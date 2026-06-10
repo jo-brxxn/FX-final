@@ -12,7 +12,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;
   --bd:#212a39;--bd2:#303c52;
   --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#6c869c;
-  --green:#3ecfb8;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
+  --green:#3ecf6e;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
@@ -212,7 +212,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .mtbl tr:last-child td{border-bottom:none}
 .mtbl th{background:var(--bg2);color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600;font-size:8px;letter-spacing:.5px}
 .mtbl .bn{text-align:left;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:var(--bg2)}
-.cb{background:#3ecfb80c;color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cb{background:#3ecf6e0c;color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cr{background:#ef6b780c;color:var(--red);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cn{color:var(--t3)}.cna{color:var(--bd);background:var(--bg0)}
 .mtbl tr:hover td:not(.cna){background:var(--bg3)!important}
@@ -387,7 +387,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (Sidebar-Glow auf Mittelwert gesetzt)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (Bullish-Farbe: kräftiges Grün statt Türkis)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -558,7 +558,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <script>
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
-const BC={bull:'#3ecfb8',bear:'#ef6b78',neu:'#f4ad5c'};
+const BC={bull:'#3ecf6e',bear:'#ef6b78',neu:'#f4ad5c'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 const SK='fxpro_v1';
@@ -595,7 +595,7 @@ const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&
 function ar(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a[i]];}
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
-function bRC(b){return b==='bull'?'#3ecfb820':b==='bear'?'#ef6b7820':'#f4ad5c20';}
+function bRC(b){return b==='bull'?'#3ecf6e20':b==='bear'?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow-neu';}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
