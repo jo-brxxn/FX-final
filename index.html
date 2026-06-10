@@ -86,9 +86,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:11px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}
-.rub-hdr{display:flex;align-items:center;gap:5px;padding:8px 10px;background:var(--bg3);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:11px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
+.rub-card{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--bc,var(--bd2));border-radius:var(--r);margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden}
+.rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
+.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:13px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rbg{display:flex;gap:2px;flex-shrink:0}
 .rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s}
@@ -101,7 +101,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rstar.on{opacity:1}.rub-card:hover .rstar{opacity:.4}.rub-card .rstar.on{opacity:1}
 .rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
 .rub-card:hover .rdel{opacity:.4}.rdel:hover{opacity:1!important;color:var(--red)}
-.rub-body{padding:8px 10px}
+.rub-body{padding:10px 12px}
 .rub-tog{color:var(--t3);font-size:10px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
 .rub-tog:hover{color:var(--blue)}
 .rub-card.collapsed .rub-tog{transform:rotate(-90deg)}
@@ -203,9 +203,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ac{background:var(--bg2);border-radius:var(--rs);padding:8px 10px;border:1px solid var(--bd);border-left:3px solid var(--bc)}
 /* ── DASHBOARD ── */
 .dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
 .dw-t{font-size:10px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
-.dw-btns{display:flex;gap:4px}
+.dw-sub{font-size:9px;color:var(--t3);margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.dw-btns{display:flex;gap:4px;flex-shrink:0}
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:11px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
@@ -277,9 +278,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .bo{font-size:11px;padding:6px 13px}
   .st{font-size:12px;padding:7px 16px}
   .slbl{font-size:9px}
-  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.rub-inp,.nc-inp,.pcc-name,.pair-name,.fsel,.pcat-sel{font-size:13px}
+  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel{font-size:13px}
+  .rub-inp,.nc-inp,.pcc-name,.pair-name{font-size:16px;font-weight:800}
   .mtbl th,.mtbl td{font-size:12px;padding:9px 11px}
   .mtbl th{font-size:9px}
+  .dw{padding:16px}
+  .dw-t{font-size:11px}
+  .dw-sub{font-size:10px}
+  .sym-row{padding:6px 9px}
+  .sym-name{font-size:12px}
+  .bbadge{font-size:9px;padding:3px 7px}
   .modal{max-width:440px;padding:20px}
   .modal h3{font-size:15px}
   .date-modal{max-width:380px;padding:20px}
@@ -295,6 +303,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .masonry>*{break-inside:avoid;-webkit-column-break-inside:avoid}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:start}
+  #dashWidgets .dw{margin-bottom:0}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -1024,7 +1034,7 @@ function renderSpecTab(c){
 function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
-  return`<div class="rub-card${collapsed}">
+  return`<div class="rub-card${collapsed}" style="--bc:${bco}">
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
@@ -1119,7 +1129,7 @@ function renderNotesSubTab(c){
   </div>`;}
 
 function renderNoteRub(rub,ri,total){
-  return`<div class="rub-card">
+  return`<div class="rub-card" style="--bc:${bCol(rub.bias)}">
     <div class="rub-hdr">
       <input class="rub-inp" value="${escH(rub.name)}" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setNoteRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
@@ -1472,12 +1482,12 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
-  {type:'fx_bias',label:'FX Bias'},
-  {type:'assets',label:'Other Assets'},
-  {type:'watchlist',label:'Watchlist Pairs'},
-  {type:'calendar',label:'Upcoming Events'},
-  {type:'quick_notes',label:'Quick Notes'},
-  {type:'pairs_editor',label:'Pairs Editor'},
+  {type:'fx_bias',label:'FX Bias',sub:'Your current bias across all major FX currencies'},
+  {type:'assets',label:'Other Assets',sub:'Bias on commodities, indices & crypto'},
+  {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
+  {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
+  {type:'quick_notes',label:'Quick Notes',sub:'Freeform notes & reminders'},
+  {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
 ];
 function renderDash(){
   const el=document.getElementById('dashWidgets');if(!el)return;
@@ -1541,9 +1551,13 @@ function renderDash(){
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
+    const wt=W_TYPES.find(t=>t.type===w.type);
     return`<div class="dw">
       <div class="dw-hdr">
-        <div class="dw-t">${escH(w.title||w.type)}</div>
+        <div>
+          <div class="dw-t">${escH(w.title||w.type)}</div>
+          ${wt?`<div class="dw-sub">${escH(wt.sub)}</div>`:''}
+        </div>
         <div class="dw-btns">
           <button class="btn" style="padding:2px 5px;font-size:8px" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''}>▲</button>
           <button class="btn" style="padding:2px 5px;font-size:8px" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''}>▼</button>
