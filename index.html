@@ -6,19 +6,19 @@
 <title>FX Analyst Pro</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;min-height:100vh;overflow-x:hidden;font-weight:500}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
 :root{
   --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;
   --bd:#212a39;--bd2:#303c52;
-  --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#4f6678;
+  --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#6c869c;
   --green:#3ecfb8;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
 .hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .logo{font-size:15px;font-weight:800;color:var(--t0)}
-.logo-s{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.logo-s{font-size:9px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:9px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:10px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
@@ -34,7 +34,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── BODY ── */
 .body{display:flex;height:calc(100vh - 94px)}
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
-.sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .ab-wrap{position:relative}
 .ab{display:block;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
 .ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg3)}
@@ -48,19 +48,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px;max-width:860px}
 .atitle{font-size:23px;font-weight:800;color:var(--t0);letter-spacing:-1px}
-.afull{font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.afull{font-size:10px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
 .bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .12s}
 .bo:hover:not(.on){background:var(--bg3);color:var(--t1)}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
-.pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
 .st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}.st:hover:not(.on){color:var(--t1)}
-.slbl{font-size:8px;letter-spacing:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
+.slbl{font-size:8px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
 .ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s}
@@ -117,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-warn span{color:var(--t1);flex:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg4);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
-.rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
+.rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
@@ -179,7 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pair-body{padding:10px;display:none;border-top:1px solid var(--bd)}
 .pair-card.open .pair-body{display:block}
-.pfl{font-size:7px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;text-transform:uppercase}
+.pfl{font-size:7px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;text-transform:uppercase}
 .pfinp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:10px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:28px;transition:border-color .12s}
 .pfinp:focus{border-color:var(--bd2);color:var(--t0)}.pfinp::placeholder{color:var(--t3)}
 .pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:10px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
@@ -209,7 +209,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
 .dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
 .dw-t{font-size:10px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
-.dw-sub{font-size:9px;color:var(--t3);margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.dw-sub{font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:4px;flex-shrink:0}
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
@@ -220,7 +220,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-ev:hover{border-color:var(--bd2)}
 .cal-date{background:var(--bg4);border:1px solid var(--purple)33;border-radius:5px;padding:5px 7px;text-align:center;flex-shrink:0;min-width:44px}
 .cal-day{font-size:13px;font-weight:800;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
-.cal-mo{font-size:7px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:2px}
+.cal-mo{font-size:7px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:2px}
 .cal-body{flex:1;min-width:0}
 .cal-name{font-size:11px;font-weight:600;color:var(--t0)}
 .cal-meta{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
@@ -244,7 +244,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
 .date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
 .date-modal h3{font-size:12px;font-weight:700;color:var(--t0);margin-bottom:12px}
-.dm-lbl{font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.dm-lbl{font-size:8px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
 .dm-inp::placeholder{color:var(--t3)}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:19px}}
@@ -346,7 +346,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (star highlight + card border)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (readability + indicator cleanup)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -572,12 +572,29 @@ function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Rate Decision Surprise','Market Repricing (OIS/Swaps)','Forward Guidance','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','ISM Prices Paid'])},
-  {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Initial Jobless Claims','Participation Rate'])},
-  {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Speculative Position','Asset Manager Positioning','WoW Change in Net Position','Crowded Trade Warning','Put/Call Ratio','Implied Volatility'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','PCE','Core PCE','Services Inflation'])},
+  {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Initial Jobless Claims'])},
+  {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
+// One-time, idempotent cleanup applied to existing saved rubrics so older
+// symbols pick up the trimmed/renamed indicator set above.
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
+const RUB_IND_RENAME={'Market Repricing (OIS/Swaps)':'Swaps','Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)'};
+function migrateRubInds(rubrics){
+  rubrics.forEach(rub=>{
+    if(!rub.indicators)return;
+    const rm=RUB_IND_REMOVE[rub.name];
+    if(rm)rub.indicators=rub.indicators.filter(ind=>!rm.includes(ind.name));
+    rub.indicators.forEach(ind=>{if(RUB_IND_RENAME[ind.name])ind.name=RUB_IND_RENAME[ind.name];});
+    if(rub.name==='COT Data'&&!rub.indicators.find(i=>i.name==='Net Bearish Positioning')){
+      const idx=rub.indicators.findIndex(i=>i.name==='Net Bullish Positioning');
+      const ni={id:uid(),name:'Net Bearish Positioning',bias:'neu',imp:false,date:'',interval:'',points:[]};
+      idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
+    }
+  });
+}
 function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));}
 
 // ══ ZENTRALBANKEN / ASSET-KLASSEN ════════════════════════════════════
@@ -784,6 +801,7 @@ function mkMacroRub(id,name){
 function addMacroRub(sym){
   if(!sym.rubrics)sym.rubrics=[];
   enrichRubrics(sym.id,sym.rubrics,sym.full||sym.name);
+  migrateRubInds(sym.rubrics);
   const idx=sym.rubrics.findIndex(r=>r.name===MACRO_NAME);
   if(idx===-1)sym.rubrics.unshift(mkMacroRub(sym.id,sym.full||sym.name));
   else if(idx>0)sym.rubrics.unshift(sym.rubrics.splice(idx,1)[0]);
