@@ -57,9 +57,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)18,var(--green)18);box-shadow:0 0 14px 0 var(--green)70}
-.ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)18,var(--red)18);box-shadow:0 0 14px 0 var(--red)70}
-.ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)18,var(--amber)18);box-shadow:0 0 14px 0 var(--amber)70}
+.ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)38,var(--green)38);box-shadow:0 0 22px 2px var(--green)b3}
+.ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)38,var(--red)38);box-shadow:0 0 22px 2px var(--red)b3}
+.ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)38,var(--amber)38);box-shadow:0 0 22px 2px var(--amber)b3}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
@@ -219,6 +219,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:11px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .bbadge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.dw-empty{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-add{font-size:9px;padding:3px 8px;margin-bottom:8px;width:100%}
+.dw-nav{padding:2px 5px;font-size:8px}
+.dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
+.dw-pname{min-width:62px}
+.dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1}
+.dw-meta{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:9px;outline:none;cursor:pointer;flex-shrink:0}
+.dw-cal-date{font-size:9px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:42px}
+.dw-cal-name{font-size:10px;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dw-cal-cur{font-size:9px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 /* ── CALENDAR ── */
 .cal-ev{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 11px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s}
 .cal-ev:hover{border-color:var(--bd2)}
@@ -291,11 +303,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .mtbl th,.mtbl td{font-size:12px;padding:9px 11px}
   .mtbl th{font-size:9px}
   .dw{padding:16px}
-  .dw-t{font-size:11px}
-  .dw-sub{font-size:10px}
-  .sym-row{padding:6px 9px}
-  .sym-name{font-size:12px}
-  .bbadge{font-size:9px;padding:3px 7px}
+  .dw-t{font-size:13px}
+  .dw-sub{font-size:11px}
+  .sym-row{padding:7px 10px}
+  .sym-name{font-size:14px}
+  .bbadge{font-size:11px;padding:3px 8px}
+  .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:12px}
+  .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:11px}
+  .dw-chip-x,.dw-del{font-size:14px}
+  .dw-nav{font-size:10px;padding:3px 6px}
   .modal{max-width:440px;padding:20px}
   .modal h3{font-size:15px}
   .date-modal{max-width:380px;padding:20px}
@@ -313,6 +329,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:start}
   #dashWidgets .dw{margin-bottom:0}
+  .dw{padding:18px}
+  .dw-t{font-size:14px}
+  .dw-sub{font-size:12px}
+  .sym-row{padding:8px 11px}
+  .sym-name{font-size:15px}
+  .bbadge{font-size:12px;padding:4px 9px}
+  .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:13px}
+  .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:12px}
+  .dw-chip-x,.dw-del{font-size:16px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -350,7 +375,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: RED (bias glow + typing-loss fix)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (brighter glow + larger dashboard fonts)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1584,65 +1609,65 @@ function renderDash(){
         </div>`).join('');
     }else if(w.type==='assets'){
       const others=syms.filter(s=>!FX.includes(s.id));
-      content=others.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No custom assets.</div>`:
+      content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
       others.map(s=>`<div class="sym-row">
         <div class="sym-name">${s.name}</div>
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
     }else if(w.type==='setups'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
-      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
-      content=addBtn+(wp.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No directional set-ups right now.</div>`:
+      const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
+      content=addBtn+(wp.length===0?`<div class="dw-empty">No directional set-ups right now.</div>`:
       wp.map(p=>`<div class="sym-row">
-        <div class="sym-name" style="min-width:60px;font-size:10px">${escH(p.name)}</div>
+        <div class="sym-name dw-pname">${escH(p.name)}</div>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
-        <button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0;margin-left:auto" title="Remove">×</button>
+        <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="margin-left:auto" title="Remove">×</button>
       </div>`).join(''));
     }else if(w.type==='no_direction'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
-      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
-      content=addBtn+(wp.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs currently have a direction.</div>`:
-      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1" title="Remove">×</button></span>`).join('')+`</div>`);
+      const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
+      content=addBtn+(wp.length===0?`<div class="dw-empty">All FX pairs currently have a direction.</div>`:
+      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
-      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair()">＋ Add Pair to Watchlist</button>`;
-      content=addBtn+(wp.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs in Watchlist yet.</div>`:
+      const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair to Watchlist</button>`;
+      content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row">
-        <div class="sym-name" style="min-width:60px;font-size:10px">${escH(p.name)}</div>
+        <div class="sym-name dw-pname">${escH(p.name)}</div>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         <div class="pbg" style="flex-shrink:0">
-          ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18;padding:2px 4px;font-size:7px" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
+          ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
         </div>
-        ${p.sl||p.tp?`<span style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0">${p.sl?'SL:'+p.sl:''} ${p.tp?'TP:'+p.tp:''}</span>`:''}
-        <button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0" title="Remove">×</button>
+        ${p.sl||p.tp?`<span class="dw-meta">${p.sl?'SL:'+p.sl:''} ${p.tp?'TP:'+p.tp:''}</span>`:''}
+        <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
     }else if(w.type==='pairs_editor'){
       // Shows all pairs across all categories with add/remove/move-category
-      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair()">＋ Add Pair</button>`;
+      const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair</button>`;
       const allP=pairs.slice();
-      content=addBtn+(allP.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet.</div>`:
+      content=addBtn+(allP.length===0?`<div class="dw-empty">No pairs yet.</div>`:
       allP.map(p=>{
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row" style="flex-wrap:wrap;gap:5px">
-          <div class="sym-name" style="min-width:62px;font-size:10px">${escH(p.name)}</div>
-          <span style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0">${escH(cat?.name||'—')}</span>
+          <div class="sym-name dw-pname">${escH(p.name)}</div>
+          <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <div class="pbg" style="flex-shrink:0">
-            ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18;padding:2px 4px;font-size:7px" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
+            ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
           </div>
-          <select style="background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:9px;outline:none;cursor:pointer;flex-shrink:0" onchange="movePair('${p.id}',this.value);renderDash()">
+          <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
             ${pairCats.map(c=>`<option value="${c.id}"${p.catId===c.id?' selected':''}>${escH(c.name)}</option>`).join('')}
           </select>
-          <button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.5;line-height:1;flex-shrink:0" title="Remove">×</button>
+          <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="opacity:.5" title="Remove">×</button>
         </div>`;}).join(''));
     }else if(w.type==='calendar'){
       const evts=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
-      content=evts.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No events. Add in Calendar tab.</div>`:
+      content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
       evts.map(ev=>{const{day,mo}=fmtDate(ev.date);const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
         return`<div class="sym-row" style="gap:6px">
-          <span style="font-size:9px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:42px">${day} ${mo}</span>
+          <span class="dw-cal-date">${day} ${mo}</span>
           <span class="ctag ${ic}" style="flex-shrink:0">${ev.impact==='high'?'🔴':ev.impact==='medium'?'🟡':'⚪'}</span>
-          <span style="font-size:10px;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(ev.name)}</span>
-          ${ev.currencies?`<span style="font-size:9px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0">${escH(ev.currencies)}</span>`:''}
+          <span class="dw-cal-name">${escH(ev.name)}</span>
+          ${ev.currencies?`<span class="dw-cal-cur">${escH(ev.currencies)}</span>`:''}
         </div>`;}).join('');
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
@@ -1655,10 +1680,10 @@ function renderDash(){
           ${wt?`<div class="dw-sub">${escH(wt.sub)}</div>`:''}
         </div>
         <div class="dw-btns">
-          <button class="btn" style="padding:2px 5px;font-size:8px" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''}>▲</button>
-          <button class="btn" style="padding:2px 5px;font-size:8px" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''}>▼</button>
-          <button class="btn" style="padding:2px 5px;font-size:8px" onclick="renameWidget('${w.id}')">✎</button>
-          <button class="btn r" style="padding:2px 5px;font-size:8px" onclick="delWidget('${w.id}')">×</button>
+          <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''}>▲</button>
+          <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''}>▼</button>
+          <button class="btn dw-nav" onclick="renameWidget('${w.id}')">✎</button>
+          <button class="btn r dw-nav" onclick="delWidget('${w.id}')">×</button>
         </div>
       </div>
       ${content}
