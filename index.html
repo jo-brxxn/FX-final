@@ -136,7 +136,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
-.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:30px}
+.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* ── INDICATOR ── */
@@ -396,7 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: LILA (Rot/Orange besser unterscheidbar, Schrift augenfreundlicher)</div>
+<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: ORANGE (Summary-Feld waechst automatisch mit dem Text)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1099,7 +1099,7 @@ function renderDetail(){
     </div>
     ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
-  document.querySelectorAll('.rtxt,.sp-txt').forEach(ar);
+  document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt').forEach(ar);
   updateStat();
 }
 
@@ -1169,7 +1169,7 @@ function renderRub(rub,ri,total){
           <span style="color:${bco}">▸ SUMMARY</span>
           <span style="font-size:8px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${(rub.indicators||[]).map((ind,ii)=>renderInd(ind,ri,ii,(rub.indicators||[]).length)).join('')}
