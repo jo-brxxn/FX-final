@@ -843,6 +843,9 @@ function save(){
   }catch(e){}
   cloudAutoSync();
 }
+// Debounced save while typing, so a reload mid-edit doesn't lose anything
+let _saveSoonTimer=null;
+function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,400);}
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
@@ -1017,7 +1020,7 @@ function renderFL(arr,key){
     const bco=bCol(b),rco=imp?'#e8c66840':bRC(b);
     return`<div class="ri${imp?' imp':''}" style="--rc:${rco}">
       <div class="rdot" style="background:${imp?'var(--star)':bco}"></div>
-      <textarea class="rtxt" rows="1" oninput="ar(this);editGenR('${key}',${i},this.value)" onblur="save()">${escH(txt)}</textarea>
+      <textarea class="rtxt" rows="1" oninput="ar(this);editGenR('${key}',${i},this.value);saveSoon()" onblur="save()">${escH(txt)}</textarea>
       <div class="rb-g">${['bull','neu','bear'].map(b2=>`<button class="rb${b===b2?' '+bClass(b2):''}" onclick="setGenRB('${key}',${i},'${b2}')">${b2==='bull'?'▲':b2==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="istar${imp?' on':''}" onclick="togGenImp('${key}',${i})">⭐</button>
       <button class="mv" onclick="mvGenR('${key}',${i},-1)" ${i===0?'disabled':''}>▲</button>
@@ -1038,7 +1041,7 @@ function renderRub(rub,ri,total){
   return`<div class="rub-card${collapsed}" style="--bc:${bco}">
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
-      <input class="rub-inp" value="${escH(rub.name)}" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
+      <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
@@ -1053,7 +1056,7 @@ function renderRub(rub,ri,total){
           <span style="color:${bco}">▸ SUMMARY</span>
           <span style="font-size:8px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." onchange="getRub(${ri}).summary=this.value;save()">${escH(rub.summary||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${(rub.indicators||[]).map((ind,ii)=>renderInd(ind,ri,ii,(rub.indicators||[]).length)).join('')}
@@ -1093,7 +1096,7 @@ function renderInd(ind,ri,ii,total){
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
   return`<div class="ind-card">
     <div class="ind-hdr">
-      <input class="ind-inp" value="${escH(ind.name)}" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
+      <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
       <div class="ibg">${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
@@ -1104,7 +1107,7 @@ function renderInd(ind,ri,ii,total){
     </div>
     <div class="ind-body">
       ${(ind.points||[]).map((pt,pi)=>`<div class="sp" style="--spc:${bco}">
-        <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value" onblur="save()">${escH(pt.text||pt||'')}</textarea>
+        <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="save()">${escH(pt.text||pt||'')}</textarea>
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},-1)" ${pi===0?'disabled':''}>▲</button>
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},1)" ${pi===(ind.points.length-1)?'disabled':''}>▼</button>
         <button class="sp-del" onclick="delPt(${ri},${ii},${pi})">×</button>
@@ -1126,13 +1129,13 @@ function renderNotesSubTab(c){
   <div class="masonry">${rubs.map((rub,ri)=>renderNoteRub(rub,ri,rubs.length)).join('')}</div>
   <div style="margin-top:10px">
     <div class="slbl"><span style="color:var(--t3)">FREE NOTES</span><div class="slbl-line"></div></div>
-    <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." onchange="getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
+    <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." oninput="getSym().notes=this.value;saveSoon()" onchange="getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
   </div>`;}
 
 function renderNoteRub(rub,ri,total){
   return`<div class="rub-card" style="--bc:${bCol(rub.bias)}">
     <div class="rub-hdr">
-      <input class="rub-inp" value="${escH(rub.name)}" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
+      <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setNoteRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togNoteRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvNoteRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -1143,7 +1146,7 @@ function renderNoteRub(rub,ri,total){
       ${(rub.items||[]).map((item,ii)=>`
         <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':bRC(item.bias||'neu')}">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
-          <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value" onblur="save()">${escH(item.text||'')}</textarea>
+          <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
           <div class="rb-g">${['bull','neu','bear'].map(b=>`<button class="rb${(item.bias||'neu')===b?' '+bClass(b):''}" onclick="setNoteRubItemBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
           <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
           <button class="mv" onclick="mvNoteRubItem(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -1309,7 +1312,7 @@ function renderPairs(){
     return`<div class="pcc${cat.open?' open':''}">
       <div class="pcc-hdr">
         <button class="pcc-tog" onclick="togPCC('${cat.id}')">▶</button>
-        <input class="pcc-name" value="${escH(cat.name)}" placeholder="Category..." onchange="pairCats[${ci}].name=this.value;save()">
+        <input class="pcc-name" value="${escH(cat.name)}" placeholder="Category..." oninput="pairCats[${ci}].name=this.value;saveSoon()" onchange="pairCats[${ci}].name=this.value;save()">
         <span style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;margin-right:4px">${catPairs.length}</span>
         <button class="btn" style="padding:2px 5px;font-size:8px;opacity:.5" onclick="mvPairCat(${ci},-1)" ${ci===0?'disabled':''}>▲</button>
         <button class="btn" style="padding:2px 5px;font-size:8px;opacity:.5" onclick="mvPairCat(${ci},1)" ${ci===pairCats.length-1?'disabled':''}>▼</button>
@@ -1338,16 +1341,16 @@ function renderPairCard(p,pci,catTotal){
     </div>
     <div class="pair-body">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px">
-        <div><div class="pfl">Entry Level</div><input class="pfinp" placeholder="e.g. 1.1650" value="${escH(p.entry||'')}" onchange="pairs[${pi}].entry=this.value;save()"></div>
-        <div><div class="pfl">Entry Trigger</div><input class="pfinp" placeholder="e.g. NFP miss" value="${escH(p.entryTrigger||'')}" onchange="pairs[${pi}].entryTrigger=this.value;save()"></div>
+        <div><div class="pfl">Entry Level</div><input class="pfinp" placeholder="e.g. 1.1650" value="${escH(p.entry||'')}" oninput="pairs[${pi}].entry=this.value;saveSoon()" onchange="pairs[${pi}].entry=this.value;save()"></div>
+        <div><div class="pfl">Entry Trigger</div><input class="pfinp" placeholder="e.g. NFP miss" value="${escH(p.entryTrigger||'')}" oninput="pairs[${pi}].entryTrigger=this.value;saveSoon()" onchange="pairs[${pi}].entryTrigger=this.value;save()"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:5px">
-        <div><div class="pfl">SL</div><input class="pfinp" value="${escH(p.sl||'')}" onchange="pairs[${pi}].sl=this.value;save()"></div>
-        <div><div class="pfl">TP</div><input class="pfinp" value="${escH(p.tp||'')}" onchange="pairs[${pi}].tp=this.value;save()"></div>
-        <div><div class="pfl">R:R</div><input class="pfinp" placeholder="1:2" value="${escH(p.rr||'')}" onchange="pairs[${pi}].rr=this.value;save()"></div>
-        <div><div class="pfl">Size</div><input class="pfinp" value="${escH(p.size||'')}" onchange="pairs[${pi}].size=this.value;save()"></div>
+        <div><div class="pfl">SL</div><input class="pfinp" value="${escH(p.sl||'')}" oninput="pairs[${pi}].sl=this.value;saveSoon()" onchange="pairs[${pi}].sl=this.value;save()"></div>
+        <div><div class="pfl">TP</div><input class="pfinp" value="${escH(p.tp||'')}" oninput="pairs[${pi}].tp=this.value;saveSoon()" onchange="pairs[${pi}].tp=this.value;save()"></div>
+        <div><div class="pfl">R:R</div><input class="pfinp" placeholder="1:2" value="${escH(p.rr||'')}" oninput="pairs[${pi}].rr=this.value;saveSoon()" onchange="pairs[${pi}].rr=this.value;save()"></div>
+        <div><div class="pfl">Size</div><input class="pfinp" value="${escH(p.size||'')}" oninput="pairs[${pi}].size=this.value;saveSoon()" onchange="pairs[${pi}].size=this.value;save()"></div>
       </div>
-      <div style="margin-bottom:5px"><div class="pfl">Setup Notes</div><textarea class="pfinp" rows="2" placeholder="Catalysts, invalidation, what to watch..." onchange="pairs[${pi}].notes=this.value;save()">${escH(p.notes||'')}</textarea></div>
+      <div style="margin-bottom:5px"><div class="pfl">Setup Notes</div><textarea class="pfinp" rows="2" placeholder="Catalysts, invalidation, what to watch..." oninput="pairs[${pi}].notes=this.value;saveSoon()" onchange="pairs[${pi}].notes=this.value;save()">${escH(p.notes||'')}</textarea></div>
       <div><div class="pfl">Move to Category</div>
         <select class="pcat-sel" onchange="movePair('${p.id}',this.value)">
           ${pairCats.map(c=>`<option value="${c.id}"${p.catId===c.id?' selected':''}>${escH(c.name)}</option>`).join('')}
@@ -1451,7 +1454,7 @@ function renderNCs(){
   el.innerHTML=noteCats.map((cat,ci)=>`
     <div class="nc">
       <div class="nc-hdr">
-        <input class="nc-inp" value="${escH(cat.name)}" placeholder="Category..." onchange="noteCats[${ci}].name=this.value;save()">
+        <input class="nc-inp" value="${escH(cat.name)}" placeholder="Category..." oninput="noteCats[${ci}].name=this.value;saveSoon()" onchange="noteCats[${ci}].name=this.value;save()">
         <button class="mv" onclick="mvNC(${ci},-1)" ${ci===0?'disabled':''} style="opacity:.3">▲</button>
         <button class="mv" onclick="mvNC(${ci},1)" ${ci===noteCats.length-1?'disabled':''} style="opacity:.3">▼</button>
         <button class="nc-del" onclick="delNC(${ci})">×</button>
@@ -1460,7 +1463,7 @@ function renderNCs(){
         ${(cat.items||[]).map((item,ii)=>`
           <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':'#26344a20'}">
             <div class="rdot" style="background:${item.imp?'var(--star)':'var(--blue)'}"></div>
-            <textarea class="rtxt" rows="1" oninput="ar(this);noteCats[${ci}].items[${ii}].text=this.value" onblur="save()">${escH(item.text||'')}</textarea>
+            <textarea class="rtxt" rows="1" oninput="ar(this);noteCats[${ci}].items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
             <button class="istar${item.imp?' on':''}" onclick="togNCI(${ci},${ii})">⭐</button>
             <button class="mv" onclick="mvNCI(${ci},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
             <button class="mv" onclick="mvNCI(${ci},${ii},1)" ${ii===(cat.items.length-1)?'disabled':''}>▼</button>
@@ -1550,7 +1553,7 @@ function renderDash(){
           ${ev.currencies?`<span style="font-size:9px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0">${escH(ev.currencies)}</span>`:''}
         </div>`;}).join('');
     }else if(w.type==='quick_notes'){
-      content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
+      content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
     return`<div class="dw">
