@@ -375,7 +375,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (brighter glow + larger dashboard fonts)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (Makro tab renamed + reordered)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1045,8 +1045,8 @@ function renderDetail(){
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span><span>${bull.length}▲ · ${bear.length}▼</span></div>
     <div class="stabs">
+      <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Makro</button>
       <button class="st${curSub==='general'?' on':''}" onclick="setSub('general')">🌐 General</button>
-      <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Specific</button>
       <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
     </div>
     ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
