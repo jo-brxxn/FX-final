@@ -57,9 +57,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)38,var(--green)38);box-shadow:0 0 22px 2px var(--green)b3}
-.ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)38,var(--red)38);box-shadow:0 0 22px 2px var(--red)b3}
-.ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)38,var(--amber)38);box-shadow:0 0 22px 2px var(--amber)b3}
+.ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)90,var(--green)90);box-shadow:0 0 45px 8px var(--green)}
+.ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)90,var(--red)90);box-shadow:0 0 45px 8px var(--red)}
+.ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)90,var(--amber)90);box-shadow:0 0 45px 8px var(--amber)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -100,7 +100,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px var(--star)55,0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:13px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
+.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rbg{display:flex;gap:2px;flex-shrink:0}
 .rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s}
@@ -175,7 +175,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .pcc-tog{color:var(--t3);font-size:10px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
 .pcc.open .pcc-tog{transform:rotate(90deg)}
-.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .pcc-name::placeholder{color:var(--t3)}
 .pcc-body{display:none;padding:10px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px}
 .pcc.open .pcc-body{display:grid}
@@ -197,7 +197,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}
 .nc:hover{border-color:var(--bd2)}
 .nc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.nc-inp{background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.nc-inp{background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .nc-inp::placeholder{color:var(--t3)}
 .nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.25;padding:0;line-height:1;transition:all .12s}
 .nc-del:hover{color:var(--red);opacity:1}
@@ -218,7 +218,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── DASHBOARD ── */
 .dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
 .dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
-.dw-t{font-size:10px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.dw-t{font-size:14px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .dw-sub{font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:4px;flex-shrink:0}
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
@@ -307,12 +307,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .bo{font-size:11px;padding:6px 13px}
   .st{font-size:12px;padding:7px 16px}
   .slbl{font-size:9px}
-  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel{font-size:13px}
-  .rub-inp,.nc-inp,.pcc-name,.pair-name{font-size:16px;font-weight:800}
+  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:13px}
+  .rub-inp,.nc-inp,.pcc-name{font-size:18px;font-weight:800}
   .mtbl th,.mtbl td{font-size:12px;padding:9px 11px}
   .mtbl th{font-size:9px}
   .dw{padding:16px}
-  .dw-t{font-size:13px}
+  .dw-t{font-size:17px}
   .dw-sub{font-size:11px}
   .sym-row{padding:7px 10px}
   .sym-name{font-size:14px}
@@ -339,7 +339,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:start}
   #dashWidgets .dw{margin-bottom:0}
   .dw{padding:18px}
-  .dw-t{font-size:14px}
+  .dw-t{font-size:18px}
   .dw-sub{font-size:12px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:15px}
@@ -384,7 +384,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: GREEN (Setups verschiebbar/markierbar, Makro-Sync, News-Flags, Logo)</div>
+<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: AMBER (Glow 5x heller, Schriftgrößen-Hierarchie korrigiert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
