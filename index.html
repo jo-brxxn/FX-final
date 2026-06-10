@@ -1696,6 +1696,20 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='Backspace')lockBack();
 });
 
+// ══ AUTO-SAVE SAFETY NET ═══════════════════════════════════════════
+// Forces any pending edit (in a focused input/textarea) to commit via
+// blur, then saves to localStorage + cloud. Runs on a timer and
+// whenever the page is hidden/closed, so nothing gets lost.
+function flushAndSave(){
+  const ae=document.activeElement;
+  if(ae&&ae!==document.body&&typeof ae.blur==='function')ae.blur();
+  save();
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAndSave();});
+window.addEventListener('pagehide',flushAndSave);
+window.addEventListener('beforeunload',flushAndSave);
+setInterval(flushAndSave,15000);
+
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
 // Start on dashboard
