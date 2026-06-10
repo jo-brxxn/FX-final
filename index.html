@@ -17,7 +17,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 }
 /* ── LAYOUT ── */
 .hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.logo{font-size:15px;font-weight:800;color:var(--t0)}
+.logo{font-size:18px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:9px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:9px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
@@ -36,7 +36,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
 .sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .ab-wrap{position:relative}
-.ab{display:block;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
+.ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
 .ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg3)}
 .ab .an{font-size:9px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
 .ab .av{font-size:9px;margin-top:1px;font-weight:600}
@@ -60,6 +60,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)38,var(--green)38);box-shadow:0 0 22px 2px var(--green)b3}
 .ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)38,var(--red)38);box-shadow:0 0 22px 2px var(--red)b3}
 .ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)38,var(--amber)38);box-shadow:0 0 22px 2px var(--amber)b3}
+/* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
+.evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
+.evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
+.sym-row.row-marked{border:1px solid var(--star);background:var(--star)15}
+.pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
+.evt-banner{color:var(--red);font-weight:800;font-size:12px;margin-top:4px;letter-spacing:.2px;width:100%}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
@@ -224,6 +230,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-nav{padding:2px 5px;font-size:8px}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:62px}
+.dw-mark{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}
+.dw-mark:hover{opacity:.8}
+.dw-mark.on{color:var(--star);opacity:1}
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
@@ -375,7 +384,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (Makro tab renamed + reordered)</div>
+<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: GREEN (Setups verschiebbar/markierbar, Makro-Sync, News-Flags, Logo)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -560,7 +569,7 @@ const ALL_PAIRS=[
   'NZD/JPY','NZD/CAD','NZD/CHF',
   'CAD/JPY','CAD/CHF',
   'CHF/JPY',
-  'XAU/USD','XAG/USD','WTI/USD','BTC/USD','ETH/USD'
+  'XAU/USD','XAG/USD','WTI/USD','BTC/USD','ETH/USD','SP500/USD','NAS/USD'
 ];
 
 // The 28 pure FX cross pairs (both legs are G8 currencies) – these are
@@ -604,6 +613,25 @@ function evtMatchesSym(ev,id){
   return tokens.some(t=>names.some(n=>n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+// ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
+// Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
+// daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
+const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS'];
+const MACRO_SYNC_IDS=['USD',...NONFX_IDS];
+const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
+function getRelevantEvents(id){
+  const today=todayStr();
+  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  return calEvts.filter(ev=>ev.date>=today&&ids.some(x=>evtMatchesSym(ev,x)));
+}
+function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
+function pairHasImportantEvt(name){
+  const parts=name.split('/');if(parts.length!==2)return hasImportantEvt(name);
+  const a=PAIR_CODE_TO_ID[parts[0]]||parts[0],b=PAIR_CODE_TO_ID[parts[1]]||parts[1];
+  return hasImportantEvt(a)||hasImportantEvt(b);
+}
+const EVT_FLAG='<span class="evt-flag" title="Wichtige Nachricht steht an">❗</span>';
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
@@ -737,6 +765,9 @@ const DEF=[
 
 // ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
 const MACRO_NAME='Makro & Risikoumfeld';
+// Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
+// (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
+const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market','Geopolitics',MACRO_NAME];
 const MACRO_RUB_INFO={
   fx:name=>`Diese Rubrik bündelt, wie ${name} auf das globale Makro- und Risikoumfeld reagiert – unabhängig von währungsspezifischen Fundamentaldaten. Wichtig für kurzfristiges Trading, da Risk-on-/Risk-off-Stimmungswechsel oft schneller wirken als fundamentale News.`,
   crypto:name=>`Diese Rubrik beschreibt, wie ${name} auf globale Liquiditäts- und Risikostimmung reagiert. Da ${name} (noch) keine etablierten eigenen Fundamentaldaten wie Zinsen/Inflation hat, ist das Makroumfeld – insbesondere die Fed-Politik und der Risikoappetit – der dominante Treiber.`,
@@ -1000,7 +1031,7 @@ function cloudAutoSync(){
 }
 
 // ══ CURRENT STATE ══════════════════════════════════════════════════
-let selId='USD',curSub='general',curPage='dash';
+let selId='USD',curSub='specific',curPage='dash';
 function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
@@ -1024,6 +1055,7 @@ function renderSidebar(){
       const isCustom=customCatIds.includes(id);
       return`<div class="ab-wrap">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" style="border-left-color:${on?BC[c.bias]:'transparent'}" onclick="selSym('${id}')">
+          ${hasImportantEvt(c.id)?'<span class="evt-flag-abs" title="Wichtige Nachricht steht an">❗</span>':''}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${isCustom?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
@@ -1037,13 +1069,15 @@ function renderDetail(){
   const c=getSym();if(!c)return;
   const bull=c.genBull||[],bear=c.genBear||[];
   const pct=Math.round((bull.length/(bull.length+bear.length||1))*100);
+  const relEvts=getRelevantEvents(c.id);
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${c.name}</div><div class="afull">${c.full}</div></div>
       <div class="brow">${['bull','neu','bear'].map(b=>`<button class="bo${c.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setBias('${b}')">${b==='bull'?'▲ BULL':b==='bear'?'▼ BEAR':'◆ NEU'}</button>`).join('')}</div>
+      ${relEvts.length?`<div class="evt-banner">⚠ ${relEvts.map(ev=>{const{day,mo}=fmtDate(ev.date);return`${escH(ev.name)} (${day} ${mo})`;}).join(' · ')}</div>`:''}
     </div>
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
-    <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span><span>${bull.length}▲ · ${bear.length}▼</span></div>
+    <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs">
       <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Makro</button>
       <button class="st${curSub==='general'?' on':''}" onclick="setSub('general')">🌐 General</button>
@@ -1121,7 +1155,7 @@ function renderRub(rub,ri,total){
           <span style="color:${bco}">▸ SUMMARY</span>
           <span style="font-size:8px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;save()">${escH(rub.summary||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${(rub.indicators||[]).map((ind,ii)=>renderInd(ind,ri,ii,(rub.indicators||[]).length)).join('')}
@@ -1145,12 +1179,12 @@ function saveDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
   ind.date=document.getElementById('dmDate').value;
   ind.interval=document.getElementById('dmIntv').value.trim();
-  save();closeM('mDate');renderDetail();
+  syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
 function clearDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
   ind.date='';ind.interval='';
-  save();closeM('mDate');renderDetail();
+  syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
 
 function renderInd(ind,ri,ii,total){
@@ -1161,7 +1195,7 @@ function renderInd(ind,ri,ii,total){
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
     <div class="ind-hdr">
-      <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
+      <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
       <div class="ibg">${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
@@ -1172,7 +1206,7 @@ function renderInd(ind,ri,ii,total){
     </div>
     <div class="ind-body">
       ${(ind.points||[]).map((pt,pi)=>`<div class="sp" style="--spc:${bco}">
-        <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="save()">${escH(pt.text||pt||'')}</textarea>
+        <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="syncMacroRub(${ri});save()">${escH(pt.text||pt||'')}</textarea>
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},-1)" ${pi===0?'disabled':''}>▲</button>
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},1)" ${pi===(ind.points.length-1)?'disabled':''}>▼</button>
         <button class="sp-del" onclick="delPt(${ri},${ii},${pi})">×</button>
@@ -1226,7 +1260,7 @@ function renderNoteRub(rub,ri,total){
   </div>`;}
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
-function selSym(id){selId=id;curSub='general';renderSidebar();renderDetail();}
+function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();}
 function setSub(s){curSub=s;renderDetail();}
 function setBias(b){
   pushU();getSym().bias=b;
@@ -1248,8 +1282,24 @@ function addGenR(key){
 // ══ ACTIONS – RUBRICS ═══════════════════════════════════════════════
 function getRub(ri){const c=getSym();return c&&c.rubrics?c.rubrics[ri]:null;}
 function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii]:null;}
-function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;save();renderDetail();}
-function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;save();renderDetail();}
+// Hält die Makro-Rubriken (Zinsen, Inflation, Arbeitsmarkt, Geopolitik,
+// Makro & Risikoumfeld) zwischen USD und allen USD-getriebenen Assets
+// (Gold, Silber, Öl, BTC, Indizes) synchron, da sie dieselbe globale
+// Makro-Lage beschreiben. Asset-spezifische Info-Texte bleiben unberührt.
+function syncMacroRub(ri){
+  const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
+  if(!cur||!src||!MACRO_SYNC_IDS.includes(cur.id)||!MACRO_SYNC_RUBS.includes(src.name))return;
+  const clone=JSON.parse(JSON.stringify({bias:src.bias,imp:src.imp,summary:src.summary,indicators:src.indicators||[]}));
+  MACRO_SYNC_IDS.forEach(id=>{
+    if(id===cur.id)return;
+    const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
+    const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
+    r.bias=clone.bias;r.imp=clone.imp;r.summary=clone.summary;
+    r.indicators=JSON.parse(JSON.stringify(clone.indicators));
+  });
+}
+function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderDetail();}
+function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){const c=getSym();if(c&&c.rubrics)mvArr(c.rubrics,ri,d);save();renderDetail();}
@@ -1271,20 +1321,20 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;save();renderDetail();}
-function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;save();renderDetail();}
-function delInd(ri,ii){pushU();const r=getRub(ri);if(r&&r.indicators)r.indicators.splice(ii,1);save();renderDetail();}
-function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);save();renderDetail();}
+function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);save();renderDetail();}
+function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
+function delInd(ri,ii){pushU();const r=getRub(ri);if(r&&r.indicators)r.indicators.splice(ii,1);syncMacroRub(ri);save();renderDetail();}
+function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
-  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';save();renderDetail();}
+  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroRub(ri);save();renderDetail();}
 function addPt(ri,ii){
   const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
-  ind.points.push({id:uid(),text:v});inp.value='';save();renderDetail();}
-function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);save();renderDetail();}
-function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(ind&&ind.points)mvArr(ind.points,pi,d);save();renderDetail();}
+  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();}
+function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);syncMacroRub(ri);save();renderDetail();}
+function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(ind&&ind.points)mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
@@ -1428,16 +1478,18 @@ function renderPairs(){
 function renderPairCard(p,pci,catTotal){
   const pi=pairs.findIndex(x=>x.id===p.id);
   const bco=BC[p.bias];
-  return`<div class="pair-card${p._open?' open':''} ${glowClass(p.bias)}">
+  return`<div class="pair-card${p._open?' open':''}${p.marked?' row-marked':''} ${glowClass(p.bias)}">
     <div class="pair-hdr" onclick="togPair('${p.id}')">
       <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0" onclick="event.stopPropagation()">
         <button class="sp-mv" onclick="mvPairInCat('${p.id}',-1)" ${pci===0?'disabled':''} style="font-size:8px;margin-top:0">▲</button>
         <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:8px;margin-top:0">▼</button>
       </div>
       <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
+      ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
       <div class="pbg" onclick="event.stopPropagation()">
         ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
       </div>
+      <button class="dw-mark${p.marked?' on':''}" onclick="event.stopPropagation();togPairMark('${p.id}');renderPairs()" title="Gelb markieren">★</button>
       <button onclick="event.stopPropagation();delPair('${p.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0;opacity:.5;line-height:1" title="Remove pair">×</button>
     </div>
     <div class="pair-body">
@@ -1463,6 +1515,7 @@ function renderPairCard(p,pci,catTotal){
 function togPCC(catId){const c=pairCats.find(x=>x.id===catId);if(c){c.open=!c.open;renderPairs();}}
 function togPair(id){const p=pairs.find(x=>x.id===id);if(p){p._open=!p._open;renderPairs();}}
 function setPairBias(id,b){pushU();const p=pairs.find(x=>x.id===id);if(p){p.bias=b;save();renderPairs();}}
+function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){p.marked=!p.marked;save();}}
 function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){p.catId=catId;p._open=false;save();renderPairs();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();}
 function mvPairCat(ci,d){pushU();mvArr(pairCats,ci,d);save();renderPairs();}
@@ -1605,6 +1658,7 @@ function renderDash(){
       content=syms.filter(s=>FX.includes(s.id)).map(s=>`
         <div class="sym-row" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
+          ${hasImportantEvt(s.id)?EVT_FLAG:''}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
         </div>`).join('');
     }else if(w.type==='assets'){
@@ -1612,16 +1666,23 @@ function renderDash(){
       content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
       others.map(s=>`<div class="sym-row">
         <div class="sym-name">${s.name}</div>
+        ${hasImportantEvt(s.id)?EVT_FLAG:''}
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
     }else if(w.type==='setups'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
       content=addBtn+(wp.length===0?`<div class="dw-empty">No directional set-ups right now.</div>`:
-      wp.map(p=>`<div class="sym-row">
+      wp.map((p,idx)=>`<div class="sym-row${p.marked?' row-marked':''}">
+        <div class="pbg" style="flex-direction:column;gap:1px;flex-shrink:0">
+          <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',-1);renderDash()" ${idx===0?'disabled':''}>▲</button>
+          <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
+        </div>
         <div class="sym-name dw-pname">${escH(p.name)}</div>
+        ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
-        <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="margin-left:auto" title="Remove">×</button>
+        <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
+        <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
     }else if(w.type==='no_direction'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
@@ -1634,6 +1695,7 @@ function renderDash(){
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
+        ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         <div class="pbg" style="flex-shrink:0">
           ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -1650,6 +1712,7 @@ function renderDash(){
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
+          ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <div class="pbg" style="flex-shrink:0">
             ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -1735,10 +1798,10 @@ function addWidget(){
 function renderMatrix(){
   const fx=syms.filter(s=>FX.includes(s.id));
   let h=`<thead><tr><th style="text-align:left">BASE</th>`;
-  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}</th>`;});
+  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${hasImportantEvt(q.id)?EVT_FLAG:''}</th>`;});
   h+=`</tr></thead><tbody>`;
   fx.forEach(base=>{
-    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}</td>`;
+    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${hasImportantEvt(base.id)?EVT_FLAG:''}</td>`;
     fx.forEach(q=>{
       if(base.id===q.id){h+=`<td class="cna">—</td>`;return;}
       const pb=base.bias==='bull'&&q.bias==='bear'?'bull':base.bias==='bear'&&q.bias==='bull'?'bear':'neu';
@@ -1748,7 +1811,7 @@ function renderMatrix(){
   const others=syms.filter(s=>!FX.includes(s.id));
   document.getElementById('assetCards').innerHTML=others.length?
     `<div style="font-size:8px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:11px;font-weight:700;color:var(--t0)">${s.name}</div><div style="font-size:9px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
+    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:11px;font-weight:700;color:var(--t0)">${s.name} ${hasImportantEvt(s.id)?EVT_FLAG:''}</div><div style="font-size:9px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
 
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
