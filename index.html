@@ -6,13 +6,13 @@
 <title>FX Analyst Pro</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#07090f;color:#b8cce0;min-height:100vh;overflow-x:hidden}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#1c2538;border-radius:4px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
 :root{
-  --bg0:#07090f;--bg1:#0b0f1c;--bg2:#0f1525;--bg3:#13192e;--bg4:#182035;--bg5:#1e2840;
-  --bd:#1a2238;--bd2:#243050;
-  --t0:#e8f2ff;--t1:#b8cce0;--t2:#6a8099;--t3:#3a5060;
-  --green:#00d4aa;--red:#ff4c5e;--amber:#ffa030;--star:#f5c842;--blue:#4a9eff;--purple:#a78bfa;
+  --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;
+  --bd:#212a39;--bd2:#303c52;
+  --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#4f6678;
+  --green:#3ecfb8;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
@@ -64,10 +64,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
 .ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s}
-.ri:hover{background:var(--bg3)}.ri.imp{background:#181200;border-left-color:var(--star)!important}
+.ri:hover{background:var(--bg3)}.ri.imp{background:#211c10;border-left-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:11px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
-.rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d4b870}
+.rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
 .rb-g{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
 .rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s;line-height:1.4}
 .rb.bb{border-color:var(--green);background:var(--green)15;color:var(--green)}
@@ -143,7 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ind-body{padding:6px 8px}
 /* subpoints */
 .sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg5);border-radius:var(--rss);border-left:2px solid var(--spc)}
-.sp:hover{background:#1f2d45}
+.sp:hover{background:#2c3a52}
 .sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
 .sp-txt:focus{color:var(--t0)}
 .sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:8px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}
@@ -191,8 +191,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .mtbl tr:last-child td{border-bottom:none}
 .mtbl th{background:var(--bg2);color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600;font-size:8px;letter-spacing:.5px}
 .mtbl .bn{text-align:left;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:var(--bg2)}
-.cb{background:#00d4aa0c;color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cr{background:#ff4c5e0c;color:var(--red);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cb{background:#3ecfb80c;color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cr{background:#ef6b780c;color:var(--red);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cn{color:var(--t3)}.cna{color:var(--bd);background:var(--bg0)}
 .mtbl tr:hover td:not(.cna){background:var(--bg3)!important}
 .ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;margin-top:10px}
@@ -392,7 +392,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <script>
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
-const BC={bull:'#00d4aa',bear:'#ff4c5e',neu:'#ffa030'};
+const BC={bull:'#3ecfb8',bear:'#ef6b78',neu:'#f4ad5c'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 const SK='fxpro_v1';
@@ -423,7 +423,7 @@ const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&
 function ar(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a[i]];}
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
-function bRC(b){return b==='bull'?'#00d4aa20':b==='bear'?'#ff4c5e20':'#ffa03020';}
+function bRC(b){return b==='bull'?'#3ecfb820':b==='bear'?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
@@ -804,7 +804,7 @@ function renderFL(arr,key){
   if(!arr||!arr.length)return'';
   return arr.map((r,i)=>{
     const b=r.bias||'neu',imp=r.imp||false,txt=r.text||r||'';
-    const bco=bCol(b),rco=imp?'#f5c84240':bRC(b);
+    const bco=bCol(b),rco=imp?'#e8c66840':bRC(b);
     return`<div class="ri${imp?' imp':''}" style="--rc:${rco}">
       <div class="rdot" style="background:${imp?'var(--star)':bco}"></div>
       <textarea class="rtxt" rows="1" oninput="ar(this);editGenR('${key}',${i},this.value)" onblur="save()">${escH(txt)}</textarea>
@@ -929,7 +929,7 @@ function renderNoteRub(rub,ri,total){
     </div>
     <div class="rub-body">
       ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#f5c84240':bRC(item.bias||'neu')}">
+        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':bRC(item.bias||'neu')}">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
           <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value" onblur="save()">${escH(item.text||'')}</textarea>
           <div class="rb-g">${['bull','neu','bear'].map(b=>`<button class="rb${(item.bias||'neu')===b?' '+bClass(b):''}" onclick="setNoteRubItemBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
@@ -1235,7 +1235,7 @@ function renderNCs(){
       </div>
       <div class="nc-body">
         ${(cat.items||[]).map((item,ii)=>`
-          <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#f5c84240':'#1c2a4020'}">
+          <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':'#26344a20'}">
             <div class="rdot" style="background:${item.imp?'var(--star)':'var(--blue)'}"></div>
             <textarea class="rtxt" rows="1" oninput="ar(this);noteCats[${ci}].items[${ii}].text=this.value" onblur="save()">${escH(item.text||'')}</textarea>
             <button class="istar${item.imp?' on':''}" onclick="togNCI(${ci},${ii})">⭐</button>
@@ -1245,7 +1245,7 @@ function renderNCs(){
           </div>`).join('')}
         <div class="add-row" style="margin-top:4px">
           <input class="ai" id="ni-${ci}" placeholder="+ Add note..." onkeydown="if(event.key==='Enter'){addNCI(${ci});event.preventDefault()}">
-          <button class="add-btn" style="background:#4a9eff15;border-color:#4a9eff44;color:var(--blue);border:1px solid" onclick="addNCI(${ci})">＋</button>
+          <button class="add-btn" style="background:#5fa8ed15;border-color:#5fa8ed44;color:var(--blue);border:1px solid" onclick="addNCI(${ci})">＋</button>
         </div>
       </div>
     </div>`).join('');
