@@ -396,7 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: ORANGE (Summary-Feld waechst automatisch mit dem Text)</div>
+<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: GRUEN (Indikator-Listen je Symbol unabhaengig, Loeschen wirkt nicht auf USD/BTC/etc.)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1298,23 +1298,20 @@ function getRub(ri){const c=getSym();return c&&c.rubrics?c.rubrics[ri]:null;}
 function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii]:null;}
 // Hält die Makro-Rubriken (Zinsen, Inflation, Arbeitsmarkt, Geopolitik,
 // Makro & Risikoumfeld) zwischen USD und allen USD-getriebenen Assets
-// (Gold, Silber, Öl, BTC, Indizes) synchron, da sie dieselbe globale
-// Makro-Lage beschreiben. Asset-spezifische Info-Texte bleiben unberührt.
-// Bias (Rubrik- und Indikator-Ebene) ist je Symbol unabhängig und wird
-// NICHT mit synchronisiert.
+// (Gold, Silber, Öl, BTC, Indizes) bei der SUMMARY synchron, da sie
+// dieselbe globale Makro-Lage beschreiben. Bias (Rubrik- und
+// Indikator-Ebene) sowie die Indikator-Listen selbst (Hinzufügen/
+// Löschen/Umsortieren/Umbenennen) sind je Symbol unabhängig und werden
+// NICHT synchronisiert.
 function syncMacroRub(ri){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
   if(!cur||!src||!MACRO_SYNC_IDS.includes(cur.id)||!MACRO_SYNC_RUBS.includes(src.name))return;
-  const clone=JSON.parse(JSON.stringify({imp:src.imp,summary:src.summary,indicators:src.indicators||[]}));
+  const clone={imp:src.imp,summary:src.summary};
   MACRO_SYNC_IDS.forEach(id=>{
     if(id===cur.id)return;
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
     r.imp=clone.imp;r.summary=clone.summary;
-    const oldBiases=(r.indicators||[]).map(ind=>ind.bias);
-    r.indicators=JSON.parse(JSON.stringify(clone.indicators)).map((ind,i)=>{
-      ind.bias=oldBiases[i]||'neu';return ind;
-    });
   });
 }
 function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderDetail();}
