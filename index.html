@@ -297,6 +297,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <button class="btn" onclick="exportData()">⬇ Export</button>
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
+    <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:var(--blue)44;color:var(--blue)">☁ Sync</button>
   </div>
 </div>
 
@@ -428,6 +429,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <h3 id="mInfoTitle">ℹ️ Info</h3>
     <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Erklärung eingeben..."></textarea>
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Schließen</button><button class="btn g" onclick="saveInfoM()">Speichern</button></div>
+  </div>
+</div>
+<!-- MODAL: Cloud Sync -->
+<div class="ov" id="mCloud" style="display:none">
+  <div class="modal">
+    <h3>☁ Cloud-Synchronisierung</h3>
+    <div style="font-size:10px;color:var(--t2);line-height:1.6;margin-bottom:10px">Verbinde ein kostenloses <a href="https://supabase.com" target="_blank" style="color:var(--blue)">Supabase</a>-Projekt, um deine Daten automatisch zwischen all deinen Geräten (iPad, iPhone, PC) zu synchronisieren. Die Zugangsdaten werden nur lokal auf diesem Gerät gespeichert.</div>
+    <label class="dm-lbl">Project URL</label>
+    <input class="m-inp" id="cloudUrl" placeholder="https://xxxxx.supabase.co">
+    <label class="dm-lbl">Anon / Public API Key</label>
+    <input class="m-inp" id="cloudKey" placeholder="eyJhbGciOi...">
+    <label class="dm-lbl">Sync-ID (gleiche ID auf allen Geräten verwenden)</label>
+    <input class="m-inp" id="cloudSyncId" placeholder="z.B. mein-fx-tracker">
+    <div id="cloudStatus" style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
+    <div class="m-btns">
+      <button class="btn" onclick="closeM('mCloud')">Schließen</button>
+      <button class="btn" onclick="cloudPull(true)">⬇ Herunterladen</button>
+      <button class="btn" onclick="cloudPush(true)">⬆ Hochladen</button>
+      <button class="btn g" onclick="saveCloudCfg()">Speichern</button>
+    </div>
   </div>
 </div>
 
@@ -755,7 +776,12 @@ function loadState(){
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];
 }
 function save(){
-  try{localStorage.setItem(SK,snap());const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();}catch(e){}
+  try{
+    localStorage.setItem(SK,snap());
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
+  }catch(e){}
+  cloudAutoSync();
 }
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
@@ -770,6 +796,82 @@ function importData(input){
   r.readAsText(f);input.value='';
 }
 
+// ══ CLOUD SYNC (Supabase) ═══════════════════════════════════════════
+const CLOUD_CFG_KEY='fxpro_cloud_cfg';
+let _cloudPushTimer=null;
+function getCloudCfg(){
+  try{return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY))||null;}catch(e){return null;}
+}
+function cloudHeaders(cfg){
+  return{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key,'Content-Type':'application/json'};
+}
+function openCloudM(){
+  const cfg=getCloudCfg()||{};
+  document.getElementById('cloudUrl').value=cfg.url||'';
+  document.getElementById('cloudKey').value=cfg.key||'';
+  document.getElementById('cloudSyncId').value=cfg.syncId||'';
+  setCloudStatus(cfg.url?'Verbunden mit Sync-ID "'+(cfg.syncId||'')+'". Letzte lokale Änderung: '+(localStorage.getItem('fxpro_updated')?new Date(localStorage.getItem('fxpro_updated')).toLocaleString():'-'):'Noch nicht eingerichtet.');
+  openM('mCloud');
+}
+function setCloudStatus(txt){
+  const el=document.getElementById('cloudStatus');if(el)el.textContent=txt;
+}
+function saveCloudCfg(){
+  const url=document.getElementById('cloudUrl').value.trim().replace(/\/+$/,'');
+  const key=document.getElementById('cloudKey').value.trim();
+  const syncId=document.getElementById('cloudSyncId').value.trim();
+  if(!url||!key||!syncId){alert('Bitte URL, API-Key und Sync-ID ausfüllen.');return;}
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({url,key,syncId}));
+  setCloudStatus('Gespeichert. Synchronisiere...');
+  cloudPull(true);
+}
+async function cloudPush(manual){
+  const cfg=getCloudCfg();if(!cfg)return;
+  try{
+    const body=JSON.stringify([{id:cfg.syncId,data:JSON.parse(snap()),updated_at:localStorage.getItem('fxpro_updated')||new Date().toISOString()}]);
+    const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
+      method:'POST',
+      headers:{...cloudHeaders(cfg),'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body,signal:AbortSignal.timeout(10000)
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    if(manual)setCloudStatus('✓ Hochgeladen: '+new Date().toLocaleString());
+  }catch(e){
+    if(manual)setCloudStatus('✗ Fehler beim Hochladen: '+e.message);
+  }
+}
+async function cloudPull(manual){
+  const cfg=getCloudCfg();if(!cfg){if(manual)setCloudStatus('Bitte zuerst speichern.');return;}
+  try{
+    const res=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(cfg.syncId)+'&select=data,updated_at',{
+      headers:cloudHeaders(cfg),signal:AbortSignal.timeout(10000)
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const rows=await res.json();
+    if(!rows.length){
+      if(manual){setCloudStatus('Keine Cloud-Daten gefunden – lade lokale Daten hoch...');await cloudPush(true);}
+      return;
+    }
+    const cloudUpdated=rows[0].updated_at;
+    const localUpdated=localStorage.getItem('fxpro_updated');
+    if(manual||!localUpdated||new Date(cloudUpdated)>new Date(localUpdated)){
+      pushU();applySnap(JSON.stringify(rows[0].data));
+      localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
+      rerender();updateStat();updUB();
+      if(manual)setCloudStatus('✓ Heruntergeladen: '+new Date(cloudUpdated).toLocaleString());
+    }else if(manual){
+      setCloudStatus('Lokale Daten sind aktueller. Lade hoch...');await cloudPush(true);
+    }
+  }catch(e){
+    if(manual)setCloudStatus('✗ Fehler beim Herunterladen: '+e.message);
+  }
+}
+function cloudAutoSync(){
+  if(!getCloudCfg())return;
+  clearTimeout(_cloudPushTimer);
+  _cloudPushTimer=setTimeout(()=>cloudPush(false),1500);
+}
+
 // ══ CURRENT STATE ══════════════════════════════════════════════════
 let selId='USD',curSub='general',curPage='dash';
 function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
@@ -779,7 +881,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -1527,6 +1629,7 @@ loadState();
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();
 autoFetchFF();
+cloudPull(false);
 </script>
 </body>
 </html>
