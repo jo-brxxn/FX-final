@@ -102,6 +102,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
 .rub-card:hover .rdel{opacity:.4}.rdel:hover{opacity:1!important;color:var(--red)}
 .rub-body{padding:8px 10px}
+/* ── INFO BUTTON ── */
+.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
+.rinfo:hover{opacity:1;background:var(--blue)15}
+/* ── CALENDAR WARNING ── */
+.cal-warn{background:var(--red)12;border:1px solid var(--red)44;border-radius:var(--rs);padding:6px 9px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:10px}
+.cal-warn b{color:var(--red);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
+.cal-warn span{color:var(--t1);flex:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg4);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -373,6 +380,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <div class="m-btns"><button class="btn" onclick="closeM('mDelSym')">Cancel</button><button class="btn r" onclick="confirmDelSym()">Remove</button></div>
   </div>
 </div>
+<!-- MODAL: Info -->
+<div class="ov" id="mInfo" style="display:none">
+  <div class="modal">
+    <h3 id="mInfoTitle">ℹ️ Info</h3>
+    <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Erklärung eingeben..."></textarea>
+    <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Schließen</button><button class="btn g" onclick="saveInfoM()">Speichern</button></div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -412,6 +427,23 @@ function bRC(b){return b==='bull'?'#00d4aa20':b==='bear'?'#ff4c5e20':'#ffa03020'
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
+// ── CALENDAR ↔ SYMBOL MATCHING ──
+const CAL_ALIASES={
+  GOLD:['GOLD','XAU','XAUUSD'],
+  SILVER:['SILVER','XAG','XAGUSD'],
+  OIL:['OIL','WTI','CRUDE','USOIL','BRENT'],
+  BTC:['BTC','BITCOIN','BTCUSD'],
+  SP500:['SP500','SPX','S&P','S&P500','S&P 500','US500'],
+  NAS:['NAS','NASDAQ','NDX','US100','NAS100'],
+};
+function evtMatchesSym(ev,id){
+  if(!ev.currencies)return false;
+  const tokens=ev.currencies.toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean);
+  const names=CAL_ALIASES[id]||[id];
+  return tokens.some(t=>names.some(n=>n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
+}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
@@ -422,6 +454,49 @@ function mkRubs(){return[
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
 function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));}
+
+// ══ ZENTRALBANKEN / ASSET-KLASSEN ════════════════════════════════════
+const CB_MAP={USD:'die Fed (Federal Reserve)',EUR:'die EZB (Europäische Zentralbank)',GBP:'die BoE (Bank of England)',CHF:'die SNB (Schweizerische Nationalbank)',JPY:'die BoJ (Bank of Japan)',CAD:'die BoC (Bank of Canada)',AUD:'die RBA (Reserve Bank of Australia)',NZD:'die RBNZ (Reserve Bank of New Zealand)'};
+function cbName(id){return CB_MAP[id]||'die Fed (Federal Reserve)';}
+function cbDat(id){return cbName(id).replace(/^die /,'der ');}
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index'};
+
+// ── Info-Texte für die 5 Standard-Rubriken (Specific-Tab) ──
+function enrichRubrics(id,rubrics,name){
+  const cb=cbName(id);
+  const cls=ASSET_CLASS[id];
+  const isFx=cls==='fx';
+  const rateImpact=cls==='metal'?`Steigt die Realrendite (Fed restriktiv), wird ${name} unattraktiver, da es keine laufende Verzinsung bietet – Gegenwind. Eine dovishe Fed senkt Realrenditen und stützt ${name}.`
+    :cls==='index'?`Höhere bzw. länger hohe Zinsen erhöhen den Diskontsatz künftiger Gewinne und belasten v.a. wachstumsstarke Titel in ${name}. Eine dovishe Fed (Zinssenkungsfantasie) wirkt unterstützend.`
+    :cls==='energy'?`Bei ${name} wirken Zinsentscheidungen primär indirekt über den USD: hohe Zinsen stärken den USD, wodurch Öl für Käufer in anderen Währungen teurer wird (Nachfragedämpfer) – zusätzlich beeinflussen Zinsen die globalen Konjunkturerwartungen.`
+    :`Höhere Zinsen erhöhen die Finanzierungskosten für gehebelte Positionen und können Liquidität aus ${name} abziehen; eine dovishe Fed (mehr globale Liquidität) wirkt meist unterstützend.`;
+  const txt={
+    'Interest Rates': isFx
+      ? `Der Leitzins und vor allem die vom Markt eingepreisten Zinserwartungen von ${cbDat(id)} sind der wichtigste fundamentale Treiber für ${name}. Entscheidend ist nicht das aktuelle Niveau, sondern der erwartete künftige Zinspfad (OIS/Swaps). Hawkishe Signale (Zinsen bleiben länger hoch / weitere Erhöhungen) stützen ${name}, dovishe Signale (Senkungen näher/größer) belasten. Forward Guidance & Reden von Notenbankern bewegen oft stärker als die Entscheidung selbst. 2J-Renditen sind ein guter Frühindikator für Zinserwartungen, 10J-Renditen für das langfristige Wachstums-/Inflationsbild.`
+      : `${name} wird in USD gehandelt und reagiert daher primär auf die Geldpolitik der Fed (Federal Reserve), die über die globalen USD-Finanzierungskosten und Realzinsen entscheidet. ${rateImpact}`,
+    'Inflation': isFx
+      ? `Inflationsdaten (CPI, Core CPI, PCE, Lohnwachstum) sind der zentrale Input für die Zinsentscheidungen von ${cbDat(id)}. Höher als erwartete Inflation erhöht die Wahrscheinlichkeit für (weitere) Zinserhöhungen bzw. verzögerte Senkungen → stützt tendenziell ${name}. Schwächere Inflation öffnet Raum für Lockerung → belastet ${name}. Die Kernrate (Core, ohne Energie/Nahrung) und Dienstleistungsinflation gelten als hartnäckiger und werden stärker beachtet als Headline-Werte.`
+      : `US-Inflationsdaten (CPI/PCE) sind weltweit marktbewegend, da sie über die Fed-Politik direkt Realzinsen, USD-Stärke und globale Liquidität steuern – allesamt zentrale Treiber für ${name}. Heißere Inflation → höhere Realzins-Erwartungen ${cls==='metal'?`→ meist negativ für ${name} (höhere Opportunitätskosten ohne Zinszahlung)`:cls==='index'?`→ höhere Diskontierung künftiger Gewinne → meist negativ für ${name}`:`→ engere globale Liquidität → meist negativ für ${name}`}. Schwächere Inflation wirkt i.d.R. umgekehrt unterstützend.`,
+    'Labour Market': isFx
+      ? `Der Arbeitsmarkt ist für ${cb} ein Schlüsselindikator für Konjunktur- und Inflationsdruck (Lohn-Preis-Spirale). Ein robuster Arbeitsmarkt mit steigenden Löhnen erhöht den Inflationsdruck und stützt damit tendenziell ${name} (höhere Zinserwartungen). Eine sich abschwächende Beschäftigung (steigende Arbeitslosigkeit, fallende Lohnzuwächse) signalisiert Abkühlung und nährt Zinssenkungsfantasien → belastet ${name}.`
+      : `Der US-Arbeitsmarktbericht (NFP, Arbeitslosenquote, Stundenlöhne) zählt zu den marktbewegendsten Terminen überhaupt, da er die Zinserwartungen für die Fed steuert und damit USD-Liquidität und Risikoappetit beeinflusst – beides direkt relevant für ${name}. Sehr starke Daten können kurzfristig belasten ("Fed bleibt restriktiv"), während eine spürbare Abkühlung meist Lockerungshoffnung und damit Rückenwind für ${name} bedeutet.`,
+    'COT Data': cls==='crypto'
+      ? `Klassische CFTC-COT-Daten existieren für CME-Bitcoin-Futures, sind wegen des großen Spot-/Perp-Marktes aber weniger aussagekräftig als bei FX. Aussagekräftiger: Funding Rates auf Perpetual-Futures (stark positiv = überhitzte Long-Positionierung, Korrekturrisiko; negativ = übertriebener Pessimismus, Erholungspotenzial) sowie Open Interest und Liquidationsdaten als Sentiment-Proxy für ${name}.`
+      : cls==='index'
+      ? `Bei ${name} dienen E-Mini-Futures-COT-Daten, die Put/Call-Ratio und der VIX (Volatilitätsindex) als Positionierungs- und Sentiment-Indikatoren. Extreme Netto-Long-Positionierung oder sehr niedrige Volatilität (Sorglosigkeit) signalisieren erhöhtes Korrekturrisiko; extreme Pessimismus-Werte (hohe Put/Call-Ratio, VIX-Spitzen) markieren oft Böden.`
+      : `Die CFTC Commitment-of-Traders (COT) Daten zeigen die Positionierung von Großspekulanten (Asset Managern, Hedgefonds) in ${name}-Futures. Extrem einseitige Positionierung (Crowded Trade) erhöht das Risiko scharfer Gegenbewegungen bei Trendwechseln. Eine wachsende Netto-Long-Position signalisiert bullishes Sentiment, eine wachsende Netto-Short-Position bearishes – die Wochenveränderung (WoW) ist oft ein Frühindikator für Stimmungswechsel.`,
+    'Geopolitics': cls==='metal'
+      ? `Geopolitische Krisen (Kriege, Sanktionen, Handelskonflikte) treiben typischerweise die Nachfrage nach ${name} als sicherem Hafen und Wertspeicher nach oben. Zusätzlich kaufen Notenbanken (insb. Schwellenländer) im Rahmen von Reservediversifizierung strukturell ${name} – ein Trend, der sich bei geopolitischer Unsicherheit verstärkt.`
+      : cls==='energy'
+      ? `Geopolitische Risiken wirken bei ${name} primär über die Angebotsseite: Konflikte oder Sanktionen in wichtigen Förderregionen (Naher Osten, Russland, OPEC+-Staaten) können Lieferungen unterbrechen und den Preis trotz schwacher Nachfrage nach oben treiben (Angebotsschock). Entspannung wirkt entsprechend preisdämpfend.`
+      : cls==='crypto'
+      ? `Bei geopolitischer Eskalation reagiert ${name} uneinheitlich: kurzfristig oft Risk-off-Verkäufe (Korrelation zu Tech-Aktien), während langfristig eine "digitale Fluchtwährung"-Erzählung (z.B. bei Kapitalverkehrskontrollen, Sanktionen, Währungsverfall in Krisenländern) unterstützend wirken kann.`
+      : cls==='index'
+      ? `Geopolitische Eskalationen belasten ${name} meist über steigende Risikoprämien, höhere Energiepreise (Kosteninflation) und sinkende Risikobereitschaft (Risk-off). Eine Entspannung wirkt unterstützend. Besonders relevant: Konflikte mit Auswirkung auf Energiepreise und globale Lieferketten.`
+      : `Geopolitische Risiken (Konflikte, Sanktionen, Wahlen, Handelskonflikte) wirken auf ${name} über zwei Kanäle: (1) Safe-Haven-Flows – in Krisenzeiten fließt Kapital in als sicher geltende Währungen, (2) direkte wirtschaftliche Betroffenheit (z.B. Energieabhängigkeit, Handelsbeziehungen, geografische Nähe). Bewerte konkret, wie stark das jeweilige Ereignis ${name} direkt betrifft.`,
+  };
+  rubrics.forEach(r=>{if(txt[r.name]!==undefined&&!r.info)r.info=txt[r.name];});
+}
 
 const DEF=[
   {id:'USD',name:'USD',full:'US Dollar',bias:'bull',
@@ -482,6 +557,112 @@ const DEF=[
     rubrics:mkRubs(),noteRubs:[],notes:''},
 ];
 
+// ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
+const MACRO_NAME='Makro & Risikoumfeld';
+const MACRO_RUB_INFO={
+  fx:name=>`Diese Rubrik bündelt, wie ${name} auf das globale Makro- und Risikoumfeld reagiert – unabhängig von währungsspezifischen Fundamentaldaten. Wichtig für kurzfristiges Trading, da Risk-on-/Risk-off-Stimmungswechsel oft schneller wirken als fundamentale News.`,
+  crypto:name=>`Diese Rubrik beschreibt, wie ${name} auf globale Liquiditäts- und Risikostimmung reagiert. Da ${name} (noch) keine etablierten eigenen Fundamentaldaten wie Zinsen/Inflation hat, ist das Makroumfeld – insbesondere die Fed-Politik und der Risikoappetit – der dominante Treiber.`,
+  metal:name=>`Diese Rubrik beschreibt, wie ${name} auf globale Risikostimmung, Realzinsen und Krisendynamik reagiert – die wichtigsten kurzfristigen Treiber neben den strukturellen Faktoren.`,
+  energy:name=>`Diese Rubrik beschreibt, wie ${name} auf globale Risikostimmung und Konjunkturerwartungen reagiert – neben Angebot/Nachfrage der zweite zentrale Preistreiber.`,
+  index:name=>`Diese Rubrik beschreibt, wie ${name} auf das globale Liquiditäts- und Risikoumfeld reagiert – der dominante kurzfristige Treiber für Aktienindizes neben Einzelfundamentaldaten.`,
+};
+const MACRO_DATA={
+  USD:{extra:'Globales Zinsdifferenzial',
+    safe:{info:'USD ist DIE globale Reservewährung und der primäre sichere Hafen. In schweren Krisen (Finanzkrisen, globale Rezessionsängste) fließt Kapital strukturell in USD und US-Treasuries – unabhängig von der Fed-Politik.'},
+    ron:{info:'In Risk-on-Phasen wird USD häufig als Funding-Currency genutzt bzw. verkauft, da Kapital in höher rentierliche/risikoreichere Anlagen (Schwellenländer, Aktien, Rohstoffwährungen) fließt – tendenziell USD-negativ.'},
+    roff:{info:'In Risk-off-Phasen ist USD einer der größten Profiteure: Safe-Haven-Flows, Repatriierung von US-Kapital und Liquiditätsbedarf in USD (Margin Calls) treiben die Nachfrage – meist USD-positiv.'},
+    extraInfo:'Das Zinsdifferenzial zwischen den US-Leitzinsen/-Renditen und denen anderer G10-Länder bestimmt Carry-Trade-Flüsse. Ein wachsendes Zinsplus der USA gegenüber z.B. EUR oder JPY zieht Kapital an und stützt USD; ein schrumpfendes Differenzial (andere Notenbanken holen auf oder die Fed senkt schneller) wirkt USD-negativ.'},
+  EUR:{extra:'Energiepreis-Schock-Risiko',
+    safe:{info:'EUR gilt nicht als sicherer Hafen. In globalen Krisen wird EUR eher verkauft, insbesondere wenn die Krise die Eurozone direkt betrifft (Energie, Fragmentierung) oder Kapital in USD/CHF/JPY flüchtet.'},
+    ron:{info:'In Risk-on-Phasen profitiert EUR moderat, da es teils als Funding-Currency für Carry Trades dient (historisch niedrige EZB-Zinsen) und globales Wachstum die exportorientierte Eurozone stützt.'},
+    roff:{info:'In Risk-off-Phasen leidet EUR häufig doppelt: allgemeine Safe-Haven-Flucht aus EUR in USD/CHF sowie spezifische Sorgen um Fragmentierung (BTP-Bund-Spread) und Energieversorgung.'},
+    extraInfo:'Die Eurozone importiert einen Großteil ihrer Energie. Ein plötzlicher Anstieg der Gas-/Ölpreise (z.B. durch Lieferunterbrechungen aus Russland oder dem Nahen Osten) verschlechtert die Terms of Trade massiv und ist strukturell EUR-negativ – besonders relevant im Winterhalbjahr.'},
+  GBP:{extra:'Leistungsbilanzdefizit / Kapitalzuflussbedarf',
+    safe:{info:'GBP gilt nicht als sicherer Hafen. London ist zwar ein globaler Finanzplatz, aber in Krisen wird GBP meist verkauft – besonders bei Sorgen um die britische Fiskal- oder Außenhandelslage.'},
+    ron:{info:'Als High-Beta-Währung profitiert GBP in Risk-on-Phasen meist überdurchschnittlich, da Kapital in britische Assets (Aktien, Anleihen) fließt und der globale Risikoappetit steigt.'},
+    roff:{info:'GBP gehört zu den anfälligsten G10-Währungen in Risk-off-Phasen – das chronische Leistungsbilanzdefizit macht GBP abhängig von kontinuierlichen Kapitalzuflüssen, die in Krisen schnell versiegen ("Kindness of Strangers").'},
+    extraInfo:'Großbritannien weist strukturell ein Leistungsbilanzdefizit von ca. 3-4% des BIP auf und ist daher dauerhaft auf ausländisches Kapital angewiesen. Schwindet das Vertrauen (z.B. Fiskalsorgen wie 2022), kann GBP überproportional und schnell abwerten.'},
+  CHF:{extra:'SNB-Interventionsrisiko',
+    safe:{info:'CHF ist der stärkste sichere Hafen im G10-Raum. Politische Neutralität, Leistungsbilanzüberschuss und die Reputation der Schweiz als stabiler Rechtsstaat führen in jeder globalen Krise zu Kapitalzuflüssen in CHF.'},
+    ron:{info:'In Risk-on-Phasen tendiert CHF zur Schwäche, da Safe-Haven-Flows zurückgehen und Kapital in höher rentierliche Währungen/Anlagen fließt.'},
+    roff:{info:'In Risk-off-Phasen gehört CHF zu den stärksten Gewinnern – oft sogar stärker als USD, da CHF zusätzlich von der politischen Neutralität der Schweiz profitiert.'},
+    extraInfo:'Wird CHF in Krisenzeiten "zu stark", interveniert die SNB historisch (Devisenkäufe, früher auch Mindestkurs/Negativzinsen), um die exportabhängige Schweizer Wirtschaft zu schützen. Solche Interventionen oder auch nur verbale Signale können abrupte CHF-Bewegungen auslösen.'},
+  JPY:{extra:'Carry-Trade-Dynamik (Zinsdifferenzial JPY vs. USD)',
+    safe:{info:'JPY gilt traditionell als sicherer Hafen (Japan ist Netto-Gläubiger, Kapitalrepatriierung in Krisen). Die ultralockere BoJ-Politik schwächt diesen Effekt jedoch ab – JPY ist heute ein "bedingter" Safe Haven.'},
+    ron:{info:'In Risk-on-Phasen ist JPY meist die schwächste G10-Währung: Anleger leihen sich günstig in JPY (niedrige BoJ-Zinsen) und investieren in höher rentierliche Anlagen (Carry Trade) – das drückt JPY systematisch.'},
+    roff:{info:'In Risk-off-Phasen kann JPY stark aufwerten, wenn Carry Trades aufgelöst werden (Rückkauf von JPY zur Kreditrückzahlung) – dieser Effekt kann sehr abrupt und heftig ausfallen ("Carry Unwind").'},
+    extraInfo:'Das Zinsdifferenzial zwischen JPY (nahe 0%) und USD/anderen G10-Währungen treibt den Carry Trade: je größer das Differenzial, desto attraktiver, JPY zu shorten. Jede (auch nur angedeutete) BoJ-Zinserhöhung oder ein Rückgang der US-Renditen verkleinert dieses Differenzial und kann eine Welle von Carry-Trade-Auflösungen (= JPY-Rally) auslösen.'},
+  CAD:{extra:'Ölpreis-Korrelation (WTI)',
+    safe:{info:'CAD gilt nicht als sicherer Hafen. In globalen Krisen wird CAD meist verkauft, da es als Rohstoff- und Risikowährung mit hoher Korrelation zur US-Konjunktur wahrgenommen wird.'},
+    ron:{info:'In Risk-on-Phasen profitiert CAD: steigende Rohstoffpreise (insbesondere Öl), eine starke US-Konjunktur (Hauptabnehmer kanadischer Exporte) und allgemeine Risikofreude stützen CAD.'},
+    roff:{info:'In Risk-off-Phasen leidet CAD doppelt: fallende Ölpreise (Wachstumssorgen) und Kapitalabflüsse aus Rohstoffwährungen in Safe Havens.'},
+    extraInfo:'Kanada ist ein bedeutender Netto-Ölexporteur. Steigende WTI-Preise verbessern die Terms of Trade und die Handelsbilanz und wirken strukturell CAD-positiv (CAD reagiert häufig invers zu USD/CAD bei steigendem WTI, also CAD stärker). Ein Ölpreisverfall wirkt entsprechend belastend.'},
+  AUD:{extra:'China-Konjunktur & Rohstoffnachfrage (Eisenerz)',
+    safe:{info:'AUD gilt als das Gegenteil eines sicheren Hafens – die "reinste" Risk-on-Währung im G10-Raum. In Krisen wird AUD typischerweise zuerst und am stärksten verkauft.'},
+    ron:{info:'AUD profitiert stark von Risk-on-Phasen: hohe Korrelation zu globalen Aktienmärkten, Rohstoffpreisen und chinesischem Wachstum – steigt der globale Risikoappetit, steigt meist auch AUD.'},
+    roff:{info:'AUD fällt in Risk-off-Phasen meist als erste und am stärksten unter den G10-Währungen ("high-beta to global growth") – ein klassischer Frühindikator für globale Risikostimmung.'},
+    extraInfo:'China ist Australiens mit Abstand wichtigster Handelspartner (~35% der Exporte, v.a. Eisenerz, Kohle, LNG). AUD korreliert daher eng mit chinesischen Konjunkturdaten (PMI, Kreditwachstum) und Eisenerzpreisen (~0.88 Korrelation). Schwache China-Daten oder fallende Eisenerzpreise belasten AUD strukturell.'},
+  NZD:{extra:'Globale Milchpreise (GDT) & China-Nachfrage',
+    safe:{info:'NZD gilt nicht als sicherer Hafen und ist tendenziell noch volatiler/illiquider als AUD – in Krisen oft die am schnellsten und stärksten fallende G10-Währung.'},
+    ron:{info:'NZD profitiert von globalem Wachstumsoptimismus und steigender Risikofreude, ähnlich wie AUD, da Neuseeland stark von Agrarexporten und globaler Nachfrage abhängt.'},
+    roff:{info:'In Risk-off-Phasen fällt NZD meist sehr schnell – die geringere Liquidität im Vergleich zu AUD verstärkt Bewegungen in beide Richtungen, besonders nach unten.'},
+    extraInfo:'Die zweiwöchentlichen Global Dairy Trade (GDT) Auktionen sind ein direkter NZD-Treiber, da Milchprodukte einen Großteil der neuseeländischen Exporte ausmachen. Zusätzlich hängt NZD wie AUD stark an der chinesischen Nachfrage (~25% der Agrarexporte gehen nach China).'},
+  BTC:{extra:'Globale USD-Liquidität & Fed-Bilanz',
+    safe:{info:'Die "digitales Gold"-Erzählung (BTC als Inflations-/Schuldenkrisen-Hedge) ist umstritten: in akuten Krisen verhält sich BTC bisher meist wie ein Risikoasset (Korrelation zu Nasdaq) und nicht wie ein sicherer Hafen. Längerfristig könnte sich das mit institutioneller Adoption ändern.'},
+    ron:{info:'BTC ist ein High-Beta-Risikoasset: in Risk-on-Phasen mit steigender globaler Liquidität und Risikoappetit gehört BTC oft zu den stärksten Gewinnern – überproportional zu Aktien.'},
+    roff:{info:'In Risk-off-Phasen korreliert BTC meist stark mit dem Nasdaq und fällt überproportional – Liquidationskaskaden bei gehebelten Positionen verstärken Abwärtsbewegungen zusätzlich.'},
+    extraInfo:'BTC reagiert sehr sensitiv auf die globale USD-Liquidität: expandiert die Fed-Bilanz (QE) bzw. sinken die Realzinsen, steigt die Risikobereitschaft für Assets ohne Cashflow wie BTC. Eine restriktive Fed (QT, hohe Realzinsen) entzieht dem Markt Liquidität und belastet BTC überproportional.'},
+  GOLD:{extra:'Realzinsen (US-TIPS) & Notenbank-Goldkäufe',
+    safe:{info:'Gold ist DER klassische sichere Hafen schlechthin – bei geopolitischen Krisen, Finanzmarktstress oder Vertrauensverlust in Fiat-Währungen fließt Kapital strukturell in Gold.'},
+    ron:{info:'In starken Risk-on-Phasen kann Gold kurzfristig underperformen, da Kapital in renditestärkere Risikoassets rotiert – der Effekt wird aber oft durch strukturelle Notenbank-Käufe gedämpft.'},
+    roff:{info:'In Risk-off-Phasen ist Gold einer der Hauptprofiteure: Safe-Haven-Nachfrage steigt, und sinkende Zinserwartungen (Flucht in Anleihen) drücken die Realzinsen, was Gold zusätzlich stützt.'},
+    extraInfo:'Die Realrendite von US-Staatsanleihen (nominale Rendite minus Inflationserwartung, sichtbar an TIPS-Renditen) ist der wichtigste Preistreiber für Gold: sinkende Realzinsen senken die Opportunitätskosten des zinslosen Goldhaltens (Gold steigt), steigende Realzinsen wirken umgekehrt. Zusätzlich kaufen Schwellenland-Notenbanken (China, Indien etc.) strukturell Gold zur Reservediversifizierung – ein Trend, der die Nachfrage strukturell stützt.'},
+  SILVER:{extra:'Industrielle Nachfrage & globaler Konjunkturzyklus (PMI)',
+    safe:{info:'Silber gilt als "kleiner Bruder" von Gold und profitiert teilweise von Safe-Haven-Flows, ist aber wegen des hohen Industrieanteils ein deutlich unreinerer sicherer Hafen als Gold.'},
+    ron:{info:'In Risk-on-Phasen mit guter Konjunktur profitiert Silber stark – sowohl von steigenden Edelmetallpreisen als auch von höherer industrieller Nachfrage (Solar, Elektronik, E-Autos).'},
+    roff:{info:'In Risk-off-Phasen ist die Wirkung gemischt: Safe-Haven-Bid (positiv) trifft auf Sorgen um industrielle Nachfrage in einer Rezession (negativ) – Silber ist daher volatiler als Gold und kann in beide Richtungen ausschlagen.'},
+    extraInfo:'Anders als Gold wird Silber zu einem erheblichen Teil industriell verbraucht (Solarpanels, Elektronik, E-Mobilität). Globale PMI-Daten (insbesondere China/USA, verarbeitendes Gewerbe) sind daher ein wichtiger Frühindikator: steigende PMIs signalisieren steigende Industrienachfrage und sind tendenziell Silber-positiv, fallende PMIs entsprechend negativ.'},
+  OIL:{extra:'OPEC+ Angebotspolitik & globale Lagerbestände',
+    safe:{info:'Öl gilt nicht als sicherer Hafen im klassischen Sinn. Bei geopolitischen Krisen mit Bezug zu Förderregionen kann der Preis dennoch durch Angebotssorgen steigen – das ist aber ein Angebots-, kein Safe-Haven-Effekt.'},
+    ron:{info:'In Risk-on-Phasen mit starkem globalem Wachstum steigt die erwartete Ölnachfrage (Industrie, Transport) – das wirkt unterstützend für den Preis.'},
+    roff:{info:'In Risk-off-Phasen dominieren Nachfragesorgen (drohende Rezession senkt Energiebedarf) – der Ölpreis fällt meist deutlich, außer ein gleichzeitiger Angebotsschock überlagert den Effekt.'},
+    extraInfo:'OPEC+ steuert über Förderquoten aktiv das globale Angebot und damit einen Preiskorridor. Ankündigungen von Förderkürzungen (angebotsverknappend, preisstützend) oder -ausweitungen (preisdämpfend) sowie wöchentliche US-Lagerbestandsdaten (EIA/API) gehören zu den unmittelbarsten Preistreibern.'},
+  SP500:{extra:'Fed-Liquidität & Gewinnerwartungen (Earnings)',
+    safe:{info:'Aktienindizes gelten nicht als sicherer Hafen – im Gegenteil, sie sind das klassische Risikoasset, das in Krisen verkauft wird.'},
+    ron:{info:'In Risk-on-Phasen ist der S&P 500 ein Hauptprofiteur: steigende Risikobereitschaft, niedrigere Volatilität und positive Liquiditätsbedingungen treiben Bewertungen nach oben.'},
+    roff:{info:'In Risk-off-Phasen fällt der S&P 500 typischerweise deutlich – steigende Volatilität (VIX), Gewinnwarnungen und eine Flucht in Anleihen/Cash belasten die Bewertungen.'},
+    extraInfo:'Zwei Treiber dominieren: (1) die Liquiditätsbedingungen der Fed (Bilanzgröße, Realzinsen – mehr Liquidität = höhere Bewertungen) und (2) die tatsächliche/erwartete Unternehmensgewinnentwicklung (Earnings-Season, Gewinnmargen, Guidance). Übersteigen die Bewertungen (P/E) das Gewinnwachstum deutlich, steigt das Korrekturrisiko bei restriktiverer Fed-Politik.'},
+  NAS:{extra:'Zinssensitivität (Duration) & KI-Capex-Zyklus',
+    safe:{info:'Wie der S&P 500 ist der Nasdaq 100 kein sicherer Hafen, sondern aufgrund des hohen Tech-/Wachstumsanteils sogar noch risikosensitiver – der am stärksten fallende große Index in Risk-off-Phasen.'},
+    ron:{info:'In Risk-on-Phasen outperformt der Nasdaq oft den breiteren Markt: niedrige Zinsen und hohe Risikofreude begünstigen besonders Wachstumswerte mit weit in der Zukunft liegenden Gewinnen.'},
+    roff:{info:'In Risk-off-Phasen fällt der Nasdaq meist überproportional zum S&P 500 – hohe Bewertungen und lange "Duration" der Gewinne machen ihn besonders zinssensitiv.'},
+    extraInfo:'Wachstumsaktien haben eine hohe "Duration" (ein Großteil der Gewinne liegt in ferner Zukunft) und reagieren daher überproportional auf Zinsänderungen: steigende Zinsen senken den Barwert dieser Gewinne stark (Nasdaq-negativ), fallende Zinsen wirken stark unterstützend. Zusätzlich treibt aktuell der KI-Investitionszyklus (Capex von Hyperscalern in Chips/Rechenzentren) Erwartungen und Kurse der größten Indexmitglieder.'},
+};
+function mkMacroRub(id,name){
+  const cls=ASSET_CLASS[id];
+  const m=MACRO_DATA[id]||{
+    extra:'Korrelation zu Risikoassets',
+    safe:{info:`Ob ${name} als sicherer Hafen gilt, hängt von der Marktphase ab. Beobachte, ob ${name} in Krisenzeiten eher gekauft (Safe-Haven-Charakter) oder verkauft wird (Risikoasset-Charakter).`},
+    ron:{info:`Prüfe, ob ${name} in Phasen steigender Risikofreude (Risk-on: steigende Aktienmärkte, sinkende Volatilität) tendenziell zulegt.`},
+    roff:{info:`Prüfe, ob ${name} in Phasen sinkender Risikofreude (Risk-off: fallende Aktienmärkte, steigender VIX) tendenziell verliert oder als Absicherung dient.`},
+    extraInfo:`Notiere hier den wichtigsten zusätzlichen Makro-Treiber für ${name} (z.B. branchen-, sektor- oder länderspezifische Faktoren).`
+  };
+  const infoFn=MACRO_RUB_INFO[cls]||MACRO_RUB_INFO.fx;
+  return{id:uid(),name:MACRO_NAME,bias:'neu',imp:false,summary:'',info:infoFn(name),
+    indicators:[
+      {id:uid(),name:'Sicherer Hafen (Safe Haven)',bias:'neu',imp:false,date:'',interval:'',points:[],info:m.safe.info},
+      {id:uid(),name:'Risk-On Korrelation',bias:'neu',imp:false,date:'',interval:'',points:[],info:m.ron.info},
+      {id:uid(),name:'Risk-Off Korrelation',bias:'neu',imp:false,date:'',interval:'',points:[],info:m.roff.info},
+      {id:uid(),name:m.extra,bias:'neu',imp:false,date:'',interval:'',points:[],info:m.extraInfo},
+    ]};
+}
+function addMacroRub(sym){
+  if(!sym.rubrics)sym.rubrics=[];
+  enrichRubrics(sym.id,sym.rubrics,sym.full||sym.name);
+  if(!sym.rubrics.find(r=>r.name===MACRO_NAME))sym.rubrics.push(mkMacroRub(sym.id,sym.full||sym.name));
+}
+DEF.forEach(addMacroRub);
+
 function mkPairCats(){return[{id:uid(),name:'Watchlist',open:true},{id:uid(),name:'Active Trades',open:true},{id:uid(),name:'Low Priority',open:false}];}
 function mkNCs(){return[
   {id:uid(),name:'Macro Overview',items:[{id:uid(),text:'Global risk sentiment',imp:false},{id:uid(),text:'Fed rate path expectations',imp:false}]},
@@ -518,8 +699,10 @@ function loadState(){
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
       syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs()}:{...def};});
+      syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
+      syms.filter(s=>customIds.find(c=>c.id===s.id)).forEach(addMacroRub);
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
       noteCats=d.noteCats||mkNCs();
@@ -554,7 +737,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -603,7 +786,13 @@ function renderDetail(){
 
 // ── GENERAL TAB ──
 function renderGenTab(c){
-  return`<div style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
+  const today=todayStr();
+  const warns=calEvts.filter(ev=>ev.date>=today&&evtMatchesSym(ev,c.id)).sort((a,b)=>a.date.localeCompare(b.date));
+  const warnHtml=warns.map(ev=>{
+    const{day,mo}=fmtDate(ev.date);
+    return`<div class="cal-warn">⚠️<b>${day} ${mo}</b><span>${escH(ev.name)}${ev.expected?' — '+escH(ev.expected):''}</span></div>`;
+  }).join('');
+  return`${warnHtml}<div style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
   <div class="slbl"><span style="color:var(--green)">▲ BULLISH STRUCTURAL</span><div class="slbl-line"></div></div>
   ${renderFL(c.genBull,'genBull')}
   <div class="add-row"><input class="ai" id="bull-inp" placeholder="+ Bullish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBull');event.preventDefault()}"><button class="add-btn" style="background:var(--green)15;border-color:var(--green)44;color:var(--green);border:1px solid" onclick="addGenR('genBull')">＋</button></div>
@@ -638,6 +827,7 @@ function renderRub(rub,ri,total){
   return`<div class="rub-card">
     <div class="rub-hdr">
       <input class="rub-inp" value="${escH(rub.name)}" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
+      <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -692,6 +882,7 @@ function renderInd(ind,ri,ii,total){
   return`<div class="ind-card">
     <div class="ind-hdr">
       <input class="ind-inp" value="${escH(ind.name)}" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
+      <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
       <div class="ibg">${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
@@ -777,6 +968,23 @@ function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;save();rende
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){const c=getSym();if(c&&c.rubrics)mvArr(c.rubrics,ri,d);save();renderDetail();}
 function addRub(){pushU();const c=getSym();if(!c)return;if(!c.rubrics)c.rubrics=[];c.rubrics.push({id:uid(),name:'New Category',bias:'neu',imp:false,summary:'',indicators:[]});save();renderDetail();}
+
+// ══ INFO MODAL (Rubrik- & Indikator-Erklärungen) ═════════════════════
+let _infoRi=-1,_infoIi=-1;
+function openInfoM(ri,ii){
+  _infoRi=ri;_infoIi=(ii===undefined?-1:ii);
+  const obj=_infoIi>=0?getInd(ri,ii):getRub(ri);
+  if(!obj)return;
+  document.getElementById('mInfoTitle').textContent='ℹ️ '+(obj.name||'Info');
+  document.getElementById('mInfoTxt').value=obj.info||'';
+  openM('mInfo');
+}
+function saveInfoM(){
+  const obj=_infoIi>=0?getInd(_infoRi,_infoIi):getRub(_infoRi);
+  if(!obj)return;
+  obj.info=document.getElementById('mInfoTxt').value;
+  save();closeM('mInfo');
+}
 function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;save();renderDetail();}
 function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;save();renderDetail();}
 function delInd(ri,ii){pushU();const r=getRub(ri);if(r&&r.indicators)r.indicators.splice(ii,1);save();renderDetail();}
@@ -812,7 +1020,9 @@ function confirmAddSym(){
   if(!ticker)return;
   if(syms.find(s=>s.id===ticker)){alert('Symbol already exists.');return;}
   pushU();
-  syms.push({id:ticker,name:ticker,full:full,bias:'neu',genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});
+  const newSym={id:ticker,name:ticker,full:full,bias:'neu',genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''};
+  addMacroRub(newSym);
+  syms.push(newSym);
   customIds.push({id:ticker,name:ticker,full:full});
   closeM('mAddSym');document.getElementById('mSymTicker').value='';document.getElementById('mSymFull').value='';
   save();renderSidebar();selSym(ticker);
