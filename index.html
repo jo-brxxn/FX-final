@@ -59,12 +59,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.6);background-image:linear-gradient(rgba(var(--green-rgb),.04),rgba(var(--green-rgb),.04));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.12)}
-.ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.6);background-image:linear-gradient(rgba(var(--red-rgb),.04),rgba(var(--red-rgb),.04));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.12)}
-.ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.6);background-image:linear-gradient(rgba(var(--amber-rgb),.04),rgba(var(--amber-rgb),.04));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.12)}
-.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.6);background-image:linear-gradient(rgba(var(--green-rgb),.05),rgba(var(--green-rgb),.05));box-shadow:inset 0 0 18px 4px rgba(var(--green-rgb),.14)}
-.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.6);background-image:linear-gradient(rgba(var(--red-rgb),.05),rgba(var(--red-rgb),.05));box-shadow:inset 0 0 18px 4px rgba(var(--red-rgb),.14)}
-.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.6);background-image:linear-gradient(rgba(var(--amber-rgb),.05),rgba(var(--amber-rgb),.05));box-shadow:inset 0 0 18px 4px rgba(var(--amber-rgb),.14)}
+.ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.025),rgba(var(--green-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.07)}
+.ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.025),rgba(var(--red-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.07)}
+.ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.025),rgba(var(--amber-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.07)}
+.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.03),rgba(var(--green-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.08)}
+.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.03),rgba(var(--red-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.08)}
+.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.03),rgba(var(--amber-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.08)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -393,7 +393,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: LILA (Banner-Farbe als Versionsindikator)</div>
+<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: ORANGE (Glow reduziert, Bias-Farbe der Umrandung kraeftiger)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
