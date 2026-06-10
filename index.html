@@ -9,7 +9,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;min-height:100vh;overflow-x:hidden;font-weight:500}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
 :root{
-  --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;
+  --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;--bg6:#313c52;
   --bd:#212a39;--bd2:#303c52;
   --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#6c869c;
   --green:#4fc3f7;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
@@ -62,9 +62,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.025),rgba(var(--green-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.07)}
 .ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.025),rgba(var(--red-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.07)}
 .ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.025),rgba(var(--amber-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.07)}
-.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.03),rgba(var(--green-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.08)}
-.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.03),rgba(var(--red-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.08)}
-.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.03),rgba(var(--amber-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.08)}
+.rub-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.03),rgba(var(--green-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.08)}
+.rub-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.03),rgba(var(--red-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.08)}
+.rub-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.03),rgba(var(--amber-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.08)}
+.ind-card.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.015),rgba(var(--green-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--green-rgb),.04)}
+.ind-card.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.015),rgba(var(--red-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--red-rgb),.04)}
+.ind-card.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.015),rgba(var(--amber-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--amber-rgb),.04)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -101,10 +104,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:11px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg2);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s;break-inside:avoid}
+.rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s;break-inside:avoid}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
-.rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
+.rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rbg{display:flex;gap:2px;flex-shrink:0}
@@ -131,16 +134,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-warn b{color:var(--red);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
 .cal-warn span{color:var(--t1);flex:1}
 /* ── RUBRIC SUMMARY ── */
-.rub-summary{background:var(--bg4);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
+.rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* ── INDICATOR ── */
-.ind-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
+.ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
-.ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg4);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg5);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .ind-inp{background:transparent;border:none;color:var(--t0);font-size:10px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
 /* date badge */
@@ -165,7 +168,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
 .ind-body{padding:6px 8px}
 /* subpoints */
-.sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg5);border-radius:var(--rss);border-left:2px solid var(--spc)}
+.sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}
 .sp:hover{background:#2c3a52}
 .sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
 .sp-txt:focus{color:var(--t0)}
@@ -393,7 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: ROT (mehr Abstand + dickere Umrandung bei Kategorie-Karten)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLAU (Karten-Hintergrund abgehoben, Indikator-Glow gedaempft, Bias-Sync-Fix)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1297,16 +1300,21 @@ function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii
 // Makro & Risikoumfeld) zwischen USD und allen USD-getriebenen Assets
 // (Gold, Silber, Öl, BTC, Indizes) synchron, da sie dieselbe globale
 // Makro-Lage beschreiben. Asset-spezifische Info-Texte bleiben unberührt.
+// Bias (Rubrik- und Indikator-Ebene) ist je Symbol unabhängig und wird
+// NICHT mit synchronisiert.
 function syncMacroRub(ri){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
   if(!cur||!src||!MACRO_SYNC_IDS.includes(cur.id)||!MACRO_SYNC_RUBS.includes(src.name))return;
-  const clone=JSON.parse(JSON.stringify({bias:src.bias,imp:src.imp,summary:src.summary,indicators:src.indicators||[]}));
+  const clone=JSON.parse(JSON.stringify({imp:src.imp,summary:src.summary,indicators:src.indicators||[]}));
   MACRO_SYNC_IDS.forEach(id=>{
     if(id===cur.id)return;
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
-    r.bias=clone.bias;r.imp=clone.imp;r.summary=clone.summary;
-    r.indicators=JSON.parse(JSON.stringify(clone.indicators));
+    r.imp=clone.imp;r.summary=clone.summary;
+    const oldBiases=(r.indicators||[]).map(ind=>ind.bias);
+    r.indicators=JSON.parse(JSON.stringify(clone.indicators)).map((ind,i)=>{
+      ind.bias=oldBiases[i]||'neu';return ind;
+    });
   });
 }
 function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderDetail();}
