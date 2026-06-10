@@ -57,12 +57,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull{background-image:linear-gradient(var(--green)90,var(--green)90);box-shadow:inset 0 0 50px 12px var(--green)}
-.ab.glow-bear,.ab.on.glow-bear{background-image:linear-gradient(var(--red)90,var(--red)90);box-shadow:inset 0 0 50px 12px var(--red)}
-.ab.glow-neu,.ab.on.glow-neu{background-image:linear-gradient(var(--amber)90,var(--amber)90);box-shadow:inset 0 0 50px 12px var(--amber)}
-.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)90,var(--green)90);box-shadow:inset 0 0 50px 12px var(--green)}
-.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)90,var(--red)90);box-shadow:inset 0 0 50px 12px var(--red)}
-.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)90,var(--amber)90);box-shadow:inset 0 0 50px 12px var(--amber)}
+.ab.glow-bull,.ab.on.glow-bull{background-image:linear-gradient(var(--green)45,var(--green)45);box-shadow:inset 0 0 26px 6px var(--green)99}
+.ab.glow-bear,.ab.on.glow-bear{background-image:linear-gradient(var(--red)45,var(--red)45);box-shadow:inset 0 0 26px 6px var(--red)99}
+.ab.glow-neu,.ab.on.glow-neu{background-image:linear-gradient(var(--amber)45,var(--amber)45);box-shadow:inset 0 0 26px 6px var(--amber)99}
+.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)80,var(--green)80);box-shadow:inset 0 0 44px 11px var(--green)e6}
+.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)80,var(--red)80);box-shadow:inset 0 0 44px 11px var(--red)e6}
+.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)80,var(--amber)80);box-shadow:inset 0 0 44px 11px var(--amber)e6}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -386,7 +386,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: RED (Beleuchtung um 10px reduziert, ~50px)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (Links deutlich reduziert, rechts leicht reduziert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
