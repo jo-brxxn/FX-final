@@ -346,7 +346,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (readability + indicator cleanup)</div>
+<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: AMBER (auto pair bias + Possible Set-ups / No Direction)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -533,6 +533,12 @@ const ALL_PAIRS=[
   'CHF/JPY',
   'XAU/USD','XAG/USD','WTI/USD','BTC/USD','ETH/USD'
 ];
+
+// The 28 pure FX cross pairs (both legs are G8 currencies) – these are
+// auto-sorted into the "Possible Set-ups" / "No Direction" categories
+const SETUP_CAT='Possible Set-ups';
+const NODIR_CAT='No Direction';
+const FX_PAIRS=ALL_PAIRS.filter(p=>{const[b,q]=p.split('/');return FX.includes(b)&&FX.includes(q);});
 
 const SB_CATS=[
   {l:'FX',ids:['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD']},
@@ -822,17 +828,19 @@ function mkCalEvts(){return[
 ];}
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias',order:0},
-  {id:uid(),type:'assets',title:'Other Assets',order:1},
-  {id:uid(),type:'watchlist',title:'Watchlist',order:2},
-  {id:uid(),type:'calendar',title:'Upcoming Events',order:3},
-  {id:uid(),type:'quick_notes',title:'Quick Notes',content:'',order:4},
+  {id:uid(),type:'setups',title:'Possible Set-ups',order:1},
+  {id:uid(),type:'no_direction',title:'No Direction',order:2},
+  {id:uid(),type:'assets',title:'Other Assets',order:3},
+  {id:uid(),type:'watchlist',title:'Watchlist',order:4},
+  {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
+  {id:uid(),type:'quick_notes',title:'Quick Notes',content:'',order:6},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];recomputeAllPairBiases();syncAutoPairCats();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();rerender();updUB();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();rerender();updUB();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -853,9 +861,13 @@ function loadState(){
       noteCats=d.noteCats||mkNCs();
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
+      if(!widgets.find(w=>w.type==='no_direction'))widgets.unshift({id:uid(),type:'no_direction',title:'No Direction',order:-1});
+      if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
+      recomputeAllPairBiases();syncAutoPairCats();
       return;}
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];
+  recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
   try{
@@ -1186,7 +1198,12 @@ function renderNoteRub(rub,ri,total){
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
 function selSym(id){selId=id;curSub='general';renderSidebar();renderDetail();}
 function setSub(s){curSub=s;renderDetail();}
-function setBias(b){pushU();getSym().bias=b;save();renderSidebar();renderDetail();}
+function setBias(b){
+  pushU();getSym().bias=b;
+  recomputeAllPairBiases();syncAutoPairCats();
+  save();renderSidebar();renderDetail();
+  if(curPage==='pairs')renderPairs();else if(curPage==='dash')renderDash();
+}
 function editGenR(key,i,v){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(r&&typeof r==='object')r.text=v;else if(c[key])c[key][i]=v;}
 function setGenRB(key,i,b){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(typeof r==='string')c[key][i]={text:r,bias:b,imp:false};else r.bias=b;save();renderDetail();}
 function togGenImp(key,i){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(typeof r==='string')c[key][i]={text:r,bias:'neu',imp:true};else r.imp=!r.imp;save();renderDetail();}
@@ -1295,6 +1312,37 @@ function autoPairBias(pairName){
   if(bSym.bias==='bull'&&qSym.bias==='bear')return'bull';
   if(bSym.bias==='bear'&&qSym.bias==='bull')return'bear';
   return'neu';
+}
+
+// Keep every pair's bias in sync with the underlying currency/asset biases
+function recomputeAllPairBiases(){
+  pairs.forEach(p=>{
+    const parts=p.name.split('/');if(parts.length!==2)return;
+    const codeToId={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
+    const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
+    const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
+    if(bSym&&qSym)p.bias=autoPairBias(p.name);
+  });
+}
+
+// Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
+// bullish, the other bearish) or "No Direction" (neutral pair bias).
+// Pairs the user has manually moved to a different category are left alone.
+function syncAutoPairCats(){
+  let setupCat=pairCats.find(c=>c.name===SETUP_CAT);
+  if(!setupCat){setupCat={id:uid(),name:SETUP_CAT,open:true};pairCats.unshift(setupCat);}
+  let nodirCat=pairCats.find(c=>c.name===NODIR_CAT);
+  if(!nodirCat){nodirCat={id:uid(),name:NODIR_CAT,open:false};pairCats.splice(pairCats.indexOf(setupCat)+1,0,nodirCat);}
+  FX_PAIRS.forEach(name=>{
+    const bias=autoPairBias(name);
+    const target=bias==='neu'?nodirCat:setupCat;
+    const p=pairs.find(x=>x.name===name);
+    if(p){
+      if(p.catId===setupCat.id||p.catId===nodirCat.id){p.bias=bias;p.catId=target.id;}
+    }else{
+      pairs.push({id:uid(),name,bias,catId:target.id,entry:'',entryTrigger:'',sl:'',tp:'',rr:'',size:'',notes:'',_open:false});
+    }
+  });
 }
 
 function openAddPair(prefCatName){
@@ -1510,6 +1558,8 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'fx_bias',label:'FX Bias',sub:'Your current bias across all major FX currencies'},
+  {type:'setups',label:'Possible Set-ups',sub:'FX pairs where one currency is bullish and the other bearish'},
+  {type:'no_direction',label:'No Direction',sub:'FX pairs with no clear directional bias yet'},
   {type:'assets',label:'Other Assets',sub:'Bias on commodities, indices & crypto'},
   {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
   {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
@@ -1534,6 +1584,20 @@ function renderDash(){
         <div class="sym-name">${s.name}</div>
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
+    }else if(w.type==='setups'){
+      const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
+      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
+      content=addBtn+(wp.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No directional set-ups right now.</div>`:
+      wp.map(p=>`<div class="sym-row">
+        <div class="sym-name" style="min-width:60px;font-size:10px">${escH(p.name)}</div>
+        <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
+        <button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0;margin-left:auto" title="Remove">×</button>
+      </div>`).join(''));
+    }else if(w.type==='no_direction'){
+      const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
+      const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
+      content=addBtn+(wp.length===0?`<div style="color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs currently have a direction.</div>`:
+      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g" style="padding:3px 8px;font-size:9px;margin-bottom:8px;width:100%" onclick="openAddPair()">＋ Add Pair to Watchlist</button>`;
