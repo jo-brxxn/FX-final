@@ -56,6 +56,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* ── BIAS GLOW (static, non-animated highlight) ── */
+.ab.glow-bull,.ab.on.glow-bull,.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(var(--green)18,var(--green)18);box-shadow:0 0 14px 0 var(--green)70}
+.ab.glow-bear,.ab.on.glow-bear,.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(var(--red)18,var(--red)18);box-shadow:0 0 14px 0 var(--red)70}
+.ab.glow-neu,.ab.on.glow-neu,.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(var(--amber)18,var(--amber)18);box-shadow:0 0 14px 0 var(--amber)70}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
@@ -346,7 +350,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--amber);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: AMBER (auto pair bias + Possible Set-ups / No Direction)</div>
+<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: RED (bias glow + typing-loss fix)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -556,6 +560,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
 function bRC(b){return b==='bull'?'#3ecfb820':b==='bear'?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
+function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow-neu';}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
 // ── CALENDAR ↔ SYMBOL MATCHING ──
@@ -993,7 +998,7 @@ function renderSidebar(){
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
       return`<div class="ab-wrap">
-        <button class="ab${on?' on':''}" style="border-left-color:${on?BC[c.bias]:'transparent'}" onclick="selSym('${id}')">
+        <button class="ab${on?' on':''} ${glowClass(c.bias)}" style="border-left-color:${on?BC[c.bias]:'transparent'}" onclick="selSym('${id}')">
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${isCustom?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
@@ -1073,7 +1078,7 @@ function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
   const imp=rub.imp?' imp':'';
-  return`<div class="rub-card${collapsed}${imp}">
+  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}">
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
@@ -1129,7 +1134,7 @@ function renderInd(ind,ri,ii,total){
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">🔄 <span>${escH(ind.interval)}</span></button>`;}
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
-  return`<div class="ind-card${ind.imp?' imp':''}">
+  return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
     <div class="ind-hdr">
       <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
@@ -1398,7 +1403,7 @@ function renderPairs(){
 function renderPairCard(p,pci,catTotal){
   const pi=pairs.findIndex(x=>x.id===p.id);
   const bco=BC[p.bias];
-  return`<div class="pair-card${p._open?' open':''}">
+  return`<div class="pair-card${p._open?' open':''} ${glowClass(p.bias)}">
     <div class="pair-hdr" onclick="togPair('${p.id}')">
       <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0" onclick="event.stopPropagation()">
         <button class="sp-mv" onclick="mvPairInCat('${p.id}',-1)" ${pci===0?'disabled':''} style="font-size:8px;margin-top:0">▲</button>
@@ -1787,12 +1792,11 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══ AUTO-SAVE SAFETY NET ═══════════════════════════════════════════
-// Forces any pending edit (in a focused input/textarea) to commit via
-// blur, then saves to localStorage + cloud. Runs on a timer and
-// whenever the page is hidden/closed, so nothing gets lost.
+// oninput handlers already write every keystroke into the in-memory
+// state, so save() (which serializes that state) is always up to date.
+// We must NOT blur the focused field here - doing so on the periodic
+// timer used to kick users out of whatever they were typing.
 function flushAndSave(){
-  const ae=document.activeElement;
-  if(ae&&ae!==document.body&&typeof ae.blur==='function')ae.blur();
   save();
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAndSave();});
