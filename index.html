@@ -14,6 +14,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#6c869c;
   --green:#4fc3f7;--red:#ef6b78;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:79,195,247;--red-rgb:239,107,120;--amber-rgb:244,173,92;
+  --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
@@ -23,11 +24,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .saved{font-size:9px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:10px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
-.btn:hover:not(:disabled){background:var(--bg4);border-color:var(--blue)66;color:var(--blue)}
+.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .btn:disabled{opacity:.22;cursor:default}
-.btn.g{background:var(--green)15;border-color:var(--green)44;color:var(--green)}
-.btn.g:hover{background:var(--green)25}
-.btn.r{background:var(--red)12;border-color:var(--red)33;color:var(--red)}
+.btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}
+.btn.g:hover{background:rgba(var(--green-rgb),.15)}
+.btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}
@@ -58,16 +59,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.27),rgba(var(--green-rgb),.27));box-shadow:inset 0 0 26px 6px rgba(var(--green-rgb),.6)}
-.ab.glow-bear,.ab.on.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.27),rgba(var(--red-rgb),.27));box-shadow:inset 0 0 26px 6px rgba(var(--red-rgb),.6)}
-.ab.glow-neu,.ab.on.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.27),rgba(var(--amber-rgb),.27));box-shadow:inset 0 0 26px 6px rgba(var(--amber-rgb),.6)}
-.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.5),rgba(var(--green-rgb),.5));box-shadow:inset 0 0 44px 11px rgba(var(--green-rgb),.9)}
-.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.5),rgba(var(--red-rgb),.5));box-shadow:inset 0 0 44px 11px rgba(var(--red-rgb),.9)}
-.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.5),rgba(var(--amber-rgb),.5));box-shadow:inset 0 0 44px 11px rgba(var(--amber-rgb),.9)}
+.ab.glow-bull,.ab.on.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.14),rgba(var(--green-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--green-rgb),.3)}
+.ab.glow-bear,.ab.on.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.14),rgba(var(--red-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--red-rgb),.3)}
+.ab.glow-neu,.ab.on.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.14),rgba(var(--amber-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--amber-rgb),.3)}
+.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.25),rgba(var(--green-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--green-rgb),.45)}
+.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.25),rgba(var(--red-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--red-rgb),.45)}
+.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.25),rgba(var(--amber-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--amber-rgb),.45)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
-.sym-row.row-marked{border:1px solid var(--star);background:var(--star)15}
+.sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
 .evt-banner{color:var(--red);font-weight:800;font-size:12px;margin-top:4px;letter-spacing:.2px;width:100%}
 /* ── SUBTABS ── */
@@ -84,9 +85,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
 .rb-g{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
 .rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s;line-height:1.4}
-.rb.bb{border-color:var(--green);background:var(--green)15;color:var(--green)}
-.rb.br{border-color:var(--red);background:var(--red)15;color:var(--red)}
-.rb.bn{border-color:var(--amber);background:var(--amber)15;color:var(--amber)}
+.rb.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
+.rb.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
+.rb.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}
 .ri:hover .mv{opacity:.4}.mv:hover{opacity:1!important;color:var(--blue)}.mv:disabled{opacity:.05!important;cursor:default}
 .istar{background:none;border:none;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
@@ -101,16 +102,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
 .rub-card{background:var(--bg2);border:1px solid #2c4f7c;border-radius:var(--r);margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
-.rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px var(--star)55,0 2px 12px rgba(0,0,0,.22)}
+.rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rbg{display:flex;gap:2px;flex-shrink:0}
 .rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s}
-.rbo.bb{border-color:var(--green);background:var(--green)15;color:var(--green)}
-.rbo.br{border-color:var(--red);background:var(--red)15;color:var(--red)}
-.rbo.bn{border-color:var(--amber);background:var(--amber)15;color:var(--amber)}
+.rbo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
+.rbo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
+.rbo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}
 .rmv:hover{opacity:1;color:var(--blue)}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
@@ -124,9 +125,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rub-card.collapsed .rub-body{display:none}
 /* ── INFO BUTTON ── */
 .rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
-.rinfo:hover{opacity:1;background:var(--blue)15}
+.rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
 /* ── CALENDAR WARNING ── */
-.cal-warn{background:var(--red)12;border:1px solid var(--red)44;border-radius:var(--rs);padding:6px 9px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:10px}
+.cal-warn{background:rgba(var(--red-rgb),.07);border:1px solid rgba(var(--red-rgb),.27);border-radius:var(--rs);padding:6px 9px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:10px}
 .cal-warn b{color:var(--red);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
 .cal-warn span{color:var(--t1);flex:1}
 /* ── RUBRIC SUMMARY ── */
@@ -143,19 +144,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ind-inp{background:transparent;border:none;color:var(--t0);font-size:10px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
 /* date badge */
-.dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid var(--purple)33;border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
-.dbadge:hover{border-color:var(--purple)66}
+.dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
+.dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}
 .dbadge span{font-size:8px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid var(--blue)33;border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
-.ibadge:hover{border-color:var(--blue)66}
+.ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
+.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}
 .ibadge span{font-size:8px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
 .add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:8px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.add-date-btn:hover{border-color:var(--purple)66;color:var(--purple)}
+.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}
 .ibg{display:flex;gap:2px;flex-shrink:0}
 .ibo{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:7px;font-weight:700;transition:all .1s}
-.ibo.bb{border-color:var(--green);background:var(--green)15;color:var(--green)}
-.ibo.br{border-color:var(--red);background:var(--red)15;color:var(--red)}
-.ibo.bn{border-color:var(--amber);background:var(--amber)15;color:var(--amber)}
+.ibo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
+.ibo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
+.ibo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:9px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .ind-card:hover .imv{opacity:.35}.imv:hover{opacity:1!important;color:var(--blue)}.imv:disabled{opacity:.05;cursor:default}
 .istar2{background:none;border:none;cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
@@ -247,14 +248,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── CALENDAR ── */
 .cal-ev{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 11px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s}
 .cal-ev:hover{border-color:var(--bd2)}
-.cal-date{background:var(--bg4);border:1px solid var(--purple)33;border-radius:5px;padding:5px 7px;text-align:center;flex-shrink:0;min-width:44px}
+.cal-date{background:var(--bg4);border:1px solid rgba(var(--purple-rgb),.2);border-radius:5px;padding:5px 7px;text-align:center;flex-shrink:0;min-width:44px}
 .cal-day{font-size:13px;font-weight:800;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
 .cal-mo{font-size:7px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:2px}
 .cal-body{flex:1;min-width:0}
 .cal-name{font-size:11px;font-weight:600;color:var(--t0)}
 .cal-meta{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
 .ctag{font-size:8px;padding:1px 5px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ih{background:var(--red)18;color:var(--red)}.im{background:var(--amber)18;color:var(--amber)}.il{background:var(--t3)18;color:var(--t2)}
+.ih{background:rgba(var(--red-rgb),.09);color:var(--red)}.im{background:rgba(var(--amber-rgb),.09);color:var(--amber)}.il{background:rgba(var(--t3-rgb),.09);color:var(--t2)}
 .cal-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;opacity:.2;flex-shrink:0;padding:0;line-height:1;transition:opacity .12s}
 .cal-ev:hover .cal-del{opacity:.5}.cal-del:hover{opacity:1!important;color:var(--red)}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
@@ -268,7 +269,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
 .modal h3{font-size:13px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
-.m-inp:focus{border-color:var(--blue)44}.m-inp::placeholder{color:var(--t3)}
+.m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
 .date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
@@ -284,10 +285,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .lock-sub{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:3px;text-transform:uppercase;margin-top:-14px}
 .lock-dots{display:flex;gap:16px;margin:4px 0 6px}
 .lock-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--bd2);transition:all .15s;background:transparent}
-.lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px var(--blue)88}
+.lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px rgba(var(--blue-rgb),.53)}
 .lock-pad{display:grid;grid-template-columns:repeat(3,62px);gap:14px}
 .lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:21px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.lock-key:hover,.lock-key:active{background:var(--bg4);border-color:var(--blue)66;color:var(--blue)}
+.lock-key:hover,.lock-key:active{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .lock-key.empty{visibility:hidden;cursor:default}
 .lock-box.shake{animation:lockshake .4s}
 .lock-err{font-size:10px;color:var(--red);height:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px}
@@ -387,7 +388,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (Bug behoben: Glow-Transparenz via rgba() statt ungueltigem var()+Hex)</div>
+<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: RED (rgba()-Fix ueberall + Glow noch blasser/transparenter)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -400,7 +401,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <button class="btn" onclick="exportData()">⬇ Export</button>
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:var(--blue)44;color:var(--blue)">☁ Sync</button>
+    <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:rgba(var(--blue-rgb),.27);color:var(--blue)">☁ Sync</button>
   </div>
 </div>
 
@@ -439,7 +440,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:var(--amber)44;color:var(--amber)" onclick="fetchFF()">⬇ Forex Factory</button>
+    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()">⬇ Forex Factory</button>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -1105,12 +1106,12 @@ function renderGenTab(c){
   <div>
     <div class="slbl"><span style="color:var(--green)">▲ BULLISH STRUCTURAL</span><div class="slbl-line"></div></div>
     ${renderFL(c.genBull,'genBull')}
-    <div class="add-row"><input class="ai" id="bull-inp" placeholder="+ Bullish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBull');event.preventDefault()}"><button class="add-btn" style="background:var(--green)15;border-color:var(--green)44;color:var(--green);border:1px solid" onclick="addGenR('genBull')">＋</button></div>
+    <div class="add-row"><input class="ai" id="bull-inp" placeholder="+ Bullish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBull');event.preventDefault()}"><button class="add-btn" style="background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green);border:1px solid" onclick="addGenR('genBull')">＋</button></div>
   </div>
   <div>
     <div class="slbl"><span style="color:var(--red)">▼ BEARISH STRUCTURAL</span><div class="slbl-line"></div></div>
     ${renderFL(c.genBear,'genBear')}
-    <div class="add-row"><input class="ai" id="bear-inp" placeholder="+ Bearish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBear');event.preventDefault()}"><button class="add-btn" style="background:var(--red)15;border-color:var(--red)44;color:var(--red);border:1px solid" onclick="addGenR('genBear')">＋</button></div>
+    <div class="add-row"><input class="ai" id="bear-inp" placeholder="+ Bearish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBear');event.preventDefault()}"><button class="add-btn" style="background:rgba(var(--red-rgb),.08);border-color:rgba(var(--red-rgb),.27);color:var(--red);border:1px solid" onclick="addGenR('genBear')">＋</button></div>
   </div>
   </div>`;}
 
@@ -1164,7 +1165,7 @@ function renderRub(rub,ri,total){
       ${(rub.indicators||[]).map((ind,ii)=>renderInd(ind,ri,ii,(rub.indicators||[]).length)).join('')}
       <div class="add-row" style="margin-top:5px">
         <input class="ai" id="ind-${ri}" placeholder="+ Add indicator (e.g. CPI, NFP, Net Position)..." onkeydown="if(event.key==='Enter'){addInd(${ri});event.preventDefault()}">
-        <button class="add-btn" style="background:var(--blue)15;border-color:var(--blue)44;color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
+        <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
       </div>
     </div>
   </div>`;}
@@ -1257,7 +1258,7 @@ function renderNoteRub(rub,ri,total){
         </div>`).join('')}
       <div class="add-row">
         <input class="ai" id="nr-${ri}" placeholder="+ Add point..." onkeydown="if(event.key==='Enter'){addNoteRubItem(${ri});event.preventDefault()}">
-        <button class="add-btn" style="background:var(--blue)15;border-color:var(--blue)44;color:var(--blue);border:1px solid" onclick="addNoteRubItem(${ri})">＋</button>
+        <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addNoteRubItem(${ri})">＋</button>
       </div>
     </div>
   </div>`;}
@@ -1554,8 +1555,8 @@ function renderCalendar(){
         <div class="cal-name">${escH(ev.name)}</div>
         <div class="cal-meta">
           <span class="ctag ${ic}">${ev.impact==='high'?'🔴 HIGH':ev.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
-          ${ev.currencies?`<span class="ctag" style="background:var(--blue)18;color:var(--blue)">${escH(ev.currencies)}</span>`:''}
-          ${ev.expected?`<span class="ctag" style="background:var(--t3)18;color:var(--t2)">Exp: ${escH(ev.expected)}</span>`:''}
+          ${ev.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(ev.currencies)}</span>`:''}
+          ${ev.expected?`<span class="ctag" style="background:rgba(var(--t3-rgb),.09);color:var(--t2)">Exp: ${escH(ev.expected)}</span>`:''}
         </div>
         ${ev.notes?`<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.5">${escH(ev.notes)}</div>`:''}
       </div>
