@@ -76,7 +76,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}
 .ri:hover .mv{opacity:.4}.mv:hover{opacity:1!important;color:var(--blue)}.mv:disabled{opacity:.05!important;cursor:default}
 .istar{background:none;border:none;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
-.istar.on{opacity:1}.ri:hover .istar{opacity:.4}.ri .istar.on{opacity:1}
+.istar.on{opacity:1;color:var(--star)}.ri:hover .istar{opacity:.4}.ri .istar.on{opacity:1;color:var(--star)}
 .idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}
 .ri:hover .idel{opacity:.5}.idel:hover{opacity:1!important}
 .add-row{display:flex;gap:5px;margin-top:4px}
@@ -86,7 +86,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:11px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--bc,var(--bd2));border-radius:var(--r);margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden}
+.rub-card{background:var(--bg2);border:1px solid #2c4f7c;border-radius:var(--r);margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px var(--star)55,0 2px 12px rgba(0,0,0,.22)}
+.rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:13px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
@@ -98,7 +100,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}
 .rmv:hover{opacity:1;color:var(--blue)}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
-.rstar.on{opacity:1}.rub-card:hover .rstar{opacity:.4}.rub-card .rstar.on{opacity:1}
+.rstar.on{opacity:1;color:var(--star)}.rub-card:hover .rstar{opacity:.4}.rub-card .rstar.on{opacity:1;color:var(--star)}
 .rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
 .rub-card:hover .rdel{opacity:.4}.rdel:hover{opacity:1!important;color:var(--red)}
 .rub-body{padding:10px 12px}
@@ -120,7 +122,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* ── INDICATOR ── */
-.ind-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px}
+.ind-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
+.ind-card.imp{border-color:var(--star)}
+.ind-card.imp .ind-hdr{background:#2a230f}
 .ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg4);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .ind-inp{background:transparent;border:none;color:var(--t0);font-size:10px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
@@ -141,7 +145,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:9px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .ind-card:hover .imv{opacity:.35}.imv:hover{opacity:1!important;color:var(--blue)}.imv:disabled{opacity:.05;cursor:default}
 .istar2{background:none;border:none;cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
-.istar2.on{opacity:1}.ind-card:hover .istar2{opacity:.35}.ind-card .istar2.on{opacity:1}
+.istar2.on{opacity:1;color:var(--star)}.ind-card:hover .istar2{opacity:.35}.ind-card .istar2.on{opacity:1;color:var(--star)}
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
 .ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
 .ind-body{padding:6px 8px}
@@ -342,7 +346,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: GREEN (live edit autosave)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: PURPLE (star highlight + card border)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1038,7 +1042,8 @@ function renderSpecTab(c){
 function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
-  return`<div class="rub-card${collapsed}" style="--bc:${bco}">
+  const imp=rub.imp?' imp':'';
+  return`<div class="rub-card${collapsed}${imp}">
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
@@ -1094,7 +1099,7 @@ function renderInd(ind,ri,ii,total){
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">🔄 <span>${escH(ind.interval)}</span></button>`;}
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
-  return`<div class="ind-card">
+  return`<div class="ind-card${ind.imp?' imp':''}">
     <div class="ind-hdr">
       <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
@@ -1133,7 +1138,7 @@ function renderNotesSubTab(c){
   </div>`;}
 
 function renderNoteRub(rub,ri,total){
-  return`<div class="rub-card" style="--bc:${bCol(rub.bias)}">
+  return`<div class="rub-card${rub.imp?' imp':''}">
     <div class="rub-hdr">
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setNoteRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
