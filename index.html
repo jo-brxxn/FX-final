@@ -59,12 +59,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.14),rgba(var(--green-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--green-rgb),.3)}
-.ab.glow-bear,.ab.on.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.14),rgba(var(--red-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--red-rgb),.3)}
-.ab.glow-neu,.ab.on.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.14),rgba(var(--amber-rgb),.14));box-shadow:inset 0 0 26px 6px rgba(var(--amber-rgb),.3)}
-.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{background-image:linear-gradient(rgba(var(--green-rgb),.25),rgba(var(--green-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--green-rgb),.45)}
-.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{background-image:linear-gradient(rgba(var(--red-rgb),.25),rgba(var(--red-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--red-rgb),.45)}
-.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{background-image:linear-gradient(rgba(var(--amber-rgb),.25),rgba(var(--amber-rgb),.25));box-shadow:inset 0 0 44px 11px rgba(var(--amber-rgb),.45)}
+.ab.glow-bull,.ab.on.glow-bull{border-left-color:var(--green);background-image:linear-gradient(rgba(var(--green-rgb),.06),rgba(var(--green-rgb),.06));box-shadow:inset 0 0 14px 3px rgba(var(--green-rgb),.16)}
+.ab.glow-bear,.ab.on.glow-bear{border-left-color:var(--red);background-image:linear-gradient(rgba(var(--red-rgb),.06),rgba(var(--red-rgb),.06));box-shadow:inset 0 0 14px 3px rgba(var(--red-rgb),.16)}
+.ab.glow-neu,.ab.on.glow-neu{border-left-color:var(--amber);background-image:linear-gradient(rgba(var(--amber-rgb),.06),rgba(var(--amber-rgb),.06));box-shadow:inset 0 0 14px 3px rgba(var(--amber-rgb),.16)}
+.rub-card.glow-bull,.ind-card.glow-bull,.pair-card.glow-bull{border-color:var(--green);background-image:linear-gradient(rgba(var(--green-rgb),.07),rgba(var(--green-rgb),.07));box-shadow:inset 0 0 22px 5px rgba(var(--green-rgb),.18)}
+.rub-card.glow-bear,.ind-card.glow-bear,.pair-card.glow-bear{border-color:var(--red);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07));box-shadow:inset 0 0 22px 5px rgba(var(--red-rgb),.18)}
+.rub-card.glow-neu,.ind-card.glow-neu,.pair-card.glow-neu{border-color:var(--amber);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07));box-shadow:inset 0 0 22px 5px rgba(var(--amber-rgb),.18)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -229,7 +229,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:11px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
-.bbadge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.bbadge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
+.evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:9px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-nav{padding:2px 5px;font-size:8px}
@@ -251,6 +252,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-date{background:var(--bg4);border:1px solid rgba(var(--purple-rgb),.2);border-radius:5px;padding:5px 7px;text-align:center;flex-shrink:0;min-width:44px}
 .cal-day{font-size:13px;font-weight:800;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
 .cal-mo{font-size:7px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:2px}
+.cal-cd{font-size:7px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:3px;color:var(--t3);white-space:nowrap}
+.cal-cd.soon{color:var(--amber)}
+.dw-cal-cd{font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.dw-cal-cd.soon{color:var(--amber)}
 .cal-body{flex:1;min-width:0}
 .cal-name{font-size:11px;font-weight:600;color:var(--t0)}
 .cal-meta{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
@@ -321,7 +326,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .dw-sub{font-size:11px}
   .sym-row{padding:7px 10px}
   .sym-name{font-size:14px}
-  .bbadge{font-size:11px;padding:3px 8px}
+  .bbadge{font-size:11px;padding:3px 8px;width:68px}
   .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:12px}
   .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:11px}
   .dw-chip-x,.dw-del{font-size:14px}
@@ -347,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .dw-sub{font-size:12px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:15px}
-  .bbadge{font-size:12px;padding:4px 9px}
+  .bbadge{font-size:12px;padding:4px 9px;width:74px}
   .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:13px}
   .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:12px}
   .dw-chip-x,.dw-del{font-size:16px}
@@ -388,7 +393,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: RED (rgba()-Fix ueberall + Glow noch blasser/transparenter)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLUE (Bias-Umrandungen, Mini-Glow, Kalender-Countdown, feste Spalten im Dashboard)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -617,6 +622,8 @@ function evtMatchesSym(ev,id){
   return tokens.some(t=>names.some(n=>n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
+function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute';if(n===1)return'Morgen';if(n===-1)return'Gestern';return n>1?`in ${n}T`:`vor ${-n}T`;}
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
@@ -1058,7 +1065,7 @@ function renderSidebar(){
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
       return`<div class="ab-wrap">
-        <button class="ab${on?' on':''} ${glowClass(c.bias)}" style="border-left-color:${on?BC[c.bias]:'transparent'}" onclick="selSym('${id}')">
+        <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="selSym('${id}')">
           ${hasImportantEvt(c.id)?'<span class="evt-flag-abs" title="Wichtige Nachricht steht an">❗</span>':''}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
@@ -1549,8 +1556,9 @@ function renderCalendar(){
   sorted.map(ev=>{
     const{day,mo}=fmtDate(ev.date);
     const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
+    const dleft=daysUntil(ev.date);
     return`<div class="cal-ev">
-      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div></div>
+      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</div></div>
       <div class="cal-body">
         <div class="cal-name">${escH(ev.name)}</div>
         <div class="cal-meta">
@@ -1662,7 +1670,7 @@ function renderDash(){
       content=syms.filter(s=>FX.includes(s.id)).map(s=>`
         <div class="sym-row" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
-          ${hasImportantEvt(s.id)?EVT_FLAG:''}
+          <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
         </div>`).join('');
     }else if(w.type==='assets'){
@@ -1670,7 +1678,7 @@ function renderDash(){
       content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
       others.map(s=>`<div class="sym-row">
         <div class="sym-name">${s.name}</div>
-        ${hasImportantEvt(s.id)?EVT_FLAG:''}
+        <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
     }else if(w.type==='setups'){
@@ -1683,7 +1691,7 @@ function renderDash(){
           <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
         </div>
         <div class="sym-name dw-pname">${escH(p.name)}</div>
-        ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
+        <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
         <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
@@ -1699,7 +1707,7 @@ function renderDash(){
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
-        ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
+        <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         <div class="pbg" style="flex-shrink:0">
           ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -1716,7 +1724,7 @@ function renderDash(){
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
-          ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
+          <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <div class="pbg" style="flex-shrink:0">
             ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -1729,12 +1737,13 @@ function renderDash(){
     }else if(w.type==='calendar'){
       const evts=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
       content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      evts.map(ev=>{const{day,mo}=fmtDate(ev.date);const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
+      evts.map(ev=>{const{day,mo}=fmtDate(ev.date);const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';const dleft=daysUntil(ev.date);
         return`<div class="sym-row" style="gap:6px">
           <span class="dw-cal-date">${day} ${mo}</span>
           <span class="ctag ${ic}" style="flex-shrink:0">${ev.impact==='high'?'🔴':ev.impact==='medium'?'🟡':'⚪'}</span>
           <span class="dw-cal-name">${escH(ev.name)}</span>
           ${ev.currencies?`<span class="dw-cal-cur">${escH(ev.currencies)}</span>`:''}
+          <span class="dw-cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</span>
         </div>`;}).join('');
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
