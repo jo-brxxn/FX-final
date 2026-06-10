@@ -803,7 +803,7 @@ function getCloudCfg(){
   try{return JSON.parse(localStorage.getItem(CLOUD_CFG_KEY))||null;}catch(e){return null;}
 }
 function cloudHeaders(cfg){
-  return{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key,'Content-Type':'application/json'};
+  return{'apikey':cfg.key,'Content-Type':'application/json'};
 }
 function openCloudM(){
   const cfg=getCloudCfg()||{};
