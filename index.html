@@ -270,7 +270,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-ccy{font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
-.cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
 .cal-val{font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700;color:var(--t1);text-align:center}
 .cal-val.ph{color:var(--t3);font-weight:400}
@@ -279,6 +279,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
 .cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 14px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
+/* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
+/* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
+   + farbiger Rahmen für Impact, damit nichts im schmalen Dashboard-Widget abgeschnitten wird. */
+.cal-col-hdr.compact,.cal-row.compact{grid-template-columns:32px 28px 1fr 40px 40px;gap:4px;padding:6px 8px;min-width:0}
+.cal-col-hdr.compact span:nth-child(1),.cal-col-hdr.compact span:nth-child(2),.cal-col-hdr.compact span:nth-child(3){text-align:left}
+.cal-col-hdr.compact span:nth-child(4),.cal-col-hdr.compact span:nth-child(5){text-align:center}
+.cal-row.compact{border-left:3px solid transparent}
+.cal-row.compact.ih{border-left-color:var(--red)}
+.cal-row.compact.im{border-left-color:var(--amber)}
+.cal-row.compact.il{border-left-color:var(--bd2)}
+.cal-row.compact .cal-evsub{grid-column:3/6}
+.cal-table.compact{overflow-x:hidden}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
@@ -375,6 +387,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .cal-val{font-size:12px}
   .cal-evsub{font-size:11px}
   .evt-toggle{font-size:12px;padding:9px 12px}
+  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:42px 36px 1fr 52px 52px;gap:6px;padding:7px 10px}
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
 @media(min-width:1100px){
@@ -404,6 +417,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .cal-val{font-size:13px}
   .cal-evsub{font-size:11.5px}
   .evt-toggle{font-size:13px;padding:10px 14px}
+  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 42px 1fr 56px 56px;gap:8px;padding:8px 12px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -440,7 +454,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Masonry-Layout fix, einklappbare Events, Kalender responsiv für iPad/PC)</div>
+<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRUEN (Actual-Farbe vs. Forecast korrigiert, Dashboard-Kalender kompakt & ohne Abschneiden)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -688,8 +702,9 @@ function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute'
 function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
 
 // ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
-// Vergleicht "Actual" mit "Forecast" (Fallback: "Previous") und färbt grün/rot,
-// je nachdem ob der Wert für die jeweilige Währung gut oder schlecht ist.
+// Vergleicht "Actual" mit "Forecast" (Fallback: "Previous", falls kein Forecast vorhanden)
+// und färbt grün/rot, je nachdem ob der Wert für die jeweilige Währung gut oder
+// schlecht ist - oder lässt ihn neutral, wenn er dem Forecast entspricht.
 // Bei Indikatoren wie Unemployment/Claims/Deficit ist "niedriger" besser.
 const LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i;
 function parseNumLike(s){
@@ -703,13 +718,15 @@ function parseNumLike(s){
 function actualColor(ev){
   if(!ev.actual)return'';
   const a=parseNumLike(ev.actual);
-  const base=(ev.previous!=null&&ev.previous!=='')?ev.previous:ev.forecast;
+  const base=(ev.forecast!=null&&ev.forecast!=='')?ev.forecast:ev.previous;
   const f=parseNumLike(base);
   if(a===null||f===null||a===f)return'';
   const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
   return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
 }
 // Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
+// Im "compact"-Modus (z.B. Dashboard-Widget) entfallen die Impact-Text- und Lösch-Spalte
+// zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
 function calRowHtml(ev,opts){
   opts=opts||{};
   const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
@@ -718,6 +735,17 @@ function calRowHtml(ev,opts){
   const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
   const isToday=ev.date===todayStr();
   const sub=[ev.expected,ev.notes].filter(Boolean).join(' · ');
+  if(opts.compact){
+    const csub=[ev.previous?`Prev: ${ev.previous}`:'',sub].filter(Boolean).join(' · ');
+    return`<div class="cal-row compact ${ic}${isToday?' today':''}">
+      <div class="cal-time">${ev.time||'—'}</div>
+      <div class="cal-ccy">${escH(ev.currencies||'')}</div>
+      <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+      ${val(ev.actual,ac)}
+      ${val(ev.forecast)}
+      ${csub?`<div class="cal-evsub">${escH(csub)}</div>`:''}
+    </div>`;
+  }
   return`<div class="cal-row${isToday?' today':''}">
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
@@ -731,20 +759,24 @@ function calRowHtml(ev,opts){
   </div>`;
 }
 // Rendert eine Liste von Events gruppiert nach Tag (mit Spalten-Header und Datums-Headern).
+// opts.compact: kompaktere Spaltenbreiten ohne Impact-Text/Lösch-Spalte (z.B. Dashboard-Widget).
 function calTableHtml(evts,opts){
   opts=opts||{};
   if(!evts.length)return'';
   const today=todayStr();
-  let html=`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`,lastDate=null;
+  let html=opts.compact
+    ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`
+    :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
+  let lastDate=null;
   evts.forEach(ev=>{
     if(ev.date!==lastDate){
       lastDate=ev.date;
       const isToday=ev.date===today;
       html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(ev.date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
     }
-    html+=calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null});
+    html+=calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
   });
-  return`<div class="cal-table">${html}</div>`;
+  return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
 }
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
@@ -1981,7 +2013,7 @@ function renderDash(){
     }else if(w.type==='calendar'){
       const evts=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date)).slice(0,6);
       content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      calTableHtml(evts);
+      calTableHtml(evts,{compact:true});
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
