@@ -461,7 +461,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Postfach deutlich vergrößert: mehr Höhe auf allen Geräten, breiter auf Tablet/Desktop)</div>
+<div style="background:var(--green);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Postfach vergrößert + Actual-Werte: Refresh lädt jetzt auch die letzten 2 Tage nach, damit bereits veröffentlichte Actual-Zahlen importiert werden)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -514,7 +514,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage von Forex Factory neu (auch gelöschte Events)">🔄 Refresh</button>
+    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage inkl. Actual-Werte) von Forex Factory neu (auch gelöschte Events)">🔄 Refresh</button>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -1864,6 +1864,7 @@ function delInboxItem(id){
 // faireconomy.media wird daher direkt UND über mehrere CORS-Proxys versucht,
 // damit ein einzelner blockierter/ausgefallener Weg nicht das ganze Update killt.
 const FF_WINDOW_DAYS=10;
+const FF_PAST_DAYS=2;
 async function fetchFFPeriod(period){
   const target='https://nfs.faireconomy.media/ff_calendar_'+period+'.json';
   const targetAlt='https://cdn-nfs.faireconomy.media/ff_calendar_'+period+'.json';
@@ -1906,9 +1907,9 @@ async function fetchFF(silent){
   try{
     const evts=await fetchFFJson();
     if(!silent)pushU();
-    // Bisherige FF-Importe im 10-Tage-Fenster entfernen, damit auch manuell
+    // Bisherige FF-Importe im Fenster entfernen, damit auch manuell
     // gelöschte Events beim Aktualisieren wieder erscheinen
-    calEvts=calEvts.filter(e=>!(e.src==='ff'&&daysUntil(e.date)>=0&&daysUntil(e.date)<=FF_WINDOW_DAYS));
+    calEvts=calEvts.filter(e=>!(e.src==='ff'&&daysUntil(e.date)>=-FF_PAST_DAYS&&daysUntil(e.date)<=FF_WINDOW_DAYS));
     let added=0;
     evts.forEach(ev=>{
       if(ev.impact==='High'||ev.impact==='Medium'){
@@ -1918,9 +1919,12 @@ async function fetchFF(silent){
         // (FF liefert Zeiten in US-Eastern, was je nach Zeitzone zu Datums-Verschiebung führen kann)
         const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         const timeStr=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+        // Auch die letzten FF_PAST_DAYS Tage importieren: nur für diese
+        // (bereits veröffentlichten) Events liefert der Feed Actual-Werte,
+        // und die Detailseiten zeigen Events bis 2 Tage zurück an.
         const dl=daysUntil(dateStr);
-        if(dl<0||dl>FF_WINDOW_DAYS)return;
-        if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
+        if(dl<-FF_PAST_DAYS||dl>FF_WINDOW_DAYS)return;
+        if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)&&!inbox.find(e=>e.name===ev.title&&e.date===dateStr)){
           calEvts.push({id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'});
           added++;
         }
@@ -1946,7 +1950,7 @@ async function fetchFF(silent){
     processCalEvts();
     save();renderSidebar();rerender();renderInbox();updInboxBadge();
     if(!silent){
-      alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) für bestehende Events nachgetragen.');
+      alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die letzten '+FF_PAST_DAYS+' und nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) für bestehende Events nachgetragen.');
     }
   }catch(e){
     if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
