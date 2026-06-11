@@ -53,5 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ff_calendar.json
-          git diff --staged --quiet || git commit -m "Update FF calendar data"
-          git diff --staged --quiet || git push
+          if ! git diff --staged --quiet; then
+            git commit -m "Update FF calendar data"
+            git push
+          fi
