@@ -112,7 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
 .rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
-.masonry-col{display:flex;flex-direction:column;min-width:0}
+.masonry-col{display:flex;flex-direction:column;min-width:0;flex:1 1 0}
 .masonry-col .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
@@ -279,6 +279,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
 .cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 14px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
+/* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
+.evt-section{margin-bottom:11px}
+.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
+.evt-toggle:hover{border-color:var(--bd2)}
+.evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
+.evt-flag{font-size:13px;line-height:1}
+.evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:9px;transition:transform .15s;flex-shrink:0}
+.evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
+.evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -356,6 +365,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .lock-logo{font-size:26px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
   .lock-key{width:68px;height:68px;font-size:23px}
+  /* ── CALENDAR TABLE: TABLET ── */
+  .cal-col-hdr,.cal-row{grid-template-columns:60px 60px 78px 1fr 80px 80px 80px 18px;gap:10px;min-width:0;padding:8px 12px}
+  .cal-day-hdr{font-size:11px;padding:8px 12px}
+  .cal-col-hdr{font-size:9.5px;padding:7px 12px}
+  .cal-time,.cal-ccy{font-size:12px}
+  .cal-imp{font-size:10px}
+  .cal-evname{font-size:13px}
+  .cal-val{font-size:12px}
+  .cal-evsub{font-size:11px}
+  .evt-toggle{font-size:12px;padding:9px 12px}
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
 @media(min-width:1100px){
@@ -375,6 +394,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .dw-empty,.dw-chip,.dw-meta{font-size:13px}
   .dw-add,.pbo,.dw-sel{font-size:12px}
   .dw-chip-x,.dw-del{font-size:16px}
+  /* ── CALENDAR TABLE: DESKTOP ── */
+  .cal-col-hdr,.cal-row{grid-template-columns:70px 70px 90px 1fr 110px 110px 110px 22px;gap:14px;padding:9px 14px}
+  .cal-day-hdr{font-size:12px;padding:9px 14px}
+  .cal-col-hdr{font-size:10px;padding:8px 14px}
+  .cal-time,.cal-ccy{font-size:13px}
+  .cal-imp{font-size:11px}
+  .cal-evname{font-size:14px}
+  .cal-val{font-size:13px}
+  .cal-evsub{font-size:11.5px}
+  .evt-toggle{font-size:13px;padding:10px 14px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -771,6 +800,19 @@ function getSymEventsAll(id){
   });
   return all.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
 }
+// Kompakte Sicht für die Detailseite: vergangene Events fallen nach 2 Tagen
+// weg, künftige Events werden auf den jeweils nächsten Veröffentlichungstag
+// (bzw. heute) begrenzt.
+function getSymEventsCompact(id){
+  const today=todayStr();
+  const all=getSymEventsAll(id).filter(ev=>daysUntil(ev.date)>=-2);
+  const future=all.filter(ev=>ev.date>=today);
+  const nextDate=future.length?future[0].date:null;
+  const events=nextDate?all.filter(ev=>ev.date<today||ev.date===nextDate):all;
+  return{events,nextDate};
+}
+const evtSectionOpen={};
+function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetail();}
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
@@ -1214,15 +1256,20 @@ function renderDetail(){
   const c=getSym();if(!c)return;
   const bull=c.genBull||[],bear=c.genBear||[];
   const pct=Math.round((bull.length/(bull.length+bear.length||1))*100);
-  const symEvts=getSymEventsAll(c.id);
+  const{events:symEvts,nextDate}=getSymEventsCompact(c.id);
+  const evtOpen=!!evtSectionOpen[c.id];
+  const nextLbl=nextDate?(nextDate===todayStr()?'Heute':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${c.name}</div><div class="afull">${c.full}</div></div>
       <div class="brow">${['bull','neu','bear'].map(b=>`<button class="bo${c.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setBias('${b}')">${b==='bull'?'▲ BULL':b==='bear'?'▼ BEAR':'◆ NEU'}</button>`).join('')}</div>
     </div>
-    ${symEvts.length?`<div style="margin-bottom:11px">
-      <div style="font-size:9px;font-weight:700;color:var(--t1);margin-bottom:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px">📅 ECONOMIC EVENTS</div>
-      ${calTableHtml(symEvts)}
+    ${symEvts.length?`<div class="evt-section">
+      <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
+        ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag">❗</span><span>Next Event: ${nextLbl}</span>`}
+        <span class="evt-tog-arrow">▶</span>
+      </div>
+      ${evtOpen?`<div class="evt-body">${calTableHtml(symEvts)}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
