@@ -7,33 +7,16 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe candidate endpoints
+      - name: Probe USD events (today + yesterday)
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           START="2026-06-10T00:00:00.000Z"
-          END="2026-06-13T00:00:00.000Z"
-
-          echo "==== 1) eventDates GET, no query ===="
-          curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" -w "\nHTTP_CODE:%{http_code}\n" \
-            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}" | head -c 3000
-          echo
-
-          echo "==== 2) eventDates GET, with volatilities+countries+categories empty ===="
-          curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" -w "\nHTTP_CODE:%{http_code}\n" \
-            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}?volatilities=NONE,LOW,MEDIUM,HIGH&countries=&categories=" | head -c 3000
-          echo
-
-          echo "==== 3) eventDates GET, with US/EU countries ===="
-          curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" -w "\nHTTP_CODE:%{http_code}\n" \
-            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}?volatilities=NONE,LOW,MEDIUM,HIGH&countries=US,EU&categories=" | head -c 3000
-          echo
-
-          echo "==== 4) eventDates POST with JSON body ===="
-          curl -sL -A "$UA" -X POST -H "Content-Type: application/json" -H "Referer: https://www.fxstreet.com/economic-calendar" -w "\nHTTP_CODE:%{http_code}\n" \
-            -d '{"countries":[],"categories":[],"volatilities":["NONE","LOW","MEDIUM","HIGH"]}' \
-            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}" | head -c 3000
-          echo
-
-          echo "==== 5) HEAD on base domain ===="
-          curl -sIL -A "$UA" -w "\nHTTP_CODE:%{http_code}\n" "https://calendar-api.fxstreet.com/en/api/v1/" | head -c 1000
-          echo
+          END="2026-06-12T00:00:00.000Z"
+          curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" \
+            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}?volatilities=NONE,LOW,MEDIUM,HIGH&countries=&categories=" -o resp.json
+          node -e '
+            const d = JSON.parse(require("fs").readFileSync("resp.json","utf8"));
+            console.log("total events:", d.length);
+            const us = d.filter(e=>e.currencyCode==="USD");
+            us.forEach(e=>console.log(JSON.stringify({name:e.name,dateUtc:e.dateUtc,actual:e.actual,consensus:e.consensus,previous:e.previous,unit:e.unit,potency:e.potency,volatility:e.volatility})));
+          '
