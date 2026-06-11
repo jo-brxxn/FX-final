@@ -455,7 +455,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--star);color:#1a1a1a;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Core PPI bei Inflation ergänzt, Indikator-Reihenfolge symbolübergreifend synchron, Hinzufügen/Entfernen bei USD-Makro-Rubriken auf Rohstoffe/Crypto/Indizes übertragen, Refresh trägt Actual-Werte für bestehende Events nach)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Bugfix: Refresh trägt Actual-Werte jetzt auch für Events nach, die bereits ins Postfach gewandert sind)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1920,11 +1920,12 @@ async function fetchFF(silent){
         }
       }
     });
-    // Bestehende Events (auch außerhalb des 10-Tage-Fensters bzw. bereits
-    // vergangene) auf neu verfügbare "Actual"-Werte prüfen und nachtragen,
-    // ohne das Event selbst neu anzulegen (Notizen/Edits bleiben erhalten).
+    // Bestehende Events (auch außerhalb des 10-Tage-Fensters, bereits
+    // vergangene und solche, die schon ins Postfach gewandert sind) auf neu
+    // verfügbare "Actual"-Werte prüfen und nachtragen, ohne das Event selbst
+    // neu anzulegen (Notizen/Edits bleiben erhalten).
     let actualsAdded=0;
-    calEvts.forEach(e=>{
+    [...calEvts,...inbox].forEach(e=>{
       if(e.actual)return;
       const match=evts.find(ev=>{
         if(ev.actual==null||ev.actual===''||(ev.impact!=='High'&&ev.impact!=='Medium'))return false;
@@ -1937,7 +1938,7 @@ async function fetchFF(silent){
     });
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
     processCalEvts();
-    save();renderSidebar();rerender();updInboxBadge();
+    save();renderSidebar();rerender();renderInbox();updInboxBadge();
     if(!silent){
       alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) für bestehende Events nachgetragen.');
     }
