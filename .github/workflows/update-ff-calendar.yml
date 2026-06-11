@@ -1,0 +1,57 @@
+name: Update FF Calendar
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Forex Factory calendar (this + next week)
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL -A "$UA" "https://nfs.faireconomy.media/ff_calendar_thisweek.json" -o thisweek.json || true
+          curl -sL -A "$UA" "https://nfs.faireconomy.media/ff_calendar_nextweek.json" -o nextweek.json || true
+
+      - name: Merge into ff_calendar.json
+        run: |
+          node -e '
+            const fs=require("fs");
+            function safeParse(file){
+              try{
+                const d=JSON.parse(fs.readFileSync(file,"utf8"));
+                return Array.isArray(d)?d:null;
+              }catch(e){return null;}
+            }
+            const a=safeParse("thisweek.json");
+            const b=safeParse("nextweek.json");
+            if(a===null&&b===null){
+              console.log("Both fetches failed/invalid, keeping existing ff_calendar.json");
+              process.exit(0);
+            }
+            const combined=[...(a||[]),...(b||[])];
+            if(combined.length===0){
+              console.log("Empty result, keeping existing ff_calendar.json");
+              process.exit(0);
+            }
+            fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+            console.log("Wrote "+combined.length+" events to ff_calendar.json");
+          '
+
+      - name: Cleanup temp files
+        run: rm -f thisweek.json nextweek.json
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ff_calendar.json
+          git diff --staged --quiet || git commit -m "Update FF calendar data"
+          git diff --staged --quiet || git push

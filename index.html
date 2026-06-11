@@ -413,7 +413,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Refresh-Button, Multi-Proxy-Fallback für FF-News)</div>
+<div style="background:var(--amber);color:#1a1300;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Refresh-Button, tägliche FF-Calendar-Action)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1716,6 +1716,16 @@ async function fetchFFPeriod(period){
   throw new Error('Network error');
 }
 async function fetchFFJson(){
+  // 1) Eigene, von einer täglichen GitHub Action gepflegte Kopie (same-origin,
+  // kein CORS/Proxy nötig - siehe .github/workflows/update-ff-calendar.yml)
+  try{
+    const res=await fetch('ff_calendar.json',{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    if(res.ok){
+      const evts=await res.json();
+      if(Array.isArray(evts)&&evts.length)return evts;
+    }
+  }catch(e){}
+  // 2) Live-Abruf direkt/über Proxys als Fallback
   const results=await Promise.allSettled([fetchFFPeriod('thisweek'),fetchFFPeriod('nextweek')]);
   const evts=results.filter(r=>r.status==='fulfilled').flatMap(r=>r.value);
   if(!evts.length)throw new Error('Network error');
