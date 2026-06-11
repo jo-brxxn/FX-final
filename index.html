@@ -81,7 +81,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
-.evt-banner{color:var(--red);font-weight:800;font-size:12px;margin-top:4px;letter-spacing:.2px;width:100%}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
@@ -139,10 +138,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── INFO BUTTON ── */
 .rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 .rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
-/* ── CALENDAR WARNING ── */
-.cal-warn{background:rgba(var(--red-rgb),.07);border:1px solid rgba(var(--red-rgb),.27);border-radius:var(--rs);padding:6px 9px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-size:10px}
-.cal-warn b{color:var(--red);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
-.cal-warn span{color:var(--t1);flex:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -257,30 +252,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:9px;outline:none;cursor:pointer;flex-shrink:0}
-.dw-cal-date{font-size:9px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:42px}
-.dw-cal-name{font-size:10px;color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dw-cal-cur{font-size:9px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-/* ── CALENDAR ── */
-.cal-ev{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 11px;margin-bottom:6px;display:flex;align-items:flex-start;gap:9px;transition:border-color .12s}
-.cal-ev:hover{border-color:var(--bd2)}
-.cal-date{background:var(--bg4);border:1px solid rgba(var(--purple-rgb),.2);border-radius:5px;padding:5px 7px;text-align:center;flex-shrink:0;min-width:44px}
-.cal-day{font-size:13px;font-weight:800;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
-.cal-mo{font-size:7px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:2px}
-.cal-cd{font-size:7px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-top:3px;color:var(--t3);white-space:nowrap}
-.cal-cd.soon{color:var(--amber)}
-.dw-cal-cd{font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-.dw-cal-cd.soon{color:var(--amber)}
-.cal-body{flex:1;min-width:0}
-.cal-name{font-size:11px;font-weight:600;color:var(--t0)}
-.cal-meta{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
-.ctag{font-size:8px;padding:1px 5px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ih{background:rgba(var(--red-rgb),.09);color:var(--red)}.im{background:rgba(var(--amber-rgb),.09);color:var(--amber)}.il{background:rgba(var(--t3-rgb),.09);color:var(--t2)}
-.cal-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;opacity:.2;flex-shrink:0;padding:0;line-height:1;transition:opacity .12s}
-.cal-ev:hover .cal-del{opacity:.5}.cal-del:hover{opacity:1!important;color:var(--red)}
-.cal-ev.today{border-color:var(--red);background:rgba(var(--red-rgb),.08);box-shadow:0 0 0 1px rgba(var(--red-rgb),.35);animation:pulse-today 1.6s ease-in-out infinite}
-.cal-cd.today-cd{color:var(--red);font-weight:800}
-@keyframes pulse-today{0%,100%{box-shadow:0 0 0 1px rgba(var(--red-rgb),.35)}50%{box-shadow:0 0 0 4px rgba(var(--red-rgb),.12)}}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+/* ── CALENDAR TABLE (FF-Style) ── */
+.cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;margin-bottom:6px}
+.cal-day-hdr{font-size:9px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+.cal-day-hdr.today{color:var(--red)}
+.cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
+.cal-day-hdr.today .cal-day-cd{color:var(--red)}
+.cal-row{display:grid;grid-template-columns:34px 36px 8px 1fr 16px;gap:7px;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bd)}
+.cal-row:last-child{border-bottom:none}
+.cal-row:hover{background:var(--bg3)}
+.cal-row.today{background:rgba(var(--red-rgb),.05)}
+.cal-time{font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
+.cal-ccy{font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
+.cal-imp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cal-imp-dot.ih{background:var(--red)}.cal-imp-dot.im{background:var(--amber)}.cal-imp-dot.il{background:var(--t3)}
+.cal-evname{font-size:10.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
+.cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
+.cal-stats{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3);padding-left:91px;margin-top:-1px}
+.cal-stats b{color:var(--t1);font-weight:700}
+.cal-stats b.act-good{color:var(--green)}
+.cal-stats b.act-bad{color:var(--red)}
+@media(max-width:380px){.cal-row{grid-template-columns:32px 8px 1fr 16px}.cal-row .cal-time{display:none}.cal-stats{padding-left:40px}}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -348,8 +342,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .sym-row{padding:7px 10px}
   .sym-name{font-size:14px}
   .bbadge{font-size:11px;padding:3px 8px;width:68px}
-  .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:12px}
-  .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:11px}
+  .dw-empty,.dw-chip,.dw-meta{font-size:12px}
+  .dw-add,.pbo,.dw-sel{font-size:11px}
   .dw-chip-x,.dw-del{font-size:14px}
   .dw-nav{font-size:10px;padding:3px 6px}
   .modal{max-width:440px;padding:20px}
@@ -374,8 +368,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .sym-row{padding:8px 11px}
   .sym-name{font-size:15px}
   .bbadge{font-size:12px;padding:4px 9px;width:74px}
-  .dw-empty,.dw-chip,.dw-meta,.dw-cal-name{font-size:13px}
-  .dw-cal-date,.dw-cal-cur,.dw-add,.pbo,.dw-sel{font-size:12px}
+  .dw-empty,.dw-chip,.dw-meta{font-size:13px}
+  .dw-add,.pbo,.dw-sel{font-size:12px}
   .dw-chip-x,.dw-del{font-size:16px}
 }
 /* ── ULTRA-WIDE ── */
@@ -413,7 +407,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (FF-Calendar-Action Push-Bug behoben)</div>
+<div style="background:var(--star);color:#000;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Kalender im Forex-Factory-Stil + USD-News bei Rohstoffen/Krypto/Index)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -476,9 +470,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
       <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">DATE</div><input class="finp" id="evDate" type="date"></div>
     </div>
     <div class="fg3">
+      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
       <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
       <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">EXPECTED</div><input class="finp" id="evExp" placeholder="Consensus..."></div>
+    </div>
+    <div class="fg3">
+      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="z.B. 0.7%"></div>
+      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">PREVIOUS</div><input class="finp" id="evPrevious" placeholder="z.B. 1.4%"></div>
+      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">ACTUAL</div><input class="finp" id="evActual" placeholder="z.B. 0.9%"></div>
     </div>
     <div style="margin-bottom:7px"><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">NOTES</div><input class="finp" id="evNotes" placeholder="What to watch..."></div>
     <button class="btn g" style="width:100%;padding:8px;justify-content:center" onclick="addCalEv()">＋ Add to Calendar</button>
@@ -653,6 +652,67 @@ function evtMatchesSym(ev,id){
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
 function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute';if(n===1)return'Morgen';if(n===-1)return'Gestern';return n>1?`in ${n}T`:`vor ${-n}T`;}
+function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
+
+// ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
+// Vergleicht "Actual" mit "Forecast" (Fallback: "Previous") und färbt grün/rot,
+// je nachdem ob der Wert für die jeweilige Währung gut oder schlecht ist.
+// Bei Indikatoren wie Unemployment/Claims/Deficit ist "niedriger" besser.
+const LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i;
+function parseNumLike(s){
+  if(s==null||s==='')return null;
+  const m=String(s).match(/-?[\d.]+/);
+  if(!m)return null;
+  let v=parseFloat(m[0]);
+  if(/B/i.test(s))v*=1e9;else if(/M/i.test(s))v*=1e6;else if(/K/i.test(s))v*=1e3;
+  return isNaN(v)?null:v;
+}
+function actualColor(ev){
+  if(!ev.actual)return'';
+  const a=parseNumLike(ev.actual);
+  const f=parseNumLike(ev.forecast||ev.previous);
+  if(a===null||f===null||a===f)return'';
+  const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
+  return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
+}
+// Rendert eine Kalender-Zeile im FF-Stil: Zeit | Währung | Impact | Name [+ Actual/Forecast/Previous]
+function calRowHtml(ev,opts){
+  opts=opts||{};
+  const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
+  const impLbl=ev.impact==='high'?'High Impact':ev.impact==='medium'?'Medium Impact':'Low Impact';
+  const ac=actualColor(ev);
+  const stats=[];
+  if(ev.actual)stats.push(`<span>Actual: <b class="${ac}">${escH(ev.actual)}</b></span>`);
+  if(ev.forecast)stats.push(`<span>Forecast: <b>${escH(ev.forecast)}</b></span>`);
+  if(ev.previous)stats.push(`<span>Previous: <b>${escH(ev.previous)}</b></span>`);
+  if(!stats.length&&ev.expected)stats.push(`<span>${escH(ev.expected)}</span>`);
+  const isToday=ev.date===todayStr();
+  return`<div class="cal-row${isToday?' today':''}">
+    <div class="cal-time">${ev.time||'—'}</div>
+    <div class="cal-ccy">${escH(ev.currencies||'')}</div>
+    <div class="cal-imp-dot ${ic}" title="${impLbl}"></div>
+    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+    ${opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`:'<div></div>'}
+    ${stats.length?`<div class="cal-stats">${stats.join('')}</div>`:''}
+    ${ev.notes?`<div class="cal-stats" style="color:var(--t2)">${escH(ev.notes)}</div>`:''}
+  </div>`;
+}
+// Rendert eine Liste von Events gruppiert nach Tag (mit Datums-Headern).
+function calTableHtml(evts,opts){
+  opts=opts||{};
+  if(!evts.length)return'';
+  const today=todayStr();
+  let html='',lastDate=null;
+  evts.forEach(ev=>{
+    if(ev.date!==lastDate){
+      lastDate=ev.date;
+      const isToday=ev.date===today;
+      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(ev.date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
+    }
+    html+=calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null});
+  });
+  return`<div class="cal-table">${html}</div>`;
+}
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
@@ -682,7 +742,7 @@ function processCalEvts(){
   let changed=false;
   calEvts.forEach(ev=>{
     if(ev.date<=today&&!inbox.find(m=>m.name===ev.name&&m.date===ev.date)){
-      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,notes:ev.notes});
+      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,time:ev.time,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,forecast:ev.forecast,previous:ev.previous,actual:ev.actual,notes:ev.notes});
       changed=true;
     }
   });
@@ -697,6 +757,16 @@ function getInboxFor(id){
 }
 function hasInboxNotif(id){return getInboxFor(id).length>0;}
 const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach">❗</span>';
+// Alle Events (anstehend + bereits im Postfach/erschienen) für ein Symbol -
+// inkl. USD-News bei Rohstoffen/Krypto/Indizes (NONFX_IDS).
+function getSymEventsAll(id){
+  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  const all=calEvts.filter(ev=>ids.some(x=>evtMatchesSym(ev,x)));
+  inbox.forEach(m=>{
+    if(ids.some(x=>evtMatchesSym(m,x))&&!all.find(e=>e.name===m.name&&e.date===m.date))all.push(m);
+  });
+  return all.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+}
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
@@ -1140,13 +1210,16 @@ function renderDetail(){
   const c=getSym();if(!c)return;
   const bull=c.genBull||[],bear=c.genBear||[];
   const pct=Math.round((bull.length/(bull.length+bear.length||1))*100);
-  const relEvts=getRelevantEvents(c.id);
+  const symEvts=getSymEventsAll(c.id);
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${c.name}</div><div class="afull">${c.full}</div></div>
       <div class="brow">${['bull','neu','bear'].map(b=>`<button class="bo${c.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setBias('${b}')">${b==='bull'?'▲ BULL':b==='bear'?'▼ BEAR':'◆ NEU'}</button>`).join('')}</div>
-      ${relEvts.length?`<div class="evt-banner">⚠ ${relEvts.map(ev=>{const{day,mo}=fmtDate(ev.date);return`${escH(ev.name)} (${day} ${mo})`;}).join(' · ')}</div>`:''}
     </div>
+    ${symEvts.length?`<div style="margin-bottom:11px">
+      <div style="font-size:9px;font-weight:700;color:var(--t1);margin-bottom:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px">📅 ECONOMIC EVENTS</div>
+      ${calTableHtml(symEvts)}
+    </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs">
@@ -1162,13 +1235,7 @@ function renderDetail(){
 
 // ── GENERAL TAB ──
 function renderGenTab(c){
-  const today=todayStr();
-  const warns=calEvts.filter(ev=>ev.date>=today&&evtMatchesSym(ev,c.id)).sort((a,b)=>a.date.localeCompare(b.date));
-  const warnHtml=warns.map(ev=>{
-    const{day,mo}=fmtDate(ev.date);
-    return`<div class="cal-warn">⚠️<b>${day} ${mo}</b><span>${escH(ev.name)}${ev.expected?' — '+escH(ev.expected):''}</span></div>`;
-  }).join('');
-  return`${warnHtml}<div style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
+  return`<div style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
   <div class="gen-cols">
   <div>
     <div class="slbl"><span style="color:var(--green)">▲ BULLISH STRUCTURAL</span><div class="slbl-line"></div></div>
@@ -1623,34 +1690,15 @@ function mvPairInCat(id,d){
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
-  const today=todayStr();
-  const sorted=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date));
+  const sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   el.innerHTML=sorted.length===0?`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No events yet.</div>`:
-  sorted.map(ev=>{
-    const{day,mo}=fmtDate(ev.date);
-    const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
-    const dleft=daysUntil(ev.date);
-    const isToday=ev.date===today;
-    return`<div class="cal-ev${isToday?' today':''}">
-      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}${isToday?' today-cd':''}">${countdownLbl(ev.date)}</div></div>
-      <div class="cal-body">
-        <div class="cal-name">${isToday?'🔴 ':''}${escH(ev.name)}</div>
-        <div class="cal-meta">
-          <span class="ctag ${ic}">${ev.impact==='high'?'🔴 HIGH':ev.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
-          ${ev.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(ev.currencies)}</span>`:''}
-          ${ev.expected?`<span class="ctag" style="background:rgba(var(--t3-rgb),.09);color:var(--t2)">Exp: ${escH(ev.expected)}</span>`:''}
-          ${isToday?`<span class="ctag" style="background:rgba(var(--red-rgb),.18);color:var(--red);font-weight:800">🔥 HEUTE</span>`:''}
-        </div>
-        ${ev.notes?`<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.5">${escH(ev.notes)}</div>`:''}
-      </div>
-      <button class="cal-del" onclick="delCalEv('${ev.id}')">×</button>
-    </div>`;}).join('');}
+  calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
   if(!name||!date){alert('Name and date are required.');return;}
-  pushU();calEvts.push({id:uid(),name,date,currencies:document.getElementById('evCcy').value.trim(),impact:document.getElementById('evImpact').value,expected:document.getElementById('evExp').value.trim(),notes:document.getElementById('evNotes').value.trim()});
-  ['evName','evCcy','evExp','evNotes'].forEach(id=>{document.getElementById(id).value='';});
+  pushU();calEvts.push({id:uid(),name,date,time:document.getElementById('evTime').value.trim(),currencies:document.getElementById('evCcy').value.trim(),impact:document.getElementById('evImpact').value,forecast:document.getElementById('evForecast').value.trim(),previous:document.getElementById('evPrevious').value.trim(),actual:document.getElementById('evActual').value.trim(),notes:document.getElementById('evNotes').value.trim()});
+  ['evName','evCcy','evTime','evForecast','evPrevious','evActual','evNotes'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('evDate').value='';save();renderCalendar();}
 function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();renderCalendar();}
 
@@ -1663,23 +1711,8 @@ function openInboxM(){renderInbox();openM('mInbox');}
 function renderInbox(){
   const el=document.getElementById('inboxList');if(!el)return;
   if(!inbox.length){el.innerHTML=`<div class="inbox-empty">Keine neuen Nachrichten.</div>`;return;}
-  el.innerHTML=inbox.map(m=>{
-    const{day,mo}=fmtDate(m.date);
-    const ic=m.impact==='high'?'ih':m.impact==='medium'?'im':'il';
-    return`<div class="cal-ev">
-      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div></div>
-      <div class="cal-body">
-        <div class="cal-name">${escH(m.name)}</div>
-        <div class="cal-meta">
-          <span class="ctag ${ic}">${m.impact==='high'?'🔴 HIGH':m.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
-          ${m.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(m.currencies)}</span>`:''}
-          ${m.expected?`<span class="ctag" style="background:rgba(var(--t3-rgb),.09);color:var(--t2)">Exp: ${escH(m.expected)}</span>`:''}
-        </div>
-        ${m.notes?`<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.5">${escH(m.notes)}</div>`:''}
-      </div>
-      <button class="cal-del" onclick="delInboxItem('${m.id}')" title="Löschen">×</button>
-    </div>`;
-  }).join('');
+  const sorted=[...inbox].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):b.date.localeCompare(a.date));
+  el.innerHTML=calTableHtml(sorted,{delAction:m=>`delInboxItem('${m.id}')`});
 }
 function delInboxItem(id){
   pushU();
@@ -1748,10 +1781,11 @@ async function fetchFF(silent){
         // In lokales Datum umrechnen, damit "heute" mit todayStr() übereinstimmt
         // (FF liefert Zeiten in US-Eastern, was je nach Zeitzone zu Datums-Verschiebung führen kann)
         const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        const timeStr=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
         const dl=daysUntil(dateStr);
         if(dl<0||dl>FF_WINDOW_DAYS)return;
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
-          calEvts.push({id:uid(),name:ev.title||'',date:dateStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',expected:ev.forecast?'Forecast: '+ev.forecast:(ev.previous?'Prev: '+ev.previous:''),notes:'',src:'ff'});
+          calEvts.push({id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'});
           added++;
         }
       }
@@ -1894,19 +1928,9 @@ function renderDash(){
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="opacity:.5" title="Remove">×</button>
         </div>`;}).join(''));
     }else if(w.type==='calendar'){
-      const evts=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+      const evts=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date)).slice(0,6);
       content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      evts.map(ev=>{const{day,mo}=fmtDate(ev.date);const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';const dleft=daysUntil(ev.date);
-        return`<div class="cal-ev">
-          <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</div></div>
-          <div class="cal-body">
-            <div class="cal-name">${escH(ev.name)}</div>
-            <div class="cal-meta">
-              <span class="ctag ${ic}">${ev.impact==='high'?'🔴 HIGH':ev.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
-              ${ev.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(ev.currencies)}</span>`:''}
-            </div>
-          </div>
-        </div>`;}).join('');
+      calTableHtml(evts);
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
