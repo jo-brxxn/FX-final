@@ -172,6 +172,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
 .ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
 .ind-body{padding:6px 8px}
+.ind-data{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
+.ind-data-lbl{color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-size:8px}
+.ind-data-act{font-weight:800;color:var(--t1)}
+.ind-data-act.act-good{color:var(--green)}
+.ind-data-act.act-bad{color:var(--red)}
+.ind-data-val{font-weight:600;color:var(--t2)}
+.ind-data-sep{color:var(--t3);opacity:.4}
 /* subpoints */
 .sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}
 .sp:hover{background:#2c3a52}
@@ -461,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (TradingView als zusätzliche Actual-Quelle: PPI 1.1%, Core PPI 0.4%, Claims 229K und EZB-Leitzins 2.4% jetzt verfügbar — Refresh drücken)</div>
+<div style="background:var(--red);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Inflation/Zinsen/Arbeitsmarkt-Indikatoren zeigen jetzt automatisch Actual/Forecast/Previous + Bias-Update bei allen Symbolen)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -823,6 +830,7 @@ function processCalEvts(){
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
+  if(syncIndicatorBiases())changed=true;
   return changed;
 }
 function getInboxFor(id){
@@ -857,6 +865,75 @@ function getSymEventsCompact(id){
 }
 const evtSectionOpen={};
 function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetail();}
+
+// ── INDIKATOR ↔ KALENDER-AUTOMATIK ──
+// Verknüpft die manuell gepflegten Indikatoren in den Rubriken "Interest
+// Rates"/"Inflation"/"Labour Market" automatisch mit dem jüngsten
+// passenden Kalender-Event (Actual/Forecast/Previous) und aktualisiert
+// daraus das Bias des Indikators (▲/▼/◆ je nach Überraschung ggü. Forecast).
+function mkIndMatcher(include,exclude){
+  return name=>{
+    const n=(name||'').toLowerCase();
+    if(exclude&&exclude.some(re=>re.test(n)))return false;
+    return include.some(re=>re.test(n));
+  };
+}
+const IND_EVENT_MATCHERS={
+  'Central Bank Rate':mkIndMatcher([/rate decision/,/interest rate/,/cash rate/,/bank rate/,/refinancing rate/,/overnight rate/,/policy rate/,/deposit facility/,/official cash rate/]),
+  'CPI (Headline)':mkIndMatcher([/\bcpi\b/],[/core/]),
+  'Core CPI':mkIndMatcher([/core cpi/]),
+  'PPI':mkIndMatcher([/\bppi\b/],[/core/]),
+  'Core PPI':mkIndMatcher([/core ppi/]),
+  'PCE':mkIndMatcher([/\bpce\b/],[/core/]),
+  'Core PCE':mkIndMatcher([/core pce/]),
+  'Services Inflation':mkIndMatcher([/services?\s+(pmi|inflation)/]),
+  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/]),
+  'NFP / Employment Change':mkIndMatcher([/non-?farm/,/\bnfp\b/,/employment change/],[/adp/]),
+  'Unemployment Rate':mkIndMatcher([/unemployment rate/]),
+  'ADP Employment':mkIndMatcher([/\badp\b/]),
+  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/]),
+  'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/]),
+  'Initial Jobless Claims':mkIndMatcher([/unemployment claims/,/jobless claims/]),
+};
+const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
+// Rohstoffe/Krypto/Indizes hängen am USD-Makrozyklus -> nutzen USD-Events.
+function macroCcyFor(id){return MACRO_SYNC_IDS.includes(id)?'USD':id;}
+// Findet das jüngste veröffentlichte Event (mit "Actual"-Wert), das zum
+// Indikator-Namen und zur Symbol-Währung passt.
+function findIndEvent(symId,indName){
+  const matcher=IND_EVENT_MATCHERS[indName];
+  if(!matcher)return null;
+  const ccy=macroCcyFor(symId);
+  const pool=[...inbox,...calEvts].filter(ev=>ev.actual&&evtMatchesSym(ev,ccy)&&matcher(ev.name));
+  if(!pool.length)return null;
+  pool.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  return pool[pool.length-1];
+}
+function indBiasFromEvent(ev){
+  const ac=actualColor(ev);
+  return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
+}
+// Aktualisiert automatisch das Bias aller Inflation-/Zins-/Arbeitsmarkt-
+// Indikatoren anhand des jeweils neuesten passenden Kalender-Events. Wird
+// nur ausgelöst, wenn ein NEUES Event (anderes als zuletzt) gefunden wird,
+// damit ein manuell gesetztes Bias nicht bei jedem Render überschrieben wird.
+function syncIndicatorBiases(){
+  let changed=false;
+  syms.forEach(c=>{
+    (c.rubrics||[]).forEach(rub=>{
+      if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
+      rub.indicators.forEach(ind=>{
+        const ev=findIndEvent(c.id,ind.name);
+        if(ev&&ev.id!==ind.autoEvId){
+          ind.autoEvId=ev.id;
+          const nb=indBiasFromEvent(ev);
+          if(ind.bias!==nb){ind.bias=nb;changed=true;}
+        }
+      });
+    });
+  });
+  return changed;
+}
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
@@ -1441,6 +1518,16 @@ function renderInd(ind,ri,ii,total){
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">🔄 <span>${escH(ind.interval)}</span></button>`;}
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
+  const ev=findIndEvent(getSym().id,ind.name);
+  let dataPart='';
+  if(ev){
+    const ac=actualColor(ev);
+    dataPart=`<div class="ind-data" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
+      <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
+      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
+      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
+    </div>`;
+  }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
     <div class="ind-hdr">
       <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
@@ -1452,6 +1539,7 @@ function renderInd(ind,ri,ii,total){
       <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
       <button class="idel2" onclick="delInd(${ri},${ii})">×</button>
     </div>
+    ${dataPart}
     <div class="ind-body">
       ${(ind.points||[]).map((pt,pi)=>`<div class="sp" style="--spc:${bco}">
         <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="syncMacroRub(${ri});save()">${escH(pt.text||pt||'')}</textarea>
