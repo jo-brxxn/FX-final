@@ -413,7 +413,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Glow überall, Setups-Layout, größere Event-Karten)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Refresh-Button, Multi-Proxy-Fallback für FF-News)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -466,7 +466,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage von Forex Factory neu (auch gelöschte Events)">🔄 News aktualisieren</button>
+    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage von Forex Factory neu (auch gelöschte Events)">🔄 Refresh</button>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -1690,26 +1690,30 @@ function delInboxItem(id){
   renderSidebar();
   rerender();
 }
-// Holt Events von FF (this+next week, mit Proxy-Fallback) für ein 10-Tage-Fenster
+// Holt Events von FF (this+next week) für ein 10-Tage-Fenster.
+// Forex Factory bietet keine offizielle API/keinen API-Key an - der Feed unter
+// faireconomy.media wird daher direkt UND über mehrere CORS-Proxys versucht,
+// damit ein einzelner blockierter/ausgefallener Weg nicht das ganze Update killt.
 const FF_WINDOW_DAYS=10;
 async function fetchFFPeriod(period){
-  const target='https://cdn-nfs.faireconomy.media/ff_calendar_'+period+'.json';
-  // 1) Direkter Versuch (CDN erlaubt teilweise CORS)
-  try{
-    const res=await fetch(target,{signal:AbortSignal.timeout(10000)});
-    if(res.ok){
+  const target='https://nfs.faireconomy.media/ff_calendar_'+period+'.json';
+  const targetAlt='https://cdn-nfs.faireconomy.media/ff_calendar_'+period+'.json';
+  const sources=[
+    target,
+    targetAlt,
+    'https://corsproxy.io/?url='+encodeURIComponent(target),
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(target),
+    'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(target),
+  ];
+  for(const url of sources){
+    try{
+      const res=await fetch(url,{signal:AbortSignal.timeout(10000)});
+      if(!res.ok)continue;
       const evts=await res.json();
-      if(Array.isArray(evts))return evts;
-    }
-  }catch(e){}
-  // 2) Fallback über CORS-Proxy (allorigins)
-  const proxyUrl='https://api.allorigins.win/get?url='+encodeURIComponent(target);
-  const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(10000)});
-  if(!res.ok)throw new Error('Network error');
-  const data=await res.json();
-  const evts=JSON.parse(data.contents||'null');
-  if(!Array.isArray(evts))throw new Error('Invalid response');
-  return evts;
+      if(Array.isArray(evts)&&evts.length)return evts;
+    }catch(e){}
+  }
+  throw new Error('Network error');
 }
 async function fetchFFJson(){
   const results=await Promise.allSettled([fetchFFPeriod('thisweek'),fetchFFPeriod('nextweek')]);
@@ -1719,7 +1723,7 @@ async function fetchFFJson(){
 }
 async function fetchFF(silent){
   const btn=silent?null:event.currentTarget;
-  if(btn){btn.textContent='⏳ Aktualisiere...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Refreshing...';btn.disabled=true;}
   try{
     const evts=await fetchFFJson();
     if(!silent)pushU();
@@ -1749,9 +1753,9 @@ async function fetchFF(silent){
       alert('✓ '+added+' High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.');
     }
   }catch(e){
-    if(!silent)alert('Could not reach Forex Factory.\n\nThis can happen if:\n• Forex Factory blocked the request\n• The proxy is temporarily down\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
+    if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
   }
-  if(btn){btn.textContent='🔄 News aktualisieren';btn.disabled=false;}
+  if(btn){btn.textContent='🔄 Refresh';btn.disabled=false;}
 }
 function autoFetchFF(){
   const last=localStorage.getItem('fxpro_ff_last');
