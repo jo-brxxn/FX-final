@@ -455,7 +455,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Kalender-Workflow erweitert: holt zusätzlich echte "Actual"-Werte von FXStreet und trägt sie automatisch in ff_calendar.json ein)</div>
+<div style="background:var(--star);color:#1a1a1a;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Core PPI bei Inflation ergänzt, Indikator-Reihenfolge symbolübergreifend synchron, Hinzufügen/Entfernen bei USD-Makro-Rubriken auf Rohstoffe/Crypto/Indizes übertragen, Refresh trägt Actual-Werte für bestehende Events nach)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -851,7 +851,7 @@ function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetai
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','PCE','Core PCE','Services Inflation','Unemployment Claims'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Unemployment Claims'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Initial Jobless Claims'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
@@ -873,6 +873,11 @@ function migrateRubInds(rubrics){
     }
     if(rub.name==='Inflation'&&!rub.indicators.find(i=>i.name==='Unemployment Claims')){
       rub.indicators.push({id:uid(),name:'Unemployment Claims',bias:'neu',imp:false,date:'',interval:'',points:[]});
+    }
+    if(rub.name==='Inflation'&&!rub.indicators.find(i=>i.name==='Core PPI')){
+      const idx=rub.indicators.findIndex(i=>i.name==='PPI');
+      const ni={id:uid(),name:'Core PPI',bias:'neu',imp:false,date:'',interval:'',points:[]};
+      idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
   });
 }
@@ -1557,12 +1562,53 @@ function saveInfoM(){
 }
 function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);save();renderDetail();}
 function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
-function delInd(ri,ii){pushU();const r=getRub(ri);if(r&&r.indicators)r.indicators.splice(ii,1);syncMacroRub(ri);save();renderDetail();}
-function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncMacroRub(ri);save();renderDetail();}
+
+// ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
+// 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
+//    Rubrik umsortiert werden, wird dieselbe Reihenfolge (per Name
+//    abgeglichen) auf die gleichnamige Rubrik aller anderen Symbole
+//    übertragen.
+function syncIndOrderGlobal(ri){
+  const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
+  if(!cur||!src||!src.indicators)return;
+  const order=src.indicators.map(i=>i.name);
+  syms.forEach(sym=>{
+    if(sym.id===cur.id||!sym.rubrics)return;
+    const r=sym.rubrics.find(x=>x.name===src.name);
+    if(!r||!r.indicators)return;
+    const byName=new Map(r.indicators.map(ind=>[ind.name,ind]));
+    const reordered=[];
+    order.forEach(name=>{if(byName.has(name)){reordered.push(byName.get(name));byName.delete(name);}});
+    r.indicators.forEach(ind=>{if(byName.has(ind.name)){reordered.push(ind);byName.delete(ind.name);}});
+    r.indicators=reordered;
+  });
+}
+// 2) Hinzufügen/Entfernen: in den Makro-Rubriken (Interest Rates,
+//    Inflation, Labour Market, Geopolitics, Makro & Risikoumfeld) wird
+//    ein neuer/gelöschter Indikator von USD zu allen USD-getriebenen
+//    Assets (Rohstoffe, Krypto, Indizes) gespiegelt - NICHT umgekehrt,
+//    da diese Assets eigene, USD-unabhängige Indikatoren haben können.
+function syncMacroIndAddRemove(ri,action,name){
+  const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
+  if(!cur||cur.id!=='USD'||!src||!MACRO_SYNC_RUBS.includes(src.name))return;
+  NONFX_IDS.forEach(id=>{
+    const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
+    const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
+    if(!r.indicators)r.indicators=[];
+    if(action==='add'){
+      if(!r.indicators.find(i=>i.name===name))r.indicators.push({id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]});
+    }else{
+      const idx=r.indicators.findIndex(i=>i.name===name);
+      if(idx>=0)r.indicators.splice(idx,1);
+    }
+  });
+}
+function delInd(ri,ii){pushU();const r=getRub(ri);if(!r||!r.indicators)return;const ind=r.indicators[ii];r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);save();renderDetail();}
+function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
-  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroRub(ri);save();renderDetail();}
+  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);save();renderDetail();}
 function addPt(ri,ii){
   const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
@@ -1874,11 +1920,26 @@ async function fetchFF(silent){
         }
       }
     });
+    // Bestehende Events (auch außerhalb des 10-Tage-Fensters bzw. bereits
+    // vergangene) auf neu verfügbare "Actual"-Werte prüfen und nachtragen,
+    // ohne das Event selbst neu anzulegen (Notizen/Edits bleiben erhalten).
+    let actualsAdded=0;
+    calEvts.forEach(e=>{
+      if(e.actual)return;
+      const match=evts.find(ev=>{
+        if(ev.actual==null||ev.actual===''||(ev.impact!=='High'&&ev.impact!=='Medium'))return false;
+        if(!ev.date)return false;
+        const d=new Date(ev.date);if(isNaN(d))return false;
+        const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        return ev.title===e.name&&dateStr===e.date&&(ev.country||'')===(e.currencies||'');
+      });
+      if(match){e.actual=match.actual;actualsAdded++;}
+    });
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
     processCalEvts();
     save();renderSidebar();rerender();updInboxBadge();
     if(!silent){
-      alert('✓ '+added+' High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.');
+      alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) für bestehende Events nachgetragen.');
     }
   }catch(e){
     if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
