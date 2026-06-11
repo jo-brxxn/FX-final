@@ -93,6 +93,10 @@ jobs:
             curl -sL -A "$UA" "https://www.forexfactory.com/calendar?day=$d" -o "ffhtml_$d.html" || true
           done
           curl -sL -A "$UA" "https://api.tradingeconomics.com/calendar?c=guest:guest&f=json" -o te.json || true
+          TV_FROM=$(node -e 'console.log(new Date(Date.now()-3*86400e3).toISOString())')
+          TV_TO=$(node -e 'console.log(new Date(Date.now()+86400e3).toISOString())')
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
+            "https://economic-calendar.tradingview.com/events?from=${TV_FROM}&to=${TV_TO}&countries=US,EU,DE,FR,IT,ES,GB,JP,CA,AU,NZ,CH,CN" -o tv.json || true
           node -e '
             const fs=require("fs");
             const out=[];
@@ -115,8 +119,30 @@ jobs:
                   found++;
                 }
               });
-              console.log("FF website "+day+": "+found+" actual(s) parsed");
+              const diag=found?"":" [len="+html.length+" rows="+rows.length+(/just a moment|challenge|cf-/i.test(html)?" CLOUDFLARE-BLOCK":"")+"]";
+              console.log("FF website "+day+": "+found+" actual(s) parsed"+diag);
             });
+            // ── TradingView-Wirtschaftskalender ────────────────────────
+            const TV2CCY={US:"USD",EU:"EUR",DE:"EUR",FR:"EUR",IT:"EUR",ES:"EUR",GB:"GBP",JP:"JPY",CA:"CAD",AU:"AUD",NZ:"NZD",CH:"CHF",CN:"CNY"};
+            try{
+              const tv=JSON.parse(fs.readFileSync("tv.json","utf8"));
+              const evts=Array.isArray(tv)?tv:(tv&&Array.isArray(tv.result)?tv.result:null);
+              if(evts){
+                let n=0;
+                evts.forEach(ev=>{
+                  const ccy=TV2CCY[ev.country];
+                  if(!ccy||ev.actual==null)return;
+                  let val=String(ev.actual);
+                  if(ev.unit==="%")val+="%";
+                  else if(ev.scale)val+=String(ev.scale).toUpperCase();
+                  out.push({source:"tv",name:ev.title||"",country:ccy,dateUtc:ev.date,actual:val});
+                  n++;
+                });
+                console.log("TradingView: "+n+" actual(s) loaded");
+              }else{
+                console.log("TradingView: unexpected response shape");
+              }
+            }catch(e){console.log("TradingView unavailable: "+e.message);}
             // ── Trading Economics normalisieren ────────────────────────
             const C2CCY={"united states":"USD","euro area":"EUR","germany":"EUR","france":"EUR","italy":"EUR","spain":"EUR","united kingdom":"GBP","japan":"JPY","canada":"CAD","australia":"AUD","new zealand":"NZD","switzerland":"CHF","china":"CNY"};
             try{
@@ -251,6 +277,8 @@ jobs:
               s=s.replace(/producer price index|producer prices/g,"ppi");
               s=s.replace(/consumer price index|inflation rate/g,"cpi");
               s=s.replace(/, final demand|final demand/g,"");
+              s=s.replace(/initial jobless claims/g,"unemployment claims");
+              s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
               s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
               return s.split(" ").sort().join(" ");
             }
@@ -284,10 +312,10 @@ jobs:
               const evDayET=String(ev.date).slice(0,10);
               const ffw=altActuals.find(a=>a.source==="ffhtml"&&a.title===ev.title&&a.country===ev.country&&a.day===evDayET&&a.actual);
               if(ffw){ev.actual=ffw.actual;matchedFFW++;return;}
-              // 3) Trading Economics: kanonischer Name + Zeit-Toleranz
+              // 3) TradingView/Trading Economics: kanonischer Name + Zeit-Toleranz
               const evKey=canonKey(ev.title);
               const te=altActuals.filter(a=>
-                a.source==="te"&&a.country===ev.country&&a.actual&&
+                (a.source==="te"||a.source==="tv")&&a.country===ev.country&&a.actual&&
                 Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&
                 canonKey(a.name)===evKey
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
@@ -301,7 +329,7 @@ jobs:
                 unmatched.push(ev.title+" ("+ev.country+", "+ev.date+") -> FXStreet: "+(near.length?near.join(" | "):"NONE")+" || Alt: "+(nearAlt.length?nearAlt.join(" | "):"NONE"));
               }
             });
-            console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from Trading Economics");
+            console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from TradingView/TradingEconomics");
             if(unmatched.length){
               console.log("Unmatched due/recent High+Medium events:");
               unmatched.forEach(u=>console.log("  - "+u));
@@ -310,7 +338,7 @@ jobs:
           '
 
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json alt_actuals.json ffhtml_*.html
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json alt_actuals.json ffhtml_*.html
 
       - name: Commit and push if changed
         run: |
