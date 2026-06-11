@@ -6,7 +6,7 @@
 <title>FX Analyst Pro</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;min-height:100vh;overflow-x:hidden;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;height:100vh;overflow:hidden;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
 :root{
   --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;--bg6:#313c52;
@@ -18,7 +18,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
-.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .logo{font-size:18px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:9px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:9px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
@@ -29,12 +29,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}
 .btn.g:hover{background:rgba(var(--green-rgb),.15)}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
-.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}
 .tp:hover:not(.on){color:var(--t1)}
 /* ── BODY ── */
-.body{display:flex;height:calc(100vh - 94px)}
+.body{display:flex;flex:1;min-height:0}
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
 .sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .ab-wrap{position:relative}
@@ -179,7 +179,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}
 .sp:hover .sp-del{opacity:.5}.sp-del:hover{opacity:1!important}
 /* ── FULL PAGE ── */
-.pc{padding:14px;overflow-y:auto;height:calc(100vh - 94px);-webkit-overflow-scrolling:touch}
+.pc{padding:14px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
 .pcc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px}
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
@@ -312,7 +312,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   .btn{font-size:11px;padding:6px 12px}
   .tabbar{padding:0 22px}
   .tp{font-size:12px;padding:11px 18px}
-  .body,.pc{height:calc(100vh - 104px)}
   .sb{width:90px}
   .sb-lbl{font-size:8px}
   .ab .an,.ab .av{font-size:11px}
@@ -398,7 +397,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: LILA (Pro/Contra im Allgemein-Tab beleuchtet, Other Assets ausgerichtet)</div>
+<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRUEN (Sidebar scrollt unabhaengig vom Inhalt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
