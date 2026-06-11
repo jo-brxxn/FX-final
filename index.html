@@ -254,27 +254,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:9px;outline:none;cursor:pointer;flex-shrink:0}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 /* ── CALENDAR TABLE (FF-Style) ── */
-.cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;margin-bottom:6px}
-.cal-day-hdr{font-size:9px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+.cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto;margin-bottom:6px}
+.cal-day-hdr{font-size:10px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .cal-day-hdr.today{color:var(--red)}
 .cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
 .cal-day-hdr.today .cal-day-cd{color:var(--red)}
-.cal-row{display:grid;grid-template-columns:34px 36px 8px 1fr 16px;gap:7px;align-items:center;padding:6px 9px;border-bottom:1px solid var(--bd)}
+.cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:5px 9px;font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
+.cal-col-hdr span{text-align:center}
+.cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
+.cal-row{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-row:last-child{border-bottom:none}
 .cal-row:hover{background:var(--bg3)}
 .cal-row.today{background:rgba(var(--red-rgb),.05)}
-.cal-time{font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
-.cal-ccy{font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
-.cal-imp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.cal-imp-dot.ih{background:var(--red)}.cal-imp-dot.im{background:var(--amber)}.cal-imp-dot.il{background:var(--t3)}
-.cal-evname{font-size:10.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-time{font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
+.cal-ccy{font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
+.cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
+.cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
+.cal-val{font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700;color:var(--t1);text-align:center}
+.cal-val.ph{color:var(--t3);font-weight:400}
+.cal-val.act-good{color:var(--green)}
+.cal-val.act-bad{color:var(--red)}
 .cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
 .cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
-.cal-stats{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap;font-size:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3);padding-left:91px;margin-top:-1px}
-.cal-stats b{color:var(--t1);font-weight:700}
-.cal-stats b.act-good{color:var(--green)}
-.cal-stats b.act-bad{color:var(--red)}
-@media(max-width:380px){.cal-row{grid-template-columns:32px 8px 1fr 16px}.cal-row .cal-time{display:none}.cal-stats{padding-left:40px}}
+@media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 14px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -407,7 +411,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--star);color:#000;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Kalender im Forex-Factory-Stil + USD-News bei Rohstoffen/Krypto/Index)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Kalender: volle Spalten Time/Sym/Impact/Event/Actual/Forecast/Previous, größere Schrift)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -670,39 +674,39 @@ function parseNumLike(s){
 function actualColor(ev){
   if(!ev.actual)return'';
   const a=parseNumLike(ev.actual);
-  const f=parseNumLike(ev.forecast||ev.previous);
+  const base=(ev.previous!=null&&ev.previous!=='')?ev.previous:ev.forecast;
+  const f=parseNumLike(base);
   if(a===null||f===null||a===f)return'';
   const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
   return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
 }
-// Rendert eine Kalender-Zeile im FF-Stil: Zeit | Währung | Impact | Name [+ Actual/Forecast/Previous]
+// Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
 function calRowHtml(ev,opts){
   opts=opts||{};
   const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
-  const impLbl=ev.impact==='high'?'High Impact':ev.impact==='medium'?'Medium Impact':'Low Impact';
+  const impLbl=ev.impact==='high'?'High':ev.impact==='medium'?'Medium':'Low';
   const ac=actualColor(ev);
-  const stats=[];
-  if(ev.actual)stats.push(`<span>Actual: <b class="${ac}">${escH(ev.actual)}</b></span>`);
-  if(ev.forecast)stats.push(`<span>Forecast: <b>${escH(ev.forecast)}</b></span>`);
-  if(ev.previous)stats.push(`<span>Previous: <b>${escH(ev.previous)}</b></span>`);
-  if(!stats.length&&ev.expected)stats.push(`<span>${escH(ev.expected)}</span>`);
+  const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
   const isToday=ev.date===todayStr();
+  const sub=[ev.expected,ev.notes].filter(Boolean).join(' · ');
   return`<div class="cal-row${isToday?' today':''}">
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-    <div class="cal-imp-dot ${ic}" title="${impLbl}"></div>
+    <div class="cal-imp ${ic}">${impLbl}</div>
     <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+    ${val(ev.actual,ac)}
+    ${val(ev.forecast)}
+    ${val(ev.previous)}
     ${opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`:'<div></div>'}
-    ${stats.length?`<div class="cal-stats">${stats.join('')}</div>`:''}
-    ${ev.notes?`<div class="cal-stats" style="color:var(--t2)">${escH(ev.notes)}</div>`:''}
+    ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
 }
-// Rendert eine Liste von Events gruppiert nach Tag (mit Datums-Headern).
+// Rendert eine Liste von Events gruppiert nach Tag (mit Spalten-Header und Datums-Headern).
 function calTableHtml(evts,opts){
   opts=opts||{};
   if(!evts.length)return'';
   const today=todayStr();
-  let html='',lastDate=null;
+  let html=`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`,lastDate=null;
   evts.forEach(ev=>{
     if(ev.date!==lastDate){
       lastDate=ev.date;
