@@ -461,7 +461,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--amber);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Actual-Werte: ff_calendar.json wird jetzt mit Cache-Buster geladen — kein veralteter Stand mehr; Refresh zählt importierte Actual-Werte korrekt statt immer "0")</div>
+<div style="background:var(--star);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Refresh prüft jetzt zusätzlich den Live-Feed von Forex Factory, damit Actual-Werte für HEUTE veröffentlichte Events wie PPI/EZB-Leitzins sofort übernommen werden)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -514,7 +514,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage inkl. Actual-Werte) von Forex Factory neu (auch gelöschte Events)">🔄 Refresh</button>
+    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -1936,13 +1936,20 @@ async function fetchFF(silent){
         }
       }
     });
+    // Zusätzlich live von Forex Factory abrufen (best effort, per CORS-Proxy):
+    // die ff_calendar.json wird nur 1x/Tag per GitHub Action aktualisiert,
+    // Actual-Werte für HEUTE veröffentlichte Events (z.B. PPI, EZB-Leitzins)
+    // stehen im Live-Feed aber meist schon Minuten nach Veröffentlichung.
+    let liveEvts=[];
+    try{liveEvts=await fetchFFPeriod('thisweek');}catch(e){}
+    const matchPool=liveEvts.length?evts.concat(liveEvts):evts;
     // Bestehende Events (auch außerhalb des 10-Tage-Fensters, bereits
     // vergangene und solche, die schon ins Postfach gewandert sind) auf neu
     // verfügbare "Actual"-Werte prüfen und nachtragen, ohne das Event selbst
     // neu anzulegen (Notizen/Edits bleiben erhalten).
     [...calEvts,...inbox].forEach(e=>{
       if(e.actual)return;
-      const match=evts.find(ev=>{
+      const match=matchPool.find(ev=>{
         if(ev.actual==null||ev.actual===''||(ev.impact!=='High'&&ev.impact!=='Medium'))return false;
         if(!ev.date)return false;
         const d=new Date(ev.date);if(isNaN(d))return false;
