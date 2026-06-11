@@ -80,24 +80,33 @@ jobs:
             const fs=require("fs");
 
             // Maps Forex Factory event titles (lowercased) to the equivalent
-            // FXStreet event name (lowercased), since the two providers use
-            // different naming conventions for the same release.
+            // FXStreet event name(s) (lowercased), since the two providers use
+            // different naming conventions for the same release. A value may
+            // be a string or an array of candidate names.
             const NAME_ALIASES={
               "cpi m/m":"consumer price index (mom)",
               "cpi y/y":"consumer price index (yoy)",
               "core cpi m/m":"consumer price index ex food & energy (mom)",
               "core cpi y/y":"consumer price index ex food & energy (yoy)",
               "national cpi y/y":"consumer price index (yoy)",
-              "ppi m/m":"producer price index (mom)",
-              "ppi y/y":"producer price index (yoy)",
-              "core ppi m/m":"producer price index ex food & energy (mom)",
-              "core ppi y/y":"producer price index ex food & energy (yoy)",
+              "ppi m/m":["producer price index (mom)","producer price index, final demand (mom)"],
+              "ppi y/y":["producer price index (yoy)","producer price index, final demand (yoy)"],
+              "core ppi m/m":["producer price index ex food & energy (mom)","core producer price index (mom)"],
+              "core ppi y/y":["producer price index ex food & energy (yoy)","core producer price index (yoy)"],
               "core pce price index m/m":"core personal consumption expenditures - price index (mom)",
               "core pce price index y/y":"core personal consumption expenditures - price index (yoy)",
+              "main refinancing rate":["ecb main refinancing operations rate","ecb interest rate decision","ecb rate decision","interest rate decision"],
+              "overnight rate":["boc interest rate decision","boc rate decision","interest rate decision"],
+              "official bank rate":["boe interest rate decision","interest rate decision"],
+              "federal funds rate":["fed interest rate decision","fomc rate decision","interest rate decision"],
+              "official cash rate":["rbnz interest rate decision","rba interest rate decision","interest rate decision"],
+              "cash rate":["rba interest rate decision","interest rate decision"],
+              "policy rate":["interest rate decision"],
               "gdp q/q":"gross domestic product annualized (qoq)",
               "prelim gdp q/q":"gross domestic product annualized (qoq)",
               "final gdp q/q":"gross domestic product annualized (qoq)",
               "advance gdp q/q":"gross domestic product annualized (qoq)",
+              "gdp m/m":"gross domestic product (mom)",
               "unemployment rate":"unemployment rate",
               "retail sales m/m":"retail sales (mom)",
               "core retail sales m/m":"retail sales ex autos (mom)",
@@ -163,25 +172,41 @@ jobs:
               process.exit(0);
             }
 
+            // Zeit-Toleranz: Provider veröffentlichen denselben Release teils
+            // mit leicht abweichendem Zeitstempel - Name+Währung müssen exakt
+            // passen, der Zeitpunkt nur auf +/-2h genau (nächster gewinnt).
+            const TIME_TOL=2*60*60*1000;
             let matched=0;
+            const unmatched=[];
             combined.forEach(ev=>{
               if(ev.actual)return;
               const t=new Date(ev.date).getTime();
               if(isNaN(t))return;
               const ffName=normName(ev.title);
-              const aliasName=NAME_ALIASES[ffName];
+              let aliases=NAME_ALIASES[ffName]||[];
+              if(typeof aliases==="string")aliases=[aliases];
               const candidates=fxEvents.filter(fx=>
                 fx.currencyCode===ev.country &&
-                new Date(fx.dateUtc).getTime()===t &&
+                Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL &&
                 fx.actual!=null &&
-                (normName(fx.name)===ffName || (aliasName && normName(fx.name)===aliasName))
-              );
+                (normName(fx.name)===ffName || aliases.includes(normName(fx.name)))
+              ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(candidates.length){
                 const f=fmtActual(candidates[0]);
-                if(f!==null){ev.actual=f;matched++;}
+                if(f!==null){ev.actual=f;matched++;return;}
+              }
+              // Diagnose fuer kuerzlich faellige High/Medium-Events ohne Treffer
+              if((ev.impact==="High"||ev.impact==="Medium")&&t<=Date.now()&&Date.now()-t<=48*60*60*1000){
+                const near=fxEvents.filter(fx=>fx.currencyCode===ev.country&&Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL)
+                  .map(fx=>fx.name+" [actual="+fx.actual+" unit="+fx.unit+" potency="+fx.potency+"]");
+                unmatched.push(ev.title+" ("+ev.country+", "+ev.date+") -> FXStreet candidates: "+(near.length?near.join(" | "):"NONE"));
               }
             });
             console.log("Matched "+matched+" actual value(s) from FXStreet");
+            if(unmatched.length){
+              console.log("Unmatched due/recent High+Medium events:");
+              unmatched.forEach(u=>console.log("  - "+u));
+            }
             if(matched>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
           '
 

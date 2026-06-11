@@ -461,7 +461,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Vergangene Events bleiben 2 Tage in Kalender/Symbol/Dashboard sichtbar + nächstes anstehendes Event wird beim Symbol zusätzlich angezeigt)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Fix: Events der letzten 2 Tage erscheinen nach Refresh wieder im Kalender + Actual-Quellen erweitert: EZB-Leitzins/PPI werden jetzt erkannt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1932,7 +1932,11 @@ async function fetchFF(silent){
         // und die Detailseiten zeigen Events bis 2 Tage zurück an.
         const dl=daysUntil(dateStr);
         if(dl<-FF_PAST_DAYS||dl>FF_WINDOW_DAYS)return;
-        if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)&&!inbox.find(e=>e.name===ev.title&&e.date===dateStr)){
+        // Nur gegen calEvts deduplizieren - Events, die schon ins Postfach
+        // gewandert sind, müssen trotzdem wieder im Kalender erscheinen
+        // (sie bleiben dort jetzt CAL_PAST_DAYS Tage sichtbar). Das Postfach
+        // selbst dedupliziert processCalEvts() über name+date.
+        if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
           calEvts.push({id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'});
           added++;
           // Frisch importierte Events bringen ihren Actual-Wert direkt mit -
