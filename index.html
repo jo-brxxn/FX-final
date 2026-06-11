@@ -65,9 +65,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rub-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.03),rgba(var(--green-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.08)}
 .rub-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.03),rgba(var(--red-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.08)}
 .rub-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.03),rgba(var(--amber-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.08)}
-.ind-card.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.015),rgba(var(--green-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--green-rgb),.04)}
-.ind-card.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.015),rgba(var(--red-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--red-rgb),.04)}
-.ind-card.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.015),rgba(var(--amber-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--amber-rgb),.04)}
+.ind-card.glow-bull,.ri.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.015),rgba(var(--green-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--green-rgb),.04)}
+.ind-card.glow-bear,.ri.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.015),rgba(var(--red-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--red-rgb),.04)}
+.ind-card.glow-neu,.ri.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.015),rgba(var(--amber-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--amber-rgb),.04)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
@@ -81,8 +81,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .slbl{font-size:8px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
-.ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s}
-.ri:hover{background:var(--bg3)}.ri.imp{background:#211c10;border-left-color:var(--star)!important}
+.ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}
+.ri:hover{background:var(--bg3)}.ri.imp{background:#211c10;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:11px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
@@ -234,6 +234,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:11px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
+.sym-name:not(.dw-pname){flex:1}
 .bbadge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -397,7 +398,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLAU (Karten-Layout fest, kein Verschieben mehr beim Tippen)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: LILA (Pro/Contra im Allgemein-Tab beleuchtet, Other Assets ausgerichtet)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1130,8 +1131,8 @@ function renderFL(arr,key){
   if(!arr||!arr.length)return'';
   return arr.map((r,i)=>{
     const b=r.bias||'neu',imp=r.imp||false,txt=r.text||r||'';
-    const bco=bCol(b),rco=imp?'#e8c66840':bRC(b);
-    return`<div class="ri${imp?' imp':''}" style="--rc:${rco}">
+    const bco=bCol(b);
+    return`<div class="ri${imp?' imp':''} ${glowClass(b)}">
       <div class="rdot" style="background:${imp?'var(--star)':bco}"></div>
       <textarea class="rtxt" rows="1" oninput="ar(this);editGenR('${key}',${i},this.value);saveSoon()" onblur="save()">${escH(txt)}</textarea>
       <div class="rb-g">${['bull','neu','bear'].map(b2=>`<button class="rb${b===b2?' '+bClass(b2):''}" onclick="setGenRB('${key}',${i},'${b2}')">${b2==='bull'?'▲':b2==='bear'?'▼':'◆'}</button>`).join('')}</div>
