@@ -104,7 +104,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:11px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s;break-inside:avoid}
+.rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.masonry-col{display:flex;flex-direction:column;min-width:0}
+.masonry-col .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
@@ -345,7 +347,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 @media(min-width:1100px){
   .dp{max-width:1700px}
   .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
-  .masonry{column-count:2;column-gap:36px}
+  .masonry{display:flex;align-items:flex-start;gap:36px}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
@@ -363,7 +365,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
   .dp{max-width:2000px}
-  .masonry{column-count:3}
 }
 </style>
 </head>
@@ -396,7 +397,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: GRUEN (Indikator-Listen je Symbol unabhaengig, Loeschen wirkt nicht auf USD/BTC/etc.)</div>
+<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px">VERSION-CHECK: BLAU (Karten-Layout fest, kein Verschieben mehr beim Tippen)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1140,11 +1141,21 @@ function renderFL(arr,key){
       <button class="idel" onclick="delGenR('${key}',${i})">×</button>
     </div>`; }).join('');}
 
+// ── MASONRY (static columns, immune to per-card height changes) ──
+function masonryCols(){return window.innerWidth>=1600?3:window.innerWidth>=1100?2:1;}
+function masonryHTML(items,renderFn){
+  const n=masonryCols();
+  if(n<=1)return`<div class="masonry">${items.map((it,i)=>renderFn(it,i)).join('')}</div>`;
+  const cols=Array.from({length:n},()=>[]);
+  items.forEach((it,i)=>cols[i%n].push(renderFn(it,i)));
+  return`<div class="masonry">${cols.map(col=>`<div class="masonry-col">${col.join('')}</div>`).join('')}</div>`;
+}
+
 // ── SPECIFIC TAB ──
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
   return`<div style="font-size:10px;color:var(--t3);margin-bottom:9px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">⚡ Current factors – what matters right now (CB tone, data surprises, news, positioning)</div>
-  <div class="masonry">${rubs.map((rub,ri)=>renderRub(rub,ri,rubs.length)).join('')}</div>
+  ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
 function renderRub(rub,ri,total){
@@ -1239,7 +1250,7 @@ function renderNotesSubTab(c){
     <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized notes for ${c.name}</div>
     <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:9px">＋ Category</button>
   </div>
-  <div class="masonry">${rubs.map((rub,ri)=>renderNoteRub(rub,ri,rubs.length)).join('')}</div>
+  ${masonryHTML(rubs,(rub,ri)=>renderNoteRub(rub,ri,rubs.length))}
   <div style="margin-top:10px">
     <div class="slbl"><span style="color:var(--t3)">FREE NOTES</span><div class="slbl-line"></div></div>
     <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." oninput="getSym().notes=this.value;saveSoon()" onchange="getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
@@ -1909,6 +1920,18 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',flushAndSave);
 window.addEventListener('beforeunload',flushAndSave);
 setInterval(flushAndSave,15000);
+
+// Re-render only when the masonry column count actually changes (e.g.
+// rotating a tablet across the 1100px/1600px breakpoints) - never on
+// height changes from typing, so cards never jump while editing.
+let _masonryCols=masonryCols(),_masonryResizeT=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_masonryResizeT);
+  _masonryResizeT=setTimeout(()=>{
+    const n=masonryCols();
+    if(n!==_masonryCols){_masonryCols=n;renderDetail();}
+  },150);
+});
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
