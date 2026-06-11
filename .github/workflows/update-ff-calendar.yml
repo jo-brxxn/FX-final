@@ -3,6 +3,7 @@ name: Update FF Calendar
 on:
   schedule:
     - cron: '0 5 * * *'
+    - cron: '0 16 * * *'
   workflow_dispatch:
 
 permissions:
@@ -45,8 +46,147 @@ jobs:
             console.log("Wrote "+combined.length+" events to ff_calendar.json");
           '
 
+      # FXStreet's economic calendar API (calendar-api.fxstreet.com) returns
+      # "actual" values that the free FF feed never provides. We fetch a
+      # window covering the FF events and merge in any verified actuals.
+      - name: Fetch FXStreet actual values
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          RANGE=$(node -e '
+            const fs=require("fs");
+            try{
+              const d=JSON.parse(fs.readFileSync("ff_calendar.json","utf8"));
+              let minT=Infinity,maxT=-Infinity;
+              d.forEach(ev=>{
+                const t=new Date(ev.date).getTime();
+                if(!isNaN(t)){minT=Math.min(minT,t);maxT=Math.max(maxT,t);}
+              });
+              if(!isFinite(minT))process.exit(0);
+              console.log(new Date(minT-86400000).toISOString()+" "+new Date(maxT+86400000).toISOString());
+            }catch(e){process.exit(0);}
+          ')
+          if [ -n "$RANGE" ]; then
+            START=$(echo "$RANGE" | cut -d" " -f1)
+            END=$(echo "$RANGE" | cut -d" " -f2)
+            curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" \
+              "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${START}/${END}?volatilities=NONE,LOW,MEDIUM,HIGH&countries=&categories=" -o fxstreet.json || echo '[]' > fxstreet.json
+          else
+            echo '[]' > fxstreet.json
+          fi
+
+      - name: Enrich ff_calendar.json with FXStreet actuals
+        run: |
+          node -e '
+            const fs=require("fs");
+
+            // Maps Forex Factory event titles (lowercased) to the equivalent
+            // FXStreet event name (lowercased), since the two providers use
+            // different naming conventions for the same release.
+            const NAME_ALIASES={
+              "cpi m/m":"consumer price index (mom)",
+              "cpi y/y":"consumer price index (yoy)",
+              "core cpi m/m":"consumer price index ex food & energy (mom)",
+              "core cpi y/y":"consumer price index ex food & energy (yoy)",
+              "national cpi y/y":"consumer price index (yoy)",
+              "ppi m/m":"producer price index (mom)",
+              "ppi y/y":"producer price index (yoy)",
+              "core ppi m/m":"producer price index ex food & energy (mom)",
+              "core ppi y/y":"producer price index ex food & energy (yoy)",
+              "core pce price index m/m":"core personal consumption expenditures - price index (mom)",
+              "core pce price index y/y":"core personal consumption expenditures - price index (yoy)",
+              "gdp q/q":"gross domestic product annualized (qoq)",
+              "prelim gdp q/q":"gross domestic product annualized (qoq)",
+              "final gdp q/q":"gross domestic product annualized (qoq)",
+              "advance gdp q/q":"gross domestic product annualized (qoq)",
+              "unemployment rate":"unemployment rate",
+              "retail sales m/m":"retail sales (mom)",
+              "core retail sales m/m":"retail sales ex autos (mom)",
+              "ism manufacturing pmi":"ism manufacturing pmi",
+              "ism services pmi":"ism non-manufacturing pmi",
+              "ism non-manufacturing pmi":"ism non-manufacturing pmi",
+              "flash manufacturing pmi":"s&p global manufacturing pmi",
+              "flash services pmi":"s&p global services pmi",
+              "final manufacturing pmi":"s&p global manufacturing pmi",
+              "final services pmi":"s&p global services pmi",
+              "prelim uom consumer sentiment":"michigan consumer sentiment index",
+              "revised uom consumer sentiment":"michigan consumer sentiment index",
+              "prelim uom inflation expectations":"michigan inflation expectations",
+              "cb consumer confidence":"consumer confidence",
+              "consumer confidence":"consumer confidence",
+              "industrial production m/m":"industrial production (mom)",
+              "industrial production y/y":"industrial production (yoy)",
+              "manufacturing production m/m":"manufacturing production (mom)",
+              "durable goods orders m/m":"durable goods orders (mom)",
+              "core durable goods orders m/m":"durable goods orders ex transportation (mom)",
+              "philly fed manufacturing index":"philadelphia fed manufacturing survey",
+              "empire state manufacturing index":"empire state manufacturing index",
+              "zew economic sentiment":"zew survey - economic sentiment",
+              "german zew economic sentiment":"zew survey - economic sentiment",
+              "ifo business climate":"ifo - business climate",
+              "gfk consumer confidence":"gfk consumer confidence survey"
+            };
+
+            function normName(s){return String(s||"").toLowerCase().trim().replace(/\s+/g," ");}
+
+            function trimNum(n){
+              let s=Number(n).toFixed(3);
+              s=s.replace(/0+$/,"").replace(/\.$/,"");
+              return s;
+            }
+
+            // Only merge "actual" when we can format it the same way FF
+            // does (plain number or percentage). K/M/B/T-scaled values
+            // (Trade Balance, Jobless Claims, NFP, ...) are skipped to avoid
+            // guessing the wrong magnitude/suffix.
+            function fmtActual(fx){
+              if(fx.actual==null)return null;
+              if(fx.unit==="%")return trimNum(fx.actual)+"%";
+              if((fx.unit==null||fx.unit==="")&&(fx.potency==null||fx.potency==="ZERO"))return trimNum(fx.actual);
+              return null;
+            }
+
+            let combined;
+            try{
+              combined=JSON.parse(fs.readFileSync("ff_calendar.json","utf8"));
+            }catch(e){
+              console.log("No ff_calendar.json, skipping FXStreet enrichment");
+              process.exit(0);
+            }
+            if(!Array.isArray(combined)||!combined.length)process.exit(0);
+
+            let fxEvents;
+            try{
+              fxEvents=JSON.parse(fs.readFileSync("fxstreet.json","utf8"));
+              if(!Array.isArray(fxEvents))throw new Error("not an array");
+            }catch(e){
+              console.log("FXStreet data unavailable/invalid, skipping enrichment");
+              process.exit(0);
+            }
+
+            let matched=0;
+            combined.forEach(ev=>{
+              if(ev.actual)return;
+              const t=new Date(ev.date).getTime();
+              if(isNaN(t))return;
+              const ffName=normName(ev.title);
+              const aliasName=NAME_ALIASES[ffName];
+              const candidates=fxEvents.filter(fx=>
+                fx.currencyCode===ev.country &&
+                new Date(fx.dateUtc).getTime()===t &&
+                fx.actual!=null &&
+                (normName(fx.name)===ffName || (aliasName && normName(fx.name)===aliasName))
+              );
+              if(candidates.length){
+                const f=fmtActual(candidates[0]);
+                if(f!==null){ev.actual=f;matched++;}
+              }
+            });
+            console.log("Matched "+matched+" actual value(s) from FXStreet");
+            if(matched>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+          '
+
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json
 
       - name: Commit and push if changed
         run: |
