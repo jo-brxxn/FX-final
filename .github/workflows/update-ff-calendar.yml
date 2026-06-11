@@ -74,6 +74,68 @@ jobs:
             echo '[]' > fxstreet.json
           fi
 
+      # Fallback-Quellen fuer Actual-Werte, falls FXStreet eine Zahl (noch)
+      # nicht fuehrt:
+      # 1) Die Forex-Factory-Webseite selbst - dort stehen die Actuals und
+      #    die Event-Namen passen 1:1 zum Feed (kein Alias-Mapping noetig).
+      # 2) Trading Economics Kalender-API (guest-Zugang).
+      - name: Fetch alternative actual sources (FF website + Trading Economics)
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          for d in $(node -e '
+            const M=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+            const nowET=new Date(Date.now()-4*3600e3);
+            for(let i=2;i>=0;i--){
+              const x=new Date(nowET.getTime()-i*86400e3);
+              console.log(M[x.getUTCMonth()]+x.getUTCDate()+"."+x.getUTCFullYear());
+            }
+          '); do
+            curl -sL -A "$UA" "https://www.forexfactory.com/calendar?day=$d" -o "ffhtml_$d.html" || true
+          done
+          curl -sL -A "$UA" "https://api.tradingeconomics.com/calendar?c=guest:guest&f=json" -o te.json || true
+          node -e '
+            const fs=require("fs");
+            const out=[];
+            // ── Forex-Factory-HTML parsen ──────────────────────────────
+            const M={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+            fs.readdirSync(".").filter(f=>/^ffhtml_.*\.html$/.test(f)).forEach(f=>{
+              const m=f.match(/^ffhtml_([a-z]{3})(\d+)\.(\d{4})\.html$/);
+              if(!m)return;
+              const day=m[3]+"-"+String(M[m[1]]+1).padStart(2,"0")+"-"+String(Number(m[2])).padStart(2,"0");
+              let html;
+              try{html=fs.readFileSync(f,"utf8");}catch(e){return;}
+              const rows=html.split(/<tr[^>]*calendar__row/).slice(1);
+              let found=0;
+              rows.forEach(row=>{
+                const cur=row.match(/calendar__currency[^>]*>\s*([A-Z]{3})\b/);
+                const title=row.match(/calendar__event-title[^>]*>([^<]+)</);
+                const act=row.match(/calendar__actual[^>]*>(?:\s*<span[^>]*>)?([^<>]*?)(?:<\/span>)?\s*<\/td>/);
+                if(cur&&title&&act&&act[1].trim()){
+                  out.push({source:"ffhtml",title:title[1].trim(),country:cur[1],day:day,actual:act[1].trim()});
+                  found++;
+                }
+              });
+              console.log("FF website "+day+": "+found+" actual(s) parsed");
+            });
+            // ── Trading Economics normalisieren ────────────────────────
+            const C2CCY={"united states":"USD","euro area":"EUR","germany":"EUR","france":"EUR","italy":"EUR","spain":"EUR","united kingdom":"GBP","japan":"JPY","canada":"CAD","australia":"AUD","new zealand":"NZD","switzerland":"CHF","china":"CNY"};
+            try{
+              const te=JSON.parse(fs.readFileSync("te.json","utf8"));
+              if(Array.isArray(te)){
+                let n=0;
+                te.forEach(ev=>{
+                  const ccy=C2CCY[String(ev.Country||"").toLowerCase()];
+                  if(!ccy||ev.Actual==null||ev.Actual==="")return;
+                  out.push({source:"te",name:ev.Event||"",country:ccy,dateUtc:ev.Date,actual:String(ev.Actual)});
+                  n++;
+                });
+                console.log("Trading Economics: "+n+" actual(s) loaded");
+              }
+            }catch(e){console.log("Trading Economics unavailable: "+e.message);}
+            fs.writeFileSync("alt_actuals.json",JSON.stringify(out));
+            console.log("alt_actuals.json: "+out.length+" total entries");
+          '
+
       - name: Enrich ff_calendar.json with FXStreet actuals
         run: |
           node -e '
@@ -172,11 +234,32 @@ jobs:
               process.exit(0);
             }
 
+            let altActuals=[];
+            try{
+              altActuals=JSON.parse(fs.readFileSync("alt_actuals.json","utf8"));
+              if(!Array.isArray(altActuals))altActuals=[];
+            }catch(e){}
+
+            // Kanonischer Schluessel, damit Quellen mit anderer Namens-
+            // Konvention (Trading Economics etc.) ohne Alias-Pflege matchen:
+            // mom/yoy vereinheitlichen, "ex food & energy" -> core,
+            // Langnamen kuerzen, Tokens sortieren.
+            function canonKey(s){
+              s=normName(s);
+              s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
+              s=s.replace(/ex food (?:&|and) energy/g,"core");
+              s=s.replace(/producer price index|producer prices/g,"ppi");
+              s=s.replace(/consumer price index|inflation rate/g,"cpi");
+              s=s.replace(/, final demand|final demand/g,"");
+              s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
+              return s.split(" ").sort().join(" ");
+            }
+
             // Zeit-Toleranz: Provider veröffentlichen denselben Release teils
             // mit leicht abweichendem Zeitstempel - Name+Währung müssen exakt
             // passen, der Zeitpunkt nur auf +/-2h genau (nächster gewinnt).
             const TIME_TOL=2*60*60*1000;
-            let matched=0;
+            let matched=0,matchedFFW=0,matchedTE=0;
             const unmatched=[];
             combined.forEach(ev=>{
               if(ev.actual)return;
@@ -185,6 +268,7 @@ jobs:
               const ffName=normName(ev.title);
               let aliases=NAME_ALIASES[ffName]||[];
               if(typeof aliases==="string")aliases=[aliases];
+              // 1) FXStreet (verifizierte, einheitlich formatierte Werte)
               const candidates=fxEvents.filter(fx=>
                 fx.currencyCode===ev.country &&
                 Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL &&
@@ -195,23 +279,38 @@ jobs:
                 const f=fmtActual(candidates[0]);
                 if(f!==null){ev.actual=f;matched++;return;}
               }
+              // 2) Forex-Factory-Webseite: Namen identisch zum Feed, daher
+              // reicht Titel+Waehrung+ET-Kalendertag (Feed-Datum traegt -04:00)
+              const evDayET=String(ev.date).slice(0,10);
+              const ffw=altActuals.find(a=>a.source==="ffhtml"&&a.title===ev.title&&a.country===ev.country&&a.day===evDayET&&a.actual);
+              if(ffw){ev.actual=ffw.actual;matchedFFW++;return;}
+              // 3) Trading Economics: kanonischer Name + Zeit-Toleranz
+              const evKey=canonKey(ev.title);
+              const te=altActuals.filter(a=>
+                a.source==="te"&&a.country===ev.country&&a.actual&&
+                Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&
+                canonKey(a.name)===evKey
+              ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
+              if(te.length){ev.actual=te[0].actual;matchedTE++;return;}
               // Diagnose fuer kuerzlich faellige High/Medium-Events ohne Treffer
               if((ev.impact==="High"||ev.impact==="Medium")&&t<=Date.now()&&Date.now()-t<=48*60*60*1000){
                 const near=fxEvents.filter(fx=>fx.currencyCode===ev.country&&Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL)
                   .map(fx=>fx.name+" [actual="+fx.actual+" unit="+fx.unit+" potency="+fx.potency+"]");
-                unmatched.push(ev.title+" ("+ev.country+", "+ev.date+") -> FXStreet candidates: "+(near.length?near.join(" | "):"NONE"));
+                const nearAlt=altActuals.filter(a=>a.country===ev.country&&(a.day===evDayET||(a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL)))
+                  .map(a=>a.source+":"+(a.title||a.name)+" ["+a.actual+"]");
+                unmatched.push(ev.title+" ("+ev.country+", "+ev.date+") -> FXStreet: "+(near.length?near.join(" | "):"NONE")+" || Alt: "+(nearAlt.length?nearAlt.join(" | "):"NONE"));
               }
             });
-            console.log("Matched "+matched+" actual value(s) from FXStreet");
+            console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from Trading Economics");
             if(unmatched.length){
               console.log("Unmatched due/recent High+Medium events:");
               unmatched.forEach(u=>console.log("  - "+u));
             }
-            if(matched>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+            if(matched+matchedFFW+matchedTE>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
           '
 
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json alt_actuals.json ffhtml_*.html
 
       - name: Commit and push if changed
         run: |
