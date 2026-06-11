@@ -406,7 +406,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--amber);color:#1a1305;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Forex-Factory-Update repariert)</div>
+<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (News-Update-Button, 10-Tage-Fenster)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -459,7 +459,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()">⬇ Forex Factory</button>
+    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage von Forex Factory neu (auch gelöschte Events)">🔄 News aktualisieren</button>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -674,7 +674,7 @@ function processCalEvts(){
   const today=todayStr();
   let changed=false;
   calEvts.forEach(ev=>{
-    if(ev.date<=today&&!inbox.find(m=>m.evId===ev.id)){
+    if(ev.date<=today&&!inbox.find(m=>m.name===ev.name&&m.date===ev.date)){
       inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,notes:ev.notes});
       changed=true;
     }
@@ -1680,8 +1680,10 @@ function delInboxItem(id){
   renderSidebar();
   rerender();
 }
-async function fetchFFJson(){
-  const target='https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json';
+// Holt Events von FF (this+next week, mit Proxy-Fallback) für ein 10-Tage-Fenster
+const FF_WINDOW_DAYS=10;
+async function fetchFFPeriod(period){
+  const target='https://cdn-nfs.faireconomy.media/ff_calendar_'+period+'.json';
   // 1) Direkter Versuch (CDN erlaubt teilweise CORS)
   try{
     const res=await fetch(target,{signal:AbortSignal.timeout(10000)});
@@ -1699,38 +1701,47 @@ async function fetchFFJson(){
   if(!Array.isArray(evts))throw new Error('Invalid response');
   return evts;
 }
+async function fetchFFJson(){
+  const results=await Promise.allSettled([fetchFFPeriod('thisweek'),fetchFFPeriod('nextweek')]);
+  const evts=results.filter(r=>r.status==='fulfilled').flatMap(r=>r.value);
+  if(!evts.length)throw new Error('Network error');
+  return evts;
+}
 async function fetchFF(silent){
   const btn=silent?null:event.currentTarget;
-  if(btn){btn.textContent='⏳ Fetching...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Aktualisiere...';btn.disabled=true;}
   try{
     const evts=await fetchFFJson();
-    let added=0;if(!silent)pushU();
-    (evts||[]).forEach(ev=>{
+    if(!silent)pushU();
+    // Bisherige FF-Importe im 10-Tage-Fenster entfernen, damit auch manuell
+    // gelöschte Events beim Aktualisieren wieder erscheinen
+    calEvts=calEvts.filter(e=>!(e.src==='ff'&&daysUntil(e.date)>=0&&daysUntil(e.date)<=FF_WINDOW_DAYS));
+    let added=0;
+    evts.forEach(ev=>{
       if(ev.impact==='High'||ev.impact==='Medium'){
         if(!ev.date)return;
         const d=new Date(ev.date);if(isNaN(d))return;
         // In lokales Datum umrechnen, damit "heute" mit todayStr() übereinstimmt
         // (FF liefert Zeiten in US-Eastern, was je nach Zeitzone zu Datums-Verschiebung führen kann)
         const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        const dl=daysUntil(dateStr);
+        if(dl<0||dl>FF_WINDOW_DAYS)return;
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
-          calEvts.push({id:uid(),name:ev.title||'',date:dateStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',expected:ev.forecast?'Forecast: '+ev.forecast:(ev.previous?'Prev: '+ev.previous:''),notes:''});
+          calEvts.push({id:uid(),name:ev.title||'',date:dateStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',expected:ev.forecast?'Forecast: '+ev.forecast:(ev.previous?'Prev: '+ev.previous:''),notes:'',src:'ff'});
           added++;
         }
       }
     });
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
-    if(added>0){
-      processCalEvts();
-      save();renderSidebar();rerender();updInboxBadge();
-    }
+    processCalEvts();
+    save();renderSidebar();rerender();updInboxBadge();
     if(!silent){
-      if(added>0)alert('✓ Imported '+added+' events from Forex Factory (current week only).\n\nTip: Come back next week and click the button again to import next week\'s events.');
-      else alert('No new events found. All current week events may already be imported.');
+      alert('✓ '+added+' High/Medium-Impact-Event(s) für die nächsten '+FF_WINDOW_DAYS+' Tage geladen.');
     }
   }catch(e){
     if(!silent)alert('Could not reach Forex Factory.\n\nThis can happen if:\n• Forex Factory blocked the request\n• The proxy is temporarily down\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
   }
-  if(btn){btn.textContent='⬇ Forex Factory';btn.disabled=false;}
+  if(btn){btn.textContent='🔄 News aktualisieren';btn.disabled=false;}
 }
 function autoFetchFF(){
   const last=localStorage.getItem('fxpro_ff_last');
