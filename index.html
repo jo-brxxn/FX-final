@@ -70,6 +70,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ind-card.glow-neu,.ri.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.015),rgba(var(--amber-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--amber-rgb),.04)}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
+.notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
 .evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
@@ -269,6 +270,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ih{background:rgba(var(--red-rgb),.09);color:var(--red)}.im{background:rgba(var(--amber-rgb),.09);color:var(--amber)}.il{background:rgba(var(--t3-rgb),.09);color:var(--t2)}
 .cal-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;opacity:.2;flex-shrink:0;padding:0;line-height:1;transition:opacity .12s}
 .cal-ev:hover .cal-del{opacity:.5}.cal-del:hover{opacity:1!important;color:var(--red)}
+.cal-ev.today{border-color:var(--red);background:rgba(var(--red-rgb),.08);box-shadow:0 0 0 1px rgba(var(--red-rgb),.35);animation:pulse-today 1.6s ease-in-out infinite}
+.cal-cd.today-cd{color:var(--red);font-weight:800}
+@keyframes pulse-today{0%,100%{box-shadow:0 0 0 1px rgba(var(--red-rgb),.35)}50%{box-shadow:0 0 0 4px rgba(var(--red-rgb),.12)}}
+@keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+/* ── INBOX / POSTFACH ── */
+.inbox-btn{position:relative}
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
+.inbox-empty{color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
@@ -397,7 +406,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRUEN (Sidebar scrollt unabhaengig vom Inhalt)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Postfach + News-Benachrichtigungen)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -411,6 +420,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:rgba(var(--blue-rgb),.27);color:var(--blue)">☁ Sync</button>
+    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Postfach">📥 Postfach<span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
   </div>
 </div>
 
@@ -544,6 +554,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Schließen</button><button class="btn g" onclick="saveInfoM()">Speichern</button></div>
   </div>
 </div>
+<!-- MODAL: Inbox / Postfach -->
+<div class="ov" id="mInbox" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <h3>📥 Postfach</h3>
+    <div id="inboxList" style="max-height:55vh;overflow-y:auto"></div>
+    <div class="m-btns" style="margin-top:10px"><button class="btn" onclick="closeM('mInbox')">Schließen</button></div>
+  </div>
+</div>
 <!-- MODAL: Cloud Sync -->
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
@@ -647,6 +665,30 @@ function pairHasImportantEvt(name){
   return hasImportantEvt(a)||hasImportantEvt(b);
 }
 const EVT_FLAG='<span class="evt-flag" title="Wichtige Nachricht steht an">❗</span>';
+
+// ── NEWS PROCESSING / POSTFACH ──────────────────────────────────────
+// Verschiebt fällige (heute/vergangene) Events ins Postfach. Events von
+// heute bleiben zusätzlich (auffällig markiert) im Kalender stehen.
+function processCalEvts(){
+  const today=todayStr();
+  let changed=false;
+  calEvts.forEach(ev=>{
+    if(ev.date<=today&&!inbox.find(m=>m.evId===ev.id)){
+      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,notes:ev.notes});
+      changed=true;
+    }
+  });
+  const before=calEvts.length;
+  calEvts=calEvts.filter(ev=>ev.date>=today);
+  if(calEvts.length!==before)changed=true;
+  return changed;
+}
+function getInboxFor(id){
+  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  return inbox.filter(m=>ids.some(x=>evtMatchesSym(m,x)));
+}
+function hasInboxNotif(id){return getInboxFor(id).length>0;}
+const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach">❗</span>';
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
@@ -914,15 +956,15 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];recomputeAllPairBiases();syncAutoPairCats();}
-function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();rerender();updUB();}
-function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();rerender();updUB();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];recomputeAllPairBiases();syncAutoPairCats();}
+function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
+function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[];
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[];
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -939,10 +981,11 @@ function loadState(){
       widgets=d.widgets||mkWidgets();
       if(!widgets.find(w=>w.type==='no_direction'))widgets.unshift({id:uid(),type:'no_direction',title:'No Direction',order:-1});
       if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
+      inbox=d.inbox||[];
       recomputeAllPairBiases();syncAutoPairCats();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
@@ -959,13 +1002,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);save();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -1029,8 +1072,9 @@ async function cloudPull(manual){
     const localUpdated=localStorage.getItem('fxpro_updated');
     if(manual||!localUpdated||new Date(cloudUpdated)>new Date(localUpdated)){
       pushU();applySnap(JSON.stringify(rows[0].data));
+      processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
-      rerender();updateStat();updUB();
+      renderSidebar();rerender();updateStat();updUB();updInboxBadge();
       if(manual)setCloudStatus('✓ Heruntergeladen: '+new Date(cloudUpdated).toLocaleString());
     }else if(manual){
       setCloudStatus('Lokale Daten sind aktueller. Lade hoch...');await cloudPush(true);
@@ -1054,7 +1098,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -1071,6 +1115,7 @@ function renderSidebar(){
       return`<div class="ab-wrap">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="selSym('${id}')">
           ${hasImportantEvt(c.id)?'<span class="evt-flag-abs" title="Wichtige Nachricht steht an">❗</span>':''}
+          ${hasInboxNotif(c.id)?NOTIF_FLAG:''}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${isCustom?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
@@ -1567,20 +1612,23 @@ function mvPairInCat(id,d){
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
+  const today=todayStr();
   const sorted=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date));
   el.innerHTML=sorted.length===0?`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No events yet.</div>`:
   sorted.map(ev=>{
     const{day,mo}=fmtDate(ev.date);
     const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
     const dleft=daysUntil(ev.date);
-    return`<div class="cal-ev">
-      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</div></div>
+    const isToday=ev.date===today;
+    return`<div class="cal-ev${isToday?' today':''}">
+      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}${isToday?' today-cd':''}">${countdownLbl(ev.date)}</div></div>
       <div class="cal-body">
-        <div class="cal-name">${escH(ev.name)}</div>
+        <div class="cal-name">${isToday?'🔴 ':''}${escH(ev.name)}</div>
         <div class="cal-meta">
           <span class="ctag ${ic}">${ev.impact==='high'?'🔴 HIGH':ev.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
           ${ev.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(ev.currencies)}</span>`:''}
           ${ev.expected?`<span class="ctag" style="background:rgba(var(--t3-rgb),.09);color:var(--t2)">Exp: ${escH(ev.expected)}</span>`:''}
+          ${isToday?`<span class="ctag" style="background:rgba(var(--red-rgb),.18);color:var(--red);font-weight:800">🔥 HEUTE</span>`:''}
         </div>
         ${ev.notes?`<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.5">${escH(ev.notes)}</div>`:''}
       </div>
@@ -1594,6 +1642,43 @@ function addCalEv(){
   ['evName','evCcy','evExp','evNotes'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('evDate').value='';save();renderCalendar();}
 function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();renderCalendar();}
+
+// ── INBOX / POSTFACH ─────────────────────────────────────────────────
+function updInboxBadge(){
+  const b=document.getElementById('inboxBadge');if(!b)return;
+  b.style.display=inbox.length?'flex':'none';
+}
+function openInboxM(){renderInbox();openM('mInbox');}
+function renderInbox(){
+  const el=document.getElementById('inboxList');if(!el)return;
+  if(!inbox.length){el.innerHTML=`<div class="inbox-empty">Keine neuen Nachrichten.</div>`;return;}
+  el.innerHTML=inbox.map(m=>{
+    const{day,mo}=fmtDate(m.date);
+    const ic=m.impact==='high'?'ih':m.impact==='medium'?'im':'il';
+    return`<div class="cal-ev">
+      <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div></div>
+      <div class="cal-body">
+        <div class="cal-name">${escH(m.name)}</div>
+        <div class="cal-meta">
+          <span class="ctag ${ic}">${m.impact==='high'?'🔴 HIGH':m.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
+          ${m.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(m.currencies)}</span>`:''}
+          ${m.expected?`<span class="ctag" style="background:rgba(var(--t3-rgb),.09);color:var(--t2)">Exp: ${escH(m.expected)}</span>`:''}
+        </div>
+        ${m.notes?`<div style="font-size:10px;color:var(--t2);margin-top:4px;line-height:1.5">${escH(m.notes)}</div>`:''}
+      </div>
+      <button class="cal-del" onclick="delInboxItem('${m.id}')" title="Löschen">×</button>
+    </div>`;
+  }).join('');
+}
+function delInboxItem(id){
+  pushU();
+  inbox=inbox.filter(m=>m.id!==id);
+  save();
+  renderInbox();
+  updInboxBadge();
+  renderSidebar();
+  rerender();
+}
 async function fetchFF(silent){
   const btn=silent?null:event.currentTarget;
   if(btn){btn.textContent='⏳ Fetching...';btn.disabled=true;}
@@ -1935,11 +2020,18 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
+if(processCalEvts())save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();
+renderDash();updateStat();updUB();updInboxBadge();
 autoFetchFF();
 cloudPull(false);
+// Tagwechsel-Check (z.B. wenn die Seite über Mitternacht geöffnet bleibt)
+setInterval(()=>{
+  if(processCalEvts()){
+    save();renderSidebar();rerender();updInboxBadge();
+  }
+},60*60*1000);
 </script>
 </body>
 </html>
