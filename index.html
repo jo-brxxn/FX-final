@@ -406,7 +406,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Marker wandert zu Postfach + tägl. Auto-Update)</div>
+<div style="background:var(--amber);color:#1a1305;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Forex-Factory-Update repariert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1680,19 +1680,38 @@ function delInboxItem(id){
   renderSidebar();
   rerender();
 }
+async function fetchFFJson(){
+  const target='https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json';
+  // 1) Direkter Versuch (CDN erlaubt teilweise CORS)
+  try{
+    const res=await fetch(target,{signal:AbortSignal.timeout(10000)});
+    if(res.ok){
+      const evts=await res.json();
+      if(Array.isArray(evts))return evts;
+    }
+  }catch(e){}
+  // 2) Fallback über CORS-Proxy (allorigins)
+  const proxyUrl='https://api.allorigins.win/get?url='+encodeURIComponent(target);
+  const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(10000)});
+  if(!res.ok)throw new Error('Network error');
+  const data=await res.json();
+  const evts=JSON.parse(data.contents||'null');
+  if(!Array.isArray(evts))throw new Error('Invalid response');
+  return evts;
+}
 async function fetchFF(silent){
   const btn=silent?null:event.currentTarget;
   if(btn){btn.textContent='⏳ Fetching...';btn.disabled=true;}
   try{
-    const url='https://api.allorigins.win/get?url='+encodeURIComponent('https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json');
-    const res=await fetch(url,{signal:AbortSignal.timeout(10000)});
-    if(!res.ok)throw new Error('Network error');
-    const data=await res.json();
-    const evts=JSON.parse(data.contents);
+    const evts=await fetchFFJson();
     let added=0;if(!silent)pushU();
     (evts||[]).forEach(ev=>{
       if(ev.impact==='High'||ev.impact==='Medium'){
-        const dateStr=(ev.date||'').slice(0,10);if(!dateStr)return;
+        if(!ev.date)return;
+        const d=new Date(ev.date);if(isNaN(d))return;
+        // In lokales Datum umrechnen, damit "heute" mit todayStr() übereinstimmt
+        // (FF liefert Zeiten in US-Eastern, was je nach Zeitzone zu Datums-Verschiebung führen kann)
+        const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
           calEvts.push({id:uid(),name:ev.title||'',date:dateStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',expected:ev.forecast?'Forecast: '+ev.forecast:(ev.previous?'Prev: '+ev.previous:''),notes:''});
           added++;
