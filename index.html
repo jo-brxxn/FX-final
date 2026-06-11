@@ -917,9 +917,13 @@ function indBiasFromEvent(ev){
 // Indikatoren anhand des jeweils neuesten passenden Kalender-Events. Wird
 // nur ausgelöst, wenn ein NEUES Event (anderes als zuletzt) gefunden wird,
 // damit ein manuell gesetztes Bias nicht bei jedem Render überschrieben wird.
+// Rohstoffe/Krypto/Indizes (NONFX_IDS) zeigen die Actual/Forecast/Previous-
+// Werte zwar ebenfalls an (sie nutzen die USD-Events), aber ihr Bias wird
+// NICHT automatisch verändert - das bleibt manuell (siehe resetNonFxIndBias).
 function syncIndicatorBiases(){
   let changed=false;
   syms.forEach(c=>{
+    if(NONFX_IDS.includes(c.id))return;
     (c.rubrics||[]).forEach(rub=>{
       if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
       rub.indicators.forEach(ind=>{
@@ -933,6 +937,19 @@ function syncIndicatorBiases(){
     });
   });
   return changed;
+}
+// Einmalige Migration: setzt bei Rohstoffen/Krypto/Indizes das Bias aller
+// Inflation-/Zins-/Arbeitsmarkt-Indikatoren, die zuvor automatisch (fälsch-
+// licherweise) verändert wurden, wieder auf neutral zurück.
+function resetNonFxIndBias(sym){
+  if(!NONFX_IDS.includes(sym.id))return;
+  (sym.rubrics||[]).forEach(rub=>{
+    if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
+    rub.indicators.forEach(ind=>{
+      if(ind.autoEvId!==undefined)delete ind.autoEvId;
+      if(ind.bias!=='neu')ind.bias='neu';
+    });
+  });
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1179,6 +1196,7 @@ function addMacroRub(sym){
   if(!sym.rubrics)sym.rubrics=[];
   enrichRubrics(sym.id,sym.rubrics,sym.full||sym.name);
   migrateRubInds(sym.rubrics);
+  resetNonFxIndBias(sym);
   const idx=sym.rubrics.findIndex(r=>r.name===MACRO_NAME);
   if(idx===-1)sym.rubrics.unshift(mkMacroRub(sym.id,sym.full||sym.name));
   else if(idx>0)sym.rubrics.unshift(sym.rubrics.splice(idx,1)[0]);
