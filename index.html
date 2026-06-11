@@ -72,6 +72,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sym-row.glow-bull{border:1px solid rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.05),rgba(var(--green-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.06)}
 .sym-row.glow-bear{border:1px solid rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.05),rgba(var(--red-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.06)}
 .sym-row.glow-neu{border:1px solid rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.05),rgba(var(--amber-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.06)}
+.dw-chip.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.07),rgba(var(--green-rgb),.07))}
+.dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
+.dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
 .notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -410,7 +413,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Dashboard-Bias-Glow, Scroll-Fix, Inflation-Indikator)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Glow überall, Setups-Layout, größere Event-Karten)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1810,7 +1813,7 @@ function renderDash(){
     let content='';
     if(w.type==='fx_bias'){
       content=syms.filter(s=>FX.includes(s.id)).map(s=>`
-        <div class="sym-row" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
+        <div class="sym-row ${glowClass(s.bias)}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
@@ -1818,7 +1821,7 @@ function renderDash(){
     }else if(w.type==='assets'){
       const others=syms.filter(s=>!FX.includes(s.id));
       content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
-      others.map(s=>`<div class="sym-row">
+      others.map(s=>`<div class="sym-row ${glowClass(s.bias)}">
         <div class="sym-name">${s.name}</div>
         <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
@@ -1832,7 +1835,7 @@ function renderDash(){
           <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',-1);renderDash()" ${idx===0?'disabled':''}>▲</button>
           <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
         </div>
-        <div class="sym-name dw-pname">${escH(p.name)}</div>
+        <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
         <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
         <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
@@ -1842,7 +1845,7 @@ function renderDash(){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
       content=addBtn+(wp.length===0?`<div class="dw-empty">All FX pairs currently have a direction.</div>`:
-      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
+      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip ${glowClass(p.bias)}">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair to Watchlist</button>`;
@@ -1880,12 +1883,15 @@ function renderDash(){
       const evts=[...calEvts].sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
       content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
       evts.map(ev=>{const{day,mo}=fmtDate(ev.date);const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';const dleft=daysUntil(ev.date);
-        return`<div class="sym-row" style="gap:6px">
-          <span class="dw-cal-date">${day} ${mo}</span>
-          <span class="ctag ${ic}" style="flex-shrink:0">${ev.impact==='high'?'🔴':ev.impact==='medium'?'🟡':'⚪'}</span>
-          <span class="dw-cal-name">${escH(ev.name)}</span>
-          ${ev.currencies?`<span class="dw-cal-cur">${escH(ev.currencies)}</span>`:''}
-          <span class="dw-cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</span>
+        return`<div class="cal-ev">
+          <div class="cal-date"><div class="cal-day">${day}</div><div class="cal-mo">${mo}</div><div class="cal-cd${dleft>=0&&dleft<=1?' soon':''}">${countdownLbl(ev.date)}</div></div>
+          <div class="cal-body">
+            <div class="cal-name">${escH(ev.name)}</div>
+            <div class="cal-meta">
+              <span class="ctag ${ic}">${ev.impact==='high'?'🔴 HIGH':ev.impact==='medium'?'🟡 MED':'⚪ LOW'}</span>
+              ${ev.currencies?`<span class="ctag" style="background:rgba(var(--blue-rgb),.09);color:var(--blue)">${escH(ev.currencies)}</span>`:''}
+            </div>
+          </div>
         </div>`;}).join('');
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
