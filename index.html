@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Kalender-Datenquelle (ff_calendar.json) wird jetzt stündlich statt nur 2x/Tag aktualisiert, damit heutige Actual-Werte wie GDP zeitnah erscheinen)</div>
+<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Neue Rubrik "Economic Growth" mit BIP/PMI/Einzelhandel/Verbrauchervertrauen-Recherchedaten je Währung; Anzeige "Zuletzt aktualisiert: HH:MM Uhr" neben Refresh bestätigt sichtbar, dass Forex-Factory-Daten bei jedem Laden & jedem Refresh-Klick abgerufen werden, nicht nur stündlich)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -521,7 +521,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
+    <div style="display:flex;align-items:center;gap:7px">
+      <span id="ffLastUpd" style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
+    </div>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
@@ -979,8 +982,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'0.3% MoM / 3.4% YoY',forecast:'0.3% MoM / 3.3% YoY',previous:'0.2% MoM / 3.3% YoY',releaseDate:'2026-06-05',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich'},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'ISM Manufacturing PMI',actual:'54.0',forecast:'53.0',previous:'52.7',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.3% (annualisiert, Q1 2026)',forecast:'-0.2%',previous:'2.4% (Q4 2025)',releaseDate:'2026-05-29',interval:'quartalsweise (annualisiert)'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.0',previous:'52.7',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'51.3 (ISM)',forecast:'52.0',previous:'51.6',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1%',forecast:'0.2%',previous:'0.7% (rev.)',releaseDate:'2026-05-15',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'98.0 (Conference Board)',forecast:'94.0',previous:'85.7 (rev.)',releaseDate:'2026-05-27',interval:'monatlich'},
   ]},
   EUR:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Einlagesatz) / 2.15% (Hauptrefi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (EZB-Sitzung)'},
@@ -1002,8 +1008,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'2.2% (Job Vacancy Rate)',forecast:null,previous:'2.1%',releaseDate:'2026-03-18',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'2.46% (Negotiated Wage Growth y/y)',forecast:null,previous:'2.95%',releaseDate:'2026-05-22',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'ZEW Economic Sentiment Index',actual:'-9.1',forecast:'-20.0',previous:'-20.4',releaseDate:'2026-05-12',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Q1 2026)',forecast:'0.2%',previous:'0.1% (Q4 2025)',releaseDate:'2026-05-15',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.4 (HCOB)',forecast:'49.0',previous:'49.0',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.2 (HCOB)',forecast:'50.3',previous:'50.1',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1%',forecast:'0.3%',previous:'-0.1%',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-15.2 (EU-Kommission)',forecast:'-15.0',previous:'-16.3',releaseDate:'2026-05-29',interval:'monatlich'},
   ]},
   GBP:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (BoE-Sitzung)'},
@@ -1025,8 +1034,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'4.1% incl. Bonus / 3.4% excl. Bonus',forecast:null,previous:'3.8% incl. / 3.6% excl.',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'GDP m/m',actual:'0.3%',forecast:null,previous:'0.4%',releaseDate:'2026-05-13',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% (Q1 2026, vorl.)',forecast:'0.6%',previous:'0.7% (Q4 2025, rev.)',releaseDate:'2026-05-13',interval:'monatlich (auch Quartalsdaten)'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.5 (S&P Global/CIPS)',forecast:'46.5',previous:'45.4',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.9 (S&P Global/CIPS)',forecast:'50.5',previous:'50.2',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-0.4%',forecast:'0.0%',previous:'1.3%',releaseDate:'2026-05-22',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-20 (GfK)',forecast:'-19',previous:'-19',releaseDate:'2026-05-23',interval:'monatlich'},
   ]},
   CHF:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'alle 3 Monate (SNB-Sitzung)'},
@@ -1048,8 +1060,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'1.8% (Lohnindex-Jahresdurchschnitt 2025)',forecast:null,previous:'1.7% (2024)',releaseDate:'2026-04-24',interval:'jährlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'KOF Economic Barometer',actual:'98.0',forecast:'98.0',previous:'97.8',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (Q1 2026)',forecast:'0.4%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.7 (procure.ch)',forecast:'49.0',previous:'49.6',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'52.0 (procure.ch)',forecast:null,previous:'51.2',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.5%',forecast:null,previous:'-0.3%',releaseDate:'2026-05-06',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-29 (SECO Konsumentenstimmung)',forecast:'-28',previous:'-27',releaseDate:'2026-06-03',interval:'quartalsweise'},
   ]},
   JPY:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)'},
@@ -1071,8 +1086,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'Tankan Large Manufacturers Index',actual:'17',forecast:'16',previous:'15',releaseDate:'2026-04-01',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% (Q1 2026, 2. Schätzung)',forecast:'0.2%',previous:'0.6% (Q4 2025)',releaseDate:'2026-06-08',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.2 (au Jibun Bank)',forecast:'49.5',previous:'48.7',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'51.0 (au Jibun Bank)',forecast:'50.8',previous:'50.6',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.8%',forecast:'0.5%',previous:'-0.2%',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'34.1 (Cabinet Office)',forecast:'34.5',previous:'34.0',releaseDate:'2026-05-09',interval:'monatlich'},
   ]},
   CAD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'alle 6-8 Wochen (BoC-Sitzung)'},
@@ -1094,8 +1112,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.0% y/y',forecast:null,previous:'4.5%',releaseDate:'2026-06-05',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'Ivey PMI',actual:'58.2',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% m/m (März)',forecast:'0.2%',previous:'0.0%',releaseDate:'2026-05-30',interval:'monatlich (Statistics Canada)'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.8 (S&P Global)',forecast:'48.5',previous:'48.3',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'58.2 (Ivey PMI)',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.2%',forecast:'0.3%',previous:'-0.3%',releaseDate:'2026-05-22',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'52.0 (Conference Board)',forecast:null,previous:'50.5',releaseDate:'2026-05-28',interval:'monatlich'},
   ]},
   AUD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (Halten erwartet)',previous:'4.10%',releaseDate:'2026-05-06',interval:'alle 6-8 Wochen (RBA-Sitzung)'},
@@ -1117,8 +1138,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.3% y/y / 0.8% q/q (Q1, WPI)',forecast:null,previous:'3.4% y/y (Q4 2025)',releaseDate:'2026-05-13',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Labour Market',indicator:'NAB Business Confidence',actual:'-14',forecast:null,previous:'-24',releaseDate:'2026-05-12',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (Q1 2026)',forecast:'0.4%',previous:'0.6% (Q4 2025)',releaseDate:'2026-06-04',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.5 (Judo Bank)',forecast:'50.0',previous:'51.7',releaseDate:'2026-06-02',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.6 (Judo Bank)',forecast:null,previous:'50.5',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.2%',forecast:'0.3%',previous:'-0.1%',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'92.1 (Westpac-MI)',forecast:null,previous:'92.6',releaseDate:'2026-06-10',interval:'monatlich'},
   ]},
   NZD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'alle 6-7 Wochen (RBNZ-Sitzung)'},
@@ -1140,8 +1164,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'Labour Cost Index +2.0% y/y',forecast:null,previous:null,releaseDate:'2026-05-06',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-  ],newInds:[
-    {rubric:'Inflation',indicator:'GDT Dairy Auction Price Index',actual:'-0.6% (Preisindex gefallen)',forecast:null,previous:'vorheriger Anstieg seit April 2026',releaseDate:'2026-06-02',interval:'alle 2 Wochen (GDT-Auktion)'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.1% (Q4 2025)',forecast:'0.3%',previous:'0.0% (Q3 2025, rev.)',releaseDate:'2026-03-19',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.5 (BNZ-BusinessNZ PMI)',forecast:null,previous:'48.1',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.8 (BNZ-BusinessNZ PSI)',forecast:null,previous:'49.1',releaseDate:'2026-05-28',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.4% (Electronic Card Transactions)',forecast:null,previous:'-0.2%',releaseDate:'2026-05-15',interval:'monatlich (Electronic Card Transactions)'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'96.5 (ANZ-Roy Morgan)',forecast:null,previous:'94.8',releaseDate:'2026-05-27',interval:'monatlich'},
   ]},
 };
 const RESEARCH_MONTHS_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
@@ -1160,7 +1187,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV3)return;
+  if(sym._researchV4)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1168,7 +1195,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV3=true;return;}
+  if(!data){sym._researchV4=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1185,17 +1212,7 @@ function applyIndResearch(sym){
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
     }
   });
-  (data.newInds||[]).forEach(e=>{
-    const rub=sym.rubrics.find(r=>r.name===e.rubric);
-    if(!rub||!rub.indicators||rub.indicators.find(i=>i.name===e.indicator))return;
-    const ind={id:uid(),name:e.indicator,bias:'neu',imp:false,date:'',interval:e.interval||'',points:[]};
-    if(e.actual!=null){
-      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate};
-      ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
-    }
-    rub.indicators.push(ind);
-  });
-  sym._researchV3=true;
+  sym._researchV4=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1204,6 +1221,7 @@ function mkRubs(){return[
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Unemployment Claims'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Initial Jobless Claims'])},
+  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
@@ -1211,11 +1229,17 @@ function mkRubs(){return[
 // symbols pick up the trimmed/renamed indicator set above.
 const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
 const RUB_IND_RENAME={'Market Repricing (OIS/Swaps)':'Swaps','Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)'};
+// Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
+// Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
+// Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
+// zu vermeiden.
+const OLD_NEWINDS_REMOVE=['ISM Manufacturing PMI','ZEW Economic Sentiment Index','GDP m/m','KOF Economic Barometer','Tankan Large Manufacturers Index','Ivey PMI','NAB Business Confidence','GDT Dairy Auction Price Index'];
 function migrateRubInds(rubrics){
   rubrics.forEach(rub=>{
     if(!rub.indicators)return;
     const rm=RUB_IND_REMOVE[rub.name];
     if(rm)rub.indicators=rub.indicators.filter(ind=>!rm.includes(ind.name));
+    rub.indicators=rub.indicators.filter(ind=>!OLD_NEWINDS_REMOVE.includes(ind.name));
     rub.indicators.forEach(ind=>{if(RUB_IND_RENAME[ind.name])ind.name=RUB_IND_RENAME[ind.name];});
     if(rub.name==='COT Data'&&!rub.indicators.find(i=>i.name==='Net Bearish Positioning')){
       const idx=rub.indicators.findIndex(i=>i.name==='Net Bullish Positioning');
@@ -1231,6 +1255,11 @@ function migrateRubInds(rubrics){
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
   });
+  if(!rubrics.find(r=>r.name==='Economic Growth')){
+    const idx=rubrics.findIndex(r=>r.name==='Labour Market');
+    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])};
+    idx>=0?rubrics.splice(idx+1,0,ni):rubrics.push(ni);
+  }
 }
 function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));}
 
@@ -1259,6 +1288,9 @@ function enrichRubrics(id,rubrics,name){
     'Labour Market': isFx
       ? `Der Arbeitsmarkt ist für ${cb} ein Schlüsselindikator für Konjunktur- und Inflationsdruck (Lohn-Preis-Spirale). Ein robuster Arbeitsmarkt mit steigenden Löhnen erhöht den Inflationsdruck und stützt damit tendenziell ${name} (höhere Zinserwartungen). Eine sich abschwächende Beschäftigung (steigende Arbeitslosigkeit, fallende Lohnzuwächse) signalisiert Abkühlung und nährt Zinssenkungsfantasien → belastet ${name}.`
       : `Der US-Arbeitsmarktbericht (NFP, Arbeitslosenquote, Stundenlöhne) zählt zu den marktbewegendsten Terminen überhaupt, da er die Zinserwartungen für die Fed steuert und damit USD-Liquidität und Risikoappetit beeinflusst – beides direkt relevant für ${name}. Sehr starke Daten können kurzfristig belasten ("Fed bleibt restriktiv"), während eine spürbare Abkühlung meist Lockerungshoffnung und damit Rückenwind für ${name} bedeutet.`,
+    'Economic Growth': isFx
+      ? `Wachstumsdaten (BIP, Einkaufsmanagerindizes/PMI, Einzelhandelsumsätze, Verbrauchervertrauen) zeigen das aktuelle Konjunkturtempo und sind ein wichtiger Frühindikator für die künftige Geldpolitik von ${cbDat(id)}. PMI-Werte über 50 signalisieren Expansion, unter 50 Kontraktion. Überraschend starke Wachstumsdaten erhöhen tendenziell die Wahrscheinlichkeit einer restriktiveren Politik und stützen damit ${name}, eine deutliche Abkühlung schürt Zinssenkungserwartungen und belastet ${name}.`
+      : `US-Wachstumsdaten (BIP, ISM/PMI, Einzelhandelsumsätze, Verbrauchervertrauen) sind ein zentraler Frühindikator für die Fed-Politik und den globalen Risikoappetit – beides direkt relevant für ${name}. ${cls==='metal'?`Starke Daten erhöhen meist die Zinserwartungen und belasten ${name} (höhere Opportunitätskosten ohne Verzinsung), während eine Abkühlung über Zinssenkungshoffnungen unterstützend wirkt.`:cls==='index'?`Starke Daten stützen Unternehmensgewinne, können bei Überhitzung aber eine restriktivere Fed-Politik auslösen ("gute Nachrichten = schlechte Nachrichten") – wie ${name} reagiert, hängt davon ab, welcher Effekt überwiegt.`:cls==='energy'?`Starke Daten signalisieren steigende globale Energienachfrage und wirken preisstützend für ${name}, während schwache Daten Rezessionssorgen und sinkende Nachfrage andeuten (preisdämpfend).`:`Starke Daten können eine restriktivere Fed-Politik bedeuten und ${name} als Risikoasset kurzfristig belasten, während eine Abkühlung über Lockerungshoffnungen Liquidität in Richtung Risikoassets wie ${name} lenkt.`}`,
     'COT Data': cls==='crypto'
       ? `Klassische CFTC-COT-Daten existieren für CME-Bitcoin-Futures, sind wegen des großen Spot-/Perp-Marktes aber weniger aussagekräftig als bei FX. Aussagekräftiger: Funding Rates auf Perpetual-Futures (stark positiv = überhitzte Long-Positionierung, Korrekturrisiko; negativ = übertriebener Pessimismus, Erholungspotenzial) sowie Open Interest und Liquidationsdaten als Sentiment-Proxy für ${name}.`
       : cls==='index'
@@ -1487,7 +1519,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV3:sv._researchV3}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV4:sv._researchV4}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
@@ -2330,12 +2362,17 @@ async function fetchFF(silent){
       if(match){e.actual=match.actual;actualsAdded++;}
     });
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
+    localStorage.setItem('fxpro_ff_lastok','1');
+    updFFLastUpd();
     processCalEvts();
     save();renderSidebar();rerender();renderInbox();updInboxBadge();
     if(!silent){
       alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die letzten '+FF_PAST_DAYS+' und nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) übernommen bzw. nachgetragen.');
     }
   }catch(e){
+    localStorage.setItem('fxpro_ff_last',new Date().toISOString());
+    localStorage.setItem('fxpro_ff_lastok','0');
+    updFFLastUpd();
     if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
   }
   if(btn){btn.textContent='🔄 Refresh';btn.disabled=false;}
@@ -2345,6 +2382,18 @@ async function fetchFF(silent){
 // damit neu veröffentlichte Actual-Werte (z.B. GDP, CPI) sofort erscheinen.
 function autoFetchFF(){
   fetchFF(true);
+}
+// Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
+// Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
+// Bestätigung, dass die Abfrage nicht nur stündlich passiert.
+function updFFLastUpd(){
+  const el=document.getElementById('ffLastUpd');if(!el)return;
+  const last=localStorage.getItem('fxpro_ff_last');
+  if(!last){el.textContent='';return;}
+  const d=new Date(last);
+  const time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const ok=localStorage.getItem('fxpro_ff_lastok')!=='0';
+  el.textContent=(ok?'Zuletzt aktualisiert: ':'Letzter Versuch (Fehler): ')+time+' Uhr';
 }
 
 // ══ NOTE CATS ════════════════════════════════════════════════════
@@ -2649,6 +2698,7 @@ if(processCalEvts())save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();
+updFFLastUpd();
 autoFetchFF();
 cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
