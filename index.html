@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--green);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Recherche-Daten jetzt als kompakte Akt/Forecast/Previous-Badge statt als Stichpunkt, alte Stichpunkte werden bereinigt)</div>
+<div style="background:var(--red);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Forex-Factory-Abruf läuft jetzt bei JEDEM Laden/Öffnen der Seite, nicht mehr nur 1x/Tag)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2340,10 +2340,11 @@ async function fetchFF(silent){
   }
   if(btn){btn.textContent='🔄 Refresh';btn.disabled=false;}
 }
+// Bei jedem Laden/Öffnen der Seite frische Daten von Forex Factory (+
+// FXStreet/Trading-Economics-Fallbacks via ff_calendar.json) abrufen,
+// damit neu veröffentlichte Actual-Werte (z.B. GDP, CPI) sofort erscheinen.
 function autoFetchFF(){
-  const last=localStorage.getItem('fxpro_ff_last');
-  const oneDayMs=24*60*60*1000;
-  if(!last||Date.now()-new Date(last).getTime()>oneDayMs)fetchFF(true);
+  fetchFF(true);
 }
 
 // ══ NOTE CATS ════════════════════════════════════════════════════
