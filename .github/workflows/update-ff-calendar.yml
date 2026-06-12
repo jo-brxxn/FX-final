@@ -2,8 +2,10 @@ name: Update FF Calendar
 
 on:
   schedule:
-    - cron: '0 5 * * *'
-    - cron: '0 16 * * *'
+    # Stuendlich, damit Actual-Werte (z.B. GDP, CPI), die fruehmorgens
+    # europaeischer/asiatischer Zeit veroeffentlicht werden, noch am selben
+    # Tag in ff_calendar.json landen (nicht erst beim naechsten 12h-Lauf).
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
