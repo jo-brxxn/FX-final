@@ -479,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#1f78d1;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Dashboard-Widget "Upcoming Events" zeigt jetzt immer die heutigen Events, oder falls keine vorhanden sind, die nächsten kommenden Events; Quellen-Links-Überarbeitung in Arbeit ...)</div>
+<div style="background:#8e44ad;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Y/Y- und M/M-Zusatzwerte stehen jetzt nur noch in der aufgeklappten Detailansicht, nicht mehr in der Wertezeile; Kartenreihenfolge wird jetzt global für alle Symbole synchronisiert; Quellen-Links-Überarbeitung läuft weiter ...)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1253,12 +1253,25 @@ function srcLabel(url){
 // Wert ("53.9") und die Zusatzinfo aus den Klammern ("S&P Global/CIPS").
 // In der Wertezeile steht nur der reine Wert, die Zusatzinfo wandert in
 // den aufklappbaren Quellen-Bereich.
+// Trennt zusätzlich Werte wie "4.2% YoY / 0.5% MoM" in den ersten
+// (primären) Wert ("4.2%") und den zweiten Zeitraum-Wert, der ebenfalls
+// nur im aufklappbaren Bereich erscheint.
+function splitPeriodVal(s){
+  const str=String(s).trim();
+  if(!/^[+\-]?[\d.,]+\s*%?\s*(Y\/Y|YoY|y\/y|M\/M|MoM|m\/m|Q\/Q|QoQ|q\/q)(\s*\/\s*.+)?$/.test(str))return null;
+  const m=str.match(/^([+\-]?[\d.,]+\s*%?)/);
+  if(!m)return null;
+  return{val:m[1].trim(),note:str};
+}
 function splitResearchVal(s){
   if(s==null)return{val:null,note:''};
   const notes=[];
-  const val=String(s).replace(/\s*\(([^)]*)\)/g,(m,g)=>{notes.push(g);return'';}).trim();
+  let val=String(s).replace(/\s*\(([^)]*)\)/g,(m,g)=>{notes.push(g);return'';}).trim();
+  const p=splitPeriodVal(val);
+  if(p){notes.unshift(p.note);val=p.val;}
   return{val:val||String(s),note:notes.join(', ')};
 }
+
 function researchBias(name,actual,forecast,previous){
   const ac=actualColor({name,actual,forecast,previous});
   return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
@@ -1306,6 +1319,20 @@ function mkRubs(){return[
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
+// Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
+// Verschieben einer Karte (mvRub) aktualisiert und auf alle Symbole
+// angewendet, damit überall die gleiche Kartenreihenfolge gilt.
+function mkRubOrder(){return[MACRO_NAME,...mkRubs().map(r=>r.name)];}
+function applyRubOrder(){
+  if(!rubOrder||!rubOrder.length)return;
+  syms.forEach(sym=>{
+    if(!sym.rubrics)return;
+    sym.rubrics.sort((a,b)=>{
+      const ia=rubOrder.indexOf(a.name),ib=rubOrder.indexOf(b.name);
+      return(ia<0?rubOrder.length:ia)-(ib<0?rubOrder.length:ib);
+    });
+  });
+}
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
 const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
@@ -1587,15 +1614,15 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];recomputeAllPairBiases();syncAutoPairCats();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[];
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[];
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -1605,6 +1632,8 @@ function loadState(){
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
       syms.filter(s=>customIds.find(c=>c.id===s.id)).forEach(addMacroRub);
+      rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();
+      applyRubOrder();
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
       noteCats=d.noteCats||mkNCs();
@@ -1616,7 +1645,7 @@ function loadState(){
       recomputeAllPairBiases();syncAutoPairCats();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
@@ -2045,7 +2074,13 @@ function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(
 function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
-function mvRub(ri,d){const c=getSym();if(c&&c.rubrics)mvArr(c.rubrics,ri,d);save();renderDetail();}
+function mvRub(ri,d){
+  const c=getSym();if(!c||!c.rubrics)return;
+  mvArr(c.rubrics,ri,d);
+  rubOrder=c.rubrics.map(r=>r.name);
+  applyRubOrder();
+  save();renderDetail();
+}
 function addRub(){pushU();const c=getSym();if(!c)return;if(!c.rubrics)c.rubrics=[];c.rubrics.push({id:uid(),name:'New Category',bias:'neu',imp:false,summary:'',indicators:[]});save();renderDetail();}
 
 // ══ INFO MODAL (Rubrik- & Indikator-Erklärungen) ═════════════════════
@@ -2167,6 +2202,7 @@ function confirmAddSym(){
     });
   }
   syms.push(newSym);
+  applyRubOrder();
   closeM('mAddSym');document.getElementById('mSymTicker').value='';document.getElementById('mSymFull').value='';
   save();renderSidebar();selSym(ticker);
 }
