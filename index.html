@@ -40,7 +40,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .ab-wrap{position:relative}
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
-.ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg3)}
+.ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
 .ab .an{font-size:9px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
 .ab .av{font-size:9px;margin-top:1px;font-weight:600}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
@@ -112,8 +112,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
 .rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
-.masonry-col{display:flex;flex-direction:column;min-width:0;flex:1 1 0}
-.masonry-col .rub-card:last-child{margin-bottom:0}
+.masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
@@ -414,7 +413,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   #inboxList{max-height:78vh}
   .dp{max-width:1700px}
   .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
-  .masonry{display:flex;align-items:flex-start;gap:36px}
+  /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
+     auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
+     bleibt oben und wird NICHT gestreckt. */
+  .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
+  .masonry .rub-card{margin-bottom:0}
+  .masonry .rub-card.collapsed{align-self:start}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
@@ -475,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Wertezeile zeigt nur noch reine Zahlen - Zusatzinfos wie Quelle/Monat stehen im Aufklapp-Bereich; Kalender & Postfach übernehmen fehlende Actual-Werte jetzt aus denselben Recherche-Quellen wie die Währungs-Karten, z.B. GBP GDP m/m heute -0.1%)</div>
+<div style="background:#2f9e62;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Karten einer Zeile jetzt gleich hoch (nur Hintergrund streckt sich); ausgewähltes Symbol links deutlicher hervorgehoben; neue Symbole mit Kategorie-Auswahl: Krypto/Metalle/Energie/Index werden mit USD verknüpft, Forex erhält die gleichen Karten/Indikatoren wie USD)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -577,6 +581,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <h3>Add Symbol</h3>
     <input class="m-inp" id="mSymTicker" placeholder="Ticker (e.g. BTC, OIL2)" maxlength="10">
     <input class="m-inp" id="mSymFull" placeholder="Full name (e.g. Bitcoin)">
+    <select class="m-inp" id="mSymCls" title="Kategorie: Forex erhält die gleichen Karten/Indikatoren wie der US-Dollar; Krypto/Metalle/Energie/Index werden zusätzlich mit dem US-Dollar verknüpft (Werte werden übernommen)">
+      <option value="fx">Forex (Währung)</option>
+      <option value="crypto">Krypto</option>
+      <option value="metal">Metalle</option>
+      <option value="energy">Energie</option>
+      <option value="index">Index</option>
+    </select>
     <div class="m-btns"><button class="btn" onclick="closeM('mAddSym')">Cancel</button><button class="btn g" onclick="confirmAddSym()">Add</button></div>
   </div>
 </div>
@@ -807,11 +818,18 @@ function calTableHtml(evts,opts){
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
 const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS'];
-const MACRO_SYNC_IDS=['USD',...NONFX_IDS];
+// Kategorie eines Symbols ('fx','crypto','metal','energy','index'): für
+// eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
+// Hinzufügen gewählten Kategorie (customIds[].cls).
+function assetCls(id){return ASSET_CLASS[id]||(customIds.find(c=>c.id===id)||{}).cls;}
+function isNonFx(id){return['crypto','metal','energy','index'].includes(assetCls(id));}
+// USD + alle USD-getriebenen Assets (inkl. selbst hinzugefügter Krypto/
+// Metall/Energie/Index-Symbole) teilen sich die Makro-Rubrik-Summaries.
+function macroSyncIds(){return['USD',...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
 function getRelevantEvents(id){
   const today=todayStr();
-  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  const ids=isNonFx(id)?[id,'USD']:[id];
   // Events ab heute gelten als "geschehen" -> Markierung wandert zum Postfach-Symbol (NOTIF_FLAG)
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
@@ -844,7 +862,7 @@ function processCalEvts(){
   return changed;
 }
 function getInboxFor(id){
-  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  const ids=isNonFx(id)?[id,'USD']:[id];
   return inbox.filter(m=>ids.some(x=>evtMatchesSym(m,x)));
 }
 function hasInboxNotif(id){return getInboxFor(id).length>0;}
@@ -852,7 +870,7 @@ const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach
 // Alle Events (anstehend + bereits im Postfach/erschienen) für ein Symbol -
 // inkl. USD-News bei Rohstoffen/Krypto/Indizes (NONFX_IDS).
 function getSymEventsAll(id){
-  const ids=NONFX_IDS.includes(id)?[id,'USD']:[id];
+  const ids=isNonFx(id)?[id,'USD']:[id];
   const all=calEvts.filter(ev=>ids.some(x=>evtMatchesSym(ev,x)));
   inbox.forEach(m=>{
     if(ids.some(x=>evtMatchesSym(m,x))&&!all.find(e=>e.name===m.name&&e.date===m.date))all.push(m);
@@ -907,7 +925,7 @@ const IND_EVENT_MATCHERS={
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Rohstoffe/Krypto/Indizes hängen am USD-Makrozyklus -> nutzen USD-Events.
-function macroCcyFor(id){return MACRO_SYNC_IDS.includes(id)?'USD':id;}
+function macroCcyFor(id){return id==='USD'||isNonFx(id)?'USD':id;}
 // Findet das jüngste veröffentlichte Event (mit "Actual"-Wert), das zum
 // Indikator-Namen und zur Symbol-Währung passt.
 function findIndEvent(symId,indName){
@@ -967,7 +985,7 @@ function applyResearchToCal(){
 function syncIndicatorBiases(){
   let changed=false;
   syms.forEach(c=>{
-    if(NONFX_IDS.includes(c.id))return;
+    if(isNonFx(c.id))return;
     (c.rubrics||[]).forEach(rub=>{
       if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
       rub.indicators.forEach(ind=>{
@@ -986,7 +1004,7 @@ function syncIndicatorBiases(){
 // Inflation-/Zins-/Arbeitsmarkt-Indikatoren, die zuvor automatisch (fälsch-
 // licherweise) verändert wurden, wieder auf neutral zurück.
 function resetNonFxIndBias(sym){
-  if(!NONFX_IDS.includes(sym.id))return;
+  if(!isNonFx(sym.id))return;
   (sym.rubrics||[]).forEach(rub=>{
     if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
     rub.indicators.forEach(ind=>{
@@ -1335,7 +1353,7 @@ const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx
 // ── Info-Texte für die 5 Standard-Rubriken (Specific-Tab) ──
 function enrichRubrics(id,rubrics,name){
   const cb=cbName(id);
-  const cls=ASSET_CLASS[id];
+  const cls=assetCls(id);
   const isFx=cls==='fx';
   const rateImpact=cls==='metal'?`Steigt die Realrendite (Fed restriktiv), wird ${name} unattraktiver, da es keine laufende Verzinsung bietet – Gegenwind. Eine dovishe Fed senkt Realrenditen und stützt ${name}.`
     :cls==='index'?`Höhere bzw. länger hohe Zinsen erhöhen den Diskontsatz künftiger Gewinne und belasten v.a. wachstumsstarke Titel in ${name}. Eine dovishe Fed (Zinssenkungsfantasie) wirkt unterstützend.`
@@ -1516,7 +1534,7 @@ const MACRO_DATA={
     extraInfo:'Wachstumsaktien haben eine hohe "Duration" (ein Großteil der Gewinne liegt in ferner Zukunft) und reagieren daher überproportional auf Zinsänderungen: steigende Zinsen senken den Barwert dieser Gewinne stark (Nasdaq-negativ), fallende Zinsen wirken stark unterstützend. Zusätzlich treibt aktuell der KI-Investitionszyklus (Capex von Hyperscalern in Chips/Rechenzentren) Erwartungen und Kurse der größten Indexmitglieder.'},
 };
 function mkMacroRub(id,name){
-  const cls=ASSET_CLASS[id];
+  const cls=assetCls(id);
   const m=MACRO_DATA[id]||{
     extra:'Korrelation zu Risikoassets',
     safe:{info:`Ob ${name} als sicherer Hafen gilt, hängt von der Marktphase ab. Beobachte, ob ${name} in Krisenzeiten eher gekauft (Safe-Haven-Charakter) oder verkauft wird (Risikoasset-Charakter).`},
@@ -1716,10 +1734,18 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
+const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices'};
 function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
-  const allCats=[...SB_CATS];
-  if(customIds.length>0)allCats.push({l:'Custom',ids:customCatIds});
+  // Eigene Symbole erscheinen in der Sidebar unter ihrer gewählten
+  // Kategorie; ältere ohne Kategorie weiterhin unter "Custom".
+  const allCats=SB_CATS.map(c=>({l:c.l,ids:[...c.ids]}));
+  const uncategorized=[];
+  customIds.forEach(c=>{
+    const cat=CLS_CAT[c.cls]&&allCats.find(x=>x.l===CLS_CAT[c.cls]);
+    cat?cat.ids.push(c.id):uncategorized.push(c.id);
+  });
+  if(uncategorized.length>0)allCats.push({l:'Custom',ids:uncategorized});
   let html=allCats.map(cat=>`
     <div class="sb-lbl">${cat.l}</div>
     ${cat.ids.filter(id=>syms.find(s=>s.id===id)).map(id=>{
@@ -1801,14 +1827,14 @@ function renderFL(arr,key){
       <button class="idel" onclick="delGenR('${key}',${i})">×</button>
     </div>`; }).join('');}
 
-// ── MASONRY (static columns, immune to per-card height changes) ──
+// ── KARTEN-GRID (gleich hohe Zeilen) ──
+// CSS-Grid statt Spalten-Stacks: Karten einer Zeile strecken sich auf die
+// Höhe der größten Karte (nur der Karten-Hintergrund - die Indikatoren im
+// Inneren behalten ihre natürliche Höhe). Reihenfolge bleibt identisch zur
+// alten Round-Robin-Verteilung (zeilenweise links nach rechts).
 function masonryCols(){return window.innerWidth>=1600?3:window.innerWidth>=1100?2:1;}
 function masonryHTML(items,renderFn){
-  const n=masonryCols();
-  if(n<=1)return`<div class="masonry">${items.map((it,i)=>renderFn(it,i)).join('')}</div>`;
-  const cols=Array.from({length:n},()=>[]);
-  items.forEach((it,i)=>cols[i%n].push(renderFn(it,i)));
-  return`<div class="masonry">${cols.map(col=>`<div class="masonry-col">${col.join('')}</div>`).join('')}</div>`;
+  return`<div class="masonry" style="--mcols:${masonryCols()}">${items.map((it,i)=>renderFn(it,i)).join('')}</div>`;
 }
 
 // ── SPECIFIC TAB ──
@@ -2006,9 +2032,9 @@ function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii
 // NICHT synchronisiert.
 function syncMacroRub(ri){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
-  if(!cur||!src||!MACRO_SYNC_IDS.includes(cur.id)||!MACRO_SYNC_RUBS.includes(src.name))return;
+  if(!cur||!src||!(cur.id==='USD'||isNonFx(cur.id))||!MACRO_SYNC_RUBS.includes(src.name))return;
   const clone={imp:src.imp,summary:src.summary};
-  MACRO_SYNC_IDS.forEach(id=>{
+  macroSyncIds().forEach(id=>{
     if(id===cur.id)return;
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
@@ -2069,7 +2095,7 @@ function syncIndOrderGlobal(ri){
 function syncMacroIndAddRemove(ri,action,name){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
   if(!cur||cur.id!=='USD'||!src||!MACRO_SYNC_RUBS.includes(src.name))return;
-  NONFX_IDS.forEach(id=>{
+  macroSyncIds().filter(id=>id!=='USD').forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
     if(!r.indicators)r.indicators=[];
@@ -2108,16 +2134,39 @@ function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;r.i
 function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(r&&r.items)mvArr(r.items,ii,d);save();renderDetail();}
 
 // ══ ADD SYMBOL ════════════════════════════════════════════════════
+// Übernimmt die Karten-/Indikator-Struktur vom US-Dollar (gleiche Rubriken
+// und Indikator-Namen, aber eigene leere Werte) für neue Symbole.
+function cloneRubsFromUSD(){
+  const usd=syms.find(s=>s.id==='USD');
+  if(!usd||!usd.rubrics)return mkRubs();
+  return usd.rubrics.filter(r=>r.name!==MACRO_NAME).map(r=>({
+    id:uid(),name:r.name,bias:'neu',imp:false,summary:'',
+    indicators:(r.indicators||[]).map(i=>({id:uid(),name:i.name,bias:'neu',imp:false,date:'',interval:i.interval||'',points:[]}))
+  }));
+}
 function confirmAddSym(){
   const ticker=document.getElementById('mSymTicker').value.trim().toUpperCase();
   const full=document.getElementById('mSymFull').value.trim()||ticker;
+  const cls=document.getElementById('mSymCls').value||'fx';
   if(!ticker)return;
   if(syms.find(s=>s.id===ticker)){alert('Symbol already exists.');return;}
   pushU();
-  const newSym={id:ticker,name:ticker,full:full,bias:'neu',genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''};
+  // Kategorie zuerst registrieren, damit assetCls()/isNonFx() beim Aufbau
+  // der Rubriken (Info-Texte, Bias-Reset, USD-Verknüpfung) korrekt greifen.
+  customIds.push({id:ticker,name:ticker,full:full,cls:cls});
+  const newSym={id:ticker,name:ticker,full:full,bias:'neu',genBull:[],genBear:[],rubrics:cloneRubsFromUSD(),noteRubs:[],notes:''};
   addMacroRub(newSym);
+  // Krypto/Metalle/Energie/Index hängen am USD-Makrozyklus: Summaries der
+  // Makro-Rubriken vom USD übernehmen; die Indikator-Werte kommen über die
+  // USD-Verknüpfung (isNonFx) automatisch herein und bleiben synchron.
+  if(isNonFx(ticker)){
+    const usd=syms.find(s=>s.id==='USD');
+    MACRO_SYNC_RUBS.forEach(rn=>{
+      const ur=usd?.rubrics.find(r=>r.name===rn),nr=newSym.rubrics.find(r=>r.name===rn);
+      if(ur&&nr){nr.summary=ur.summary;nr.imp=ur.imp;}
+    });
+  }
   syms.push(newSym);
-  customIds.push({id:ticker,name:ticker,full:full});
   closeM('mAddSym');document.getElementById('mSymTicker').value='';document.getElementById('mSymFull').value='';
   save();renderSidebar();selSym(ticker);
 }
