@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Fix v2: Recherche-Migration auf neues Flag umgestellt - greift jetzt auch bei bereits gespeicherten Profilen mit fehlgeschlagenem ersten Versuch)</div>
+<div style="background:var(--green);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Recherche-Daten jetzt als kompakte Akt/Forecast/Previous-Badge statt als Stichpunkt, alte Stichpunkte werden bereinigt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1151,25 +1151,24 @@ function fmtResearchDate(s){
   if(isNaN(d))return'';
   return`${RESEARCH_MONTHS_DE[d.getMonth()]} ${d.getFullYear()}`;
 }
-function fmtResearchPoint(e){
-  let txt=`Letzter Wert: ${e.actual}`;
-  const dt=fmtResearchDate(e.releaseDate);
-  if(dt)txt+=` (${dt})`;
-  if(e.forecast!=null)txt+=` · Forecast ${e.forecast}`;
-  if(e.previous!=null)txt+=` · Prev ${e.previous}`;
-  return txt;
-}
 function researchBias(name,actual,forecast,previous){
   const ac=actualColor({name,actual,forecast,previous});
   return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
 }
 // Einmalige Befüllung: entfernt nicht zutreffende Indikatoren, ergänzt
-// fehlende High-Impact-Indikatoren und trägt bei gefundenen Daten einen
-// Datenpunkt + Intervall-Badge ein. Läuft pro Symbol nur einmal.
+// fehlende High-Impact-Indikatoren und trägt bei gefundenen Daten den
+// letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
+// Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV2)return;
+  if(sym._researchV3)return;
+  // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
+  (sym.rubrics||[]).forEach(rub=>{
+    (rub.indicators||[]).forEach(ind=>{
+      if(ind.points&&ind.points.length)ind.points=ind.points.filter(p=>!/^Letzter Wert:/.test(p.text));
+    });
+  });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data)return;
+  if(!data){sym._researchV3=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1182,8 +1181,7 @@ function applyIndResearch(sym){
     const ind=rub.indicators[idx];
     if(e.interval)ind.interval=e.interval;
     if(e.actual!=null){
-      ind.points=ind.points||[];
-      ind.points.push({id:uid(),text:fmtResearchPoint(e),bias:'neu',imp:false});
+      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate};
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
     }
   });
@@ -1192,12 +1190,12 @@ function applyIndResearch(sym){
     if(!rub||!rub.indicators||rub.indicators.find(i=>i.name===e.indicator))return;
     const ind={id:uid(),name:e.indicator,bias:'neu',imp:false,date:'',interval:e.interval||'',points:[]};
     if(e.actual!=null){
-      ind.points.push({id:uid(),text:fmtResearchPoint(e),bias:'neu',imp:false});
+      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate};
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
     }
     rub.indicators.push(ind);
   });
-  sym._researchV2=true;
+  sym._researchV3=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1489,7 +1487,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV2:sv._researchV2}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV3:sv._researchV3}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
@@ -1793,6 +1791,15 @@ function renderInd(ind,ri,ii,total){
       <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
       <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
       <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
+    </div>`;
+  }else if(ind.research){
+    const r=ind.research;
+    const ac=actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const dt=fmtResearchDate(r.date);
+    dataPart=`<div class="ind-data" title="Letzter bekannter Wert${dt?' · '+dt:''}">
+      <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(r.actual)}</span>
+      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(r.forecast??'–')}</span>
+      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(r.previous??'–')}</span>
     </div>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
