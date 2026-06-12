@@ -172,13 +172,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
 .ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
 .ind-body{padding:6px 8px}
-.ind-data{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
+.ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
+.ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
+.ind-data-sum::-webkit-details-marker{display:none}
+.ind-data-sum::after{content:'Quelle ▾';margin-left:auto;color:var(--t3);font-size:8px;letter-spacing:.5px;text-transform:uppercase}
+.ind-data[open] .ind-data-sum::after{content:'Quelle ▴'}
 .ind-data-lbl{color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-size:8px}
 .ind-data-act{font-weight:800;color:var(--t1)}
 .ind-data-act.act-good{color:var(--green)}
 .ind-data-act.act-bad{color:var(--red)}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
+.ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:9px}
+.ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}
+.ind-data-src a:hover{text-decoration:underline}
 /* subpoints */
 .sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}
 .sp:hover{background:#2c3a52}
@@ -468,7 +475,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--purple);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Neue Rubrik "Economic Growth" mit BIP/PMI/Einzelhandel/Verbrauchervertrauen-Recherchedaten je Währung; Anzeige "Zuletzt aktualisiert: HH:MM Uhr" neben Refresh bestätigt sichtbar, dass Forex-Factory-Daten bei jedem Laden & jedem Refresh-Klick abgerufen werden, nicht nur stündlich)</div>
+<div style="background:var(--star);color:#16191f;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GOLD (Alle Economic-Growth-Werte durch echte, im Web recherchierte Daten ersetzt (Stand 12.06.2026, u.a. tradingeconomics/ONS/ABS/Stats NZ); jeder Indikator-Wert ist jetzt aufklappbar und zeigt Stand-Datum + Link zur Quelle)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -982,11 +989,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'0.3% MoM / 3.4% YoY',forecast:'0.3% MoM / 3.3% YoY',previous:'0.2% MoM / 3.3% YoY',releaseDate:'2026-06-05',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich'},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.3% (annualisiert, Q1 2026)',forecast:'-0.2%',previous:'2.4% (Q4 2025)',releaseDate:'2026-05-29',interval:'quartalsweise (annualisiert)'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.0',previous:'52.7',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'51.3 (ISM)',forecast:'52.0',previous:'51.6',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1%',forecast:'0.2%',previous:'0.7% (rev.)',releaseDate:'2026-05-15',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'98.0 (Conference Board)',forecast:'94.0',previous:'85.7 (rev.)',releaseDate:'2026-05-27',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (BEA, 2. Schätzung, annualisiert 1.6%)',forecast:'0.5%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise',source:'https://www.bea.gov/news/2026/gdp-second-estimate-and-corporate-profits-1st-quarter-2026'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/united-states/business-confidence'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'54.5 (ISM)',forecast:'53.8',previous:'53.6',releaseDate:'2026-06-03',interval:'monatlich',source:'https://tradingeconomics.com/united-states/non-manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monatlich',source:'https://tradingeconomics.com/united-states/retail-sales'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'93.1 (Conference Board)',forecast:'91.9',previous:'93.8',releaseDate:'2026-05-26',interval:'monatlich',source:'https://www.conference-board.org/topics/consumer-confidence/'},
   ]},
   EUR:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Einlagesatz) / 2.15% (Hauptrefi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (EZB-Sitzung)'},
@@ -1008,11 +1015,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'2.2% (Job Vacancy Rate)',forecast:null,previous:'2.1%',releaseDate:'2026-03-18',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'2.46% (Negotiated Wage Growth y/y)',forecast:null,previous:'2.95%',releaseDate:'2026-05-22',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Q1 2026)',forecast:'0.2%',previous:'0.1% (Q4 2025)',releaseDate:'2026-05-15',interval:'quartalsweise'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.4 (HCOB)',forecast:'49.0',previous:'49.0',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.2 (HCOB)',forecast:'50.3',previous:'50.1',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1%',forecast:'0.3%',previous:'-0.1%',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-15.2 (EU-Kommission)',forecast:'-15.0',previous:'-16.3',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.2% (Eurostat, revidiert)',forecast:null,previous:'0.2% (Q4 2025)',releaseDate:'2026-06-05',interval:'quartalsweise',source:'https://tradingeconomics.com/euro-area/gdp-growth'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'51.6 (HCOB)',forecast:'51.2',previous:'52.2',releaseDate:'2026-06-02',interval:'monatlich',source:'https://tradingeconomics.com/euro-area/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'46.4 (HCOB)',forecast:'47.7',previous:'47.6',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/euro-area/services-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-0.4% (Eurostat)',forecast:'-0.3%',previous:'0.8%',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/euro-area/retail-sales'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-19.0 (EU-Kommission, Flash)',forecast:'-20.8',previous:'-20.6',releaseDate:'2026-05-21',interval:'monatlich',source:'https://tradingeconomics.com/euro-area/consumer-confidence'},
   ]},
   GBP:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (BoE-Sitzung)'},
@@ -1034,11 +1041,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'4.1% incl. Bonus / 3.4% excl. Bonus',forecast:null,previous:'3.8% incl. / 3.6% excl.',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% (Q1 2026, vorl.)',forecast:'0.6%',previous:'0.7% (Q4 2025, rev.)',releaseDate:'2026-05-13',interval:'monatlich (auch Quartalsdaten)'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.5 (S&P Global/CIPS)',forecast:'46.5',previous:'45.4',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.9 (S&P Global/CIPS)',forecast:'50.5',previous:'50.2',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-0.4%',forecast:'0.0%',previous:'1.3%',releaseDate:'2026-05-22',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-20 (GfK)',forecast:'-19',previous:'-19',releaseDate:'2026-05-23',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.1% (ONS, Monthly GDP m/m, April 2026)',forecast:'-0.1%',previous:'0.3%',releaseDate:'2026-06-12',interval:'monatlich',source:'https://www.ons.gov.uk/economy/grossdomesticproductgdp/bulletins/gdpmonthlyestimateuk/april2026'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'53.9 (S&P Global/CIPS)',forecast:'53.7',previous:'53.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/united-kingdom/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'49.3 (S&P Global/CIPS)',forecast:'47.9',previous:'52.7',releaseDate:'2026-06-03',interval:'monatlich',source:'https://tradingeconomics.com/united-kingdom/services-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.ons.gov.uk/businessindustryandtrade/retailindustry/bulletins/retailsales/latest'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-23 (GfK)',forecast:'-28',previous:'-25',releaseDate:'2026-05-22',interval:'monatlich',source:'https://tradingeconomics.com/united-kingdom/consumer-confidence'},
   ]},
   CHF:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'alle 3 Monate (SNB-Sitzung)'},
@@ -1060,11 +1067,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'1.8% (Lohnindex-Jahresdurchschnitt 2025)',forecast:null,previous:'1.7% (2024)',releaseDate:'2026-04-24',interval:'jährlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (Q1 2026)',forecast:'0.4%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.7 (procure.ch)',forecast:'49.0',previous:'49.6',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'52.0 (procure.ch)',forecast:null,previous:'51.2',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.5%',forecast:null,previous:'-0.3%',releaseDate:'2026-05-06',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-29 (SECO Konsumentenstimmung)',forecast:'-28',previous:'-27',releaseDate:'2026-06-03',interval:'quartalsweise'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (SECO, sportbereinigt, Q1 2026)',forecast:'0.3-0.4%',previous:'0.2%',releaseDate:'2026-06-02',interval:'quartalsweise',source:'https://www.focus-economics.com/countries/switzerland/news/gdp/switzerland-national-accounts-02-06-2026-economic-growth-rises-in-the-first-quarter-of-2026/'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'57.3 (procure.ch/UBS)',forecast:'54.0',previous:'54.5',releaseDate:'2026-06-02',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'56.0 (procure.ch)',forecast:null,previous:'54.8',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/services-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1% (BFS)',forecast:null,previous:'0.3% (rev.)',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/retail-sales'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-40 (SECO Konsumentenstimmung)',forecast:null,previous:'-43',releaseDate:'2026-05-08',interval:'quartalsweise',source:'https://www.seco.admin.ch/seco/en/home/wirtschaftslage---wirtschaftspolitik/Wirtschaftslage/Konsumentenstimmung.html'},
   ]},
   JPY:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)'},
@@ -1086,11 +1093,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% (Q1 2026, 2. Schätzung)',forecast:'0.2%',previous:'0.6% (Q4 2025)',releaseDate:'2026-06-08',interval:'quartalsweise'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.2 (au Jibun Bank)',forecast:'49.5',previous:'48.7',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'51.0 (au Jibun Bank)',forecast:'50.8',previous:'50.6',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.8%',forecast:'0.5%',previous:'-0.2%',releaseDate:'2026-05-29',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'34.1 (Cabinet Office)',forecast:'34.5',previous:'34.0',releaseDate:'2026-05-09',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revidiert)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quartalsweise',source:'https://tradingeconomics.com/japan/gdp-growth'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/japan/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monatlich',source:'https://tradingeconomics.com/japan/services-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monatlich',source:'https://tradingeconomics.com/japan/retail-sales'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (März 2026)',releaseDate:'2026-05-13',interval:'monatlich',source:'https://www.esri.cao.go.jp/en/stat/shouhi/shouhi-e.html'},
   ]},
   CAD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'alle 6-8 Wochen (BoC-Sitzung)'},
@@ -1112,11 +1119,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.0% y/y',forecast:null,previous:'4.5%',releaseDate:'2026-06-05',interval:'monatlich'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.1% m/m (März)',forecast:'0.2%',previous:'0.0%',releaseDate:'2026-05-30',interval:'monatlich (Statistics Canada)'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.8 (S&P Global)',forecast:'48.5',previous:'48.3',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'58.2 (Ivey PMI)',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.2%',forecast:'0.3%',previous:'-0.3%',releaseDate:'2026-05-22',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'52.0 (Conference Board)',forecast:null,previous:'50.5',releaseDate:'2026-05-28',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.0% (Statistics Canada, Q1 2026)',forecast:'0.1%',previous:'-0.2% (Q4 2025)',releaseDate:'2026-05-29',interval:'quartalsweise',source:'https://www150.statcan.gc.ca/n1/daily-quotidien/260529/dq260529a-eng.htm'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'52.9 (S&P Global)',forecast:'54.2',previous:'53.3',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/canada/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'58.2 (Ivey PMI)',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-ivey-purchasing-managers-index-(pmi)-185'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.9% (Statistics Canada, März 2026)',forecast:'0.6%',previous:'0.4% (rev., Feb 2026)',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www150.statcan.gc.ca/n1/daily-quotidien/260522/dq260522a-eng.htm'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'45.6 (Conference Board, Mai 2026)',forecast:null,previous:'49.2 (April 2026)',releaseDate:'2026-06-10',interval:'monatlich',source:'https://tradingeconomics.com/canada/consumer-confidence'},
   ]},
   AUD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (Halten erwartet)',previous:'4.10%',releaseDate:'2026-05-06',interval:'alle 6-8 Wochen (RBA-Sitzung)'},
@@ -1138,11 +1145,11 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.3% y/y / 0.8% q/q (Q1, WPI)',forecast:null,previous:'3.4% y/y (Q4 2025)',releaseDate:'2026-05-13',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (Q1 2026)',forecast:'0.4%',previous:'0.6% (Q4 2025)',releaseDate:'2026-06-04',interval:'quartalsweise'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.5 (Judo Bank)',forecast:'50.0',previous:'51.7',releaseDate:'2026-06-02',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.6 (Judo Bank)',forecast:null,previous:'50.5',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.2%',forecast:'0.3%',previous:'-0.1%',releaseDate:'2026-06-04',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'92.1 (Westpac-MI)',forecast:null,previous:'92.6',releaseDate:'2026-06-10',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (ABS, Q1 2026)',forecast:'0.3%',previous:'0.8% (Q4 2025)',releaseDate:'2026-06-03',interval:'quartalsweise',source:'https://tradingeconomics.com/australia/gdp-growth'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'50.7 (S&P Global, final)',forecast:'50.2',previous:'51.3',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/australia/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.7 (S&P Global, final)',forecast:null,previous:'50.7',releaseDate:'2026-06-02',interval:'monatlich',source:'https://tradingeconomics.com/australia/services-pmi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.1% (ABS Household Spending, April 2026)',forecast:null,previous:'1.6% (März)',releaseDate:'2026-05-28',interval:'monatlich (Household Spending Indicator)',source:'https://www.abs.gov.au/statistics/economy/finance/monthly-household-spending-indicator/latest-release'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.6 (Westpac-MI, Juni 2026)',forecast:null,previous:'83.0 (Mai)',releaseDate:'2026-06-09',interval:'monatlich',source:'https://www.westpaciq.com.au/economics/2026/06/consumer-sentiment-june-2026'},
   ]},
   NZD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'alle 6-7 Wochen (RBNZ-Sitzung)'},
@@ -1164,19 +1171,31 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'Labour Cost Index +2.0% y/y',forecast:null,previous:null,releaseDate:'2026-05-06',interval:'quartalsweise'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.1% (Q4 2025)',forecast:'0.3%',previous:'0.0% (Q3 2025, rev.)',releaseDate:'2026-03-19',interval:'quartalsweise'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'47.5 (BNZ-BusinessNZ PMI)',forecast:null,previous:'48.1',releaseDate:'2026-05-29',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.8 (BNZ-BusinessNZ PSI)',forecast:null,previous:'49.1',releaseDate:'2026-05-28',interval:'monatlich'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.4% (Electronic Card Transactions)',forecast:null,previous:'-0.2%',releaseDate:'2026-05-15',interval:'monatlich (Electronic Card Transactions)'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'96.5 (ANZ-Roy Morgan)',forecast:null,previous:'94.8',releaseDate:'2026-05-27',interval:'monatlich'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Stats NZ, Q4 2025)',forecast:null,previous:'0.9% (Q3 2025)',releaseDate:'2026-03-19',interval:'quartalsweise (Q1 2026 am 18.06.2026)',source:'https://www.stats.govt.nz/information-releases/gross-domestic-product-december-2025-quarter/'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.9 (BNZ-BusinessNZ PMI, Mai 2026)',forecast:null,previous:'50.4 (April)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://tradingeconomics.com/new-zealand/manufacturing-pmi'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.9 (BNZ-BusinessNZ PSI, April 2026)',forecast:null,previous:'46.2 (März)',releaseDate:'2026-05-18',interval:'monatlich',source:'https://businessnz.org.nz/psi'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monatlich (Electronic Card Transactions)',source:'https://www.stats.govt.nz/information-releases/?filters=Electronic+card+transactions'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'86.5 (ANZ-Roy Morgan, Mai 2026)',forecast:null,previous:'80.3 (April)',releaseDate:'2026-05-28',interval:'monatlich',source:'https://www.roymorgan.com/findings/10232-anz-roy-morgan-new-zealand-consumer-confidence-may-2026'},
   ]},
 };
 const RESEARCH_MONTHS_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const RESEARCH_MONTHS_DE_FULL=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 function fmtResearchDate(s){
   if(!s)return'';
   const d=new Date(s+'T00:00:00');
   if(isNaN(d))return'';
   return`${RESEARCH_MONTHS_DE[d.getMonth()]} ${d.getFullYear()}`;
+}
+// Volles Datum für die Quellenangabe im aufklappbaren Indikator-Detail.
+function fmtResearchDateFull(s){
+  if(!s)return'';
+  const d=new Date(s+'T00:00:00');
+  if(isNaN(d))return'';
+  return`${d.getDate()}. ${RESEARCH_MONTHS_DE_FULL[d.getMonth()]} ${d.getFullYear()}`;
+}
+// Kurzer, lesbarer Domainname für den "Quelle ↗"-Link.
+function srcLabel(url){
+  try{return new URL(url).hostname.replace(/^www\./,'');}catch(e){return'Quelle';}
 }
 function researchBias(name,actual,forecast,previous){
   const ac=actualColor({name,actual,forecast,previous});
@@ -1187,7 +1206,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV4)return;
+  if(sym._researchV5)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1195,7 +1214,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV4=true;return;}
+  if(!data){sym._researchV5=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1208,11 +1227,11 @@ function applyIndResearch(sym){
     const ind=rub.indicators[idx];
     if(e.interval)ind.interval=e.interval;
     if(e.actual!=null){
-      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate};
+      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source};
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
     }
   });
-  sym._researchV4=true;
+  sym._researchV5=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1519,7 +1538,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV4:sv._researchV4}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV5:sv._researchV5}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
@@ -1819,20 +1838,28 @@ function renderInd(ind,ri,ii,total){
   let dataPart='';
   if(ev){
     const ac=actualColor(ev);
-    dataPart=`<div class="ind-data" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
-      <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
-      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
-      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
-    </div>`;
+    const srcLink=`<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory Kalender ↗</a>`;
+    dataPart=`<details class="ind-data">
+      <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
+        <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
+      </summary>
+      <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${fmtDayHdr(ev.date)} · ${srcLink}</div>
+    </details>`;
   }else if(ind.research){
     const r=ind.research;
     const ac=actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
-    const dt=fmtResearchDate(r.date);
-    dataPart=`<div class="ind-data" title="Letzter bekannter Wert${dt?' · '+dt:''}">
-      <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(r.actual)}</span>
-      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(r.forecast??'–')}</span>
-      <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(r.previous??'–')}</span>
-    </div>`;
+    const dt=fmtResearchDateFull(r.date);
+    const srcLink=r.source?`<a href="${escH(r.source)}" target="_blank" rel="noopener">${escH(srcLabel(r.source))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
+    dataPart=`<details class="ind-data">
+      <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
+        <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(r.actual)}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(r.forecast??'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(r.previous??'–')}</span>
+      </summary>
+      <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'} · ${srcLink}</div>
+    </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
     <div class="ind-hdr">
