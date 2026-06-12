@@ -475,7 +475,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--star);color:#16191f;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GOLD (Alle Economic-Growth-Werte durch echte, im Web recherchierte Daten ersetzt (Stand 12.06.2026, u.a. tradingeconomics/ONS/ABS/Stats NZ); jeder Indikator-Wert ist jetzt aufklappbar und zeigt Stand-Datum + Link zur Quelle)</div>
+<div style="background:var(--red);color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Wertezeile zeigt nur noch reine Zahlen - Zusatzinfos wie Quelle/Monat stehen im Aufklapp-Bereich; Kalender & Postfach übernehmen fehlende Actual-Werte jetzt aus denselben Recherche-Quellen wie die Währungs-Karten, z.B. GBP GDP m/m heute -0.1%)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -923,6 +923,40 @@ function indBiasFromEvent(ev){
   const ac=actualColor(ev);
   return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
 }
+// ── RECHERCHE → KALENDER ──
+// Der Forex-Factory-Feed liefert oft keine Actual-Werte. Für Events, deren
+// Actual fehlt, werden die recherchierten Werte aus IND_RESEARCH_DATA
+// übernommen - dieselbe Quelle wie bei den Indikator-Karten. Match über
+// Währung + exaktes Veröffentlichungsdatum + Indikator-Namensmuster.
+const CAL_RESEARCH_MATCHERS={
+  ...IND_EVENT_MATCHERS,
+  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/]),
+  'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
+  'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
+  'Retail Sales MoM':mkIndMatcher([/retail sales/],[/core/]),
+  'Consumer Confidence':mkIndMatcher([/consumer confidence/,/consumer sentiment/]),
+};
+function applyResearchToCal(){
+  let changed=false;
+  Object.entries(IND_RESEARCH_DATA).forEach(([ccy,data])=>{
+    data.entries.forEach(e=>{
+      if(e.actual==null||!e.releaseDate)return;
+      const matcher=CAL_RESEARCH_MATCHERS[e.indicator];
+      if(!matcher)return;
+      [...calEvts,...inbox].forEach(ev=>{
+        if(ev.actual)return;
+        if(ev.date!==e.releaseDate)return;
+        if(!evtMatchesSym(ev,ccy))return;
+        if(!matcher(ev.name))return;
+        ev.actual=splitResearchVal(e.actual).val;
+        if(!ev.forecast&&e.forecast!=null)ev.forecast=splitResearchVal(e.forecast).val;
+        if(!ev.previous&&e.previous!=null)ev.previous=splitResearchVal(e.previous).val;
+        changed=true;
+      });
+    });
+  });
+  return changed;
+}
 // Aktualisiert automatisch das Bias aller Inflation-/Zins-/Arbeitsmarkt-
 // Indikatoren anhand des jeweils neuesten passenden Kalender-Events. Wird
 // nur ausgelöst, wenn ein NEUES Event (anderes als zuletzt) gefunden wird,
@@ -1196,6 +1230,16 @@ function fmtResearchDateFull(s){
 // Kurzer, lesbarer Domainname für den "Quelle ↗"-Link.
 function srcLabel(url){
   try{return new URL(url).hostname.replace(/^www\./,'');}catch(e){return'Quelle';}
+}
+// Trennt einen Recherche-Wert wie "53.9 (S&P Global/CIPS)" in den reinen
+// Wert ("53.9") und die Zusatzinfo aus den Klammern ("S&P Global/CIPS").
+// In der Wertezeile steht nur der reine Wert, die Zusatzinfo wandert in
+// den aufklappbaren Quellen-Bereich.
+function splitResearchVal(s){
+  if(s==null)return{val:null,note:''};
+  const notes=[];
+  const val=String(s).replace(/\s*\(([^)]*)\)/g,(m,g)=>{notes.push(g);return'';}).trim();
+  return{val:val||String(s),note:notes.join(', ')};
 }
 function researchBias(name,actual,forecast,previous){
   const ac=actualColor({name,actual,forecast,previous});
@@ -1851,14 +1895,16 @@ function renderInd(ind,ri,ii,total){
     const r=ind.research;
     const ac=actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     const dt=fmtResearchDateFull(r.date);
+    const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
+    const notes=[A.note&&`Akt: ${A.note}`,F.note&&`Forecast: ${F.note}`,P.note&&`Previous: ${P.note}`].filter(Boolean).join(' · ');
     const srcLink=r.source?`<a href="${escH(r.source)}" target="_blank" rel="noopener">${escH(srcLabel(r.source))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
-        <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(r.actual)}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(r.forecast??'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(r.previous??'–')}</span>
+        <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>
       </summary>
-      <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'} · ${srcLink}</div>
+      <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'}${notes?` · ${escH(notes)}`:''} · ${srcLink}</div>
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
@@ -2391,6 +2437,7 @@ async function fetchFF(silent){
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
     localStorage.setItem('fxpro_ff_lastok','1');
     updFFLastUpd();
+    applyResearchToCal();
     processCalEvts();
     save();renderSidebar();rerender();renderInbox();updInboxBadge();
     if(!silent){
@@ -2721,7 +2768,8 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
-if(processCalEvts())save();
+const _researchCalChanged=applyResearchToCal();
+if(processCalEvts()||_researchCalChanged)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();
