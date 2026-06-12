@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:var(--blue);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Bias-Auto-Update bei Rohstoffen/Krypto/Indizes zurückgesetzt - Zahlen bleiben farbig, Bias bleibt manuell)</div>
+<div style="background:var(--star);color:#0b1220;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Indikatoren für alle 8 Währungen recherchiert & befüllt: Zinsen/Inflation/Arbeitsmarkt mit aktuellen Werten, Intervallen, neuen High-Impact-Indikatoren & nicht zutreffenden entfernt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -952,6 +952,254 @@ function resetNonFxIndBias(sym){
   });
 }
 
+// ══ INDIKATOR-RECHERCHE (einmalige Befüllung, Stand 11.06.2026) ═══════
+// Für jede FX-Währung recherchierte Werte für Interest Rates/Inflation/
+// Labour Market. "applicable:false" entfernt einen Indikator einmalig,
+// wenn er für die Währung konzeptionell nicht existiert. "actual:null"
+// lässt einen existierenden Indikator unverändert (kein Datenpunkt), wenn
+// keine aktuellen Zahlen gefunden wurden - er wird NICHT gelöscht.
+const IND_RESEARCH_DATA={
+  USD:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Ober: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'alle 6-8 Wochen (FOMC-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'3.62% (Effective Fed Funds Rate)',forecast:null,previous:'3.62%',releaseDate:'2026-06-09',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% YoY / 0.5% MoM',forecast:'4.2% YoY / 0.5% MoM',previous:'3.8% YoY / 0.6% MoM',releaseDate:'2026-06-10',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'6.5% YoY / 1.1% MoM',forecast:'6.4% YoY / 0.7% MoM',previous:'6.0% YoY / 1.1% MoM (rev.)',releaseDate:'2026-06-11',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'4.9% YoY / 0.4% MoM',forecast:'5.4% YoY / 0.5% MoM',previous:null,releaseDate:'2026-06-11',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PCE',applicable:true,actual:'3.8% YoY / 0.4% MoM',forecast:'3.8% YoY / 0.5% MoM',previous:'3.5% YoY / 0.7% MoM',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:true,actual:'3.3% YoY / 0.2% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.2% YoY / 0.3% MoM',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'172K',forecast:'80K',previous:'179K (rev.)',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.3%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:true,actual:'122K',forecast:'117K',previous:'105K',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'0.3% MoM / 3.4% YoY',forecast:'0.3% MoM / 3.3% YoY',previous:'0.2% MoM / 3.3% YoY',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich'},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'ISM Manufacturing PMI',actual:'54.0',forecast:'53.0',previous:'52.7',releaseDate:'2026-06-02',interval:'monatlich'},
+  ]},
+  EUR:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Einlagesatz) / 2.15% (Hauptrefi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (EZB-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.68% (Bund 2Y)',forecast:null,previous:'2.62%',releaseDate:'2026-06-03',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.2% (HICP y/y)',forecast:'3.1%',previous:'3.0%',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5% (Core HICP y/y)',forecast:'2.3%',previous:'2.2%',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% y/y (0.6% m/m)',forecast:null,previous:'3.4% y/y',releaseDate:'2026-06-03',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'0.9% m/m (ex-Energie)',forecast:null,previous:null,releaseDate:'2026-06-03',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.5% (HICP Services y/y)',forecast:null,previous:'3.0%',releaseDate:'2026-05-29',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+0.1% q/q (+0.5% y/y, Eurozone Employment)',forecast:null,previous:'+0.2% q/q (+0.7% y/y)',releaseDate:'2026-06-05',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.3%',forecast:'6.3%',previous:'6.3%',releaseDate:'2026-06-01',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'2.2% (Job Vacancy Rate)',forecast:null,previous:'2.1%',releaseDate:'2026-03-18',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'2.46% (Negotiated Wage Growth y/y)',forecast:null,previous:'2.95%',releaseDate:'2026-05-22',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'ZEW Economic Sentiment Index',actual:'-9.1',forecast:'-20.0',previous:'-20.4',releaseDate:'2026-05-12',interval:'monatlich'},
+  ]},
+  GBP:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (BoE-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.35% (UK Gilt 2Y)',forecast:null,previous:'4.34%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:'0.61%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:'2.9%',previous:'3.3%',releaseDate:'2026-05-20',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5%',forecast:'2.7%',previous:'3.1%',releaseDate:'2026-05-20',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.0% (Output Prices)',forecast:null,previous:'3.0%',releaseDate:'2026-05-20',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.2%',forecast:null,previous:'4.5%',releaseDate:'2026-05-20',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'1.699M (Claimant Count Level)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (Claimant Count statt wöchentl. US-Claims)'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'34.39M Beschäftigte (Jan-Mär 2026)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.0% (ILO)',forecast:null,previous:'4.9%',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'4.1% incl. Bonus / 3.4% excl. Bonus',forecast:null,previous:'3.8% incl. / 3.6% excl.',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'GDP m/m',actual:'0.3%',forecast:null,previous:'0.4%',releaseDate:'2026-05-13',interval:'monatlich'},
+  ]},
+  CHF:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'alle 3 Monate (SNB-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'0.00%',forecast:null,previous:'0.00%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'0.11%',forecast:null,previous:'0.11%',releaseDate:'2026-06-02',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.33%',forecast:null,previous:'0.31%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'0.6%',forecast:'0.8%',previous:'0.6%',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'0.3%',forecast:null,previous:'0.3%',releaseDate:'2026-06-04',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'-2.0% YoY / +0.8% MoM',forecast:null,previous:'-2.7% YoY / +0.2% MoM',releaseDate:'2026-05-05',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537 Mio. (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516 Mio.',releaseDate:'2026-06-04',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'3.0% n.s.a. / 3.1% s.a.',forecast:'2.9%',previous:'3.0%',releaseDate:'2026-06-09',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'1.8% (Lohnindex-Jahresdurchschnitt 2025)',forecast:null,previous:'1.7% (2024)',releaseDate:'2026-04-24',interval:'jährlich'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'KOF Economic Barometer',actual:'98.0',forecast:'98.0',previous:'97.8',releaseDate:'2026-05-29',interval:'monatlich'},
+  ]},
+  JPY:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'~1.00% (impliziter Pfad bis Ende 2026: 1.00-1.25%)',forecast:'1.00% (Hike am 16.06. ~98% eingepreist)',previous:'0.84% (1Y OIS, Dez. 2025)',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',releaseDate:'2026-05-22',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'1.4%',forecast:'1.7%',previous:'1.8%',releaseDate:'2026-05-22',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% (CGPI y/y)',forecast:'3.0%',previous:'4.0%',releaseDate:'2026-05-15',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'2.6% (Corporate Service Price Index)',forecast:null,previous:'2.6%',releaseDate:'2026-02-24',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-120K',forecast:null,previous:null,releaseDate:'2026-05-30',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'2.5%',forecast:'2.6%',previous:'2.7%',releaseDate:'2026-05-30',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'Tankan Large Manufacturers Index',actual:'17',forecast:'16',previous:'15',releaseDate:'2026-04-01',interval:'quartalsweise'},
+  ]},
+  CAD:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'alle 6-8 Wochen (BoC-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.85%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:null,previous:'2.4%',releaseDate:'2026-05-19',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.0% (Trim) / 2.1% (Median)',forecast:null,previous:'2.3% (Ø März, BoC-Kernmaße)',releaseDate:'2026-05-19',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'+2.0% m/m (IPPI)',forecast:null,previous:null,releaseDate:'2026-04-23',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'1.7% y/y',forecast:null,previous:'2.6%',releaseDate:'2026-05-19',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'88.0K (Net Change in Employment)',forecast:'10.0K',previous:null,releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.6%',forecast:null,previous:'6.9%',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.0% y/y',forecast:null,previous:'4.5%',releaseDate:'2026-06-05',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'Ivey PMI',actual:'58.2',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich'},
+  ]},
+  AUD:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (Halten erwartet)',previous:'4.10%',releaseDate:'2026-05-06',interval:'alle 6-8 Wochen (RBA-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.54%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36% (36 bps)',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% y/y (monatl. Indikator, April)',forecast:null,previous:'4.6% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.4% y/y (Trimmed Mean, April)',forecast:null,previous:'3.3% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'3.0% y/y / 0.4% q/q (Q1)',forecast:'0.9% q/q',previous:'3.5% y/y / 0.8% q/q (Q4 2025)',releaseDate:'2026-04-23',interval:'quartalsweise'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.5% y/y (April)',forecast:null,previous:'3.6% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-18.6K',forecast:'+17.5K',previous:'-18.6K (März, rev.)',releaseDate:'2026-05-15',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.5%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-05-15',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.3% y/y / 0.8% q/q (Q1, WPI)',forecast:null,previous:'3.4% y/y (Q4 2025)',releaseDate:'2026-05-13',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Labour Market',indicator:'NAB Business Confidence',actual:'-14',forecast:null,previous:'-24',releaseDate:'2026-05-12',interval:'monatlich'},
+  ]},
+  NZD:{entries:[
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'alle 6-7 Wochen (RBNZ-Sitzung)'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'OCR-Pfad impliziert ~2.40-2.51% bis Ende 2026',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'3.14%',forecast:null,previous:'3.10%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'1.74%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.1% y/y (+0.9% q/q)',forecast:'3.0% y/y',previous:'3.1% y/y',releaseDate:'2026-04-21',interval:'quartalsweise'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'Non-tradables CPI 3.5% y/y (+1.1% q/q)',forecast:null,previous:'Non-tradables CPI ~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quartalsweise'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'Output +0.8% q/q; Input +1.4% q/q',forecast:'Output 0.5% q/q; Input 0.8% q/q',previous:'Output +0.1% q/q (Q4 2025)',releaseDate:'2026-05-19',interval:'quartalsweise'},
+    {rubric:'Inflation',indicator:'Core PPI',applicable:false},
+    {rubric:'Inflation',indicator:'PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Core PCE',applicable:false},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'Non-tradables CPI 3.5% y/y',forecast:null,previous:'~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quartalsweise'},
+    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+4K (auf 2.89 Mio.)',forecast:null,previous:'+14K (Q4 2025, auf 2.886 Mio.)',releaseDate:'2026-05-06',interval:'quartalsweise (HLFS)'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.3%',forecast:'5.4%',previous:'5.4%',releaseDate:'2026-05-06',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'Labour Cost Index +2.0% y/y',forecast:null,previous:null,releaseDate:'2026-05-06',interval:'quartalsweise'},
+    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+  ],newInds:[
+    {rubric:'Inflation',indicator:'GDT Dairy Auction Price Index',actual:'-0.6% (Preisindex gefallen)',forecast:null,previous:'vorheriger Anstieg seit April 2026',releaseDate:'2026-06-02',interval:'alle 2 Wochen (GDT-Auktion)'},
+  ]},
+};
+const RESEARCH_MONTHS_DE=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+function fmtResearchDate(s){
+  if(!s)return'';
+  const d=new Date(s+'T00:00:00');
+  if(isNaN(d))return'';
+  return`${RESEARCH_MONTHS_DE[d.getMonth()]} ${d.getFullYear()}`;
+}
+function fmtResearchPoint(e){
+  let txt=`Letzter Wert: ${e.actual}`;
+  const dt=fmtResearchDate(e.releaseDate);
+  if(dt)txt+=` (${dt})`;
+  if(e.forecast!=null)txt+=` · Forecast ${e.forecast}`;
+  if(e.previous!=null)txt+=` · Prev ${e.previous}`;
+  return txt;
+}
+function researchBias(name,actual,forecast,previous){
+  const ac=actualColor({name,actual,forecast,previous});
+  return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
+}
+// Einmalige Befüllung: entfernt nicht zutreffende Indikatoren, ergänzt
+// fehlende High-Impact-Indikatoren und trägt bei gefundenen Daten einen
+// Datenpunkt + Intervall-Badge ein. Läuft pro Symbol nur einmal.
+function applyIndResearch(sym){
+  if(sym._researchV1)return;
+  const data=IND_RESEARCH_DATA[sym.id];
+  if(!data)return;
+  data.entries.forEach(e=>{
+    const rub=sym.rubrics.find(r=>r.name===e.rubric);
+    if(!rub||!rub.indicators)return;
+    const idx=rub.indicators.findIndex(i=>i.name===e.indicator);
+    if(!e.applicable){
+      if(idx>=0)rub.indicators.splice(idx,1);
+      return;
+    }
+    if(idx<0)return;
+    const ind=rub.indicators[idx];
+    if(e.interval)ind.interval=e.interval;
+    if(e.actual!=null){
+      ind.points=ind.points||[];
+      ind.points.push({id:uid(),text:fmtResearchPoint(e),bias:'neu',imp:false});
+      ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
+    }
+  });
+  (data.newInds||[]).forEach(e=>{
+    const rub=sym.rubrics.find(r=>r.name===e.rubric);
+    if(!rub||!rub.indicators||rub.indicators.find(i=>i.name===e.indicator))return;
+    const ind={id:uid(),name:e.indicator,bias:'neu',imp:false,date:'',interval:e.interval||'',points:[]};
+    if(e.actual!=null){
+      ind.points.push({id:uid(),text:fmtResearchPoint(e),bias:'neu',imp:false});
+      ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
+    }
+    rub.indicators.push(ind);
+  });
+  sym._researchV1=true;
+}
+
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
@@ -1197,6 +1445,7 @@ function addMacroRub(sym){
   enrichRubrics(sym.id,sym.rubrics,sym.full||sym.name);
   migrateRubInds(sym.rubrics);
   resetNonFxIndBias(sym);
+  applyIndResearch(sym);
   const idx=sym.rubrics.findIndex(r=>r.name===MACRO_NAME);
   if(idx===-1)sym.rubrics.unshift(mkMacroRub(sym.id,sym.full||sym.name));
   else if(idx>0)sym.rubrics.unshift(sym.rubrics.splice(idx,1)[0]);
