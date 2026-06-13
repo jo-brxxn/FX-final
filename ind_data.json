@@ -17,11 +17,11 @@
    "period": null
   },
   "CPI (Headline)": {
-   "actual": "2.4%",
+   "actual": "1.5%",
    "forecast": null,
-   "previous": "2.5%",
+   "previous": "1.3%",
    "date": "2026-04-23",
-   "event": "Inflation Rate Ex-Food and Energy YoY",
+   "event": "Inflation Rate YoY",
    "period": "y/y"
   },
   "Core CPI": {
@@ -204,20 +204,12 @@
    "event": "JOLTs Job Openings",
    "period": null
   },
-  "ADP Employment": {
-   "actual": "42.25K",
-   "forecast": null,
-   "previous": "33K",
-   "date": "2026-05-19",
-   "event": "ADP Employment Change Weekly",
-   "period": null
-  },
   "PPI": {
-   "actual": "4.4%",
-   "forecast": null,
-   "previous": "3.7%",
+   "actual": "6%",
+   "forecast": "4.9%",
+   "previous": "4.3%",
    "date": "2026-05-13",
-   "event": "PPI Ex Food, Energy and Trade YoY",
+   "event": "PPI YoY",
    "period": "y/y"
   },
   "Core PPI": {
@@ -234,6 +226,14 @@
    "previous": "3.75%",
    "date": "2026-04-29",
    "event": "Fed Interest Rate Decision",
+   "period": null
+  },
+  "ADP Employment": {
+   "actual": "109K",
+   "forecast": "99K",
+   "previous": "61K",
+   "date": "2026-05-06",
+   "event": "ADP Employment Change",
    "period": null
   },
   "Retail Sales MoM": {
@@ -326,14 +326,6 @@
    "event": "BoC Interest Rate Decision",
    "period": null
   },
-  "Retail Sales MoM": {
-   "actual": "0.6%",
-   "forecast": null,
-   "previous": "0.7%",
-   "date": "2026-04-24",
-   "event": "Retail Sales MoM Prel",
-   "period": "m/m"
-  },
   "PPI": {
    "actual": "7.8%",
    "forecast": null,
@@ -341,6 +333,14 @@
    "date": "2026-04-23",
    "event": "PPI YoY",
    "period": "y/y"
+  },
+  "Retail Sales MoM": {
+   "actual": "0.6%",
+   "forecast": null,
+   "previous": "0.7%",
+   "date": "2026-04-24",
+   "event": "Retail Sales MoM Prel",
+   "period": "m/m"
   }
  },
  "AUD": {
@@ -477,11 +477,11 @@
    "period": null
   },
   "PPI": {
-   "actual": "7.7%",
-   "forecast": "5.9%",
-   "previous": "5.3%",
+   "actual": "4%",
+   "forecast": "2.8%",
+   "previous": "3%",
    "date": "2026-05-20",
-   "event": "PPI Input YoY",
+   "event": "PPI Output YoY",
    "period": "y/y"
   },
   "Core CPI": {
@@ -509,11 +509,11 @@
    "period": null
   },
   "Retail Sales MoM": {
-   "actual": "0.2%",
+   "actual": "0.7%",
    "forecast": "0.2%",
    "previous": "-0.6%",
    "date": "2026-04-24",
-   "event": "Retail Sales ex Fuel MoM",
+   "event": "Retail Sales MoM",
    "period": "m/m"
   },
   "GDP Growth QoQ": {
