@@ -571,25 +571,28 @@ jobs:
             // Nur EINDEUTIGE Standard-Releases; laenderspezifische Sondermasse
             // (Negotiated Wages, WPI, Labour Cost Index, CSPI, Anleiherenditen,
             // Swaps, Spreads) bleiben bewusst aussen vor und landen im Report.
+            // Schliesst Kern-/Spezial-Varianten aus, damit ein "Headline"-Wert
+            // nicht faelschlich eine Ex-/Input-/Weekly-Reihe erwischt.
+            const EXCORE=/core|\bex[\s-]|ex food|ex-food|excluding|trimmed|median|weighted|super/;
             const RULES=[
               {ind:"Central Bank Rate",period:null,test:t=>/interest rate decision|rate decision/.test(t)},
-              {ind:"CPI (Headline)",period:"y/y",test:t=>/\binflation rate\b/.test(t)&&!/core/.test(t)},
+              {ind:"CPI (Headline)",period:"y/y",test:t=>/\binflation rate\b/.test(t)&&!EXCORE.test(t)&&!/wage|expectation|harmoni/.test(t)},
               {ind:"Core CPI",period:"y/y",test:t=>/core inflation rate/.test(t)},
-              {ind:"PPI",period:"y/y",test:t=>/producer pric|\bppi\b/.test(t)&&!/core/.test(t)},
+              {ind:"PPI",period:"y/y",test:t=>(/producer pric/.test(t)||/\bppi\b/.test(t))&&!EXCORE.test(t)&&!/input|import|\btrade\b/.test(t)},
               {ind:"Core PPI",period:"y/y",test:t=>/core producer pric|core ppi/.test(t)},
-              {ind:"PCE",period:"y/y",test:(t,c)=>c==="USD"&&/\bpce price index\b/.test(t)&&!/core/.test(t)},
+              {ind:"PCE",period:"y/y",test:(t,c)=>c==="USD"&&/\bpce price index\b/.test(t)&&!EXCORE.test(t)},
               {ind:"Core PCE",period:"y/y",test:(t,c)=>c==="USD"&&/core pce price index/.test(t)},
-              {ind:"Unemployment Rate",period:null,test:t=>/unemployment rate/.test(t)},
+              {ind:"Unemployment Rate",period:null,test:t=>/unemployment rate/.test(t)&&!/ex|youth/.test(t)},
               {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
-              {ind:"ADP Employment",period:null,test:(t,c)=>c==="USD"&&/adp employment/.test(t)},
+              {ind:"ADP Employment",period:null,test:(t,c)=>c==="USD"&&/adp employment/.test(t)&&!/weekly/.test(t)},
               {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings|jolts/.test(t)},
               {ind:"Initial Jobless Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="GBP"&&/claimant count/.test(t)},
               {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="USD"&&/average hourly earnings/.test(t)},
-              {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)},
-              {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)},
+              {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},
+              {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
-              {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year/.test(t)},
+              {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
               {ind:"Consumer Confidence",period:null,test:t=>/consumer confidence|consumer sentiment/.test(t)},
             ];
             let tv;
