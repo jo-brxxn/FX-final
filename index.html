@@ -484,7 +484,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#ec4899;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: PINK (Weitere Quellen-Links auf investing.com umgestellt: USD/CHF GDP QoQ, AUD Consumer Confidence (Westpac), NZD Swaps (1Y IRS) - für ~16 verbleibende Datenpunkte ohne separate investing.com-Seite (z.B. Services Inflation, einige Lohn-/Konsum-Indikatoren) siehe Analyse im Chat)</div>
+<div style="background:#14b8a6;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TEAL ("Services Inflation" entfernt für USD/EUR/GBP/CHF/CAD/AUD/NZD, da investing.com diese Teilkomponente für keine dieser Währungen separat listet - JPY behält sie (CSPI-Link); _researchV8-Migration + Bias-Reset-Fix für Rohstoffe/Indizes/Krypto; weitere Punkte siehe Antwort im Chat)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1053,7 +1053,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'4.9% YoY / 0.4% MoM',forecast:'5.4% YoY / 0.5% MoM',previous:null,releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-ppi-735'},
     {rubric:'Inflation',indicator:'PCE',applicable:true,actual:'3.8% YoY / 0.4% MoM',forecast:'3.8% YoY / 0.5% MoM',previous:'3.5% YoY / 0.7% MoM',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/pce-price-index-906'},
     {rubric:'Inflation',indicator:'Core PCE',applicable:true,actual:'3.3% YoY / 0.2% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.2% YoY / 0.3% MoM',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-pce-price-index-905'},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'monatlich',source:'https://tradingeconomics.com/united-states/services-inflation'},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/continuing-jobless-claims-522'},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'172K',forecast:'80K',previous:'179K (rev.)',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/nonfarm-payrolls-227'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.3%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-300'},
@@ -1079,7 +1079,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'0.9% m/m (ex-Energie)',forecast:null,previous:null,releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-237'},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.5% (HICP Services y/y)',forecast:null,previous:'3.0%',releaseDate:'2026-05-29',interval:'monatlich',source:'https://tradingeconomics.com/euro-area/inflation-cpi',period:null},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+0.1% q/q (+0.5% y/y, Eurozone Employment)',forecast:null,previous:'+0.2% q/q (+0.7% y/y)',releaseDate:'2026-06-05',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/employment-change-96'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.3%',forecast:'6.3%',previous:'6.3%',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-299'},
@@ -1105,7 +1105,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.2%',forecast:null,previous:'4.5%',releaseDate:'2026-05-20',interval:'monatlich',source:'https://tradingeconomics.com/united-kingdom/services-inflation'},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'1.699M (Claimant Count Level)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (Claimant Count statt wöchentl. US-Claims)',source:'https://www.investing.com/economic-calendar/claimant-count-change-39'},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'34.39M Beschäftigte (Jan-Mär 2026)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://www.investing.com/economic-calendar/employment-change-3m-3m-1743'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.0% (ILO)',forecast:null,previous:'4.9%',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://uk.investing.com/economic-calendar/unemployment-rate-297'},
@@ -1183,7 +1183,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'1.7% y/y',forecast:null,previous:'2.6%',releaseDate:'2026-05-19',interval:'monatlich',source:'https://tradingeconomics.com/canada/services-inflation',period:null},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'88.0K (Net Change in Employment)',forecast:'10.0K',previous:null,releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/employment-change-95'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.6%',forecast:null,previous:'6.9%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-301'},
@@ -1209,7 +1209,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.5% y/y (April)',forecast:null,previous:'3.6% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)',source:'https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/monthly-consumer-price-index-indicator/latest-release',period:null},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-18.6K',forecast:'+17.5K',previous:'-18.6K (März, rev.)',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/employment-change-94'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.5%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-302'},
@@ -1235,7 +1235,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'3.5% y/y (Non-tradables CPI)',forecast:null,previous:'~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quartalsweise',source:'https://www.stats.govt.nz/indicators/consumers-price-index-cpi/',period:null},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+4K (auf 2.89 Mio.)',forecast:null,previous:'+14K (Q4 2025, auf 2.886 Mio.)',releaseDate:'2026-05-06',interval:'quartalsweise (HLFS)',source:'https://www.investing.com/economic-calendar/employment-change-93'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.3%',forecast:'5.4%',previous:'5.4%',releaseDate:'2026-05-06',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/unemployment-rate-295'},
@@ -1338,7 +1338,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV7)return;
+  if(sym._researchV8)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1346,11 +1346,14 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
-    const idx=rub.indicators.findIndex(i=>i.name===e.indicator);
+    // Per Basisnamen matchen (ohne y/y-/m/m-/q/q-Suffix), damit bereits
+    // umbenannte Indikatoren (aus einem vorherigen applyIndResearch-Lauf)
+    // bei einem erneuten Lauf (Versions-Bump) wiedergefunden werden.
+    const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base===e.indicator);
     if(!e.applicable){
       if(idx>=0)rub.indicators.splice(idx,1);
       return;
@@ -1367,10 +1370,11 @@ function applyIndResearch(sym){
       // "period:null" (explizit gesetzt) unterdrückt das Suffix, falls für
       // diesen Datenpunkt kein passender investing.com-Link existiert.
       const per='period'in e?e.period:splitResearchVal(e.actual).period;
-      if(per)ind.name=e.indicator+' '+per.toLowerCase();
+      ind.name=per?e.indicator+' '+per.toLowerCase():e.indicator;
     }
   });
   sym._researchV7=true;
+  sym._researchV8=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1652,8 +1656,8 @@ function addMacroRub(sym){
   if(!sym.rubrics)sym.rubrics=[];
   enrichRubrics(sym.id,sym.rubrics,sym.full||sym.name);
   migrateRubInds(sym.rubrics,sym);
-  resetNonFxIndBias(sym);
   applyIndResearch(sym);
+  resetNonFxIndBias(sym);
   const idx=sym.rubrics.findIndex(r=>r.name===MACRO_NAME);
   if(idx===-1)sym.rubrics.unshift(mkMacroRub(sym.id,sym.full||sym.name));
   else if(idx>0)sym.rubrics.unshift(sym.rubrics.splice(idx,1)[0]);
@@ -1707,7 +1711,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
