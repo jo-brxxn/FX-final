@@ -595,7 +595,7 @@ jobs:
               {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t)&&!/private/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
               {ind:"ADP Employment",period:null,test:(t,c)=>c==="USD"&&/adp employment/.test(t)&&!/weekly/.test(t)},
               {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings/.test(t)},
-              {ind:"Initial Jobless Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
+              {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="GBP"&&/claimant count/.test(t)},
               {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="USD"&&/average hourly earnings/.test(t)},
               {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},

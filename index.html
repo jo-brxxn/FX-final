@@ -494,7 +494,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TEAL (Kalender zeigt jetzt auch Tage ohne News ("Keine Termine"); neue Makro-Kartenreihenfolge: Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches, Risikoumfeld, COT; Symbol-Ausrufezeichen nur noch bei High-Impact-Event in den nächsten 3 Tagen (rot), nach Erscheinen grün bis 1 Tag danach, dann weg - max. eins, etwas kleiner)</div>
+<div style="background:#4f46e5;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: INDIGO (USA Core CPI nutzt jetzt den korrekten investing.com-Link; "Unemployment Claims" aus Inflation entfernt und "Initial Jobless Claims" im Arbeitsmarkt in "Unemployment Claims" umbenannt (gleiche Werte); GBP Claimant Count von Inflation in den Arbeitsmarkt verschoben (Kategorie-Fix); alle FX-Symbole/Kategorien auf falsch zugeordnete Werte geprüft)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1036,7 +1036,6 @@ const IND_EVENT_MATCHERS={
   'ADP Employment':mkIndMatcher([/\badp\b/]),
   'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/]),
   'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/]),
-  'Initial Jobless Claims':mkIndMatcher([/unemployment claims/,/jobless claims/]),
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Rohstoffe/Krypto/Indizes hängen am USD-Makrozyklus -> nutzen USD-Events.
@@ -1148,19 +1147,18 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% YoY / 0.5% MoM',forecast:'4.2% YoY / 0.5% MoM',previous:'3.8% YoY / 0.6% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/cpi-733'},
-    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-states-core-consumer-price-index-(cpi)-yoy-736'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-cpi-736'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'6.5% YoY / 1.1% MoM',forecast:'6.4% YoY / 0.7% MoM',previous:'6.0% YoY / 1.1% MoM (rev.)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-734'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'4.9% YoY / 0.4% MoM',forecast:'5.4% YoY / 0.5% MoM',previous:null,releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-ppi-735'},
     {rubric:'Inflation',indicator:'PCE',applicable:true,actual:'3.8% YoY / 0.4% MoM',forecast:'3.8% YoY / 0.5% MoM',previous:'3.5% YoY / 0.7% MoM',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/pce-price-index-906'},
     {rubric:'Inflation',indicator:'Core PCE',applicable:true,actual:'3.3% YoY / 0.2% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.2% YoY / 0.3% MoM',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-pce-price-index-905'},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/continuing-jobless-claims-522'},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'172K',forecast:'80K',previous:'179K (rev.)',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/nonfarm-payrolls-227'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.3%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-300'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:true,actual:'122K',forecast:'117K',previous:'105K',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/adp-nonfarm-employment-change-1'},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/jolts-job-openings-1057'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.4% YoY / 0.3% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.3% YoY / 0.2% MoM',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-hourly-earnings-8'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/initial-jobless-claims-294'},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/initial-jobless-claims-294'},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (BEA, 2. Schätzung, annualisiert 1.6%)',forecast:'0.5%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'54.5 (ISM)',forecast:'53.8',previous:'53.6',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'},
@@ -1180,13 +1178,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+0.1% q/q (+0.5% y/y, Eurozone Employment)',forecast:null,previous:'+0.2% q/q (+0.7% y/y)',releaseDate:'2026-06-05',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/employment-change-96'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.3%',forecast:'6.3%',previous:'6.3%',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-299'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'2.2% (Job Vacancy Rate)',forecast:null,previous:'2.1%',releaseDate:'2026-03-18',interval:'quartalsweise',source:'https://tradingeconomics.com/euro-area/job-vacancy-rate'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'2.46% (Negotiated Wage Growth y/y)',forecast:null,previous:'2.95%',releaseDate:'2026-05-22',interval:'quartalsweise',source:'https://tradingeconomics.com/euro-area/negotiated-wage-growth',period:null},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.2% (Eurostat, revidiert)',forecast:null,previous:'0.2% (Q4 2025)',releaseDate:'2026-06-05',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/european-gross-domestic-product-(gdp)-qoq-120'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'51.6 (HCOB)',forecast:'51.2',previous:'52.2',releaseDate:'2026-06-02',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-manufacturing-purchasing-managers-index-(pmi)-201'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'46.4 (HCOB)',forecast:'47.7',previous:'47.6',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-272'},
@@ -1206,13 +1203,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:true,actual:'1.699M (Claimant Count Level)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (Claimant Count statt wöchentl. US-Claims)',source:'https://www.investing.com/economic-calendar/claimant-count-change-39'},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'34.39M Beschäftigte (Jan-Mär 2026)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://www.investing.com/economic-calendar/employment-change-3m-3m-1743'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.0% (ILO)',forecast:null,previous:'4.9%',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://uk.investing.com/economic-calendar/unemployment-rate-297'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'4.1% incl. Bonus / 3.4% excl. Bonus',forecast:null,previous:'3.8% incl. / 3.6% excl.',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://www.investing.com/economic-calendar/average-earnings-index-bonus-7'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:true,actual:'1.699M (Claimant Count Level)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monatlich (Claimant Count)',source:'https://www.investing.com/economic-calendar/claimant-count-change-39'},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.6%',forecast:'0.6%',previous:'0.2%',releaseDate:'2026-05-14',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-kingdom-gross-domestic-product-(gdp)-qoq-121'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'53.9 (S&P Global/CIPS)',forecast:'53.7',previous:'53.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-manufacturing-purchasing-managers-index-(pmi)-204'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'49.3 (S&P Global/CIPS)',forecast:'47.9',previous:'52.7',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-274'},
@@ -1232,13 +1228,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537 Mio. (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516 Mio.',releaseDate:'2026-06-04',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/employment-level-98'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'3.0% n.s.a. / 3.1% s.a.',forecast:'2.9%',previous:'3.0%',releaseDate:'2026-06-09',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-sa-296'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'1.8% (Lohnindex-Jahresdurchschnitt 2025)',forecast:null,previous:'1.7% (2024)',releaseDate:'2026-04-24',interval:'jährlich',source:'https://www.bfs.admin.ch/bfs/en/home/statistics/work-income/wages-income-employment-labour-costs/trend-wages.html'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (SECO, sportbereinigt, Q1 2026)',forecast:'0.3-0.4%',previous:'0.2%',releaseDate:'2026-06-02',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/switzerland-gross-domestic-product-(gdp)-qoq-122'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'57.3 (procure.ch/UBS)',forecast:'54.0',previous:'54.5',releaseDate:'2026-06-02',interval:'monatlich',source:'https://www.investing.com/economic-calendar/procure.ch-pmi-278'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'56.0 (procure.ch)',forecast:null,previous:'54.8',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/services-pmi'},
@@ -1258,13 +1253,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'2.6% (Corporate Service Price Index)',forecast:null,previous:'2.6%',releaseDate:'2026-02-24',interval:'monatlich',source:'https://www.investing.com/economic-calendar/corporate-services-price-index-(cspi)-76'},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-120K',forecast:null,previous:null,releaseDate:'2026-05-30',interval:'monatlich',source:'https://tradingeconomics.com/japan/employment-change'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'2.5%',forecast:'2.6%',previous:'2.7%',releaseDate:'2026-05-30',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-298'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich',source:'https://www.investing.com/economic-calendar/jobs-applications-ratio-1001'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-cash-earnings-6'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revidiert)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/japan-gross-domestic-product-(gdp)-qoq-119'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-202'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/au-jibun-bank-japan-services-pmi-1912'},
@@ -1284,13 +1278,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'88.0K (Net Change in Employment)',forecast:'10.0K',previous:null,releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/employment-change-95'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.6%',forecast:null,previous:'6.9%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-301'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.0% y/y',forecast:null,previous:'4.5%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/avg-hourly-wages-permanent-employee-2218'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.0% (Statistics Canada, Q1 2026)',forecast:'0.1%',previous:'-0.2% (Q4 2025)',releaseDate:'2026-05-29',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/gdp-annualized-1025'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'52.9 (S&P Global)',forecast:'54.2',previous:'53.3',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-manufacturing-purchasing-managers-index-(pmi)-1029'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'58.2 (Ivey PMI)',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-ivey-purchasing-managers-index-(pmi)-185'},
@@ -1310,13 +1303,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-18.6K',forecast:'+17.5K',previous:'-18.6K (März, rev.)',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/employment-change-94'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.5%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-302'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.3% y/y / 0.8% q/q (Q1, WPI)',forecast:null,previous:'3.4% y/y (Q4 2025)',releaseDate:'2026-05-13',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/wage-price-index-1019'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (ABS, Q1 2026)',forecast:'0.3%',previous:'0.8% (Q4 2025)',releaseDate:'2026-06-03',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/australia-gross-domestic-product-(gdp)-qoq-124'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'50.7 (S&P Global, final)',forecast:'50.2',previous:'51.3',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-1838'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.7 (S&P Global, final)',forecast:null,previous:'50.7',releaseDate:'2026-06-02',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-1839'},
@@ -1336,13 +1328,12 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+4K (auf 2.89 Mio.)',forecast:null,previous:'+14K (Q4 2025, auf 2.886 Mio.)',releaseDate:'2026-05-06',interval:'quartalsweise (HLFS)',source:'https://www.investing.com/economic-calendar/employment-change-93'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.3%',forecast:'5.4%',previous:'5.4%',releaseDate:'2026-05-06',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/unemployment-rate-295'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'+2.0% y/y (Labour Cost Index)',forecast:null,previous:null,releaseDate:'2026-05-06',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/labor-cost-index-188'},
-    {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
+    {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Stats NZ, Q4 2025)',forecast:null,previous:'0.9% (Q3 2025)',releaseDate:'2026-03-19',interval:'quartalsweise (Q1 2026 am 18.06.2026)',source:'https://www.investing.com/economic-calendar/new-zealand-gross-domestic-product-(gdp)-qoq-125'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.9 (BNZ-BusinessNZ PMI, Mai 2026)',forecast:null,previous:'50.4 (April)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/business-nz-pmi-338'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.9 (BNZ-BusinessNZ PSI, April 2026)',forecast:null,previous:'46.2 (März)',releaseDate:'2026-05-18',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-910'},
@@ -1438,7 +1429,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV9)return;
+  if(sym._researchV10)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1446,7 +1437,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1476,14 +1467,15 @@ function applyIndResearch(sym){
   sym._researchV7=true;
   sym._researchV8=true;
   sym._researchV9=true;
+  sym._researchV10=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Unemployment Claims'])},
-  {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Initial Jobless Claims'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
+  {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
@@ -1507,8 +1499,8 @@ function applyRubOrder(){
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
-const RUB_IND_RENAME={'Market Repricing (OIS/Swaps)':'Swaps','Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)'};
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
+const RUB_IND_RENAME={'Market Repricing (OIS/Swaps)':'Swaps','Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
 // Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
@@ -1521,24 +1513,41 @@ function migrateRubInds(rubrics,sym){
     if(rm)rub.indicators=rub.indicators.filter(ind=>!rm.includes(ind.name));
     rub.indicators=rub.indicators.filter(ind=>!OLD_NEWINDS_REMOVE.includes(ind.name));
     rub.indicators.forEach(ind=>{if(RUB_IND_RENAME[ind.name])ind.name=RUB_IND_RENAME[ind.name];});
+    // Defensiv: falls ein Rename zwei Indikatoren mit gleichem Basisnamen
+    // erzeugt (z.B. 'Initial Jobless Claims' -> 'Unemployment Claims', wenn
+    // letzteres schon existierte), Duplikate entfernen - den mit Research-
+    // Werten bevorzugt behalten.
+    const seen={};
+    rub.indicators=rub.indicators.filter(ind=>{
+      const b=stripPeriodSuffix(ind.name).base;
+      if(seen[b]===undefined){seen[b]=ind;return true;}
+      const keep=seen[b];
+      if((ind.research&&ind.research.actual!=null)&&!(keep.research&&keep.research.actual!=null)){
+        Object.assign(keep,ind);
+      }
+      return false;
+    });
     if(rub.name==='COT Data'&&!rub.indicators.find(i=>i.name==='Net Bearish Positioning')){
       const idx=rub.indicators.findIndex(i=>i.name==='Net Bullish Positioning');
       const ni={id:uid(),name:'Net Bearish Positioning',bias:'neu',imp:false,date:'',interval:'',points:[]};
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
-    // Diese beiden Ergänzungen laufen NUR vor dem ersten applyIndResearch-
-    // Durchlauf (sym._researchV7 noch nicht gesetzt): danach sind die
-    // "applicable"-Flags in IND_RESEARCH_DATA massgeblich dafür, ob ein
-    // Indikator existiert - sonst würde ein von applyIndResearch bereits
+    // Diese Ergänzungen laufen NUR vor dem jeweils zugehörigen
+    // applyIndResearch-Durchlauf (Versions-Flag noch nicht gesetzt): danach
+    // sind die "applicable"-Flags in IND_RESEARCH_DATA massgeblich dafür, ob
+    // ein Indikator existiert - sonst würde ein von applyIndResearch bereits
     // entfernter Indikator (applicable:false) bei jedem weiteren Laden als
     // leere Geister-Karte neu eingefügt.
-    if(rub.name==='Inflation'&&!sym._researchV7&&!rub.indicators.find(i=>i.name==='Unemployment Claims')){
-      rub.indicators.push({id:uid(),name:'Unemployment Claims',bias:'neu',imp:false,date:'',interval:'',points:[]});
-    }
     if(rub.name==='Inflation'&&!sym._researchV7&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='Core PPI')){
       const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='PPI');
       const ni={id:uid(),name:'Core PPI',bias:'neu',imp:false,date:'',interval:'',points:[]};
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
+    }
+    // "Unemployment Claims" gehört jetzt in den Arbeitsmarkt (vorher fälschlich
+    // auch in Inflation). Slot vor dem V10-Durchlauf sicherstellen, damit
+    // applyIndResearch ihn befüllen (USD/GBP) bzw. korrekt entfernen kann.
+    if(rub.name==='Labour Market'&&!sym._researchV10&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='Unemployment Claims')){
+      rub.indicators.push({id:uid(),name:'Unemployment Claims',bias:'neu',imp:false,date:'',interval:'',points:[]});
     }
   });
   if(!rubrics.find(r=>r.name==='Economic Growth')){
@@ -1815,7 +1824,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
