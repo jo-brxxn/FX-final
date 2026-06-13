@@ -417,12 +417,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   #inboxList{max-height:78vh}
   .dp{max-width:1700px}
   .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
-  /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
-     auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
-     bleibt oben und wird NICHT gestreckt. */
-  .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
-  .masonry .rub-card{margin-bottom:0}
-  .masonry .rub-card.collapsed{align-self:start}
+  /* Echtes Masonry per CSS-Mehrspaltenlayout: die Karten werden dicht
+     gepackt (oben links beginnend, spaltenweise), sodass eine kürzere Karte
+     KEINE leere Lücke bis zur Höhe der größten Karte ihrer Zeile mehr
+     hinterlässt (vorheriges Grid mit align-items:stretch erzeugte genau
+     diese Lücken). break-inside:avoid hält jede Karte zusammen. */
+  .masonry{column-count:var(--mcols,2);column-gap:36px}
+  .masonry .rub-card{margin-bottom:24px;break-inside:avoid;-webkit-column-break-inside:avoid;width:100%}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
@@ -483,7 +484,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#e67e22;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Kalender holt jetzt laufende + Folgewoche live und legt sie ueber die Tageskopie - naechste 10 Tage erscheinen, fehlende Actuals + revidierte Previous-Werte werden uebernommen; GitHub-Action liest revidierte Previous/Forecast von der FF-Webseite und bewahrt zukuenftige Events)</div>
+<div style="background:#8e44ad;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Lücken im Rubriken-Layout behoben (echtes Masonry/Spalten), Refresh-Button repariert (kein globales event mehr), fest einprogrammierte Beispiel-Events wie "95% priced" entfernt - Kalender wird nur noch live von Forex Factory befüllt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -538,7 +539,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
       <span id="ffLastUpd" style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
-      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF()" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
+      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
     </div>
   </div>
   <div id="calEvents"></div>
@@ -1637,13 +1638,23 @@ function mkNCs(){return[
   {id:uid(),name:'Macro Overview',items:[{id:uid(),text:'Global risk sentiment',imp:false},{id:uid(),text:'Fed rate path expectations',imp:false}]},
   {id:uid(),name:'Geopolitics',items:[{id:uid(),text:'Middle East: Hormuz tensions',imp:true}]},
 ];}
-function mkCalEvts(){return[
-  {id:uid(),name:'US NFP',date:'2026-06-06',currencies:'USD',impact:'high',expected:'Consensus: 93k',notes:'Key for USD direction'},
-  {id:uid(),name:'ECB Rate Decision',date:'2026-06-11',currencies:'EUR',impact:'high',expected:'+25bp (95% priced)',notes:'Watch forward guidance'},
-  {id:uid(),name:'RBA Rate Decision',date:'2026-06-16',currencies:'AUD',impact:'high',expected:'Hold',notes:'Bullock tone is key'},
-  {id:uid(),name:'BoJ Rate Decision',date:'2026-06-17',currencies:'JPY',impact:'high',expected:'Hold or +25bp',notes:'Surprise hike = explosive JPY rally'},
-  {id:uid(),name:'RBNZ Rate Decision',date:'2026-07-09',currencies:'NZD',impact:'high',expected:'+25bp (85% priced)',notes:'Most hawkish G10 CB'},
-];}
+// Keine fest einprogrammierten Beispiel-Events mehr: der Kalender wird
+// ausschließlich live von Forex Factory befüllt (autoFetchFF beim Laden +
+// Refresh-Button), damit keine redaktionellen Platzhalter wie "95% priced"
+// erscheinen. Frühere Seed-Events werden bei Bestandsnutzern einmalig per
+// cleanLegacySeedEvts() entfernt.
+const LEGACY_SEED_EVTS=['US NFP','ECB Rate Decision','RBA Rate Decision','BoJ Rate Decision','RBNZ Rate Decision'];
+function mkCalEvts(){return[];}
+function cleanLegacySeedEvts(){
+  if(localStorage.getItem('fxpro_seedclean')==='1')return false;
+  const set=new Set(LEGACY_SEED_EVTS);
+  const before=calEvts.length;
+  // Nur die alten, von uns gesetzten Seed-Events treffen: kein FF-Import,
+  // noch kein Actual und mit redaktionellem expected-Text.
+  calEvts=calEvts.filter(e=>!(e.src!=='ff'&&!e.actual&&set.has(e.name)&&(e.expected||'')));
+  localStorage.setItem('fxpro_seedclean','1');
+  return calEvts.length!==before;
+}
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias',order:0},
   {id:uid(),type:'setups',title:'Possible Set-ups',order:1},
@@ -2583,8 +2594,10 @@ async function fetchFFJson(){
   if(!evts.length)throw new Error('Network error');
   return evts;
 }
-async function fetchFF(silent){
-  const btn=silent?null:event.currentTarget;
+async function fetchFF(silent,btnEl){
+  // btnEl wird vom Refresh-Button per this übergeben - kein Rückgriff mehr auf
+  // das globale event (unter 'use strict' unzuverlässig -> "Button tut nichts").
+  const btn=silent?null:(btnEl||null);
   if(btn){btn.textContent='⏳ Refreshing...';btn.disabled=true;}
   try{
     const baseEvts=await fetchFFJson();
@@ -3011,8 +3024,9 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
+const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
-if(processCalEvts()||_researchCalChanged)save();
+if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();
