@@ -30,6 +30,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}
 .btn.g:hover{background:rgba(var(--green-rgb),.15)}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
+.btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}
+.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}
 .tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}
@@ -277,6 +279,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-day-hdr.today{color:var(--red)}
 .cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
 .cal-day-hdr.today .cal-day-cd{color:var(--red)}
+.cal-day-hdr.past{cursor:pointer;user-select:none;color:var(--t2)}
+.cal-day-hdr.past:hover{background:var(--bg3)}
+.cal-day-chev{display:inline-block;transition:transform .15s;font-size:8px;color:var(--t3);margin-right:3px}
+.cal-day-hdr.past.collapsed .cal-day-chev{transform:rotate(-90deg)}
+.cal-day-cnt{color:var(--t3);font-weight:600;font-size:9px;margin-left:5px}
 .cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:5px 9px;font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-col-hdr span{text-align:center}
 .cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
@@ -483,7 +490,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#2563eb;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Aktualitäts-Audit: TradingView-Abfrage liefert max. 2000 Events und schnitt bei 95 Tagen die letzten 2-3 Wochen ab - GitHub Action fragt jetzt ZUSÄTZLICH ein enges 45-Tage-Fenster ab, damit die neuesten Veröffentlichungen nicht mehr verschwinden; 4 Fehlzuordnungen behoben (USD Unemployment Rate fing fälschlich "U-6", JOLTS fing "Job Quits" statt "Job Openings", NFP fing "Payrolls Private", AUD Consumer Confidence fing die "Change"-Reihe statt den Index); jetzt 73 Indikatoren, größtenteils 1-12 Tage alt)</div>
+<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Kalender-Filter: neuer Button "Nur High-Impact" blendet Medium-/Low-Events aus (Einstellung wird gespeichert); die letzten 2 vergangenen Tage bleiben im Kalender, sind aber eingeklappt - Klick auf den Tages-Header (zeigt Event-Anzahl + Pfeil) klappt sie auf und zeigt die Actual-Werte)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -538,6 +545,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
       <span id="ffLastUpd" style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Blendet Medium-/Low-Impact-Events aus und zeigt nur High-Impact-News">⚪ Alle Impacts</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
     </div>
   </div>
@@ -829,16 +837,56 @@ function calTableHtml(evts,opts){
   let html=opts.compact
     ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`
     :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
-  let lastDate=null;
+  // Anzahl Events je Tag vorab zählen (für die Event-Anzahl im eingeklappten
+  // Tages-Header der vergangenen Tage).
+  const dayCount={};
+  if(opts.collapsePast)evts.forEach(ev=>{dayCount[ev.date]=(dayCount[ev.date]||0)+1;});
+  let lastDate=null,openSection=false;
+  const closeSection=()=>{if(openSection){html+='</div>';openSection=false;}};
   evts.forEach(ev=>{
     if(ev.date!==lastDate){
+      closeSection();
       lastDate=ev.date;
       const isToday=ev.date===today;
-      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(ev.date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
+      // Vergangene Tage (gestern / vorgestern) bleiben im Kalender, werden aber
+      // eingeklappt dargestellt - erst per Klick auf den Tages-Header sichtbar.
+      const isPast=opts.collapsePast&&daysUntil(ev.date)<0;
+      if(isPast){
+        const open=calOpenDays.has(ev.date);
+        const n=dayCount[ev.date]||0;
+        html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="calhdr-${ev.date}" onclick="toggleCalDay('${ev.date}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(ev.date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
+        html+=`<div class="cal-day-body" id="calbody-${ev.date}"${open?'':' style="display:none"'}>`;
+        openSection=true;
+      }else{
+        html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(ev.date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
+      }
     }
     html+=calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
   });
+  closeSection();
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
+}
+// Klappt einen vergangenen Kalender-Tag auf/zu (ohne Re-Render, damit die
+// Scroll-Position erhalten bleibt).
+function toggleCalDay(date){
+  if(calOpenDays.has(date))calOpenDays.delete(date);else calOpenDays.add(date);
+  const open=calOpenDays.has(date);
+  const body=document.getElementById('calbody-'+date);
+  const hdr=document.getElementById('calhdr-'+date);
+  if(body)body.style.display=open?'':'none';
+  if(hdr)hdr.classList.toggle('collapsed',!open);
+}
+// Schaltet den "nur High-Impact"-Filter um (persistiert) und rendert neu.
+function toggleCalHighOnly(){
+  calHighOnly=!calHighOnly;
+  localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');
+  updCalHighBtn();
+  renderCalendar();
+}
+function updCalHighBtn(){
+  const b=document.getElementById('calHighBtn');if(!b)return;
+  b.classList.toggle('active',calHighOnly);
+  b.textContent=calHighOnly?'🔴 Nur High-Impact':'⚪ Alle Impacts';
 }
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
@@ -873,6 +921,11 @@ const EVT_FLAG='<span class="evt-flag" title="Wichtige Nachricht steht an">❗</
 // zusätzlich noch CAL_PAST_DAYS Tage lang im Kalender (und damit auch beim
 // zugehörigen Symbol) stehen, damit man Actual-Werte direkt dort sieht.
 const CAL_PAST_DAYS=2;
+// Kalender-Filter "nur High-Impact" (persistiert eigenständig im localStorage).
+let calHighOnly=localStorage.getItem('fxpro_cal_highonly')==='1';
+// Welche vergangenen Tage im Kalender aktuell aufgeklappt sind (nur Session,
+// vergangene Tage starten immer eingeklappt).
+const calOpenDays=new Set();
 function processCalEvts(){
   const today=todayStr();
   let changed=false;
@@ -2524,9 +2577,13 @@ function mvPairInCat(id,d){
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
-  const sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-  el.innerHTML=sorted.length===0?`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No events yet.</div>`:
-  calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`});}
+  updCalHighBtn();
+  let list=[...calEvts];
+  if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
+  const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+  const empty=calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.';
+  el.innerHTML=sorted.length===0?`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`:
+  calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
