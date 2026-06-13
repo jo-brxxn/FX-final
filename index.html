@@ -153,7 +153,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── INFO BUTTON ── */
 .rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 .rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
-.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer}
+.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .rate-watch:hover{opacity:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
@@ -502,7 +502,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0891b2;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: CYAN (Selbst hinzugefügte Symbole (z.B. Ethereum) werden jetzt korrekt gespeichert & per Cloud-Sync auf andere Geräte übertragen; grünes Event-Ausrufezeichen ist jetzt wirklich grün (vorher Emoji, das die Farbe ignorierte); Mini-Kalender beim Symbol hat dieselben Funktionen wie der große Kalender (High-Filter, eingeklappte Vergangenheit, leere Tage); USD CPI/Core CPI behalten ihren investing.com-Link (Feed überschreibt ihn nicht mehr), CHF Retail Sales auf investing.com umgestellt)</div>
+<div style="background:#db2777;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: PINK (Zinserwartungs-Icon: langes Drücken (Touch & Maus) öffnet ein responsives Feld zum Bearbeiten/Austauschen des Links - pro Symbol gespeichert & per Cloud synchronisiert; CPI/Core-CPI-Quelle zeigt jetzt den investing.com-Link statt des generischen "Forex Factory Kalender"-Links, auch wenn ein Kalender-Event die Werte liefert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -664,6 +664,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
     <h3 id="mInfoTitle">ℹ️ Info</h3>
     <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Erklärung eingeben..."></textarea>
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Schließen</button><button class="btn g" onclick="saveInfoM()">Speichern</button></div>
+  </div>
+</div>
+<!-- MODAL: Rate-Watch-Link bearbeiten -->
+<div class="ov" id="mRateWatch" style="display:none">
+  <div class="modal">
+    <h3>📈 Zinserwartungen-Link (<span id="mRateWatchSym"></span>)</h3>
+    <p style="font-size:11px;color:var(--t1);margin-bottom:10px;line-height:1.5">Dieser Link öffnet sich über das Icon in der „Interest Rates"-Karte. Hier kannst du ihn austauschen.</p>
+    <input class="m-inp" id="mRateWatchInp" placeholder="https://..." inputmode="url">
+    <div class="m-btns"><button class="btn" onclick="closeM('mRateWatch')">Abbrechen</button><button class="btn" onclick="resetRateWatch()">Standard</button><button class="btn g" onclick="saveRateWatch()">Speichern</button></div>
   </div>
 </div>
 <!-- MODAL: Inbox / Postfach -->
@@ -962,7 +971,22 @@ const RATE_WATCH={
   AUD:'https://www.investing.com/economic-calendar/interest-rate-decision-171',
   NZD:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167',
 };
-function rateWatchUrl(id){return RATE_WATCH[macroCcyFor(id)]||RATE_WATCH.USD;}
+function rateWatchUrl(id){return(rateWatchCustom&&rateWatchCustom[id])||RATE_WATCH[macroCcyFor(id)]||RATE_WATCH.USD;}
+// Langes Drücken (≈500ms, funktioniert per Touch auf Handy/iPad und per Maus
+// am PC) auf das Zinserwartungs-Icon öffnet ein Feld zum Bearbeiten des Links;
+// ein kurzer Klick/Tap öffnet wie gewohnt den Link.
+let _rwPressTimer=null,_rwLong=false,_rwEditId=null;
+function rwPressStart(id){_rwLong=false;clearTimeout(_rwPressTimer);_rwPressTimer=setTimeout(()=>{_rwLong=true;openRateWatchEdit(id);},500);}
+function rwPressEnd(){clearTimeout(_rwPressTimer);}
+function rwClick(e,id){e.stopPropagation();if(_rwLong){e.preventDefault();_rwLong=false;return false;}return true;}
+function openRateWatchEdit(id){_rwEditId=id;const inp=document.getElementById('mRateWatchInp');if(inp)inp.value=rateWatchUrl(id);const t=document.getElementById('mRateWatchSym');if(t)t.textContent=id;openM('mRateWatch');}
+function saveRateWatch(){
+  if(!_rwEditId)return;
+  const v=document.getElementById('mRateWatchInp').value.trim();
+  if(v)rateWatchCustom[_rwEditId]=v;else delete rateWatchCustom[_rwEditId];
+  save();closeM('mRateWatch');renderDetail();
+}
+function resetRateWatch(){if(_rwEditId)delete rateWatchCustom[_rwEditId];save();closeM('mRateWatch');renderDetail();}
 function getRelevantEvents(id){
   const today=todayStr();
   const ids=isNonFx(id)?[id,'USD']:[id];
@@ -1872,15 +1896,15 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={};
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},rateWatchCustom={};
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -1913,10 +1937,11 @@ function loadState(){
       if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
+      rateWatchCustom=d.rateWatchCustom||{};
       recomputeAllPairBiases();syncAutoPairCats();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v2','1');
   recomputeAllPairBiases();syncAutoPairCats();
@@ -2035,7 +2060,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -2202,7 +2227,7 @@ function renderRub(rub,ri,total){
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
-      ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''}" onclick="event.stopPropagation()">📈</a>`:''}
+      ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · lange drücken zum Bearbeiten" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
@@ -2259,7 +2284,11 @@ function renderInd(ind,ri,ii,total){
   let dataPart='';
   if(ev){
     const ac=actualColor(ev);
-    const srcLink=`<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory Kalender ↗</a>`;
+    // Quelle: kuratierten investing.com-Link des Indikators bevorzugen (sonst
+    // erschiene hier immer der generische Forex-Factory-Link, obwohl ein
+    // passender investing.com-Link hinterlegt ist).
+    const cs=indResearchSource(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base)||(ind.research&&ind.research.source);
+    const srcLink=cs?`<a href="${escH(cs)}" target="_blank" rel="noopener">${escH(srcLabel(cs))} ↗</a>`:`<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory Kalender ↗</a>`;
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
