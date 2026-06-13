@@ -483,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0891b2;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: CYAN (Karten-Zeilen wieder gleich hoch (CSS-Grid); Akt-Farbe vergleicht nur noch mit Forecast - kein Previous-Fallback mehr; Rohstoffe/Krypto/Indizes (BTC/GOLD/SILVER/OIL/SP500/NAS) zeigen Akt-Werte wieder farbig wie USD, nur der Bias-Pfeil bleibt neutral; Details + offene Punkte siehe Antwort im Chat)</div>
+<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: VIOLETT (Indikator-Werte werden jetzt dauerhaft aus dem Kalender-Feed (echte API-Quellen: ForexFactory/TradingView/FXStreet/Trading Economics) übernommen und gespeichert - bleiben erhalten, wenn das Event aus dem Kalenderfenster fällt; fehlende Forecast/Previous-Werte werden so automatisch aus echten Webseiten ergänzt statt aus statischer Recherche; Quellen-Link bleibt zur Prüfung erhalten)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -874,6 +874,7 @@ function processCalEvts(){
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
   if(syncIndicatorBiases())changed=true;
+  if(captureIndResearch())changed=true;
   return changed;
 }
 function getInboxFor(id){
@@ -1032,6 +1033,59 @@ function resetNonFxIndBias(sym){
       if(ind.bias!=='neu')ind.bias='neu';
     });
   });
+}
+// ── INDIKATOR-WERTE AUS DEM KALENDER-FEED (echte API-Quelle) ──
+// Übernimmt Actual/Forecast/Previous der getrackten Indikatoren aus dem
+// (stündlich per GitHub Action von echten API-Feeds - ForexFactory/TradingView/
+// FXStreet/Trading Economics - gepflegten) Kalender und SPEICHERT den Wert
+// dauerhaft am Indikator. Dadurch bleibt er erhalten, wenn das Event aus dem
+// rollierenden Kalenderfenster (nur die letzten CAL_PAST_DAYS Tage) herausfällt.
+// So stammen die angezeigten Werte aus echten Webseiten/APIs (dieselbe Quelle
+// wie der Kalender) statt aus statisch hinterlegter Recherche. Der hinterlegte
+// Quellen-Link (z.B. investing.com-Seite des Indikators) bleibt zur manuellen
+// Überprüfung erhalten; nur die Zahlen werden aus dem Feed aktualisiert.
+function captureIndResearch(){
+  let changed=false;
+  syms.forEach(c=>{
+    const ccy=macroCcyFor(c.id);
+    const fx=!isNonFx(c.id);
+    (c.rubrics||[]).forEach(rub=>{
+      if(!rub.indicators)return;
+      rub.indicators.forEach(ind=>{
+        if(!ind.research)return;
+        const{base,period}=stripPeriodSuffix(ind.name);
+        const matcher=CAL_RESEARCH_MATCHERS[base];
+        if(!matcher)return;
+        const pool=[...inbox,...calEvts].filter(ev=>{
+          if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name))return false;
+          if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
+          return true;
+        });
+        if(!pool.length)return;
+        pool.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+        const ev=pool[pool.length-1];
+        const r=ind.research;
+        const nf=(ev.forecast!=null&&ev.forecast!=='')?ev.forecast:null;
+        const np=(ev.previous!=null&&ev.previous!=='')?ev.previous:null;
+        if(r.date&&ev.date>r.date){
+          // Neuere Veröffentlichung -> Werte komplett aus dem Feed übernehmen.
+          if(r.actual!==ev.actual||r.forecast!==nf||r.previous!==np||r.date!==ev.date){
+            r.actual=ev.actual;r.forecast=nf;r.previous=np;r.date=ev.date;r.live=true;
+            if(fx)ind.bias=researchBias(base,ev.actual,nf,np);
+            changed=true;
+          }
+        }else if(!r.date||ev.date===r.date){
+          // Gleiche Veröffentlichung -> nur fehlende Forecast/Previous aus dem
+          // Feed ergänzen (kuratierten Actual-Text mit Zusatzangaben behalten).
+          let u=false;
+          if((r.forecast==null||r.forecast==='')&&nf!=null){r.forecast=nf;u=true;}
+          if((r.previous==null||r.previous==='')&&np!=null){r.previous=np;u=true;}
+          if(u){r.live=true;if(fx)ind.bias=researchBias(base,r.actual,r.forecast,r.previous);changed=true;}
+        }
+      });
+    });
+  });
+  return changed;
 }
 
 // ══ INDIKATOR-RECHERCHE (einmalige Befüllung, Stand 11.06.2026) ═══════
