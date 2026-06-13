@@ -35,17 +35,39 @@ jobs:
             }
             const a=safeParse("thisweek.json");
             const b=safeParse("nextweek.json");
+            const existing=safeParse("ff_calendar.json")||[];
             if(a===null&&b===null){
               console.log("Both fetches failed/invalid, keeping existing ff_calendar.json");
               process.exit(0);
             }
-            const combined=[...(a||[]),...(b||[])];
-            if(combined.length===0){
+            const fetched=[...(a||[]),...(b||[])];
+            if(fetched.length===0){
               console.log("Empty result, keeping existing ff_calendar.json");
               process.exit(0);
             }
+            console.log("Fetched: thisweek="+((a||[]).length)+" nextweek="+((b||[]).length));
+            // Key auf Land|Titel|UTC-Kalendertag, damit derselbe Release nicht
+            // doppelt landet. Frisch geholte Events haben Vorrang; danach werden
+            // ZUKUENFTIGE Events aus der bisherigen Datei ergaenzt, die diesmal
+            // nicht (mit)geholt wurden - so verschwindet die Folgewoche nicht,
+            // wenn der nextweek-Abruf einmal blockiert wird/leer ist.
+            function key(ev){
+              const t=new Date(ev.date);
+              if(isNaN(t))return null;
+              return (ev.country||"")+"|"+(ev.title||"")+"|"+t.toISOString().slice(0,10);
+            }
+            const map=new Map();
+            fetched.forEach(ev=>{const k=key(ev);if(k&&!map.has(k))map.set(k,ev);});
+            const now=Date.now();
+            let kept=0;
+            existing.forEach(ev=>{
+              const k=key(ev);if(!k)return;
+              const t=new Date(ev.date).getTime();
+              if(t>=now-86400000 && !map.has(k)){map.set(k,ev);kept++;}
+            });
+            const combined=[...map.values()].sort((x,y)=>new Date(x.date)-new Date(y.date));
             fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
-            console.log("Wrote "+combined.length+" events to ff_calendar.json");
+            console.log("Wrote "+combined.length+" events ("+kept+" future events preserved from previous file)");
           '
 
       # FXStreet's economic calendar API (calendar-api.fxstreet.com) returns
@@ -112,13 +134,24 @@ jobs:
               try{html=fs.readFileSync(f,"utf8");}catch(e){return;}
               const rows=html.split(/<tr[^>]*calendar__row/).slice(1);
               let found=0;
+              const cell=(row,cls)=>{
+                const m=row.match(new RegExp("calendar__"+cls+"[^>]*>(?:\\s*<span[^>]*>)?([^<>]*?)(?:<\\/span>)?\\s*<\\/td>"));
+                return m?m[1].trim():"";
+              };
               rows.forEach(row=>{
                 const cur=row.match(/calendar__currency[^>]*>\s*([A-Z]{3})\b/);
                 const title=row.match(/calendar__event-title[^>]*>([^<]+)</);
-                const act=row.match(/calendar__actual[^>]*>(?:\s*<span[^>]*>)?([^<>]*?)(?:<\/span>)?\s*<\/td>/);
-                if(cur&&title&&act&&act[1].trim()){
-                  out.push({source:"ffhtml",title:title[1].trim(),country:cur[1],day:day,actual:act[1].trim()});
-                  found++;
+                if(!cur||!title)return;
+                const actual=cell(row,"actual");
+                const previous=cell(row,"previous");
+                const forecast=cell(row,"forecast");
+                // Die Forex-Factory-Webseite ist die Referenz fuer revidierte
+                // Previous-Werte (z.B. Core PPI 1.0% -> 0.7%) und nachgetragene
+                // Actuals - daher auch dann uebernehmen, wenn (noch) kein Actual
+                // vorliegt, solange wenigstens Previous oder Forecast dasteht.
+                if(actual||previous||forecast){
+                  out.push({source:"ffhtml",title:title[1].trim(),country:cur[1],day:day,actual:actual,previous:previous,forecast:forecast});
+                  if(actual)found++;
                 }
               });
               const diag=found?"":" [len="+html.length+" rows="+rows.length+(/just a moment|challenge|cf-/i.test(html)?" CLOUDFLARE-BLOCK":"")+"]";
@@ -253,20 +286,40 @@ jobs:
             }
             if(!Array.isArray(combined)||!combined.length)process.exit(0);
 
-            let fxEvents;
-            try{
-              fxEvents=JSON.parse(fs.readFileSync("fxstreet.json","utf8"));
-              if(!Array.isArray(fxEvents))throw new Error("not an array");
-            }catch(e){
-              console.log("FXStreet data unavailable/invalid, skipping enrichment");
-              process.exit(0);
-            }
-
             let altActuals=[];
             try{
               altActuals=JSON.parse(fs.readFileSync("alt_actuals.json","utf8"));
               if(!Array.isArray(altActuals))altActuals=[];
             }catch(e){}
+
+            // ── Revidierte Previous-/Forecast-Werte von der Forex-Factory-
+            // Webseite uebernehmen (unabhaengig von FXStreet, da die Webseite
+            // die Referenz ist, die der Nutzer sieht). Die FF-Webseite nutzt
+            // exakt dieselben Event-Namen wie der Feed, daher reicht
+            // Titel+Waehrung+ET-Kalendertag als Schluessel. Wird auch dann
+            // angewandt, wenn der Wert bereits gesetzt ist (Revision).
+            let revPrev=0,revFc=0,actFromWeb=0;
+            combined.forEach(ev=>{
+              const evDayET=String(ev.date).slice(0,10);
+              const w=altActuals.find(a=>a.source==="ffhtml"&&a.title===ev.title&&a.country===ev.country&&a.day===evDayET);
+              if(!w)return;
+              if(w.actual&&w.actual!==ev.actual){ev.actual=w.actual;actFromWeb++;}
+              if(w.previous&&w.previous!==ev.previous){ev.previous=w.previous;revPrev++;}
+              if(w.forecast&&w.forecast!==ev.forecast){ev.forecast=w.forecast;revFc++;}
+            });
+            if(revPrev||revFc||actFromWeb){
+              fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+              console.log("FF website overlay: "+actFromWeb+" actual, "+revPrev+" previous, "+revFc+" forecast updated");
+            }
+
+            let fxEvents;
+            try{
+              fxEvents=JSON.parse(fs.readFileSync("fxstreet.json","utf8"));
+              if(!Array.isArray(fxEvents))throw new Error("not an array");
+            }catch(e){
+              console.log("FXStreet data unavailable/invalid, skipping FXStreet enrichment (FF website overlay already applied)");
+              process.exit(0);
+            }
 
             // Kanonischer Schluessel, damit Quellen mit anderer Namens-
             // Konvention (Trading Economics etc.) ohne Alias-Pflege matchen:

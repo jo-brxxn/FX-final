@@ -483,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#2980b9;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Symbole in der Sidebar koennen jetzt per Lang-Druck verschoben werden - Pfeile ▲▼ erscheinen zum Umsortieren innerhalb der Kategorie)</div>
+<div style="background:#e67e22;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Kalender holt jetzt laufende + Folgewoche live und legt sie ueber die Tageskopie - naechste 10 Tage erscheinen, fehlende Actuals + revidierte Previous-Werte werden uebernommen; GitHub-Action liest revidierte Previous/Forecast von der FF-Webseite und bewahrt zukuenftige Events)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2529,6 +2529,42 @@ async function fetchFFPeriod(period){
   }
   throw new Error('Network error');
 }
+// Lokales Kalenderdatum (YYYY-MM-DD) eines FF-Feed-Events. FF liefert die
+// Zeit in US-Eastern; die Umrechnung auf die lokale Zeitzone stellt sicher,
+// dass das Datum mit todayStr()/daysUntil() zusammenpasst.
+function ffLocalDate(ev){
+  if(!ev||!ev.date)return null;
+  const d=new Date(ev.date);if(isNaN(d))return null;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function ffEvKey(ev){const ds=ffLocalDate(ev);return ds?((ev.country||'')+'|'+(ev.title||'')+'|'+ds):null;}
+// Führt die (einmal täglich per GitHub Action gepflegte) ff_calendar.json-Basis
+// mit frisch live abgerufenen Events zusammen. Live-Werte sind autoritativ:
+// sie überschreiben Actual/Forecast/Previous der Basis (die Kopie hinkt der
+// Forex-Factory-Website bei revidierten Werten/neuen Actuals hinterher) und
+// ergänzen Events, die die Basis noch gar nicht kennt - vor allem die
+// Folgewoche (nextweek), damit die nächsten 10 Tage auch dann erscheinen, wenn
+// die Tageskopie nur die laufende Woche enthält.
+function mergeFeedEvents(base,live){
+  const map=new Map();
+  (base||[]).forEach(ev=>{const k=ffEvKey(ev);if(k&&!map.has(k))map.set(k,{...ev});});
+  (live||[]).forEach(ev=>{
+    const k=ffEvKey(ev);if(!k)return;
+    const ex=map.get(k);
+    if(!ex){map.set(k,{...ev});return;}
+    if(ev.actual!=null&&ev.actual!=='')ex.actual=ev.actual;
+    if(ev.forecast!=null&&ev.forecast!=='')ex.forecast=ev.forecast;
+    if(ev.previous!=null&&ev.previous!=='')ex.previous=ev.previous;
+    if((!ex.impact||ex.impact==='')&&ev.impact)ex.impact=ev.impact;
+  });
+  return[...map.values()];
+}
+// Beide FF-Wochen (laufende + Folgewoche) live abrufen - best effort, ohne dass
+// ein einzelner blockierter Weg/Proxy das Update killt.
+async function fetchFFLive(){
+  const r=await Promise.allSettled([fetchFFPeriod('thisweek'),fetchFFPeriod('nextweek')]);
+  return r.filter(x=>x.status==='fulfilled').flatMap(x=>x.value);
+}
 async function fetchFFJson(){
   // 1) Eigene, von einer täglichen GitHub Action gepflegte Kopie (same-origin,
   // kein CORS/Proxy nötig - siehe .github/workflows/update-ff-calendar.yml)
@@ -2543,8 +2579,7 @@ async function fetchFFJson(){
     }
   }catch(e){}
   // 2) Live-Abruf direkt/über Proxys als Fallback
-  const results=await Promise.allSettled([fetchFFPeriod('thisweek'),fetchFFPeriod('nextweek')]);
-  const evts=results.filter(r=>r.status==='fulfilled').flatMap(r=>r.value);
+  const evts=await fetchFFLive();
   if(!evts.length)throw new Error('Network error');
   return evts;
 }
@@ -2552,7 +2587,15 @@ async function fetchFF(silent){
   const btn=silent?null:event.currentTarget;
   if(btn){btn.textContent='⏳ Refreshing...';btn.disabled=true;}
   try{
-    const evts=await fetchFFJson();
+    const baseEvts=await fetchFFJson();
+    // Zusätzlich IMMER beide Wochen live versuchen und über die Basis legen:
+    // (a) damit die Folgewoche/zukünftige Events (nächste 10 Tage) erscheinen,
+    // auch wenn die Tageskopie nur die laufende Woche enthält, und (b) damit
+    // frische Actual-/revidierte Previous-Werte die einmal täglich erzeugte
+    // ff_calendar.json überschreiben.
+    let freshLive=[];
+    try{freshLive=await fetchFFLive();}catch(e){}
+    const evts=mergeFeedEvents(baseEvts,freshLive);
     if(!silent)pushU();
     // Bisherige FF-Importe im Fenster entfernen, damit auch manuell
     // gelöschte Events beim Aktualisieren wieder erscheinen. Die "Previous"-
@@ -2600,19 +2643,13 @@ async function fetchFF(silent){
         }
       }
     });
-    // Zusätzlich live von Forex Factory abrufen (best effort, per CORS-Proxy):
-    // die ff_calendar.json wird nur 1x/Tag per GitHub Action aktualisiert,
-    // Actual-Werte für HEUTE veröffentlichte Events (z.B. PPI, EZB-Leitzins)
-    // stehen im Live-Feed aber meist schon Minuten nach Veröffentlichung.
-    let liveEvts=[];
-    try{liveEvts=await fetchFFPeriod('thisweek');}catch(e){}
-    const matchPool=liveEvts.length?evts.concat(liveEvts):evts;
     // Bestehende Events (auch außerhalb des 10-Tage-Fensters, bereits
     // vergangene und solche, die schon ins Postfach gewandert sind) auf neu
     // verfügbare "Actual"-Werte prüfen und nachtragen, ohne das Event selbst
-    // neu anzulegen (Notizen/Edits bleiben erhalten).
+    // neu anzulegen (Notizen/Edits bleiben erhalten). Als Abgleich-Pool dient
+    // das bereits mit den Live-Daten zusammengeführte evts-Set.
     [...calEvts,...inbox].forEach(e=>{
-      const match=matchPool.find(ev=>{
+      const match=evts.find(ev=>{
         if(!ev.date)return false;
         if(ev.impact!=='High'&&ev.impact!=='Medium')return false;
         const d=new Date(ev.date);if(isNaN(d))return false;
