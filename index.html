@@ -479,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#16a085;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Investing.com-Quellenlinks fuer alle 8 Waehrungen (USD, EUR, GBP, CHF, CAD, AUD, NZD, JPY) ergaenzt/ersetzt – Task abgeschlossen)</div>
+<div style="background:#c0392b;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Revidierte "Previous"-Werte werden jetzt grün/rot/neutral eingefaerbt – Kalenderliste & Indikator-Detailansicht)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -759,6 +759,16 @@ function actualColor(ev){
   const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
   return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
 }
+// Faerbt einen revidierten "Previous"-Wert ein: vergleicht den neuen
+// (revidierten) mit dem zuvor angezeigten Wert derselben Periode und
+// signalisiert, ob die Revision die Datenlage verbessert (act-good) oder
+// verschlechtert (act-bad) hat - analog zu actualColor (Beat/Miss-Logik).
+function revisionColor(oldVal,newVal,name){
+  const o=parseNumLike(oldVal),n=parseNumLike(newVal);
+  if(o===null||n===null||o===n)return'';
+  const lowerBetter=LOWER_IS_BETTER_RE.test(name||'');
+  return(lowerBetter?n<o:n>o)?'act-good':'act-bad';
+}
 // Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
 // Im "compact"-Modus (z.B. Dashboard-Widget) entfallen die Impact-Text- und Lösch-Spalte
 // zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
@@ -788,7 +798,7 @@ function calRowHtml(ev,opts){
     <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
-    ${val(ev.previous)}
+    ${val(ev.previous,ev.prevRevColor)}
     ${opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`:'<div></div>'}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
@@ -851,7 +861,7 @@ function processCalEvts(){
   let changed=false;
   calEvts.forEach(ev=>{
     if(ev.date<=today&&!inbox.find(m=>m.name===ev.name&&m.date===ev.date)){
-      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,time:ev.time,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,forecast:ev.forecast,previous:ev.previous,actual:ev.actual,notes:ev.notes});
+      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,time:ev.time,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,forecast:ev.forecast,previous:ev.previous,actual:ev.actual,notes:ev.notes,prevRevColor:ev.prevRevColor});
       changed=true;
     }
   });
@@ -1942,7 +1952,7 @@ function renderInd(ind,ri,ii,total){
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-act${ev.prevRevColor?' '+ev.prevRevColor:''}">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${fmtDayHdr(ev.date)} · ${srcLink}</div>
     </details>`;
@@ -2468,9 +2478,17 @@ async function fetchFF(silent){
     const evts=await fetchFFJson();
     if(!silent)pushU();
     // Bisherige FF-Importe im Fenster entfernen, damit auch manuell
-    // gelöschte Events beim Aktualisieren wieder erscheinen
+    // gelöschte Events beim Aktualisieren wieder erscheinen. Die "Previous"-
+    // Werte werden vorher gesichert, um Revisionen ggü. dem neu geladenen
+    // Feed erkennen und einfärben zu können.
+    const oldPrevMap={};
+    calEvts.forEach(e=>{
+      if(e.src==='ff'&&daysUntil(e.date)>=-FF_PAST_DAYS&&daysUntil(e.date)<=FF_WINDOW_DAYS&&e.previous){
+        oldPrevMap[(e.currencies||'')+'|'+e.name+'|'+e.date]=e.previous;
+      }
+    });
     calEvts=calEvts.filter(e=>!(e.src==='ff'&&daysUntil(e.date)>=-FF_PAST_DAYS&&daysUntil(e.date)<=FF_WINDOW_DAYS));
-    let added=0,actualsAdded=0;
+    let added=0,actualsAdded=0,revisionsUpdated=0;
     evts.forEach(ev=>{
       if(ev.impact==='High'||ev.impact==='Medium'){
         if(!ev.date)return;
@@ -2489,7 +2507,15 @@ async function fetchFF(silent){
         // (sie bleiben dort jetzt CAL_PAST_DAYS Tage sichtbar). Das Postfach
         // selbst dedupliziert processCalEvts() über name+date.
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
-          calEvts.push({id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'});
+          const newEvt={id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'};
+          // Wurde der "Previous"-Wert seit dem letzten Abruf revidiert
+          // (z.B. Vormonats-NFP beim Folgemonats-Release korrigiert)?
+          const oldPrev=oldPrevMap[(newEvt.currencies||'')+'|'+newEvt.name+'|'+newEvt.date];
+          if(oldPrev&&newEvt.previous&&oldPrev!==newEvt.previous){
+            newEvt.prevRevColor=revisionColor(oldPrev,newEvt.previous,newEvt.name);
+            revisionsUpdated++;
+          }
+          calEvts.push(newEvt);
           added++;
           // Frisch importierte Events bringen ihren Actual-Wert direkt mit -
           // mitzählen, damit die Erfolgsmeldung nicht fälschlich "0" anzeigt.
@@ -2509,15 +2535,22 @@ async function fetchFF(silent){
     // verfügbare "Actual"-Werte prüfen und nachtragen, ohne das Event selbst
     // neu anzulegen (Notizen/Edits bleiben erhalten).
     [...calEvts,...inbox].forEach(e=>{
-      if(e.actual)return;
       const match=matchPool.find(ev=>{
-        if(ev.actual==null||ev.actual===''||(ev.impact!=='High'&&ev.impact!=='Medium'))return false;
         if(!ev.date)return false;
+        if(ev.impact!=='High'&&ev.impact!=='Medium')return false;
         const d=new Date(ev.date);if(isNaN(d))return false;
         const dateStr=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         return ev.title===e.name&&dateStr===e.date&&(ev.country||'')===(e.currencies||'');
       });
-      if(match){e.actual=match.actual;actualsAdded++;}
+      if(!match)return;
+      if(!e.actual&&match.actual!=null&&match.actual!==''){e.actual=match.actual;actualsAdded++;}
+      // "Previous" wurde nachträglich revidiert (z.B. NFP-Vormonatswert
+      // wurde beim Folgemonats-Release korrigiert): Richtung der Revision
+      // einmalig einfärben und den neuen Wert übernehmen.
+      if(match.previous!=null&&match.previous!==''&&match.previous!==e.previous){
+        if(e.previous){e.prevRevColor=revisionColor(e.previous,match.previous,e.name);revisionsUpdated++;}
+        e.previous=match.previous;
+      }
     });
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
     localStorage.setItem('fxpro_ff_lastok','1');
@@ -2526,7 +2559,7 @@ async function fetchFF(silent){
     processCalEvts();
     save();renderSidebar();rerender();renderInbox();updInboxBadge();
     if(!silent){
-      alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die letzten '+FF_PAST_DAYS+' und nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) übernommen bzw. nachgetragen.');
+      alert('✓ '+added+' neue(s) High/Medium-Impact-Event(s) für die letzten '+FF_PAST_DAYS+' und nächsten '+FF_WINDOW_DAYS+' Tage geladen.\n✓ '+actualsAdded+' "Actual"-Wert(e) übernommen bzw. nachgetragen.'+(revisionsUpdated?'\n✓ '+revisionsUpdated+' "Previous"-Wert(e) revidiert.':''));
     }
   }catch(e){
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
