@@ -483,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: VIOLETT (Indikator-Werte werden jetzt dauerhaft aus dem Kalender-Feed (echte API-Quellen: ForexFactory/TradingView/FXStreet/Trading Economics) übernommen und gespeichert - bleiben erhalten, wenn das Event aus dem Kalenderfenster fällt; fehlende Forecast/Previous-Werte werden so automatisch aus echten Webseiten ergänzt statt aus statischer Recherche; Quellen-Link bleibt zur Prüfung erhalten)</div>
+<div style="background:#dc2626;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Farb-Bug behoben: parseNumLike interpretierte "M" in Texten wie "Monthly"/"m/m" faelschlich als Millionen-Skalierung und verfaelschte so die Farbe - jetzt zaehlt nur ein Suffix DIREKT nach der Zahl; GBP GDP QoQ korrigiert (0.6%/0.6%/0.2%, war faelschlich der Monatswert); ungenaues Kalender-Capture wieder entfernt; Recherche-Version V9)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -750,11 +750,23 @@ function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.t
 const LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i;
 function parseNumLike(s){
   if(s==null||s==='')return null;
-  const m=String(s).match(/-?[\d.]+/);
+  const str=String(s).trim();
+  const m=str.match(/-?\d[\d.,]*/);
   if(!m)return null;
-  let v=parseFloat(m[0]);
-  if(/B/i.test(s))v*=1e9;else if(/M/i.test(s))v*=1e6;else if(/K/i.test(s))v*=1e3;
-  return isNaN(v)?null:v;
+  let v=parseFloat(m[0].replace(/,/g,''));
+  if(isNaN(v))return null;
+  // Skalierungssuffix (K/M/B/T) NUR anwenden, wenn es UNMITTELBAR auf die Zahl
+  // folgt (z.B. "1.7M", "625B", "2.89 Mio."). Buchstaben weiter hinten im
+  // String (z.B. "Monthly", "m/m", "revidiert") dürfen die Zahl NICHT
+  // skalieren - sonst wurde z.B. "-0.1% (Monthly GDP m/m)" faelschlich als
+  // -0.1 Millionen interpretiert und damit die Farbe verfaelscht. Ein direkt
+  // folgendes "%" bedeutet Prozent -> ebenfalls keine Skalierung.
+  const after=str.slice(m.index+m[0].length).match(/^\s*([%KMBT])/i);
+  if(after){
+    const suf=after[1].toUpperCase();
+    if(suf==='B')v*=1e9;else if(suf==='M')v*=1e6;else if(suf==='K')v*=1e3;
+  }
+  return v;
 }
 function actualColor(ev){
   if(!ev.actual||ev.forecast==null||ev.forecast==='')return'';
@@ -874,7 +886,6 @@ function processCalEvts(){
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
   if(syncIndicatorBiases())changed=true;
-  if(captureIndResearch())changed=true;
   return changed;
 }
 function getInboxFor(id){
@@ -1034,59 +1045,6 @@ function resetNonFxIndBias(sym){
     });
   });
 }
-// ── INDIKATOR-WERTE AUS DEM KALENDER-FEED (echte API-Quelle) ──
-// Übernimmt Actual/Forecast/Previous der getrackten Indikatoren aus dem
-// (stündlich per GitHub Action von echten API-Feeds - ForexFactory/TradingView/
-// FXStreet/Trading Economics - gepflegten) Kalender und SPEICHERT den Wert
-// dauerhaft am Indikator. Dadurch bleibt er erhalten, wenn das Event aus dem
-// rollierenden Kalenderfenster (nur die letzten CAL_PAST_DAYS Tage) herausfällt.
-// So stammen die angezeigten Werte aus echten Webseiten/APIs (dieselbe Quelle
-// wie der Kalender) statt aus statisch hinterlegter Recherche. Der hinterlegte
-// Quellen-Link (z.B. investing.com-Seite des Indikators) bleibt zur manuellen
-// Überprüfung erhalten; nur die Zahlen werden aus dem Feed aktualisiert.
-function captureIndResearch(){
-  let changed=false;
-  syms.forEach(c=>{
-    const ccy=macroCcyFor(c.id);
-    const fx=!isNonFx(c.id);
-    (c.rubrics||[]).forEach(rub=>{
-      if(!rub.indicators)return;
-      rub.indicators.forEach(ind=>{
-        if(!ind.research)return;
-        const{base,period}=stripPeriodSuffix(ind.name);
-        const matcher=CAL_RESEARCH_MATCHERS[base];
-        if(!matcher)return;
-        const pool=[...inbox,...calEvts].filter(ev=>{
-          if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name))return false;
-          if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
-          return true;
-        });
-        if(!pool.length)return;
-        pool.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
-        const ev=pool[pool.length-1];
-        const r=ind.research;
-        const nf=(ev.forecast!=null&&ev.forecast!=='')?ev.forecast:null;
-        const np=(ev.previous!=null&&ev.previous!=='')?ev.previous:null;
-        if(r.date&&ev.date>r.date){
-          // Neuere Veröffentlichung -> Werte komplett aus dem Feed übernehmen.
-          if(r.actual!==ev.actual||r.forecast!==nf||r.previous!==np||r.date!==ev.date){
-            r.actual=ev.actual;r.forecast=nf;r.previous=np;r.date=ev.date;r.live=true;
-            if(fx)ind.bias=researchBias(base,ev.actual,nf,np);
-            changed=true;
-          }
-        }else if(!r.date||ev.date===r.date){
-          // Gleiche Veröffentlichung -> nur fehlende Forecast/Previous aus dem
-          // Feed ergänzen (kuratierten Actual-Text mit Zusatzangaben behalten).
-          let u=false;
-          if((r.forecast==null||r.forecast==='')&&nf!=null){r.forecast=nf;u=true;}
-          if((r.previous==null||r.previous==='')&&np!=null){r.previous=np;u=true;}
-          if(u){r.live=true;if(fx)ind.bias=researchBias(base,r.actual,r.forecast,r.previous);changed=true;}
-        }
-      });
-    });
-  });
-  return changed;
-}
 
 // ══ INDIKATOR-RECHERCHE (einmalige Befüllung, Stand 11.06.2026) ═══════
 // Für jede FX-Währung recherchierte Werte für Interest Rates/Inflation/
@@ -1167,7 +1125,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'4.1% incl. Bonus / 3.4% excl. Bonus',forecast:null,previous:'3.8% incl. / 3.6% excl.',releaseDate:'2026-05-20',interval:'monatlich (3-Monats-Rollwert)',source:'https://www.investing.com/economic-calendar/average-earnings-index-bonus-7'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.1% (ONS, Monthly GDP m/m, April 2026)',forecast:'-0.1%',previous:'0.3%',releaseDate:'2026-06-12',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-gross-domestic-product-(gdp)-qoq-121'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.6%',forecast:'0.6%',previous:'0.2%',releaseDate:'2026-05-14',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-kingdom-gross-domestic-product-(gdp)-qoq-121'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'53.9 (S&P Global/CIPS)',forecast:'53.7',previous:'53.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-manufacturing-purchasing-managers-index-(pmi)-204'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'49.3 (S&P Global/CIPS)',forecast:'47.9',previous:'52.7',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-274'},
     {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/retail-sales-258'},
@@ -1392,7 +1350,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV8)return;
+  if(sym._researchV9)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1400,7 +1358,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;sym._researchV8=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1429,6 +1387,7 @@ function applyIndResearch(sym){
   });
   sym._researchV7=true;
   sym._researchV8=true;
+  sym._researchV9=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1765,7 +1724,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
