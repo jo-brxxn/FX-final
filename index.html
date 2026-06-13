@@ -483,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#dc2626;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROT (Farb-Bug behoben: parseNumLike interpretierte "M" in Texten wie "Monthly"/"m/m" faelschlich als Millionen-Skalierung und verfaelschte so die Farbe - jetzt zaehlt nur ein Suffix DIREKT nach der Zahl; GBP GDP QoQ korrigiert (0.6%/0.6%/0.2%, war faelschlich der Monatswert); ungenaues Kalender-Capture wieder entfernt; Recherche-Version V9)</div>
+<div style="background:#16a34a;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Indikator-Werte kommen jetzt aus echter API-Quelle: GitHub Action zieht stündlich TradingViews Kalender (95-Tage-Fenster) und schreibt periodengenau (q/q≠m/m≠y/y) ind_data.json; ~71 Indikatoren werden mit echten Actual/Forecast/Previous + daraus berechneter Farbe überlagert; Quell-Link bleibt; Anleiherenditen/Swaps/Spreads + länderspezifische Sondermaße bleiben kuratiert - Liste im Chat)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2745,6 +2745,53 @@ async function fetchFF(silent,btnEl){
 function autoFetchFF(){
   fetchFF(true);
 }
+
+// ── INDIKATOR-WERTE AUS ECHTER API-QUELLE (ind_data.json) ──
+// ind_data.json wird stündlich per GitHub Action aus TradingViews
+// Wirtschaftskalender (95-Tage-Fenster) erzeugt und enthält pro Indikator den
+// zuletzt veröffentlichten Actual/Forecast/Previous - periodengenau (q/q/m/m/
+// y/y). Diese echten Werte werden über die statisch hinterlegte Recherche
+// gelegt. Der kuratierte Quellen-Link (z.B. investing.com-Seite) bleibt zur
+// Überprüfung erhalten; nur die Zahlen + die daraus berechnete Farbe/Bias
+// stammen jetzt aus der API. Indikatoren ohne API-Treffer (z.B. Anleihe-
+// renditen, Swaps, länderspezifische Lohnmaße) behalten die Recherchewerte.
+let IND_DATA_FEED=null;
+async function fetchIndData(){
+  try{
+    const res=await fetch('ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))IND_DATA_FEED=d;}
+  }catch(e){}
+}
+function applyIndDataFeed(){
+  if(!IND_DATA_FEED)return false;
+  let changed=false;
+  syms.forEach(c=>{
+    const feed=IND_DATA_FEED[macroCcyFor(c.id)];
+    if(!feed)return;
+    const fx=!isNonFx(c.id);
+    (c.rubrics||[]).forEach(rub=>{
+      if(!rub.indicators)return;
+      rub.indicators.forEach(ind=>{
+        const base=stripPeriodSuffix(ind.name).base;
+        const f=feed[base];
+        if(!f||f.actual==null)return;
+        const r=ind.research||{};
+        const na=f.actual,nf=(f.forecast==null?null:f.forecast),np=(f.previous==null?null:f.previous);
+        if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date)return;
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,
+          source:r.source||'https://www.tradingview.com/economic-calendar/',feed:true,event:f.event};
+        if(fx)ind.bias=researchBias(base,na,nf,np);
+        ind.name=f.period?base+' '+f.period:base;
+        changed=true;
+      });
+    });
+  });
+  if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
+  return changed;
+}
+function autoFetchIndData(){
+  fetchIndData().then(()=>{if(applyIndDataFeed()){save();renderSidebar();rerender();}});
+}
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
 // Bestätigung, dass die Abfrage nicht nur stündlich passiert.
@@ -3075,9 +3122,11 @@ document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();
 updFFLastUpd();
 autoFetchFF();
+autoFetchIndData();
 cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
+  autoFetchIndData();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
   }
