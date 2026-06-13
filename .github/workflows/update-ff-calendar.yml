@@ -553,7 +553,7 @@ jobs:
           # Zusaetzlich ein enges, garantiert unter dem Limit liegendes
           # Fenster um "jetzt" abfragen, damit die neuesten Actuals nicht
           # durch das Limit abgeschnitten werden.
-          TV_RFROM=$(node -e 'console.log(new Date(Date.now()-16*86400e3).toISOString())')
+          TV_RFROM=$(node -e 'console.log(new Date(Date.now()-45*86400e3).toISOString())')
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
             "https://economic-calendar.tradingview.com/events?from=${TV_RFROM}&to=${TV_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o tv_recent.json || true
           node -e '
@@ -591,10 +591,10 @@ jobs:
               {ind:"Core PPI",period:"y/y",test:t=>/core producer pric|core ppi/.test(t)},
               {ind:"PCE",period:"y/y",test:(t,c)=>c==="USD"&&/\bpce price index\b/.test(t)&&!EXCORE.test(t)},
               {ind:"Core PCE",period:"y/y",test:(t,c)=>c==="USD"&&/core pce price index/.test(t)},
-              {ind:"Unemployment Rate",period:null,test:t=>/unemployment rate/.test(t)&&!/ex|youth/.test(t)},
-              {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
+              {ind:"Unemployment Rate",period:null,test:t=>/unemployment rate/.test(t)&&!/ex|youth|\bu-?\d/.test(t)},
+              {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t)&&!/private/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
               {ind:"ADP Employment",period:null,test:(t,c)=>c==="USD"&&/adp employment/.test(t)&&!/weekly/.test(t)},
-              {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings|jolts/.test(t)},
+              {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings/.test(t)},
               {ind:"Initial Jobless Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="GBP"&&/claimant count/.test(t)},
               {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="USD"&&/average hourly earnings/.test(t)},
@@ -602,7 +602,7 @@ jobs:
               {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
               {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
-              {ind:"Consumer Confidence",period:null,test:t=>/consumer confidence|consumer sentiment/.test(t)},
+              {ind:"Consumer Confidence",period:null,test:t=>/consumer confidence|consumer sentiment/.test(t)&&!/change/.test(t)},
             ];
             const readEvts=f=>{
               let tv;
@@ -616,7 +616,7 @@ jobs:
             // spaetere Event (s.u.), aber so sind die juengsten Actuals nicht
             // vom 2000er-Limit der 95-Tage-Abfrage betroffen.
             const evts=[...(recent||[]),...(wide||[])];
-            console.log("ind_data: "+(wide?wide.length:0)+" TV events in 95d window, "+(recent?recent.length:0)+" in 16d window");
+            console.log("ind_data: "+(wide?wide.length:0)+" TV events in 95d window, "+(recent?recent.length:0)+" in 45d window");
             // Pro (ccy|ind) das spaeteste Event mit Actual behalten.
             const best={};
             evts.forEach(ev=>{
