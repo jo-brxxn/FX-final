@@ -82,10 +82,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
-.evt-flag-abs{position:absolute;top:2px;left:2px;display:flex;gap:1px;line-height:1}
-.evt-flag-abs .evt-flag{font-size:8px}
+.evt-flag-abs{position:absolute;top:1px;left:3px;display:flex;gap:2px;line-height:1}
+.evt-flag-abs .evt-flag{font-size:12px}
 .notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.evt-flag{color:var(--red);font-size:8px;line-height:1;flex-shrink:0}
+.evt-flag{color:var(--red);font-size:13px;font-weight:900;line-height:1;flex-shrink:0}
 .evt-flag.ef-red{color:var(--red)}
 .evt-flag.ef-green{color:#22c55e}
 .cal-empty-day{padding:7px 9px;font-size:9px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -333,7 +333,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
 .evt-toggle:hover{border-color:var(--bd2)}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
-.evt-flag{font-size:11px;line-height:1}
+.evt-flag{font-size:14px;line-height:1}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:9px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
@@ -502,7 +502,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#c026d3;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: MAGENTA ("Currencies" heißt jetzt "Assets"; Add-Pair wählt die Kategorie des geklickten Buttons vor; pro Symbol ein Quick-Note-Feld neben Makro/General/Notes; alle Krypto-Symbole sind verbunden (Änderung an einem Coin gilt für alle); Interest-Rates-Karte hat ein Icon zu den Markt-Zinserwartungen (USD = FedWatch); bei gleichzeitig anstehendem (rot) und gerade erschienenem (grün) High-Impact-Event werden zwei Ausrufezeichen gezeigt)</div>
+<div style="background:#0891b2;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: CYAN (Selbst hinzugefügte Symbole (z.B. Ethereum) werden jetzt korrekt gespeichert & per Cloud-Sync auf andere Geräte übertragen; grünes Event-Ausrufezeichen ist jetzt wirklich grün (vorher Emoji, das die Farbe ignorierte); Mini-Kalender beim Symbol hat dieselben Funktionen wie der große Kalender (High-Filter, eingeklappte Vergangenheit, leere Tage); USD CPI/Core CPI behalten ihren investing.com-Link (Feed überschreibt ihn nicht mehr), CHF Retail Sales auf investing.com umgestellt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -857,6 +857,9 @@ function calTableHtml(evts,opts){
   // Welche Tage werden gerendert? Mit opts.allDates wird ein lückenloses Fenster
   // gezeichnet (auch Tage ganz ohne News), sonst nur Tage mit Events.
   const dates=(opts.allDates&&opts.allDates.length)?opts.allDates:Object.keys(byDate).sort();
+  // ID-Präfix, damit Haupt- und Mini-Kalender keine doppelten Element-IDs
+  // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
+  const pfx=opts.idPrefix||'';
   const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
   dates.forEach(date=>{
     const dayEvts=byDate[date]||[];
@@ -867,8 +870,8 @@ function calTableHtml(evts,opts){
     const isPast=opts.collapsePast&&daysUntil(date)<0;
     if(isPast){
       const open=calOpenDays.has(date);
-      html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="calhdr-${date}" onclick="toggleCalDay('${date}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
-      html+=`<div class="cal-day-body" id="calbody-${date}"${open?'':' style="display:none"'}>`;
+      html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="${pfx}calhdr-${date}" onclick="toggleCalDay('${date}','${pfx}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
+      html+=`<div class="cal-day-body" id="${pfx}calbody-${date}"${open?'':' style="display:none"'}>`;
       html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">Keine Termine</div>`;
       html+=`</div>`;
     }else{
@@ -878,13 +881,23 @@ function calTableHtml(evts,opts){
   });
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
 }
+// Lückenloses Tagesfenster (erstes bis letztes Event, mind. inkl. heute) für
+// eine Eventliste - für die "leere Tage anzeigen"-Darstellung.
+function calWindowDatesFor(evts){
+  if(!evts||!evts.length)return[];
+  const today=todayStr();let min=today,max=today;
+  evts.forEach(ev=>{if(ev.date<min)min=ev.date;if(ev.date>max)max=ev.date;});
+  const out=[];for(let d=min,g=0;d<=max&&g<400;d=dateAddStr(d,1),g++)out.push(d);
+  return out;
+}
 // Klappt einen vergangenen Kalender-Tag auf/zu (ohne Re-Render, damit die
-// Scroll-Position erhalten bleibt).
-function toggleCalDay(date){
+// Scroll-Position erhalten bleibt). pfx unterscheidet Haupt-/Mini-Kalender.
+function toggleCalDay(date,pfx){
+  pfx=pfx||'';
   if(calOpenDays.has(date))calOpenDays.delete(date);else calOpenDays.add(date);
   const open=calOpenDays.has(date);
-  const body=document.getElementById('calbody-'+date);
-  const hdr=document.getElementById('calhdr-'+date);
+  const body=document.getElementById(pfx+'calbody-'+date);
+  const hdr=document.getElementById(pfx+'calhdr-'+date);
   if(body)body.style.display=open?'':'none';
   if(hdr)hdr.classList.toggle('collapsed',!open);
 }
@@ -973,12 +986,15 @@ function evtFlagState(id){
   });
   return (up?'u':'')+(done?'d':'');
 }
-// Baut die ein bis zwei ❗-Spans (rot=anstehend, grün=erschienen).
+// Baut die ein bis zwei Flag-Spans (rot=anstehend, grün=erschienen).
+// Bewusst ein normales "!" statt des ❗-Emojis: Farb-Emojis ignorieren die
+// CSS-color und würden auf echten Geräten immer rot dargestellt - das "!"
+// nimmt zuverlässig die rote bzw. grüne Farbe an.
 function flagSpans(st,baseCls){
   if(!st)return'';
   let h='';
-  if(st.includes('u'))h+=`<span class="${baseCls||'evt-flag'} ef-red" title="High-Impact-Event in den nächsten 3 Tagen">❗</span>`;
-  if(st.includes('d'))h+=`<span class="${baseCls||'evt-flag'} ef-green" title="High-Impact-Event erschienen (bis 1 Tag danach)">❗</span>`;
+  if(st.includes('u'))h+=`<span class="${baseCls||'evt-flag'} ef-red" title="High-Impact-Event in den nächsten 3 Tagen">!</span>`;
+  if(st.includes('d'))h+=`<span class="${baseCls||'evt-flag'} ef-green" title="High-Impact-Event erschienen (bis 1 Tag danach)">!</span>`;
   return h;
 }
 function evtFlagHtml(id,baseCls){return flagSpans(evtFlagState(id),baseCls);}
@@ -1282,7 +1298,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (SECO, sportbereinigt, Q1 2026)',forecast:'0.3-0.4%',previous:'0.2%',releaseDate:'2026-06-02',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/switzerland-gross-domestic-product-(gdp)-qoq-122'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'57.3 (procure.ch/UBS)',forecast:'54.0',previous:'54.5',releaseDate:'2026-06-02',interval:'monatlich',source:'https://www.investing.com/economic-calendar/procure.ch-pmi-278'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'56.0 (procure.ch)',forecast:null,previous:'54.8',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/services-pmi'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1% (BFS)',forecast:null,previous:'0.3% (rev.)',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/retail-sales'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1% (BFS)',forecast:null,previous:'0.3% (rev.)',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/retail-sales-259'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-40 (SECO Konsumentenstimmung)',forecast:null,previous:'-43',releaseDate:'2026-05-08',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/seco-consumer-climate-362'},
   ]},
   JPY:{entries:[
@@ -1872,7 +1888,16 @@ function loadState(){
       syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
-      customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
+      // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
+      // wiederherstellen (Rubriken, Bias, Notizen, Quick-Note ...). Früher
+      // wurde hier fälschlich ein leeres Symbol erzeugt, wodurch alle
+      // Änderungen an z.B. Ethereum beim Neuladen verloren gingen.
+      customIds.forEach(c=>{
+        if(syms.find(s=>s.id===c.id))return;
+        const sv=d.syms?.find(x=>x.id===c.id);
+        syms.push(sv?{...c,...sv,genBull:sv.genBull||[],genBear:sv.genBear||[],rubrics:sv.rubrics||mkRubs(),noteRubs:sv.noteRubs||[],notes:sv.notes||''}
+                    :{...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});
+      });
       syms.filter(s=>customIds.find(c=>c.id===s.id)).forEach(addMacroRub);
       rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();
       // Einmalige Migration auf die neue Karten-Reihenfolge (Inflation, Leitzins,
@@ -2100,10 +2125,10 @@ function renderDetail(){
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
-        ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag">❗</span><span>Next Event: ${nextLbl}</span>`}
+        ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${calTableHtml(symEvts)}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-'}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
@@ -2697,11 +2722,7 @@ function renderCalendar(){
   if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
-  const today=todayStr();
-  let minD=today,maxD=today;
-  sorted.forEach(ev=>{if(ev.date<minD)minD=ev.date;if(ev.date>maxD)maxD=ev.date;});
-  const allDates=[];for(let d=minD,g=0;d<=maxD&&g<400;d=dateAddStr(d,1),g++)allDates.push(d);
-  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates});}
+  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted)});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
@@ -2937,6 +2958,15 @@ async function fetchIndData(){
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))IND_DATA_FEED=d;}
   }catch(e){}
 }
+// Kuratierter Quellen-Link (i.d.R. investing.com) eines Indikators aus der
+// statischen Recherche - hat beim Feed-Overlay Vorrang, damit der Link nie
+// auf den TradingView-Fallback "herunterfällt".
+function indResearchSource(ccy,base){
+  const data=IND_RESEARCH_DATA[ccy];
+  if(!data)return null;
+  const e=data.entries.find(x=>x.indicator===base&&x.applicable&&x.source);
+  return e?e.source:null;
+}
 function applyIndDataFeed(){
   if(!IND_DATA_FEED)return false;
   let changed=false;
@@ -2952,9 +2982,11 @@ function applyIndDataFeed(){
         if(!f||f.actual==null)return;
         const r=ind.research||{};
         const na=f.actual,nf=(f.forecast==null?null:f.forecast),np=(f.previous==null?null:f.previous);
-        if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date)return;
-        ind.research={actual:na,forecast:nf,previous:np,date:f.date,
-          source:r.source||'https://www.tradingview.com/economic-calendar/',feed:true,event:f.event};
+        // Kuratierte investing.com-Quelle bevorzugen; nur wenn keine vorhanden
+        // ist, die bisherige bzw. den TradingView-Fallback verwenden.
+        const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
+        if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event};
         if(fx)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;
