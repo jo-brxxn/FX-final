@@ -479,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#16a085;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Investing.com-Quellenlinks jetzt auch für CAD, AUD, NZD ergänzt/ersetzt; JPY folgt als letzte Währung in Kürze)</div>
+<div style="background:#16a085;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Investing.com-Quellenlinks fuer alle 8 Waehrungen (USD, EUR, GBP, CHF, CAD, AUD, NZD, JPY) ergaenzt/ersetzt – Task abgeschlossen)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1126,30 +1126,30 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-40 (SECO Konsumentenstimmung)',forecast:null,previous:'-43',releaseDate:'2026-05-08',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/seco-consumer-climate-362'},
   ]},
   JPY:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'~1.00% (impliziter Pfad bis Ende 2026: 1.00-1.25%)',forecast:'1.00% (Hike am 16.06. ~98% eingepreist)',previous:'0.84% (1Y OIS, Dez. 2025)',releaseDate:'2026-06-11',interval:'täglich'},
-    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'täglich'},
-    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich'},
+    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)',source:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165'},
+    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'~1.00% (impliziter Pfad bis Ende 2026: 1.00-1.25%)',forecast:'1.00% (Hike am 16.06. ~98% eingepreist)',previous:'0.84% (1Y OIS, Dez. 2025)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/jpy-1-year-irs-interest-rate-swap'},
+    {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-2-year-bond-yield'},
+    {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'täglich'},
-    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',releaseDate:'2026-05-22',interval:'monatlich'},
-    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'1.4%',forecast:'1.7%',previous:'1.8%',releaseDate:'2026-05-22',interval:'monatlich'},
-    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% (CGPI y/y)',forecast:'3.0%',previous:'4.0%',releaseDate:'2026-05-15',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-yoy-992'},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'1.4%',forecast:'1.7%',previous:'1.8%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-core-consumer-price-index-(cpi)-yoy-344'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% (CGPI y/y)',forecast:'3.0%',previous:'4.0%',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-35'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
-    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'2.6% (Corporate Service Price Index)',forecast:null,previous:'2.6%',releaseDate:'2026-02-24',interval:'monatlich'},
+    {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'2.6% (Corporate Service Price Index)',forecast:null,previous:'2.6%',releaseDate:'2026-02-24',interval:'monatlich',source:'https://www.investing.com/economic-calendar/corporate-services-price-index-(cspi)-76'},
     {rubric:'Inflation',indicator:'Unemployment Claims',applicable:false},
     {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-120K',forecast:null,previous:null,releaseDate:'2026-05-30',interval:'monatlich'},
-    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'2.5%',forecast:'2.6%',previous:'2.7%',releaseDate:'2026-05-30',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'2.5%',forecast:'2.6%',previous:'2.7%',releaseDate:'2026-05-30',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-298'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
-    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich'},
-    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich'},
+    {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monatlich',source:'https://www.investing.com/economic-calendar/jobs-applications-ratio-1001'},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.5% (Cash Earnings y/y)',forecast:'3.2%',previous:'3.1%',releaseDate:'2026-06-09',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-cash-earnings-6'},
     {rubric:'Labour Market',indicator:'Initial Jobless Claims',applicable:false},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revidiert)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quartalsweise',source:'https://tradingeconomics.com/japan/gdp-growth'},
-    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monatlich',source:'https://tradingeconomics.com/japan/manufacturing-pmi'},
-    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monatlich',source:'https://tradingeconomics.com/japan/services-pmi'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monatlich',source:'https://tradingeconomics.com/japan/retail-sales'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (März 2026)',releaseDate:'2026-05-13',interval:'monatlich',source:'https://www.esri.cao.go.jp/en/stat/shouhi/shouhi-e.html'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revidiert)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/japan-gross-domestic-product-(gdp)-qoq-119'},
+    {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-202'},
+    {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/au-jibun-bank-japan-services-pmi-1912'},
+    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monatlich',source:'https://www.investing.com/economic-calendar/large-retailers\'-sales-190'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (März 2026)',releaseDate:'2026-05-13',interval:'monatlich',source:'https://www.investing.com/economic-calendar/household-confidence-148'},
   ]},
   CAD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'alle 6-8 Wochen (BoC-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-166'},
