@@ -82,9 +82,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
-.evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:9px;line-height:1}
+.evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:8px;line-height:1}
 .notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.evt-flag{color:var(--red);font-size:10px;line-height:1;flex-shrink:0}
+.evt-flag{color:var(--red);font-size:8px;line-height:1;flex-shrink:0}
+.evt-flag.ef-red,.evt-flag-abs.ef-red{color:var(--red)}
+.evt-flag.ef-green,.evt-flag-abs.ef-green{color:#22c55e}
+.cal-empty-day{padding:7px 9px;font-size:9px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
 /* ── SUBTABS ── */
@@ -321,7 +325,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
 .evt-toggle:hover{border-color:var(--bd2)}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
-.evt-flag{font-size:13px;line-height:1}
+.evt-flag{font-size:11px;line-height:1}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:9px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
@@ -490,7 +494,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Kalender-Filter: neuer Button "Nur High-Impact" blendet Medium-/Low-Events aus (Einstellung wird gespeichert); die letzten 2 vergangenen Tage bleiben im Kalender, sind aber eingeklappt - Klick auf den Tages-Header (zeigt Event-Anzahl + Pfeil) klappt sie auf und zeigt die Actual-Werte)</div>
+<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TEAL (Kalender zeigt jetzt auch Tage ohne News ("Keine Termine"); neue Makro-Kartenreihenfolge: Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches, Risikoumfeld, COT; Symbol-Ausrufezeichen nur noch bei High-Impact-Event in den nächsten 3 Tagen (rot), nach Erscheinen grün bis 1 Tag danach, dann weg - max. eins, etwas kleiner)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -745,6 +749,8 @@ function evtMatchesSym(ev,id){
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
+// Datum (YYYY-MM-DD) um n Tage verschieben, lokal gerechnet (kein UTC-Versatz).
+function dateAddStr(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute';if(n===1)return'Morgen';if(n===-1)return'Gestern';return n>1?`in ${n}T`:`vor ${-n}T`;}
 function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
 
@@ -832,38 +838,36 @@ function calRowHtml(ev,opts){
 // opts.compact: kompaktere Spaltenbreiten ohne Impact-Text/Lösch-Spalte (z.B. Dashboard-Widget).
 function calTableHtml(evts,opts){
   opts=opts||{};
-  if(!evts.length)return'';
+  if(!evts.length&&!(opts.allDates&&opts.allDates.length))return'';
   const today=todayStr();
   let html=opts.compact
     ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`
     :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
-  // Anzahl Events je Tag vorab zählen (für die Event-Anzahl im eingeklappten
-  // Tages-Header der vergangenen Tage).
-  const dayCount={};
-  if(opts.collapsePast)evts.forEach(ev=>{dayCount[ev.date]=(dayCount[ev.date]||0)+1;});
-  let lastDate=null,openSection=false;
-  const closeSection=()=>{if(openSection){html+='</div>';openSection=false;}};
-  evts.forEach(ev=>{
-    if(ev.date!==lastDate){
-      closeSection();
-      lastDate=ev.date;
-      const isToday=ev.date===today;
-      // Vergangene Tage (gestern / vorgestern) bleiben im Kalender, werden aber
-      // eingeklappt dargestellt - erst per Klick auf den Tages-Header sichtbar.
-      const isPast=opts.collapsePast&&daysUntil(ev.date)<0;
-      if(isPast){
-        const open=calOpenDays.has(ev.date);
-        const n=dayCount[ev.date]||0;
-        html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="calhdr-${ev.date}" onclick="toggleCalDay('${ev.date}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(ev.date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
-        html+=`<div class="cal-day-body" id="calbody-${ev.date}"${open?'':' style="display:none"'}>`;
-        openSection=true;
-      }else{
-        html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(ev.date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(ev.date)}</span></div>`;
-      }
+  // Events nach Datum gruppieren (Reihenfolge innerhalb des Tages bleibt erhalten).
+  const byDate={};
+  evts.forEach(ev=>{(byDate[ev.date]=byDate[ev.date]||[]).push(ev);});
+  // Welche Tage werden gerendert? Mit opts.allDates wird ein lückenloses Fenster
+  // gezeichnet (auch Tage ganz ohne News), sonst nur Tage mit Events.
+  const dates=(opts.allDates&&opts.allDates.length)?opts.allDates:Object.keys(byDate).sort();
+  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
+  dates.forEach(date=>{
+    const dayEvts=byDate[date]||[];
+    const n=dayEvts.length;
+    const isToday=date===today;
+    // Vergangene Tage (gestern / vorgestern) bleiben im Kalender, werden aber
+    // eingeklappt dargestellt - erst per Klick auf den Tages-Header sichtbar.
+    const isPast=opts.collapsePast&&daysUntil(date)<0;
+    if(isPast){
+      const open=calOpenDays.has(date);
+      html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="calhdr-${date}" onclick="toggleCalDay('${date}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
+      html+=`<div class="cal-day-body" id="calbody-${date}"${open?'':' style="display:none"'}>`;
+      html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">Keine Termine</div>`;
+      html+=`</div>`;
+    }else{
+      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
+      html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">Keine Termine</div>`;
     }
-    html+=calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
   });
-  closeSection();
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
 }
 // Klappt einen vergangenen Kalender-Tag auf/zu (ohne Re-Render, damit die
@@ -909,12 +913,43 @@ function getRelevantEvents(id){
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
 function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
-function pairHasImportantEvt(name){
-  const parts=name.split('/');if(parts.length!==2)return hasImportantEvt(name);
-  const a=PAIR_CODE_TO_ID[parts[0]]||parts[0],b=PAIR_CODE_TO_ID[parts[1]]||parts[1];
-  return hasImportantEvt(a)||hasImportantEvt(b);
+// Status des Event-Ausrufezeichens für ein Symbol (es gibt maximal EIN Flag):
+//   'up'   = High-Impact-Event steht in den nächsten 3 Tagen an  -> rot
+//   'done' = High-Impact-Event ist erschienen, bleibt bis 1 Tag danach -> grün
+//   ''     = kein Flag
+// Es zählt ausschließlich High-Impact (kein Medium/Low). Sobald ein Actual-Wert
+// vorliegt (oder das Datum vorbei ist), gilt das Event als erschienen.
+function evtFlagState(id){
+  let up=false,done=false;
+  getSymEventsAll(id).forEach(ev=>{
+    if(ev.impact!=='high')return;
+    const dl=daysUntil(ev.date);
+    const released=(ev.actual!=null&&String(ev.actual).trim()!=='')||dl<0;
+    if(!released){if(dl>=0&&dl<=3)up=true;}
+    else if(dl>=-1&&dl<=0)done=true;
+  });
+  return up?'up':done?'done':'';
 }
-const EVT_FLAG='<span class="evt-flag" title="Wichtige Nachricht steht an">❗</span>';
+function evtFlagHtml(id,baseCls){
+  const st=evtFlagState(id);if(!st)return'';
+  const color=st==='up'?'ef-red':'ef-green';
+  const title=st==='up'?'High-Impact-Event in den nächsten 3 Tagen':'High-Impact-Event erschienen';
+  return`<span class="${baseCls||'evt-flag'} ${color}" title="${title}">❗</span>`;
+}
+// Für ein Paar: rot (anstehend) hat Vorrang vor grün (erschienen), max. ein Flag.
+function pairEvtFlagState(name){
+  const parts=name.split('/');
+  const ids=parts.length!==2?[name]:[PAIR_CODE_TO_ID[parts[0]]||parts[0],PAIR_CODE_TO_ID[parts[1]]||parts[1]];
+  let st='';
+  for(const id of ids){const s=evtFlagState(id);if(s==='up')return'up';if(s==='done')st='done';}
+  return st;
+}
+function pairEvtFlagHtml(name,baseCls){
+  const st=pairEvtFlagState(name);if(!st)return'';
+  const color=st==='up'?'ef-red':'ef-green';
+  const title=st==='up'?'High-Impact-Event in den nächsten 3 Tagen':'High-Impact-Event erschienen';
+  return`<span class="${baseCls||'evt-flag'} ${color}" title="${title}">❗</span>`;
+}
 
 // ── NEWS PROCESSING / POSTFACH ──────────────────────────────────────
 // Kopiert fällige (heute/vergangene) Events ins Postfach. Events bleiben
@@ -1456,7 +1491,10 @@ function mkRubs(){return[
 // Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
 // Verschieben einer Karte (mvRub) aktualisiert und auf alle Symbole
 // angewendet, damit überall die gleiche Kartenreihenfolge gilt.
-function mkRubOrder(){return[MACRO_NAME,...mkRubs().map(r=>r.name)];}
+// Globale Kartenreihenfolge der Makro-Kategorien (für jedes Symbol gleich):
+// Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches,
+// Risikoumfeld, COT Data.
+function mkRubOrder(){return['Inflation','Interest Rates','Labour Market','Economic Growth','Geopolitics',MACRO_NAME,'COT Data'];}
 function applyRubOrder(){
   if(!rubOrder||!rubOrder.length)return;
   syms.forEach(sym=>{
@@ -1783,6 +1821,9 @@ function loadState(){
       customIds.forEach(c=>{if(!syms.find(s=>s.id===c.id)){syms.push({...c,genBull:[],genBear:[],rubrics:mkRubs(),noteRubs:[],notes:''});}});
       syms.filter(s=>customIds.find(c=>c.id===s.id)).forEach(addMacroRub);
       rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();
+      // Einmalige Migration auf die neue Karten-Reihenfolge (Inflation, Leitzins,
+      // Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches, Risikoumfeld, COT).
+      if(localStorage.getItem('fxpro_ruborder_v2')!=='1'){rubOrder=mkRubOrder();localStorage.setItem('fxpro_ruborder_v2','1');}
       applyRubOrder();
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
@@ -1797,6 +1838,8 @@ function loadState(){
       return;}
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};
+  syms.forEach(addMacroRub);applyRubOrder();
+  localStorage.setItem('fxpro_ruborder_v2','1');
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
@@ -1973,8 +2016,7 @@ function renderSidebar(){
       const reorder=sbReorderId===id;
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
-          ${hasImportantEvt(c.id)?'<span class="evt-flag-abs" title="Wichtige Nachricht steht an">❗</span>':''}
-          ${hasInboxNotif(c.id)?NOTIF_FLAG:''}
+          ${evtFlagHtml(c.id,'evt-flag-abs')}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Nach oben verschieben">▲</button>
@@ -2522,7 +2564,7 @@ function renderPairCard(p,pci,catTotal){
         <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:8px;margin-top:0">▼</button>
       </div>
       <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
-      ${pairHasImportantEvt(p.name)?EVT_FLAG:''}
+      ${pairEvtFlagHtml(p.name)}
       <div class="pbg" onclick="event.stopPropagation()">
         ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
       </div>
@@ -2582,8 +2624,14 @@ function renderCalendar(){
   if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   const empty=calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.';
-  el.innerHTML=sorted.length===0?`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`:
-  calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true});}
+  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
+  // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
+  // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
+  const today=todayStr();
+  let minD=today,maxD=today;
+  sorted.forEach(ev=>{if(ev.date<minD)minD=ev.date;if(ev.date>maxD)maxD=ev.date;});
+  const allDates=[];for(let d=minD,g=0;d<=maxD&&g<400;d=dateAddStr(d,1),g++)allDates.push(d);
+  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
@@ -2918,7 +2966,7 @@ function renderDash(){
       content=syms.filter(s=>FX.includes(s.id)).map(s=>`
         <div class="sym-row ${glowClass(s.bias)}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
-          <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
+          <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
         </div>`).join('');
     }else if(w.type==='assets'){
@@ -2926,7 +2974,7 @@ function renderDash(){
       content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
       others.map(s=>`<div class="sym-row ${glowClass(s.bias)}">
         <div class="sym-name">${s.name}</div>
-        <span class="evt-flag-slot">${hasImportantEvt(s.id)?EVT_FLAG:''}</span>
+        <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
     }else if(w.type==='setups'){
@@ -2939,7 +2987,7 @@ function renderDash(){
           <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
         </div>
         <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
-        <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
+        <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
         <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
@@ -2955,7 +3003,7 @@ function renderDash(){
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
-        <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
+        <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         <div class="pbg" style="flex-shrink:0">
           ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -2972,7 +3020,7 @@ function renderDash(){
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
-          <span class="evt-flag-slot">${pairHasImportantEvt(p.name)?EVT_FLAG:''}</span>
+          <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <div class="pbg" style="flex-shrink:0">
             ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -3063,10 +3111,10 @@ function addWidget(){
 function renderMatrix(){
   const fx=syms.filter(s=>FX.includes(s.id));
   let h=`<thead><tr><th style="text-align:left">BASE</th>`;
-  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${hasImportantEvt(q.id)?EVT_FLAG:''}</th>`;});
+  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${evtFlagHtml(q.id)}</th>`;});
   h+=`</tr></thead><tbody>`;
   fx.forEach(base=>{
-    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${hasImportantEvt(base.id)?EVT_FLAG:''}</td>`;
+    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${evtFlagHtml(base.id)}</td>`;
     fx.forEach(q=>{
       if(base.id===q.id){h+=`<td class="cna">—</td>`;return;}
       const pb=base.bias==='bull'&&q.bias==='bear'?'bull':base.bias==='bear'&&q.bias==='bull'?'bear':'neu';
@@ -3076,7 +3124,7 @@ function renderMatrix(){
   const others=syms.filter(s=>!FX.includes(s.id));
   document.getElementById('assetCards').innerHTML=others.length?
     `<div style="font-size:8px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:11px;font-weight:700;color:var(--t0)">${s.name} ${hasImportantEvt(s.id)?EVT_FLAG:''}</div><div style="font-size:9px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
+    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:11px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:9px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
 
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
