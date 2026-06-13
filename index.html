@@ -82,17 +82,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
-.evt-flag-abs{position:absolute;top:2px;left:2px;color:var(--red);font-size:8px;line-height:1}
+.evt-flag-abs{position:absolute;top:2px;left:2px;display:flex;gap:1px;line-height:1}
+.evt-flag-abs .evt-flag{font-size:8px}
 .notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
 .evt-flag{color:var(--red);font-size:8px;line-height:1;flex-shrink:0}
-.evt-flag.ef-red,.evt-flag-abs.ef-red{color:var(--red)}
-.evt-flag.ef-green,.evt-flag-abs.ef-green{color:#22c55e}
+.evt-flag.ef-red{color:var(--red)}
+.evt-flag.ef-green{color:#22c55e}
 .cal-empty-day{padding:7px 9px;font-size:9px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
+.stabs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stabs-row .stabs{margin:11px 0 9px}
+.quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:11px;padding:6px 9px;outline:none;font-family:inherit}
+.quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
+.quick-note::placeholder{color:var(--t3)}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
 .st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}.st:hover:not(.on){color:var(--t1)}
 .slbl{font-size:8px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
@@ -147,6 +153,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── INFO BUTTON ── */
 .rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 .rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
+.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer}
+.rate-watch:hover{opacity:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -494,7 +502,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#4f46e5;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: INDIGO (USA Core CPI nutzt jetzt den korrekten investing.com-Link; "Unemployment Claims" aus Inflation entfernt und "Initial Jobless Claims" im Arbeitsmarkt in "Unemployment Claims" umbenannt (gleiche Werte); GBP Claimant Count von Inflation in den Arbeitsmarkt verschoben (Kategorie-Fix); alle FX-Symbole/Kategorien auf falsch zugeordnete Werte geprüft)</div>
+<div style="background:#c026d3;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: MAGENTA ("Currencies" heißt jetzt "Assets"; Add-Pair wählt die Kategorie des geklickten Buttons vor; pro Symbol ein Quick-Note-Feld neben Makro/General/Notes; alle Krypto-Symbole sind verbunden (Änderung an einem Coin gilt für alle); Interest-Rates-Karte hat ein Icon zu den Markt-Zinserwartungen (USD = FedWatch); bei gleichzeitig anstehendem (rot) und gerade erschienenem (grün) High-Impact-Event werden zwei Ausrufezeichen gezeigt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -514,7 +522,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 
 <div class="tabbar">
   <button class="tp on"  onclick="showTab('dash',this)">Dashboard</button>
-  <button class="tp"     onclick="showTab('cur',this)">Currencies</button>
+  <button class="tp"     onclick="showTab('cur',this)">Assets</button>
   <button class="tp"     onclick="showTab('mat',this)">Matrix</button>
   <button class="tp"     onclick="showTab('pairs',this)">Pairs</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
@@ -905,7 +913,43 @@ function isNonFx(id){return['crypto','metal','energy','index'].includes(assetCls
 // USD + alle USD-getriebenen Assets (inkl. selbst hinzugefügter Krypto/
 // Metall/Energie/Index-Symbole) teilen sich die Makro-Rubrik-Summaries.
 function macroSyncIds(){return['USD',...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
+// ── KRYPTO-VERBUND ───────────────────────────────────────────────────
+// Alle Krypto-Symbole (BTC + selbst hinzugefügte Coins) sind verbunden:
+// Bias, Rubriken, General-Argumente, Notizen und Quick-Note werden zwischen
+// allen Coins gespiegelt - ändert man eines, ändern sich alle (in beide
+// Richtungen). Symbol-Identität (id/name/full) bleibt natürlich erhalten.
+function isCrypto(id){return assetCls(id)==='crypto';}
+function cryptoIds(){return syms.filter(s=>isCrypto(s.id)).map(s=>s.id);}
+const CRYPTO_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote'];
+function syncCryptoGroup(srcId){
+  if(!isCrypto(srcId))return false;
+  const src=syms.find(s=>s.id===srcId);if(!src)return false;
+  let changed=false;
+  cryptoIds().forEach(id=>{
+    if(id===srcId)return;
+    const t=syms.find(s=>s.id===id);if(!t)return;
+    CRYPTO_SYNC_FIELDS.forEach(f=>{
+      const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
+      if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
+    });
+  });
+  return changed;
+}
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
+// Markt-Zinserwartungen pro Währung (Icon-Link in der Interest-Rates-Karte).
+// USD = CME FedWatch Tool; übrige = investing.com-Zinsentscheid-Seite der
+// jeweiligen Notenbank. NONFX (Krypto/Metalle/Indizes) hängen am USD -> FedWatch.
+const RATE_WATCH={
+  USD:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',
+  EUR:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655',
+  GBP:'https://www.investing.com/economic-calendar/interest-rate-decision-170',
+  CHF:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169',
+  JPY:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165',
+  CAD:'https://www.investing.com/economic-calendar/interest-rate-decision-166',
+  AUD:'https://www.investing.com/economic-calendar/interest-rate-decision-171',
+  NZD:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167',
+};
+function rateWatchUrl(id){return RATE_WATCH[macroCcyFor(id)]||RATE_WATCH.USD;}
 function getRelevantEvents(id){
   const today=todayStr();
   const ids=isNonFx(id)?[id,'USD']:[id];
@@ -913,12 +957,11 @@ function getRelevantEvents(id){
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
 function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
-// Status des Event-Ausrufezeichens für ein Symbol (es gibt maximal EIN Flag):
-//   'up'   = High-Impact-Event steht in den nächsten 3 Tagen an  -> rot
-//   'done' = High-Impact-Event ist erschienen, bleibt bis 1 Tag danach -> grün
-//   ''     = kein Flag
-// Es zählt ausschließlich High-Impact (kein Medium/Low). Sobald ein Actual-Wert
-// vorliegt (oder das Datum vorbei ist), gilt das Event als erschienen.
+// Status des Event-Ausrufezeichens für ein Symbol. Es kann BEIDES gleichzeitig
+// zutreffen (dann werden zwei Flags angezeigt):
+//   'u' = High-Impact-Event steht in den nächsten 3 Tagen an     -> rot
+//   'd' = High-Impact-Event ist erschienen (bis 1 Tag danach)    -> grün
+// Rückgabe: '' | 'u' | 'd' | 'ud'. Es zählt ausschließlich High-Impact.
 function evtFlagState(id){
   let up=false,done=false;
   getSymEventsAll(id).forEach(ev=>{
@@ -928,28 +971,30 @@ function evtFlagState(id){
     if(!released){if(dl>=0&&dl<=3)up=true;}
     else if(dl>=-1&&dl<=0)done=true;
   });
-  return up?'up':done?'done':'';
+  return (up?'u':'')+(done?'d':'');
 }
-function evtFlagHtml(id,baseCls){
-  const st=evtFlagState(id);if(!st)return'';
-  const color=st==='up'?'ef-red':'ef-green';
-  const title=st==='up'?'High-Impact-Event in den nächsten 3 Tagen':'High-Impact-Event erschienen';
-  return`<span class="${baseCls||'evt-flag'} ${color}" title="${title}">❗</span>`;
+// Baut die ein bis zwei ❗-Spans (rot=anstehend, grün=erschienen).
+function flagSpans(st,baseCls){
+  if(!st)return'';
+  let h='';
+  if(st.includes('u'))h+=`<span class="${baseCls||'evt-flag'} ef-red" title="High-Impact-Event in den nächsten 3 Tagen">❗</span>`;
+  if(st.includes('d'))h+=`<span class="${baseCls||'evt-flag'} ef-green" title="High-Impact-Event erschienen (bis 1 Tag danach)">❗</span>`;
+  return h;
 }
-// Für ein Paar: rot (anstehend) hat Vorrang vor grün (erschienen), max. ein Flag.
+function evtFlagHtml(id,baseCls){return flagSpans(evtFlagState(id),baseCls);}
+// Absolut positionierte Variante (für Sidebar-/Karten-Ecke): Container mit
+// den inline-Flags, damit zwei Flags nebeneinander statt übereinander liegen.
+function evtFlagAbs(id){const f=flagSpans(evtFlagState(id));return f?`<span class="evt-flag-abs">${f}</span>`:'';}
+// Für ein Paar: Vereinigung beider Schenkel - es können also auch hier ein
+// rotes UND ein grünes Flag gleichzeitig erscheinen.
 function pairEvtFlagState(name){
   const parts=name.split('/');
   const ids=parts.length!==2?[name]:[PAIR_CODE_TO_ID[parts[0]]||parts[0],PAIR_CODE_TO_ID[parts[1]]||parts[1]];
-  let st='';
-  for(const id of ids){const s=evtFlagState(id);if(s==='up')return'up';if(s==='done')st='done';}
-  return st;
+  let up=false,done=false;
+  ids.forEach(id=>{const s=evtFlagState(id);if(s.includes('u'))up=true;if(s.includes('d'))done=true;});
+  return (up?'u':'')+(done?'d':'');
 }
-function pairEvtFlagHtml(name,baseCls){
-  const st=pairEvtFlagState(name);if(!st)return'';
-  const color=st==='up'?'ef-red':'ef-green';
-  const title=st==='up'?'High-Impact-Event in den nächsten 3 Tagen':'High-Impact-Event erschienen';
-  return`<span class="${baseCls||'evt-flag'} ${color}" title="${title}">❗</span>`;
-}
+function pairEvtFlagHtml(name,baseCls){return flagSpans(pairEvtFlagState(name),baseCls);}
 
 // ── NEWS PROCESSING / POSTFACH ──────────────────────────────────────
 // Kopiert fällige (heute/vergangene) Events ins Postfach. Events bleiben
@@ -1852,6 +1897,10 @@ function loadState(){
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
+  // Krypto-Verbund: Änderungen am aktuell gewählten Krypto-Symbol vor dem
+  // Speichern auf alle anderen Coins spiegeln (BTC <-> ETH <-> ...). selId
+  // zeigt nur dann auf ein Coin, wenn der Nutzer es geöffnet hat.
+  if(isCrypto(selId))syncCryptoGroup(selId);
   try{
     localStorage.setItem(SK,snap());
     localStorage.setItem('fxpro_updated',new Date().toISOString());
@@ -2025,7 +2074,7 @@ function renderSidebar(){
       const reorder=sbReorderId===id;
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
-          ${evtFlagHtml(c.id,'evt-flag-abs')}
+          ${evtFlagAbs(c.id)}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Nach oben verschieben">▲</button>
@@ -2058,10 +2107,13 @@ function renderDetail(){
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
-    <div class="stabs">
-      <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Makro</button>
-      <button class="st${curSub==='general'?' on':''}" onclick="setSub('general')">🌐 General</button>
-      <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
+    <div class="stabs-row">
+      <div class="stabs">
+        <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Makro</button>
+        <button class="st${curSub==='general'?' on':''}" onclick="setSub('general')">🌐 General</button>
+        <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
+      </div>
+      <input class="quick-note" value="${escH(c.quickNote||'')}" placeholder="📌 Quick Note – kurze Notiz, direkt sichtbar" oninput="setQuickNote(this.value)" title="Kurze Notiz, die direkt beim Öffnen des Symbols sichtbar ist">
     </div>
     ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
@@ -2125,6 +2177,7 @@ function renderRub(rub,ri,total){
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Ein-/Ausklappen">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
+      ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''}" onclick="event.stopPropagation()">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
@@ -2277,6 +2330,7 @@ function renderNoteRub(rub,ri,total){
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
 function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();}
 function setSub(s){curSub=s;renderDetail();}
+function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 function setBias(b){
   pushU();getSym().bias=b;
   recomputeAllPairBiases();syncAutoPairCats();
@@ -2445,6 +2499,13 @@ function confirmAddSym(){
       const ur=usd?.rubrics.find(r=>r.name===rn),nr=newSym.rubrics.find(r=>r.name===rn);
       if(ur&&nr){nr.summary=ur.summary;nr.imp=ur.imp;}
     });
+  }
+  // Krypto-Verbund: ein neues Coin übernimmt die gemeinsame Analyse eines
+  // bereits vorhandenen Krypto-Symbols (i.d.R. BTC), damit es sofort synchron
+  // ist und der spätere Abgleich nichts überschreibt.
+  if(cls==='crypto'){
+    const other=syms.find(s=>isCrypto(s.id));
+    if(other)CRYPTO_SYNC_FIELDS.forEach(f=>{newSym[f]=other[f]===undefined?undefined:JSON.parse(JSON.stringify(other[f]));});
   }
   syms.push(newSym);
   applyRubOrder();
@@ -3008,7 +3069,7 @@ function renderDash(){
       `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip ${glowClass(p.bias)}">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
-      const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair to Watchlist</button>`;
+      const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
