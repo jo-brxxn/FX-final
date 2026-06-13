@@ -417,13 +417,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   #inboxList{max-height:78vh}
   .dp{max-width:1700px}
   .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
-  /* Echtes Masonry per CSS-Mehrspaltenlayout: die Karten werden dicht
-     gepackt (oben links beginnend, spaltenweise), sodass eine kürzere Karte
-     KEINE leere Lücke bis zur Höhe der größten Karte ihrer Zeile mehr
-     hinterlässt (vorheriges Grid mit align-items:stretch erzeugte genau
-     diese Lücken). break-inside:avoid hält jede Karte zusammen. */
-  .masonry{column-count:var(--mcols,2);column-gap:36px}
-  .masonry .rub-card{margin-bottom:24px;break-inside:avoid;-webkit-column-break-inside:avoid;width:100%}
+  /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
+     auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
+     bleibt oben und wird NICHT gestreckt. */
+  .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
+  .masonry .rub-card{margin-bottom:0}
+  .masonry .rub-card.collapsed{align-self:start}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
@@ -484,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#14b8a6;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TEAL ("Services Inflation" entfernt für USD/EUR/GBP/CHF/CAD/AUD/NZD, da investing.com diese Teilkomponente für keine dieser Währungen separat listet - JPY behält sie (CSPI-Link); _researchV8-Migration + Bias-Reset-Fix für Rohstoffe/Indizes/Krypto; weitere Punkte siehe Antwort im Chat)</div>
+<div style="background:#2563eb;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Karten-Zeilen wieder gleich hoch (CSS-Grid); Akt-Farbe vergleicht nur noch mit Forecast - kein Previous-Fallback mehr (keine Färbung bei fehlendem Forecast); Rohstoffe/Krypto/Indizes (BTC/GOLD/SILVER/OIL/SP500/NAS) zeigen Akt-Werte nie mehr farbig, da Richtung oft umgekehrt zum USD; Details + offene Punkte siehe Antwort im Chat)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -742,9 +741,11 @@ function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute'
 function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
 
 // ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
-// Vergleicht "Actual" mit "Forecast" (Fallback: "Previous", falls kein Forecast vorhanden)
-// und färbt grün/rot, je nachdem ob der Wert für die jeweilige Währung gut oder
-// schlecht ist - oder lässt ihn neutral, wenn er dem Forecast entspricht.
+// Vergleicht "Actual" ausschliesslich mit "Forecast" (kein Previous-Fallback
+// mehr - ohne hinterlegten Forecast aus der Quelle gibt es nichts, womit der
+// Wert verglichen werden könnte, und er bleibt neutral) und färbt grün/rot,
+// je nachdem ob der Wert für die jeweilige Währung gut oder schlecht ist -
+// oder lässt ihn neutral, wenn er dem Forecast entspricht.
 // Bei Indikatoren wie Unemployment/Claims/Deficit ist "niedriger" besser.
 const LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i;
 function parseNumLike(s){
@@ -756,10 +757,9 @@ function parseNumLike(s){
   return isNaN(v)?null:v;
 }
 function actualColor(ev){
-  if(!ev.actual)return'';
+  if(!ev.actual||ev.forecast==null||ev.forecast==='')return'';
   const a=parseNumLike(ev.actual);
-  const base=(ev.forecast!=null&&ev.forecast!=='')?ev.forecast:ev.previous;
-  const f=parseNumLike(base);
+  const f=parseNumLike(ev.forecast);
   if(a===null||f===null||a===f)return'';
   const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
   return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
@@ -2056,6 +2056,13 @@ function clearDateM(){
 
 function renderInd(ind,ri,ii,total){
   const bco=bCol(ind.bias);
+  // Rohstoffe/Krypto/Indizes (NONFX_IDS) teilen sich die Makro-Indikatoren
+  // des USD, reagieren auf dieselben Daten aber oft GEGENLÄUFIG (z.B. ist
+  // eine hohe US-Inflation USD-bullish, aber GOLD/Aktien-bearish). Die
+  // generische Akt-vs-Forecast-Einfärbung (gut/schlecht fürs USD) würde hier
+  // also oft die GENAU FALSCHE Richtung anzeigen - daher bleibt der Akt-Wert
+  // für diese Symbole immer neutral (analog zu resetNonFxIndBias).
+  const nonFx=isNonFx(getSym().id);
   let datePart='';
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">🔄 <span>${escH(ind.interval)}</span></button>`;}
@@ -2063,19 +2070,20 @@ function renderInd(ind,ri,ii,total){
   const ev=findIndEvent(getSym().id,ind.name);
   let dataPart='';
   if(ev){
-    const ac=actualColor(ev);
+    const ac=nonFx?'':actualColor(ev);
+    const prevAc=nonFx?'':ev.prevRevColor;
     const srcLink=`<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory Kalender ↗</a>`;
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-act${ev.prevRevColor?' '+ev.prevRevColor:''}">${escH(ev.previous||'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-act${prevAc?' '+prevAc:''}">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${fmtDayHdr(ev.date)} · ${srcLink}</div>
     </details>`;
   }else if(ind.research){
     const r=ind.research;
-    const ac=actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const ac=nonFx?'':actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
