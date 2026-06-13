@@ -45,6 +45,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ab .av{font-size:9px;margin-top:1px;font-weight:600}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
 .ab-wrap:hover .ab-del{opacity:.5}.ab-del:hover{opacity:1!important}
+.ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
+.ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:9px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.ab-move.up{top:2px}.ab-move.down{bottom:2px}
+.ab-move:disabled{opacity:.25;cursor:default}
 .add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:15px;transition:all .12s;margin-top:3px}
 .add-sym:hover{color:var(--blue);background:var(--bg2)}
 /* ── DETAIL ── */
@@ -479,7 +483,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#27ae60;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRUEN (Akt-Wert zeigt jetzt Y/Y-/M/M-/Q/Q-Kennzeichnung ohne Dopplung in den Details, ALLE 146 FX-Indikatoren + 6 Rohstoff/Krypto/Index-Symbole (BTC, GOLD, SILVER, OIL, SP500, NAS) haben jetzt Recherchedaten mit investing.com-Quellenlink)</div>
+<div style="background:#2980b9;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Symbole in der Sidebar koennen jetzt per Lang-Druck verschoben werden - Pfeile ▲▼ erscheinen zum Umsortieren innerhalb der Kategorie)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1652,15 +1656,15 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[];
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={};
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -1680,10 +1684,11 @@ function loadState(){
       if(!widgets.find(w=>w.type==='no_direction'))widgets.unshift({id:uid(),type:'no_direction',title:'No Direction',order:-1});
       if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
       inbox=d.inbox||[];
+      sbOrder=d.sbOrder||{};
       recomputeAllPairBiases();syncAutoPairCats();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
@@ -1802,10 +1807,9 @@ document.addEventListener('keydown',e=>{
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
 const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices'};
-function renderSidebar(){
-  const customCatIds=customIds.map(c=>c.id);
-  // Eigene Symbole erscheinen in der Sidebar unter ihrer gewählten
-  // Kategorie; ältere ohne Kategorie weiterhin unter "Custom".
+// Berechnet die Sidebar-Kategorien (Standard-Kategorien + ggf. eigene
+// Symbole unter ihrer gewählten Kategorie bzw. "Custom").
+function computeSbCats(){
   const allCats=SB_CATS.map(c=>({l:c.l,ids:[...c.ids]}));
   const uncategorized=[];
   customIds.forEach(c=>{
@@ -1813,19 +1817,62 @@ function renderSidebar(){
     cat?cat.ids.push(c.id):uncategorized.push(c.id);
   });
   if(uncategorized.length>0)allCats.push({l:'Custom',ids:uncategorized});
-  let html=allCats.map(cat=>`
+  return allCats;
+}
+// Liefert die Reihenfolge der Symbol-IDs einer Kategorie unter
+// Berücksichtigung einer vom Nutzer per Lang-Druck festgelegten
+// Sortierung (sbOrder); neue/unbekannte IDs werden hinten angehängt.
+function getSbIds(cat){
+  const stored=sbOrder[cat.l];
+  if(!stored)return cat.ids;
+  const ordered=stored.filter(id=>cat.ids.includes(id));
+  cat.ids.forEach(id=>{if(!ordered.includes(id))ordered.push(id);});
+  return ordered;
+}
+function moveSbSym(catL,id,d){
+  const cat=computeSbCats().find(c=>c.l===catL);if(!cat)return;
+  const ids=getSbIds(cat);
+  const i=ids.indexOf(id);if(i<0)return;
+  mvArr(ids,i,d);
+  sbOrder[catL]=ids;
+  save();renderSidebar();
+}
+// Lang-Druck (Touch & Maus) auf ein Symbol blendet ▲/▼-Buttons zum
+// Verschieben innerhalb seiner Kategorie ein.
+let sbReorderId=null,_sbPressTimer=null,_sbSuppressClick=false;
+function sbPressStart(id){
+  clearTimeout(_sbPressTimer);
+  _sbPressTimer=setTimeout(()=>{sbReorderId=id;_sbSuppressClick=true;renderSidebar();},450);
+}
+function sbPressEnd(){clearTimeout(_sbPressTimer);_sbPressTimer=null;}
+function sbClick(id){
+  if(_sbSuppressClick){_sbSuppressClick=false;return;}
+  const was=sbReorderId;
+  sbReorderId=null;
+  if(was===id){renderSidebar();return;}
+  selSym(id);
+}
+function renderSidebar(){
+  const customCatIds=customIds.map(c=>c.id);
+  const allCats=computeSbCats();
+  let html=allCats.map(cat=>{
+    const ids=getSbIds(cat).filter(id=>syms.find(s=>s.id===id));
+    return`
     <div class="sb-lbl">${cat.l}</div>
-    ${cat.ids.filter(id=>syms.find(s=>s.id===id)).map(id=>{
+    ${ids.map((id,idx)=>{
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
-      return`<div class="ab-wrap">
-        <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="selSym('${id}')">
+      const reorder=sbReorderId===id;
+      return`<div class="ab-wrap${reorder?' reorder':''}">
+        <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${hasImportantEvt(c.id)?'<span class="evt-flag-abs" title="Wichtige Nachricht steht an">❗</span>':''}
           ${hasInboxNotif(c.id)?NOTIF_FLAG:''}
           <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
-        ${isCustom?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
-      </div>`;}).join('')}`).join('');
+        ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Nach oben verschieben">▲</button>
+        <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Nach unten verschieben">▼</button>`:''}
+        ${isCustom&&!reorder?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
+      </div>`;}).join('')}`;}).join('');
   html+=`<button class="add-sym" onclick="openM('mAddSym')" title="Add symbol">＋</button>`;
   document.getElementById('sidebar').innerHTML=html;
 }
