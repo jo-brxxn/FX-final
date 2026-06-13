@@ -547,6 +547,15 @@ jobs:
           TV_TO=$(node -e 'console.log(new Date(Date.now()+2*86400e3).toISOString())')
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
             "https://economic-calendar.tradingview.com/events?from=${TV_FROM}&to=${TV_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o tv_wide.json || true
+          # Die 95-Tage-Abfrage liefert pro Aufruf maximal ~2000 Events
+          # (API-Limit) - bei 9 Laendern reicht das Limit oft nicht bis zum
+          # aktuellen Tag, wodurch die juengsten Veroeffentlichungen fehlen.
+          # Zusaetzlich ein enges, garantiert unter dem Limit liegendes
+          # Fenster um "jetzt" abfragen, damit die neuesten Actuals nicht
+          # durch das Limit abgeschnitten werden.
+          TV_RFROM=$(node -e 'console.log(new Date(Date.now()-16*86400e3).toISOString())')
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
+            "https://economic-calendar.tradingview.com/events?from=${TV_RFROM}&to=${TV_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o tv_recent.json || true
           node -e '
             const fs=require("fs");
             // TradingView-Laendercode -> unsere Symbol-Waehrung. DE wird als
@@ -595,11 +604,19 @@ jobs:
               {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
               {ind:"Consumer Confidence",period:null,test:t=>/consumer confidence|consumer sentiment/.test(t)},
             ];
-            let tv;
-            try{tv=JSON.parse(fs.readFileSync("tv_wide.json","utf8"));}catch(e){tv=null;}
-            const evts=Array.isArray(tv)?tv:(tv&&Array.isArray(tv.result)?tv.result:null);
-            if(!evts){console.log("ind_data: TradingView wide window unavailable, keeping existing ind_data.json");process.exit(0);}
-            console.log("ind_data: "+evts.length+" TV events in 95d window");
+            const readEvts=f=>{
+              let tv;
+              try{tv=JSON.parse(fs.readFileSync(f,"utf8"));}catch(e){return null;}
+              return Array.isArray(tv)?tv:(tv&&Array.isArray(tv.result)?tv.result:null);
+            };
+            const wide=readEvts("tv_wide.json");
+            const recent=readEvts("tv_recent.json");
+            if(!wide&&!recent){console.log("ind_data: TradingView windows unavailable, keeping existing ind_data.json");process.exit(0);}
+            // Enges Fenster zuerst -> bei gleichem Datum gewinnt trotzdem das
+            // spaetere Event (s.u.), aber so sind die juengsten Actuals nicht
+            // vom 2000er-Limit der 95-Tage-Abfrage betroffen.
+            const evts=[...(recent||[]),...(wide||[])];
+            console.log("ind_data: "+(wide?wide.length:0)+" TV events in 95d window, "+(recent?recent.length:0)+" in 16d window");
             // Pro (ccy|ind) das spaeteste Event mit Actual behalten.
             const best={};
             evts.forEach(ev=>{
@@ -647,7 +664,7 @@ jobs:
           '
 
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json alt_actuals.json ffhtml_*.html
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html
 
       - name: Commit and push if changed
         run: |
