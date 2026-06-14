@@ -280,6 +280,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:1}
 .bbadge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
+.row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
@@ -415,6 +416,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .sym-row{padding:7px 10px}
   .sym-name{font-size:16px}
   .bbadge{font-size:13px;padding:3px 8px;width:68px}
+  .row-score{font-size:12px;width:32px}
   .dw-empty,.dw-chip,.dw-meta{font-size:14px}
   .dw-add,.pbo,.dw-sel{font-size:13px}
   .dw-chip-x,.dw-del{font-size:16px}
@@ -461,6 +463,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
   .bbadge{font-size:14px;padding:4px 9px;width:74px}
+  .row-score{font-size:13px;width:36px}
   .dw-empty,.dw-chip,.dw-meta{font-size:15px}
   .dw-add,.pbo,.dw-sel{font-size:14px}
   .dw-chip-x,.dw-del{font-size:18px}
@@ -511,7 +514,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#22c55e;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Score je Symbol/Karte – blau/orange/rot; Anleiherenditen 2Y/10Y aktualisieren täglich: Actual = letzter Handelstag, Previous = Actual −10 Tage; steigend = blau/bullish, fallend = rot/bearish, gleich = weiß/neutral)</div>
+<div style="background:#a78bfa;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Score aktualisiert sich live bei Bias-Änderung – Sidebar, Symbol- & Karten-Titel, Dashboard, Matrix; Paar-Score (Basis − Quote) jetzt überall bei Paaren sichtbar: Possible Set-ups, No Direction, Watchlist, Pairs-Editor, Pairs-Seite, Matrix – immer linksbündig vor dem Bias-Badge)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -764,6 +767,16 @@ function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+biasSco
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 function scoreColor(n){return n>0?'var(--blue)':n<0?'var(--red)':'var(--amber)';}
 function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = Summe der Indikatoren (Bullish +1, Neutral 0, Bearish −1)')}">${n>0?'+':''}${n}</span>`;}
+// Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung (z.B. EUR -5, USD +5 -> EUR/USD = -10)
+function pairScore(pairName){
+  const parts=(pairName||'').split('/');if(parts.length!==2)return 0;
+  const codeToId={XAU:'GOLD',XAG:'SILVER',WTI:'OIL',BTC:'BTC',ETH:'ETH'};
+  const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
+  const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
+  if(!bSym||!qSym)return 0;
+  return symScore(bSym)-symScore(qSym);
+}
+function rowScore(n,title){return`<span class="row-score" style="color:${scoreColor(n)}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
 // ── CALENDAR ↔ SYMBOL MATCHING ──
@@ -2462,7 +2475,7 @@ function syncMacroRub(ri){
     r.imp=clone.imp;r.summary=clone.summary;
   });
 }
-function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderDetail();}
+function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
@@ -2491,7 +2504,7 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);save();renderDetail();}
+function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
@@ -2728,6 +2741,7 @@ function renderPairCard(p,pci,catTotal){
       </div>
       <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
       ${pairEvtFlagHtml(p.name)}
+      ${rowScore(pairScore(p.name),'Paar-Score')}
       <div class="pbg" onclick="event.stopPropagation()">
         ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
       </div>
@@ -3226,6 +3240,7 @@ function renderDash(){
         <div class="sym-row ${glowClass(s.bias)}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
+          ${rowScore(symScore(s),'Symbol-Score')}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
         </div>`).join('');
     }else if(w.type==='assets'){
@@ -3234,6 +3249,7 @@ function renderDash(){
       others.map(s=>`<div class="sym-row ${glowClass(s.bias)}">
         <div class="sym-name">${s.name}</div>
         <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
+        ${rowScore(symScore(s),'Symbol-Score')}
         <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
       </div>`).join('');
     }else if(w.type==='setups'){
@@ -3247,6 +3263,7 @@ function renderDash(){
         </div>
         <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
         <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
+        ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
         <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
@@ -3255,7 +3272,7 @@ function renderDash(){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
       content=addBtn+(wp.length===0?`<div class="dw-empty">All FX pairs currently have a direction.</div>`:
-      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip ${glowClass(p.bias)}">${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
+      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip ${glowClass(p.bias)}">${rowScore(pairScore(p.name),'Paar-Score')}${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
@@ -3263,6 +3280,7 @@ function renderDash(){
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
         <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
+        ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         <div class="pbg" style="flex-shrink:0">
           ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -3280,6 +3298,7 @@ function renderDash(){
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
           <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
+          ${rowScore(pairScore(p.name),'Paar-Score')}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <div class="pbg" style="flex-shrink:0">
             ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
@@ -3370,20 +3389,20 @@ function addWidget(){
 function renderMatrix(){
   const fx=syms.filter(s=>FX.includes(s.id));
   let h=`<thead><tr><th style="text-align:left">BASE</th>`;
-  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${evtFlagHtml(q.id)}</th>`;});
+  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${rowScore(symScore(q))} ${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${evtFlagHtml(q.id)}</th>`;});
   h+=`</tr></thead><tbody>`;
   fx.forEach(base=>{
-    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${evtFlagHtml(base.id)}</td>`;
+    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${rowScore(symScore(base))} ${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${evtFlagHtml(base.id)}</td>`;
     fx.forEach(q=>{
       if(base.id===q.id){h+=`<td class="cna">—</td>`;return;}
       const pb=base.bias==='bull'&&q.bias==='bear'?'bull':base.bias==='bear'&&q.bias==='bull'?'bear':'neu';
-      h+=`<td class="c${pb==='bull'?'b':pb==='bear'?'r':'n'}">${pb==='bull'?'▲ LONG':pb==='bear'?'▼ SHORT':'◆ NEUTRAL'}</td>`;});
+      h+=`<td class="c${pb==='bull'?'b':pb==='bear'?'r':'n'}">${rowScore(pairScore(base.id+'/'+q.id))} ${pb==='bull'?'▲ LONG':pb==='bear'?'▼ SHORT':'◆ NEUTRAL'}</td>`;});
     h+=`</tr>`;});h+=`</tbody>`;
   document.getElementById('mtbl').innerHTML=h;
   const others=syms.filter(s=>!FX.includes(s.id));
   document.getElementById('assetCards').innerHTML=others.length?
     `<div style="font-size:10px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
+    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${rowScore(symScore(s))} ${BL[s.bias]}</div></div>`).join(''):'';}
 
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
