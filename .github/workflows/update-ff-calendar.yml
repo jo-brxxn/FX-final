@@ -672,15 +672,15 @@ jobs:
       # keine Methoden-Bruchstelle. Laeuft vor dem TradingView-Schritt; die
       # historischen Tage bleiben erhalten, TradingView ergaenzt nur "heute".
       - name: Backfill bond history (FRED + Bank of Canada, no key)
+        continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2&cosd=$(node -e 'console.log(new Date(Date.now()-40*86400e3).toISOString().slice(0,10))')" -o fred_dgs2.csv || true
           curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd=$(node -e 'console.log(new Date(Date.now()-40*86400e3).toISOString().slice(0,10))')" -o fred_dgs10.csv || true
           curl -sL -A "$UA" "https://www.bankofcanada.ca/valet/observations/BD.CDN.2YR.DQ.YLD,BD.CDN.10YR.DQ.YLD/json?recent=30" -o boc.json || true
-          echo "=== FRED DGS2 head ==="; head -c 200 fred_dgs2.csv 2>/dev/null; echo
-          echo "=== BoC head ==="; head -c 200 boc.json 2>/dev/null; echo
           node -e '
             const fs=require("fs");
+            ["fred_dgs2.csv","fred_dgs10.csv","boc.json"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,120));}catch(e){console.log("[debug] "+f+": MISSING");}});
             const SRC={
               "USD|10Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
               "USD|2Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
