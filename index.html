@@ -47,7 +47,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
 .ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
 .ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
-.ab .av{font-size:11px;margin-top:1px;font-weight:600}
+.ab .av{font-size:11px;margin-top:1px;font-weight:600;display:inline-block}
+.ab .sb-score{font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;display:inline-block;margin-right:5px;margin-top:1px}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
 .ab-wrap:hover .ab-del{opacity:.5}.ab-del:hover{opacity:1!important}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
@@ -60,6 +61,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px;max-width:860px}
 .atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
+.score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
+.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
@@ -505,7 +508,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#a78bfa;color:#1e1b2e;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Previous-Wert von Indikatoren wird bei Revisionen wie im Kalender farblich markiert; neuer Indikator "CPI m/m" unter "CPI (Headline)" für USD/EUR/GBP/CHF/JPY/CAD mit investing.com-Quelle; CAD PPI y/y Quelle &amp; Daten korrigiert)</div>
+<div style="background:#5fa8ed;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Neuer Score neben Symbolname, in der Symbolleiste links und auf jeder Karte: Summe aller Indikatoren – Bullish +1, Neutral 0, Bearish −1; positiv = blau, neutral = orange, negativ = rot)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -750,6 +753,14 @@ function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(-
 function bRC(b){return b==='bull'?'#4fc3f720':b==='bear'?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow-neu';}
+// ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
+// Symbol-Score = ueber alle Rubriken; Karten-Score = nur die Indikatoren
+// der jeweiligen Karte. Farbe: positiv blau, neutral orange, negativ rot.
+function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
+function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+biasScore(ind.bias),0);}
+function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
+function scoreColor(n){return n>0?'var(--blue)':n<0?'var(--red)':'var(--amber)';}
+function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = Summe der Indikatoren (Bullish +1, Neutral 0, Bearish −1)')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
 // ── CALENDAR ↔ SYMBOL MATCHING ──
@@ -2146,7 +2157,7 @@ function renderSidebar(){
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
-          <div class="an">${c.name}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an">${c.name}</div>${(()=>{const sc=symScore(c);return`<div class="sb-score" style="color:${scoreColor(sc)}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Nach oben verschieben">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Nach unten verschieben">▼</button>`:''}
@@ -2166,7 +2177,7 @@ function renderDetail(){
   const nextLbl=nextDate?(nextDate===todayStr()?'Heute':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${c.name}</div><div class="afull">${c.full}</div></div>
+      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol-Score = Summe aller Indikatoren über alle Karten (Bullish +1, Neutral 0, Bearish −1)')}</div><div class="afull">${c.full}</div></div>
       <div class="brow">${['bull','neu','bear'].map(b=>`<button class="bo${c.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setBias('${b}')">${b==='bull'?'▲ BULL':b==='bear'?'▼ BEAR':'◆ NEU'}</button>`).join('')}</div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -2250,6 +2261,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · lange drücken zum Bearbeiten" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${scoreColor(sc)};border-color:${scoreColor(sc)}" title="Karten-Score = Summe der Indikatoren dieser Karte (Bullish +1, Neutral 0, Bearish −1)">${sc>0?'+':''}${sc}</span>`;})()}
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
