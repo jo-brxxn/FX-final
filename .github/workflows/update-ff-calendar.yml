@@ -665,40 +665,38 @@ jobs:
           '
 
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
-      # Taegliche Schlusskurse der 2J-/10J-Staatsanleiherenditen je Waehrung
-      # von Stooq (frei, ohne Auth, als CSV). Daraus baut der Browser den
-      # Actual-Wert (letzter Handelstag <= gestern) und den Previous-Wert
-      # (letzter Handelstag <= Actual-Datum minus 10 Tage) sowie die Faerbung.
-      # Pro Symbol werden nur die letzten ~30 Tage gespeichert; schlaegt der
-      # Abruf einer Reihe fehl, bleibt die bisherige Reihe erhalten (Merge).
-      - name: Fetch government bond yields (Stooq) -> bond_data.json
+      # 2J-/10J-Staatsanleiherenditen je Waehrung von TradingViews Scanner-API
+      # (auf den Runnern erreichbar; Stooq/investing.com liefern Cloud-IPs nur
+      # eine JS-Challenge bzw. 403). Pro Lauf wird der aktuelle Wert je Reihe
+      # mit dem heutigen UTC-Datum in eine rollierende Zeitreihe (letzte ~35
+      # Eintraege) geschrieben (gleiches Datum wird ueberschrieben). Daraus
+      # baut der Browser Actual (letzter Wert <= gestern) und Previous (letzter
+      # Wert <= Actual-Datum minus 10 Tage) samt Faerbung. Schlaegt der Abruf
+      # fehl, bleibt die bestehende Reihe erhalten.
+      - name: Fetch government bond yields (TradingView) -> bond_data.json
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          # Stooq-Symbol -> "CCY|Laufzeit". Laufzeit = Indikatorname in der App.
-          for pair in \
-            "10usy.b USD|10Y Bond Yield" "2usy.b USD|2Y Bond Yield" \
-            "10dey.b EUR|10Y Bond Yield" "2dey.b EUR|2Y Bond Yield" \
-            "10uky.b GBP|10Y Bond Yield" "2uky.b GBP|2Y Bond Yield" \
-            "10chy.b CHF|10Y Bond Yield" "2chy.b CHF|2Y Bond Yield" \
-            "10jpy.b JPY|10Y Bond Yield" "2jpy.b JPY|2Y Bond Yield" \
-            "10cay.b CAD|10Y Bond Yield" "2cay.b CAD|2Y Bond Yield" \
-            "10auy.b AUD|10Y Bond Yield" "2auy.b AUD|2Y Bond Yield" \
-            "10nzy.b NZD|10Y Bond Yield" "2nzy.b NZD|2Y Bond Yield"; do
-            sym=$(echo "$pair" | cut -d" " -f1)
-            curl -sL -A "$UA" "https://stooq.com/q/d/l/?s=${sym}&i=d" -o "bond_${sym}.csv" || true
-            sleep 1
-          done
-          echo "=== Stooq response debug (first symbol) ==="
-          echo "--- bond_10usy.b.csv (size $(wc -c < bond_10usy.b.csv 2>/dev/null || echo 0) bytes) ---"
-          head -c 300 bond_10usy.b.csv 2>/dev/null || echo "(missing)"
-          echo
-          echo "--- bond_2dey.b.csv (size $(wc -c < bond_2dey.b.csv 2>/dev/null || echo 0) bytes) ---"
-          head -c 300 bond_2dey.b.csv 2>/dev/null || echo "(missing)"
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["TVC:US10Y","TVC:US02Y","TVC:DE10Y","TVC:DE02Y","TVC:GB10Y","TVC:GB02Y","TVC:CH10Y","TVC:CH02Y","TVC:JP10Y","TVC:JP02Y","TVC:CA10Y","TVC:CA02Y","TVC:AU10Y","TVC:AU02Y","TVC:NZ10Y","TVC:NZ02Y"],"query":{"types":[]}},"columns":["close"]}' \
+            "https://scanner.tradingview.com/global/scan" -o bond_tv.json || true
+          echo "=== TradingView scanner response (first 500 chars) ==="
+          head -c 500 bond_tv.json 2>/dev/null || echo "(missing)"
           echo
           node -e '
             const fs=require("fs");
-            // Investing.com-Quelle je Waehrung/Laufzeit (Fallback; die App
-            // bevorzugt ohnehin ihren kuratierten Link).
+            // TVC-Ticker -> "CCY|Laufzeit" (Indikatorname in der App).
+            const MAP={
+              "TVC:US10Y":"USD|10Y Bond Yield","TVC:US02Y":"USD|2Y Bond Yield",
+              "TVC:DE10Y":"EUR|10Y Bond Yield","TVC:DE02Y":"EUR|2Y Bond Yield",
+              "TVC:GB10Y":"GBP|10Y Bond Yield","TVC:GB02Y":"GBP|2Y Bond Yield",
+              "TVC:CH10Y":"CHF|10Y Bond Yield","TVC:CH02Y":"CHF|2Y Bond Yield",
+              "TVC:JP10Y":"JPY|10Y Bond Yield","TVC:JP02Y":"JPY|2Y Bond Yield",
+              "TVC:CA10Y":"CAD|10Y Bond Yield","TVC:CA02Y":"CAD|2Y Bond Yield",
+              "TVC:AU10Y":"AUD|10Y Bond Yield","TVC:AU02Y":"AUD|2Y Bond Yield",
+              "TVC:NZ10Y":"NZD|10Y Bond Yield","TVC:NZ02Y":"NZD|2Y Bond Yield"
+            };
+            // Investing.com-Quelle je Reihe (Fallback; die App bevorzugt ihren
+            // kuratierten Link).
             const SRC={
               "USD|10Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
               "USD|2Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
@@ -717,48 +715,38 @@ jobs:
               "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
               "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
             };
-            const MAP={
-              "10usy.b":"USD|10Y Bond Yield","2usy.b":"USD|2Y Bond Yield",
-              "10dey.b":"EUR|10Y Bond Yield","2dey.b":"EUR|2Y Bond Yield",
-              "10uky.b":"GBP|10Y Bond Yield","2uky.b":"GBP|2Y Bond Yield",
-              "10chy.b":"CHF|10Y Bond Yield","2chy.b":"CHF|2Y Bond Yield",
-              "10jpy.b":"JPY|10Y Bond Yield","2jpy.b":"JPY|2Y Bond Yield",
-              "10cay.b":"CAD|10Y Bond Yield","2cay.b":"CAD|2Y Bond Yield",
-              "10auy.b":"AUD|10Y Bond Yield","2auy.b":"AUD|2Y Bond Yield",
-              "10nzy.b":"NZD|10Y Bond Yield","2nzy.b":"NZD|2Y Bond Yield"
-            };
-            // Bestehende Datei laden (Merge bei Teil-Ausfaellen).
+            const today=new Date().toISOString().slice(0,10);
+            let resp;
+            try{resp=JSON.parse(fs.readFileSync("bond_tv.json","utf8"));}catch(e){console.log("bond_data: TradingView response unreadable, keeping existing file ("+e.message+")");process.exit(0);}
+            const rows=resp&&Array.isArray(resp.data)?resp.data:null;
+            if(!rows){console.log("bond_data: unexpected TradingView shape, keeping existing file");process.exit(0);}
             let out={};
             try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
-            let okN=0,failN=0;const fails=[];
-            Object.keys(MAP).forEach(sym=>{
-              const [ccy,ind]=MAP[sym].split("|");
-              let csv;
-              try{csv=fs.readFileSync("bond_"+sym+".csv","utf8");}catch(e){failN++;fails.push(sym+"(no file)");return;}
-              const lines=csv.trim().split(/\r?\n/);
-              const rows=[];
-              lines.forEach(l=>{
-                const c=l.split(",");
-                // Date,Open,High,Low,Close,Volume - Close = Index 4
-                if(!/^\d{4}-\d{2}-\d{2}$/.test(c[0]))return;
-                const close=parseFloat(c[4]);
-                if(!isFinite(close))return;
-                rows.push([c[0],String(close)]);
-              });
-              if(!rows.length){failN++;fails.push(sym+"(no rows)");return;}
-              rows.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-              const series=rows.slice(-30);
-              (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||"",series:series};
+            let okN=0;const miss=[];
+            rows.forEach(r=>{
+              const key=MAP[r.s];if(!key)return;
+              const v=r.d&&r.d[0];
+              if(v==null||!isFinite(Number(v))){miss.push(r.s);return;}
+              const val=String(Math.round(Number(v)*1000)/1000);
+              const [ccy,ind]=key.split("|");
+              const cur=(out[ccy]&&out[ccy][ind])||{};
+              let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
+              series.push([today,val]);
+              series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              series=series.slice(-35);
+              (out[ccy]=out[ccy]||{})[ind]={source:SRC[key]||cur.source||"",series:series};
               okN++;
             });
+            // Reihen, die diesmal fehlten, aber bereits existieren, bleiben erhalten.
+            const wantMiss=Object.keys(MAP).map(k=>MAP[k]).filter(key=>{const[c,i]=key.split("|");return !(out[c]&&out[c][i]);});
             if(okN>0){
               fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
-              console.log("bond_data.json: "+okN+" series updated, "+failN+" failed"+(fails.length?" ["+fails.join(", ")+"]":""));
+              console.log("bond_data.json: "+okN+"/16 series appended for "+today+(miss.length?" [no value: "+miss.join(", ")+"]":"")+(wantMiss.length?" [never seen: "+wantMiss.join(", ")+"]":""));
             }else{
-              console.log("bond_data.json: all "+failN+" fetches failed, keeping existing file"+(fails.length?" ["+fails.join(", ")+"]":""));
+              console.log("bond_data: no usable values from TradingView, keeping existing file"+(miss.length?" [no value: "+miss.join(", ")+"]":""));
             }
           '
-          rm -f bond_*.csv
+          rm -f bond_tv.json
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html
