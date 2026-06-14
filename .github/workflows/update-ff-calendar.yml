@@ -681,8 +681,8 @@ jobs:
           # EZB-Zinsstrukturkurve (Euroraum AAA), Spot-Rate 2J/10J, taeglich.
           curl -sL -A "$UA" "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y?format=csvdata&lastNObservations=30" -o ecb2.csv || true
           curl -sL -A "$UA" "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?format=csvdata&lastNObservations=30" -o ecb10.csv || true
-          # Japan MOF: taegliche JGB-Renditen (CSV, Spalten 1Y,2Y,...,10Y,...).
-          curl -sL -A "$UA" "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcme.csv" -o mof.csv || true
+          # Japan MOF: taegliche JGB-Renditen (CSV unter /data/, laufendes Jahr).
+          curl -sL -A "$UA" "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcme.csv" -o mof.csv || true
           node -e '
             const fs=require("fs");
             ["ust.csv","boc.json","ecb2.csv","ecb10.csv","mof.csv"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,160));}catch(e){console.log("[debug] "+f+": MISSING");}});
