@@ -514,7 +514,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#a78bfa;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Score aktualisiert sich live bei Bias-Änderung – Sidebar, Symbol- & Karten-Titel, Dashboard, Matrix; Paar-Score (Basis − Quote) jetzt überall bei Paaren sichtbar: Possible Set-ups, No Direction, Watchlist, Pairs-Editor, Pairs-Seite, Matrix – immer linksbündig vor dem Bias-Badge)</div>
+<div style="background:#22d3ee;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Indikator „Swaps" überall entfernt; bei Makro steht jetzt überall zuerst die Karte Inflation und danach die Karte Leitzins – auch für bestehende Profile per Migration)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1257,7 +1257,6 @@ function resetNonFxIndBias(sym){
 const IND_RESEARCH_DATA={
   USD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Ober: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'alle 6-8 Wochen (FOMC-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-168'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'3.62% (Effective Fed Funds Rate)',forecast:null,previous:'3.62%',releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/usd-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1283,7 +1282,6 @@ const IND_RESEARCH_DATA={
   ]},
   EUR:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Einlagesatz) / 2.15% (Hauptrefi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (EZB-Sitzung)',source:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich',source:'https://www.investing.com/rates-bonds/eur-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.68% (Bund 2Y)',forecast:null,previous:'2.62%',releaseDate:'2026-06-03',interval:'täglich',source:'https://www.investing.com/rates-bonds/germany-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/germany-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1309,7 +1307,6 @@ const IND_RESEARCH_DATA={
   ]},
   GBP:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'alle 6-8 Wochen (BoE-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-170'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich',source:'https://www.investing.com/rates-bonds/gbp-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.35% (UK Gilt 2Y)',forecast:null,previous:'4.34%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/uk-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/uk-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:'0.61%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1335,7 +1332,6 @@ const IND_RESEARCH_DATA={
   ]},
   CHF:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'alle 3 Monate (SNB-Sitzung)',source:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'0.00%',forecast:null,previous:'0.00%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/chf-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'0.11%',forecast:null,previous:'0.11%',releaseDate:'2026-06-02',interval:'täglich',source:'https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.33%',forecast:null,previous:'0.31%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1361,7 +1357,6 @@ const IND_RESEARCH_DATA={
   ]},
   JPY:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'alle 6-7 Wochen (BoJ-Sitzung)',source:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'~1.00% (impliziter Pfad bis Ende 2026: 1.00-1.25%)',forecast:'1.00% (Hike am 16.06. ~98% eingepreist)',previous:'0.84% (1Y OIS, Dez. 2025)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/jpy-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1387,7 +1382,6 @@ const IND_RESEARCH_DATA={
   ]},
   CAD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'alle 6-8 Wochen (BoC-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-166'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich',source:'https://www.investing.com/rates-bonds/cad-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.85%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://ca.investing.com/rates-bonds/canada-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/canada-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1413,7 +1407,6 @@ const IND_RESEARCH_DATA={
   ]},
   AUD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (Halten erwartet)',previous:'4.10%',releaseDate:'2026-05-06',interval:'alle 6-8 Wochen (RBA-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-171'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:null,forecast:null,previous:null,releaseDate:null,interval:'täglich',source:'https://www.investing.com/rates-bonds/aud-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.54%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/australia-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/australia-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36% (36 bps)',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1439,7 +1432,6 @@ const IND_RESEARCH_DATA={
   ]},
   NZD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'alle 6-7 Wochen (RBNZ-Sitzung)',source:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167'},
-    {rubric:'Interest Rates',indicator:'Swaps',applicable:true,actual:'OCR-Pfad impliziert ~2.40-2.51% bis Ende 2026',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/nzd-1-year-irs-interest-rate-swap'},
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'3.14%',forecast:null,previous:'3.10%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'1.74%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
@@ -1597,8 +1589,8 @@ function applyIndResearch(sym){
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
@@ -1623,8 +1615,8 @@ function applyRubOrder(){
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
-const RUB_IND_RENAME={'Market Repricing (OIS/Swaps)':'Swaps','Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims'};
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
+const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
 // Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
@@ -1974,7 +1966,7 @@ function loadState(){
       rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();
       // Einmalige Migration auf die neue Karten-Reihenfolge (Inflation, Leitzins,
       // Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches, Risikoumfeld, COT).
-      if(localStorage.getItem('fxpro_ruborder_v2')!=='1'){rubOrder=mkRubOrder();localStorage.setItem('fxpro_ruborder_v2','1');}
+      if(localStorage.getItem('fxpro_ruborder_v3')!=='1'){rubOrder=mkRubOrder();localStorage.setItem('fxpro_ruborder_v3','1');}
       applyRubOrder();
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
@@ -1991,7 +1983,7 @@ function loadState(){
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};
   syms.forEach(addMacroRub);applyRubOrder();
-  localStorage.setItem('fxpro_ruborder_v2','1');
+  localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAllPairBiases();syncAutoPairCats();
 }
 function save(){
