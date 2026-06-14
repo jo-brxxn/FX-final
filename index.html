@@ -505,7 +505,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#ea580c;color:#fff;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Schriftart überall auf Arial umgestellt; jede Schrift 2 Stufen größer (+2px); Textfarben kräftig/voll deckend statt gedämpft - keine transparent wirkende Schrift mehr)</div>
+<div style="background:#a78bfa;color:#1e1b2e;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Previous-Wert von Indikatoren wird bei Revisionen wie im Kalender farblich markiert; neuer Indikator "CPI m/m" unter "CPI (Headline)" für USD/EUR/GBP/CHF/JPY/CAD mit investing.com-Quelle; CAD PPI y/y Quelle &amp; Daten korrigiert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1235,6 +1235,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% YoY / 0.5% MoM',forecast:'4.2% YoY / 0.5% MoM',previous:'3.8% YoY / 0.6% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/cpi-733'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.5%',forecast:'0.5%',previous:'0.6%',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-mom-69'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-cpi-736'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'6.5% YoY / 1.1% MoM',forecast:'6.4% YoY / 0.7% MoM',previous:'6.0% YoY / 1.1% MoM (rev.)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-734'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'4.9% YoY / 0.4% MoM',forecast:'5.4% YoY / 0.5% MoM',previous:null,releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-ppi-735'},
@@ -1260,6 +1261,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/germany-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.2% (HICP y/y)',forecast:'3.1%',previous:'3.0%',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-yoy-68'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.6%',forecast:'0.7%',previous:'-0.6%',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-mom-928'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5% (Core HICP y/y)',forecast:'2.3%',previous:'2.2%',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-core-consumer-price-index-(cpi)-yoy-317'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% y/y (0.6% m/m)',forecast:null,previous:'3.4% y/y',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-935'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'0.9% m/m (ex-Energie)',forecast:null,previous:null,releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-237'},
@@ -1285,6 +1287,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/uk-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:'0.61%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:'2.9%',previous:'3.3%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-yoy-67'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.7%',forecast:'0.6%',previous:'0.4%',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-mom-727'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5%',forecast:'2.7%',previous:'3.1%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-cpi-55'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.0% (Output Prices)',forecast:null,previous:'3.0%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-output-730'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
@@ -1310,6 +1313,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.33%',forecast:null,previous:'0.31%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'0.6%',forecast:'0.8%',previous:'0.6%',period:'Y/Y',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/swiss-cpi-956'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.2%',forecast:null,previous:'0.3%',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/swiss-cpi-71'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'0.3%',forecast:null,previous:'0.3%',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/core-inflation-rate'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'-2.0% YoY / +0.8% MoM',forecast:null,previous:'-2.7% YoY / +0.2% MoM',releaseDate:'2026-05-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/swiss-ppi-960'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
@@ -1335,6 +1339,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-yoy-992'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.1%',forecast:null,previous:'0.4%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-mom-1766'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'1.4%',forecast:'1.7%',previous:'1.8%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-core-consumer-price-index-(cpi)-yoy-344'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'4.9% (CGPI y/y)',forecast:'3.0%',previous:'4.0%',releaseDate:'2026-05-15',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-35'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
@@ -1360,8 +1365,9 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/canada-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:null,previous:'2.4%',period:'Y/Y',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/cpi-741'},
+    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.4%',forecast:'0.4%',previous:'0.5%',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-consumer-price-index-(cpi)-mom-70'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.0% (Trim) / 2.1% (Median)',forecast:null,previous:'2.3% (Ø März, BoC-Kernmaße)',period:'Y/Y',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-core-consumer-price-index-(cpi)-yoy-1020'},
-    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'+2.0% m/m (IPPI)',forecast:null,previous:null,releaseDate:'2026-04-23',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-industrial-product-price-index-(ippi)-mom-172'},
+    {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'11.4% (IPPI y/y)',forecast:null,previous:'7.8%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-industrial-product-price-index-(ippi)-yoy-742'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
@@ -1385,6 +1391,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/australia-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36% (36 bps)',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% y/y (monatl. Indikator, April)',forecast:null,previous:'4.6% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)',source:'https://www.investing.com/economic-calendar/monthly-cpi-indicator-2215'},
+    {rubric:'Inflation',indicator:'CPI',applicable:false},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.4% y/y (Trimmed Mean, April)',forecast:null,previous:'3.3% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)',source:'https://www.investing.com/economic-calendar/trimmed-mean-cpi-1017'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'3.0% y/y / 0.4% q/q (Q1)',forecast:'0.9% q/q',previous:'3.5% y/y / 0.8% q/q (Q4 2025)',releaseDate:'2026-04-23',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/ppi-1164'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
@@ -1410,6 +1417,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'1.74%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.1% y/y (+0.9% q/q)',forecast:'3.0% y/y',previous:'3.1% y/y',releaseDate:'2026-04-21',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/new-zealand-consumer-price-index-(cpi)-yoy-1063'},
+    {rubric:'Inflation',indicator:'CPI',applicable:false},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.5% y/y (Non-tradables CPI; +1.1% q/q)',forecast:null,previous:'Non-tradables CPI ~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quartalsweise',source:'https://www.stats.govt.nz/indicators/consumers-price-index-cpi/',period:null},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'+0.8% q/q (Output; Input +1.4% q/q)',forecast:'0.5% q/q (Output; Input 0.8% q/q)',previous:'+0.1% q/q (Output, Q4 2025)',releaseDate:'2026-05-19',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/ppi-output-247'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
@@ -1517,7 +1525,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV10)return;
+  if(sym._researchV11)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1525,7 +1533,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1556,13 +1564,14 @@ function applyIndResearch(sym){
   sym._researchV8=true;
   sym._researchV9=true;
   sym._researchV10=true;
+  sym._researchV11=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','Swaps','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
@@ -1636,6 +1645,15 @@ function migrateRubInds(rubrics,sym){
     // applyIndResearch ihn befüllen (USD/GBP) bzw. korrekt entfernen kann.
     if(rub.name==='Labour Market'&&!sym._researchV10&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='Unemployment Claims')){
       rub.indicators.push({id:uid(),name:'Unemployment Claims',bias:'neu',imp:false,date:'',interval:'',points:[]});
+    }
+    // "CPI m/m" ist ein neuer Indikator direkt unter "CPI (Headline)"
+    // (y/y). Slot vor dem V11-Durchlauf einfuegen, damit applyIndResearch
+    // ihn befuellen bzw. fuer Waehrungen ohne monatliche Headline-CPI
+    // (applicable:false) wieder entfernen kann.
+    if(rub.name==='Inflation'&&!sym._researchV11&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='CPI')){
+      const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
+      const ni={id:uid(),name:'CPI m/m',bias:'neu',imp:false,date:'',interval:'',points:[]};
+      idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
   });
   if(!rubrics.find(r=>r.name==='Economic Growth')){
@@ -1912,7 +1930,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -2312,7 +2330,7 @@ function renderInd(ind,ri,ii,total){
       <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="${r.prevRevColor?'ind-data-act '+r.prevRevColor:'ind-data-val'}">${escH(P.val??'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'}${notes?` · ${escH(notes)}`:''} · ${srcLink}</div>
     </details>`;
@@ -3018,7 +3036,15 @@ function applyIndDataFeed(){
         // ist, die bisherige bzw. den TradingView-Fallback verwenden.
         const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
-        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event};
+        // Wurde der "Previous"-Wert seit dem letzten Feed-Abruf revidiert
+        // (z.B. nachtraegliche Korrektur eines Vormonatswerts)? Dann analog
+        // zum Kalender per revisionColor() einfaerben, sonst bisherige
+        // Faerbung (falls vorhanden) beibehalten.
+        let prevRevColor=r.prevRevColor;
+        if(r.feed&&r.previous!=null&&r.previous!==''&&np!=null&&np!==''&&r.previous!==np){
+          prevRevColor=revisionColor(r.previous,np,ind.name);
+        }
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event,prevRevColor:prevRevColor};
         if(fx)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;

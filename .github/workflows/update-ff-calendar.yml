@@ -586,6 +586,7 @@ jobs:
             const RULES=[
               {ind:"Central Bank Rate",period:null,test:t=>/interest rate decision|rate decision/.test(t)},
               {ind:"CPI (Headline)",period:"y/y",test:t=>/\binflation rate\b/.test(t)&&!EXCORE.test(t)&&!/wage|expectation|harmoni/.test(t)},
+              {ind:"CPI",period:"m/m",test:t=>/\binflation rate\b/.test(t)&&!EXCORE.test(t)&&!/wage|expectation|harmoni/.test(t)},
               {ind:"Core CPI",period:"y/y",test:t=>/core inflation rate/.test(t)},
               {ind:"PPI",period:"y/y",test:t=>(/producer pric/.test(t)||/\bppi\b/.test(t))&&!EXCORE.test(t)&&!/input|import|\btrade\b/.test(t)},
               {ind:"Core PPI",period:"y/y",test:t=>/core producer pric|core ppi/.test(t)},
