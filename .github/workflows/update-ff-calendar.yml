@@ -667,20 +667,20 @@ jobs:
       # ── BOND-HISTORIE BACKFILL (offizielle Gratis-Quellen, ohne Key) ──
       # Fuellt die Zeitreihe fuer Waehrungen, deren Tageshistorie frei und ohne
       # API-Key verfuegbar ist, sofort mit echten Werten (statt ~10 Tage zu
-      # "warmlaufen"): USD via US Treasury (FRED), CAD via Bank of Canada.
+      # "warmlaufen"): USD via US-Treasury-CSV, CAD via Bank of Canada (Valet).
       # Gleiche Messgroesse wie TradingView (Treasury/Benchmark-Rendite), daher
       # keine Methoden-Bruchstelle. Laeuft vor dem TradingView-Schritt; die
       # historischen Tage bleiben erhalten, TradingView ergaenzt nur "heute".
-      - name: Backfill bond history (FRED + Bank of Canada, no key)
+      - name: Backfill bond history (US Treasury + Bank of Canada, no key)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2&cosd=$(node -e 'console.log(new Date(Date.now()-40*86400e3).toISOString().slice(0,10))')" -o fred_dgs2.csv || true
-          curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10&cosd=$(node -e 'console.log(new Date(Date.now()-40*86400e3).toISOString().slice(0,10))')" -o fred_dgs10.csv || true
+          YEAR=$(node -e 'console.log(new Date().getUTCFullYear())')
+          curl -sL -A "$UA" "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/${YEAR}/all?type=daily_treasury_yield_curve&field_tdr_date_value=${YEAR}&page&_format=csv" -o ust.csv || true
           curl -sL -A "$UA" "https://www.bankofcanada.ca/valet/observations/BD.CDN.2YR.DQ.YLD,BD.CDN.10YR.DQ.YLD/json?recent=30" -o boc.json || true
           node -e '
             const fs=require("fs");
-            ["fred_dgs2.csv","fred_dgs10.csv","boc.json"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,120));}catch(e){console.log("[debug] "+f+": MISSING");}});
+            ["ust.csv","boc.json"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,160));}catch(e){console.log("[debug] "+f+": MISSING");}});
             const SRC={
               "USD|10Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
               "USD|2Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
@@ -699,16 +699,29 @@ jobs:
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
               return points.length;
             }
-            function parseFred(file){
-              let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return [];}
-              const pts=[];
-              csv.split(/\r?\n/).forEach(l=>{const m=l.match(/^(\d{4}-\d{2}-\d{2}),(-?[0-9.]+)$/);if(m&&m[2]!=="."){const v=parseFloat(m[2]);if(isFinite(v))pts.push([m[1],v]);}});
-              return pts;
+            // US-Treasury-Tages-CSV: Spalten "Date","1 Mo",...,"2 Yr",...,"10 Yr",...
+            // Datum als MM/DD/YYYY. Liefert "2 Yr"/"10 Yr"-Par-Renditen.
+            function parseTreasury(file){
+              let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
+              const lines=csv.split(/\r?\n/).filter(Boolean);
+              if(!lines.length)return {p2:[],p10:[]};
+              const hdr=lines[0].split(",").map(s=>s.replace(/^"|"$/g,"").trim());
+              const di=hdr.indexOf("Date"),i2=hdr.indexOf("2 Yr"),i10=hdr.indexOf("10 Yr");
+              const p2=[],p10=[];
+              if(di<0||i2<0||i10<0)return {p2:[],p10:[]};
+              for(let i=1;i<lines.length;i++){
+                const c=lines[i].split(",").map(s=>s.replace(/^"|"$/g,"").trim());
+                const m=c[di]&&c[di].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+                if(!m)continue;
+                const date=m[3]+"-"+m[1]+"-"+m[2];
+                const v2=parseFloat(c[i2]),v10=parseFloat(c[i10]);
+                if(isFinite(v2))p2.push([date,v2]);
+                if(isFinite(v10))p10.push([date,v10]);
+              }
+              return {p2,p10};
             }
-            const usd2=parseFred("fred_dgs2.csv"),usd10=parseFred("fred_dgs10.csv");
-            let n=0;
-            n+=merge("USD","2Y Bond Yield",usd2);
-            n+=merge("USD","10Y Bond Yield",usd10);
+            const ust=parseTreasury("ust.csv");
+            let usd2=merge("USD","2Y Bond Yield",ust.p2),usd10=merge("USD","10Y Bond Yield",ust.p10);
             let boc=null;try{boc=JSON.parse(fs.readFileSync("boc.json","utf8"));}catch(e){}
             let cad2=0,cad10=0;
             if(boc&&Array.isArray(boc.observations)){
@@ -720,14 +733,14 @@ jobs:
               });
               cad2=merge("CAD","2Y Bond Yield",p2);cad10=merge("CAD","10Y Bond Yield",p10);
             }
-            if(usd2.length||usd10.length||cad2||cad10){
+            if(usd2||usd10||cad2||cad10){
               fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
-              console.log("bond backfill: USD 2Y="+usd2.length+" 10Y="+usd10.length+" pts, CAD 2Y="+cad2+" 10Y="+cad10+" pts");
+              console.log("bond backfill: USD 2Y="+usd2+" 10Y="+usd10+" pts, CAD 2Y="+cad2+" 10Y="+cad10+" pts");
             }else{
-              console.log("bond backfill: no data from FRED/BoC, keeping existing file");
+              console.log("bond backfill: no data from US Treasury/BoC, keeping existing file");
             }
           '
-          rm -f fred_dgs2.csv fred_dgs10.csv boc.json
+          rm -f ust.csv boc.json
 
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
       # 2J-/10J-Staatsanleiherenditen je Waehrung von TradingViews Scanner-API
