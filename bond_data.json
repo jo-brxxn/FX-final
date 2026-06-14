@@ -1,0 +1,162 @@
+{
+ "USD": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.483"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.087"
+    ]
+   ]
+  }
+ },
+ "EUR": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/germany-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "2.996"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/germany-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "2.619"
+    ]
+   ]
+  }
+ },
+ "GBP": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/uk-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.836"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/uk-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.238"
+    ]
+   ]
+  }
+ },
+ "CHF": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "0.399"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "0.071"
+    ]
+   ]
+  }
+ },
+ "JPY": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/japan-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "2.615"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/japan-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "1.391"
+    ]
+   ]
+  }
+ },
+ "CAD": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/canada-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "3.402"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/canada-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "2.76"
+    ]
+   ]
+  }
+ },
+ "AUD": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/australia-10-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.814"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/australia-2-year-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.485"
+    ]
+   ]
+  }
+ },
+ "NZD": {
+  "10Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "4.5"
+    ]
+   ]
+  },
+  "2Y Bond Yield": {
+   "source": "https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield",
+   "series": [
+    [
+     "2026-06-14",
+     "3.438"
+    ]
+   ]
+  }
+ }
+}

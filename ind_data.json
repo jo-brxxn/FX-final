@@ -1,86 +1,4 @@
 {
- "EUR": {
-  "Central Bank Rate": {
-   "actual": "2.4%",
-   "forecast": "2.4%",
-   "previous": "2.15%",
-   "date": "2026-06-11",
-   "event": "ECB Interest Rate Decision",
-   "period": null
-  },
-  "PPI": {
-   "actual": "4.9%",
-   "forecast": "4.8%",
-   "previous": "2%",
-   "date": "2026-06-03",
-   "event": "PPI YoY",
-   "period": "y/y"
-  },
-  "Retail Sales MoM": {
-   "actual": "-0.4%",
-   "forecast": "-0.3%",
-   "previous": "0.8%",
-   "date": "2026-06-04",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
-  },
-  "CPI (Headline)": {
-   "actual": "2.6%",
-   "forecast": "2.6%",
-   "previous": "2.9%",
-   "date": "2026-06-12",
-   "event": "Inflation Rate YoY Final",
-   "period": "y/y"
-  },
-  "CPI": {
-   "actual": "-0.2%",
-   "forecast": "-0.2%",
-   "previous": "0.6%",
-   "date": "2026-06-12",
-   "event": "Inflation Rate MoM Final",
-   "period": "m/m"
-  },
-  "NFP / Employment Change": {
-   "actual": "0.5%",
-   "forecast": "0.5%",
-   "previous": "0.7%",
-   "date": "2026-06-05",
-   "event": "Employment Change YoY Final",
-   "period": null
-  },
-  "GDP Growth QoQ": {
-   "actual": "-0.2%",
-   "forecast": "0.1%",
-   "previous": "0.2%",
-   "date": "2026-06-05",
-   "event": "GDP Growth Rate QoQ 3rd Est",
-   "period": "q/q"
-  },
-  "Core CPI": {
-   "actual": "2.5%",
-   "forecast": "2.4%",
-   "previous": "2.2%",
-   "date": "2026-06-02",
-   "event": "Core Inflation Rate YoY Flash",
-   "period": "y/y"
-  },
-  "Consumer Confidence": {
-   "actual": "-19",
-   "forecast": "-19",
-   "previous": "-20.6",
-   "date": "2026-05-28",
-   "event": "Consumer Confidence Final",
-   "period": null
-  },
-  "Unemployment Rate": {
-   "actual": "6.3%",
-   "forecast": "6.2%",
-   "previous": "6.3%",
-   "date": "2026-06-01",
-   "event": "Unemployment Rate",
-   "period": null
-  }
- },
  "USD": {
   "Unemployment Claims": {
    "actual": "229K",
@@ -414,6 +332,88 @@
    "previous": "0%",
    "date": "2026-03-19",
    "event": "SNB Interest Rate Decision",
+   "period": null
+  }
+ },
+ "EUR": {
+  "PPI": {
+   "actual": "4.9%",
+   "forecast": "4.8%",
+   "previous": "2%",
+   "date": "2026-06-03",
+   "event": "PPI YoY",
+   "period": "y/y"
+  },
+  "Retail Sales MoM": {
+   "actual": "-0.4%",
+   "forecast": "-0.3%",
+   "previous": "0.8%",
+   "date": "2026-06-04",
+   "event": "Retail Sales MoM",
+   "period": "m/m"
+  },
+  "CPI (Headline)": {
+   "actual": "2.6%",
+   "forecast": "2.6%",
+   "previous": "2.9%",
+   "date": "2026-06-12",
+   "event": "Inflation Rate YoY Final",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "-0.2%",
+   "forecast": "-0.2%",
+   "previous": "0.6%",
+   "date": "2026-06-12",
+   "event": "Inflation Rate MoM Final",
+   "period": "m/m"
+  },
+  "NFP / Employment Change": {
+   "actual": "0.5%",
+   "forecast": "0.5%",
+   "previous": "0.7%",
+   "date": "2026-06-05",
+   "event": "Employment Change YoY Final",
+   "period": null
+  },
+  "GDP Growth QoQ": {
+   "actual": "-0.2%",
+   "forecast": "0.1%",
+   "previous": "0.2%",
+   "date": "2026-06-05",
+   "event": "GDP Growth Rate QoQ 3rd Est",
+   "period": "q/q"
+  },
+  "Core CPI": {
+   "actual": "2.5%",
+   "forecast": "2.4%",
+   "previous": "2.2%",
+   "date": "2026-06-02",
+   "event": "Core Inflation Rate YoY Flash",
+   "period": "y/y"
+  },
+  "Consumer Confidence": {
+   "actual": "-19",
+   "forecast": "-19",
+   "previous": "-20.6",
+   "date": "2026-05-28",
+   "event": "Consumer Confidence Final",
+   "period": null
+  },
+  "Unemployment Rate": {
+   "actual": "6.3%",
+   "forecast": "6.2%",
+   "previous": "6.3%",
+   "date": "2026-06-01",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "Central Bank Rate": {
+   "actual": "2.4%",
+   "forecast": "2.4%",
+   "previous": "2.15%",
+   "date": "2026-06-11",
+   "event": "ECB Interest Rate Decision",
    "period": null
   }
  },
