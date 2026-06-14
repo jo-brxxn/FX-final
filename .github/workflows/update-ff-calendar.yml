@@ -671,7 +671,7 @@ jobs:
       # Gleiche Messgroesse wie TradingView (Treasury/Benchmark-Rendite), daher
       # keine Methoden-Bruchstelle. Laeuft vor dem TradingView-Schritt; die
       # historischen Tage bleiben erhalten, TradingView ergaenzt nur "heute".
-      - name: Backfill bond history (US Treasury + BoC + ECB + MOF, no key)
+      - name: Backfill bond history (US Treasury + BoC + ECB, no key)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -681,20 +681,16 @@ jobs:
           # EZB-Zinsstrukturkurve (Euroraum AAA), Spot-Rate 2J/10J, taeglich.
           curl -sL -A "$UA" "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y?format=csvdata&lastNObservations=30" -o ecb2.csv || true
           curl -sL -A "$UA" "https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_10Y?format=csvdata&lastNObservations=30" -o ecb10.csv || true
-          # Japan MOF: taegliche JGB-Renditen (CSV unter /data/, laufendes Jahr).
-          curl -sL -A "$UA" "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcme.csv" -o mof.csv || true
           node -e '
             const fs=require("fs");
-            ["ust.csv","boc.json","ecb2.csv","ecb10.csv","mof.csv"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,160));}catch(e){console.log("[debug] "+f+": MISSING");}});
+            ["ust.csv","boc.json","ecb2.csv","ecb10.csv"].forEach(f=>{try{const s=fs.readFileSync(f,"utf8");console.log("[debug] "+f+": "+s.length+" bytes, first line: "+JSON.stringify(s.split(/\r?\n/)[0]).slice(0,160));}catch(e){console.log("[debug] "+f+": MISSING");}});
             const SRC={
               "USD|10Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
               "USD|2Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
               "CAD|10Y Bond Yield":"https://www.investing.com/rates-bonds/canada-10-year-bond-yield",
               "CAD|2Y Bond Yield":"https://www.investing.com/rates-bonds/canada-2-year-bond-yield",
               "EUR|10Y Bond Yield":"https://www.investing.com/rates-bonds/germany-10-year-bond-yield",
-              "EUR|2Y Bond Yield":"https://www.investing.com/rates-bonds/germany-2-year-bond-yield",
-              "JPY|10Y Bond Yield":"https://www.investing.com/rates-bonds/japan-10-year-bond-yield",
-              "JPY|2Y Bond Yield":"https://www.investing.com/rates-bonds/japan-2-year-bond-yield"
+              "EUR|2Y Bond Yield":"https://www.investing.com/rates-bonds/germany-2-year-bond-yield"
             };
             let out={};
             try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
@@ -745,23 +741,6 @@ jobs:
               }
               return pts;
             }
-            // Japan MOF JGB-CSV: Spalte0=Datum (YYYY/M/D), dann 1Y,2Y,...,10Y,...
-            // => 2Y=Index2, 10Y=Index10. Datei ist Shift-JIS; Daten sind ASCII,
-            // daher als latin1 lesen (Header-Japanisch egal, Indizes fest).
-            function parseMof(file){
-              let csv;try{csv=fs.readFileSync(file,"latin1");}catch(e){return {p2:[],p10:[]};}
-              const p2=[],p10=[];
-              csv.split(/\r?\n/).forEach(l=>{
-                const c=l.split(",");
-                const m=c[0]&&c[0].trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
-                if(!m)return;
-                const date=m[1]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[3]).padStart(2,"0");
-                const v2=parseFloat(c[2]),v10=parseFloat(c[10]);
-                if(isFinite(v2))p2.push([date,v2]);
-                if(isFinite(v10))p10.push([date,v10]);
-              });
-              return {p2,p10};
-            }
             const ust=parseTreasury("ust.csv");
             let usd2=merge("USD","2Y Bond Yield",ust.p2),usd10=merge("USD","10Y Bond Yield",ust.p10);
             let boc=null;try{boc=JSON.parse(fs.readFileSync("boc.json","utf8"));}catch(e){}
@@ -776,16 +755,14 @@ jobs:
               cad2=merge("CAD","2Y Bond Yield",p2);cad10=merge("CAD","10Y Bond Yield",p10);
             }
             let eur2=merge("EUR","2Y Bond Yield",parseEcb("ecb2.csv")),eur10=merge("EUR","10Y Bond Yield",parseEcb("ecb10.csv"));
-            const mof=parseMof("mof.csv");
-            let jpy2=merge("JPY","2Y Bond Yield",mof.p2),jpy10=merge("JPY","10Y Bond Yield",mof.p10);
-            if(usd2||usd10||cad2||cad10||eur2||eur10||jpy2||jpy10){
+            if(usd2||usd10||cad2||cad10||eur2||eur10){
               fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
-              console.log("bond backfill: USD 2Y="+usd2+"/10Y="+usd10+", CAD 2Y="+cad2+"/10Y="+cad10+", EUR 2Y="+eur2+"/10Y="+eur10+", JPY 2Y="+jpy2+"/10Y="+jpy10+" pts");
+              console.log("bond backfill: USD 2Y="+usd2+"/10Y="+usd10+", CAD 2Y="+cad2+"/10Y="+cad10+", EUR 2Y="+eur2+"/10Y="+eur10+" pts");
             }else{
               console.log("bond backfill: no data from official sources, keeping existing file");
             }
           '
-          rm -f ust.csv boc.json ecb2.csv ecb10.csv mof.csv
+          rm -f ust.csv boc.json ecb2.csv ecb10.csv
 
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
       # 2J-/10J-Staatsanleiherenditen je Waehrung von TradingViews Scanner-API
