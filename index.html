@@ -7,12 +7,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0d1117;color:#a9b9cc;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+/* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
+*,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
+.rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
 :root{
   --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;--bg6:#313c52;
   --bd:#212a39;--bd2:#303c52;
-  --t0:#dce4ee;--t1:#a9b9cc;--t2:#7c93a8;--t3:#6c869c;
+  --t0:#eef3fa;--t1:#dfe7f1;--t2:#c9d6e6;--t3:#b8c6d9;
   --green:#4fc3f7;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:79,195,247;--red-rgb:239,83,80;--amber-rgb:244,173,92;
   --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
@@ -20,11 +23,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 }
 /* ── LAYOUT ── */
 .hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.logo{font-size:18px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
-.logo-s{font-size:9px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
-.saved{font-size:9px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:10px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
 .btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .btn:disabled{opacity:.22;cursor:default}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}
@@ -33,38 +36,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}
 .btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}
 .tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}
 .tp:hover:not(.on){color:var(--t1)}
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
-.sb-lbl{font-size:7px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .ab-wrap{position:relative}
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
 .ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
-.ab .an{font-size:9px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
-.ab .av{font-size:9px;margin-top:1px;font-weight:600}
-.ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
+.ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
+.ab .av{font-size:11px;margin-top:1px;font-weight:600}
+.ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
 .ab-wrap:hover .ab-del{opacity:.5}.ab-del:hover{opacity:1!important}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
-.ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:9px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
+.ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
 .ab-move.up{top:2px}.ab-move.down{bottom:2px}
 .ab-move:disabled{opacity:.25;cursor:default}
-.add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:15px;transition:all .12s;margin-top:3px}
+.add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:17px;transition:all .12s;margin-top:3px}
 .add-sym:hover{color:var(--blue);background:var(--bg2)}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px;max-width:860px}
-.atitle{font-size:23px;font-weight:800;color:var(--t0);letter-spacing:-1px}
-.afull{font-size:10px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
+.afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
-.bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .12s}
+.bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}
 .bo:hover:not(.on){background:var(--bg3);color:var(--t1)}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
-.pbar-i{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
 .ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.025),rgba(var(--green-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.07)}
 .ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.025),rgba(var(--red-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.07)}
@@ -83,12 +86,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:1px;left:3px;display:flex;gap:2px;line-height:1}
-.evt-flag-abs .evt-flag{font-size:12px}
-.notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:11px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.evt-flag{color:var(--red);font-size:13px;font-weight:900;line-height:1;flex-shrink:0}
+.evt-flag-abs .evt-flag{font-size:14px}
+.notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:13px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
+.evt-flag{color:var(--red);font-size:15px;font-weight:900;line-height:1;flex-shrink:0}
 .evt-flag.ef-red{color:var(--red)}
 .evt-flag.ef-green{color:#22c55e}
-.cal-empty-day{padding:7px 9px;font-size:9px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cal-empty-day{padding:7px 9px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
@@ -96,35 +99,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .stabs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stabs-row .stabs{margin:11px 0 9px}
-.quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:11px;padding:6px 9px;outline:none;font-family:inherit}
+.quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:13px;padding:6px 9px;outline:none;font-family:inherit}
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
-.st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
+.st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
 .st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}.st:hover:not(.on){color:var(--t1)}
-.slbl{font-size:8px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
+.slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
 .ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}
 .ri:hover{background:var(--bg3)}.ri.imp{background:#211c10;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
-.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:11px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
+.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
 .rb-g{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
-.rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s;line-height:1.4}
+.rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s;line-height:1.4}
 .rb.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .rb.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .rb.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}
+.mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}
 .ri:hover .mv{opacity:.4}.mv:hover{opacity:1!important;color:var(--blue)}.mv:disabled{opacity:.05!important;cursor:default}
-.istar{background:none;border:none;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
+.istar{background:none;border:none;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
 .istar.on{opacity:1;color:var(--star)}.ri:hover .istar{opacity:.4}.ri .istar.on{opacity:1;color:var(--star)}
-.idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}
+.idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}
 .ri:hover .idel{opacity:.5}.idel:hover{opacity:1!important}
 .add-row{display:flex;gap:5px;margin-top:4px}
-.ai{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
-.ai:focus{border-color:var(--bd2);color:var(--t0);background:var(--bg3)}.ai::placeholder{color:var(--t3);font-size:10px}
-.add-btn{padding:6px 9px;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;flex-shrink:0;transition:all .12s;line-height:1;border:1px solid transparent}
-.nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:11px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.ai{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.ai:focus{border-color:var(--bd2);color:var(--t0);background:var(--bg3)}.ai::placeholder{color:var(--t3);font-size:12px}
+.add-btn{padding:6px 9px;border-radius:var(--rs);cursor:pointer;font-size:15px;font-weight:700;flex-shrink:0;transition:all .12s;line-height:1;border:1px solid transparent}
+.nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
 .rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
@@ -132,33 +135,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
+.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rbg{display:flex;gap:2px;flex-shrink:0}
-.rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s}
+.rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s}
 .rbo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .rbo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .rbo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}
+.rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}
 .rmv:hover{opacity:1;color:var(--blue)}.rmv:disabled{opacity:.05;cursor:default}
-.rstar{background:none;border:none;cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
+.rstar{background:none;border:none;cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
 .rstar.on{opacity:1;color:var(--star)}.rub-card:hover .rstar{opacity:.4}.rub-card .rstar.on{opacity:1;color:var(--star)}
-.rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
+.rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
 .rub-card:hover .rdel{opacity:.4}.rdel:hover{opacity:1!important;color:var(--red)}
 .rub-body{padding:10px 12px}
-.rub-tog{color:var(--t3);font-size:10px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
+.rub-tog{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
 .rub-tog:hover{color:var(--blue)}
 .rub-card.collapsed .rub-tog{transform:rotate(-90deg)}
 .rub-card.collapsed .rub-body{display:none}
 /* ── INFO BUTTON ── */
-.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:9px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
+.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:11px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 .rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
-.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 .rate-watch:hover{opacity:1}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
-.rub-summary-lbl{font-size:8px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
-.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
+.rub-summary-lbl{font-size:10px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
+.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* ── INDICATOR ── */
@@ -166,60 +169,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
 .ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg5);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
-.ind-inp{background:transparent;border:none;color:var(--t0);font-size:10px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
+.ind-inp{background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
 /* date badge */
 .dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
 .dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}
-.dbadge span{font-size:8px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
+.dbadge span{font-size:10px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
 .ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
 .ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}
-.ibadge span{font-size:8px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:8px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ibadge span{font-size:10px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
+.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}
 .ibg{display:flex;gap:2px;flex-shrink:0}
-.ibo{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:7px;font-weight:700;transition:all .1s}
+.ibo{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:9px;font-weight:700;transition:all .1s}
 .ibo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .ibo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .ibo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:9px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
+.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .ind-card:hover .imv{opacity:.35}.imv:hover{opacity:1!important;color:var(--blue)}.imv:disabled{opacity:.05;cursor:default}
-.istar2{background:none;border:none;cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
+.istar2{background:none;border:none;cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .istar2.on{opacity:1;color:var(--star)}.ind-card:hover .istar2{opacity:.35}.ind-card .istar2.on{opacity:1;color:var(--star)}
-.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
+.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
 .ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
 .ind-body{padding:6px 8px}
 .ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
 .ind-data-sum::-webkit-details-marker{display:none}
-.ind-data-sum::after{content:'Quelle ▾';margin-left:auto;color:var(--t3);font-size:8px;letter-spacing:.5px;text-transform:uppercase}
+.ind-data-sum::after{content:'Quelle ▾';margin-left:auto;color:var(--t3);font-size:10px;letter-spacing:.5px;text-transform:uppercase}
 .ind-data[open] .ind-data-sum::after{content:'Quelle ▴'}
-.ind-data-lbl{color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-size:8px}
+.ind-data-lbl{color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-size:10px}
 .ind-data-act{font-weight:800;color:var(--t1)}
 .ind-data-act.act-good{color:var(--green)}
 .ind-data-act.act-bad{color:var(--red)}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
-.ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:9px}
+.ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}
 .ind-data-src a:hover{text-decoration:underline}
 /* subpoints */
 .sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}
 .sp:hover{background:#2c3a52}
-.sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:10px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
+.sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
 .sp-txt:focus{color:var(--t0)}
-.sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:8px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}
+.sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}
 .sp:hover .sp-mv{opacity:.35}.sp-mv:hover{opacity:1!important;color:var(--blue)}.sp-mv:disabled{opacity:.04;cursor:default}
-.sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}
+.sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}
 .sp:hover .sp-del{opacity:.5}.sp-del:hover{opacity:1!important}
 /* ── FULL PAGE ── */
 .pc{padding:14px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
 .pcc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px}
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.pcc-tog{color:var(--t3);font-size:10px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
+.pcc-tog{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
 .pcc.open .pcc-tog{transform:rotate(90deg)}
-.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .pcc-name::placeholder{color:var(--t3)}
 .pcc-body{display:none;padding:10px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px}
 .pcc.open .pcc-body{display:grid}
@@ -227,31 +230,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .pair-card.open{border-color:var(--bd2)}
 .pair-hdr{display:flex;align-items:center;padding:9px 10px;cursor:pointer;background:var(--bg3);transition:background .12s;gap:6px;user-select:none}
 .pair-hdr:hover,.pair-card.open .pair-hdr{background:var(--bg4)}
-.pair-name{font-size:12px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1;min-width:0}
+.pair-name{font-size:14px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1;min-width:0}
 .pbg{display:flex;gap:3px;flex-shrink:0}
-.pbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;font-size:8px;font-weight:700;transition:all .1s}
+.pbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s}
 .pbo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pair-body{padding:10px;display:none;border-top:1px solid var(--bd)}
 .pair-card.open .pair-body{display:block}
-.pfl{font-size:7px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;text-transform:uppercase}
-.pfinp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:10px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:28px;transition:border-color .12s}
+.pfl{font-size:9px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;text-transform:uppercase}
+.pfinp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:28px;transition:border-color .12s}
 .pfinp:focus{border-color:var(--bd2);color:var(--t0)}.pfinp::placeholder{color:var(--t3)}
-.pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:10px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
+.pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── NOTE CATS ── */
 .nc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}
 .nc:hover{border-color:var(--bd2)}
 .nc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.nc-inp{background:transparent;border:none;color:var(--t0);font-size:15px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.nc-inp{background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .nc-inp::placeholder{color:var(--t3)}
-.nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.25;padding:0;line-height:1;transition:all .12s}
+.nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;opacity:.25;padding:0;line-height:1;transition:all .12s}
 .nc-del:hover{color:var(--red);opacity:1}
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 .mwrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bd);overflow:hidden}
 .mtbl{border-collapse:collapse;min-width:440px;width:100%}
-.mtbl th,.mtbl td{padding:8px 10px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);font-size:12px;text-align:center;white-space:nowrap}
+.mtbl th,.mtbl td{padding:8px 10px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);font-size:14px;text-align:center;white-space:nowrap}
 .mtbl tr:last-child td{border-bottom:none}
-.mtbl th{background:var(--bg2);color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600;font-size:10px;letter-spacing:.5px}
+.mtbl th{background:var(--bg2);color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600;font-size:12px;letter-spacing:.5px}
 .mtbl .bn{text-align:left;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:var(--bg2)}
 .cb{background:rgba(var(--green-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--green-rgb),.35);color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cr{background:rgba(var(--red-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--red-rgb),.35);color:var(--red);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -263,48 +266,48 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 /* ── DASHBOARD ── */
 .dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
 .dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
-.dw-t{font-size:14px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
-.dw-sub{font-size:9px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.dw-t{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:4px;flex-shrink:0}
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
-.sym-name{font-size:11px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
+.sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:1}
-.bbadge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
+.bbadge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
-.dw-empty{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.dw-add{font-size:9px;padding:3px 8px;margin-bottom:8px;width:100%}
-.dw-nav{padding:2px 5px;font-size:8px}
-.dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
+.dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
+.dw-nav{padding:2px 5px;font-size:10px}
+.dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:62px}
-.dw-mark{background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}
+.dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}
 .dw-mark:hover{opacity:.8}
 .dw-mark.on{color:var(--star);opacity:1}
-.dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;opacity:.5;line-height:1}
-.dw-meta{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-.dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:9px;outline:none;cursor:pointer;flex-shrink:0}
+.dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
+.dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 /* ── CALENDAR TABLE (FF-Style) ── */
 .cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto;margin-bottom:6px}
-.cal-day-hdr{font-size:10px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+.cal-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .cal-day-hdr.today{color:var(--red)}
 .cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
 .cal-day-hdr.today .cal-day-cd{color:var(--red)}
 .cal-day-hdr.past{cursor:pointer;user-select:none;color:var(--t2)}
 .cal-day-hdr.past:hover{background:var(--bg3)}
-.cal-day-chev{display:inline-block;transition:transform .15s;font-size:8px;color:var(--t3);margin-right:3px}
+.cal-day-chev{display:inline-block;transition:transform .15s;font-size:10px;color:var(--t3);margin-right:3px}
 .cal-day-hdr.past.collapsed .cal-day-chev{transform:rotate(-90deg)}
-.cal-day-cnt{color:var(--t3);font-weight:600;font-size:9px;margin-left:5px}
-.cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:5px 9px;font-size:8px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
+.cal-day-cnt{color:var(--t3);font-weight:600;font-size:11px;margin-left:5px}
+.cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:5px 9px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-col-hdr span{text-align:center}
 .cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
 .cal-row{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-row:last-child{border-bottom:none}
 .cal-row:hover{background:var(--bg3)}
 .cal-row.today{background:rgba(var(--red-rgb),.05)}
-.cal-time{font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
-.cal-ccy{font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
+.cal-time{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
+.cal-ccy{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
 .cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -313,7 +316,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-val.ph{color:var(--t3);font-weight:400}
 .cal-val.act-good{color:var(--green)}
 .cal-val.act-bad{color:var(--red)}
-.cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
+.cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
 .cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 14px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
@@ -330,104 +333,104 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 .cal-table.compact{overflow-x:hidden}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
-.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
+.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
 .evt-toggle:hover{border-color:var(--bd2)}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
-.evt-flag{font-size:14px;line-height:1}
-.evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:9px;transition:transform .15s;flex-shrink:0}
+.evt-flag{font-size:16px;line-height:1}
+.evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
-.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.inbox-empty{color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
+.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
-.finp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.finp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .finp:focus{border-color:var(--bd2);color:var(--t0)}.finp::placeholder{color:var(--t3)}
-.fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
+.fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px}
 .modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
-.modal h3{font-size:13px;font-weight:700;color:var(--t0);margin-bottom:12px}
+.modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:480px}
 #inboxList{max-height:65vh;overflow-y:auto}
-.m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
+.m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
-.m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
+.m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
 .date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
-.date-modal h3{font-size:12px;font-weight:700;color:var(--t0);margin-bottom:12px}
-.dm-lbl{font-size:8px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
-.dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:11px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
+.date-modal h3{font-size:14px;font-weight:700;color:var(--t0);margin-bottom:12px}
+.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
 .dm-inp::placeholder{color:var(--t3)}
-@media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:19px}}
+@media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:21px}}
 /* ── LOCK SCREEN ── */
 .lock-ov{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
 .lock-box{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px}
-.lock-logo{font-size:22px;font-weight:800;color:var(--t0);display:flex;align-items:center;gap:8px;letter-spacing:.5px}
-.lock-sub{font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:3px;text-transform:uppercase;margin-top:-14px}
+.lock-logo{font-size:24px;font-weight:800;color:var(--t0);display:flex;align-items:center;gap:8px;letter-spacing:.5px}
+.lock-sub{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:3px;text-transform:uppercase;margin-top:-14px}
 .lock-dots{display:flex;gap:16px;margin:4px 0 6px}
 .lock-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--bd2);transition:all .15s;background:transparent}
 .lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px rgba(var(--blue-rgb),.53)}
 .lock-pad{display:grid;grid-template-columns:repeat(3,62px);gap:14px}
-.lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:21px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:23px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .lock-key:hover,.lock-key:active{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .lock-key.empty{visibility:hidden;cursor:default}
 .lock-box.shake{animation:lockshake .4s}
-.lock-err{font-size:10px;color:var(--red);height:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px}
+.lock-err{font-size:12px;color:var(--red);height:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px}
 @keyframes lockshake{10%,90%{transform:translateX(-6px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
 /* ── DESKTOP / TABLET (iPad+, PC) ── */
 @media(min-width:760px){
   .hdr{padding:13px 22px}
-  .logo{font-size:18px}
-  .logo-s,.saved{font-size:11px}
-  .btn{font-size:11px;padding:6px 12px}
+  .logo{font-size:20px}
+  .logo-s,.saved{font-size:13px}
+  .btn{font-size:13px;padding:6px 12px}
   .tabbar{padding:0 22px}
-  .tp{font-size:12px;padding:11px 18px}
+  .tp{font-size:14px;padding:11px 18px}
   .sb{width:90px}
-  .sb-lbl{font-size:8px}
-  .ab .an,.ab .av{font-size:11px}
-  .add-sym{font-size:17px}
+  .sb-lbl{font-size:10px}
+  .ab .an,.ab .av{font-size:13px}
+  .add-sym{font-size:19px}
   .dp,.pc{padding:20px 28px}
-  .atitle{font-size:28px}
-  .afull{font-size:11px}
-  .bo{font-size:11px;padding:6px 13px}
-  .st{font-size:12px;padding:7px 16px}
-  .slbl{font-size:9px}
-  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:13px}
-  .rub-inp,.nc-inp,.pcc-name{font-size:18px;font-weight:800}
-  .mtbl th,.mtbl td{font-size:14px;padding:10px 13px}
-  .mtbl th{font-size:11px}
+  .atitle{font-size:30px}
+  .afull{font-size:13px}
+  .bo{font-size:13px;padding:6px 13px}
+  .st{font-size:14px;padding:7px 16px}
+  .slbl{font-size:11px}
+  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
+  .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
+  .mtbl th,.mtbl td{font-size:16px;padding:10px 13px}
+  .mtbl th{font-size:13px}
   .dw{padding:16px}
-  .dw-t{font-size:17px}
-  .dw-sub{font-size:11px}
+  .dw-t{font-size:19px}
+  .dw-sub{font-size:13px}
   .sym-row{padding:7px 10px}
-  .sym-name{font-size:14px}
-  .bbadge{font-size:11px;padding:3px 8px;width:68px}
-  .dw-empty,.dw-chip,.dw-meta{font-size:12px}
-  .dw-add,.pbo,.dw-sel{font-size:11px}
-  .dw-chip-x,.dw-del{font-size:14px}
-  .dw-nav{font-size:10px;padding:3px 6px}
+  .sym-name{font-size:16px}
+  .bbadge{font-size:13px;padding:3px 8px;width:68px}
+  .dw-empty,.dw-chip,.dw-meta{font-size:14px}
+  .dw-add,.pbo,.dw-sel{font-size:13px}
+  .dw-chip-x,.dw-del{font-size:16px}
+  .dw-nav{font-size:12px;padding:3px 6px}
   .modal{max-width:440px;padding:20px}
-  .modal h3{font-size:15px}
+  .modal h3{font-size:17px}
   .modal.inbox-modal{max-width:680px}
   #inboxList{max-height:72vh}
   .date-modal{max-width:380px;padding:20px}
-  .lock-logo{font-size:26px}
+  .lock-logo{font-size:28px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
-  .lock-key{width:68px;height:68px;font-size:23px}
+  .lock-key{width:68px;height:68px;font-size:25px}
   /* ── CALENDAR TABLE: TABLET ── */
   .cal-col-hdr,.cal-row{grid-template-columns:60px 60px 78px 1fr 80px 80px 80px 18px;gap:10px;min-width:0;padding:8px 12px}
-  .cal-day-hdr{font-size:11px;padding:8px 12px}
+  .cal-day-hdr{font-size:13px;padding:8px 12px}
   .cal-col-hdr{font-size:9.5px;padding:7px 12px}
-  .cal-time,.cal-ccy{font-size:12px}
-  .cal-imp{font-size:10px}
-  .cal-evname{font-size:13px}
-  .cal-val{font-size:12px}
-  .cal-evsub{font-size:11px}
-  .evt-toggle{font-size:12px;padding:9px 12px}
+  .cal-time,.cal-ccy{font-size:14px}
+  .cal-imp{font-size:12px}
+  .cal-evname{font-size:15px}
+  .cal-val{font-size:14px}
+  .cal-evsub{font-size:13px}
+  .evt-toggle{font-size:14px;padding:9px 12px}
   .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:42px 36px 1fr 52px 52px;gap:6px;padding:7px 10px}
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
@@ -447,24 +450,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
   .dw{padding:18px}
-  .dw-t{font-size:18px}
-  .dw-sub{font-size:12px}
+  .dw-t{font-size:20px}
+  .dw-sub{font-size:14px}
   .sym-row{padding:8px 11px}
-  .sym-name{font-size:15px}
-  .bbadge{font-size:12px;padding:4px 9px;width:74px}
-  .dw-empty,.dw-chip,.dw-meta{font-size:13px}
-  .dw-add,.pbo,.dw-sel{font-size:12px}
-  .dw-chip-x,.dw-del{font-size:16px}
+  .sym-name{font-size:17px}
+  .bbadge{font-size:14px;padding:4px 9px;width:74px}
+  .dw-empty,.dw-chip,.dw-meta{font-size:15px}
+  .dw-add,.pbo,.dw-sel{font-size:14px}
+  .dw-chip-x,.dw-del{font-size:18px}
   /* ── CALENDAR TABLE: DESKTOP ── */
   .cal-col-hdr,.cal-row{grid-template-columns:70px 70px 90px 1fr 110px 110px 110px 22px;gap:14px;padding:9px 14px}
-  .cal-day-hdr{font-size:12px;padding:9px 14px}
-  .cal-col-hdr{font-size:10px;padding:8px 14px}
-  .cal-time,.cal-ccy{font-size:13px}
-  .cal-imp{font-size:11px}
-  .cal-evname{font-size:14px}
-  .cal-val{font-size:13px}
+  .cal-day-hdr{font-size:14px;padding:9px 14px}
+  .cal-col-hdr{font-size:12px;padding:8px 14px}
+  .cal-time,.cal-ccy{font-size:15px}
+  .cal-imp{font-size:13px}
+  .cal-evname{font-size:16px}
+  .cal-val{font-size:15px}
   .cal-evsub{font-size:11.5px}
-  .evt-toggle{font-size:13px;padding:10px 14px}
+  .evt-toggle{font-size:15px;padding:10px 14px}
   .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 42px 1fr 56px 56px;gap:8px;padding:8px 12px}
 }
 /* ── ULTRA-WIDE ── */
@@ -502,7 +505,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#db2777;color:#fff;text-align:center;font-weight:800;font-size:12px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: PINK (Zinserwartungs-Icon: langes Drücken (Touch & Maus) öffnet ein responsives Feld zum Bearbeiten/Austauschen des Links - pro Symbol gespeichert & per Cloud synchronisiert; CPI/Core-CPI-Quelle zeigt jetzt den investing.com-Link statt des generischen "Forex Factory Kalender"-Links, auch wenn ein Kalender-Event die Werte liefert)</div>
+<div style="background:#ea580c;color:#fff;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Schriftart überall auf Arial umgestellt; jede Schrift 2 Stufen größer (+2px); Textfarben kräftig/voll deckend statt gedämpft - keine transparent wirkende Schrift mehr)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -536,14 +539,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 </div>
 <!-- PAGE: MATRIX -->
 <div class="pc" id="pgMat" style="display:none">
-  <div style="margin-bottom:11px"><div style="font-size:14px;font-weight:700;color:var(--t0)">Pair Matrix</div><div style="font-size:10px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Green=Long Base · Red=Short Base</div></div>
+  <div style="margin-bottom:11px"><div style="font-size:16px;font-weight:700;color:var(--t0)">Pair Matrix</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Green=Long Base · Red=Short Base</div></div>
   <div class="mwrap"><table class="mtbl" id="mtbl"></table></div>
   <div class="ag" id="assetCards"></div>
 </div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Pairs</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized by category · expand to edit</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Pairs</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized by category · expand to edit</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
       <button class="btn g" onclick="addPairCat()">＋ Category</button>
@@ -554,38 +557,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <!-- PAGE: CALENDAR -->
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
-      <span id="ffLastUpd" style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Blendet Medium-/Low-Impact-Events aus und zeigt nur High-Impact-News">⚪ Alle Impacts</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
     </div>
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
-    <div style="font-size:9px;font-weight:700;color:var(--t0);margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px">＋ ADD EVENT</div>
+    <div style="font-size:11px;font-weight:700;color:var(--t0);margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px">＋ ADD EVENT</div>
     <div class="fg2">
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">EVENT NAME</div><input class="finp" id="evName" placeholder="e.g. US NFP, ECB Rate Decision..."></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">DATE</div><input class="finp" id="evDate" type="date"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">EVENT NAME</div><input class="finp" id="evName" placeholder="e.g. US NFP, ECB Rate Decision..."></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">DATE</div><input class="finp" id="evDate" type="date"></div>
     </div>
     <div class="fg3">
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
     </div>
     <div class="fg3">
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="z.B. 0.7%"></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">PREVIOUS</div><input class="finp" id="evPrevious" placeholder="z.B. 1.4%"></div>
-      <div><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">ACTUAL</div><input class="finp" id="evActual" placeholder="z.B. 0.9%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="z.B. 0.7%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">PREVIOUS</div><input class="finp" id="evPrevious" placeholder="z.B. 1.4%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">ACTUAL</div><input class="finp" id="evActual" placeholder="z.B. 0.9%"></div>
     </div>
-    <div style="margin-bottom:7px"><div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">NOTES</div><input class="finp" id="evNotes" placeholder="What to watch..."></div>
+    <div style="margin-bottom:7px"><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">NOTES</div><input class="finp" id="evNotes" placeholder="What to watch..."></div>
     <button class="btn g" style="width:100%;padding:8px;justify-content:center" onclick="addCalEv()">＋ Add to Calendar</button>
   </div>
 </div>
 <!-- PAGE: NOTES -->
 <div class="pc" id="pgNotes" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Notes</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Custom categories · ⭐ = important</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Notes</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Custom categories · ⭐ = important</div></div>
     <button class="btn g" onclick="addNC()">＋ Category</button>
   </div>
   <div id="noteCats"></div>
@@ -593,7 +596,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <!-- PAGE: DASHBOARD -->
 <div class="pc" id="pgDash">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between">
-    <div><div style="font-size:14px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:10px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live overview</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live overview</div></div>
     <button class="btn g" onclick="addWidget()">＋ Widget</button>
   </div>
   <div id="dashWidgets"></div>
@@ -619,11 +622,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="ov" id="mAddPair" style="display:none">
   <div class="modal">
     <h3>Add Pair</h3>
-    <div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">SELECT PAIR</div>
+    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">SELECT PAIR</div>
     <select class="m-sel" id="mPairSel" size="8"></select>
-    <div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">OR ENTER CUSTOM</div>
+    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">OR ENTER CUSTOM</div>
     <input class="m-inp" id="mPairCustom" placeholder="e.g. USD/NOK (custom)">
-    <div style="font-size:8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">CATEGORY</div>
+    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">CATEGORY</div>
     <select class="m-sel" id="mPairCat" size="1" style="max-height:40px;margin-bottom:10px"></select>
     <div class="m-btns"><button class="btn" onclick="closeM('mAddPair')">Cancel</button><button class="btn g" onclick="confirmAddPair()">Add</button></div>
   </div>
@@ -654,7 +657,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="ov" id="mDelSym" style="display:none">
   <div class="modal">
     <h3>Remove Symbol</h3>
-    <p id="mDelSymMsg" style="font-size:11px;color:var(--t1);margin-bottom:14px;line-height:1.6"></p>
+    <p id="mDelSymMsg" style="font-size:13px;color:var(--t1);margin-bottom:14px;line-height:1.6"></p>
     <div class="m-btns"><button class="btn" onclick="closeM('mDelSym')">Cancel</button><button class="btn r" onclick="confirmDelSym()">Remove</button></div>
   </div>
 </div>
@@ -670,7 +673,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="ov" id="mRateWatch" style="display:none">
   <div class="modal">
     <h3>📈 Zinserwartungen-Link (<span id="mRateWatchSym"></span>)</h3>
-    <p style="font-size:11px;color:var(--t1);margin-bottom:10px;line-height:1.5">Dieser Link öffnet sich über das Icon in der „Interest Rates"-Karte. Hier kannst du ihn austauschen.</p>
+    <p style="font-size:13px;color:var(--t1);margin-bottom:10px;line-height:1.5">Dieser Link öffnet sich über das Icon in der „Interest Rates"-Karte. Hier kannst du ihn austauschen.</p>
     <input class="m-inp" id="mRateWatchInp" placeholder="https://..." inputmode="url">
     <div class="m-btns"><button class="btn" onclick="closeM('mRateWatch')">Abbrechen</button><button class="btn" onclick="resetRateWatch()">Standard</button><button class="btn g" onclick="saveRateWatch()">Speichern</button></div>
   </div>
@@ -687,14 +690,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Ar
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
     <h3>☁ Cloud-Synchronisierung</h3>
-    <div style="font-size:10px;color:var(--t2);line-height:1.6;margin-bottom:10px">Verbinde ein kostenloses <a href="https://supabase.com" target="_blank" style="color:var(--blue)">Supabase</a>-Projekt, um deine Daten automatisch zwischen all deinen Geräten (iPad, iPhone, PC) zu synchronisieren. Die Zugangsdaten werden nur lokal auf diesem Gerät gespeichert.</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Verbinde ein kostenloses <a href="https://supabase.com" target="_blank" style="color:var(--blue)">Supabase</a>-Projekt, um deine Daten automatisch zwischen all deinen Geräten (iPad, iPhone, PC) zu synchronisieren. Die Zugangsdaten werden nur lokal auf diesem Gerät gespeichert.</div>
     <label class="dm-lbl">Project URL</label>
     <input class="m-inp" id="cloudUrl" placeholder="https://xxxxx.supabase.co">
     <label class="dm-lbl">Anon / Public API Key</label>
     <input class="m-inp" id="cloudKey" placeholder="eyJhbGciOi...">
     <label class="dm-lbl">Sync-ID (gleiche ID auf allen Geräten verwenden)</label>
     <input class="m-inp" id="cloudSyncId" placeholder="z.B. mein-fx-tracker">
-    <div id="cloudStatus" style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
+    <div id="cloudStatus" style="font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
     <div class="m-btns">
       <button class="btn" onclick="closeM('mCloud')">Schließen</button>
       <button class="btn" onclick="cloudPull(true)">⬇ Herunterladen</button>
@@ -2173,7 +2176,7 @@ function renderDetail(){
 
 // ── GENERAL TAB ──
 function renderGenTab(c){
-  return`<div style="font-size:10px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
+  return`<div style="font-size:12px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
   <div class="gen-cols">
   <div>
     <div class="slbl"><span style="color:var(--green)">▲ BULLISH STRUCTURAL</span><div class="slbl-line"></div></div>
@@ -2215,7 +2218,7 @@ function masonryHTML(items,renderFn){
 // ── SPECIFIC TAB ──
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
-  return`<div style="font-size:10px;color:var(--t3);margin-bottom:9px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">⚡ Current factors – what matters right now (CB tone, data surprises, news, positioning)</div>
+  return`<div style="font-size:12px;color:var(--t3);margin-bottom:9px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">⚡ Current factors – what matters right now (CB tone, data surprises, news, positioning)</div>
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
@@ -2240,7 +2243,7 @@ function renderRub(rub,ri,total){
       <div class="rub-summary">
         <div class="rub-summary-lbl">
           <span style="color:${bco}">▸ SUMMARY</span>
-          <span style="font-size:8px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
+          <span style="font-size:10px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
@@ -2334,7 +2337,7 @@ function renderInd(ind,ri,ii,total){
         <button class="sp-del" onclick="delPt(${ri},${ii},${pi})">×</button>
       </div>`).join('')}
       <div class="add-row" style="margin-top:3px">
-        <input class="ai" id="pt-${ri}-${ii}" placeholder="+ Add data point..." onkeydown="if(event.key==='Enter'){addPt(${ri},${ii});event.preventDefault()}" style="font-size:10px;padding:5px 7px">
+        <input class="ai" id="pt-${ri}-${ii}" placeholder="+ Add data point..." onkeydown="if(event.key==='Enter'){addPt(${ri},${ii});event.preventDefault()}" style="font-size:12px;padding:5px 7px">
         <button class="add-btn" style="background:${bco}15;border-color:${bco}44;color:${bco};border:1px solid;padding:5px 7px" onclick="addPt(${ri},${ii})">＋</button>
       </div>
     </div>
@@ -2344,8 +2347,8 @@ function renderInd(ind,ri,ii,total){
 function renderNotesSubTab(c){
   const rubs=c.noteRubs||[];
   return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized notes for ${c.name}</div>
-    <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:9px">＋ Category</button>
+    <div style="font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized notes for ${c.name}</div>
+    <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:11px">＋ Category</button>
   </div>
   ${masonryHTML(rubs,(rub,ri)=>renderNoteRub(rub,ri,rubs.length))}
   <div style="margin-top:10px">
@@ -2667,13 +2670,13 @@ function renderPairs(){
       <div class="pcc-hdr">
         <button class="pcc-tog" onclick="togPCC('${cat.id}')">▶</button>
         <input class="pcc-name" value="${escH(cat.name)}" placeholder="Category..." oninput="pairCats[${ci}].name=this.value;saveSoon()" onchange="pairCats[${ci}].name=this.value;save()">
-        <span style="font-size:9px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;margin-right:4px">${catPairs.length}</span>
-        <button class="btn" style="padding:2px 5px;font-size:8px;opacity:.5" onclick="mvPairCat(${ci},-1)" ${ci===0?'disabled':''}>▲</button>
-        <button class="btn" style="padding:2px 5px;font-size:8px;opacity:.5" onclick="mvPairCat(${ci},1)" ${ci===pairCats.length-1?'disabled':''}>▼</button>
-        <button class="btn r" style="padding:2px 6px;font-size:9px;flex-shrink:0" onclick="delPairCat('${cat.id}')">×</button>
+        <span style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;margin-right:4px">${catPairs.length}</span>
+        <button class="btn" style="padding:2px 5px;font-size:10px;opacity:.5" onclick="mvPairCat(${ci},-1)" ${ci===0?'disabled':''}>▲</button>
+        <button class="btn" style="padding:2px 5px;font-size:10px;opacity:.5" onclick="mvPairCat(${ci},1)" ${ci===pairCats.length-1?'disabled':''}>▼</button>
+        <button class="btn r" style="padding:2px 6px;font-size:11px;flex-shrink:0" onclick="delPairCat('${cat.id}')">×</button>
       </div>
       <div class="pcc-body">
-        ${catPairs.length===0?`<div style="color:var(--t3);font-size:10px;padding:8px 4px;grid-column:1/-1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs. Click "＋ Add Pair" above.</div>`:
+        ${catPairs.length===0?`<div style="color:var(--t3);font-size:12px;padding:8px 4px;grid-column:1/-1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs. Click "＋ Add Pair" above.</div>`:
           catPairs.map((p,pci)=>renderPairCard(p,pci,catPairs.length)).join('')}
       </div>
     </div>`;}).join('');}
@@ -2684,8 +2687,8 @@ function renderPairCard(p,pci,catTotal){
   return`<div class="pair-card${p._open?' open':''}${p.marked?' row-marked':''} ${glowClass(p.bias)}">
     <div class="pair-hdr" onclick="togPair('${p.id}')">
       <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0" onclick="event.stopPropagation()">
-        <button class="sp-mv" onclick="mvPairInCat('${p.id}',-1)" ${pci===0?'disabled':''} style="font-size:8px;margin-top:0">▲</button>
-        <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:8px;margin-top:0">▼</button>
+        <button class="sp-mv" onclick="mvPairInCat('${p.id}',-1)" ${pci===0?'disabled':''} style="font-size:10px;margin-top:0">▲</button>
+        <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:10px;margin-top:0">▼</button>
       </div>
       <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
       ${pairEvtFlagHtml(p.name)}
@@ -2693,7 +2696,7 @@ function renderPairCard(p,pci,catTotal){
         ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
       </div>
       <button class="dw-mark${p.marked?' on':''}" onclick="event.stopPropagation();togPairMark('${p.id}');renderPairs()" title="Gelb markieren">★</button>
-      <button onclick="event.stopPropagation();delPair('${p.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0;opacity:.5;line-height:1" title="Remove pair">×</button>
+      <button onclick="event.stopPropagation();delPair('${p.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:.5;line-height:1" title="Remove pair">×</button>
     </div>
     <div class="pair-body">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px">
@@ -2748,7 +2751,7 @@ function renderCalendar(){
   if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   const empty=calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.';
-  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:10px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
+  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
   el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted)});}
@@ -3114,8 +3117,8 @@ function renderDash(){
       content=addBtn+(wp.length===0?`<div class="dw-empty">No directional set-ups right now.</div>`:
       wp.map((p,idx)=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
         <div class="pbg" style="flex-direction:column;gap:1px;flex-shrink:0">
-          <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',-1);renderDash()" ${idx===0?'disabled':''}>▲</button>
-          <button class="sp-mv" style="font-size:8px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
+          <button class="sp-mv" style="font-size:10px;margin-top:0" onclick="mvPairInCat('${p.id}',-1);renderDash()" ${idx===0?'disabled':''}>▲</button>
+          <button class="sp-mv" style="font-size:10px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
         </div>
         <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
         <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
@@ -3254,8 +3257,8 @@ function renderMatrix(){
   document.getElementById('mtbl').innerHTML=h;
   const others=syms.filter(s=>!FX.includes(s.id));
   document.getElementById('assetCards').innerHTML=others.length?
-    `<div style="font-size:8px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:11px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:9px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
+    `<div style="font-size:10px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
+    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${BL[s.bias]}</div></div>`).join(''):'';}
 
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
