@@ -514,7 +514,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#22d3ee;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Indikator „Swaps" überall entfernt; bei Makro steht jetzt überall zuerst die Karte Inflation und danach die Karte Leitzins – auch für bestehende Profile per Migration)</div>
+<div style="background:#f472b6;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROSA (Bias jetzt vollautomatisch aus dem Score: Symbol/Paar ab +3 bullish, ab −3 bearish, dazwischen neutral; Paare mit Richtung wandern automatisch in „Possible Set-ups", neutrale in „No Direction" – Watchlist bleibt unangetastet, nur du nimmst dort Paare raus)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -766,6 +766,9 @@ function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
 function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+biasScore(ind.bias),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 function scoreColor(n){return n>0?'var(--blue)':n<0?'var(--red)':'var(--amber)';}
+// Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
+// dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
+function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
 function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = Summe der Indikatoren (Bullish +1, Neutral 0, Bearish −1)')}">${n>0?'+':''}${n}</span>`;}
 // Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung (z.B. EUR -5, USD +5 -> EUR/USD = -10)
 function pairScore(pairName){
@@ -1938,7 +1941,7 @@ function mkWidgets(){return[
 let uStack=[],rStack=[];
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};applyRubOrder();recomputeAllPairBiases();syncAutoPairCats();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};applyRubOrder();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -1978,13 +1981,13 @@ function loadState(){
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
       rateWatchCustom=d.rateWatchCustom||{};
-      recomputeAllPairBiases();syncAutoPairCats();
+      recomputeAuto();
       return;}
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
-  recomputeAllPairBiases();syncAutoPairCats();
+  recomputeAuto();
 }
 function save(){
   // Krypto-Verbund: Änderungen am aktuell gewählten Krypto-Symbol vor dem
@@ -2186,7 +2189,7 @@ function renderDetail(){
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol-Score = Summe aller Indikatoren über alle Karten (Bullish +1, Neutral 0, Bearish −1)')}</div><div class="afull">${c.full}</div></div>
-      <div class="brow">${['bull','neu','bear'].map(b=>`<button class="bo${c.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setBias('${b}')">${b==='bull'?'▲ BULL':b==='bear'?'▼ BEAR':'◆ NEU'}</button>`).join('')}</div>
+      <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias wird automatisch aus dem Score gesetzt: ab +3 bullish, ab −3 bearish, dazwischen neutral">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
@@ -2496,7 +2499,7 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
@@ -2628,17 +2631,20 @@ function confirmDelSym(){
 
 // ══ PAIRS ═════════════════════════════════════════════════════════
 // Auto-bias: determine pair bias from base/quote currency biases
+// Paar-Bias automatisch aus dem Paar-Score (Basis-Score minus Quote-Score):
+// >=+3 bullish, <=-3 bearish, sonst neutral.
 function autoPairBias(pairName){
-  const parts=pairName.split('/');if(parts.length!==2)return'neu';
-  const baseId=parts[0].toUpperCase();const quoteId=parts[1].toUpperCase();
-  // Map common pair codes to sym ids
+  const parts=(pairName||'').split('/');if(parts.length!==2)return'neu';
   const codeToId={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
-  const bSym=syms.find(s=>s.id===(codeToId[baseId]||baseId));
-  const qSym=syms.find(s=>s.id===(codeToId[quoteId]||quoteId));
+  const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
+  const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
   if(!bSym||!qSym)return'neu';
-  if(bSym.bias==='bull'&&qSym.bias==='bear')return'bull';
-  if(bSym.bias==='bear'&&qSym.bias==='bull')return'bear';
-  return'neu';
+  return scoreBias(pairScore(pairName));
+}
+
+// Symbol-Bias automatisch aus dem Symbol-Score einstufen.
+function recomputeAllSymBiases(){
+  syms.forEach(s=>{s.bias=scoreBias(symScore(s));});
 }
 
 // Keep every pair's bias in sync with the underlying currency/asset biases
@@ -2651,6 +2657,10 @@ function recomputeAllPairBiases(){
     if(bSym&&qSym)p.bias=autoPairBias(p.name);
   });
 }
+
+// Vollstaendige automatische Neuberechnung: erst Symbol-Bias aus Score,
+// dann Paar-Bias aus Paar-Score, dann Auto-Einsortierung der Paare.
+function recomputeAuto(){recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
@@ -2735,7 +2745,7 @@ function renderPairCard(p,pci,catTotal){
       ${pairEvtFlagHtml(p.name)}
       ${rowScore(pairScore(p.name),'Paar-Score')}
       <div class="pbg" onclick="event.stopPropagation()">
-        ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
+        <span class="pbo on" style="--bc:${BC[p.bias]};--bca:${BC[p.bias]}18;cursor:default" title="Bias wird automatisch aus dem Paar-Score gesetzt (Basis − Quote): ab +3 bullish, ab −3 bearish, dazwischen neutral">${p.bias==='bull'?'▲':p.bias==='bear'?'▼':'◆'}</span>
       </div>
       <button class="dw-mark${p.marked?' on':''}" onclick="event.stopPropagation();togPairMark('${p.id}');renderPairs()" title="Gelb markieren">★</button>
       <button onclick="event.stopPropagation();delPair('${p.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:.5;line-height:1" title="Remove pair">×</button>
@@ -3079,7 +3089,7 @@ function applyIndDataFeed(){
   return changed;
 }
 function autoFetchIndData(){
-  fetchIndData().then(()=>{if(applyIndDataFeed()){save();renderSidebar();rerender();}});
+  fetchIndData().then(()=>{if(applyIndDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
 }
 
 // ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
@@ -3160,7 +3170,7 @@ function applyBondDataFeed(){
   return changed;
 }
 function autoFetchBondData(){
-  fetchBondData().then(()=>{if(applyBondDataFeed()){save();renderSidebar();rerender();}});
+  fetchBondData().then(()=>{if(applyBondDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
 }
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
@@ -3274,9 +3284,6 @@ function renderDash(){
         <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
-        <div class="pbg" style="flex-shrink:0">
-          ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
-        </div>
         ${p.sl||p.tp?`<span class="dw-meta">${p.sl?'SL:'+p.sl:''} ${p.tp?'TP:'+p.tp:''}</span>`:''}
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
@@ -3292,9 +3299,7 @@ function renderDash(){
           <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
           ${rowScore(pairScore(p.name),'Paar-Score')}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
-          <div class="pbg" style="flex-shrink:0">
-            ${['bull','neu','bear'].map(b=>`<button class="pbo${p.bias===b?' on':''}" style="--bc:${BC[b]};--bca:${BC[b]}18" onclick="setPairBias('${p.id}','${b}');renderDash()">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}
-          </div>
+          <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatisch aus dem Paar-Score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
           <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
             ${pairCats.map(c=>`<option value="${c.id}"${p.catId===c.id?' selected':''}>${escH(c.name)}</option>`).join('')}
           </select>
