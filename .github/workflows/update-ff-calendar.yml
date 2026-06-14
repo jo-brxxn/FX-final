@@ -664,6 +664,95 @@ jobs:
             console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
           '
 
+      # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
+      # Taegliche Schlusskurse der 2J-/10J-Staatsanleiherenditen je Waehrung
+      # von Stooq (frei, ohne Auth, als CSV). Daraus baut der Browser den
+      # Actual-Wert (letzter Handelstag <= gestern) und den Previous-Wert
+      # (letzter Handelstag <= Actual-Datum minus 10 Tage) sowie die Faerbung.
+      # Pro Symbol werden nur die letzten ~30 Tage gespeichert; schlaegt der
+      # Abruf einer Reihe fehl, bleibt die bisherige Reihe erhalten (Merge).
+      - name: Fetch government bond yields (Stooq) -> bond_data.json
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          # Stooq-Symbol -> "CCY|Laufzeit". Laufzeit = Indikatorname in der App.
+          for pair in \
+            "10usy.b USD|10Y Bond Yield" "2usy.b USD|2Y Bond Yield" \
+            "10dey.b EUR|10Y Bond Yield" "2dey.b EUR|2Y Bond Yield" \
+            "10uky.b GBP|10Y Bond Yield" "2uky.b GBP|2Y Bond Yield" \
+            "10chy.b CHF|10Y Bond Yield" "2chy.b CHF|2Y Bond Yield" \
+            "10jpy.b JPY|10Y Bond Yield" "2jpy.b JPY|2Y Bond Yield" \
+            "10cay.b CAD|10Y Bond Yield" "2cay.b CAD|2Y Bond Yield" \
+            "10auy.b AUD|10Y Bond Yield" "2auy.b AUD|2Y Bond Yield" \
+            "10nzy.b NZD|10Y Bond Yield" "2nzy.b NZD|2Y Bond Yield"; do
+            sym=$(echo "$pair" | cut -d" " -f1)
+            curl -sL -A "$UA" "https://stooq.com/q/d/l/?s=${sym}&i=d" -o "bond_${sym}.csv" || true
+            sleep 1
+          done
+          node -e '
+            const fs=require("fs");
+            // Investing.com-Quelle je Waehrung/Laufzeit (Fallback; die App
+            // bevorzugt ohnehin ihren kuratierten Link).
+            const SRC={
+              "USD|10Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
+              "USD|2Y Bond Yield":"https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
+              "EUR|10Y Bond Yield":"https://www.investing.com/rates-bonds/germany-10-year-bond-yield",
+              "EUR|2Y Bond Yield":"https://www.investing.com/rates-bonds/germany-2-year-bond-yield",
+              "GBP|10Y Bond Yield":"https://www.investing.com/rates-bonds/uk-10-year-bond-yield",
+              "GBP|2Y Bond Yield":"https://www.investing.com/rates-bonds/uk-2-year-bond-yield",
+              "CHF|10Y Bond Yield":"https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield",
+              "CHF|2Y Bond Yield":"https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield",
+              "JPY|10Y Bond Yield":"https://www.investing.com/rates-bonds/japan-10-year-bond-yield",
+              "JPY|2Y Bond Yield":"https://www.investing.com/rates-bonds/japan-2-year-bond-yield",
+              "CAD|10Y Bond Yield":"https://www.investing.com/rates-bonds/canada-10-year-bond-yield",
+              "CAD|2Y Bond Yield":"https://www.investing.com/rates-bonds/canada-2-year-bond-yield",
+              "AUD|10Y Bond Yield":"https://www.investing.com/rates-bonds/australia-10-year-bond-yield",
+              "AUD|2Y Bond Yield":"https://www.investing.com/rates-bonds/australia-2-year-bond-yield",
+              "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
+              "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
+            };
+            const MAP={
+              "10usy.b":"USD|10Y Bond Yield","2usy.b":"USD|2Y Bond Yield",
+              "10dey.b":"EUR|10Y Bond Yield","2dey.b":"EUR|2Y Bond Yield",
+              "10uky.b":"GBP|10Y Bond Yield","2uky.b":"GBP|2Y Bond Yield",
+              "10chy.b":"CHF|10Y Bond Yield","2chy.b":"CHF|2Y Bond Yield",
+              "10jpy.b":"JPY|10Y Bond Yield","2jpy.b":"JPY|2Y Bond Yield",
+              "10cay.b":"CAD|10Y Bond Yield","2cay.b":"CAD|2Y Bond Yield",
+              "10auy.b":"AUD|10Y Bond Yield","2auy.b":"AUD|2Y Bond Yield",
+              "10nzy.b":"NZD|10Y Bond Yield","2nzy.b":"NZD|2Y Bond Yield"
+            };
+            // Bestehende Datei laden (Merge bei Teil-Ausfaellen).
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            let okN=0,failN=0;const fails=[];
+            Object.keys(MAP).forEach(sym=>{
+              const [ccy,ind]=MAP[sym].split("|");
+              let csv;
+              try{csv=fs.readFileSync("bond_"+sym+".csv","utf8");}catch(e){failN++;fails.push(sym+"(no file)");return;}
+              const lines=csv.trim().split(/\r?\n/);
+              const rows=[];
+              lines.forEach(l=>{
+                const c=l.split(",");
+                // Date,Open,High,Low,Close,Volume - Close = Index 4
+                if(!/^\d{4}-\d{2}-\d{2}$/.test(c[0]))return;
+                const close=parseFloat(c[4]);
+                if(!isFinite(close))return;
+                rows.push([c[0],String(close)]);
+              });
+              if(!rows.length){failN++;fails.push(sym+"(no rows)");return;}
+              rows.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              const series=rows.slice(-30);
+              (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||"",series:series};
+              okN++;
+            });
+            if(okN>0){
+              fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+              console.log("bond_data.json: "+okN+" series updated, "+failN+" failed"+(fails.length?" ["+fails.join(", ")+"]":""));
+            }else{
+              console.log("bond_data.json: all "+failN+" fetches failed, keeping existing file"+(fails.length?" ["+fails.join(", ")+"]":""));
+            }
+          '
+          rm -f bond_*.csv
+
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html
 
@@ -671,7 +760,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ff_calendar.json ind_data.json
+          git add ff_calendar.json ind_data.json bond_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             git push

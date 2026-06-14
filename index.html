@@ -204,6 +204,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-data-act{font-weight:800;color:var(--t1)}
 .ind-data-act.act-good{color:var(--green)}
 .ind-data-act.act-bad{color:var(--red)}
+.ind-data-act.bond-up{color:var(--blue)}
+.ind-data-act.bond-down{color:var(--red)}
+.ind-data-act.bond-flat{color:#fff}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -508,7 +511,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#5fa8ed;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: BLAU (Neuer Score neben Symbolname, in der Symbolleiste links und auf jeder Karte: Summe aller Indikatoren – Bullish +1, Neutral 0, Bearish −1; positiv = blau, neutral = orange, negativ = rot)</div>
+<div style="background:#22c55e;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GRÜN (Score je Symbol/Karte – blau/orange/rot; Anleiherenditen 2Y/10Y aktualisieren täglich: Actual = letzter Handelstag, Previous = Actual −10 Tage; steigend = blau/bullish, fallend = rot/bearish, gleich = weiß/neutral)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2332,16 +2335,19 @@ function renderInd(ind,ri,ii,total){
     </details>`;
   }else if(ind.research){
     const r=ind.research;
-    const ac=actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    // Bonds: Farbe der Akt-Rendite kommt aus dem 10-Tage-Vergleich
+    // (blau steigend / rot fallend / weiss gleich), sonst Forecast-Vergleich.
+    const ac=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
-    const notes=[note2,A.notes.length&&`Akt: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
+    const bondNote=r.bond&&r.prevDate?`Previous-Stand: ${fmtResearchDateFull(r.prevDate)} (Akt − 10 Tage)`:null;
+    const notes=[bondNote,note2,A.notes.length&&`Akt: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
     const srcLink=r.source?`<a href="${escH(r.source)}" target="_blank" rel="noopener">${escH(srcLabel(r.source))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>
+        ${r.bond?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="${r.prevRevColor?'ind-data-act '+r.prevRevColor:'ind-data-val'}">${escH(P.val??'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'}${notes?` · ${escH(notes)}`:''} · ${srcLink}</div>
@@ -3069,6 +3075,87 @@ function applyIndDataFeed(){
 function autoFetchIndData(){
   fetchIndData().then(()=>{if(applyIndDataFeed()){save();renderSidebar();rerender();}});
 }
+
+// ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
+// bond_data.json wird stuendlich per GitHub Action aus Stooq (taegliche
+// Schlusskurse der Staatsanleiherenditen) erzeugt und enthaelt pro Waehrung
+// und Laufzeit (2Y/10Y) eine Zeitreihe [Datum, Rendite]. Im Browser wird
+// daraus berechnet:
+//   actual   = letzter verfuegbarer Wert am/vor "gestern"
+//              (Wochenende/Feiertag -> letzter Handelstag davor)
+//   previous = letzter verfuegbarer Wert am/vor (actual-Datum minus 10 Tage)
+// Faerbung: actual > previous -> blau + Bias bullish; actual < previous ->
+// rot + bearish; gleich -> weiss + neutral. Aktualisiert sich taeglich.
+const BOND_INDS=['2Y Bond Yield','10Y Bond Yield'];
+let BOND_DATA_FEED=null;
+async function fetchBondData(){
+  try{
+    const res=await fetch('bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))BOND_DATA_FEED=d;}
+  }catch(e){}
+}
+function isoMinusDays(iso,days){
+  const t=new Date(iso+'T00:00:00Z');if(isNaN(t))return iso;
+  t.setUTCDate(t.getUTCDate()-days);
+  return t.toISOString().slice(0,10);
+}
+// Letzter Eintrag der (aufsteigend nach Datum sortierten) Reihe mit Datum <= target.
+function bondPick(series,target){
+  let pick=null;
+  for(let i=0;i<series.length;i++){const d=series[i];if(d&&d[0]<=target)pick=d;else if(d&&d[0]>target)break;}
+  return pick;
+}
+function fmtYield(v){
+  const n=Number(v);if(!isFinite(n))return String(v);
+  let s=n.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+  if(!/\./.test(s))s+='.0';
+  return s+'%';
+}
+function applyBondDataFeed(){
+  if(!BOND_DATA_FEED)return false;
+  const today=todayStr();
+  const yesterday=isoMinusDays(today,1);
+  let changed=false;
+  syms.forEach(c=>{
+    const bd=BOND_DATA_FEED[macroCcyFor(c.id)];
+    if(!bd)return;
+    const fx=!isNonFx(c.id);
+    (c.rubrics||[]).forEach(rub=>{
+      if(!rub.indicators)return;
+      rub.indicators.forEach(ind=>{
+        const base=stripPeriodSuffix(ind.name).base;
+        if(!BOND_INDS.includes(base))return;
+        const series=bd[base]&&bd[base].series;
+        if(!Array.isArray(series)||!series.length)return;
+        const aEntry=bondPick(series,yesterday)||series[series.length-1];
+        if(!aEntry)return;
+        const aDate=aEntry[0],aVal=Number(aEntry[1]);
+        if(!isFinite(aVal))return;
+        const pEntry=bondPick(series,isoMinusDays(aDate,10));
+        const pVal=pEntry?Number(pEntry[1]):null;
+        let bondColor='bond-flat',bias='neu';
+        if(pVal!=null&&isFinite(pVal)){
+          if(aVal>pVal){bondColor='bond-up';bias='bull';}
+          else if(aVal<pVal){bondColor='bond-down';bias='bear';}
+        }
+        const src=indResearchSource(macroCcyFor(c.id),base)||bd[base].source||(ind.research&&ind.research.source);
+        const aStr=fmtYield(aVal),pStr=(pVal!=null&&isFinite(pVal))?fmtYield(pVal):null;
+        const pDate=pEntry?pEntry[0]:null;
+        const r=ind.research||{};
+        if(!(r.bond&&r.actual===aStr&&r.previous===pStr&&r.date===aDate&&r.bondColor===bondColor&&r.prevDate===pDate&&r.source===src)){
+          ind.research={actual:aStr,forecast:null,previous:pStr,date:aDate,prevDate:pDate,source:src,bond:true,bondColor:bondColor};
+          changed=true;
+        }
+        if(fx&&ind.bias!==bias){ind.bias=bias;changed=true;}
+      });
+    });
+  });
+  if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
+  return changed;
+}
+function autoFetchBondData(){
+  fetchBondData().then(()=>{if(applyBondDataFeed()){save();renderSidebar();rerender();}});
+}
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
 // Bestätigung, dass die Abfrage nicht nur stündlich passiert.
@@ -3400,10 +3487,12 @@ renderDash();updateStat();updUB();updInboxBadge();
 updFFLastUpd();
 autoFetchFF();
 autoFetchIndData();
+autoFetchBondData();
 cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
   autoFetchIndData();
+  autoFetchBondData();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
   }
