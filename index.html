@@ -98,11 +98,20 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
-/* ── MARKIERT (WICHTIG): mit Bias = Bias-Farbe extrem verstaerkt, ohne Bias = hellgelb ── */
-.sym-row.row-marked.glow-bull,.pair-card.row-marked.glow-bull,.ind-card.imp.glow-bull,.rub-card.imp.glow-bull,.ri.imp.glow-bull{border-color:var(--green)!important;background-image:linear-gradient(rgba(var(--green-rgb),.22),rgba(var(--green-rgb),.22))!important;box-shadow:0 0 0 1px rgba(var(--green-rgb),.85),inset 0 0 16px 3px rgba(var(--green-rgb),.34)!important}
-.sym-row.row-marked.glow-bear,.pair-card.row-marked.glow-bear,.ind-card.imp.glow-bear,.rub-card.imp.glow-bear,.ri.imp.glow-bear{border-color:var(--red)!important;background-image:linear-gradient(rgba(var(--red-rgb),.22),rgba(var(--red-rgb),.22))!important;box-shadow:0 0 0 1px rgba(var(--red-rgb),.85),inset 0 0 16px 3px rgba(var(--red-rgb),.34)!important}
-.sym-row.row-marked.glow-neu,.pair-card.row-marked.glow-neu,.ind-card.imp.glow-neu,.rub-card.imp.glow-neu,.ri.imp.glow-neu{border-color:var(--amber)!important;background-image:linear-gradient(rgba(var(--amber-rgb),.24),rgba(var(--amber-rgb),.24))!important;box-shadow:0 0 0 1px rgba(var(--amber-rgb),.85),inset 0 0 16px 3px rgba(var(--amber-rgb),.34)!important}
-/* ohne Bias (z.B. Notiz-Stichpunkte) → hellgelb aufleuchten */
+/* ── MARKIERT (WICHTIG): Bias-Farbe extrem verstaerkt – kein Gold mehr ── */
+.sym-row.row-marked.glow-bull,.pair-card.row-marked.glow-bull,.ind-card.imp.glow-bull,.rub-card.imp.glow-bull,.ri.imp.glow-bull{border-color:var(--green)!important;background:rgba(var(--green-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--green-rgb),.85),inset 0 0 16px 3px rgba(var(--green-rgb),.34)!important}
+.sym-row.row-marked.glow-bear,.pair-card.row-marked.glow-bear,.ind-card.imp.glow-bear,.rub-card.imp.glow-bear,.ri.imp.glow-bear{border-color:var(--red)!important;background:rgba(var(--red-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--red-rgb),.85),inset 0 0 16px 3px rgba(var(--red-rgb),.34)!important}
+.sym-row.row-marked.glow-neu,.pair-card.row-marked.glow-neu,.ind-card.imp.glow-neu,.rub-card.imp.glow-neu,.ri.imp.glow-neu{border-color:var(--amber)!important;background:rgba(var(--amber-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--amber-rgb),.85),inset 0 0 16px 3px rgba(var(--amber-rgb),.34)!important}
+/* Karten-Header (rub-card/ind-card) in Bias-Farbe statt Gold */
+.rub-card.imp.glow-bull .rub-hdr{background:rgba(var(--green-rgb),.1)!important}
+.rub-card.imp.glow-bear .rub-hdr{background:rgba(var(--red-rgb),.1)!important}
+.rub-card.imp.glow-neu .rub-hdr{background:rgba(var(--amber-rgb),.1)!important}
+.ind-card.imp.glow-bull .ind-hdr{background:rgba(var(--green-rgb),.08)!important}
+.ind-card.imp.glow-bear .ind-hdr{background:rgba(var(--red-rgb),.08)!important}
+.ind-card.imp.glow-neu .ind-hdr{background:rgba(var(--amber-rgb),.08)!important}
+/* Text-Farbe in ri.imp: bei Bias normal; ohne Bias → hellgelb aufleuchten */
+.ri.imp.glow-bull .rtxt,.ri.imp.glow-bear .rtxt,.ri.imp.glow-neu .rtxt{color:inherit!important}
+/* ohne Bias (Notiz-Stichpunkte ohne glow-Klasse) → hellgelb */
 .ri.imp:not([class*="glow-"]){background:rgba(255,221,51,.16)!important;border-color:#ffe14d!important;box-shadow:0 0 0 1px rgba(255,221,51,.7),inset 0 0 13px 2px rgba(255,221,51,.26)!important}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
@@ -292,7 +301,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-nav{padding:2px 5px;font-size:10px}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
-.dw-pname{min-width:62px}
+.dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}
 .dw-mark:hover{opacity:.8}
 .dw-mark.on{color:var(--star);opacity:1}
@@ -378,6 +387,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
 .ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
+.ba-cols .sym-row .sym-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -488,11 +498,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Set-ups + FX-Bias/Assets: je 3 bzw. 2 Innenspalten -> 2 Grid-Spalten breit; Kalender: 2 Grid-Spalten fuer volle Event-Namen */
-  #dashWidgets .dw.dw-setups{grid-column:span 2}
+  /* Set-ups + Kalender: je 3 Grid-Spalten; FX-Bias/Assets: 2 Spalten */
+  #dashWidgets .dw.dw-setups{grid-column:span 3}
   #dashWidgets .dw.dw-biasassets{grid-column:span 2}
-  #dashWidgets .dw.dw-calendar{grid-column:span 2}
-  @media(max-width:600px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
+  #dashWidgets .dw.dw-calendar{grid-column:span 3}
+  @media(max-width:700px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
+  /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
+  #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
+  #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
 .dw{padding:18px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
@@ -550,7 +563,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#3b82f6;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: BLAU (FX-Bias + Other Assets in 1 Karte mit 2 Spalten, beide nach Score sortiert; Kalender passt sich an längste Karte an; mehr Abstand Name/Score/Bias; Bias-Text mittig zentriert; markiert=Bias-Farbe extrem verstärkt bzw. hellgelb ohne Bias; Score-Farbe folgt Karten-Bias; Symbolwechsel scrollt nach oben)</div>
+<div style="background:#10b981;color:#0d1117;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: GRÜN (Kein Overlap bei Setups/Watchlist (text-overflow); Other Assets Spalte ausgerichtet; Kalender breiter (3 Spalten), Header sticky außerhalb Scroll, Höhe bis 65vh; Markierung nur Bias-Farbe (kein Gold mehr); Pairs-Karte leuchtet in Bias-Farbe bei Markierung)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -952,7 +965,7 @@ function calTableHtml(evts,opts){
   opts=opts||{};
   if(!evts.length&&!(opts.allDates&&opts.allDates.length))return'';
   const today=todayStr();
-  let html=opts.compact
+  let html=opts.skipHeader?'':opts.compact
     ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`
     :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
   // Events nach Datum gruppieren (Reihenfolge innerhalb des Tages bleibt erhalten).
@@ -3433,8 +3446,9 @@ function renderDash(){
       // Events gedimmt, rote Jetzt-Linie), aber kompakt und in einem scrollbaren
       // Container, der beim Rendern automatisch zur aktuellen Uhrzeit scrollt.
       const sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+      const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`;
       content=sorted.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      `<div class="cal-scroll">${calTableHtml(sorted,{compact:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`;
+      calHdr+`<div class="cal-scroll">${calTableHtml(sorted,{compact:true,skipHeader:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`;
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
@@ -3454,27 +3468,12 @@ function renderDash(){
       </div>
       ${content}
     </div>`;}).join('');
-  requestAnimationFrame(()=>{fitCalendarHeight();scrollCalsToNow();});
+  requestAnimationFrame(scrollCalsToNow);
 }
-// Passt die Hoehe des Upcoming-Events-Kalenders an die laengste andere Karte an,
-// damit der Kalender nie die laengste Karte ist, sich aber so weit wie moeglich
-// nach unten erstreckt. Der Rest scrollt intern.
-function fitCalendarHeight(){
-  const cal=document.querySelector('#dashWidgets .dw-calendar');
-  if(!cal)return;
-  const scroll=cal.querySelector('.cal-scroll');
-  if(!scroll)return;
-  // Erst den Kalender einklappen, damit er seine eigene Grid-Zeile (und deren
-  // Nachbarkarten) nicht aufblaeht und die Messung verfaelscht.
-  scroll.style.maxHeight='0px';
-  const overhead=cal.offsetHeight; // Header/Padding bei eingeklapptem Scrollbereich
-  let maxH=0;
-  document.querySelectorAll('#dashWidgets .dw').forEach(c=>{if(c!==cal)maxH=Math.max(maxH,c.offsetHeight);});
-  if(maxH<=0){scroll.style.maxHeight='620px';return;}
-  // Obergrenze = laengste andere Karte; nie laenger. Inhalt scrollt intern.
-  const target=Math.max(180,maxH-overhead);
-  scroll.style.maxHeight=target+'px';
-}
+// Die Kalender-Hoehe wird jetzt via CSS (flex:1 auf .cal-scroll) gesteuert.
+// Die Karte dehnt sich per Grid auf die Hoehe der laengsten Karte in der Zeile aus,
+// und cal-scroll fuellt den Rest. Diese Funktion ist nur noch ein no-op.
+function fitCalendarHeight(){}
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
 function scrollCalsToNow(){
@@ -3483,7 +3482,7 @@ function scrollCalsToNow(){
     if(line)box.scrollTop=Math.max(0,line.offsetTop-box.clientHeight/2+line.offsetHeight/2);
   });
 }
-window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>{fitCalendarHeight();scrollCalsToNow();});});
+window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(scrollCalsToNow);});
 
 function mvWidget(id,d){
   const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
