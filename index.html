@@ -384,7 +384,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-green-dismiss:hover{color:var(--red)}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
-.setups-cols .sym-row{gap:5px}
+.setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center}
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
 .ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
@@ -539,20 +539,16 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .dp{max-width:2000px}
 }
 /* ── INTRO-ANIMATION (Start/Reload) ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:transparent}
-#introOv.intro-done{display:none}
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#0d1117;cursor:pointer}
 #introShards{position:absolute;inset:0;z-index:1}
-.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1a2538 0%,#0d1117 58%,#070a0f 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.06);will-change:transform,opacity}
-.intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.06) 1px,transparent 1px);background-size:46px 46px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 68%);mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 68%);animation:introGridFade 1.9s ease forwards}
-#introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;transform-origin:50% 45%;animation:introZoomSeq 2.75s cubic-bezier(.66,0,.86,0) .25s forwards}
-.intro-title{font-weight:900;font-size:clamp(32px,7vw,88px);letter-spacing:clamp(1px,.6vw,7px);white-space:nowrap;padding:0 4vw;background:linear-gradient(135deg,#5fa8ed 0%,#4fc3f7 45%,#a78bfa 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.02;filter:drop-shadow(0 0 26px rgba(79,195,247,.55));opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .15s forwards}
-.intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .6s forwards}
-.intro-flash{position:absolute;inset:0;z-index:4;background:radial-gradient(circle at 50% 45%,#dcefff 0%,#5fa8ed 26%,transparent 58%);opacity:0;mix-blend-mode:screen;animation:introFlash 1.2s ease 1.45s forwards;pointer-events:none}
+.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1a2538 0%,#0d1117 58%,#070a0f 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
+.intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
+#introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.intro-title{font-weight:900;font-size:clamp(32px,7vw,88px);letter-spacing:clamp(1px,.6vw,7px);white-space:nowrap;padding:0 4vw;background:linear-gradient(135deg,#5fa8ed 0%,#4fc3f7 45%,#a78bfa 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.02;filter:drop-shadow(0 0 26px rgba(79,195,247,.55));opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
+.intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
+.intro-hint{position:absolute;bottom:9%;left:0;right:0;text-align:center;font-size:clamp(10px,1.4vw,14px);color:rgba(128,151,176,.55);letter-spacing:3px;text-transform:uppercase;opacity:0;animation:introSubIn 1s ease 1.4s both;pointer-events:none}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
-@keyframes introZoomSeq{0%{transform:scale(1);opacity:1}48%{transform:scale(1.7);opacity:1}100%{transform:scale(26);opacity:0}}
-@keyframes introFlash{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}
-@keyframes introGridFade{0%{opacity:.9}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){#introOv{display:none}}
 </style>
 </head>
@@ -566,41 +562,50 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     <div class="intro-title">FX ANALYST&nbsp;PRO</div>
     <div class="intro-sub">created by Jonathan Brinkmann</div>
   </div>
-  <div class="intro-flash"></div>
+  <div class="intro-hint">Tippen oder Klicken</div>
 </div>
 <script>
 (function(){
   var ov=document.getElementById('introOv');
   if(!ov)return;
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches){ov.remove();return;}
-  function build(){
-    var layer=document.getElementById('introShards');
-    var vw=window.innerWidth,vh=window.innerHeight;
-    var cols=vw<700?5:7,rows=vw<700?6:5;
-    var tw=vw/cols,th=vh/rows,cx=vw/2,cy=vh*0.45;
-    for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
-      var x=c*tw,y=r*th;
-      var sh=document.createElement('div');
-      sh.className='intro-shard';
-      sh.style.left=x+'px';sh.style.top=y+'px';
-      sh.style.width=Math.ceil(tw)+1+'px';sh.style.height=Math.ceil(th)+1+'px';
-      sh.style.backgroundSize=vw+'px '+vh+'px';
-      sh.style.backgroundPosition=(-x)+'px '+(-y)+'px';
-      layer.appendChild(sh);
-      var mx=x+tw/2-cx,my=y+th/2-cy,dist=Math.hypot(mx,my)||1,maxd=Math.hypot(cx,cy)||1;
-      var ux=mx/dist,uy=my/dist;
+  var done=false;
+  var layer=document.getElementById('introShards');
+  var vw=window.innerWidth,vh=window.innerHeight;
+  var cols=vw<700?5:7,rows=vw<700?7:5;
+  var tw=vw/cols,th=vh/rows,cx=vw/2,cy=vh*0.45;
+  var shards=[];
+  for(var r=0;r<rows;r++){for(var c=0;c<cols;c++){
+    var x=c*tw,y=r*th;
+    var el=document.createElement('div');
+    el.className='intro-shard';
+    el.style.left=x+'px';el.style.top=y+'px';
+    el.style.width=(Math.ceil(tw)+1)+'px';el.style.height=(Math.ceil(th)+1)+'px';
+    el.style.backgroundSize=vw+'px '+vh+'px';
+    el.style.backgroundPosition=(-x)+'px '+(-y)+'px';
+    layer.appendChild(el);
+    shards.push({el:el,cx:x+tw/2,cy:y+th/2});
+  }}
+  function dismiss(){
+    if(done)return;done=true;
+    var zoom=document.getElementById('introZoom');
+    if(zoom){zoom.style.transition='opacity .35s ease';zoom.style.opacity='0';}
+    var hint=document.querySelector('.intro-hint');
+    if(hint){hint.style.transition='opacity .2s ease';hint.style.opacity='0';}
+    shards.forEach(function(s){
+      var dx=s.cx-cx,dy=s.cy-cy,dist=Math.hypot(dx,dy)||1;
       var push=Math.max(vw,vh)*(0.85+Math.random()*0.5);
-      var rot=(Math.random()*2-1)*150;
-      // Kacheln nahe der Mitte zerbrechen zuerst (Explosion aus dem gezoomten Text)
-      var delay=1750+(dist/maxd)*450;
-      sh.animate([
-        {transform:'translate(0,0) rotate(0deg) scale(1)',opacity:1,offset:0},
-        {transform:'translate('+(ux*push)+'px,'+(uy*push-120)+'px) rotate('+rot+'deg) scale(.34)',opacity:0,offset:1}
-      ],{duration:1150,delay:delay,easing:'cubic-bezier(.36,0,.4,1)',fill:'both'});
-    }
-    setTimeout(function(){ov.classList.add('intro-done');if(ov.parentNode)ov.remove();},3450);
+      var rot=(Math.random()*2-1)*180;
+      var delay=Math.random()*280;
+      s.el.animate([
+        {transform:'translate(0,0) rotate(0deg)',opacity:1},
+        {transform:'translate('+(dx/dist*push)+'px,'+(dy/dist*push-100)+'px) rotate('+rot+'deg) scale(.3)',opacity:0}
+      ],{duration:580,delay:delay,easing:'cubic-bezier(.36,0,.4,1)',fill:'forwards'});
+    });
+    setTimeout(function(){if(ov.parentNode)ov.remove();},1050);
   }
-  build();
+  ov.addEventListener('click',dismiss);
+  ov.addEventListener('touchstart',dismiss,{passive:true});
 })();
 </script>
 
@@ -631,7 +636,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#6366f1;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: INDIGO (Watchlist + Quick Notes breiter (2 Spalten); Setups: Score direkt neben Symbolname; CNY-News überall Medium-Impact; großer Kalender: Spalten gleichmäßiger verteilt, Event-Name näher am Actual-Wert)</div>
+<div style="background:#0e7490;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: CYAN (Animation: erscheint beim Laden, bleibt bis Klick/Touch, dann Splitter-Effekt; High-Impact-Filter in allen Kalendern (📁); Possible Set-ups: Score perfekt in Spalte ausgerichtet)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -690,7 +695,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
-      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Blendet Medium-/Low-Impact-Events aus und zeigt nur High-Impact-News">⚪ Alle Impacts</button>
+      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Blendet Medium-/Low-Impact-Events aus und zeigt nur High-Impact-News">📁 Alle Impacts</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Lädt High/Medium-Impact-News der nächsten 10 Tage (+ letzte 2 Tage) von Forex Factory neu und prüft per Live-Feed auf neue Actual-Werte für heute (auch gelöschte Events)">🔄 Refresh</button>
     </div>
   </div>
@@ -1109,11 +1114,13 @@ function toggleCalHighOnly(){
   localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');
   updCalHighBtn();
   renderCalendar();
+  if(curPage==='dash')renderDash();
+  if(curPage==='cur')renderDetail();
 }
 function updCalHighBtn(){
   const b=document.getElementById('calHighBtn');if(!b)return;
   b.classList.toggle('active',calHighOnly);
-  b.textContent=calHighOnly?'🔴 Nur High-Impact':'⚪ Alle Impacts';
+  b.textContent=calHighOnly?'📁 Nur High-Impact':'📁 Alle Impacts';
 }
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
@@ -2394,7 +2401,7 @@ function renderDetail(){
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
-        ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
+        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span><button class="btn dw-nav${calHighOnly?' active':''}" style="margin-left:auto;margin-right:4px" onclick="event.stopPropagation();toggleCalHighOnly()" title="${calHighOnly?'Alle Impacts anzeigen':'Nur High-Impact anzeigen'}">📁${calHighOnly?' Nur High':' Alle'}</button>`:`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
       ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
@@ -3473,9 +3480,9 @@ function renderDash(){
         const bear=[...wp.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
         const neu=[...wp.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
         const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
-          <div class="sym-name dw-pname" style="min-width:0">${escH(p.name)}</div>
+          <div class="sym-name dw-pname">${escH(p.name)}</div>
           ${rowScore(pairScore(p.name),'Paar-Score')}
-          <button class="dw-mark${p.marked?' on':''}" style="margin-left:auto" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
+          <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
         </div>`;
         const col=(label,color,list)=>`<div>
@@ -3519,10 +3526,12 @@ function renderDash(){
       // Gleiche Eigenschaften wie der Hauptkalender (Tagesgruppen, vergangene
       // Events gedimmt, rote Jetzt-Linie), aber kompakt und in einem scrollbaren
       // Container, der beim Rendern automatisch zur aktuellen Uhrzeit scrollt.
-      const sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+      let sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+      if(calHighOnly)sorted=sorted.filter(ev=>ev.impact==='high');
+      const calHighFilterBtn=`<button class="btn dw-nav${calHighOnly?' active':''}" style="margin-bottom:6px" onclick="toggleCalHighOnly()" title="${calHighOnly?'Alle Impacts anzeigen':'Nur High-Impact anzeigen'}">${calHighOnly?'📁 Nur High':'📁 Alle'}</button>`;
       const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`;
-      content=sorted.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      calHdr+`<div class="cal-scroll">${calTableHtml(sorted,{compact:true,skipHeader:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`;
+      content=calHighFilterBtn+(sorted.length===0?`<div class="dw-empty">${calHighOnly?'Keine High-Impact-Events.':'No events. Add in Calendar tab.'}</div>`:
+      calHdr+`<div class="cal-scroll">${calTableHtml(sorted,{compact:true,skipHeader:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`);
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
