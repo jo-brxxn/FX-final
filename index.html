@@ -384,6 +384,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-green-dismiss:hover{color:var(--red)}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
+.setups-cols .sym-row{gap:5px}
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
 .ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
@@ -498,11 +499,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Set-ups + Kalender: je 3 Grid-Spalten; FX-Bias/Assets: 2 Spalten */
+  /* Set-ups + Kalender: je 3 Grid-Spalten; FX-Bias/Assets, Watchlist, Quick Notes: 2 Spalten */
   #dashWidgets .dw.dw-setups{grid-column:span 3}
   #dashWidgets .dw.dw-biasassets{grid-column:span 2}
   #dashWidgets .dw.dw-calendar{grid-column:span 3}
-  @media(max-width:700px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
+  #dashWidgets .dw.dw-watchlist{grid-column:span 2}
+  #dashWidgets .dw.dw-quicknotes{grid-column:span 2}
+  @media(max-width:700px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar,#dashWidgets .dw.dw-watchlist,#dashWidgets .dw.dw-quicknotes{grid-column:1/-1}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -517,7 +520,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .dw-add,.pbo,.dw-sel{font-size:14px}
   .dw-chip-x,.dw-del{font-size:18px}
   /* ── CALENDAR TABLE: DESKTOP ── */
-  .cal-col-hdr,.cal-row{grid-template-columns:70px 70px 90px 1fr 110px 110px 110px 22px;gap:14px;padding:9px 14px}
+  /* Event-Spalte begrenzt (nicht volle Restbreite) + flexible Wert-Spalten,
+     damit Actual/Forecast/Previous naeher an den Event-Namen ruecken und sich
+     die Daten gleichmaessiger ueber die Breite verteilen. */
+  .cal-col-hdr,.cal-row{grid-template-columns:70px 70px 90px minmax(150px,1fr) 1fr 1fr 1fr 26px;gap:16px;padding:9px 14px}
   .cal-day-hdr{font-size:14px;padding:9px 14px}
   .cal-col-hdr{font-size:12px;padding:8px 14px}
   .cal-time,.cal-ccy{font-size:15px}
@@ -625,7 +631,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#ec4899;color:#0d1117;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: PINK (Neue Intro-Animation beim Laden: großes "FX ANALYST PRO" + "created by Jonathan Brinkmann", extremer Zoom in den Text, Bild zerbricht in Kacheln und gibt die Webseite frei)</div>
+<div style="background:#6366f1;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: INDIGO (Watchlist + Quick Notes breiter (2 Spalten); Setups: Score direkt neben Symbolname; CNY-News überall Medium-Impact; großer Kalender: Spalten gleichmäßiger verteilt, Event-Name näher am Actual-Wert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -985,10 +991,14 @@ function revisionColor(oldVal,newVal,name){
 // Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
 // Im "compact"-Modus (z.B. Dashboard-Widget) entfallen die Impact-Text- und Lösch-Spalte
 // zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
+// CNY-News werden in allen Kalendern immer als Medium-Impact behandelt.
+function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).includes('CNY');}
+function evtImpact(ev){return evtIsCNY(ev)?'medium':ev.impact;}
 function calRowHtml(ev,opts){
   opts=opts||{};
-  const ic=ev.impact==='high'?'ih':ev.impact==='medium'?'im':'il';
-  const impLbl=ev.impact==='high'?'High':ev.impact==='medium'?'Medium':'Low';
+  const imp=evtImpact(ev);
+  const ic=imp==='high'?'ih':imp==='medium'?'im':'il';
+  const impLbl=imp==='high'?'High':imp==='medium'?'Medium':'Low';
   const ac=actualColor(ev);
   const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
   const isToday=ev.date===todayStr();
@@ -3144,7 +3154,9 @@ async function fetchFF(silent,btnEl){
     calEvts=calEvts.filter(e=>!(e.src==='ff'&&daysUntil(e.date)>=-FF_PAST_DAYS&&daysUntil(e.date)<=FF_WINDOW_DAYS));
     let added=0,actualsAdded=0,revisionsUpdated=0;
     evts.forEach(ev=>{
-      if(ev.impact==='High'||ev.impact==='Medium'){
+      // CNY-News immer aufnehmen (als Medium), sonst nur High/Medium.
+      const isCNY=(ev.country||'').toUpperCase()==='CNY';
+      if(ev.impact==='High'||ev.impact==='Medium'||isCNY){
         if(!ev.date)return;
         const d=new Date(ev.date);if(isNaN(d))return;
         // In lokales Datum umrechnen, damit "heute" mit todayStr() übereinstimmt
@@ -3161,7 +3173,7 @@ async function fetchFF(silent,btnEl){
         // (sie bleiben dort jetzt CAL_PAST_DAYS Tage sichtbar). Das Postfach
         // selbst dedupliziert processCalEvts() über name+date.
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
-          const newEvt={id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:ev.impact==='High'?'high':'medium',forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'};
+          const newEvt={id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:isCNY?'medium':(ev.impact==='High'?'high':'medium'),forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'};
           // Wurde der "Previous"-Wert seit dem letzten Abruf revidiert
           // (z.B. Vormonats-NFP beim Folgemonats-Release korrigiert)?
           const oldPrev=oldPrevMap[(newEvt.currencies||'')+'|'+newEvt.name+'|'+newEvt.date];
@@ -3461,9 +3473,9 @@ function renderDash(){
         const bear=[...wp.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
         const neu=[...wp.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
         const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
-          <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}</div>
+          <div class="sym-name dw-pname" style="min-width:0">${escH(p.name)}</div>
           ${rowScore(pairScore(p.name),'Paar-Score')}
-          <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
+          <button class="dw-mark${p.marked?' on':''}" style="margin-left:auto" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
         </div>`;
         const col=(label,color,list)=>`<div>
@@ -3515,7 +3527,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':''}">
+    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
