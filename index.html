@@ -514,7 +514,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#f472b6;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ROSA (Bias jetzt vollautomatisch aus dem Score: Symbol/Paar ab +3 bullish, ab −3 bearish, dazwischen neutral; Paare mit Richtung wandern automatisch in „Possible Set-ups", neutrale in „No Direction" – Watchlist bleibt unangetastet, nur du nimmst dort Paare raus)</div>
+<div style="background:#fb923c;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Grünes ! nur neben Symbolen in FX-Bias/Other-Assets/Sidebar – nicht bei Paaren/Matrix; Logik rein datumsbasiert: heute oder gestern = grün, nächste 1–3 Tage = rot; USD-Events triggern auch grünes ! bei GOLD/OIL/BTC/SP500/NAS)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1037,9 +1037,8 @@ function evtFlagState(id){
   getSymEventsAll(id).forEach(ev=>{
     if(ev.impact!=='high')return;
     const dl=daysUntil(ev.date);
-    const released=(ev.actual!=null&&String(ev.actual).trim()!=='')||dl<0;
-    if(!released){if(dl>=0&&dl<=3)up=true;}
-    else if(dl>=-1&&dl<=0)done=true;
+    if(dl>=-1&&dl<=0)done=true;    // heute oder gestern -> grün
+    else if(dl>=1&&dl<=3)up=true;  // nächste 1-3 Tage -> rot
   });
   return (up?'u':'')+(done?'d':'');
 }
@@ -2742,7 +2741,6 @@ function renderPairCard(p,pci,catTotal){
         <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:10px;margin-top:0">▼</button>
       </div>
       <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
-      ${pairEvtFlagHtml(p.name)}
       ${rowScore(pairScore(p.name),'Paar-Score')}
       <div class="pbg" onclick="event.stopPropagation()">
         <span class="pbo on" style="--bc:${BC[p.bias]};--bca:${BC[p.bias]}18;cursor:default" title="Bias wird automatisch aus dem Paar-Score gesetzt (Basis − Quote): ab +3 bullish, ab −3 bearish, dazwischen neutral">${p.bias==='bull'?'▲':p.bias==='bear'?'▼':'◆'}</span>
@@ -3264,7 +3262,6 @@ function renderDash(){
           <button class="sp-mv" style="font-size:10px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
         </div>
         <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
-        <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
         <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
@@ -3281,7 +3278,6 @@ function renderDash(){
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname">${escH(p.name)}</div>
-        <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
         ${p.sl||p.tp?`<span class="dw-meta">${p.sl?'SL:'+p.sl:''} ${p.tp?'TP:'+p.tp:''}</span>`:''}
@@ -3296,7 +3292,6 @@ function renderDash(){
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
-          <span class="evt-flag-slot">${pairEvtFlagHtml(p.name)}</span>
           ${rowScore(pairScore(p.name),'Paar-Score')}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatisch aus dem Paar-Score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
@@ -3386,10 +3381,10 @@ function addWidget(){
 function renderMatrix(){
   const fx=syms.filter(s=>FX.includes(s.id));
   let h=`<thead><tr><th style="text-align:left">BASE</th>`;
-  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${rowScore(symScore(q))} ${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}${evtFlagHtml(q.id)}</th>`;});
+  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${rowScore(symScore(q))} ${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}</th>`;});
   h+=`</tr></thead><tbody>`;
   fx.forEach(base=>{
-    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${rowScore(symScore(base))} ${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}${evtFlagHtml(base.id)}</td>`;
+    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${rowScore(symScore(base))} ${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}</td>`;
     fx.forEach(q=>{
       if(base.id===q.id){h+=`<td class="cna">—</td>`;return;}
       const pb=base.bias==='bull'&&q.bias==='bear'?'bull':base.bias==='bear'&&q.bias==='bull'?'bear':'neu';
@@ -3399,7 +3394,7 @@ function renderMatrix(){
   const others=syms.filter(s=>!FX.includes(s.id));
   document.getElementById('assetCards').innerHTML=others.length?
     `<div style="font-size:10px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name} ${evtFlagHtml(s.id)}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${rowScore(symScore(s))} ${BL[s.bias]}</div></div>`).join(''):'';}
+    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${rowScore(symScore(s))} ${BL[s.bias]}</div></div>`).join(''):'';}
 
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
