@@ -98,6 +98,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
+/* ── MARKIERT (WICHTIG): mit Bias = Bias-Farbe extrem verstaerkt, ohne Bias = hellgelb ── */
+.sym-row.row-marked.glow-bull,.pair-card.row-marked.glow-bull,.ind-card.imp.glow-bull,.rub-card.imp.glow-bull,.ri.imp.glow-bull{border-color:var(--green)!important;background-image:linear-gradient(rgba(var(--green-rgb),.22),rgba(var(--green-rgb),.22))!important;box-shadow:0 0 0 1px rgba(var(--green-rgb),.85),inset 0 0 16px 3px rgba(var(--green-rgb),.34)!important}
+.sym-row.row-marked.glow-bear,.pair-card.row-marked.glow-bear,.ind-card.imp.glow-bear,.rub-card.imp.glow-bear,.ri.imp.glow-bear{border-color:var(--red)!important;background-image:linear-gradient(rgba(var(--red-rgb),.22),rgba(var(--red-rgb),.22))!important;box-shadow:0 0 0 1px rgba(var(--red-rgb),.85),inset 0 0 16px 3px rgba(var(--red-rgb),.34)!important}
+.sym-row.row-marked.glow-neu,.pair-card.row-marked.glow-neu,.ind-card.imp.glow-neu,.rub-card.imp.glow-neu,.ri.imp.glow-neu{border-color:var(--amber)!important;background-image:linear-gradient(rgba(var(--amber-rgb),.24),rgba(var(--amber-rgb),.24))!important;box-shadow:0 0 0 1px rgba(var(--amber-rgb),.85),inset 0 0 16px 3px rgba(var(--amber-rgb),.34)!important}
+/* ohne Bias (z.B. Notiz-Stichpunkte) → hellgelb aufleuchten */
+.ri.imp:not([class*="glow-"]){background:rgba(255,221,51,.16)!important;border-color:#ffe14d!important;box-shadow:0 0 0 1px rgba(255,221,51,.7),inset 0 0 13px 2px rgba(255,221,51,.26)!important}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
 .stabs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -275,11 +281,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-t{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:4px;flex-shrink:0}
-.sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
+.sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
-.bbadge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
+.bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
 .row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -370,6 +376,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
+/* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
+.ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -480,10 +488,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Possible Set-ups: 3 Spalten -> 2 Grid-Spalten breit; Kalender: 2 Grid-Spalten fuer volle Event-Namen */
+  /* Set-ups + FX-Bias/Assets: je 3 bzw. 2 Innenspalten -> 2 Grid-Spalten breit; Kalender: 2 Grid-Spalten fuer volle Event-Namen */
   #dashWidgets .dw.dw-setups{grid-column:span 2}
+  #dashWidgets .dw.dw-biasassets{grid-column:span 2}
   #dashWidgets .dw.dw-calendar{grid-column:span 2}
-  @media(max-width:600px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
+  @media(max-width:600px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
 .dw{padding:18px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
@@ -541,7 +550,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#f97316;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE-2 (Lücke zwischen Name und Score entfernt (flex:none); Karten schmaler (minmax 220px); Kalender-Widget 2 Spalten breit für volle Event-Namen)</div>
+<div style="background:#3b82f6;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: BLAU (FX-Bias + Other Assets in 1 Karte mit 2 Spalten, beide nach Score sortiert; Kalender passt sich an längste Karte an; mehr Abstand Name/Score/Bias; Bias-Text mittig zentriert; markiert=Bias-Farbe extrem verstärkt bzw. hellgelb ohne Bias; Score-Farbe folgt Karten-Bias; Symbolwechsel scrollt nach oben)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -816,7 +825,7 @@ function pairScore(pairName){
   if(!bSym||!qSym)return 0;
   return symScore(bSym)-symScore(qSym);
 }
-function rowScore(n,title){return`<span class="row-score" style="color:${scoreColor(n)}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
+function rowScore(n,title,color){return`<span class="row-score" style="color:${color||scoreColor(n)}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
 // ── CALENDAR ↔ SYMBOL MATCHING ──
@@ -2030,9 +2039,8 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'fx_bias',title:'FX Bias',order:0},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:0},
   {id:uid(),type:'setups',title:'Possible Set-ups',order:1},
-  {id:uid(),type:'assets',title:'Other Assets',order:3},
   {id:uid(),type:'watchlist',title:'Watchlist',order:4},
   {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
   {id:uid(),type:'quick_notes',title:'Quick Notes',content:'',order:6},
@@ -2079,6 +2087,12 @@ function loadState(){
       widgets=d.widgets||mkWidgets();
       // "No Direction"-Widget wurde entfernt (in "Possible Set-ups" zusammengeführt).
       widgets=widgets.filter(w=>w.type!=='no_direction');
+      // "Other Assets" wurde in das FX-Bias-Widget integriert (zwei Spalten).
+      if(widgets.find(w=>w.type==='assets')){
+        const fb=widgets.find(w=>w.type==='fx_bias');
+        if(fb)fb.title='FX Bias & Other Assets';
+        widgets=widgets.filter(w=>w.type!=='assets');
+      }
       if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
@@ -2270,7 +2284,7 @@ function renderSidebar(){
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
-          <div class="an">${c.name}</div>${(()=>{const sc=symScore(c);return`<div class="sb-score" style="color:${scoreColor(sc)}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an">${c.name}</div>${(()=>{const sc=symScore(c);return`<div class="sb-score" style="color:${BC[c.bias]}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Nach oben verschieben">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Nach unten verschieben">▼</button>`:''}
@@ -2374,7 +2388,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · lange drücken zum Bearbeiten" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${scoreColor(sc)};border-color:${scoreColor(sc)}" title="Karten-Score = Summe der Indikatoren dieser Karte (Bullish +1, Neutral 0, Bearish −1)">${sc>0?'+':''}${sc}</span>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Karten-Score = Summe der Indikatoren dieser Karte (Bullish +1, Neutral 0, Bearish −1)">${sc>0?'+':''}${sc}</span>`;})()}
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -2532,7 +2546,7 @@ function renderNoteRub(rub,ri,total){
   </div>`;}
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
-function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();}
+function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d)d.scrollTop=0;}
 function setSub(s){curSub=s;renderDetail();}
 function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 function setBias(b){
@@ -2881,6 +2895,7 @@ function togPCC(catId){const c=pairCats.find(x=>x.id===catId);if(c){c.open=!c.op
 function togPair(id){const p=pairs.find(x=>x.id===id);if(p){p._open=!p._open;renderPairs();}}
 function setPairBias(id,b){pushU();const p=pairs.find(x=>x.id===id);if(p){p.bias=b;save();renderPairs();}}
 function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){p.marked=!p.marked;save();}}
+function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){s.marked=!s.marked;save();renderDash();}}
 function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){p.catId=catId;p._open=false;save();renderPairs();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();}
 function mvPairCat(ci,d){pushU();mvArr(pairCats,ci,d);save();renderPairs();}
@@ -3331,9 +3346,8 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
-  {type:'fx_bias',label:'FX Bias',sub:'Your current bias across all major FX currencies'},
+  {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'setups',label:'Possible Set-ups',sub:'FX pairs sorted into bullish / neutral / bearish columns'},
-  {type:'assets',label:'Other Assets',sub:'Bias on commodities, indices & crypto'},
   {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
   {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
   {type:'quick_notes',label:'Quick Notes',sub:'Freeform notes & reminders'},
@@ -3346,22 +3360,22 @@ function renderDash(){
     let content='';
     if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
-      content=fxSorted.map(s=>`
-        <div class="sym-row ${glowClass(s.bias)}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
+      const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
+      const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
-          ${rowScore(symScore(s),'Symbol-Score')}
+          ${rowScore(symScore(s),'Symbol-Score',BC[s.bias])}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
-        </div>`).join('');
-    }else if(w.type==='assets'){
-      const others=syms.filter(s=>!FX.includes(s.id));
-      content=others.length===0?`<div class="dw-empty">No custom assets.</div>`:
-      others.map(s=>`<div class="sym-row ${glowClass(s.bias)}">
-        <div class="sym-name">${s.name}</div>
-        <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
-        ${rowScore(symScore(s),'Symbol-Score')}
-        <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
-      </div>`).join('');
+          <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
+        </div>`;
+      const col=(label,list,empty)=>`<div>
+          <div class="setups-col-hdr" style="background:var(--bg3);color:var(--t2)">${label}</div>
+          ${list.length?list.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">${empty}</div>`}
+        </div>`;
+      content=`<div class="ba-cols">
+          ${col('FX Majors',fxSorted,'–')}
+          ${col('Other Assets',others,'No custom assets.')}
+        </div>`;
     }else if(w.type==='setups'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
@@ -3425,7 +3439,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':''}">
+    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
@@ -3440,7 +3454,26 @@ function renderDash(){
       </div>
       ${content}
     </div>`;}).join('');
-  scrollCalsToNow();
+  requestAnimationFrame(()=>{fitCalendarHeight();scrollCalsToNow();});
+}
+// Passt die Hoehe des Upcoming-Events-Kalenders an die laengste andere Karte an,
+// damit der Kalender nie die laengste Karte ist, sich aber so weit wie moeglich
+// nach unten erstreckt. Der Rest scrollt intern.
+function fitCalendarHeight(){
+  const cal=document.querySelector('#dashWidgets .dw-calendar');
+  if(!cal)return;
+  const scroll=cal.querySelector('.cal-scroll');
+  if(!scroll)return;
+  // Erst den Kalender einklappen, damit er seine eigene Grid-Zeile (und deren
+  // Nachbarkarten) nicht aufblaeht und die Messung verfaelscht.
+  scroll.style.maxHeight='0px';
+  const overhead=cal.offsetHeight; // Header/Padding bei eingeklapptem Scrollbereich
+  let maxH=0;
+  document.querySelectorAll('#dashWidgets .dw').forEach(c=>{if(c!==cal)maxH=Math.max(maxH,c.offsetHeight);});
+  if(maxH<=0){scroll.style.maxHeight='620px';return;}
+  // Obergrenze = laengste andere Karte; nie laenger. Inhalt scrollt intern.
+  const target=Math.max(180,maxH-overhead);
+  scroll.style.maxHeight=target+'px';
 }
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
@@ -3450,6 +3483,7 @@ function scrollCalsToNow(){
     if(line)box.scrollTop=Math.max(0,line.offsetTop-box.clientHeight/2+line.offsetHeight/2);
   });
 }
+window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>{fitCalendarHeight();scrollCalsToNow();});});
 
 function mvWidget(id,d){
   const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
