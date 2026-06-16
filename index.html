@@ -637,7 +637,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Großer Kalender: Actual/Forecast/Previous wieder etwas weiter auseinander, weiterhin rechts; Cloud-Sync-Fix: Vergleich jetzt geräteunabhängig (Versions-Gleichheit statt Uhrzeit-Größenvergleich) — PC-Änderungen kommen jetzt auch auf dem iPad an)</div>
+<div style="background:#b45309;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: BERNSTEIN (Undo/Redo jetzt vollständig: Rubrik-Bias, Indikator-Bias, Wichtig-Haken, Markierungen, Widget-Verschieben; Lokale Backups: 🕐 Backups-Button oben rechts → bis zu 5 Snapshots, überlebt Neuladen, automatisch alle 10 Min. + vor Cloud-Download)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -655,6 +655,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:rgba(var(--blue-rgb),.27);color:var(--blue)">☁ Sync</button>
+    <button class="btn" onclick="openBackupM()" title="Lokale Backups (letzte 5 Snapshots)">🕐 Backups</button>
     <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Postfach">📥 Postfach<span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
   </div>
 </div>
@@ -839,6 +840,18 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
       <button class="btn" onclick="cloudPull(true)">⬇ Herunterladen</button>
       <button class="btn" onclick="cloudPush(true)">⬆ Hochladen</button>
       <button class="btn g" onclick="saveCloudCfg()">Speichern</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: Lokale Backups -->
+<div class="ov" id="mBackup" style="display:none">
+  <div class="modal">
+    <h3>🕐 Lokale Backups</h3>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Bis zu <strong>5 Snapshots</strong> deiner Daten werden lokal auf diesem Gerät gespeichert — automatisch vor jedem Cloud-Download und alle 10 Minuten. Unabhängig von Cloud und Undo-Funktion. Kein Netzwerk nötig.</div>
+    <div id="mBackupList"></div>
+    <div class="m-btns" style="margin-top:12px">
+      <button class="btn" onclick="closeM('mBackup')">Schließen</button>
+      <button class="btn g" onclick="saveLocalBackup('Manuell');openBackupM()" title="Jetzt einen Backup-Snapshot erstellen">💾 Jetzt sichern</button>
     </div>
   </div>
 </div>
@@ -2152,6 +2165,43 @@ function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
+// ══ LOKALE BACKUPS ══════════════════════════════════════════════════
+// Bis zu 5 Snapshots lokal (localStorage), unabhängig von Cloud und Undo-Stapel.
+// Überlebt Seitenneuladen. Wird vor Cloud-Pull und alle 10 Minuten gespeichert.
+const BACKUP_KEY='fxpro_backups';
+function saveLocalBackup(label){
+  try{
+    const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+    bs.unshift({ts:new Date().toISOString(),label:label||'Auto',data:snap(),gd:JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')});
+    if(bs.length>5)bs.length=5;
+    localStorage.setItem(BACKUP_KEY,JSON.stringify(bs));
+  }catch(e){}
+}
+function openBackupM(){
+  try{
+    const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+    const el=document.getElementById('mBackupList');
+    if(bs.length===0){el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">Noch keine Backups vorhanden. Backups werden automatisch vor jedem Cloud-Download und alle 10 Minuten erstellt.</div>';}
+    else{el.innerHTML=bs.map((b,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
+      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:13px">${escH(b.label)}</div><div style="color:var(--t3);font-size:11px;font-family:'SF Mono',monospace">${new Date(b.ts).toLocaleString('de-DE')}</div></div>
+      <button class="btn g" onclick="restoreLocalBackup(${i})" style="font-size:11px;flex-shrink:0">↩ Wiederherstellen</button>
+    </div>`).join('');}
+  }catch(e){}
+  openM('mBackup');
+}
+function restoreLocalBackup(i){
+  try{
+    const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+    const b=bs[i];if(!b)return;
+    if(!confirm('Zustand von '+new Date(b.ts).toLocaleString('de-DE')+' wiederherstellen?\n\nAktuelle Daten werden als Undo-Schritt gespeichert (↩ Undo drücken zum Zurücksetzen).'))return;
+    pushU();applySnap(b.data);
+    if(b.gd){greenDismissed=b.gd;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(b.gd));}catch(e){}}
+    processCalEvts();save();renderSidebar();rerender();updUB();updInboxBadge();updGreenBadge();
+    closeM('mBackup');
+  }catch(e){alert('Fehler beim Wiederherstellen: '+e.message);}
+}
+setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatisch (10 Min.)');},10*60*1000);
+
 // ══ STATE ═══════════════════════════════════════════════════════════
 let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},rateWatchCustom={};
 function loadState(){
@@ -2306,6 +2356,7 @@ async function cloudPull(manual){
     // kamen nie auf dem iPad an (Sync funktionierte nur iPad -> PC).
     if(manual||!seen||cloudUpdated!==seen){
       const cd=rows[0].data;
+      saveLocalBackup('Vor Cloud-Download ('+(manual?'manuell':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       processCalEvts();
@@ -2335,7 +2386,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -2703,8 +2754,8 @@ function syncMacroRub(ri){
     r.imp=clone.imp;r.summary=clone.summary;
   });
 }
-function setRubBias(ri,b){const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togRubImp(ri){const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
+function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
@@ -2732,8 +2783,8 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togIndImp(ri,ii){const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
+function setIndBias(ri,ii,b){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
@@ -3010,9 +3061,9 @@ function renderPairCard(p,pci,catTotal){
 function togPCC(catId){const c=pairCats.find(x=>x.id===catId);if(c){c.open=!c.open;renderPairs();}}
 function togPair(id){const p=pairs.find(x=>x.id===id);if(p){p._open=!p._open;renderPairs();}}
 function setPairBias(id,b){pushU();const p=pairs.find(x=>x.id===id);if(p){p.bias=b;save();renderPairs();}}
-function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){p.marked=!p.marked;save();}}
-function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){s.marked=!s.marked;save();renderDash();}}
-function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){p.catId=catId;p._open=false;save();renderPairs();}}
+function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){pushU();p.marked=!p.marked;save();}}
+function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){pushU();s.marked=!s.marked;save();renderDash();}}
+function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;p._open=false;save();renderPairs();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();}
 function mvPairCat(ci,d){pushU();mvArr(pairCats,ci,d);save();renderPairs();}
 function addPairCat(){pushU();pairCats.push({id:uid(),name:'New Category',open:true});save();renderPairs();}
@@ -3593,7 +3644,7 @@ window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(
 
 function mvWidget(id,d){
   const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
-  mvArr(widgets,i,d);widgets.forEach((w,j)=>w.order=j);save();renderDash();}
+  pushU();mvArr(widgets,i,d);widgets.forEach((w,j)=>w.order=j);save();renderDash();}
 function delWidget(id){pushU();widgets=widgets.filter(w=>w.id!==id);save();renderDash();}
 
 // rename widget using rename modal
@@ -3602,7 +3653,7 @@ function renameWidget(id){
   const w=widgets.find(x=>x.id===id);if(!w)return;
   document.getElementById('mRenameTitle').textContent='Rename Widget';
   document.getElementById('mRenameInp').value=w.title||'';
-  _renameCb=v=>{w.title=v;save();renderDash();};
+  _renameCb=v=>{pushU();w.title=v;save();renderDash();};
   openM('mRename');setTimeout(()=>document.getElementById('mRenameInp').focus(),50);
 }
 function confirmRename(){
