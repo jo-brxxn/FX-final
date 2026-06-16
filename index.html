@@ -278,7 +278,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .sym-row{display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
 .sym-row:hover{background:var(--bg3)}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
-.sym-name:not(.dw-pname){flex:1}
+.sym-name:not(.dw-pname){flex:none}
 .bbadge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:50px;text-align:center;box-sizing:border-box}
 .row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
@@ -478,11 +478,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .masonry .rub-card.collapsed{align-self:start}
   .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Possible Set-ups braucht mehr Platz fuer 3 Spalten -> 2 Grid-Spalten breit (nicht volle Breite) */
+  /* Possible Set-ups: 3 Spalten -> 2 Grid-Spalten breit; Kalender: 2 Grid-Spalten fuer volle Event-Namen */
   #dashWidgets .dw.dw-setups{grid-column:span 2}
-  @media(max-width:820px){#dashWidgets .dw.dw-setups{grid-column:1/-1}}
+  #dashWidgets .dw.dw-calendar{grid-column:span 2}
+  @media(max-width:600px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-calendar{grid-column:1/-1}}
 .dw{padding:18px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
@@ -540,7 +541,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#14b8a6;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Possible Set-ups breiter (2 Spalten, kein Überlappen mehr); Upcoming-Events-Kalender erweitert sich nach unten (mehr Events sichtbar))</div>
+<div style="background:#f97316;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE-2 (Lücke zwischen Name und Score entfernt (flex:none); Karten schmaler (minmax 220px); Kalender-Widget 2 Spalten breit für volle Event-Namen)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -3424,7 +3425,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='setups'?' dw-setups':''}">
+    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
