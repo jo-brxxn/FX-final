@@ -368,7 +368,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}
 .cal-green-dismiss:hover{color:var(--red)}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
-.setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px;max-width:860px}
+.setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
@@ -480,9 +480,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Possible Set-ups braucht Platz fuer 3 Spalten -> ueber die volle Breite */
-  #dashWidgets .dw.dw-wide{grid-column:1/-1}
-  .dw{padding:18px}
+.dw{padding:18px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
   .sym-row{padding:8px 11px}
@@ -539,7 +537,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#facc15;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Vergangene Events gedimmt; rote Jetzt-Linie mit Uhrzeit (bewegt sich); Upcoming-Events-Widget scrollbar + auto-scrollt zur Uhrzeit; Possible Set-ups kompakter; FX-Bias nach Score sortiert; neutrale Scores ±1/±2 in Orange)</div>
+<div style="background:#a855f7;color:#fff;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LILA (Possible Set-ups Karte jetzt normale Breite statt volle Breite)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -3423,7 +3421,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='setups'?' dw-wide':''}">
+    return`<div class="dw">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
