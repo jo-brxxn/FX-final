@@ -471,6 +471,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
+  /* Possible Set-ups braucht Platz fuer 3 Spalten -> ueber die volle Breite */
+  #dashWidgets .dw.dw-wide{grid-column:1/-1}
   .dw{padding:18px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
@@ -528,7 +530,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#a3e635;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LIME (Bonds geben 0,5 Punkte; grüne ! nach Reload stabil (Key=Name|Datum|Währung); Dismiss aktualisiert Sidebar+Dashboard; Possible Set-ups: 3 Spalten Bull/Neutral/Bear, nach Score sortiert)</div>
+<div style="background:#fb923c;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Watchlist-Zeilen rechtsbündig wie übrige Karten; grünes ! verschwindet jetzt auch im Mini-Kalender beim Löschen; Karte „No Direction" entfernt – neutrale Paare jetzt in der Neutral-Spalte von „Possible Set-ups"; Set-ups-Karte über volle Breite)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -903,7 +905,7 @@ function calRowHtml(ev,opts){
     ${val(ev.previous,ev.prevRevColor)}
     ${opts.delAction
       ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`
-      :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[ev.id])
+      :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])
         ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-Impact-Event eingetroffen">!</span><button class="cal-green-dismiss" data-dkey="${escH(evtDismissKey(ev)).replace(/"/g,'&quot;')}" onclick="dismissGreenEvt(this.dataset.dkey)" title="Bestätigen / entfernen">×</button></div>`
         :'<div></div>'}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
@@ -1991,7 +1993,6 @@ function cleanLegacySeedEvts(){
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias',order:0},
   {id:uid(),type:'setups',title:'Possible Set-ups',order:1},
-  {id:uid(),type:'no_direction',title:'No Direction',order:2},
   {id:uid(),type:'assets',title:'Other Assets',order:3},
   {id:uid(),type:'watchlist',title:'Watchlist',order:4},
   {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
@@ -2037,7 +2038,8 @@ function loadState(){
       noteCats=d.noteCats||mkNCs();
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
-      if(!widgets.find(w=>w.type==='no_direction'))widgets.unshift({id:uid(),type:'no_direction',title:'No Direction',order:-1});
+      // "No Direction"-Widget wurde entfernt (in "Possible Set-ups" zusammengeführt).
+      widgets=widgets.filter(w=>w.type!=='no_direction');
       if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
@@ -2730,16 +2732,21 @@ function recomputeAuto(){recomputeAllSymBiases();recomputeAllPairBiases();syncAu
 function syncAutoPairCats(){
   let setupCat=pairCats.find(c=>c.name===SETUP_CAT);
   if(!setupCat){setupCat={id:uid(),name:SETUP_CAT,open:true};pairCats.unshift(setupCat);}
-  let nodirCat=pairCats.find(c=>c.name===NODIR_CAT);
-  if(!nodirCat){nodirCat={id:uid(),name:NODIR_CAT,open:false};pairCats.splice(pairCats.indexOf(setupCat)+1,0,nodirCat);}
+  // "No Direction" wurde mit "Possible Set-ups" zusammengelegt: noch vorhandene
+  // Paare aus der alten Kategorie nach Set-ups verschieben (sie landen dort in
+  // der Neutral-Spalte) und die nun leere Kategorie entfernen.
+  const nodirCat=pairCats.find(c=>c.name===NODIR_CAT);
+  if(nodirCat){
+    pairs.forEach(p=>{if(p.catId===nodirCat.id)p.catId=setupCat.id;});
+    pairCats=pairCats.filter(c=>c.id!==nodirCat.id);
+  }
   FX_PAIRS.forEach(name=>{
     const bias=autoPairBias(name);
-    const target=bias==='neu'?nodirCat:setupCat;
     const p=pairs.find(x=>x.name===name);
     if(p){
-      if(p.catId===setupCat.id||p.catId===nodirCat.id){p.bias=bias;p.catId=target.id;}
+      if(p.catId===setupCat.id){p.bias=bias;}
     }else{
-      pairs.push({id:uid(),name,bias,catId:target.id,entry:'',entryTrigger:'',sl:'',tp:'',rr:'',size:'',notes:'',_open:false});
+      pairs.push({id:uid(),name,bias,catId:setupCat.id,entry:'',entryTrigger:'',sl:'',tp:'',rr:'',size:'',notes:'',_open:false});
     }
   });
 }
@@ -3286,8 +3293,7 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'fx_bias',label:'FX Bias',sub:'Your current bias across all major FX currencies'},
-  {type:'setups',label:'Possible Set-ups',sub:'FX pairs where one currency is bullish and the other bearish'},
-  {type:'no_direction',label:'No Direction',sub:'FX pairs with no clear directional bias yet'},
+  {type:'setups',label:'Possible Set-ups',sub:'FX pairs sorted into bullish / neutral / bearish columns'},
   {type:'assets',label:'Other Assets',sub:'Bias on commodities, indices & crypto'},
   {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
   {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
@@ -3341,20 +3347,14 @@ function renderDash(){
           ${col('▼ Bearish',BC.bear,bear)}
         </div>`;
       }
-    }else if(w.type==='no_direction'){
-      const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
-      const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
-      content=addBtn+(wp.length===0?`<div class="dw-empty">All FX pairs currently have a direction.</div>`:
-      `<div style="display:flex;flex-wrap:wrap;gap:5px">`+wp.map(p=>`<span class="dw-chip ${glowClass(p.bias)}">${rowScore(pairScore(p.name),'Paar-Score')}${escH(p.name)}<button onclick="delPair('${p.id}');renderDash()" class="dw-chip-x" title="Remove">×</button></span>`).join('')+`</div>`);
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
       content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
-        <div class="sym-name dw-pname">${escH(p.name)}</div>
+        <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEU'}</span>
-        ${p.sl||p.tp?`<span class="dw-meta">${p.sl?'SL:'+p.sl:''} ${p.tp?'TP:'+p.tp:''}</span>`:''}
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
     }else if(w.type==='pairs_editor'){
@@ -3393,7 +3393,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw">
+    return`<div class="dw${w.type==='setups'?' dw-wide':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
