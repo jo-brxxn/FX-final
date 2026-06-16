@@ -347,6 +347,17 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
+/* ── GREEN ALERT BADGE (Toolbar) ── */
+.green-alert-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 5px;cursor:default;transition:opacity .2s,transform .2s;line-height:1;gap:1px;min-width:24px}
+.green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
+.green-alert-count{color:#22c55e;font-size:10px;font-weight:800;line-height:1;display:block;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-align:center}
+.green-alert-wrap.ga-zero{opacity:.22;transform:scale(.72)}
+.green-alert-wrap.ga-many .green-alert-icon{font-size:22px;animation:pulse-badge 1.4s ease-in-out infinite}
+.green-alert-wrap.ga-many .green-alert-count{font-size:13px;font-weight:900}
+/* Green flag + dismiss button in mini-calendar */
+.cal-green-row-wrap{display:flex;align-items:center;gap:3px}
+.cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}
+.cal-green-dismiss:hover{color:var(--red)}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -514,7 +525,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#e879f9;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: MAGENTA (Grünes ! datumsbasiert: heute/gestern = grün, 1–3 Tage voraus = rot; nur neben Symbolen in FX-Bias/Assets/Sidebar, nicht bei Paaren/Matrix; USD-Events gelten auch für GOLD/OIL/BTC/SP500/NAS; Bond-Yields ausgeklappt: Akt-Datum und Previous-Datum separat angezeigt)</div>
+<div style="background:#06b6d4;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: CYAN (Grünes ! in Toolbar mit Zähler: links neben Undo, Anzahl Symbole mit unbestätigten High-Impact-Events heute/gestern; Zähler ≥2 = groß/auffällig, =0 = blass; im Mini-Kalender zeitpunktgeprüfte grüne ! mit × zum Bestätigen pro Event; Bestätigungen werden separat gespeichert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -522,6 +533,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
   </div>
   <div class="hdr-r">
+    <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbole mit High-Impact-Events heute / gestern">
+      <span class="green-alert-icon">!</span>
+      <span class="green-alert-count" id="greenAlertCount">0</span>
+    </div>
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled>↩ Undo</button>
     <button class="btn" id="redoBtn" onclick="doRedo()" disabled>↪ Redo</button>
     <button class="btn" onclick="exportData()">⬇ Export</button>
@@ -880,7 +895,11 @@ function calRowHtml(ev,opts){
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
     ${val(ev.previous,ev.prevRevColor)}
-    ${opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`:'<div></div>'}
+    ${opts.delAction
+      ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`
+      :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[ev.id])
+        ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-Impact-Event eingetroffen">!</span><button class="cal-green-dismiss" onclick="dismissGreenEvt('${ev.id}')" title="Bestätigen / entfernen">×</button></div>`
+        :'<div></div>'}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
 }
@@ -902,7 +921,7 @@ function calTableHtml(evts,opts){
   // ID-Präfix, damit Haupt- und Mini-Kalender keine doppelten Element-IDs
   // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
   const pfx=opts.idPrefix||'';
-  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
+  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact,showGreenFlag:opts.showGreenFlag});
   dates.forEach(date=>{
     const dayEvts=byDate[date]||[];
     const n=dayEvts.length;
@@ -1027,6 +1046,39 @@ function getRelevantEvents(id){
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
 function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
+// Bestätigte (dismisste) grüne Events – persistiert separat, nicht in snap/undo.
+let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')}catch(e){return{};}})();
+// Ist ein Event jetzt grün? High-Impact + (gestern ODER heute-nach-Uhrzeit).
+function isEvtGreenNow(ev){
+  if(ev.impact!=='high')return false;
+  const dl=daysUntil(ev.date);
+  if(dl===-1)return true;
+  if(dl!==0)return false;
+  if(!ev.time)return true;
+  const n=new Date();
+  const cur=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  return cur>=ev.time;
+}
+// Bestätigt ein grünes Event (× geklickt) und aktualisiert Badge + Mini-Kalender.
+function dismissGreenEvt(evtId){
+  greenDismissed[evtId]=true;
+  try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}
+  updGreenBadge();
+  if(curPage==='cur')renderDetail();
+  else if(curPage==='dash')renderDash();
+}
+// Anzahl Symbole mit mindestens einem unbestätigten grünen Event.
+function countGreenSyms(){return syms.filter(s=>evtFlagState(s.id).includes('d')).length;}
+// Aktualisiert den grünen Ausrufezeichen-Badge oben in der Leiste.
+function updGreenBadge(){
+  const wrap=document.getElementById('greenAlertWrap');
+  const cnt=document.getElementById('greenAlertCount');
+  if(!wrap)return;
+  const n=countGreenSyms();
+  cnt.textContent=n;
+  wrap.classList.toggle('ga-zero',n===0);
+  wrap.classList.toggle('ga-many',n>=2);
+}
 // Status des Event-Ausrufezeichens für ein Symbol. Es kann BEIDES gleichzeitig
 // zutreffen (dann werden zwei Flags angezeigt):
 //   'u' = High-Impact-Event steht in den nächsten 3 Tagen an     -> rot
@@ -1037,8 +1089,8 @@ function evtFlagState(id){
   getSymEventsAll(id).forEach(ev=>{
     if(ev.impact!=='high')return;
     const dl=daysUntil(ev.date);
-    if(dl>=-1&&dl<=0)done=true;    // heute oder gestern -> grün
-    else if(dl>=1&&dl<=3)up=true;  // nächste 1-3 Tage -> rot
+    if(isEvtGreenNow(ev)&&!greenDismissed[ev.id])done=true;
+    else if(dl>=1&&dl<=3)up=true;
   });
   return (up?'u':'')+(done?'d':'');
 }
@@ -2195,7 +2247,7 @@ function renderDetail(){
         ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-'}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
@@ -2819,6 +2871,7 @@ function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();render
 function updInboxBadge(){
   const b=document.getElementById('inboxBadge');if(!b)return;
   b.style.display=inbox.length?'flex':'none';
+  updGreenBadge();
 }
 function openInboxM(){renderInbox();openM('mInbox');}
 function renderInbox(){
