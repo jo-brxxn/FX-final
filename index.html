@@ -313,6 +313,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-row:last-child{border-bottom:none}
 .cal-row:hover{background:var(--bg3)}
 .cal-row.today{background:rgba(var(--red-rgb),.05)}
+/* Bereits vergangene Events: gesamte Zeile gedimmt (Name, Uhrzeit, Werte ...). */
+.cal-row.cal-past{opacity:.42}
+.cal-row.cal-past:hover{opacity:.75}
+/* Dünne rote "Jetzt"-Linie mit linksbündiger Uhrzeit. */
+.cal-now-line{display:flex;align-items:center;gap:6px;padding:3px 9px}
+.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.5;letter-spacing:.3px}
+.cal-now-rule{flex:1;height:2px;background:var(--red);border-radius:1px;box-shadow:0 0 4px rgba(var(--red-rgb),.6)}
+/* Scrollbarer Kalender-Container (Dashboard-Widget "Upcoming Events"). */
+.cal-scroll{position:relative;max-height:340px;overflow-y:auto}
 .cal-time{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
 .cal-ccy{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -359,7 +368,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}
 .cal-green-dismiss:hover{color:var(--red)}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
-.setups-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:start;margin-top:4px}
+.setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px;max-width:860px}
 .setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
@@ -530,7 +539,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#fb923c;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: ORANGE (Watchlist-Zeilen rechtsbündig wie übrige Karten; grünes ! verschwindet jetzt auch im Mini-Kalender beim Löschen; Karte „No Direction" entfernt – neutrale Paare jetzt in der Neutral-Spalte von „Possible Set-ups"; Set-ups-Karte über volle Breite)</div>
+<div style="background:#facc15;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: GELB (Vergangene Events gedimmt; rote Jetzt-Linie mit Uhrzeit (bewegt sich); Upcoming-Events-Widget scrollbar + auto-scrollt zur Uhrzeit; Possible Set-ups kompakter; FX-Bias nach Score sortiert; neutrale Scores ±1/±2 in Orange)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -788,7 +797,10 @@ const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
 function indScore(ind){return biasScore(ind.bias)*(BOND_HALF_PT.has(ind.name)?0.5:1);}
 function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
-function scoreColor(n){return n>0?'var(--blue)':n<0?'var(--red)':'var(--amber)';}
+// Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
+// dazwischen neutral/orange) - so ist die Zahl z.B. bei einem neutralen Asset mit
+// +1 oder -1 ebenfalls orange, passend zum Bias.
+function scoreColor(n){return n>=3?'var(--blue)':n<=-3?'var(--red)':'var(--amber)';}
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
 // dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
 function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
@@ -822,6 +834,17 @@ function evtMatchesSym(ev,id){
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
+// Aktuelle Uhrzeit als "HH:MM" (lokal) - fuer Vergleiche mit ev.time.
+function nowHM(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+function evtTimeValid(t){return /^\d{1,2}:\d{2}$/.test(t||'');}
+// Ist ein Event bereits vergangen? Vergangene Tage komplett; heute nur, wenn die
+// (gueltige) Uhrzeit schon erreicht/ueberschritten ist.
+function isEvtPast(ev){
+  const dl=daysUntil(ev.date);
+  if(dl<0)return true;
+  if(dl>0)return false;
+  return evtTimeValid(ev.time)&&ev.time<=nowHM();
+}
 // Datum (YYYY-MM-DD) um n Tage verschieben, lokal gerechnet (kein UTC-Versatz).
 function dateAddStr(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Heute';if(n===1)return'Morgen';if(n===-1)return'Gestern';return n>1?`in ${n}T`:`vor ${-n}T`;}
@@ -883,10 +906,11 @@ function calRowHtml(ev,opts){
   const ac=actualColor(ev);
   const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
   const isToday=ev.date===todayStr();
+  const past=isEvtPast(ev)?' cal-past':'';
   const sub=[ev.expected,ev.notes].filter(Boolean).join(' · ');
   if(opts.compact){
     const csub=[ev.previous?`Prev: ${ev.previous}`:'',sub].filter(Boolean).join(' · ');
-    return`<div class="cal-row compact ${ic}${isToday?' today':''}">
+    return`<div class="cal-row compact ${ic}${isToday?' today':''}${past}">
       <div class="cal-time">${ev.time||'—'}</div>
       <div class="cal-ccy">${escH(ev.currencies||'')}</div>
       <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
@@ -895,7 +919,7 @@ function calRowHtml(ev,opts){
       ${csub?`<div class="cal-evsub">${escH(csub)}</div>`:''}
     </div>`;
   }
-  return`<div class="cal-row${isToday?' today':''}">
+  return`<div class="cal-row${isToday?' today':''}${past}">
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
     <div class="cal-imp ${ic}">${impLbl}</div>
@@ -930,10 +954,23 @@ function calTableHtml(evts,opts){
   // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
   const pfx=opts.idPrefix||'';
   const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact,showGreenFlag:opts.showGreenFlag});
+  // Dünne rote "Jetzt"-Linie mit aktueller Uhrzeit (linksbündig). Wird in der
+  // heutigen Tagesgruppe zwischen vergangenen und anstehenden Events eingefügt.
+  const nowMarker=`<div class="cal-now-line" title="Aktuelle Uhrzeit"><span class="cal-now-time">${nowHM()}</span><span class="cal-now-rule"></span></div>`;
+  const renderToday=dayEvts=>{
+    const now=nowHM();let out='',done=false;
+    dayEvts.forEach(ev=>{
+      if(!done&&evtTimeValid(ev.time)&&ev.time>now){out+=nowMarker;done=true;}
+      out+=rows(ev);
+    });
+    if(!done)out+=nowMarker;
+    return out;
+  };
   dates.forEach(date=>{
     const dayEvts=byDate[date]||[];
     const n=dayEvts.length;
     const isToday=date===today;
+    const nowHere=opts.showNowLine&&isToday;
     // Vergangene Tage (gestern / vorgestern) bleiben im Kalender, werden aber
     // eingeklappt dargestellt - erst per Klick auf den Tages-Header sichtbar.
     const isPast=opts.collapsePast&&daysUntil(date)<0;
@@ -945,7 +982,7 @@ function calTableHtml(evts,opts){
       html+=`</div>`;
     }else{
       html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 HEUTE':''}</span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
-      html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">Keine Termine</div>`;
+      html+=n?(nowHere?renderToday(dayEvts):dayEvts.map(rows).join('')):(nowHere?nowMarker+`<div class="cal-empty-day">Keine Termine</div>`:`<div class="cal-empty-day">Keine Termine</div>`);
     }
   });
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
@@ -2259,7 +2296,7 @@ function renderDetail(){
         ${evtOpen?'<span>📅 ECONOMIC EVENTS</span>':`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">Keine High-Impact-Events</div>`;})()}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
@@ -2874,7 +2911,7 @@ function renderCalendar(){
   if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
-  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted)});}
+  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
@@ -3306,7 +3343,8 @@ function renderDash(){
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
     if(w.type==='fx_bias'){
-      content=syms.filter(s=>FX.includes(s.id)).map(s=>`
+      const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
+      content=fxSorted.map(s=>`
         <div class="sym-row ${glowClass(s.bias)}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
@@ -3375,20 +3413,12 @@ function renderDash(){
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="opacity:.5" title="Remove">×</button>
         </div>`;}).join(''));
     }else if(w.type==='calendar'){
-      const today=todayStr();
+      // Gleiche Eigenschaften wie der Hauptkalender (Tagesgruppen, vergangene
+      // Events gedimmt, rote Jetzt-Linie), aber kompakt und in einem scrollbaren
+      // Container, der beim Rendern automatisch zur aktuellen Uhrzeit scrollt.
       const sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-      const todays=sorted.filter(ev=>ev.date===today);
-      let evts;
-      if(todays.length){
-        evts=todays;
-      }else{
-        const future=sorted.filter(ev=>ev.date>today);
-        const nextDate=future.length?future[0].date:null;
-        evts=nextDate?future.filter(ev=>ev.date===nextDate):[];
-      }
-      evts=evts.slice(0,6);
-      content=evts.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
-      calTableHtml(evts,{compact:true});
+      content=sorted.length===0?`<div class="dw-empty">No events. Add in Calendar tab.</div>`:
+      `<div class="cal-scroll">${calTableHtml(sorted,{compact:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`;
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
@@ -3407,7 +3437,17 @@ function renderDash(){
         </div>
       </div>
       ${content}
-    </div>`;}).join('');}
+    </div>`;}).join('');
+  scrollCalsToNow();
+}
+// Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
+// (aktuelle Uhrzeit) mittig sichtbar ist.
+function scrollCalsToNow(){
+  document.querySelectorAll('.cal-scroll').forEach(box=>{
+    const line=box.querySelector('.cal-now-line');
+    if(line)box.scrollTop=Math.max(0,line.offsetTop-box.clientHeight/2+line.offsetHeight/2);
+  });
+}
 
 function mvWidget(id,d){
   const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
@@ -3583,6 +3623,12 @@ setInterval(()=>{
   }
   autoFetchFF();
 },60*60*1000);
+// Rote Jetzt-Linie + Dimmen vergangener Events aktuell halten: minütlich die
+// sichtbare Kalenderansicht neu rendern (Scroll-Position der Seite bleibt erhalten).
+setInterval(()=>{
+  if(curPage==='cal'){const y=window.scrollY;renderCalendar();window.scrollTo(0,y);}
+  else if(curPage==='dash'){renderDash();}
+},60*1000);
 </script>
 </body>
 </html>
