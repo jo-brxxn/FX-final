@@ -2348,16 +2348,17 @@ function renderInd(ind,ri,ii,total){
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
-    const bondNote=r.bond&&r.prevDate?`Previous-Stand: ${fmtResearchDateFull(r.prevDate)} (Akt − 10 Tage)`:null;
-    const notes=[bondNote,note2,A.notes.length&&`Akt: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
+    const notes=[note2,A.notes.length&&`Akt: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
     const srcLink=r.source?`<a href="${escH(r.source)}" target="_blank" rel="noopener">${escH(srcLabel(r.source))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
+    const bondDates=r.bond?`<span class="ind-data-lbl">Akt-Datum:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous-Datum:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
+      `<span class="ind-data-lbl">Stand:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         ${r.bond?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="${r.prevRevColor?'ind-data-act '+r.prevRevColor:'ind-data-val'}">${escH(P.val??'–')}</span>
       </summary>
-      <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${dt||'–'}${notes?` · ${escH(notes)}`:''} · ${srcLink}</div>
+      <div class="ind-data-src">${bondDates} ${srcLink}</div>
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
