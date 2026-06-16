@@ -523,7 +523,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   /* Event-Spalte nimmt die Restbreite, Actual/Forecast/Previous als feste
      schmale Spalten mit kleinem Spaltenabstand, damit die drei Werte eng
      beieinander stehen (Wunsch des Nutzers). */
-  .cal-col-hdr,.cal-row{grid-template-columns:64px 60px 84px minmax(160px,1fr) 74px 74px 74px 24px;gap:10px;padding:9px 14px}
+  .cal-col-hdr,.cal-row{grid-template-columns:64px 60px 84px minmax(150px,1fr) 82px 82px 82px 24px;gap:14px;padding:9px 14px}
   .cal-day-hdr{font-size:14px;padding:9px 14px}
   .cal-col-hdr{font-size:12px;padding:8px 14px}
   .cal-time,.cal-ccy{font-size:15px}
@@ -637,7 +637,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#e11d48;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: KORALLE (Intro-Animation erscheint jetzt auch am PC — Ursache war systemweites „Bewegung reduzieren", das das Intro übersprang; Dashboard „Upcoming Events": Previous-Wert als eigene Spalte ergänzt)</div>
+<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Großer Kalender: Actual/Forecast/Previous wieder etwas weiter auseinander, weiterhin rechts; Cloud-Sync-Fix: Vergleich jetzt geräteunabhängig (Versions-Gleichheit statt Uhrzeit-Größenvergleich) — PC-Änderungen kommen jetzt auch auf dem iPad an)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2265,20 +2265,28 @@ async function cloudPush(manual){
     // greenDismissed (bestätigte Ausrufezeichen) liegt bewusst außerhalb von
     // snap()/Undo, muss aber ebenfalls geräteübergreifend synchron sein.
     const data=JSON.parse(snap());data.greenDismissed=greenDismissed;
-    const body=JSON.stringify([{id:cfg.syncId,data,updated_at:localStorage.getItem('fxpro_updated')||new Date().toISOString()}]);
+    const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
+    const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
       method:'POST',
       headers:{...cloudHeaders(cfg),'Prefer':'resolution=merge-duplicates,return=minimal'},
       body,signal:AbortSignal.timeout(10000)
     });
     if(!res.ok)throw new Error('HTTP '+res.status);
+    // Cloud-Version merken, die dieses Gerät jetzt kennt. Nur Gleichheitsvergleich
+    // (kein Größenvergleich von Uhren verschiedener Geräte) -> kein einseitiger
+    // Sync-Ausfall mehr durch abweichende iPad/PC-Uhrzeiten.
+    localStorage.setItem('fxpro_cloud_seen',sentUpdated);
     if(manual)setCloudStatus('✓ Hochgeladen: '+new Date().toLocaleString());
   }catch(e){
     if(manual)setCloudStatus('✗ Fehler beim Hochladen: '+e.message);
   }
 }
-async function cloudPull(manual,bootUpdated){
+async function cloudPull(manual){
   const cfg=getCloudCfg();if(!cfg){if(manual)setCloudStatus('Bitte zuerst speichern.');return;}
+  // Beim Start einen evtl. anstehenden Auto-Push (vom Kalender-Refresh) abbrechen
+  // und ZUERST pullen, damit lokale Daten die Cloud nicht überschreiben.
+  if(!manual)clearTimeout(_cloudPushTimer);
   try{
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(cfg.syncId)+'&select=data,updated_at',{
       headers:cloudHeaders(cfg),signal:AbortSignal.timeout(10000)
@@ -2290,21 +2298,23 @@ async function cloudPull(manual,bootUpdated){
       return;
     }
     const cloudUpdated=rows[0].updated_at;
-    // Beim Start (arguments.length>1) den Zeitstempel von VOR dem automatischen
-    // Kalender-/Research-Refresh nutzen. Sonst würde der Start-save() den lokalen
-    // Stempel auf "jetzt" setzen und echte Fremd-Änderungen (z.B. Makro-Karten von
-    // einem anderen Gerät) fälschlich als "älter" verwerfen → sie kämen nie an.
-    const localUpdated=arguments.length>1?bootUpdated:localStorage.getItem('fxpro_updated');
-    if(manual||!localUpdated||new Date(cloudUpdated)>new Date(localUpdated)){
+    const seen=localStorage.getItem('fxpro_cloud_seen');
+    // Anwenden, wenn die Cloud-Version eine ANDERE ist als die zuletzt bekannte.
+    // Reiner Gleichheitsvergleich: unabhängig davon, ob die Uhr des PCs hinter
+    // der des iPads liegt. Früher wurde mit new Date(a)>new Date(b) verglichen –
+    // dadurch galten PC-Änderungen bei nachgehender PC-Uhr immer als "älter" und
+    // kamen nie auf dem iPad an (Sync funktionierte nur iPad -> PC).
+    if(manual||!seen||cloudUpdated!==seen){
       const cd=rows[0].data;
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
+      localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
       renderSidebar();rerender();updateStat();updUB();updInboxBadge();updGreenBadge();
       if(manual)setCloudStatus('✓ Heruntergeladen: '+new Date(cloudUpdated).toLocaleString());
     }else if(manual){
-      setCloudStatus('Lokale Daten sind aktueller. Lade hoch...');await cloudPush(true);
+      setCloudStatus('Bereits aktuell.');
     }
   }catch(e){
     if(manual)setCloudStatus('✗ Fehler beim Herunterladen: '+e.message);
@@ -3735,10 +3745,6 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
-// Echten "letzte Nutzer-Änderung"-Zeitstempel merken, BEVOR der automatische
-// Kalender-/Research-Refresh unten save() aufruft und ihn auf "jetzt" setzt.
-// cloudPull(false,_bootUpdated) vergleicht damit korrekt gegen Fremd-Änderungen.
-const _bootUpdated=localStorage.getItem('fxpro_updated');
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
@@ -3749,7 +3755,7 @@ updFFLastUpd();
 autoFetchFF();
 autoFetchIndData();
 autoFetchBondData();
-cloudPull(false,_bootUpdated);
+cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
   autoFetchIndData();
