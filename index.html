@@ -353,14 +353,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
 /* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
    + farbiger Rahmen für Impact, damit nichts im schmalen Dashboard-Widget abgeschnitten wird. */
-.cal-col-hdr.compact,.cal-row.compact{grid-template-columns:32px 28px 1fr 40px 40px;gap:4px;padding:6px 8px;min-width:0}
+.cal-col-hdr.compact,.cal-row.compact{grid-template-columns:32px 26px 1fr 38px 38px 38px;gap:4px;padding:6px 8px;min-width:0}
 .cal-col-hdr.compact span:nth-child(1),.cal-col-hdr.compact span:nth-child(2),.cal-col-hdr.compact span:nth-child(3){text-align:left}
-.cal-col-hdr.compact span:nth-child(4),.cal-col-hdr.compact span:nth-child(5){text-align:center}
+.cal-col-hdr.compact span:nth-child(4),.cal-col-hdr.compact span:nth-child(5),.cal-col-hdr.compact span:nth-child(6){text-align:center}
 .cal-row.compact{border-left:3px solid transparent}
 .cal-row.compact.ih{border-left-color:var(--red)}
 .cal-row.compact.im{border-left-color:var(--amber)}
 .cal-row.compact.il{border-left-color:var(--bd2)}
-.cal-row.compact .cal-evsub{grid-column:3/6}
+.cal-row.compact .cal-evsub{grid-column:3/7}
 .cal-table.compact{overflow-x:hidden}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
@@ -481,7 +481,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .cal-val{font-size:14px}
   .cal-evsub{font-size:13px}
   .evt-toggle{font-size:14px;padding:9px 12px}
-  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:42px 36px 1fr 52px 52px;gap:6px;padding:7px 10px}
+  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:42px 34px 1fr 48px 48px 48px;gap:6px;padding:7px 10px}
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
 @media(min-width:1100px){
@@ -532,7 +532,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .cal-val{font-size:15px}
   .cal-evsub{font-size:11.5px}
   .evt-toggle{font-size:15px;padding:10px 14px}
-  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 42px 1fr 56px 56px;gap:8px;padding:8px 12px}
+  .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 40px 1fr 54px 54px 54px;gap:8px;padding:8px 12px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -549,7 +549,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .intro-hint{position:absolute;bottom:9%;left:0;right:0;text-align:center;font-size:clamp(10px,1.4vw,14px);color:rgba(128,151,176,.55);letter-spacing:3px;text-transform:uppercase;opacity:0;animation:introSubIn 1s ease 1.4s both;pointer-events:none}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
-@media(prefers-reduced-motion:reduce){#introOv{display:none}}
 </style>
 </head>
 <body>
@@ -568,7 +567,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 (function(){
   var ov=document.getElementById('introOv');
   if(!ov)return;
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches){ov.remove();return;}
+  // Bewusst KEINE prefers-reduced-motion-Abfrage: viele PCs haben "Bewegung
+  // reduzieren" systemweit aktiv, wodurch das Intro dort komplett übersprungen
+  // wurde (auf iPad sichtbar, am PC nicht). Das Intro soll überall erscheinen.
   var done=false;
   var layer=document.getElementById('introShards');
   var vw=window.innerWidth,vh=window.innerHeight;
@@ -636,7 +637,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#047857;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: SMARAGD (Großer Kalender: Actual/Forecast/Previous wieder enger zusammen; Cloud-Sync-Fix: Makro-Karten-Änderungen & Ausrufezeichen werden jetzt geräteübergreifend übertragen — Ursache war ein Code-Fehler beim Start-Zeitstempel, nicht eine volle Datenbank)</div>
+<div style="background:#e11d48;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: KORALLE (Intro-Animation erscheint jetzt auch am PC — Ursache war systemweites „Bewegung reduzieren", das das Intro übersprang; Dashboard „Upcoming Events": Previous-Wert als eigene Spalte ergänzt)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1010,14 +1011,14 @@ function calRowHtml(ev,opts){
   const past=isEvtPast(ev)?' cal-past':'';
   const sub=[ev.expected,ev.notes].filter(Boolean).join(' · ');
   if(opts.compact){
-    const csub=[ev.previous?`Prev: ${ev.previous}`:'',sub].filter(Boolean).join(' · ');
     return`<div class="cal-row compact ${ic}${isToday?' today':''}${past}">
       <div class="cal-time">${ev.time||'—'}</div>
       <div class="cal-ccy">${escH(ev.currencies||'')}</div>
       <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
       ${val(ev.actual,ac)}
       ${val(ev.forecast)}
-      ${csub?`<div class="cal-evsub">${escH(csub)}</div>`:''}
+      ${val(ev.previous,ev.prevRevColor)}
+      ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
     </div>`;
   }
   return`<div class="cal-row${isToday?' today':''}${past}">
@@ -1043,7 +1044,7 @@ function calTableHtml(evts,opts){
   if(!evts.length&&!(opts.allDates&&opts.allDates.length))return'';
   const today=todayStr();
   let html=opts.skipHeader?'':opts.compact
-    ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`
+    ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Prev</span></div>`
     :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
   // Events nach Datum gruppieren (Reihenfolge innerhalb des Tages bleibt erhalten).
   const byDate={};
@@ -3542,7 +3543,7 @@ function renderDash(){
       let sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
       if(calHighOnly)sorted=sorted.filter(ev=>ev.impact==='high');
       const calHighFilterBtn=`<button class="btn dw-nav${calHighOnly?' active':''}" style="margin-bottom:6px" onclick="toggleCalHighOnly()" title="${calHighOnly?'Alle Impacts anzeigen':'Nur High-Impact anzeigen'}">${calHighOnly?'📁 Nur High':'📁 Alle'}</button>`;
-      const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span></div>`;
+      const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Prev</span></div>`;
       content=calHighFilterBtn+(sorted.length===0?`<div class="dw-empty">${calHighOnly?'Keine High-Impact-Events.':'No events. Add in Calendar tab.'}</div>`:
       calHdr+`<div class="cal-scroll">${calTableHtml(sorted,{compact:true,skipHeader:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true})}</div>`);
     }else if(w.type==='quick_notes'){
