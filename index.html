@@ -358,6 +358,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-green-row-wrap{display:flex;align-items:center;gap:3px}
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}
 .cal-green-dismiss:hover{color:var(--red)}
+/* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
+.setups-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:start;margin-top:4px}
+.setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -525,7 +528,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#06b6d4;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: CYAN (Grünes ! in Toolbar mit Zähler: links neben Undo, Anzahl Symbole mit unbestätigten High-Impact-Events heute/gestern; Zähler ≥2 = groß/auffällig, =0 = blass; im Mini-Kalender zeitpunktgeprüfte grüne ! mit × zum Bestätigen pro Event; Bestätigungen werden separat gespeichert)</div>
+<div style="background:#a3e635;color:#0d1117;text-align:center;font-weight:800;font-size:14px;padding:6px;letter-spacing:1px;flex-shrink:0">VERSION-CHECK: LIME (Bonds geben 0,5 Punkte; grüne ! nach Reload stabil (Key=Name|Datum|Währung); Dismiss aktualisiert Sidebar+Dashboard; Possible Set-ups: 3 Spalten Bull/Neutral/Bear, nach Score sortiert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -778,7 +781,10 @@ function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow
 // Symbol-Score = ueber alle Rubriken; Karten-Score = nur die Indikatoren
 // der jeweiligen Karte. Farbe: positiv blau, neutral orange, negativ rot.
 function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
-function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+biasScore(ind.bias),0);}
+// 2Y Bond Yield und 10Y Bond Yield zählen je nur 0,5 Punkte (zusammen max. ±1).
+const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
+function indScore(ind){return biasScore(ind.bias)*(BOND_HALF_PT.has(ind.name)?0.5:1);}
+function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 function scoreColor(n){return n>0?'var(--blue)':n<0?'var(--red)':'var(--amber)';}
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
@@ -898,7 +904,7 @@ function calRowHtml(ev,opts){
     ${opts.delAction
       ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Löschen">×</button>`
       :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[ev.id])
-        ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-Impact-Event eingetroffen">!</span><button class="cal-green-dismiss" onclick="dismissGreenEvt('${ev.id}')" title="Bestätigen / entfernen">×</button></div>`
+        ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-Impact-Event eingetroffen">!</span><button class="cal-green-dismiss" data-dkey="${escH(evtDismissKey(ev)).replace(/"/g,'&quot;')}" onclick="dismissGreenEvt(this.dataset.dkey)" title="Bestätigen / entfernen">×</button></div>`
         :'<div></div>'}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
@@ -1048,6 +1054,9 @@ function getRelevantEvents(id){
 function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
 // Bestätigte (dismisste) grüne Events – persistiert separat, nicht in snap/undo.
 let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')}catch(e){return{};}})();
+// Stabiler Schlüssel für greenDismissed (unabhängig von ev.id, das sich bei
+// jedem FF-Reload ändert): Name + Datum + Währung sind event-übergreifend stabil.
+function evtDismissKey(ev){return(ev.name||'')+'|'+(ev.date||'')+'|'+(ev.currencies||'');}
 // Ist ein Event jetzt grün? High-Impact + (gestern ODER heute-nach-Uhrzeit).
 function isEvtGreenNow(ev){
   if(ev.impact!=='high')return false;
@@ -1059,13 +1068,14 @@ function isEvtGreenNow(ev){
   const cur=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
   return cur>=ev.time;
 }
-// Bestätigt ein grünes Event (× geklickt) und aktualisiert Badge + Mini-Kalender.
-function dismissGreenEvt(evtId){
-  greenDismissed[evtId]=true;
+// Bestätigt ein grünes Event (× geklickt): persistiert und aktualisiert alles.
+function dismissGreenEvt(key){
+  greenDismissed[key]=true;
   try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}
+  renderSidebar();
   updGreenBadge();
+  renderDash();
   if(curPage==='cur')renderDetail();
-  else if(curPage==='dash')renderDash();
 }
 // Anzahl Symbole mit mindestens einem unbestätigten grünen Event.
 function countGreenSyms(){return syms.filter(s=>evtFlagState(s.id).includes('d')).length;}
@@ -1089,7 +1099,7 @@ function evtFlagState(id){
   getSymEventsAll(id).forEach(ev=>{
     if(ev.impact!=='high')return;
     const dl=daysUntil(ev.date);
-    if(isEvtGreenNow(ev)&&!greenDismissed[ev.id])done=true;
+    if(isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])done=true;
     else if(dl>=1&&dl<=3)up=true;
   });
   return (up?'u':'')+(done?'d':'');
@@ -3309,18 +3319,28 @@ function renderDash(){
     }else if(w.type==='setups'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
-      content=addBtn+(wp.length===0?`<div class="dw-empty">No directional set-ups right now.</div>`:
-      wp.map((p,idx)=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
-        <div class="pbg" style="flex-direction:column;gap:1px;flex-shrink:0">
-          <button class="sp-mv" style="font-size:10px;margin-top:0" onclick="mvPairInCat('${p.id}',-1);renderDash()" ${idx===0?'disabled':''}>▲</button>
-          <button class="sp-mv" style="font-size:10px;margin-top:0" onclick="mvPairInCat('${p.id}',1);renderDash()" ${idx===wp.length-1?'disabled':''}>▼</button>
-        </div>
-        <div class="sym-name dw-pname" style="flex:1">${escH(p.name)}</div>
-        ${rowScore(pairScore(p.name),'Paar-Score')}
-        <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ LONG':p.bias==='bear'?'▼ SHORT':'◆ NEU'}</span>
-        <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Gelb markieren">★</button>
-        <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
-      </div>`).join(''));
+      if(wp.length===0){
+        content=addBtn+`<div class="dw-empty">No directional set-ups right now.</div>`;
+      }else{
+        const bull=[...wp.filter(p=>p.bias==='bull')].sort((a,b)=>pairScore(b.name)-pairScore(a.name));
+        const bear=[...wp.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
+        const neu=[...wp.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
+        const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
+          <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}</div>
+          ${rowScore(pairScore(p.name),'Paar-Score')}
+          <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
+          <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
+        </div>`;
+        const col=(label,color,list)=>`<div>
+          <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
+          ${list.length?list.map(pairRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
+        </div>`;
+        content=addBtn+`<div class="setups-cols">
+          ${col('▲ Bullish',BC.bull,bull)}
+          ${col('◆ Neutral',BC.neu,neu)}
+          ${col('▼ Bearish',BC.bear,bear)}
+        </div>`;
+      }
     }else if(w.type==='no_direction'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===NODIR_CAT;});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${NODIR_CAT}')">＋ Add Pair</button>`;
