@@ -637,7 +637,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#b45309;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: BERNSTEIN (Undo/Redo jetzt vollständig: Rubrik-Bias, Indikator-Bias, Wichtig-Haken, Markierungen, Widget-Verschieben; Lokale Backups: 🕐 Backups-Button oben rechts → bis zu 5 Snapshots, überlebt Neuladen, automatisch alle 10 Min. + vor Cloud-Download)</div>
+<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: TÜRKIS ("Pairs"-Tab umgebaut zu "Set-ups": keine Kategorien/Karten mit Entry/SL/TP/Notizen mehr, sondern eine große 3-Spalten-Tabelle (Bullish/Neutral/Bearish) über ALLE Paare hinweg – im selben Look wie die "Possible Set-ups"-Kachel auf dem Dashboard)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -664,7 +664,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   <button class="tp on"  onclick="showTab('dash',this)">Dashboard</button>
   <button class="tp"     onclick="showTab('cur',this)">Assets</button>
   <button class="tp"     onclick="showTab('mat',this)">Matrix</button>
-  <button class="tp"     onclick="showTab('pairs',this)">Pairs</button>
+  <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
 </div>
@@ -683,10 +683,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Pairs</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized by category · expand to edit</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
-      <button class="btn g" onclick="addPairCat()">＋ Category</button>
     </div>
   </div>
   <div id="pairCats"></div>
@@ -3004,85 +3003,34 @@ function confirmAddPair(){
 
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
-  el.innerHTML=pairCats.map((cat,ci)=>{
-    const catPairs=pairs.filter(p=>p.catId===cat.id);
-    return`<div class="pcc${cat.open?' open':''}">
-      <div class="pcc-hdr">
-        <button class="pcc-tog" onclick="togPCC('${cat.id}')">▶</button>
-        <input class="pcc-name" value="${escH(cat.name)}" placeholder="Category..." oninput="pairCats[${ci}].name=this.value;saveSoon()" onchange="pairCats[${ci}].name=this.value;save()">
-        <span style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;margin-right:4px">${catPairs.length}</span>
-        <button class="btn" style="padding:2px 5px;font-size:10px;opacity:.5" onclick="mvPairCat(${ci},-1)" ${ci===0?'disabled':''}>▲</button>
-        <button class="btn" style="padding:2px 5px;font-size:10px;opacity:.5" onclick="mvPairCat(${ci},1)" ${ci===pairCats.length-1?'disabled':''}>▼</button>
-        <button class="btn r" style="padding:2px 6px;font-size:11px;flex-shrink:0" onclick="delPairCat('${cat.id}')">×</button>
-      </div>
-      <div class="pcc-body">
-        ${catPairs.length===0?`<div style="color:var(--t3);font-size:12px;padding:8px 4px;grid-column:1/-1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs. Click "＋ Add Pair" above.</div>`:
-          catPairs.map((p,pci)=>renderPairCard(p,pci,catPairs.length)).join('')}
-      </div>
-    </div>`;}).join('');}
+  if(pairs.length===0){
+    el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
+    return;
+  }
+  const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
+    <div class="sym-name dw-pname">${escH(p.name)}</div>
+    ${rowScore(pairScore(p.name),'Paar-Score')}
+    <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}')" title="Gelb markieren">★</button>
+    <button onclick="delPair('${p.id}')" class="dw-del" title="Remove">×</button>
+  </div>`;
+  const col=(label,color,list)=>`<div>
+    <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
+    ${list.length?list.map(pairRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
+  </div>`;
+  const bull=[...pairs.filter(p=>p.bias==='bull')].sort((a,b)=>pairScore(b.name)-pairScore(a.name));
+  const bear=[...pairs.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
+  const neu=[...pairs.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
+  el.innerHTML=`<div class="setups-cols">
+    ${col('▲ Bullish',BC.bull,bull)}
+    ${col('◆ Neutral',BC.neu,neu)}
+    ${col('▼ Bearish',BC.bear,bear)}
+  </div>`;
+}
 
-function renderPairCard(p,pci,catTotal){
-  const pi=pairs.findIndex(x=>x.id===p.id);
-  const bco=BC[p.bias];
-  return`<div class="pair-card${p._open?' open':''}${p.marked?' row-marked':''} ${glowClass(p.bias)}">
-    <div class="pair-hdr" onclick="togPair('${p.id}')">
-      <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0" onclick="event.stopPropagation()">
-        <button class="sp-mv" onclick="mvPairInCat('${p.id}',-1)" ${pci===0?'disabled':''} style="font-size:10px;margin-top:0">▲</button>
-        <button class="sp-mv" onclick="mvPairInCat('${p.id}',1)" ${pci===catTotal-1?'disabled':''} style="font-size:10px;margin-top:0">▼</button>
-      </div>
-      <div class="pair-name" style="color:${bco}">${escH(p.name)}</div>
-      ${rowScore(pairScore(p.name),'Paar-Score')}
-      <div class="pbg" onclick="event.stopPropagation()">
-        <span class="pbo on" style="--bc:${BC[p.bias]};--bca:${BC[p.bias]}18;cursor:default" title="Bias wird automatisch aus dem Paar-Score gesetzt (Basis − Quote): ab +3 bullish, ab −3 bearish, dazwischen neutral">${p.bias==='bull'?'▲':p.bias==='bear'?'▼':'◆'}</span>
-      </div>
-      <button class="dw-mark${p.marked?' on':''}" onclick="event.stopPropagation();togPairMark('${p.id}');renderPairs()" title="Gelb markieren">★</button>
-      <button onclick="event.stopPropagation();delPair('${p.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 2px;flex-shrink:0;opacity:.5;line-height:1" title="Remove pair">×</button>
-    </div>
-    <div class="pair-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px">
-        <div><div class="pfl">Entry Level</div><input class="pfinp" placeholder="e.g. 1.1650" value="${escH(p.entry||'')}" oninput="pairs[${pi}].entry=this.value;saveSoon()" onchange="pairs[${pi}].entry=this.value;save()"></div>
-        <div><div class="pfl">Entry Trigger</div><input class="pfinp" placeholder="e.g. NFP miss" value="${escH(p.entryTrigger||'')}" oninput="pairs[${pi}].entryTrigger=this.value;saveSoon()" onchange="pairs[${pi}].entryTrigger=this.value;save()"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin-bottom:5px">
-        <div><div class="pfl">SL</div><input class="pfinp" value="${escH(p.sl||'')}" oninput="pairs[${pi}].sl=this.value;saveSoon()" onchange="pairs[${pi}].sl=this.value;save()"></div>
-        <div><div class="pfl">TP</div><input class="pfinp" value="${escH(p.tp||'')}" oninput="pairs[${pi}].tp=this.value;saveSoon()" onchange="pairs[${pi}].tp=this.value;save()"></div>
-        <div><div class="pfl">R:R</div><input class="pfinp" placeholder="1:2" value="${escH(p.rr||'')}" oninput="pairs[${pi}].rr=this.value;saveSoon()" onchange="pairs[${pi}].rr=this.value;save()"></div>
-        <div><div class="pfl">Size</div><input class="pfinp" value="${escH(p.size||'')}" oninput="pairs[${pi}].size=this.value;saveSoon()" onchange="pairs[${pi}].size=this.value;save()"></div>
-      </div>
-      <div style="margin-bottom:5px"><div class="pfl">Setup Notes</div><textarea class="pfinp" rows="2" placeholder="Catalysts, invalidation, what to watch..." oninput="pairs[${pi}].notes=this.value;saveSoon()" onchange="pairs[${pi}].notes=this.value;save()">${escH(p.notes||'')}</textarea></div>
-      <div><div class="pfl">Move to Category</div>
-        <select class="pcat-sel" onchange="movePair('${p.id}',this.value)">
-          ${pairCats.map(c=>`<option value="${c.id}"${p.catId===c.id?' selected':''}>${escH(c.name)}</option>`).join('')}
-        </select>
-      </div>
-    </div>
-  </div>`;}
-
-function togPCC(catId){const c=pairCats.find(x=>x.id===catId);if(c){c.open=!c.open;renderPairs();}}
-function togPair(id){const p=pairs.find(x=>x.id===id);if(p){p._open=!p._open;renderPairs();}}
-function setPairBias(id,b){pushU();const p=pairs.find(x=>x.id===id);if(p){p.bias=b;save();renderPairs();}}
-function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){pushU();p.marked=!p.marked;save();}}
+function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){pushU();p.marked=!p.marked;save();renderPairs();if(curPage==='dash')renderDash();}}
 function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){pushU();s.marked=!s.marked;save();renderDash();}}
-function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;p._open=false;save();renderPairs();}}
-function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();}
-function mvPairCat(ci,d){pushU();mvArr(pairCats,ci,d);save();renderPairs();}
-function addPairCat(){pushU();pairCats.push({id:uid(),name:'New Category',open:true});save();renderPairs();}
-function delPairCat(catId){
-  pushU();
-  const fallback=pairCats.find(c=>c.id!==catId);
-  pairs.forEach(p=>{if(p.catId===catId)p.catId=fallback?.id||null;});
-  pairCats=pairCats.filter(c=>c.id!==catId);save();renderPairs();
-}
-function mvPairInCat(id,d){
-  const p=pairs.find(x=>x.id===id);if(!p)return;
-  const catPairs=pairs.filter(x=>x.catId===p.catId);
-  const ci=catPairs.findIndex(x=>x.id===id);
-  const ni=ci+d;if(ni<0||ni>=catPairs.length)return;
-  const gi=pairs.findIndex(x=>x.id===id);
-  const gni=pairs.findIndex(x=>x.id===catPairs[ni].id);
-  if(gi<0||gni<0)return;
-  [pairs[gi],pairs[gni]]=[pairs[gni],pairs[gi]];save();renderPairs();
-}
+function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;save();renderPairs();if(curPage==='dash')renderDash();}}
+function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();if(curPage==='dash')renderDash();}
 
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
