@@ -271,19 +271,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .nc-del:hover{color:var(--red);opacity:1}
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
-.mwrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bd);overflow:hidden}
-.mtbl{border-collapse:collapse;min-width:440px;width:100%}
-.mtbl th,.mtbl td{padding:8px 10px;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);font-size:14px;text-align:center;white-space:nowrap}
-.mtbl tr:last-child td{border-bottom:none}
-.mtbl th{background:var(--bg2);color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600;font-size:12px;letter-spacing:.5px}
-.mtbl .bn{text-align:left;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;background:var(--bg2)}
-.cb{background:rgba(var(--green-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--green-rgb),.35);color:var(--green);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cr{background:rgba(var(--red-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--red-rgb),.35);color:var(--red);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cn{background:rgba(var(--amber-rgb),.1);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.35);color:var(--amber);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cna{color:var(--bd);background:var(--bg0)}
-.mtbl tr:hover td:not(.cna){background:var(--bg3)!important}
-.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:6px;margin-top:10px}
-.ac{background:var(--bg2);border-radius:var(--rs);padding:8px 10px;border:1px solid var(--bd);border-left:3px solid var(--bc)}
 /* ── DASHBOARD ── */
 .dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
 .dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
@@ -450,8 +437,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .slbl{font-size:11px}
   .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
   .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
-  .mtbl th,.mtbl td{font-size:16px;padding:10px 13px}
-  .mtbl th{font-size:13px}
   .dw{padding:16px}
   .dw-t{font-size:19px}
   .dw-sub{font-size:13px}
@@ -495,8 +480,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
   .masonry .rub-card{margin-bottom:0}
   .masonry .rub-card.collapsed{align-self:start}
-  .pcc-body{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
-  .ag{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
   #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
   /* Set-ups + Kalender: je 3 Grid-Spalten; FX-Bias/Assets, Watchlist, Quick Notes: 2 Spalten */
@@ -637,7 +620,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: TÜRKIS ("Pairs"-Tab umgebaut zu "Set-ups": keine Kategorien/Karten mit Entry/SL/TP/Notizen mehr, sondern eine große 3-Spalten-Tabelle (Bullish/Neutral/Bearish) über ALLE Paare hinweg – im selben Look wie die "Possible Set-ups"-Kachel auf dem Dashboard)</div>
+<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Matrix-Tab komplett entfernt; im Set-ups-Tab erscheinen jetzt zusätzlich ALLE Assets (Gold, Silber, Öl, BTC, S&P 500, Nasdaq) – nicht nur FX-Paare – gemeinsam nach Bullish/Neutral/Bearish sortiert)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -663,7 +646,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 <div class="tabbar">
   <button class="tp on"  onclick="showTab('dash',this)">Dashboard</button>
   <button class="tp"     onclick="showTab('cur',this)">Assets</button>
-  <button class="tp"     onclick="showTab('mat',this)">Matrix</button>
   <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
@@ -674,16 +656,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   <div class="sb" id="sidebar"></div>
   <div class="detail" id="detail"></div>
 </div>
-<!-- PAGE: MATRIX -->
-<div class="pc" id="pgMat" style="display:none">
-  <div style="margin-bottom:11px"><div style="font-size:16px;font-weight:700;color:var(--t0)">Pair Matrix</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Green=Long Base · Red=Short Base</div></div>
-  <div class="mwrap"><table class="mtbl" id="mtbl"></table></div>
-  <div class="ag" id="assetCards"></div>
-</div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs sorted into bullish / neutral / bearish columns</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
     </div>
@@ -3003,23 +2979,27 @@ function confirmAddPair(){
 
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
-  if(pairs.length===0){
+  const items=[
+    ...pairs.map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
+    ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScore(s)})),
+  ];
+  if(items.length===0){
     el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
     return;
   }
-  const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
-    <div class="sym-name dw-pname">${escH(p.name)}</div>
-    ${rowScore(pairScore(p.name),'Paar-Score')}
-    <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}')" title="Gelb markieren">★</button>
-    <button onclick="delPair('${p.id}')" class="dw-del" title="Remove">×</button>
+  const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
+    <div class="sym-name dw-pname">${escH(it.name)}</div>
+    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score')}
+    <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
+    ${it.kind==='asset'?`<span class="dw-del" style="visibility:hidden">×</span>`:`<button onclick="delPair('${it.id}')" class="dw-del" title="Remove">×</button>`}
   </div>`;
   const col=(label,color,list)=>`<div>
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
-    ${list.length?list.map(pairRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
+    ${list.length?list.map(row).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
-  const bull=[...pairs.filter(p=>p.bias==='bull')].sort((a,b)=>pairScore(b.name)-pairScore(a.name));
-  const bear=[...pairs.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
-  const neu=[...pairs.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
+  const bull=items.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
+  const bear=items.filter(it=>it.bias==='bear').sort((a,b)=>a.score-b.score);
+  const neu=items.filter(it=>it.bias==='neu').sort((a,b)=>Math.abs(b.score)-Math.abs(a.score));
   el.innerHTML=`<div class="setups-cols">
     ${col('▲ Bullish',BC.bull,bull)}
     ${col('◆ Neutral',BC.neu,neu)}
@@ -3028,7 +3008,7 @@ function renderPairs(){
 }
 
 function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){pushU();p.marked=!p.marked;save();renderPairs();if(curPage==='dash')renderDash();}}
-function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){pushU();s.marked=!s.marked;save();renderDash();}}
+function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){pushU();s.marked=!s.marked;save();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}}
 function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;save();renderPairs();if(curPage==='dash')renderDash();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();if(curPage==='dash')renderDash();}
 
@@ -3633,26 +3613,8 @@ function addWidget(){
 }
 
 // ══ MATRIX ═══════════════════════════════════════════════════════
-function renderMatrix(){
-  const fx=syms.filter(s=>FX.includes(s.id));
-  let h=`<thead><tr><th style="text-align:left">BASE</th>`;
-  fx.forEach(q=>{h+=`<th style="color:${BC[q.bias]}">${rowScore(symScore(q))} ${q.name} ${q.bias==='bull'?'▲':q.bias==='bear'?'▼':'◆'}</th>`;});
-  h+=`</tr></thead><tbody>`;
-  fx.forEach(base=>{
-    h+=`<tr><td class="bn" style="color:${BC[base.bias]}">${rowScore(symScore(base))} ${base.name} ${base.bias==='bull'?'▲':base.bias==='bear'?'▼':'◆'}</td>`;
-    fx.forEach(q=>{
-      if(base.id===q.id){h+=`<td class="cna">—</td>`;return;}
-      const pb=base.bias==='bull'&&q.bias==='bear'?'bull':base.bias==='bear'&&q.bias==='bull'?'bear':'neu';
-      h+=`<td class="c${pb==='bull'?'b':pb==='bear'?'r':'n'}">${rowScore(pairScore(base.id+'/'+q.id))} ${pb==='bull'?'▲ LONG':pb==='bear'?'▼ SHORT':'◆ NEUTRAL'}</td>`;});
-    h+=`</tr>`;});h+=`</tbody>`;
-  document.getElementById('mtbl').innerHTML=h;
-  const others=syms.filter(s=>!FX.includes(s.id));
-  document.getElementById('assetCards').innerHTML=others.length?
-    `<div style="font-size:10px;letter-spacing:2px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:10px 0 5px;grid-column:1/-1;text-transform:uppercase">Other Assets</div>`+
-    others.map(s=>`<div class="ac" style="--bc:${BC[s.bias]}"><div style="font-size:13px;font-weight:700;color:var(--t0)">${s.name}</div><div style="font-size:11px;color:${BC[s.bias]};margin-top:2px;font-weight:600">${rowScore(symScore(s))} ${BL[s.bias]}</div></div>`).join(''):'';}
-
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',mat:'pgMat',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 function showTab(tab,btn){
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.querySelectorAll('.tp').forEach(b=>b.classList.remove('on'));
@@ -3661,7 +3623,6 @@ function showTab(tab,btn){
   if(btn)btn.classList.add('on');curPage=tab;
   if(tab==='dash')renderDash();
   else if(tab==='cur'){renderSidebar();renderDetail();}
-  else if(tab==='mat')renderMatrix();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
   else if(tab==='notes')renderNCs();
@@ -3669,7 +3630,6 @@ function showTab(tab,btn){
 function rerender(){
   if(curPage==='dash')renderDash();
   else if(curPage==='cur'){renderSidebar();renderDetail();}
-  else if(curPage==='mat')renderMatrix();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
   else if(curPage==='notes')renderNCs();
