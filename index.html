@@ -620,7 +620,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Matrix-Tab komplett entfernt; im Set-ups-Tab erscheinen jetzt zusätzlich ALLE Assets (Gold, Silber, Öl, BTC, S&P 500, Nasdaq) – nicht nur FX-Paare – gemeinsam nach Bullish/Neutral/Bearish sortiert)</div>
+<div style="background:#be123c;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: KARMINROT (Gold & Indizes (S&P 500/Nasdaq): Inflation/Interest Rates/Labour Market/Economic Growth jetzt automatisch aus USD abgeleitet – Rubrik- UND Indikator-Bias, kein manuelles Eintragen mehr nötig. Gold: Inflation/Rates/Labour invertiert, Growth gleich USD. Indizes: Inflation/Rates invertiert, Labour/Growth gleich USD)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1992,6 +1992,33 @@ const MACRO_NAME='Makro & Risikoumfeld';
 // Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
 // (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
 const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market','Geopolitics',MACRO_NAME];
+// Leitet Rubrik- und Indikator-Bias (Karte + jeder einzelne Indikator) für
+// bestimmte Nicht-FX-Assets automatisch aus USD ab, statt sie manuell
+// einzutragen. 'same' = identischer Bias wie USD, 'inverse' = umgekehrt.
+const MACRO_DERIVE_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth'];
+const MACRO_DERIVE_RULES={
+  GOLD:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'inverse','Economic Growth':'same'},
+  SP500:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'same','Economic Growth':'same'},
+  NAS:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'same','Economic Growth':'same'},
+};
+function invertBias(b){return b==='bull'?'bear':b==='bear'?'bull':'neu';}
+function deriveMacroBiasAll(){
+  const usd=syms.find(s=>s.id==='USD');if(!usd||!usd.rubrics)return;
+  Object.keys(MACRO_DERIVE_RULES).forEach(id=>{
+    const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
+    const rules=MACRO_DERIVE_RULES[id];
+    MACRO_DERIVE_RUBS.forEach(rubName=>{
+      const rule=rules[rubName];if(!rule)return;
+      const src=usd.rubrics.find(r=>r.name===rubName);if(!src)return;
+      const r=sym.rubrics.find(x=>x.name===rubName);if(!r)return;
+      r.bias=rule==='same'?src.bias:invertBias(src.bias);
+      if(r.indicators&&src.indicators)r.indicators.forEach(ind=>{
+        const srcInd=src.indicators.find(i=>i.name===ind.name);if(!srcInd)return;
+        ind.bias=rule==='same'?srcInd.bias:invertBias(srcInd.bias);
+      });
+    });
+  });
+}
 const MACRO_RUB_INFO={
   fx:name=>`Diese Rubrik bündelt, wie ${name} auf das globale Makro- und Risikoumfeld reagiert – unabhängig von währungsspezifischen Fundamentaldaten. Wichtig für kurzfristiges Trading, da Risk-on-/Risk-off-Stimmungswechsel oft schneller wirken als fundamentale News.`,
   crypto:name=>`Diese Rubrik beschreibt, wie ${name} auf globale Liquiditäts- und Risikostimmung reagiert. Da ${name} (noch) keine etablierten eigenen Fundamentaldaten wie Zinsen/Inflation hat, ist das Makroumfeld – insbesondere die Fed-Politik und der Risikoappetit – der dominante Treiber.`,
@@ -2729,7 +2756,7 @@ function syncMacroRub(ri){
     r.imp=clone.imp;r.summary=clone.summary;
   });
 }
-function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
@@ -2919,7 +2946,7 @@ function recomputeAllPairBiases(){
 
 // Vollstaendige automatische Neuberechnung: erst Symbol-Bias aus Score,
 // dann Paar-Bias aus Paar-Score, dann Auto-Einsortierung der Paare.
-function recomputeAuto(){recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
