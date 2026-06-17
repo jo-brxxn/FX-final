@@ -620,7 +620,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#be123c;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: KARMINROT (Gold & Indizes (S&P 500/Nasdaq): Inflation/Interest Rates/Labour Market/Economic Growth jetzt automatisch aus USD abgeleitet – Rubrik- UND Indikator-Bias, kein manuelles Eintragen mehr nötig. Gold: Inflation/Rates/Labour invertiert, Growth gleich USD. Indizes: Inflation/Rates invertiert, Labour/Growth gleich USD)</div>
+<div style="background:#0369a1;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: PETROL (Als ⭐ Wichtig markierte Indikatoren zählen jetzt ±1,5 statt ±1 im Score – je nach Bullish/Bearish/Neutral; wirkt sich auf Karten-Score, Symbol-Score und damit auch auf Bias/Set-ups aus)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -880,7 +880,7 @@ function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow
 function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
 // 2Y Bond Yield und 10Y Bond Yield zählen je nur 0,5 Punkte (zusammen max. ±1).
 const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
-function indScore(ind){return biasScore(ind.bias)*(BOND_HALF_PT.has(ind.name)?0.5:1);}
+function indScore(ind){return biasScore(ind.bias)*(BOND_HALF_PT.has(ind.name)?0.5:1)*(ind.imp?1.5:1);}
 function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
@@ -890,7 +890,7 @@ function scoreColor(n){return n>=3?'var(--blue)':n<=-3?'var(--red)':'var(--amber
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
 // dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
 function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
-function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = Summe der Indikatoren (Bullish +1, Neutral 0, Bearish −1)')}">${n>0?'+':''}${n}</span>`;}
+function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = Summe der Indikatoren (Bullish +1, Neutral 0, Bearish −1; als Wichtig (★) markierte Indikatoren zählen ±1,5)')}">${n>0?'+':''}${n}</span>`;}
 // Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung (z.B. EUR -5, USD +5 -> EUR/USD = -10)
 function pairScore(pairName){
   const parts=(pairName||'').split('/');if(parts.length!==2)return 0;
@@ -2473,7 +2473,7 @@ function renderDetail(){
   const nextLbl=nextDate?(nextDate===todayStr()?'Heute':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol-Score = Summe aller Indikatoren über alle Karten (Bullish +1, Neutral 0, Bearish −1)')}</div><div class="afull">${c.full}</div></div>
+      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol-Score = Summe aller Indikatoren über alle Karten (Bullish +1, Neutral 0, Bearish −1; als Wichtig (★) markierte Indikatoren zählen ±1,5)')}</div><div class="afull">${c.full}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias wird automatisch aus dem Score gesetzt: ab +3 bullish, ab −3 bearish, dazwischen neutral">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -2557,7 +2557,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Markt-Zinserwartungen${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · lange drücken zum Bearbeiten" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Karten-Score = Summe der Indikatoren dieser Karte (Bullish +1, Neutral 0, Bearish −1)">${sc>0?'+':''}${sc}</span>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Karten-Score = Summe der Indikatoren dieser Karte (Bullish +1, Neutral 0, Bearish −1; als Wichtig (★) markierte Indikatoren zählen ±1,5)">${sc>0?'+':''}${sc}</span>`;})()}
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
