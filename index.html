@@ -620,7 +620,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0369a1;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: PETROL (Als ⭐ Wichtig markierte Indikatoren zählen jetzt ±1,5 statt ±1 im Score – je nach Bullish/Bearish/Neutral; wirkt sich auf Karten-Score, Symbol-Score und damit auch auf Bias/Set-ups aus)</div>
+<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Index-Verbund: Bias, Rubriken/Indikatoren, General-Argumente, Notizen und Quick-Note werden jetzt zwischen allen Index-Symbolen (S&P 500, Nasdaq) gespiegelt – egal welcher Index bearbeitet wird, ändern sich alle gleichzeitig)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1140,6 +1140,28 @@ function syncCryptoGroup(srcId){
     if(id===srcId)return;
     const t=syms.find(s=>s.id===id);if(!t)return;
     CRYPTO_SYNC_FIELDS.forEach(f=>{
+      const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
+      if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
+    });
+  });
+  return changed;
+}
+// ── INDEX-VERBUND ────────────────────────────────────────────────────
+// Alle Index-Symbole (S&P 500, Nasdaq, ggf. weitere) sind verbunden:
+// Bias, Rubriken, General-Argumente, Notizen und Quick-Note werden zwischen
+// allen Indizes gespiegelt - ändert man eines, ändern sich alle (in beide
+// Richtungen). Symbol-Identität (id/name/full) bleibt natürlich erhalten.
+function isIndex(id){return assetCls(id)==='index';}
+function indexIds(){return syms.filter(s=>isIndex(s.id)).map(s=>s.id);}
+const INDEX_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote'];
+function syncIndexGroup(srcId){
+  if(!isIndex(srcId))return false;
+  const src=syms.find(s=>s.id===srcId);if(!src)return false;
+  let changed=false;
+  indexIds().forEach(id=>{
+    if(id===srcId)return;
+    const t=syms.find(s=>s.id===id);if(!t)return;
+    INDEX_SYNC_FIELDS.forEach(f=>{
       const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
       if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
     });
@@ -2259,6 +2281,10 @@ function save(){
   // Speichern auf alle anderen Coins spiegeln (BTC <-> ETH <-> ...). selId
   // zeigt nur dann auf ein Coin, wenn der Nutzer es geöffnet hat.
   if(isCrypto(selId))syncCryptoGroup(selId);
+  // Index-Verbund: Änderungen am aktuell gewählten Index (S&P 500, Nasdaq,
+  // ...) vor dem Speichern auf alle anderen Indizes spiegeln - egal welcher
+  // Index bearbeitet wird, gleichen sich alle Felder an.
+  if(isIndex(selId))syncIndexGroup(selId);
   try{
     localStorage.setItem(SK,snap());
     localStorage.setItem('fxpro_updated',new Date().toISOString());
