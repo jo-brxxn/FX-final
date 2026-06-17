@@ -237,10 +237,10 @@
    "period": "y/y"
   },
   "Retail Sales MoM": {
-   "actual": "0.5%",
+   "actual": "0.9%",
    "forecast": "0.5%",
-   "previous": "1.6%",
-   "date": "2026-05-14",
+   "previous": "0.4%",
+   "date": "2026-06-17",
    "event": "Retail Sales MoM",
    "period": "m/m"
   },
@@ -353,18 +353,18 @@
    "period": "m/m"
   },
   "CPI (Headline)": {
-   "actual": "2.6%",
-   "forecast": "2.6%",
-   "previous": "2.9%",
-   "date": "2026-06-12",
+   "actual": "3.2%",
+   "forecast": "3.2%",
+   "previous": "3%",
+   "date": "2026-06-17",
    "event": "Inflation Rate YoY Final",
    "period": "y/y"
   },
   "CPI": {
-   "actual": "-0.2%",
-   "forecast": "-0.2%",
-   "previous": "0.6%",
-   "date": "2026-06-12",
+   "actual": "0.1%",
+   "forecast": "0.1%",
+   "previous": "1%",
+   "date": "2026-06-17",
    "event": "Inflation Rate MoM Final",
    "period": "m/m"
   },
@@ -385,11 +385,11 @@
    "period": "q/q"
   },
   "Core CPI": {
-   "actual": "2.5%",
-   "forecast": "2.4%",
+   "actual": "2.6%",
+   "forecast": "2.5%",
    "previous": "2.2%",
-   "date": "2026-06-02",
-   "event": "Core Inflation Rate YoY Flash",
+   "date": "2026-06-17",
+   "event": "Core Inflation Rate YoY Final",
    "period": "y/y"
   },
   "Consumer Confidence": {
@@ -526,33 +526,33 @@
   },
   "PPI": {
    "actual": "4%",
-   "forecast": "2.8%",
-   "previous": "3%",
-   "date": "2026-05-20",
+   "forecast": "4%",
+   "previous": "4.1%",
+   "date": "2026-06-17",
    "event": "PPI Output YoY",
    "period": "y/y"
   },
   "CPI (Headline)": {
    "actual": "2.8%",
    "forecast": "3%",
-   "previous": "3.3%",
-   "date": "2026-05-20",
+   "previous": "2.8%",
+   "date": "2026-06-17",
    "event": "Inflation Rate YoY",
    "period": "y/y"
   },
   "CPI": {
-   "actual": "0.7%",
-   "forecast": "0.9%",
+   "actual": "0.2%",
+   "forecast": "0.4%",
    "previous": "0.7%",
-   "date": "2026-05-20",
+   "date": "2026-06-17",
    "event": "Inflation Rate MoM",
    "period": "m/m"
   },
   "Core CPI": {
-   "actual": "2.5%",
-   "forecast": "2.6%",
-   "previous": "3.1%",
-   "date": "2026-05-20",
+   "actual": "2.6%",
+   "forecast": "2.7%",
+   "previous": "2.5%",
+   "date": "2026-06-17",
    "event": "Core Inflation Rate YoY",
    "period": "y/y"
   },
