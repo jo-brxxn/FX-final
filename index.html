@@ -27,6 +27,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
+.profile-circle{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
+.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}
+.profile-btn:active .profile-circle{transform:scale(.95)}
+.profile-name{font-size:10px;font-weight:600;color:var(--t2);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
 .btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .btn:disabled{opacity:.22;cursor:default}
@@ -666,7 +671,7 @@ function introLogin(){
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#4f46e5;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: INDIGO (Zwei dezente Animationen: beim Wechsel eines Symbols blendet die Detailansicht sanft ein (Cross-Fade, nur beim Symbolwechsel – kein Effekt beim Tippen/Bearbeiten); die „Loading…"-Statuszeile zeigt beim ersten Laden einen Skeleton-Shimmer. Reines CSS, keine Dauer-Timer – belastet die Leistung nicht)</div>
+<div style="background:#e11d48;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: ROSÉ (Der „☁ Sync"-Button wurde oben rechts durch einen runden Profil-Kreis mit Personen-Emoji ersetzt; darunter steht der eingetragene Benutzername (sonst „Log in") – ein Klick öffnet das Cloud-Sync-Fenster. Undo/Redo sind jetzt Zurück-/Vor-Pfeile (← →))</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -678,14 +683,17 @@ function introLogin(){
       <span class="green-alert-icon">!</span>
       <span class="green-alert-count" id="greenAlertCount">0</span>
     </div>
-    <button class="btn" id="undoBtn" onclick="doUndo()" disabled>↩ Undo</button>
-    <button class="btn" id="redoBtn" onclick="doRedo()" disabled>↪ Redo</button>
+    <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Zurück (Rückgängig)">←</button>
+    <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Vor (Wiederholen)">→</button>
     <button class="btn" onclick="exportData()">⬇ Export</button>
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" id="cloudBtn" onclick="openCloudM()" style="border-color:rgba(var(--blue-rgb),.27);color:var(--blue)">☁ Sync</button>
     <button class="btn" onclick="openBackupM()" title="Lokale Backups (letzte 5 Snapshots)">🕐 Backups</button>
     <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Postfach">📥 Postfach<span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
+    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud-Sync / Login">
+      <span class="profile-circle">👤</span>
+      <span class="profile-name" id="profileName">Log in</span>
+    </button>
   </div>
 </div>
 
@@ -2389,8 +2397,16 @@ function saveCloudCfg(){
   // Falls der Login-Button im Intro noch sichtbar ist, sofort aktualisieren.
   const lb=document.getElementById('introLoginBtn');
   if(lb)lb.textContent='👤 '+(username||syncId);
+  updProfile();
   setCloudStatus('Gespeichert. Synchronisiere...');
   cloudPull(true);
+}
+// Profil-Button oben rechts: zeigt den eingetragenen Benutzernamen (oder
+// ersatzweise die Sync-ID), wenn der Cloud-Sync eingerichtet ist, sonst "Log in".
+function updProfile(){
+  const el=document.getElementById('profileName');if(!el)return;
+  const cfg=getCloudCfg();
+  el.textContent=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Log in';
 }
 async function cloudPush(manual){
   const cfg=getCloudCfg();if(!cfg)return;
@@ -3817,7 +3833,7 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();updInboxBadge();
+renderDash();updateStat();updUB();updInboxBadge();updProfile();
 updFFLastUpd();
 autoFetchFF();
 autoFetchIndData();
