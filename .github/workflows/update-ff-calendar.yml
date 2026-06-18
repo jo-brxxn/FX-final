@@ -731,14 +731,9 @@ jobs:
             // In nach Waehrung gruppiertes Objekt umwandeln. "Previous" wird,
             // wenn moeglich, durch den ACTUAL-Wert des vorhergehenden Release
             // ERSETZT statt dem von TradingView selbst gemeldeten previous-Feld
-            // zu vertrauen: Anbieter melden im "previous"-Feld oft den Stand
-            // VOR einer zwischenzeitlichen Revision (z.B. NZD GDP q/q: Previous
-            // wurde von 0.2% auf 0.8% revidiert, aber sowohl der FF-Feed als
-            // auch TradingViews "previous"-Feld zeigten weiterhin alte/falsche
-            // Werte). Der zuletzt von UNS selbst erfasste Actual-Wert desselben
-            // Indikators ist per Definition immer der aktuelle (revidierte)
-            // Stand, unabhaengig davon, ob/wann eine Revision veroeffentlicht
-            // wurde.
+            // zu vertrauen. Das ist aber nur der FALLBACK: wo der Forex-Factory-
+            // Kalender (unten) einen passenden Eintrag hat, gewinnen dessen
+            // Werte (siehe FF-Overlay).
             const out={};
             Object.keys(hist).forEach(k=>{
               const [ccy,ind]=k.split("|");
@@ -747,19 +742,17 @@ jobs:
               if(list[1])v.previous=list[1].actual;
               (out[ccy]=out[ccy]||{})[ind]=v;
             });
-            fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
-            // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
-            const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];
-            const missing=[];
-            ALLCCY.forEach(c=>RULES.forEach(r=>{ if(!out[c]||!out[c][r.ind])missing.push(c+" "+r.ind); }));
-            console.log("ind_data.json: "+Object.values(out).reduce((n,o)=>n+Object.keys(o).length,0)+" indicator values written");
-            console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
 
-            // ── Denselben verlaesslichen "Previous"-Wert (= unser eigener
-            // letzter Actual desselben Indikators) auch ins Kalender/Postfach
-            // (ff_calendar.json) uebernehmen, damit beide Stellen die gleiche,
-            // korrekte Zahl zeigen statt dem (oft unrevidierten) previous-Feld
-            // eines einzelnen Anbieters zu vertrauen.
+            // ── Forex-Factory-Kalenderwerte haben VORRANG (Nutzerwunsch) ──────
+            // Die Indikator-Karten sollen exakt die Werte des Forex-Factory-
+            // Kalenders (ff_calendar.json) zeigen, damit Karte und Kalender
+            // IMMER identisch sind (kein Auseinanderlaufen mehr wie bei NZD GDP:
+            // Karte 0.5% vs. Kalender 0.2%). Pro Indikator wird der passende
+            // FF-Eintrag (gleiche Waehrung + kanonischer Name, naechstgelegenes
+            // Datum) gesucht und dessen actual/forecast/previous uebernommen.
+            // Nur wo der Kalender (noch) keinen Eintrag hat (Release liegt
+            // ausserhalb des ~13-Tage-Fensters), bleiben die oben aus
+            // TradingView abgeleiteten Werte als Fallback bestehen.
             function canonKey(s){
               s=String(s||"").toLowerCase().trim().replace(/\s+/g," ");
               s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
@@ -775,27 +768,40 @@ jobs:
             }
             let cal;
             try{cal=JSON.parse(fs.readFileSync("ff_calendar.json","utf8"));}catch(e){cal=null;}
+            let ffOverlaid=0;
             if(Array.isArray(cal)){
-              let overlaid=0;
               Object.keys(out).forEach(ccy=>{
                 Object.keys(out[ccy]).forEach(ind=>{
                   const v=out[ccy][ind];
                   if(!v.event)return;
                   const evKey=ccy+"|"+canonKey(v.event);
                   const t=new Date(v.date).getTime();
+                  // Passenden FF-Eintrag mit dem naechstgelegenen Datum suchen.
+                  let best=null,bestDt=Infinity;
                   cal.forEach(ev=>{
                     if(ev.country+"|"+canonKey(ev.title)!==evKey)return;
                     const et=new Date(ev.date).getTime();
-                    if(isNaN(et)||Math.abs(et-t)>3*86400e3)return;
-                    if(v.previous&&ev.previous!==v.previous){ev.previous=v.previous;overlaid++;}
+                    if(isNaN(et))return;
+                    const dt=Math.abs(et-t);
+                    if(dt<bestDt){bestDt=dt;best=ev;}
                   });
+                  if(!best||bestDt>4*86400e3)return;
+                  let changed=false;
+                  if(best.actual&&v.actual!==best.actual){v.actual=best.actual;changed=true;}
+                  if(best.forecast&&v.forecast!==best.forecast){v.forecast=best.forecast;changed=true;}
+                  if(best.previous&&v.previous!==best.previous){v.previous=best.previous;changed=true;}
+                  if(changed)ffOverlaid++;
                 });
               });
-              if(overlaid){
-                fs.writeFileSync("ff_calendar.json", JSON.stringify(cal));
-                console.log("ind_data->calendar previous overlay: "+overlaid+" event(s) updated");
-              }
             }
+            fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
+            // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
+            const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];
+            const missing=[];
+            ALLCCY.forEach(c=>RULES.forEach(r=>{ if(!out[c]||!out[c][r.ind])missing.push(c+" "+r.ind); }));
+            console.log("ind_data.json: "+Object.values(out).reduce((n,o)=>n+Object.keys(o).length,0)+" indicator values written");
+            console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
+            console.log("ind_data <- FF calendar overlay: "+ffOverlaid+" indicator value(s) taken from Forex-Factory");
           '
 
       # ── BOND-HISTORIE BACKFILL (offizielle Gratis-Quellen, ohne Key) ──

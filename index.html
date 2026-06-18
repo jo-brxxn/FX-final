@@ -670,7 +670,7 @@ function introLogin(){
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Kalender-Dopplungen behoben + FF-Webseite hat Vorrang bei Revisionen; NEU: "Previous"-Wert bei Indikatoren & Kalender wird jetzt aus unserem eigenen letzten Actual-Wert desselben Indikators abgeleitet statt blind dem (oft unrevidierten) previous-Feld eines einzelnen Anbieters zu vertrauen - löst z.B. NZD-GDP-Fall, wo Forecast/Previous je Quelle widersprüchlich waren)</div>
+<div style="background:#d97706;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: BERNSTEIN (Indikator-Karten übernehmen jetzt die Forex-Factory-Kalenderwerte: pro Indikator wird der passende Kalendereintrag gesucht und dessen Actual/Forecast/Previous übernommen, damit Karte & Kalender IMMER identisch sind, statt TradingViews abweichende Zahlen zu zeigen - TradingView bleibt nur Fallback für Releases ausserhalb des Kalenderfensters; löst den NZD-GDP-Fall, wo Karte 0.5% und Kalender 0.2% zeigten)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
