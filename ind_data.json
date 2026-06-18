@@ -159,7 +159,7 @@
   "Unemployment Claims": {
    "actual": "226K",
    "forecast": "225K",
-   "previous": "229K",
+   "previous": "230K",
    "date": "2026-06-18",
    "event": "Initial Jobless Claims",
    "period": null
@@ -239,7 +239,7 @@
   "Retail Sales MoM": {
    "actual": "0.9%",
    "forecast": "0.5%",
-   "previous": "0.7%",
+   "previous": "0.4%",
    "date": "2026-06-17",
    "event": "Retail Sales MoM",
    "period": "m/m"
@@ -321,7 +321,7 @@
   "GDP Growth QoQ": {
    "actual": "0.8%",
    "forecast": "0.9%",
-   "previous": "0.2%",
+   "previous": "0.5%",
    "date": "2026-06-17",
    "event": "GDP Growth Rate QoQ",
    "period": "q/q"
@@ -355,7 +355,7 @@
   "CPI (Headline)": {
    "actual": "3.2%",
    "forecast": "3.2%",
-   "previous": "2.6%",
+   "previous": "3%",
    "date": "2026-06-17",
    "event": "Inflation Rate YoY Final",
    "period": "y/y"
@@ -387,7 +387,7 @@
   "Core CPI": {
    "actual": "2.6%",
    "forecast": "2.5%",
-   "previous": "2.5%",
+   "previous": "2.2%",
    "date": "2026-06-17",
    "event": "Core Inflation Rate YoY Final",
    "period": "y/y"
@@ -503,7 +503,7 @@
   "Unemployment Claims": {
    "actual": "31.2K",
    "forecast": "25.8K",
-   "previous": "26.5K",
+   "previous": "8.3K",
    "date": "2026-06-18",
    "event": "Claimant Count Change",
    "period": null
