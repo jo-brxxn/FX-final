@@ -529,7 +529,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 .intro-title{font-weight:900;font-size:clamp(32px,7vw,88px);letter-spacing:clamp(1px,.6vw,7px);white-space:nowrap;padding:0 4vw;background:linear-gradient(135deg,#5fa8ed 0%,#4fc3f7 45%,#a78bfa 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.02;filter:drop-shadow(0 0 26px rgba(79,195,247,.55));opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
 .intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
-.intro-hint{position:absolute;bottom:9%;left:0;right:0;text-align:center;font-size:clamp(10px,1.4vw,14px);color:rgba(128,151,176,.55);letter-spacing:3px;text-transform:uppercase;opacity:0;animation:introSubIn 1s ease 1.4s both;pointer-events:none}
+.intro-hint{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;opacity:0;transition:opacity .5s ease;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+#introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}
+#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}
+#introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
 </style>
@@ -538,13 +541,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
+  <button id="introLoginBtn" onclick="introLogin()">Log in</button>
   <div id="introShards"></div>
   <div class="intro-grid"></div>
   <div id="introZoom">
     <div class="intro-title">FX ANALYST&nbsp;PRO</div>
     <div class="intro-sub">created by Jonathan Brinkmann</div>
   </div>
-  <div class="intro-hint">Tippen oder Klicken</div>
+  <div class="intro-hint" id="introHint">tap to continue</div>
 </div>
 <script>
 (function(){
@@ -570,12 +574,39 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     layer.appendChild(el);
     shards.push({el:el,cx:x+tw/2,cy:y+th/2});
   }}
+  // Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
+  // Cloud-Sync bereits eingerichtet ist, sonst "Log in".
+  var loginBtn=document.getElementById('introLoginBtn');
+  if(loginBtn){
+    var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
+    if(cc&&(cc.username||cc.syncId)){loginBtn.textContent='👤 '+(cc.username||cc.syncId);}
+    else{loginBtn.textContent='Log in';}
+  }
+  // Hinweis unten wechselt alle 3 Sekunden zwischen "tap to continue" und
+  // "click to continue" (weiche Aus-/Einblendung).
+  var hintEl=document.getElementById('introHint');
+  var hints=['tap to continue','click to continue'],hi=0;
+  if(hintEl){
+    setTimeout(function(){if(!done)hintEl.style.opacity='1';},1300);
+    setInterval(function(){
+      if(done)return;
+      hintEl.style.opacity='0';
+      setTimeout(function(){
+        if(done)return;
+        hi=(hi+1)%hints.length;
+        hintEl.textContent=hints[hi];
+        hintEl.style.opacity='1';
+      },500);
+    },3000);
+  }
   function dismiss(){
     if(done)return;done=true;
     var zoom=document.getElementById('introZoom');
     if(zoom){zoom.style.transition='opacity .35s ease';zoom.style.opacity='0';}
     var hint=document.querySelector('.intro-hint');
     if(hint){hint.style.transition='opacity .2s ease';hint.style.opacity='0';}
+    var lb=document.getElementById('introLoginBtn');
+    if(lb){lb.style.transition='opacity .2s ease';lb.style.opacity='0';}
     shards.forEach(function(s){
       var dx=s.cx-cx,dy=s.cy-cy,dist=Math.hypot(dx,dy)||1;
       var push=Math.max(vw,vh)*(0.85+Math.random()*0.5);
@@ -588,9 +619,18 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     });
     setTimeout(function(){if(ov.parentNode)ov.remove();},1050);
   }
-  ov.addEventListener('click',dismiss);
-  ov.addEventListener('touchstart',dismiss,{passive:true});
+  // Klick/Tap auf den Login-Button NICHT als "Intro wegklicken" werten.
+  function onTap(e){if(e.target&&e.target.closest&&e.target.closest('#introLoginBtn'))return;dismiss();}
+  ov.addEventListener('click',onTap);
+  ov.addEventListener('touchstart',onTap,{passive:true});
 })();
+// Vom Intro aus zum Login (Cloud-Sync) springen: Intro ausblenden und das
+// Cloud-Modal oberhalb des Sperrbildschirms öffnen.
+function introLogin(){
+  var ov=document.getElementById('introOv');
+  if(ov){ov.style.transition='opacity .35s ease';ov.style.opacity='0';setTimeout(function(){if(ov.parentNode)ov.remove();},360);}
+  if(typeof openCloudM==='function')openCloudM(true);
+}
 </script>
 
 <!-- LOCK SCREEN -->
@@ -620,7 +660,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#7c3aed;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: VIOLETT (Index-Verbund: Bias, Rubriken/Indikatoren, General-Argumente, Notizen und Quick-Note werden jetzt zwischen allen Index-Symbolen (S&P 500, Nasdaq) gespiegelt – egal welcher Index bearbeitet wird, ändern sich alle gleichzeitig)</div>
+<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Startbildschirm: unten wechselt der Hinweis alle 3 Sek. zwischen „tap to continue" und „click to continue"; oben rechts neuer Log-in-Button, der das Cloud-Sync-Fenster öffnet und – sobald verbunden – den eingetragenen Benutzernamen anzeigt. Im Sync-Fenster kann jetzt ein Benutzername vergeben werden)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -803,6 +843,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   <div class="modal">
     <h3>☁ Cloud-Synchronisierung</h3>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Verbinde ein kostenloses <a href="https://supabase.com" target="_blank" style="color:var(--blue)">Supabase</a>-Projekt, um deine Daten automatisch zwischen all deinen Geräten (iPad, iPhone, PC) zu synchronisieren. Die Zugangsdaten werden nur lokal auf diesem Gerät gespeichert.</div>
+    <label class="dm-lbl">Benutzername (wird oben rechts im Startbildschirm angezeigt)</label>
+    <input class="m-inp" id="cloudUsername" placeholder="z.B. Jonathan">
     <label class="dm-lbl">Project URL</label>
     <input class="m-inp" id="cloudUrl" placeholder="https://xxxxx.supabase.co">
     <label class="dm-lbl">Anon / Public API Key</label>
@@ -2317,23 +2359,30 @@ function getCloudCfg(){
 function cloudHeaders(cfg){
   return{'apikey':cfg.key,'Content-Type':'application/json'};
 }
-function openCloudM(){
+function openCloudM(fromIntro){
   const cfg=getCloudCfg()||{};
+  document.getElementById('cloudUsername').value=cfg.username||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
   document.getElementById('cloudKey').value=cfg.key||'';
   document.getElementById('cloudSyncId').value=cfg.syncId||'';
   setCloudStatus(cfg.url?'Verbunden mit Sync-ID "'+(cfg.syncId||'')+'". Letzte lokale Änderung: '+(localStorage.getItem('fxpro_updated')?new Date(localStorage.getItem('fxpro_updated')).toLocaleString():'-'):'Noch nicht eingerichtet.');
+  // Wenn vom Intro aus geöffnet, muss das Modal über dem Sperrbildschirm liegen.
+  document.getElementById('mCloud').style.zIndex=fromIntro?'100001':'';
   openM('mCloud');
 }
 function setCloudStatus(txt){
   const el=document.getElementById('cloudStatus');if(el)el.textContent=txt;
 }
 function saveCloudCfg(){
+  const username=document.getElementById('cloudUsername').value.trim();
   const url=document.getElementById('cloudUrl').value.trim().replace(/\/+$/,'');
   const key=document.getElementById('cloudKey').value.trim();
   const syncId=document.getElementById('cloudSyncId').value.trim();
   if(!url||!key||!syncId){alert('Bitte URL, API-Key und Sync-ID ausfüllen.');return;}
-  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({url,key,syncId}));
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,url,key,syncId}));
+  // Falls der Login-Button im Intro noch sichtbar ist, sofort aktualisieren.
+  const lb=document.getElementById('introLoginBtn');
+  if(lb)lb.textContent='👤 '+(username||syncId);
   setCloudStatus('Gespeichert. Synchronisiere...');
   cloudPull(true);
 }
