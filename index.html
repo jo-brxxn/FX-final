@@ -534,7 +534,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 .intro-title{font-weight:900;font-size:clamp(32px,7vw,88px);letter-spacing:clamp(1px,.6vw,7px);white-space:nowrap;padding:0 4vw;background:linear-gradient(135deg,#5fa8ed 0%,#4fc3f7 45%,#a78bfa 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.02;filter:drop-shadow(0 0 26px rgba(79,195,247,.55));opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
 .intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
-.intro-hint{position:absolute;bottom:5%;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;opacity:0;transition:opacity .5s ease;pointer-events:none;text-shadow:0 1px 8px rgba(0,0,0,.4)}
+.intro-hint{position:absolute;bottom:5%;left:0;right:0;height:1.4em;pointer-events:none}
+.ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
+.ih-2{animation-delay:3s}
+@keyframes ihCycle{0%{opacity:0}5%{opacity:1}45%{opacity:1}50%{opacity:0}100%{opacity:0}}
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}
 #introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}
 #introLoginBtn:active{transform:scale(.95)}
@@ -565,7 +568,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     <div class="intro-title">FX ANALYST&nbsp;PRO</div>
     <div class="intro-sub">created by Jonathan Brinkmann</div>
   </div>
-  <div class="intro-hint" id="introHint">tap to continue</div>
+  <div class="intro-hint" id="introHint">
+    <span class="ih-txt ih-1">tap to continue</span>
+    <span class="ih-txt ih-2">click to continue</span>
+  </div>
 </div>
 <script>
 (function(){
@@ -600,22 +606,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
     else{loginBtn.textContent='Log in';}
   }
   // Hinweis unten wechselt alle 3 Sekunden zwischen "tap to continue" und
-  // "click to continue" (weiche Aus-/Einblendung).
-  var hintEl=document.getElementById('introHint');
-  var hints=['tap to continue','click to continue'],hi=0;
-  if(hintEl){
-    setTimeout(function(){if(!done)hintEl.style.opacity='1';},1300);
-    setInterval(function(){
-      if(done)return;
-      hintEl.style.opacity='0';
-      setTimeout(function(){
-        if(done)return;
-        hi=(hi+1)%hints.length;
-        hintEl.textContent=hints[hi];
-        hintEl.style.opacity='1';
-      },500);
-    },3000);
-  }
+  // "click to continue" - rein per CSS-Keyframes (zwei überlagerte Spans mit
+  // versetztem animation-delay), damit die Anzeige unabhängig von JS-Timern
+  // läuft und auch bei verzögertem Skript-Start sofort sichtbar ist.
   function dismiss(){
     if(done)return;done=true;
     var zoom=document.getElementById('introZoom');
@@ -677,7 +670,7 @@ function introLogin(){
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0891b2;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: ZYAN (Alle Übergänge weicher: Tab-Wechsel (Dashboard/Assets/Set-ups/Calendar/Notes) blenden jetzt sanft ein, ebenso die Makro/General/Notes-Unterreiter in der Detailansicht und alle Pop-up-Fenster (Cloud-Sync, Backups, Postfach usw.) – reines CSS, kein Effekt während des Tippens/Bearbeitens)</div>
+<div style="background:#65a30d;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: OLIV (Postfach zeigt/zählt nur noch Events von heute & gestern, ältere werden automatisch entfernt (löschbar war es schon, das „!" verschwindet jetzt zuverlässig bei leerem Postfach); Start-Hinweis "tap/click to continue" läuft jetzt rein per CSS statt JS-Timer, damit er sicher angezeigt wird; Bullish/Bearish-Prozentleiste zählt einzeln auf "neutral" gesetzte General-Argumente nicht mehr mit)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -1354,6 +1347,10 @@ function pairEvtFlagHtml(name,baseCls){return flagSpans(pairEvtFlagState(name),b
 // zusätzlich noch CAL_PAST_DAYS Tage lang im Kalender (und damit auch beim
 // zugehörigen Symbol) stehen, damit man Actual-Werte direkt dort sieht.
 const CAL_PAST_DAYS=2;
+// Postfach-Einträge bleiben nur bis gestern sichtbar - danach werden sie
+// automatisch entfernt (die Symbol-Detailansicht zieht ältere Actual-Werte
+// ohnehin aus calEvts, das CAL_PAST_DAYS Tage lang separat erhalten bleibt).
+const INBOX_RETENTION_DAYS=1;
 // Kalender-Filter "nur High-Impact" (persistiert eigenständig im localStorage).
 let calHighOnly=localStorage.getItem('fxpro_cal_highonly')==='1';
 // Welche vergangenen Tage im Kalender aktuell aufgeklappt sind (nur Session,
@@ -1371,6 +1368,9 @@ function processCalEvts(){
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
+  const beforeInbox=inbox.length;
+  inbox=inbox.filter(m=>daysUntil(m.date)>=-INBOX_RETENTION_DAYS);
+  if(inbox.length!==beforeInbox)changed=true;
   if(syncIndicatorBiases())changed=true;
   return changed;
 }
@@ -2570,7 +2570,12 @@ function renderSidebar(){
 function renderDetail(){
   const c=getSym();if(!c)return;
   const bull=c.genBull||[],bear=c.genBear||[];
-  const pct=Math.round((bull.length/(bull.length+bear.length||1))*100);
+  // Nur Einträge mit tatsächlichem Bias zählen - ein einzelner Eintrag, der
+  // per Toggle auf "neutral" (0) gesetzt wurde, soll die Bullish/Bearish-
+  // Prozentleiste nicht mehr beeinflussen, egal in welchem Array er steht.
+  const bullN=bull.filter(r=>(r.bias||'bull')==='bull').length;
+  const bearN=bear.filter(r=>(r.bias||'bear')==='bear').length;
+  const pct=Math.round((bullN/(bullN+bearN||1))*100);
   const{events:symEvts,nextDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
   const nextLbl=nextDate?(nextDate===todayStr()?'Heute':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
