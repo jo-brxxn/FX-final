@@ -430,17 +430,23 @@ jobs:
             // exakt dieselben Event-Namen wie der Feed, daher reicht
             // Titel+Waehrung+ET-Kalendertag als Schluessel. Wird auch dann
             // angewandt, wenn der Wert bereits gesetzt ist (Revision).
+            // Felder, die hier gesetzt werden, markieren wir (_ffAct/_ffPrev/
+            // _ffFc), damit der nachfolgende TradingView-Overlay sie NICHT
+            // mehr ueberschreibt - die FF-Webseite hat Vorrang.
             let revPrev=0,revFc=0,actFromWeb=0;
             combined.forEach(ev=>{
               const evDayET=String(ev.date).slice(0,10);
               const w=altActuals.find(a=>a.source==="ffhtml"&&a.title===ev.title&&a.country===ev.country&&a.day===evDayET);
               if(!w)return;
-              if(w.actual&&w.actual!==ev.actual){ev.actual=w.actual;actFromWeb++;}
-              if(w.previous&&w.previous!==ev.previous){ev.previous=w.previous;revPrev++;}
-              if(w.forecast&&w.forecast!==ev.forecast){ev.forecast=w.forecast;revFc++;}
+              if(w.actual&&w.actual!==ev.actual){ev.actual=w.actual;ev._ffAct=true;actFromWeb++;}
+              if(w.previous&&w.previous!==ev.previous){ev.previous=w.previous;ev._ffPrev=true;revPrev++;}
+              if(w.forecast&&w.forecast!==ev.forecast){ev.forecast=w.forecast;ev._ffFc=true;revFc++;}
             });
             if(revPrev||revFc||actFromWeb){
-              fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+              // _ffAct/_ffPrev/_ffFc sind nur fuer den nachfolgenden TradingView-
+              // Overlay-Schritt (im selben Prozess, gleiches `combined`-Array)
+              // gedacht und duerfen nicht in die Datei geschrieben werden.
+              fs.writeFileSync("ff_calendar.json", JSON.stringify(combined,(k,v)=>k==="_ffAct"||k==="_ffPrev"||k==="_ffFc"?undefined:v));
               console.log("FF website overlay: "+actFromWeb+" actual, "+revPrev+" previous, "+revFc+" forecast updated");
             }
 
@@ -448,7 +454,9 @@ jobs:
             // Economics uebernehmen (FF-Webseite ist auf den Runnern fast immer
             // von Cloudflare blockiert). Matcht ueber kanonischen Namen +
             // Waehrung + Zeit (+/-2h). Laeuft UNABHAENGIG von FXStreet, damit
-            // Revisionen auch dann ankommen, wenn FXStreet ausfaellt.
+            // Revisionen auch dann ankommen, wenn FXStreet ausfaellt. Felder,
+            // die bereits von der FF-Webseite gesetzt wurden, bleiben
+            // unangetastet (FF-Webseite hat Vorrang vor TradingView).
             const TV_TOL=2*60*60*1000;
             let tvPrev=0,tvFc=0,tvAct=0;
             combined.forEach(ev=>{
@@ -462,13 +470,16 @@ jobs:
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(!hits.length)return;
               const h=hits[0];
-              if(h.previous&&h.previous!==ev.previous){ev.previous=h.previous;tvPrev++;}
-              if(h.forecast&&h.forecast!==ev.forecast){ev.forecast=h.forecast;tvFc++;}
+              if(!ev._ffPrev&&h.previous&&h.previous!==ev.previous){ev.previous=h.previous;tvPrev++;}
+              if(!ev._ffFc&&h.forecast&&h.forecast!==ev.forecast){ev.forecast=h.forecast;tvFc++;}
               // Actual nur fuellen, nicht ueberschreiben: vermeidet, dass ein
               // korrekter FF-Actual durch eine abweichend formatierte TV-Zahl
               // ersetzt wird (und faelschlich als Revision gefaerbt wird).
-              if(h.actual&&!ev.actual){ev.actual=h.actual;tvAct++;}
+              if(!ev._ffAct&&h.actual&&!ev.actual){ev.actual=h.actual;tvAct++;}
             });
+            // Temporaere FF-Vorrang-Markierungen wieder entfernen, bevor in
+            // die Datei geschrieben wird.
+            combined.forEach(ev=>{delete ev._ffAct;delete ev._ffPrev;delete ev._ffFc;});
             if(tvPrev||tvFc||tvAct){
               fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
               console.log("TradingView/TE overlay: "+tvAct+" actual, "+tvPrev+" previous, "+tvFc+" forecast updated");
