@@ -698,8 +698,10 @@ jobs:
             // vom 2000er-Limit der 95-Tage-Abfrage betroffen.
             const evts=[...(recent||[]),...(wide||[])];
             console.log("ind_data: "+(wide?wide.length:0)+" TV events in 95d window, "+(recent?recent.length:0)+" in 45d window");
-            // Pro (ccy|ind) das spaeteste Event mit Actual behalten.
-            const best={};
+            // Pro (ccy|ind) ALLE Events mit Actual sammeln (nicht nur das
+            // spaeteste) - das vorletzte Event liefert den verlaesslichsten
+            // "Previous"-Wert (s.u.).
+            const hist={};
             evts.forEach(ev=>{
               const ccy=TV2CCY[ev.country];
               if(!ccy)return;
@@ -715,24 +717,34 @@ jobs:
                 const k=ccy+"|"+r.ind;
                 const t=new Date(ev.date).getTime();
                 if(isNaN(t))return;
-                if(!best[k]||t>best[k]._t){
-                  best[k]={
-                    actual:actual,
-                    forecast:fmt(ev.forecast,ev.unit,ev.scale),
-                    previous:fmt(ev.previous,ev.unit,ev.scale),
-                    date:new Date(ev.date).toISOString().slice(0,10),
-                    event:(ev.title||ev.indicator||""),
-                    period:r.period,
-                    _t:t
-                  };
-                }
+                (hist[k]=hist[k]||[]).push({
+                  actual:actual,
+                  forecast:fmt(ev.forecast,ev.unit,ev.scale),
+                  previous:fmt(ev.previous,ev.unit,ev.scale),
+                  date:new Date(ev.date).toISOString().slice(0,10),
+                  event:(ev.title||ev.indicator||""),
+                  period:r.period,
+                  _t:t
+                });
               });
             });
-            // In nach Waehrung gruppiertes Objekt umwandeln (ohne _t).
+            // In nach Waehrung gruppiertes Objekt umwandeln. "Previous" wird,
+            // wenn moeglich, durch den ACTUAL-Wert des vorhergehenden Release
+            // ERSETZT statt dem von TradingView selbst gemeldeten previous-Feld
+            // zu vertrauen: Anbieter melden im "previous"-Feld oft den Stand
+            // VOR einer zwischenzeitlichen Revision (z.B. NZD GDP q/q: Previous
+            // wurde von 0.2% auf 0.8% revidiert, aber sowohl der FF-Feed als
+            // auch TradingViews "previous"-Feld zeigten weiterhin alte/falsche
+            // Werte). Der zuletzt von UNS selbst erfasste Actual-Wert desselben
+            // Indikators ist per Definition immer der aktuelle (revidierte)
+            // Stand, unabhaengig davon, ob/wann eine Revision veroeffentlicht
+            // wurde.
             const out={};
-            Object.keys(best).forEach(k=>{
+            Object.keys(hist).forEach(k=>{
               const [ccy,ind]=k.split("|");
-              const v={...best[k]};delete v._t;
+              const list=hist[k].sort((a,b)=>b._t-a._t);
+              const v={...list[0]};delete v._t;
+              if(list[1])v.previous=list[1].actual;
               (out[ccy]=out[ccy]||{})[ind]=v;
             });
             fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
@@ -742,6 +754,48 @@ jobs:
             ALLCCY.forEach(c=>RULES.forEach(r=>{ if(!out[c]||!out[c][r.ind])missing.push(c+" "+r.ind); }));
             console.log("ind_data.json: "+Object.values(out).reduce((n,o)=>n+Object.keys(o).length,0)+" indicator values written");
             console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
+
+            // ── Denselben verlaesslichen "Previous"-Wert (= unser eigener
+            // letzter Actual desselben Indikators) auch ins Kalender/Postfach
+            // (ff_calendar.json) uebernehmen, damit beide Stellen die gleiche,
+            // korrekte Zahl zeigen statt dem (oft unrevidierten) previous-Feld
+            // eines einzelnen Anbieters zu vertrauen.
+            function canonKey(s){
+              s=String(s||"").toLowerCase().trim().replace(/\s+/g," ");
+              s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
+              s=s.replace(/growth rate/g,"");
+              s=s.replace(/ex food (?:&|and) energy/g,"core");
+              s=s.replace(/producer price index|producer prices/g,"ppi");
+              s=s.replace(/consumer price index|inflation rate/g,"cpi");
+              s=s.replace(/, final demand|final demand/g,"");
+              s=s.replace(/initial jobless claims/g,"unemployment claims");
+              s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
+              return s.split(" ").sort().join(" ");
+            }
+            let cal;
+            try{cal=JSON.parse(fs.readFileSync("ff_calendar.json","utf8"));}catch(e){cal=null;}
+            if(Array.isArray(cal)){
+              let overlaid=0;
+              Object.keys(out).forEach(ccy=>{
+                Object.keys(out[ccy]).forEach(ind=>{
+                  const v=out[ccy][ind];
+                  if(!v.event)return;
+                  const evKey=ccy+"|"+canonKey(v.event);
+                  const t=new Date(v.date).getTime();
+                  cal.forEach(ev=>{
+                    if(ev.country+"|"+canonKey(ev.title)!==evKey)return;
+                    const et=new Date(ev.date).getTime();
+                    if(isNaN(et)||Math.abs(et-t)>3*86400e3)return;
+                    if(v.previous&&ev.previous!==v.previous){ev.previous=v.previous;overlaid++;}
+                  });
+                });
+              });
+              if(overlaid){
+                fs.writeFileSync("ff_calendar.json", JSON.stringify(cal));
+                console.log("ind_data->calendar previous overlay: "+overlaid+" event(s) updated");
+              }
+            }
           '
 
       # ── BOND-HISTORIE BACKFILL (offizielle Gratis-Quellen, ohne Key) ──
