@@ -392,8 +392,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .finp:focus{border-color:var(--bd2);color:var(--t0)}.finp::placeholder{color:var(--t3)}
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px}
-.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
+.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:480px}
 #inboxList{max-height:65vh;overflow-y:auto}
@@ -401,7 +401,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
-.date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .date-modal h3{font-size:14px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
@@ -540,9 +540,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
-/* ── DETAIL CROSS-FADE (nur beim Symbolwechsel) ── */
+/* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
 .detail-fade{animation:detailFadeIn .26s ease both}
+/* ── SEITEN-ÜBERGANG (Dashboard / Assets / Set-ups / Calendar / Notes) ── */
+@keyframes pageFadeIn{0%{opacity:0;transform:translateY(9px)}100%{opacity:1;transform:translateY(0)}}
+.page-fade-in{animation:pageFadeIn .3s cubic-bezier(.16,.84,.44,1) both}
+/* ── MODAL-ÜBERGANG (Ein-/Ausblenden) ── */
+@keyframes ovFadeIn{0%{opacity:0}100%{opacity:1}}
+@keyframes modalPopIn{0%{opacity:0;transform:scale(.94) translateY(6px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 /* ── SKELETON-SHIMMER (Platzhalter beim ersten Laden) ── */
 .skel{display:inline-block;height:11px;border-radius:4px;vertical-align:middle;background:linear-gradient(90deg,rgba(128,151,176,.10) 25%,rgba(128,151,176,.30) 50%,rgba(128,151,176,.10) 75%);background-size:200% 100%;animation:skelShimmer 1.2s ease-in-out infinite}
 @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -671,7 +677,7 @@ function introLogin(){
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#e11d48;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: ROSÉ (Der „☁ Sync"-Button wurde oben rechts durch einen runden Profil-Kreis mit Personen-Emoji ersetzt; darunter steht der eingetragene Benutzername (sonst „Log in") – ein Klick öffnet das Cloud-Sync-Fenster. Undo/Redo sind jetzt Zurück-/Vor-Pfeile (← →))</div>
+<div style="background:#0891b2;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: ZYAN (Alle Übergänge weicher: Tab-Wechsel (Dashboard/Assets/Set-ups/Calendar/Notes) blenden jetzt sanft ein, ebenso die Makro/General/Notes-Unterreiter in der Detailansicht und alle Pop-up-Fenster (Cloud-Sync, Backups, Postfach usw.) – reines CSS, kein Effekt während des Tippens/Bearbeitens)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
@@ -2813,7 +2819,7 @@ function renderNoteRub(rub,ri,total){
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
 function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
-function setSub(s){curSub=s;renderDetail();}
+function setSub(s){curSub=s;renderDetail();const dp=document.querySelector('#detail .dp');if(dp)dp.classList.add('detail-fade');}
 function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 function setBias(b){
   pushU();getSym().bias=b;
@@ -3742,8 +3748,15 @@ const PAGE_IDS={dash:'pgDash',cur:'pgCur',pairs:'pgPairs',cal:'pgCal',notes:'pgN
 function showTab(tab,btn){
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.querySelectorAll('.tp').forEach(b=>b.classList.remove('on'));
-  const pgEl=document.getElementById(PAGE_IDS[tab]);if(pgEl)pgEl.style.display='block';
-  if(tab==='cur'){document.getElementById('pgCur').style.display='flex';}
+  const pgEl=document.getElementById(PAGE_IDS[tab]);
+  if(pgEl){
+    pgEl.style.display=tab==='cur'?'flex':'block';
+    // Animation neu auslösen (Reflow erzwingen), falls dieselbe Seite kurz
+    // zuvor schon einmal eingeblendet wurde.
+    pgEl.classList.remove('page-fade-in');
+    void pgEl.offsetWidth;
+    pgEl.classList.add('page-fade-in');
+  }
   if(btn)btn.classList.add('on');curPage=tab;
   if(tab==='dash')renderDash();
   else if(tab==='cur'){renderSidebar();renderDetail();}
