@@ -108,6 +108,11 @@ jobs:
             function canonKey(s){
               s=String(s||"").toLowerCase().trim().replace(/\s+/g," ");
               s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
+              // TradingView haengt an viele Titel "Growth Rate" an (z.B. "GDP
+              // Growth Rate QoQ"), waehrend der FF-Feed nur "GDP q/q" nutzt -
+              // das Wort entfernen, sonst werden beide als verschiedene Events
+              // erkannt und es entstehen Dopplungen im Kalender.
+              s=s.replace(/growth rate/g,"");
               s=s.replace(/ex food (?:&|and) energy/g,"core");
               s=s.replace(/producer price index|producer prices/g,"ppi");
               s=s.replace(/consumer price index|inflation rate/g,"cpi");
@@ -393,6 +398,7 @@ jobs:
             function canonKey(s){
               s=normName(s);
               s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
+              s=s.replace(/growth rate/g,"");
               s=s.replace(/ex food (?:&|and) energy/g,"core");
               s=s.replace(/producer price index|producer prices/g,"ppi");
               s=s.replace(/consumer price index|inflation rate/g,"cpi");
@@ -529,6 +535,69 @@ jobs:
               unmatched.forEach(u=>console.log("  - "+u));
             }
             if(matched+matchedFFW+matchedTE>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+          '
+
+      # Schutznetz gegen Dopplungen im Kalender (z.B. "GDP q/q" vom FF-Feed
+      # UND "GDP Growth Rate QoQ" von TradingView fuer denselben Release):
+      # unabhaengig davon, wie eine Dopplung entstanden ist (Namens-
+      # Mismatch beim Hinzufuegen, mehrfacher Lauf, ...), werden hier ALLE
+      # Events mit gleicher Waehrung + kanonischem Namen + ET-Kalendertag
+      # zu einem Eintrag zusammengefuehrt (der vollstaendigere/FF-Eintrag
+      # gewinnt, fehlende Felder werden aus dem Duplikat ergaenzt).
+      - name: Deduplicate ff_calendar.json
+        run: |
+          node -e '
+            const fs=require("fs");
+            function canonKey(s){
+              s=String(s||"").toLowerCase().trim().replace(/\s+/g," ");
+              s=s.replace(/\(mom\)|\bmom\b/g,"m/m").replace(/\(yoy\)|\byoy\b/g,"y/y").replace(/\(qoq\)|\bqoq\b/g,"q/q");
+              s=s.replace(/growth rate/g,"");
+              s=s.replace(/ex food (?:&|and) energy/g,"core");
+              s=s.replace(/producer price index|producer prices/g,"ppi");
+              s=s.replace(/consumer price index|inflation rate/g,"cpi");
+              s=s.replace(/, final demand|final demand/g,"");
+              s=s.replace(/initial jobless claims/g,"unemployment claims");
+              s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
+              return s.split(" ").sort().join(" ");
+            }
+            function etDay(iso){const t=new Date(iso).getTime();if(isNaN(t))return null;return new Date(t-4*3600e3).toISOString().slice(0,10);}
+            let combined;
+            try{combined=JSON.parse(fs.readFileSync("ff_calendar.json","utf8"));}catch(e){process.exit(0);}
+            if(!Array.isArray(combined))process.exit(0);
+            const groups=new Map();
+            combined.forEach(ev=>{
+              const k=ev.country+"|"+canonKey(ev.title)+"|"+etDay(ev.date);
+              if(!groups.has(k))groups.set(k,[]);
+              groups.get(k).push(ev);
+            });
+            let removed=0;
+            const out=[];
+            groups.forEach(list=>{
+              if(list.length===1){out.push(list[0]);return;}
+              // FF-natives Event (kein src-Tag) zuerst, sonst das mit den
+              // meisten gefuellten Feldern.
+              list.sort((a,b)=>{
+                const as=a.src?1:0,bs=b.src?1:0;
+                if(as!==bs)return as-bs;
+                const af=["actual","forecast","previous"].filter(k=>a[k]).length;
+                const bf=["actual","forecast","previous"].filter(k=>b[k]).length;
+                return bf-af;
+              });
+              const base=list[0];
+              for(let i=1;i<list.length;i++){
+                ["actual","forecast","previous"].forEach(k=>{if(!base[k]&&list[i][k])base[k]=list[i][k];});
+              }
+              out.push(base);
+              removed+=list.length-1;
+            });
+            if(removed){
+              out.sort((x,y)=>new Date(x.date)-new Date(y.date));
+              fs.writeFileSync("ff_calendar.json", JSON.stringify(out));
+              console.log("Dedup: removed "+removed+" duplicate calendar event(s)");
+            } else {
+              console.log("Dedup: no duplicates found");
+            }
           '
 
       # ── INDIKATOR-WERTE (ind_data.json) ───────────────────────────────
