@@ -535,6 +535,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
+/* ── DETAIL CROSS-FADE (nur beim Symbolwechsel) ── */
+@keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+.detail-fade{animation:detailFadeIn .26s ease both}
+/* ── SKELETON-SHIMMER (Platzhalter beim ersten Laden) ── */
+.skel{display:inline-block;height:11px;border-radius:4px;vertical-align:middle;background:linear-gradient(90deg,rgba(128,151,176,.10) 25%,rgba(128,151,176,.30) 50%,rgba(128,151,176,.10) 75%);background-size:200% 100%;animation:skelShimmer 1.2s ease-in-out infinite}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 </style>
 </head>
 <body>
@@ -660,11 +666,11 @@ function introLogin(){
 </div>
 <script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
-<div style="background:#0d9488;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: TÜRKIS (Startbildschirm: unten wechselt der Hinweis alle 3 Sek. zwischen „tap to continue" und „click to continue"; oben rechts neuer Log-in-Button, der das Cloud-Sync-Fenster öffnet und – sobald verbunden – den eingetragenen Benutzernamen anzeigt. Im Sync-Fenster kann jetzt ein Benutzername vergeben werden)</div>
+<div style="background:#4f46e5;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:6px;letter-spacing:.5px;flex-shrink:0">VERSION-CHECK: INDIGO (Zwei dezente Animationen: beim Wechsel eines Symbols blendet die Detailansicht sanft ein (Cross-Fade, nur beim Symbolwechsel – kein Effekt beim Tippen/Bearbeiten); die „Loading…"-Statuszeile zeigt beim ersten Laden einen Skeleton-Shimmer. Reines CSS, keine Dauer-Timer – belastet die Leistung nicht)</div>
 <div class="hdr">
   <div>
     <div class="logo">📊 FX Analyst Pro</div>
-    <div class="logo-s" id="statLine">Loading...</div>
+    <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
   </div>
   <div class="hdr-r">
@@ -2790,7 +2796,7 @@ function renderNoteRub(rub,ri,total){
   </div>`;}
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
-function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d)d.scrollTop=0;}
+function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
 function setSub(s){curSub=s;renderDetail();}
 function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 function setBias(b){
