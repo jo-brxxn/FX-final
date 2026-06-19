@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--purple);color:#1a1330;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LILA (FOMC Dot Plot + CPI y/y + Previous ohne Farbe + Long-Press Link-Edit)</div>
+<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#2dd4bf;color:#06302b;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TÜRKIS (Live-Werte für GDP/PMI/Retail/Confidence + korrekte Länder-Namen z.B. Claimant Count/Fed Funds Rate)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1462,6 +1462,15 @@ const IND_EVENT_MATCHERS={
   'ADP Employment':mkIndMatcher([/\badp\b/]),
   'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/]),
   'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/]),
+  // Economic-Growth-Indikatoren: ziehen jetzt ebenfalls die LIVE-Werte aus
+  // dem (stündlich aktualisierten) Forex-Factory-Feed, statt dauerhaft den
+  // eingefrorenen Recherche-Stand zu zeigen. Dadurch stimmen Actual/Forecast/
+  // Previous mit der aktuellen Quelle überein.
+  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/]),
+  'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
+  'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
+  'Retail Sales MoM':mkIndMatcher([/retail sales/],[/core/]),
+  'Consumer Confidence':mkIndMatcher([/consumer confidence/,/consumer sentiment/,/consumer climate/]),
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Rohstoffe/Krypto/Indizes hängen am USD-Makrozyklus -> nutzen USD-Events.
@@ -1565,6 +1574,20 @@ function resetNonFxIndBias(sym){
 // wenn er für die Währung konzeptionell nicht existiert. "actual:null"
 // lässt einen existierenden Indikator unverändert (kein Datenpunkt), wenn
 // keine aktuellen Zahlen gefunden wurden - er wird NICHT gelöscht.
+// Pro Währung der OFFIZIELL korrekte Anzeigename eines Indikators. Der
+// interne Name (Match-Key für Kalender-Events, Recherche, GOLD/SP500/NAS-
+// Ableitung) bleibt unverändert - nur der angezeigte Name wird ersetzt.
+// Schlüssel = interner Basisname, Wert = Anzeigename.
+const IND_DISPLAY_NAMES={
+  USD:{'Central Bank Rate':'Fed Funds Rate','Unemployment Claims':'Initial Jobless Claims','NFP / Employment Change':'Nonfarm Payrolls (NFP)','Consumer Confidence':'CB Consumer Confidence'},
+  EUR:{'Central Bank Rate':'ECB Deposit Facility Rate','NFP / Employment Change':'Employment Change (QoQ)','Avg Hourly Earnings':'Negotiated Wage Growth','JOLTS Job Openings':'Job Vacancy Rate'},
+  GBP:{'Central Bank Rate':'BoE Bank Rate','Unemployment Claims':'Claimant Count Change','NFP / Employment Change':'Employment Change (3M)','Avg Hourly Earnings':'Average Earnings Index (+Bonus)','Consumer Confidence':'GfK Consumer Confidence'},
+  CHF:{'Central Bank Rate':'SNB Policy Rate','NFP / Employment Change':'Employment Level','Avg Hourly Earnings':'Wage Index','Consumer Confidence':'SECO Consumer Climate'},
+  JPY:{'Central Bank Rate':'BoJ Policy Rate','NFP / Employment Change':'Employment Change','Avg Hourly Earnings':'Average Cash Earnings','JOLTS Job Openings':'Jobs/Applicants Ratio','Services Inflation':'Corporate Services Price Index','Consumer Confidence':'Consumer Confidence (Cabinet Office)'},
+  CAD:{'Central Bank Rate':'BoC Overnight Rate','NFP / Employment Change':'Net Employment Change','Avg Hourly Earnings':'Avg Hourly Wages (Permanent)','Services PMI':'Ivey PMI','Consumer Confidence':'Conference Board Consumer Confidence'},
+  AUD:{'Central Bank Rate':'RBA Cash Rate','NFP / Employment Change':'Employment Change','Avg Hourly Earnings':'Wage Price Index','Consumer Confidence':'Westpac Consumer Sentiment'},
+  NZD:{'Central Bank Rate':'RBNZ Official Cash Rate','NFP / Employment Change':'Employment Change (QoQ)','Avg Hourly Earnings':'Labour Cost Index'},
+};
 const IND_RESEARCH_DATA={
   USD:{entries:[
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Ober: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'alle 6-8 Wochen (FOMC-Sitzung)',source:'https://www.investing.com/economic-calendar/interest-rate-decision-168'},
@@ -1863,7 +1886,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV12)return;
+  if(sym._researchV13)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1871,7 +1894,8 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;return;}
+  const dispMap=IND_DISPLAY_NAMES[sym.id]||{};
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV13=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1885,6 +1909,8 @@ function applyIndResearch(sym){
     }
     if(idx<0)return;
     const ind=rub.indicators[idx];
+    // Offiziellen, währungsspezifischen Anzeigenamen setzen (Match-Key bleibt).
+    if(dispMap[e.indicator])ind.displayName=dispMap[e.indicator];
     if(e.interval)ind.interval=e.interval;
     if(e.actual!=null){
       ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source,secondarySource:e.secondarySource,secondaryLabel:e.secondaryLabel};
@@ -1904,6 +1930,7 @@ function applyIndResearch(sym){
   sym._researchV10=true;
   sym._researchV11=true;
   sym._researchV12=true;
+  sym._researchV13=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2340,7 +2367,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV13:sv._researchV13}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -2811,7 +2838,7 @@ function renderInd(ind,ri,ii,total){
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
     <div class="ind-hdr">
-      <input class="ind-inp" value="${escH(ind.name)}" oninput="getInd(${ri},${ii}).name=this.value;saveSoon()" onchange="getInd(${ri},${ii}).name=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
+      <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
       <div class="ibg">${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
