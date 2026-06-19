@@ -561,6 +561,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
+<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--purple);color:#1a1330;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LILA (FOMC Dot Plot + CPI y/y + Previous ohne Farbe + Long-Press Link-Edit)</div>
+
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
   <button id="introLoginBtn" onclick="introLogin()">Log in</button>
@@ -842,6 +844,15 @@ function introLogin(){
     <p style="font-size:13px;color:var(--t1);margin-bottom:10px;line-height:1.5">Dieser Link öffnet sich über das Icon in der „Interest Rates"-Karte. Hier kannst du ihn austauschen.</p>
     <input class="m-inp" id="mRateWatchInp" placeholder="https://..." inputmode="url">
     <div class="m-btns"><button class="btn" onclick="closeM('mRateWatch')">Abbrechen</button><button class="btn" onclick="resetRateWatch()">Standard</button><button class="btn g" onclick="saveRateWatch()">Speichern</button></div>
+  </div>
+</div>
+<!-- MODAL: Indikator-Quellen-Link bearbeiten -->
+<div class="ov" id="mIndLink" style="display:none">
+  <div class="modal">
+    <h3>🔗 Quellen-Link bearbeiten</h3>
+    <p style="font-size:13px;color:var(--t1);margin-bottom:10px;line-height:1.5">Langes Drücken auf den Quellen-Link im ausgeklappten Indikator öffnet dieses Feld. Hier kannst du den Link austauschen.</p>
+    <input class="m-inp" id="mIndLinkInp" placeholder="https://..." inputmode="url">
+    <div class="m-btns"><button class="btn" onclick="closeM('mIndLink')">Abbrechen</button><button class="btn" onclick="resetIndLink()">Standard</button><button class="btn g" onclick="saveIndLink()">Speichern</button></div>
   </div>
 </div>
 <!-- MODAL: Inbox / Postfach -->
@@ -1254,6 +1265,22 @@ function saveRateWatch(){
   save();closeM('mRateWatch');renderDetail();
 }
 function resetRateWatch(){if(_rwEditId)delete rateWatchCustom[_rwEditId];save();closeM('mRateWatch');renderDetail();}
+// Gleiches Lang-Drücken-Muster wie beim Zinserwartungs-Icon, jetzt fürs
+// Quellen-Link jedes Indikators im ausgeklappten Zustand: kurzer Klick öffnet
+// den Link, langes Drücken (≈500ms) öffnet ein Feld zum Bearbeiten.
+let _ilPressTimer=null,_ilLong=false,_ilEditKey=null;
+function indLinkKey(ccy,base){return ccy+'|'+base;}
+function ilPressStart(el){_ilLong=false;clearTimeout(_ilPressTimer);_ilPressTimer=setTimeout(()=>{_ilLong=true;openIndLinkEdit(el.dataset.ilkey,el.getAttribute('href'));},500);}
+function ilPressEnd(){clearTimeout(_ilPressTimer);}
+function ilClick(e,el){if(_ilLong){e.preventDefault();e.stopPropagation();_ilLong=false;return false;}return true;}
+function openIndLinkEdit(key,fallback){_ilEditKey=key;const inp=document.getElementById('mIndLinkInp');if(inp)inp.value=(indLinkCustom&&indLinkCustom[key])||fallback||'';openM('mIndLink');}
+function saveIndLink(){
+  if(!_ilEditKey)return;
+  const v=document.getElementById('mIndLinkInp').value.trim();
+  if(v)indLinkCustom[_ilEditKey]=v;else delete indLinkCustom[_ilEditKey];
+  save();closeM('mIndLink');renderDetail();
+}
+function resetIndLink(){if(_ilEditKey)delete indLinkCustom[_ilEditKey];save();closeM('mIndLink');renderDetail();}
 function getRelevantEvents(id){
   const today=todayStr();
   const ids=isNonFx(id)?[id,'USD']:[id];
@@ -1544,8 +1571,9 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:true,actual:'Hike: 0 / Hold: 9 / Cut: 10 (SEP, Median: 1 Cut 2026, Platzhalter - bitte verifizieren)',forecast:null,previous:null,releaseDate:'2026-03-18',interval:'alle 6-7 Wochen (quartalsweise SEP)',source:'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% YoY / 0.5% MoM',forecast:'4.2% YoY / 0.5% MoM',previous:'3.8% YoY / 0.6% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/cpi-733'},
-    {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.5%',forecast:'0.5%',previous:'0.6%',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-mom-69'},
+    {rubric:'Inflation',indicator:'CPI',period:'Y/Y',applicable:true,actual:'4.2%',forecast:'4.2%',previous:'3.8%',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-yoy-733',secondarySource:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-mom-69',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-cpi-736'},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'6.5% YoY / 1.1% MoM',forecast:'6.4% YoY / 0.7% MoM',previous:'6.0% YoY / 1.1% MoM (rev.)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ppi-734'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:true,actual:'4.9% YoY / 0.4% MoM',forecast:'5.4% YoY / 0.5% MoM',previous:null,releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-ppi-735'},
@@ -1556,7 +1584,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.3%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/unemployment-rate-300'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:true,actual:'122K',forecast:'117K',previous:'105K',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/adp-nonfarm-employment-change-1'},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/jolts-job-openings-1057'},
-    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.4% YoY / 0.3% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.3% YoY / 0.2% MoM',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-hourly-earnings-8'},
+    {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.4% YoY / 0.3% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.3% YoY / 0.2% MoM',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-hourly-earnings-1777',secondarySource:'https://www.investing.com/economic-calendar/average-hourly-earnings-8',secondaryLabel:'Avg Hourly Earnings m/m'},
     {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/initial-jobless-claims-294'},
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (BEA, 2. Schätzung, annualisiert 1.6%)',forecast:'0.5%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'},
@@ -1569,6 +1597,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.68% (Bund 2Y)',forecast:null,previous:'2.62%',releaseDate:'2026-06-03',interval:'täglich',source:'https://www.investing.com/rates-bonds/germany-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/germany-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.2% (HICP y/y)',forecast:'3.1%',previous:'3.0%',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-yoy-68'},
     {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.6%',forecast:'0.7%',previous:'-0.6%',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-mom-928'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5% (Core HICP y/y)',forecast:'2.3%',previous:'2.2%',releaseDate:'2026-05-29',interval:'monatlich',source:'https://www.investing.com/economic-calendar/european-core-consumer-price-index-(cpi)-yoy-317'},
@@ -1594,6 +1623,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.35% (UK Gilt 2Y)',forecast:null,previous:'4.34%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/uk-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/uk-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:'0.61%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:'2.9%',previous:'3.3%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-yoy-67'},
     {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.7%',forecast:'0.6%',previous:'0.4%',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-mom-727'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.5%',forecast:'2.7%',previous:'3.1%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monatlich',source:'https://www.investing.com/economic-calendar/core-cpi-55'},
@@ -1619,6 +1649,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'0.11%',forecast:null,previous:'0.11%',releaseDate:'2026-06-02',interval:'täglich',source:'https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.33%',forecast:null,previous:'0.31%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'0.6%',forecast:'0.8%',previous:'0.6%',period:'Y/Y',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/swiss-cpi-956'},
     {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.2%',forecast:null,previous:'0.3%',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/swiss-cpi-71'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'0.3%',forecast:null,previous:'0.3%',releaseDate:'2026-06-04',interval:'monatlich',source:'https://tradingeconomics.com/switzerland/core-inflation-rate'},
@@ -1644,6 +1675,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-yoy-992'},
     {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.1%',forecast:null,previous:'0.4%',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-mom-1766'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'1.4%',forecast:'1.7%',previous:'1.8%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monatlich',source:'https://www.investing.com/economic-calendar/japan-national-core-consumer-price-index-(cpi)-yoy-344'},
@@ -1669,6 +1701,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'2.85%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://ca.investing.com/rates-bonds/canada-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/canada-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:null,previous:'2.4%',period:'Y/Y',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/cpi-741'},
     {rubric:'Inflation',indicator:'CPI',period:'M/M',applicable:true,actual:'0.4%',forecast:'0.4%',previous:'0.5%',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-consumer-price-index-(cpi)-mom-70'},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.0% (Trim) / 2.1% (Median)',forecast:null,previous:'2.3% (Ø März, BoC-Kernmaße)',period:'Y/Y',releaseDate:'2026-05-19',interval:'monatlich',source:'https://www.investing.com/economic-calendar/canada-core-consumer-price-index-(cpi)-yoy-1020'},
@@ -1694,6 +1727,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.54%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/australia-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'täglich',source:'https://www.investing.com/rates-bonds/australia-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36% (36 bps)',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% y/y (monatl. Indikator, April)',forecast:null,previous:'4.6% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)',source:'https://www.investing.com/economic-calendar/monthly-cpi-indicator-2215'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.4% y/y (Trimmed Mean, April)',forecast:null,previous:'3.3% y/y (März)',releaseDate:'2026-05-28',interval:'monatlich (Indikator) / quartalsweise (offiziell)',source:'https://www.investing.com/economic-calendar/trimmed-mean-cpi-1017'},
@@ -1719,6 +1753,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'3.14%',forecast:null,previous:'3.10%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'1.74%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'täglich',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.1% y/y (+0.9% q/q)',forecast:'3.0% y/y',previous:'3.1% y/y',releaseDate:'2026-04-21',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/new-zealand-consumer-price-index-(cpi)-yoy-1063'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.5% y/y (Non-tradables CPI; +1.1% q/q)',forecast:null,previous:'Non-tradables CPI ~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quartalsweise',source:'https://www.stats.govt.nz/indicators/consumers-price-index-cpi/',period:null},
@@ -1828,7 +1863,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV11)return;
+  if(sym._researchV12)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1836,7 +1871,7 @@ function applyIndResearch(sym){
     });
   });
   const data=IND_RESEARCH_DATA[sym.id];
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1852,7 +1887,7 @@ function applyIndResearch(sym){
     const ind=rub.indicators[idx];
     if(e.interval)ind.interval=e.interval;
     if(e.actual!=null){
-      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source};
+      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source,secondarySource:e.secondarySource,secondaryLabel:e.secondaryLabel};
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
       // Zeigt im Indikator-Namen an, welcher Zeitraum (y/y/m/m/q/q) als
       // Hauptwert dargestellt wird, z.B. "PPI y/y" - der jeweils andere
@@ -1868,6 +1903,7 @@ function applyIndResearch(sym){
   sym._researchV9=true;
   sym._researchV10=true;
   sym._researchV11=true;
+  sym._researchV12=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -1956,6 +1992,16 @@ function migrateRubInds(rubrics,sym){
     if(rub.name==='Inflation'&&!sym._researchV11&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='CPI')){
       const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
       const ni={id:uid(),name:'CPI m/m',bias:'neu',imp:false,date:'',interval:'',points:[]};
+      idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
+    }
+    // "FOMC Dot Plot" ist ein neuer Indikator direkt unter "Central Bank Rate"
+    // (nur USD/Fed - andere Zentralbanken veroeffentlichen keinen Dot Plot;
+    // fuer alle anderen Waehrungen entfernt applyIndResearch ihn wieder ueber
+    // applicable:false, genau wie z.B. "Services Inflation" bei USD). Slot vor
+    // dem V12-Durchlauf einfuegen.
+    if(rub.name==='Interest Rates'&&!sym._researchV12&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='FOMC Dot Plot')){
+      const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='Central Bank Rate');
+      const ni={id:uid(),name:'FOMC Dot Plot',bias:'neu',imp:false,date:'',interval:'',points:[]};
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
   });
@@ -2237,7 +2283,6 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:0},
-  {id:uid(),type:'setups',title:'Possible Set-ups',order:1},
   {id:uid(),type:'watchlist',title:'Watchlist',order:4},
   {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
   {id:uid(),type:'quick_notes',title:'Quick Notes',content:'',order:6},
@@ -2245,9 +2290,9 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom,indLinkCustom});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};applyRubOrder();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};applyRubOrder();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -2290,12 +2335,12 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatisch (10 Min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},rateWatchCustom={};
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},rateWatchCustom={},indLinkCustom={};
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -2327,14 +2372,15 @@ function loadState(){
         if(fb)fb.title='FX Bias & Other Assets';
         widgets=widgets.filter(w=>w.type!=='assets');
       }
-      if(!widgets.find(w=>w.type==='setups'))widgets.unshift({id:uid(),type:'setups',title:'Possible Set-ups',order:-2});
+      widgets=widgets.filter(w=>w.type!=='setups');
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
       rateWatchCustom=d.rateWatchCustom||{};
+      indLinkCustom=d.indLinkCustom||{};
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};indLinkCustom={};
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -2492,7 +2538,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -2726,12 +2772,15 @@ function renderInd(ind,ri,ii,total){
     // erschiene hier immer der generische Forex-Factory-Link, obwohl ein
     // passender investing.com-Link hinterlegt ist).
     const cs=indResearchSource(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base)||(ind.research&&ind.research.source);
-    const srcLink=cs?`<a href="${escH(cs)}" target="_blank" rel="noopener">${escH(srcLabel(cs))} ↗</a>`:`<a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">Forex Factory Kalender ↗</a>`;
+    const ilKey1=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
+    const fb1=cs||'https://www.forexfactory.com/calendar';
+    const fin1=(indLinkCustom&&indLinkCustom[ilKey1])||fb1;
+    const srcLink=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-act${ev.prevRevColor?' '+ev.prevRevColor:''}">${escH(ev.previous||'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">Stand:</span> ${fmtDayHdr(ev.date)} · ${srcLink}</div>
     </details>`;
@@ -2744,16 +2793,20 @@ function renderInd(ind,ri,ii,total){
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
     const notes=[note2,A.notes.length&&`Akt: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
-    const srcLink=r.source?`<a href="${escH(r.source)}" target="_blank" rel="noopener">${escH(srcLabel(r.source))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
+    const ilKey2=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
+    const fb2=r.source||'';
+    const fin2=(indLinkCustom&&indLinkCustom[ilKey2])||fb2;
+    const srcLink=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
+    const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
     const bondDates=r.bond?`<span class="ind-data-lbl">Akt-Datum:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous-Datum:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">Stand:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="Letzter bekannter Wert${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Akt</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         ${r.bond?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="${r.prevRevColor?'ind-data-act '+r.prevRevColor:'ind-data-val'}">${escH(P.val??'–')}</span>
+        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>
       </summary>
-      <div class="ind-data-src">${bondDates} ${srcLink}</div>
+      <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
@@ -2868,7 +2921,7 @@ function syncMacroRub(ri){
 function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
-function delRub(ri){pushU();const c=getSym();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
+function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`"${r?r.name:'diese Karte'}" wirklich löschen?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
   const c=getSym();if(!c||!c.rubrics)return;
   mvArr(c.rubrics,ri,d);
@@ -2937,7 +2990,7 @@ function syncMacroIndAddRemove(ri,action,name){
     }
   });
 }
-function delInd(ri,ii){pushU();const r=getRub(ri);if(!r||!r.indicators)return;const ind=r.indicators[ii];r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);save();renderDetail();}
+function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`"${ind?ind.name:'dieser Indikator'}" wirklich löschen?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);save();renderDetail();}
 function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
@@ -3053,9 +3106,21 @@ function recomputeAllPairBiases(){
   });
 }
 
+// FOMC tagt nur alle 6-7 Wochen - der Dot Plot soll daher nicht dauerhaft
+// in den Score einfließen. 5 Tage nach der Sitzung wird der Bias unabhängig
+// vom vorherigen Stand automatisch auf neutral zurückgesetzt.
+function decayFomcDotPlot(){
+  const usd=syms.find(s=>s.id==='USD');if(!usd||!usd.rubrics)return;
+  const rub=usd.rubrics.find(r=>r.name==='Interest Rates');if(!rub)return;
+  const ind=rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='FOMC Dot Plot');
+  if(!ind||!ind.research||!ind.research.date||ind.bias==='neu')return;
+  const cutoff=new Date(ind.research.date).getTime()+5*86400000;
+  if(Date.now()>cutoff)ind.bias='neu';
+}
+
 // Vollstaendige automatische Neuberechnung: erst Symbol-Bias aus Score,
 // dann Paar-Bias aus Paar-Score, dann Auto-Einsortierung der Paare.
-function recomputeAuto(){deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){decayFomcDotPlot();deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
@@ -3432,15 +3497,9 @@ function applyIndDataFeed(){
         // ist, die bisherige bzw. den TradingView-Fallback verwenden.
         const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
-        // Wurde der "Previous"-Wert seit dem letzten Feed-Abruf revidiert
-        // (z.B. nachtraegliche Korrektur eines Vormonatswerts)? Dann analog
-        // zum Kalender per revisionColor() einfaerben, sonst bisherige
-        // Faerbung (falls vorhanden) beibehalten.
-        let prevRevColor=r.prevRevColor;
-        if(r.feed&&r.previous!=null&&r.previous!==''&&np!=null&&np!==''&&r.previous!==np){
-          prevRevColor=revisionColor(r.previous,np,ind.name);
-        }
-        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event,prevRevColor:prevRevColor};
+        // Previous = einfach der zuletzt gemeldete Actual-Wert der Vorperiode -
+        // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event};
         if(fx)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;
@@ -3586,7 +3645,6 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
-  {type:'setups',label:'Possible Set-ups',sub:'FX pairs sorted into bullish / neutral / bearish columns'},
   {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
   {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
   {type:'quick_notes',label:'Quick Notes',sub:'Freeform notes & reminders'},
@@ -3615,31 +3673,6 @@ function renderDash(){
           ${col('FX Majors',fxSorted,'–')}
           ${col('Other Assets',others,'No custom assets.')}
         </div>`;
-    }else if(w.type==='setups'){
-      const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name===SETUP_CAT;});
-      const addBtn=`<button class="btn g dw-add" onclick="openAddPair('${SETUP_CAT}')">＋ Add Pair</button>`;
-      if(wp.length===0){
-        content=addBtn+`<div class="dw-empty">No directional set-ups right now.</div>`;
-      }else{
-        const bull=[...wp.filter(p=>p.bias==='bull')].sort((a,b)=>pairScore(b.name)-pairScore(a.name));
-        const bear=[...wp.filter(p=>p.bias==='bear')].sort((a,b)=>pairScore(a.name)-pairScore(b.name));
-        const neu=[...wp.filter(p=>p.bias==='neu')].sort((a,b)=>Math.abs(pairScore(b.name))-Math.abs(pairScore(a.name)));
-        const pairRow=p=>`<div class="sym-row ${glowClass(p.bias)}${p.marked?' row-marked':''}">
-          <div class="sym-name dw-pname">${escH(p.name)}</div>
-          ${rowScore(pairScore(p.name),'Paar-Score')}
-          <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
-          <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
-        </div>`;
-        const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
-          <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
-          ${list.length?list.map(pairRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
-        </div>`;
-        content=addBtn+`<div class="setups-cols">
-          ${col('▲ Bullish',BC.bull,bull)}
-          ${col('◆ Neutral',BC.neu,neu)}
-          ${col('▼ Bearish',BC.bear,bear)}
-        </div>`;
-      }
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
@@ -3681,7 +3714,7 @@ function renderDash(){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='setups'?' dw-setups':w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
+    return`<div class="dw${w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
