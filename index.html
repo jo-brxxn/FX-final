@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#22c55e;color:#06320f;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GRÜN (USD Consumer Confidence = Conference Board 93.1 statt fälschlich UoM Michigan Sentiment)</div>
+<div style="flex:none;background:#3b82f6;color:#eaf2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLAU (Paare lassen sich wieder zur Watchlist hinzufügen, auch wenn sie schon in Set-ups stehen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3166,11 +3166,11 @@ function recomputeAuto(){decayFomcDotPlot();deriveMacroBiasAll();recomputeAllSym
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
 // Pairs the user has manually moved to a different category are left alone.
 function syncAutoPairCats(){
-  // Dedup: falls ein Paar (z.B. durch manuelles "+ Add Pair" auf ein bereits
-  // automatisch eingesortiertes FX-Paar) doppelt im pairs-Array steckt, nur
-  // das erste Vorkommen behalten - sonst erscheint es zweimal in der Spalte.
+  // Dedup PRO KATEGORIE: dasselbe Paar darf in mehreren Kategorien stehen
+  // (z.B. EUR/USD gleichzeitig in "Possible Set-ups" UND in der "Watchlist").
+  // Nur ein doppeltes Vorkommen INNERHALB derselben Kategorie wird entfernt.
   const seen=new Set();
-  pairs=pairs.filter(p=>{if(seen.has(p.name))return false;seen.add(p.name);return true;});
+  pairs=pairs.filter(p=>{const k=p.name+'|'+p.catId;if(seen.has(k))return false;seen.add(k);return true;});
   let setupCat=pairCats.find(c=>c.name===SETUP_CAT);
   if(!setupCat){setupCat={id:uid(),name:SETUP_CAT,open:true};pairCats.unshift(setupCat);}
   // "No Direction" wurde mit "Possible Set-ups" zusammengelegt: noch vorhandene
@@ -3213,8 +3213,10 @@ function confirmAddPair(){
   const fromList=document.getElementById('mPairSel').value;
   const name=custom||fromList;
   if(!name){alert('Please select or enter a pair name.');return;}
-  if(pairs.some(p=>p.name===name)){alert('This pair already exists.');return;}
   const catId=document.getElementById('mPairCat').value||pairCats[0]?.id;
+  // Nur blocken, wenn das Paar bereits IN DIESER Kategorie ist - dasselbe Paar
+  // darf z.B. in Set-ups und zusätzlich in der Watchlist stehen.
+  if(pairs.some(p=>p.name===name&&p.catId===catId)){const cat=pairCats.find(c=>c.id===catId);alert('Dieses Paar ist bereits in "'+(cat?cat.name:'dieser Kategorie')+'".');return;}
   const autoBias=autoPairBias(name);
   pushU();
   pairs.push({id:uid(),name,bias:autoBias,catId,entry:'',entryTrigger:'',sl:'',tp:'',rr:'',size:'',notes:'',_open:false});
