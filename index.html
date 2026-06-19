@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#2dd4bf;color:#06302b;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: KORALLE (Consumer Confidence/PMI zeigen wieder den korrekten Länder-Indikator statt falschem Feed-Eintrag)</div>
+<div style="flex:none;background:#f59e0b;color:#3a2406;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BERNSTEIN (USD GDP auf aktuellste Veröffentlichung + Info-Box zeigt allgemeinen Indikatornamen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -833,6 +833,7 @@ function introLogin(){
 <div class="ov" id="mInfo" style="display:none">
   <div class="modal">
     <h3 id="mInfoTitle">ℹ️ Info</h3>
+    <div id="mInfoGeneric" style="display:none;font-size:12px;color:var(--t2);margin:-4px 0 8px"></div>
     <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Erklärung eingeben..."></textarea>
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Schließen</button><button class="btn g" onclick="saveInfoM()">Speichern</button></div>
   </div>
@@ -1611,7 +1612,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monatlich',source:'https://www.investing.com/economic-calendar/jolts-job-openings-1057'},
     {rubric:'Labour Market',indicator:'Avg Hourly Earnings',applicable:true,actual:'3.4% YoY / 0.3% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.3% YoY / 0.2% MoM',releaseDate:'2026-06-05',interval:'monatlich',source:'https://www.investing.com/economic-calendar/average-hourly-earnings-1777',secondarySource:'https://www.investing.com/economic-calendar/average-hourly-earnings-8',secondaryLabel:'Avg Hourly Earnings m/m'},
     {rubric:'Labour Market',indicator:'Unemployment Claims',applicable:true,actual:'229K',forecast:'219K',previous:'225K',releaseDate:'2026-06-11',interval:'wöchentlich',source:'https://www.investing.com/economic-calendar/initial-jobless-claims-294'},
-    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (BEA, 2. Schätzung, annualisiert 1.6%)',forecast:'0.5%',previous:'0.5% (Q4 2025)',releaseDate:'2026-05-28',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
+    {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'1.6% (annualisiert, 2. Schätzung Q1 2026)',forecast:'2.0%',previous:'0.7%',releaseDate:'2026-05-29',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'54.5 (ISM)',forecast:'53.8',previous:'53.6',releaseDate:'2026-06-03',interval:'monatlich',source:'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'},
     {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monatlich',source:'https://www.investing.com/economic-calendar/retail-sales-256'},
@@ -1888,7 +1889,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV13)return;
+  if(sym._researchV14)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1897,7 +1898,7 @@ function applyIndResearch(sym){
   });
   const data=IND_RESEARCH_DATA[sym.id];
   const dispMap=IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV13=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV14=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1932,7 +1933,7 @@ function applyIndResearch(sym){
   sym._researchV10=true;
   sym._researchV11=true;
   sym._researchV12=true;
-  sym._researchV13=true;
+  sym._researchV14=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2369,7 +2370,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV13:sv._researchV13}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV14:sv._researchV14}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -2966,7 +2967,17 @@ function openInfoM(ri,ii){
   _infoRi=ri;_infoIi=(ii===undefined?-1:ii);
   const obj=_infoIi>=0?getInd(ri,ii):getRub(ri);
   if(!obj)return;
-  document.getElementById('mInfoTitle').textContent='ℹ️ '+(obj.name||'Info');
+  document.getElementById('mInfoTitle').textContent='ℹ️ '+(obj.displayName||obj.name||'Info');
+  // Wenn ein länderspezifischer Anzeigename gesetzt ist, zusätzlich den
+  // allgemeinen (kanonischen) Indikatornamen einblenden, damit klar ist,
+  // welche Kennzahl gemeint ist (z.B. "Claimant Count Change" → "allg.:
+  // Unemployment Claims").
+  const gen=document.getElementById('mInfoGeneric');
+  if(gen){
+    if(_infoIi>=0&&obj.displayName&&obj.displayName!==obj.name){
+      gen.textContent='Allgemein: '+obj.name;gen.style.display='';
+    }else{gen.style.display='none';}
+  }
   document.getElementById('mInfoTxt').value=obj.info||'';
   openM('mInfo');
 }
