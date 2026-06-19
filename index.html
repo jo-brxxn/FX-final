@@ -28,10 +28,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
+.profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
 .profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}
 .profile-btn:active .profile-circle{transform:scale(.95)}
-.profile-name{font-size:10px;font-weight:600;color:var(--t2);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
 .btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .btn:disabled{opacity:.22;cursor:default}
@@ -377,7 +377,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
 .setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center}
-.setups-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 6px;border-radius:var(--rs);margin-bottom:4px;text-align:center}
+.setups-cols>div{border:1.5px solid var(--colb,var(--bg3));border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
+.setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
+.setups-cols .sym-row{padding-left:6px;padding-right:6px}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
 .ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
 .ba-cols .sym-row .sym-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3059,6 +3061,11 @@ function recomputeAuto(){deriveMacroBiasAll();recomputeAllSymBiases();recomputeA
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
 // Pairs the user has manually moved to a different category are left alone.
 function syncAutoPairCats(){
+  // Dedup: falls ein Paar (z.B. durch manuelles "+ Add Pair" auf ein bereits
+  // automatisch eingesortiertes FX-Paar) doppelt im pairs-Array steckt, nur
+  // das erste Vorkommen behalten - sonst erscheint es zweimal in der Spalte.
+  const seen=new Set();
+  pairs=pairs.filter(p=>{if(seen.has(p.name))return false;seen.add(p.name);return true;});
   let setupCat=pairCats.find(c=>c.name===SETUP_CAT);
   if(!setupCat){setupCat={id:uid(),name:SETUP_CAT,open:true};pairCats.unshift(setupCat);}
   // "No Direction" wurde mit "Possible Set-ups" zusammengelegt: noch vorhandene
@@ -3101,6 +3108,7 @@ function confirmAddPair(){
   const fromList=document.getElementById('mPairSel').value;
   const name=custom||fromList;
   if(!name){alert('Please select or enter a pair name.');return;}
+  if(pairs.some(p=>p.name===name)){alert('This pair already exists.');return;}
   const catId=document.getElementById('mPairCat').value||pairCats[0]?.id;
   const autoBias=autoPairBias(name);
   pushU();
@@ -3127,7 +3135,7 @@ function renderPairs(){
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
     ${it.kind==='asset'?`<span class="dw-del" style="visibility:hidden">×</span>`:`<button onclick="delPair('${it.id}')" class="dw-del" title="Remove">×</button>`}
   </div>`;
-  const col=(label,color,list)=>`<div>
+  const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
     ${list.length?list.map(row).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
@@ -3622,7 +3630,7 @@ function renderDash(){
           <button class="dw-mark${p.marked?' on':''}" onclick="togPairMark('${p.id}');renderDash()" title="Markieren">★</button>
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
         </div>`;
-        const col=(label,color,list)=>`<div>
+        const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
           <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
           ${list.length?list.map(pairRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
         </div>`;
