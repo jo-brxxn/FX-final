@@ -683,7 +683,13 @@ jobs:
               {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
               {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
-              {ind:"Consumer Confidence",period:null,test:t=>/consumer confidence|consumer sentiment/.test(t)&&!/change/.test(t)},
+              // USD: ausdruecklich die Conference-Board-Reihe ("Consumer
+              // Confidence") - NICHT die University-of-Michigan-"Consumer
+              // Sentiment"-Reihe (anderer Indikator!).
+              {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="USD"&&/consumer confidence/.test(t)&&!/sentiment|michigan|expectation|change/.test(t)},
+              // Uebrige Waehrungen: jeweils ihr landesuebliches Stimmungsmass
+              // (EU-Kommission, GfK, SECO Climate, Cabinet Office, Westpac ...).
+              {ind:"Consumer Confidence",period:null,test:(t,c)=>c!=="USD"&&/consumer confidence|consumer sentiment|consumer climate/.test(t)&&!/change|expectation/.test(t)},
             ];
             const readEvts=f=>{
               let tv;
