@@ -687,9 +687,11 @@ jobs:
               // Confidence") - NICHT die University-of-Michigan-"Consumer
               // Sentiment"-Reihe (anderer Indikator!).
               {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="USD"&&/consumer confidence/.test(t)&&!/sentiment|michigan|expectation|change/.test(t)},
+              // NZD: ausdruecklich die Westpac-Reihe (nicht ANZ-Roy Morgan).
+              {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="NZD"&&/westpac/.test(t)&&/consumer/.test(t)},
               // Uebrige Waehrungen: jeweils ihr landesuebliches Stimmungsmass
               // (EU-Kommission, GfK, SECO Climate, Cabinet Office, Westpac ...).
-              {ind:"Consumer Confidence",period:null,test:(t,c)=>c!=="USD"&&/consumer confidence|consumer sentiment|consumer climate/.test(t)&&!/change|expectation/.test(t)},
+              {ind:"Consumer Confidence",period:null,test:(t,c)=>c!=="USD"&&c!=="NZD"&&/consumer confidence|consumer sentiment|consumer climate/.test(t)&&!/change|expectation/.test(t)},
             ];
             const readEvts=f=>{
               let tv;

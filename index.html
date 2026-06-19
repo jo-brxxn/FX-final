@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#3b82f6;color:#eaf2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLAU (Paare lassen sich wieder zur Watchlist hinzufügen, auch wenn sie schon in Set-ups stehen)</div>
+<div style="flex:none;background:#6366f1;color:#eef0ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO (NZD Consumer Confidence = Westpac 80.4 mit korrektem investing.com-Link)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1589,7 +1589,7 @@ const IND_DISPLAY_NAMES={
   JPY:{'Central Bank Rate':'BoJ Policy Rate','NFP / Employment Change':'Employment Change','Avg Hourly Earnings':'Average Cash Earnings','JOLTS Job Openings':'Jobs/Applicants Ratio','Services Inflation':'Corporate Services Price Index','Consumer Confidence':'Consumer Confidence (Cabinet Office)'},
   CAD:{'Central Bank Rate':'BoC Overnight Rate','NFP / Employment Change':'Net Employment Change','Avg Hourly Earnings':'Avg Hourly Wages (Permanent)','Services PMI':'Ivey PMI','Consumer Confidence':'Conference Board Consumer Confidence'},
   AUD:{'Central Bank Rate':'RBA Cash Rate','NFP / Employment Change':'Employment Change','Avg Hourly Earnings':'Wage Price Index','Consumer Confidence':'Westpac Consumer Sentiment'},
-  NZD:{'Central Bank Rate':'RBNZ Official Cash Rate','NFP / Employment Change':'Employment Change (QoQ)','Avg Hourly Earnings':'Labour Cost Index'},
+  NZD:{'Central Bank Rate':'RBNZ Official Cash Rate','NFP / Employment Change':'Employment Change (QoQ)','Avg Hourly Earnings':'Labour Cost Index','Consumer Confidence':'Westpac Consumer Sentiment'},
 };
 const IND_RESEARCH_DATA={
   USD:{entries:[
@@ -1798,7 +1798,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.9 (BNZ-BusinessNZ PMI, Mai 2026)',forecast:null,previous:'50.4 (April)',releaseDate:'2026-06-11',interval:'monatlich',source:'https://www.investing.com/economic-calendar/business-nz-pmi-338'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.9 (BNZ-BusinessNZ PSI, April 2026)',forecast:null,previous:'46.2 (März)',releaseDate:'2026-05-18',interval:'monatlich',source:'https://www.investing.com/economic-calendar/services-pmi-910'},
     {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monatlich (Electronic Card Transactions)',source:'https://www.investing.com/economic-calendar/electronic-card-retail-sales-1058'},
-    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'86.5 (ANZ-Roy Morgan, Mai 2026)',forecast:null,previous:'80.3 (April)',releaseDate:'2026-05-28',interval:'monatlich',source:'https://www.roymorgan.com/findings/10232-anz-roy-morgan-new-zealand-consumer-confidence-may-2026'},
+    {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.4 (Westpac-McDermott Miller)',forecast:null,previous:null,releaseDate:'2026-06-12',interval:'quartalsweise',source:'https://www.investing.com/economic-calendar/westpac-consumer-sentiment-357'},
   ]},
 };
 // Rohstoffe/Krypto/Indizes (NONFX_IDS) haben kein eigenes Land/keine eigene
@@ -1889,7 +1889,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV14)return;
+  if(sym._researchV15)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1898,7 +1898,7 @@ function applyIndResearch(sym){
   });
   const data=IND_RESEARCH_DATA[sym.id];
   const dispMap=IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV14=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV15=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -1933,7 +1933,7 @@ function applyIndResearch(sym){
   sym._researchV10=true;
   sym._researchV11=true;
   sym._researchV12=true;
-  sym._researchV14=true;
+  sym._researchV15=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2370,7 +2370,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV14:sv._researchV14}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV15:sv._researchV15}:{...def};});
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
