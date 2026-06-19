@@ -1,54 +1,4 @@
 {
- "NZD": {
-  "NFP / Employment Change": {
-   "actual": "0.2%",
-   "forecast": "0.3%",
-   "previous": "0.2%",
-   "date": "2026-05-05",
-   "event": "Employment Change QoQ",
-   "period": null
-  },
-  "Unemployment Rate": {
-   "actual": "5.3%",
-   "forecast": "5.4%",
-   "previous": "5.3%",
-   "date": "2026-05-05",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "Central Bank Rate": {
-   "actual": "2.25%",
-   "forecast": "2.25%",
-   "previous": "2.25%",
-   "date": "2026-05-27",
-   "event": "RBNZ Interest Rate Decision",
-   "period": null
-  },
-  "Consumer Confidence": {
-   "actual": "80.4",
-   "forecast": null,
-   "previous": "86.5",
-   "date": "2026-06-16",
-   "event": "Westpac Consumer Confidence",
-   "period": null
-  },
-  "GDP Growth QoQ": {
-   "actual": "0.8%",
-   "forecast": "0.9%",
-   "previous": "0.5%",
-   "date": "2026-06-17",
-   "event": "GDP Growth Rate QoQ",
-   "period": "q/q"
-  },
-  "CPI (Headline)": {
-   "actual": "3.1%",
-   "forecast": "2.9%",
-   "previous": "3.1%",
-   "date": "2026-04-20",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  }
- },
  "EUR": {
   "PPI": {
    "actual": "2.2%",
@@ -172,14 +122,6 @@
    "event": "Average Hourly Earnings YoY",
    "period": "y/y"
   },
-  "Consumer Confidence": {
-   "actual": "93.1",
-   "forecast": "91.9",
-   "previous": "93.8",
-   "date": "2026-05-26",
-   "event": "CB Consumer Confidence",
-   "period": null
-  },
   "CPI": {
    "actual": "0.5%",
    "forecast": "0.5%",
@@ -227,6 +169,14 @@
    "date": "2026-06-17",
    "event": "Retail Sales MoM",
    "period": "m/m"
+  },
+  "Consumer Confidence": {
+   "actual": "93.1",
+   "forecast": "92",
+   "previous": "93.1",
+   "date": "2026-05-26",
+   "event": "CB Consumer Confidence",
+   "period": null
   },
   "GDP Growth QoQ": {
    "actual": "1.6%",
@@ -653,6 +603,56 @@
    "date": "2026-05-01",
    "event": "PPI YoY",
    "period": "y/y"
+  }
+ },
+ "NZD": {
+  "Central Bank Rate": {
+   "actual": "2.25%",
+   "forecast": "2.25%",
+   "previous": "2.25%",
+   "date": "2026-05-27",
+   "event": "RBNZ Interest Rate Decision",
+   "period": null
+  },
+  "Consumer Confidence": {
+   "actual": "80.4",
+   "forecast": null,
+   "previous": "94.7",
+   "date": "2026-06-16",
+   "event": "Westpac Consumer Confidence",
+   "period": null
+  },
+  "GDP Growth QoQ": {
+   "actual": "0.8%",
+   "forecast": "0.9%",
+   "previous": "0.5%",
+   "date": "2026-06-17",
+   "event": "GDP Growth Rate QoQ",
+   "period": "q/q"
+  },
+  "CPI (Headline)": {
+   "actual": "3.1%",
+   "forecast": "2.9%",
+   "previous": "3.1%",
+   "date": "2026-04-20",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "NFP / Employment Change": {
+   "actual": "0.2%",
+   "forecast": "0.3%",
+   "previous": "0.5%",
+   "date": "2026-05-05",
+   "event": "Employment Change QoQ",
+   "period": null
+  },
+  "Unemployment Rate": {
+   "actual": "5.3%",
+   "forecast": "5.4%",
+   "previous": "5.4%",
+   "date": "2026-05-05",
+   "event": "Unemployment Rate",
+   "period": null
   }
  }
 }
