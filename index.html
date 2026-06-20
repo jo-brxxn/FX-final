@@ -125,6 +125,22 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:13px;padding:6px 9px;outline:none;font-family:inherit}
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
+/* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
+.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}
+.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}
+/* Asset-Einstellungen-Modal */
+.acfg-sec{margin:14px 0 4px;font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
+.acfg-hint{font-size:11px;color:var(--t3);margin:2px 0 8px;line-height:1.5}
+.acfg-syncgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.acfg-syncbtn{display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);color:var(--t1);font-size:12px;cursor:pointer;text-align:left}
+.acfg-syncbtn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.14);color:var(--t0)}
+.acfg-rubrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bd)}
+.acfg-rubname{flex:1;min-width:0;font-size:13px;color:var(--t0)}
+.acfg-seg{display:flex;gap:0;border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;flex:none}
+.acfg-seg button{border:none;background:var(--bg2);color:var(--t3);font-size:11px;font-weight:600;padding:5px 9px;cursor:pointer;white-space:nowrap}
+.acfg-seg button.on-bull{background:rgba(var(--blue-rgb),.22);color:var(--blue)}
+.acfg-seg button.on-bear{background:rgba(239,107,120,.22);color:var(--red)}
+.acfg-seg button.on-off{background:var(--bg3);color:var(--t1)}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
 .st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}.st:hover:not(.on){color:var(--t1)}
 .slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
@@ -561,7 +577,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c3aed;color:#f1e9ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT (Set-ups: äußere Box-Umrandung entfernt + alle Kalender verbunden, kleiner Kalender erbt Actual-Werte des großen)</div>
+<div style="flex:none;background:#0369a1;color:#e0f2fe;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OZEANBLAU (Zahnrad-Menü: Asset↔Währung verbinden/trennen, Assets untereinander synchronisieren, Auto-Bias je Rubrik · DAX & GER 100 (EUR) · alle Kalender aus einer Quelle)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -787,6 +803,14 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mAddSym')">Cancel</button><button class="btn g" onclick="confirmAddSym()">Add</button></div>
   </div>
 </div>
+<!-- MODAL: Asset-Einstellungen (Verbindung & Auto-Bias) -->
+<div class="ov" id="mAssetCfg" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <h3 id="mAssetCfgTitle">Asset-Einstellungen</h3>
+    <div id="assetCfgBody"></div>
+    <div class="m-btns"><button class="btn g" onclick="closeM('mAssetCfg')">Fertig</button></div>
+  </div>
+</div>
 <!-- MODAL: Add Pair -->
 <div class="ov" id="mAddPair" style="display:none">
   <div class="modal">
@@ -931,7 +955,7 @@ const SB_CATS=[
   {l:'Crypto',ids:['BTC']},
   {l:'Metals',ids:['GOLD','SILVER']},
   {l:'Energy',ids:['OIL']},
-  {l:'Indices',ids:['SP500','NAS']},
+  {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
   {l:'Stocks',ids:['AMZN','NVDA']}
 ];
 
@@ -981,12 +1005,14 @@ const CAL_ALIASES={
   BTC:['BTC','BITCOIN','BTCUSD'],
   SP500:['SP500','SPX','S&P','S&P500','S&P 500','US500'],
   NAS:['NAS','NASDAQ','NDX','US100','NAS100'],
+  DAX:['DAX','DAX40','GER40','DE40','GERMANY40'],
+  GER100:['GER100','DE100','GERMANY100'],
 };
 function evtMatchesSym(ev,id){
-  if(!ev.currencies)return false;
+  if(!ev.currencies||!id)return false;
   const tokens=ev.currencies.toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean);
   const names=CAL_ALIASES[id]||[id];
-  return tokens.some(t=>names.some(n=>n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
+  return tokens.some(t=>names.some(n=>n&&n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
@@ -1186,7 +1212,7 @@ function updCalHighBtn(){
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
-const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','AMZN','NVDA'];
+const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','AMZN','NVDA','DAX','GER100'];
 // Kategorie eines Symbols ('fx','crypto','metal','energy','index','stock'): für
 // eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
 // Hinzufügen gewählten Kategorie (customIds[].cls).
@@ -1194,51 +1220,47 @@ function assetCls(id){return ASSET_CLASS[id]||(customIds.find(c=>c.id===id)||{})
 function isNonFx(id){return['crypto','metal','energy','index','stock'].includes(assetCls(id));}
 // USD + alle USD-getriebenen Assets (inkl. selbst hinzugefügter Krypto/
 // Metall/Energie/Index-Symbole) teilen sich die Makro-Rubrik-Summaries.
-function macroSyncIds(){return['USD',...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
-// ── KRYPTO-VERBUND ───────────────────────────────────────────────────
-// Alle Krypto-Symbole (BTC + selbst hinzugefügte Coins) sind verbunden:
-// Bias, Rubriken, General-Argumente, Notizen und Quick-Note werden zwischen
-// allen Coins gespiegelt - ändert man eines, ändern sich alle (in beide
-// Richtungen). Symbol-Identität (id/name/full) bleibt natürlich erhalten.
+// Symbole, die sich die Makro-Rubrik-Summaries teilen: eine Währung + alle
+// Nicht-FX-Assets, die mit GENAU dieser Währung verbunden sind (Standard USD).
+function macroSyncIds(ccy){ccy=ccy||'USD';return[ccy,...syms.filter(s=>isNonFx(s.id)&&macroCcyFor(s.id)===ccy).map(s=>s.id)];}
 function isCrypto(id){return assetCls(id)==='crypto';}
 function cryptoIds(){return syms.filter(s=>isCrypto(s.id)).map(s=>s.id);}
-const CRYPTO_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote'];
-function syncCryptoGroup(srcId){
-  if(!isCrypto(srcId))return false;
-  const src=syms.find(s=>s.id===srcId);if(!src)return false;
-  let changed=false;
-  cryptoIds().forEach(id=>{
-    if(id===srcId)return;
-    const t=syms.find(s=>s.id===id);if(!t)return;
-    CRYPTO_SYNC_FIELDS.forEach(f=>{
-      const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
-      if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
-    });
-  });
-  return changed;
-}
-// ── INDEX-VERBUND ────────────────────────────────────────────────────
-// Alle Index-Symbole (S&P 500, Nasdaq, ggf. weitere) sind verbunden:
-// Bias, Rubriken, General-Argumente, Notizen und Quick-Note werden zwischen
-// allen Indizes gespiegelt - ändert man eines, ändern sich alle (in beide
-// Richtungen). Symbol-Identität (id/name/full) bleibt natürlich erhalten.
 function isIndex(id){return assetCls(id)==='index';}
 function indexIds(){return syms.filter(s=>isIndex(s.id)).map(s=>s.id);}
-const INDEX_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote'];
-function syncIndexGroup(srcId){
-  if(!isIndex(srcId))return false;
+// ── ASSET-VERBUND (Sync-Gruppen) ─────────────────────────────────────
+// Mehrere Nicht-FX-Assets können verbunden werden, sodass sie sich immer
+// gleich aktualisieren: Bias, Rubriken, General-Argumente, Notizen,
+// Quick-Note, verbundene Währung und Auto-Bias-Regeln werden zwischen allen
+// Assets derselben Sync-Gruppe gespiegelt. Die Gruppe wird über das
+// Zahnrad-Menü (sym.syncGroup) gesetzt. Standard (ohne explizite Einstellung)
+// zur Wahrung des bisherigen Verhaltens: alle Krypto-Coins teilen sich die
+// Gruppe 'crypto', S&P 500 und Nasdaq die Gruppe 'usidx'. Symbol-Identität
+// (id/name/full/linkCcy-Anzeige) bleibt erhalten.
+const ASSET_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote','linkCcy','deriveRules'];
+function symSyncGroup(id){
+  const s=syms.find(x=>x.id===id);if(!s)return null;
+  if(s.syncGroup!==undefined)return s.syncGroup||null;
+  if(isCrypto(id))return'crypto';
+  if(id==='SP500'||id==='NAS')return'usidx';
+  return null;
+}
+function syncGroupMembers(g){return g?syms.filter(s=>symSyncGroup(s.id)===g).map(s=>s.id):[];}
+function syncAssetGroup(srcId){
+  const g=symSyncGroup(srcId);if(!g)return false;
   const src=syms.find(s=>s.id===srcId);if(!src)return false;
   let changed=false;
-  indexIds().forEach(id=>{
-    if(id===srcId)return;
-    const t=syms.find(s=>s.id===id);if(!t)return;
-    INDEX_SYNC_FIELDS.forEach(f=>{
+  syms.forEach(t=>{
+    if(t.id===srcId||symSyncGroup(t.id)!==g)return;
+    ASSET_SYNC_FIELDS.forEach(f=>{
       const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
       if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
     });
   });
   return changed;
 }
+// Rückwärtskompatible Aliase (frühere klassenbasierte Verbünde).
+function syncCryptoGroup(srcId){return syncAssetGroup(srcId);}
+function syncIndexGroup(srcId){return syncAssetGroup(srcId);}
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
 // Markt-Zinserwartungen pro Währung (Icon-Link in der Interest-Rates-Karte).
 // USD = CME FedWatch Tool; übrige = investing.com-Zinsentscheid-Seite der
@@ -1285,9 +1307,17 @@ function saveIndLink(){
   save();closeM('mIndLink');renderDetail();
 }
 function resetIndLink(){if(_ilEditKey)delete indLinkCustom[_ilEditKey];save();closeM('mIndLink');renderDetail();}
+// Event-/News-Quellen-IDs für ein Symbol: das Symbol selbst plus - bei
+// Nicht-FX-Assets - die verbundene Währung (sym.linkCcy, Standard USD).
+// "Keine Verbindung" (linkCcy=null) -> nur das Symbol selbst.
+function eventSrcIds(id){
+  if(!isNonFx(id))return[id];
+  const lc=macroCcyFor(id);
+  return lc?[id,lc]:[id];
+}
 function getRelevantEvents(id){
   const today=todayStr();
-  const ids=isNonFx(id)?[id,'USD']:[id];
+  const ids=eventSrcIds(id);
   // Events ab heute gelten als "geschehen" -> Markierung wandert zum Postfach-Symbol (NOTIF_FLAG)
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
@@ -1400,43 +1430,41 @@ function processCalEvts(){
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
+  // Postfach mit dem Kalender konsistent halten: jeder Postfach-Eintrag ist
+  // an seinen Kalender-Zwilling (gleicher Name+Datum+Währung) gekoppelt und
+  // übernimmt dessen aktuellen Impact/Actual/Forecast/Previous. Veraltete
+  // "Waisen" (kein Zwilling mehr im noch sichtbaren Kalenderfenster, obwohl
+  // zeitlich darin) waren z.B. umbenannte/neu eingestufte Events und werden
+  // entfernt, damit Postfach und Kalender exakt dasselbe zeigen.
   const beforeInbox=inbox.length;
-  inbox=inbox.filter(m=>daysUntil(m.date)>=-INBOX_RETENTION_DAYS);
+  inbox=inbox.filter(m=>{
+    if(daysUntil(m.date)<-INBOX_RETENTION_DAYS)return false;
+    const twin=calEvts.find(ev=>ev.name===m.name&&ev.date===m.date&&(ev.currencies||'')===(m.currencies||''));
+    if(twin){['impact','actual','forecast','previous','time','notes','prevRevColor'].forEach(f=>{if(m[f]!==twin[f]){m[f]=twin[f];changed=true;}});return true;}
+    // Kein Zwilling, liegt aber noch im Kalenderfenster -> verwaister Altbestand.
+    if(daysUntil(m.date)>=-CAL_PAST_DAYS){changed=true;return false;}
+    return true;
+  });
   if(inbox.length!==beforeInbox)changed=true;
   if(syncIndicatorBiases())changed=true;
   return changed;
 }
 function getInboxFor(id){
-  const ids=isNonFx(id)?[id,'USD']:[id];
+  const ids=eventSrcIds(id);
   return inbox.filter(m=>ids.some(x=>evtMatchesSym(m,x)));
 }
 function hasInboxNotif(id){return getInboxFor(id).length>0;}
 const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach">❗</span>';
-// Alle Events (anstehend + bereits im Postfach/erschienen) für ein Symbol -
-// inkl. USD-News bei Rohstoffen/Krypto/Indizes (NONFX_IDS).
-// Beim selben Event (Name+Datum) können Kalender- und Postfach-Kopie unter-
-// schiedlich aktuell sein (z.B. Actual erst nach dem Postfach-Snapshot
-// nachgetragen). Damit ALLE Kalender (groß, klein, Dashboard, Postfach)
-// denselben Stand zeigen, werden die beiden Kopien feldweise zusammengeführt:
-// ein fehlender Actual/Forecast/Previous-Wert wird aus der jeweils anderen
-// Quelle ergänzt.
-function mergeEvtVals(t,s){
-  ['actual','forecast','previous','time','impact','notes'].forEach(f=>{
-    if((t[f]==null||t[f]==='')&&s[f]!=null&&s[f]!=='')t[f]=s[f];
-  });
-  if(!t.prevRevColor&&s.prevRevColor)t.prevRevColor=s.prevRevColor;
-}
+// Events für ein Symbol - inkl. Währungs-News bei Nicht-FX-Assets (verbundene
+// Währung). EINZIGE Quelle ist calEvts (derselbe Datenbestand wie der große
+// Kalender), nur nach Symbol/Währung gefiltert. Dadurch zeigen großer Kalender,
+// Asset-Mini-Kalender und Dashboard-Kalender GARANTIERT exakt dieselben Events
+// mit identischem Impact/Actual/Forecast/Previous - es gibt keine zweite,
+// abweichende Postfach-Kopie mehr, die ein Phantom-Event einschleusen könnte.
 function getSymEventsAll(id){
-  const ids=isNonFx(id)?[id,'USD']:[id];
+  const ids=eventSrcIds(id);
   const match=ev=>ids.some(x=>evtMatchesSym(ev,x));
-  const keyOf=e=>e.name+'|'+e.date+'|'+(e.currencies||'');
-  const seen={},all=[];
-  // Kalender-Kopien zuerst (behalten ihre id für evtl. Aktionen), dann Postfach -
-  // jeweils ergänzend zusammenführen, falls dieselbe Veröffentlichung schon
-  // vorhanden ist.
-  calEvts.filter(match).forEach(ev=>{const k=keyOf(ev);if(!seen[k]){seen[k]={...ev};all.push(seen[k]);}else mergeEvtVals(seen[k],ev);});
-  inbox.filter(match).forEach(m=>{const k=keyOf(m);if(!seen[k]){seen[k]={...m};all.push(seen[k]);}else mergeEvtVals(seen[k],m);});
-  return all.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+  return calEvts.filter(match).sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
 }
 // Kompakte Sicht für die Detailseite: vergangene Events fallen nach
 // CAL_PAST_DAYS Tagen weg. Heutige Events bleiben immer sichtbar, UND
@@ -1495,8 +1523,26 @@ const IND_EVENT_MATCHERS={
   'Retail Sales MoM':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/,/yoy/,/y\/y/]),
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
-// Rohstoffe/Krypto/Indizes hängen am USD-Makrozyklus -> nutzen USD-Events.
-function macroCcyFor(id){return id==='USD'||isNonFx(id)?'USD':id;}
+// Mit welcher Währung sind die Indikatoren eines Nicht-FX-Assets verbunden?
+// - FX-Symbole: sie selbst.
+// - Nicht-FX-Assets (Rohstoffe/Krypto/Indizes/Aktien): standardmäßig USD,
+//   per Asset über das Zahnrad-Menü (sym.linkCcy) auf eine andere Währung
+//   umstellbar - oder null ("keine Verbindung": keine Live-Daten/Events).
+// Diese reine Variante liest direkt vom Symbol-Objekt (ohne globales syms),
+// damit sie auch beim Modul-Aufbau (DEF.forEach(addMacroRub)) funktioniert.
+function effLinkCcy(sym){
+  if(!sym)return null;
+  if(sym.id==='USD')return'USD';
+  if(isNonFx(sym.id))return sym.linkCcy!==undefined?sym.linkCcy:'USD';
+  return sym.id;
+}
+// Rohstoffe/Krypto/Indizes/Aktien hängen (standardmäßig) am USD-Makrozyklus.
+function macroCcyFor(id){
+  if(id==='USD')return'USD';
+  const s=(typeof syms!=='undefined'&&syms)?syms.find(x=>x.id===id):null;
+  if(s)return effLinkCcy(s);
+  return isNonFx(id)?'USD':id;
+}
 // Findet das jüngste veröffentlichte Event (mit "Actual"-Wert), das zum
 // Indikator-Namen und zur Symbol-Währung passt.
 function findIndEvent(symId,indName){
@@ -1504,6 +1550,7 @@ function findIndEvent(symId,indName){
   const matcher=IND_EVENT_MATCHERS[base];
   if(!matcher)return null;
   const ccy=macroCcyFor(symId);
+  if(!ccy)return null; // "keine Verbindung" -> keine automatischen Events
   const pool=[...inbox,...calEvts].filter(ev=>{
     if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name))return false;
     if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
@@ -1915,8 +1962,11 @@ function applyIndResearch(sym){
       if(ind.points&&ind.points.length)ind.points=ind.points.filter(p=>!/^Letzter Wert:/.test(p.text));
     });
   });
-  const data=IND_RESEARCH_DATA[sym.id];
-  const dispMap=IND_DISPLAY_NAMES[sym.id]||{};
+  // Recherchedaten kommen von der verbundenen Währung (Standard USD; bei z.B.
+  // mit EUR verbundenen Assets von EUR; "keine Verbindung" -> keine Daten).
+  const lc=effLinkCcy(sym);
+  const data=lc?(IND_RESEARCH_DATA[lc]||IND_RESEARCH_DATA[sym.id]):null;
+  const dispMap=(lc&&IND_DISPLAY_NAMES[lc])||IND_DISPLAY_NAMES[sym.id]||{};
   if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
@@ -2066,7 +2116,7 @@ function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));
 const CB_MAP={USD:'die Fed (Federal Reserve)',EUR:'die EZB (Europäische Zentralbank)',GBP:'die BoE (Bank of England)',CHF:'die SNB (Schweizerische Nationalbank)',JPY:'die BoJ (Bank of Japan)',CAD:'die BoC (Bank of Canada)',AUD:'die RBA (Reserve Bank of Australia)',NZD:'die RBNZ (Reserve Bank of New Zealand)'};
 function cbName(id){return CB_MAP[id]||'die Fed (Federal Reserve)';}
 function cbDat(id){return cbName(id).replace(/^die /,'der ');}
-const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',AMZN:'stock',NVDA:'stock'};
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',AMZN:'stock',NVDA:'stock',DAX:'index',GER100:'index'};
 
 // ── Info-Texte für die 5 Standard-Rubriken (Specific-Tab) ──
 function enrichRubrics(id,rubrics,name){
@@ -2178,6 +2228,14 @@ const DEF=[
     genBull:mkR(['Dominant AI/GPU chip market share – structural demand from hyperscaler capex','Data center revenue scaling rapidly with AI infrastructure buildout','CUDA software ecosystem creates high switching costs'],'bull'),
     genBear:mkR(['Extremely high valuation – most rate-sensitive large-cap stock','China export restrictions – geopolitical/regulatory risk','Customer concentration: few hyperscalers drive majority of revenue'],'bear'),
     rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'DAX',name:'DAX',full:'DAX 40 (Germany)',bias:'neu',linkCcy:'EUR',
+    genBull:mkR(['Export-heavy German blue chips benefit from a weaker EUR','ECB easing cycle supports equity valuations'],'bull'),
+    genBear:mkR(['High dependency on global/China demand and trade cycle','Energy-cost sensitivity of German industry'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'GER100',name:'GER 100',full:'Germany 100',bias:'neu',linkCcy:'EUR',
+    genBull:mkR(['Broader German large-/mid-cap exposure than the DAX 40','ECB easing cycle supports equity valuations'],'bull'),
+    genBear:mkR(['High dependency on global/China demand and trade cycle','Energy-cost sensitivity of German industry'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
 ];
 
 // ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
@@ -2185,9 +2243,13 @@ const MACRO_NAME='Makro & Risikoumfeld';
 // Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
 // (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
 const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market','Geopolitics',MACRO_NAME];
-// Leitet Rubrik- und Indikator-Bias (Karte + jeder einzelne Indikator) für
-// bestimmte Nicht-FX-Assets automatisch aus USD ab, statt sie manuell
-// einzutragen. 'same' = identischer Bias wie USD, 'inverse' = umgekehrt.
+// Leitet Rubrik- und Indikator-Bias (Karte + jeder einzelne Indikator) eines
+// Nicht-FX-Assets automatisch aus der verbundenen Währung ab, statt es manuell
+// einzutragen. Pro Rubrik: 'same' = starke Daten gelten als bullish (identisch
+// zur Währung), 'inverse' = starke Daten gelten als bearish (umgekehrt),
+// 'off'/fehlend = manuell (keine Ableitung). Einstellbar pro Asset über das
+// Zahnrad-Menü (sym.deriveRules). MACRO_DERIVE_RULES sind nur die VORGABEN für
+// die eingebauten Assets Gold/S&P 500/Nasdaq.
 const MACRO_DERIVE_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth'];
 const MACRO_DERIVE_RULES={
   GOLD:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'inverse','Economic Growth':'same'},
@@ -2195,15 +2257,22 @@ const MACRO_DERIVE_RULES={
   NAS:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'same','Economic Growth':'same'},
 };
 function invertBias(b){return b==='bull'?'bear':b==='bear'?'bull':'neu';}
+// Effektive Auto-Bias-Regeln eines Assets: explizit gesetzte sym.deriveRules,
+// sonst die Vorgabe für die eingebauten Assets, sonst keine (alles manuell).
+function effDeriveRules(sym){
+  if(sym&&sym.deriveRules)return sym.deriveRules;
+  return(sym&&MACRO_DERIVE_RULES[sym.id])||{};
+}
 function deriveMacroBiasAll(){
-  const usd=syms.find(s=>s.id==='USD');if(!usd||!usd.rubrics)return;
-  Object.keys(MACRO_DERIVE_RULES).forEach(id=>{
-    const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
-    const rules=MACRO_DERIVE_RULES[id];
-    MACRO_DERIVE_RUBS.forEach(rubName=>{
-      const rule=rules[rubName];if(!rule)return;
-      const src=usd.rubrics.find(r=>r.name===rubName);if(!src)return;
-      const r=sym.rubrics.find(x=>x.name===rubName);if(!r)return;
+  syms.forEach(sym=>{
+    if(!isNonFx(sym.id)||!sym.rubrics)return;
+    const ccy=macroCcyFor(sym.id);if(!ccy)return; // keine Verbindung -> alles manuell
+    const srcSym=syms.find(s=>s.id===ccy);if(!srcSym||!srcSym.rubrics)return;
+    const rules=effDeriveRules(sym);
+    sym.rubrics.forEach(r=>{
+      const rule=rules[r.name];
+      if(rule!=='same'&&rule!=='inverse')return;
+      const src=srcSym.rubrics.find(x=>x.name===r.name);if(!src)return;
       r.bias=rule==='same'?src.bias:invertBias(src.bias);
       if(r.indicators&&src.indicators)r.indicators.forEach(ind=>{
         const srcInd=src.indicators.find(i=>i.name===ind.name);if(!srcInd)return;
@@ -2458,14 +2527,11 @@ function loadState(){
   recomputeAuto();
 }
 function save(){
-  // Krypto-Verbund: Änderungen am aktuell gewählten Krypto-Symbol vor dem
-  // Speichern auf alle anderen Coins spiegeln (BTC <-> ETH <-> ...). selId
-  // zeigt nur dann auf ein Coin, wenn der Nutzer es geöffnet hat.
-  if(isCrypto(selId))syncCryptoGroup(selId);
-  // Index-Verbund: Änderungen am aktuell gewählten Index (S&P 500, Nasdaq,
-  // ...) vor dem Speichern auf alle anderen Indizes spiegeln - egal welcher
-  // Index bearbeitet wird, gleichen sich alle Felder an.
-  if(isIndex(selId))syncIndexGroup(selId);
+  // Asset-Verbund: Änderungen am aktuell gewählten Asset vor dem Speichern
+  // auf alle anderen Assets derselben Sync-Gruppe spiegeln (Krypto-Coins,
+  // S&P 500/Nasdaq, oder per Zahnrad-Menü verbundene Assets). selId zeigt nur
+  // dann auf ein Asset, wenn der Nutzer es geöffnet hat.
+  if(selId)syncAssetGroup(selId);
   try{
     localStorage.setItem(SK,snap());
     localStorage.setItem('fxpro_updated',new Date().toISOString());
@@ -2610,7 +2676,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAssetCfg','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -2719,6 +2785,7 @@ function renderDetail(){
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
       </div>
       <input class="quick-note" value="${escH(c.quickNote||'')}" placeholder="📌 Quick Note – kurze Notiz, direkt sichtbar" oninput="setQuickNote(this.value)" title="Kurze Notiz, die direkt beim Öffnen des Symbols sichtbar ist">
+      ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset-Einstellungen: verbundene Währung, Verbindung mit anderen Assets & automatisches Bias">⚙️</button>`:''}
     </div>
     ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
@@ -2982,8 +3049,10 @@ function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii
 function syncMacroRub(ri){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
   if(!cur||!src||!(cur.id==='USD'||isNonFx(cur.id))||!MACRO_SYNC_RUBS.includes(src.name))return;
+  const ccy=cur.id==='USD'?'USD':macroCcyFor(cur.id);
+  if(!ccy)return;
   const clone={imp:src.imp,summary:src.summary};
-  macroSyncIds().forEach(id=>{
+  macroSyncIds(ccy).forEach(id=>{
     if(id===cur.id)return;
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
@@ -3060,7 +3129,7 @@ function syncIndOrderGlobal(ri){
 function syncMacroIndAddRemove(ri,action,name){
   const cur=getSym();const src=cur&&cur.rubrics?cur.rubrics[ri]:null;
   if(!cur||cur.id!=='USD'||!src||!MACRO_SYNC_RUBS.includes(src.name))return;
-  macroSyncIds().filter(id=>id!=='USD').forEach(id=>{
+  macroSyncIds('USD').filter(id=>id!=='USD').forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
     if(!r.indicators)r.indicators=[];
@@ -3136,12 +3205,79 @@ function confirmAddSym(){
   // ist und der spätere Abgleich nichts überschreibt.
   if(cls==='crypto'){
     const other=syms.find(s=>isCrypto(s.id));
-    if(other)CRYPTO_SYNC_FIELDS.forEach(f=>{newSym[f]=other[f]===undefined?undefined:JSON.parse(JSON.stringify(other[f]));});
+    if(other)ASSET_SYNC_FIELDS.forEach(f=>{newSym[f]=other[f]===undefined?undefined:JSON.parse(JSON.stringify(other[f]));});
   }
   syms.push(newSym);
   applyRubOrder();
   closeM('mAddSym');document.getElementById('mSymTicker').value='';document.getElementById('mSymFull').value='';
   save();renderSidebar();selSym(ticker);
+}
+
+// ══ ASSET-EINSTELLUNGEN (Zahnrad-Menü, nur Nicht-FX-Assets) ═════════
+// Pro Asset einstellbar: (1) mit welcher Währung die Indikatoren verbunden
+// sind (oder gar keine Verbindung), (2) Verbindung mit anderen Assets, sodass
+// sie sich immer gleich aktualisieren, (3) bei verbundener Währung: je Rubrik,
+// ob starke Daten als bullish/bearish gewertet werden oder die Kategorie
+// ausgeschlossen (manuell) bleibt.
+const FX_LINK_CCYS=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
+function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function openAssetCfg(){const c=getSym();if(!c||!isNonFx(c.id))return;renderAssetCfgBody();openM('mAssetCfg');}
+function renderAssetCfgBody(){
+  const c=getSym();if(!c)return;
+  const el=document.getElementById('assetCfgBody');if(!el)return;
+  const t=document.getElementById('mAssetCfgTitle');if(t)t.textContent=c.name+' – Einstellungen';
+  const lc=effLinkCcy(c);
+  let h=`<div class="acfg-sec">🔗 Verbundene Währung</div>
+    <div class="acfg-hint">Die Indikatoren und News dieses Assets werden mit dieser Währung verbunden (einseitig – das Asset übernimmt die Werte, beeinflusst die Währung aber nicht). "Keine Verbindung" = vollständig manuell, keine automatischen Werte.</div>
+    <select class="m-inp" onchange="setAssetLinkCcy(this.value)">
+      <option value="__none__"${lc===null?' selected':''}>Keine Verbindung</option>
+      ${FX_LINK_CCYS.map(x=>`<option value="${x}"${lc===x?' selected':''}>${x}</option>`).join('')}
+    </select>`;
+  const myG=symSyncGroup(c.id);
+  const others=syms.filter(s=>s.id!==c.id&&isNonFx(s.id));
+  h+=`<div class="acfg-sec">🔁 Mit anderen Assets verbinden</div>
+    <div class="acfg-hint">Verbundene Assets aktualisieren sich immer gleich – Bias, Karten, Notizen, verbundene Währung und Auto-Bias-Regeln werden zwischen ihnen gespiegelt.</div>
+    <div class="acfg-syncgrid">
+      ${others.length?others.map(s=>{const on=!!myG&&symSyncGroup(s.id)===myG;return`<button class="acfg-syncbtn${on?' on':''}" onclick="toggleAssetSync('${escJs(s.id)}')"><span>${on?'✓':'＋'}</span><span>${escH(s.name)}</span></button>`;}).join(''):`<div class="acfg-hint">Keine weiteren Assets vorhanden.</div>`}
+    </div>`;
+  if(lc){
+    const rules=effDeriveRules(c);
+    h+=`<div class="acfg-sec">⚙️ Automatisches Bias (aus ${escH(lc)})</div>
+      <div class="acfg-hint">Lege je Kategorie fest, ob starke Daten als bullish oder bearish gewertet werden – oder schließe die Kategorie aus, dann bleibt ihr Bias manuell. Der Score wird daraus automatisch berechnet.</div>`;
+    (c.rubrics||[]).forEach(r=>{
+      const rule=rules[r.name]||'off';
+      h+=`<div class="acfg-rubrow">
+        <div class="acfg-rubname">${escH(r.displayName||r.name)}</div>
+        <div class="acfg-seg">
+          <button class="${rule==='same'?'on-bull':''}" onclick="setAssetDeriveRule('${escJs(r.name)}','same')" title="Starke Daten → Bullish">Bullish</button>
+          <button class="${rule==='inverse'?'on-bear':''}" onclick="setAssetDeriveRule('${escJs(r.name)}','inverse')" title="Starke Daten → Bearish">Bearish</button>
+          <button class="${rule==='off'?'on-off':''}" onclick="setAssetDeriveRule('${escJs(r.name)}','off')" title="Kategorie ausschließen (Bias manuell)">Aus</button>
+        </div>
+      </div>`;
+    });
+  }
+  el.innerHTML=h;
+}
+function assetCfgApply(){
+  if(selId)syncAssetGroup(selId);
+  if(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)applyIndDataFeed();
+  recomputeAuto();save();renderSidebar();renderAssetCfgBody();renderDetail();
+  if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();
+}
+function setAssetLinkCcy(v){const c=getSym();if(!c)return;pushU();c.linkCcy=(v==='__none__')?null:v;assetCfgApply();}
+function setAssetDeriveRule(rub,rule){const c=getSym();if(!c)return;pushU();if(!c.deriveRules)c.deriveRules=Object.assign({},effDeriveRules(c));c.deriveRules[rub]=rule;assetCfgApply();}
+function toggleAssetSync(otherId){
+  const c=getSym();if(!c)return;const other=syms.find(s=>s.id===otherId);if(!other)return;pushU();
+  const myG=symSyncGroup(c.id);
+  if(myG&&symSyncGroup(otherId)===myG){
+    other.syncGroup='';            // aus der Gruppe lösen
+  }else{
+    let g=myG;
+    if(!g){g='g_'+uid();c.syncGroup=g;}   // neue gemeinsame Gruppe anlegen
+    other.syncGroup=g;
+    syncAssetGroup(c.id);          // den anderen sofort an dieses Asset angleichen
+  }
+  assetCfgApply();
 }
 
 // ══ DEL SYMBOL ════════════════════════════════════════════════════
