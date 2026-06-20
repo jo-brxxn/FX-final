@@ -411,7 +411,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
-.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:480px}
 #inboxList{max-height:65vh;overflow-y:auto}
@@ -577,7 +577,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0369a1;color:#e0f2fe;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OZEANBLAU (Zahnrad-Menü: Asset↔Währung verbinden/trennen, Assets untereinander synchronisieren, Auto-Bias je Rubrik · DAX & GER 100 (EUR) · alle Kalender aus einer Quelle)</div>
+<div style="flex:none;background:#65a30d;color:#f7fee7;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LIME (Inbox "Clear All" button + settings window now fits the screen + full UI switched to English)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -881,12 +881,12 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mIndLink')">Abbrechen</button><button class="btn" onclick="resetIndLink()">Standard</button><button class="btn g" onclick="saveIndLink()">Speichern</button></div>
   </div>
 </div>
-<!-- MODAL: Inbox / Postfach -->
+<!-- MODAL: Inbox -->
 <div class="ov" id="mInbox" style="display:none">
   <div class="modal inbox-modal">
-    <h3>📥 Postfach</h3>
+    <h3>📥 Inbox</h3>
     <div id="inboxList"></div>
-    <div class="m-btns" style="margin-top:10px"><button class="btn" onclick="closeM('mInbox')">Schließen</button></div>
+    <div class="m-btns" style="margin-top:10px"><button class="btn r" onclick="clearInbox()">Clear All</button><button class="btn" onclick="closeM('mInbox')">Close</button></div>
   </div>
 </div>
 <!-- MODAL: Cloud Sync -->
@@ -2239,7 +2239,8 @@ const DEF=[
 ];
 
 // ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
-const MACRO_NAME='Makro & Risikoumfeld';
+const MACRO_NAME='Macro & Risk Environment';
+const MACRO_NAME_LEGACY='Makro & Risikoumfeld';
 // Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
 // (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
 const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market','Geopolitics',MACRO_NAME];
@@ -2433,7 +2434,7 @@ function mkWidgets(){return[
 let uStack=[],rStack=[];
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom,indLinkCustom});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};applyRubOrder();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -2482,6 +2483,11 @@ function loadState(){
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
       syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17}:{...def};});
+      // Migration: die Makro-Rubrik wurde von Deutsch ("Makro & Risikoumfeld")
+      // auf Englisch ("Macro & Risk Environment") umbenannt - in gespeicherten
+      // Profilen den Namen mitziehen, damit keine Dubletten entstehen.
+      syms.forEach(s=>{(s.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});
+      if(Array.isArray(d.rubOrder))d.rubOrder=d.rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -3480,6 +3486,18 @@ function renderInbox(){
 function delInboxItem(id){
   pushU();
   inbox=inbox.filter(m=>m.id!==id);
+  save();
+  renderInbox();
+  updInboxBadge();
+  renderSidebar();
+  rerender();
+}
+// Leert das Postfach vollständig (Clear All).
+function clearInbox(){
+  if(!inbox.length)return;
+  if(!confirm('Clear all messages from the inbox?'))return;
+  pushU();
+  inbox=[];
   save();
   renderInbox();
   updInboxBadge();
