@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#e11d48;color:#ffe9ef;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROSÉ (Dashboard-Kalender ausklappen repariert + Postfach-Filter + Intervalle auf Englisch)</div>
+<div style="flex:none;background:#0d9488;color:#e7fffb;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SMARAGD (neue Asset-Kategorie "Aktie" + Amazon/Nvidia hinzugefügt, einseitig an USD-Makro gekoppelt, Bias manuell)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -782,6 +782,7 @@ function introLogin(){
       <option value="metal">Metalle</option>
       <option value="energy">Energie</option>
       <option value="index">Index</option>
+      <option value="stock">Aktie</option>
     </select>
     <div class="m-btns"><button class="btn" onclick="closeM('mAddSym')">Cancel</button><button class="btn g" onclick="confirmAddSym()">Add</button></div>
   </div>
@@ -930,7 +931,8 @@ const SB_CATS=[
   {l:'Crypto',ids:['BTC']},
   {l:'Metals',ids:['GOLD','SILVER']},
   {l:'Energy',ids:['OIL']},
-  {l:'Indices',ids:['SP500','NAS']}
+  {l:'Indices',ids:['SP500','NAS']},
+  {l:'Stocks',ids:['AMZN','NVDA']}
 ];
 
 // ══ HELPERS ════════════════════════════════════════════════════════
@@ -1181,15 +1183,15 @@ function updCalHighBtn(){
   b.textContent=calHighOnly?'📁 Nur High-Impact':'📁 Alle Impacts';
 }
 
-// ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes ohne eigenes FX-Paar) ──
+// ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
-const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS'];
-// Kategorie eines Symbols ('fx','crypto','metal','energy','index'): für
+const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','AMZN','NVDA'];
+// Kategorie eines Symbols ('fx','crypto','metal','energy','index','stock'): für
 // eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
 // Hinzufügen gewählten Kategorie (customIds[].cls).
 function assetCls(id){return ASSET_CLASS[id]||(customIds.find(c=>c.id===id)||{}).cls;}
-function isNonFx(id){return['crypto','metal','energy','index'].includes(assetCls(id));}
+function isNonFx(id){return['crypto','metal','energy','index','stock'].includes(assetCls(id));}
 // USD + alle USD-getriebenen Assets (inkl. selbst hinzugefügter Krypto/
 // Metall/Energie/Index-Symbole) teilen sich die Makro-Rubrik-Summaries.
 function macroSyncIds(){return['USD',...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
@@ -2048,7 +2050,7 @@ function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));
 const CB_MAP={USD:'die Fed (Federal Reserve)',EUR:'die EZB (Europäische Zentralbank)',GBP:'die BoE (Bank of England)',CHF:'die SNB (Schweizerische Nationalbank)',JPY:'die BoJ (Bank of Japan)',CAD:'die BoC (Bank of Canada)',AUD:'die RBA (Reserve Bank of Australia)',NZD:'die RBNZ (Reserve Bank of New Zealand)'};
 function cbName(id){return CB_MAP[id]||'die Fed (Federal Reserve)';}
 function cbDat(id){return cbName(id).replace(/^die /,'der ');}
-const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index'};
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',AMZN:'stock',NVDA:'stock'};
 
 // ── Info-Texte für die 5 Standard-Rubriken (Specific-Tab) ──
 function enrichRubrics(id,rubrics,name){
@@ -2057,6 +2059,7 @@ function enrichRubrics(id,rubrics,name){
   const isFx=cls==='fx';
   const rateImpact=cls==='metal'?`Steigt die Realrendite (Fed restriktiv), wird ${name} unattraktiver, da es keine laufende Verzinsung bietet – Gegenwind. Eine dovishe Fed senkt Realrenditen und stützt ${name}.`
     :cls==='index'?`Höhere bzw. länger hohe Zinsen erhöhen den Diskontsatz künftiger Gewinne und belasten v.a. wachstumsstarke Titel in ${name}. Eine dovishe Fed (Zinssenkungsfantasie) wirkt unterstützend.`
+    :cls==='stock'?`Als wachstumsstarker Einzeltitel mit einem Großteil der Gewinne in der Zukunft reagiert ${name} stark auf den Diskontsatz: höhere bzw. länger hohe Zinsen senken den Barwert künftiger Gewinne und belasten die Bewertung überproportional. Eine dovishe Fed (Zinssenkungsfantasie) wirkt unterstützend.`
     :cls==='energy'?`Bei ${name} wirken Zinsentscheidungen primär indirekt über den USD: hohe Zinsen stärken den USD, wodurch Öl für Käufer in anderen Währungen teurer wird (Nachfragedämpfer) – zusätzlich beeinflussen Zinsen die globalen Konjunkturerwartungen.`
     :`Höhere Zinsen erhöhen die Finanzierungskosten für gehebelte Positionen und können Liquidität aus ${name} abziehen; eine dovishe Fed (mehr globale Liquidität) wirkt meist unterstützend.`;
   const txt={
@@ -2065,17 +2068,19 @@ function enrichRubrics(id,rubrics,name){
       : `${name} wird in USD gehandelt und reagiert daher primär auf die Geldpolitik der Fed (Federal Reserve), die über die globalen USD-Finanzierungskosten und Realzinsen entscheidet. ${rateImpact}`,
     'Inflation': isFx
       ? `Inflationsdaten (CPI, Core CPI, PCE, Lohnwachstum) sind der zentrale Input für die Zinsentscheidungen von ${cbDat(id)}. Höher als erwartete Inflation erhöht die Wahrscheinlichkeit für (weitere) Zinserhöhungen bzw. verzögerte Senkungen → stützt tendenziell ${name}. Schwächere Inflation öffnet Raum für Lockerung → belastet ${name}. Die Kernrate (Core, ohne Energie/Nahrung) und Dienstleistungsinflation gelten als hartnäckiger und werden stärker beachtet als Headline-Werte.`
-      : `US-Inflationsdaten (CPI/PCE) sind weltweit marktbewegend, da sie über die Fed-Politik direkt Realzinsen, USD-Stärke und globale Liquidität steuern – allesamt zentrale Treiber für ${name}. Heißere Inflation → höhere Realzins-Erwartungen ${cls==='metal'?`→ meist negativ für ${name} (höhere Opportunitätskosten ohne Zinszahlung)`:cls==='index'?`→ höhere Diskontierung künftiger Gewinne → meist negativ für ${name}`:`→ engere globale Liquidität → meist negativ für ${name}`}. Schwächere Inflation wirkt i.d.R. umgekehrt unterstützend.`,
+      : `US-Inflationsdaten (CPI/PCE) sind weltweit marktbewegend, da sie über die Fed-Politik direkt Realzinsen, USD-Stärke und globale Liquidität steuern – allesamt zentrale Treiber für ${name}. Heißere Inflation → höhere Realzins-Erwartungen ${cls==='metal'?`→ meist negativ für ${name} (höhere Opportunitätskosten ohne Zinszahlung)`:cls==='index'||cls==='stock'?`→ höhere Diskontierung künftiger Gewinne → meist negativ für ${name}`:`→ engere globale Liquidität → meist negativ für ${name}`}. Schwächere Inflation wirkt i.d.R. umgekehrt unterstützend.`,
     'Labour Market': isFx
       ? `Der Arbeitsmarkt ist für ${cb} ein Schlüsselindikator für Konjunktur- und Inflationsdruck (Lohn-Preis-Spirale). Ein robuster Arbeitsmarkt mit steigenden Löhnen erhöht den Inflationsdruck und stützt damit tendenziell ${name} (höhere Zinserwartungen). Eine sich abschwächende Beschäftigung (steigende Arbeitslosigkeit, fallende Lohnzuwächse) signalisiert Abkühlung und nährt Zinssenkungsfantasien → belastet ${name}.`
       : `Der US-Arbeitsmarktbericht (NFP, Arbeitslosenquote, Stundenlöhne) zählt zu den marktbewegendsten Terminen überhaupt, da er die Zinserwartungen für die Fed steuert und damit USD-Liquidität und Risikoappetit beeinflusst – beides direkt relevant für ${name}. Sehr starke Daten können kurzfristig belasten ("Fed bleibt restriktiv"), während eine spürbare Abkühlung meist Lockerungshoffnung und damit Rückenwind für ${name} bedeutet.`,
     'Economic Growth': isFx
       ? `Wachstumsdaten (BIP, Einkaufsmanagerindizes/PMI, Einzelhandelsumsätze, Verbrauchervertrauen) zeigen das aktuelle Konjunkturtempo und sind ein wichtiger Frühindikator für die künftige Geldpolitik von ${cbDat(id)}. PMI-Werte über 50 signalisieren Expansion, unter 50 Kontraktion. Überraschend starke Wachstumsdaten erhöhen tendenziell die Wahrscheinlichkeit einer restriktiveren Politik und stützen damit ${name}, eine deutliche Abkühlung schürt Zinssenkungserwartungen und belastet ${name}.`
-      : `US-Wachstumsdaten (BIP, ISM/PMI, Einzelhandelsumsätze, Verbrauchervertrauen) sind ein zentraler Frühindikator für die Fed-Politik und den globalen Risikoappetit – beides direkt relevant für ${name}. ${cls==='metal'?`Starke Daten erhöhen meist die Zinserwartungen und belasten ${name} (höhere Opportunitätskosten ohne Verzinsung), während eine Abkühlung über Zinssenkungshoffnungen unterstützend wirkt.`:cls==='index'?`Starke Daten stützen Unternehmensgewinne, können bei Überhitzung aber eine restriktivere Fed-Politik auslösen ("gute Nachrichten = schlechte Nachrichten") – wie ${name} reagiert, hängt davon ab, welcher Effekt überwiegt.`:cls==='energy'?`Starke Daten signalisieren steigende globale Energienachfrage und wirken preisstützend für ${name}, während schwache Daten Rezessionssorgen und sinkende Nachfrage andeuten (preisdämpfend).`:`Starke Daten können eine restriktivere Fed-Politik bedeuten und ${name} als Risikoasset kurzfristig belasten, während eine Abkühlung über Lockerungshoffnungen Liquidität in Richtung Risikoassets wie ${name} lenkt.`}`,
+      : `US-Wachstumsdaten (BIP, ISM/PMI, Einzelhandelsumsätze, Verbrauchervertrauen) sind ein zentraler Frühindikator für die Fed-Politik und den globalen Risikoappetit – beides direkt relevant für ${name}. ${cls==='metal'?`Starke Daten erhöhen meist die Zinserwartungen und belasten ${name} (höhere Opportunitätskosten ohne Verzinsung), während eine Abkühlung über Zinssenkungshoffnungen unterstützend wirkt.`:cls==='index'?`Starke Daten stützen Unternehmensgewinne, können bei Überhitzung aber eine restriktivere Fed-Politik auslösen ("gute Nachrichten = schlechte Nachrichten") – wie ${name} reagiert, hängt davon ab, welcher Effekt überwiegt.`:cls==='stock'?`Starke Daten stützen die Konsum-/Investitionsnachfrage und damit die Umsatz-/Gewinnerwartungen für ${name}, können bei Überhitzung aber eine restriktivere Fed-Politik auslösen ("gute Nachrichten = schlechte Nachrichten") – wie ${name} reagiert, hängt davon ab, welcher Effekt überwiegt.`:cls==='energy'?`Starke Daten signalisieren steigende globale Energienachfrage und wirken preisstützend für ${name}, während schwache Daten Rezessionssorgen und sinkende Nachfrage andeuten (preisdämpfend).`:`Starke Daten können eine restriktivere Fed-Politik bedeuten und ${name} als Risikoasset kurzfristig belasten, während eine Abkühlung über Lockerungshoffnungen Liquidität in Richtung Risikoassets wie ${name} lenkt.`}`,
     'COT Data': cls==='crypto'
       ? `Klassische CFTC-COT-Daten existieren für CME-Bitcoin-Futures, sind wegen des großen Spot-/Perp-Marktes aber weniger aussagekräftig als bei FX. Aussagekräftiger: Funding Rates auf Perpetual-Futures (stark positiv = überhitzte Long-Positionierung, Korrekturrisiko; negativ = übertriebener Pessimismus, Erholungspotenzial) sowie Open Interest und Liquidationsdaten als Sentiment-Proxy für ${name}.`
       : cls==='index'
       ? `Bei ${name} dienen E-Mini-Futures-COT-Daten, die Put/Call-Ratio und der VIX (Volatilitätsindex) als Positionierungs- und Sentiment-Indikatoren. Extreme Netto-Long-Positionierung oder sehr niedrige Volatilität (Sorglosigkeit) signalisieren erhöhtes Korrekturrisiko; extreme Pessimismus-Werte (hohe Put/Call-Ratio, VIX-Spitzen) markieren oft Böden.`
+      : cls==='stock'
+      ? `Bei Einzeltiteln wie ${name} dienen die Options-Put/Call-Ratio, der Short-Interest-Anteil (% des Streubesitzes) und institutionelle 13F-Meldungen (Auf-/Abbau großer Fonds-Positionen) als Positionierungsindikatoren. Sehr hoher Short-Interest kann bei positiven Überraschungen Short-Squeezes auslösen, extreme Netto-Long-Positionierung erhöht das Korrekturrisiko bei Enttäuschungen.`
       : `Die CFTC Commitment-of-Traders (COT) Daten zeigen die Positionierung von Großspekulanten (Asset Managern, Hedgefonds) in ${name}-Futures. Extrem einseitige Positionierung (Crowded Trade) erhöht das Risiko scharfer Gegenbewegungen bei Trendwechseln. Eine wachsende Netto-Long-Position signalisiert bullishes Sentiment, eine wachsende Netto-Short-Position bearishes – die Wochenveränderung (WoW) ist oft ein Frühindikator für Stimmungswechsel.`,
     'Geopolitics': cls==='metal'
       ? `Geopolitische Krisen (Kriege, Sanktionen, Handelskonflikte) treiben typischerweise die Nachfrage nach ${name} als sicherem Hafen und Wertspeicher nach oben. Zusätzlich kaufen Notenbanken (insb. Schwellenländer) im Rahmen von Reservediversifizierung strukturell ${name} – ein Trend, der sich bei geopolitischer Unsicherheit verstärkt.`
@@ -2085,6 +2090,8 @@ function enrichRubrics(id,rubrics,name){
       ? `Bei geopolitischer Eskalation reagiert ${name} uneinheitlich: kurzfristig oft Risk-off-Verkäufe (Korrelation zu Tech-Aktien), während langfristig eine "digitale Fluchtwährung"-Erzählung (z.B. bei Kapitalverkehrskontrollen, Sanktionen, Währungsverfall in Krisenländern) unterstützend wirken kann.`
       : cls==='index'
       ? `Geopolitische Eskalationen belasten ${name} meist über steigende Risikoprämien, höhere Energiepreise (Kosteninflation) und sinkende Risikobereitschaft (Risk-off). Eine Entspannung wirkt unterstützend. Besonders relevant: Konflikte mit Auswirkung auf Energiepreise und globale Lieferketten.`
+      : cls==='stock'
+      ? `Geopolitische Eskalationen belasten ${name} meist über steigende Risikoprämien und sinkende Risikobereitschaft (Risk-off), zusätzlich über firmenspezifische Kanäle (z.B. Lieferketten/Halbleiterabhängigkeit von Taiwan/Asien, Exportbeschränkungen, regulatorische Eingriffe einzelner Länder). Eine Entspannung wirkt unterstützend.`
       : `Geopolitische Risiken (Konflikte, Sanktionen, Wahlen, Handelskonflikte) wirken auf ${name} über zwei Kanäle: (1) Safe-Haven-Flows – in Krisenzeiten fließt Kapital in als sicher geltende Währungen, (2) direkte wirtschaftliche Betroffenheit (z.B. Energieabhängigkeit, Handelsbeziehungen, geografische Nähe). Bewerte konkret, wie stark das jeweilige Ereignis ${name} direkt betrifft.`,
   };
   rubrics.forEach(r=>{if(txt[r.name]!==undefined&&!r.info)r.info=txt[r.name];});
@@ -2146,6 +2153,14 @@ const DEF=[
   {id:'NAS',name:'Nasdaq',full:'Nasdaq 100',bias:'bear',
     genBull:mkR(['World\'s best tech companies: Apple, NVIDIA, Microsoft','AI infrastructure boom: cloud, chips, data centers'],'bull'),
     genBear:mkR(['Extremely rate-sensitive: growth stocks suffer most','Top 10 = 50% of index – concentration and herd risk'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'AMZN',name:'Amazon',full:'Amazon.com Inc.',bias:'neu',
+    genBull:mkR(['AWS: dominant cloud market share with highest-margin profits','E-commerce scale & logistics moat – hard to replicate','AI investment cycle: AWS benefits from enterprise AI workload demand'],'bull'),
+    genBear:mkR(['High valuation – extremely rate-sensitive growth stock','AWS growth deceleration risk from Azure/Google Cloud competition','Thin e-commerce margins – exposed to consumer spending slowdown'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'NVDA',name:'Nvidia',full:'NVIDIA Corporation',bias:'neu',
+    genBull:mkR(['Dominant AI/GPU chip market share – structural demand from hyperscaler capex','Data center revenue scaling rapidly with AI infrastructure buildout','CUDA software ecosystem creates high switching costs'],'bull'),
+    genBear:mkR(['Extremely high valuation – most rate-sensitive large-cap stock','China export restrictions – geopolitical/regulatory risk','Customer concentration: few hyperscalers drive majority of revenue'],'bear'),
     rubrics:mkRubs(),noteRubs:[],notes:''},
 ];
 
@@ -2259,6 +2274,16 @@ const MACRO_DATA={
     ron:{info:'In Risk-on-Phasen outperformt der Nasdaq oft den breiteren Markt: niedrige Zinsen und hohe Risikofreude begünstigen besonders Wachstumswerte mit weit in der Zukunft liegenden Gewinnen.'},
     roff:{info:'In Risk-off-Phasen fällt der Nasdaq meist überproportional zum S&P 500 – hohe Bewertungen und lange "Duration" der Gewinne machen ihn besonders zinssensitiv.'},
     extraInfo:'Wachstumsaktien haben eine hohe "Duration" (ein Großteil der Gewinne liegt in ferner Zukunft) und reagieren daher überproportional auf Zinsänderungen: steigende Zinsen senken den Barwert dieser Gewinne stark (Nasdaq-negativ), fallende Zinsen wirken stark unterstützend. Zusätzlich treibt aktuell der KI-Investitionszyklus (Capex von Hyperscalern in Chips/Rechenzentren) Erwartungen und Kurse der größten Indexmitglieder.'},
+  AMZN:{extra:'Cloud-Wachstum (AWS) & Kapitaldisziplin',
+    safe:{info:'Einzelaktien wie Amazon gelten nicht als sicherer Hafen – sie sind ein klassisches Risikoasset, das in Krisen verkauft wird.'},
+    ron:{info:'In Risk-on-Phasen profitiert Amazon meist überdurchschnittlich: niedrigere Zinsen stützen die Bewertung des margenstarken AWS-Cloud-Geschäfts, und steigender Konsum stützt das E-Commerce-Geschäft.'},
+    roff:{info:'In Risk-off-Phasen fällt Amazon meist überproportional zum Gesamtmarkt – hohe Bewertung und Wachstumsabhängigkeit machen die Aktie besonders zinssensitiv.'},
+    extraInfo:'AWS (Amazon Web Services) liefert den Großteil des operativen Gewinns trotz kleinerem Umsatzanteil – Wachstum und Marge von AWS (insbesondere im Wettbewerb mit Microsoft Azure/Google Cloud um KI-Workloads) sind daher der wichtigste Einzeltreiber. Zusätzlich beobachten Investoren die Kapitaldisziplin im margenschwachen E-Commerce-Geschäft (Logistikkosten, Same-Day-Delivery-Investitionen).'},
+  NVDA:{extra:'KI-Chip-Nachfrage & Hyperscaler-Capex',
+    safe:{info:'Einzelaktien wie Nvidia gelten nicht als sicherer Hafen – sie sind ein klassisches, hochvolatiles Risikoasset.'},
+    ron:{info:'In Risk-on-Phasen gehört Nvidia oft zu den größten Gewinnern: niedrigere Zinsen stützen die hohe Bewertung, und steigender Risikoappetit lenkt Kapital in den KI-Wachstumstrend.'},
+    roff:{info:'In Risk-off-Phasen fällt Nvidia meist deutlich überproportional – extrem hohe Bewertung und Wachstumserwartungen machen die Aktie zur am stärksten zinssensitiven und volatilsten Large-Cap-Aktie.'},
+    extraInfo:'Die Nachfrage nach KI-Beschleuniger-Chips (insbesondere von Hyperscalern wie Microsoft, Google, Amazon, Meta für den Ausbau von KI-Rechenzentren) ist der dominante Treiber. Quartalsweise Capex-Guidance der großen Cloud-Anbieter sowie geopolitische Exportbeschränkungen (insb. China/Taiwan, Chip-Exportkontrollen) gehören zu den unmittelbarsten Kurstreibern.'},
 };
 function mkMacroRub(id,name){
   const cls=assetCls(id);
@@ -2574,7 +2599,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
-const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices'};
+const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices',stock:'Stocks'};
 // Berechnet die Sidebar-Kategorien (Standard-Kategorien + ggf. eigene
 // Symbole unter ihrer gewählten Kategorie bzw. "Custom").
 function computeSbCats(){
