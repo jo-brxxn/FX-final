@@ -377,7 +377,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
 .setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center}
-.setups-cols>div{border:1.5px solid var(--colb,var(--bg3));border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
+.setups-cols>div{border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
 .setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
 .setups-cols .sym-row{padding-left:6px;padding-right:6px}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
@@ -561,7 +561,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0d9488;color:#e7fffb;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SMARAGD (neue Asset-Kategorie "Aktie" + Amazon/Nvidia hinzugefügt, einseitig an USD-Makro gekoppelt, Bias manuell)</div>
+<div style="flex:none;background:#7c3aed;color:#f1e9ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT (Set-ups: äußere Box-Umrandung entfernt + alle Kalender verbunden, kleiner Kalender erbt Actual-Werte des großen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1414,12 +1414,28 @@ function hasInboxNotif(id){return getInboxFor(id).length>0;}
 const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach">❗</span>';
 // Alle Events (anstehend + bereits im Postfach/erschienen) für ein Symbol -
 // inkl. USD-News bei Rohstoffen/Krypto/Indizes (NONFX_IDS).
+// Beim selben Event (Name+Datum) können Kalender- und Postfach-Kopie unter-
+// schiedlich aktuell sein (z.B. Actual erst nach dem Postfach-Snapshot
+// nachgetragen). Damit ALLE Kalender (groß, klein, Dashboard, Postfach)
+// denselben Stand zeigen, werden die beiden Kopien feldweise zusammengeführt:
+// ein fehlender Actual/Forecast/Previous-Wert wird aus der jeweils anderen
+// Quelle ergänzt.
+function mergeEvtVals(t,s){
+  ['actual','forecast','previous','time','impact','notes'].forEach(f=>{
+    if((t[f]==null||t[f]==='')&&s[f]!=null&&s[f]!=='')t[f]=s[f];
+  });
+  if(!t.prevRevColor&&s.prevRevColor)t.prevRevColor=s.prevRevColor;
+}
 function getSymEventsAll(id){
   const ids=isNonFx(id)?[id,'USD']:[id];
-  const all=calEvts.filter(ev=>ids.some(x=>evtMatchesSym(ev,x)));
-  inbox.forEach(m=>{
-    if(ids.some(x=>evtMatchesSym(m,x))&&!all.find(e=>e.name===m.name&&e.date===m.date))all.push(m);
-  });
+  const match=ev=>ids.some(x=>evtMatchesSym(ev,x));
+  const keyOf=e=>e.name+'|'+e.date+'|'+(e.currencies||'');
+  const seen={},all=[];
+  // Kalender-Kopien zuerst (behalten ihre id für evtl. Aktionen), dann Postfach -
+  // jeweils ergänzend zusammenführen, falls dieselbe Veröffentlichung schon
+  // vorhanden ist.
+  calEvts.filter(match).forEach(ev=>{const k=keyOf(ev);if(!seen[k]){seen[k]={...ev};all.push(seen[k]);}else mergeEvtVals(seen[k],ev);});
+  inbox.filter(match).forEach(m=>{const k=keyOf(m);if(!seen[k]){seen[k]={...m};all.push(seen[k]);}else mergeEvtVals(seen[k],m);});
   return all.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
 }
 // Kompakte Sicht für die Detailseite: vergangene Events fallen nach
