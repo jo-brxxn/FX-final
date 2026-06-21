@@ -1551,7 +1551,7 @@ const IND_EVENT_MATCHERS={
   // gemeinsames Live-Muster - sie zeigen den kuratierten, korrekt zugeordneten
   // Recherche-Wert (sonst würde das falsche Barometer angezeigt).
   'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/]),
-  'Retail Sales MoM':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/,/yoy/,/y\/y/]),
+  'Retail Sales':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/,/yoy/,/y\/y/]),
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Mit welcher Währung sind die Indikatoren eines Nicht-FX-Assets verbunden?
@@ -1605,7 +1605,7 @@ const CAL_RESEARCH_MATCHERS={
   'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/]),
   'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
   'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
-  'Retail Sales MoM':mkIndMatcher([/retail sales/],[/core/]),
+  'Retail Sales':mkIndMatcher([/retail sales/],[/core/]),
   'Consumer Confidence':mkIndMatcher([/consumer confidence/,/consumer sentiment/]),
 };
 function applyResearchToCal(){
@@ -1712,7 +1712,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'1.6% (annualized, 2nd estimate Q1 2026)',forecast:'2.0%',previous:'0.7%',releaseDate:'2026-05-29',interval:'quarterly',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'54.5 (ISM)',forecast:'53.8',previous:'53.6',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-256'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-256'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'93.1 (Conference Board)',forecast:'91.9',previous:'93.8',releaseDate:'2026-05-26',interval:'monthly',source:'https://www.investing.com/economic-calendar/cb-consumer-confidence-48'},
   ]},
   EUR:{entries:[
@@ -1738,7 +1738,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.2% (Eurostat, revised)',forecast:null,previous:'0.2% (Q4 2025)',releaseDate:'2026-06-05',interval:'quarterly',source:'https://www.investing.com/economic-calendar/european-gross-domestic-product-(gdp)-qoq-120'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'51.6 (HCOB)',forecast:'51.2',previous:'52.2',releaseDate:'2026-06-02',interval:'monthly',source:'https://www.investing.com/economic-calendar/european-manufacturing-purchasing-managers-index-(pmi)-201'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'46.4 (HCOB)',forecast:'47.7',previous:'47.6',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-272'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-0.4% (Eurostat)',forecast:'-0.3%',previous:'0.8%',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-255'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-0.4% (Eurostat)',forecast:'-0.3%',previous:'0.8%',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-255'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-19.0 (EU-Kommission, Flash)',forecast:'-20.8',previous:'-20.6',releaseDate:'2026-05-21',interval:'monthly',source:'https://www.investing.com/economic-calendar/consumer-confidence-49'},
   ]},
   GBP:{entries:[
@@ -1764,7 +1764,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.6%',forecast:'0.6%',previous:'0.2%',releaseDate:'2026-05-14',interval:'quarterly',source:'https://www.investing.com/economic-calendar/united-kingdom-gross-domestic-product-(gdp)-qoq-121'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'53.9 (S&P Global/CIPS)',forecast:'53.7',previous:'53.7',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/united-kingdom-manufacturing-purchasing-managers-index-(pmi)-204'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'49.3 (S&P Global/CIPS)',forecast:'47.9',previous:'52.7',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-274'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-258'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-258'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-23 (GfK)',forecast:'-28',previous:'-25',releaseDate:'2026-05-22',interval:'monthly',source:'https://uk.investing.com/economic-calendar/gfk-consumer-confidence-330'},
   ]},
   CHF:{entries:[
@@ -1790,7 +1790,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.4% (SECO, sportbereinigt, Q1 2026)',forecast:'0.3-0.4%',previous:'0.2%',releaseDate:'2026-06-02',interval:'quarterly',source:'https://www.investing.com/economic-calendar/switzerland-gross-domestic-product-(gdp)-qoq-122'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'57.3 (procure.ch/UBS)',forecast:'54.0',previous:'54.5',releaseDate:'2026-06-02',interval:'monthly',source:'https://www.investing.com/economic-calendar/procure.ch-pmi-278'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'56.0 (procure.ch)',forecast:null,previous:'54.8',releaseDate:'2026-06-04',interval:'monthly',source:'https://tradingeconomics.com/switzerland/services-pmi'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.1% (BFS)',forecast:null,previous:'0.3% (rev.)',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-259'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'0.1% (BFS)',forecast:null,previous:'0.3% (rev.)',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-259'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-40 (SECO Konsumentenstimmung)',forecast:null,previous:'-43',releaseDate:'2026-05-08',interval:'quarterly',source:'https://www.investing.com/economic-calendar/seco-consumer-climate-362'},
   ]},
   JPY:{entries:[
@@ -1816,7 +1816,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revised)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quarterly',source:'https://www.investing.com/economic-calendar/japan-gross-domestic-product-(gdp)-qoq-119'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-202'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/au-jibun-bank-japan-services-pmi-1912'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/large-retailers\'-sales-190'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/large-retailers\'-sales-190'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (March 2026)',releaseDate:'2026-05-13',interval:'monthly',source:'https://www.investing.com/economic-calendar/household-confidence-148'},
   ]},
   CAD:{entries:[
@@ -1842,7 +1842,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.0% (Statistics Canada, Q1 2026)',forecast:'0.1%',previous:'-0.2% (Q4 2025)',releaseDate:'2026-05-29',interval:'quarterly',source:'https://www.investing.com/economic-calendar/gdp-annualized-1025'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'52.9 (S&P Global)',forecast:'54.2',previous:'53.3',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/canada-manufacturing-purchasing-managers-index-(pmi)-1029'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'58.2 (Ivey PMI)',forecast:'55.0',previous:'57.7',releaseDate:'2026-06-05',interval:'monthly',source:'https://www.investing.com/economic-calendar/canada-ivey-purchasing-managers-index-(pmi)-185'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'0.9% (Statistics Canada, March 2026)',forecast:'0.6%',previous:'0.4% (rev., Feb 2026)',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-260'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'0.9% (Statistics Canada, March 2026)',forecast:'0.6%',previous:'0.4% (rev., Feb 2026)',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-260'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'45.6 (Conference Board, May 2026)',forecast:null,previous:'49.2 (April 2026)',releaseDate:'2026-06-10',interval:'monthly',source:'https://tradingeconomics.com/canada/consumer-confidence'},
   ]},
   AUD:{entries:[
@@ -1868,7 +1868,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.3% (ABS, Q1 2026)',forecast:'0.3%',previous:'0.8% (Q4 2025)',releaseDate:'2026-06-03',interval:'quarterly',source:'https://www.investing.com/economic-calendar/australia-gross-domestic-product-(gdp)-qoq-124'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'50.7 (S&P Global, final)',forecast:'50.2',previous:'51.3',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-1838'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.7 (S&P Global, final)',forecast:null,previous:'50.7',releaseDate:'2026-06-02',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-1839'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.1% (ABS Household Spending, April 2026)',forecast:null,previous:'1.6% (March)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-262'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.1% (ABS Household Spending, April 2026)',forecast:null,previous:'1.6% (March)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-262'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.6 (Westpac-MI, June 2026)',forecast:null,previous:'83.0 (May)',releaseDate:'2026-06-09',interval:'monthly',source:'https://www.investing.com/economic-calendar/westpac-consumer-sentiment-364'},
   ]},
   NZD:{entries:[
@@ -1894,7 +1894,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Stats NZ, Q4 2025)',forecast:null,previous:'0.9% (Q3 2025)',releaseDate:'2026-03-19',interval:'quarterly',source:'https://www.investing.com/economic-calendar/new-zealand-gross-domestic-product-(gdp)-qoq-125'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.9 (BNZ-BusinessNZ PMI, May 2026)',forecast:null,previous:'50.4 (April)',releaseDate:'2026-06-11',interval:'monthly',source:'https://www.investing.com/economic-calendar/business-nz-pmi-338'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.9 (BNZ-BusinessNZ PSI, April 2026)',forecast:null,previous:'46.2 (March)',releaseDate:'2026-05-18',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-910'},
-    {rubric:'Economic Growth',indicator:'Retail Sales MoM',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monthly',source:'https://www.investing.com/economic-calendar/electronic-card-retail-sales-1058'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monthly',source:'https://www.investing.com/economic-calendar/electronic-card-retail-sales-1058'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.4 (Westpac-McDermott Miller)',forecast:null,previous:null,releaseDate:'2026-06-12',interval:'quarterly',source:'https://www.investing.com/economic-calendar/westpac-consumer-sentiment-357'},
   ]},
 };
@@ -1986,7 +1986,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV21)return;
+  if(sym._researchV22)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1998,7 +1998,7 @@ function applyIndResearch(sym){
   const lc=effLinkCcy(sym);
   const data=lc?(IND_RESEARCH_DATA[lc]||IND_RESEARCH_DATA[sym.id]):null;
   const dispMap=(lc&&IND_DISPLAY_NAMES[lc])||IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;sym._researchV21=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;sym._researchV21=true;sym._researchV22=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -2038,6 +2038,7 @@ function applyIndResearch(sym){
   sym._researchV19=true;
   sym._researchV20=true;
   sym._researchV21=true;
+  sym._researchV22=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2046,7 +2047,7 @@ function mkRubs(){return[
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
-  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])},
+  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
@@ -2086,7 +2087,7 @@ const IND_INFO_DEFAULTS={
   'GDP Growth QoQ':'Gross Domestic Product, quarter-over-quarter change in %. The broadest measure of economic output; stronger growth = currency-positive.',
   'Manufacturing PMI':'Purchasing Managers\' Index for manufacturing. Above 50 = expansion, below 50 = contraction. A leading growth indicator.',
   'Services PMI':'Purchasing Managers\' Index for services. Above 50 = expansion, below 50 = contraction. Services dominate most economies.',
-  'Retail Sales MoM':'Change in total retail spending, month-over-month in %. Gauges consumer demand; strong sales = currency-supportive.',
+  'Retail Sales':'Change in total retail spending, month-over-month in %. Gauges consumer demand; strong sales = currency-supportive.',
   'Consumer Confidence':'Survey of households\' optimism about the economy (index). Higher readings point to more spending and stronger growth.',
   // COT Data
   'Net Bullish Positioning':'From the CFTC Commitments of Traders report: net long positions of speculators. Extreme longs can flag a crowded trade and reversal risk.',
@@ -2113,7 +2114,7 @@ function applyRubOrder(){
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
 const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
-const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims'};
+const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
 // Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
@@ -2184,7 +2185,7 @@ function migrateRubInds(rubrics,sym){
   });
   if(!rubrics.find(r=>r.name==='Economic Growth')){
     const idx=rubrics.findIndex(r=>r.name==='Labour Market');
-    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales MoM','Consumer Confidence'])};
+    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])};
     idx>=0?rubrics.splice(idx+1,0,ni):rubrics.push(ni);
   }
 }
@@ -2559,7 +2560,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20,_researchV21:sv._researchV21}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20,_researchV21:sv._researchV21,_researchV22:sv._researchV22}:{...def};});
       // Migration: die Makro-Rubrik wurde von Deutsch ("Makro & Risikoumfeld")
       // auf Englisch ("Macro & Risk Environment") umbenannt - in gespeicherten
       // Profilen den Namen mitziehen, damit keine Dubletten entstehen.

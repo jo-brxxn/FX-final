@@ -682,7 +682,7 @@ jobs:
               {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},
               {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
-              {ind:"Retail Sales MoM",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
+              {ind:"Retail Sales",period:"m/m",test:t=>/retail sales/.test(t)&&!/core|year|\bex[\s-]|ex fuel/.test(t)},
               // USD: ausdruecklich die Conference-Board-Reihe ("Consumer
               // Confidence") - NICHT die University-of-Michigan-"Consumer
               // Sentiment"-Reihe (anderer Indikator!).
