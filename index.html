@@ -581,7 +581,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#059669;color:#ecfdf5;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: EMERALD (CPI shown as y/y for all currencies with m/m as a secondary link + every indicator now has a short English explanation in its "i" + bold Quick Notes heading + currency-linked Non-FX assets inherit the card summaries & indicator bullet points)</div>
+<div style="flex:none;background:#7c2d92;color:#fbe8ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAGENTA (fix: if "CPI (Headline)" was ever manually deleted from a currency's Inflation card, it is now automatically restored on next load instead of staying gone)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1982,7 +1982,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV19)return;
+  if(sym._researchV20)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1994,7 +1994,7 @@ function applyIndResearch(sym){
   const lc=effLinkCcy(sym);
   const data=lc?(IND_RESEARCH_DATA[lc]||IND_RESEARCH_DATA[sym.id]):null;
   const dispMap=(lc&&IND_DISPLAY_NAMES[lc])||IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -2032,6 +2032,7 @@ function applyIndResearch(sym){
   sym._researchV17=true;
   sym._researchV18=true;
   sym._researchV19=true;
+  sym._researchV20=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2175,6 +2176,16 @@ function migrateRubInds(rubrics,sym){
       const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='Central Bank Rate');
       const ni={id:uid(),name:'FOMC Dot Plot',bias:'neu',imp:false,date:'',interval:'',points:[]};
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
+    }
+    // "CPI (Headline)" ist Teil der Basis-Rubrik und sollte eigentlich nie
+    // fehlen - kann aber von Nutzern manuell ueber den Loesch-Button entfernt
+    // worden sein. Slot fuer ALLE Waehrungen wiederherstellen (vor dem
+    // V20-Durchlauf), damit applyIndResearch ihn danach befuellen kann -
+    // anders als bei den optionalen Indikatoren oben gilt das hier
+    // bedingungslos, weil jede Waehrung CPI (Headline) als applicable:true
+    // fuehrt.
+    if(rub.name==='Inflation'&&!sym._researchV20&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)')){
+      rub.indicators.unshift({id:uid(),name:'CPI (Headline)',bias:'neu',imp:false,date:'',interval:'',points:[]});
     }
   });
   if(!rubrics.find(r=>r.name==='Economic Growth')){
@@ -2554,7 +2565,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20}:{...def};});
       // Migration: die Makro-Rubrik wurde von Deutsch ("Makro & Risikoumfeld")
       // auf Englisch ("Macro & Risk Environment") umbenannt - in gespeicherten
       // Profilen den Namen mitziehen, damit keine Dubletten entstehen.
