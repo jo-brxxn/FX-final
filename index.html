@@ -587,7 +587,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#e11d48;color:#fff1f2;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROSE (m/m link now also shows next to live-feed values, not just researched ones + EUR "Core PPI" no longer shows a m/m-only number as its main value since no real y/y series exists for it (set to n/a like other currencies) + real investing.com m/m links added for Core CPI/PPI across USD/EUR/GBP/CHF/JPY/CAD)</div>
+<div style="flex:none;background:#0891b2;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CYAN (calendar can now be filtered by a single currency or show all + per-asset mini-calendars now show events up to 7 days ahead instead of just the next one + any event tied to a score-driving indicator (CPI, NFP, rate decisions, GDP, PMI…) is auto-classified as HIGH impact, even if the source said medium)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -755,6 +755,7 @@ function introLogin(){
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news">📁 All Impacts</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)">🔄 Refresh</button>
     </div>
@@ -1241,6 +1242,15 @@ function updCalHighBtn(){
   b.classList.toggle('active',calHighOnly);
   b.textContent=calHighOnly?'📁 High-impact only':'📁 All impacts';
 }
+function setCalCcyFilter(v){
+  calCcyFilter=v||'ALL';
+  localStorage.setItem('fxpro_cal_ccy',calCcyFilter);
+  renderCalendar();
+}
+function updCalCcySel(){
+  const sel=document.getElementById('calCcySel');if(!sel)return;
+  sel.value=calCcyFilter;
+}
 
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
@@ -1448,12 +1458,21 @@ const CAL_PAST_DAYS=2;
 const INBOX_RETENTION_DAYS=1;
 // Kalender-Filter "nur High-Impact" (persistiert eigenständig im localStorage).
 let calHighOnly=localStorage.getItem('fxpro_cal_highonly')==='1';
+// Kalender-Filter "nach Währung" ('ALL' = alle). Gilt nur für den grossen
+// Kalender, nicht für die symbol-eigenen Mini-Kalender (die sind ohnehin schon
+// auf ihre Währung gefiltert). Persistiert eigenständig im localStorage.
+let calCcyFilter=localStorage.getItem('fxpro_cal_ccy')||'ALL';
 // Welche vergangenen Tage im Kalender aktuell aufgeklappt sind (nur Session,
 // vergangene Tage starten immer eingeklappt).
 const calOpenDays=new Set();
 function processCalEvts(){
   const today=todayStr();
   let changed=false;
+  // Score-relevante Events (CPI, NFP, Zinsentscheid, GDP, PMI ...) immer als
+  // High-Impact einstufen, auch wenn die Quelle nur "Medium" liefert.
+  calEvts.forEach(ev=>{
+    if(ev.impact!=='high'&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
+  });
   calEvts.forEach(ev=>{
     if(ev.date<=today&&!inbox.find(m=>m.name===ev.name&&m.date===ev.date)){
       inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,time:ev.time,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,forecast:ev.forecast,previous:ev.previous,actual:ev.actual,notes:ev.notes,prevRevColor:ev.prevRevColor});
@@ -1512,9 +1531,9 @@ function getSymEventsCompact(id){
   // (konsistent zur roten Flagge), nicht Medium/Low.
   const nextHigh=future.find(ev=>ev.impact==='high');
   const nextHighDate=nextHigh?nextHigh.date:null;
-  const upcoming=all.filter(ev=>ev.date>today);
-  const upcomingDate=upcoming.length?upcoming[0].date:null;
-  const events=all.filter(ev=>ev.date<=today||ev.date===nextDate||ev.date===upcomingDate);
+  // Mini-Kalender der Symbole zeigen alle Events der naechsten 7 Tage (plus die
+  // letzten CAL_PAST_DAYS Tage), nicht nur das naechste Veroeffentlichungsdatum.
+  const events=all.filter(ev=>daysUntil(ev.date)<=7);
   return{events,nextDate,nextHighDate};
 }
 const evtSectionOpen={};
@@ -1614,6 +1633,13 @@ const CAL_RESEARCH_MATCHERS={
   'Retail Sales':mkIndMatcher([/retail sales/],[/core/]),
   'Consumer Confidence':mkIndMatcher([/consumer confidence/,/consumer sentiment/]),
 };
+// Ein Event "treibt den Score", wenn sein Name zu einem der getrackten
+// Indikatoren passt (Zins/Inflation/Arbeitsmarkt/Wachstum). Solche Events
+// werden ueberall als High-Impact behandelt - egal was die Quelle (FF) sagt.
+function isScoreDrivingEvent(ev){
+  if(!ev||!ev.name)return false;
+  return Object.values(CAL_RESEARCH_MATCHERS).some(m=>m(ev.name));
+}
 function applyResearchToCal(){
   let changed=false;
   Object.entries(IND_RESEARCH_DATA).forEach(([ccy,data])=>{
@@ -3657,11 +3683,12 @@ function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
-  updCalHighBtn();
+  updCalHighBtn();updCalCcySel();
   let list=[...calEvts];
   if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
+  if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-  const empty=calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.';
+  const empty=calCcyFilter!=='ALL'?`No events for ${calCcyFilter} in this range.`:(calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.');
   if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
