@@ -581,7 +581,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c2d92;color:#fbe8ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAGENTA (fix: if "CPI (Headline)" was ever manually deleted from a currency's Inflation card, it is now automatically restored on next load instead of staying gone)</div>
+<div style="flex:none;background:#b45309;color:#fff7ed;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER (all score displays now update instantly & in sync — marking an indicator as important now also refreshes the sidebar score, the dashboard and the set-ups, not just the detail view)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3237,7 +3237,7 @@ function pullMacroFromCcy(sym){
   });
 }
 function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);save();renderDetail();}
+function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
@@ -3284,7 +3284,7 @@ function saveInfoM(){
   save();closeM('mInfo');
 }
 function setIndBias(ri,ii,b){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);save();renderDetail();}
+function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
@@ -3326,12 +3326,12 @@ function syncMacroIndAddRemove(ri,action,name){
     }
   });
 }
-function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);save();renderDetail();}
+function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
-  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);save();renderDetail();}
+  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function addPt(ri,ii){
   const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
