@@ -47,7 +47,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
-.sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
+.sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
+.sb-cat-moves{display:flex;gap:2px;flex:none}
+.ab-move.cat{position:static;width:18px;height:16px}
 .ab-wrap{position:relative}
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
 .ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
@@ -307,6 +310,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
+.dw-notes-sub{font-size:11px;font-weight:700;color:var(--t3);margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-nav{padding:2px 5px;font-size:10px}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -577,7 +581,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0891b2;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CYAN ("Assets" tab split into separate "FX" and "Non-FX" tabs; original Crypto/Metals/Energy/Indices/Stocks sidebar sub-categories restored within Non-FX)</div>
+<div style="flex:none;background:#db2777;color:#fce7f3;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK (Fixed EUR/USD duplicating in Set-ups + Watchlist & Quick Notes merged into one dashboard card + Non-FX categories can be reordered via long-press + Important now adds +0.5 and Core-paired indicators count ±0.5 each)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -975,8 +979,28 @@ function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow
 function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
 // 2Y Bond Yield und 10Y Bond Yield zählen je nur 0,5 Punkte (zusammen max. ±1).
 const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
-function indScore(ind){return biasScore(ind.bias)*(BOND_HALF_PT.has(ind.name)?0.5:1)*(ind.imp?1.5:1);}
-function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind),0);}
+// Indikatoren mit einer eigenen "Core"-Variante: stehen Headline UND Core
+// zusammen in einer Rubrik, zählt jeder nur 0,5 (gemeinsam max. ±1), weil sie
+// dasselbe misst und sonst doppelt gewichtet würde. Basisnamen (ohne y/y-Suffix).
+const CORE_PAIRS=[['CPI (Headline)','Core CPI'],['PPI','Core PPI'],['PCE','Core PCE']];
+// Grundgewicht eines Indikators (0,5 oder 1), abhängig davon, ob er ein
+// Bond-Halbpunkt ist oder als Teil eines vorhandenen Core-Paares zählt.
+function indBaseWeight(ind,rub){
+  if(BOND_HALF_PT.has(ind.name))return 0.5;
+  const base=stripPeriodSuffix(ind.name).base;
+  const inds=(rub&&rub.indicators)||[];
+  for(const[a,b]of CORE_PAIRS){
+    if(base===a||base===b){
+      const partner=base===a?b:a;
+      if(inds.some(i=>stripPeriodSuffix(i.name).base===partner))return 0.5;
+    }
+  }
+  return 1;
+}
+// "Wichtig" (★) erhöht den Betrag additiv um 0,5 (statt Multiplikation ×1,5):
+// normaler Indikator 1 -> 1,5; halber Indikator 0,5 -> 1,0.
+function indScore(ind,rub){return biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));}
+function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
 // dazwischen neutral/orange) - so ist die Zahl z.B. bei einem neutralen Asset mit
@@ -985,7 +1009,7 @@ function scoreColor(n){return n>=3?'var(--blue)':n<=-3?'var(--red)':'var(--amber
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
 // dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
 function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
-function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = sum of the indicators (Bullish +1, Neutral 0, Bearish −1; indicators marked Important (★) count ±1.5)')}">${n>0?'+':''}${n}</span>`;}
+function scoreBadge(n,title){return`<span class="score-badge" style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = sum of the indicators (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}">${n>0?'+':''}${n}</span>`;}
 // Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung (z.B. EUR -5, USD +5 -> EUR/USD = -10)
 function pairScore(pairName){
   const parts=(pairName||'').split('/');if(parts.length!==2)return 0;
@@ -2427,16 +2451,15 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:0},
-  {id:uid(),type:'watchlist',title:'Watchlist',order:4},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:4},
   {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
-  {id:uid(),type:'quick_notes',title:'Quick Notes',content:'',order:6},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,rateWatchCustom,indLinkCustom});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -2479,7 +2502,7 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},rateWatchCustom={},indLinkCustom={};
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={};
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -2522,14 +2545,26 @@ function loadState(){
         widgets=widgets.filter(w=>w.type!=='assets');
       }
       widgets=widgets.filter(w=>w.type!=='setups');
+      // Quick-Notes-Karte wurde mit der Watchlist-Karte zu EINER Karte
+      // zusammengeführt: Notiztext in die Watchlist-Karte übernehmen und das
+      // eigenständige Quick-Notes-Widget entfernen.
+      const qnW=widgets.find(w=>w.type==='quick_notes');
+      if(qnW){
+        let wlW=widgets.find(w=>w.type==='watchlist');
+        if(!wlW){wlW={id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',order:qnW.order};widgets.push(wlW);}
+        if(wlW.content==null||wlW.content==='')wlW.content=qnW.content||'';
+        if(wlW.title==='Watchlist')wlW.title='Watchlist & Quick Notes';
+        widgets=widgets.filter(w=>w.type!=='quick_notes');
+      }
       inbox=d.inbox||[];
       sbOrder=d.sbOrder||{};
+      catOrder=d.catOrder||[];
       rateWatchCustom=d.rateWatchCustom||{};
       indLinkCustom=d.indLinkCustom||{};
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};rateWatchCustom={};indLinkCustom={};
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -2700,6 +2735,14 @@ function computeSbCats(){
     cat?cat.ids.push(c.id):uncategorized.push(c.id);
   });
   if(uncategorized.length>0)allCats.push({l:'Custom',ids:uncategorized});
+  // Vom Nutzer per Lang-Druck festgelegte Kategorie-Reihenfolge anwenden;
+  // unbekannte/neue Kategorien behalten ihre Standardposition (hinten).
+  if(catOrder.length){
+    allCats.sort((a,b)=>{
+      const ia=catOrder.indexOf(a.l),ib=catOrder.indexOf(b.l);
+      return (ia<0?999:ia)-(ib<0?999:ib);
+    });
+  }
   return allCats;
 }
 // Liefert die Reihenfolge der Symbol-IDs einer Kategorie unter
@@ -2720,12 +2763,28 @@ function moveSbSym(catL,id,d){
   sbOrder[catL]=ids;
   save();renderSidebar();
 }
+// Verschiebt eine GANZE Kategorie (mit allen Assets) in der aktuell sichtbaren
+// Sidebar-Ansicht nach oben/unten. Arbeitet auf der gefilterten Ansicht
+// (Non-FX), schreibt aber die vollständige Reihenfolge aller Kategorien.
+function moveSbCat(catL,d){
+  const visible=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
+  const i=visible.findIndex(c=>c.l===catL);if(i<0)return;
+  const n=i+d;if(n<0||n>=visible.length)return;
+  [visible[i],visible[n]]=[visible[n],visible[i]];
+  // Sichtbare Reihenfolge mit den (unsichtbaren) FX-Kategorien zusammenführen
+  // und als vollständige catOrder persistieren.
+  const all=computeSbCats();
+  const visibleLabels=visible.map(c=>c.l);
+  let vi=0;
+  catOrder=all.map(c=>(curFxMode==='fx'?c.l==='FX':c.l!=='FX')?visibleLabels[vi++]:c.l);
+  save();renderSidebar();
+}
 // Lang-Druck (Touch & Maus) auf ein Symbol blendet ▲/▼-Buttons zum
 // Verschieben innerhalb seiner Kategorie ein.
 let sbReorderId=null,_sbPressTimer=null,_sbSuppressClick=false;
 function sbPressStart(id){
   clearTimeout(_sbPressTimer);
-  _sbPressTimer=setTimeout(()=>{sbReorderId=id;_sbSuppressClick=true;renderSidebar();},450);
+  _sbPressTimer=setTimeout(()=>{sbReorderId=id;sbCatReorder=null;_sbSuppressClick=true;renderSidebar();},450);
 }
 function sbPressEnd(){clearTimeout(_sbPressTimer);_sbPressTimer=null;}
 function sbClick(id){
@@ -2735,13 +2794,34 @@ function sbClick(id){
   if(was===id){renderSidebar();return;}
   selSym(id);
 }
+// Lang-Druck auf eine KATEGORIE-Überschrift blendet ▲/▼-Buttons ein, mit denen
+// die gesamte Kategorie (inkl. aller Assets) verschoben werden kann.
+let sbCatReorder=null,_sbCatPressTimer=null;
+function sbCatPressStart(catL){
+  clearTimeout(_sbCatPressTimer);
+  _sbCatPressTimer=setTimeout(()=>{sbCatReorder=catL;sbReorderId=null;renderSidebar();},450);
+}
+function sbCatPressEnd(){clearTimeout(_sbCatPressTimer);_sbCatPressTimer=null;}
+function sbCatClick(catL){
+  // Tippen auf die Überschrift im Reorder-Modus beendet ihn wieder.
+  if(sbCatReorder===catL){sbCatReorder=null;renderSidebar();}
+}
 function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
   const allCats=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
-  let html=allCats.map(cat=>{
+  // Kategorien lassen sich nur verschieben, wenn es mehr als eine gibt (Non-FX).
+  const catMovable=allCats.length>1;
+  let html=allCats.map((cat,ci)=>{
     const ids=getSbIds(cat).filter(id=>syms.find(s=>s.id===id));
+    const catRe=sbCatReorder===cat.l;
     return`
-    <div class="sb-lbl">${cat.l}</div>
+    <div class="sb-lbl${catRe?' cat-reorder':''}"${catMovable?` onpointerdown="sbCatPressStart('${cat.l}')" onpointerup="sbCatPressEnd()" onpointerleave="sbCatPressEnd()" onpointercancel="sbCatPressEnd()" onclick="sbCatClick('${cat.l}')" style="cursor:pointer"`:''}>
+      <span>${cat.l}</span>
+      ${catRe?`<span class="sb-cat-moves">
+        <button class="ab-move cat" onclick="event.stopPropagation();moveSbCat('${cat.l}',-1)" ${ci===0?'disabled':''} title="Move category up">▲</button>
+        <button class="ab-move cat" onclick="event.stopPropagation();moveSbCat('${cat.l}',1)" ${ci===allCats.length-1?'disabled':''} title="Move category down">▼</button>
+      </span>`:''}
+    </div>
     ${ids.map((id,idx)=>{
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
@@ -2774,7 +2854,7 @@ function renderDetail(){
   const nextLbl=nextDate?(nextDate===todayStr()?'Today':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; indicators marked Important (★) count ±1.5)')}</div><div class="afull">${c.full}</div></div>
+      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}</div><div class="afull">${c.full}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -2859,7 +2939,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; indicators marked Important (★) count ±1.5)">${sc>0?'+':''}${sc}</span>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -3423,8 +3503,13 @@ function confirmAddPair(){
 
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
+  // Die Set-ups-Ansicht fasst ALLE Kategorien (z.B. Set-ups + Watchlist) zu
+  // einer einzigen Bullish/Neutral/Bearish-Übersicht zusammen. Dasselbe Paar
+  // kann aber in mehreren Kategorien stehen (z.B. EUR/USD in Set-ups UND
+  // Watchlist) - daher pro Paar-Name nur EINMAL anzeigen, sonst doppelt es sich.
+  const seenPair=new Set();
   const items=[
-    ...pairs.map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
+    ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
     ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScore(s)})),
   ];
   if(items.length===0){
@@ -3898,9 +3983,8 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
-  {type:'watchlist',label:'Watchlist Pairs',sub:'Pairs you are actively tracking with SL/TP'},
+  {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
   {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
-  {type:'quick_notes',label:'Quick Notes',sub:'Freeform notes & reminders'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
 ];
 function renderDash(){
@@ -3929,13 +4013,17 @@ function renderDash(){
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
-      content=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
+      const wlList=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
+      // Quick Notes direkt unter der Watchlist in derselben Karte.
+      const notes=`<div class="dw-notes-sub">📝 Quick Notes</div>
+        <textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
+      content=wlList+notes;
     }else if(w.type==='pairs_editor'){
       // Shows all pairs across all categories with add/remove/move-category
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair</button>`;
