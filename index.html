@@ -577,7 +577,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c3aed;color:#f5f3ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PURPLE (Full English translation completed + sidebar categories merged into "FX" and "Other Assets")</div>
+<div style="flex:none;background:#0891b2;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CYAN ("Assets" tab split into separate "FX" and "Non-FX" tabs; original Crypto/Metals/Energy/Indices/Stocks sidebar sub-categories restored within Non-FX)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -717,7 +717,8 @@ function introLogin(){
 
 <div class="tabbar">
   <button class="tp on"  onclick="showTab('dash',this)">Dashboard</button>
-  <button class="tp"     onclick="showTab('cur',this)">Assets</button>
+  <button class="tp"     id="tabFx" onclick="showTab('cur',this,'fx')">FX</button>
+  <button class="tp"     id="tabNonfx" onclick="showTab('cur',this,'nonfx')">Non-FX</button>
   <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
@@ -952,7 +953,11 @@ const FX_PAIRS=ALL_PAIRS.filter(p=>{const[b,q]=p.split('/');return FX.includes(b
 
 const SB_CATS=[
   {l:'FX',ids:['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD']},
-  {l:'Other Assets',ids:['BTC','GOLD','SILVER','OIL','SP500','NAS','DAX','GER100','AMZN','NVDA']}
+  {l:'Crypto',ids:['BTC']},
+  {l:'Metals',ids:['GOLD','SILVER']},
+  {l:'Energy',ids:['OIL']},
+  {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
+  {l:'Stocks',ids:['AMZN','NVDA']}
 ];
 
 // ══ HELPERS ════════════════════════════════════════════════════════
@@ -2671,7 +2676,7 @@ function cloudAutoSync(){
 }
 
 // ══ CURRENT STATE ══════════════════════════════════════════════════
-let selId='USD',curSub='specific',curPage='dash';
+let selId='USD',curSub='specific',curPage='dash',curFxMode='fx';
 function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
@@ -2684,7 +2689,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
-const CLS_CAT={fx:'FX',crypto:'Other Assets',metal:'Other Assets',energy:'Other Assets',index:'Other Assets',stock:'Other Assets'};
+const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices',stock:'Stocks'};
 // Berechnet die Sidebar-Kategorien (Standard-Kategorien + ggf. eigene
 // Symbole unter ihrer gewählten Kategorie bzw. "Custom").
 function computeSbCats(){
@@ -2732,7 +2737,7 @@ function sbClick(id){
 }
 function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
-  const allCats=computeSbCats();
+  const allCats=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
   let html=allCats.map(cat=>{
     const ids=getSbIds(cat).filter(id=>syms.find(s=>s.id===id));
     return`
@@ -3020,6 +3025,14 @@ function renderNoteRub(rub,ri,total){
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
 function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
+// Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
+// Assets-Seite und wechselt dabei automatisch auf den passenden FX/Non-FX-Tab.
+function gotoSym(id){
+  const mode=FX.includes(id)?'fx':'nonfx';
+  const btn=document.getElementById(mode==='fx'?'tabFx':'tabNonfx');
+  showTab('cur',btn,mode);
+  selSym(id);
+}
 function setSub(s){curSub=s;renderDetail();const dp=document.querySelector('#detail .dp');if(dp)dp.classList.add('detail-fade');}
 function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 function setBias(b){
@@ -3213,6 +3226,7 @@ function confirmAddSym(){
   syms.push(newSym);
   applyRubOrder();
   closeM('mAddSym');document.getElementById('mSymTicker').value='';document.getElementById('mSymFull').value='';
+  curFxMode=cls==='fx'?'fx':'nonfx';
   save();renderSidebar();selSym(ticker);
 }
 
@@ -3897,7 +3911,7 @@ function renderDash(){
     if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
-      const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="showTab('cur',document.querySelector('.tp:nth-child(2)'));selSym('${s.id}')">
+      const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           ${rowScore(symScore(s),'Symbol-Score',BC[s.bias])}
@@ -4029,7 +4043,8 @@ function addWidget(){
 // ══ MATRIX ═══════════════════════════════════════════════════════
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
-function showTab(tab,btn){
+function showTab(tab,btn,fxMode){
+  if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   document.querySelectorAll('.tp').forEach(b=>b.classList.remove('on'));
   const pgEl=document.getElementById(PAGE_IDS[tab]);
