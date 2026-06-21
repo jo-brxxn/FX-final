@@ -210,6 +210,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
+/* Pärchen-Indikatoren (z.B. CPI + Core CPI): gemeinsame Umrandung, jeweils
+   eigene Bias-Farbe oben/unten – Score/Bias bleiben pro Indikator unabhängig. */
+.ind-pair-group{margin-bottom:5px}
+.ind-pair-group .ind-card{margin-bottom:0;border-radius:0}
+.ind-pair-group .ind-card:first-child{border-top-left-radius:var(--rs);border-top-right-radius:var(--rs);border-bottom:none}
+.ind-pair-group .ind-card:last-child{border-bottom-left-radius:var(--rs);border-bottom-right-radius:var(--rs);border-top:none}
 .ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg5);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .ind-inp{background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
@@ -581,7 +587,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0d9488;color:#f0fdfa;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (removed the FOMC Dot Plot indicator since it can't be auto-updated from the calendar feed and only ever showed a stale placeholder + the per-asset "Next Event" now shows the next HIGH-impact event only, not medium)</div>
+<div style="flex:none;background:#7c3aed;color:#f5f3ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PURPLE (fixed "Retail Sales MoM m/m" duplicate-period naming bug + CPI/Core CPI, PPI/Core PPI, PCE/Core PCE pairs now share one connected border in the Inflation card, top half colored by the first indicator's bias and bottom half by the second's, while each keeps its own independent score)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3009,7 +3015,7 @@ function renderRub(rub,ri,total){
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
-      ${(rub.indicators||[]).map((ind,ii)=>renderInd(ind,ri,ii,(rub.indicators||[]).length)).join('')}
+      ${renderInds(rub,ri)}
       <div class="add-row" style="margin-top:5px">
         <input class="ai" id="ind-${ri}" placeholder="+ Add indicator (e.g. CPI, NFP, Net Position)..." onkeydown="if(event.key==='Enter'){addInd(${ri});event.preventDefault()}">
         <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
@@ -3036,6 +3042,32 @@ function clearDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
   ind.date='';ind.interval='';
   syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
+}
+
+// Gruppiert direkt benachbarte Indikatoren, die ein CORE_PAIRS-Pärchen bilden
+// (z.B. CPI + Core CPI), in eine gemeinsam umrandete .ind-pair-group. Score
+// und Bias jedes Indikators bleiben dabei komplett unangetastet – renderInd()
+// selbst wird unverändert pro Indikator aufgerufen, nur das Wrapping ändert sich.
+function renderInds(rub,ri){
+  const inds=rub.indicators||[];
+  const total=inds.length;
+  let html='',i=0;
+  while(i<total){
+    const ind=inds[i],next=inds[i+1];
+    const base1=stripPeriodSuffix(ind.name).base;
+    const isPair=next&&CORE_PAIRS.some(([a,b])=>{
+      const base2=stripPeriodSuffix(next.name).base;
+      return(base1===a&&base2===b)||(base1===b&&base2===a);
+    });
+    if(isPair){
+      html+=`<div class="ind-pair-group">${renderInd(ind,ri,i,total)}${renderInd(next,ri,i+1,total)}</div>`;
+      i+=2;
+    }else{
+      html+=renderInd(ind,ri,i,total);
+      i+=1;
+    }
+  }
+  return html;
 }
 
 function renderInd(ind,ri,ii,total){
