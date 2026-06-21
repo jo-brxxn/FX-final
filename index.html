@@ -581,7 +581,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#b45309;color:#fff7ed;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER (all score displays now update instantly & in sync — marking an indicator as important now also refreshes the sidebar score, the dashboard and the set-ups, not just the detail view)</div>
+<div style="flex:none;background:#0d9488;color:#f0fdfa;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (removed the FOMC Dot Plot indicator since it can't be auto-updated from the calendar feed and only ever showed a stale placeholder + the per-asset "Next Event" now shows the next HIGH-impact event only, not medium)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1502,10 +1502,14 @@ function getSymEventsCompact(id){
   const all=getSymEventsAll(id).filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   const future=all.filter(ev=>ev.date>=today);
   const nextDate=future.length?future[0].date:null;
+  // "Next Event"-Label zeigt ausschliesslich das naechste HIGH-Impact-Event
+  // (konsistent zur roten Flagge), nicht Medium/Low.
+  const nextHigh=future.find(ev=>ev.impact==='high');
+  const nextHighDate=nextHigh?nextHigh.date:null;
   const upcoming=all.filter(ev=>ev.date>today);
   const upcomingDate=upcoming.length?upcoming[0].date:null;
   const events=all.filter(ev=>ev.date<=today||ev.date===nextDate||ev.date===upcomingDate);
-  return{events,nextDate};
+  return{events,nextDate,nextHighDate};
 }
 const evtSectionOpen={};
 function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetail();}
@@ -1690,7 +1694,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
-    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:true,actual:'Hike: 0 / Hold: 9 / Cut: 10 (SEP, Median: 1 Cut 2026, placeholder - please verify)',forecast:null,previous:null,releaseDate:'2026-03-18',interval:'every 6-7 weeks',source:'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'},
+    {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',period:'Y/Y',applicable:true,actual:'4.2%',forecast:'4.2%',previous:'3.8%',releaseDate:'2026-06-10',interval:'monthly',source:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-yoy-733',secondarySource:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-mom-69',secondaryLabel:'CPI m/m ↗'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
     {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'2.9% YoY / 0.2% MoM',forecast:'2.9% YoY / 0.3% MoM',previous:'2.8% YoY / 0.4% MoM',releaseDate:'2026-06-10',interval:'monthly',source:'https://www.investing.com/economic-calendar/core-cpi-736'},
@@ -1982,7 +1986,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV20)return;
+  if(sym._researchV21)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -1994,7 +1998,7 @@ function applyIndResearch(sym){
   const lc=effLinkCcy(sym);
   const data=lc?(IND_RESEARCH_DATA[lc]||IND_RESEARCH_DATA[sym.id]):null;
   const dispMap=(lc&&IND_DISPLAY_NAMES[lc])||IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;sym._researchV21=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -2033,6 +2037,7 @@ function applyIndResearch(sym){
   sym._researchV18=true;
   sym._researchV19=true;
   sym._researchV20=true;
+  sym._researchV21=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2070,7 +2075,6 @@ const IND_INFO_DEFAULTS={
   '2Y Bond Yield':'Yield on 2-year government bonds, in %. Tracks rate-hike/cut expectations closely; rising = market pricing tighter policy = currency-supportive.',
   '10Y Bond Yield':'Yield on 10-year government bonds, in %. Reflects long-term growth & inflation expectations; rising yields often support the currency.',
   '2Y/10Y Spread':'10-year minus 2-year yield, in percentage points. Negative (inverted) = recession warning; steepening = improving growth outlook.',
-  'FOMC Dot Plot':'Fed officials\' projections for the future path of interest rates. A higher path than expected is hawkish and USD-positive.',
   // Labour Market
   'NFP / Employment Change':'Net new jobs added in the period (non-farm), in thousands. Strong job growth = robust economy = hawkish and currency-positive.',
   'Unemployment Rate':'Share of the labour force without a job, in %. Lower = tighter labour market, supports rate hikes and the currency.',
@@ -2165,16 +2169,6 @@ function migrateRubInds(rubrics,sym){
     if(rub.name==='Inflation'&&!sym._researchV11&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='CPI')){
       const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
       const ni={id:uid(),name:'CPI m/m',bias:'neu',imp:false,date:'',interval:'',points:[]};
-      idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
-    }
-    // "FOMC Dot Plot" ist ein neuer Indikator direkt unter "Central Bank Rate"
-    // (nur USD/Fed - andere Zentralbanken veroeffentlichen keinen Dot Plot;
-    // fuer alle anderen Waehrungen entfernt applyIndResearch ihn wieder ueber
-    // applicable:false, genau wie z.B. "Services Inflation" bei USD). Slot vor
-    // dem V12-Durchlauf einfuegen.
-    if(rub.name==='Interest Rates'&&!sym._researchV12&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='FOMC Dot Plot')){
-      const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='Central Bank Rate');
-      const ni={id:uid(),name:'FOMC Dot Plot',bias:'neu',imp:false,date:'',interval:'',points:[]};
       idx>=0?rub.indicators.splice(idx+1,0,ni):rub.indicators.push(ni);
     }
     // "CPI (Headline)" ist Teil der Basis-Rubrik und sollte eigentlich nie
@@ -2565,7 +2559,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20,_researchV21:sv._researchV21}:{...def};});
       // Migration: die Makro-Rubrik wurde von Deutsch ("Makro & Risikoumfeld")
       // auf Englisch ("Macro & Risk Environment") umbenannt - in gespeicherten
       // Profilen den Namen mitziehen, damit keine Dubletten entstehen.
@@ -2907,9 +2901,9 @@ function renderDetail(){
   const bullN=bull.filter(r=>(r.bias||'bull')==='bull').length;
   const bearN=bear.filter(r=>(r.bias||'bear')==='bear').length;
   const pct=Math.round((bullN/(bullN+bearN||1))*100);
-  const{events:symEvts,nextDate}=getSymEventsCompact(c.id);
+  const{events:symEvts,nextHighDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
-  const nextLbl=nextDate?(nextDate===todayStr()?'Today':`${fmtDayHdr(nextDate)} (${countdownLbl(nextDate)})`):'–';
+  const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}</div><div class="afull">${c.full}</div></div>
@@ -3514,21 +3508,9 @@ function recomputeAllPairBiases(){
   });
 }
 
-// FOMC tagt nur alle 6-7 Wochen - der Dot Plot soll daher nicht dauerhaft
-// in den Score einfließen. 5 Tage nach der Sitzung wird der Bias unabhängig
-// vom vorherigen Stand automatisch auf neutral zurückgesetzt.
-function decayFomcDotPlot(){
-  const usd=syms.find(s=>s.id==='USD');if(!usd||!usd.rubrics)return;
-  const rub=usd.rubrics.find(r=>r.name==='Interest Rates');if(!rub)return;
-  const ind=rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='FOMC Dot Plot');
-  if(!ind||!ind.research||!ind.research.date||ind.bias==='neu')return;
-  const cutoff=new Date(ind.research.date).getTime()+5*86400000;
-  if(Date.now()>cutoff)ind.bias='neu';
-}
-
 // Vollstaendige automatische Neuberechnung: erst Symbol-Bias aus Score,
 // dann Paar-Bias aus Paar-Score, dann Auto-Einsortierung der Paare.
-function recomputeAuto(){decayFomcDotPlot();deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
