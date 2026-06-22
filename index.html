@@ -593,7 +593,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0d9488;color:#f0fdfa;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (Fixed buttons/links staying highlighted after a tap on touch devices - hover styles now only apply with real mouse hover, not on touch - while legitimate persistent selections like the active currency button still work correctly. Also added small unit/frequency badges in the Compare page for indicators like "NFP / Employment Change" where currencies use different units (job count vs. % growth vs. absolute level), so the numbers no longer look like a direct apples-to-apples comparison)</div>
+<div style="flex:none;background:#65a30d;color:#f7fee7;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LIME (Compare page: added a third quick-filter button "Select" that picks only the Non-FX assets (BTC, GOLD, SILVER, OIL, SP500, NAS, AMZN, NVDA, DAX, GER100), next to the existing "FX only" and "Select all" buttons)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4301,6 +4301,7 @@ let cmpCols=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_cmp_cols'))
 function cmpColIds(){const avail=cmpAvailableIds();let sel=cmpCols.filter(id=>avail.includes(id));if(!sel.length)sel=[...FX];return avail.filter(id=>sel.includes(id));}
 function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
 function cmpSelectAllFx(){cmpCols=[...FX];localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
+function cmpSelectAllAssets(){cmpCols=cmpAvailableIds().filter(id=>isNonFx(id));localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
 function cmpSelectAll(){cmpCols=cmpAvailableIds();localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
 // Maße/Einheiten, die je Währung für ein und denselben Indikatornamen
 // abweichen können (z.B. "NFP / Employment Change": USD = monatliche
@@ -4362,11 +4363,13 @@ function renderCompare(){
   const avail=cmpAvailableIds();
   // Filterleiste: FX-Chips, Non-FX-Chips, Schnellaktionen.
   const allSel=cols.length===avail.length;
+  const nfAvail=avail.filter(id=>isNonFx(id));
+  const assetsSel=nfAvail.length>0&&cols.length===nfAvail.length&&cols.every(id=>nfAvail.includes(id));
   const chip=id=>{const on=cols.includes(id);const nf=isNonFx(id);return`<button class="cmp-chip${on?' on':''}${nf?' nf':''}" onclick="toggleCmpCol('${id}')">${escH(id)}</button>`;}
   const filterBar=`<div class="cmp-filter">
     <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Currencies</span>${FX.map(chip).join('')}</div>
-    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Assets</span>${avail.filter(id=>isNonFx(id)).map(chip).join('')||'<span class="cmp-filter-none">none</span>'}</div>
-    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Assets</span>${nfAvail.map(chip).join('')||'<span class="cmp-filter-none">none</span>'}</div>
+    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${assetsSel?' on':''}" onclick="cmpSelectAllAssets()" title="Nur Non-FX-Assets auswählen">Select</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
   </div>`;
   const cards=CMP_RUBS.map(rubName=>{
     // Union der Indikator-Basisnamen über die gewählten Spalten (in Spalten-
