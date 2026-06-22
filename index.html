@@ -253,18 +253,36 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-data-act.bond-down{color:var(--red)}
 .ind-data-act.bond-flat{color:#fff}
 /* ── COMPARE / CROSS-CURRENCY MATRIX ── */
-.cmp-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:12px;overflow:hidden}
-.cmp-title{font-size:13px;font-weight:700;color:var(--t0);padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--bg3);display:flex;align-items:center;gap:8px}
-.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cmp-filter{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:14px;padding:11px 13px;background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--bd);border-radius:12px}
+.cmp-filter-grp{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.cmp-filter-lbl{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;margin-right:3px}
+.cmp-filter-none{font-size:11px;color:var(--t3);font-style:italic}
+.cmp-chip{font:600 11px/1 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t2);background:var(--bg0);border:1px solid var(--bd2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .13s}
+.cmp-chip:hover{border-color:var(--blue);color:var(--t0)}
+.cmp-chip.on{background:rgba(var(--blue-rgb),.18);border-color:var(--blue);color:var(--blue)}
+.cmp-chip.nf{border-style:dashed}
+.cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
+.cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}
+.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}
+.cmp-quick.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
+.cmp-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
+.cmp-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px}
+.cmp-title-ic{font-size:15px;filter:saturate(1.2)}
+.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;margin-left:auto;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cmp-scroll{overflow-x:auto}
 .cmp-tbl{border-collapse:separate;border-spacing:0;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px}
-.cmp-tbl th,.cmp-tbl td{padding:6px 10px;text-align:center;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap}
-.cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1}
-.cmp-tbl td.cmp-ind,.cmp-tbl th.cmp-corner{text-align:left;position:sticky;left:0;background:var(--bg3);font-weight:600;color:var(--t1);z-index:1;min-width:130px}
-.cmp-tbl th.cmp-corner{z-index:2;color:var(--t3);font-weight:600}
+.cmp-tbl th,.cmp-tbl td{padding:7px 12px;text-align:center;border-bottom:1px solid var(--bd);border-right:1px solid rgba(255,255,255,.04);white-space:nowrap}
+.cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1;font-size:12px;letter-spacing:.5px}
+.cmp-tbl thead th.cmp-col-nf{color:var(--purple)}
+.cmp-tbl td.cmp-ind,.cmp-tbl th.cmp-corner{text-align:left;position:sticky;left:0;background:var(--bg3);font-weight:600;color:var(--t1);z-index:1;min-width:140px}
+.cmp-tbl th.cmp-corner{z-index:2;color:var(--t2);font-weight:700}
 .cmp-tbl tbody tr:hover td{background:var(--bg4)}
 .cmp-tbl tbody tr:hover td.cmp-ind{background:var(--bg5)}
-.cmp-a{font-weight:800;color:var(--t1)}
+.cmp-tbl tr.cmp-score-row td{background:rgba(var(--blue-rgb),.05);border-bottom:1px solid var(--bd2)}
+.cmp-tbl tr.cmp-score-row:hover td{background:rgba(var(--blue-rgb),.09)}
+.cmp-tbl tr.cmp-score-row td.cmp-ind{background:var(--bg5);color:var(--t0);font-weight:700;letter-spacing:.3px}
+.cmp-score{display:inline-block;min-width:30px;padding:2px 8px;border:1px solid;border-radius:999px;font-weight:800;font-size:11px;background:rgba(255,255,255,.02)}
+.cmp-a{font-weight:800;color:var(--t1);font-size:12px}
 .cmp-a.act-good{color:var(--green)}
 .cmp-a.act-bad{color:var(--red)}
 .cmp-a.bond-up{color:var(--blue)}
@@ -607,7 +625,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#059669;color:#ecfdf5;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: EMERALD (new "Compare" tab next to Non-FX: one card per macro category — Inflation, Interest Rates, Labour Market, Economic Growth — with a table of currencies across the top, indicators down the left, and Actual · (Forecast / Previous) in every cell to compare all currencies side by side)</div>
+<div style="flex:none;background:#4338ca;color:#eef2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO (Compare page redesigned with a modern look + you can now pick exactly which columns to show via currency/asset chips (all or individual, incl. Non-FX assets like BTC/GOLD) + each card now shows a ⚡ Score row per column + values auto-refresh when the live feed updates)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4301,17 +4319,27 @@ function addWidget(){
 }
 
 // ══ COMPARE / CROSS-CURRENCY MATRIX ═══════════════════════════════
-// Vergleichsseite: pro Makro-Karte eine Tabelle - Währungen oben (Spalten),
-// Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous).
+// Vergleichsseite: pro Makro-Karte eine Tabelle - Symbole oben (Spalten),
+// Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous), plus
+// eine Score-Zeile pro Karte/Spalte. Spalten frei wählbar (FX + Non-FX).
 const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth'];
-// Liefert {a,f,p,color,name} für einen Indikator einer Währung - exakt
+const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐'};
+// Auswählbare Vergleichsspalten: alle FX-Währungen + alle Non-FX-Assets.
+function cmpAvailableIds(){return[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
+// Aktuell gewählte Spalten (persistiert). Default: alle FX-Währungen.
+let cmpCols=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_cmp_cols'));return Array.isArray(v)&&v.length?v:[...FX];}catch(e){return[...FX];}})();
+function cmpColIds(){const avail=cmpAvailableIds();let sel=cmpCols.filter(id=>avail.includes(id));if(!sel.length)sel=[...FX];return avail.filter(id=>sel.includes(id));}
+function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
+function cmpSelectAllFx(){cmpCols=[...FX];localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
+function cmpSelectAll(){cmpCols=cmpAvailableIds();localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
+// Liefert {a,f,p,color,name} für einen Indikator eines Symbols - exakt
 // dieselbe Quelle/Priorität wie die Detailkarte (Live-Event vor Recherche).
-function cmpCellData(ccy,rubName,baseName){
-  const sym=syms.find(s=>s.id===ccy);if(!sym)return null;
+function cmpCellData(symId,rubName,baseName){
+  const sym=syms.find(s=>s.id===symId);if(!sym)return null;
   const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
   const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===baseName);
   if(!ind)return null;
-  const ev=findIndEvent(ccy,ind.name);
+  const ev=findIndEvent(symId,ind.name);
   if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name};
   if(ind.research){
     const r=ind.research;
@@ -4321,23 +4349,38 @@ function cmpCellData(ccy,rubName,baseName){
   }
   return{a:null,f:null,p:null,color:'',name:ind.name};
 }
+// Karten-Score eines Symbols für eine Rubrik (null, wenn die Rubrik fehlt).
+function cmpRubScore(symId,rubName){const sym=syms.find(s=>s.id===symId);if(!sym)return null;const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;return rubScore(rub);}
+function cmpScoreColor(sc){return sc>0?'var(--green)':sc<0?'var(--red)':'var(--amber)';}
 function renderCompare(){
   const el=document.getElementById('cmpCards');if(!el)return;
-  const html=CMP_RUBS.map(rubName=>{
-    // Union der Indikator-Basisnamen über alle FX-Währungen (USD zuerst -> dessen
-    // Reihenfolge gibt die Zeilenfolge vor; bei anderen Währungen evtl. vorhandene
-    // Extra-Indikatoren werden hinten angehängt).
+  const cols=cmpColIds();
+  const avail=cmpAvailableIds();
+  // Filterleiste: FX-Chips, Non-FX-Chips, Schnellaktionen.
+  const allSel=cols.length===avail.length;
+  const chip=id=>{const on=cols.includes(id);const nf=isNonFx(id);return`<button class="cmp-chip${on?' on':''}${nf?' nf':''}" onclick="toggleCmpCol('${id}')">${escH(id)}</button>`;}
+  const filterBar=`<div class="cmp-filter">
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Currencies</span>${FX.map(chip).join('')}</div>
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Assets</span>${avail.filter(id=>isNonFx(id)).map(chip).join('')||'<span class="cmp-filter-none">none</span>'}</div>
+    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
+  </div>`;
+  const cards=CMP_RUBS.map(rubName=>{
+    // Union der Indikator-Basisnamen über die gewählten Spalten (in Spalten-
+    // reihenfolge -> erste Spalte gibt die Zeilenfolge vor, Extras hinten dran).
     const bases=[];
-    FX.forEach(ccy=>{
-      const sym=syms.find(s=>s.id===ccy);if(!sym)return;
+    cols.forEach(id=>{
+      const sym=syms.find(s=>s.id===id);if(!sym)return;
       const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return;
       (rub.indicators||[]).forEach(ind=>{const b=stripPeriodSuffix(ind.name).base;if(b&&!bases.includes(b))bases.push(b);});
     });
     if(!bases.length)return'';
-    const head=`<th class="cmp-corner">${escH(rubName)}</th>`+FX.map(c=>`<th>${c}</th>`).join('');
+    const head=`<th class="cmp-corner">${CMP_RUB_ICON[rubName]||''} ${escH(rubName)}</th>`+cols.map(id=>`<th class="${isNonFx(id)?'cmp-col-nf':''}">${escH(id)}</th>`).join('');
+    // Score-Zeile (Karten-Score je Spalte).
+    const scoreCells=cols.map(id=>{const sc=cmpRubScore(id,rubName);if(sc==null)return`<td class="cmp-na">–</td>`;return`<td><span class="cmp-score" style="color:${cmpScoreColor(sc)};border-color:${cmpScoreColor(sc)}">${sc>0?'+':''}${sc}</span></td>`;}).join('');
+    const scoreRow=`<tr class="cmp-score-row"><td class="cmp-ind">⚡ Score</td>${scoreCells}</tr>`;
     const rows=bases.map(base=>{
-      const cells=FX.map(ccy=>{
-        const d=cmpCellData(ccy,rubName,base);
+      const cells=cols.map(id=>{
+        const d=cmpCellData(id,rubName,base);
         if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
         const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
         return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}</td>`;
@@ -4345,11 +4388,11 @@ function renderCompare(){
       return`<tr><td class="cmp-ind">${escH(base)}</td>${cells}</tr>`;
     }).join('');
     return`<div class="cmp-card">
-      <div class="cmp-title">${escH(rubName)} <small>Actual · (Forecast / Previous)</small></div>
-      <div class="cmp-scroll"><table class="cmp-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="cmp-title"><span class="cmp-title-ic">${CMP_RUB_ICON[rubName]||''}</span><span>${escH(rubName)}</span><small>Actual · (Forecast / Previous)</small></div>
+      <div class="cmp-scroll"><table class="cmp-tbl"><thead><tr>${head}</tr></thead><tbody>${scoreRow}${rows}</tbody></table></div>
     </div>`;
   }).join('');
-  el.innerHTML=html||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No comparable data.</div>`;
+  el.innerHTML=filterBar+(cards||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No columns selected.</div>`);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
@@ -4477,6 +4520,7 @@ setInterval(()=>{
 setInterval(()=>{
   if(curPage==='cal'){const y=window.scrollY;renderCalendar();window.scrollTo(0,y);}
   else if(curPage==='dash'){renderDash();}
+  else if(curPage==='cmp'){renderCompare();}
 },60*1000);
 </script>
 </body>
