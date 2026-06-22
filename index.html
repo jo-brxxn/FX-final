@@ -290,6 +290,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-a.bond-flat{color:#fff}
 .cmp-fp{font-size:9px;color:var(--t3);margin-top:2px;letter-spacing:.2px}
 .cmp-na{color:var(--t3);opacity:.5}
+.cmp-data-row{cursor:pointer}
+.cmp-caret{display:inline-block;width:11px;color:var(--t3);font-size:9px;margin-right:5px;transition:transform .14s}
+.cmp-data-row.open .cmp-caret{transform:rotate(90deg);color:var(--blue)}
+.cmp-data-row.open td.cmp-ind{color:var(--blue)}
+.cmp-tbl tr.cmp-exp-row td{background:var(--bg0);border-bottom:1px solid var(--bd2);padding:6px 12px}
+.cmp-tbl tr.cmp-exp-row td.cmp-exp-lbl{background:var(--bg1);color:var(--t3);font-weight:600;font-size:10px}
+.cmp-link-wrap{display:flex;flex-direction:column;gap:3px;align-items:center}
+.cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -625,7 +634,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#4338ca;color:#eef2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO (Compare page redesigned with a modern look + you can now pick exactly which columns to show via currency/asset chips (all or individual, incl. Non-FX assets like BTC/GOLD) + each card now shows a ⚡ Score row per column + values auto-refresh when the live feed updates)</div>
+<div style="flex:none;background:#ea580c;color:#fff7ed;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ORANGE (Compare page: removed the duplicated category name (top-left cell now just says "Indicator") + clicking any indicator row now expands it to show the matching investing.com link(s) for every currency/asset column, including the m/m secondary link)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4352,6 +4361,25 @@ function cmpCellData(symId,rubName,baseName){
 // Karten-Score eines Symbols für eine Rubrik (null, wenn die Rubrik fehlt).
 function cmpRubScore(symId,rubName){const sym=syms.find(s=>s.id===symId);if(!sym)return null;const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;return rubScore(rub);}
 function cmpScoreColor(sc){return sc>0?'var(--green)':sc<0?'var(--red)':'var(--amber)';}
+// Investing.com-Link(s) eines Indikators für ein Symbol - identische Quelle/
+// Priorität wie in der Detailkarte (kuratierter Link > Research-Quelle, plus
+// optionaler m/m-Sekundärlink). null, wenn der Indikator dort nicht existiert.
+function cmpCellLinks(symId,rubName,base){
+  const sym=syms.find(s=>s.id===symId);if(!sym)return null;
+  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
+  const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
+  if(!ind)return null;
+  const ccy=macroCcyFor(symId);
+  const cs=(ccy?indResearchSource(ccy,base):null)||(ind.research&&ind.research.source)||'';
+  const fin=(ccy&&indLinkCustom&&indLinkCustom[indLinkKey(ccy,base)])||cs;
+  const out={primary:null,secondary:null};
+  if(fin)out.primary={url:fin,label:srcLabel(fin)};
+  if(ind.research&&ind.research.secondarySource)out.secondary={url:ind.research.secondarySource,label:ind.research.secondaryLabel||srcLabel(ind.research.secondarySource)};
+  return out;
+}
+// Welche Indikator-Zeilen sind aktuell ausgeklappt (Key: "Rubrik|Basisname").
+const cmpOpenRows=new Set();
+function toggleCmpRow(enc){const key=decodeURIComponent(enc);if(cmpOpenRows.has(key))cmpOpenRows.delete(key);else cmpOpenRows.add(key);renderCompare();}
 function renderCompare(){
   const el=document.getElementById('cmpCards');if(!el)return;
   const cols=cmpColIds();
@@ -4374,18 +4402,30 @@ function renderCompare(){
       (rub.indicators||[]).forEach(ind=>{const b=stripPeriodSuffix(ind.name).base;if(b&&!bases.includes(b))bases.push(b);});
     });
     if(!bases.length)return'';
-    const head=`<th class="cmp-corner">${CMP_RUB_ICON[rubName]||''} ${escH(rubName)}</th>`+cols.map(id=>`<th class="${isNonFx(id)?'cmp-col-nf':''}">${escH(id)}</th>`).join('');
+    const head=`<th class="cmp-corner">Indicator</th>`+cols.map(id=>`<th class="${isNonFx(id)?'cmp-col-nf':''}">${escH(id)}</th>`).join('');
     // Score-Zeile (Karten-Score je Spalte).
     const scoreCells=cols.map(id=>{const sc=cmpRubScore(id,rubName);if(sc==null)return`<td class="cmp-na">–</td>`;return`<td><span class="cmp-score" style="color:${cmpScoreColor(sc)};border-color:${cmpScoreColor(sc)}">${sc>0?'+':''}${sc}</span></td>`;}).join('');
     const scoreRow=`<tr class="cmp-score-row"><td class="cmp-ind">⚡ Score</td>${scoreCells}</tr>`;
     const rows=bases.map(base=>{
+      const key=rubName+'|'+base;const open=cmpOpenRows.has(key);const enc=encodeURIComponent(key);
       const cells=cols.map(id=>{
         const d=cmpCellData(id,rubName,base);
         if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
         const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
         return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}</td>`;
       }).join('');
-      return`<tr><td class="cmp-ind">${escH(base)}</td>${cells}</tr>`;
+      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${enc}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
+      if(!open)return mainRow;
+      // Ausgeklappte Link-Zeile: pro Spalte der/die passende(n) investing.com-Link(s).
+      const linkCells=cols.map(id=>{
+        const lk=cmpCellLinks(id,rubName,base);
+        if(!lk||(!lk.primary&&!lk.secondary))return`<td class="cmp-na">–</td>`;
+        const parts=[];
+        if(lk.primary)parts.push(`<a href="${escH(lk.primary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.primary.label)} ↗</a>`);
+        if(lk.secondary)parts.push(`<a href="${escH(lk.secondary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.secondary.label)} ↗</a>`);
+        return`<td class="cmp-link-cell"><div class="cmp-link-wrap">${parts.join('')}</div></td>`;
+      }).join('');
+      return mainRow+`<tr class="cmp-exp-row"><td class="cmp-ind cmp-exp-lbl">🔗 Sources</td>${linkCells}</tr>`;
     }).join('');
     return`<div class="cmp-card">
       <div class="cmp-title"><span class="cmp-title-ic">${CMP_RUB_ICON[rubName]||''}</span><span>${escH(rubName)}</span><small>Actual · (Forecast / Previous)</small></div>
