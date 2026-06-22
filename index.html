@@ -28,22 +28,17 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
-.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}
+.profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}
-.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 .btn:disabled{opacity:.22;cursor:default}
-.btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}
-.btn.g:hover{background:rgba(var(--green-rgb),.15)}
+.btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
-.btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}
-.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}
+.btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
 .tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.tp.on{color:var(--green);border-bottom-color:var(--green)}
-.tp:hover:not(.on){color:var(--t1)}
+.tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
 .sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
@@ -52,19 +47,16 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .sb-cat-moves{display:flex;gap:2px;flex:none}
 .ab-move.cat{position:static;width:18px;height:16px}
 .ab-wrap{position:relative}
-.ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}
-.ab:hover:not(.on){background:var(--bg2)}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
+.ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}@media (hover:hover){.ab:hover:not(.on){background:var(--bg2)}}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
 .ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
 .ab .av{font-size:11px;margin-top:1px;font-weight:600;display:inline-block}
 .ab .sb-score{font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;display:inline-block;margin-right:5px;margin-top:1px}
-.ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}
-.ab-wrap:hover .ab-del{opacity:.5}.ab-del:hover{opacity:1!important}
+.ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
 .ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
 .ab-move.up{top:2px}.ab-move.down{bottom:2px}
 .ab-move:disabled{opacity:.25;cursor:default}
-.add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:17px;transition:all .12s;margin-top:3px}
-.add-sym:hover{color:var(--blue);background:var(--bg2)}
+.add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:17px;transition:all .12s;margin-top:3px}@media (hover:hover){.add-sym:hover{color:var(--blue);background:var(--bg2)}}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px;max-width:860px}
@@ -74,8 +66,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
-.bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}
-.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
+.bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}@media (hover:hover){.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -129,8 +120,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
-.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}
-.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}
+.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}
 /* Asset-Einstellungen-Modal */
 .acfg-sec{margin:14px 0 4px;font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
 .acfg-hint{font-size:11px;color:var(--t3);margin:2px 0 8px;line-height:1.5}
@@ -145,12 +135,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .acfg-seg button.on-bear{background:rgba(239,107,120,.22);color:var(--red)}
 .acfg-seg button.on-off{background:var(--bg3);color:var(--t1)}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
-.st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}.st:hover:not(.on){color:var(--t1)}
+.st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}@media (hover:hover){.st:hover:not(.on){color:var(--t1)}}
 .slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
-.ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}
-.ri:hover{background:var(--bg3)}.ri.imp{background:#211c10;border-color:var(--star)!important}
+.ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#211c10;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
@@ -159,12 +148,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .rb.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .rb.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .rb.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}
-.ri:hover .mv{opacity:.4}.mv:hover{opacity:1!important;color:var(--blue)}.mv:disabled{opacity:.05!important;cursor:default}
+.mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}@media (hover:hover){.ri:hover .mv{opacity:.4}}@media (hover:hover){.mv:hover{opacity:1!important;color:var(--blue)}}.mv:disabled{opacity:.05!important;cursor:default}
 .istar{background:none;border:none;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
-.istar.on{opacity:1;color:var(--star)}.ri:hover .istar{opacity:.4}.ri .istar.on{opacity:1;color:var(--star)}
-.idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}
-.ri:hover .idel{opacity:.5}.idel:hover{opacity:1!important}
+.istar.on{opacity:1;color:var(--star)}@media (hover:hover){.ri:hover .istar{opacity:.4}}.ri .istar.on{opacity:1;color:var(--star)}
+.idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}@media (hover:hover){.ri:hover .idel{opacity:.5}}@media (hover:hover){.idel:hover{opacity:1!important}}
 .add-row{display:flex;gap:5px;margin-top:4px}
 .ai{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .ai:focus{border-color:var(--bd2);color:var(--t0);background:var(--bg3)}.ai::placeholder{color:var(--t3);font-size:12px}
@@ -184,22 +171,17 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .rbo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .rbo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .rbo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}
-.rmv:hover{opacity:1;color:var(--blue)}.rmv:disabled{opacity:.05;cursor:default}
+.rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}@media (hover:hover){.rmv:hover{opacity:1;color:var(--blue)}}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
-.rstar.on{opacity:1;color:var(--star)}.rub-card:hover .rstar{opacity:.4}.rub-card .rstar.on{opacity:1;color:var(--star)}
-.rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}
-.rub-card:hover .rdel{opacity:.4}.rdel:hover{opacity:1!important;color:var(--red)}
+.rstar.on{opacity:1;color:var(--star)}@media (hover:hover){.rub-card:hover .rstar{opacity:.4}}.rub-card .rstar.on{opacity:1;color:var(--star)}
+.rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.rub-card:hover .rdel{opacity:.4}}@media (hover:hover){.rdel:hover{opacity:1!important;color:var(--red)}}
 .rub-body{padding:10px 12px}
-.rub-tog{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
-.rub-tog:hover{color:var(--blue)}
+.rub-tog{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}@media (hover:hover){.rub-tog:hover{color:var(--blue)}}
 .rub-card.collapsed .rub-tog{transform:rotate(-90deg)}
 .rub-card.collapsed .rub-body{display:none}
 /* ── INFO BUTTON ── */
-.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:11px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
-.rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}
-.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-.rate-watch:hover{opacity:1}
+.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:11px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}@media (hover:hover){.rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}}
+.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}@media (hover:hover){.rate-watch:hover{opacity:1}}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:10px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -220,25 +202,20 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-inp{background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
 .ind-inp::placeholder{color:var(--t3)}
 /* date badge */
-.dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
-.dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}
+.dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}}
 .dbadge span{font-size:10px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}
-.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}
+.ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}}
 .ibadge span{font-size:10px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}
+.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}@media (hover:hover){.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}}
 .ibg{display:flex;gap:2px;flex-shrink:0}
 .ibo{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:9px;font-weight:700;transition:all .1s}
 .ibo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
 .ibo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .ibo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
-.ind-card:hover .imv{opacity:.35}.imv:hover{opacity:1!important;color:var(--blue)}.imv:disabled{opacity:.05;cursor:default}
+.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
 .istar2{background:none;border:none;cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
-.istar2.on{opacity:1;color:var(--star)}.ind-card:hover .istar2{opacity:.35}.ind-card .istar2.on{opacity:1;color:var(--star)}
-.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}
-.ind-card:hover .idel2{opacity:.4}.idel2:hover{opacity:1!important;color:var(--red)}
+.istar2.on{opacity:1;color:var(--star)}@media (hover:hover){.ind-card:hover .istar2{opacity:.35}}.ind-card .istar2.on{opacity:1;color:var(--star)}
+.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.ind-card:hover .idel2{opacity:.4}}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
 .ind-body{padding:6px 8px}
 .ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
@@ -257,13 +234,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-filter-grp{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
 .cmp-filter-lbl{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;margin-right:3px}
 .cmp-filter-none{font-size:11px;color:var(--t3);font-style:italic}
-.cmp-chip{font:600 11px/1 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t2);background:var(--bg0);border:1px solid var(--bd2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .13s}
-.cmp-chip:hover{border-color:var(--blue);color:var(--t0)}
+.cmp-chip{font:600 11px/1 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t2);background:var(--bg0);border:1px solid var(--bd2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-chip:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-chip.on{background:rgba(var(--blue-rgb),.18);border-color:var(--blue);color:var(--blue)}
 .cmp-chip.nf{border-style:dashed}
 .cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
-.cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}
-.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}
+.cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-quick.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
 .cmp-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .cmp-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px}
@@ -275,11 +250,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1;font-size:12px;letter-spacing:.5px}
 .cmp-tbl thead th.cmp-col-nf{color:var(--purple)}
 .cmp-tbl td.cmp-ind,.cmp-tbl th.cmp-corner{text-align:left;position:sticky;left:0;background:var(--bg3);font-weight:600;color:var(--t1);z-index:1;min-width:140px}
-.cmp-tbl th.cmp-corner{z-index:2;color:var(--t2);font-weight:700}
-.cmp-tbl tbody tr:hover td{background:var(--bg4)}
-.cmp-tbl tbody tr:hover td.cmp-ind{background:var(--bg5)}
-.cmp-tbl tr.cmp-score-row td{background:rgba(var(--blue-rgb),.05);border-bottom:1px solid var(--bd2)}
-.cmp-tbl tr.cmp-score-row:hover td{background:rgba(var(--blue-rgb),.09)}
+.cmp-tbl th.cmp-corner{z-index:2;color:var(--t2);font-weight:700}@media (hover:hover){.cmp-tbl tbody tr:hover td{background:var(--bg4)}}@media (hover:hover){.cmp-tbl tbody tr:hover td.cmp-ind{background:var(--bg5)}}
+.cmp-tbl tr.cmp-score-row td{background:rgba(var(--blue-rgb),.05);border-bottom:1px solid var(--bd2)}@media (hover:hover){.cmp-tbl tr.cmp-score-row:hover td{background:rgba(var(--blue-rgb),.09)}}
 .cmp-tbl tr.cmp-score-row td.cmp-ind{background:var(--bg5);color:var(--t0);font-weight:700;letter-spacing:.3px}
 .cmp-score{display:inline-block;min-width:30px;padding:2px 8px;border:1px solid;border-radius:999px;font-weight:800;font-size:11px;background:rgba(255,255,255,.02)}
 .cmp-a{font-weight:800;color:var(--t1);font-size:12px}
@@ -289,6 +261,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-a.bond-down{color:var(--red)}
 .cmp-a.bond-flat{color:#fff}
 .cmp-fp{font-size:9px;color:var(--t3);margin-top:2px;letter-spacing:.2px}
+.cmp-unit{display:inline-block;font-size:8px;font-weight:700;color:var(--amber);background:rgba(var(--amber-rgb),.13);border:1px solid rgba(var(--amber-rgb),.3);border-radius:5px;padding:1px 5px;margin-top:3px;letter-spacing:.2px;cursor:help}
 .cmp-na{color:var(--t3);opacity:.5}
 .cmp-data-row{cursor:pointer}
 .cmp-caret{display:inline-block;width:11px;color:var(--t3);font-size:9px;margin-right:5px;transition:transform .14s}
@@ -297,22 +270,17 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-tbl tr.cmp-exp-row td{background:var(--bg0);border-bottom:1px solid var(--bd2);padding:6px 12px}
 .cmp-tbl tr.cmp-exp-row td.cmp-exp-lbl{background:var(--bg1);color:var(--t3);font-weight:600;font-size:10px}
 .cmp-link-wrap{display:flex;flex-direction:column;gap:3px;align-items:center}
-.cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}
+.cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}@media (hover:hover){.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
-.ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}
-.ind-data-src a:hover{text-decoration:underline}
+.ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
 /* subpoints */
-.sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}
-.sp:hover{background:#2c3a52}
+.sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}@media (hover:hover){.sp:hover{background:#2c3a52}}
 .sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
 .sp-txt:focus{color:var(--t0)}
-.sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}
-.sp:hover .sp-mv{opacity:.35}.sp-mv:hover{opacity:1!important;color:var(--blue)}.sp-mv:disabled{opacity:.04;cursor:default}
-.sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}
-.sp:hover .sp-del{opacity:.5}.sp-del:hover{opacity:1!important}
+.sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}@media (hover:hover){.sp:hover .sp-mv{opacity:.35}}@media (hover:hover){.sp-mv:hover{opacity:1!important;color:var(--blue)}}.sp-mv:disabled{opacity:.04;cursor:default}
+.sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}@media (hover:hover){.sp:hover .sp-del{opacity:.5}}@media (hover:hover){.sp-del:hover{opacity:1!important}}
 /* ── FULL PAGE ── */
 .pc{padding:14px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
@@ -327,7 +295,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .pair-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;transition:border-color .12s}
 .pair-card.open{border-color:var(--bd2)}
 .pair-hdr{display:flex;align-items:center;padding:9px 10px;cursor:pointer;background:var(--bg3);transition:background .12s;gap:6px;user-select:none}
-.pair-hdr:hover,.pair-card.open .pair-hdr{background:var(--bg4)}
+@media (hover:hover){.pair-hdr:hover{background:var(--bg4)}}
+.pair-card.open .pair-hdr{background:var(--bg4)}
 .pair-name{font-size:14px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1;min-width:0}
 .pbg{display:flex;gap:3px;flex-shrink:0}
 .pbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s}
@@ -339,13 +308,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .pfinp:focus{border-color:var(--bd2);color:var(--t0)}.pfinp::placeholder{color:var(--t3)}
 .pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── NOTE CATS ── */
-.nc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}
-.nc:hover{border-color:var(--bd2)}
+.nc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}@media (hover:hover){.nc:hover{border-color:var(--bd2)}}
 .nc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .nc-inp{background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .nc-inp::placeholder{color:var(--t3)}
-.nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;opacity:.25;padding:0;line-height:1;transition:all .12s}
-.nc-del:hover{color:var(--red);opacity:1}
+.nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;opacity:.25;padding:0;line-height:1;transition:all .12s}@media (hover:hover){.nc-del:hover{color:var(--red);opacity:1}}
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 /* ── DASHBOARD ── */
@@ -354,8 +321,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-t{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:4px;flex-shrink:0}
-.sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}
-.sym-row:hover{background:var(--bg3)}
+.sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
 .bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
@@ -367,8 +333,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-nav{padding:2px 5px;font-size:10px}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}
-.dw-mark:hover{opacity:.8}
+.dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}@media (hover:hover){.dw-mark:hover{opacity:.8}}
 .dw-mark.on{color:var(--star);opacity:1}
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
@@ -381,8 +346,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-day-hdr.today{color:var(--red)}
 .cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
 .cal-day-hdr.today .cal-day-cd{color:var(--red)}
-.cal-day-hdr.past{cursor:pointer;user-select:none;color:var(--t2)}
-.cal-day-hdr.past:hover{background:var(--bg3)}
+.cal-day-hdr.past{cursor:pointer;user-select:none;color:var(--t2)}@media (hover:hover){.cal-day-hdr.past:hover{background:var(--bg3)}}
 .cal-day-chev{display:inline-block;transition:transform .15s;font-size:10px;color:var(--t3);margin-right:3px}
 .cal-day-hdr.past.collapsed .cal-day-chev{transform:rotate(-90deg)}
 .cal-day-cnt{color:var(--t3);font-weight:600;font-size:11px;margin-left:5px}
@@ -390,12 +354,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-col-hdr span{text-align:center}
 .cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
 .cal-row{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 14px;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--bd);min-width:390px}
-.cal-row:last-child{border-bottom:none}
-.cal-row:hover{background:var(--bg3)}
+.cal-row:last-child{border-bottom:none}@media (hover:hover){.cal-row:hover{background:var(--bg3)}}
 .cal-row.today{background:rgba(var(--red-rgb),.05)}
 /* Bereits vergangene Events: gesamte Zeile gedimmt (Name, Uhrzeit, Werte ...). */
-.cal-row.cal-past{opacity:.42}
-.cal-row.cal-past:hover{opacity:.75}
+.cal-row.cal-past{opacity:.42}@media (hover:hover){.cal-row.cal-past:hover{opacity:.75}}
 /* Dünne rote "Jetzt"-Linie mit linksbündiger Uhrzeit. */
 .cal-now-line{display:flex;align-items:center;gap:6px;padding:3px 9px}
 .cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.5;letter-spacing:.3px}
@@ -412,8 +374,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-val.ph{color:var(--t3);font-weight:400}
 .cal-val.act-good{color:var(--green)}
 .cal-val.act-bad{color:var(--red)}
-.cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}
-.cal-row:hover .cal-row-del{opacity:.5}.cal-row-del:hover{opacity:1!important;color:var(--red)}
+.cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.cal-row:hover .cal-row-del{opacity:.5}}@media (hover:hover){.cal-row-del:hover{opacity:1!important;color:var(--red)}}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 14px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
 /* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
@@ -429,8 +390,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-table.compact{overflow-x:hidden}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
-.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}
-.evt-toggle:hover{border-color:var(--bd2)}
+.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
 .evt-flag{font-size:16px;line-height:1}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
@@ -445,8 +405,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .green-alert-wrap.ga-many .green-alert-count{font-size:13px;font-weight:900}
 /* Green flag + dismiss button in mini-calendar */
 .cal-green-row-wrap{display:flex;align-items:center;gap:3px}
-.cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}
-.cal-green-dismiss:hover{color:var(--red)}
+.cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}@media (hover:hover){.cal-green-dismiss:hover{color:var(--red)}}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
 .setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center}
@@ -492,7 +451,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px rgba(var(--blue-rgb),.53)}
 .lock-pad{display:grid;grid-template-columns:repeat(3,62px);gap:14px}
 .lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:23px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.lock-key:hover,.lock-key:active{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
+@media (hover:hover){.lock-key:hover{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
+.lock-key:active{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .lock-key.empty{visibility:hidden;cursor:default}
 .lock-box.shake{animation:lockshake .4s}
 .lock-err{font-size:12px;color:var(--red);height:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px}
@@ -613,8 +573,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
 .ih-2{animation-delay:3s}
 @keyframes ihCycle{0%{opacity:0}5%{opacity:1}45%{opacity:1}50%{opacity:0}100%{opacity:0}}
-#introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}
-#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}
+#introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
@@ -634,7 +593,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#ea580c;color:#fff7ed;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ORANGE (Compare page: removed the duplicated category name (top-left cell now just says "Indicator") + clicking any indicator row now expands it to show the matching investing.com link(s) for every currency/asset column, including the m/m secondary link)</div>
+<div style="flex:none;background:#0d9488;color:#f0fdfa;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (Fixed buttons/links staying highlighted after a tap on touch devices - hover styles now only apply with real mouse hover, not on touch - while legitimate persistent selections like the active currency button still work correctly. Also added small unit/frequency badges in the Compare page for indicators like "NFP / Employment Change" where currencies use different units (job count vs. % growth vs. absolute level), so the numbers no longer look like a direct apples-to-apples comparison)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1791,7 +1750,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:true,actual:'3.8% YoY / 0.4% MoM',forecast:'3.8% YoY / 0.5% MoM',previous:'3.5% YoY / 0.7% MoM',releaseDate:'2026-05-29',interval:'monthly',source:'https://www.investing.com/economic-calendar/pce-price-index-906',secondarySource:'https://www.investing.com/economic-calendar/pce-price-index-904',secondaryLabel:'PCE m/m'},
     {rubric:'Inflation',indicator:'Core PCE',applicable:true,actual:'3.3% YoY / 0.2% MoM',forecast:'3.3% YoY / 0.3% MoM',previous:'3.2% YoY / 0.3% MoM',releaseDate:'2026-05-29',interval:'monthly',source:'https://www.investing.com/economic-calendar/core-pce-price-index-905',secondarySource:'https://www.investing.com/economic-calendar/core-pce-price-index-61',secondaryLabel:'Core PCE m/m'},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'172K',forecast:'80K',previous:'179K (rev.)',releaseDate:'2026-06-05',interval:'monthly',source:'https://www.investing.com/economic-calendar/nonfarm-payrolls-227'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'172K',forecast:'80K',previous:'179K (rev.)',releaseDate:'2026-06-05',interval:'monthly',unit:'count',source:'https://www.investing.com/economic-calendar/nonfarm-payrolls-227'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.3%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-06-05',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-300'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:true,actual:'122K',forecast:'117K',previous:'105K',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/adp-nonfarm-employment-change-1'},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'7.618M',forecast:'6.88M',previous:'6.887M',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/jolts-job-openings-1057'},
@@ -1817,7 +1776,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+0.1% q/q (+0.5% y/y, Eurozone Employment)',forecast:null,previous:'+0.2% q/q (+0.7% y/y)',releaseDate:'2026-06-05',interval:'quarterly',source:'https://www.investing.com/economic-calendar/employment-change-96'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+0.1% q/q (+0.5% y/y, Eurozone Employment)',forecast:null,previous:'+0.2% q/q (+0.7% y/y)',releaseDate:'2026-06-05',interval:'quarterly',unit:'percent',source:'https://www.investing.com/economic-calendar/employment-change-96'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.3%',forecast:'6.3%',previous:'6.3%',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-299'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'2.2% (Job Vacancy Rate)',forecast:null,previous:'2.1%',releaseDate:'2026-03-18',interval:'quarterly',source:'https://tradingeconomics.com/euro-area/job-vacancy-rate'},
@@ -1843,7 +1802,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'34.39M employed (Jan-Mar 2026)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monthly',source:'https://www.investing.com/economic-calendar/employment-change-3m-3m-1743'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'34.39M employed (Jan-Mar 2026)',forecast:null,previous:null,releaseDate:'2026-05-20',interval:'monthly',source:'https://www.investing.com/economic-calendar/employment-change-3m-3m-1743',unit:'level'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.0% (ILO)',forecast:null,previous:'4.9%',releaseDate:'2026-05-20',interval:'monthly',source:'https://uk.investing.com/economic-calendar/unemployment-rate-297'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -1869,7 +1828,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537 Mio. (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516 Mio.',releaseDate:'2026-06-04',interval:'quarterly',source:'https://www.investing.com/economic-calendar/employment-level-98'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537 Mio. (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516 Mio.',releaseDate:'2026-06-04',interval:'quarterly',unit:'level',source:'https://www.investing.com/economic-calendar/employment-level-98'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'3.0% n.s.a. / 3.1% s.a.',forecast:'2.9%',previous:'3.0%',releaseDate:'2026-06-09',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-sa-296'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -1895,7 +1854,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:true,actual:'2.6% (Corporate Service Price Index)',forecast:null,previous:'2.6%',releaseDate:'2026-02-24',interval:'monthly',source:'https://www.investing.com/economic-calendar/corporate-services-price-index-(cspi)-76'},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-120K',forecast:null,previous:null,releaseDate:'2026-05-30',interval:'monthly',source:'https://tradingeconomics.com/japan/employment-change'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-120K',forecast:null,previous:null,releaseDate:'2026-05-30',interval:'monthly',source:'https://tradingeconomics.com/japan/employment-change',unit:'count'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'2.5%',forecast:'2.6%',previous:'2.7%',releaseDate:'2026-05-30',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-298'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:true,actual:'1.18 (Job-to-Applicant Ratio)',forecast:'1.18',previous:'1.19',releaseDate:'2026-05-30',interval:'monthly',source:'https://www.investing.com/economic-calendar/jobs-applications-ratio-1001'},
@@ -1921,7 +1880,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'88.0K (Net Change in Employment)',forecast:'10.0K',previous:null,releaseDate:'2026-06-05',interval:'monthly',source:'https://www.investing.com/economic-calendar/employment-change-95'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'88.0K (Net Change in Employment)',forecast:'10.0K',previous:null,releaseDate:'2026-06-05',interval:'monthly',unit:'count',source:'https://www.investing.com/economic-calendar/employment-change-95'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'6.6%',forecast:null,previous:'6.9%',releaseDate:'2026-06-05',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-301'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -1947,7 +1906,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-18.6K',forecast:'+17.5K',previous:'-18.6K (March, rev.)',releaseDate:'2026-05-15',interval:'monthly',source:'https://www.investing.com/economic-calendar/employment-change-94'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'-18.6K',forecast:'+17.5K',previous:'-18.6K (March, rev.)',releaseDate:'2026-05-15',interval:'monthly',unit:'count',source:'https://www.investing.com/economic-calendar/employment-change-94'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'4.5%',forecast:'4.3%',previous:'4.3%',releaseDate:'2026-05-15',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-302'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -1973,7 +1932,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+4K (to 2.89M)',forecast:null,previous:'+14K (Q4 2025, to 2.886M)',releaseDate:'2026-05-06',interval:'quarterly',source:'https://www.investing.com/economic-calendar/employment-change-93'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'+4K (to 2.89M)',forecast:null,previous:'+14K (Q4 2025, to 2.886M)',releaseDate:'2026-05-06',interval:'quarterly',unit:'count',source:'https://www.investing.com/economic-calendar/employment-change-93'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'5.3%',forecast:'5.4%',previous:'5.4%',releaseDate:'2026-05-06',interval:'quarterly',source:'https://www.investing.com/economic-calendar/unemployment-rate-295'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -2074,7 +2033,7 @@ function researchBias(name,actual,forecast,previous){
 // letzten bekannten Wert (Akt/Forecast/Previous) + Intervall-Badge ein.
 // Läuft pro Symbol nur einmal.
 function applyIndResearch(sym){
-  if(sym._researchV23)return;
+  if(sym._researchV24)return;
   // Aufräumen: alte "Letzter Wert: ..."-Stichpunkte aus v2 entfernen
   (sym.rubrics||[]).forEach(rub=>{
     (rub.indicators||[]).forEach(ind=>{
@@ -2086,7 +2045,7 @@ function applyIndResearch(sym){
   const lc=effLinkCcy(sym);
   const data=lc?(IND_RESEARCH_DATA[lc]||IND_RESEARCH_DATA[sym.id]):null;
   const dispMap=(lc&&IND_DISPLAY_NAMES[lc])||IND_DISPLAY_NAMES[sym.id]||{};
-  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;sym._researchV21=true;sym._researchV22=true;sym._researchV23=true;return;}
+  if(!data){sym._researchV7=true;sym._researchV8=true;sym._researchV9=true;sym._researchV10=true;sym._researchV11=true;sym._researchV12=true;sym._researchV17=true;sym._researchV18=true;sym._researchV19=true;sym._researchV20=true;sym._researchV21=true;sym._researchV22=true;sym._researchV24=true;return;}
   data.entries.forEach(e=>{
     const rub=sym.rubrics.find(r=>r.name===e.rubric);
     if(!rub||!rub.indicators)return;
@@ -2104,7 +2063,7 @@ function applyIndResearch(sym){
     if(dispMap[e.indicator])ind.displayName=dispMap[e.indicator];
     if(e.interval)ind.interval=e.interval;
     if(e.actual!=null){
-      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source,secondarySource:e.secondarySource,secondaryLabel:e.secondaryLabel};
+      ind.research={actual:e.actual,forecast:e.forecast,previous:e.previous,date:e.releaseDate,source:e.source,secondarySource:e.secondarySource,secondaryLabel:e.secondaryLabel,unit:e.unit,interval:e.interval};
       ind.bias=researchBias(e.indicator,e.actual,e.forecast,e.previous);
       // Zeigt im Indikator-Namen an, welcher Zeitraum (y/y/m/m/q/q) als
       // Hauptwert dargestellt wird, z.B. "PPI y/y" - der jeweils andere
@@ -2127,7 +2086,7 @@ function applyIndResearch(sym){
   sym._researchV20=true;
   sym._researchV21=true;
   sym._researchV22=true;
-  sym._researchV23=true;
+  sym._researchV24=true;
 }
 
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
@@ -2649,7 +2608,7 @@ function loadState(){
   try{
     const s=localStorage.getItem(SK);
     if(s){const d=JSON.parse(s);
-      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20,_researchV21:sv._researchV21,_researchV22:sv._researchV22,_researchV23:sv._researchV23}:{...def};});
+      syms=DEF.map(def=>{const sv=d.syms?.find(c=>c.id===def.id);return sv?{...def,...sv,noteRubs:sv.noteRubs||[],rubrics:sv.rubrics||mkRubs(),_researchV7:sv._researchV7,_researchV8:sv._researchV8,_researchV9:sv._researchV9,_researchV10:sv._researchV10,_researchV11:sv._researchV11,_researchV12:sv._researchV12,_researchV17:sv._researchV17,_researchV18:sv._researchV18,_researchV19:sv._researchV19,_researchV20:sv._researchV20,_researchV21:sv._researchV21,_researchV22:sv._researchV22,_researchV24:sv._researchV24}:{...def};});
       // Migration: die Makro-Rubrik wurde von Deutsch ("Makro & Risikoumfeld")
       // auf Englisch ("Macro & Risk Environment") umbenannt - in gespeicherten
       // Profilen den Namen mitziehen, damit keine Dubletten entstehen.
@@ -4037,6 +3996,8 @@ function applyIndDataFeed(){
         // Sekundär-Link (z.B. CPI m/m im ausgeklappten CPI-y/y-Indikator) aus den
         // Recherchedaten erhalten, da der Feed nur den Hauptwert (y/y) liefert.
         if(r.secondarySource){ind.research.secondarySource=r.secondarySource;ind.research.secondaryLabel=r.secondaryLabel;}
+        if(r.unit)ind.research.unit=r.unit;
+        if(r.interval)ind.research.interval=r.interval;
         if(fx)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;
@@ -4341,22 +4302,37 @@ function cmpColIds(){const avail=cmpAvailableIds();let sel=cmpCols.filter(id=>av
 function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
 function cmpSelectAllFx(){cmpCols=[...FX];localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
 function cmpSelectAll(){cmpCols=cmpAvailableIds();localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
-// Liefert {a,f,p,color,name} für einen Indikator eines Symbols - exakt
+// Maße/Einheiten, die je Währung für ein und denselben Indikatornamen
+// abweichen können (z.B. "NFP / Employment Change": USD = monatliche
+// Job-Veränderung in Tsd., EUR = q/q %-Wachstum, GBP = absolutes Level).
+// Damit das im Compare-Vergleich nicht wie "falsche Zahl" wirkt, wird ein
+// kleines Hinweis-Badge an der Zelle angezeigt, wenn die Recherchedaten
+// ein "unit" hinterlegt haben.
+const IND_UNIT_LABEL={count:'Δ count',percent:'% chg',level:'Level'};
+const IND_INTERVAL_LABEL={monthly:'m/m',quarterly:'q/q',weekly:'w/w',annual:'y/y'};
+function cmpUnitBadge(ind){
+  const r=ind&&ind.research;if(!r||!r.unit)return null;
+  const u=IND_UNIT_LABEL[r.unit]||r.unit;
+  const iv=r.interval?(IND_INTERVAL_LABEL[r.interval]||r.interval):null;
+  return iv?u+' · '+iv:u;
+}
+// Liefert {a,f,p,color,name,badge} für einen Indikator eines Symbols - exakt
 // dieselbe Quelle/Priorität wie die Detailkarte (Live-Event vor Recherche).
 function cmpCellData(symId,rubName,baseName){
   const sym=syms.find(s=>s.id===symId);if(!sym)return null;
   const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
   const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===baseName);
   if(!ind)return null;
+  const badge=cmpUnitBadge(ind);
   const ev=findIndEvent(symId,ind.name);
-  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name};
+  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name,badge};
   if(ind.research){
     const r=ind.research;
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
-    return{a:A.val,f:F.val,p:P.val,color,name:ind.name};
+    return{a:A.val,f:F.val,p:P.val,color,name:ind.name,badge};
   }
-  return{a:null,f:null,p:null,color:'',name:ind.name};
+  return{a:null,f:null,p:null,color:'',name:ind.name,badge};
 }
 // Karten-Score eines Symbols für eine Rubrik (null, wenn die Rubrik fehlt).
 function cmpRubScore(symId,rubName){const sym=syms.find(s=>s.id===symId);if(!sym)return null;const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;return rubScore(rub);}
@@ -4412,7 +4388,8 @@ function renderCompare(){
         const d=cmpCellData(id,rubName,base);
         if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
         const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
-        return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}</td>`;
+        const badge=d.badge?`<div class="cmp-unit" title="Maßeinheit/Frequenz weicht ggf. von anderen Währungen ab - direkter Zahlenvergleich nicht 1:1 möglich">${escH(d.badge)}</div>`:'';
+        return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}${badge}</td>`;
       }).join('');
       const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${enc}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
       if(!open)return mainRow;
