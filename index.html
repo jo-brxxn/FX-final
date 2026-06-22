@@ -593,7 +593,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#65a30d;color:#f7fee7;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LIME (Compare page: added a third quick-filter button "Select" that picks only the Non-FX assets (BTC, GOLD, SILVER, OIL, SP500, NAS, AMZN, NVDA, DAX, GER100), next to the existing "FX only" and "Select all" buttons)</div>
+<div style="flex:none;background:#0369a1;color:#f0f9ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SKY BLUE (Consumer Confidence now pulls its Actual/Forecast/Previous live from the calendar, same as CPI/NFP etc. - EUR uses a strict pattern so it only ever picks up the EU Commission "Consumer Confidence (Flash)" release, never a different national survey like GfK that also gets tagged EUR)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1566,6 +1566,23 @@ function mkIndMatcher(include,exclude){
     return include.some(re=>re.test(n));
   };
 }
+// Manche Indikatoren werden unter EINER Währung (v.a. EUR) von mehreren,
+// methodisch verschiedenen nationalen Umfragen gemeldet (z.B. EU-Kommission
+// "Consumer Confidence (Flash)" vs. deutsches "GfK Consumer Confidence" -
+// beide unter "EUR" getaggt). Ein generisches Muster würde da leicht das
+// falsche Barometer ziehen. "overrides" liefert pro Währung ein striktes,
+// eindeutiges Muster; alle anderen Währungen (nur 1 Land je Währung, daher
+// unkritisch) nutzen weiterhin das breite "fallback"-Muster. Wird matcher()
+// ohne ccy aufgerufen (z.B. für die generelle High-Impact-Einstufung), wird
+// breit über alle Muster geprüft.
+function mkCcyIndMatcher(overrides,fallback){
+  const fb=Array.isArray(fallback)?fallback:[fallback];
+  return (name,ccy)=>{
+    const n=(name||'').toLowerCase();
+    if(ccy)return overrides[ccy]?overrides[ccy].test(n):fb.some(re=>re.test(n));
+    return fb.some(re=>re.test(n))||Object.values(overrides).some(re=>re.test(n));
+  };
+}
 const IND_EVENT_MATCHERS={
   'Central Bank Rate':mkIndMatcher([/rate decision/,/interest rate/,/cash rate/,/bank rate/,/refinancing rate/,/overnight rate/,/policy rate/,/deposit facility/,/official cash rate/]),
   'CPI (Headline)':mkIndMatcher([/\bcpi\b/],[/core/]),
@@ -1581,17 +1598,20 @@ const IND_EVENT_MATCHERS={
   'ADP Employment':mkIndMatcher([/\badp\b/]),
   'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/]),
   'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/]),
-  // Economic-Growth: nur GDP-Wachstum und Retail Sales ziehen LIVE-Werte aus
-  // dem (stündlich aktualisierten) Feed - mit PRÄZISEN Mustern, damit nicht
-  // versehentlich ein anderer Sub-Indikator erwischt wird (z.B. "GDP Price
-  // Index" statt GDP-Wachstum, oder "Core/YoY" statt der Headline-MoM-Zahl).
-  // Manufacturing/Services PMI und Consumer Confidence sind je nach Land
-  // unterschiedliche Quellen (ISM vs. S&P Global, Conference Board vs.
-  // UoM/Michigan, GfK, SECO, Westpac ...). Für sie gibt es daher KEIN
-  // gemeinsames Live-Muster - sie zeigen den kuratierten, korrekt zugeordneten
-  // Recherche-Wert (sonst würde das falsche Barometer angezeigt).
+  // Economic-Growth: nur GDP-Wachstum, Retail Sales und Consumer Confidence
+  // ziehen LIVE-Werte aus dem (stündlich aktualisierten) Feed - mit
+  // PRÄZISEN Mustern, damit nicht versehentlich ein anderer Sub-Indikator
+  // erwischt wird (z.B. "GDP Price Index" statt GDP-Wachstum, oder
+  // "Core/YoY" statt der Headline-MoM-Zahl).
+  // Manufacturing/Services PMI sind je nach Land unterschiedliche Quellen
+  // (ISM vs. S&P Global) ohne ein eindeutiges gemeinsames Live-Muster -
+  // sie zeigen weiterhin den kuratierten Recherche-Wert.
   'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/]),
   'Retail Sales':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/,/yoy/,/y\/y/]),
+  'Consumer Confidence':mkCcyIndMatcher(
+    {EUR:/^consumer confidence(\s+flash)?$/},
+    [/consumer confidence/,/consumer sentiment/,/consumer climate/]
+  ),
 };
 const IND_AUTO_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Mit welcher Währung sind die Indikatoren eines Nicht-FX-Assets verbunden?
@@ -1623,7 +1643,7 @@ function findIndEvent(symId,indName){
   const ccy=macroCcyFor(symId);
   if(!ccy)return null; // "keine Verbindung" -> keine automatischen Events
   const pool=[...inbox,...calEvts].filter(ev=>{
-    if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name))return false;
+    if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return false;
     if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
     return true;
   });
@@ -1646,7 +1666,6 @@ const CAL_RESEARCH_MATCHERS={
   'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
   'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
   'Retail Sales':mkIndMatcher([/retail sales/],[/core/]),
-  'Consumer Confidence':mkIndMatcher([/consumer confidence/,/consumer sentiment/]),
 };
 // Ein Event "treibt den Score", wenn sein Name zu einem der getrackten
 // Indikatoren passt (Zins/Inflation/Arbeitsmarkt/Wachstum). Solche Events
@@ -1666,7 +1685,7 @@ function applyResearchToCal(){
         if(ev.actual)return;
         if(ev.date!==e.releaseDate)return;
         if(!evtMatchesSym(ev,ccy))return;
-        if(!matcher(ev.name))return;
+        if(!matcher(ev.name,ccy))return;
         ev.actual=splitResearchVal(e.actual).val;
         if(!ev.forecast&&e.forecast!=null)ev.forecast=splitResearchVal(e.forecast).val;
         if(!ev.previous&&e.previous!=null)ev.previous=splitResearchVal(e.previous).val;
