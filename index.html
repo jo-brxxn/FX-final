@@ -252,6 +252,26 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-data-act.bond-up{color:var(--blue)}
 .ind-data-act.bond-down{color:var(--red)}
 .ind-data-act.bond-flat{color:#fff}
+/* ── COMPARE / CROSS-CURRENCY MATRIX ── */
+.cmp-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:12px;overflow:hidden}
+.cmp-title{font-size:13px;font-weight:700;color:var(--t0);padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--bg3);display:flex;align-items:center;gap:8px}
+.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cmp-scroll{overflow-x:auto}
+.cmp-tbl{border-collapse:separate;border-spacing:0;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px}
+.cmp-tbl th,.cmp-tbl td{padding:6px 10px;text-align:center;border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap}
+.cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1}
+.cmp-tbl td.cmp-ind,.cmp-tbl th.cmp-corner{text-align:left;position:sticky;left:0;background:var(--bg3);font-weight:600;color:var(--t1);z-index:1;min-width:130px}
+.cmp-tbl th.cmp-corner{z-index:2;color:var(--t3);font-weight:600}
+.cmp-tbl tbody tr:hover td{background:var(--bg4)}
+.cmp-tbl tbody tr:hover td.cmp-ind{background:var(--bg5)}
+.cmp-a{font-weight:800;color:var(--t1)}
+.cmp-a.act-good{color:var(--green)}
+.cmp-a.act-bad{color:var(--red)}
+.cmp-a.bond-up{color:var(--blue)}
+.cmp-a.bond-down{color:var(--red)}
+.cmp-a.bond-flat{color:#fff}
+.cmp-fp{font-size:9px;color:var(--t3);margin-top:2px;letter-spacing:.2px}
+.cmp-na{color:var(--t3);opacity:.5}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -587,7 +607,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0891b2;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CYAN (calendar can now be filtered by a single currency or show all + per-asset mini-calendars now show events up to 7 days ahead instead of just the next one + any event tied to a score-driving indicator (CPI, NFP, rate decisions, GDP, PMI…) is auto-classified as HIGH impact, even if the source said medium)</div>
+<div style="flex:none;background:#059669;color:#ecfdf5;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: EMERALD (new "Compare" tab next to Non-FX: one card per macro category — Inflation, Interest Rates, Labour Market, Economic Growth — with a table of currencies across the top, indicators down the left, and Actual · (Forecast / Previous) in every cell to compare all currencies side by side)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -729,6 +749,7 @@ function introLogin(){
   <button class="tp on"  onclick="showTab('dash',this)">Dashboard</button>
   <button class="tp"     id="tabFx" onclick="showTab('cur',this,'fx')">FX</button>
   <button class="tp"     id="tabNonfx" onclick="showTab('cur',this,'nonfx')">Non-FX</button>
+  <button class="tp"     onclick="showTab('cmp',this)">Compare</button>
   <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
@@ -738,6 +759,14 @@ function introLogin(){
 <div class="body" id="pgCur" style="display:none">
   <div class="sb" id="sidebar"></div>
   <div class="detail" id="detail"></div>
+</div>
+<!-- PAGE: COMPARE -->
+<div class="pc" id="pgCmp" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Compare</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Side-by-side macro data across all currencies · each cell shows Actual · (Forecast / Previous)</div>
+  </div>
+  <div id="cmpCards"></div>
 </div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
@@ -4271,9 +4300,59 @@ function addWidget(){
   openM('mRename');
 }
 
-// ══ MATRIX ═══════════════════════════════════════════════════════
+// ══ COMPARE / CROSS-CURRENCY MATRIX ═══════════════════════════════
+// Vergleichsseite: pro Makro-Karte eine Tabelle - Währungen oben (Spalten),
+// Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous).
+const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth'];
+// Liefert {a,f,p,color,name} für einen Indikator einer Währung - exakt
+// dieselbe Quelle/Priorität wie die Detailkarte (Live-Event vor Recherche).
+function cmpCellData(ccy,rubName,baseName){
+  const sym=syms.find(s=>s.id===ccy);if(!sym)return null;
+  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
+  const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===baseName);
+  if(!ind)return null;
+  const ev=findIndEvent(ccy,ind.name);
+  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name};
+  if(ind.research){
+    const r=ind.research;
+    const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
+    const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    return{a:A.val,f:F.val,p:P.val,color,name:ind.name};
+  }
+  return{a:null,f:null,p:null,color:'',name:ind.name};
+}
+function renderCompare(){
+  const el=document.getElementById('cmpCards');if(!el)return;
+  const html=CMP_RUBS.map(rubName=>{
+    // Union der Indikator-Basisnamen über alle FX-Währungen (USD zuerst -> dessen
+    // Reihenfolge gibt die Zeilenfolge vor; bei anderen Währungen evtl. vorhandene
+    // Extra-Indikatoren werden hinten angehängt).
+    const bases=[];
+    FX.forEach(ccy=>{
+      const sym=syms.find(s=>s.id===ccy);if(!sym)return;
+      const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return;
+      (rub.indicators||[]).forEach(ind=>{const b=stripPeriodSuffix(ind.name).base;if(b&&!bases.includes(b))bases.push(b);});
+    });
+    if(!bases.length)return'';
+    const head=`<th class="cmp-corner">${escH(rubName)}</th>`+FX.map(c=>`<th>${c}</th>`).join('');
+    const rows=bases.map(base=>{
+      const cells=FX.map(ccy=>{
+        const d=cmpCellData(ccy,rubName,base);
+        if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
+        const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
+        return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}</td>`;
+      }).join('');
+      return`<tr><td class="cmp-ind">${escH(base)}</td>${cells}</tr>`;
+    }).join('');
+    return`<div class="cmp-card">
+      <div class="cmp-title">${escH(rubName)} <small>Actual · (Forecast / Previous)</small></div>
+      <div class="cmp-scroll"><table class="cmp-tbl"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  }).join('');
+  el.innerHTML=html||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No comparable data.</div>`;
+}
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -4290,6 +4369,7 @@ function showTab(tab,btn,fxMode){
   if(btn)btn.classList.add('on');curPage=tab;
   if(tab==='dash')renderDash();
   else if(tab==='cur'){renderSidebar();renderDetail();}
+  else if(tab==='cmp')renderCompare();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
   else if(tab==='notes')renderNCs();
@@ -4297,6 +4377,7 @@ function showTab(tab,btn,fxMode){
 function rerender(){
   if(curPage==='dash')renderDash();
   else if(curPage==='cur'){renderSidebar();renderDetail();}
+  else if(curPage==='cmp')renderCompare();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
   else if(curPage==='notes')renderNCs();
