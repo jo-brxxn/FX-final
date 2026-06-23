@@ -650,7 +650,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#be123c;color:#fff1f2;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CRIMSON (1) Dashboard "Today" card marks an event "released" (✓) as soon as its scheduled time is reached, even before the value arrives. (2) The Inbox now only collects score updates: you get a message whenever a new release changes a currency's score, and clicking it jumps straight to that indicator on the currency. (3) Seeded a test CAD CPI message from yesterday so you can try the click-through)</div>
+<div style="flex:none;background:#db2777;color:#fdf2f8;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK (Indicators now pull their Actual/Forecast/Previous from the calendar far more reliably. The headline CPI is recognized under its TradingView name "Inflation Rate" too — so e.g. Canada's CPI now shows the real headline 3.2% instead of a wrong sub-measure — plus Core CPI ("Core Inflation Rate"), PPI ("Producer Price"), Manufacturing/Services PMI (currency-aware, picks the right national gauge), wage indices, and a fixed "Non Farm" (with a space) match for NFP)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1641,30 +1641,47 @@ function mkCcyIndMatcher(overrides,fallback){
   };
 }
 const IND_EVENT_MATCHERS={
-  'Central Bank Rate':mkIndMatcher([/rate decision/,/interest rate/,/cash rate/,/bank rate/,/refinancing rate/,/overnight rate/,/policy rate/,/deposit facility/,/official cash rate/]),
-  'CPI (Headline)':mkIndMatcher([/\bcpi\b/],[/core/]),
-  'Core CPI':mkIndMatcher([/core cpi/]),
-  'PPI':mkIndMatcher([/\bppi\b/],[/core/]),
-  'Core PPI':mkIndMatcher([/core ppi/]),
+  'Central Bank Rate':mkIndMatcher([/rate decision/,/interest rate decision/,/\bcash rate\b/,/bank rate/,/refinancing rate/,/overnight rate/,/policy rate/,/deposit facility/,/official cash rate/,/fed funds/]),
+  // Der Headline-CPI heisst je nach Datenquelle "CPI" (Forex Factory) ODER
+  // "Inflation Rate" (TradingView, z.B. bei CAD/EUR/CHF). Kern- und Teilmasse
+  // (Core/Common/Median/Trimmed/Super, PPI/PCE, Inflationserwartungen, BoJ/
+  // Tokyo, Services) werden ausgeschlossen, damit wirklich der Headline-Wert
+  // gezogen wird und nicht versehentlich ein Kernmass.
+  'CPI (Headline)':mkIndMatcher([/\bcpi\b/,/inflation rate/],[/core/,/common/,/median/,/trimmed/,/super/,/\bppi\b/,/\bpce\b/,/expectation/,/\bboj\b/,/tokyo/,/services/,/\bsppi\b/,/wage/,/rent/]),
+  // Kern-/Core-Inflation: "Core CPI", "Core Inflation Rate", BoJ/Tokyo Core CPI.
+  'Core CPI':mkIndMatcher([/core cpi/,/core inflation rate/,/super core/,/\bboj core cpi\b/,/tokyo core cpi/]),
+  'PPI':mkIndMatcher([/\bppi\b/,/producer price/],[/core/,/services/,/import/,/export/]),
+  'Core PPI':mkIndMatcher([/core ppi/,/core producer price/]),
   'PCE':mkIndMatcher([/\bpce\b/],[/core/]),
   'Core PCE':mkIndMatcher([/core pce/]),
-  'Services Inflation':mkIndMatcher([/services?\s+(pmi|inflation)/]),
-  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/]),
-  'NFP / Employment Change':mkIndMatcher([/non-?farm/,/\bnfp\b/,/employment change/],[/adp/]),
+  // Services-Inflation = Dienstleistungs-ERZEUGERPREISE (JPY: SPPI / Corporate
+  // Services Price Index) - bewusst NICHT der Services-PMI.
+  'Services Inflation':mkIndMatcher([/\bsppi\b/,/corporate services price/,/services producer price/]),
+  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/,/claimant count/]),
+  // NFP / Beschaeftigungsaenderung: "Non Farm" MIT Leerzeichen korrekt erfassen
+  // ("non-?farm" verfehlte das); Unemployment-/ADP-/Teilzeit-Varianten raus.
+  'NFP / Employment Change':mkIndMatcher([/non[\s-]?farm/,/\bnfp\b/,/\bemployment change\b/,/payrolls/,/net employment/,/employment level/],[/adp/,/unemployment/,/full[\s-]?time/,/part[\s-]?time/,/change in/]),
   'Unemployment Rate':mkIndMatcher([/unemployment rate/]),
-  'ADP Employment':mkIndMatcher([/\badp\b/]),
-  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/]),
-  'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/]),
-  // Economic-Growth: nur GDP-Wachstum, Retail Sales und Consumer Confidence
-  // ziehen LIVE-Werte aus dem (stündlich aktualisierten) Feed - mit
-  // PRÄZISEN Mustern, damit nicht versehentlich ein anderer Sub-Indikator
-  // erwischt wird (z.B. "GDP Price Index" statt GDP-Wachstum, oder
-  // "Core/YoY" statt der Headline-MoM-Zahl).
-  // Manufacturing/Services PMI sind je nach Land unterschiedliche Quellen
-  // (ISM vs. S&P Global) ohne ein eindeutiges gemeinsames Live-Muster -
-  // sie zeigen weiterhin den kuratierten Recherche-Wert.
-  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/]),
-  'Retail Sales':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/,/yoy/,/y\/y/]),
+  'ADP Employment':mkIndMatcher([/\badp\b/],[/weekly/]),
+  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/,/job vacanc/]),
+  'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/,/avg hourly earnings/,/wage price index/,/labou?r cost index/]),
+  // Economic Growth: GDP-Wachstum, Retail Sales, Manufacturing-/Services-PMI und
+  // Consumer Confidence ziehen jetzt ebenfalls LIVE-Werte aus dem Kalender -
+  // mit PRAEZISEN, ggf. waehrungsspezifischen Mustern, damit nicht ein falscher
+  // Sub-Indikator erwischt wird (z.B. "GDP Price Index" statt GDP-Wachstum oder
+  // eine nationale Teil-PMI statt der Eurozone-Aggregat-PMI).
+  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/,/\bmom\b/,/m\/m/]),
+  'Retail Sales':mkIndMatcher([/retail sales/],[/core/,/inventories/,/ex auto/]),
+  // PMI: USA = ISM (Headline) statt S&P-Global-Flash; Eurozone = das Aggregat
+  // (kein deutsches/franzoesisches Flash, das ebenfalls als "EUR" getaggt ist).
+  'Manufacturing PMI':mkCcyIndMatcher(
+    {USD:/ism manufacturing pmi/,EUR:/^(flash |s&p global |hcob )?manufacturing pmi( flash)?$/},
+    [/manufacturing pmi/]
+  ),
+  'Services PMI':mkCcyIndMatcher(
+    {USD:/ism (services|non-?manufacturing) pmi/,EUR:/^(flash |s&p global |hcob )?services pmi( flash)?$/,CAD:/ivey/},
+    [/services pmi/,/non-?manufacturing pmi/]
+  ),
   'Consumer Confidence':mkCcyIndMatcher(
     {EUR:/^consumer confidence(\s+flash)?$/},
     [/consumer confidence/,/consumer sentiment/,/consumer climate/]
