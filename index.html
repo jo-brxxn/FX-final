@@ -463,7 +463,19 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
+/* ── INBOX SCORE NOTIFICATIONS ── */
+.nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
+.nb-ccy{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
+.nb-main{flex:1;min-width:0}
+.nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nb-rub{color:var(--t3);font-weight:500;font-size:11px}
+.nb-sub{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
+.nb-dir{font-size:11px;font-weight:700;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.nb-dir.nb-bull{color:var(--blue)}.nb-dir.nb-bear{color:var(--red)}.nb-dir.nb-neu{color:var(--amber)}
+.nb-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;line-height:1;padding:0 2px;flex-shrink:0;transition:color .12s}@media (hover:hover){.nb-del:hover{color:var(--red)}}
+.ind-card.ind-flash{animation:indFlash 1.8s ease-out}
+@keyframes indFlash{0%,40%{box-shadow:0 0 0 2px var(--blue),0 0 16px rgba(var(--blue-rgb),.55);background:rgba(var(--blue-rgb),.10)}100%{box-shadow:none;background:transparent}}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
@@ -638,7 +650,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#4338ca;color:#eef2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROYAL BLUE (Removed the old "Upcoming Events" calendar widget from the Dashboard - it is now covered by the new "Today" reminder card up top plus the dedicated Calendar tab. Existing dashboards drop it automatically on load)</div>
+<div style="flex:none;background:#be123c;color:#fff1f2;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CRIMSON (1) Dashboard "Today" card marks an event "released" (✓) as soon as its scheduled time is reached, even before the value arrives. (2) The Inbox now only collects score updates: you get a message whenever a new release changes a currency's score, and clicking it jumps straight to that indicator on the currency. (3) Seeded a test CAD CPI message from yesterday so you can try the click-through)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1522,10 +1534,10 @@ function pairEvtFlagHtml(name,baseCls){return flagSpans(pairEvtFlagState(name),b
 // zusätzlich noch CAL_PAST_DAYS Tage lang im Kalender (und damit auch beim
 // zugehörigen Symbol) stehen, damit man Actual-Werte direkt dort sieht.
 const CAL_PAST_DAYS=2;
-// Postfach-Einträge bleiben nur bis gestern sichtbar - danach werden sie
-// automatisch entfernt (die Symbol-Detailansicht zieht ältere Actual-Werte
-// ohnehin aus calEvts, das CAL_PAST_DAYS Tage lang separat erhalten bleibt).
-const INBOX_RETENTION_DAYS=1;
+// Score-Update-Benachrichtigungen im Postfach bleiben einige Tage stehen,
+// damit man auch nach ein paar Tagen noch sieht, welche Indikatoren zuletzt
+// den Score bewegt haben - danach werden sie automatisch ausgeräumt.
+const INBOX_NOTIF_DAYS=5;
 // Kalender-Filter "nur High-Impact" (persistiert eigenständig im localStorage).
 let calHighOnly=localStorage.getItem('fxpro_cal_highonly')==='1';
 // Kalender-Filter "nach Währung" ('ALL' = alle). Gilt nur für den grossen
@@ -1543,28 +1555,18 @@ function processCalEvts(){
   calEvts.forEach(ev=>{
     if(ev.impact!=='high'&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
   });
-  calEvts.forEach(ev=>{
-    if(ev.date<=today&&!inbox.find(m=>m.name===ev.name&&m.date===ev.date)){
-      inbox.unshift({id:uid(),evId:ev.id,name:ev.name,date:ev.date,time:ev.time,currencies:ev.currencies,impact:ev.impact,expected:ev.expected,forecast:ev.forecast,previous:ev.previous,actual:ev.actual,notes:ev.notes,prevRevColor:ev.prevRevColor});
-      changed=true;
-    }
-  });
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
-  // Postfach mit dem Kalender konsistent halten: jeder Postfach-Eintrag ist
-  // an seinen Kalender-Zwilling (gleicher Name+Datum+Währung) gekoppelt und
-  // übernimmt dessen aktuellen Impact/Actual/Forecast/Previous. Veraltete
-  // "Waisen" (kein Zwilling mehr im noch sichtbaren Kalenderfenster, obwohl
-  // zeitlich darin) waren z.B. umbenannte/neu eingestufte Events und werden
-  // entfernt, damit Postfach und Kalender exakt dasselbe zeigen.
+  // Postfach enthält jetzt NUR noch Score-Update-Benachrichtigungen
+  // (kind:'score'), keine Kalender-Kopien mehr. Hier nur noch alte
+  // Benachrichtigungen ausräumen, deren Release länger als
+  // INBOX_NOTIF_DAYS her ist. Etwaige alte Kalender-Kopien aus früheren
+  // Versionen (ohne kind) werden ebenfalls entfernt.
   const beforeInbox=inbox.length;
   inbox=inbox.filter(m=>{
-    if(daysUntil(m.date)<-INBOX_RETENTION_DAYS)return false;
-    const twin=calEvts.find(ev=>ev.name===m.name&&ev.date===m.date&&(ev.currencies||'')===(m.currencies||''));
-    if(twin){['impact','actual','forecast','previous','time','notes','prevRevColor'].forEach(f=>{if(m[f]!==twin[f]){m[f]=twin[f];changed=true;}});return true;}
-    // Kein Zwilling, liegt aber noch im Kalenderfenster -> verwaister Altbestand.
-    if(daysUntil(m.date)>=-CAL_PAST_DAYS){changed=true;return false;}
+    if(m.kind!=='score')return false;
+    if(m.date&&daysUntil(m.date)<-INBOX_NOTIF_DAYS)return false;
     return true;
   });
   if(inbox.length!==beforeInbox)changed=true;
@@ -1697,7 +1699,7 @@ function findIndEvent(symId,indName){
   if(!matcher)return null;
   const ccy=macroCcyFor(symId);
   if(!ccy)return null; // "keine Verbindung" -> keine automatischen Events
-  const pool=[...inbox,...calEvts].filter(ev=>{
+  const pool=calEvts.filter(ev=>{
     if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return false;
     if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
     return true;
@@ -1736,7 +1738,7 @@ function applyResearchToCal(){
       if(e.actual==null||!e.releaseDate)return;
       const matcher=CAL_RESEARCH_MATCHERS[e.indicator];
       if(!matcher)return;
-      [...calEvts,...inbox].forEach(ev=>{
+      calEvts.forEach(ev=>{
         if(ev.actual)return;
         if(ev.date!==e.releaseDate)return;
         if(!evtMatchesSym(ev,ccy))return;
@@ -1757,6 +1759,25 @@ function applyResearchToCal(){
 // Rohstoffe/Krypto/Indizes (NONFX_IDS) zeigen die Actual/Forecast/Previous-
 // Werte zwar ebenfalls an (sie nutzen die USD-Events), aber ihr Bias wird
 // NICHT automatisch verändert - das bleibt manuell (siehe resetNonFxIndBias).
+// Postfach-Benachrichtigungen werden erst NACH dem initialen Laden scharf
+// geschaltet (notifEnabled). Beim Start werden die notifKey-Marker der
+// Indikatoren still gesetzt, ohne zu benachrichtigen - sonst gäbe es bei
+// jedem Öffnen eine Flut für längst bekannte Releases.
+let notifEnabled=false;
+// Erzeugt eine "Score wurde aktualisiert"-Benachrichtigung fürs Postfach.
+function mkScoreNotif(symId,rub,ind,ev){
+  return{
+    id:uid(),kind:'score',
+    symId,currencies:symId,
+    base:stripPeriodSuffix(ind.name).base,
+    label:ind.displayName||ind.name,
+    rubName:rub.name,
+    bias:ind.bias,
+    actual:ev?ev.actual:null,forecast:ev?ev.forecast:null,previous:ev?ev.previous:null,
+    date:ev?ev.date:todayStr(),time:ev?ev.time:'',
+    ts:Date.now()
+  };
+}
 function syncIndicatorBiases(){
   let changed=false;
   syms.forEach(c=>{
@@ -1769,6 +1790,22 @@ function syncIndicatorBiases(){
           ind.autoEvId=ev.id;
           const nb=indBiasFromEvent(ev);
           if(ind.bias!==nb){ind.bias=nb;changed=true;}
+        }
+        // Score-Update-Benachrichtigung: ausgelöst, sobald ein Release mit
+        // Actual-Wert vorliegt, dessen STABILER Schlüssel (Name+Datum+Währung,
+        // unabhängig von der bei jedem FF-Reload wechselnden ev.id) sich vom
+        // zuletzt gemerkten unterscheidet.
+        if(ev&&ev.actual){
+          const k=evtDismissKey(ev);
+          if(ind.notifKey!==k){
+            const base=stripPeriodSuffix(ind.name).base;
+            // Pro Indikator+Release-Tag nur EINE Benachrichtigung (verhindert
+            // Dubletten, wenn z.B. mehrere CPI-Teilindizes am selben Tag matchen
+            // oder eine Test-/Seed-Nachricht bereits dafür existiert).
+            const dup=inbox.find(m=>m.kind==='score'&&m.symId===c.id&&m.base===base&&m.date===ev.date);
+            if(notifEnabled&&!dup){inbox.unshift(mkScoreNotif(c.id,rub,ind,ev));changed=true;}
+            ind.notifKey=k;changed=true;
+          }
         }
       });
     });
@@ -3244,7 +3281,7 @@ function renderInd(ind,ri,ii,total){
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
     </details>`;
   }
-  return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}">
+  return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
     <div class="ind-hdr">
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
@@ -3801,15 +3838,42 @@ function updInboxBadge(){
   updGreenBadge();
 }
 function openInboxM(){renderInbox();openM('mInbox');}
+// Das Postfach zeigt jetzt Score-Update-Benachrichtigungen: ein Indikator
+// hat einen neuen Wert bekommen, der den Score bewegt. Klick -> direkt zum
+// Indikator bei der jeweiligen Währung.
 function renderInbox(){
   const el=document.getElementById('inboxList');if(!el)return;
-  // Gleiche Filter-Funktion wie alle anderen Kalender (geteilter calHighOnly-Status).
-  const filterBar=`<div style="margin-bottom:8px"><button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Show only high-impact'}">${calHighOnly?'📁 High-impact only':'📁 All impacts'}</button></div>`;
-  if(!inbox.length){el.innerHTML=filterBar+`<div class="inbox-empty">No new messages.</div>`;return;}
-  let list=[...inbox];
-  if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
-  const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):b.date.localeCompare(a.date));
-  el.innerHTML=filterBar+(sorted.length?calTableHtml(sorted,{delAction:m=>`delInboxItem('${m.id}')`,idPrefix:'inbox-'}):`<div class="inbox-empty">No high-impact messages.</div>`);
+  if(!inbox.length){el.innerHTML=`<div class="inbox-empty">No score updates yet. You'll get a message here whenever a new release changes a currency's score.</div>`;return;}
+  const sorted=[...inbox].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  el.innerHTML=sorted.map(n=>{
+    const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
+    const dirLbl=n.bias==='bull'?'▲ Bullish':n.bias==='bear'?'▼ Bearish':'◆ Neutral';
+    const af=[n.actual!=null&&n.actual!==''?'A '+escH(n.actual):null,n.forecast!=null&&n.forecast!==''?'F '+escH(n.forecast):null,n.previous!=null&&n.previous!==''?'P '+escH(n.previous):null].filter(Boolean).join('  ·  ');
+    const when=n.date?escH(fmtDayHdr(n.date))+(n.time?' '+escH(n.time):''):'';
+    return`<div class="nb-row" onclick="gotoIndicatorByNotif('${n.id}')" title="Open ${escH(n.symId)} · ${escH(n.label)}">
+      <span class="nb-ccy">${escH(n.symId)}</span>
+      <div class="nb-main">
+        <div class="nb-name">${escH(n.label)}<span class="nb-rub"> · ${escH(n.rubName)}</span></div>
+        <div class="nb-sub">${af}${af&&when?'  ·  ':''}${when}</div>
+      </div>
+      <span class="nb-dir ${dirCls}">${dirLbl}</span>
+      <button class="nb-del" onclick="event.stopPropagation();delInboxItem('${n.id}')" title="Dismiss">×</button>
+    </div>`;
+  }).join('');
+}
+// Navigiert vom Postfach direkt zum betroffenen Indikator: Währung öffnen,
+// zugehörige Rubrik aufklappen und die Indikator-Karte kurz hervorheben.
+function gotoIndicatorByNotif(id){
+  const n=inbox.find(x=>x.id===id);if(!n)return;
+  closeM('mInbox');
+  const sym=syms.find(s=>s.id===n.symId);
+  if(sym){const rub=(sym.rubrics||[]).find(r=>r.name===n.rubName);if(rub&&rub.collapsed){rub.collapsed=false;save();}}
+  gotoSym(n.symId);
+  setTimeout(()=>{
+    const d=document.getElementById('detail');if(!d)return;
+    const card=[...d.querySelectorAll('.ind-card')].find(el=>el.dataset.indbase===n.base);
+    if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('ind-flash');setTimeout(()=>card.classList.remove('ind-flash'),1800);}
+  },150);
 }
 function delInboxItem(id){
   pushU();
@@ -4224,24 +4288,13 @@ const W_TYPES=[
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
 ];
 // Heutige Erinnerungen: alle High-Impact- bzw. scoretreibenden Events von
-// HEUTE - getrennt nach "noch anstehend" (oben, mit Countdown-Gefühl über die
-// Uhrzeit) und "bereits veröffentlicht" (mit Actual-Wert & Beat/Miss-Farbe).
+// HEUTE, sortiert nach Uhrzeit. Status ist rein zeitbasiert: vor der
+// geplanten Uhrzeit "upcoming" (•), ab der Uhrzeit gilt es als "released" (✓)
+// - dann steht (sobald vorhanden) der Actual-Wert mit Beat/Miss-Farbe da.
 function getTodayReminders(){
-  const t=todayStr();const seen=new Set();const out=[];
-  [...calEvts,...inbox].forEach(ev=>{
-    if(ev.date!==t)return;
-    if(evtImpact(ev)!=='high'&&!isScoreDrivingEvent(ev))return;
-    const key=(ev.name||'')+'|'+(ev.currencies||'')+'|'+(ev.time||'');
-    if(seen.has(key)){
-      // Dublette (Inbox-Kopie) - die Variante mit Actual bevorzugen.
-      if(ev.actual){const ex=out.find(o=>o._k===key);if(ex&&!ex.actual){ex.actual=ev.actual;ex.forecast=ex.forecast||ev.forecast;}}
-      return;
-    }
-    seen.add(key);
-    out.push({...ev,_k:key});
-  });
-  out.sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
-  return out;
+  const t=todayStr();
+  return calEvts.filter(ev=>ev.date===t&&(evtImpact(ev)==='high'||isScoreDrivingEvent(ev)))
+    .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
 }
 function renderTodayReminder(){
   const el=document.getElementById('todayCard');if(!el)return;
@@ -4250,15 +4303,16 @@ function renderTodayReminder(){
     el.innerHTML=`<div class="today-card empty"><span class="today-ic">📅</span><span>No high-impact events scheduled today.</span></div>`;
     return;
   }
-  const now=nowHM();
+  // "released", sobald die geplante Uhrzeit erreicht ist (isEvtPast). Fehlt die
+  // Uhrzeit, gilt das Event am selben Tag ebenfalls als released.
   const row=ev=>{
-    const released=!!ev.actual;
-    const past=isEvtPast(ev);
+    const released=isEvtPast(ev)||!ev.time;
     const ac=actualColor(ev);
-    const valTxt=released?ev.actual:(ev.forecast?'F '+ev.forecast:'');
-    const valCls=released?(ac||'today-neu'):'today-fc';
-    const stat=released?'released':(past?'awaiting':'upcoming');
-    const statLbl=released?'✓':(past?'⏳':'•');
+    const hasActual=ev.actual!=null&&ev.actual!=='';
+    const valTxt=released?(hasActual?ev.actual:'—'):(ev.forecast?'F '+ev.forecast:'');
+    const valCls=released?(hasActual?(ac||'today-neu'):'today-fc'):'today-fc';
+    const stat=released?'released':'upcoming';
+    const statLbl=released?'✓':'•';
     return`<div class="today-row ${stat}">
       <span class="today-stat" title="${stat}">${statLbl}</span>
       <span class="today-time">${ev.time||'—'}</span>
@@ -4267,10 +4321,10 @@ function renderTodayReminder(){
       ${valTxt?`<span class="today-val ${valCls}">${escH(valTxt)}</span>`:''}
     </div>`;
   };
-  const up=list.filter(e=>!e.actual);
-  const done=list.filter(e=>e.actual);
+  const rel=list.filter(e=>isEvtPast(e)||!e.time);
+  const up=list.length-rel.length;
   el.innerHTML=`<div class="today-card">
-    <div class="today-hd"><span class="today-ic">📅</span><span>Today</span><small>${up.length} upcoming · ${done.length} released</small></div>
+    <div class="today-hd"><span class="today-ic">📅</span><span>Today</span><small>${up} upcoming · ${rel.length} released</small></div>
     <div class="today-list">${list.map(row).join('')}</div>
   </div>`;
 }
@@ -4584,7 +4638,7 @@ function sparkline(arr,w,h){
 // ist ein Beat hier immer ein wirtschaftlich positiver Überraschungswert.
 function surpriseIndex(ccy){
   let net=0,n=0;
-  [...calEvts,...inbox].forEach(ev=>{
+  calEvts.forEach(ev=>{
     if(!ev.actual||ev.forecast==null||ev.forecast===''||!ev.date)return;
     const du=daysUntil(ev.date);if(du>0||du<-30)return;
     if(!evtMatchesSym(ev,ccy)||!isScoreDrivingEvent(ev))return;
@@ -4749,7 +4803,29 @@ loadState();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
+// Während des initialen Laufs werden nur die notifKey-Marker gesetzt (kein
+// Postfach-Spam für längst bekannte Releases); danach scharf schalten.
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
+notifEnabled=true;
+// Einmaliger Test: eine CAD-CPI-Score-Benachrichtigung von gestern ins
+// Postfach legen, damit sich der Klick-zum-Indikator-Ablauf direkt
+// ausprobieren lässt. Werte aus dem realen Kalender (CAD CPI m/m, 22.06.).
+if(localStorage.getItem('fxpro_seed_cadcpi')!=='1'){
+  const cad=syms.find(s=>s.id==='CAD');
+  const rub=cad&&(cad.rubrics||[]).find(r=>r.name==='Inflation');
+  const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
+  if(ind){
+    const yd=new Date(todayStr()+'T00:00:00');yd.setDate(yd.getDate()-1);
+    const ydStr=yd.getFullYear()+'-'+String(yd.getMonth()+1).padStart(2,'0')+'-'+String(yd.getDate()).padStart(2,'0');
+    inbox.unshift({id:uid(),kind:'score',symId:'CAD',currencies:'CAD',base:'CPI (Headline)',label:ind.displayName||ind.name,rubName:'Inflation',bias:'bull',actual:'1%',forecast:'0.8%',previous:'0.4%',date:ydStr,time:'08:30',ts:Date.now()});
+    // Verhindert, dass der echte CAD-CPI-Eintrag (sofern schon im Kalender)
+    // dieselbe Benachrichtigung gleich nochmal erzeugt.
+    const cev=findIndEvent('CAD',ind.name);
+    ind.notifKey=cev?evtDismissKey(cev):'CPI m/m|'+ydStr+'|CAD';
+  }
+  localStorage.setItem('fxpro_seed_cadcpi','1');
+  save();
+}
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
