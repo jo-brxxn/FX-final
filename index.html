@@ -638,7 +638,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#ca8a04;color:#fefce8;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GOLD (New "Today" reminder card on the Dashboard: shows every high-impact / score-driving event scheduled for today, split into still-upcoming (•), awaiting-result (⏳) and already-released (✓ with the actual value + beat/miss color), so you don't miss a release)</div>
+<div style="flex:none;background:#4338ca;color:#eef2ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROYAL BLUE (Removed the old "Upcoming Events" calendar widget from the Dashboard - it is now covered by the new "Today" reminder card up top plus the dedicated Calendar tab. Existing dashboards drop it automatically on load)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2627,7 +2627,6 @@ function cleanLegacySeedEvts(){
 function mkWidgets(){return[
   {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:0},
   {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:4},
-  {id:uid(),type:'calendar',title:'Upcoming Events',order:5},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -2720,6 +2719,9 @@ function loadState(){
         widgets=widgets.filter(w=>w.type!=='assets');
       }
       widgets=widgets.filter(w=>w.type!=='setups');
+      // "Upcoming Events"-Kalenderwidget entfernt (durch die "Today"-Karte oben
+      // im Dashboard + das eigene Kalender-Tab abgedeckt).
+      widgets=widgets.filter(w=>w.type!=='calendar');
       // Quick-Notes-Karte wurde mit der Watchlist-Karte zu EINER Karte
       // zusammengeführt: Notiztext in die Watchlist-Karte übernehmen und das
       // eigenständige Quick-Notes-Widget entfernen.
@@ -4219,7 +4221,6 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 const W_TYPES=[
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
-  {type:'calendar',label:'Upcoming Events',sub:'Next high-impact economic events'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
 ];
 // Heutige Erinnerungen: alle High-Impact- bzw. scoretreibenden Events von
