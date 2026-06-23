@@ -79,6 +79,22 @@
    "date": "2026-06-11",
    "event": "ECB Interest Rate Decision",
    "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "50.7",
+   "forecast": "50",
+   "previous": "49.7",
+   "date": "2026-06-23",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null
+  },
+  "Services PMI": {
+   "actual": "47.4",
+   "forecast": "45.5",
+   "previous": "44.3",
+   "date": "2026-06-23",
+   "event": "S&P Global Services PMI Flash",
+   "period": null
   }
  },
  "USD": {
@@ -323,6 +339,22 @@
    "date": "2026-06-18",
    "event": "BoE Interest Rate Decision",
    "period": null
+  },
+  "Services PMI": {
+   "actual": "48.7",
+   "forecast": "50.5",
+   "previous": "49.3",
+   "date": "2026-06-23",
+   "event": "S&P Global Services PMI Flash",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "53.1",
+   "forecast": "53.8",
+   "previous": "53.9",
+   "date": "2026-06-23",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null
   }
  },
  "JPY": {
@@ -396,6 +428,22 @@
    "previous": "0.75%",
    "date": "2026-06-16",
    "event": "BoJ Interest Rate Decision",
+   "period": null
+  },
+  "Services PMI": {
+   "actual": "51.8",
+   "forecast": null,
+   "previous": "50",
+   "date": "2026-06-23",
+   "event": "S&P Global Services PMI Flash",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "54.9",
+   "forecast": "54.5",
+   "previous": "54.5",
+   "date": "2026-06-23",
+   "event": "S&P Global Manufacturing PMI Flash",
    "period": null
   }
  },
@@ -522,6 +570,22 @@
    "event": "RBA Interest Rate Decision",
    "period": null
   },
+  "Services PMI": {
+   "actual": "49.9",
+   "forecast": null,
+   "previous": "48.7",
+   "date": "2026-06-22",
+   "event": "S&P Global Services PMI Flash",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "51.2",
+   "forecast": null,
+   "previous": "50.7",
+   "date": "2026-06-22",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null
+  },
   "PPI": {
    "actual": "3%",
    "forecast": null,
@@ -575,7 +639,7 @@
   "GDP Growth QoQ": {
    "actual": "0%",
    "forecast": null,
-   "previous": "-0.2%",
+   "previous": "0%",
    "date": "2026-05-29",
    "event": "GDP Growth Rate QoQ",
    "period": "q/q"
