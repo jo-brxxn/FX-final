@@ -271,6 +271,30 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cmp-tbl tr.cmp-exp-row td.cmp-exp-lbl{background:var(--bg1);color:var(--t3);font-weight:600;font-size:10px}
 .cmp-link-wrap{display:flex;flex-direction:column;gap:3px;align-items:center}
 .cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}@media (hover:hover){.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}}
+/* ── MATRIX / STRENGTH ── */
+.mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
+.mx-card-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mx-card-title small{font-weight:500;color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-head,.mx-rank-row{display:grid;grid-template-columns:26px 48px 1fr 52px 74px 56px;align-items:center;gap:9px;padding:7px 14px}
+.mx-rank-head{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd)}
+.mx-rank-row{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .12s}@media (hover:hover){.mx-rank-row:hover{background:var(--bg4)}}
+.mx-rank-row:last-child{border-bottom:none}
+.mx-rank-pos{color:var(--t3);font-size:12px;font-weight:700;text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-id{font-size:14px;font-weight:700;color:var(--t0)}
+.mx-rank-bar-wrap{height:9px;background:var(--bg4);border-radius:5px;overflow:hidden}
+.mx-rank-bar{height:100%;border-radius:5px;transition:width .3s}
+.mx-rank-score{font-size:14px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-spark{display:flex;justify-content:center;align-items:center}
+.mx-spark-empty{color:var(--t3);opacity:.5}
+.mx-rank-surp{text-align:right;font-size:13px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-surp small{color:var(--t3);font-weight:500;font-size:9px}
+.mx-hm-scroll{overflow-x:auto;padding:10px}
+.mx-hm{border-collapse:separate;border-spacing:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:0 auto}
+.mx-hm th{font-size:11px;font-weight:700;color:var(--t2);padding:4px 6px;text-align:center}
+.mx-hm th.mx-hm-rowh{color:var(--t0)}
+.mx-hm th.mx-hm-corner{color:var(--t3);font-size:9px}
+.mx-hm td{font-size:11px;font-weight:600;color:var(--t1);text-align:center;padding:5px 7px;border-radius:5px;min-width:34px;border:1px solid var(--bd)}
+.mx-hm td.mx-hm-diag{color:var(--t3);opacity:.35;border-color:transparent;background:var(--bg3)}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -593,7 +617,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0369a1;color:#f0f9ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SKY BLUE (Consumer Confidence now pulls its Actual/Forecast/Previous live from the calendar, same as CPI/NFP etc. - EUR uses a strict pattern so it only ever picks up the EU Commission "Consumer Confidence (Flash)" release, never a different national survey like GfK that also gets tagged EUR)</div>
+<div style="flex:none;background:#a21caf;color:#fdf4ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: FUCHSIA (New "Matrix" tab: live currency-strength ranking with score bars, a day-by-day score-trend sparkline per currency (starts collecting from now), a 30-day data-surprise index (beats−misses of score-driving releases), and an 8x8 pair-strength heatmap built from the single-currency scores - blue = long the row / short the column)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -736,6 +760,7 @@ function introLogin(){
   <button class="tp"     id="tabFx" onclick="showTab('cur',this,'fx')">FX</button>
   <button class="tp"     id="tabNonfx" onclick="showTab('cur',this,'nonfx')">Non-FX</button>
   <button class="tp"     onclick="showTab('cmp',this)">Compare</button>
+  <button class="tp"     onclick="showTab('mx',this)">Matrix</button>
   <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
@@ -753,6 +778,14 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Side-by-side macro data across all currencies · each cell shows Actual · (Forecast / Previous)</div>
   </div>
   <div id="cmpCards"></div>
+</div>
+<!-- PAGE: MATRIX -->
+<div class="pc" id="pgMx" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Strength Matrix</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live currency-strength ranking, score trend &amp; data-surprise momentum · pair heatmap from the single-currency scores</div>
+  </div>
+  <div id="mxBody"></div>
 </div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
@@ -2700,6 +2733,7 @@ function save(){
     localStorage.setItem('fxpro_updated',new Date().toISOString());
     const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
   }catch(e){}
+  recordScoreHist();
   cloudAutoSync();
 }
 // Debounced save while typing, so a reload mid-edit doesn't lose anything
@@ -4433,8 +4467,109 @@ function renderCompare(){
   }).join('');
   el.innerHTML=filterBar+(cards||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No columns selected.</div>`);
 }
+// ══ MATRIX / STÄRKE ════════════════════════════════════════════════
+// Persistenter Score-Verlauf: pro FX-Währung 1 Wert je Tag (max. 30 Tage).
+// Separat vom Haupt-State gespeichert, damit Undo/Redo & Cloud-Sync nicht
+// bei jedem Snapshot mit anwachsen. Wird beim Start geladen und bei jedem
+// save() fortgeschrieben (überschreibt den heutigen Wert, fügt neue Tage an).
+const SCOREHIST_KEY='fxpro_scorehist';
+let scoreHist={};
+function loadScoreHist(){try{scoreHist=JSON.parse(localStorage.getItem(SCOREHIST_KEY))||{};}catch(e){scoreHist={};}}
+function recordScoreHist(){
+  const t=todayStr();let changed=false;
+  FX.forEach(id=>{
+    const sym=syms.find(s=>s.id===id);if(!sym)return;
+    const sc=Math.round(symScore(sym)*10)/10;
+    const arr=scoreHist[id]||(scoreHist[id]=[]);
+    const last=arr[arr.length-1];
+    if(last&&last[0]===t){if(last[1]!==sc){last[1]=sc;changed=true;}}
+    else{arr.push([t,sc]);changed=true;}
+    if(arr.length>30)arr.splice(0,arr.length-30);
+  });
+  if(changed){try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
+}
+// Mini-Sparkline (SVG) aus den letzten Score-Werten einer Währung. Steigt
+// der Score (heute ≥ erster Wert) -> blau, sonst rot. Ein einzelner Tag
+// wird als Punkt gezeichnet.
+function sparkline(arr,w,h){
+  w=w||66;h=h||20;
+  if(!arr||!arr.length)return`<span class="mx-spark-empty">–</span>`;
+  const vals=arr.map(p=>p[1]);const n=vals.length;
+  let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1;}
+  const x=i=>n===1?w/2:(i/(n-1))*(w-2)+1;
+  const y=v=>h-2-((v-mn)/(mx-mn))*(h-4);
+  const col=vals[n-1]>=vals[0]?'var(--blue)':'var(--red)';
+  if(n===1)return`<svg class="mx-spark" width="${w}" height="${h}"><circle cx="${x(0).toFixed(1)}" cy="${y(vals[0]).toFixed(1)}" r="2.2" fill="${col}"/></svg>`;
+  const pts=vals.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  return`<svg class="mx-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(n-1).toFixed(1)}" cy="${y(vals[n-1]).toFixed(1)}" r="1.8" fill="${col}"/></svg>`;
+}
+// Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
+// scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
+// berücksichtigt bereits "lower is better" (z.B. Arbeitslosenquote), daher
+// ist ein Beat hier immer ein wirtschaftlich positiver Überraschungswert.
+function surpriseIndex(ccy){
+  let net=0,n=0;
+  [...calEvts,...inbox].forEach(ev=>{
+    if(!ev.actual||ev.forecast==null||ev.forecast===''||!ev.date)return;
+    const du=daysUntil(ev.date);if(du>0||du<-30)return;
+    if(!evtMatchesSym(ev,ccy)||!isScoreDrivingEvent(ev))return;
+    const c=actualColor(ev);
+    if(c==='act-good')net++;else if(c==='act-bad')net--;
+    n++;
+  });
+  return{net,n};
+}
+function mxHeatColor(v,maxAbs){
+  if(!v)return'transparent';
+  const t=Math.min(1,Math.abs(v)/(maxAbs||1));
+  const a=(0.1+t*0.55).toFixed(2);
+  return(v>0?'rgba(var(--blue-rgb),':'rgba(var(--red-rgb),')+a+')';
+}
+function renderMatrix(){
+  const el=document.getElementById('mxBody');if(!el)return;
+  const scores={};FX.forEach(id=>{const s=syms.find(x=>x.id===id);scores[id]=s?Math.round(symScore(s)*10)/10:0;});
+  // ── Stärke-Ranking ──
+  const ranked=[...FX].sort((a,b)=>scores[b]-scores[a]);
+  const maxAbs=Math.max(1,...FX.map(id=>Math.abs(scores[id])));
+  let maxDays=0;
+  const rankRows=ranked.map((id,i)=>{
+    const sc=scores[id],col=scoreColor(sc),w=(Math.abs(sc)/maxAbs*100).toFixed(0);
+    const hist=scoreHist[id]||[];if(hist.length>maxDays)maxDays=hist.length;
+    const sp=surpriseIndex(id);
+    const spCol=sp.net>0?'var(--blue)':sp.net<0?'var(--red)':'var(--t3)';
+    return`<div class="mx-rank-row" onclick="gotoSym('${id}')" title="Open ${id}">
+      <div class="mx-rank-pos">${i+1}</div>
+      <div class="mx-rank-id">${id}</div>
+      <div class="mx-rank-bar-wrap"><div class="mx-rank-bar" style="width:${w}%;background:${col}"></div></div>
+      <div class="mx-rank-score" style="color:${col}">${sc>0?'+':''}${sc}</div>
+      <div class="mx-rank-spark">${sparkline(hist)}</div>
+      <div class="mx-rank-surp"><span style="color:${spCol}">${sp.net>0?'+':''}${sp.net}</span>${sp.n?`<small>/${sp.n}</small>`:''}</div>
+    </div>`;
+  }).join('');
+  // ── Paar-Heatmap (Zeile − Spalte) ──
+  const maxSpread=Math.max(1,...FX.flatMap(a=>FX.map(b=>Math.abs(scores[a]-scores[b]))));
+  const head=`<tr><th class="mx-hm-corner" title="Zeile long / Spalte short">L\\S</th>${FX.map(q=>`<th>${q}</th>`).join('')}</tr>`;
+  const body=FX.map(base=>{
+    const cells=FX.map(q=>{
+      if(base===q)return`<td class="mx-hm-diag">·</td>`;
+      const v=Math.round((scores[base]-scores[q])*10)/10;
+      return`<td style="background:${mxHeatColor(v,maxSpread)}" title="${base}/${q}: ${v>0?'+':''}${v}">${v>0?'+':''}${v}</td>`;
+    }).join('');
+    return`<tr><th class="mx-hm-rowh">${base}</th>${cells}</tr>`;
+  }).join('');
+  el.innerHTML=`
+  <div class="mx-card">
+    <div class="mx-card-title"><span>💪 Currency Strength</span><small>Score · ${maxDays>1?`trend (last ${maxDays} days)`:'trend (collecting daily…)'} · surprise (30d beats−misses)</small></div>
+    <div class="mx-rank-head"><div class="mx-rank-pos">#</div><div class="mx-rank-id">CCY</div><div class="mx-rank-bar-wrap"></div><div class="mx-rank-score">Score</div><div class="mx-rank-spark">Trend</div><div class="mx-rank-surp">Surprise</div></div>
+    ${rankRows}
+  </div>
+  <div class="mx-card">
+    <div class="mx-card-title"><span>🔥 Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
+    <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
+  </div>`;
+}
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -4452,6 +4587,7 @@ function showTab(tab,btn,fxMode){
   if(tab==='dash')renderDash();
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
+  else if(tab==='mx')renderMatrix();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
   else if(tab==='notes')renderNCs();
@@ -4460,6 +4596,7 @@ function rerender(){
   if(curPage==='dash')renderDash();
   else if(curPage==='cur'){renderSidebar();renderDetail();}
   else if(curPage==='cmp')renderCompare();
+  else if(curPage==='mx')renderMatrix();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
   else if(curPage==='notes')renderNCs();
@@ -4534,6 +4671,7 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
+loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
@@ -4560,6 +4698,7 @@ setInterval(()=>{
   if(curPage==='cal'){const y=window.scrollY;renderCalendar();window.scrollTo(0,y);}
   else if(curPage==='dash'){renderDash();}
   else if(curPage==='cmp'){renderCompare();}
+  else if(curPage==='mx'){renderMatrix();}
 },60*1000);
 </script>
 </body>
