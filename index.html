@@ -319,6 +319,26 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
 .cot-tbl td.cot-c-long{color:#4fc3f7;font-weight:700}
 .cot-tbl td.cot-c-short{color:#ef6b78;font-weight:700}
+/* COT Steuerleiste (Countdown + Refresh) */
+.cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cot-cd-box{display:flex;flex-direction:column;gap:1px}
+.cot-cd-lbl{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:700}
+.cot-cd{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:14px;color:var(--t1);font-weight:600}
+.cot-cd b{color:var(--t0);font-weight:800}
+.cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cot-note{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
+@media (hover:hover){.cot-refresh:hover{border-color:#4fc3f7;color:var(--t0)}}
+.cot-refresh:disabled{opacity:.6;cursor:default}
+.cot-refresh-ic{display:inline-block;font-size:14px;line-height:1}
+.cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
+@keyframes cotSpin{to{transform:rotate(360deg)}}
+.cot-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.cot-filter-lbl{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:700;margin-right:2px}
+.cot-chip{background:var(--bg3);color:var(--t2);border:1px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+@media (hover:hover){.cot-chip:hover{border-color:#4fc3f7;color:var(--t0)}}
+.cot-chip.on{background:rgba(79,195,247,.16);border-color:#4fc3f7;color:#bfe6fb}
+.cot-chip-all{font-weight:700}
 /* ── TODAY REMINDER ── */
 .today-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .today-card.empty{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--t3);font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -674,7 +694,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TURQUOISE (COT tab colors switched from generic green/red to the app's own bullish/bearish bias colors — Long now shown in the bullish blue (#4fc3f7), Short in the bearish red (#ef6b78), matching the bias coloring used everywhere else in the app)</div>
+<div style="flex:none;background:#a21caf;color:#fdf4ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAGENTA (COT tab gains three controls: a per-symbol filter (chip row) with an "← Alle anzeigen" button to return to the full overview; a manual "Aktualisieren" button that pulls live straight from the CFTC on demand (falls back to the stored file); and a live countdown to the next report — CFTC publishes weekly, Fridays 15:30 New York time, shifted a day on US holidays)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4799,6 +4819,10 @@ function renderMatrix(){
 // aus dem Browser nicht immer per CORS erreichbar). COT erscheint woechentlich
 // (Stand Dienstag, Veroeffentlichung Freitag).
 let COT_DATA=null;
+let cotFilter=null;            // null = grosse Uebersicht (alle), sonst Symbol-ID
+let cotRefreshing=false;
+let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
+let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
 const COT_SYMS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
 const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq'};
 async function fetchCotData(){
@@ -4808,6 +4832,101 @@ async function fetchCotData(){
   }catch(e){}
 }
 function autoFetchCot(){fetchCotData().then(()=>{if(curPage==='cot')renderCot();});}
+
+// ── Direkt-Abruf von der CFTC (fuer den manuellen Refresh-Button). Die
+// Socrata-API der CFTC sendet CORS-Header, laeuft also auch aus dem Browser.
+// Dieselbe Markt-Zuordnung wie im GitHub-Action.
+const COT_CFTC_URL='https://publicreporting.cftc.gov/resource/6dca-aqww.json?$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,open_interest_all,noncomm_positions_long_all,noncomm_positions_short_all,change_in_noncomm_long_all,change_in_noncomm_short_all,change_in_open_interest_all&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=6000';
+const COT_MARKETS=[
+  {id:'EUR',inc:/EURO FX/,exc:/MICRO/},
+  {id:'GBP',inc:/BRITISH POUND/,exc:/MICRO/},
+  {id:'JPY',inc:/JAPANESE YEN/,exc:/MICRO/},
+  {id:'CHF',inc:/SWISS FRANC/,exc:/MICRO/},
+  {id:'CAD',inc:/CANADIAN DOLLAR/,exc:/MICRO/},
+  {id:'AUD',inc:/AUSTRALIAN DOLLAR/,exc:/MICRO/},
+  {id:'NZD',inc:/(NZ DOLLAR|NEW ZEALAND DOLLAR)/,exc:/MICRO/},
+  {id:'USD',inc:/(U\.?S\.?\s*DOLLAR INDEX|USD INDEX)/,exc:/MICRO/},
+  {id:'BTC',inc:/BITCOIN/,exc:/(MICRO|YIELD|ETHER|EVENT)/},
+  {id:'GOLD',inc:/^GOLD - /,exc:/(MICRO|KILO)/},
+  {id:'SILVER',inc:/^SILVER - /,exc:/MICRO/},
+  {id:'OIL',inc:/CRUDE OIL, LIGHT SWEET/,exc:/(MICRO|CALENDAR|BULLET|FINANCIAL|NYMEX OTHER|MIDLAND|GULF|WTI AVERAGE)/},
+  {id:'SP500',inc:/E-MINI S&P 500/,exc:/(MICRO|ESG|GROWTH|VALUE|DIVIDEND|ANNUAL|QUARTER|CONSU|FINANCIAL|HEALTH|TECH|UTIL|MATERIAL|INDUSTRIAL|ENERGY|REAL|COMMUNICATION)/},
+  {id:'NAS',inc:/(NASDAQ-100|E-MINI NASDAQ)/,exc:/MICRO/}
+];
+function cotParseRaw(rows){
+  if(!Array.isArray(rows)||!rows.length)return null;
+  const out={};let reportDate='';
+  for(const r of rows){
+    const nm=(r.market_and_exchange_names||'').toUpperCase();
+    for(const mk of COT_MARKETS){
+      if(out[mk.id])continue;
+      if(mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))){
+        const L=+r.noncomm_positions_long_all,S=+r.noncomm_positions_short_all;
+        if(!isFinite(L)||!isFinite(S))continue;
+        out[mk.id]={long:L,short:S,dLong:+r.change_in_noncomm_long_all||0,dShort:+r.change_in_noncomm_short_all||0,oi:+r.open_interest_all||0,dOi:+r.change_in_open_interest_all||0};
+        const d=String(r.report_date_as_yyyy_mm_dd||'').slice(0,10);
+        if(d>reportDate)reportDate=d;
+      }
+    }
+  }
+  return Object.keys(out).length?{report_date:reportDate,updated:new Date().toISOString(),symbols:out}:null;
+}
+async function cotFetchLive(){
+  const res=await fetch(COT_CFTC_URL,{signal:AbortSignal.timeout(13000),cache:'no-store'});
+  if(!res.ok)throw new Error('cftc '+res.status);
+  const parsed=cotParseRaw(await res.json());
+  if(!parsed)throw new Error('no markets');
+  return parsed;
+}
+async function cotManualRefresh(){
+  if(cotRefreshing)return;
+  cotRefreshing=true;cotRefreshNote='';
+  const btn=document.getElementById('cotRefreshBtn');
+  if(btn){btn.classList.add('spin');btn.disabled=true;}
+  try{
+    COT_DATA=await cotFetchLive();                 // frisch direkt von der CFTC
+    cotRefreshNote='✓ Live von der CFTC aktualisiert';
+  }catch(e){
+    await fetchCotData();                           // Fallback: zuletzt gespeicherte Datei
+    cotRefreshNote=COT_DATA?'✓ Aus gespeicherten Daten aktualisiert (CFTC-Direktabruf nicht möglich)':'⚠ Aktualisierung fehlgeschlagen';
+  }
+  cotRefreshing=false;
+  renderCot();
+}
+
+// ── Countdown bis zum naechsten COT-Report (Freitag 15:30 New Yorker Zeit) ──
+function cotNyParts(date){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hour12:false,weekday:'short',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const m={};dtf.formatToParts(date).forEach(p=>{m[p.type]=p.value;});return m;
+}
+function cotNyToUtc(y,mo,d,h,mi){
+  const guess=Date.UTC(y,mo-1,d,h,mi,0);
+  const m=cotNyParts(new Date(guess));
+  const asUTC=Date.UTC(+m.year,+m.month-1,+m.day,m.hour==='24'?0:+m.hour,+m.minute,+m.second);
+  return guess-(asUTC-guess);
+}
+function cotNextReportTs(){
+  const now=Date.now();
+  for(let add=0;add<14;add++){
+    const m=cotNyParts(new Date(now+add*864e5));
+    if(m.weekday==='Fri'){
+      const ts=cotNyToUtc(+m.year,+m.month,+m.day,15,30);
+      if(ts>=now)return ts;
+    }
+  }
+  return null;
+}
+function cotStartCountdown(){cotStopCountdown();cotTickCountdown();cotCdTimer=setInterval(cotTickCountdown,1000);}
+function cotStopCountdown(){if(cotCdTimer){clearInterval(cotCdTimer);cotCdTimer=null;}}
+function cotTickCountdown(){
+  const el=document.getElementById('cotCountdown');
+  if(!el){cotStopCountdown();return;}
+  const ts=cotNextReportTs();
+  if(!ts){el.textContent='–';return;}
+  let diff=ts-Date.now();if(diff<0)diff=0;
+  const d=Math.floor(diff/864e5),h=Math.floor(diff%864e5/36e5),mi=Math.floor(diff%36e5/6e4),s=Math.floor(diff%6e4/1e3);
+  el.innerHTML=`<b>${d}</b>d <b>${String(h).padStart(2,'0')}</b>h <b>${String(mi).padStart(2,'0')}</b>m <b>${String(s).padStart(2,'0')}</b>s`;
+}
 // Leitet aus {long,short,dLong,dShort,oi,dOi} alle Kennzahlen ab.
 function cotMetrics(s){
   if(!s)return null;
@@ -4824,14 +4943,34 @@ function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
 function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return String(Math.round(n));}
 function cotSigned(n){n=+n;if(!isFinite(n))return'–';return(n>0?'+':'')+cotNum(n);}
 function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+':'')+n.toFixed(1)+'%';}
+function setCotFilter(id){cotFilter=(cotFilter===id?null:id)||null;renderCot();}
+function clearCotFilter(){cotFilter=null;renderCot();}
 function renderCot(){
   const el=document.getElementById('cotBody');if(!el)return;
+  cotStopCountdown();
+  // Steuerleiste: Countdown bis zum naechsten Report + manueller Refresh.
+  const refreshSpin=cotRefreshing?' spin':'';
+  const note=cotRefreshNote?`<span class="cot-note">${escH(cotRefreshNote)}</span>`:'';
+  const ctrl=`<div class="cot-ctrl">
+    <div class="cot-cd-box"><span class="cot-cd-lbl">Nächster Report in</span><span class="cot-cd" id="cotCountdown">–</span></div>
+    <div class="cot-ctrl-r">${note}<button class="cot-refresh${refreshSpin}" id="cotRefreshBtn" onclick="cotManualRefresh()" title="Jetzt live von der CFTC laden"><span class="cot-refresh-ic">↻</span> Aktualisieren</button></div>
+  </div>`;
   if(!COT_DATA||!COT_DATA.symbols){
-    el.innerHTML=`<div class="cot-empty">COT-Daten sind noch nicht verfügbar. Sie werden stündlich von der CFTC geladen – nach dem ersten Lauf des Daten-Jobs erscheinen sie hier (COT wird wöchentlich, freitags, aktualisiert).</div>`;
-    return;
+    el.innerHTML=ctrl+`<div class="cot-empty">COT-Daten sind noch nicht verfügbar. Sie werden stündlich von der CFTC geladen – nach dem ersten Lauf des Daten-Jobs erscheinen sie hier (COT wird wöchentlich, freitags, aktualisiert). Mit „Aktualisieren“ kannst du jederzeit live von der CFTC nachladen.</div>`;
+    cotStartCountdown();return;
   }
-  const rows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
-  if(!rows.length){el.innerHTML=`<div class="cot-empty">Keine COT-Werte für die gewählten Symbole gefunden.</div>`;return;}
+  const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
+  // Filter-Chips (immer alle verfuegbaren Symbole) + „Alle“-Zuruecksetzer.
+  const avail=allRows.map(r=>r.id);
+  if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
+  const chip=r=>`<button class="cot-chip${cotFilter===r.id?' on':''}" onclick="setCotFilter('${r.id}')">${escH(r.name)}</button>`;
+  const filterBar=`<div class="cot-filter">
+    <span class="cot-filter-lbl">Symbol</span>
+    <button class="cot-chip cot-chip-all${cotFilter?'':' on'}" onclick="clearCotFilter()" title="Große Übersicht – alle Symbole">${cotFilter?'← Alle anzeigen':'Alle'}</button>
+    ${allRows.map(chip).join('')}
+  </div>`;
+  const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
+  if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">Keine COT-Werte für die gewählte Auswahl gefunden.</div>`;cotStartCountdown();return;}
   const bars=rows.map(r=>{
     const lp=r.m.longPct,sp=r.m.shortPct;
     return`<div class="cot-bar-row" onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
@@ -4854,22 +4993,25 @@ function renderCot(){
       <td style="color:${cotColor(m.dOi)}">${cotSigned(m.dOi)}</td>
     </tr>`;}).join('');
   const date=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
-  el.innerHTML=`
+  const scope=cotFilter?`gefiltert: ${escH(COT_NAME[cotFilter]||cotFilter)}`:'sortiert nach Long-Anteil';
+  el.innerHTML=ctrl+filterBar+`
     <div class="cot-meta">Report-Datum: <b>${escH(date)}</b> · Quelle: CFTC (Legacy, Non-Commercial) · COT erscheint wöchentlich (Stand Dienstag, Veröffentlichung Freitag)</div>
     <div class="cot-card">
-      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>grün = Long · rot = Short · sortiert nach Long-Anteil · Klick öffnet das Symbol</small></div>
+      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blau = Long · rot = Short · ${scope} · Klick öffnet das Symbol</small></div>
       <div class="cot-bars">${bars}</div>
     </div>
     <div class="cot-card">
       <div class="cot-card-title"><span>📋 Details &amp; Wochenänderung</span><small>Δ = Veränderung zur Vorwoche</small></div>
       <div class="cot-scroll"><table class="cot-tbl"><thead>${head}</thead><tbody>${body}</tbody></table></div>
     </div>`;
+  cotStartCountdown();
 }
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  if(tab!=='cot')cotStopCountdown();
   document.querySelectorAll('.tp').forEach(b=>b.classList.remove('on'));
   const pgEl=document.getElementById(PAGE_IDS[tab]);
   if(pgEl){
