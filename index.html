@@ -36,8 +36,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;max-height:48px;transition:max-height .2s ease,opacity .15s ease,border-color .2s ease}
-.tabbar.collapsed{max-height:0;opacity:0;border-bottom-color:transparent;pointer-events:none}
+.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 /* ── BODY ── */
@@ -191,6 +190,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
+.ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
+.ov-card-title{font-size:12px;font-weight:800;color:var(--t1);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov-field{margin-bottom:5px}
+.ov-field:last-child{margin-bottom:0}
+.ov-name{font-size:12px;font-weight:600;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
+.ov-summary{font-size:12px;line-height:1.6;color:var(--t1);white-space:pre-wrap}
+.ov-empty{color:var(--t3);font-style:italic}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
 /* Pärchen-Indikatoren (z.B. CPI + Core CPI): gemeinsame Umrandung, jeweils
@@ -525,6 +531,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
 .nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .nb-day-hdr:first-child{margin-top:0}
+.nb-day-hdr.nb-day-today{background:rgba(239,107,120,.18);color:#ef6b78;border-bottom-color:rgba(239,107,120,.4)}
 .nb-ccy{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
 .nb-main{flex:1;min-width:0}
 .nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -709,7 +716,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#1e3a8a;color:#dbeafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: NAVY (COT Positioning History improvements: the chart now stretches to the full available width, the right (contract) scale always rounds up to the next 10k with one extra 10k of headroom; when an asset is filtered the redundant Net Long/Short bars are hidden and the details table below the chart is replaced with one row per historical report — incl. date column — with the Δ Net % (wk) column visually highlighted as the key metric; and the previously-fetched history is now cached locally so it survives a page reload instead of disappearing until the next hourly data job run)</div>
+<div style="flex:none;background:#36393f;color:#e5e5e5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CHARCOAL (the top tab bar is permanently visible again, no more auto-collapse on scroll; inbox messages now auto-delete after 2 days, sort oldest-to-newest with the newest at the bottom, and today's day header is highlighted in red; every symbol page now has a new "Overview" card at the top showing the first 5 rubric cards' summary, auto-bias and score in an indicator-card style; and the "Net % weekly change" math was double-checked against real data — it is correct, it's just twice the change in Long%, by definition)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2887,7 +2894,7 @@ function loadState(){
         if(wlW.title==='Watchlist')wlW.title='Watchlist & Quick Notes';
         widgets=widgets.filter(w=>w.type!=='quick_notes');
       }
-      inbox=d.inbox||[];
+      inbox=pruneInbox(d.inbox||[]);
       sbOrder=d.sbOrder||{};
       catOrder=d.catOrder||[];
       rateWatchCustom=d.rateWatchCustom||{};
@@ -3254,10 +3261,37 @@ function masonryHTML(items,renderFn){
   return`<div class="masonry" style="--mcols:${masonryCols()}">${items.map((it,i)=>renderFn(it,i)).join('')}</div>`;
 }
 
+// ── OVERVIEW-KARTE ──
+// Fasst die ersten 5 Rubrik-Karten (in derselben Reihenfolge wie unten
+// angezeigt) zu einer einzigen Übersichtskarte zusammen: pro Rubrik ein
+// Feld mit deren Zusammenfassungstext, automatisch übernommenem Bias und
+// Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
+function renderOverviewCard(rubs){
+  const top=rubs.slice(0,5);
+  if(!top.length)return'';
+  const fields=top.map(rub=>{
+    const bco=bCol(rub.bias);
+    const sc=rubScore(rub);
+    const txt=rub.summary&&rub.summary.trim()?escH(rub.summary):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
+    return`<div class="ind-card ov-field ${glowClass(rub.bias)}">
+      <div class="ind-hdr">
+        <span class="ov-name">${escH(rub.name)}</span>
+        <span class="bo on" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
+        <span class="rub-score" style="color:${bco};border-color:${bco}" title="Score of the ${escH(rub.name)} card below">${sc>0?'+':''}${sc}</span>
+      </div>
+      <div class="ind-body ov-summary">${txt}</div>
+    </div>`;
+  }).join('');
+  return`<div class="ov-card">
+    <div class="ov-card-title">📋 Overview</div>
+    ${fields}
+  </div>`;
+}
 // ── SPECIFIC TAB ──
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
   return`<div style="font-size:12px;color:var(--t3);margin-bottom:9px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">⚡ Current factors – what matters right now (CB tone, data surprises, news, positioning)</div>
+  ${renderOverviewCard(rubs)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
@@ -3979,7 +4013,17 @@ function addCalEv(){
 function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();renderCalendar();}
 
 // ── INBOX / POSTFACH ─────────────────────────────────────────────────
+// Nachrichten loeschen sich nach 2 Tagen selbst (Alter ueber den
+// Empfangs-Zeitstempel `ts`, nicht ueber das Event-Datum).
+const INBOX_TTL_MS=2*86400000;
+function pruneInbox(arr){
+  const cutoff=Date.now()-INBOX_TTL_MS;
+  return(arr||[]).filter(n=>!n.ts||n.ts>=cutoff);
+}
 function updInboxBadge(){
+  const before=inbox.length;
+  inbox=pruneInbox(inbox);
+  if(inbox.length!==before)save();
   const b=document.getElementById('inboxBadge');if(!b)return;
   b.style.display=inbox.length?'flex':'none';
   updGreenBadge();
@@ -3989,15 +4033,20 @@ function openInboxM(){renderInbox();openM('mInbox');}
 // hat einen neuen Wert bekommen, der den Score bewegt. Klick -> direkt zum
 // Indikator bei der jeweiligen Währung.
 // Gruppiert nach Tag (das Event-Datum der Meldung, sonst der Empfangstag),
-// genau wie der Kalender - neueste Tage oben, mit demselben Tages-Header-Stil.
+// aelteste Tage oben, neueste ganz unten - der heutige Tag wird rot
+// hervorgehoben.
 function renderInbox(){
   const el=document.getElementById('inboxList');if(!el)return;
+  const before=inbox.length;
+  inbox=pruneInbox(inbox);
+  if(inbox.length!==before)save();
   if(!inbox.length){el.innerHTML=`<div class="inbox-empty">No score updates yet. You'll get a message here whenever a new release changes a currency's score.</div>`;return;}
-  const sorted=[...inbox].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const todayStr=new Date().toISOString().slice(0,10);
+  const sorted=[...inbox].sort((a,b)=>(a.ts||0)-(b.ts||0));
   const dayKey=n=>n.date||(n.ts?new Date(n.ts).toISOString().slice(0,10):'');
   const byDate={};
   sorted.forEach(n=>{(byDate[dayKey(n)]=byDate[dayKey(n)]||[]).push(n);});
-  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+  const dates=Object.keys(byDate).sort((a,b)=>a.localeCompare(b));
   el.innerHTML=dates.map(d=>{
     const rows=byDate[d].map(n=>{
       const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
@@ -4014,7 +4063,8 @@ function renderInbox(){
         <button class="nb-del" onclick="event.stopPropagation();delInboxItem('${n.id}')" title="Dismiss">×</button>
       </div>`;
     }).join('');
-    return`<div class="nb-day-hdr">${d?escH(fmtDayHdr(d)):'Unknown date'}</div>${rows}`;
+    const isToday=d===todayStr;
+    return`<div class="nb-day-hdr${isToday?' nb-day-today':''}">${d?escH(fmtDayHdr(d)):'Unknown date'}</div>${rows}`;
   }).join('');
 }
 // Navigiert vom Postfach direkt zum betroffenen Indikator: Währung öffnen,
@@ -5288,49 +5338,7 @@ function renderCot(){
 }
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
-// ── Tab-Leiste beim Runterscrollen automatisch einklappen, beim Hochscrollen
-// wieder einblenden. Der Header (Logo + Symbole rechts daneben) bleibt davon
-// unberuehrt, da nur .tabbar (nicht .hdr) ein/ausgeklappt wird.
-let tabbarCollapsed=false;
-let tabbarGuardUntil=0;
-function setTabbarCollapsed(v){
-  if(tabbarCollapsed===v)return;
-  tabbarCollapsed=v;
-  tabbarGuardUntil=Date.now()+350;
-  const tb=document.querySelector('.tabbar');
-  if(tb)tb.classList.toggle('collapsed',v);
-}
-function wireTabbarAutoHide(){
-  const ids=['pgDash','pgCmp','pgMx','pgCot','pgPairs','pgCal','pgNotes','detail'];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el||el.dataset.tbWired)return;
-    el.dataset.tbWired='1';
-    let last=el.scrollTop;
-    let ticking=false;
-    el.addEventListener('scroll',()=>{
-      if(ticking)return;
-      ticking=true;
-      requestAnimationFrame(()=>{
-        ticking=false;
-        const top=el.scrollTop;
-        // Waehrend die Tabbar-Animation laeuft, kann das Layout den Scroll-
-        // Container clampen (scrollHeight/clientHeight aendert sich), was ein
-        // rein layoutbedingtes scroll-Event ausloest. Dieses Echo wuerde sonst
-        // sofort wieder den gegenteiligen Zustand auslösen -> Ruckel-Loop.
-        // Daher wird waehrend der Guard-Zeit nur `last` synchronisiert, ohne
-        // eine neue Ein-/Ausklapp-Entscheidung zu treffen.
-        if(Date.now()<tabbarGuardUntil){last=top;return;}
-        if(top<=8)setTabbarCollapsed(false);
-        else if(top>last+4)setTabbarCollapsed(true);
-        else if(top<last-4)setTabbarCollapsed(false);
-        last=top;
-      });
-    },{passive:true});
-  });
-}
 function showTab(tab,btn,fxMode){
-  setTabbarCollapsed(false);
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   if(tab!=='cot')cotStopCountdown();
@@ -5465,7 +5473,6 @@ autoFetchFF();
 autoFetchIndData();
 autoFetchBondData();
 autoFetchCot();
-wireTabbarAutoHide();
 cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
