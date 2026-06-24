@@ -192,11 +192,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:12px;font-weight:800;color:var(--t1);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.ov-field{margin-bottom:5px}
-.ov-field:last-child{margin-bottom:0}
-.ov-name{font-size:12px;font-weight:600;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
-.ov-summary{font-size:12px;line-height:1.6;color:var(--t1);white-space:pre-wrap}
+.ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
+.ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
+@media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
+.ov-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
+.ov-summary{font-size:12px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
 .ov-empty{color:var(--t3);font-style:italic}
+.rub-card.rub-flash{animation:indFlash 1.8s ease-out}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
 /* Pärchen-Indikatoren (z.B. CPI + Core CPI): gemeinsame Umrandung, jeweils
@@ -3271,14 +3273,15 @@ function masonryHTML(items,renderFn){
 // angezeigt) zu einer einzigen Übersichtskarte zusammen: pro Rubrik ein
 // Feld mit deren Zusammenfassungstext, automatisch übernommenem Bias und
 // Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
+function ovCols(){return window.innerWidth>=900?3:window.innerWidth>=600?2:1;}
 function renderOverviewCard(rubs){
   const top=rubs.slice(0,5);
   if(!top.length)return'';
-  const fields=top.map(rub=>{
+  const fields=top.map((rub,ri)=>{
     const bco=bCol(rub.bias);
     const sc=rubScore(rub);
     const txt=rub.summary&&rub.summary.trim()?escH(rub.summary):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
-    return`<div class="ind-card ov-field ${glowClass(rub.bias)}">
+    return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
         <span class="bo on" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
@@ -3289,8 +3292,21 @@ function renderOverviewCard(rubs){
   }).join('');
   return`<div class="ov-card">
     <div class="ov-card-title">📋 Overview</div>
-    ${fields}
+    <div class="ov-grid" style="--ovcols:${ovCols()}">${fields}</div>
   </div>`;
+}
+function goToRubCard(ri){
+  const r=getRub(ri);if(!r)return;
+  const needsExpand=!!r.collapsed;
+  if(needsExpand){r.collapsed=false;save();renderDetail();}
+  const run=()=>{
+    const el=document.getElementById('rubCard'+ri);
+    if(!el)return;
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.add('rub-flash');
+    setTimeout(()=>el.classList.remove('rub-flash'),1800);
+  };
+  needsExpand?setTimeout(run,30):run();
 }
 // ── SPECIFIC TAB ──
 function renderSpecTab(c){
@@ -3304,7 +3320,7 @@ function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
   const imp=rub.imp?' imp':'';
-  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}">
+  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
     <div class="rub-hdr">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
@@ -5510,12 +5526,12 @@ setInterval(flushAndSave,15000);
 // Re-render only when the masonry column count actually changes (e.g.
 // rotating a tablet across the 1100px/1600px breakpoints) - never on
 // height changes from typing, so cards never jump while editing.
-let _masonryCols=masonryCols(),_masonryResizeT=null;
+let _masonryCols=masonryCols(),_ovCols=ovCols(),_masonryResizeT=null;
 window.addEventListener('resize',()=>{
   clearTimeout(_masonryResizeT);
   _masonryResizeT=setTimeout(()=>{
-    const n=masonryCols();
-    if(n!==_masonryCols){_masonryCols=n;renderDetail();}
+    const n=masonryCols(),o=ovCols();
+    if(n!==_masonryCols||o!==_ovCols){_masonryCols=n;_ovCols=o;renderDetail();}
   },150);
 });
 
