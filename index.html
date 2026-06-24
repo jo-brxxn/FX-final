@@ -313,6 +313,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
+.cot-hist-wrap{overflow-x:auto;padding:10px 8px}
+.cot-hist-svg{display:block}
 .cot-tbl{border-collapse:collapse;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:13px;white-space:nowrap}
 .cot-tbl th,.cot-tbl td{padding:8px 11px;text-align:right;border-bottom:1px solid var(--bd)}
 .cot-tbl thead th{color:var(--t3);font-size:11px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;position:sticky;top:0;background:var(--bg2)}
@@ -704,7 +706,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#065f46;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: EMERALD (fixed the tab-bar auto-collapse jitter caused by a scroll-clamp feedback loop on layout shift; Net Bullish/Net Bearish Positioning in the COT Data card are now visually paired like CPI/Core CPI, each keeping its own bias and notes; the Forex Factory link moved out of every calendar row into the calendar's top toolbar; and a dismissible "NEW COT DATA!" banner now appears at the top of the Dashboard for 3 days whenever a new CFTC report lands, linking straight to the COT tab)</div>
+<div style="flex:none;background:#4d7c0f;color:#ecfccb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OLIVE (the COT tab now shows a Positioning History chart when a single asset is filtered: one stacked bar per weekly CFTC report — blue Long / red Short contracts on the right scale, a black Long% line on a fixed 0-100% left scale with a grey 50% reference line, dates below each bar; the hourly data job and the live CFTC fallback both now collect up to 26 weeks of history per market to feed it)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4893,7 +4895,8 @@ function autoFetchCot(){
 // ── Direkt-Abruf von der CFTC (fuer den manuellen Refresh-Button). Die
 // Socrata-API der CFTC sendet CORS-Header, laeuft also auch aus dem Browser.
 // Dieselbe Markt-Zuordnung wie im GitHub-Action.
-const COT_CFTC_URL='https://publicreporting.cftc.gov/resource/6dca-aqww.json?$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,open_interest_all,noncomm_positions_long_all,noncomm_positions_short_all,change_in_noncomm_long_all,change_in_noncomm_short_all,change_in_open_interest_all&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=6000';
+const COT_CFTC_URL='https://publicreporting.cftc.gov/resource/6dca-aqww.json?$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,open_interest_all,noncomm_positions_long_all,noncomm_positions_short_all,change_in_noncomm_long_all,change_in_noncomm_short_all,change_in_open_interest_all&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=12000';
+const COT_HIST_LEN=26;
 const COT_MARKETS=[
   {id:'EUR',inc:/EURO FX/,exc:/MICRO/},
   {id:'GBP',inc:/BRITISH POUND/,exc:/MICRO/},
@@ -4912,20 +4915,24 @@ const COT_MARKETS=[
 ];
 function cotParseRaw(rows){
   if(!Array.isArray(rows)||!rows.length)return null;
-  const out={};let reportDate='';
+  const out={};let reportDate='';const hist={};
   for(const r of rows){
     const nm=(r.market_and_exchange_names||'').toUpperCase();
     for(const mk of COT_MARKETS){
-      if(out[mk.id])continue;
+      if(hist[mk.id]&&hist[mk.id].length>=COT_HIST_LEN)continue;
       if(mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))){
         const L=+r.noncomm_positions_long_all,S=+r.noncomm_positions_short_all;
         if(!isFinite(L)||!isFinite(S))continue;
-        out[mk.id]={long:L,short:S,dLong:+r.change_in_noncomm_long_all||0,dShort:+r.change_in_noncomm_short_all||0,oi:+r.open_interest_all||0,dOi:+r.change_in_open_interest_all||0};
         const d=String(r.report_date_as_yyyy_mm_dd||'').slice(0,10);
-        if(d>reportDate)reportDate=d;
+        (hist[mk.id]=hist[mk.id]||[]).push({date:d,long:L,short:S,oi:+r.open_interest_all||0});
+        if(!out[mk.id]){
+          out[mk.id]={long:L,short:S,dLong:+r.change_in_noncomm_long_all||0,dShort:+r.change_in_noncomm_short_all||0,oi:+r.open_interest_all||0,dOi:+r.change_in_open_interest_all||0};
+          if(d>reportDate)reportDate=d;
+        }
       }
     }
   }
+  Object.keys(out).forEach(id=>{if(hist[id])out[id].history=hist[id].slice().sort((a,b)=>a.date.localeCompare(b.date));});
   return Object.keys(out).length?{report_date:reportDate,updated:new Date().toISOString(),symbols:out}:null;
 }
 async function cotFetchLive(){
@@ -5000,6 +5007,70 @@ function cotMetrics(s){
 }
 function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
 function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return String(Math.round(n));}
+// ── Verlaufs-Diagramm (gestapelte Balken Long/Short + Long-%-Linie) fuer
+// ein einzelnes Asset, ein Balken = ein COT-Report. Rechte Skala (Kontrakte,
+// "nice" gerundet auf den jeweiligen Werte-Bereich des Assets) fuer die
+// gestapelten Balken, linke Skala (fest 0-100%) fuer die schwarze Long-%-
+// Linie. Graue Referenzlinie bei 50% markiert den neutralen Punkt (gleich
+// viele Long- wie Short-Kontrakte).
+function cotNiceAxis(maxVal,ticks){
+  ticks=ticks||6;
+  if(!isFinite(maxVal)||maxVal<=0)return{max:10,step:2};
+  const rawStep=maxVal/(ticks-1);
+  const mag=Math.pow(10,Math.floor(Math.log10(rawStep)));
+  const norm=rawStep/mag;
+  const niceNorm=norm<1.5?1:norm<3?2:norm<7?5:10;
+  const step=niceNorm*mag;
+  const max=Math.ceil(maxVal/step)*step;
+  return{max,step};
+}
+function cotHistChart(history){
+  if(!Array.isArray(history)||history.length<2)return'';
+  const n=history.length;
+  const barW=14,gap=8,perBar=barW+gap;
+  const leftPad=40,rightPad=46,topPad=10,chartH=210,bottomPad=26;
+  const w=leftPad+rightPad+n*perBar,h=topPad+chartH+bottomPad;
+  const y0=topPad+chartH;
+  const rawMax=Math.max(...history.map(e=>Math.max(e.long||0,e.short||0)));
+  const ax=cotNiceAxis(rawMax,6);
+  const yPct=p=>y0-(p/100)*chartH;
+  const yVal=v=>y0-(v/ax.max)*chartH;
+  let svg=`<svg class="cot-hist-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+  // Linke Achse (0-100%, alle 25%)
+  for(let p=0;p<=100;p+=25){
+    const y=yPct(p);
+    svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(leftPad-4).toFixed(1)}" y2="${y.toFixed(1)}" style="stroke:var(--t3)" stroke-width="1"/>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${p}%</text>`;
+  }
+  // Graue 50%-Referenzlinie ueber die gesamte Breite
+  const y50=yPct(50);
+  svg+=`<line x1="${leftPad}" y1="${y50.toFixed(1)}" x2="${(leftPad+n*perBar).toFixed(1)}" y2="${y50.toFixed(1)}" style="stroke:var(--t3)" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>`;
+  // Rechte Achse (0-ax.max, Schritt ax.step)
+  for(let v=0;v<=ax.max;v+=ax.step){
+    const y=yVal(v);
+    const xR=leftPad+n*perBar;
+    svg+=`<line x1="${xR}" y1="${y.toFixed(1)}" x2="${(xR+4).toFixed(1)}" y2="${y.toFixed(1)}" style="stroke:var(--t3)" stroke-width="1"/>`;
+    svg+=`<text x="${xR+7}" y="${(y+3).toFixed(1)}" text-anchor="start" style="font-size:9px;fill:var(--t3)">${cotNum(v)}</text>`;
+  }
+  // Balken + Datumsbeschriftung
+  const linePts=[];
+  history.forEach((e,i)=>{
+    const x=leftPad+i*perBar;
+    const L=+e.long||0,S=+e.short||0;
+    const longH=(L/ax.max)*chartH,shortH=(S/ax.max)*chartH;
+    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH).toFixed(1)}" width="${barW}" height="${longH.toFixed(1)}" fill="${BC.bull}"/>`;
+    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH-shortH).toFixed(1)}" width="${barW}" height="${shortH.toFixed(1)}" fill="${BC.bear}"/>`;
+    const tot=L+S,lp=tot>0?L/tot*100:50;
+    linePts.push((x+barW/2).toFixed(1)+','+yPct(lp).toFixed(1));
+    let d;try{const dt=new Date(e.date+'T00:00:00');d=(dt.getMonth()+1)+'/'+dt.getDate();}catch(err){d=e.date;}
+    svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y0+14).toFixed(1)}" text-anchor="middle" style="font-size:8px;fill:var(--t3)">${escH(d)}</text>`;
+  });
+  const linePtsStr=linePts.join(' ');
+  svg+=`<polyline points="${linePtsStr}" fill="none" stroke="#fff" stroke-width="3.4" opacity="0.55"/>`;
+  svg+=`<polyline points="${linePtsStr}" fill="none" stroke="#000" stroke-width="1.6"/>`;
+  svg+=`</svg>`;
+  return svg;
+}
 function cotSigned(n){n=+n;if(!isFinite(n))return'–';return(n>0?'+':'')+cotNum(n);}
 function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+':'')+n.toFixed(1)+'%';}
 // ── COT-Werte in die "COT Data"-Karte jedes Symbols eintragen ──────
@@ -5123,8 +5194,20 @@ function renderCot(){
     </tr>`;}).join('');
   const date=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
   const scope=cotFilter?`filtered: ${escH(COT_NAME[cotFilter]||cotFilter)}`:'sorted by long share';
+  // Verlaufsdiagramm nur, wenn genau ein Asset gefiltert ist und fuer dieses
+  // Historie-Daten vorliegen (mind. 2 Reports).
+  let histCard='';
+  if(cotFilter){
+    const histArr=(COT_DATA.symbols[cotFilter]||{}).history;
+    const chartSvg=cotHistChart(histArr);
+    histCard=`<div class="cot-card">
+      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)</small></div>
+      ${chartSvg?`<div class="cot-hist-wrap">${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
+    </div>`;
+  }
   el.innerHTML=ctrl+filterBar+`
     <div class="cot-meta">Report date: <b>${escH(date)}</b> · Source: CFTC (Legacy, Non-Commercial) · COT is released weekly (as of Tuesday, published Friday)</div>
+    ${histCard}
     <div class="cot-card">
       <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · ${scope} · click opens the symbol</small></div>
       <div class="cot-bars">${bars}</div>
