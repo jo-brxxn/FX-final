@@ -36,7 +36,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;max-height:48px;transition:max-height .2s ease,opacity .15s ease,border-color .2s ease}
+.tabbar.collapsed{max-height:0;opacity:0;border-bottom-color:transparent;pointer-events:none}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 /* ── BODY ── */
@@ -457,6 +458,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
 .cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cal-ff-ic{display:inline-block;text-decoration:none;margin-right:5px;font-size:11px;opacity:.85;vertical-align:-1px}
+@media (hover:hover){.cal-ff-ic:hover{opacity:1}}
 .cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
 .cal-val{font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700;color:var(--t1);text-align:center}
 .cal-val.ph{color:var(--t3);font-weight:400}
@@ -509,6 +512,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
 /* ── INBOX SCORE NOTIFICATIONS ── */
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
+.nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.nb-day-hdr:first-child{margin-top:0}
 .nb-ccy{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
 .nb-main{flex:1;min-width:0}
 .nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -693,7 +698,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0f52ba;color:#eaf2ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SAPPHIRE (COT now auto-loads live from the CFTC on every page open, no manual reload needed; the asset filter is a native dropdown grouped like the sidebar (FX/Crypto/Metals/…), same UX as the calendar's currency filter; COT data now feeds each symbol's "COT Data" card — Net Bullish/Bearish Positioning auto-bias from Long%/Short% (neutral at 0%, never affects the score), WoW Change in Net Position (%) auto-biases from its own sign and is the only one counted in the score; Put/Call Ratio stays manual)</div>
+<div style="flex:none;background:#7f1d1d;color:#fee2e2;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAROON (the tab bar now auto-collapses on scroll-down and reappears on scroll-up, while the header/logo stay put; every calendar event row now has an 🅵🅵 link straight to Forex Factory; the Inbox is now grouped by day like the calendar; and Compare now includes the COT Data, Geopolitics and Macro &amp; Risk Environment cards too, not just the first four)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1258,6 +1263,11 @@ function revisionColor(oldVal,newVal,name){
 // CNY-News werden in allen Kalendern immer als Medium-Impact behandelt.
 function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).includes('CNY');}
 function evtImpact(ev){return evtIsCNY(ev)?'medium':ev.impact;}
+// Kleiner Link neben jedem Event-Namen, der direkt zu Forex Factory führt.
+// 🅵🅵 ("F" zweimal im Quadrat) ist der Unicode-Emoji, der dem grünen
+// "ff"-Markenzeichen der Forex-Factory-Webseite am naechsten kommt.
+const FF_CAL_URL='https://www.forexfactory.com/calendar';
+function calFfLink(){return`<a class="cal-ff-ic" href="${FF_CAL_URL}" target="_blank" rel="noopener" title="Open on Forex Factory" onclick="event.stopPropagation()">🅵🅵</a>`;}
 function calRowHtml(ev,opts){
   opts=opts||{};
   const imp=evtImpact(ev);
@@ -1272,7 +1282,7 @@ function calRowHtml(ev,opts){
     return`<div class="cal-row compact ${ic}${isToday?' today':''}${past}">
       <div class="cal-time">${ev.time||'—'}</div>
       <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-      <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+      <div class="cal-evname" title="${escH(ev.name)}">${calFfLink()}${escH(ev.name)}</div>
       ${val(ev.actual,ac)}
       ${val(ev.forecast)}
       ${val(ev.previous,ev.prevRevColor)}
@@ -1283,7 +1293,7 @@ function calRowHtml(ev,opts){
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
     <div class="cal-imp ${ic}">${impLbl}</div>
-    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+    <div class="cal-evname" title="${escH(ev.name)}">${calFfLink()}${escH(ev.name)}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
     ${val(ev.previous,ev.prevRevColor)}
@@ -3962,24 +3972,33 @@ function openInboxM(){renderInbox();openM('mInbox');}
 // Das Postfach zeigt jetzt Score-Update-Benachrichtigungen: ein Indikator
 // hat einen neuen Wert bekommen, der den Score bewegt. Klick -> direkt zum
 // Indikator bei der jeweiligen Währung.
+// Gruppiert nach Tag (das Event-Datum der Meldung, sonst der Empfangstag),
+// genau wie der Kalender - neueste Tage oben, mit demselben Tages-Header-Stil.
 function renderInbox(){
   const el=document.getElementById('inboxList');if(!el)return;
   if(!inbox.length){el.innerHTML=`<div class="inbox-empty">No score updates yet. You'll get a message here whenever a new release changes a currency's score.</div>`;return;}
   const sorted=[...inbox].sort((a,b)=>(b.ts||0)-(a.ts||0));
-  el.innerHTML=sorted.map(n=>{
-    const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
-    const dirLbl=n.bias==='bull'?'▲ Bullish':n.bias==='bear'?'▼ Bearish':'◆ Neutral';
-    const af=[n.actual!=null&&n.actual!==''?'A '+escH(n.actual):null,n.forecast!=null&&n.forecast!==''?'F '+escH(n.forecast):null,n.previous!=null&&n.previous!==''?'P '+escH(n.previous):null].filter(Boolean).join('  ·  ');
-    const when=n.date?escH(fmtDayHdr(n.date))+(n.time?' '+escH(n.time):''):'';
-    return`<div class="nb-row" onclick="gotoIndicatorByNotif('${n.id}')" title="Open ${escH(n.symId)} · ${escH(n.label)}">
-      <span class="nb-ccy">${escH(n.symId)}</span>
-      <div class="nb-main">
-        <div class="nb-name">${escH(n.label)}<span class="nb-rub"> · ${escH(n.rubName)}</span></div>
-        <div class="nb-sub">${af}${af&&when?'  ·  ':''}${when}</div>
-      </div>
-      <span class="nb-dir ${dirCls}">${dirLbl}</span>
-      <button class="nb-del" onclick="event.stopPropagation();delInboxItem('${n.id}')" title="Dismiss">×</button>
-    </div>`;
+  const dayKey=n=>n.date||(n.ts?new Date(n.ts).toISOString().slice(0,10):'');
+  const byDate={};
+  sorted.forEach(n=>{(byDate[dayKey(n)]=byDate[dayKey(n)]||[]).push(n);});
+  const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+  el.innerHTML=dates.map(d=>{
+    const rows=byDate[d].map(n=>{
+      const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
+      const dirLbl=n.bias==='bull'?'▲ Bullish':n.bias==='bear'?'▼ Bearish':'◆ Neutral';
+      const af=[n.actual!=null&&n.actual!==''?'A '+escH(n.actual):null,n.forecast!=null&&n.forecast!==''?'F '+escH(n.forecast):null,n.previous!=null&&n.previous!==''?'P '+escH(n.previous):null].filter(Boolean).join('  ·  ');
+      const when=n.time?escH(n.time):'';
+      return`<div class="nb-row" onclick="gotoIndicatorByNotif('${n.id}')" title="Open ${escH(n.symId)} · ${escH(n.label)}">
+        <span class="nb-ccy">${escH(n.symId)}</span>
+        <div class="nb-main">
+          <div class="nb-name">${escH(n.label)}<span class="nb-rub"> · ${escH(n.rubName)}</span></div>
+          <div class="nb-sub">${af}${af&&when?'  ·  ':''}${when}</div>
+        </div>
+        <span class="nb-dir ${dirCls}">${dirLbl}</span>
+        <button class="nb-del" onclick="event.stopPropagation();delInboxItem('${n.id}')" title="Dismiss">×</button>
+      </div>`;
+    }).join('');
+    return`<div class="nb-day-hdr">${d?escH(fmtDayHdr(d)):'Unknown date'}</div>${rows}`;
   }).join('');
 }
 // Navigiert vom Postfach direkt zum betroffenen Indikator: Währung öffnen,
@@ -4595,8 +4614,8 @@ function addWidget(){
 // Vergleichsseite: pro Makro-Karte eine Tabelle - Symbole oben (Spalten),
 // Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous), plus
 // eine Score-Zeile pro Karte/Spalte. Spalten frei wählbar (FX + Non-FX).
-const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth'];
-const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐'};
+const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data','Geopolitics',MACRO_NAME];
+const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐','COT Data':'📊','Geopolitics':'🌍',[MACRO_NAME]:'⚖️'};
 // Auswählbare Vergleichsspalten: alle FX-Währungen + alle Non-FX-Assets.
 function cmpAvailableIds(){return[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
 // Aktuell gewählte Spalten (persistiert). Default: alle FX-Währungen.
@@ -5072,7 +5091,34 @@ function renderCot(){
 }
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+// ── Tab-Leiste beim Runterscrollen automatisch einklappen, beim Hochscrollen
+// wieder einblenden. Der Header (Logo + Symbole rechts daneben) bleibt davon
+// unberuehrt, da nur .tabbar (nicht .hdr) ein/ausgeklappt wird.
+let tabbarCollapsed=false;
+function setTabbarCollapsed(v){
+  if(tabbarCollapsed===v)return;
+  tabbarCollapsed=v;
+  const tb=document.querySelector('.tabbar');
+  if(tb)tb.classList.toggle('collapsed',v);
+}
+function wireTabbarAutoHide(){
+  const ids=['pgDash','pgCmp','pgMx','pgCot','pgPairs','pgCal','pgNotes','detail'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||el.dataset.tbWired)return;
+    el.dataset.tbWired='1';
+    let last=el.scrollTop;
+    el.addEventListener('scroll',()=>{
+      const top=el.scrollTop;
+      if(top<=8)setTabbarCollapsed(false);
+      else if(top>last+4)setTabbarCollapsed(true);
+      else if(top<last-4)setTabbarCollapsed(false);
+      last=top;
+    },{passive:true});
+  });
+}
 function showTab(tab,btn,fxMode){
+  setTabbarCollapsed(false);
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   if(tab!=='cot')cotStopCountdown();
@@ -5207,6 +5253,7 @@ autoFetchFF();
 autoFetchIndData();
 autoFetchBondData();
 autoFetchCot();
+wireTabbarAutoHide();
 cloudPull(false);
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
