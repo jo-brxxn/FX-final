@@ -306,8 +306,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cot-bar-row{display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer}
 .cot-bar-sym{width:62px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--t1)}
 .cot-bar{flex:1;display:flex;height:20px;border-radius:5px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#2a9d6f,#37b37e);color:#eafff5;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:flex-start;padding-left:6px;min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#e0664f,#ef7a5f);color:#fff3f0;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#2f9ecf,#4fc3f7);color:#06222e;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:flex-start;padding-left:6px;min-width:0;transition:width .3s}
+.cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);color:#2a0608;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-tbl{border-collapse:collapse;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;white-space:nowrap}
@@ -317,8 +317,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:12px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#37b37e;font-weight:700}
-.cot-tbl td.cot-c-short{color:#ef7a5f;font-weight:700}
+.cot-tbl td.cot-c-long{color:#4fc3f7;font-weight:700}
+.cot-tbl td.cot-c-short{color:#ef6b78;font-weight:700}
 /* ── TODAY REMINDER ── */
 .today-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .today-card.empty{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--t3);font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -674,7 +674,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#1e3a8a;color:#eff6ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: COBALT (New COT tab added — CFTC "Commitments of Traders" (Legacy, Non-Commercial) net Long/Short positioning in % plus weekly change, as bar chart + detail table for 14 symbols: 8 FX majors, Gold, Silver, Oil, BTC, S&amp;P 500, Nasdaq. Fetched hourly via GitHub Action into cot_data.json; CFTC publishes new data weekly (Tue as-of, Fri release))</div>
+<div style="flex:none;background:#0e7490;color:#ecfeff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TURQUOISE (COT tab colors switched from generic green/red to the app's own bullish/bearish bias colors — Long now shown in the bullish blue (#4fc3f7), Short in the bearish red (#ef6b78), matching the bias coloring used everywhere else in the app)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4820,7 +4820,7 @@ function cotMetrics(s){
   const dNetPct=(longPct-prevLongPct)*2; // WoW-Aenderung des Netto-%
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'var(--blue)':v<0?'var(--red)':'var(--t3)';}
+function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
 function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return String(Math.round(n));}
 function cotSigned(n){n=+n;if(!isFinite(n))return'–';return(n>0?'+':'')+cotNum(n);}
 function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+':'')+n.toFixed(1)+'%';}
