@@ -539,12 +539,30 @@ jobs:
               // gepflegt ist, ohne dass dafuer jede Sprachvariante einzeln
               // eingetragen werden muss.
               const ffCanon=canonKey(ev.title);
-              const candidates=fxEvents.filter(fx=>
+              let candidates=fxEvents.filter(fx=>
                 fx.currencyCode===ev.country &&
                 Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL &&
                 fx.actual!=null &&
                 (normName(fx.name)===ffName || aliases.includes(normName(fx.name)) || canonKey(fx.name)===ffCanon)
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
+              if(!candidates.length){
+                // FXStreet benennt French/German/Eurozone Flash-PMI-Releases
+                // teils alle identisch nach dem Indexanbieter ("HCOB
+                // Manufacturing PMI") OHNE das Land im Namen - der obige
+                // Laendervergleich (canonKey enthaelt "france"/"germany")
+                // kann das nie matchen. Fallback: Land aus dem Vergleich
+                // herausnehmen und stattdessen ueber eine enge Zeit-Toleranz
+                // disambiguieren, da France/Germany/Eurozone-Flash-PMI
+                // ueblicherweise nur 15 Min. auseinander liegen.
+                const STRICT_TOL=12*60*1000;
+                const ffCanonNoCountry=ffCanon.split(" ").filter(w=>!["france","germany","spain","italy","netherlands"].includes(w)).join(" ");
+                candidates=fxEvents.filter(fx=>
+                  fx.currencyCode===ev.country &&
+                  Math.abs(new Date(fx.dateUtc).getTime()-t)<=STRICT_TOL &&
+                  fx.actual!=null &&
+                  canonKey(fx.name)===ffCanonNoCountry
+                ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
+              }
               if(candidates.length){
                 const f=fmtActual(candidates[0]);
                 if(f!==null){ev.actual=f;matched++;return;}
