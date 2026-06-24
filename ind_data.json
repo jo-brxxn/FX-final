@@ -171,11 +171,11 @@
    "period": "y/y"
   },
   "Manufacturing PMI": {
-   "actual": "55.7",
-   "forecast": "54.8",
-   "previous": "55.1",
-   "date": "2026-06-23",
-   "event": "S&P Global Manufacturing PMI Flash",
+   "actual": "54",
+   "forecast": "53",
+   "previous": "52.7",
+   "date": "2026-06-01",
+   "event": "ISM Manufacturing PMI",
    "period": null
   },
   "JOLTS Job Openings": {
@@ -195,11 +195,11 @@
    "period": null
   },
   "Services PMI": {
-   "actual": "51.3",
-   "forecast": "51",
-   "previous": "50.7",
-   "date": "2026-06-23",
-   "event": "S&P Global Services PMI Flash",
+   "actual": "54.5",
+   "forecast": "53.8",
+   "previous": "53.6",
+   "date": "2026-06-03",
+   "event": "ISM Services PMI",
    "period": null
   },
   "Unemployment Rate": {
