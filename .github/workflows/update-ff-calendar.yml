@@ -119,6 +119,18 @@ jobs:
               s=s.replace(/, final demand|final demand/g,"");
               s=s.replace(/initial jobless claims/g,"unemployment claims");
               s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              // Land-Adjektive (FF: "French Flash Manufacturing PMI", "German
+              // Flash Services PMI" fuer Eurozone-Einzelstaaten) auf das
+              // Substantiv normalisieren und das Fuellwort "Flash" entfernen,
+              // sonst matcht das kanonische CPI dieser Releases nie gegen die
+              // landesspezifischen Namen von TradingView/FXStreet/Trading
+              // Economics ("France Manufacturing PMI" etc.) und das "actual"
+              // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
+              s=s.replace(/\bflash\b/g,"");
+              s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
+              // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
+              // verschiedene Quellen nennen denselben Release mit/ohne Marke.
+              s=s.replace(/\bs ?& ?p global\b|\bhcob\b|\bihs markit\b|\bmarkit\b/g,"");
               s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
               return s.split(" ").sort().join(" ");
             }
@@ -405,6 +417,18 @@ jobs:
               s=s.replace(/, final demand|final demand/g,"");
               s=s.replace(/initial jobless claims/g,"unemployment claims");
               s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              // Land-Adjektive (FF: "French Flash Manufacturing PMI", "German
+              // Flash Services PMI" fuer Eurozone-Einzelstaaten) auf das
+              // Substantiv normalisieren und das Fuellwort "Flash" entfernen,
+              // sonst matcht das kanonische CPI dieser Releases nie gegen die
+              // landesspezifischen Namen von TradingView/FXStreet/Trading
+              // Economics ("France Manufacturing PMI" etc.) und das "actual"
+              // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
+              s=s.replace(/\bflash\b/g,"");
+              s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
+              // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
+              // verschiedene Quellen nennen denselben Release mit/ohne Marke.
+              s=s.replace(/\bs ?& ?p global\b|\bhcob\b|\bihs markit\b|\bmarkit\b/g,"");
               s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
               return s.split(" ").sort().join(" ");
             }
@@ -507,12 +531,19 @@ jobs:
               const ffName=normName(ev.title);
               let aliases=NAME_ALIASES[ffName]||[];
               if(typeof aliases==="string")aliases=[aliases];
-              // 1) FXStreet (verifizierte, einheitlich formatierte Werte)
+              // 1) FXStreet (verifizierte, einheitlich formatierte Werte).
+              // Neben der expliziten Alias-Liste auch ueber den kanonischen
+              // Namen (canonKey) matchen, der Land-Adjektive normalisiert und
+              // "Flash" entfernt - faengt Eurozone-Einzelstaaten-Releases
+              // (French/German Flash PMI) ab, fuer die keine Alias-Zeile
+              // gepflegt ist, ohne dass dafuer jede Sprachvariante einzeln
+              // eingetragen werden muss.
+              const ffCanon=canonKey(ev.title);
               const candidates=fxEvents.filter(fx=>
                 fx.currencyCode===ev.country &&
                 Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL &&
                 fx.actual!=null &&
-                (normName(fx.name)===ffName || aliases.includes(normName(fx.name)))
+                (normName(fx.name)===ffName || aliases.includes(normName(fx.name)) || canonKey(fx.name)===ffCanon)
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(candidates.length){
                 const f=fmtActual(candidates[0]);
@@ -569,6 +600,18 @@ jobs:
               s=s.replace(/, final demand|final demand/g,"");
               s=s.replace(/initial jobless claims/g,"unemployment claims");
               s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              // Land-Adjektive (FF: "French Flash Manufacturing PMI", "German
+              // Flash Services PMI" fuer Eurozone-Einzelstaaten) auf das
+              // Substantiv normalisieren und das Fuellwort "Flash" entfernen,
+              // sonst matcht das kanonische CPI dieser Releases nie gegen die
+              // landesspezifischen Namen von TradingView/FXStreet/Trading
+              // Economics ("France Manufacturing PMI" etc.) und das "actual"
+              // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
+              s=s.replace(/\bflash\b/g,"");
+              s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
+              // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
+              // verschiedene Quellen nennen denselben Release mit/ohne Marke.
+              s=s.replace(/\bs ?& ?p global\b|\bhcob\b|\bihs markit\b|\bmarkit\b/g,"");
               s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
               return s.split(" ").sort().join(" ");
             }
@@ -771,6 +814,18 @@ jobs:
               s=s.replace(/, final demand|final demand/g,"");
               s=s.replace(/initial jobless claims/g,"unemployment claims");
               s=s.replace(/non.?farm (?:payrolls|employment change)/g,"nfp");
+              // Land-Adjektive (FF: "French Flash Manufacturing PMI", "German
+              // Flash Services PMI" fuer Eurozone-Einzelstaaten) auf das
+              // Substantiv normalisieren und das Fuellwort "Flash" entfernen,
+              // sonst matcht das kanonische CPI dieser Releases nie gegen die
+              // landesspezifischen Namen von TradingView/FXStreet/Trading
+              // Economics ("France Manufacturing PMI" etc.) und das "actual"
+              // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
+              s=s.replace(/\bflash\b/g,"");
+              s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
+              // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
+              // verschiedene Quellen nennen denselben Release mit/ohne Marke.
+              s=s.replace(/\bs ?& ?p global\b|\bhcob\b|\bihs markit\b|\bmarkit\b/g,"");
               s=s.replace(/[^a-z0-9\/ ]/g," ").replace(/\s+/g," ").trim();
               return s.split(" ").sort().join(" ");
             }
