@@ -336,19 +336,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
 @keyframes cotSpin{to{transform:rotate(360deg)}}
 /* COT single Filter button + grouped pop-up list */
-.cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px;position:relative}
-.cot-filter-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 15px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-filter-btn:hover{border-color:#4fc3f7;color:var(--t0)}}
-.cot-filter-btn.act{border-color:#4fc3f7;color:#bfe6fb;background:rgba(79,195,247,.14)}
-.cot-filter-btn .cot-fi-ic{font-size:13px;opacity:.8}
-.cot-pop-back{position:fixed;inset:0;z-index:60}
-.cot-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:61;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.5);padding:7px;min-width:238px;max-height:62vh;overflow-y:auto;animation:ovFadeIn .14s ease both}
-.cot-pop-grp-lbl{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);font-weight:700;padding:8px 9px 3px}
-.cot-pop-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:none;border:none;color:var(--t1);font-size:14px;font-weight:600;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer}
-@media (hover:hover){.cot-pop-item:hover{background:var(--bg4)}}
-.cot-pop-item.on{background:rgba(79,195,247,.16);color:#bfe6fb}
-.cot-pop-item .cot-pop-chk{color:#4fc3f7;font-weight:800}
-.cot-pop-all{font-weight:700;border-bottom:1px solid var(--bd);border-radius:8px;margin-bottom:3px}
+.cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+#cotFilterSel{font-size:14px;padding:8px 15px}
 /* ── TODAY REMINDER ── */
 .today-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .today-card.empty{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--t3);font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -704,7 +693,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#92400e;color:#fffbeb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BRONZE (COT tab polish: larger fonts throughout; both Long% and Short% now always shown beside every bar (top &amp; bottom rows no longer drop a value); all text in English; the symbol filter is now a single "Filter" button opening a grouped pop-up list (FX · Crypto · Metals · Energy · Indices, same order as the sidebar) with an "All assets" reset; and the detail table is sorted by the week-over-week Δ Net % change)</div>
+<div style="flex:none;background:#0f52ba;color:#eaf2ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SAPPHIRE (COT now auto-loads live from the CFTC on every page open, no manual reload needed; the asset filter is a native dropdown grouped like the sidebar (FX/Crypto/Metals/…), same UX as the calendar's currency filter; COT data now feeds each symbol's "COT Data" card — Net Bullish/Bearish Positioning auto-bias from Long%/Short% (neutral at 0%, never affects the score), WoW Change in Net Position (%) auto-biases from its own sign and is the only one counted in the score; Put/Call Ratio stays manual)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1153,7 +1142,13 @@ function indBaseWeight(ind,rub){
 }
 // "Wichtig" (★) erhöht den Betrag additiv um 0,5 (statt Multiplikation ×1,5):
 // normaler Indikator 1 -> 1,5; halber Indikator 0,5 -> 1,0.
-function indScore(ind,rub){return biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));}
+// Net Bullish/Bearish Positioning sind reine Anzeige-Indikatoren (Bias wird
+// automatisch aus dem COT-Long%/Short% gesetzt) und zählen nie in den Score.
+const COT_IND_NOSCORE=new Set(['Net Bullish Positioning','Net Bearish Positioning']);
+function indScore(ind,rub){
+  if(COT_IND_NOSCORE.has(stripPeriodSuffix(ind.name).base))return 0;
+  return biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));
+}
 function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
@@ -3364,7 +3359,7 @@ function renderInd(ind,ri,ii,total){
     const r=ind.research;
     // Bonds: Farbe der Akt-Rendite kommt aus dem 10-Tage-Vergleich
     // (blau steigend / rot fallend / weiss gleich), sonst Forecast-Vergleich.
-    const ac=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const ac=r.bond?r.bondColor:r.cot?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
@@ -3379,7 +3374,7 @@ function renderInd(ind,ri,ii,total){
     dataPart=`<details class="ind-data">
       <summary class="ind-data-sum" title="Last known value${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
-        ${r.bond?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
+        ${(r.bond||r.cot)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>
       </summary>
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
@@ -4830,7 +4825,6 @@ function renderMatrix(){
 // (Stand Dienstag, Veroeffentlichung Freitag).
 let COT_DATA=null;
 let cotFilter=null;            // null = full overview (all), otherwise a symbol id
-let cotFilterOpen=false;       // is the Filter pop-up list open?
 let cotRefreshing=false;
 let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
@@ -4841,8 +4835,19 @@ async function fetchCotData(){
     const res=await fetch('cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&d.symbols)COT_DATA=d;}
   }catch(e){}
+  // Falls die staendlich geschriebene Datei (noch) fehlt oder leer ist, direkt
+  // von der CFTC nachladen, damit die Karten/das COT-Tab nicht jedes Mal
+  // manuell per "Refresh" neu geladen werden muessen.
+  if(!COT_DATA||!COT_DATA.symbols){
+    try{COT_DATA=await cotFetchLive();}catch(e){}
+  }
 }
-function autoFetchCot(){fetchCotData().then(()=>{if(curPage==='cot')renderCot();});}
+function autoFetchCot(){
+  fetchCotData().then(()=>{
+    if(applyCotDataFeed()){recomputeAuto();save();renderSidebar();}
+    rerender();
+  });
+}
 
 // ── Direkt-Abruf von der CFTC (fuer den manuellen Refresh-Button). Die
 // Socrata-API der CFTC sendet CORS-Header, laeuft also auch aus dem Browser.
@@ -4902,6 +4907,7 @@ async function cotManualRefresh(){
     cotRefreshNote=COT_DATA?'✓ Updated from stored data (live CFTC fetch unavailable)':'⚠ Refresh failed';
   }
   cotRefreshing=false;
+  if(applyCotDataFeed()){recomputeAuto();save();renderSidebar();}
   renderCot();
 }
 
@@ -4947,16 +4953,50 @@ function cotMetrics(s){
   const dL=+s.dLong||0,dS=+s.dShort||0;
   const pL=L-dL,pS=S-dS,pTot=pL+pS;
   const prevLongPct=pTot>0?pL/pTot*100:longPct;
+  const prevShortPct=pTot>0?pS/pTot*100:shortPct;
   const dNetPct=(longPct-prevLongPct)*2; // WoW-Aenderung des Netto-%
-  return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,oi:+s.oi||0,dOi:+s.dOi||0};
+  return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
 function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
 function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return String(Math.round(n));}
 function cotSigned(n){n=+n;if(!isFinite(n))return'–';return(n>0?'+':'')+cotNum(n);}
 function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+':'')+n.toFixed(1)+'%';}
-function toggleCotFilterMenu(e){if(e)e.stopPropagation();cotFilterOpen=!cotFilterOpen;renderCot();}
-function closeCotFilterMenu(){if(!cotFilterOpen)return;cotFilterOpen=false;renderCot();}
-function pickCotFilter(id){cotFilter=id||null;cotFilterOpen=false;renderCot();}
+// ── COT-Werte in die "COT Data"-Karte jedes Symbols eintragen ──────
+// Net Bullish Positioning <- Long %, immer bullish (0% -> neutral).
+// Net Bearish Positioning <- Short %, immer bearish (0% -> neutral).
+// WoW Change in Net Position (%) <- woechentliche Netto-%-Aenderung, zaehlt
+// als einziger der drei Indikatoren in den Score (bull >0 / bear <0 / neutral =0).
+// Put/Call Ratio bleibt unberuehrt (rein manuell).
+const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm';
+function applyCotDataFeed(){
+  if(!COT_DATA||!COT_DATA.symbols)return false;
+  const date=COT_DATA.report_date||null;
+  let changed=false;
+  const setOne=(rub,base,actual,previous,bias)=>{
+    const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base===base);
+    if(idx<0)return;
+    const ind=rub.indicators[idx];
+    const cotColor2=bias==='bull'?'bond-up':bias==='bear'?'bond-down':'bond-flat';
+    const r=ind.research||{};
+    if(!(r.cot&&r.actual===actual&&r.previous===previous&&r.date===date&&r.cotColor===cotColor2)){
+      ind.research={actual,forecast:null,previous,date,source:COT_SOURCE_URL,cot:true,cotColor:cotColor2};
+      changed=true;
+    }
+    if(ind.bias!==bias){ind.bias=bias;changed=true;}
+  };
+  syms.forEach(c=>{
+    if(!COT_SYMS.includes(c.id))return;
+    const m=cotMetrics(COT_DATA.symbols[c.id]);
+    if(!m)return;
+    const rub=(c.rubrics||[]).find(r=>r.name==='COT Data');
+    if(!rub||!rub.indicators)return;
+    setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),m.longPct===0?'neu':'bull');
+    setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct===0?'neu':'bear');
+    setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu');
+  });
+  return changed;
+}
+function pickCotFilter(id){cotFilter=id||null;renderCot();}
 function renderCot(){
   const el=document.getElementById('cotBody');if(!el)return;
   cotStopCountdown();
@@ -4974,25 +5014,20 @@ function renderCot(){
   const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
   const avail=allRows.map(r=>r.id);
   if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
-  // Single "Filter" button -> grouped pop-up list (FX, Crypto, Metals, … – same order as the sidebar).
-  let pop='';
-  if(cotFilterOpen){
-    const grpHtml=SB_CATS.map(cat=>{
-      const items=cat.ids.filter(id=>avail.includes(id));
-      if(!items.length)return'';
-      const its=items.map(id=>`<button class="cot-pop-item${cotFilter===id?' on':''}" onclick="pickCotFilter('${id}')">${escH(COT_NAME[id]||id)}${cotFilter===id?'<span class="cot-pop-chk">✓</span>':''}</button>`).join('');
-      return`<div class="cot-pop-grp"><div class="cot-pop-grp-lbl">${escH(cat.l)}</div>${its}</div>`;
-    }).join('');
-    pop=`<div class="cot-pop-back" onclick="closeCotFilterMenu()"></div>
-      <div class="cot-pop">
-        <button class="cot-pop-item cot-pop-all${cotFilter?'':' on'}" onclick="pickCotFilter('')">All assets${cotFilter?'':'<span class="cot-pop-chk">✓</span>'}</button>
-        ${grpHtml}
-      </div>`;
-  }
-  const curLabel=cotFilter?escH(COT_NAME[cotFilter]||cotFilter):'';
+  // Native <select> mit <optgroup> je Asset-Kategorie (FX, Crypto, Metals, …
+  // – dieselbe Reihenfolge wie in der Sidebar) statt eines eigenen Pop-ups,
+  // damit der Filter sich wie z.B. der Waehrungs-Filter im Kalender oeffnet.
+  const grpHtml=SB_CATS.map(cat=>{
+    const items=cat.ids.filter(id=>avail.includes(id));
+    if(!items.length)return'';
+    const opts=items.map(id=>`<option value="${id}"${cotFilter===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('');
+    return`<optgroup label="${escH(cat.l)}">${opts}</optgroup>`;
+  }).join('');
   const filterBar=`<div class="cot-filterbar">
-    <button class="cot-filter-btn${cotFilter?' act':''}${cotFilterOpen?' act':''}" onclick="toggleCotFilterMenu(event)"><span class="cot-fi-ic">▾</span> Filter${cotFilter?' · '+curLabel:''}</button>
-    ${pop}
+    <select class="btn" id="cotFilterSel" onchange="pickCotFilter(this.value)" title="Filter by a single asset" style="cursor:pointer">
+      <option value=""${cotFilter?'':' selected'}>🌐 All assets</option>
+      ${grpHtml}
+    </select>
   </div>`;
   const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
   if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
