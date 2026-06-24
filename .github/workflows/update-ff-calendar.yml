@@ -523,6 +523,51 @@ jobs:
             // passen, der Zeitpunkt nur auf +/-2h genau (nächster gewinnt).
             const TIME_TOL=2*60*60*1000;
             let matched=0,matchedFFW=0,matchedTE=0;
+
+            // 0) Eurozone-Einzelstaaten-Flash-PMI (French/German Manufacturing/
+            // Services PMI): FXStreet benennt diese Releases teils ALLE
+            // identisch nach dem Indexanbieter ("HCOB Manufacturing PMI")
+            // OHNE das Land im Namen, und die Zeitstempel sind nicht
+            // zuverlaessig genug, um per Zeit-Naehe zu disambiguieren (FF und
+            // FXStreet weichen teils um mehr als die 15 Min. Abstand zwischen
+            // den Laendern selbst ab). Stattdessen nach Veroeffentlichungs-
+            // Reihenfolge zuordnen: Frankreich meldet vor Deutschland vor dem
+            // Eurozone-Aggregat - diese Reihenfolge ist Konvention und nicht
+            // von Zeitstempel-Ungenauigkeit betroffen.
+            const COUNTRY_ORDER={france:0,germany:1,spain:2,italy:2,netherlands:2};
+            const pmiGroups={};
+            combined.forEach(ev=>{
+              if(ev.actual)return;
+              const m=ev.title.toLowerCase().match(/\b(french|german|spanish|italian|dutch)\b/);
+              if(!m)return;
+              const t=new Date(ev.date).getTime();
+              if(isNaN(t))return;
+              const country=({french:"france",german:"germany",spanish:"spain",italian:"italy",dutch:"netherlands"})[m[1]];
+              const noCountryCanon=canonKey(ev.title).split(" ").filter(w=>!(w in COUNTRY_ORDER)).join(" ");
+              const key=ev.country+"|"+noCountryCanon+"|"+String(ev.date).slice(0,10);
+              (pmiGroups[key]=pmiGroups[key]||[]).push({ev,country,t});
+            });
+            Object.keys(pmiGroups).forEach(key=>{
+              const group=pmiGroups[key].sort((a,b)=>COUNTRY_ORDER[a.country]-COUNTRY_ORDER[b.country]);
+              const [ccy,noCountryCanon]=key.split("|");
+              const refT=group[0].t;
+              const seen=new Set();
+              const fxCands=fxEvents.filter(fx=>{
+                if(fx.currencyCode!==ccy||fx.actual==null)return false;
+                if(canonKey(fx.name)!==noCountryCanon)return false;
+                if(Math.abs(new Date(fx.dateUtc).getTime()-refT)>24*60*60*1000)return false;
+                const k=fx.dateUtc+"|"+fx.actual;
+                if(seen.has(k))return false;
+                seen.add(k);
+                return true;
+              }).sort((a,b)=>new Date(a.dateUtc).getTime()-new Date(b.dateUtc).getTime());
+              if(fxCands.length!==group.length)return;
+              group.forEach((item,i)=>{
+                const f=fmtActual(fxCands[i]);
+                if(f!==null){item.ev.actual=f;matched++;}
+              });
+            });
+
             const unmatched=[];
             combined.forEach(ev=>{
               if(ev.actual)return;
@@ -539,30 +584,12 @@ jobs:
               // gepflegt ist, ohne dass dafuer jede Sprachvariante einzeln
               // eingetragen werden muss.
               const ffCanon=canonKey(ev.title);
-              let candidates=fxEvents.filter(fx=>
+              const candidates=fxEvents.filter(fx=>
                 fx.currencyCode===ev.country &&
                 Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL &&
                 fx.actual!=null &&
                 (normName(fx.name)===ffName || aliases.includes(normName(fx.name)) || canonKey(fx.name)===ffCanon)
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
-              if(!candidates.length){
-                // FXStreet benennt French/German/Eurozone Flash-PMI-Releases
-                // teils alle identisch nach dem Indexanbieter ("HCOB
-                // Manufacturing PMI") OHNE das Land im Namen - der obige
-                // Laendervergleich (canonKey enthaelt "france"/"germany")
-                // kann das nie matchen. Fallback: Land aus dem Vergleich
-                // herausnehmen und stattdessen ueber eine enge Zeit-Toleranz
-                // disambiguieren, da France/Germany/Eurozone-Flash-PMI
-                // ueblicherweise nur 15 Min. auseinander liegen.
-                const STRICT_TOL=12*60*1000;
-                const ffCanonNoCountry=ffCanon.split(" ").filter(w=>!["france","germany","spain","italy","netherlands"].includes(w)).join(" ");
-                candidates=fxEvents.filter(fx=>
-                  fx.currencyCode===ev.country &&
-                  Math.abs(new Date(fx.dateUtc).getTime()-t)<=STRICT_TOL &&
-                  fx.actual!=null &&
-                  canonKey(fx.name)===ffCanonNoCountry
-                ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
-              }
               if(candidates.length){
                 const f=fmtActual(candidates[0]);
                 if(f!==null){ev.actual=f;matched++;return;}
