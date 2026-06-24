@@ -650,7 +650,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#db2777;color:#fdf2f8;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK (Indicators now pull their Actual/Forecast/Previous from the calendar far more reliably. The headline CPI is recognized under its TradingView name "Inflation Rate" too — so e.g. Canada's CPI now shows the real headline 3.2% instead of a wrong sub-measure — plus Core CPI ("Core Inflation Rate"), PPI ("Producer Price"), Manufacturing/Services PMI (currency-aware, picks the right national gauge), wage indices, and a fixed "Non Farm" (with a space) match for NFP)</div>
+<div style="flex:none;background:#7c3aed;color:#f5f3ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLET (Inbox now notifies for ALL calendar-linked indicators, not just Interest Rates/Inflation/Labour Market — Economic Growth (Consumer Confidence, PMI, GDP, Retail Sales) creates messages too. Also removed the startup guard that silently swallowed releases which arrived while the app was closed, so you get a one-time catch-up of recent updates and never miss new ones)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1571,6 +1571,9 @@ function processCalEvts(){
   });
   if(inbox.length!==beforeInbox)changed=true;
   if(syncIndicatorBiases())changed=true;
+  if(syncIndNotifs())changed=true;
+  // Sicherheitskappe: höchstens 60 Benachrichtigungen behalten (neueste zuerst).
+  if(inbox.length>60){inbox=inbox.slice(0,60);changed=true;}
   return changed;
 }
 function getInboxFor(id){
@@ -1776,12 +1779,13 @@ function applyResearchToCal(){
 // Rohstoffe/Krypto/Indizes (NONFX_IDS) zeigen die Actual/Forecast/Previous-
 // Werte zwar ebenfalls an (sie nutzen die USD-Events), aber ihr Bias wird
 // NICHT automatisch verändert - das bleibt manuell (siehe resetNonFxIndBias).
-// Postfach-Benachrichtigungen werden erst NACH dem initialen Laden scharf
-// geschaltet (notifEnabled). Beim Start werden die notifKey-Marker der
-// Indikatoren still gesetzt, ohne zu benachrichtigen - sonst gäbe es bei
-// jedem Öffnen eine Flut für längst bekannte Releases.
-let notifEnabled=false;
-// Erzeugt eine "Score wurde aktualisiert"-Benachrichtigung fürs Postfach.
+// Benachrichtigungen werden über den persistenten notifKey je Indikator
+// entdoppelt: Ein Release wird nur EINMAL gemeldet (auch über Reloads hinweg),
+// neue Releases - oder solche, die seit der letzten Sitzung dazukamen - lösen
+// dagegen eine Meldung aus. Dadurch braucht es keinen Boot-Schalter, der
+// (fälschlich) auch frische, noch ungesehene Releases unterdrücken würde.
+// Erzeugt eine "Indikator wurde aktualisiert"-Benachrichtigung fürs Postfach.
+// Die Richtung (bull/bear/neu) ergibt sich aus dem Beat/Miss des Releases.
 function mkScoreNotif(symId,rub,ind,ev){
   return{
     id:uid(),kind:'score',
@@ -1789,7 +1793,7 @@ function mkScoreNotif(symId,rub,ind,ev){
     base:stripPeriodSuffix(ind.name).base,
     label:ind.displayName||ind.name,
     rubName:rub.name,
-    bias:ind.bias,
+    bias:ev?indBiasFromEvent(ev):ind.bias,
     actual:ev?ev.actual:null,forecast:ev?ev.forecast:null,previous:ev?ev.previous:null,
     date:ev?ev.date:todayStr(),time:ev?ev.time:'',
     ts:Date.now()
@@ -1808,22 +1812,35 @@ function syncIndicatorBiases(){
           const nb=indBiasFromEvent(ev);
           if(ind.bias!==nb){ind.bias=nb;changed=true;}
         }
-        // Score-Update-Benachrichtigung: ausgelöst, sobald ein Release mit
-        // Actual-Wert vorliegt, dessen STABILER Schlüssel (Name+Datum+Währung,
-        // unabhängig von der bei jedem FF-Reload wechselnden ev.id) sich vom
-        // zuletzt gemerkten unterscheidet.
-        if(ev&&ev.actual){
-          const k=evtDismissKey(ev);
-          if(ind.notifKey!==k){
-            const base=stripPeriodSuffix(ind.name).base;
-            // Pro Indikator+Release-Tag nur EINE Benachrichtigung (verhindert
-            // Dubletten, wenn z.B. mehrere CPI-Teilindizes am selben Tag matchen
-            // oder eine Test-/Seed-Nachricht bereits dafür existiert).
-            const dup=inbox.find(m=>m.kind==='score'&&m.symId===c.id&&m.base===base&&m.date===ev.date);
-            if(notifEnabled&&!dup){inbox.unshift(mkScoreNotif(c.id,rub,ind,ev));changed=true;}
-            ind.notifKey=k;changed=true;
-          }
-        }
+      });
+    });
+  });
+  return changed;
+}
+// Postfach-Benachrichtigungen: für JEDEN FX-Indikator (über ALLE Rubriken -
+// also auch Economic Growth mit Consumer Confidence/PMI/GDP/Retail Sales, nicht
+// nur die Auto-Bias-Rubriken), sobald ein Kalender-Release mit Actual-Wert
+// vorliegt, dessen STABILER Schlüssel (Name+Datum+Währung, unabhängig von der
+// bei jedem FF-Reload wechselnden ev.id) sich vom zuletzt gemerkten notifKey
+// unterscheidet. Indikatoren ohne Kalender-Matcher (Bonds, COT, Geopolitik)
+// liefern findIndEvent=null und werden automatisch übersprungen. Die
+// Dublettensperre (gleicher Indikator+Release-Tag) und der persistente
+// notifKey verhindern, dass dasselbe Release mehrfach gemeldet wird.
+function syncIndNotifs(){
+  let changed=false;
+  syms.forEach(c=>{
+    if(isNonFx(c.id))return;
+    (c.rubrics||[]).forEach(rub=>{
+      if(!rub.indicators)return;
+      rub.indicators.forEach(ind=>{
+        const ev=findIndEvent(c.id,ind.name);
+        if(!ev||!ev.actual)return;
+        const k=evtDismissKey(ev);
+        if(ind.notifKey===k)return;
+        const base=stripPeriodSuffix(ind.name).base;
+        const dup=inbox.find(m=>m.kind==='score'&&m.symId===c.id&&m.base===base&&m.date===ev.date);
+        if(!dup){inbox.unshift(mkScoreNotif(c.id,rub,ind,ev));changed=true;}
+        ind.notifKey=k;changed=true;
       });
     });
   });
@@ -4820,10 +4837,7 @@ loadState();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
-// Während des initialen Laufs werden nur die notifKey-Marker gesetzt (kein
-// Postfach-Spam für längst bekannte Releases); danach scharf schalten.
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
-notifEnabled=true;
 // Einmaliger Test: eine CAD-CPI-Score-Benachrichtigung von gestern ins
 // Postfach legen, damit sich der Klick-zum-Indikator-Ablauf direkt
 // ausprobieren lässt. Werte aus dem realen Kalender (CAD CPI m/m, 22.06.).
