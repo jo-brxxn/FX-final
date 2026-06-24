@@ -650,7 +650,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c3aed;color:#f5f3ff;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLET (Inbox now notifies for ALL calendar-linked indicators, not just Interest Rates/Inflation/Labour Market — Economic Growth (Consumer Confidence, PMI, GDP, Retail Sales) creates messages too. Also removed the startup guard that silently swallowed releases which arrived while the app was closed, so you get a one-time catch-up of recent updates and never miss new ones)</div>
+<div style="flex:none;background:#475569;color:#f8fafc;font:600 12px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SLATE (Set-ups page now has a "Filter by currency" bar: pick one or more currencies and the list shows only the pairs containing them — e.g. tap USD to see just USD/CHF, EUR/USD, USD/JPY … ; "All" clears the filter and the selection is remembered)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3803,6 +3803,14 @@ function confirmAddPair(){
   if(curPage==='dash')renderDash();
 }
 
+// Währungs-Filter der Set-ups-Ansicht (Mehrfachauswahl). Leer = alle anzeigen.
+// Persistiert eigenständig im localStorage.
+let setupCcyFilter=(()=>{try{const a=JSON.parse(localStorage.getItem('fxpro_setup_ccy')||'[]');return Array.isArray(a)?a.filter(c=>FX.includes(c)):[];}catch(e){return[];}})();
+function saveSetupCcy(){localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}
+function toggleSetupCcy(c){const i=setupCcyFilter.indexOf(c);if(i>=0)setupCcyFilter.splice(i,1);else setupCcyFilter.push(c);saveSetupCcy();renderPairs();}
+function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();renderPairs();}
+// Enthält ein Paar(name) eine der gewählten Währungen (als Basis ODER Kurs)?
+function pairHasCcy(name,ccys){const parts=(name||'').split('/').map(s=>s.trim().toUpperCase());return ccys.some(c=>parts.includes(c));}
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
   // Die Set-ups-Ansicht fasst ALLE Kategorien (z.B. Set-ups + Watchlist) zu
@@ -3814,10 +3822,20 @@ function renderPairs(){
     ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
     ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScore(s)})),
   ];
+  // Filterleiste: einzelne Währungen auswählen -> nur Paare mit dieser Währung.
+  const active=setupCcyFilter.length>0;
+  const chip=c=>`<button class="cmp-chip${setupCcyFilter.includes(c)?' on':''}" onclick="toggleSetupCcy('${c}')">${c}</button>`;
+  const filterBar=`<div class="cmp-filter" style="margin-bottom:11px">
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Filter by currency</span>${FX.map(chip).join('')}</div>
+    <div class="cmp-filter-grp"><button class="cmp-quick${active?'':' on'}" onclick="clearSetupCcy()" title="Show all pairs &amp; assets">All</button></div>
+  </div>`;
   if(items.length===0){
-    el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
     return;
   }
+  // Bei aktivem Filter NUR Paare zeigen, die eine der gewählten Währungen
+  // enthalten (Non-FX-Assets sind keine Währungspaare und werden ausgeblendet).
+  const shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
   const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     <div class="sym-name dw-pname">${escH(it.name)}</div>
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score')}
@@ -3828,10 +3846,14 @@ function renderPairs(){
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
     ${list.length?list.map(row).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
-  const bull=items.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
-  const bear=items.filter(it=>it.bias==='bear').sort((a,b)=>a.score-b.score);
-  const neu=items.filter(it=>it.bias==='neu').sort((a,b)=>Math.abs(b.score)-Math.abs(a.score));
-  el.innerHTML=`<div class="setups-cols">
+  if(shown.length===0){
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs with ${escH(setupCcyFilter.join(', '))}. Add one via "＋ Add Pair" or pick another currency.</div>`;
+    return;
+  }
+  const bull=shown.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
+  const bear=shown.filter(it=>it.bias==='bear').sort((a,b)=>a.score-b.score);
+  const neu=shown.filter(it=>it.bias==='neu').sort((a,b)=>Math.abs(b.score)-Math.abs(a.score));
+  el.innerHTML=filterBar+`<div class="setups-cols">
     ${col('▲ Bullish',BC.bull,bull)}
     ${col('◆ Neutral',BC.neu,neu)}
     ${col('▼ Bearish',BC.bear,bear)}
