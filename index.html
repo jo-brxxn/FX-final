@@ -323,6 +323,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
 .cot-tbl td.cot-c-long{color:#4fc3f7;font-weight:700}
+.cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
+.cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
+@media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
 .cot-tbl td.cot-c-short{color:#ef6b78;font-weight:700}
 /* COT control bar (countdown + refresh) */
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -706,7 +709,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#4d7c0f;color:#ecfccb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OLIVE (the COT tab now shows a Positioning History chart when a single asset is filtered: one stacked bar per weekly CFTC report — blue Long / red Short contracts on the right scale, a black Long% line on a fixed 0-100% left scale with a grey 50% reference line, dates below each bar; the hourly data job and the live CFTC fallback both now collect up to 26 weeks of history per market to feed it)</div>
+<div style="flex:none;background:#1e3a8a;color:#dbeafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: NAVY (COT Positioning History improvements: the chart now stretches to the full available width, the right (contract) scale always rounds up to the next 10k with one extra 10k of headroom; when an asset is filtered the redundant Net Long/Short bars are hidden and the details table below the chart is replaced with one row per historical report — incl. date column — with the Δ Net % (wk) column visually highlighted as the key metric; and the previously-fetched history is now cached locally so it survives a page reload instead of disappearing until the next hourly data job run)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4873,6 +4876,32 @@ let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
 const COT_SYMS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
 const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq'};
+// Lokaler Cache der zuletzt gesehenen Historie. Die stuendlich geschriebene
+// cot_data.json kann (z.B. direkt nach diesem Feature-Rollout, oder wenn der
+// Cron-Job mal ausfaellt) noch keine/weniger Historie enthalten als bereits
+// per Live-Refresh geladen wurde - ohne diesen Cache wuerde ein simpler
+// Seiten-Reload die zuvor angezeigte Verlaufs-Historie wieder verschwinden
+// lassen, weil COT_DATA nirgends sonst persistiert wird.
+const COT_CACHE_KEY='fxpro_cot_hist_cache';
+function cotLoadCache(){try{const s=localStorage.getItem(COT_CACHE_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
+function cotSaveCache(d){try{localStorage.setItem(COT_CACHE_KEY,JSON.stringify(d));}catch(e){}}
+function cotMergeHistory(fresh){
+  if(!fresh||!fresh.symbols)return fresh;
+  const cache=cotLoadCache();
+  if(cache&&cache.symbols){
+    Object.keys(fresh.symbols).forEach(id=>{
+      const f=fresh.symbols[id],c=cache.symbols[id];
+      if(!c)return;
+      const byDate={};
+      (c.history||[]).forEach(e=>byDate[e.date]=e);
+      (f.history||[]).forEach(e=>byDate[e.date]=e);
+      const merged=Object.keys(byDate).sort().map(k=>byDate[k]);
+      if(merged.length)f.history=merged.slice(-COT_HIST_LEN);
+    });
+  }
+  cotSaveCache(fresh);
+  return fresh;
+}
 async function fetchCotData(){
   try{
     const res=await fetch('cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
@@ -4884,6 +4913,7 @@ async function fetchCotData(){
   if(!COT_DATA||!COT_DATA.symbols){
     try{COT_DATA=await cotFetchLive();}catch(e){}
   }
+  if(COT_DATA)COT_DATA=cotMergeHistory(COT_DATA);
 }
 function autoFetchCot(){
   fetchCotData().then(()=>{
@@ -4948,7 +4978,7 @@ async function cotManualRefresh(){
   const btn=document.getElementById('cotRefreshBtn');
   if(btn){btn.classList.add('spin');btn.disabled=true;}
   try{
-    COT_DATA=await cotFetchLive();                 // fresh, straight from the CFTC
+    COT_DATA=cotMergeHistory(await cotFetchLive()); // fresh, straight from the CFTC
     cotRefreshNote='✓ Updated live from the CFTC';
   }catch(e){
     await fetchCotData();                           // fallback: last stored file
@@ -5006,6 +5036,22 @@ function cotMetrics(s){
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
 function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
+// Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
+// gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
+// dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
+function cotHistRowMetrics(cur,prev){
+  const L=+cur.long||0,S=+cur.short||0,tot=L+S;
+  if(tot<=0)return null;
+  const longPct=L/tot*100,shortPct=S/tot*100,net=L-S,netPct=net/tot*100;
+  let dL=null,dS=null,dNetPct=null,dOi=null;
+  if(prev){
+    const pL=+prev.long||0,pS=+prev.short||0,pTot=pL+pS;
+    dL=L-pL;dS=S-pS;
+    if(pTot>0)dNetPct=netPct-(pL-pS)/pTot*100;
+    dOi=(+cur.oi||0)-(+prev.oi||0);
+  }
+  return{L,S,longPct,shortPct,net,netPct,dL,dS,dNetPct,oi:+cur.oi||0,dOi};
+}
 function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(2)+'M';if(a>=1e3)return(n/1e3).toFixed(1)+'K';return String(Math.round(n));}
 // ── Verlaufs-Diagramm (gestapelte Balken Long/Short + Long-%-Linie) fuer
 // ein einzelnes Asset, ein Balken = ein COT-Report. Rechte Skala (Kontrakte,
@@ -5013,29 +5059,28 @@ function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e
 // gestapelten Balken, linke Skala (fest 0-100%) fuer die schwarze Long-%-
 // Linie. Graue Referenzlinie bei 50% markiert den neutralen Punkt (gleich
 // viele Long- wie Short-Kontrakte).
-function cotNiceAxis(maxVal,ticks){
-  ticks=ticks||6;
-  if(!isFinite(maxVal)||maxVal<=0)return{max:10,step:2};
-  const rawStep=maxVal/(ticks-1);
-  const mag=Math.pow(10,Math.floor(Math.log10(rawStep)));
-  const norm=rawStep/mag;
-  const niceNorm=norm<1.5?1:norm<3?2:norm<7?5:10;
-  const step=niceNorm*mag;
-  const max=Math.ceil(maxVal/step)*step;
+function cotNiceAxis(maxVal){
+  // Rechte Skala: immer in 10k-Schritten, Maximum = naechstes 10k oberhalb
+  // des Hoechstwerts plus einen weiteren 10k-Schritt Luft nach oben.
+  const step=10000;
+  if(!isFinite(maxVal)||maxVal<=0)return{max:step,step};
+  const max=Math.ceil(maxVal/step)*step+step;
   return{max,step};
 }
-function cotHistChart(history){
+function cotHistChart(history,availWidth){
   if(!Array.isArray(history)||history.length<2)return'';
   const n=history.length;
-  const barW=14,gap=8,perBar=barW+gap;
-  const leftPad=40,rightPad=46,topPad=10,chartH=210,bottomPad=26;
+  const leftPad=44,rightPad=52,topPad=10,chartH=210,bottomPad=26;
+  const minPerBar=16;
+  const usableW=Math.max((availWidth||0)-leftPad-rightPad,n*minPerBar);
+  const perBar=usableW/n,barW=Math.max(4,perBar*0.62);
   const w=leftPad+rightPad+n*perBar,h=topPad+chartH+bottomPad;
   const y0=topPad+chartH;
   const rawMax=Math.max(...history.map(e=>Math.max(e.long||0,e.short||0)));
-  const ax=cotNiceAxis(rawMax,6);
+  const ax=cotNiceAxis(rawMax);
   const yPct=p=>y0-(p/100)*chartH;
   const yVal=v=>y0-(v/ax.max)*chartH;
-  let svg=`<svg class="cot-hist-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+  let svg=`<svg class="cot-hist-svg" width="${w.toFixed(1)}" height="${h}" viewBox="0 0 ${w.toFixed(1)} ${h}">`;
   // Linke Achse (0-100%, alle 25%)
   for(let p=0;p<=100;p+=25){
     const y=yPct(p);
@@ -5058,8 +5103,8 @@ function cotHistChart(history){
     const x=leftPad+i*perBar;
     const L=+e.long||0,S=+e.short||0;
     const longH=(L/ax.max)*chartH,shortH=(S/ax.max)*chartH;
-    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH).toFixed(1)}" width="${barW}" height="${longH.toFixed(1)}" fill="${BC.bull}"/>`;
-    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH-shortH).toFixed(1)}" width="${barW}" height="${shortH.toFixed(1)}" fill="${BC.bear}"/>`;
+    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH).toFixed(1)}" width="${barW.toFixed(1)}" height="${longH.toFixed(1)}" fill="${BC.bull}"/>`;
+    svg+=`<rect x="${x.toFixed(1)}" y="${(y0-longH-shortH).toFixed(1)}" width="${barW.toFixed(1)}" height="${shortH.toFixed(1)}" fill="${BC.bear}"/>`;
     const tot=L+S,lp=tot>0?L/tot*100:50;
     linePts.push((x+barW/2).toFixed(1)+','+yPct(lp).toFixed(1));
     let d;try{const dt=new Date(e.date+'T00:00:00');d=(dt.getMonth()+1)+'/'+dt.getDate();}catch(err){d=e.date;}
@@ -5177,14 +5222,48 @@ function renderCot(){
     </div>`;
   }).join('');
   // Detail table sorted by week-over-week net % change (largest swing first).
-  const tblRows=rows.slice().sort((a,b)=>b.m.dNetPct-a.m.dNetPct);
-  const head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th><th title="Week-over-week change of net positioning">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
-  const body=tblRows.map(r=>{const m=r.m;return`<tr onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
+  const date=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
+  // Verlaufsdiagramm + Verlaufstabelle nur, wenn genau ein Asset gefiltert
+  // ist; ansonsten die normale Symbol-Vergleichstabelle (alle Assets).
+  let histCard='',tblTitle,head,body;
+  if(cotFilter){
+    let histArr=(COT_DATA.symbols[cotFilter]||{}).history;
+    if(!Array.isArray(histArr)||!histArr.length){
+      const m0=cotMetrics(COT_DATA.symbols[cotFilter]);
+      histArr=m0?[{date:COT_DATA.report_date,long:m0.L,short:m0.S,oi:m0.oi}]:[];
+    }
+    const availWidth=(el.clientWidth||el.parentElement&&el.parentElement.clientWidth||window.innerWidth)-4;
+    const chartSvg=cotHistChart(histArr,availWidth);
+    histCard=`<div class="cot-card">
+      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)</small></div>
+      ${chartSvg?`<div class="cot-hist-wrap">${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
+    </div>`;
+    tblTitle=`<span>📋 Report-by-report history — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>newest first · Δ = change vs. the previous report</small>`;
+    head=`<tr><th class="cot-corner">Date</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
+    const rowsDesc=histArr.map((e,i)=>({e,m:cotHistRowMetrics(e,histArr[i-1])})).reverse();
+    body=rowsDesc.map(({e,m})=>{if(!m)return'';return`<tr>
+      <th class="cot-rowh">${escH(fmtDayHdr(e.date))}</th>
+      <td class="cot-c-long">${m.longPct.toFixed(1)}%</td>
+      <td class="cot-c-short">${m.shortPct.toFixed(1)}%</td>
+      <td style="color:${cotColor(m.net)};font-weight:700">${cotPct(m.netPct,true)}</td>
+      <td class="cot-c-hl" style="color:${cotColor(m.dNetPct)}">${m.dNetPct==null?'–':cotPct(m.dNetPct,true)}</td>
+      <td>${cotNum(m.L)}</td><td>${cotNum(m.S)}</td>
+      <td style="color:${cotColor(m.dL)}">${m.dL==null?'–':cotSigned(m.dL)}</td>
+      <td style="color:${cotColor(-m.dS)}">${m.dS==null?'–':cotSigned(m.dS)}</td>
+      <td style="color:${cotColor(m.net)}">${cotSigned(m.net)}</td>
+      <td>${cotNum(m.oi)}</td>
+      <td style="color:${cotColor(m.dOi)}">${m.dOi==null?'–':cotSigned(m.dOi)}</td>
+    </tr>`;}).join('');
+  }else{
+    const tblRows=rows.slice().sort((a,b)=>b.m.dNetPct-a.m.dNetPct);
+    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week</small>`;
+    head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
+    body=tblRows.map(r=>{const m=r.m;return`<tr onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
       <th class="cot-rowh">${escH(r.name)}</th>
       <td class="cot-c-long">${m.longPct.toFixed(1)}%</td>
       <td class="cot-c-short">${m.shortPct.toFixed(1)}%</td>
       <td style="color:${cotColor(m.net)};font-weight:700">${cotPct(m.netPct,true)}</td>
-      <td style="color:${cotColor(m.dNetPct)};font-weight:700">${cotPct(m.dNetPct,true)}</td>
+      <td class="cot-c-hl" style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true)}</td>
       <td>${cotNum(m.L)}</td><td>${cotNum(m.S)}</td>
       <td style="color:${cotColor(m.dL)}">${cotSigned(m.dL)}</td>
       <td style="color:${cotColor(-m.dS)}">${cotSigned(m.dS)}</td>
@@ -5192,28 +5271,17 @@ function renderCot(){
       <td>${cotNum(m.oi)}</td>
       <td style="color:${cotColor(m.dOi)}">${cotSigned(m.dOi)}</td>
     </tr>`;}).join('');
-  const date=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
-  const scope=cotFilter?`filtered: ${escH(COT_NAME[cotFilter]||cotFilter)}`:'sorted by long share';
-  // Verlaufsdiagramm nur, wenn genau ein Asset gefiltert ist und fuer dieses
-  // Historie-Daten vorliegen (mind. 2 Reports).
-  let histCard='';
-  if(cotFilter){
-    const histArr=(COT_DATA.symbols[cotFilter]||{}).history;
-    const chartSvg=cotHistChart(histArr);
-    histCard=`<div class="cot-card">
-      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)</small></div>
-      ${chartSvg?`<div class="cot-hist-wrap">${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
-    </div>`;
   }
+  const barsCard=cotFilter?'':`<div class="cot-card">
+      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small></div>
+      <div class="cot-bars">${bars}</div>
+    </div>`;
   el.innerHTML=ctrl+filterBar+`
     <div class="cot-meta">Report date: <b>${escH(date)}</b> · Source: CFTC (Legacy, Non-Commercial) · COT is released weekly (as of Tuesday, published Friday)</div>
     ${histCard}
+    ${barsCard}
     <div class="cot-card">
-      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · ${scope} · click opens the symbol</small></div>
-      <div class="cot-bars">${bars}</div>
-    </div>
-    <div class="cot-card">
-      <div class="cot-card-title"><span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week</small></div>
+      <div class="cot-card-title">${tblTitle}</div>
       <div class="cot-scroll"><table class="cot-tbl"><thead>${head}</thead><tbody>${body}</tbody></table></div>
     </div>`;
   cotStartCountdown();
