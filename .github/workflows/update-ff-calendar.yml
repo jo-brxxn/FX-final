@@ -996,8 +996,79 @@ jobs:
           '
           rm -f bond_tv.json
 
+      # ── COT / Commitments of Traders (cot_data.json) ──────────────────
+      # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
+      # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
+      # nur geschrieben, wenn sich die Werte tatsaechlich geaendert haben - sonst
+      # entsteht kein stuendlicher Commit-Churn.
+      - name: Fetch CFTC COT (Legacy futures-only) -> cot_data.json
+        run: |
+          curl -sL --max-time 90 \
+            'https://publicreporting.cftc.gov/resource/6dca-aqww.json?$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,open_interest_all,noncomm_positions_long_all,noncomm_positions_short_all,change_in_noncomm_long_all,change_in_noncomm_short_all,change_in_open_interest_all&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=6000' \
+            -o cot_raw.json || true
+          node -e '
+            const fs=require("fs");
+            let rows;
+            try{rows=JSON.parse(fs.readFileSync("cot_raw.json","utf8"));}catch(e){console.log("cot: raw unreadable, keeping existing file");process.exit(0);}
+            if(!Array.isArray(rows)||!rows.length){console.log("cot: empty/invalid raw, keeping existing file");process.exit(0);}
+            const MARKETS=[
+              {id:"EUR", inc:/EURO FX/, exc:/MICRO/},
+              {id:"GBP", inc:/BRITISH POUND/, exc:/MICRO/},
+              {id:"JPY", inc:/JAPANESE YEN/, exc:/MICRO/},
+              {id:"CHF", inc:/SWISS FRANC/, exc:/MICRO/},
+              {id:"CAD", inc:/CANADIAN DOLLAR/, exc:/MICRO/},
+              {id:"AUD", inc:/AUSTRALIAN DOLLAR/, exc:/MICRO/},
+              {id:"NZD", inc:/(NZ DOLLAR|NEW ZEALAND DOLLAR)/, exc:/MICRO/},
+              {id:"USD", inc:/(U\.?S\.?\s*DOLLAR INDEX|USD INDEX)/, exc:/MICRO/},
+              {id:"BTC", inc:/BITCOIN/, exc:/(MICRO|YIELD|ETHER|EVENT)/},
+              {id:"GOLD", inc:/^GOLD - /, exc:/(MICRO|KILO)/},
+              {id:"SILVER", inc:/^SILVER - /, exc:/MICRO/},
+              {id:"OIL", inc:/CRUDE OIL, LIGHT SWEET/, exc:/(MICRO|CALENDAR|BULLET|FINANCIAL|NYMEX OTHER|MIDLAND|GULF|WTI AVERAGE)/},
+              {id:"SP500", inc:/E-MINI S&P 500/, exc:/(MICRO|ESG|GROWTH|VALUE|DIVIDEND|ANNUAL|QUARTER|CONSU|FINANCIAL|HEALTH|TECH|UTIL|MATERIAL|INDUSTRIAL|ENERGY|REAL|COMMUNICATION)/},
+              {id:"NAS", inc:/(NASDAQ-100|E-MINI NASDAQ)/, exc:/MICRO/}
+            ];
+            const out={};let reportDate="";const matched=[];
+            for(const r of rows){
+              const nm=(r.market_and_exchange_names||"").toUpperCase();
+              for(const mk of MARKETS){
+                if(out[mk.id])continue;
+                if(mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))){
+                  const L=Number(r.noncomm_positions_long_all),S=Number(r.noncomm_positions_short_all);
+                  if(!isFinite(L)||!isFinite(S))continue;
+                  out[mk.id]={
+                    long:L,short:S,
+                    dLong:Number(r.change_in_noncomm_long_all)||0,
+                    dShort:Number(r.change_in_noncomm_short_all)||0,
+                    oi:Number(r.open_interest_all)||0,
+                    dOi:Number(r.change_in_open_interest_all)||0
+                  };
+                  const d=String(r.report_date_as_yyyy_mm_dd||"").slice(0,10);
+                  if(d>reportDate)reportDate=d;
+                  matched.push(mk.id+" <- "+r.market_and_exchange_names+" ("+d+")");
+                }
+              }
+            }
+            const got=Object.keys(out).length;
+            if(got===0){
+              console.log("cot: no markets matched - sample row keys: "+Object.keys(rows[0]||{}).join(","));
+              console.log("cot: sample market names: "+rows.slice(0,6).map(r=>r.market_and_exchange_names).join(" | "));
+              console.log("cot: keeping existing file");
+              process.exit(0);
+            }
+            console.log("cot matched "+got+"/"+MARKETS.length+" markets:");
+            matched.forEach(s=>console.log("  "+s));
+            const missing=MARKETS.map(m=>m.id).filter(id=>!out[id]);
+            if(missing.length)console.log("cot MISSING: "+missing.join(", "));
+            let prev=null;try{prev=JSON.parse(fs.readFileSync("cot_data.json","utf8"));}catch(e){}
+            if(prev&&JSON.stringify(prev.symbols)===JSON.stringify(out)){console.log("cot: unchanged, keeping existing file");process.exit(0);}
+            const result={report_date:reportDate,updated:new Date().toISOString(),symbols:out};
+            fs.writeFileSync("cot_data.json",JSON.stringify(result,null,1));
+            console.log("cot_data.json written: "+got+" markets, report "+reportDate);
+          '
+          rm -f cot_raw.json
+
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html cot_raw.json
 
       - name: Commit and push if changed
         run: |
@@ -1005,6 +1076,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add ff_calendar.json ind_data.json
           [ -f bond_data.json ] && git add bond_data.json
+          [ -f cot_data.json ] && git add cot_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             git push
