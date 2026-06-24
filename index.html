@@ -339,6 +339,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* COT single Filter button + grouped pop-up list */
 .cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
 #cotFilterSel{font-size:14px;padding:8px 15px}
+/* ── NEW COT DATA BANNER ── */
+.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:linear-gradient(90deg,#0b3d91,#1c64f2);color:#fff;box-shadow:0 2px 10px rgba(28,100,242,.35);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+.cot-notify-ic{font-size:16px}
+.cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px}
+.cot-notify-sub{font-size:11px;opacity:.85;margin-left:2px}
+.cot-notify-x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:20px;height:20px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1}
+.cot-notify-x:hover{background:rgba(255,255,255,.28)}
+@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.35)}50%{box-shadow:0 2px 18px rgba(28,100,242,.6)}}
 /* ── TODAY REMINDER ── */
 .today-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.18)}
 .today-card.empty{display:flex;align-items:center;gap:8px;padding:10px 14px;color:var(--t3);font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -458,8 +466,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
 .cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.cal-ff-ic{display:inline-block;text-decoration:none;margin-right:5px;font-size:11px;opacity:.85;vertical-align:-1px}
-@media (hover:hover){.cal-ff-ic:hover{opacity:1}}
 .cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
 .cal-val{font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700;color:var(--t1);text-align:center}
 .cal-val.ph{color:var(--t3);font-weight:400}
@@ -698,7 +704,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7f1d1d;color:#fee2e2;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAROON (the tab bar now auto-collapses on scroll-down and reappears on scroll-up, while the header/logo stay put; every calendar event row now has an 🅵🅵 link straight to Forex Factory; the Inbox is now grouped by day like the calendar; and Compare now includes the COT Data, Geopolitics and Macro &amp; Risk Environment cards too, not just the first four)</div>
+<div style="flex:none;background:#065f46;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: EMERALD (fixed the tab-bar auto-collapse jitter caused by a scroll-clamp feedback loop on layout shift; Net Bullish/Net Bearish Positioning in the COT Data card are now visually paired like CPI/Core CPI, each keeping its own bias and notes; the Forex Factory link moved out of every calendar row into the calendar's top toolbar; and a dismissible "NEW COT DATA!" banner now appears at the top of the Dashboard for 3 days whenever a new CFTC report lands, linking straight to the COT tab)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -893,6 +899,7 @@ function introLogin(){
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px">
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news">📁 All Impacts</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)">🔄 Refresh</button>
@@ -933,6 +940,7 @@ function introLogin(){
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live overview</div></div>
     <button class="btn g" onclick="addWidget()">＋ Widget</button>
   </div>
+  <div id="cotNotifyCard"></div>
   <div id="todayCard"></div>
   <div id="dashWidgets"></div>
 </div>
@@ -1263,11 +1271,6 @@ function revisionColor(oldVal,newVal,name){
 // CNY-News werden in allen Kalendern immer als Medium-Impact behandelt.
 function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).includes('CNY');}
 function evtImpact(ev){return evtIsCNY(ev)?'medium':ev.impact;}
-// Kleiner Link neben jedem Event-Namen, der direkt zu Forex Factory führt.
-// 🅵🅵 ("F" zweimal im Quadrat) ist der Unicode-Emoji, der dem grünen
-// "ff"-Markenzeichen der Forex-Factory-Webseite am naechsten kommt.
-const FF_CAL_URL='https://www.forexfactory.com/calendar';
-function calFfLink(){return`<a class="cal-ff-ic" href="${FF_CAL_URL}" target="_blank" rel="noopener" title="Open on Forex Factory" onclick="event.stopPropagation()">🅵🅵</a>`;}
 function calRowHtml(ev,opts){
   opts=opts||{};
   const imp=evtImpact(ev);
@@ -1282,7 +1285,7 @@ function calRowHtml(ev,opts){
     return`<div class="cal-row compact ${ic}${isToday?' today':''}${past}">
       <div class="cal-time">${ev.time||'—'}</div>
       <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-      <div class="cal-evname" title="${escH(ev.name)}">${calFfLink()}${escH(ev.name)}</div>
+      <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
       ${val(ev.actual,ac)}
       ${val(ev.forecast)}
       ${val(ev.previous,ev.prevRevColor)}
@@ -1293,7 +1296,7 @@ function calRowHtml(ev,opts){
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
     <div class="cal-imp ${ic}">${impLbl}</div>
-    <div class="cal-evname" title="${escH(ev.name)}">${calFfLink()}${escH(ev.name)}</div>
+    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
     ${val(ev.previous,ev.prevRevColor)}
@@ -3309,10 +3312,18 @@ function clearDateM(){
   syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
 
-// Gruppiert direkt benachbarte Indikatoren, die ein CORE_PAIRS-Pärchen bilden
-// (z.B. CPI + Core CPI), in eine gemeinsam umrandete .ind-pair-group. Score
-// und Bias jedes Indikators bleiben dabei komplett unangetastet – renderInd()
-// selbst wird unverändert pro Indikator aufgerufen, nur das Wrapping ändert sich.
+// Paare, die nur optisch (eine gemeinsam umrandete .ind-pair-group) gruppiert
+// werden - zusätzlich zu den CORE_PAIRS (die auch die Score-Gewichtung
+// halbieren). Net Bullish/Net Bearish Positioning zählen ohnehin nie in den
+// Score (COT_IND_NOSCORE), werden aber genauso wie CPI/Core CPI nebeneinander
+// in einer Box dargestellt - mit weiterhin komplett eigenem Bias & eigenen
+// Stichpunkten je Indikator.
+const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning']];
+// Gruppiert direkt benachbarte Indikatoren, die ein IND_PAIR_GROUPS-Pärchen
+// bilden (z.B. CPI + Core CPI), in eine gemeinsam umrandete .ind-pair-group.
+// Score und Bias jedes Indikators bleiben dabei komplett unangetastet –
+// renderInd() selbst wird unverändert pro Indikator aufgerufen, nur das
+// Wrapping ändert sich.
 function renderInds(rub,ri){
   const inds=rub.indicators||[];
   const total=inds.length;
@@ -3320,7 +3331,7 @@ function renderInds(rub,ri){
   while(i<total){
     const ind=inds[i],next=inds[i+1];
     const base1=stripPeriodSuffix(ind.name).base;
-    const isPair=next&&CORE_PAIRS.some(([a,b])=>{
+    const isPair=next&&IND_PAIR_GROUPS.some(([a,b])=>{
       const base2=stripPeriodSuffix(next.name).base;
       return(base1===a&&base2===b)||(base1===b&&base2===a);
     });
@@ -4468,7 +4479,18 @@ function renderTodayReminder(){
     <div class="today-list">${list.map(row).join('')}</div>
   </div>`;
 }
+function renderCotNotify(){
+  const el=document.getElementById('cotNotifyCard');if(!el)return;
+  if(!cotNotifyActive()){el.innerHTML='';return;}
+  el.innerHTML=`<div class="cot-notify-card" onclick="showTab('cot')">
+    <span class="cot-notify-ic">📊</span>
+    <span class="cot-notify-txt">NEW COT DATA!</span>
+    <span class="cot-notify-sub">New CFTC report available — tap to view</span>
+    <button class="cot-notify-x" onclick="event.stopPropagation();dismissCotNotify()" title="Dismiss">×</button>
+  </div>`;
+}
 function renderDash(){
+  renderCotNotify();
   renderTodayReminder();
   const el=document.getElementById('dashWidgets');if(!el)return;
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
@@ -4987,8 +5009,32 @@ function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+
 // als einziger der drei Indikatoren in den Score (bull >0 / bear <0 / neutral =0).
 // Put/Call Ratio bleibt unberuehrt (rein manuell).
 const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm';
+// ── Erkennung eines NEUEN COT-Reports (anhand report_date), unabhaengig
+// davon ob der Auto-Fetch oder der manuelle Refresh die Daten gebracht hat.
+// Wird ein bisher unbekanntes Datum erkannt, bleibt das Dashboard-Banner
+// "NEW COT DATA!" 3 Tage lang sichtbar (auch ueber Reloads hinweg, daher
+// localStorage statt einer simplen Variable).
+const COT_SEEN_KEY='fxpro_cot_seen_date';
+const COT_NOTIFY_KEY='fxpro_cot_notify_until';
+function checkCotNewReport(){
+  const date=COT_DATA&&COT_DATA.report_date;
+  if(!date)return;
+  const seen=localStorage.getItem(COT_SEEN_KEY);
+  if(seen===date)return;
+  localStorage.setItem(COT_SEEN_KEY,date);
+  if(seen)localStorage.setItem(COT_NOTIFY_KEY,String(Date.now()+3*86400000));
+}
+function cotNotifyActive(){
+  const until=+localStorage.getItem(COT_NOTIFY_KEY)||0;
+  return Date.now()<until;
+}
+function dismissCotNotify(){
+  localStorage.removeItem(COT_NOTIFY_KEY);
+  renderDash();
+}
 function applyCotDataFeed(){
   if(!COT_DATA||!COT_DATA.symbols)return false;
+  checkCotNewReport();
   const date=COT_DATA.report_date||null;
   let changed=false;
   const setOne=(rub,base,actual,previous,bias)=>{
@@ -5095,9 +5141,11 @@ const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',pair
 // wieder einblenden. Der Header (Logo + Symbole rechts daneben) bleibt davon
 // unberuehrt, da nur .tabbar (nicht .hdr) ein/ausgeklappt wird.
 let tabbarCollapsed=false;
+let tabbarGuardUntil=0;
 function setTabbarCollapsed(v){
   if(tabbarCollapsed===v)return;
   tabbarCollapsed=v;
+  tabbarGuardUntil=Date.now()+350;
   const tb=document.querySelector('.tabbar');
   if(tb)tb.classList.toggle('collapsed',v);
 }
@@ -5108,12 +5156,25 @@ function wireTabbarAutoHide(){
     if(!el||el.dataset.tbWired)return;
     el.dataset.tbWired='1';
     let last=el.scrollTop;
+    let ticking=false;
     el.addEventListener('scroll',()=>{
-      const top=el.scrollTop;
-      if(top<=8)setTabbarCollapsed(false);
-      else if(top>last+4)setTabbarCollapsed(true);
-      else if(top<last-4)setTabbarCollapsed(false);
-      last=top;
+      if(ticking)return;
+      ticking=true;
+      requestAnimationFrame(()=>{
+        ticking=false;
+        const top=el.scrollTop;
+        // Waehrend die Tabbar-Animation laeuft, kann das Layout den Scroll-
+        // Container clampen (scrollHeight/clientHeight aendert sich), was ein
+        // rein layoutbedingtes scroll-Event ausloest. Dieses Echo wuerde sonst
+        // sofort wieder den gegenteiligen Zustand auslösen -> Ruckel-Loop.
+        // Daher wird waehrend der Guard-Zeit nur `last` synchronisiert, ohne
+        // eine neue Ein-/Ausklapp-Entscheidung zu treffen.
+        if(Date.now()<tabbarGuardUntil){last=top;return;}
+        if(top<=8)setTabbarCollapsed(false);
+        else if(top>last+4)setTabbarCollapsed(true);
+        else if(top<last-4)setTabbarCollapsed(false);
+        last=top;
+      });
     },{passive:true});
   });
 }
