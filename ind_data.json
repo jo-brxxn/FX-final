@@ -123,10 +123,10 @@
    "period": "y/y"
   },
   "Unemployment Claims": {
-   "actual": "226K",
+   "actual": "215K",
    "forecast": "225K",
-   "previous": "229K",
-   "date": "2026-06-18",
+   "previous": "227K",
+   "date": "2026-06-25",
    "event": "Initial Jobless Claims",
    "period": null
   },
@@ -147,26 +147,26 @@
    "period": null
   },
   "GDP Growth QoQ": {
-   "actual": "1.6%",
-   "forecast": "2%",
-   "previous": "1.6%",
-   "date": "2026-05-28",
-   "event": "GDP Growth Rate QoQ 2nd Est",
+   "actual": "2.1%",
+   "forecast": "1.6%",
+   "previous": "0.5%",
+   "date": "2026-06-25",
+   "event": "GDP Growth Rate QoQ Final",
    "period": "q/q"
   },
   "PCE": {
-   "actual": "3.8%",
-   "forecast": "3.8%",
+   "actual": "4.1%",
+   "forecast": "4.1%",
    "previous": "3.8%",
-   "date": "2026-05-28",
+   "date": "2026-06-25",
    "event": "PCE Price Index YoY",
    "period": "y/y"
   },
   "Core PCE": {
-   "actual": "3.3%",
-   "forecast": "3.3%",
+   "actual": "3.4%",
+   "forecast": "3.4%",
    "previous": "3.3%",
-   "date": "2026-05-28",
+   "date": "2026-06-25",
    "event": "Core PCE Price Index YoY",
    "period": "y/y"
   },
@@ -534,7 +534,7 @@
  "CAD": {
   "CPI": {
    "actual": "1%",
-   "forecast": "0.8%",
+   "forecast": "0.7%",
    "previous": "0.4%",
    "date": "2026-06-22",
    "event": "Inflation Rate MoM",
