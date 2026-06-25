@@ -723,7 +723,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#1f7a5c;color:#d6fff0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: JADE (the Overview card on each symbol page now arranges its fields side by side in a grid, up to 3 per row, instead of stacking; clicking a field jumps straight to the matching card below and briefly highlights it)</div>
+<div style="flex:none;background:#7a3d9c;color:#f3e0ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLET (COT-Kennzahl "WoW Change in Net Position (%)" zeigt jetzt die einfache Long%-Aenderung statt der verdoppelten Netto-%-Aenderung, analog zu Drittanbieter-COT-Tools)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5103,7 +5103,7 @@ function cotMetrics(s){
   const pL=L-dL,pS=S-dS,pTot=pL+pS;
   const prevLongPct=pTot>0?pL/pTot*100:longPct;
   const prevShortPct=pTot>0?pS/pTot*100:shortPct;
-  const dNetPct=(longPct-prevLongPct)*2; // WoW-Aenderung des Netto-%
+  const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
 function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
@@ -5118,7 +5118,7 @@ function cotHistRowMetrics(cur,prev){
   if(prev){
     const pL=+prev.long||0,pS=+prev.short||0,pTot=pL+pS;
     dL=L-pL;dS=S-pS;
-    if(pTot>0)dNetPct=netPct-(pL-pS)/pTot*100;
+    if(pTot>0)dNetPct=longPct-pL/pTot*100;
     dOi=(+cur.oi||0)-(+prev.oi||0);
   }
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNetPct,oi:+cur.oi||0,dOi};
