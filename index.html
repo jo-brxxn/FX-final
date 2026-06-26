@@ -214,6 +214,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .carry-bar-wrap{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
 .carry-bar{height:100%;border-radius:4px}
 .carry-rates{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-lookup{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px}
+.carry-lk-pair{font-size:18px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
+.carry-lk-grid{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.carry-lk-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-lk-rate{font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-lk-op{font-size:18px;color:var(--t3);padding-bottom:2px}
+.carry-lk-dir{margin-top:9px;font-size:13px;font-weight:700}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
@@ -739,7 +746,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0f6e6e;color:#d6fffb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (Overview-Karte: groessere Rubrik-Namen & Bias-Labels · jede Karten-Zusammenfassung hat jetzt zusaetzlich oben ein rotes Feld fuer die aktuelle Situation · neuer Tab "Carry" = Carry-Trade-Scanner mit allen FX-Paaren nach Zinsdifferenz sortiert)</div>
+<div style="flex:none;background:#9a6b13;color:#fff3da;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER (Carry-Trade-Scanner liest die Leitzinsen jetzt LIVE aus dem Kalender — eine Zinsanhebung/-senkung wird automatisch uebernommen und dauerhaft gecacht · neues Suchfeld: Paar eintippen zeigt beide aktuellen Zinsen + Differenz)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -923,8 +930,10 @@ function introLogin(){
 <div class="pc" id="pgCarry" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Carry Trade Scanner</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · based on central-bank policy rates</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
   </div>
+  <div style="margin-bottom:10px"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:420px"></div>
+  <div id="carryLookup"></div>
   <div id="carryBody"></div>
 </div>
 <!-- PAGE: PAIRS -->
@@ -5509,42 +5518,91 @@ function parsePolicyRate(str){
   const m=str.match(/(-?\d+(?:\.\d+)?)\s*%/);
   return m?parseFloat(m[1]):null;
 }
-function carryRate(ccy){
-  const d=IND_RESEARCH_DATA[ccy];
-  if(!d||!d.entries)return null;
-  const e=d.entries.find(x=>x.indicator==='Central Bank Rate'&&x.actual);
-  return e?parsePolicyRate(e.actual):null;
+// Persistenter Cache des zuletzt gesehenen Leitzinses je Waehrung. Sorgt
+// dafuer, dass eine Zinsaenderung erhalten bleibt, auch wenn das Kalender-
+// Event spaeter aus dem 10-Tage-Fenster rollt.
+const CARRY_CACHE_KEY='carryRateCache';
+function loadRateCache(){try{return JSON.parse(localStorage.getItem(CARRY_CACHE_KEY))||{};}catch(e){return{};}}
+function saveRateCache(c){try{localStorage.setItem(CARRY_CACHE_KEY,JSON.stringify(c));}catch(e){}}
+// Aktueller Leitzins einer Waehrung: bevorzugt das juengste Kalender-Event
+// (live Zinsentscheidung), faellt sonst auf die Recherche-Daten oder den
+// Cache zurueck - es gewinnt immer der Wert mit dem juengsten Datum.
+function rateInfo(ccy){
+  let best=null;
+  const res=IND_RESEARCH_DATA[ccy];
+  if(res&&res.entries){
+    const e=res.entries.find(x=>x.indicator==='Central Bank Rate'&&x.actual);
+    if(e){const v=parsePolicyRate(e.actual);if(v!=null)best={rate:v,date:e.releaseDate||'',src:'research'};}
+  }
+  const ev=findIndEvent(ccy,'Central Bank Rate');
+  if(ev&&ev.actual){const v=parsePolicyRate(ev.actual);if(v!=null){const d=(ev.date||'').slice(0,10);if(!best||d>=best.date)best={rate:v,date:d,src:'calendar'};}}
+  const cache=loadRateCache(),c=cache[ccy];
+  if(c&&c.rate!=null&&(!best||c.date>best.date))best={rate:c.rate,date:c.date,src:'cache'};
+  if(best&&(!c||best.date>c.date||best.rate!==c.rate)){cache[ccy]={rate:best.rate,date:best.date};saveRateCache(cache);}
+  return best;
+}
+function carryRows(){
+  return ALL_PAIRS.map(p=>{
+    const[b,q]=p.split('/');
+    if(!FX.includes(b)||!FX.includes(q))return null;
+    const ib=rateInfo(b),iq=rateInfo(q);
+    if(!ib||!iq)return null;
+    const diff=ib.rate-iq.rate;
+    return{pair:p,base:b,quote:q,rb:ib.rate,rq:iq.rate,db:ib.date,dq:iq.date,diff,carry:Math.abs(diff),long:diff>=0};
+  }).filter(Boolean).sort((a,b)=>b.carry-a.carry);
+}
+function carryRowHTML(r,rank,max){
+  const col=r.long?'var(--green)':'var(--red)';
+  const pct=max>0?Math.max(2,r.carry/max*100):0;
+  const dir=r.long?'▲ LONG':'▼ SHORT';
+  return`<div class="carry-row">
+    <div class="carry-rank">${rank}</div>
+    <div class="carry-main">
+      <div class="carry-top">
+        <span class="carry-pair">${r.pair}</span>
+        <span class="carry-dir" style="color:${col};border-color:${col};background:${col}14">${dir}</span>
+        <span class="carry-val" style="color:${col}">+${r.carry.toFixed(2)}% p.a.</span>
+      </div>
+      <div class="carry-bar-wrap"><div class="carry-bar" style="width:${pct}%;background:${col}"></div></div>
+      <div class="carry-rates">${r.base} ${r.rb.toFixed(2)}%  ·  ${r.quote} ${r.rq.toFixed(2)}%  →  ${r.long?('long '+r.base+' / short '+r.quote):('long '+r.quote+' / short '+r.base)}</div>
+    </div>
+  </div>`;
 }
 function renderCarry(){
   const el=document.getElementById('carryBody');if(!el)return;
-  const rows=ALL_PAIRS.map(p=>{
-    const[b,q]=p.split('/');
-    if(!FX.includes(b)||!FX.includes(q))return null;
-    const rb=carryRate(b),rq=carryRate(q);
-    if(rb==null||rq==null)return null;
-    const diff=rb-rq;
-    return{pair:p,base:b,quote:q,rb,rq,diff,carry:Math.abs(diff),long:diff>=0};
-  }).filter(Boolean).sort((a,b)=>b.carry-a.carry);
-  if(!rows.length){el.innerHTML='<div style="font-size:13px;color:var(--t3);padding:10px">No policy-rate data available.</div>';return;}
-  const max=rows[0].carry||1;
-  const list=rows.map((r,i)=>{
-    const col=r.long?'var(--green)':'var(--red)';
-    const pct=max>0?Math.max(2,r.carry/max*100):0;
-    const dir=r.long?'▲ LONG':'▼ SHORT';
-    return`<div class="carry-row">
-      <div class="carry-rank">${i+1}</div>
-      <div class="carry-main">
-        <div class="carry-top">
-          <span class="carry-pair">${r.pair}</span>
-          <span class="carry-dir" style="color:${col};border-color:${col};background:${col}14">${dir}</span>
-          <span class="carry-val" style="color:${col}">+${r.carry.toFixed(2)}% p.a.</span>
+  const all=carryRows();
+  const lookEl=document.getElementById('carryLookup');
+  const qEl=document.getElementById('carrySearch');
+  const term=qEl?qEl.value.trim().toUpperCase().replace(/\s+/g,''):'';
+  if(!all.length){el.innerHTML='<div style="font-size:13px;color:var(--t3);padding:10px">No policy-rate data available.</div>';if(lookEl)lookEl.innerHTML='';return;}
+  const max=all[0].carry||1;
+  // Lookup-Panel: getipptes Paar -> aktuelle Zinsen beider Waehrungen + Differenz
+  if(lookEl){
+    let look=null;
+    if(term){
+      const tp=term.replace('-','/');
+      look=all.find(r=>r.pair.toUpperCase()===tp)||all.find(r=>r.pair.toUpperCase().replace('/','')===tp.replace('/',''));
+    }
+    if(look){
+      const col=look.long?'var(--green)':'var(--red)';
+      lookEl.innerHTML=`<div class="carry-lookup">
+        <div class="carry-lk-pair">${look.pair}</div>
+        <div class="carry-lk-grid">
+          <div><div class="carry-lk-lbl">${look.base}</div><div class="carry-lk-rate">${look.rb.toFixed(2)}%</div></div>
+          <div class="carry-lk-op">−</div>
+          <div><div class="carry-lk-lbl">${look.quote}</div><div class="carry-lk-rate">${look.rq.toFixed(2)}%</div></div>
+          <div class="carry-lk-op">=</div>
+          <div><div class="carry-lk-lbl">Differential</div><div class="carry-lk-rate" style="color:${col}">${look.diff>=0?'+':''}${look.diff.toFixed(2)}%</div></div>
         </div>
-        <div class="carry-bar-wrap"><div class="carry-bar" style="width:${pct}%;background:${col}"></div></div>
-        <div class="carry-rates">${r.base} ${r.rb.toFixed(2)}%  ·  ${r.quote} ${r.rq.toFixed(2)}%  →  ${r.long?('long '+r.base+' / short '+r.quote):('long '+r.quote+' / short '+r.base)}</div>
-      </div>
-    </div>`;
-  }).join('');
-  el.innerHTML=`<div class="carry-list">${list}</div>`;
+        <div class="carry-lk-dir" style="color:${col}">${look.long?'▲ Positive swap going LONG '+look.pair:'▼ Positive swap going SHORT '+look.pair} (+${look.carry.toFixed(2)}% p.a.)</div>
+      </div>`;
+    }else lookEl.innerHTML='';
+  }
+  // Liste (gefiltert nach Suchbegriff, globaler Rang bleibt erhalten)
+  const list=all.map((r,i)=>({r,rank:i+1}))
+    .filter(({r})=>!term||r.pair.toUpperCase().includes(term)||r.pair.toUpperCase().replace('/','').includes(term.replace('/',''))||r.base===term||r.quote===term)
+    .map(({r,rank})=>carryRowHTML(r,rank,max)).join('');
+  el.innerHTML=list?`<div class="carry-list">${list}</div>`:'<div style="font-size:13px;color:var(--t3);padding:10px">No matching pair.</div>';
 }
 function updateStat(){
   const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
