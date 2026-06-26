@@ -748,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7a3d9c;color:#f3e0ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLET (Kalender-Bug behoben: Impact-Feld ist jetzt anklickbar (High→Medium→Low) und die manuelle Einstellung wird nicht mehr automatisch auf High hochgestuft — der High-Impact-Filter beruecksichtigt sie jetzt korrekt)</div>
+<div style="flex:none;background:#1f7a5c;color:#d6fff0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: JADE (Summary-Reihenfolge gedreht: generelle Zusammenfassung oben, das rote Aktuell-Feld jetzt darunter — in den Karten und in der Overview · Bias-Label in den Overview-Feldern auf Score-Groesse (11px) verkleinert)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1350,7 +1350,7 @@ function calRowHtml(ev,opts){
   return`<div class="cal-row${isToday?' today':''}${past}">
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-    <div class="cal-imp ${ic}" onclick="cycleEvtImpact('${ev.id}')" title="Click to change impact (High → Medium → Low)" style="cursor:pointer">${impLbl}</div>
+    <div class="cal-imp ${ic}">${impLbl}</div>
     <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
@@ -1679,9 +1679,7 @@ function processCalEvts(){
   // Score-relevante Events (CPI, NFP, Zinsentscheid, GDP, PMI ...) immer als
   // High-Impact einstufen, auch wenn die Quelle nur "Medium" liefert.
   calEvts.forEach(ev=>{
-    // Manuell gesetzte Impacts (Klick aufs Impact-Feld oder via Formular)
-    // NICHT ueberschreiben - sonst ignoriert der Filter die Einstellung.
-    if(ev.impact!=='high'&&!ev.impactManual&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
+    if(ev.impact!=='high'&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
   });
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
@@ -4070,22 +4068,10 @@ function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
   if(!name||!date){alert('Name and date are required.');return;}
-  pushU();calEvts.push({id:uid(),name,date,time:document.getElementById('evTime').value.trim(),currencies:document.getElementById('evCcy').value.trim(),impact:document.getElementById('evImpact').value,impactManual:true,forecast:document.getElementById('evForecast').value.trim(),previous:document.getElementById('evPrevious').value.trim(),actual:document.getElementById('evActual').value.trim(),notes:document.getElementById('evNotes').value.trim()});
+  pushU();calEvts.push({id:uid(),name,date,time:document.getElementById('evTime').value.trim(),currencies:document.getElementById('evCcy').value.trim(),impact:document.getElementById('evImpact').value,forecast:document.getElementById('evForecast').value.trim(),previous:document.getElementById('evPrevious').value.trim(),actual:document.getElementById('evActual').value.trim(),notes:document.getElementById('evNotes').value.trim()});
   ['evName','evCcy','evTime','evForecast','evPrevious','evActual','evNotes'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('evDate').value='';save();renderCalendar();}
 function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();renderCalendar();}
-// Impact eines Events per Klick durchschalten (High -> Medium -> Low). Setzt
-// impactManual, damit processCalEvts die Einstellung nicht ueberschreibt und
-// der High-Impact-Filter sie korrekt beruecksichtigt.
-function cycleEvtImpact(id){
-  const ev=calEvts.find(e=>e.id===id);if(!ev)return;
-  const order=['high','medium','low'];
-  const cur=order.indexOf(ev.impact);
-  pushU();
-  ev.impact=order[(cur+1)%order.length];
-  ev.impactManual=true;
-  save();rerender();
-}
 
 // ── INBOX / POSTFACH ─────────────────────────────────────────────────
 // Nachrichten loeschen sich nach 2 Tagen selbst (Alter ueber den
