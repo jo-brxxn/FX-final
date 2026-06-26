@@ -200,10 +200,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
 .ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
-.ov-now{color:var(--red);font-weight:600;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid var(--bd)}
+.ov-now{color:var(--red);font-weight:600;margin-top:5px;padding-top:5px;border-top:1px solid var(--bd)}
 .ov-sum-line{color:var(--t1)}
 .ov-empty{color:var(--t3);font-style:italic}
-.ov-bias{font-size:14px;padding:4px 10px}
+.ov-field .ov-bias{font-size:11px;font-weight:800;padding:1px 7px;letter-spacing:0}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
 .carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
@@ -748,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#2563b0;color:#dcebff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLUE (Overview-Karte abgestimmt: Titel "OVERVIEW" jetzt Ueberschriften-Groesse wie die Rubrik-Namen, einheitliche Hierarchie · das rote Aktuell-Feld wird jetzt auch in der Overview-Zusammenfassung angezeigt, ueber der allgemeinen Summary)</div>
+<div style="flex:none;background:#1f7a5c;color:#d6fff0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: JADE (Summary-Reihenfolge gedreht: generelle Zusammenfassung oben, das rote Aktuell-Feld jetzt darunter — in den Karten und in der Overview · Bias-Label in den Overview-Feldern auf Score-Groesse (11px) verkleinert)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3318,7 +3318,7 @@ function renderOverviewCard(rubs){
     const sc=rubScore(rub);
     const nowLine=rub.now&&rub.now.trim()?`<div class="ov-now">${escH(rub.now)}</div>`:'';
     const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
-    const txt=(nowLine||sumLine)?(nowLine+sumLine):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
+    const txt=(sumLine||nowLine)?(sumLine+nowLine):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
@@ -3378,9 +3378,9 @@ function renderRub(rub,ri,total){
           <span style="color:${bco}">▸ SUMMARY</span>
           <span style="font-size:10px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
-        <textarea class="rub-summary-txt rub-now-txt" placeholder="⚡ What matters right now / current situation..." oninput="ar(this);getRub(${ri}).now=this.value;saveSoon()" onchange="getRub(${ri}).now=this.value;save()">${escH(rub.now||'')}</textarea>
-        <div class="rub-summary-sep"></div>
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
+        <div class="rub-summary-sep"></div>
+        <textarea class="rub-summary-txt rub-now-txt" placeholder="⚡ What matters right now / current situation..." oninput="ar(this);getRub(${ri}).now=this.value;saveSoon()" onchange="getRub(${ri}).now=this.value;save()">${escH(rub.now||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${renderInds(rub,ri)}
