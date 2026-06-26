@@ -748,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#1f7a5c;color:#d6fff0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: JADE (Summary-Reihenfolge gedreht: generelle Zusammenfassung oben, das rote Aktuell-Feld jetzt darunter — in den Karten und in der Overview · Bias-Label in den Overview-Feldern auf Score-Groesse (11px) verkleinert)</div>
+<div style="flex:none;background:#0e6b78;color:#d6f7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: CYAN (Kalender-Filter-Bug behoben: alle Impact-Filter nutzen jetzt den effektiven Impact (evtImpact) — CNY-News zaehlen ueberall als Medium (nicht mehr faelschlich High), score-treibende Events ueberall als High und werden nicht mehr rausgefiltert)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1325,7 +1325,10 @@ function revisionColor(oldVal,newVal,name){
 // zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
 // CNY-News werden in allen Kalendern immer als Medium-Impact behandelt.
 function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).includes('CNY');}
-function evtImpact(ev){return evtIsCNY(ev)?'medium':ev.impact;}
+// Effektiver Impact eines Events (einzige Wahrheit fuer Anzeige UND Filter):
+// CNY-News sind immer nur Medium, score-treibende Events (CPI, NFP, Zins,
+// PMI, GDP ...) immer High - unabhaengig davon, was die rohe ev.impact sagt.
+function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev))return'high';return ev.impact;}
 function calRowHtml(ev,opts){
   opts=opts||{};
   const imp=evtImpact(ev);
@@ -1572,7 +1575,7 @@ function getRelevantEvents(id){
   // Events ab heute gelten als "geschehen" -> Markierung wandert zum Postfach-Symbol (NOTIF_FLAG)
   return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
 }
-function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>ev.impact==='high');}
+function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>evtImpact(ev)==='high');}
 // Bestätigte (dismisste) grüne Events – persistiert separat, nicht in snap/undo.
 let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')}catch(e){return{};}})();
 // Stabiler Schlüssel für greenDismissed (unabhängig von ev.id, das sich bei
@@ -1580,7 +1583,7 @@ let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green
 function evtDismissKey(ev){return(ev.name||'')+'|'+(ev.date||'')+'|'+(ev.currencies||'');}
 // Ist ein Event jetzt grün? High-Impact + (gestern ODER heute-nach-Uhrzeit).
 function isEvtGreenNow(ev){
-  if(ev.impact!=='high')return false;
+  if(evtImpact(ev)!=='high')return false;
   const dl=daysUntil(ev.date);
   if(dl===-1)return true;
   if(dl!==0)return false;
@@ -1622,7 +1625,7 @@ function updGreenBadge(){
 function evtFlagState(id){
   let up=false,done=false;
   getSymEventsAll(id).forEach(ev=>{
-    if(ev.impact!=='high')return;
+    if(evtImpact(ev)!=='high')return;
     const dl=daysUntil(ev.date);
     if(isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])done=true;
     else if(dl>=1&&dl<=3)up=true;
@@ -1679,7 +1682,7 @@ function processCalEvts(){
   // Score-relevante Events (CPI, NFP, Zinsentscheid, GDP, PMI ...) immer als
   // High-Impact einstufen, auch wenn die Quelle nur "Medium" liefert.
   calEvts.forEach(ev=>{
-    if(ev.impact!=='high'&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
+    if(ev.impact!=='high'&&!evtIsCNY(ev)&&isScoreDrivingEvent(ev)){ev.impact='high';changed=true;}
   });
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
@@ -1730,7 +1733,7 @@ function getSymEventsCompact(id){
   const nextDate=future.length?future[0].date:null;
   // "Next Event"-Label zeigt ausschliesslich das naechste HIGH-Impact-Event
   // (konsistent zur roten Flagge), nicht Medium/Low.
-  const nextHigh=future.find(ev=>ev.impact==='high');
+  const nextHigh=future.find(ev=>evtImpact(ev)==='high');
   const nextHighDate=nextHigh?nextHigh.date:null;
   // Mini-Kalender der Symbole zeigen alle Events der naechsten 7 Tage (plus die
   // letzten CAL_PAST_DAYS Tage), nicht nur das naechste Veroeffentlichungsdatum.
@@ -3244,7 +3247,7 @@ function renderDetail(){
         ${evtOpen?`<span>📅 ECONOMIC EVENTS</span><button class="btn dw-nav${calHighOnly?' active':''}" style="margin-left:auto;margin-right:4px" onclick="event.stopPropagation();toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Show only high-impact'}">📁${calHighOnly?' High only':' All'}</button>`:`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>ev.impact==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
@@ -4056,7 +4059,7 @@ function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
   updCalHighBtn();updCalCcySel();
   let list=[...calEvts];
-  if(calHighOnly)list=list.filter(ev=>ev.impact==='high');
+  if(calHighOnly)list=list.filter(ev=>evtImpact(ev)==='high');
   if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   const empty=calCcyFilter!=='ALL'?`No events for ${calCcyFilter} in this range.`:(calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.');
@@ -4560,7 +4563,7 @@ const W_TYPES=[
 // - dann steht (sobald vorhanden) der Actual-Wert mit Beat/Miss-Farbe da.
 function getTodayReminders(){
   const t=todayStr();
-  return calEvts.filter(ev=>ev.date===t&&(evtImpact(ev)==='high'||isScoreDrivingEvent(ev)))
+  return calEvts.filter(ev=>ev.date===t&&evtImpact(ev)==='high')
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
 }
 function renderTodayReminder(){
@@ -4666,7 +4669,7 @@ function renderDash(){
       // Events gedimmt, rote Jetzt-Linie), aber kompakt und in einem scrollbaren
       // Container, der beim Rendern automatisch zur aktuellen Uhrzeit scrollt.
       let sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-      if(calHighOnly)sorted=sorted.filter(ev=>ev.impact==='high');
+      if(calHighOnly)sorted=sorted.filter(ev=>evtImpact(ev)==='high');
       const calHighFilterBtn=`<button class="btn dw-nav${calHighOnly?' active':''}" style="margin-bottom:6px" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Show only high-impact'}">${calHighOnly?'📁 High only':'📁 All'}</button>`;
       const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Prev</span></div>`;
       content=calHighFilterBtn+(sorted.length===0?`<div class="dw-empty">${calHighOnly?'Keine High-Impact-Events.':'No events. Add in Calendar tab.'}</div>`:
