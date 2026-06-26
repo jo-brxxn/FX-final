@@ -188,6 +188,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
+.rub-now-txt,.rub-now-txt:focus{color:var(--red);font-weight:600}
+.rub-now-txt::placeholder{color:rgba(var(--red-rgb),.5)}
+.rub-summary-sep{border-top:1px solid var(--bd);margin:6px 0}
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
@@ -195,9 +198,22 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
 .ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
-.ov-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
-.ov-summary{font-size:12px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
+.ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
+.ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
 .ov-empty{color:var(--t3);font-style:italic}
+.ov-bias{font-size:14px;padding:4px 10px}
+/* ── CARRY TRADE SCANNER ── */
+.carry-list{display:flex;flex-direction:column;gap:5px}
+.carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
+.carry-rank{font-size:16px;font-weight:800;color:var(--t3);min-width:26px;padding-top:1px;text-align:center}
+.carry-main{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.carry-top{display:flex;align-items:center;gap:10px}
+.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-dir{font-size:11px;font-weight:700;border:1px solid;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.carry-val{margin-left:auto;font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.carry-bar-wrap{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.carry-bar{height:100%;border-radius:4px}
+.carry-rates{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
 .ind-card.imp{border-color:var(--star)}
 .ind-card.imp .ind-hdr{background:#2a230f}
@@ -723,7 +739,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7a3d9c;color:#f3e0ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLET (COT-Kennzahl "WoW Change in Net Position (%)" zeigt jetzt die einfache Long%-Aenderung statt der verdoppelten Netto-%-Aenderung, analog zu Drittanbieter-COT-Tools)</div>
+<div style="flex:none;background:#0f6e6e;color:#d6fffb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL (Overview-Karte: groessere Rubrik-Namen & Bias-Labels · jede Karten-Zusammenfassung hat jetzt zusaetzlich oben ein rotes Feld fuer die aktuelle Situation · neuer Tab "Carry" = Carry-Trade-Scanner mit allen FX-Paaren nach Zinsdifferenz sortiert)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -868,6 +884,7 @@ function introLogin(){
   <button class="tp"     onclick="showTab('cmp',this)">Compare</button>
   <button class="tp"     onclick="showTab('mx',this)">Matrix</button>
   <button class="tp"     onclick="showTab('cot',this)">COT</button>
+  <button class="tp"     onclick="showTab('carry',this)">Carry</button>
   <button class="tp"     onclick="showTab('pairs',this)">Set-ups</button>
   <button class="tp"     onclick="showTab('cal',this)">Calendar</button>
   <button class="tp"     onclick="showTab('notes',this)">Notes</button>
@@ -901,6 +918,14 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Non-Commercial net long / short positioning (%) &amp; weekly change · source: CFTC</div>
   </div>
   <div id="cotBody"></div>
+</div>
+<!-- PAGE: CARRY TRADE SCANNER -->
+<div class="pc" id="pgCarry" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Carry Trade Scanner</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · based on central-bank policy rates</div>
+  </div>
+  <div id="carryBody"></div>
 </div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
@@ -3284,7 +3309,7 @@ function renderOverviewCard(rubs){
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
-        <span class="bo on" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
+        <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
         <span class="rub-score" style="color:${bco};border-color:${bco}" title="Score of the ${escH(rub.name)} card below">${sc>0?'+':''}${sc}</span>
       </div>
       <div class="ind-body ov-summary">${txt}</div>
@@ -3340,6 +3365,8 @@ function renderRub(rub,ri,total){
           <span style="color:${bco}">▸ SUMMARY</span>
           <span style="font-size:10px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
         </div>
+        <textarea class="rub-summary-txt rub-now-txt" placeholder="⚡ What matters right now / current situation..." oninput="ar(this);getRub(${ri}).now=this.value;saveSoon()" onchange="getRub(${ri}).now=this.value;save()">${escH(rub.now||'')}</textarea>
+        <div class="rub-summary-sep"></div>
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
@@ -5432,7 +5459,7 @@ function renderCot(){
   cotWireChartHover();
 }
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',cot:'pgCot',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -5453,6 +5480,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='cmp')renderCompare();
   else if(tab==='mx')renderMatrix();
   else if(tab==='cot'){renderCot();autoFetchCot();}
+  else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
   else if(tab==='notes')renderNCs();
@@ -5463,9 +5491,60 @@ function rerender(){
   else if(curPage==='cmp')renderCompare();
   else if(curPage==='mx')renderMatrix();
   else if(curPage==='cot')renderCot();
+  else if(curPage==='carry')renderCarry();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
   else if(curPage==='notes')renderNCs();
+}
+// ══ CARRY TRADE SCANNER ═══════════════════════════════════════════
+// Liest die Leitzins-Werte (Central Bank Rate) je Waehrung aus den
+// recherchierten Daten, bildet fuer jedes reine FX-Paar die Zinsdifferenz
+// (= Carry/Swap-Naeherung) und sortiert absteigend nach groesstem positivem
+// Swap. Pro Paar wird die Richtung (Long/Short) gezeigt, in der man den
+// positiven Swap einnimmt.
+function parsePolicyRate(str){
+  if(!str)return null;
+  const range=str.match(/(-?\d+(?:\.\d+)?)\s*%\s*[-–]\s*(-?\d+(?:\.\d+)?)\s*%/);
+  if(range)return(parseFloat(range[1])+parseFloat(range[2]))/2;
+  const m=str.match(/(-?\d+(?:\.\d+)?)\s*%/);
+  return m?parseFloat(m[1]):null;
+}
+function carryRate(ccy){
+  const d=IND_RESEARCH_DATA[ccy];
+  if(!d||!d.entries)return null;
+  const e=d.entries.find(x=>x.indicator==='Central Bank Rate'&&x.actual);
+  return e?parsePolicyRate(e.actual):null;
+}
+function renderCarry(){
+  const el=document.getElementById('carryBody');if(!el)return;
+  const rows=ALL_PAIRS.map(p=>{
+    const[b,q]=p.split('/');
+    if(!FX.includes(b)||!FX.includes(q))return null;
+    const rb=carryRate(b),rq=carryRate(q);
+    if(rb==null||rq==null)return null;
+    const diff=rb-rq;
+    return{pair:p,base:b,quote:q,rb,rq,diff,carry:Math.abs(diff),long:diff>=0};
+  }).filter(Boolean).sort((a,b)=>b.carry-a.carry);
+  if(!rows.length){el.innerHTML='<div style="font-size:13px;color:var(--t3);padding:10px">No policy-rate data available.</div>';return;}
+  const max=rows[0].carry||1;
+  const list=rows.map((r,i)=>{
+    const col=r.long?'var(--green)':'var(--red)';
+    const pct=max>0?Math.max(2,r.carry/max*100):0;
+    const dir=r.long?'▲ LONG':'▼ SHORT';
+    return`<div class="carry-row">
+      <div class="carry-rank">${i+1}</div>
+      <div class="carry-main">
+        <div class="carry-top">
+          <span class="carry-pair">${r.pair}</span>
+          <span class="carry-dir" style="color:${col};border-color:${col};background:${col}14">${dir}</span>
+          <span class="carry-val" style="color:${col}">+${r.carry.toFixed(2)}% p.a.</span>
+        </div>
+        <div class="carry-bar-wrap"><div class="carry-bar" style="width:${pct}%;background:${col}"></div></div>
+        <div class="carry-rates">${r.base} ${r.rb.toFixed(2)}%  ·  ${r.quote} ${r.rq.toFixed(2)}%  →  ${r.long?('long '+r.base+' / short '+r.quote):('long '+r.quote+' / short '+r.base)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="carry-list">${list}</div>`;
 }
 function updateStat(){
   const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
