@@ -194,12 +194,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
-.ov-card-title{font-size:12px;font-weight:800;color:var(--t1);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
 .ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
 .ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
+.ov-now{color:var(--red);font-weight:600;margin-bottom:5px;padding-bottom:5px;border-bottom:1px solid var(--bd)}
+.ov-sum-line{color:var(--t1)}
 .ov-empty{color:var(--t3);font-style:italic}
 .ov-bias{font-size:14px;padding:4px 10px}
 /* ── CARRY TRADE SCANNER ── */
@@ -746,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#9a6b13;color:#fff3da;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER (Carry-Trade-Scanner liest die Leitzinsen jetzt LIVE aus dem Kalender — eine Zinsanhebung/-senkung wird automatisch uebernommen und dauerhaft gecacht · neues Suchfeld: Paar eintippen zeigt beide aktuellen Zinsen + Differenz)</div>
+<div style="flex:none;background:#2563b0;color:#dcebff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLUE (Overview-Karte abgestimmt: Titel "OVERVIEW" jetzt Ueberschriften-Groesse wie die Rubrik-Namen, einheitliche Hierarchie · das rote Aktuell-Feld wird jetzt auch in der Overview-Zusammenfassung angezeigt, ueber der allgemeinen Summary)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3314,7 +3316,9 @@ function renderOverviewCard(rubs){
   const fields=top.map((rub,ri)=>{
     const bco=bCol(rub.bias);
     const sc=rubScore(rub);
-    const txt=rub.summary&&rub.summary.trim()?escH(rub.summary):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
+    const nowLine=rub.now&&rub.now.trim()?`<div class="ov-now">${escH(rub.now)}</div>`:'';
+    const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
+    const txt=(nowLine||sumLine)?(nowLine+sumLine):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
