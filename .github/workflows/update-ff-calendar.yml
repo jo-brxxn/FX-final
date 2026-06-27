@@ -1133,33 +1133,53 @@ jobs:
             // (unveraendertes Schema fuer die Karten/Scoring), history[id]
             // wird zusaetzlich fuer das COT-Verlaufsdiagramm gesammelt.
             const HIST_LEN=26;
-            const out={};let reportDate="";const matched=[];const hist={};
+            const out={};let reportDate="";const matched=[];
+            // Rohzeilen nach exaktem Kontraktnamen gruppieren. Ein Regex wie
+            // /EURO FX/ trifft auch Cross-Rate-Kontrakte ("EURO FX/BRITISH
+            // POUND CROSS RATE") und Nano-/Wochen-Varianten - mit voellig
+            // anderen (winzigen) Positionszahlen. Frueher wurde je Markt teils
+            // der Hauptkontrakt, teils ein Cross-Rate erwischt (abhaengig von
+            // der Zeilenreihenfolge), wodurch Werte zwischen Symbolen
+            // vertauscht wurden. Loesung: pro Markt den KANONISCHEN Kontrakt
+            // waehlen = der mit dem groessten Open Interest im neuesten Report.
+            // Der echte Hauptkontrakt ist um Groessenordnungen groesser als
+            // jede Cross-Rate-/Nano-Variante.
+            const byMarket={};
             for(const r of rows){
               const nm=(r.market_and_exchange_names||"").toUpperCase();
-              for(const mk of MARKETS){
-                if(hist[mk.id]&&hist[mk.id].length>=HIST_LEN)continue;
-                if(mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))){
-                  const L=Number(r.noncomm_positions_long_all),S=Number(r.noncomm_positions_short_all);
-                  if(!isFinite(L)||!isFinite(S))continue;
-                  const d=String(r.report_date_as_yyyy_mm_dd||"").slice(0,10);
-                  (hist[mk.id]=hist[mk.id]||[]).push({date:d,long:L,short:S,oi:Number(r.open_interest_all)||0});
-                  if(!out[mk.id]){
-                    out[mk.id]={
-                      long:L,short:S,
-                      dLong:Number(r.change_in_noncomm_long_all)||0,
-                      dShort:Number(r.change_in_noncomm_short_all)||0,
-                      oi:Number(r.open_interest_all)||0,
-                      dOi:Number(r.change_in_open_interest_all)||0
-                    };
-                    if(d>reportDate)reportDate=d;
-                    matched.push(mk.id+" <- "+r.market_and_exchange_names+" ("+d+")");
-                  }
-                }
-              }
+              (byMarket[nm]=byMarket[nm]||[]).push(r);
             }
-            Object.keys(out).forEach(id=>{
-              if(hist[id])out[id].history=hist[id].slice().sort((a,b)=>a.date.localeCompare(b.date));
-            });
+            const descByDate=(a,b)=>String(b.report_date_as_yyyy_mm_dd||"").localeCompare(String(a.report_date_as_yyyy_mm_dd||""));
+            for(const mk of MARKETS){
+              const cands=Object.keys(byMarket).filter(nm=>mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))&&!/CROSS RATE/.test(nm));
+              if(!cands.length)continue;
+              let best=null,bestOi=-1;
+              for(const nm of cands){
+                const s=byMarket[nm].slice().sort(descByDate);
+                const oi=Number(s[0].open_interest_all)||0;
+                if(oi>bestOi){bestOi=oi;best=nm;}
+              }
+              const series=byMarket[best].slice().sort(descByDate);
+              const newest=series[0];
+              const L=Number(newest.noncomm_positions_long_all),S=Number(newest.noncomm_positions_short_all);
+              if(!isFinite(L)||!isFinite(S))continue;
+              const d=String(newest.report_date_as_yyyy_mm_dd||"").slice(0,10);
+              out[mk.id]={
+                long:L,short:S,
+                dLong:Number(newest.change_in_noncomm_long_all)||0,
+                dShort:Number(newest.change_in_noncomm_short_all)||0,
+                oi:Number(newest.open_interest_all)||0,
+                dOi:Number(newest.change_in_open_interest_all)||0
+              };
+              out[mk.id].history=series.slice(0,HIST_LEN).map(r=>({
+                date:String(r.report_date_as_yyyy_mm_dd||"").slice(0,10),
+                long:Number(r.noncomm_positions_long_all)||0,
+                short:Number(r.noncomm_positions_short_all)||0,
+                oi:Number(r.open_interest_all)||0
+              })).sort((a,b)=>a.date.localeCompare(b.date));
+              if(d>reportDate)reportDate=d;
+              matched.push(mk.id+" <- "+best+" ("+d+", OI "+bestOi+")");
+            }
             const got=Object.keys(out).length;
             if(got===0){
               console.log("cot: no markets matched - sample row keys: "+Object.keys(rows[0]||{}).join(","));
