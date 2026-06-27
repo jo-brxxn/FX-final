@@ -748,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#b5651d;color:#fff0dd;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BRONZE (COT-Verlaufsdiagramm: Skala richtet sich jetzt nach der gestapelten Summe (Long+Short) + 10% Luft oben — gestapelte Balken ragen nicht mehr ueber die Skala hinaus und stossen nie ganz oben an; Gitterlinien skalieren mit der Marktgroesse)</div>
+<div style="flex:none;background:#3b4a8c;color:#e0e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO (COT-Refresh-Bug behoben: der Live-Abruf im Browser (cotParseRaw) waehlt jetzt — wie der Workflow — pro Markt den Hauptkontrakt per groesstem Open Interest, statt Cross-Rate-Varianten zu erwischen; nach Refresh keine fast-leeren Wochen-Balken mehr)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5059,24 +5059,35 @@ const COT_MARKETS=[
 ];
 function cotParseRaw(rows){
   if(!Array.isArray(rows)||!rows.length)return null;
-  const out={};let reportDate='';const hist={};
+  // Pro Markt den KANONISCHEN Kontrakt = groesstes Open Interest waehlen.
+  // Sonst treffen Regex wie /EURO FX/ auch Cross-Rate-/Nano-Varianten mit
+  // winzigen Zahlen und beim Refresh erscheinen einzelne Wochen fast bei 0
+  // (identisch zum Fix im GitHub-Action-Workflow).
+  const byMarket={};
   for(const r of rows){
     const nm=(r.market_and_exchange_names||'').toUpperCase();
-    for(const mk of COT_MARKETS){
-      if(hist[mk.id]&&hist[mk.id].length>=COT_HIST_LEN)continue;
-      if(mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))){
-        const L=+r.noncomm_positions_long_all,S=+r.noncomm_positions_short_all;
-        if(!isFinite(L)||!isFinite(S))continue;
-        const d=String(r.report_date_as_yyyy_mm_dd||'').slice(0,10);
-        (hist[mk.id]=hist[mk.id]||[]).push({date:d,long:L,short:S,oi:+r.open_interest_all||0});
-        if(!out[mk.id]){
-          out[mk.id]={long:L,short:S,dLong:+r.change_in_noncomm_long_all||0,dShort:+r.change_in_noncomm_short_all||0,oi:+r.open_interest_all||0,dOi:+r.change_in_open_interest_all||0};
-          if(d>reportDate)reportDate=d;
-        }
-      }
-    }
+    (byMarket[nm]=byMarket[nm]||[]).push(r);
   }
-  Object.keys(out).forEach(id=>{if(hist[id])out[id].history=hist[id].slice().sort((a,b)=>a.date.localeCompare(b.date));});
+  const descByDate=(a,b)=>String(b.report_date_as_yyyy_mm_dd||'').localeCompare(String(a.report_date_as_yyyy_mm_dd||''));
+  const out={};let reportDate='';
+  for(const mk of COT_MARKETS){
+    const cands=Object.keys(byMarket).filter(nm=>mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))&&!/CROSS RATE/.test(nm));
+    if(!cands.length)continue;
+    let best=null,bestOi=-1;
+    for(const nm of cands){
+      const s=byMarket[nm].slice().sort(descByDate);
+      const oi=+s[0].open_interest_all||0;
+      if(oi>bestOi){bestOi=oi;best=nm;}
+    }
+    const series=byMarket[best].slice().sort(descByDate);
+    const newest=series[0];
+    const L=+newest.noncomm_positions_long_all,S=+newest.noncomm_positions_short_all;
+    if(!isFinite(L)||!isFinite(S))continue;
+    const d=String(newest.report_date_as_yyyy_mm_dd||'').slice(0,10);
+    out[mk.id]={long:L,short:S,dLong:+newest.change_in_noncomm_long_all||0,dShort:+newest.change_in_noncomm_short_all||0,oi:+newest.open_interest_all||0,dOi:+newest.change_in_open_interest_all||0};
+    out[mk.id].history=series.slice(0,COT_HIST_LEN).map(r=>({date:String(r.report_date_as_yyyy_mm_dd||'').slice(0,10),long:+r.noncomm_positions_long_all||0,short:+r.noncomm_positions_short_all||0,oi:+r.open_interest_all||0})).sort((a,b)=>a.date.localeCompare(b.date));
+    if(d>reportDate)reportDate=d;
+  }
   return Object.keys(out).length?{report_date:reportDate,updated:new Date().toISOString(),symbols:out}:null;
 }
 async function cotFetchLive(){
