@@ -757,7 +757,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#9d2b54;color:#ffe0ec;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROSE (Neuer Tab "Trends": Score-Verlauf je Waehrung ueber ~3 Monate — Gesamt-Score (Skala +/-14) plus Inflation/Labour Market/Economic Growth (+/-7), ein Punkt pro Tag, Asset-Filter wie im Kalender, Farb-Legende je Waehrung. Score-History aus der Matrix entfernt)</div>
+<div style="flex:none;background:#4d7c0f;color:#eaffd0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LIME (Trends-Tab: Gesamt-Score-Chart zeigt jetzt ALLE Assets inkl. Gold/Silber/Oel/BTC/SP500/Nasdaq (eigene Farben), Filter umfasst alle Assets. Die Makro-Charts Inflation/Labour/Growth bleiben waehrungsspezifisch)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4904,6 +4904,12 @@ const SCOREHIST_KEY='fxpro_scorehist';
 let scoreHist={};
 function loadScoreHist(){try{scoreHist=JSON.parse(localStorage.getItem(SCOREHIST_KEY))||{};}catch(e){scoreHist={};}}
 function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name===name);return r?Math.round(rubScore(r)*10)/10:0;}
+// Assets fuer Score-History/Trends: alle FX-Waehrungen plus die vorhandenen
+// Non-FX-Assets (Gold, Silber, Oel, BTC, Indizes) - in stabiler Reihenfolge.
+function trendAssets(){
+  const present=new Set(syms.map(s=>s.id));
+  return [...FX,'GOLD','SILVER','OIL','BTC','SP500','NAS'].filter(id=>present.has(id));
+}
 // Taeglicher Score-Schnappschuss je FX-Waehrung. Pro Tag ein Eintrag:
 // [Datum, Gesamt-Score, Inflation, Labour Market, Economic Growth]. Wird beim
 // Laden und nach jeder Datenaktualisierung aufgerufen; aendert sich der Score
@@ -4911,7 +4917,7 @@ function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name=
 // (rund 3 Monate) Historie fuer die Trend-Kategorie.
 function recordScoreHist(){
   const t=todayStr();let changed=false;
-  FX.forEach(id=>{
+  trendAssets().forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym)return;
     const tot=Math.round(symScore(sym)*10)/10;
     const inf=rubScoreByName(sym,'Inflation'),lab=rubScoreByName(sym,'Labour Market'),gro=rubScoreByName(sym,'Economic Growth');
@@ -5007,7 +5013,7 @@ function renderMatrix(){
 // den Gesamt-Score (Skala +/-14) und je ein Chart fuer Inflation, Labour
 // Market und Economic Growth (Skala +/-7, automatisch groesser bei Bedarf).
 // Gut unterscheidbare Farben je Waehrung, Legende ueber jedem Chart.
-const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:'#b07aa1',CAD:'#76b7b2',AUD:'#edc948',NZD:'#ff9da7'};
+const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:'#b07aa1',CAD:'#76b7b2',AUD:'#edc948',NZD:'#ff9da7',GOLD:'#d4af37',SILVER:'#9aa0a6',OIL:'#8c564b',BTC:'#17becf',SP500:'#e7298a',NAS:'#7570b3'};
 let trendsFilter='ALL';
 function setTrendsFilter(v){trendsFilter=v||'ALL';renderTrends();}
 function trendLegend(ids){
@@ -5055,17 +5061,32 @@ function scoreTrendCard(ids,dates,vi,base,title){
 }
 function renderTrends(){
   const el=document.getElementById('trendsBody');if(!el)return;
-  const sel=document.getElementById('trendsCcySel');if(sel&&sel.value!==trendsFilter)sel.value=trendsFilter;
-  const ids=trendsFilter==='ALL'?FX.slice():[trendsFilter];
+  const assets=trendAssets();
+  // Filter-Dropdown dynamisch befuellen (alle Assets, nicht nur Waehrungen).
+  const sel=document.getElementById('trendsCcySel');
+  if(sel){
+    const opts='<option value="ALL">\u{1F310} Alle Assets</option>'+assets.map(id=>`<option value="${id}">${escH(COT_NAME[id]||id)}</option>`).join('');
+    if(sel.innerHTML!==opts)sel.innerHTML=opts;
+    sel.value=trendsFilter;
+  }
+  // Gesamt-Score: ALLE Assets. Makro-Karten (Inflation/Labour/Growth) nur fuer
+  // Waehrungen - bei Non-FX-Assets werden diese Scores nicht aus Daten
+  // abgeleitet (waeren konstant 0).
+  const totalIds=trendsFilter==='ALL'?assets:[trendsFilter];
+  const macroIds=trendsFilter==='ALL'?assets.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
   const dset=new Set();
-  ids.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
+  totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const dates=[...dset].sort();
   if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Noch keine Verlaufsdaten vorhanden. Der Score wird ab jetzt taeglich gespeichert &ndash; mit jedem neuen Tag waechst die Linie um einen Punkt. Schau morgen wieder vorbei.</div>';return;}
-  el.innerHTML=
-    scoreTrendCard(ids,dates,1,14,'Gesamt-Score')+
-    scoreTrendCard(ids,dates,2,7,'Inflation')+
-    scoreTrendCard(ids,dates,3,7,'Labour Market')+
-    scoreTrendCard(ids,dates,4,7,'Economic Growth');
+  let html=scoreTrendCard(totalIds,dates,1,14,'Gesamt-Score');
+  if(macroIds.length){
+    html+=scoreTrendCard(macroIds,dates,2,7,'Inflation')+
+          scoreTrendCard(macroIds,dates,3,7,'Labour Market')+
+          scoreTrendCard(macroIds,dates,4,7,'Economic Growth');
+  }else{
+    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">Die Karten Inflation / Labour Market / Economic Growth gibt es nur fuer Waehrungen &ndash; fuer dieses Asset werden diese Makro-Scores nicht aus Daten abgeleitet.</div>';
+  }
+  el.innerHTML=html;
 }
 // ══ COT (Commitments of Traders) ═══════════════════════════════════
 // Quelle: CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
