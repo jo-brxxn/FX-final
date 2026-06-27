@@ -820,6 +820,7 @@ jobs:
                   date:new Date(ev.date).toISOString().slice(0,10),
                   event:(ev.title||ev.indicator||""),
                   period:r.period,
+                  origin:ev.country,
                   _t:t
                 });
               });
@@ -833,8 +834,15 @@ jobs:
             const out={};
             Object.keys(hist).forEach(k=>{
               const [ccy,ind]=k.split("|");
-              const list=hist[k].sort((a,b)=>b._t-a._t);
-              const v={...list[0]};delete v._t;
+              let arr=hist[k];
+              // EUR: Eurozone-Aggregat (TV-Land "EU") bevorzugen, damit
+              // nationale Releases (DE/FR/IT/ES -> EUR) den Euro-Wert nicht
+              // ueberschreiben (z.B. deutscher PPI 2.2% statt Eurozone-PPI).
+              // Nationale Quelle bleibt nur Fallback, falls kein EU-Release
+              // im Fenster vorliegt.
+              if(ccy==="EUR"){const eu=arr.filter(e=>e.origin==="EU");if(eu.length)arr=eu;}
+              const list=arr.sort((a,b)=>b._t-a._t);
+              const v={...list[0]};delete v._t;delete v.origin;
               if(list[1])v.previous=list[1].actual;
               (out[ccy]=out[ccy]||{})[ind]=v;
             });
