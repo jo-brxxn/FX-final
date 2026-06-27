@@ -748,7 +748,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#a8327d;color:#ffe0f3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MAGENTA (COT-Daten-Bug behoben: pro Markt wird jetzt der Hauptkontrakt per groesstem Open Interest gewaehlt — keine vertauschten Cross-Rate-Werte mehr, WoW stimmt · EUR-PPI zeigt jetzt den Eurozone-PPI statt des deutschen)</div>
+<div style="flex:none;background:#b5651d;color:#fff0dd;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BRONZE (COT-Verlaufsdiagramm: Skala richtet sich jetzt nach der gestapelten Summe (Long+Short) + 10% Luft oben — gestapelte Balken ragen nicht mehr ueber die Skala hinaus und stossen nie ganz oben an; Gitterlinien skalieren mit der Marktgroesse)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5173,12 +5173,18 @@ function cotNum(n){n=+n;if(!isFinite(n))return'–';const a=Math.abs(n);if(a>=1e
 // gestapelten Balken, linke Skala (fest 0-100%) fuer die schwarze Long-%-
 // Linie. Graue Referenzlinie bei 50% markiert den neutralen Punkt (gleich
 // viele Long- wie Short-Kontrakte).
-function cotNiceAxis(maxVal){
-  // Rechte Skala: immer in 10k-Schritten, Maximum = naechstes 10k oberhalb
-  // des Hoechstwerts plus einen weiteren 10k-Schritt Luft nach oben.
-  const step=10000;
-  if(!isFinite(maxVal)||maxVal<=0)return{max:step,step};
-  const max=Math.ceil(maxVal/step)*step+step;
+function cotNiceAxis(maxStack){
+  // Rechte Skala fuer die GESTAPELTEN Balken (Hoehe = Long+Short). Maximum =
+  // groesste gestapelte Summe + 10% Luft nach oben, damit die Balken nie ganz
+  // oben anstossen (der feste 10k-Puffer war je nach Marktgroesse mal zu viel,
+  // mal zu wenig). Schrittweite der Gitterlinien "nice" gewaehlt (~6 Linien),
+  // skaliert mit der Marktgroesse.
+  if(!isFinite(maxStack)||maxStack<=0)return{max:10000,step:10000};
+  const max=maxStack*1.10;
+  const rough=max/6;
+  const mag=Math.pow(10,Math.floor(Math.log10(rough)));
+  const norm=rough/mag;
+  const step=(norm<=1?1:norm<=2?2:norm<=5?5:10)*mag;
   return{max,step};
 }
 function cotHistChart(history,availWidth,meta){
@@ -5190,7 +5196,7 @@ function cotHistChart(history,availWidth,meta){
   const perBar=usableW/n,barW=Math.max(4,perBar*0.62);
   const w=leftPad+rightPad+n*perBar,h=topPad+chartH+bottomPad;
   const y0=topPad+chartH;
-  const rawMax=Math.max(...history.map(e=>Math.max(e.long||0,e.short||0)));
+  const rawMax=Math.max(...history.map(e=>(+e.long||0)+(+e.short||0)));
   const ax=cotNiceAxis(rawMax);
   const yPct=p=>y0-(p/100)*chartH;
   const yVal=v=>y0-(v/ax.max)*chartH;
