@@ -127,6 +127,21 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:13px;padding:6px 9px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.4;white-space:pre-wrap;word-break:break-word;min-height:33px}
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
+/* ── Notes: Bullish/Bearish-Tabelle ── */
+.nt-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+@media(max-width:600px){.nt-wrap{grid-template-columns:1fr}}
+.nt-col{background:var(--bg2);border:1px solid var(--bd);border-top:3px solid var(--ntc);border-radius:10px;padding:10px 11px}
+.nt-col-hd{font-size:16px;font-weight:800;color:var(--ntc);letter-spacing:.4px;margin-bottom:9px}
+.nt-item{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--ntc);border-radius:7px;padding:6px 9px;margin-bottom:7px}
+.nt-item-top{display:flex;align-items:center;gap:6px}
+.nt-item-hd{flex:1;background:transparent;border:none;outline:none;color:var(--ntc);font-size:14px;font-weight:700;font-family:inherit;padding:1px 0;min-width:0}
+.nt-item-hd::placeholder{color:var(--ntc);opacity:.45}
+.nt-item-tx{width:100%;background:transparent;border:none;outline:none;color:var(--ntc);opacity:.9;font-size:12.5px;line-height:1.45;font-family:inherit;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;margin-top:2px;min-height:18px}
+.nt-item-tx::placeholder{color:var(--t3);opacity:1}
+.nt-del{background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;flex:none}
+@media(hover:hover){.nt-del:hover{color:var(--red)}}
+.nt-add{width:100%;margin-top:2px;background:transparent;border:1px dashed var(--ntc);color:var(--ntc);border-radius:7px;padding:6px;cursor:pointer;font-size:12px;font-weight:600;opacity:.8}
+@media(hover:hover){.nt-add:hover{opacity:1}}
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
 .cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}
 /* Asset-Einstellungen-Modal */
@@ -765,7 +780,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#1f8a70;color:#dffff5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MINT (Quick-Note bei einem Asset ist jetzt ein mehrzeiliges, automatisch wachsendes Feld — zu langer Text bricht in die naechste Zeile um statt seitlich zu scrollen)</div>
+<div style="flex:none;background:#2e7d32;color:#e3ffe0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: FOREST (Notes-Unteransicht: neue Bullish/Bearish-Tabelle mit zwei Spalten (bull = blau, bear = rot). Pro Spalte Stichpunkte mit Ueberschrift + kleinem Text darunter (Ueberschriften-Hierarchie). Synchronisiert ueber syms/Cloud)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1504,7 +1519,7 @@ function indexIds(){return syms.filter(s=>isIndex(s.id)).map(s=>s.id);}
 // zur Wahrung des bisherigen Verhaltens: alle Krypto-Coins teilen sich die
 // Gruppe 'crypto', S&P 500 und Nasdaq die Gruppe 'usidx'. Symbol-Identität
 // (id/name/full/linkCcy-Anzeige) bleibt erhalten.
-const ASSET_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','quickNote','linkCcy','deriveRules'];
+const ASSET_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','noteTable','quickNote','linkCcy','deriveRules'];
 function symSyncGroup(id){
   const s=syms.find(x=>x.id===id);if(!s)return null;
   if(s.syncGroup!==undefined)return s.syncGroup||null;
@@ -3277,7 +3292,7 @@ function renderDetail(){
     </div>
     ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
-  document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note').forEach(ar);
+  document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
   updateStat();
 }
 
@@ -3548,7 +3563,23 @@ function renderInd(ind,ri,ii,total){
 // ── NOTES SUB-TAB ──
 function renderNotesSubTab(c){
   const rubs=c.noteRubs||[];
-  return`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+  const nt={bull:(c.noteTable&&Array.isArray(c.noteTable.bull))?c.noteTable.bull:[],bear:(c.noteTable&&Array.isArray(c.noteTable.bear))?c.noteTable.bear:[]};
+  const col=(side,label,color,items)=>`<div class="nt-col" style="--ntc:${color}">
+    <div class="nt-col-hd">${label}</div>
+    ${items.map((it,i)=>`<div class="nt-item">
+      <div class="nt-item-top">
+        <input class="nt-item-hd" placeholder="Überschrift…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}',${i},'title',this.value)" onchange="save()">
+        <button class="nt-del" onclick="delNoteTableItem('${side}',${i})" title="Stichpunkt löschen">×</button>
+      </div>
+      <textarea class="nt-item-tx" rows="1" placeholder="kurzer Text…" oninput="ar(this);setNoteTableField('${side}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
+    </div>`).join('')}
+    <button class="nt-add" onclick="addNoteTableItem('${side}')">＋ Stichpunkt</button>
+  </div>`;
+  return`<div class="nt-wrap">
+    ${col('bull','▲ BULLISH',BC.bull,nt.bull)}
+    ${col('bear','▼ BEARISH',BC.bear,nt.bear)}
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
     <div style="font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized notes for ${c.name}</div>
     <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:11px">＋ Category</button>
   </div>
@@ -3765,6 +3796,16 @@ function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(ind&&ind.points)mvArr(ind.p
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
+// ── Notes-Bullish/Bearish-Tabelle (Stichpunkte mit Ueberschrift + Text) ──
+function ensureNoteTable(c){
+  if(!c.noteTable||typeof c.noteTable!=='object')c.noteTable={bull:[],bear:[]};
+  if(!Array.isArray(c.noteTable.bull))c.noteTable.bull=[];
+  if(!Array.isArray(c.noteTable.bear))c.noteTable.bear=[];
+  return c.noteTable;
+}
+function addNoteTableItem(side){const c=getSym();if(!c||(side!=='bull'&&side!=='bear'))return;pushU();ensureNoteTable(c)[side].push({id:uid(),title:'',text:''});save();renderDetail();}
+function delNoteTableItem(side,i){const c=getSym();if(!c)return;pushU();const nt=ensureNoteTable(c);if(nt[side]&&nt[side][i])nt[side].splice(i,1);save();renderDetail();}
+function setNoteTableField(side,i,field,val){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);if(nt[side]&&nt[side][i]){nt[side][i][field]=val;saveSoon();}}
 function addNoteRub(){pushU();const c=getSym();if(!c)return;if(!c.noteRubs)c.noteRubs=[];c.noteRubs.push({id:uid(),name:'New Category',bias:'neu',imp:false,items:[]});save();renderDetail();}
 function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;r.bias=b;save();renderDetail();}
 function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;r.imp=!r.imp;save();renderDetail();}
