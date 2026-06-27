@@ -51,7 +51,7 @@
   "Consumer Confidence": {
    "actual": "-29.2",
    "forecast": "-27.6",
-   "previous": "-29.7",
+   "previous": "-17.7",
    "date": "2026-06-25",
    "event": "GfK Consumer Confidence",
    "period": null
@@ -403,7 +403,7 @@
   "GDP Growth QoQ": {
    "actual": "0.4%",
    "forecast": "0.5%",
-   "previous": "0.5%",
+   "previous": "0.4%",
    "date": "2026-06-01",
    "event": "GDP Growth Rate QoQ Final",
    "period": "q/q"
@@ -419,7 +419,7 @@
   "Manufacturing PMI": {
    "actual": "57.3",
    "forecast": "54",
-   "previous": "54.5",
+   "previous": "57.3",
    "date": "2026-06-01",
    "event": "procure.ch Manufacturing PMI",
    "period": null
@@ -492,7 +492,7 @@
   },
   "CPI (Headline)": {
    "actual": "4%",
-   "forecast": "4.4%",
+   "forecast": "4.3%",
    "previous": "4.2%",
    "date": "2026-06-24",
    "event": "Inflation Rate YoY",
@@ -500,7 +500,7 @@
   },
   "CPI": {
    "actual": "-0.7%",
-   "forecast": "-0.3%",
+   "forecast": "-0.4%",
    "previous": "0.4%",
    "date": "2026-06-24",
    "event": "Inflation Rate MoM",
