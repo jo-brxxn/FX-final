@@ -765,7 +765,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6b3fa0;color:#f0e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PLUM (Tab-Leiste mit Stapeln: Kategorien lassen sich zu Gruppen buendeln. Standard-Stapel „Insights" (Compare/Matrix/Trends/COT/Carry) — anklicken klappt ihn aus (Name unterstrichen + Pfeil, Mitglieder in kleinerer Schrift). Lang auf eine Kategorie druecken: zu einem Stapel hinzufuegen oder neuen Stapel anlegen)</div>
+<div style="flex:none;background:#7a5c1f;color:#fff4d6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BRASS (Tab-Stapel werden jetzt geraeteuebergreifend synchronisiert: sie haengen an Cloud-Push/Pull (wie greenDismissed) und an Export/Import; jede Stapel-Aenderung stoesst einen Cloud-Sync an)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2987,13 +2987,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -3046,7 +3046,7 @@ async function cloudPush(manual){
   try{
     // greenDismissed (bestätigte Ausrufezeichen) liegt bewusst außerhalb von
     // snap()/Undo, muss aber ebenfalls geräteübergreifend synchron sein.
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
@@ -3091,6 +3091,7 @@ async function cloudPull(manual){
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
+      if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -5623,9 +5624,15 @@ function loadTabStacks(){
   try{const s=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(s)){tabStacks=s;return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
   tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','carry']}];
-  saveTabStacks();
+  try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
-function saveTabStacks(){try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
+function saveTabStacks(){
+  try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
+  // Aenderung als neue Version markieren und (falls Cloud-Sync eingerichtet ist)
+  // pushen, damit die Stapel ueber mehrere Geraete synchron sind.
+  try{localStorage.setItem('fxpro_updated',new Date().toISOString());}catch(e){}
+  cloudAutoSync();
+}
 function stackOf(tabId){return tabStacks.find(s=>s.members.includes(tabId));}
 function tabIdFor(tab,fxMode){return tab==='cur'?(fxMode==='nonfx'?'nonfx':'fx'):tab;}
 function selectTab(id){const d=TABS[id];if(!d)return;showTab(d.tab,null,d.mode);}
