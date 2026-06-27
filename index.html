@@ -224,9 +224,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .carry-lk-op{font-size:18px;color:var(--t3);padding-bottom:2px}
 .carry-lk-dir{margin-top:9px;font-size:13px;font-weight:700}
 /* ── SCORE TRENDS ── */
-.tr-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;margin-bottom:10px}
-.tr-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-.tr-card-title{font-size:15px;font-weight:800;color:var(--t0)}
+.tr-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 2px 14px rgba(0,0,0,.22)}
+.tr-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--bd)}
+.tr-card-title{font-size:18px;font-weight:800;color:var(--t0);letter-spacing:.2px}
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
 .tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .tr-leg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
@@ -757,7 +757,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#4d7c0f;color:#eaffd0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LIME (Trends-Tab: Gesamt-Score-Chart zeigt jetzt ALLE Assets inkl. Gold/Silber/Oel/BTC/SP500/Nasdaq (eigene Farben), Filter umfasst alle Assets. Die Makro-Charts Inflation/Labour/Growth bleiben waehrungsspezifisch)</div>
+<div style="flex:none;background:#1f6f8b;color:#dff4ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SKY (Trends-Charts deutlich groesser (wie bei COT, ~320px hoch) mit klarer Ueberschriften-Hierarchie: Seitentitel > Chart-Titel (eigene Kopfzeile) > Achsen/Legende)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -933,7 +933,7 @@ function introLogin(){
 <!-- PAGE: TRENDS (Score-Verlauf) -->
 <div class="pc" id="pgTrends" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score-Verlauf je Waehrung &uuml;ber ~3 Monate &middot; ein Punkt pro Tag &middot; Gesamt-Score + Inflation / Labour Market / Economic Growth</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score-Verlauf je Asset &uuml;ber ~3 Monate &middot; ein Punkt pro Tag &middot; Gesamt-Score + Inflation / Labour Market / Economic Growth</div></div>
     <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Nach Waehrung filtern" style="cursor:pointer"><option value="ALL">&#127760; Alle Assets</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
   </div>
   <div id="trendsBody"></div>
@@ -5030,7 +5030,7 @@ function scoreTrendChart(ids,dates,vi,base){
     valOf[id]=m;
   });
   const scale=Math.ceil(maxAbs);
-  const leftPad=36,rightPad=16,topPad=14,chartH=170,bottomPad=30,PD=44;
+  const leftPad=42,rightPad=20,topPad=18,chartH=320,bottomPad=36,PD=48;
   const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
   const yMid=topPad+chartH/2;
   const xOf=i=>leftPad+i*PD+PD/2;
@@ -5038,18 +5038,18 @@ function scoreTrendChart(ids,dates,vi,base){
   let svg=`<svg class="tr-svg" width="${w}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
   [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
     const y=yOf(t),mid=t===0;
-    svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1:0.5}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.5:0.28}"/>`;
-    svg+=`<text x="${leftPad-6}" y="${(y+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+    svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
   ids.forEach(id=>{
     const col=TREND_COLORS[id]||'#888';const pts=[];
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push([xOf(i),yOf(v)]);});
-    if(pts.length>1)svg+=`<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
-    pts.forEach(p=>{svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.6" fill="${col}"/>`;});
+    if(pts.length>1)svg+=`<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+    pts.forEach(p=>{svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}"/>`;});
   });
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+15).toFixed(1)}" text-anchor="middle" style="font-size:8px;fill:var(--t3)">${escH(lbl)}</text>`;
+    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
   return svg+`</svg>`;
 }
