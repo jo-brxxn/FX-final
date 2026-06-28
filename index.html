@@ -142,6 +142,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media(hover:hover){.nt-del:hover{color:var(--red)}}
 .nt-add{width:100%;margin-top:2px;background:transparent;border:1px dashed var(--ntc);color:var(--ntc);border-radius:7px;padding:6px;cursor:pointer;font-size:12px;font-weight:600;opacity:.8}
 @media(hover:hover){.nt-add:hover{opacity:1}}
+.nt-sub-lbl{font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--t3);margin:5px 0 6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.nt-divider{border-top:1px solid var(--bd);margin:12px 0 6px}
+.nt-item-ctrl{display:flex;align-items:center;gap:0;flex:none}
+.nt-mv{background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:1px 3px;line-height:1}
+.nt-mv:disabled{opacity:.3;cursor:default}
+@media(hover:hover){.nt-mv:not(:disabled):hover{color:var(--ntc)}}
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
 .cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}
 /* Asset-Einstellungen-Modal */
@@ -780,7 +786,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#a85a16;color:#ffeacf;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OCHRE (COT-Karten-Bias wird jetzt direkt bullish/bearish nach dem Vorzeichen ihres Scores — da es nur einen scoretreibenden Wert gibt, greift die +/-3-Schwelle hier nicht mehr)</div>
+<div style="flex:none;background:#475569;color:#eef2f7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SLATE (General-Tab entfernt; dessen bullish/bearish-Argumente wandern in die Notes-Tabelle. Diese hat pro Spalte jetzt AKTUELL (oben) und GENERELL (unten), getrennt durch einen Strich. Stichpunkte verschiebbar (hoch/runter) und zwischen Aktuell<->Generell)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1519,7 +1525,7 @@ function indexIds(){return syms.filter(s=>isIndex(s.id)).map(s=>s.id);}
 // zur Wahrung des bisherigen Verhaltens: alle Krypto-Coins teilen sich die
 // Gruppe 'crypto', S&P 500 und Nasdaq die Gruppe 'usidx'. Symbol-Identität
 // (id/name/full/linkCcy-Anzeige) bleibt erhalten.
-const ASSET_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','noteTable','quickNote','linkCcy','deriveRules'];
+const ASSET_SYNC_FIELDS=['bias','rubrics','genBull','genBear','noteRubs','notes','noteTable','_notesMigrated','quickNote','linkCcy','deriveRules'];
 function symSyncGroup(id){
   const s=syms.find(x=>x.id===id);if(!s)return null;
   if(s.syncGroup!==undefined)return s.syncGroup||null;
@@ -3284,13 +3290,12 @@ function renderDetail(){
     <div class="stabs-row">
       <div class="stabs">
         <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Macro</button>
-        <button class="st${curSub==='general'?' on':''}" onclick="setSub('general')">🌐 General</button>
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
       </div>
       <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
     </div>
-    ${curSub==='general'?renderGenTab(c):curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
+    ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
   updateStat();
@@ -3563,17 +3568,29 @@ function renderInd(ind,ri,ii,total){
 // ── NOTES SUB-TAB ──
 function renderNotesSubTab(c){
   const rubs=c.noteRubs||[];
-  const nt={bull:(c.noteTable&&Array.isArray(c.noteTable.bull))?c.noteTable.bull:[],bear:(c.noteTable&&Array.isArray(c.noteTable.bear))?c.noteTable.bear:[]};
-  const col=(side,label,color,items)=>`<div class="nt-col" style="--ntc:${color}">
-    <div class="nt-col-hd">${label}</div>
-    ${items.map((it,i)=>`<div class="nt-item">
-      <div class="nt-item-top">
-        <input class="nt-item-hd" placeholder="Überschrift…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}',${i},'title',this.value)" onchange="save()">
-        <button class="nt-del" onclick="delNoteTableItem('${side}',${i})" title="Stichpunkt löschen">×</button>
+  const nt=ensureNoteTable(c);
+  const item=(side,group,it,i,len)=>`<div class="nt-item">
+    <div class="nt-item-top">
+      <input class="nt-item-hd" placeholder="Überschrift…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}','${group}',${i},'title',this.value)" onchange="save()">
+      <div class="nt-item-ctrl">
+        <button class="nt-mv" title="Hoch" onclick="mvNoteTableItem('${side}','${group}',${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="nt-mv" title="Runter" onclick="mvNoteTableItem('${side}','${group}',${i},1)" ${i===len-1?'disabled':''}>▼</button>
+        <button class="nt-mv" title="${group==='cur'?'Nach Generell verschieben':'Nach Aktuell verschieben'}" onclick="moveNoteTableGroup('${side}','${group}',${i})">${group==='cur'?'⇩':'⇧'}</button>
+        <button class="nt-del" title="Löschen" onclick="delNoteTableItem('${side}','${group}',${i})">×</button>
       </div>
-      <textarea class="nt-item-tx" rows="1" placeholder="kurzer Text…" oninput="ar(this);setNoteTableField('${side}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
-    </div>`).join('')}
-    <button class="nt-add" onclick="addNoteTableItem('${side}')">＋ Stichpunkt</button>
+    </div>
+    <textarea class="nt-item-tx" rows="1" placeholder="kurzer Text…" oninput="ar(this);setNoteTableField('${side}','${group}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
+  </div>`;
+  const grp=(side,group,items)=>items.map((it,i)=>item(side,group,it,i,items.length)).join('');
+  const col=(side,label,color,d)=>`<div class="nt-col" style="--ntc:${color}">
+    <div class="nt-col-hd">${label}</div>
+    <div class="nt-sub-lbl">⚡ AKTUELL</div>
+    ${grp(side,'cur',d.cur)}
+    <button class="nt-add" onclick="addNoteTableItem('${side}','cur')">＋ Aktuell</button>
+    <div class="nt-divider"></div>
+    <div class="nt-sub-lbl">🌐 GENERELL</div>
+    ${grp(side,'gen',d.gen)}
+    <button class="nt-add" onclick="addNoteTableItem('${side}','gen')">＋ Generell</button>
   </div>`;
   return`<div class="nt-wrap">
     ${col('bull','▲ BULLISH',BC.bull,nt.bull)}
@@ -3796,16 +3813,42 @@ function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(ind&&ind.points)mvArr(ind.p
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
-// ── Notes-Bullish/Bearish-Tabelle (Stichpunkte mit Ueberschrift + Text) ──
+// ── Notes-Bullish/Bearish-Tabelle ──
+// Struktur: noteTable={bull:{cur:[],gen:[]}, bear:{cur:[],gen:[]}}.
+// cur = aktuell wichtige Punkte (oben), gen = generelle/strukturelle (unten).
+// Jeder Punkt: {id,title,text}. ensureNoteTable migriert auch das fruehere
+// flache Format ({bull:[],bear:[]}) -> cur.
 function ensureNoteTable(c){
-  if(!c.noteTable||typeof c.noteTable!=='object')c.noteTable={bull:[],bear:[]};
-  if(!Array.isArray(c.noteTable.bull))c.noteTable.bull=[];
-  if(!Array.isArray(c.noteTable.bear))c.noteTable.bear=[];
-  return c.noteTable;
+  let nt=(c.noteTable&&typeof c.noteTable==='object')?c.noteTable:{};
+  ['bull','bear'].forEach(side=>{
+    const s=nt[side];
+    if(Array.isArray(s)){nt[side]={cur:s,gen:[]};}            // altes flaches Format
+    else if(!s||typeof s!=='object'){nt[side]={cur:[],gen:[]};}
+    if(!Array.isArray(nt[side].cur))nt[side].cur=[];
+    if(!Array.isArray(nt[side].gen))nt[side].gen=[];
+  });
+  c.noteTable=nt;
+  return nt;
 }
-function addNoteTableItem(side){const c=getSym();if(!c||(side!=='bull'&&side!=='bear'))return;pushU();ensureNoteTable(c)[side].push({id:uid(),title:'',text:''});save();renderDetail();}
-function delNoteTableItem(side,i){const c=getSym();if(!c)return;pushU();const nt=ensureNoteTable(c);if(nt[side]&&nt[side][i])nt[side].splice(i,1);save();renderDetail();}
-function setNoteTableField(side,i,field,val){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);if(nt[side]&&nt[side][i]){nt[side][i][field]=val;saveSoon();}}
+// Einmalige Migration: bullish/bearish Argumente aus dem alten General-Tab
+// (genBull/genBear) in den GENERELL-Bereich der Notes-Tabelle uebernehmen.
+function migrateGeneralToNotes(){
+  let changed=false;
+  syms.forEach(c=>{
+    if(c._notesMigrated)return;
+    const nt=ensureNoteTable(c);
+    (c.genBull||[]).forEach(r=>{const t=(typeof r==='string')?r:(r&&r.text||'');if(t.trim())nt.bull.gen.push({id:uid(),title:t,text:''});});
+    (c.genBear||[]).forEach(r=>{const t=(typeof r==='string')?r:(r&&r.text||'');if(t.trim())nt.bear.gen.push({id:uid(),title:t,text:''});});
+    c.genBull=[];c.genBear=[];
+    c._notesMigrated=true;changed=true;
+  });
+  if(changed)save();
+}
+function addNoteTableItem(side,group){const c=getSym();if(!c||(side!=='bull'&&side!=='bear'))return;group=group==='gen'?'gen':'cur';pushU();ensureNoteTable(c)[side][group].push({id:uid(),title:'',text:''});save();renderDetail();}
+function delNoteTableItem(side,group,i){const c=getSym();if(!c)return;pushU();const a=ensureNoteTable(c)[side][group];if(a&&a[i])a.splice(i,1);save();renderDetail();}
+function setNoteTableField(side,group,i,field,val){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(a&&a[i]){a[i][field]=val;saveSoon();}}
+function mvNoteTableItem(side,group,i,d){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(!a)return;const j=i+d;if(j<0||j>=a.length)return;pushU();const t=a[i];a[i]=a[j];a[j]=t;save();renderDetail();}
+function moveNoteTableGroup(side,group,i){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);const from=nt[side][group];if(!from||!from[i])return;pushU();const it=from.splice(i,1)[0];nt[side][group==='cur'?'gen':'cur'].push(it);save();renderDetail();}
 function addNoteRub(){pushU();const c=getSym();if(!c)return;if(!c.noteRubs)c.noteRubs=[];c.noteRubs.push({id:uid(),name:'New Category',bias:'neu',imp:false,items:[]});save();renderDetail();}
 function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;r.bias=b;save();renderDetail();}
 function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;r.imp=!r.imp;save();renderDetail();}
@@ -5955,6 +5998,7 @@ window.addEventListener('resize',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
+migrateGeneralToNotes();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
