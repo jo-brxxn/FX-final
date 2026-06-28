@@ -780,7 +780,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#2e7d32;color:#e3ffe0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: FOREST (Notes-Unteransicht: neue Bullish/Bearish-Tabelle mit zwei Spalten (bull = blau, bear = rot). Pro Spalte Stichpunkte mit Ueberschrift + kleinem Text darunter (Ueberschriften-Hierarchie). Synchronisiert ueber syms/Cloud)</div>
+<div style="flex:none;background:#a85a16;color:#ffeacf;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: OCHRE (COT-Karten-Bias wird jetzt direkt bullish/bearish nach dem Vorzeichen ihres Scores — da es nur einen scoretreibenden Wert gibt, greift die +/-3-Schwelle hier nicht mehr)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5522,6 +5522,12 @@ function applyCotDataFeed(){
     setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),m.longPct===0?'neu':'bull');
     setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct===0?'neu':'bear');
     setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu');
+    // Karten-Bias direkt aus dem Score-Vorzeichen ableiten: die COT-Karte hat
+    // nur EINEN scoretreibenden Wert (WoW-Aenderung; Net Long/Short zaehlen
+    // nicht), daher wuerde die normale +/-3-Schwelle nie bull/bear ergeben.
+    // -> Karte wird direkt bullish/bearish, sobald der Score-Treiber es ist.
+    const sc=rubScore(rub),cardBias=sc>0?'bull':sc<0?'bear':'neu';
+    if(rub.bias!==cardBias){rub.bias=cardBias;changed=true;}
   });
   return changed;
 }
