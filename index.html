@@ -517,6 +517,31 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
+.globe-host{display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px}
+.globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+/* Currency Strength Ranking */
+.rank-list{display:flex;flex-direction:column;gap:5px}
+.rank-row{display:grid;grid-template-columns:20px 44px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
+.rank-pos{font-size:11px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-name{font-size:14px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
+.rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
+.rank-sc{font-size:13px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Risk Sentiment Gauge */
+.risk-gauge{padding:8px 4px 2px}
+.risk-track{position:relative;height:12px;border-radius:7px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green))}
+.risk-ptr{position:absolute;top:50%;width:15px;height:15px;border-radius:50%;border:2px solid var(--bg0);transform:translate(-50%,-50%);box-shadow:0 0 7px rgba(0,0,0,.6);transition:left .5s ease}
+.risk-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-lbl{text-align:center;font-size:21px;font-weight:800;margin-top:10px;letter-spacing:1.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-sub{text-align:center;font-size:11px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Asset Heatmap */
+.heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
+.heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
+.heat-name{font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heat-sc{font-size:18px;font-weight:800;margin:3px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.heat-bias{font-size:10px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-mini_calendar .cal-scroll{max-height:52vh;overflow-y:auto}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 /* ── CALENDAR TABLE (FF-Style) ── */
 .cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto;margin-bottom:6px}
@@ -718,7 +743,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
      die ganze Zeile. */
   #dashWidgets{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  #dashWidgets .dw.dw-setups{grid-column:1/-1}
+  #dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-mini_calendar{grid-column:1/-1}
   @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
@@ -797,7 +822,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: COMPASS (CAD GDP: Quellen-Link auf die nicht-annualisierte QoQ-Seite korrigiert, damit Link und angezeigter Quartalswert (0% q/q, nicht m/m) zusammenpassen)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ATLAS (Dashboard neu gestaltet: rotierender SVG-Weltglobus mit nach Bias-Score eingefaerbten Waehrungs-Markern, Currency-Strength-Ranking (staerkste->schwaechste), Risk-on/Risk-off-Sentiment-Gauge, Asset-Heatmap (Rohstoffe/Indizes/Krypto) und ein mit den anderen Kalendern verbundener Mini-Kalender (gleiche Events + Bedienelemente). 2-Spalten-Layout, neue Module per Migration auch in bestehenden Dashboards)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2933,8 +2958,13 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:0},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:4},
+  {id:uid(),type:'globe',title:'FX World Globe',order:0},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:2},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:3},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:4},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:5},
+  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:6},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -3040,6 +3070,17 @@ function loadState(){
         if(wlW.content==null||wlW.content==='')wlW.content=qnW.content||'';
         if(wlW.title==='Watchlist')wlW.title='Watchlist & Quick Notes';
         widgets=widgets.filter(w=>w.type!=='quick_notes');
+      }
+      // Dashboard-Redesign: neue Module (Globus, Currency Strength, Risk
+      // Sentiment, Asset-Heatmap, verbundener Mini-Kalender) einmalig zu
+      // bestehenden Dashboards hinzufuegen und sinnvoll anordnen.
+      if(localStorage.getItem('fxpro_dashv2')!=='1'){
+        [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
+          .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
+        const rank={globe:0,ccy_ranking:1,fx_bias:2,risk_sentiment:3,asset_heatmap:4,watchlist:5,mini_calendar:6,pairs_editor:7};
+        widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
+        widgets.forEach((w,i)=>w.order=i);
+        localStorage.setItem('fxpro_dashv2','1');
       }
       inbox=pruneInbox(d.inbox||[]);
       sbOrder=d.sbOrder||{};
@@ -4741,6 +4782,11 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
+  {type:'globe',label:'FX World Globe',sub:'Rotating globe — currencies coloured by bias score'},
+  {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
+  {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
+  {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
+  {type:'mini_calendar',label:'Mini Calendar',sub:'Same events & controls as the main calendar'},
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
@@ -4803,7 +4849,15 @@ function renderDash(){
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
-    if(w.type==='fx_bias'){
+    if(w.type==='globe'){
+      // Marker werden live per startGlobes() gezeichnet; hier nur Host + Legende.
+      content=`<div class="globe-host"></div>
+        <div class="globe-legend">
+          <span><i style="background:${BC.bull}"></i>Bullish</span>
+          <span><i style="background:${BC.neu}"></i>Neutral</span>
+          <span><i style="background:${BC.bear}"></i>Bearish</span>
+        </div>`;
+    }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -4854,9 +4908,40 @@ function renderDash(){
         </div>`;}).join(''));
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
+    }else if(w.type==='ccy_ranking'){
+      const ranked=syms.filter(s=>FX.includes(s.id)).map(s=>({s,sc:symScore(s)})).sort((a,b)=>b.sc-a.sc);
+      const mx=Math.max(1,...ranked.map(r=>Math.abs(r.sc)));
+      content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" onclick="gotoSym('${r.s.id}')">
+        <span class="rank-pos">${i+1}</span><span class="rank-name">${r.s.id}</span>
+        <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
+        <span class="rank-sc" style="color:${BC[r.s.bias]}">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
+      </div>`).join('')+`</div>`;
+    }else if(w.type==='risk_sentiment'){
+      const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScore(s):null;};
+      const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+      const on=avg(['AUD','NZD','SP500','NAS','BTC','DAX']),off=avg(['JPY','CHF','GOLD']);
+      const net=on-off,pct=Math.max(2,Math.min(98,50+net*8));
+      const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
+      content=`<div class="risk-gauge">
+        <div class="risk-track"><div class="risk-fill"></div><div class="risk-ptr" style="left:${pct}%;background:${col}"></div></div>
+        <div class="risk-ends"><span>◀ Risk-off (safe havens)</span><span>Risk-on ▶</span></div>
+        <div class="risk-lbl" style="color:${col}">${lbl}</div>
+        <div class="risk-sub">Risk assets ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Safe havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
+      </div>`;
+    }else if(w.type==='asset_heatmap'){
+      const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
+      content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
+        <div class="heat-name">${escH(s.name)}</div>
+        <div class="heat-sc" style="color:${BC[s.bias]}">${symScore(s)>0?'+':''}${Math.round(symScore(s)*10)/10}</div>
+        <div class="heat-bias" style="color:${BC[s.bias]}">${BL[s.bias]}</div>
+      </div>`).join('')+`</div>`:`<div class="dw-empty">No non-FX assets.</div>`;
+    }else if(w.type==='mini_calendar'){
+      let mc=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+      if(calHighOnly)mc=mc.filter(ev=>evtImpact(ev)==='high');
+      content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calTableHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
+    return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
@@ -4872,6 +4957,7 @@ function renderDash(){
       ${content}
     </div>`;}).join('');
   requestAnimationFrame(scrollCalsToNow);
+  startGlobes();
 }
 // Die Kalender-Hoehe wird jetzt via CSS (flex:1 auf .cal-scroll) gesteuert.
 // Die Karte dehnt sich per Grid auf die Hoehe der laengsten Karte in der Zeile aus,
@@ -4886,6 +4972,64 @@ function scrollCalsToNow(){
   });
 }
 window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(scrollCalsToNow);});
+
+// ══ DASHBOARD: ROTIERENDER FX-WELTGLOBUS ════════════════════════════
+// Reines SVG/JS (kein externes Lib, offline-tauglich): orthografische Projektion
+// einer langsam rotierenden Kugel. Die 8 Hauptwaehrungen sitzen als Marker an
+// ihren Laendern (lat/lon) und sind nach Bias-Score eingefaerbt; Marker auf der
+// abgewandten Hemisphaere werden ausgeblendet. Laeuft nur, solange das Dashboard
+// sichtbar ist (sonst stoppt die Animation selbst).
+const GLOBE_GEO={USD:[39,-98],EUR:[50,10],GBP:[54,-2],JPY:[36,138],CHF:[47,8],CAD:[56,-106],AUD:[-25,133],NZD:[-41,174]};
+const GLOBE_LAT0=18*Math.PI/180; // leichte Nordneigung der Blickachse
+let _globeRAF=null,_globeLon=200,_globeLast=0;
+function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}}
+function globeProject(lat,lon,lon0,R){
+  const f=lat*Math.PI/180,l=(lon-lon0)*Math.PI/180;
+  const cosc=Math.sin(GLOBE_LAT0)*Math.sin(f)+Math.cos(GLOBE_LAT0)*Math.cos(f)*Math.cos(l);
+  return{x:R*Math.cos(f)*Math.sin(l),y:-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l)),vis:cosc>0};
+}
+function globeGridPath(pts,cx,cy){
+  let d='',pen=false;
+  pts.forEach(p=>{if(p.vis){d+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
+  return d?`<path d="${d}" fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>`:'';
+}
+function globeSVG(size){
+  const R=size/2-16,cx=size/2,cy=size/2;
+  let grid='';
+  for(let lon=-180;lon<180;lon+=30){const pts=[];for(let lat=-90;lat<=90;lat+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
+  for(let lat=-60;lat<=60;lat+=30){const pts=[];for(let lon=-180;lon<=180;lon+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
+  let markers='';
+  Object.keys(GLOBE_GEO).forEach(id=>{
+    const sym=syms.find(s=>s.id===id);if(!sym)return;
+    const p=globeProject(GLOBE_GEO[id][0],GLOBE_GEO[id][1],_globeLon,R);
+    if(!p.vis)return;
+    const x=(cx+p.x),y=(cy+p.y),col=BC[sym.bias]||'#888',sc=symScore(sym);
+    const scTxt=(sc>0?'+':'')+(Math.round(sc*10)/10);
+    markers+=`<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
+      `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${col}" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace">${id} ${scTxt}</text></g>`;
+  });
+  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%">
+    <defs><radialGradient id="globeGrad" cx="38%" cy="34%" r="78%">
+      <stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/>
+    </radialGradient></defs>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#globeGrad)" stroke="var(--bd2)" stroke-width="1"/>
+    ${grid}${markers}
+  </svg>`;
+}
+function startGlobes(){
+  stopGlobe();
+  if(curPage!=='dash'||!document.querySelector('.globe-host'))return;
+  _globeLast=performance.now();
+  const frame=now=>{
+    const hosts=[...document.querySelectorAll('.globe-host')];
+    if(curPage!=='dash'||!hosts.length){stopGlobe();return;}
+    const dt=now-_globeLast;
+    if(dt>=45){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
+      hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s);});}
+    _globeRAF=requestAnimationFrame(frame);
+  };
+  _globeRAF=requestAnimationFrame(frame);
+}
 
 function mvWidget(id,d){
   const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
