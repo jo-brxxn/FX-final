@@ -822,7 +822,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ATLAS (Dashboard neu gestaltet: rotierender SVG-Weltglobus mit nach Bias-Score eingefaerbten Waehrungs-Markern, Currency-Strength-Ranking (staerkste->schwaechste), Risk-on/Risk-off-Sentiment-Gauge, Asset-Heatmap (Rohstoffe/Indizes/Krypto) und ein mit den anderen Kalendern verbundener Mini-Kalender (gleiche Events + Bedienelemente). 2-Spalten-Layout, neue Module per Migration auch in bestehenden Dashboards)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ATLAS-2 (Fix: die neuen Dashboard-Module (Globus, Currency Strength, Risk Sentiment, Asset-Heatmap, Mini-Kalender) erscheinen jetzt auch bei aktivem Cloud-Sync - die Dashboard-Version (dashV) ist Teil des synchronisierten States, sodass der Cloud-Download die migrierten Module nicht mehr mit dem alten Stand ueberschreibt. Geloeschte Module bleiben nach dem Sync geloescht)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2969,9 +2969,9 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV});}
 function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -3014,7 +3014,24 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={};
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0;
+// Dashboard-Schema-Migration: ergaenzt fehlende neue Module (Globus, Currency
+// Strength, Risk Sentiment, Asset-Heatmap, Mini-Kalender). dashV ist Teil des
+// synchronisierten States (snap), damit die Migration auch dann greift, wenn ein
+// aelterer Stand aus der Cloud geladen wird (sonst ueberschreibt cloudPull die
+// migrierten Widgets) - und damit spaeter geloeschte Module nach dem Sync nicht
+// staendig zurueckkehren.
+const DASH_V=2;
+function migrateDash(){
+  if(!Array.isArray(widgets))widgets=mkWidgets();
+  if((dashV||0)>=DASH_V)return;
+  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
+    .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
+  const rank={globe:0,ccy_ranking:1,fx_bias:2,risk_sentiment:3,asset_heatmap:4,watchlist:5,mini_calendar:6,pairs_editor:7};
+  widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
+  widgets.forEach((w,i)=>w.order=i);
+  dashV=DASH_V;
+}
 function loadState(){
   try{
     const s=localStorage.getItem(SK);
@@ -3071,17 +3088,10 @@ function loadState(){
         if(wlW.title==='Watchlist')wlW.title='Watchlist & Quick Notes';
         widgets=widgets.filter(w=>w.type!=='quick_notes');
       }
-      // Dashboard-Redesign: neue Module (Globus, Currency Strength, Risk
-      // Sentiment, Asset-Heatmap, verbundener Mini-Kalender) einmalig zu
-      // bestehenden Dashboards hinzufuegen und sinnvoll anordnen.
-      if(localStorage.getItem('fxpro_dashv2')!=='1'){
-        [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
-          .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-        const rank={globe:0,ccy_ranking:1,fx_bias:2,risk_sentiment:3,asset_heatmap:4,watchlist:5,mini_calendar:6,pairs_editor:7};
-        widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
-        widgets.forEach((w,i)=>w.order=i);
-        localStorage.setItem('fxpro_dashv2','1');
-      }
+      // Dashboard-Redesign: neue Module ergaenzen (siehe migrateDash). dashV
+      // kommt aus dem (ggf. aelteren) gespeicherten Stand.
+      dashV=d.dashV||0;
+      migrateDash();
       inbox=pruneInbox(d.inbox||[]);
       sbOrder=d.sbOrder||{};
       catOrder=d.catOrder||[];
