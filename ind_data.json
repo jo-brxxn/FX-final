@@ -1,78 +1,4 @@
 {
- "JPY": {
-  "PPI": {
-   "actual": "6.3%",
-   "forecast": "5.5%",
-   "previous": "4.9%",
-   "date": "2026-06-09",
-   "event": "PPI YoY",
-   "period": "y/y"
-  },
-  "GDP Growth QoQ": {
-   "actual": "0.5%",
-   "forecast": "0.3%",
-   "previous": "0.5%",
-   "date": "2026-06-07",
-   "event": "GDP Growth Rate QoQ Final",
-   "period": "q/q"
-  },
-  "CPI (Headline)": {
-   "actual": "1.5%",
-   "forecast": null,
-   "previous": "1.4%",
-   "date": "2026-06-18",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "Core CPI": {
-   "actual": "1.4%",
-   "forecast": "1.4%",
-   "previous": "1.4%",
-   "date": "2026-06-18",
-   "event": "Core Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "CPI": {
-   "actual": "0.4%",
-   "forecast": null,
-   "previous": "0.1%",
-   "date": "2026-06-18",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "Unemployment Rate": {
-   "actual": "2.5%",
-   "forecast": "2.7%",
-   "previous": "2.5%",
-   "date": "2026-05-28",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "Retail Sales": {
-   "actual": "1.3%",
-   "forecast": null,
-   "previous": "1.3%",
-   "date": "2026-05-28",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
-  },
-  "Consumer Confidence": {
-   "actual": "33.6",
-   "forecast": "32",
-   "previous": "33.6",
-   "date": "2026-05-29",
-   "event": "Consumer Confidence",
-   "period": null
-  },
-  "Central Bank Rate": {
-   "actual": "1%",
-   "forecast": "1%",
-   "previous": "0.75%",
-   "date": "2026-06-16",
-   "event": "BoJ Interest Rate Decision",
-   "period": null
-  }
- },
  "CHF": {
   "GDP Growth QoQ": {
    "actual": "0.4%",
@@ -83,12 +9,12 @@
    "period": "q/q"
   },
   "Retail Sales": {
-   "actual": "0.1%",
-   "forecast": null,
-   "previous": "0.1%",
+   "actual": "1.6%",
+   "forecast": "0.2%",
+   "previous": "1.6%",
    "date": "2026-06-01",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
+   "event": "Retail Sales YoY",
+   "period": "y/y"
   },
   "Manufacturing PMI": {
    "actual": "57.3",
@@ -136,6 +62,80 @@
    "previous": "0%",
    "date": "2026-06-18",
    "event": "SNB Interest Rate Decision",
+   "period": null
+  }
+ },
+ "JPY": {
+  "GDP Growth QoQ": {
+   "actual": "0.5%",
+   "forecast": "0.3%",
+   "previous": "0.5%",
+   "date": "2026-06-07",
+   "event": "GDP Growth Rate QoQ Final",
+   "period": "q/q"
+  },
+  "CPI (Headline)": {
+   "actual": "1.5%",
+   "forecast": null,
+   "previous": "1.4%",
+   "date": "2026-06-18",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "Core CPI": {
+   "actual": "1.4%",
+   "forecast": "1.4%",
+   "previous": "1.4%",
+   "date": "2026-06-18",
+   "event": "Core Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "0.4%",
+   "forecast": null,
+   "previous": "0.1%",
+   "date": "2026-06-18",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
+  },
+  "Unemployment Rate": {
+   "actual": "2.5%",
+   "forecast": "2.7%",
+   "previous": "2.5%",
+   "date": "2026-05-28",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "Retail Sales": {
+   "actual": "5.3%",
+   "forecast": "3.2%",
+   "previous": "2.8%",
+   "date": "2026-06-28",
+   "event": "Retail Sales YoY",
+   "period": "y/y"
+  },
+  "Consumer Confidence": {
+   "actual": "33.6",
+   "forecast": "32",
+   "previous": "33.6",
+   "date": "2026-05-29",
+   "event": "Consumer Confidence",
+   "period": null
+  },
+  "PPI": {
+   "actual": "6.3%",
+   "forecast": "5.5%",
+   "previous": "4.9%",
+   "date": "2026-06-09",
+   "event": "PPI YoY",
+   "period": "y/y"
+  },
+  "Central Bank Rate": {
+   "actual": "1%",
+   "forecast": "1%",
+   "previous": "0.75%",
+   "date": "2026-06-16",
+   "event": "BoJ Interest Rate Decision",
    "period": null
   }
  },
@@ -271,12 +271,12 @@
    "period": null
   },
   "Retail Sales": {
-   "actual": "1.2%",
-   "forecast": "0.5%",
-   "previous": "-1.3%",
+   "actual": "3.2%",
+   "forecast": "1.9%",
+   "previous": "3.4%",
    "date": "2026-06-19",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
+   "event": "Retail Sales YoY",
+   "period": "y/y"
   },
   "Central Bank Rate": {
    "actual": "3.75%",
@@ -321,12 +321,12 @@
    "period": "y/y"
   },
   "Retail Sales": {
-   "actual": "1%",
+   "actual": "3.7%",
    "forecast": null,
-   "previous": "0.5%",
+   "previous": "3.4%",
    "date": "2026-06-19",
-   "event": "Retail Sales MoM Prel",
-   "period": "m/m"
+   "event": "Retail Sales YoY",
+   "period": "y/y"
   },
   "PPI": {
    "actual": "13.6%",
@@ -404,10 +404,10 @@
   },
   "Consumer Confidence": {
    "actual": "-17.7",
-   "forecast": "-17.5",
-   "previous": "-19",
-   "date": "2026-06-22",
-   "event": "Consumer Confidence Flash",
+   "forecast": "-17.7",
+   "previous": "-17.7",
+   "date": "2026-06-29",
+   "event": "Consumer Confidence Final",
    "period": null
   },
   "GDP Growth QoQ": {
@@ -435,12 +435,12 @@
    "period": null
   },
   "Retail Sales": {
-   "actual": "-0.4%",
-   "forecast": "-0.3%",
-   "previous": "-0.1%",
+   "actual": "1%",
+   "forecast": "0.3%",
+   "previous": "1.2%",
    "date": "2026-06-04",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
+   "event": "Retail Sales YoY",
+   "period": "y/y"
   },
   "Central Bank Rate": {
    "actual": "2.4%",
@@ -519,7 +519,7 @@
   "Services PMI": {
    "actual": "54.5",
    "forecast": "53.8",
-   "previous": "53.6",
+   "previous": "54.5",
    "date": "2026-06-03",
    "event": "ISM Services PMI",
    "period": null
@@ -589,12 +589,12 @@
    "period": "y/y"
   },
   "Retail Sales": {
-   "actual": "0.9%",
-   "forecast": "0.5%",
-   "previous": "0.7%",
+   "actual": "6.9%",
+   "forecast": null,
+   "previous": "4.9%",
    "date": "2026-06-17",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
+   "event": "Retail Sales YoY",
+   "period": "y/y"
   },
   "Central Bank Rate": {
    "actual": "3.75%",
@@ -606,6 +606,14 @@
   }
  },
  "NZD": {
+  "Retail Sales": {
+   "actual": "4.5%",
+   "forecast": null,
+   "previous": "4.5%",
+   "date": "2026-05-21",
+   "event": "Retail Sales YoY",
+   "period": "y/y"
+  },
   "Central Bank Rate": {
    "actual": "2.25%",
    "forecast": "2.25%",
