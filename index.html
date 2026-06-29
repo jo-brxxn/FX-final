@@ -799,7 +799,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SAFFRON (Retail Sales zeigt jetzt y/y statt m/m: Workflow-Regel auf Periode y/y umgestellt, Feed liefert "Retail Sales y/y" als Wert + Name, Indikator-Beschreibung auf year-over-year angepasst, YoY-Aliasse fuer FXStreet-Merge ergaenzt)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBERGLOW (Indikator-Events immer High-Impact: jedes Kalender-Event, das zu einem getrackten Indikator gehoert (isScoreDrivingEvent), wird beim FF-Import jetzt IMMER aufgenommen + als High eingestuft - egal was Forex Factory meldet. Behebt, dass Retail-Sales-y/y-Releases (bei FF oft "Low") verschwanden statt high zu sein. Retail-Sales-Source-Links auf y/y umgestellt)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2123,7 +2123,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'1.6% (annualized, 2nd estimate Q1 2026)',forecast:'2.0%',previous:'0.7%',releaseDate:'2026-05-29',interval:'quarterly',source:'https://www.investing.com/economic-calendar/united-states-gross-domestic-product-(gdp)-qoq-375'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.0 (ISM)',forecast:'53.3',previous:'52.7',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/ism-manufacturing-pmi-173'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'54.5 (ISM)',forecast:'53.8',previous:'53.6',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/ism-non-manufacturing-pmi-176'},
-    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-256'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'0.5% (Census Bureau)',forecast:'0.5%',previous:'1.6%',releaseDate:'2026-05-14',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-1878'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'93.1 (Conference Board)',forecast:'91.9',previous:'93.8',releaseDate:'2026-05-26',interval:'monthly',source:'https://www.investing.com/economic-calendar/cb-consumer-confidence-48'},
   ]},
   EUR:{entries:[
@@ -2149,7 +2149,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'-0.2% (Eurostat, revised)',forecast:null,previous:'0.2% (Q4 2025)',releaseDate:'2026-06-05',interval:'quarterly',source:'https://www.investing.com/economic-calendar/european-gross-domestic-product-(gdp)-qoq-120'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'51.6 (HCOB)',forecast:'51.2',previous:'52.2',releaseDate:'2026-06-02',interval:'monthly',source:'https://www.investing.com/economic-calendar/european-manufacturing-purchasing-managers-index-(pmi)-201'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'46.4 (HCOB)',forecast:'47.7',previous:'47.6',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-272'},
-    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-0.4% (Eurostat)',forecast:'-0.3%',previous:'0.8%',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-255'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-0.4% (Eurostat)',forecast:'-0.3%',previous:'0.8%',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-936'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-19.0 (EU-Kommission, Flash)',forecast:'-20.8',previous:'-20.6',releaseDate:'2026-05-21',interval:'monthly',source:'https://www.investing.com/economic-calendar/consumer-confidence-49'},
   ]},
   GBP:{entries:[
@@ -2175,7 +2175,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.6%',forecast:'0.6%',previous:'0.2%',releaseDate:'2026-05-14',interval:'quarterly',source:'https://www.investing.com/economic-calendar/united-kingdom-gross-domestic-product-(gdp)-qoq-121'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'53.9 (S&P Global/CIPS)',forecast:'53.7',previous:'53.7',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/united-kingdom-manufacturing-purchasing-managers-index-(pmi)-204'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'49.3 (S&P Global/CIPS)',forecast:'47.9',previous:'52.7',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-274'},
-    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-258'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (ONS)',forecast:'-0.6%',previous:'0.6%',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-731'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-23 (GfK)',forecast:'-28',previous:'-25',releaseDate:'2026-05-22',interval:'monthly',source:'https://uk.investing.com/economic-calendar/gfk-consumer-confidence-330'},
   ]},
   CHF:{entries:[
@@ -2227,7 +2227,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.5% (Cabinet Office, Q1 2026, revised)',forecast:'0.4%',previous:'0.2%',releaseDate:'2026-05-19',interval:'quarterly',source:'https://www.investing.com/economic-calendar/japan-gross-domestic-product-(gdp)-qoq-119'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'54.5 (au Jibun Bank, final)',forecast:'54.5',previous:'55.1',releaseDate:'2026-06-01',interval:'monthly',source:'https://www.investing.com/economic-calendar/manufacturing-pmi-202'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'50.0 (au Jibun Bank, final)',forecast:'50.0',previous:'51.0',releaseDate:'2026-06-03',interval:'monthly',source:'https://www.investing.com/economic-calendar/au-jibun-bank-japan-services-pmi-1912'},
-    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/large-retailers\'-sales-190'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'1.3% (METI, April 2026)',forecast:'1.3%',previous:'1.0% (rev.)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-261'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (March 2026)',releaseDate:'2026-05-13',interval:'monthly',source:'https://www.investing.com/economic-calendar/household-confidence-148'},
   ]},
   CAD:{entries:[
@@ -2305,7 +2305,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'GDP Growth QoQ',applicable:true,actual:'0.2% (Stats NZ, Q4 2025)',forecast:null,previous:'0.9% (Q3 2025)',releaseDate:'2026-03-19',interval:'quarterly',source:'https://www.investing.com/economic-calendar/new-zealand-gross-domestic-product-(gdp)-qoq-125'},
     {rubric:'Economic Growth',indicator:'Manufacturing PMI',applicable:true,actual:'49.9 (BNZ-BusinessNZ PMI, May 2026)',forecast:null,previous:'50.4 (April)',releaseDate:'2026-06-11',interval:'monthly',source:'https://www.investing.com/economic-calendar/business-nz-pmi-338'},
     {rubric:'Economic Growth',indicator:'Services PMI',applicable:true,actual:'48.9 (BNZ-BusinessNZ PSI, April 2026)',forecast:null,previous:'46.2 (March)',releaseDate:'2026-05-18',interval:'monthly',source:'https://www.investing.com/economic-calendar/services-pmi-910'},
-    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monthly',source:'https://www.investing.com/economic-calendar/electronic-card-retail-sales-1058'},
+    {rubric:'Economic Growth',indicator:'Retail Sales',applicable:true,actual:'-1.3% (Electronic Card Transactions, April 2026)',forecast:null,previous:null,releaseDate:'2026-05-19',interval:'monthly',source:'https://www.investing.com/economic-calendar/retail-sales-quarterly-vs.-year-ago-1508'},
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.4 (Westpac-McDermott Miller)',forecast:null,previous:null,releaseDate:'2026-06-12',interval:'quarterly',source:'https://www.investing.com/economic-calendar/westpac-consumer-sentiment-357'},
   ]},
 };
@@ -4424,7 +4424,13 @@ async function fetchFF(silent,btnEl){
     evts.forEach(ev=>{
       // CNY-News immer aufnehmen (als Medium), sonst nur High/Medium.
       const isCNY=(ev.country||'').toUpperCase()==='CNY';
-      if(ev.impact==='High'||ev.impact==='Medium'||isCNY){
+      // Gehoert das Event zu einem von uns getrackten Indikator (Zins, Inflation,
+      // Arbeitsmarkt, Wachstum/Retail Sales ...)? Dann IMMER aufnehmen und als
+      // High behandeln - egal was Forex Factory als Impact meldet. Sonst werden
+      // z.B. Retail-Sales-y/y-Releases (bei FF oft nur "Low") schon hier
+      // verworfen und koennen spaeter nicht mehr hochgestuft werden.
+      const isInd=isScoreDrivingEvent({name:ev.title});
+      if(ev.impact==='High'||ev.impact==='Medium'||isCNY||isInd){
         if(!ev.date)return;
         const d=new Date(ev.date);if(isNaN(d))return;
         // In lokales Datum umrechnen, damit "heute" mit todayStr() übereinstimmt
@@ -4441,7 +4447,7 @@ async function fetchFF(silent,btnEl){
         // (sie bleiben dort jetzt CAL_PAST_DAYS Tage sichtbar). Das Postfach
         // selbst dedupliziert processCalEvts() über name+date.
         if(!calEvts.find(e=>e.name===ev.title&&e.date===dateStr)){
-          const newEvt={id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:isCNY?'medium':(ev.impact==='High'?'high':'medium'),forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'};
+          const newEvt={id:uid(),name:ev.title||'',date:dateStr,time:timeStr,currencies:ev.country||'',impact:isCNY?'medium':((ev.impact==='High'||isInd)?'high':'medium'),forecast:ev.forecast||'',previous:ev.previous||'',actual:ev.actual||'',notes:'',src:'ff'};
           // Wurde der "Previous"-Wert seit dem letzten Abruf revidiert
           // (z.B. Vormonats-NFP beim Folgemonats-Release korrigiert)?
           const oldPrev=oldPrevMap[(newEvt.currencies||'')+'|'+newEvt.name+'|'+newEvt.date];
