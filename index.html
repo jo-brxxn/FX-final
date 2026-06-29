@@ -517,9 +517,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
-.globe-host{display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px}
+.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
+.globe-sess-badge{padding:2px 7px;border-radius:10px;border:1px solid var(--bd);color:var(--t3);background:var(--bg3);opacity:.55}
+.globe-sess-badge.on{opacity:1;border-color:currentColor}
+.globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
+.globe-tip b{font-size:12.5px}
+.globe-tip .gt-row{color:var(--t3);margin-top:3px}
 /* Currency Strength Ranking */
 .rank-list{display:flex;flex-direction:column;gap:5px}
 .rank-row{display:grid;grid-template-columns:20px 44px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
@@ -822,7 +828,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ATLAS-2 (Fix: die neuen Dashboard-Module (Globus, Currency Strength, Risk Sentiment, Asset-Heatmap, Mini-Kalender) erscheinen jetzt auch bei aktivem Cloud-Sync - die Dashboard-Version (dashV) ist Teil des synchronisierten States, sodass der Cloud-Download die migrierten Module nicht mehr mit dem alten Stand ueberschreibt. Geloeschte Module bleiben nach dem Sync geloescht)</div>
+<div style="flex:none;background:#0d9488;color:#e6fffb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-3 (Feature: FX-Weltglobus deutlich aufgewertet - Tag/Nacht-Schattierung anhand des echten Sonnenstands (UTC-Zeit/Datum), grob vereinfachte Kontinent-Umrisse, Nachtlichter ueber Grossstaedten auf der dunklen Hemisphaere, Handelssitzungen-Overlay (Sydney/Tokyo/London/New York) mit pulsierenden Ringen an den betroffenen Waehrungen und Status-Badges, sowie klickbare Waehrungsmarker mit Score/Bias/Session-Tooltip und score-abhaengigem Pulsring)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4860,13 +4866,15 @@ function renderDash(){
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
     if(w.type==='globe'){
-      // Marker werden live per startGlobes() gezeichnet; hier nur Host + Legende.
+      // Marker, Terminator, Nachtlichter & Sessions werden live per startGlobes() gezeichnet; hier nur Host + Legende.
+      const activeS=activeSessions();
       content=`<div class="globe-host"></div>
         <div class="globe-legend">
           <span><i style="background:${BC.bull}"></i>Bullish</span>
           <span><i style="background:${BC.neu}"></i>Neutral</span>
           <span><i style="background:${BC.bear}"></i>Bearish</span>
-        </div>`;
+        </div>
+        <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col}">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
@@ -4991,6 +4999,43 @@ window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(
 // sichtbar ist (sonst stoppt die Animation selbst).
 const GLOBE_GEO={USD:[39,-98],EUR:[50,10],GBP:[54,-2],JPY:[36,138],CHF:[47,8],CAD:[56,-106],AUD:[-25,133],NZD:[-41,174]};
 const GLOBE_LAT0=18*Math.PI/180; // leichte Nordneigung der Blickachse
+// Stark vereinfachte Kontinent-Umrisse (grobe Polygone, keine exakten Laendergrenzen) -
+// reichen aus, damit die Kugel wie ein Globus statt einer leeren Kugel aussieht.
+const GLOBE_LAND=[
+  [[71,-156],[70,-128],[60,-95],[58,-78],[50,-60],[45,-66],[40,-74],[32,-80],[25,-97],[18,-95],[16,-92],[14,-91],[8,-78],[9,-82],[15,-83],[20,-87],[25,-80],[30,-81],[35,-76],[40,-73],[45,-67],[50,-56],[52,-79],[58,-94],[63,-90],[68,-117],[70,-149],[71,-156]],
+  [[12,-72],[10,-65],[5,-60],[2,-50],[-2,-44],[-8,-35],[-15,-39],[-23,-43],[-30,-50],[-34,-58],[-38,-62],[-42,-65],[-50,-69],[-55,-68],[-52,-74],[-45,-73],[-38,-73],[-30,-71],[-20,-70],[-15,-75],[-5,-81],[2,-78],[5,-77],[8,-78],[12,-72]],
+  [[37,10],[33,11],[31,25],[31,32],[22,38],[12,43],[10,51],[0,42],[-12,40],[-20,35],[-26,33],[-34,19],[-30,17],[-22,14],[-17,11],[-12,13],[-4,9],[4,8],[6,3],[5,-4],[6,-10],[12,-17],[16,-16],[21,-17],[27,-13],[31,-9],[35,-6],[37,10]],
+  [[71,28],[69,33],[60,30],[55,38],[45,38],[41,29],[40,20],[38,15],[40,9],[43,3],[36,-6],[43,-9],[48,-5],[50,2],[53,8],[55,8],[58,11],[60,5],[63,8],[66,13],[70,20],[71,28]],
+  [[71,28],[73,60],[70,90],[68,140],[60,163],[55,160],[45,142],[35,130],[22,120],[10,105],[1,104],[6,80],[8,77],[20,73],[25,67],[30,62],[37,49],[40,40],[41,29],[45,38],[55,38],[60,30],[69,33],[71,28]],
+  [[-11,131],[-12,136],[-16,145],[-19,146],[-24,153],[-28,153],[-33,151],[-38,147],[-39,144],[-35,136],[-32,134],[-31,131],[-26,113],[-21,114],[-18,122],[-14,126],[-11,131]],
+  [[83,-30],[76,-20],[70,-22],[66,-38],[60,-43],[62,-49],[68,-53],[72,-56],[78,-65],[82,-50],[83,-30]],
+  [[58,-3],[57,-2],[54,-1],[51,1],[50,-5],[51,-5],[53,-9],[55,-6],[58,-3]],
+  [[45,142],[43,144],[40,142],[36,140],[34,135],[31,131],[33,130],[35,133],[38,138],[41,140],[45,142]],
+  [[-34,173],[-37,178],[-41,175],[-46,167],[-44,168],[-41,174],[-37,174],[-34,173]],
+  [[-12,49],[-16,50],[-22,48],[-25,46],[-23,44],[-18,44],[-13,48],[-12,49]]
+];
+// Kuratierte Liste grosser Staedte fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere.
+const GLOBE_CITIES=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9]];
+// FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
+const GLOBE_SESSIONS=[
+  {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
+  {name:'Tokyo',start:0,end:9,ccys:['JPY'],col:'#f59e0b'},
+  {name:'London',start:8,end:17,ccys:['GBP','EUR','CHF'],col:'#34d399'},
+  {name:'New York',start:13,end:22,ccys:['USD','CAD'],col:'#60a5fa'}
+];
+function sessionActiveNow(s,hr){return s.start<s.end?(hr>=s.start&&hr<s.end):(hr>=s.start||hr<s.end);}
+function activeSessions(){const hr=new Date().getUTCHours()+new Date().getUTCMinutes()/60;return GLOBE_SESSIONS.filter(s=>sessionActiveNow(s,hr));}
+// Sonnenstand (deklination + Sub-Sonnen-Laengengrad) rein aus aktueller UTC-Zeit/Datum -
+// keine externen Daten noetig, treibt Tag/Nacht-Schattierung und Nachtlichter.
+function globeSunInfo(){
+  const now=new Date();
+  const start=new Date(Date.UTC(now.getUTCFullYear(),0,0));
+  const dayOfYear=Math.floor((now-start)/864e5);
+  const declDeg=-23.44*Math.cos(2*Math.PI/365*(dayOfYear+10));
+  const utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
+  let lonS=(12-utcH)*15;while(lonS>180)lonS-=360;while(lonS<-180)lonS+=360;
+  return{decl:declDeg*Math.PI/180,lonS};
+}
 let _globeRAF=null,_globeLon=200,_globeLast=0;
 function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}}
 function globeProject(lat,lon,lon0,R){
@@ -5003,11 +5048,63 @@ function globeGridPath(pts,cx,cy){
   pts.forEach(p=>{if(p.vis){d+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
   return d?`<path d="${d}" fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>`:'';
 }
+function globeLandSVG(cx,cy,lon0,R){
+  let d='';
+  GLOBE_LAND.forEach(poly=>{
+    let pd='',pen=false;
+    poly.forEach(([lat,lon])=>{const p=globeProject(lat,lon,lon0,R);if(p.vis){pd+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
+    d+=pd+' ';
+  });
+  return d?`<path d="${d}" fill="#2f5c3d" opacity="0.65"/>`:'';
+}
+function globeNightOverlaySVG(cx,cy,R,decl,lonS,lon0){
+  // Antisonnen-Punkt screen-projizieren (ohne vis-Test) als Gradient-Mittelpunkt -> plausible,
+  // sich mit Uhrzeit/Rotation bewegende Tag/Nacht-Schattierung ohne exakte Terminator-Clip-Geometrie.
+  const f=-decl,l=(lonS+180-lon0)*Math.PI/180;
+  const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
+  const gx=(50+(nx/R)*46).toFixed(1),gy=(50+(ny/R)*46).toFixed(1);
+  const gid='globeNight'+Math.round(lonS*10);
+  return`<defs><radialGradient id="${gid}" cx="${gx}%" cy="${gy}%" r="92%">
+    <stop offset="0%" stop-color="#000814" stop-opacity="0.62"/>
+    <stop offset="55%" stop-color="#000814" stop-opacity="0.28"/>
+    <stop offset="100%" stop-color="#000814" stop-opacity="0"/>
+  </radialGradient></defs>
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})"/>`;
+}
+function globeCityLightsSVG(cx,cy,R,decl,lonS,lon0){
+  let out='';
+  GLOBE_CITIES.forEach(([lat,lon])=>{
+    const fr=lat*Math.PI/180,dl=(lon-lonS)*Math.PI/180;
+    const cosZ=Math.sin(fr)*Math.sin(decl)+Math.cos(fr)*Math.cos(decl)*Math.cos(dl);
+    if(cosZ>-0.04)return; // noch (Daemmerungs-)Tageslicht -> keine sichtbaren Lichter
+    const p=globeProject(lat,lon,lon0,R);if(!p.vis)return;
+    const op=Math.max(0.25,Math.min(1,-cosZ*1.6));
+    out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="0.9" fill="#ffd87a" opacity="${op.toFixed(2)}"/>`;
+  });
+  return out;
+}
+function globeSessionRingsSVG(cx,cy,R,lon0,sessions){
+  let out='';
+  sessions.forEach(s=>{
+    s.ccys.forEach(id=>{
+      const geo=GLOBE_GEO[id];if(!geo)return;
+      const p=globeProject(geo[0],geo[1],lon0,R);if(!p.vis)return;
+      out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="9.5" fill="none" stroke="${s.col}" stroke-width="1.3" opacity="0.8"><animate attributeName="r" values="7;12;7" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.85;0.15;0.85" dur="2.4s" repeatCount="indefinite"/></circle>`;
+    });
+  });
+  return out;
+}
 function globeSVG(size){
   const R=size/2-16,cx=size/2,cy=size/2;
+  const{decl,lonS}=globeSunInfo();
+  const sessions=activeSessions();
   let grid='';
   for(let lon=-180;lon<180;lon+=30){const pts=[];for(let lat=-90;lat<=90;lat+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
   for(let lat=-60;lat<=60;lat+=30){const pts=[];for(let lon=-180;lon<=180;lon+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
+  const land=globeLandSVG(cx,cy,_globeLon,R);
+  const cities=globeCityLightsSVG(cx,cy,R,decl,lonS,_globeLon);
+  const night=globeNightOverlaySVG(cx,cy,R,decl,lonS,_globeLon);
+  const sessRings=globeSessionRingsSVG(cx,cy,R,_globeLon,sessions);
   let markers='';
   Object.keys(GLOBE_GEO).forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym)return;
@@ -5015,16 +5112,37 @@ function globeSVG(size){
     if(!p.vis)return;
     const x=(cx+p.x),y=(cy+p.y),col=BC[sym.bias]||'#888',sc=symScore(sym);
     const scTxt=(sc>0?'+':'')+(Math.round(sc*10)/10);
-    markers+=`<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
+    const pulseDur=Math.max(0.8,2.6-Math.min(1,Math.abs(sc)/5)*1.6).toFixed(2);
+    markers+=`<g style="cursor:pointer" onclick="globeMarkerClick(event,'${id}')">`+
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="none" stroke="${col}" stroke-width="1.2" opacity="0.7"><animate attributeName="r" values="4.5;9;4.5" dur="${pulseDur}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0;0.7" dur="${pulseDur}s" repeatCount="indefinite"/></circle>`+
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
       `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${col}" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace">${id} ${scTxt}</text></g>`;
   });
-  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%">
+  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[onclick]'))closeGlobeTip()">
     <defs><radialGradient id="globeGrad" cx="38%" cy="34%" r="78%">
       <stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/>
     </radialGradient></defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#globeGrad)" stroke="var(--bd2)" stroke-width="1"/>
-    ${grid}${markers}
+    ${land}${grid}${cities}${night}${sessRings}${markers}
   </svg>`;
+}
+function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
+function globeMarkerClick(ev,id){
+  ev.stopPropagation();
+  const sym=syms.find(s=>s.id===id);if(!sym)return;
+  const host=ev.currentTarget.closest('.globe-host');if(!host)return;
+  closeGlobeTip();
+  const rect=host.getBoundingClientRect();
+  const x=ev.clientX-rect.left,y=ev.clientY-rect.top;
+  const sc=symScore(sym),col=BC[sym.bias]||'#888';
+  const mySessions=GLOBE_SESSIONS.filter(s=>s.ccys.includes(id)&&sessionActiveNow(s,new Date().getUTCHours()+new Date().getUTCMinutes()/60));
+  const tip=document.createElement('div');
+  tip.className='globe-tip';
+  tip.style.left=x+'px';tip.style.top=(y-10)+'px';
+  tip.innerHTML=`<b style="color:${col}">${id}</b> — ${BL[sym.bias]}
+    <div class="gt-row">Score: <b style="color:${col}">${sc>0?'+':''}${Math.round(sc*10)/10}</b></div>
+    <div class="gt-row">${mySessions.length?'🟢 '+mySessions.map(s=>s.name).join(', ')+' aktiv':'⚪ Keine Session aktiv'}</div>`;
+  host.appendChild(tip);
 }
 function startGlobes(){
   stopGlobe();
@@ -5035,7 +5153,7 @@ function startGlobes(){
     if(curPage!=='dash'||!hosts.length){stopGlobe();return;}
     const dt=now-_globeLast;
     if(dt>=45){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
-      hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s);});}
+      hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s)+(h.querySelector('.globe-tip')?h.querySelector('.globe-tip').outerHTML:'');});}
     _globeRAF=requestAnimationFrame(frame);
   };
   _globeRAF=requestAnimationFrame(frame);
