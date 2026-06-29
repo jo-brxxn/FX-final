@@ -799,7 +799,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SLATE (Specific-Tab: die Info-Zeile "Current factors - what matters right now ..." oben in der Asset-Ansicht entfernt)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: HARBOR (Kalender vereinheitlicht: Dashboard-Kalender-Widget (toter Code) entfernt; Asset-Kalender bekommt dieselbe Bedienleiste wie der Hauptkalender (Forex-Factory-Link + High-Impact-Filter + Refresh) via gemeinsamer calToolbarHtml; Non-FX-Assets zeigen weiterhin die News ihrer verknuepften Waehrung. CAD GDP hat wieder einen Forecast (Research-Fallback, wenn der Live-Feed keinen liefert). m/m-Quellen-Links werden im Link-Text als "(m/m)" gekennzeichnet)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1412,6 +1412,17 @@ function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).
 // CNY-News sind immer nur Medium, score-treibende Events (CPI, NFP, Zins,
 // PMI, GDP ...) immer High - unabhaengig davon, was die rohe ev.impact sagt.
 function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev))return'high';return ev.impact;}
+// Gemeinsame Kalender-Bedienleiste (Forex-Factory-Link, High-Impact-Filter,
+// Refresh) - damit Haupt- und Asset-Kalender identische Buttons an gleicher
+// Stelle haben. Ein Waehrungsfilter ist hier nicht enthalten: der Hauptkalender
+// hat dafuer ein eigenes Select, der Asset-Kalender ist ohnehin schon auf sein
+// Asset (inkl. verknuepfter Waehrung) gefiltert.
+function calToolbarHtml(){
+  const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
+  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}">📁 ${calHighOnly?'High-impact only':'All impacts'}</button>`;
+  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values">🔄 Refresh</button>`;
+  return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${refresh}</div>`;
+}
 function calRowHtml(ev,opts){
   opts=opts||{};
   const imp=evtImpact(ev);
@@ -2330,7 +2341,16 @@ function fmtResearchDateFull(s){
 }
 // Kurzer, lesbarer Domainname für den "Quelle ↗"-Link.
 function srcLabel(url){
-  try{return new URL(url).hostname.replace(/^www\./,'');}catch(e){return'Source';}
+  let host;
+  try{host=new URL(url).hostname.replace(/^www\./,'');}catch(e){return'Source';}
+  // Zeigt die verlinkte Quelle einen MONATS-Wert (m/m)? Dann sichtbar an den
+  // Link schreiben, damit klar ist, dass die Seite KEINEN y/y-Wert zeigt. Die
+  // meisten investing.com-Seiten tragen "mom" im Slug; einige nicht (z.B. die
+  // kanadische/australische Retail-Sales-MoM-Seite retail-sales-260/-262, die
+  // es dort nicht als y/y-Variante gibt) - diese sind explizit gelistet.
+  const u=String(url).toLowerCase();
+  const isMoM=/\bmom\b|-mom-|\(mom\)|mom-\d|\/retail-sales-260\b|\/retail-sales-262\b/.test(u);
+  return isMoM?host+' (m/m)':host;
 }
 // Erkennt Zeitraum-Kürzel (y/y, m/m, q/q in jeder Schreibweise) und liefert
 // die normalisierte Anzeigeform ("Y/Y"/"M/M"/"Q/Q").
@@ -3328,10 +3348,10 @@ function renderDetail(){
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
-        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span><button class="btn dw-nav${calHighOnly?' active':''}" style="margin-left:auto;margin-right:4px" onclick="event.stopPropagation();toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Show only high-impact'}">📁${calHighOnly?' High only':' All'}</button>`:`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
+        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span class="evt-flag ef-red">!</span><span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
@@ -4528,11 +4548,16 @@ async function fetchIndData(){
 // Kuratierter Quellen-Link (i.d.R. investing.com) eines Indikators aus der
 // statischen Recherche - hat beim Feed-Overlay Vorrang, damit der Link nie
 // auf den TradingView-Fallback "herunterfällt".
-function indResearchSource(ccy,base){
+// Kuratierter (statischer) Research-Eintrag eines Indikators - Quelle fuer
+// Felder, die der Live-Feed (TradingView) nicht immer liefert.
+function indResearchEntry(ccy,base){
   const data=IND_RESEARCH_DATA[ccy];
   if(!data)return null;
-  const e=data.entries.find(x=>x.indicator===base&&x.applicable&&x.source);
-  return e?e.source:null;
+  return data.entries.find(x=>x.indicator===base&&x.applicable)||null;
+}
+function indResearchSource(ccy,base){
+  const e=indResearchEntry(ccy,base);
+  return e&&e.source?e.source:null;
 }
 function applyIndDataFeed(){
   if(!IND_DATA_FEED)return false;
@@ -4548,7 +4573,15 @@ function applyIndDataFeed(){
         const f=feed[base];
         if(!f||f.actual==null)return;
         const r=ind.research||{};
-        const na=f.actual,nf=(f.forecast==null?null:f.forecast),np=(f.previous==null?null:f.previous);
+        const na=f.actual;let nf=(f.forecast==null?null:f.forecast);const np=(f.previous==null?null:f.previous);
+        // Liefert der Live-Feed (TradingView) KEINEN Forecast (z.B. CAD GDP),
+        // den kuratierten Research-Forecast als Fallback uebernehmen - aber nur,
+        // wenn er denselben Release meint (Datum max. ~4 Tage auseinander), damit
+        // kein veralteter Forecast neben einem neueren Actual steht.
+        if(nf==null){
+          const re=indResearchEntry(macroCcyFor(c.id),base);
+          if(re&&re.forecast!=null&&re.releaseDate&&f.date&&Math.abs((new Date(f.date)-new Date(re.releaseDate))/86400000)<=4)nf=re.forecast;
+        }
         // Kuratierte investing.com-Quelle bevorzugen; nur wenn keine vorhanden
         // ist, die bisherige bzw. den TradingView-Fallback verwenden.
         const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
@@ -4816,21 +4849,11 @@ function renderDash(){
           </select>
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="opacity:.5" title="Remove">×</button>
         </div>`;}).join(''));
-    }else if(w.type==='calendar'){
-      // Gleiche Eigenschaften wie der Hauptkalender (Tagesgruppen, vergangene
-      // Events gedimmt, rote Jetzt-Linie), aber kompakt und in einem scrollbaren
-      // Container, der beim Rendern automatisch zur aktuellen Uhrzeit scrollt.
-      let sorted=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-      if(calHighOnly)sorted=sorted.filter(ev=>evtImpact(ev)==='high');
-      const calHighFilterBtn=`<button class="btn dw-nav${calHighOnly?' active':''}" style="margin-bottom:6px" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Show only high-impact'}">${calHighOnly?'📁 High only':'📁 All'}</button>`;
-      const calHdr=`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Prev</span></div>`;
-      content=calHighFilterBtn+(sorted.length===0?`<div class="dw-empty">${calHighOnly?'Keine High-Impact-Events.':'No events. Add in Calendar tab.'}</div>`:
-      calHdr+`<div class="cal-scroll">${calTableHtml(sorted,{compact:true,skipHeader:true,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true,idPrefix:'dash-'})}</div>`);
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    return`<div class="dw${w.type==='calendar'?' dw-calendar':w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
+    return`<div class="dw${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
         <div>
           <div class="dw-t">${escH(w.title||w.type)}</div>
