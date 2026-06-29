@@ -67,7 +67,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:17px;transition:all .12s;margin-top:3px}@media (hover:hover){.add-sym:hover{color:var(--blue);background:var(--bg2)}}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.dp{padding:14px;max-width:860px}
+.dp{padding:14px}
 .atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
 .rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3}
@@ -620,15 +620,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
-.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:360px;max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
-.modal.inbox-modal{max-width:480px}
+.modal.inbox-modal{max-width:min(1300px,94vw)}
 #inboxList{max-height:65vh;overflow-y:auto}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
-.date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(520px,94vw);box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .date-modal h3{font-size:14px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
@@ -681,11 +681,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .dw-add,.pbo,.dw-sel{font-size:13px}
   .dw-chip-x,.dw-del{font-size:16px}
   .dw-nav{font-size:12px;padding:3px 6px}
-  .modal{max-width:440px;padding:20px}
+  .modal{max-width:min(720px,94vw);padding:20px}
   .modal h3{font-size:17px}
-  .modal.inbox-modal{max-width:680px}
+  .modal.inbox-modal{max-width:min(1300px,94vw)}
   #inboxList{max-height:72vh}
-  .date-modal{max-width:380px;padding:20px}
+  .date-modal{max-width:min(520px,94vw);padding:20px}
   .lock-logo{font-size:28px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
   .lock-key{width:68px;height:68px;font-size:25px}
@@ -703,9 +703,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
 @media(min-width:1100px){
-  .modal.inbox-modal{max-width:900px}
+  .modal.inbox-modal{max-width:min(1300px,94vw)}
   #inboxList{max-height:78vh}
-  .dp{max-width:1700px}
+  .dp{max-width:none}
   .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
   /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
      auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
@@ -713,15 +713,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
   .masonry .rub-card{margin-bottom:0}
   .masonry .rub-card.collapsed{align-self:start}
-  #dashWidgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;align-items:stretch}
+  /* FX-Bias/Assets + Watchlist teilen sich die volle Breite (je 50%), damit das
+     Dashboard das Geraet ausfuellt; breite Karten (Set-ups/Pairs-Editor) spannen
+     die ganze Zeile. */
+  #dashWidgets{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
   #dashWidgets .dw{margin-bottom:0}
-  /* Set-ups + Kalender: je 3 Grid-Spalten; FX-Bias/Assets, Watchlist, Quick Notes: 2 Spalten */
-  #dashWidgets .dw.dw-setups{grid-column:span 3}
-  #dashWidgets .dw.dw-biasassets{grid-column:span 2}
-  #dashWidgets .dw.dw-calendar{grid-column:span 3}
-  #dashWidgets .dw.dw-watchlist{grid-column:span 2}
-  #dashWidgets .dw.dw-quicknotes{grid-column:span 2}
-  @media(max-width:700px){#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-biasassets,#dashWidgets .dw.dw-calendar,#dashWidgets .dw.dw-watchlist,#dashWidgets .dw.dw-quicknotes{grid-column:1/-1}}
+  #dashWidgets .dw.dw-setups{grid-column:1/-1}
+  @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -752,7 +750,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
-  .dp{max-width:2000px}
+  .dp{max-width:none}
 }
 /* ── INTRO-ANIMATION (Start/Reload) ── */
 #introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#0d1117;cursor:pointer}
@@ -799,7 +797,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: HARBOR (Kalender vereinheitlicht: Dashboard-Kalender-Widget (toter Code) entfernt; Asset-Kalender bekommt dieselbe Bedienleiste wie der Hauptkalender (Forex-Factory-Link + High-Impact-Filter + Refresh) via gemeinsamer calToolbarHtml; Non-FX-Assets zeigen weiterhin die News ihrer verknuepften Waehrung. CAD GDP hat wieder einen Forecast (Research-Fallback, wenn der Live-Feed keinen liefert). m/m-Quellen-Links werden im Link-Text als "(m/m)" gekennzeichnet)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: MERIDIAN (Responsive Layout: Dashboard FX-Bias + Watchlist fuellen nebeneinander die volle Breite (2-Spalten-Grid); Detail-/Asset-Seiten ohne Breitenlimit (max-width none); Modals geraeteangepasst breiter (vw-basiert). Anleiherenditen 2Y + 10Y + 2Y/10Y-Spread werden optisch zu einer gemeinsam umrandeten Gruppe zusammengefasst (wie CPI/Core CPI) - eigener Bias/Notizen je Indikator bleiben)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3524,28 +3522,33 @@ function clearDateM(){
 // Score (COT_IND_NOSCORE), werden aber genauso wie CPI/Core CPI nebeneinander
 // in einer Box dargestellt - mit weiterhin komplett eigenem Bias & eigenen
 // Stichpunkten je Indikator.
-const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning']];
-// Gruppiert direkt benachbarte Indikatoren, die ein IND_PAIR_GROUPS-Pärchen
-// bilden (z.B. CPI + Core CPI), in eine gemeinsam umrandete .ind-pair-group.
-// Score und Bias jedes Indikators bleiben dabei komplett unangetastet –
-// renderInd() selbst wird unverändert pro Indikator aufgerufen, nur das
+// Indikatoren, die optisch zu EINER gemeinsam umrandeten .ind-pair-group
+// zusammengefasst werden - zusätzlich zu den CORE_PAIRS. Eine Gruppe kann auch
+// mehr als zwei Mitglieder haben (z.B. die Anleiherenditen 2Y + 10Y + Spread).
+// Bias, Score und Stichpunkte bleiben pro Indikator komplett eigenständig.
+const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning'],['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']];
+// Gruppiert direkt benachbarte Indikatoren, die zur SELBEN IND_PAIR_GROUPS-Gruppe
+// gehören (z.B. CPI + Core CPI oder 2Y/10Y/Spread), in eine gemeinsam umrandete
+// .ind-pair-group. Score und Bias jedes Indikators bleiben dabei komplett
+// unangetastet – renderInd() wird unverändert pro Indikator aufgerufen, nur das
 // Wrapping ändert sich.
 function renderInds(rub,ri){
   const inds=rub.indicators||[];
   const total=inds.length;
   let html='',i=0;
   while(i<total){
-    const ind=inds[i],next=inds[i+1];
-    const base1=stripPeriodSuffix(ind.name).base;
-    const isPair=next&&IND_PAIR_GROUPS.some(([a,b])=>{
-      const base2=stripPeriodSuffix(next.name).base;
-      return(base1===a&&base2===b)||(base1===b&&base2===a);
-    });
-    if(isPair){
-      html+=`<div class="ind-pair-group">${renderInd(ind,ri,i,total)}${renderInd(next,ri,i+1,total)}</div>`;
-      i+=2;
+    const base1=stripPeriodSuffix(inds[i].name).base;
+    const group=IND_PAIR_GROUPS.find(g=>g.includes(base1));
+    // Alle direkt folgenden Indikatoren einsammeln, die zur selben Gruppe gehören.
+    let j=i;
+    if(group)while(j<total&&group.includes(stripPeriodSuffix(inds[j].name).base))j++;
+    if(group&&j-i>=2){
+      let inner='';
+      for(let k=i;k<j;k++)inner+=renderInd(inds[k],ri,k,total);
+      html+=`<div class="ind-pair-group">${inner}</div>`;
+      i=j;
     }else{
-      html+=renderInd(ind,ri,i,total);
+      html+=renderInd(inds[i],ri,i,total);
       i+=1;
     }
   }
