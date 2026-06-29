@@ -799,7 +799,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBERGLOW (Indikator-Events immer High-Impact: jedes Kalender-Event, das zu einem getrackten Indikator gehoert (isScoreDrivingEvent), wird beim FF-Import jetzt IMMER aufgenommen + als High eingestuft - egal was Forex Factory meldet. Behebt, dass Retail-Sales-y/y-Releases (bei FF oft "Low") verschwanden statt high zu sein. Retail-Sales-Source-Links auf y/y umgestellt)</div>
+<div style="flex:none;background:#6d28d9;color:#f1e6ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: SLATE (Specific-Tab: die Info-Zeile "Current factors - what matters right now ..." oben in der Asset-Ansicht entfernt)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3436,8 +3436,7 @@ function goToRubCard(ri){
 // ── SPECIFIC TAB ──
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
-  return`<div style="font-size:12px;color:var(--t3);margin-bottom:9px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">⚡ Current factors – what matters right now (CB tone, data surprises, news, positioning)</div>
-  ${renderOverviewCard(rubs)}
+  return`${renderOverviewCard(rubs)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
