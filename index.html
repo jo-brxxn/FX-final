@@ -605,6 +605,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
+/* ── HISTORY STRIP (DETAIL PAGE, letzte 10 Tage) ── */
+.hist-strip{display:flex;gap:4px;padding:9px 8px;background:var(--bg2);border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--rs) var(--rs);overflow-x:auto}
+.hist-day{flex:1 0 0;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
+.hist-wd{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.3px}
+.hist-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3,#1c2533);border:1px solid var(--bd2)}
+.hist-day.hist-has .hist-dot{background:var(--hc);border-color:var(--hc)}
+.hist-day.hist-today .hist-wd{color:var(--t1)}
+.hist-day.hist-today .hist-dot{box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--bd2)}
+.hist-dn{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── GREEN ALERT BADGE (Toolbar) ── */
 .green-alert-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 5px;cursor:default;transition:opacity .2s,transform .2s;line-height:1;gap:1px;min-width:24px}
 .green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
@@ -828,7 +837,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c3aed;color:#f3ecff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-4 (Fix: Kontinente nicht mehr gruen, sondern dezente Helligkeitsabstufung in Blaugrau mit duennen Umrisslinien; Nachtlichter jetzt weiss/hellblau statt gelb und deutlich mehr Staedte; Pulsringe (Marker + Sessions) laufen nicht mehr ueber SVG-SMIL-Animate, sondern werden pro Frame aus der Wanduhrzeit berechnet - kein Neustart-Flackern mehr beim Globus-Redraw; Rotation laeuft mit hoeherer Framerate spuerbar fluessiger)</div>
+<div style="flex:none;background:#0e7490;color:#e0fcff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: HISTORY-1 (Feature: Neue einklappbare "History (10D)"-Leiste auf jeder Asset-Detailseite - zeigt die letzten 10 Tage als Punkte, faerbt jeden Tag mit Veroeffentlichung in der bestehenden Bias-Farbe je nach Beat/Miss ggue. Forecast ein (sonst leer/grau), Klartext-Tooltip pro Tag. Dafuer haelt der Kalender Events jetzt 10 statt 2 Tage rueckwirkend vor (CAL_PAST_DAYS/FF_PAST_DAYS))</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1785,7 +1794,9 @@ function pairEvtFlagHtml(name,baseCls){return flagSpans(pairEvtFlagState(name),b
 // Kopiert fällige (heute/vergangene) Events ins Postfach. Events bleiben
 // zusätzlich noch CAL_PAST_DAYS Tage lang im Kalender (und damit auch beim
 // zugehörigen Symbol) stehen, damit man Actual-Werte direkt dort sieht.
-const CAL_PAST_DAYS=2;
+// Auf HIST_DAYS angehoben, damit die Asset-History (letzte 10 Tage,
+// siehe symHistoryDays/renderSymHistory) genug vergangene Events vorfindet.
+const CAL_PAST_DAYS=10;
 // Score-Update-Benachrichtigungen im Postfach bleiben einige Tage stehen,
 // damit man auch nach ein paar Tagen noch sieht, welche Indikatoren zuletzt
 // den Score bewegt haben - danach werden sie automatisch ausgeräumt.
@@ -1865,6 +1876,47 @@ function getSymEventsCompact(id){
 }
 const evtSectionOpen={};
 function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetail();}
+
+// ── ASSET HISTORY (letzte HIST_DAYS Tage) ──
+// Reine Ableitung aus calEvts (derselben Quelle wie Kalender/Postfach) - es
+// gibt keinen separaten persistenten Score-Verlauf, symScore() ist rein live.
+// Pro Tag wird daher anhand der an dem Tag veröffentlichten Events (Actual
+// vorhanden) die Überraschungsrichtung (Beat/Miss ggü. Forecast) bestimmt und
+// in dieselbe Bias-Farbe wie überall sonst (BC) übersetzt. Tage ohne Event
+// bleiben leer/grau statt fälschlich "neutral" zu zeigen.
+const HIST_DAYS=10;
+function symHistoryDays(id,days){
+  days=days||HIST_DAYS;
+  const all=getSymEventsAll(id);
+  const today=todayStr();
+  const out=[];
+  for(let i=days-1;i>=0;i--){
+    const date=dateAddStr(today,-i);
+    const evs=all.filter(ev=>ev.date===date&&ev.actual!=null&&ev.actual!=='');
+    let bias='';
+    if(evs.length){
+      const biases=[...new Set(evs.map(indBiasFromEvent))];
+      bias=biases.length===1?biases[0]:'neu';
+    }
+    out.push({date,events:evs,bias});
+  }
+  return out;
+}
+function renderSymHistory(id){
+  const today=todayStr();
+  return symHistoryDays(id,HIST_DAYS).map(d=>{
+    const has=d.events.length>0;
+    const col=has?(BC[d.bias]||BC.neu):'';
+    const wd=new Date(d.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'}).slice(0,2);
+    const dn=new Date(d.date+'T00:00:00').getDate();
+    const tip=has?d.events.map(ev=>`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
+    return`<div class="hist-day${has?' hist-has':''}${d.date===today?' hist-today':''}" style="${has?`--hc:${col}`:''}" title="${escH(fmtDayHdr(d.date)+': '+tip)}">
+      <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
+    </div>`;
+  }).join('');
+}
+const histSectionOpen={};
+function toggleHistSection(id){histSectionOpen[id]=!histSectionOpen[id];renderDetail();}
 
 // ── INDIKATOR ↔ KALENDER-AUTOMATIK ──
 // Verknüpft die manuell gepflegten Indikatoren in den Rubriken "Interest
@@ -3395,6 +3447,7 @@ function renderDetail(){
   const pct=Math.round((bullN/(bullN+bearN||1))*100);
   const{events:symEvts,nextHighDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
+  const histOpen=!!histSectionOpen[c.id];
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
@@ -3408,6 +3461,13 @@ function renderDetail(){
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
+    <div class="evt-section">
+      <div class="evt-toggle${histOpen?' open':''}" onclick="toggleHistSection('${c.id}')">
+        <span>🕘 HISTORY (${HIST_DAYS}D)</span>
+        <span class="evt-tog-arrow">▶</span>
+      </div>
+      ${histOpen?`<div class="hist-strip">${renderSymHistory(c.id)}</div>`:''}
+    </div>
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs-row">
@@ -4397,7 +4457,7 @@ function clearInbox(){
 // faireconomy.media wird daher direkt UND über mehrere CORS-Proxys versucht,
 // damit ein einzelner blockierter/ausgefallener Weg nicht das ganze Update killt.
 const FF_WINDOW_DAYS=10;
-const FF_PAST_DAYS=2;
+const FF_PAST_DAYS=10;
 async function fetchFFPeriod(period){
   const target='https://nfs.faireconomy.media/ff_calendar_'+period+'.json';
   const targetAlt='https://cdn-nfs.faireconomy.media/ff_calendar_'+period+'.json';
