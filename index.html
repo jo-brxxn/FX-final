@@ -828,7 +828,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0d9488;color:#e6fffb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-3 (Feature: FX-Weltglobus deutlich aufgewertet - Tag/Nacht-Schattierung anhand des echten Sonnenstands (UTC-Zeit/Datum), grob vereinfachte Kontinent-Umrisse, Nachtlichter ueber Grossstaedten auf der dunklen Hemisphaere, Handelssitzungen-Overlay (Sydney/Tokyo/London/New York) mit pulsierenden Ringen an den betroffenen Waehrungen und Status-Badges, sowie klickbare Waehrungsmarker mit Score/Bias/Session-Tooltip und score-abhaengigem Pulsring)</div>
+<div style="flex:none;background:#7c3aed;color:#f3ecff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-4 (Fix: Kontinente nicht mehr gruen, sondern dezente Helligkeitsabstufung in Blaugrau mit duennen Umrisslinien; Nachtlichter jetzt weiss/hellblau statt gelb und deutlich mehr Staedte; Pulsringe (Marker + Sessions) laufen nicht mehr ueber SVG-SMIL-Animate, sondern werden pro Frame aus der Wanduhrzeit berechnet - kein Neustart-Flackern mehr beim Globus-Redraw; Rotation laeuft mit hoeherer Framerate spuerbar fluessiger)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5014,8 +5014,11 @@ const GLOBE_LAND=[
   [[-34,173],[-37,178],[-41,175],[-46,167],[-44,168],[-41,174],[-37,174],[-34,173]],
   [[-12,49],[-16,50],[-22,48],[-25,46],[-23,44],[-18,44],[-13,48],[-12,49]]
 ];
-// Kuratierte Liste grosser Staedte fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere.
-const GLOBE_CITIES=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9]];
+// Kuratierte Liste von Staedten fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere
+// (Mix aus Metropolen und kleineren Staedten, damit das Lichtermuster dichter/realistischer wirkt).
+const GLOBE_CITIES=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9],
+  [45.46,9.19],[41.39,2.17],[55.95,-3.19],[50.08,14.44],[47.5,19.04],[44.83,-0.58],[51.45,-2.59],[53.55,10.0],[45.76,4.84],[59.91,10.75],[60.17,24.94],[64.15,-21.94],[46.95,7.45],[49.45,11.07],[42.7,23.32],[44.43,26.1],[39.93,32.86],[36.81,10.18],[34.02,-6.84],[15.5,32.56],[9.03,38.74],[-4.32,15.31],[-1.95,30.06],[33.89,35.5],[31.95,35.93],[29.37,47.98],[26.23,50.59],[23.59,58.41],[15.35,44.21],[34.55,69.21],[33.72,73.04],[27.7,85.32],[16.84,96.17],[21.03,105.85],[11.56,104.92],[7.87,98.4],[4.21,101.97],[14.6,120.98],[-8.65,115.22],[10.82,106.63],[35.18,129.08],[43.06,141.35],[26.1,119.3],[30.57,104.07],[22.54,114.06],[25.04,121.56],[13.74,100.49],[1.29,103.85],[19.08,72.88],[22.57,88.36],[12.97,77.59],[17.39,78.49],[24.71,46.68],[30.04,31.24],[33.31,44.36],[35.69,51.39],[41.71,44.78],[40.41,49.87],[55.0,82.94],[56.84,60.6],[48.0,37.8],[50.45,30.52],[52.23,21.01],[59.33,18.07],[64.84,-147.72],[61.22,-149.9],[39.74,-104.99],[36.17,-115.14],[32.78,-96.8],[29.95,-90.07],[42.36,-71.06],[38.91,-77.04],[45.42,-75.7],[53.55,-113.49],[19.43,-99.13],[20.97,-89.62],[10.49,-66.88],[-0.19,-78.47],[-16.5,-68.15],[-15.78,-47.93],[-25.43,-49.27],[-31.42,-64.18],[-12.06,-77.04],[-33.45,-70.65],[-34.93,-56.16],[-25.29,-57.65]
+];
 // FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
 const GLOBE_SESSIONS=[
   {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
@@ -5049,13 +5052,16 @@ function globeGridPath(pts,cx,cy){
   return d?`<path d="${d}" fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>`:'';
 }
 function globeLandSVG(cx,cy,lon0,R){
-  let d='';
-  GLOBE_LAND.forEach(poly=>{
+  // Dezente Helligkeits-Variation pro Landmasse statt einheitlichem Gruen, plus duenne Umriss-Linie.
+  let out='';
+  GLOBE_LAND.forEach((poly,i)=>{
     let pd='',pen=false;
     poly.forEach(([lat,lon])=>{const p=globeProject(lat,lon,lon0,R);if(p.vis){pd+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
-    d+=pd+' ';
+    if(!pd)return;
+    const light=42+(i%4)*5;
+    out+=`<path d="${pd}" fill="hsl(208,22%,${light}%)" stroke="hsl(206,38%,${light+20}%)" stroke-width="0.6" stroke-opacity="0.5" opacity="0.8"/>`;
   });
-  return d?`<path d="${d}" fill="#2f5c3d" opacity="0.65"/>`:'';
+  return out;
 }
 function globeNightOverlaySVG(cx,cy,R,decl,lonS,lon0){
   // Antisonnen-Punkt screen-projizieren (ohne vis-Test) als Gradient-Mittelpunkt -> plausible,
@@ -5073,23 +5079,31 @@ function globeNightOverlaySVG(cx,cy,R,decl,lonS,lon0){
 }
 function globeCityLightsSVG(cx,cy,R,decl,lonS,lon0){
   let out='';
-  GLOBE_CITIES.forEach(([lat,lon])=>{
+  GLOBE_CITIES.forEach(([lat,lon],i)=>{
     const fr=lat*Math.PI/180,dl=(lon-lonS)*Math.PI/180;
     const cosZ=Math.sin(fr)*Math.sin(decl)+Math.cos(fr)*Math.cos(decl)*Math.cos(dl);
     if(cosZ>-0.04)return; // noch (Daemmerungs-)Tageslicht -> keine sichtbaren Lichter
     const p=globeProject(lat,lon,lon0,R);if(!p.vis)return;
     const op=Math.max(0.25,Math.min(1,-cosZ*1.6));
-    out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="0.9" fill="#ffd87a" opacity="${op.toFixed(2)}"/>`;
+    const col=i%3===0?'#bfe4ff':'#f3fbff'; // Mix aus hellblau und weiss
+    out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="${i%5===0?1.15:0.75}" fill="${col}" opacity="${op.toFixed(2)}"/>`;
   });
   return out;
 }
+// Pulswerte werden direkt aus der Wanduhrzeit berechnet statt per SMIL <animate> -
+// dadurch bleibt die Animation nahtlos/ruckelfrei, auch wenn die Kugel-SVG bei jeder
+// Rotation komplett neu aufgebaut wird (kein Neustart der Animation bei jedem Redraw).
+function globeSawPhase(durSec){const t=performance.now()/1000;return(t%durSec)/durSec;}
+function globeTriPhase(durSec){const ph=globeSawPhase(durSec);return ph<0.5?ph*2:(1-ph)*2;}
 function globeSessionRingsSVG(cx,cy,R,lon0,sessions){
   let out='';
+  const tri=globeTriPhase(2.4);
+  const r=(7+tri*5).toFixed(1),op=(0.85-0.7*tri).toFixed(2);
   sessions.forEach(s=>{
     s.ccys.forEach(id=>{
       const geo=GLOBE_GEO[id];if(!geo)return;
       const p=globeProject(geo[0],geo[1],lon0,R);if(!p.vis)return;
-      out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="9.5" fill="none" stroke="${s.col}" stroke-width="1.3" opacity="0.8"><animate attributeName="r" values="7;12;7" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.85;0.15;0.85" dur="2.4s" repeatCount="indefinite"/></circle>`;
+      out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="${r}" fill="none" stroke="${s.col}" stroke-width="1.3" opacity="${op}"/>`;
     });
   });
   return out;
@@ -5112,9 +5126,10 @@ function globeSVG(size){
     if(!p.vis)return;
     const x=(cx+p.x),y=(cy+p.y),col=BC[sym.bias]||'#888',sc=symScore(sym);
     const scTxt=(sc>0?'+':'')+(Math.round(sc*10)/10);
-    const pulseDur=Math.max(0.8,2.6-Math.min(1,Math.abs(sc)/5)*1.6).toFixed(2);
+    const pulseDur=Math.max(0.8,2.6-Math.min(1,Math.abs(sc)/5)*1.6);
+    const pp=globeSawPhase(pulseDur),pr=(4.5+pp*4.5).toFixed(1),po=(0.7*(1-pp)).toFixed(2);
     markers+=`<g style="cursor:pointer" onclick="globeMarkerClick(event,'${id}')">`+
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="none" stroke="${col}" stroke-width="1.2" opacity="0.7"><animate attributeName="r" values="4.5;9;4.5" dur="${pulseDur}s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.7;0;0.7" dur="${pulseDur}s" repeatCount="indefinite"/></circle>`+
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pr}" fill="none" stroke="${col}" stroke-width="1.2" opacity="${po}"/>`+
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
       `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${col}" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace">${id} ${scTxt}</text></g>`;
   });
@@ -5152,7 +5167,7 @@ function startGlobes(){
     const hosts=[...document.querySelectorAll('.globe-host')];
     if(curPage!=='dash'||!hosts.length){stopGlobe();return;}
     const dt=now-_globeLast;
-    if(dt>=45){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
+    if(dt>=28){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
       hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s)+(h.querySelector('.globe-tip')?h.querySelector('.globe-tip').outerHTML:'');});}
     _globeRAF=requestAnimationFrame(frame);
   };
