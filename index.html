@@ -538,6 +538,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
 .risk-asset-sc{font-size:11px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
+.risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-hist-empty{font-size:11.5px;color:var(--t3);padding:8px 2px;line-height:1.5}
+.risk-hist-scroll{overflow-x:auto;overflow-y:hidden}
 /* Asset Heatmap */
 .heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
 .heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
@@ -864,7 +868,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#be123c;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROT-AMERIKA-1 (Globus: zeigt beim Laden und bei jedem Wechsel zu Dashboard zuerst Amerika; Drag-Abklingzeit nochmals deutlich verlaengert, da vorherige Anpassung noch zu schnell war)</div>
+<div style="flex:none;background:#15803d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GRUEN-VERLAUF-1 (Risk-Sentiment-Karte: neue taeglich wachsende Verlaufsgrafik der Risk-on/Risk-off-Tendenz; Globus: Waehrungslabels (z.B. EUR/GBP/CHF in Europa) ueberlappen sich nicht mehr, sondern staffeln sich automatisch)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5052,7 +5056,7 @@ function renderDash(){
         <span class="rank-sc" style="color:${BC[r.s.bias]}">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
     }else if(w.type==='risk_sentiment'){
-      const ON_IDS=['AUD','NZD','SP500','NAS','BTC','DAX'],OFF_IDS=['JPY','CHF','GOLD'];
+      const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
       const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScore(s):null;};
       const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
       const on=avg(ON_IDS),off=avg(OFF_IDS);
@@ -5072,6 +5076,10 @@ function renderDash(){
         <div class="risk-assets-grid">
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
+        </div>
+        <div class="risk-hist-wrap">
+          <div class="risk-hist-hd">📈 Verlauf</div>
+          ${riskHistChart(col)}
         </div>
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
@@ -5410,6 +5418,7 @@ function globeUpdateOne(st){
     if(st.termGrad){st.termGrad.setAttribute('cx',scx);st.termGrad.setAttribute('cy',scy);}
   }
   // Marker (Waehrungspunkt + Label)
+  const visMarkers=[];
   Object.keys(GLOBE_GEO).forEach(id=>{
     const m=st.markers[id];if(!m)return;
     const sym=syms.find(s=>s.id===id);
@@ -5418,8 +5427,25 @@ function globeUpdateOne(st){
     m.g.style.display='';
     const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScore(sym);
     m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
-    m.text.setAttribute('x',x.toFixed(1));m.text.setAttribute('y',(y-8).toFixed(1));m.text.setAttribute('fill',col);
-    m.text.textContent=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
+    const label=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
+    visMarkers.push({m,x,y,col,label});
+  });
+  // Label-Kollisionsvermeidung: liegen Waehrungen geografisch nah beieinander
+  // (z.B. EUR/GBP/CHF in Europa), wuerden sich ihre Beschriftungen ueberlappen -
+  // kollidierende Labels schrittweise nach oben staffeln statt direkt uebereinander.
+  const placedLbl=[];
+  visMarkers.forEach(v=>{
+    const halfW=15+v.label.length*2.6;
+    let off=-8,collide=true;
+    while(collide){
+      collide=false;
+      for(const q of placedLbl){
+        if(Math.abs(v.x-q.x)<(halfW+q.halfW)&&Math.abs((v.y+off)-q.ly)<13){off-=12;collide=true;break;}
+      }
+    }
+    placedLbl.push({x:v.x,ly:v.y+off,halfW});
+    v.m.text.setAttribute('x',v.x.toFixed(1));v.m.text.setAttribute('y',(v.y+off).toFixed(1));v.m.text.setAttribute('fill',v.col);
+    v.m.text.textContent=v.label;
   });
 }
 function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
@@ -5698,7 +5724,7 @@ function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name=
 // Non-FX-Assets (Gold, Silber, Oel, BTC, Indizes) - in stabiler Reihenfolge.
 function trendAssets(){
   const present=new Set(syms.map(s=>s.id));
-  return [...FX,'GOLD','SILVER','OIL','BTC','SP500','NAS'].filter(id=>present.has(id));
+  return [...FX,'GOLD','SILVER','OIL','BTC','SP500','NAS','DAX'].filter(id=>present.has(id));
 }
 // Taeglicher Score-Schnappschuss je FX-Waehrung. Pro Tag ein Eintrag:
 // [Datum, Gesamt-Score, Inflation, Labour Market, Economic Growth]. Wird beim
@@ -5720,6 +5746,52 @@ function recordScoreHist(){
     if(arr.length>95)arr.splice(0,arr.length-95);
   });
   if(changed){try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
+}
+// Taeglicher Netto-Verlauf (Risk assets − Safe havens) fuer das Mini-Chart in
+// der Risk-Sentiment-Karte, aus scoreHist abgeleitet - waechst von selbst um
+// einen Punkt, sobald recordScoreHist() einen neuen Tag erfasst hat.
+const RISK_ON_IDS=['AUD','NZD','SP500','NAS','BTC','DAX'],RISK_OFF_IDS=['JPY','CHF','GOLD'];
+function riskNetHistory(){
+  const lookup=id=>{const m={};(scoreHist[id]||[]).forEach(e=>m[e[0]]=e[1]);return m;};
+  const onM=RISK_ON_IDS.map(lookup),offM=RISK_OFF_IDS.map(lookup);
+  const dset=new Set();
+  [...onM,...offM].forEach(m=>Object.keys(m).forEach(d=>dset.add(d)));
+  const dates=[...dset].sort();
+  return dates.map(d=>{
+    const onV=onM.map(m=>m[d]).filter(v=>v!=null),offV=offM.map(m=>m[d]).filter(v=>v!=null);
+    const on=onV.length?onV.reduce((a,b)=>a+b,0)/onV.length:0;
+    const off=offV.length?offV.reduce((a,b)=>a+b,0)/offV.length:0;
+    return[d,on-off];
+  });
+}
+function riskHistChart(col){
+  const pts=riskNetHistory();
+  if(!pts.length)return`<div class="risk-hist-empty">Noch keine Verlaufsdaten &ndash; die Linie waechst ab jetzt mit jedem neuen Tag.</div>`;
+  let maxAbs=4;pts.forEach(p=>{if(Math.abs(p[1])>maxAbs)maxAbs=Math.abs(p[1]);});
+  const scale=Math.ceil(maxAbs),n=pts.length;
+  const leftPad=64,rightPad=16,topPad=14,chartH=120,bottomPad=22,PD=34;
+  const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
+  const yMid=topPad+chartH/2;
+  const xOf=i=>leftPad+i*PD+PD/2;
+  const yOf=v=>yMid-(Math.max(-scale,Math.min(scale,v))/scale)*(chartH/2);
+  let svg=`<svg class="tr-svg risk-hist-svg" width="${w.toFixed(0)}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
+  svg+=`<line x1="${leftPad}" y1="${yMid.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="var(--t3)" stroke-width="1" opacity="0.55"/>`;
+  svg+=`<text x="${leftPad-8}" y="${(topPad+9).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bull}">Risk-on</text>`;
+  svg+=`<text x="${leftPad-8}" y="${(yMid+4).toFixed(1)}" text-anchor="end" style="font-size:10.5px;fill:var(--t3)">0</text>`;
+  svg+=`<text x="${leftPad-8}" y="${(topPad+chartH-2).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bear}">Risk-off</text>`;
+  const linePts=pts.map((p,i)=>[xOf(i),yOf(p[1])]);
+  if(linePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${linePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+  pts.forEach((p,i)=>{
+    const pc=p[1]>0.8?BC.bull:p[1]<-0.8?BC.bear:BC.neu;
+    svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+i*16,1100)}ms" cx="${linePts[i][0].toFixed(1)}" cy="${linePts[i][1].toFixed(1)}" r="2.6" fill="${pc}"/>`;
+  });
+  const labelEvery=n>20?Math.ceil(n/14):1;
+  pts.forEach((p,i)=>{
+    if(i%labelEvery!==0&&i!==n-1)return;
+    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=p[0];}
+    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+16).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
+  });
+  return`<div class="tr-scroll risk-hist-scroll">${svg}</svg></div>`;
 }
 // Mini-Sparkline (SVG) aus den letzten Score-Werten einer Währung. Steigt
 // der Score (heute ≥ erster Wert) -> blau, sonst rot. Ein einzelner Tag
