@@ -517,7 +517,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
-.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px}
+.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px;cursor:grab;touch-action:none;user-select:none}
+.globe-host.grabbing{cursor:grabbing}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:6px}
@@ -603,6 +604,18 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .cal-row.compact.il{border-left-color:var(--bd2)}
 .cal-row.compact .cal-evsub{grid-column:3/7}
 .cal-table.compact{overflow-x:hidden}
+/* ── KALENDER: NACH WAEHRUNG NEBENEINANDER (Spalten) ── */
+/* Nur Waehrungen mit tatsaechlichen Events bekommen eine Spalte; alle Spalten teilen
+   sich die Breite gleichmaessig (flex:1), Luecken links/rechts bleiben dadurch gleich
+   gross egal wie viele Spalten gerade da sind. */
+.cal-ccycols{display:flex;align-items:flex-start;gap:10px}
+.cal-ccycol{flex:1 1 0;min-width:0;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
+.cal-ccycol-hdr{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.cal-ccycol-cnt{color:var(--t3);font-weight:600;font-size:10.5px;margin-left:auto}
+.cal-ccycol-body .cal-table{border:none;border-radius:0;margin-bottom:0}
+.cal-ccycol-body .cal-ccy{display:none}
+.cal-ccycol-body .cal-row.compact{grid-template-columns:36px 1fr 38px 38px 38px}
+@media(max-width:760px){.cal-ccycols{flex-direction:column}.cal-ccycol{width:100%}}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
@@ -861,7 +874,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0d9488;color:#e0fcff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-SMOOTH-1 (Globus dreht jetzt FLUESSIG: wird nur EINMAL als SVG aufgebaut, danach werden pro Frame (~20 FPS) nur noch die Element-Positionen aktualisiert - kein staendiges Neu-Rendern mehr (behebt Ruckeln + UI-Blockade beim Tab-/Kategorie-Wechsel). Kontinente vervollstaendigt/verdichtet (mehr, kleinere Polygone -> mehr Land sichtbar). Marker = nur Punkt+Label (kein Ring). History (🕰️) klappt jetzt ein Fenster aus, das die letzten 10 Tage + heute UNTEREINANDER listet - pro Tag die score-treibenden Events mit Actual/Forecast und Richtung (Beat->Score hoch/bullish, Miss->Score runter/bearish) in den Bias-Farben, plus Tages-Netto)</div>
+<div style="flex:none;background:#7e22ce;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT-MODAL-1 (History (🕰️) oeffnet jetzt ein echtes Modal-Fenster statt Inline-Ausklappen, inkl. Actual/Forecast/Previous pro Event. Globus: erster Render komplett in einem Zug (kein Nachladen mehr), ~5x mehr Stadtlichter nachts, per Drag/Touch selbst drehbar - laeuft nach Loslassen mit Schwung aus und faengt sich sanft wieder im normalen Auto-Tempo. Kalender-Tab: News oben jetzt nach Waehrung in nebeneinanderliegenden Spalten (zeitsortiert, je Spalte Actual/Forecast), nur Waehrungen mit echten Events bekommen eine Spalte, alle gleichmaessig in der Breite verteilt)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1133,6 +1146,14 @@ function introLogin(){
     <h3 id="mAssetCfgTitle">Asset Settings</h3>
     <div id="assetCfgBody"></div>
     <div class="m-btns"><button class="btn g" onclick="closeM('mAssetCfg')">Done</button></div>
+  </div>
+</div>
+<!-- MODAL: History -->
+<div class="ov" id="mHist" style="display:none">
+  <div class="modal" style="max-width:480px">
+    <h3 id="mHistTitle">History</h3>
+    <div id="histBody"></div>
+    <div class="m-btns"><button class="btn g" onclick="closeM('mHist')">Done</button></div>
   </div>
 </div>
 <!-- MODAL: Add Pair -->
@@ -1574,6 +1595,29 @@ function calTableHtml(evts,opts){
   });
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
 }
+// Rendert Events nach Waehrung gruppiert NEBENEINANDER (eine Spalte pro Waehrung,
+// innerhalb zeitlich sortiert) statt als eine lange Liste - nur Waehrungen mit
+// tatsaechlichen Events bekommen eine Spalte, alle Spalten teilen sich die Breite
+// gleichmaessig. opts wie bei calTableHtml (delAction, collapsePast, showNowLine, ...).
+function calColumnsHtml(evts,opts){
+  opts=opts||{};
+  if(!evts.length)return'';
+  const sorted=[...evts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+  const groups={};
+  sorted.forEach(ev=>{
+    const ccy=(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean)[0]||'OTHER';
+    (groups[ccy]=groups[ccy]||[]).push(ev);
+  });
+  const ccys=Object.keys(groups).sort();
+  return`<div class="cal-ccycols">${ccys.map(ccy=>{
+    const evs=groups[ccy];
+    const body=calTableHtml(evs,{...opts,compact:true,skipHeader:true,idPrefix:`cal-${ccy}-`,allDates:calWindowDatesFor(evs)});
+    return`<div class="cal-ccycol">
+      <div class="cal-ccycol-hdr"><span>${escH(ccy)}</span><span class="cal-ccycol-cnt">${evs.length} Event${evs.length===1?'':'s'}</span></div>
+      <div class="cal-ccycol-body">${body}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
 // Lückenloses Tagesfenster (erstes bis letztes Event, mind. inkl. heute) für
 // eine Eventliste - für die "leere Tage anzeigen"-Darstellung.
 function calWindowDatesFor(evts){
@@ -1967,10 +2011,11 @@ function renderSymHistoryPanel(id){
       const ac=actualColor(ev);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
       const fcv=(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–';
+      const pvv=(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–';
       return`<div class="histp-evt">
         <span class="histp-arrow" style="color:${col}">${arr}</span>
         <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
-        <span class="histp-val">${acv} <span class="histp-fc">fc ${fcv}</span></span>
+        <span class="histp-val">${acv} <span class="histp-fc">fc ${fcv} · prev ${pvv}</span></span>
         <span class="histp-eff" style="color:${col};border-color:${col}">${eff}</span>
       </div>`;
     }).join('');
@@ -1983,8 +2028,12 @@ function renderSymHistoryPanel(id){
   }).join('');
   return`<div class="histp">${rows}</div>`;
 }
-const histSectionOpen={};
-function toggleHistSection(id){histSectionOpen[id]=!histSectionOpen[id];renderDetail();}
+function openHistModal(id){
+  const c=syms.find(s=>s.id===id);if(!c)return;
+  const t=document.getElementById('mHistTitle');if(t)t.textContent=c.name+` – History (${HIST_DAYS}D)`;
+  const el=document.getElementById('histBody');if(el)el.innerHTML=renderSymHistoryPanel(id);
+  openM('mHist');
+}
 
 // ── INDIKATOR ↔ KALENDER-AUTOMATIK ──
 // Verknüpft die manuell gepflegten Indikatoren in den Rubriken "Interest
@@ -3383,7 +3432,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAssetCfg','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAssetCfg','mHist','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -3515,7 +3564,6 @@ function renderDetail(){
   const pct=Math.round((bullN/(bullN+bearN||1))*100);
   const{events:symEvts,nextHighDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
-  const histOpen=!!histSectionOpen[c.id];
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
@@ -3537,10 +3585,9 @@ function renderDetail(){
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
       </div>
       <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
-      <button class="cfg-gear${histOpen?' on':''}" onclick="toggleHistSection('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
+      <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
     </div>
-    ${histOpen?`<div class="evt-section">${renderSymHistoryPanel(c.id)}</div>`:''}
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
@@ -4415,7 +4462,7 @@ function renderCalendar(){
   if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
-  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
+  el.innerHTML=calColumnsHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
@@ -5165,9 +5212,27 @@ const GLOBE_LAND=[
 ];
 // Kuratierte Liste von Staedten fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere
 // (Mix aus Metropolen und kleineren Staedten, damit das Lichtermuster dichter/realistischer wirkt).
-const GLOBE_CITIES=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9],
+const GLOBE_CITIES_BASE=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9],
   [45.46,9.19],[41.39,2.17],[55.95,-3.19],[50.08,14.44],[47.5,19.04],[44.83,-0.58],[51.45,-2.59],[53.55,10.0],[45.76,4.84],[59.91,10.75],[60.17,24.94],[64.15,-21.94],[46.95,7.45],[49.45,11.07],[42.7,23.32],[44.43,26.1],[39.93,32.86],[36.81,10.18],[34.02,-6.84],[15.5,32.56],[9.03,38.74],[-4.32,15.31],[-1.95,30.06],[33.89,35.5],[31.95,35.93],[29.37,47.98],[26.23,50.59],[23.59,58.41],[15.35,44.21],[34.55,69.21],[33.72,73.04],[27.7,85.32],[16.84,96.17],[21.03,105.85],[11.56,104.92],[7.87,98.4],[4.21,101.97],[14.6,120.98],[-8.65,115.22],[10.82,106.63],[35.18,129.08],[43.06,141.35],[26.1,119.3],[30.57,104.07],[22.54,114.06],[25.04,121.56],[13.74,100.49],[1.29,103.85],[19.08,72.88],[22.57,88.36],[12.97,77.59],[17.39,78.49],[24.71,46.68],[30.04,31.24],[33.31,44.36],[35.69,51.39],[41.71,44.78],[40.41,49.87],[55.0,82.94],[56.84,60.6],[48.0,37.8],[50.45,30.52],[52.23,21.01],[59.33,18.07],[64.84,-147.72],[61.22,-149.9],[39.74,-104.99],[36.17,-115.14],[32.78,-96.8],[29.95,-90.07],[42.36,-71.06],[38.91,-77.04],[45.42,-75.7],[53.55,-113.49],[19.43,-99.13],[20.97,-89.62],[10.49,-66.88],[-0.19,-78.47],[-16.5,-68.15],[-15.78,-47.93],[-25.43,-49.27],[-31.42,-64.18],[-12.06,-77.04],[-33.45,-70.65],[-34.93,-56.16],[-25.29,-57.65]
 ];
+// Aus jeder Basis-Stadt werden zusaetzlich ein paar eng gestreute "Vorstadt"-Lichter
+// generiert (deterministischer Pseudo-Zufall ueber den Index, damit das Muster bei
+// jedem Laden gleich bleibt) - dadurch wirkt die Nachtseite deutlich dichter/realistischer,
+// statt nur ~159 isolierte Einzelpunkte zu zeigen.
+function globeSeeded(i){const x=Math.sin(i*12.9898)*43758.5453;return x-Math.floor(x);}
+const GLOBE_CITIES=(()=>{
+  const out=[];
+  GLOBE_CITIES_BASE.forEach(([lat,lon],ci)=>{
+    out.push([lat,lon]);
+    const n=3+Math.floor(globeSeeded(ci*7+1)*4); // 3-6 zusaetzliche Lichter je Stadt
+    for(let k=0;k<n;k++){
+      const r1=globeSeeded(ci*31+k*5+2),r2=globeSeeded(ci*53+k*7+3);
+      const dLat=(r1-0.5)*3.2,dLon=(r2-0.5)*4.2;
+      out.push([+(lat+dLat).toFixed(2),+(lon+dLon).toFixed(2)]);
+    }
+  });
+  return out;
+})();
 // FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
 const GLOBE_SESSIONS=[
   {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
@@ -5228,7 +5293,11 @@ function globeSunInfoCached(){
   return _globeSunCache;
 }
 let _globeRAF=null,_globeLon=200,_globeLast=0,_globeHosts=[],_globeUid=0,_globeFrameN=0;
-function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}_globeHosts=[];}
+// Drag-zum-Drehen: 'auto' = normale Rotation, 'drag' = Nutzer zieht gerade,
+// 'decel' = nach dem Loslassen klingt der Schwung Richtung Normaltempo ab.
+const GLOBE_AUTO_VEL=0.004; // Grad/ms im Normalbetrieb
+let _globeMode='auto',_globeVel=GLOBE_AUTO_VEL,_globeDrag=null;
+function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}_globeHosts=[];_globeMode='auto';_globeVel=GLOBE_AUTO_VEL;_globeDrag=null;}
 function globeProject(lat,lon,lon0,R){
   const f=lat*Math.PI/180,l=(lon-lon0)*Math.PI/180;
   const cosc=Math.sin(GLOBE_LAT0)*Math.sin(f)+Math.cos(GLOBE_LAT0)*Math.cos(f)*Math.cos(l);
@@ -5346,6 +5415,36 @@ function globeMarkerClick(ev,id){
     <div class="gt-row">${mySessions.length?'🟢 '+mySessions.map(s=>s.name).join(', ')+' aktiv':'⚪ Keine Session aktiv'}</div>`;
   host.appendChild(tip);
 }
+// Drag-zum-Drehen: Ziehen am Globus dreht ihn direkt mit dem Finger/der Maus mit;
+// nach dem Loslassen laeuft der Schwung aus dem Drag weiter (Traegheit), bevor er
+// sanft (exponentiell) wieder auf die normale Auto-Rotationsgeschwindigkeit abklingt.
+function globeOnPointerDown(ev,host){
+  if(ev.target.closest('g[data-id]'))return; // Marker-Klicks nicht als Drag-Start behandeln
+  closeGlobeTip();
+  _globeMode='drag';
+  _globeDrag={lastX:ev.clientX,lastT:performance.now(),pid:ev.pointerId,host};
+  host.classList.add('grabbing');
+  try{host.setPointerCapture(ev.pointerId);}catch(e){}
+}
+function globeOnPointerMove(ev){
+  if(_globeMode!=='drag'||!_globeDrag||ev.pointerId!==_globeDrag.pid)return;
+  const now=performance.now(),dx=ev.clientX-_globeDrag.lastX,dt=Math.max(1,now-_globeDrag.lastT);
+  const dDeg=dx*0.4; // Drag-Sensitivitaet: Pixel -> Grad
+  _globeLon=(_globeLon-dDeg+360)%360;
+  _globeVel=-dDeg/dt; // Schwung fuers Abklingen nach dem Loslassen merken
+  _globeDrag.lastX=ev.clientX;_globeDrag.lastT=now;
+  _globeHosts.forEach(globeUpdateOne);
+}
+function globeOnPointerUp(ev){
+  if(!_globeDrag||ev.pointerId!==_globeDrag.pid)return;
+  try{_globeDrag.host.releasePointerCapture(ev.pointerId);}catch(e){}
+  _globeDrag.host.classList.remove('grabbing');
+  _globeDrag=null;
+  if(_globeMode==='drag'){
+    _globeVel=Math.max(-0.06,Math.min(0.06,_globeVel)); // Schwung deckeln
+    _globeMode='decel';
+  }
+}
 function startGlobes(){
   stopGlobe();
   if(curPage!=='dash')return;
@@ -5355,14 +5454,39 @@ function startGlobes(){
   // dreht sie sich fluessig, indem pro Frame NUR die Attribute der vorhandenen
   // Elemente (Pfad-d, Marker-Position) aktualisiert werden - kein innerHTML/Reparse,
   // daher kein Ruckeln und keine UI-Blockade beim Tab-/Kategorie-Wechsel.
-  _globeHosts=hosts.map(h=>{const size=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSkeleton(size,_globeUid++);return globeCollectRefs(h,size);}).filter(Boolean);
-  _globeHosts.forEach(globeUpdateOne); // sofortiger erster Aufbau
+  _globeHosts=hosts.map(h=>{
+    // Falls der Host transient 0 Breite meldet (z.B. waehrend eines Layout-/Tab-Wechsels),
+    // Kartenbreite als Fallback nehmen statt mit falscher Groesse zu starten - verhindert,
+    // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
+    let w=h.clientWidth;
+    if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
+    const size=Math.max(170,Math.min(w||240,360));
+    h.innerHTML=globeSkeleton(size,_globeUid++);
+    return globeCollectRefs(h,size);
+  }).filter(Boolean);
+  _globeHosts.forEach(globeUpdateOne); // sofortiger, vollstaendiger erster Aufbau (alle Layer in einem Zug)
+  hosts.forEach(h=>{
+    h.addEventListener('pointerdown',ev=>globeOnPointerDown(ev,h));
+    h.addEventListener('pointermove',globeOnPointerMove);
+    h.addEventListener('pointerup',globeOnPointerUp);
+    h.addEventListener('pointercancel',globeOnPointerUp);
+  });
   _globeLast=performance.now();
   const STEP_MS=50; // ~20 FPS: glatt genug fuer langsame Rotation, billig genug fuers UI
   const frame=now=>{
     if(curPage!=='dash'||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
     const dt=now-_globeLast;
-    if(dt>=STEP_MS){_globeLon=(_globeLon+dt*0.004)%360;_globeLast=now;_globeFrameN++;_globeHosts.forEach(globeUpdateOne);}
+    if(dt>=STEP_MS){
+      _globeLast=now;_globeFrameN++;
+      if(_globeMode==='decel'){
+        _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/350); // Schwung klingt Richtung Normaltempo ab
+        if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
+        _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
+      }else if(_globeMode==='auto'){
+        _globeLon=(_globeLon+dt*GLOBE_AUTO_VEL)%360;
+      } // 'drag': Position wird direkt per Pointermove gesetzt, hier nichts tun
+      _globeHosts.forEach(globeUpdateOne);
+    }
     _globeRAF=requestAnimationFrame(frame);
   };
   _globeRAF=requestAnimationFrame(frame);
