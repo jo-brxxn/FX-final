@@ -874,7 +874,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#9d174d;color:#fce7f3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK-KONTRAST-1 (Globus: Land-Umrandung abgeschwaecht, damit Flaeche+Kontur als EIN zusammenhaengendes Bild wirken statt erst Umriss/dann Fuellung. Stadtlichter komplett entfernt. Tag/Nacht-Kontrast deutlich verstaerkt mit weichem, mehrstufigem Verlauf fuer einen guten Uebergang)</div>
+<div style="flex:none;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER-SONNE-1 (Globus: Europa/Italien/Balkan-Polygon repariert, keine Festland-Luecken mehr; gelber Tag-Glanz + oranger Terminator-Ring ergaenzt. Waehrungsspalten von Mini-Kalender zur ersten High-Impact-Karte "Today" verschoben, Mini-Kalender wieder Liste. History-Modal zeigt jetzt expliziten Score-Delta je Event (+1/-1/0))</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -2007,7 +2007,7 @@ function renderSymHistoryPanel(id){
       if(b==='bull')net++;else if(b==='bear')net--;
       const col=BC[b]||BC.neu;
       const arr=b==='bull'?'▲':b==='bear'?'▼':'◆';
-      const eff=b==='bull'?'Score ▲':b==='bear'?'Score ▼':'neutral';
+      const eff=b==='bull'?'+1':b==='bear'?'-1':'0';
       const ac=actualColor(ev);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
       const fcv=(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–';
@@ -5013,9 +5013,22 @@ function renderTodayReminder(){
   };
   const rel=list.filter(e=>isEvtPast(e)||!e.time);
   const up=list.length-rel.length;
+  const groups={};
+  list.forEach(ev=>{
+    const ccy=(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean)[0]||'OTHER';
+    (groups[ccy]=groups[ccy]||[]).push(ev);
+  });
+  const ccys=Object.keys(groups).sort();
+  const cols=ccys.map(ccy=>{
+    const evs=groups[ccy];
+    return`<div class="cal-ccycol">
+      <div class="cal-ccycol-hdr"><span>${escH(ccy)}</span><span class="cal-ccycol-cnt">${evs.length} Event${evs.length===1?'':'s'}</span></div>
+      <div class="cal-ccycol-body today-list">${evs.map(row).join('')}</div>
+    </div>`;
+  }).join('');
   el.innerHTML=`<div class="today-card">
     <div class="today-hd"><span class="today-ic">📅</span><span>Today</span><small>${up} upcoming · ${rel.length} released</small></div>
-    <div class="today-list">${list.map(row).join('')}</div>
+    <div class="cal-ccycols">${cols}</div>
   </div>`;
 }
 function renderCotNotify(){
@@ -5126,7 +5139,7 @@ function renderDash(){
     }else if(w.type==='mini_calendar'){
       let mc=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
       if(calHighOnly)mc=mc.filter(ev=>evtImpact(ev)==='high');
-      content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calColumnsHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
+      content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calTableHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
@@ -5185,8 +5198,10 @@ const GLOBE_LAND=[
   [[12,-72],[11,-64],[7,-60],[4,-52],[0,-50],[-5,-43],[-8,-35],[-13,-38],[-18,-39],[-23,-41],[-28,-48],[-34,-54],[-38,-58],[-41,-62],[-46,-66],[-52,-69],[-55,-68],[-53,-72],[-46,-74],[-38,-73],[-30,-71],[-23,-70],[-18,-70],[-14,-76],[-6,-81],[-2,-80],[2,-78],[6,-77],[9,-77],[12,-72]],
   // Afrika
   [[37,10],[34,11],[31,20],[31,28],[27,34],[20,37],[15,40],[12,43],[11,49],[7,49],[2,46],[-5,40],[-11,40],[-17,37],[-22,35],[-26,33],[-30,31],[-34,26],[-34,19],[-29,17],[-22,14],[-15,12],[-9,13],[-2,9],[4,9],[6,4],[5,-3],[7,-9],[11,-15],[15,-17],[21,-17],[26,-15],[31,-10],[35,-6],[37,1],[37,10]],
-  // Europa (West/Mittel)
-  [[71,28],[68,28],[64,24],[60,23],[58,11],[57,8],[53,7],[51,3],[48,-2],[44,-2],[43,-9],[40,-9],[37,-8],[36,-6],[38,-2],[40,1],[42,4],[44,8],[41,16],[38,16],[40,19],[43,13],[45,14],[42,21],[41,29],[45,30],[47,38],[50,40],[55,42],[60,32],[64,30],[66,26],[71,28]],
+  // Europa (West/Mittel) - inkl. Italien-Stiefel und Balkan/Griechenland als
+  // durchgehende, nicht ueberkreuzende Kuestenlinie (statt Sprung quer ueber
+  // die Adria, der vorher Loecher mitten im Festland erzeugt hat)
+  [[71,28],[68,28],[64,24],[60,23],[58,11],[57,8],[53,7],[51,3],[48,-2],[44,-2],[43,-9],[40,-9],[37,-8],[36,-6],[38,-2],[40,1],[42,4],[44,8],[43,10],[42,12],[41,14],[38,16],[40,18],[41,17],[44,13],[45,13],[45,14],[43,16],[40,19],[38,21],[36,22],[38,24],[40,23],[41,29],[45,30],[47,38],[50,40],[55,42],[60,32],[64,30],[66,26],[71,28]],
   // Skandinavien
   [[71,28],[69,21],[66,15],[63,11],[59,5],[58,8],[60,12],[63,17],[66,23],[68,24],[71,28]],
   // Russland / Nordasien (Arktiskueste hin, Suedgrenze zurueck)
@@ -5299,7 +5314,7 @@ const GLOBE_MERIDIANS=[];for(let lon=-180;lon<180;lon+=30)GLOBE_MERIDIANS.push(l
 const GLOBE_PARALLELS=[];for(let lat=-60;lat<=60;lat+=30)GLOBE_PARALLELS.push(lat);
 function globeSkeleton(size,uid){
   const R=size/2-16,cx=size/2,cy=size/2;
-  const gid='gGrad'+uid,nid='gNight'+uid;
+  const gid='gGrad'+uid,nid='gNight'+uid,dgid='gDay'+uid,tgid='gTerm'+uid;
   const grid=(GLOBE_MERIDIANS.length+GLOBE_PARALLELS.length);
   let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>';
   // Fuellung + Umrandung jedes Land-Polygons in EINEM <path> (fill+stroke werden vom
@@ -5312,10 +5327,14 @@ function globeSkeleton(size,uid){
     <defs>
       <radialGradient id="${gid}" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/></radialGradient>
       <radialGradient class="gl-nightgrad" id="${nid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#00040a" stop-opacity="0.92"/><stop offset="38%" stop-color="#00040a" stop-opacity="0.72"/><stop offset="68%" stop-color="#00040a" stop-opacity="0.3"/><stop offset="100%" stop-color="#00040a" stop-opacity="0"/></radialGradient>
+      <radialGradient class="gl-daygrad" id="${dgid}" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fff3c4" stop-opacity="0.16"/><stop offset="45%" stop-color="#ffe085" stop-opacity="0.08"/><stop offset="100%" stop-color="#ffe085" stop-opacity="0"/></radialGradient>
+      <radialGradient class="gl-termgrad" id="${tgid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="55%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="68%" stop-color="#ff8a3d" stop-opacity="0.16"/><stop offset="82%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="100%" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})" stroke="var(--bd2)" stroke-width="1"/>
     <g data-layer="land">${land}</g>
     <g data-layer="grid">${gridP}</g>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${dgid})"/>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${tgid})"/>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${nid})"/>
     <g data-layer="markers">${markers}</g>
   </svg>`;
@@ -5329,6 +5348,8 @@ function globeCollectRefs(host,size){
     gridPaths:[...svg.querySelector('[data-layer="grid"]').children],
     landPaths:[...svg.querySelector('[data-layer="land"]').children],
     nightGrad:svg.querySelector('.gl-nightgrad'),
+    dayGrad:svg.querySelector('.gl-daygrad'),
+    termGrad:svg.querySelector('.gl-termgrad'),
     markers
   };
 }
@@ -5348,6 +5369,15 @@ function globeUpdateOne(st){
     const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
     st.nightGrad.setAttribute('cx',(50+(nx/R)*46).toFixed(1)+'%');
     st.nightGrad.setAttribute('cy',(50+(ny/R)*46).toFixed(1)+'%');
+  }
+  // Sonnenstrahlen: Tag-Glanz (leichtes Gelb) + Terminator-Ring (Orange) folgen dem
+  // Sonnenhochstand (Gegenpunkt des Nacht-Zentrums), beide nutzen denselben Mittelpunkt.
+  if(st.dayGrad||st.termGrad){
+    const f=decl,l=(lonS-lon0)*Math.PI/180;
+    const sx=R*Math.cos(f)*Math.sin(l),sy=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
+    const scx=(50+(sx/R)*46).toFixed(1)+'%',scy=(50+(sy/R)*46).toFixed(1)+'%';
+    if(st.dayGrad){st.dayGrad.setAttribute('cx',scx);st.dayGrad.setAttribute('cy',scy);}
+    if(st.termGrad){st.termGrad.setAttribute('cx',scx);st.termGrad.setAttribute('cy',scy);}
   }
   // Marker (Waehrungspunkt + Label)
   Object.keys(GLOBE_GEO).forEach(id=>{
