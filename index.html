@@ -864,7 +864,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7c3aed;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT-KONTINENT-1 (Globus: GLOBE_LAND komplett durch echte Kuestenlinien aus Natural-Earth-Daten ersetzt statt handgezeichneter Naeherung. Risk-Sentiment-Karte: zeigt jetzt zusaetzlich die einzelnen Risk-on- und Safe-Haven-Assets mit Score-Balken statt nur dem Aggregat-Wert)</div>
+<div style="flex:none;background:#0369a1;color:#e0f2fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLAU-TRAEGHEIT-1 (Globus: Abklingzeit nach dem Drag-Loslassen verlaengert - der Schwung bremst jetzt deutlich sanfter/laenger Richtung Normaltempo ab statt schnell abzubrechen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5501,7 +5501,7 @@ function startGlobes(){
     if(dt>=STEP_MS){
       _globeLast=now;
       if(_globeMode==='decel'){
-        _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/350); // Schwung klingt Richtung Normaltempo ab
+        _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/700); // Schwung klingt Richtung Normaltempo ab - langsam statt abrupt
         if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
         _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
       }else if(_globeMode==='auto'){
