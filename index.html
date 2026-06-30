@@ -620,6 +620,24 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .hist-day.hist-today .hist-wd{color:var(--t1)}
 .hist-day.hist-today .hist-dot{box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--bd2)}
 .hist-dn{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* ── HISTORY-FENSTER (ausklappbar, Tage untereinander wie im Kalender) ── */
+.histp{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);max-height:340px;overflow-y:auto;padding:4px}
+.histp-day{padding:7px 8px;border-bottom:1px solid var(--bd)}
+.histp-day:last-child{border-bottom:none}
+.histp-day.histp-today{background:rgba(var(--blue-rgb),.06)}
+.histp-dayhdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.histp-date{font-size:11px;font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:.3px}
+.histp-day.histp-today .histp-date{color:var(--blue)}
+.histp-net{font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px;border:1px solid var(--bd2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace}
+.histp-net-none{color:var(--t3);border-color:var(--bd)}
+.histp-evt{display:flex;align-items:center;gap:8px;padding:3px 2px;font-size:12px}
+.histp-arrow{flex:none;font-size:12px;font-weight:800;width:12px;text-align:center}
+.histp-name{flex:1 1 auto;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.histp-val{flex:none;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:11px}
+.histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
+.histp-fc{color:var(--t3)}
+.histp-eff{flex:none;font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px}
+@media(max-width:560px){.histp-eff{display:none}.histp-name{white-space:normal}}
 /* ── GREEN ALERT BADGE (Toolbar) ── */
 .green-alert-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 5px;cursor:default;transition:opacity .2s,transform .2s;line-height:1;gap:1px;min-width:24px}
 .green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
@@ -843,7 +861,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#9333ea;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-PERF-1 (Fix: Globus-Redraw drastisch gedrosselt (alle ~600ms statt ~35x/Sek) - behebt UI-Blockade beim Tab-Wechsel. Sonnenstand fuer Tag/Nacht-Schattierung wird nur noch stuendlich neu berechnet. Pulsierende Ringe um Waehrungs-Marker & Session-Ringe auf dem Globus entfernt (nur noch statischer Punkt+Label). Nordamerika-Landmasse korrigiert/vervollstaendigt, damit USD/CAD nicht mehr im Wasser stehen. Trading-Sessions jetzt als 24h-Leiste mit wanderndem "Jetzt"-Punkt unter dem Globus (Update alle 30 Min) statt reiner Text-Badges. History-Button (🕰️) liegt jetzt direkt neben dem Zahnrad-Symbol auf der Asset-Detailseite)</div>
+<div style="flex:none;background:#0d9488;color:#e0fcff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-SMOOTH-1 (Globus dreht jetzt FLUESSIG: wird nur EINMAL als SVG aufgebaut, danach werden pro Frame (~20 FPS) nur noch die Element-Positionen aktualisiert - kein staendiges Neu-Rendern mehr (behebt Ruckeln + UI-Blockade beim Tab-/Kategorie-Wechsel). Kontinente vervollstaendigt/verdichtet (mehr, kleinere Polygone -> mehr Land sichtbar). Marker = nur Punkt+Label (kein Ring). History (🕰️) klappt jetzt ein Fenster aus, das die letzten 10 Tage + heute UNTEREINANDER listet - pro Tag die score-treibenden Events mit Actual/Forecast und Richtung (Beat->Score hoch/bullish, Miss->Score runter/bearish) in den Bias-Farben, plus Tages-Netto)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1920,6 +1938,50 @@ function renderSymHistory(id){
       <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
     </div>`;
   }).join('');
+}
+// Ausklappbares History-Fenster: listet die letzten HIST_DAYS Tage (heute zuerst)
+// UNTEREINANDER auf - pro Tag NUR die score-treibenden Events (CPI, NFP, Zins, PMI,
+// GDP ...) mit ihrem Actual/Forecast und der daraus abgeleiteten Richtung (Beat ->
+// bullish/Score hoch, Miss -> bearish/Score runter), in denselben Bias-Farben (BC)
+// wie ueberall sonst. Tage ohne score-treibendes Event werden als "keine Events"
+// markiert. Reine Ableitung aus calEvts (kein separater Score-Verlauf).
+function renderSymHistoryPanel(id){
+  const today=todayStr();
+  const days=symHistoryDays(id,HIST_DAYS).slice().reverse(); // neueste zuerst
+  const rows=days.map(d=>{
+    const evs=d.events.filter(isScoreDrivingEvent);
+    const isToday=d.date===today;
+    const hdrTxt=escH(fmtDayHdr(d.date))+(isToday?' · Today':'');
+    if(!evs.length){
+      return`<div class="histp-day${isToday?' histp-today':''}">
+        <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span><span class="histp-net histp-net-none">– no events</span></div>
+      </div>`;
+    }
+    let net=0;
+    const evHtml=evs.map(ev=>{
+      const b=indBiasFromEvent(ev);
+      if(b==='bull')net++;else if(b==='bear')net--;
+      const col=BC[b]||BC.neu;
+      const arr=b==='bull'?'▲':b==='bear'?'▼':'◆';
+      const eff=b==='bull'?'Score ▲':b==='bear'?'Score ▼':'neutral';
+      const ac=actualColor(ev);
+      const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
+      const fcv=(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–';
+      return`<div class="histp-evt">
+        <span class="histp-arrow" style="color:${col}">${arr}</span>
+        <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
+        <span class="histp-val">${acv} <span class="histp-fc">fc ${fcv}</span></span>
+        <span class="histp-eff" style="color:${col};border-color:${col}">${eff}</span>
+      </div>`;
+    }).join('');
+    const netCol=net>0?BC.bull:net<0?BC.bear:BC.neu;
+    const netLbl=net>0?`▲ +${net}`:net<0?`▼ ${net}`:'◆ 0';
+    return`<div class="histp-day${isToday?' histp-today':''}">
+      <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span><span class="histp-net" style="color:${netCol};border-color:${netCol}">${netLbl}</span></div>
+      ${evHtml}
+    </div>`;
+  }).join('');
+  return`<div class="histp">${rows}</div>`;
 }
 const histSectionOpen={};
 function toggleHistSection(id){histSectionOpen[id]=!histSectionOpen[id];renderDetail();}
@@ -3478,7 +3540,7 @@ function renderDetail(){
       <button class="cfg-gear${histOpen?' on':''}" onclick="toggleHistSection('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
     </div>
-    ${histOpen?`<div class="evt-section"><div class="hist-strip">${renderSymHistory(c.id)}</div></div>`:''}
+    ${histOpen?`<div class="evt-section">${renderSymHistoryPanel(c.id)}</div>`:''}
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
@@ -5063,17 +5125,42 @@ const GLOBE_GEO={USD:[39,-98],EUR:[50,10],GBP:[54,-2],JPY:[36,138],CHF:[47,8],CA
 const GLOBE_LAT0=18*Math.PI/180; // leichte Nordneigung der Blickachse
 // Stark vereinfachte Kontinent-Umrisse (grobe Polygone, keine exakten Laendergrenzen) -
 // reichen aus, damit die Kugel wie ein Globus statt einer leeren Kugel aussieht.
+// Kontinent-Umrisse als mehrere, jeweils laengengrad-begrenzte Polygone (grob, keine
+// exakten Grenzen). Bewusst in kleinere Stuecke aufgeteilt (statt eines riesigen
+// Eurasien-Polygons), damit die orthografische Projektion am Kugelrand sauber clippt
+// und nicht ganze Landmassen "verschluckt".
 const GLOBE_LAND=[
-  [[71,-156],[66,-163],[60,-165],[56,-159],[58,-152],[55,-133],[50,-128],[48,-124],[44,-124],[38,-123],[34,-120],[28,-114],[23,-110],[20,-105],[17,-101],[15,-93],[13,-88],[10,-84],[8,-79],[9,-77],[12,-83],[15,-87],[18,-88],[21,-87],[22,-97],[26,-97],[29,-94],[29,-89],[30,-85],[25,-80],[28,-80],[32,-81],[36,-76],[40,-74],[42,-70],[44,-67],[45,-61],[47,-53],[54,-57],[60,-65],[66,-70],[70,-90],[70,-110],[71,-130],[71,-156]],
-  [[12,-72],[10,-65],[5,-60],[2,-50],[-2,-44],[-8,-35],[-15,-39],[-23,-43],[-30,-50],[-34,-58],[-38,-62],[-42,-65],[-50,-69],[-55,-68],[-52,-74],[-45,-73],[-38,-73],[-30,-71],[-20,-70],[-15,-75],[-5,-81],[2,-78],[5,-77],[8,-78],[12,-72]],
-  [[37,10],[33,11],[31,25],[31,32],[22,38],[12,43],[10,51],[0,42],[-12,40],[-20,35],[-26,33],[-34,19],[-30,17],[-22,14],[-17,11],[-12,13],[-4,9],[4,8],[6,3],[5,-4],[6,-10],[12,-17],[16,-16],[21,-17],[27,-13],[31,-9],[35,-6],[37,10]],
-  [[71,28],[69,33],[60,30],[55,38],[45,38],[41,29],[40,20],[38,15],[40,9],[43,3],[36,-6],[43,-9],[48,-5],[50,2],[53,8],[55,8],[58,11],[60,5],[63,8],[66,13],[70,20],[71,28]],
-  [[71,28],[73,60],[70,90],[68,140],[60,163],[55,160],[45,142],[35,130],[22,120],[10,105],[1,104],[6,80],[8,77],[20,73],[25,67],[30,62],[37,49],[40,40],[41,29],[45,38],[55,38],[60,30],[69,33],[71,28]],
-  [[-11,131],[-12,136],[-16,145],[-19,146],[-24,153],[-28,153],[-33,151],[-38,147],[-39,144],[-35,136],[-32,134],[-31,131],[-26,113],[-21,114],[-18,122],[-14,126],[-11,131]],
-  [[83,-30],[76,-20],[70,-22],[66,-38],[60,-43],[62,-49],[68,-53],[72,-56],[78,-65],[82,-50],[83,-30]],
-  [[58,-3],[57,-2],[54,-1],[51,1],[50,-5],[51,-5],[53,-9],[55,-6],[58,-3]],
-  [[45,142],[43,144],[40,142],[36,140],[34,135],[31,131],[33,130],[35,133],[38,138],[41,140],[45,142]],
-  [[-34,173],[-37,178],[-41,175],[-46,167],[-44,168],[-41,174],[-37,174],[-34,173]],
+  // Nordamerika (Alaska -> Westkueste -> Mittelamerika -> Golf -> Ostkueste -> kanad. Arktis)
+  [[71,-156],[68,-166],[60,-165],[55,-160],[58,-152],[59,-147],[57,-135],[52,-130],[48,-125],[42,-124],[37,-122],[34,-120],[30,-116],[25,-112],[23,-110],[20,-106],[16,-98],[15,-94],[13,-91],[9,-83],[8,-78],[10,-76],[15,-83],[18,-88],[21,-87],[21,-90],[19,-91],[22,-97],[26,-97],[29,-95],[30,-89],[29,-85],[26,-82],[25,-80],[28,-80],[31,-81],[33,-79],[36,-76],[39,-74],[41,-72],[44,-69],[45,-66],[48,-65],[50,-60],[52,-56],[55,-60],[58,-64],[60,-69],[63,-78],[67,-84],[70,-95],[71,-114],[70,-130],[69,-141],[71,-156]],
+  // Groenland
+  [[83,-30],[80,-22],[76,-20],[70,-22],[66,-40],[61,-45],[64,-51],[70,-54],[76,-60],[81,-58],[83,-40],[83,-30]],
+  // Suedamerika
+  [[12,-72],[11,-64],[7,-60],[4,-52],[0,-50],[-5,-43],[-8,-35],[-13,-38],[-18,-39],[-23,-41],[-28,-48],[-34,-54],[-38,-58],[-41,-62],[-46,-66],[-52,-69],[-55,-68],[-53,-72],[-46,-74],[-38,-73],[-30,-71],[-23,-70],[-18,-70],[-14,-76],[-6,-81],[-2,-80],[2,-78],[6,-77],[9,-77],[12,-72]],
+  // Afrika
+  [[37,10],[34,11],[31,20],[31,28],[27,34],[20,37],[15,40],[12,43],[11,49],[7,49],[2,46],[-5,40],[-11,40],[-17,37],[-22,35],[-26,33],[-30,31],[-34,26],[-34,19],[-29,17],[-22,14],[-15,12],[-9,13],[-2,9],[4,9],[6,4],[5,-3],[7,-9],[11,-15],[15,-17],[21,-17],[26,-15],[31,-10],[35,-6],[37,1],[37,10]],
+  // Europa (West/Mittel)
+  [[71,28],[68,28],[64,24],[60,23],[58,11],[57,8],[53,7],[51,3],[48,-2],[44,-2],[43,-9],[40,-9],[37,-8],[36,-6],[38,-2],[40,1],[42,4],[44,8],[41,16],[38,16],[40,19],[43,13],[45,14],[42,21],[41,29],[45,30],[47,38],[50,40],[55,42],[60,32],[64,30],[66,26],[71,28]],
+  // Skandinavien
+  [[71,28],[69,21],[66,15],[63,11],[59,5],[58,8],[60,12],[63,17],[66,23],[68,24],[71,28]],
+  // Russland / Nordasien (Arktiskueste hin, Suedgrenze zurueck)
+  [[66,40],[69,55],[71,68],[73,80],[75,95],[76,105],[73,113],[74,127],[71,140],[70,160],[66,170],[62,163],[60,155],[55,142],[50,140],[52,127],[48,135],[44,132],[42,131],[44,120],[48,118],[50,108],[52,98],[50,88],[48,82],[50,72],[52,62],[55,52],[58,48],[62,44],[66,40]],
+  // Naher Osten / Arabien
+  [[40,26],[37,35],[34,36],[31,35],[30,33],[28,34],[24,38],[20,40],[15,43],[12,44],[13,48],[17,53],[22,59],[25,57],[27,51],[30,49],[33,48],[37,46],[39,44],[41,40],[41,33],[40,26]],
+  // Suedasien (Indien)
+  [[35,71],[33,74],[28,70],[24,68],[22,70],[20,73],[15,74],[10,77],[8,77],[10,80],[14,80],[19,85],[22,88],[24,91],[27,89],[28,84],[30,80],[32,78],[34,76],[35,71]],
+  // Ostasien / China + Festland-Suedostasien
+  [[42,130],[40,124],[39,122],[36,122],[32,121],[30,122],[27,121],[24,118],[22,114],[21,109],[18,106],[16,108],[12,109],[9,105],[10,103],[13,100],[8,100],[7,103],[6,100],[12,98],[16,95],[20,93],[22,92],[26,97],[29,99],[28,104],[31,110],[34,113],[37,118],[40,124],[42,130]],
+  // Indonesien / maritimes Suedostasien
+  [[5,95],[3,98],[-1,100],[-4,102],[-6,105],[-8,114],[-8,123],[-9,140],[-4,138],[-2,132],[0,128],[2,128],[1,120],[2,112],[3,109],[5,95]],
+  // Australien
+  [[-11,131],[-12,137],[-15,142],[-18,146],[-21,149],[-26,153],[-30,153],[-34,151],[-38,147],[-38,141],[-35,138],[-32,134],[-31,129],[-34,123],[-33,118],[-31,115],[-26,114],[-22,114],[-18,122],[-15,125],[-14,127],[-12,130],[-11,131]],
+  // Japan
+  [[45,142],[43,145],[41,141],[38,141],[35,140],[34,137],[33,131],[31,130],[33,132],[35,133],[36,136],[38,139],[41,140],[43,141],[45,142]],
+  // Neuseeland
+  [[-34,173],[-37,176],[-39,177],[-41,175],[-42,173],[-45,170],[-46,167],[-44,168],[-41,174],[-37,175],[-34,173]],
+  // Grossbritannien & Irland
+  [[58,-3],[57,-2],[55,-1.5],[53,0],[51,1],[50,-1],[50,-4],[51,-5],[54,-3],[55,-5],[57,-5],[58,-3]],
+  // Madagaskar
   [[-12,49],[-16,50],[-22,48],[-25,46],[-23,44],[-18,44],[-13,48],[-12,49]]
 ];
 // Kuratierte Liste von Staedten fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere
@@ -5140,84 +5227,106 @@ function globeSunInfoCached(){
   if(hr!==_globeSunCacheHr){_globeSunCacheHr=hr;_globeSunCache=globeSunInfo();}
   return _globeSunCache;
 }
-let _globeRAF=null,_globeLon=200,_globeLast=0;
-function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}}
+let _globeRAF=null,_globeLon=200,_globeLast=0,_globeHosts=[],_globeUid=0,_globeFrameN=0;
+function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}_globeHosts=[];}
 function globeProject(lat,lon,lon0,R){
   const f=lat*Math.PI/180,l=(lon-lon0)*Math.PI/180;
   const cosc=Math.sin(GLOBE_LAT0)*Math.sin(f)+Math.cos(GLOBE_LAT0)*Math.cos(f)*Math.cos(l);
   return{x:R*Math.cos(f)*Math.sin(l),y:-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l)),vis:cosc>0};
 }
-function globeGridPath(pts,cx,cy){
+// Hilfs-Pfad: projizierte (lat,lon)-Punkte zu einem SVG-d, das beim Verschwinden
+// hinter den Kugelrand (vis=false) den Stift absetzt, statt quer ueber die Kugel zu ziehen.
+function globePathD(pts,lon0,R,cx,cy){
   let d='',pen=false;
-  pts.forEach(p=>{if(p.vis){d+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
-  return d?`<path d="${d}" fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>`:'';
+  for(let i=0;i<pts.length;i++){
+    const p=globeProject(pts[i][0],pts[i][1],lon0,R);
+    if(p.vis){d+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}
+    else pen=false;
+  }
+  return d;
 }
-function globeLandSVG(cx,cy,lon0,R){
-  // Dezente Helligkeits-Variation pro Landmasse statt einheitlichem Gruen, plus duenne Umriss-Linie.
-  let out='';
-  GLOBE_LAND.forEach((poly,i)=>{
-    let pd='',pen=false;
-    poly.forEach(([lat,lon])=>{const p=globeProject(lat,lon,lon0,R);if(p.vis){pd+=(pen?'L':'M')+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1);pen=true;}else pen=false;});
-    if(!pd)return;
-    const light=42+(i%4)*5;
-    out+=`<path d="${pd}" fill="hsl(208,22%,${light}%)" stroke="hsl(206,38%,${light+20}%)" stroke-width="0.6" stroke-opacity="0.5" opacity="0.8"/>`;
-  });
-  return out;
-}
-function globeNightOverlaySVG(cx,cy,R,decl,lonS,lon0){
-  // Antisonnen-Punkt screen-projizieren (ohne vis-Test) als Gradient-Mittelpunkt -> plausible,
-  // sich mit Uhrzeit/Rotation bewegende Tag/Nacht-Schattierung ohne exakte Terminator-Clip-Geometrie.
-  const f=-decl,l=(lonS+180-lon0)*Math.PI/180;
-  const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
-  const gx=(50+(nx/R)*46).toFixed(1),gy=(50+(ny/R)*46).toFixed(1);
-  const gid='globeNight'+Math.round(lonS*10);
-  return`<defs><radialGradient id="${gid}" cx="${gx}%" cy="${gy}%" r="92%">
-    <stop offset="0%" stop-color="#000814" stop-opacity="0.62"/>
-    <stop offset="55%" stop-color="#000814" stop-opacity="0.28"/>
-    <stop offset="100%" stop-color="#000814" stop-opacity="0"/>
-  </radialGradient></defs>
-  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})"/>`;
-}
-function globeCityLightsSVG(cx,cy,R,decl,lonS,lon0){
-  let out='';
-  GLOBE_CITIES.forEach(([lat,lon],i)=>{
-    const fr=lat*Math.PI/180,dl=(lon-lonS)*Math.PI/180;
-    const cosZ=Math.sin(fr)*Math.sin(decl)+Math.cos(fr)*Math.cos(decl)*Math.cos(dl);
-    if(cosZ>-0.04)return; // noch (Daemmerungs-)Tageslicht -> keine sichtbaren Lichter
-    const p=globeProject(lat,lon,lon0,R);if(!p.vis)return;
-    const op=Math.max(0.25,Math.min(1,-cosZ*1.6));
-    const col=i%3===0?'#bfe4ff':'#f3fbff'; // Mix aus hellblau und weiss
-    out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="${i%5===0?1.15:0.75}" fill="${col}" opacity="${op.toFixed(2)}"/>`;
-  });
-  return out;
-}
-function globeSVG(size){
+// Statisches SVG-Geruest EINMALIG bauen: alle Pfade/Punkte/Marker existieren schon
+// (zunaechst leer), spaeter werden nur noch ihre Attribute aktualisiert. Dadurch wird
+// NICHT bei jedem Frame neues SVG geparst/gerendert - die Kugel wird einmal aufgebaut
+// und dreht sich danach nur, indem die vorhandenen Elemente neu positioniert werden.
+const GLOBE_MERIDIANS=[];for(let lon=-180;lon<180;lon+=30)GLOBE_MERIDIANS.push(lon);
+const GLOBE_PARALLELS=[];for(let lat=-60;lat<=60;lat+=30)GLOBE_PARALLELS.push(lat);
+function globeSkeleton(size,uid){
   const R=size/2-16,cx=size/2,cy=size/2;
-  const{decl,lonS}=globeSunInfoCached();
-  let grid='';
-  for(let lon=-180;lon<180;lon+=30){const pts=[];for(let lat=-90;lat<=90;lat+=6)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
-  for(let lat=-60;lat<=60;lat+=30){const pts=[];for(let lon=-180;lon<=180;lon+=6)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
-  const land=globeLandSVG(cx,cy,_globeLon,R);
-  const cities=globeCityLightsSVG(cx,cy,R,decl,lonS,_globeLon);
-  const night=globeNightOverlaySVG(cx,cy,R,decl,lonS,_globeLon);
-  let markers='';
-  Object.keys(GLOBE_GEO).forEach(id=>{
-    const sym=syms.find(s=>s.id===id);if(!sym)return;
-    const p=globeProject(GLOBE_GEO[id][0],GLOBE_GEO[id][1],_globeLon,R);
-    if(!p.vis)return;
-    const x=(cx+p.x),y=(cy+p.y),col=BC[sym.bias]||'#888',sc=symScore(sym);
-    const scTxt=(sc>0?'+':'')+(Math.round(sc*10)/10);
-    markers+=`<g style="cursor:pointer" onclick="globeMarkerClick(event,'${id}')">`+
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
-      `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${col}" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace">${id} ${scTxt}</text></g>`;
-  });
-  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[onclick]'))closeGlobeTip()">
-    <defs><radialGradient id="globeGrad" cx="38%" cy="34%" r="78%">
-      <stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/>
-    </radialGradient></defs>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#globeGrad)" stroke="var(--bd2)" stroke-width="1"/>
-    ${land}${grid}${cities}${night}${markers}
+  const gid='gGrad'+uid,nid='gNight'+uid;
+  const grid=(GLOBE_MERIDIANS.length+GLOBE_PARALLELS.length);
+  let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>';
+  let land='';GLOBE_LAND.forEach((poly,i)=>{const light=42+(i%4)*5;land+=`<path fill="hsl(208,22%,${light}%)" stroke="hsl(206,38%,${light+20}%)" stroke-width="0.6" stroke-opacity="0.5" opacity="0.85"/>`;});
+  let cities='';GLOBE_CITIES.forEach((c,i)=>{cities+=`<circle r="${i%5===0?1.15:0.75}" fill="${i%3===0?'#bfe4ff':'#f3fbff'}" opacity="0"/>`;});
+  let markers='';Object.keys(GLOBE_GEO).forEach(id=>{markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;});
+  return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
+    <defs>
+      <radialGradient id="${gid}" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/></radialGradient>
+      <radialGradient class="gl-nightgrad" id="${nid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#000814" stop-opacity="0.62"/><stop offset="55%" stop-color="#000814" stop-opacity="0.28"/><stop offset="100%" stop-color="#000814" stop-opacity="0"/></radialGradient>
+    </defs>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})" stroke="var(--bd2)" stroke-width="1"/>
+    <g data-layer="land">${land}</g>
+    <g data-layer="grid">${gridP}</g>
+    <g data-layer="cities">${cities}</g>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${nid})"/>
+    <g data-layer="markers">${markers}</g>
   </svg>`;
+}
+function globeCollectRefs(host,size){
+  const svg=host.querySelector('svg');if(!svg)return null;
+  const markers={};
+  [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{markers[g.dataset.id]={g,circle:g.querySelector('circle'),text:g.querySelector('text')};});
+  return{
+    host,R:size/2-16,cx:size/2,cy:size/2,
+    gridPaths:[...svg.querySelector('[data-layer="grid"]').children],
+    landPaths:[...svg.querySelector('[data-layer="land"]').children],
+    cityCircles:[...svg.querySelector('[data-layer="cities"]').children],
+    nightGrad:svg.querySelector('.gl-nightgrad'),
+    markers
+  };
+}
+// Pro Frame nur Attribute der bestehenden Elemente updaten (kein innerHTML/Reparse).
+function globeUpdateOne(st){
+  const{R,cx,cy}=st,lon0=_globeLon;
+  const{decl,lonS}=globeSunInfoCached();
+  // Grid (Meridiane + Breitenkreise)
+  let gi=0;
+  GLOBE_MERIDIANS.forEach(lon=>{const pts=[];for(let lat=-90;lat<=90;lat+=6)pts.push([lat,lon]);st.gridPaths[gi++].setAttribute('d',globePathD(pts,lon0,R,cx,cy));});
+  GLOBE_PARALLELS.forEach(lat=>{const pts=[];for(let lon=-180;lon<=180;lon+=6)pts.push([lat,lon]);st.gridPaths[gi++].setAttribute('d',globePathD(pts,lon0,R,cx,cy));});
+  // Land
+  GLOBE_LAND.forEach((poly,i)=>{st.landPaths[i].setAttribute('d',globePathD(poly,lon0,R,cx,cy));});
+  // Nacht-Gradient-Mittelpunkt (wandert mit Uhrzeit UND Rotation)
+  if(st.nightGrad){
+    const f=-decl,l=(lonS+180-lon0)*Math.PI/180;
+    const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
+    st.nightGrad.setAttribute('cx',(50+(nx/R)*46).toFixed(1)+'%');
+    st.nightGrad.setAttribute('cy',(50+(ny/R)*46).toFixed(1)+'%');
+  }
+  // Stadtlichter nur jeden 3. Frame neu setzen (winzige Punkte, Kostenbremse)
+  if(_globeFrameN%3===0){
+    GLOBE_CITIES.forEach(([lat,lon],i)=>{
+      const c=st.cityCircles[i];
+      const fr=lat*Math.PI/180,dl=(lon-lonS)*Math.PI/180;
+      const cosZ=Math.sin(fr)*Math.sin(decl)+Math.cos(fr)*Math.cos(decl)*Math.cos(dl);
+      if(cosZ>-0.04){c.style.display='none';return;}
+      const p=globeProject(lat,lon,lon0,R);if(!p.vis){c.style.display='none';return;}
+      c.style.display='';
+      c.setAttribute('cx',(cx+p.x).toFixed(1));c.setAttribute('cy',(cy+p.y).toFixed(1));
+      c.setAttribute('opacity',Math.max(0.25,Math.min(1,-cosZ*1.6)).toFixed(2));
+    });
+  }
+  // Marker (Waehrungspunkt + Label)
+  Object.keys(GLOBE_GEO).forEach(id=>{
+    const m=st.markers[id];if(!m)return;
+    const sym=syms.find(s=>s.id===id);
+    const p=sym?globeProject(GLOBE_GEO[id][0],GLOBE_GEO[id][1],lon0,R):{vis:false};
+    if(!p.vis){m.g.style.display='none';return;}
+    m.g.style.display='';
+    const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScore(sym);
+    m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
+    m.text.setAttribute('x',x.toFixed(1));m.text.setAttribute('y',(y-8).toFixed(1));m.text.setAttribute('fill',col);
+    m.text.textContent=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
+  });
 }
 function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
 function globeMarkerClick(ev,id){
@@ -5239,21 +5348,21 @@ function globeMarkerClick(ev,id){
 }
 function startGlobes(){
   stopGlobe();
-  if(curPage!=='dash'||!document.querySelector('.globe-host'))return;
+  if(curPage!=='dash')return;
+  const hosts=[...document.querySelectorAll('.globe-host')];
+  if(!hosts.length)return;
+  // Kugel EINMAL als statisches SVG-Geruest aufbauen, Referenzen einsammeln. Danach
+  // dreht sie sich fluessig, indem pro Frame NUR die Attribute der vorhandenen
+  // Elemente (Pfad-d, Marker-Position) aktualisiert werden - kein innerHTML/Reparse,
+  // daher kein Ruckeln und keine UI-Blockade beim Tab-/Kategorie-Wechsel.
+  _globeHosts=hosts.map(h=>{const size=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSkeleton(size,_globeUid++);return globeCollectRefs(h,size);}).filter(Boolean);
+  _globeHosts.forEach(globeUpdateOne); // sofortiger erster Aufbau
   _globeLast=performance.now();
-  // Die Kugel wird einmal komplett aufgebaut und dreht sich danach nur noch in
-  // groben Schritten weiter (statt ~35x/Sek komplett neu zu rendern) - das volle
-  // SVG (Grid+Land+Lichter+Marker) bei jedem Frame neu zu bauen+per innerHTML zu
-  // ersetzen war zu teuer und blockierte spuerbar die restliche UI (Tab-Wechsel etc).
-  // requestAnimationFrame bleibt nur als Taktgeber aktiv, der eigentliche Redraw
-  // passiert hoechstens alle GLOBE_REDRAW_MS.
-  const GLOBE_REDRAW_MS=600;
+  const STEP_MS=50; // ~20 FPS: glatt genug fuer langsame Rotation, billig genug fuers UI
   const frame=now=>{
-    const hosts=[...document.querySelectorAll('.globe-host')];
-    if(curPage!=='dash'||!hosts.length){stopGlobe();return;}
+    if(curPage!=='dash'||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
     const dt=now-_globeLast;
-    if(dt>=GLOBE_REDRAW_MS){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
-      hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s)+(h.querySelector('.globe-tip')?h.querySelector('.globe-tip').outerHTML:'');});}
+    if(dt>=STEP_MS){_globeLon=(_globeLon+dt*0.004)%360;_globeLast=now;_globeFrameN++;_globeHosts.forEach(globeUpdateOne);}
     _globeRAF=requestAnimationFrame(frame);
   };
   _globeRAF=requestAnimationFrame(frame);
