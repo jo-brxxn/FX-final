@@ -868,7 +868,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#15803d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GRUEN-VERLAUF-1 (Risk-Sentiment-Karte: neue taeglich wachsende Verlaufsgrafik der Risk-on/Risk-off-Tendenz; Globus: Waehrungslabels (z.B. EUR/GBP/CHF in Europa) ueberlappen sich nicht mehr, sondern staffeln sich automatisch)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL-FEINSCHLIFF-2 (Globus: GBP/EUR/CHF-Label werden jetzt JEDEN Frame dynamisch nach tatsaechlicher Bildschirmposition links/rechts/darunter zugewiesen, da feste Positionen am Globus-Rand teils vertauscht waren; Risk-Sentiment-Karte: Verlaufsgrafik waechst jetzt automatisch in der Hoehe, bis die Karte buendig mit der Nachbarkarte abschliesst, statt Leerraum zu lassen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5079,7 +5079,7 @@ function renderDash(){
         </div>
         <div class="risk-hist-wrap">
           <div class="risk-hist-hd">📈 Verlauf</div>
-          ${riskHistChart(col)}
+          ${riskHistChart(col,_riskHistChartH)}
         </div>
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
@@ -5114,7 +5114,37 @@ function renderDash(){
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
   startSessionBar();
+  requestAnimationFrame(syncRiskHistHeight);
 }
+// Die Risk-Sentiment-Karte steht im Dashboard-Grid (align-items:stretch) neben
+// der FX-Bias-Karte; die Kartenbox selbst wird dadurch schon automatisch auf
+// die Hoehe der Nachbarkarte gestreckt, aber der Inhalt (Gauge + Verlauf) ist
+// meist kuerzer, sodass darunter Leerraum entsteht. Statt Leerraum zu lassen,
+// wird die Verlaufsgrafik selbst um genau die uebrige Hoehe vergroessert
+// (eigene SVG-Geometrie neu berechnet, NICHT per CSS gestreckt - so bleiben
+// Schrift & Punkte unverzerrt). Selbststabilisierend: nach der Vergroesserung
+// ist kaum noch Luft uebrig, ein zweiter Aufruf veraendert dann nichts mehr.
+let _riskHistChartH=120;
+function syncRiskHistHeight(){
+  const card=document.querySelector('.dw-risk_sentiment');
+  const calc=card&&card.querySelector('.risk-calc');
+  if(!card||!calc)return;
+  // card.scrollHeight ist hier NICHT brauchbar: die Karte wird per CSS-Grid
+  // (align-items:stretch) schon auf die Hoehe der Nachbarkarte gestreckt, und
+  // diese gestreckte Box-Hoehe zaehlt selbst zur scrollHeight, auch wenn der
+  // Inhalt viel kuerzer ist und darunter sichtbarer Leerraum bleibt. Deshalb
+  // wird stattdessen der tatsaechliche Inhalts-Endpunkt (Unterkante des
+  // letzten Elements .risk-calc) mit der Innenkante der Kartenunterkante
+  // (Kartenunterkante minus padding-bottom) verglichen.
+  const padBottom=parseFloat(getComputedStyle(card).paddingBottom)||0;
+  const extra=(card.getBoundingClientRect().bottom-padBottom)-calc.getBoundingClientRect().bottom;
+  if(extra<16)return;
+  const target=Math.max(120,Math.min(420,Math.round(_riskHistChartH+extra-10)));
+  if(Math.abs(target-_riskHistChartH)<8)return;
+  _riskHistChartH=target;
+  renderDash();
+}
+window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>setTimeout(syncRiskHistHeight,160));});
 // Die Kalender-Hoehe wird jetzt via CSS (flex:1 auf .cal-scroll) gesteuert.
 // Die Karte dehnt sich per Grid auf die Hoehe der laengsten Karte in der Zeile aus,
 // und cal-scroll fuellt den Rest. Diese Funktion ist nur noch ein no-op.
@@ -5428,13 +5458,40 @@ function globeUpdateOne(st){
     const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScore(sym);
     m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
     const label=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
-    visMarkers.push({m,x,y,col,label});
+    visMarkers.push({id,m,x,y,col,label});
   });
-  // Label-Kollisionsvermeidung: liegen Waehrungen geografisch nah beieinander
-  // (z.B. EUR/GBP/CHF in Europa), wuerden sich ihre Beschriftungen ueberlappen -
-  // kollidierende Labels schrittweise nach oben staffeln statt direkt uebereinander.
+  // GBP/EUR/CHF liegen in Europa geografisch so nah beieinander, dass eine
+  // automatische Kollisionsvermeidung sie je nach Drehwinkel trotzdem noch
+  // ueberlappen liess. Eine rein an die Waehrung gebundene feste Position
+  // (immer GBP=links, EUR=rechts) reicht aber NICHT: nahe am Globus-Rand
+  // (z.B. die Amerika-Heimatposition) ruecken die drei Punkte so eng
+  // zusammen, dass sich ihre Bildschirm-Reihenfolge durch die 3D-Projektion
+  // sogar vertauschen kann - dann landete z.B. das EUR-Label direkt auf dem
+  // CHF-Punkt. Deshalb wird die links/rechts/darunter-Zuordnung JEDEN Frame
+  // neu anhand der tatsaechlichen aktuellen Bildschirmposition vergeben: der
+  // jeweils am weitesten links liegende der drei Punkte bekommt das linke,
+  // der am weitesten rechts liegende das rechte Label, der mittlere (meist
+  // CHF, da geografisch zwischen GBP und EUR) rutscht darunter.
+  const EU_LBL_IDS=['GBP','EUR','CHF'];
+  const euVis=visMarkers.filter(v=>EU_LBL_IDS.includes(v.id));
+  const FIXED_LABEL_POS={};
+  if(euVis.length>=2){
+    const sorted=[...euVis].sort((a,b)=>a.x-b.x);
+    FIXED_LABEL_POS[sorted[0].id]={dx:-11,dy:3,anchor:'end'};
+    FIXED_LABEL_POS[sorted[sorted.length-1].id]={dx:11,dy:3,anchor:'start'};
+    if(sorted.length===3)FIXED_LABEL_POS[sorted[1].id]={dx:0,dy:18,anchor:'middle'};
+  }
   const placedLbl=[];
   visMarkers.forEach(v=>{
+    const fixed=FIXED_LABEL_POS[v.id];
+    if(fixed){
+      v.m.text.setAttribute('text-anchor',fixed.anchor);
+      v.m.text.setAttribute('x',(v.x+fixed.dx).toFixed(1));v.m.text.setAttribute('y',(v.y+fixed.dy).toFixed(1));v.m.text.setAttribute('fill',v.col);
+      v.m.text.textContent=v.label;
+      return;
+    }
+    // Generische Kollisionsvermeidung fuer alle anderen Waehrungen: kollidierende
+    // Labels schrittweise nach oben staffeln statt direkt uebereinander zu zeichnen.
     const halfW=15+v.label.length*2.6;
     let off=-8,collide=true;
     while(collide){
@@ -5444,6 +5501,7 @@ function globeUpdateOne(st){
       }
     }
     placedLbl.push({x:v.x,ly:v.y+off,halfW});
+    v.m.text.setAttribute('text-anchor','middle');
     v.m.text.setAttribute('x',v.x.toFixed(1));v.m.text.setAttribute('y',(v.y+off).toFixed(1));v.m.text.setAttribute('fill',v.col);
     v.m.text.textContent=v.label;
   });
@@ -5492,7 +5550,12 @@ function globeOnPointerUp(ev){
   _globeDrag.host.classList.remove('grabbing');
   _globeDrag=null;
   if(_globeMode==='drag'){
-    _globeVel=Math.max(-0.06,Math.min(0.06,_globeVel)); // Schwung deckeln
+    // Deckel deutlich hoeher als zuvor (war 0.06): vorher wurde praktisch jeder
+    // spuerbare Wisch sofort auf denselben Wert gekappt, wodurch sich schnelle
+    // Bewegungen anfuehlten, als wuerden sie augenblicklich ausgebremst. Jetzt
+    // duerfen schnelle Flicks tatsaechlich schneller starten - das Abklingen
+    // (Math.exp(-dt/1600) oben) sorgt weiterhin fuer ein sanftes, laengeres Auslaufen.
+    _globeVel=Math.max(-0.2,Math.min(0.2,_globeVel)); // Schwung deckeln
     _globeMode='decel';
   }
 }
@@ -5751,12 +5814,13 @@ function recordScoreHist(){
 // der Risk-Sentiment-Karte, aus scoreHist abgeleitet - waechst von selbst um
 // einen Punkt, sobald recordScoreHist() einen neuen Tag erfasst hat.
 const RISK_ON_IDS=['AUD','NZD','SP500','NAS','BTC','DAX'],RISK_OFF_IDS=['JPY','CHF','GOLD'];
+const RISK_HIST_DAYS=60;
 function riskNetHistory(){
   const lookup=id=>{const m={};(scoreHist[id]||[]).forEach(e=>m[e[0]]=e[1]);return m;};
   const onM=RISK_ON_IDS.map(lookup),offM=RISK_OFF_IDS.map(lookup);
   const dset=new Set();
   [...onM,...offM].forEach(m=>Object.keys(m).forEach(d=>dset.add(d)));
-  const dates=[...dset].sort();
+  const dates=[...dset].sort().slice(-RISK_HIST_DAYS);
   return dates.map(d=>{
     const onV=onM.map(m=>m[d]).filter(v=>v!=null),offV=offM.map(m=>m[d]).filter(v=>v!=null);
     const on=onV.length?onV.reduce((a,b)=>a+b,0)/onV.length:0;
@@ -5764,12 +5828,13 @@ function riskNetHistory(){
     return[d,on-off];
   });
 }
-function riskHistChart(col){
+function riskHistChart(col,chartH){
   const pts=riskNetHistory();
   if(!pts.length)return`<div class="risk-hist-empty">Noch keine Verlaufsdaten &ndash; die Linie waechst ab jetzt mit jedem neuen Tag.</div>`;
   let maxAbs=4;pts.forEach(p=>{if(Math.abs(p[1])>maxAbs)maxAbs=Math.abs(p[1]);});
   const scale=Math.ceil(maxAbs),n=pts.length;
-  const leftPad=64,rightPad=16,topPad=14,chartH=120,bottomPad=22,PD=34;
+  chartH=chartH||120;
+  const leftPad=64,rightPad=16,topPad=14,bottomPad=22,PD=34;
   const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
   const yMid=topPad+chartH/2;
   const xOf=i=>leftPad+i*PD+PD/2;
