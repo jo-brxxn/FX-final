@@ -864,7 +864,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0369a1;color:#e0f2fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: BLAU-TRAEGHEIT-1 (Globus: Abklingzeit nach dem Drag-Loslassen verlaengert - der Schwung bremst jetzt deutlich sanfter/laenger Richtung Normaltempo ab statt schnell abzubrechen)</div>
+<div style="flex:none;background:#be123c;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ROT-AMERIKA-1 (Globus: zeigt beim Laden und bei jedem Wechsel zu Dashboard zuerst Amerika; Drag-Abklingzeit nochmals deutlich verlaengert, da vorherige Anpassung noch zu schnell war)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5309,7 +5309,10 @@ function globeSunInfoCached(){
   if(hr!==_globeSunCacheHr){_globeSunCacheHr=hr;_globeSunCache=globeSunInfo();}
   return _globeSunCache;
 }
-let _globeRAF=null,_globeLon=200,_globeLast=0,_globeHosts=[],_globeUid=0;
+// Beim ersten Laden der Seite und bei jedem Wechsel zur Dashboard-Kategorie soll
+// zuerst Amerika zu sehen sein (danach dreht sich der Globus wie gewohnt weiter).
+const GLOBE_HOME_LON=-90;
+let _globeRAF=null,_globeLon=GLOBE_HOME_LON,_globeLast=0,_globeHosts=[],_globeUid=0;
 // Drag-zum-Drehen: 'auto' = normale Rotation, 'drag' = Nutzer zieht gerade,
 // 'decel' = nach dem Loslassen klingt der Schwung Richtung Normaltempo ab.
 const GLOBE_AUTO_VEL=0.004; // Grad/ms im Normalbetrieb
@@ -5501,7 +5504,7 @@ function startGlobes(){
     if(dt>=STEP_MS){
       _globeLast=now;
       if(_globeMode==='decel'){
-        _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/700); // Schwung klingt Richtung Normaltempo ab - langsam statt abrupt
+        _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/1600); // Schwung klingt Richtung Normaltempo ab - spuerbar lang und sanft statt abrupt
         if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
         _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
       }else if(_globeMode==='auto'){
@@ -6514,7 +6517,7 @@ function showTab(tab,btn,fxMode){
   curPage=tab;
   activeTabId=tabIdFor(tab,tab==='cur'?curFxMode:fxMode);
   renderTabBar();
-  if(tab==='dash')renderDash();
+  if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
   else if(tab==='mx')renderMatrix();
