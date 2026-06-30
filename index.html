@@ -874,7 +874,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7e22ce;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT-MODAL-1 (History (🕰️) oeffnet jetzt ein echtes Modal-Fenster statt Inline-Ausklappen, inkl. Actual/Forecast/Previous pro Event. Globus: erster Render komplett in einem Zug (kein Nachladen mehr), ~5x mehr Stadtlichter nachts, per Drag/Touch selbst drehbar - laeuft nach Loslassen mit Schwung aus und faengt sich sanft wieder im normalen Auto-Tempo. Kalender-Tab: News oben jetzt nach Waehrung in nebeneinanderliegenden Spalten (zeitsortiert, je Spalte Actual/Forecast), nur Waehrungen mit echten Events bekommen eine Spalte, alle gleichmaessig in der Breite verteilt)</div>
+<div style="flex:none;background:#7e22ce;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT-MODAL-1 (History (🕰️) oeffnet jetzt ein echtes Modal-Fenster statt Inline-Ausklappen, inkl. Actual/Forecast/Previous pro Event. Globus: erster Render komplett in einem Zug (kein Nachladen mehr), ~5x mehr Stadtlichter nachts, per Drag/Touch selbst drehbar - laeuft nach Loslassen mit Schwung aus und faengt sich sanft wieder im normalen Auto-Tempo. Dashboard Mini-Kalender: Events jetzt nach Waehrung in nebeneinanderliegenden Spalten (zeitsortiert, je Spalte Actual/Forecast), nur Waehrungen mit echten Events bekommen eine Spalte, alle gleichmaessig in der Breite verteilt)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -4462,7 +4462,7 @@ function renderCalendar(){
   if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
-  el.innerHTML=calColumnsHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
+  el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
 function addCalEv(){
   const name=document.getElementById('evName').value.trim();
   const date=document.getElementById('evDate').value;
@@ -5126,7 +5126,7 @@ function renderDash(){
     }else if(w.type==='mini_calendar'){
       let mc=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
       if(calHighOnly)mc=mc.filter(ev=>evtImpact(ev)==='high');
-      content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calTableHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
+      content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calColumnsHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
