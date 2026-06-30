@@ -100,9 +100,9 @@
   },
   "Unemployment Rate": {
    "actual": "2.5%",
-   "forecast": "2.7%",
+   "forecast": "2.5%",
    "previous": "2.5%",
-   "date": "2026-05-28",
+   "date": "2026-06-29",
    "event": "Unemployment Rate",
    "period": null
   },
@@ -290,8 +290,8 @@
    "actual": "0.6%",
    "forecast": "0.6%",
    "previous": "0.1%",
-   "date": "2026-05-14",
-   "event": "GDP Growth Rate QoQ Prel",
+   "date": "2026-06-30",
+   "event": "GDP Growth Rate QoQ Final",
    "period": "q/q"
   }
  },
@@ -437,7 +437,7 @@
   "Retail Sales": {
    "actual": "1%",
    "forecast": "0.3%",
-   "previous": "1.2%",
+   "previous": "1%",
    "date": "2026-06-04",
    "event": "Retail Sales YoY",
    "period": "y/y"
