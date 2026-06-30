@@ -149,7 +149,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .nt-mv:disabled{opacity:.3;cursor:default}
 @media(hover:hover){.nt-mv:not(:disabled):hover{color:var(--ntc)}}
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
-.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}
+.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}.cfg-gear.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.14);color:var(--blue)}
 /* Asset-Einstellungen-Modal */
 .acfg-sec{margin:14px 0 4px;font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
 .acfg-hint{font-size:11px;color:var(--t3);margin:2px 0 8px;line-height:1.5}
@@ -520,9 +520,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
+.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:6px}
 .globe-sess-badge{padding:2px 7px;border-radius:10px;border:1px solid var(--bd);color:var(--t3);background:var(--bg3);opacity:.55}
 .globe-sess-badge.on{opacity:1;border-color:currentColor}
+.sess-bar{margin-top:10px;padding:0 2px}
+.sess-track{position:relative;height:7px;border-radius:5px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--bd)}
+.sess-seg{position:absolute;top:0;bottom:0;border-radius:5px;opacity:.4}
+.sess-seg.on{opacity:.85}
+.sess-now{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--t0);border:2px solid var(--bg1);transform:translate(-50%,-50%);box-shadow:0 0 0 2px rgba(var(--blue-rgb),.35)}
+.sess-hours{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
 .globe-tip b{font-size:12.5px}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
@@ -606,7 +612,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
 .evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
 /* ── HISTORY STRIP (DETAIL PAGE, letzte 10 Tage) ── */
-.hist-strip{display:flex;gap:4px;padding:9px 8px;background:var(--bg2);border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--rs) var(--rs);overflow-x:auto}
+.hist-strip{display:flex;gap:4px;padding:9px 8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto}
 .hist-day{flex:1 0 0;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
 .hist-wd{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.3px}
 .hist-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3,#1c2533);border:1px solid var(--bd2)}
@@ -837,7 +843,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#e0fcff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: HISTORY-1 (Feature: Neue einklappbare "History (10D)"-Leiste auf jeder Asset-Detailseite - zeigt die letzten 10 Tage als Punkte, faerbt jeden Tag mit Veroeffentlichung in der bestehenden Bias-Farbe je nach Beat/Miss ggue. Forecast ein (sonst leer/grau), Klartext-Tooltip pro Tag. Dafuer haelt der Kalender Events jetzt 10 statt 2 Tage rueckwirkend vor (CAL_PAST_DAYS/FF_PAST_DAYS))</div>
+<div style="flex:none;background:#9333ea;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GLOBE-PERF-1 (Fix: Globus-Redraw drastisch gedrosselt (alle ~600ms statt ~35x/Sek) - behebt UI-Blockade beim Tab-Wechsel. Sonnenstand fuer Tag/Nacht-Schattierung wird nur noch stuendlich neu berechnet. Pulsierende Ringe um Waehrungs-Marker & Session-Ringe auf dem Globus entfernt (nur noch statischer Punkt+Label). Nordamerika-Landmasse korrigiert/vervollstaendigt, damit USD/CAD nicht mehr im Wasser stehen. Trading-Sessions jetzt als 24h-Leiste mit wanderndem "Jetzt"-Punkt unter dem Globus (Update alle 30 Min) statt reiner Text-Badges. History-Button (🕰️) liegt jetzt direkt neben dem Zahnrad-Symbol auf der Asset-Detailseite)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3461,13 +3467,6 @@ function renderDetail(){
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showGreenFlag:true,showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
-    <div class="evt-section">
-      <div class="evt-toggle${histOpen?' open':''}" onclick="toggleHistSection('${c.id}')">
-        <span>🕘 HISTORY (${HIST_DAYS}D)</span>
-        <span class="evt-tog-arrow">▶</span>
-      </div>
-      ${histOpen?`<div class="hist-strip">${renderSymHistory(c.id)}</div>`:''}
-    </div>
     <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs-row">
@@ -3476,8 +3475,10 @@ function renderDetail(){
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
       </div>
       <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
+      <button class="cfg-gear${histOpen?' on':''}" onclick="toggleHistSection('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
     </div>
+    ${histOpen?`<div class="evt-section"><div class="hist-strip">${renderSymHistory(c.id)}</div></div>`:''}
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
@@ -4926,15 +4927,15 @@ function renderDash(){
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
     if(w.type==='globe'){
-      // Marker, Terminator, Nachtlichter & Sessions werden live per startGlobes() gezeichnet; hier nur Host + Legende.
-      const activeS=activeSessions();
+      // Marker, Terminator & Nachtlichter werden live per startGlobes() gezeichnet; hier nur Host + Legende.
+      // Die Sessions-Leiste aktualisiert sich unabhaengig davon per startSessionBar() alle 30 Minuten.
       content=`<div class="globe-host"></div>
         <div class="globe-legend">
           <span><i style="background:${BC.bull}"></i>Bullish</span>
           <span><i style="background:${BC.neu}"></i>Neutral</span>
           <span><i style="background:${BC.bear}"></i>Bearish</span>
         </div>
-        <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col}">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>`;
+        ${sessionBarHtml()}`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
@@ -5036,6 +5037,7 @@ function renderDash(){
     </div>`;}).join('');
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
+  startSessionBar();
 }
 // Die Kalender-Hoehe wird jetzt via CSS (flex:1 auf .cal-scroll) gesteuert.
 // Die Karte dehnt sich per Grid auf die Hoehe der laengsten Karte in der Zeile aus,
@@ -5062,7 +5064,7 @@ const GLOBE_LAT0=18*Math.PI/180; // leichte Nordneigung der Blickachse
 // Stark vereinfachte Kontinent-Umrisse (grobe Polygone, keine exakten Laendergrenzen) -
 // reichen aus, damit die Kugel wie ein Globus statt einer leeren Kugel aussieht.
 const GLOBE_LAND=[
-  [[71,-156],[70,-128],[60,-95],[58,-78],[50,-60],[45,-66],[40,-74],[32,-80],[25,-97],[18,-95],[16,-92],[14,-91],[8,-78],[9,-82],[15,-83],[20,-87],[25,-80],[30,-81],[35,-76],[40,-73],[45,-67],[50,-56],[52,-79],[58,-94],[63,-90],[68,-117],[70,-149],[71,-156]],
+  [[71,-156],[66,-163],[60,-165],[56,-159],[58,-152],[55,-133],[50,-128],[48,-124],[44,-124],[38,-123],[34,-120],[28,-114],[23,-110],[20,-105],[17,-101],[15,-93],[13,-88],[10,-84],[8,-79],[9,-77],[12,-83],[15,-87],[18,-88],[21,-87],[22,-97],[26,-97],[29,-94],[29,-89],[30,-85],[25,-80],[28,-80],[32,-81],[36,-76],[40,-74],[42,-70],[44,-67],[45,-61],[47,-53],[54,-57],[60,-65],[66,-70],[70,-90],[70,-110],[71,-130],[71,-156]],
   [[12,-72],[10,-65],[5,-60],[2,-50],[-2,-44],[-8,-35],[-15,-39],[-23,-43],[-30,-50],[-34,-58],[-38,-62],[-42,-65],[-50,-69],[-55,-68],[-52,-74],[-45,-73],[-38,-73],[-30,-71],[-20,-70],[-15,-75],[-5,-81],[2,-78],[5,-77],[8,-78],[12,-72]],
   [[37,10],[33,11],[31,25],[31,32],[22,38],[12,43],[10,51],[0,42],[-12,40],[-20,35],[-26,33],[-34,19],[-30,17],[-22,14],[-17,11],[-12,13],[-4,9],[4,8],[6,3],[5,-4],[6,-10],[12,-17],[16,-16],[21,-17],[27,-13],[31,-9],[35,-6],[37,10]],
   [[71,28],[69,33],[60,30],[55,38],[45,38],[41,29],[40,20],[38,15],[40,9],[43,3],[36,-6],[43,-9],[48,-5],[50,2],[53,8],[55,8],[58,11],[60,5],[63,8],[66,13],[70,20],[71,28]],
@@ -5088,6 +5090,37 @@ const GLOBE_SESSIONS=[
 ];
 function sessionActiveNow(s,hr){return s.start<s.end?(hr>=s.start&&hr<s.end):(hr>=s.start||hr<s.end);}
 function activeSessions(){const hr=new Date().getUTCHours()+new Date().getUTCMinutes()/60;return GLOBE_SESSIONS.filter(s=>sessionActiveNow(s,hr));}
+// 24h-Leiste statt reiner Text-Badges: ein Punkt wandert entlang der Stunden und
+// zeigt, wo der Tag gerade steht; Sessions sind als farbige Segmente eingezeichnet
+// (Sessions, die ueber Mitternacht laufen wie Sydney, werden in 2 Segmente gesplittet).
+function sessionBarHtml(){
+  const now=new Date();
+  const hr=now.getUTCHours()+now.getUTCMinutes()/60;
+  const nowPct=(hr/24*100).toFixed(2);
+  const activeS=activeSessions();
+  const segs=[];
+  GLOBE_SESSIONS.forEach(s=>{
+    if(s.start<s.end)segs.push({s,a:s.start,b:s.end});
+    else{segs.push({s,a:s.start,b:24});segs.push({s,a:0,b:s.end});}
+  });
+  const segHtml=segs.map(({s,a,b})=>`<div class="sess-seg${activeS.includes(s)?' on':''}" style="left:${(a/24*100).toFixed(2)}%;width:${((b-a)/24*100).toFixed(2)}%;background:${s.col}"></div>`).join('');
+  const hh=String(now.getUTCHours()).padStart(2,'0'),mm=String(now.getUTCMinutes()).padStart(2,'0');
+  return`<div class="sess-bar">
+    <div class="sess-track">${segHtml}<div class="sess-now" style="left:${nowPct}%" title="${hh}:${mm} UTC"></div></div>
+    <div class="sess-hours"><span>00</span><span>06</span><span>12</span><span>18</span><span>24 UTC</span></div>
+    <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col}">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>
+  </div>`;
+}
+let _sessBarTimer=null;
+function stopSessionBar(){if(_sessBarTimer){clearInterval(_sessBarTimer);_sessBarTimer=null;}}
+function startSessionBar(){
+  stopSessionBar();
+  if(curPage!=='dash'||!document.querySelector('.sess-bar'))return;
+  _sessBarTimer=setInterval(()=>{
+    if(curPage!=='dash'){stopSessionBar();return;}
+    document.querySelectorAll('.sess-bar').forEach(el=>{el.outerHTML=sessionBarHtml();});
+  },30*60*1000);
+}
 // Sonnenstand (deklination + Sub-Sonnen-Laengengrad) rein aus aktueller UTC-Zeit/Datum -
 // keine externen Daten noetig, treibt Tag/Nacht-Schattierung und Nachtlichter.
 function globeSunInfo(){
@@ -5098,6 +5131,14 @@ function globeSunInfo(){
   const utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
   let lonS=(12-utcH)*15;while(lonS>180)lonS-=360;while(lonS<-180)lonS+=360;
   return{decl:declDeg*Math.PI/180,lonS};
+}
+// Sonnenstand nur einmal pro Stunde neu berechnen (statt bei jedem Redraw) -
+// Tag/Nacht-Schattierung & Stadtlichter aendern sich dadurch nur stuendlich.
+let _globeSunCache=null,_globeSunCacheHr=-1;
+function globeSunInfoCached(){
+  const hr=Math.floor(Date.now()/3600000);
+  if(hr!==_globeSunCacheHr){_globeSunCacheHr=hr;_globeSunCache=globeSunInfo();}
+  return _globeSunCache;
 }
 let _globeRAF=null,_globeLon=200,_globeLast=0;
 function stopGlobe(){if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}}
@@ -5150,35 +5191,15 @@ function globeCityLightsSVG(cx,cy,R,decl,lonS,lon0){
   });
   return out;
 }
-// Pulswerte werden direkt aus der Wanduhrzeit berechnet statt per SMIL <animate> -
-// dadurch bleibt die Animation nahtlos/ruckelfrei, auch wenn die Kugel-SVG bei jeder
-// Rotation komplett neu aufgebaut wird (kein Neustart der Animation bei jedem Redraw).
-function globeSawPhase(durSec){const t=performance.now()/1000;return(t%durSec)/durSec;}
-function globeTriPhase(durSec){const ph=globeSawPhase(durSec);return ph<0.5?ph*2:(1-ph)*2;}
-function globeSessionRingsSVG(cx,cy,R,lon0,sessions){
-  let out='';
-  const tri=globeTriPhase(2.4);
-  const r=(7+tri*5).toFixed(1),op=(0.85-0.7*tri).toFixed(2);
-  sessions.forEach(s=>{
-    s.ccys.forEach(id=>{
-      const geo=GLOBE_GEO[id];if(!geo)return;
-      const p=globeProject(geo[0],geo[1],lon0,R);if(!p.vis)return;
-      out+=`<circle cx="${(cx+p.x).toFixed(1)}" cy="${(cy+p.y).toFixed(1)}" r="${r}" fill="none" stroke="${s.col}" stroke-width="1.3" opacity="${op}"/>`;
-    });
-  });
-  return out;
-}
 function globeSVG(size){
   const R=size/2-16,cx=size/2,cy=size/2;
-  const{decl,lonS}=globeSunInfo();
-  const sessions=activeSessions();
+  const{decl,lonS}=globeSunInfoCached();
   let grid='';
-  for(let lon=-180;lon<180;lon+=30){const pts=[];for(let lat=-90;lat<=90;lat+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
-  for(let lat=-60;lat<=60;lat+=30){const pts=[];for(let lon=-180;lon<=180;lon+=4)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
+  for(let lon=-180;lon<180;lon+=30){const pts=[];for(let lat=-90;lat<=90;lat+=6)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
+  for(let lat=-60;lat<=60;lat+=30){const pts=[];for(let lon=-180;lon<=180;lon+=6)pts.push(globeProject(lat,lon,_globeLon,R));grid+=globeGridPath(pts,cx,cy);}
   const land=globeLandSVG(cx,cy,_globeLon,R);
   const cities=globeCityLightsSVG(cx,cy,R,decl,lonS,_globeLon);
   const night=globeNightOverlaySVG(cx,cy,R,decl,lonS,_globeLon);
-  const sessRings=globeSessionRingsSVG(cx,cy,R,_globeLon,sessions);
   let markers='';
   Object.keys(GLOBE_GEO).forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym)return;
@@ -5186,10 +5207,7 @@ function globeSVG(size){
     if(!p.vis)return;
     const x=(cx+p.x),y=(cy+p.y),col=BC[sym.bias]||'#888',sc=symScore(sym);
     const scTxt=(sc>0?'+':'')+(Math.round(sc*10)/10);
-    const pulseDur=Math.max(0.8,2.6-Math.min(1,Math.abs(sc)/5)*1.6);
-    const pp=globeSawPhase(pulseDur),pr=(4.5+pp*4.5).toFixed(1),po=(0.7*(1-pp)).toFixed(2);
     markers+=`<g style="cursor:pointer" onclick="globeMarkerClick(event,'${id}')">`+
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pr}" fill="none" stroke="${col}" stroke-width="1.2" opacity="${po}"/>`+
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="#04101c" stroke-width="1"/>`+
       `<text x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${col}" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace">${id} ${scTxt}</text></g>`;
   });
@@ -5198,7 +5216,7 @@ function globeSVG(size){
       <stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/>
     </radialGradient></defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#globeGrad)" stroke="var(--bd2)" stroke-width="1"/>
-    ${land}${grid}${cities}${night}${sessRings}${markers}
+    ${land}${grid}${cities}${night}${markers}
   </svg>`;
 }
 function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
@@ -5223,11 +5241,18 @@ function startGlobes(){
   stopGlobe();
   if(curPage!=='dash'||!document.querySelector('.globe-host'))return;
   _globeLast=performance.now();
+  // Die Kugel wird einmal komplett aufgebaut und dreht sich danach nur noch in
+  // groben Schritten weiter (statt ~35x/Sek komplett neu zu rendern) - das volle
+  // SVG (Grid+Land+Lichter+Marker) bei jedem Frame neu zu bauen+per innerHTML zu
+  // ersetzen war zu teuer und blockierte spuerbar die restliche UI (Tab-Wechsel etc).
+  // requestAnimationFrame bleibt nur als Taktgeber aktiv, der eigentliche Redraw
+  // passiert hoechstens alle GLOBE_REDRAW_MS.
+  const GLOBE_REDRAW_MS=600;
   const frame=now=>{
     const hosts=[...document.querySelectorAll('.globe-host')];
     if(curPage!=='dash'||!hosts.length){stopGlobe();return;}
     const dt=now-_globeLast;
-    if(dt>=28){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
+    if(dt>=GLOBE_REDRAW_MS){_globeLon=(_globeLon+dt*0.009)%360;_globeLast=now;
       hosts.forEach(h=>{const s=Math.max(170,Math.min(h.clientWidth||240,360));h.innerHTML=globeSVG(s)+(h.querySelector('.globe-tip')?h.querySelector('.globe-tip').outerHTML:'');});}
     _globeRAF=requestAnimationFrame(frame);
   };
