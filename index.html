@@ -548,6 +548,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .risk-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-lbl{text-align:center;font-size:21px;font-weight:800;margin-top:10px;letter-spacing:1.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-sub{text-align:center;font-size:11px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-calc b{color:var(--t2)}
 /* Asset Heatmap */
 .heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
 .heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
@@ -608,8 +610,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* Nur Waehrungen mit tatsaechlichen Events bekommen eine Spalte; alle Spalten teilen
    sich die Breite gleichmaessig (flex:1), Luecken links/rechts bleiben dadurch gleich
    gross egal wie viele Spalten gerade da sind. */
-.cal-ccycols{display:flex;align-items:flex-start;gap:10px}
-.cal-ccycol{flex:1 1 0;min-width:0;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
+.cal-ccycols{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+.cal-ccycol{flex:1 1 150px;min-width:150px;max-width:260px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
 .cal-ccycol-hdr{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
 .cal-ccycol-cnt{color:var(--t3);font-weight:600;font-size:10.5px;margin-left:auto}
 .cal-ccycol-body .cal-table{border:none;border-radius:0;margin-bottom:0}
@@ -874,7 +876,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: AMBER-SONNE-1 (Globus: Europa/Italien/Balkan-Polygon repariert, keine Festland-Luecken mehr; gelber Tag-Glanz + oranger Terminator-Ring ergaenzt. Waehrungsspalten von Mini-Kalender zur ersten High-Impact-Karte "Today" verschoben, Mini-Kalender wieder Liste. History-Modal zeigt jetzt expliziten Score-Delta je Event (+1/-1/0))</div>
+<div style="flex:none;background:#0f766e;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: TEAL-WRAP-1 (Risk-Sentiment-Karte: Berechnungs-Erklaerung direkt unter dem Gauge ergaenzt. Today-Karte: Waehrungsspalten brechen jetzt in eine neue Zeile um statt sich zu ueberlappen, wenn an einem Tag viele Hoch-Impact-Events fuer viele Waehrungen anstehen)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5128,6 +5130,7 @@ function renderDash(){
         <div class="risk-ends"><span>◀ Risk-off (safe havens)</span><span>Risk-on ▶</span></div>
         <div class="risk-lbl" style="color:${col}">${lbl}</div>
         <div class="risk-sub">Risk assets ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Safe havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
+        <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
     }else if(w.type==='asset_heatmap'){
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
