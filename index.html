@@ -874,7 +874,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#7e22ce;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: VIOLETT-MODAL-1 (History (🕰️) oeffnet jetzt ein echtes Modal-Fenster statt Inline-Ausklappen, inkl. Actual/Forecast/Previous pro Event. Globus: erster Render komplett in einem Zug (kein Nachladen mehr), ~5x mehr Stadtlichter nachts, per Drag/Touch selbst drehbar - laeuft nach Loslassen mit Schwung aus und faengt sich sanft wieder im normalen Auto-Tempo. Dashboard Mini-Kalender: Events jetzt nach Waehrung in nebeneinanderliegenden Spalten (zeitsortiert, je Spalte Actual/Forecast), nur Waehrungen mit echten Events bekommen eine Spalte, alle gleichmaessig in der Breite verteilt)</div>
+<div style="flex:none;background:#9d174d;color:#fce7f3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK-KONTRAST-1 (Globus: Land-Umrandung abgeschwaecht, damit Flaeche+Kontur als EIN zusammenhaengendes Bild wirken statt erst Umriss/dann Fuellung. Stadtlichter komplett entfernt. Tag/Nacht-Kontrast deutlich verstaerkt mit weichem, mehrstufigem Verlauf fuer einen guten Uebergang)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -5210,29 +5210,6 @@ const GLOBE_LAND=[
   // Madagaskar
   [[-12,49],[-16,50],[-22,48],[-25,46],[-23,44],[-18,44],[-13,48],[-12,49]]
 ];
-// Kuratierte Liste von Staedten fuer den "Nachtlichter"-Effekt auf der dunklen Hemisphaere
-// (Mix aus Metropolen und kleineren Staedten, damit das Lichtermuster dichter/realistischer wirkt).
-const GLOBE_CITIES_BASE=[[51.5,-0.13],[48.85,2.35],[52.52,13.4],[40.42,-3.7],[41.9,12.5],[55.75,37.6],[41.0,28.9],[30.0,31.2],[6.5,3.4],[-26.2,28.0],[-1.3,36.8],[25.2,55.3],[24.7,46.7],[19.07,72.87],[28.6,77.2],[13.75,100.5],[1.35,103.8],[-6.2,106.8],[14.6,121.0],[22.3,114.2],[31.2,121.5],[39.9,116.4],[37.5,127.0],[35.68,139.7],[34.7,135.5],[-33.9,151.2],[-37.8,145.0],[-36.85,174.76],[21.3,-157.85],[34.05,-118.24],[37.77,-122.42],[19.43,-99.13],[40.71,-74.0],[41.88,-87.63],[43.65,-79.38],[-23.55,-46.63],[-22.9,-43.2],[-34.6,-58.38],[4.71,-74.07],[-12.05,-77.04],[49.28,-123.12],[50.1,8.68],[52.37,4.9],[47.37,8.54],[59.33,18.07],[52.23,21.01],[48.21,16.37],[37.98,23.73],[38.72,-9.14],[53.35,-6.26],[50.85,4.35],[50.45,30.52],[35.69,51.39],[24.86,67.0],[31.55,74.34],[23.81,90.41],[3.14,101.69],[10.82,106.63],[25.03,121.57],[-31.95,115.86],[-33.92,18.42],[33.57,-7.59],[5.6,-0.19],[25.29,51.53],[32.08,34.78],[39.74,-104.99],[29.76,-95.37],[25.76,-80.19],[47.61,-122.33],[33.75,-84.39],[45.5,-73.57],[-33.45,-70.65],[10.48,-66.9],
-  [45.46,9.19],[41.39,2.17],[55.95,-3.19],[50.08,14.44],[47.5,19.04],[44.83,-0.58],[51.45,-2.59],[53.55,10.0],[45.76,4.84],[59.91,10.75],[60.17,24.94],[64.15,-21.94],[46.95,7.45],[49.45,11.07],[42.7,23.32],[44.43,26.1],[39.93,32.86],[36.81,10.18],[34.02,-6.84],[15.5,32.56],[9.03,38.74],[-4.32,15.31],[-1.95,30.06],[33.89,35.5],[31.95,35.93],[29.37,47.98],[26.23,50.59],[23.59,58.41],[15.35,44.21],[34.55,69.21],[33.72,73.04],[27.7,85.32],[16.84,96.17],[21.03,105.85],[11.56,104.92],[7.87,98.4],[4.21,101.97],[14.6,120.98],[-8.65,115.22],[10.82,106.63],[35.18,129.08],[43.06,141.35],[26.1,119.3],[30.57,104.07],[22.54,114.06],[25.04,121.56],[13.74,100.49],[1.29,103.85],[19.08,72.88],[22.57,88.36],[12.97,77.59],[17.39,78.49],[24.71,46.68],[30.04,31.24],[33.31,44.36],[35.69,51.39],[41.71,44.78],[40.41,49.87],[55.0,82.94],[56.84,60.6],[48.0,37.8],[50.45,30.52],[52.23,21.01],[59.33,18.07],[64.84,-147.72],[61.22,-149.9],[39.74,-104.99],[36.17,-115.14],[32.78,-96.8],[29.95,-90.07],[42.36,-71.06],[38.91,-77.04],[45.42,-75.7],[53.55,-113.49],[19.43,-99.13],[20.97,-89.62],[10.49,-66.88],[-0.19,-78.47],[-16.5,-68.15],[-15.78,-47.93],[-25.43,-49.27],[-31.42,-64.18],[-12.06,-77.04],[-33.45,-70.65],[-34.93,-56.16],[-25.29,-57.65]
-];
-// Aus jeder Basis-Stadt werden zusaetzlich ein paar eng gestreute "Vorstadt"-Lichter
-// generiert (deterministischer Pseudo-Zufall ueber den Index, damit das Muster bei
-// jedem Laden gleich bleibt) - dadurch wirkt die Nachtseite deutlich dichter/realistischer,
-// statt nur ~159 isolierte Einzelpunkte zu zeigen.
-function globeSeeded(i){const x=Math.sin(i*12.9898)*43758.5453;return x-Math.floor(x);}
-const GLOBE_CITIES=(()=>{
-  const out=[];
-  GLOBE_CITIES_BASE.forEach(([lat,lon],ci)=>{
-    out.push([lat,lon]);
-    const n=3+Math.floor(globeSeeded(ci*7+1)*4); // 3-6 zusaetzliche Lichter je Stadt
-    for(let k=0;k<n;k++){
-      const r1=globeSeeded(ci*31+k*5+2),r2=globeSeeded(ci*53+k*7+3);
-      const dLat=(r1-0.5)*3.2,dLon=(r2-0.5)*4.2;
-      out.push([+(lat+dLat).toFixed(2),+(lon+dLon).toFixed(2)]);
-    }
-  });
-  return out;
-})();
 // FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
 const GLOBE_SESSIONS=[
   {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
@@ -5292,7 +5269,7 @@ function globeSunInfoCached(){
   if(hr!==_globeSunCacheHr){_globeSunCacheHr=hr;_globeSunCache=globeSunInfo();}
   return _globeSunCache;
 }
-let _globeRAF=null,_globeLon=200,_globeLast=0,_globeHosts=[],_globeUid=0,_globeFrameN=0;
+let _globeRAF=null,_globeLon=200,_globeLast=0,_globeHosts=[],_globeUid=0;
 // Drag-zum-Drehen: 'auto' = normale Rotation, 'drag' = Nutzer zieht gerade,
 // 'decel' = nach dem Loslassen klingt der Schwung Richtung Normaltempo ab.
 const GLOBE_AUTO_VEL=0.004; // Grad/ms im Normalbetrieb
@@ -5325,18 +5302,20 @@ function globeSkeleton(size,uid){
   const gid='gGrad'+uid,nid='gNight'+uid;
   const grid=(GLOBE_MERIDIANS.length+GLOBE_PARALLELS.length);
   let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>';
-  let land='';GLOBE_LAND.forEach((poly,i)=>{const light=42+(i%4)*5;land+=`<path fill="hsl(208,22%,${light}%)" stroke="hsl(206,38%,${light+20}%)" stroke-width="0.6" stroke-opacity="0.5" opacity="0.85"/>`;});
-  let cities='';GLOBE_CITIES.forEach((c,i)=>{cities+=`<circle r="${i%5===0?1.15:0.75}" fill="${i%3===0?'#bfe4ff':'#f3fbff'}" opacity="0"/>`;});
+  // Fuellung + Umrandung jedes Land-Polygons in EINEM <path> (fill+stroke werden vom
+  // Browser immer zusammen in einem Schritt gemalt) - Umrandung bewusst nur leicht
+  // heller als die Fuellung, damit sie nicht staerker wirkt als die Flaeche selbst
+  // (sonst sieht es aus, als wuerde zuerst nur die Kontur und danach die Flaeche erscheinen).
+  let land='';GLOBE_LAND.forEach((poly,i)=>{const light=42+(i%4)*5;land+=`<path fill="hsl(208,22%,${light}%)" stroke="hsl(206,30%,${light+8}%)" stroke-width="0.5" stroke-opacity="0.35" opacity="0.85"/>`;});
   let markers='';Object.keys(GLOBE_GEO).forEach(id=>{markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;});
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
       <radialGradient id="${gid}" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/></radialGradient>
-      <radialGradient class="gl-nightgrad" id="${nid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#000814" stop-opacity="0.62"/><stop offset="55%" stop-color="#000814" stop-opacity="0.28"/><stop offset="100%" stop-color="#000814" stop-opacity="0"/></radialGradient>
+      <radialGradient class="gl-nightgrad" id="${nid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#00040a" stop-opacity="0.92"/><stop offset="38%" stop-color="#00040a" stop-opacity="0.72"/><stop offset="68%" stop-color="#00040a" stop-opacity="0.3"/><stop offset="100%" stop-color="#00040a" stop-opacity="0"/></radialGradient>
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})" stroke="var(--bd2)" stroke-width="1"/>
     <g data-layer="land">${land}</g>
     <g data-layer="grid">${gridP}</g>
-    <g data-layer="cities">${cities}</g>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${nid})"/>
     <g data-layer="markers">${markers}</g>
   </svg>`;
@@ -5349,7 +5328,6 @@ function globeCollectRefs(host,size){
     host,R:size/2-16,cx:size/2,cy:size/2,
     gridPaths:[...svg.querySelector('[data-layer="grid"]').children],
     landPaths:[...svg.querySelector('[data-layer="land"]').children],
-    cityCircles:[...svg.querySelector('[data-layer="cities"]').children],
     nightGrad:svg.querySelector('.gl-nightgrad'),
     markers
   };
@@ -5370,19 +5348,6 @@ function globeUpdateOne(st){
     const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
     st.nightGrad.setAttribute('cx',(50+(nx/R)*46).toFixed(1)+'%');
     st.nightGrad.setAttribute('cy',(50+(ny/R)*46).toFixed(1)+'%');
-  }
-  // Stadtlichter nur jeden 3. Frame neu setzen (winzige Punkte, Kostenbremse)
-  if(_globeFrameN%3===0){
-    GLOBE_CITIES.forEach(([lat,lon],i)=>{
-      const c=st.cityCircles[i];
-      const fr=lat*Math.PI/180,dl=(lon-lonS)*Math.PI/180;
-      const cosZ=Math.sin(fr)*Math.sin(decl)+Math.cos(fr)*Math.cos(decl)*Math.cos(dl);
-      if(cosZ>-0.04){c.style.display='none';return;}
-      const p=globeProject(lat,lon,lon0,R);if(!p.vis){c.style.display='none';return;}
-      c.style.display='';
-      c.setAttribute('cx',(cx+p.x).toFixed(1));c.setAttribute('cy',(cy+p.y).toFixed(1));
-      c.setAttribute('opacity',Math.max(0.25,Math.min(1,-cosZ*1.6)).toFixed(2));
-    });
   }
   // Marker (Waehrungspunkt + Label)
   Object.keys(GLOBE_GEO).forEach(id=>{
@@ -5477,7 +5442,7 @@ function startGlobes(){
     if(curPage!=='dash'||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
     const dt=now-_globeLast;
     if(dt>=STEP_MS){
-      _globeLast=now;_globeFrameN++;
+      _globeLast=now;
       if(_globeMode==='decel'){
         _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/350); // Schwung klingt Richtung Normaltempo ab
         if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
