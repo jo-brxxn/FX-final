@@ -868,7 +868,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ORANGE-FEINSCHLIFF-4 (Trends tab: asset filter now grouped by Currencies/Commodities/Crypto/Indices, plus a dedicated "Pair" button opening two dropdowns to compare a custom currency pair - chart lines are now colored by current bias once filtered to a single asset or pair; full pass over the whole app to make sure every visible label/tooltip/message is in English)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GRUEN-FEINSCHLIFF-5 (Rubric cards: a manual bias click now only sticks until that card's score actually changes - once an indicator gets a new value, it snaps back to auto (<=-2 bearish, >=2 bullish, else neutral), same pattern indicators already use; Trends tab: asset filter grouped by Currencies/Commodities/Crypto/Indices plus a dedicated "Pair" button for custom currency pairs, chart lines colored by current bias once filtered; full pass over the whole app so every visible label/tooltip/message is in English)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1902,7 +1902,9 @@ function processCalEvts(){
     return true;
   });
   if(inbox.length!==beforeInbox)changed=true;
-  if(syncIndicatorBiases())changed=true;
+  // Wenn sich hier Indikator-Bias aendert, muss auch die Rubrik-Karte neu
+  // eingestuft werden (score-abhaengige Karten-Bias, siehe recomputeAuto).
+  if(syncIndicatorBiases()){changed=true;recomputeAuto();}
   if(syncIndNotifs())changed=true;
   // Sicherheitskappe: höchstens 60 Benachrichtigungen behalten (neueste zuerst).
   if(inbox.length>60){inbox=inbox.slice(0,60);changed=true;}
@@ -4007,7 +4009,7 @@ function pullMacroFromCcy(sym){
     });
   });
 }
-function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
@@ -4321,9 +4323,46 @@ function recomputeAllPairBiases(){
   });
 }
 
-// Vollstaendige automatische Neuberechnung: erst Symbol-Bias aus Score,
-// dann Paar-Bias aus Paar-Score, dann Auto-Einsortierung der Paare.
-function recomputeAuto(){deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+// A manual click on a rubric's bias buttons (setRubBias) should only stick
+// until the rubric's underlying score actually changes - not forever. rub.
+// _biasScore remembers the score the CURRENT bias (manual or auto) was set
+// at; as long as rubScore(rub) still matches it, the bias is left alone (this
+// is what makes a manual override "stick"). The moment the score differs
+// (an indicator got a new value, weight changed, etc.), the bias is
+// re-derived from the score threshold (<=-2 bearish, >=2 bullish, else
+// neutral) and the pin moves to the new score - so a manual pick is only ever
+// good for the score it was made at, exactly like the existing indicator-
+// level auto-bias (autoEvId) is only good until the next real data release.
+// Excluded: "COT Data" already has its own bespoke threshold (see
+// applyCotDataFeed, which only has one score-driving indicator so the normal
+// +/-2 threshold would never trigger), and macro-mirrored rubrics on non-FX
+// assets (see deriveMacroBiasAll) always take their bias 1:1 from the linked
+// FX currency instead of deriving it from their own score.
+function rubAutoBiasNeeded(sym,rub){
+  if(rub.name==='COT Data')return false;
+  if(isNonFx(sym.id)&&macroCcyFor(sym.id)){
+    const rule=effDeriveRules(sym)[rub.name];
+    if(rule==='same'||rule==='inverse')return false;
+  }
+  return true;
+}
+function recomputeRubricAutoBias(){
+  syms.forEach(sym=>{
+    (sym.rubrics||[]).forEach(rub=>{
+      if(!rub.indicators||!rubAutoBiasNeeded(sym,rub))return;
+      const sc=rubScore(rub);
+      if(rub._biasScore!==sc){
+        rub.bias=sc<=-2?'bear':sc>=2?'bull':'neu';
+        rub._biasScore=sc;
+      }
+    });
+  });
+}
+
+// Vollstaendige automatische Neuberechnung: erst Rubrik-Bias aus Rubrik-Score,
+// dann Symbol-Bias aus Score, dann Paar-Bias aus Paar-Score, dann
+// Auto-Einsortierung der Paare.
+function recomputeAuto(){recomputeRubricAutoBias();deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
