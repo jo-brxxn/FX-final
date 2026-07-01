@@ -879,7 +879,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: PINK-FEINSCHLIFF-7 (New compact-view switch next to the History button on the asset detail page: hides bullet points/data points and rubric summaries so cards sit tighter and only the Actual/Forecast/Previous data shows - on by default for a fresh view, synced across devices; Economic Growth indicators now also snap back to the correct auto bias on new calendar releases; Retail Sales fixed to track m/m everywhere it exists instead of y/y, with corrected investing.com links)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ZYAN-FEINSCHLIFF-8 (Asset Overview card at the top no longer caps at the first 5 rubric cards - Macro & Risk Environment and COT Data were silently cut off before, now every rubric card shows up there; new compact-view switch next to History hides bullet points/summaries for a denser view; Retail Sales now tracks m/m everywhere it exists, corrected investing.com links)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -3712,7 +3712,11 @@ function masonryHTML(items,renderFn){
 // Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
 function ovCols(){return window.innerWidth>=900?3:window.innerWidth>=600?2:1;}
 function renderOverviewCard(rubs){
-  const top=rubs.slice(0,5);
+  // Frueher auf die ersten 5 Rubriken gedeckelt - das schnitt bei der Standard-
+  // Reihenfolge (siehe mkRubOrder) "Macro & Risk Environment" (Position 6) und
+  // "COT Data" (Position 7) ab. Grid ist responsiv (wraps ueber --ovcols),
+  // daher jetzt ungedeckelt: alle Rubrik-Karten erscheinen im Overview.
+  const top=rubs;
   if(!top.length)return'';
   const fields=top.map((rub,ri)=>{
     const bco=bCol(rub.bias);
