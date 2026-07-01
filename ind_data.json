@@ -9,18 +9,18 @@
    "period": "q/q"
   },
   "Retail Sales": {
-   "actual": "1.6%",
-   "forecast": "0.2%",
-   "previous": "1.6%",
-   "date": "2026-06-01",
+   "actual": "3.5%",
+   "forecast": "0.8%",
+   "previous": "1.7%",
+   "date": "2026-07-01",
    "event": "Retail Sales YoY",
    "period": "y/y"
   },
   "Manufacturing PMI": {
-   "actual": "57.3",
-   "forecast": "54",
+   "actual": "54.3",
+   "forecast": "56.5",
    "previous": "57.3",
-   "date": "2026-06-01",
+   "date": "2026-07-01",
    "event": "procure.ch Manufacturing PMI",
    "period": null
   },
@@ -115,10 +115,10 @@
    "period": "y/y"
   },
   "Consumer Confidence": {
-   "actual": "33.6",
-   "forecast": "32",
+   "actual": "33.8",
+   "forecast": "34",
    "previous": "33.6",
-   "date": "2026-05-29",
+   "date": "2026-07-01",
    "event": "Consumer Confidence",
    "period": null
   },
@@ -136,6 +136,14 @@
    "previous": "0.75%",
    "date": "2026-06-16",
    "event": "BoJ Interest Rate Decision",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "54.8",
+   "forecast": "54.9",
+   "previous": "54.5",
+   "date": "2026-07-01",
+   "event": "S&P Global Manufacturing PMI Final",
    "period": null
   }
  },
@@ -194,6 +202,14 @@
    "previous": "4.35%",
    "date": "2026-06-16",
    "event": "RBA Interest Rate Decision",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "51.5",
+   "forecast": "51.2",
+   "previous": "50.7",
+   "date": "2026-06-30",
+   "event": "S&P Global Manufacturing PMI Final",
    "period": null
   },
   "PPI": {
@@ -293,6 +309,14 @@
    "date": "2026-06-30",
    "event": "GDP Growth Rate QoQ Final",
    "period": "q/q"
+  },
+  "Manufacturing PMI": {
+   "actual": "52.5",
+   "forecast": "53.1",
+   "previous": "53.9",
+   "date": "2026-07-01",
+   "event": "S&P Global Manufacturing PMI Final",
+   "period": null
   }
  },
  "CAD": {
@@ -379,27 +403,27 @@
    "period": "y/y"
   },
   "Core CPI": {
-   "actual": "2.6%",
-   "forecast": "2.5%",
-   "previous": "2.5%",
-   "date": "2026-06-17",
-   "event": "Core Inflation Rate YoY Final",
+   "actual": "2.4%",
+   "forecast": "2.6%",
+   "previous": "2.6%",
+   "date": "2026-07-01",
+   "event": "Core Inflation Rate YoY Flash",
    "period": "y/y"
   },
   "CPI": {
-   "actual": "0.1%",
-   "forecast": "0.1%",
+   "actual": "-0.1%",
+   "forecast": null,
    "previous": "0.1%",
-   "date": "2026-06-17",
-   "event": "Inflation Rate MoM Final",
+   "date": "2026-07-01",
+   "event": "Inflation Rate MoM Flash",
    "period": "m/m"
   },
   "CPI (Headline)": {
-   "actual": "3.2%",
-   "forecast": "3.2%",
+   "actual": "2.8%",
+   "forecast": "3%",
    "previous": "3.2%",
-   "date": "2026-06-17",
-   "event": "Inflation Rate YoY Final",
+   "date": "2026-07-01",
+   "event": "Inflation Rate YoY Flash",
    "period": "y/y"
   },
   "Consumer Confidence": {
@@ -448,6 +472,14 @@
    "previous": "2.15%",
    "date": "2026-06-11",
    "event": "ECB Interest Rate Decision",
+   "period": null
+  },
+  "Manufacturing PMI": {
+   "actual": "51.4",
+   "forecast": "51.3",
+   "previous": "51.6",
+   "date": "2026-07-01",
+   "event": "S&P Global Manufacturing PMI Final",
    "period": null
   }
  },
