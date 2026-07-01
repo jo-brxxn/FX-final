@@ -868,7 +868,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: LILA-FEINSCHLIFF-3 (Trends-Tab: Asset-Filter jetzt nach Waehrungen/Rohstoffen/Krypto/Indizes gruppiert, plus neuer Filter "Waehrungspaar (frei waehlbar)" mit zwei Auswahllisten - der Paar-Score-Verlauf wird taeglich aus Basis- minus Kurswaehrung berechnet, analog zur Pair-Logik im Pairs-Tab)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ORANGE-FEINSCHLIFF-4 (Trends tab: asset filter now grouped by Currencies/Commodities/Crypto/Indices, plus a dedicated "Pair" button opening two dropdowns to compare a custom currency pair - chart lines are now colored by current bias once filtered to a single asset or pair; full pass over the whole app to make sure every visible label/tooltip/message is in English)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1032,13 +1032,14 @@ function introLogin(){
 <!-- PAGE: TRENDS (Score-Verlauf) -->
 <div class="pc" id="pgTrends" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score-Verlauf je Asset &uuml;ber ~3 Monate &middot; ein Punkt pro Tag &middot; Gesamt-Score + Inflation / Labour Market / Economic Growth &middot; per Filter auch als freies Waehrungspaar (Basis − Kurswaehrung)</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset over ~3 months &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-      <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Nach Asset filtern" style="cursor:pointer"></select>
+      <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
+      <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair">&#128256; Pair</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
-        <select class="btn" id="trendsPairBaseSel" onchange="setTrendsPairBase(this.value)" title="Basiswaehrung" style="cursor:pointer"></select>
+        <select class="btn" id="trendsPairBaseSel" onchange="setTrendsPairBase(this.value)" title="Base currency" style="cursor:pointer"></select>
         <span style="color:var(--t3);font-weight:700">/</span>
-        <select class="btn" id="trendsPairQuoteSel" onchange="setTrendsPairQuote(this.value)" title="Kurswaehrung" style="cursor:pointer"></select>
+        <select class="btn" id="trendsPairQuoteSel" onchange="setTrendsPairQuote(this.value)" title="Quote currency" style="cursor:pointer"></select>
       </span>
     </div>
   </div>
@@ -3869,26 +3870,26 @@ function renderNotesSubTab(c){
   const nt=ensureNoteTable(c);
   const item=(side,group,it,i,len)=>`<div class="nt-item" data-flip="${side}-${group}-${escH(it.id||(it.id=uid()))}">
     <div class="nt-item-top">
-      <input class="nt-item-hd" placeholder="Überschrift…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}','${group}',${i},'title',this.value)" onchange="save()">
+      <input class="nt-item-hd" placeholder="Heading…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}','${group}',${i},'title',this.value)" onchange="save()">
       <div class="nt-item-ctrl">
-        <button class="nt-mv" title="Hoch" onclick="mvNoteTableItem('${side}','${group}',${i},-1)" ${i===0?'disabled':''}>▲</button>
-        <button class="nt-mv" title="Runter" onclick="mvNoteTableItem('${side}','${group}',${i},1)" ${i===len-1?'disabled':''}>▼</button>
-        <button class="nt-mv" title="${group==='cur'?'Nach Generell verschieben':'Nach Aktuell verschieben'}" onclick="moveNoteTableGroup('${side}','${group}',${i})">${group==='cur'?'⇩':'⇧'}</button>
-        <button class="nt-del" title="Löschen" onclick="delNoteTableItem('${side}','${group}',${i})">×</button>
+        <button class="nt-mv" title="Move up" onclick="mvNoteTableItem('${side}','${group}',${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="nt-mv" title="Move down" onclick="mvNoteTableItem('${side}','${group}',${i},1)" ${i===len-1?'disabled':''}>▼</button>
+        <button class="nt-mv" title="${group==='cur'?'Move to General':'Move to Current'}" onclick="moveNoteTableGroup('${side}','${group}',${i})">${group==='cur'?'⇩':'⇧'}</button>
+        <button class="nt-del" title="Delete" onclick="delNoteTableItem('${side}','${group}',${i})">×</button>
       </div>
     </div>
-    <textarea class="nt-item-tx" rows="1" placeholder="kurzer Text…" oninput="ar(this);setNoteTableField('${side}','${group}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
+    <textarea class="nt-item-tx" rows="1" placeholder="short text…" oninput="ar(this);setNoteTableField('${side}','${group}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
   </div>`;
   const grp=(side,group,items)=>items.map((it,i)=>item(side,group,it,i,items.length)).join('');
   const col=(side,label,color,d)=>`<div class="nt-col" style="--ntc:${color}">
     <div class="nt-col-hd">${label}</div>
-    <div class="nt-sub-lbl">⚡ AKTUELL</div>
+    <div class="nt-sub-lbl">⚡ CURRENT</div>
     ${grp(side,'cur',d.cur)}
-    <button class="nt-add" onclick="addNoteTableItem('${side}','cur')">＋ Aktuell</button>
+    <button class="nt-add" onclick="addNoteTableItem('${side}','cur')">＋ Current</button>
     <div class="nt-divider"></div>
-    <div class="nt-sub-lbl">🌐 GENERELL</div>
+    <div class="nt-sub-lbl">🌐 GENERAL</div>
     ${grp(side,'gen',d.gen)}
-    <button class="nt-add" onclick="addNoteTableItem('${side}','gen')">＋ Generell</button>
+    <button class="nt-add" onclick="addNoteTableItem('${side}','gen')">＋ General</button>
   </div>`;
   return`<div class="nt-wrap">
     ${col('bull','▲ BULLISH',BC.bull,nt.bull)}
@@ -5085,7 +5086,7 @@ function renderDash(){
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
         </div>
         <div class="risk-hist-wrap">
-          <div class="risk-hist-hd">📈 Verlauf</div>
+          <div class="risk-hist-hd">📈 History</div>
           ${riskHistChart(col,_riskHistChartH)}
         </div>
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
@@ -5528,7 +5529,7 @@ function globeMarkerClick(ev,id){
   tip.style.left=x+'px';tip.style.top=(y-10)+'px';
   tip.innerHTML=`<b style="color:${col}">${id}</b> — ${BL[sym.bias]}
     <div class="gt-row">Score: <b style="color:${col}">${sc>0?'+':''}${Math.round(sc*10)/10}</b></div>
-    <div class="gt-row">${mySessions.length?'🟢 '+mySessions.map(s=>s.name).join(', ')+' aktiv':'⚪ Keine Session aktiv'}</div>`;
+    <div class="gt-row">${mySessions.length?'🟢 '+mySessions.map(s=>s.name).join(', ')+' active':'⚪ No session active'}</div>`;
   host.appendChild(tip);
 }
 // Drag-zum-Drehen: Ziehen am Globus dreht ihn direkt mit dem Finger/der Maus mit;
@@ -5736,7 +5737,7 @@ function renderCompare(){
   const filterBar=`<div class="cmp-filter">
     <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Currencies</span>${FX.map(chip).join('')}</div>
     <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Assets</span>${nfAvail.map(chip).join('')||'<span class="cmp-filter-none">none</span>'}</div>
-    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${assetsSel?' on':''}" onclick="cmpSelectAllAssets()" title="Nur Non-FX-Assets auswählen">Select</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
+    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${assetsSel?' on':''}" onclick="cmpSelectAllAssets()" title="Select only non-FX assets">Select</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
   </div>`;
   const cards=CMP_RUBS.map(rubName=>{
     // Union der Indikator-Basisnamen über die gewählten Spalten (in Spalten-
@@ -5758,7 +5759,7 @@ function renderCompare(){
         const d=cmpCellData(id,rubName,base);
         if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
         const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
-        const badge=d.badge?`<div class="cmp-unit" title="Maßeinheit/Frequenz weicht ggf. von anderen Währungen ab - direkter Zahlenvergleich nicht 1:1 möglich">${escH(d.badge)}</div>`:'';
+        const badge=d.badge?`<div class="cmp-unit" title="Unit/frequency may differ from other currencies - direct numeric comparison isn't 1:1">${escH(d.badge)}</div>`:'';
         return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}${badge}</td>`;
       }).join('');
       const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${enc}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
@@ -5933,7 +5934,7 @@ function renderMatrix(){
   }).join('');
   el.innerHTML=`
   <div class="mx-card">
-    <div class="mx-card-title"><span>💪 Currency Strength</span><small>Score · surprise (30d beats−misses) · Verlauf jetzt im Tab "Trends"</small></div>
+    <div class="mx-card-title"><span>💪 Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small></div>
     <div class="mx-rank-head"><div class="mx-rank-pos">#</div><div class="mx-rank-id">CCY</div><div class="mx-rank-bar-wrap"></div><div class="mx-rank-score">Score</div><div class="mx-rank-surp">Surprise</div></div>
     ${rankRows}
   </div>
@@ -5948,37 +5949,41 @@ function renderMatrix(){
 // Market und Economic Growth (Skala +/-7, automatisch groesser bei Bedarf).
 // Gut unterscheidbare Farben je Waehrung, Legende ueber jedem Chart.
 const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:'#b07aa1',CAD:'#76b7b2',AUD:'#edc948',NZD:'#ff9da7',GOLD:'#d4af37',SILVER:'#9aa0a6',OIL:'#8c564b',BTC:'#17becf',SP500:'#e7298a',NAS:'#7570b3'};
-// Gruppen-Label je Asset-Klasse (assetCls) fuer die unterteilten Filter-Dropdowns.
-const CLS_LABELS={fx:'Waehrungen',index:'Indizes',metal:'Rohstoffe',energy:'Rohstoffe',crypto:'Krypto',stock:'Aktien'};
+// Group label per asset class (assetCls) for the subdivided filter dropdowns.
+const CLS_LABELS={fx:'Currencies',index:'Indices',metal:'Commodities',energy:'Commodities',crypto:'Crypto',stock:'Stocks'};
 function groupedAssetOptions(ids,selected){
   const groups=[];const byLbl={};
   ids.forEach(id=>{
-    const lbl=CLS_LABELS[assetCls(id)]||'Sonstige';
+    const lbl=CLS_LABELS[assetCls(id)]||'Other';
     if(!byLbl[lbl]){byLbl[lbl]=[];groups.push(lbl);}
     byLbl[lbl].push(id);
   });
   return groups.map(lbl=>`<optgroup label="${escH(lbl)}">`+byLbl[lbl].map(id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('')+`</optgroup>`).join('');
 }
 let trendsFilter='ALL';
-// Fuer den Filter "Waehrungspaar (custom)": zwei frei waehlbare Assets, deren
-// Score-Differenz (Basis − Kurswaehrung, wie bei den Pairs im Pairs-Tab)
-// taeglich als eigener Verlauf berechnet wird. Die Differenz-Serie liegt NUR in
-// trendsEphemeral (nicht in scoreHist!), da scoreHist von recordScoreHist() 1:1
-// nach localStorage serialisiert wird - wuerde man den Paar-Schluessel dort
-// ablegen, wuerde er beim naechsten echten Score-Update dauerhaft mit in
-// fxpro_scorehist persistiert und wuechse bei jedem neu ausprobierten Paar an.
+// For the "custom currency pair" filter: two freely selectable assets whose
+// score difference (base − quote, like the pairs in the Pairs tab) is
+// computed daily as its own history line. The diff series lives ONLY in
+// trendsEphemeral (never in scoreHist!), since scoreHist gets serialized 1:1
+// to localStorage by recordScoreHist() - storing the pair key there would
+// permanently leak it into fxpro_scorehist on the next real score update and
+// grow with every pair the user has ever tried.
 let trendsPairBase='EUR',trendsPairQuote='USD';
 let trendsEphemeral={};
 function setTrendsFilter(v){trendsFilter=v||'ALL';renderTrends();}
+function toggleTrendsPairMode(){setTrendsFilter(trendsFilter==='PAIR'?'ALL':'PAIR');}
 function setTrendsPairBase(v){trendsPairBase=v;renderTrends();}
 function setTrendsPairQuote(v){trendsPairQuote=v;renderTrends();}
-function trendLegend(ids){
-  return`<div class="tr-legend">`+ids.map(id=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${TREND_COLORS[id]||'#888'}"></span>${id}</span>`).join('')+`</div>`;
+function trendLegend(ids,colorOverride){
+  return`<div class="tr-legend">`+ids.map(id=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||TREND_COLORS[id]||'#888'}"></span>${id}</span>`).join('')+`</div>`;
 }
-// Ein Liniendiagramm: x = Tage (ein Punkt/Tag, horizontal scrollbar), y =
-// symmetrische Score-Skala (+/-base, waechst falls Werte groesser). vi = Index
-// im scoreHist-Eintrag [Datum,Gesamt,Inflation,Labour,Growth].
-function scoreTrendChart(ids,dates,vi,base){
+// A line chart: x = days (one point/day, horizontal scrollbar), y = symmetric
+// score scale (+/-base, grows if values get bigger). vi = index into the
+// scoreHist entry [date,total,inflation,labour,growth]. colorOverride, when
+// set, replaces the per-currency TREND_COLORS - used once a single asset or
+// pair is filtered, so the line reflects that asset's/pair's current bias
+// instead of a fixed identity color (only makes sense for a single line).
+function scoreTrendChart(ids,dates,vi,base,colorOverride){
   const n=dates.length;
   const valOf={};let maxAbs=base;
   ids.forEach(id=>{
@@ -5998,7 +6003,7 @@ function scoreTrendChart(ids,dates,vi,base){
     svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
   ids.forEach(id=>{
-    const col=TREND_COLORS[id]||'#888';const pts=[];
+    const col=colorOverride||TREND_COLORS[id]||'#888';const pts=[];
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push([xOf(i),yOf(v)]);});
     if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
     pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}"/>`;});
@@ -6009,23 +6014,24 @@ function scoreTrendChart(ids,dates,vi,base){
   });
   return svg+`</svg>`;
 }
-function scoreTrendCard(ids,dates,vi,base,title){
+function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
   return`<div class="tr-card">
-    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids)}</div>
-    <div class="tr-scroll">${scoreTrendChart(ids,dates,vi,base)}</div>
+    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride)}</div>
+    <div class="tr-scroll">${scoreTrendChart(ids,dates,vi,base,colorOverride)}</div>
   </div>`;
 }
 function renderTrends(){
   const el=document.getElementById('trendsBody');if(!el)return;
   const assets=trendAssets();
-  // Filter-Dropdown dynamisch befuellen: Assets nach Klasse gruppiert (optgroup),
-  // plus Option fuer den freien Waehrungspaar-Filter.
+  // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
   const sel=document.getElementById('trendsCcySel');
   if(sel){
-    const opts='<option value="ALL">\u{1F310} Alle Assets</option>'+groupedAssetOptions(assets)+'<option value="PAIR">\u{1F500} Waehrungspaar (frei waehlbar)</option>';
+    const opts='<option value="ALL">\u{1F310} All assets</option>'+groupedAssetOptions(assets);
     if(sel.innerHTML!==opts)sel.innerHTML=opts;
-    sel.value=trendsFilter;
+    sel.value=trendsFilter==='PAIR'?'ALL':trendsFilter;
   }
+  const pairBtn=document.getElementById('trendsPairBtn');
+  if(pairBtn)pairBtn.classList.toggle('active',trendsFilter==='PAIR');
   const pairWrap=document.getElementById('trendsPairWrap');
   if(pairWrap)pairWrap.style.display=trendsFilter==='PAIR'?'flex':'none';
   if(trendsFilter==='PAIR'){
@@ -6036,51 +6042,58 @@ function renderTrends(){
     renderTrendsPair(el);
     return;
   }
-  // Gesamt-Score: ALLE Assets. Makro-Karten (Inflation/Labour/Growth) nur fuer
-  // Waehrungen - bei Non-FX-Assets werden diese Scores nicht aus Daten
-  // abgeleitet (waeren konstant 0).
+  // Total Score: ALL assets. Macro cards (Inflation/Labour/Growth) only for
+  // currencies - for non-FX assets these scores aren't derived from data
+  // (they'd be constantly 0).
   const totalIds=trendsFilter==='ALL'?assets:[trendsFilter];
   const macroIds=trendsFilter==='ALL'?assets.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
+  // Once filtered down to a single asset, color the line by its current bias
+  // instead of the fixed per-currency identity color (only makes sense for
+  // one line at a time - with "All assets" the colors need to stay distinct).
+  let colorOverride=null;
+  if(trendsFilter!=='ALL'){const sym=syms.find(s=>s.id===trendsFilter);if(sym)colorOverride=BC[sym.bias];}
   const dset=new Set();
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const dates=[...dset].sort();
-  if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Noch keine Verlaufsdaten vorhanden. Der Score wird ab jetzt taeglich gespeichert &ndash; mit jedem neuen Tag waechst die Linie um einen Punkt. Schau morgen wieder vorbei.</div>';return;}
-  let html=scoreTrendCard(totalIds,dates,1,14,'Gesamt-Score');
+  if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
+  let html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
   if(macroIds.length){
-    html+=scoreTrendCard(macroIds,dates,2,7,'Inflation')+
-          scoreTrendCard(macroIds,dates,3,7,'Labour Market')+
-          scoreTrendCard(macroIds,dates,4,7,'Economic Growth');
+    html+=scoreTrendCard(macroIds,dates,2,7,'Inflation',colorOverride)+
+          scoreTrendCard(macroIds,dates,3,7,'Labour Market',colorOverride)+
+          scoreTrendCard(macroIds,dates,4,7,'Economic Growth',colorOverride);
   }else{
-    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">Die Karten Inflation / Labour Market / Economic Growth gibt es nur fuer Waehrungen &ndash; fuer dieses Asset werden diese Makro-Scores nicht aus Daten abgeleitet.</div>';
+    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currencies &ndash; these macro scores aren\'t derived from data for this asset.</div>';
   }
   el.innerHTML=html;
 }
-// Waehrungspaar-Filter: aus zwei frei waehlbaren Assets (Basis/Kurswaehrung, wie
-// beim Pairs-Tab) wird taeglich die Score-Differenz gebildet und als eigener
-// Verlauf gezeichnet. Die Differenz-Serie wird unter dem Paar-Namen (z.B.
-// "EUR/USD") NUR in trendsEphemeral abgelegt (nicht in scoreHist!) - sie wird
-// bei jedem Render neu berechnet und landet nie in localStorage.
+// Custom pair filter: from two freely selectable assets (base/quote, like the
+// pairs in the Pairs tab) the score difference is computed daily and drawn as
+// its own history line. The diff series is kept under the pair name (e.g.
+// "EUR/USD") ONLY in trendsEphemeral (never in scoreHist!) - it's recomputed
+// on every render and never ends up in localStorage.
 function renderTrendsPair(el){
   const base=trendsPairBase,quote=trendsPairQuote;
-  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Bitte zwei unterschiedliche Assets fuer das Paar waehlen.</div>';return;}
+  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Please choose two different assets for the pair.</div>';return;}
   const baseArr=scoreHist[base]||[],quoteMap={};(scoreHist[quote]||[]).forEach(e=>quoteMap[e[0]]=e);
   const diffArr=[];
   baseArr.forEach(be=>{
     const qe=quoteMap[be[0]];if(!qe)return;
     diffArr.push([be[0],Math.round((be[1]-qe[1])*10)/10,Math.round((be[2]-qe[2])*10)/10,Math.round((be[3]-qe[3])*10)/10,Math.round((be[4]-qe[4])*10)/10]);
   });
-  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Noch keine gemeinsamen Verlaufsdaten fuer ${escH(base)}/${escH(quote)} &ndash; sobald fuer beide Assets am selben Tag ein Score-Schnappschuss vorliegt, waechst die Paar-Linie von da an taeglich.</div>`;return;}
+  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No shared history data for ${escH(base)}/${escH(quote)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
   const pairKey=base+'/'+quote;
   trendsEphemeral={};trendsEphemeral[pairKey]=diffArr;
-  TREND_COLORS[pairKey]=TREND_COLORS[base]||'#4e79a7';
+  // Color the pair's line by its current overall bias (same bull/bear/neutral
+  // colors used everywhere else in the app), not a fixed identity color.
+  const colorOverride=BC[scoreBias(pairScore(pairKey))];
   const dates=diffArr.map(e=>e[0]);
-  let html=scoreTrendCard([pairKey],dates,1,14,'Paar-Score (Basis − Kurswaehrung)');
+  let html=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
   if(FX.includes(base)&&FX.includes(quote)){
-    html+=scoreTrendCard([pairKey],dates,2,7,'Inflation-Differenz')+
-          scoreTrendCard([pairKey],dates,3,7,'Labour-Market-Differenz')+
-          scoreTrendCard([pairKey],dates,4,7,'Growth-Differenz');
+    html+=scoreTrendCard([pairKey],dates,2,7,'Inflation Difference',colorOverride)+
+          scoreTrendCard([pairKey],dates,3,7,'Labour Market Difference',colorOverride)+
+          scoreTrendCard([pairKey],dates,4,7,'Growth Difference',colorOverride);
   }else{
-    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">Die Karten Inflation / Labour Market / Economic Growth gibt es nur fuer Waehrungspaare &ndash; bei Non-FX-Assets werden diese Makro-Scores nicht aus Daten abgeleitet.</div>';
+    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currency pairs &ndash; these macro scores aren\'t derived from data for non-FX assets.</div>';
   }
   el.innerHTML=html;
 }
@@ -6693,12 +6706,12 @@ function openTabMenu(kind,id,x,y){
   if(kind==='tab'){
     const cur=stackOf(id);
     tabStacks.forEach(s=>{if(!s.members.includes(id))items.push({lbl:'➕ '+s.name,fn:()=>addTabToStack(id,s.id)});});
-    items.push({lbl:'✨ Neuer Stapel…',fn:()=>{const name=prompt('Name des neuen Stapels:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
-    if(cur)items.push({lbl:'✖ Aus „'+cur.name+'“ entfernen',fn:()=>removeTabFromStack(id)});
+    items.push({lbl:'✨ New Stack…',fn:()=>{const name=prompt('Name of the new stack:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
+    if(cur)items.push({lbl:'✖ Remove from "'+cur.name+'"',fn:()=>removeTabFromStack(id)});
   }else{
     const s=tabStacks.find(x=>x.id===id);if(!s)return;
-    items.push({lbl:'✎ Umbenennen…',fn:()=>{const name=prompt('Stapel umbenennen:',s.name);if(name&&name.trim()){s.name=name.trim();saveTabStacks();renderTabBar();}}});
-    items.push({lbl:'✖ Stapel auflösen',fn:()=>dissolveStack(id)});
+    items.push({lbl:'✎ Rename…',fn:()=>{const name=prompt('Rename stack:',s.name);if(name&&name.trim()){s.name=name.trim();saveTabStacks();renderTabBar();}}});
+    items.push({lbl:'✖ Dissolve Stack',fn:()=>dissolveStack(id)});
   }
   const m=document.createElement('div');m.className='tab-menu';m.id='tabMenu';
   m.innerHTML=items.map((it,i)=>`<button class="tab-menu-item" data-i="${i}">${escH(it.lbl)}</button>`).join('');
