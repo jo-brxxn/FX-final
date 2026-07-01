@@ -773,7 +773,11 @@ jobs:
               {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},
               {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
-              {ind:"Retail Sales",period:"y/y",test:t=>/retail sales/.test(t)&&!/core|\bex[\s-]|ex fuel/.test(t)},
+              // Ueberall den m/m-Release ziehen (nicht y/y), ausser bei CHF -
+              // die Schweiz (BFS) meldet Detailhandelsumsatz nur als y/y, es
+              // gibt dort keine eigene m/m-Reihe auf TradingView.
+              {ind:"Retail Sales",period:"m/m",test:(t,c)=>c!=="CHF"&&/retail sales/.test(t)&&!/core|\bex[\s-]|ex fuel|yoy|y\/y/.test(t)},
+              {ind:"Retail Sales",period:"y/y",test:(t,c)=>c==="CHF"&&/retail sales/.test(t)&&!/core|\bex[\s-]|ex fuel/.test(t)},
               // USD: ausdruecklich die Conference-Board-Reihe ("Consumer
               // Confidence") - NICHT die University-of-Michigan-"Consumer
               // Sentiment"-Reihe (anderer Indikator!).
