@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FX Analyst Pro</title>
+<!-- PWA/Offline: Manifest + Icons + Service-Worker-Registrierung (siehe
+     sw.js) - macht die App installierbar und offline nutzbar; Aenderungen
+     landen wie bisher zuerst in localStorage und werden per Cloud-Sync
+     automatisch nachgereicht, sobald die Verbindung zurueck ist. -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -26,6 +37,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
 .profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
@@ -904,7 +916,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-SPRACHBERICHT-18</span><span id="verBannerText"> (morning-report.yml now sends both a text message and a free robotic voice message (espeak-ng + ffmpeg -> OGG/Opus) via Telegram, and the report content is now in English throughout instead of German; no index.html changes this round)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SMARAGD-OFFLINE-19</span><span id="verBannerText"> (the app now works offline: a new service worker (sw.js) caches the app shell and the 4 live JSON data files - network-first when online, automatic fallback to the last cached snapshot when not; added a web app manifest + icons so it's installable; an "⚠ Offline" indicator shows in the header, and any changes made offline are automatically pushed to the cloud as soon as the connection comes back (with a few retries) instead of waiting for the next edit)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1042,6 +1054,7 @@ function introLogin(){
     <div class="logo">📊 FX Analyst Pro</div>
     <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
+    <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday">
@@ -3498,8 +3511,11 @@ function updProfile(){
   const cfg=getCloudCfg();
   el.textContent=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Sync';
 }
+// Gibt true/false zurueck (Erfolg/Misserfolg), damit z.B. der
+// Online-Reconnect-Handler (siehe unten) einen fehlgeschlagenen Push
+// automatisch nochmal versuchen kann.
 async function cloudPush(manual){
-  const cfg=getCloudCfg();if(!cfg)return;
+  const cfg=getCloudCfg();if(!cfg)return false;
   try{
     // greenDismissed (bestätigte Ausrufezeichen) liegt bewusst außerhalb von
     // snap()/Undo, muss aber ebenfalls geräteübergreifend synchron sein.
@@ -3517,8 +3533,10 @@ async function cloudPush(manual){
     // Sync-Ausfall mehr durch abweichende iPad/PC-Uhrzeiten.
     localStorage.setItem('fxpro_cloud_seen',sentUpdated);
     if(manual)setCloudStatus('✓ Uploaded: '+new Date().toLocaleString());
+    return true;
   }catch(e){
     if(manual)setCloudStatus('✗ Error while uploading: '+e.message);
+    return false;
   }
 }
 async function cloudPull(manual){
@@ -7258,6 +7276,43 @@ cloudPull(false).then(()=>{
   autoFetchBondData();
   autoFetchCot();
 });
+
+// ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
+// Service Worker cached die App-Shell + die 4 Live-JSON-Dateien, damit die
+// Seite auch ganz ohne Netz laedt (siehe sw.js: Netzwerk zuerst, Cache als
+// Fallback). Aenderungen landen wie bisher sofort in localStorage - das
+// Einzige, was offline nicht sofort klappt, ist der Cloud-Push. Dafuer:
+// sobald die Verbindung zurueck ist, den Push automatisch nachholen statt
+// bis zur naechsten Aenderung zu warten (mit ein paar Wiederholversuchen,
+// falls die Verbindung im ersten Moment noch wackelig ist).
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+function updNetStatus(){
+  const el=document.getElementById('netStatus');if(!el)return;
+  el.style.display=navigator.onLine?'none':'';
+}
+window.addEventListener('online',()=>{
+  updNetStatus();
+  // Bewusst KEIN automatischer Pull hier: ein Pull wuerde offline auf
+  // DIESEM Geraet gemachte, noch nicht hochgeladene Aenderungen mit einem
+  // zwischenzeitlich von einem anderen Geraet gepushten Stand ueberschreiben,
+  // bevor sie selbst oben sind. Erst pushen, danach greift wieder der
+  // normale Sync-Rhythmus (naechster cloudAutoSync/Boot-Pull).
+  if(!getCloudCfg())return;
+  let attempt=0;
+  const tryPush=()=>{
+    attempt++;
+    cloudPush(false).then(ok=>{
+      if(ok){const b=document.getElementById('saveBadge');if(b)b.textContent='☁ Synced '+new Date().toLocaleTimeString();}
+      else if(attempt<4)setTimeout(tryPush,attempt*3000);
+    });
+  };
+  tryPush();
+});
+window.addEventListener('offline',updNetStatus);
+updNetStatus();
+
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
   autoFetchIndData();
