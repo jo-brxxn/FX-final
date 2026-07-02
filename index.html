@@ -160,6 +160,33 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* Kompaktansicht aktiv: Stichpunkte (Indikator-Datenpunkte) und
    Rubrik-Zusammenfassungen ausblenden, Karten ruecken enger zusammen. */
 body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
+/* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
+   damit die Buttons nicht mehrzeilig umbrechen. */
+@media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}}
+/* Zentralbank-Stance (hawkish/dovish) - Auswahl in der Interest-Rates-Karte
+   und Badge neben dem Symbol-Titel. */
+.stance-g{display:flex;gap:2px;margin-right:4px}
+.stance-g button{background:var(--bg2);border:1px solid var(--bd);color:var(--t3);font-size:11px;padding:3px 7px;border-radius:var(--rs);cursor:pointer;line-height:1.3}
+.stance-g button.on-hawk{border-color:var(--red);color:var(--red);background:rgba(var(--red-rgb),.12)}
+.stance-g button.on-dove{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.12)}
+.stance-g button.on-neu{border-color:var(--amber);color:var(--amber);background:rgba(var(--amber-rgb),.12)}
+.stance-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:var(--rs);border:1px solid;letter-spacing:.3px;vertical-align:middle}
+/* Today's-Movers-Dashboard-Karte */
+.mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
+@media(hover:hover){.mover-row:hover{border-color:rgba(var(--blue-rgb),.5)}}
+.mover-name{font-weight:700;color:var(--t0);font-size:13px;min-width:52px}
+.mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Zins-Differenz (Carry) Badge in den Set-ups-Zeilen */
+.rate-diff{font-size:10.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);color:var(--t3);white-space:nowrap}
+.rate-diff.pos{color:var(--green);border-color:rgba(var(--green-rgb),.4)}
+.rate-diff.neg{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
+/* COT: Warnung bei extrem einseitiger Positionierung (crowded trade) */
+.cot-crowded{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:var(--rs);padding:2px 6px;margin-left:7px;vertical-align:middle}
+/* Hilfe-Modal */
+.help-sec{margin:13px 0 5px;font-size:12px;font-weight:800;color:var(--t0);text-transform:uppercase;letter-spacing:.6px}
+.help-p{font-size:12.5px;color:var(--t2);line-height:1.65;margin:4px 0}
+.help-p b{color:var(--t0)}
 /* Asset-Einstellungen-Modal */
 .acfg-sec{margin:14px 0 4px;font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.4px}
 .acfg-hint{font-size:11px;color:var(--t3);margin:2px 0 8px;line-height:1.5}
@@ -658,7 +685,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}@media (hover:hover){.cal-green-dismiss:hover{color:var(--red)}}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
-.setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto;gap:5px;align-items:center}
+.setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:5px;align-items:center}
 .setups-cols>div{border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
 .setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
 .setups-cols .sym-row{padding-left:6px;padding-right:6px}
@@ -868,11 +895,15 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GOLD-AUDIT-10 (Security & cleanup pass: escH now also escapes quotes, closing an attribute-injection XSS via external calendar event names and synced/imported note titles; new custom tickers are restricted to a safe character set since IDs flow into inline handlers; removed ~150 lines of dead code (old General tab, unused helpers, orphan CSS) plus the fake seeded CAD-CPI test notification; last German strings translated; supabase link got rel=noopener)</div>
+<!-- VERSION-CHECK-Banner: pro Sitzung wegklickbar (×), damit es im Alltag
+     keinen Platz frisst - bleibt aber Teil des Deploy-Workflows (Farbe +
+     Beschreibung werden weiterhin bei JEDER Aenderung aktualisiert). -->
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 34px">VERSION-CHECK: SILBER-UPGRADE-11 (Big feature pass: dismissible version banner; new Help button + first-run guide explaining the scoring system; new "Today's Movers" dashboard card showing which asset scores changed since yesterday; central-bank stance (hawkish/dovish) selectable per currency on the Interest Rates card and shown next to the symbol; Set-ups pairs now show the policy-rate differential (carry) per pair; COT tab flags crowded one-sided positioning; optional browser alerts before high-impact releases; tidier mobile header)<button onclick="document.getElementById('verBanner').style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<script>try{if(sessionStorage.getItem('fxpro_verbanner_hidden')==='1')document.getElementById('verBanner').style.display='none';}catch(e){}</script>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
-  <button id="introLoginBtn" onclick="introLogin()">Log in</button>
+  <button id="introLoginBtn" onclick="introLogin()">Set up sync</button>
   <div id="introShards"></div>
   <div class="intro-grid"></div>
   <div id="introZoom">
@@ -914,7 +945,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
   if(loginBtn){
     var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
     if(cc&&(cc.username||cc.syncId)){loginBtn.textContent='👤 '+(cc.username||cc.syncId);}
-    else{loginBtn.textContent='Log in';}
+    else{loginBtn.textContent='Set up sync';}
   }
   // Hinweis unten wechselt alle 3 Sekunden zwischen "tap to continue" und
   // "click to continue" - rein per CSS-Keyframes (zwei überlagerte Spans mit
@@ -994,14 +1025,15 @@ function introLogin(){
     </div>
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
     <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)">→</button>
-    <button class="btn" onclick="exportData()">⬇ Export</button>
-    <button class="btn" onclick="document.getElementById('impFile').click()">⬆ Import</button>
+    <button class="btn" onclick="exportData()">⬇<span class="btn-lbl"> Export</span></button>
+    <button class="btn" onclick="document.getElementById('impFile').click()">⬆<span class="btn-lbl"> Import</span></button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" onclick="openBackupM()" title="Local backups (last 5 snapshots)">🕐 Backups</button>
-    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox">📥 Inbox<span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
-    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync / Login">
+    <button class="btn" onclick="openBackupM()" title="Local backups (last 5 snapshots)">🕐<span class="btn-lbl"> Backups</span></button>
+    <button class="btn" onclick="openHelpM()" title="How the scoring works">❓<span class="btn-lbl"> Help</span></button>
+    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox">📥<span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
+    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
       <span class="profile-circle">👤</span>
-      <span class="profile-name" id="profileName">Log in</span>
+      <span class="profile-name" id="profileName">Sync</span>
     </button>
   </div>
 </div>
@@ -1082,6 +1114,7 @@ function introLogin(){
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news">📁 All Impacts</button>
+      <button class="btn" id="evtAlertBtn" onclick="toggleEvtAlerts()" title="Browser notification ~15 minutes before every high-impact release (per device)">🔔 Alerts off</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)">🔄 Refresh</button>
     </div>
   </div>
@@ -1257,6 +1290,22 @@ function introLogin(){
       <button class="btn" onclick="cloudPush(true)">⬆ Upload</button>
       <button class="btn g" onclick="saveCloudCfg()">Save</button>
     </div>
+  </div>
+</div>
+<!-- MODAL: Hilfe / Scoring-Erklaerung (auch als Erststart-Guide) -->
+<div class="ov" id="mHelp" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <h3>❓ How FX Analyst Pro works</h3>
+    <div class="help-sec">The score</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release.</div>
+    <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
+    <div class="help-sec">Pairs & set-ups</div>
+    <div class="help-p"><b>Pair score = base score − quote score</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that. The small <b>Δ%-badge</b> on a pair is the policy-rate differential (carry): positive favours being long the pair.</div>
+    <div class="help-sec">Data</div>
+    <div class="help-p">Calendar & indicator values refresh automatically (Forex Factory / TradingView / CFTC / bond closes, hourly via GitHub). <b>CB stance</b> (🦅 hawkish / 🕊 dovish) on the Interest Rates card is your own judgement of the central bank's tone — it's shown next to the symbol but doesn't change the score.</div>
+    <div class="help-sec">Sync</div>
+    <div class="help-p">Everything is saved locally and automatically. Connect a free Supabase project via the 👤 button to sync across devices.</div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mHelp')">Got it</button></div>
   </div>
 </div>
 <!-- MODAL: Lokale Backups -->
@@ -3138,11 +3187,12 @@ function cleanLegacySeedEvts(){
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'FX World Globe',order:0},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:2},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:3},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:4},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:5},
-  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:6},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:2},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:3},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:5},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:6},
+  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:7},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -3199,13 +3249,13 @@ let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=
 // aelterer Stand aus der Cloud geladen wird (sonst ueberschreibt cloudPull die
 // migrierten Widgets) - und damit spaeter geloeschte Module nach dem Sync nicht
 // staendig zurueckkehren.
-const DASH_V=2;
+const DASH_V=3;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if((dashV||0)>=DASH_V)return;
-  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
+  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,fx_bias:2,risk_sentiment:3,asset_heatmap:4,watchlist:5,mini_calendar:6,pairs_editor:7};
+  const rank={globe:0,ccy_ranking:1,score_changes:2,fx_bias:3,risk_sentiment:4,asset_heatmap:5,watchlist:6,mini_calendar:7,pairs_editor:8};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -3355,7 +3405,7 @@ function saveCloudCfg(){
 function updProfile(){
   const el=document.getElementById('profileName');if(!el)return;
   const cfg=getCloudCfg();
-  el.textContent=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Log in';
+  el.textContent=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Sync';
 }
 async function cloudPush(manual){
   const cfg=getCloudCfg();if(!cfg)return;
@@ -3571,7 +3621,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)','det-'+c.id)}</div><div class="afull">${c.full}</div></div>
+      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)','det-'+c.id)}${cbStanceBadge(c)}</div><div class="afull">${c.full}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -3672,6 +3722,7 @@ function renderRub(rub,ri,total){
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
+      ${rub.name==='Interest Rates'&&FX.includes(getSym().id)?cbStanceButtons(getSym()):''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
       <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
@@ -3966,6 +4017,28 @@ function pullMacroFromCcy(sym){
       if(ti)ti.points=JSON.parse(JSON.stringify(si.points||[]));
     });
   });
+}
+// ── ZENTRALBANK-STANCE (hawkish/dovish) ─────────────────────────────
+// Eigene Einschaetzung des Notenbank-Tons je Waehrung (nur FX). Bewusst
+// REIN informativ: fliesst NICHT in den Score ein, wird aber neben dem
+// Symbol-Titel angezeigt. Liegt als sym.cbStance in syms und ist damit
+// automatisch Teil von snap()/Undo/Cloud-Sync.
+const CB_STANCES={hawk:['🦅','HAWKISH','var(--red)'],neu:['◆','NEUTRAL','var(--amber)'],dove:['🕊','DOVISH','var(--blue)']};
+function cbStanceButtons(sym){
+  const cur=sym.cbStance||'neu';
+  return`<div class="stance-g" title="Central bank stance (your own read of the CB's tone) - informational, does not affect the score">${Object.keys(CB_STANCES).map(k=>
+    `<button class="${cur===k?'on-'+k:''}" onclick="setCbStance('${sym.id}','${k}')">${CB_STANCES[k][0]} ${CB_STANCES[k][1][0]+CB_STANCES[k][1].slice(1).toLowerCase()}</button>`).join('')}</div>`;
+}
+function cbStanceBadge(sym){
+  if(!FX.includes(sym.id))return'';
+  const k=sym.cbStance||'neu';
+  if(k==='neu')return'';
+  const[ic,lbl,col]=CB_STANCES[k];
+  return` <span class="stance-badge" style="color:${col};border-color:${col}" title="Central bank stance (informational)">${ic} ${lbl}</span>`;
+}
+function setCbStance(id,k){
+  const s=syms.find(x=>x.id===id);if(!s)return;
+  pushU();s.cbStance=k;save();renderDetail();
 }
 function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
@@ -4423,8 +4496,20 @@ function renderPairs(){
   // Bei aktivem Filter NUR Paare zeigen, die eine der gewählten Währungen
   // enthalten (Non-FX-Assets sind keine Währungspaare und werden ausgeblendet).
   const shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
+  // Zins-Differenz (Carry) je FX-Paar: Leitzins Basis minus Kurswaehrung.
+  // Positiv = Carry beguenstigt die Long-Seite des Paars. Rein informativ
+  // (gleiche rateInfo-Quelle wie der Carry-Tab), aendert den Score nicht.
+  const rateDiff=name=>{
+    const parts=name.split('/');
+    if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return'';
+    const rb=rateInfo(parts[0]),rq=rateInfo(parts[1]);
+    if(!rb||!rq)return'';
+    const d=Math.round((rb.rate-rq.rate)*100)/100;
+    return`<span class="rate-diff${d>0?' pos':d<0?' neg':''}" title="Policy-rate differential (carry): ${parts[0]} ${rb.rate}% − ${parts[1]} ${rq.rate}% - positive favours being long this pair">Δ${d>0?'+':''}${d}%</span>`;
+  };
   const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     <div class="sym-name dw-pname">${escH(it.name)}</div>
+    ${it.kind==='pair'?rateDiff(it.name):''}
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score')}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
     ${it.kind==='asset'?`<span class="dw-del" style="visibility:hidden">×</span>`:`<button onclick="delPair('${it.id}')" class="dw-del" title="Remove">×</button>`}
@@ -4455,7 +4540,7 @@ function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
-  updCalHighBtn();updCalCcySel();
+  updCalHighBtn();updCalCcySel();updAlertBtn();
   let list=[...calEvts];
   if(calHighOnly)list=list.filter(ev=>evtImpact(ev)==='high');
   if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
@@ -4972,6 +5057,7 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 const W_TYPES=[
   {type:'globe',label:'FX World Globe',sub:'Rotating globe — currencies coloured by bias score'},
   {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
+  {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
   {type:'mini_calendar',label:'Mini Calendar',sub:'Same events & controls as the main calendar'},
@@ -5092,6 +5178,29 @@ function renderDash(){
         </div>
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
+    }else if(w.type==='score_changes'){
+      // "Was hat sich heute bewegt?": vergleicht je Asset die letzten beiden
+      // Tages-Schnappschuesse aus scoreHist (Gesamt-Score) und listet nur
+      // Assets mit Aenderung, sortiert nach |Delta|. Der juengste Eintrag ist
+      // der LIVE-Stand von heute (recordScoreHist ueberschreibt ihn im
+      // Tagesverlauf), der davor der letzte abgeschlossene Tag.
+      const movers=trendAssets().map(id=>{
+        const h=scoreHist[id]||[];
+        if(h.length<2)return null;
+        const now=h[h.length-1][1],prev=h[h.length-2][1];
+        const d=Math.round((now-prev)*10)/10;
+        if(!d)return null;
+        const sym=syms.find(s=>s.id===id);
+        return{id,name:(sym&&sym.name)||id,now,prev,d};
+      }).filter(Boolean).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+      content=movers.length?movers.map(m=>{
+        const col=m.d>0?BC.bull:BC.bear;
+        return`<div class="mover-row" onclick="gotoSym('${m.id}')" title="Open ${escH(m.id)}">
+          <span class="mover-name">${escH(m.name)}</span>
+          <span class="mover-vals">${m.prev>0?'+':''}${m.prev} → ${m.now>0?'+':''}${m.now}</span>
+          <span class="mover-delta" style="color:${col}">${m.d>0?'▲ +':'▼ '}${m.d}</span>
+        </div>`;
+      }).join(''):`<div class="dw-empty">No score changes vs. the previous day yet. This card fills up as soon as new data moves a score.</div>`;
     }else if(w.type==='asset_heatmap'){
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
@@ -6521,10 +6630,15 @@ function renderCot(){
   </div>`;
   const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
   if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
+  // Ab 80% auf einer Seite gilt die Positionierung als "crowded": extrem
+  // einseitige Spekulanten-Positionierung erhoeht das Risiko scharfer
+  // Gegenbewegungen (Squeeze), sobald der Trend kippt.
+  const COT_CROWDED_PCT=80;
   const bars=rows.map(r=>{
     const lp=r.m.longPct,sp=r.m.shortPct;
+    const crowded=lp>=COT_CROWDED_PCT||sp>=COT_CROWDED_PCT;
     return`<div class="cot-bar-row" onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
-      <div class="cot-bar-sym">${escH(r.name)}</div>
+      <div class="cot-bar-sym">${escH(r.name)}${crowded?`<span class="cot-crowded" title="${lp>=COT_CROWDED_PCT?lp.toFixed(0)+'% long':sp.toFixed(0)+'% short'} - extremely one-sided positioning raises the risk of a sharp squeeze in the other direction">⚠ CROWDED</span>`:''}</div>
       <div class="cot-bar-long-lbl">${lp.toFixed(0)}%</div>
       <div class="cot-bar"><div class="cot-bar-long" style="width:${lp.toFixed(1)}%"></div><div class="cot-bar-short" style="width:${sp.toFixed(1)}%"></div></div>
       <div class="cot-bar-short-lbl">${sp.toFixed(0)}%</div>
@@ -6848,6 +6962,69 @@ function updateStat(){
   if(el)el.textContent=`FX: ${bull}▲ Bull · ${bear}▼ Bear · ${FX.length-bull-bear}◆ Neutral`;
 }
 
+// ══ HILFE-MODAL & ERSTSTART-GUIDE ═══════════════════════════════════
+function openHelpM(){openM('mHelp');}
+// Beim allerersten Besuch einmalig automatisch zeigen (nur lokal gemerkt -
+// bewusst KEIN Cloud-Sync: "schon mal gesehen" ist eine Geraete-Eigenschaft).
+function maybeShowFirstRunHelp(){
+  try{
+    if(localStorage.getItem('fxpro_help_seen')==='1')return;
+    localStorage.setItem('fxpro_help_seen','1');
+    openHelpM();
+  }catch(e){}
+}
+
+// ══ EVENT-ALERTS (Browser-Benachrichtigungen) ═══════════════════════
+// Optional: ~15 Minuten vor jedem High-Impact-Release eine Browser-
+// Notification. Opt-in pro Geraet (Notification-Permission ist ohnehin
+// geraetegebunden), daher bewusst NUR localStorage, kein Cloud-Sync.
+const EVT_ALERT_LEAD_MIN=15;
+let evtAlertsOn=localStorage.getItem('fxpro_evt_alerts')==='1';
+function updAlertBtn(){
+  const b=document.getElementById('evtAlertBtn');if(!b)return;
+  b.classList.toggle('active',evtAlertsOn);
+  b.textContent=evtAlertsOn?'🔔 Alerts on':'🔔 Alerts off';
+}
+function toggleEvtAlerts(){
+  if(!('Notification'in window)){alert('This browser does not support notifications.');return;}
+  if(!evtAlertsOn){
+    if(Notification.permission==='denied'){alert('Notifications are blocked for this site. Allow them in the browser settings first.');return;}
+    if(Notification.permission==='default'){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){evtAlertsOn=true;localStorage.setItem('fxpro_evt_alerts','1');updAlertBtn();checkEvtAlerts();}
+      });
+      return;
+    }
+  }
+  evtAlertsOn=!evtAlertsOn;
+  localStorage.setItem('fxpro_evt_alerts',evtAlertsOn?'1':'0');
+  updAlertBtn();
+  if(evtAlertsOn)checkEvtAlerts();
+}
+// Bereits gemeldete Events (stabiler Schluessel Name|Datum|Waehrung), damit
+// dieselbe Release nicht bei jedem Minuten-Tick erneut aufpoppt.
+function _alertedSet(){try{return new Set(JSON.parse(localStorage.getItem('fxpro_evt_alerted'))||[]);}catch(e){return new Set();}}
+function checkEvtAlerts(){
+  if(!evtAlertsOn||!('Notification'in window)||Notification.permission!=='granted')return;
+  const today=todayStr(),now=new Date();
+  const done=_alertedSet();let changed=false;
+  calEvts.forEach(ev=>{
+    if(ev.date!==today||evtImpact(ev)!=='high'||!evtTimeValid(ev.time))return;
+    const[h,m]=ev.time.split(':').map(Number);
+    const evT=new Date(now);evT.setHours(h,m,0,0);
+    const minAway=(evT-now)/60000;
+    if(minAway<=0||minAway>EVT_ALERT_LEAD_MIN)return;
+    const key=(ev.name||'')+'|'+ev.date+'|'+(ev.currencies||'');
+    if(done.has(key))return;
+    try{
+      new Notification('⏰ '+(ev.currencies||'')+' '+(ev.name||''),{body:'High-impact release at '+ev.time+' (in ~'+Math.round(minAway)+' min)'+(ev.forecast?' · Forecast '+ev.forecast:''),tag:key});
+      done.add(key);changed=true;
+    }catch(e){}
+  });
+  if(changed){try{localStorage.setItem('fxpro_evt_alerted',JSON.stringify([...done].slice(-200)));}catch(e){}}
+}
+setInterval(checkEvtAlerts,60*1000);
+
 // ══ LOCK SCREEN ══════════════════════════════════════════════════
 const LOCK_CODE='0909';
 let lockBuf='';
@@ -6921,6 +7098,7 @@ if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
+maybeShowFirstRunHelp();checkEvtAlerts();
 updFFLastUpd();
 // Cloud-Pull ZUERST abwarten, dann erst die Live-Datenfeeds (FF/ind/bond/COT)
 // anwenden - nicht parallel/gleichzeitig starten. Vorher liefen beide Wege
