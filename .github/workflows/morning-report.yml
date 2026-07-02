@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Morgenbericht aus ff_calendar.json zusammenstellen
+      - name: Morning report aus ff_calendar.json zusammenstellen (Text + Sprach-Skript)
         run: |
           node -e '
             const fs = require("fs");
@@ -23,9 +23,10 @@ jobs:
             const now = new Date();
             const dayKey = d => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
             const todayKey = dayKey(now);
-            const fmtTime = iso => new Intl.DateTimeFormat("de-DE", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
-            const dateHdr = new Intl.DateTimeFormat("de-DE", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
+            const fmtTime = iso => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
+            const dateHdr = new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(now);
             const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
+            const clean = s => String(s || "").trim();
 
             const todays = cal
               .filter(e => (e.impact === "High" || e.impact === "Medium") && dayKey(new Date(e.date)) === todayKey)
@@ -33,39 +34,64 @@ jobs:
             const high = todays.filter(e => e.impact === "High");
             const med = todays.filter(e => e.impact === "Medium");
 
-            const evLine = e => {
+            // ── Text-Nachricht (HTML fuer Telegram sendMessage) ──
+            const evLineHtml = e => {
               const marker = new Date(e.date) < now ? "✅" : "⏳";
-              const fc = esc(e.forecast);
-              const prev = esc(e.previous);
-              let vals = "";
-              if (fc || prev) {
-                const parts = [];
-                if (fc) parts.push("erw. " + fc);
-                if (prev) parts.push("zuletzt " + prev);
-                vals = " (" + parts.join(", ") + ")";
-              }
+              const fc = esc(e.forecast), prev = esc(e.previous);
+              const parts = [];
+              if (fc) parts.push("exp. " + fc);
+              if (prev) parts.push("prev. " + prev);
+              const vals = parts.length ? " (" + parts.join(", ") + ")" : "";
               return marker + " " + fmtTime(e.date) + " · " + esc(e.country) + " — " + esc(e.title) + vals;
             };
-
-            const lines = ["☀️ <b>Morgenbericht — " + esc(dateHdr) + "</b>", ""];
+            const lines = ["☀️ <b>Morning Report — " + esc(dateHdr) + "</b>", ""];
             if (high.length) {
               lines.push("🔴 <b>High Impact</b>");
-              high.forEach(e => lines.push(evLine(e)));
+              high.forEach(e => lines.push(evLineHtml(e)));
               lines.push("");
             }
             if (med.length) {
               lines.push("🟠 <b>Medium Impact</b>");
-              med.forEach(e => lines.push(evLine(e)));
+              med.forEach(e => lines.push(evLineHtml(e)));
               lines.push("");
             }
-            if (!todays.length) lines.push("Keine High/Medium-Impact-Termine heute.");
-            lines.push("Insgesamt heute: " + high.length + " High, " + med.length + " Medium Impact.");
-
+            if (!todays.length) lines.push("No High/Medium impact events today.");
+            lines.push("Total today: " + high.length + " High, " + med.length + " Medium impact.");
             fs.writeFileSync("morning-report.txt", lines.join("\n"));
+
+            // ── Sprach-Skript (Klartext ohne HTML/Emoji, fuer TTS) ──
+            const evLineSpeech = e => {
+              const parts = [clean(e.country) + " " + clean(e.title)];
+              const fc = clean(e.forecast), prev = clean(e.previous);
+              if (fc) parts.push("expected " + fc);
+              if (prev) parts.push("previous " + prev);
+              return parts.join(", ");
+            };
+            const speech = ["Good morning. Here is your market report for " + dateHdr + "."];
+            if (high.length) {
+              speech.push("There " + (high.length === 1 ? "is one high impact event" : "are " + high.length + " high impact events") + " today.");
+              high.forEach(e => speech.push(evLineSpeech(e) + "."));
+            } else {
+              speech.push("No high impact events today.");
+            }
+            speech.push(med.length + (med.length === 1 ? " medium impact event is" : " medium impact events are") + " also scheduled.");
+            fs.writeFileSync("morning-report-speech.txt", speech.join(" "));
+
             console.log(lines.join("\n"));
+            console.log("---SPEECH---");
+            console.log(speech.join(" "));
           '
 
-      - name: Per Telegram senden
+      - name: espeak-ng und ffmpeg installieren (kostenlose TTS)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng ffmpeg
+
+      - name: Sprachnachricht erzeugen
+        run: |
+          espeak-ng -v en-us -s 155 -f morning-report-speech.txt -w morning-report.wav
+          # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
+          ffmpeg -y -i morning-report.wav -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+
+      - name: Per Telegram senden (Text + Sprachnachricht)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -79,6 +105,9 @@ jobs:
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
             --data-urlencode "text=${TEXT}" \
             --data-urlencode "parse_mode=HTML"
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "voice=@morning-report.ogg"
 
 # ── Einmalige Einrichtung ────────────────────────────────────────────
 # 1. In Telegram nach "BotFather" suchen, /newbot senden, Namen vergeben.
@@ -94,3 +123,8 @@ jobs:
 #      TELEGRAM_CHAT_ID   = ID aus Schritt 3
 # 5. Workflow einmal manuell testen: Actions -> "Morning Report
 #    (Telegram)" -> "Run workflow".
+#
+# Sprachnachricht: kostenlose espeak-ng-TTS (robotisch, keine weiteren
+# Accounts noetig). Fuer eine natuerlichere Stimme muesste ein
+# kostenpflichtiger TTS-Dienst (z.B. OpenAI TTS, ElevenLabs) samt
+# eigenem API-Key als weiteres Secret eingebunden werden.
