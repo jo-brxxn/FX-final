@@ -97,7 +97,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:1px;left:3px;display:flex;gap:2px;line-height:1}
 .evt-flag-abs .evt-flag{font-size:14px}
-.notif-flag-abs{position:absolute;top:2px;right:2px;color:var(--star);font-size:13px;font-weight:800;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
 .evt-flag{color:var(--red);font-size:15px;font-weight:900;line-height:1;flex-shrink:0}
 .evt-flag.ef-red{color:var(--red)}
 .evt-flag.ef-green{color:#22c55e}
@@ -368,7 +367,6 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .mx-rank-bar{height:100%;border-radius:5px;transition:width .3s}
 .mx-rank-score{font-size:14px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mx-rank-spark{display:flex;justify-content:center;align-items:center}
-.mx-spark-empty{color:var(--t3);opacity:.5}
 .mx-rank-surp{text-align:right;font-size:13px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mx-rank-surp small{color:var(--t3);font-weight:500;font-size:9px}
 .mx-hm-scroll{overflow-x:auto;padding:14px}
@@ -613,14 +611,6 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 /* Nur Waehrungen mit tatsaechlichen Events bekommen eine Spalte; alle Spalten teilen
    sich die Breite gleichmaessig (flex:1), Luecken links/rechts bleiben dadurch gleich
    gross egal wie viele Spalten gerade da sind. */
-.cal-ccycols{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
-.cal-ccycol{flex:1 1 150px;min-width:150px;max-width:260px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
-.cal-ccycol-hdr{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
-.cal-ccycol-cnt{color:var(--t3);font-weight:600;font-size:10.5px;margin-left:auto}
-.cal-ccycol-body .cal-table{border:none;border-radius:0;margin-bottom:0}
-.cal-ccycol-body .cal-ccy{display:none}
-.cal-ccycol-body .cal-row.compact{grid-template-columns:36px 1fr 38px 38px 38px}
-@media(max-width:760px){.cal-ccycols{flex-direction:column}.cal-ccycol{width:100%}}
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
@@ -788,7 +778,6 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
   .modal.inbox-modal{max-width:min(1300px,94vw)}
   #inboxList{max-height:78vh}
   .dp{max-width:none}
-  .gen-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
   /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
      auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
      bleibt oben und wird NICHT gestreckt. */
@@ -879,7 +868,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO-FEINSCHLIFF-9 (Fixed a startup race: cloud pull and the live data feeds - FF/indicators/bonds/COT - used to fire in parallel, so a cloud pull finishing later than a live feed could silently overwrite freshly-corrected indicator data with an older synced snapshot; live feeds now always apply after cloud pull resolves, so they always have the final say; Asset Overview no longer caps at 5 rubric cards; new compact-view switch next to History; Retail Sales tracks m/m everywhere it exists)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: GOLD-AUDIT-10 (Security & cleanup pass: escH now also escapes quotes, closing an attribute-injection XSS via external calendar event names and synced/imported note titles; new custom tickers are restricted to a safe character set since IDs flow into inline handlers; removed ~150 lines of dead code (old General tab, unused helpers, orphan CSS) plus the fake seeded CAD-CPI test notification; last German strings translated; supabase link got rel=noopener)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1252,7 +1241,7 @@ function introLogin(){
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
     <h3>☁ Cloud Synchronization</h3>
-    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
     <label class="dm-lbl">Project URL</label>
@@ -1320,7 +1309,12 @@ const SB_CATS=[
 
 // ══ HELPERS ════════════════════════════════════════════════════════
 const uid=()=>Math.random().toString(36).slice(2,9);
-const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// HTML-Escaping. WICHTIG: auch " und ' maskieren - escH-Ausgabe landet an
+// vielen Stellen in HTML-ATTRIBUTEN (value="...", title="...", placeholder),
+// teils mit externen Daten (Kalender-Eventnamen aus den Feeds). Ohne
+// Quote-Maskierung konnte ein " im Text aus dem Attribut ausbrechen und
+// eigene Attribute/Event-Handler injizieren (XSS).
+const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 function ar(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a[i]];}
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
@@ -1550,7 +1544,7 @@ function calRowHtml(ev,opts){
     ${opts.delAction
       ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`
       :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])
-        ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-impact event has occurred">!</span><button class="cal-green-dismiss" data-dkey="${escH(evtDismissKey(ev)).replace(/"/g,'&quot;')}" onclick="dismissGreenEvt(this.dataset.dkey)" title="Confirm / dismiss">×</button></div>`
+        ?`<div class="cal-green-row-wrap"><span class="evt-flag ef-green" style="font-size:13px" title="High-impact event has occurred">!</span><button class="cal-green-dismiss" data-dkey="${escH(evtDismissKey(ev))}" onclick="dismissGreenEvt(this.dataset.dkey)" title="Confirm / dismiss">×</button></div>`
         :'<div></div>'}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
@@ -1606,29 +1600,6 @@ function calTableHtml(evts,opts){
     }
   });
   return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
-}
-// Rendert Events nach Waehrung gruppiert NEBENEINANDER (eine Spalte pro Waehrung,
-// innerhalb zeitlich sortiert) statt als eine lange Liste - nur Waehrungen mit
-// tatsaechlichen Events bekommen eine Spalte, alle Spalten teilen sich die Breite
-// gleichmaessig. opts wie bei calTableHtml (delAction, collapsePast, showNowLine, ...).
-function calColumnsHtml(evts,opts){
-  opts=opts||{};
-  if(!evts.length)return'';
-  const sorted=[...evts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-  const groups={};
-  sorted.forEach(ev=>{
-    const ccy=(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean)[0]||'OTHER';
-    (groups[ccy]=groups[ccy]||[]).push(ev);
-  });
-  const ccys=Object.keys(groups).sort();
-  return`<div class="cal-ccycols">${ccys.map(ccy=>{
-    const evs=groups[ccy];
-    const body=calTableHtml(evs,{...opts,compact:true,skipHeader:true,idPrefix:`cal-${ccy}-`,allDates:calWindowDatesFor(evs)});
-    return`<div class="cal-ccycol">
-      <div class="cal-ccycol-hdr"><span>${escH(ccy)}</span><span class="cal-ccycol-cnt">${evs.length} Event${evs.length===1?'':'s'}</span></div>
-      <div class="cal-ccycol-body">${body}</div>
-    </div>`;
-  }).join('')}</div>`;
 }
 // Lückenloses Tagesfenster (erstes bis letztes Event, mind. inkl. heute) für
 // eine Eventliste - für die "leere Tage anzeigen"-Darstellung.
@@ -1700,9 +1671,6 @@ function isNonFx(id){return['crypto','metal','energy','index','stock'].includes(
 // Nicht-FX-Assets, die mit GENAU dieser Währung verbunden sind (Standard USD).
 function macroSyncIds(ccy){ccy=ccy||'USD';return[ccy,...syms.filter(s=>isNonFx(s.id)&&macroCcyFor(s.id)===ccy).map(s=>s.id)];}
 function isCrypto(id){return assetCls(id)==='crypto';}
-function cryptoIds(){return syms.filter(s=>isCrypto(s.id)).map(s=>s.id);}
-function isIndex(id){return assetCls(id)==='index';}
-function indexIds(){return syms.filter(s=>isIndex(s.id)).map(s=>s.id);}
 // ── ASSET-VERBUND (Sync-Gruppen) ─────────────────────────────────────
 // Mehrere Nicht-FX-Assets können verbunden werden, sodass sie sich immer
 // gleich aktualisieren: Bias, Rubriken, General-Argumente, Notizen,
@@ -1720,7 +1688,6 @@ function symSyncGroup(id){
   if(id==='SP500'||id==='NAS')return'usidx';
   return null;
 }
-function syncGroupMembers(g){return g?syms.filter(s=>symSyncGroup(s.id)===g).map(s=>s.id):[];}
 function syncAssetGroup(srcId){
   const g=symSyncGroup(srcId);if(!g)return false;
   const src=syms.find(s=>s.id===srcId);if(!src)return false;
@@ -1734,9 +1701,6 @@ function syncAssetGroup(srcId){
   });
   return changed;
 }
-// Rückwärtskompatible Aliase (frühere klassenbasierte Verbünde).
-function syncCryptoGroup(srcId){return syncAssetGroup(srcId);}
-function syncIndexGroup(srcId){return syncAssetGroup(srcId);}
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
 // Markt-Zinserwartungen pro Währung (Icon-Link in der Interest-Rates-Karte).
 // USD = CME FedWatch Tool; übrige = investing.com-Zinsentscheid-Seite der
@@ -1791,13 +1755,6 @@ function eventSrcIds(id){
   const lc=macroCcyFor(id);
   return lc?[id,lc]:[id];
 }
-function getRelevantEvents(id){
-  const today=todayStr();
-  const ids=eventSrcIds(id);
-  // Events ab heute gelten als "geschehen" -> Markierung wandert zum Postfach-Symbol (NOTIF_FLAG)
-  return calEvts.filter(ev=>ev.date>today&&ids.some(x=>evtMatchesSym(ev,x)));
-}
-function hasImportantEvt(id){return getRelevantEvents(id).some(ev=>evtImpact(ev)==='high');}
 // Bestätigte (dismisste) grüne Events – persistiert separat, nicht in snap/undo.
 let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')}catch(e){return{};}})();
 // Kompaktansicht auf der Asset-Detailseite: blendet Stichpunkte (Indikator-
@@ -1877,14 +1834,6 @@ function evtFlagHtml(id,baseCls){return flagSpans(evtFlagState(id),baseCls);}
 function evtFlagAbs(id){const f=flagSpans(evtFlagState(id));return f?`<span class="evt-flag-abs">${f}</span>`:'';}
 // Für ein Paar: Vereinigung beider Schenkel - es können also auch hier ein
 // rotes UND ein grünes Flag gleichzeitig erscheinen.
-function pairEvtFlagState(name){
-  const parts=name.split('/');
-  const ids=parts.length!==2?[name]:[PAIR_CODE_TO_ID[parts[0]]||parts[0],PAIR_CODE_TO_ID[parts[1]]||parts[1]];
-  let up=false,done=false;
-  ids.forEach(id=>{const s=evtFlagState(id);if(s.includes('u'))up=true;if(s.includes('d'))done=true;});
-  return (up?'u':'')+(done?'d':'');
-}
-function pairEvtFlagHtml(name,baseCls){return flagSpans(pairEvtFlagState(name),baseCls);}
 
 // ── NEWS PROCESSING / POSTFACH ──────────────────────────────────────
 // Kopiert fällige (heute/vergangene) Events ins Postfach. Events bleiben
@@ -1937,12 +1886,6 @@ function processCalEvts(){
   if(inbox.length>60){inbox=inbox.slice(0,60);changed=true;}
   return changed;
 }
-function getInboxFor(id){
-  const ids=eventSrcIds(id);
-  return inbox.filter(m=>ids.some(x=>evtMatchesSym(m,x)));
-}
-function hasInboxNotif(id){return getInboxFor(id).length>0;}
-const NOTIF_FLAG='<span class="notif-flag-abs" title="Neue Nachricht im Postfach">❗</span>';
 // Events für ein Symbol - inkl. Währungs-News bei Nicht-FX-Assets (verbundene
 // Währung). EINZIGE Quelle ist calEvts (derselbe Datenbestand wie der große
 // Kalender), nur nach Symbol/Währung gefiltert. Dadurch zeigen großer Kalender,
@@ -2589,14 +2532,7 @@ const IND_RESEARCH_DATA={
 // Notenbank, hängen aber am USD-Makrozyklus (siehe macroCcyFor) - sie
 // teilen sich daher dieselben Recherche-Daten/Quellenlinks wie USD.
 NONFX_IDS.forEach(id=>{IND_RESEARCH_DATA[id]=IND_RESEARCH_DATA.USD;});
-const RESEARCH_MONTHS_DE=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const RESEARCH_MONTHS_DE_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
-function fmtResearchDate(s){
-  if(!s)return'';
-  const d=new Date(s+'T00:00:00');
-  if(isNaN(d))return'';
-  return`${RESEARCH_MONTHS_DE[d.getMonth()]} ${d.getFullYear()}`;
-}
 // Volles Datum für die Quellenangabe im aufklappbaren Indikator-Detail.
 function fmtResearchDateFull(s){
   if(!s)return'';
@@ -3411,7 +3347,7 @@ function saveCloudCfg(){
   const lb=document.getElementById('introLoginBtn');
   if(lb)lb.textContent='👤 '+(username||syncId);
   updProfile();
-  setCloudStatus('Gespeichert. Synchronisiere...');
+  setCloudStatus('Saved. Syncing...');
   cloudPull(true);
 }
 // Profil-Button oben rechts: zeigt den eingetragenen Benutzernamen (oder
@@ -3663,37 +3599,6 @@ function renderDetail(){
   animChanges();
   updateStat();
 }
-
-// ── GENERAL TAB ──
-function renderGenTab(c){
-  return`<div style="font-size:12px;color:var(--t3);margin-bottom:8px;padding:6px 9px;background:var(--bg2);border-radius:var(--rs);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6">🌐 Structural drivers – what moves this asset in general (commodity links, safe-haven, risk-on/off, carry)</div>
-  <div class="gen-cols">
-  <div>
-    <div class="slbl"><span style="color:var(--green)">▲ BULLISH STRUCTURAL</span><div class="slbl-line"></div></div>
-    ${renderFL(c.genBull,'genBull')}
-    <div class="add-row"><input class="ai" id="bull-inp" placeholder="+ Bullish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBull');event.preventDefault()}"><button class="add-btn" style="background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green);border:1px solid" onclick="addGenR('genBull')">＋</button></div>
-  </div>
-  <div>
-    <div class="slbl"><span style="color:var(--red)">▼ BEARISH STRUCTURAL</span><div class="slbl-line"></div></div>
-    ${renderFL(c.genBear,'genBear')}
-    <div class="add-row"><input class="ai" id="bear-inp" placeholder="+ Bearish structural reason..." onkeydown="if(event.key==='Enter'){addGenR('genBear');event.preventDefault()}"><button class="add-btn" style="background:rgba(var(--red-rgb),.08);border-color:rgba(var(--red-rgb),.27);color:var(--red);border:1px solid" onclick="addGenR('genBear')">＋</button></div>
-  </div>
-  </div>`;}
-
-function renderFL(arr,key){
-  if(!arr||!arr.length)return'';
-  return arr.map((r,i)=>{
-    const b=r.bias||'neu',imp=r.imp||false,txt=r.text||r||'';
-    const bco=bCol(b);
-    return`<div class="ri${imp?' imp':''} ${glowClass(b)}">
-      <div class="rdot" style="background:${imp?'var(--star)':bco}"></div>
-      <textarea class="rtxt" rows="1" oninput="ar(this);editGenR('${key}',${i},this.value);saveSoon()" onblur="save()">${escH(txt)}</textarea>
-      <div class="rb-g">${['bull','neu','bear'].map(b2=>`<button class="rb${b===b2?' '+bClass(b2):''}" onclick="setGenRB('${key}',${i},'${b2}')">${b2==='bull'?'▲':b2==='bear'?'▼':'◆'}</button>`).join('')}</div>
-      <button class="istar${imp?' on':''}" onclick="togGenImp('${key}',${i})">⭐</button>
-      <button class="mv" onclick="mvGenR('${key}',${i},-1)" ${i===0?'disabled':''}>▲</button>
-      <button class="mv" onclick="mvGenR('${key}',${i},1)" ${i===arr.length-1?'disabled':''}>▼</button>
-      <button class="idel" onclick="delGenR('${key}',${i})">×</button>
-    </div>`; }).join('');}
 
 // ── KARTEN-GRID (gleich hohe Zeilen) ──
 // CSS-Grid statt Spalten-Stacks: Karten einer Zeile strecken sich auf die
@@ -4016,23 +3921,6 @@ function gotoSym(id){
 }
 function setSub(s){curSub=s;renderDetail();const dp=document.querySelector('#detail .dp');if(dp)dp.classList.add('detail-fade');}
 function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
-function setBias(b){
-  pushU();getSym().bias=b;
-  recomputeAllPairBiases();syncAutoPairCats();
-  save();renderSidebar();renderDetail();
-  if(curPage==='pairs')renderPairs();else if(curPage==='dash')renderDash();
-}
-function editGenR(key,i,v){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(r&&typeof r==='object')r.text=v;else if(c[key])c[key][i]=v;}
-function setGenRB(key,i,b){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(typeof r==='string')c[key][i]={text:r,bias:b,imp:false};else r.bias=b;save();renderDetail();}
-function togGenImp(key,i){const c=getSym();if(!c||!c[key])return;const r=c[key][i];if(typeof r==='string')c[key][i]={text:r,bias:'neu',imp:true};else r.imp=!r.imp;save();renderDetail();}
-function delGenR(key,i){pushU();const c=getSym();if(c&&c[key])c[key].splice(i,1);save();renderDetail();}
-function mvGenR(key,i,d){const c=getSym();if(c&&c[key])mvArr(c[key],i,d);save();renderDetail();}
-function addGenR(key){
-  const isBull=key==='genBull';const inp=document.getElementById(isBull?'bull-inp':'bear-inp');
-  if(!inp)return;const v=inp.value.trim();if(!v)return;
-  pushU();const c=getSym();if(!c)return;if(!c[key])c[key]=[];
-  c[key].push({id:uid(),text:v,bias:isBull?'bull':'bear',imp:false});inp.value='';save();renderDetail();}
-
 // ══ ACTIONS – RUBRICS ═══════════════════════════════════════════════
 function getRub(ri){const c=getSym();return c&&c.rubrics?c.rubrics[ri]:null;}
 function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii]:null;}
@@ -4247,6 +4135,10 @@ function confirmAddSym(){
   const full=document.getElementById('mSymFull').value.trim()||ticker;
   const cls=document.getElementById('mSymCls').value||'fx';
   if(!ticker)return;
+  // Sicherheits-Gate: die ID landet ungefiltert in inline-onclick-Handlern
+  // (gotoSym('ID') etc.) - nur ein enger Zeichensatz verhindert, dass ein
+  // praeparierter Ticker dort aus dem String ausbricht (XSS, auch via Sync).
+  if(!/^[A-Z0-9._-]{1,15}$/.test(ticker)){alert('Ticker may only contain letters, digits, . _ - (max 15 characters).');return;}
   if(syms.find(s=>s.id===ticker)){alert('Symbol already exists.');return;}
   pushU();
   // Kategorie zuerst registrieren, damit assetCls()/isNonFx() beim Aufbau
@@ -5262,10 +5154,6 @@ function syncRiskHistHeight(){
   renderDash();
 }
 window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>setTimeout(syncRiskHistHeight,160));});
-// Die Kalender-Hoehe wird jetzt via CSS (flex:1 auf .cal-scroll) gesteuert.
-// Die Karte dehnt sich per Grid auf die Hoehe der laengsten Karte in der Zeile aus,
-// und cal-scroll fuellt den Rest. Diese Funktion ist nur noch ein no-op.
-function fitCalendarHeight(){}
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
 function scrollCalsToNow(){
@@ -5974,21 +5862,6 @@ function riskHistChart(col,chartH){
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+16).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
   return`<div class="tr-scroll risk-hist-scroll">${svg}</svg></div>`;
-}
-// Mini-Sparkline (SVG) aus den letzten Score-Werten einer Währung. Steigt
-// der Score (heute ≥ erster Wert) -> blau, sonst rot. Ein einzelner Tag
-// wird als Punkt gezeichnet.
-function sparkline(arr,w,h){
-  w=w||66;h=h||20;
-  if(!arr||!arr.length)return`<span class="mx-spark-empty">–</span>`;
-  const vals=arr.map(p=>p[1]);const n=vals.length;
-  let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1;}
-  const x=i=>n===1?w/2:(i/(n-1))*(w-2)+1;
-  const y=v=>h-2-((v-mn)/(mx-mn))*(h-4);
-  const col=vals[n-1]>=vals[0]?'var(--blue)':'var(--red)';
-  if(n===1)return`<svg class="mx-spark" width="${w}" height="${h}"><circle cx="${x(0).toFixed(1)}" cy="${y(vals[0]).toFixed(1)}" r="2.2" fill="${col}"/></svg>`;
-  const pts=vals.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
-  return`<svg class="mx-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${x(n-1).toFixed(1)}" cy="${y(vals[n-1]).toFixed(1)}" r="1.8" fill="${col}"/></svg>`;
 }
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
@@ -6988,7 +6861,7 @@ function lockKey(d){
       sessionStorage.setItem('fxpro_unlocked','1');
       setTimeout(unlockApp,150);
     }else{
-      document.getElementById('lockErr').textContent='Falscher Code';
+      document.getElementById('lockErr').textContent='Wrong code';
       const box=document.getElementById('lockBox');
       box.classList.add('shake');
       setTimeout(()=>{box.classList.remove('shake');lockBuf='';updLockDots();},400);
@@ -7045,25 +6918,6 @@ loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
-// Einmaliger Test: eine CAD-CPI-Score-Benachrichtigung von gestern ins
-// Postfach legen, damit sich der Klick-zum-Indikator-Ablauf direkt
-// ausprobieren lässt. Werte aus dem realen Kalender (CAD CPI m/m, 22.06.).
-if(localStorage.getItem('fxpro_seed_cadcpi')!=='1'){
-  const cad=syms.find(s=>s.id==='CAD');
-  const rub=cad&&(cad.rubrics||[]).find(r=>r.name==='Inflation');
-  const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
-  if(ind){
-    const yd=new Date(todayStr()+'T00:00:00');yd.setDate(yd.getDate()-1);
-    const ydStr=yd.getFullYear()+'-'+String(yd.getMonth()+1).padStart(2,'0')+'-'+String(yd.getDate()).padStart(2,'0');
-    inbox.unshift({id:uid(),kind:'score',symId:'CAD',currencies:'CAD',base:'CPI (Headline)',label:ind.displayName||ind.name,rubName:'Inflation',bias:'bull',actual:'1%',forecast:'0.8%',previous:'0.4%',date:ydStr,time:'08:30',ts:Date.now()});
-    // Verhindert, dass der echte CAD-CPI-Eintrag (sofern schon im Kalender)
-    // dieselbe Benachrichtigung gleich nochmal erzeugt.
-    const cev=findIndEvent('CAD',ind.name);
-    ind.notifKey=cev?evtDismissKey(cev):'CPI m/m|'+ydStr+'|CAD';
-  }
-  localStorage.setItem('fxpro_seed_cadcpi','1');
-  save();
-}
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
