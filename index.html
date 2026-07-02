@@ -170,9 +170,10 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Zins-Differenz (Carry) Badge in den Set-ups-Zeilen */
-.rate-diff{font-size:10.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);color:var(--t3);white-space:nowrap}
+.rate-diff{font:700 10.5px 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);background:transparent;color:var(--t3);white-space:nowrap;cursor:pointer;transition:border-color .12s}
 .rate-diff.pos{color:var(--green);border-color:rgba(var(--green-rgb),.4)}
 .rate-diff.neg{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
+@media(hover:hover){.rate-diff:hover{border-color:var(--bd2)}}
 /* COT: Warnung bei extrem einseitiger Positionierung (crowded trade) */
 .cot-crowded{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:var(--rs);padding:2px 6px;margin-left:7px;vertical-align:middle}
 /* Auto-abgeleitete Bias-Buttons (Non-FX, Regel same/inverse): gesperrt + Kettensymbol */
@@ -256,7 +257,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .rub-summary-sep{border-top:1px solid var(--bd);margin:6px 0}
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:2px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
-.ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
+.ov-card{background:var(--bg2);border:3px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
 .ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
@@ -903,7 +904,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAPHIR-INDIKATOR-15</span><span id="verBannerText"> (CB Tone, Next CB Move and Carry Bias are now real indicators on the Interest Rates card instead of a separate bolt-on: standard ▲/◆/▼ bias buttons, contribute to the card/symbol score like any indicator - CB Tone &amp; Carry Bias at half weight, Next CB Move at full weight; Carry Bias is auto-computed from the policy-rate differential vs. the FX average and locked in the UI (not manually editable); pair score is back to the simple base−quote form since carry now flows through the symbol score automatically; old CB-stance bolt-on UI/score removed; this banner is now collapsible (▾/▸) and can also be hidden from the Cloud Sync panel, not just its own ×)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BERNSTEIN-CARRYFIX-16</span><span id="verBannerText"> (Carry Bias indicator removed again per feedback - carry now only counts at Set-ups/pair level via pairCarryAdj like before (±0.5 from ±0.5%, ±1 from ±1.5%), not as a per-currency indicator; the Δ%-badge in Set-ups is now clickable and opens a responsive detail window with both policy rates, the differential and the exact score effect; the Overview summary card at the top of each asset page now has the same 3px border thickness as the cards below it instead of a thinner 1px one)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1268,6 +1269,14 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Close</button><button class="btn g" onclick="saveInfoM()">Save</button></div>
   </div>
 </div>
+<!-- MODAL: Carry-Detail (Klick auf das Δ%-Badge bei den Set-ups) -->
+<div class="ov" id="mCarryDetail" style="display:none">
+  <div class="modal" style="max-width:380px">
+    <h3 id="carryDetailTitle">📈 Carry</h3>
+    <div id="carryDetailBody"></div>
+    <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
+  </div>
+</div>
 <!-- MODAL: Rate-Watch-Link bearbeiten -->
 <div class="ov" id="mRateWatch" style="display:none">
   <div class="modal">
@@ -1328,9 +1337,9 @@ function introLogin(){
     <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release.</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
-    <div class="help-p"><b>Pair score = base score − quote score</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> in Set-ups just shows the raw policy-rate differential for reference — the actual carry effect on the score comes from each currency's own <b>Carry Bias</b> indicator (see below). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from the pair score.</div>
+    <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
     <div class="help-sec">Central bank & COT</div>
-    <div class="help-p">The Interest Rates card has three extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>Carry Bias</b> is fully automatic: it compares this currency's policy rate to the average of the other majors (half weight) and can't be edited — the buttons are shown greyed out. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 as before.</div>
+    <div class="help-p">The Interest Rates card has two extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 as before.</div>
     <div class="help-sec">Data</div>
     <div class="help-p">Calendar & indicator values refresh automatically (Forex Factory / TradingView / CFTC / bond closes, hourly via GitHub).</div>
     <div class="help-sec">Sync</div>
@@ -1434,14 +1443,11 @@ function indBaseWeight(ind,rub){
 // applyCotDataFeed) - es kann also immer nur EINE der beiden Seiten
 // gleichzeitig zaehlen (max. +/-0,5 aus der Netto-Positionierung).
 const COT_NET_HALF=new Set(['Net Bullish Positioning','Net Bearish Positioning']);
-// "CB Tone" und "Carry Bias" zaehlen mit halbem Gewicht (wie ein Bond-
-// Halbpunkt) - "Next CB Move" bleibt normal gewichtet (1). Beide sind seit
-// dieser Version echte Indikatoren der Interest-Rates-Rubrik statt eines
-// separaten Bolt-ons auf symScore/pairScore: Ton bull=hawkish/bear=dovish
-// (Standard-Bias-Buttons, manuell), Carry Bias automatisch aus dem
-// Leitzins ggue. dem FX-Durchschnitt (siehe applyCarryBias, gesperrte
-// Buttons in der UI).
-const CB_TONE_HALF=new Set(['CB Tone','Carry Bias']);
+// "CB Tone" zaehlt mit halbem Gewicht (wie ein Bond-Halbpunkt) - "Next CB
+// Move" bleibt normal gewichtet (1). Beide sind echte Indikatoren der
+// Interest-Rates-Rubrik statt eines separaten Bolt-ons auf symScore:
+// Ton bull=hawkish/bear=dovish (Standard-Bias-Buttons, manuell).
+const CB_TONE_HALF=new Set(['CB Tone']);
 function indScore(ind,rub){
   return biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));
 }
@@ -1490,18 +1496,32 @@ function flipNotes(mutate){
     requestAnimationFrame(()=>{el.style.transition='transform .32s cubic-bezier(.2,.7,.3,1)';el.style.transform='';setTimeout(()=>{el.style.transition='';},340);});
   });
 }
+// Carry-Komponente des Paar-Scores: gestaffelter Bonus/Malus aus der
+// Leitzins-Differenz (Basis minus Kurswaehrung, gleiche rateInfo-Quelle wie
+// der Carry-Tab). Positiver Carry beguenstigt die Long-Seite des Paars:
+//   Differenz >= +1,5% -> +1   |   >= +0,5% -> +0,5
+//   Differenz <= -1,5% -> -1   |   <= -0,5% -> -0,5   |   sonst 0
+// Nur fuer reine FX-Paare mit bekannten Leitzinsen beider Seiten. Zaehlt
+// bewusst NUR auf Paar-/Set-ups-Ebene (nicht als Indikator pro Waehrung),
+// weil Carry ein Paar-Konzept ist - Basis vs. Kurswaehrung, nicht Basis vs.
+// FX-Durchschnitt.
+function pairCarryAdj(pairName){
+  const parts=(pairName||'').split('/');
+  if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return 0;
+  const rb=rateInfo(parts[0]),rq=rateInfo(parts[1]);
+  if(!rb||!rq)return 0;
+  const d=rb.rate-rq.rate;
+  return d>=1.5?1:d>=0.5?0.5:d<=-1.5?-1:d<=-0.5?-0.5:0;
+}
 // Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung
-// (z.B. EUR -5, USD +5 -> EUR/USD = -10). Die Carry-Komponente (Leitzins-
-// Differenz ggue. dem FX-Durchschnitt) fliesst nicht mehr separat hier ein,
-// sondern bereits ueber den "Carry Bias"-Indikator jeder Waehrung in
-// symScore() - siehe applyCarryBias().
+// (z.B. EUR -5, USD +5 -> EUR/USD = -10) plus Carry-Komponente (s.o.).
 function pairScore(pairName){
   const parts=(pairName||'').split('/');if(parts.length!==2)return 0;
   const codeToId={XAU:'GOLD',XAG:'SILVER',WTI:'OIL',BTC:'BTC',ETH:'ETH'};
   const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
   const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
   if(!bSym||!qSym)return 0;
-  return symScore(bSym)-symScore(qSym);
+  return symScore(bSym)-symScore(qSym)+pairCarryAdj(pairName);
 }
 function rowScore(n,title,color){return`<span class="row-score" style="color:${color||scoreColor(n)}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
@@ -2779,7 +2799,7 @@ function applyIndResearch(sym){
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation'])},
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread','CB Tone','Next CB Move','Carry Bias'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread','CB Tone','Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
@@ -2812,7 +2832,6 @@ const IND_INFO_DEFAULTS={
   '2Y/10Y Spread':'10-year minus 2-year yield, in percentage points. Negative (inverted) = recession warning; steepening = improving growth outlook.',
   'CB Tone':'Your own read of the central bank\'s current rhetoric (statement, press conference, speeches). Bullish = hawkish tone, bearish = dovish tone. Set manually - counts at half weight since it overlaps with the Central Bank Rate / bond yields.',
   'Next CB Move':'Your own expectation for the next policy decision. Bullish = hike expected, bearish = cut expected, neutral = hold expected. Set manually.',
-  'Carry Bias':'Auto-computed: this currency\'s policy rate vs. the average of the other majors. Bullish = clearly above average (attractive funding target, supports carry-long demand), bearish = clearly below average (typical funding currency). Not manually editable - recalculates automatically as rates change.',
   // Labour Market
   'NFP / Employment Change':'Net new jobs added in the period (non-farm), in thousands. Strong job growth = robust economy = hawkish and currency-positive.',
   'Unemployment Rate':'Share of the labour force without a job, in %. Lower = tighter labour market, supports rate hikes and the currency.',
@@ -2849,7 +2868,7 @@ function applyRubOrder(){
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio']};
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -2918,11 +2937,14 @@ function migrateRubInds(rubrics,sym){
     if(rub.name==='Inflation'&&!sym._researchV20&&!rub.indicators.find(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)')){
       rub.indicators.unshift({id:uid(),name:'CPI (Headline)',bias:'neu',imp:false,date:'',interval:'',points:[]});
     }
-    // "CB Tone"/"Next CB Move"/"Carry Bias" waren frueher ein Bolt-on
-    // (sym.cbStance/sym.cbNextMove, ausserhalb des Score-Systems der
-    // Rubriken) - jetzt echte Indikatoren dieser Rubrik mit normalen Bias-
-    // Buttons. Slot einmalig einfuegen und, falls vorhanden, den alten
-    // sym.cbStance/cbNextMove-Wert als Startwert uebernehmen.
+    // "CB Tone"/"Next CB Move" waren frueher ein Bolt-on (sym.cbStance/
+    // sym.cbNextMove, ausserhalb des Score-Systems der Rubriken) - jetzt
+    // echte Indikatoren dieser Rubrik mit normalen Bias-Buttons. Slot
+    // einmalig einfuegen und, falls vorhanden, den alten sym.cbStance/
+    // cbNextMove-Wert als Startwert uebernehmen. ("Carry Bias" war ein
+    // kurzzeitiger dritter Indikator hier - auf Nutzerwunsch wieder
+    // entfernt, siehe RUB_IND_REMOVE; Carry laeuft jetzt wieder ueber
+    // pairCarryAdj() nur auf Paar-Ebene bei den Set-ups.)
     if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='CB Tone')){
       const tone=sym&&sym.cbStance==='hawk'?'bull':sym&&sym.cbStance==='dove'?'bear':'neu';
       rub.indicators.push({id:uid(),name:'CB Tone',bias:tone,imp:false,date:'',interval:'',points:[]});
@@ -2930,9 +2952,6 @@ function migrateRubInds(rubrics,sym){
     if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='Next CB Move')){
       const move=sym&&sym.cbNextMove==='hike'?'bull':sym&&sym.cbNextMove==='cut'?'bear':'neu';
       rub.indicators.push({id:uid(),name:'Next CB Move',bias:move,imp:false,date:'',interval:'',points:[]});
-    }
-    if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='Carry Bias')){
-      rub.indicators.push({id:uid(),name:'Carry Bias',bias:'neu',imp:false,date:'',interval:'',points:[]});
     }
   });
   if(sym){delete sym.cbStance;delete sym.cbNextMove;}
@@ -3693,7 +3712,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone/Carry Bias count ±0.5 each, Next CB Move ±1)','det-'+c.id)}</div><div class="afull">${c.full}</div></div>
+      <div><div class="atitle">${c.name}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1)','det-'+c.id)}</div><div class="afull">${c.full}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -3943,8 +3962,7 @@ function renderInd(ind,ri,ii,total){
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
-      ${(()=>{const rubLock=rubAutoDerived(getSym(),getRub(ri));const lock=rubLock||indAutoLocked(getSym(),getRub(ri),ind);
-      const tt=lock?(rubLock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:` title="Auto-computed from the policy-rate differential vs. the FX average - not manually editable"`):'';
+      ${(()=>{const lock=rubAutoDerived(getSym(),getRub(ri));const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
       return`<div class="ibg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>`;})()}
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
       <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -4108,19 +4126,6 @@ function rubAutoDerived(sym,rub){
   const rule=effDeriveRules(sym)[rub.name];
   return rule==='same'||rule==='inverse';
 }
-// Ist DIESER einzelne Indikator gesperrt (unabhaengig davon, ob die ganze
-// Rubrik gespiegelt ist)? Bisher nur "Carry Bias" bei FX-Symbolen: der Wert
-// wird automatisch aus dem Leitzins ggue. dem FX-Durchschnitt berechnet
-// (applyCarryBias, Teil von recomputeAuto) - ein manueller Klick wuerde
-// beim naechsten recomputeAuto() sofort wieder ueberschrieben. Bei
-// Nicht-FX-Assets gilt stattdessen wie ueberall die normale
-// rubAutoDerived-Spiegel-Sperre (bzw. gar keine Sperre, wenn die Regel
-// "Off" ist).
-function indAutoLocked(sym,rub,ind){
-  if(!sym||!rub||!ind)return false;
-  if(rub.name==='Interest Rates'&&ind.name==='Carry Bias'&&!isNonFx(sym.id))return true;
-  return rubAutoDerived(sym,rub);
-}
 function setRubBias(ri,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This card\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
@@ -4168,7 +4173,7 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri),_i0=getInd(ri,ii);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}if(_c&&_r0&&_i0&&indAutoLocked(_c,_r0,_i0)){alert('Carry Bias is computed automatically from the policy-rate differential vs. the FX average and can\'t be set manually.');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
@@ -4493,7 +4498,7 @@ function recomputeRubricAutoBias(){
 // Vollstaendige automatische Neuberechnung: erst Rubrik-Bias aus Rubrik-Score,
 // dann Symbol-Bias aus Score, dann Paar-Bias aus Paar-Score, dann
 // Auto-Einsortierung der Paare.
-function recomputeAuto(){applyCarryBias();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){recomputeRubricAutoBias();deriveMacroBiasAll();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
@@ -4567,6 +4572,42 @@ function toggleSetupCcy(c){const i=setupCcyFilter.indexOf(c);if(i>=0)setupCcyFil
 function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();renderPairs();}
 // Enthält ein Paar(name) eine der gewählten Währungen (als Basis ODER Kurs)?
 function pairHasCcy(name,ccys){const parts=(name||'').split('/').map(s=>s.trim().toUpperCase());return ccys.some(c=>parts.includes(c));}
+// Carry-Detail-Fenster (Klick auf das Δ%-Badge bei den Set-ups): zeigt beide
+// Leitzinsen, die Differenz und den konkreten Score-Effekt (dieselbe
+// gestaffelte Formel wie pairCarryAdj). Fenster passt sich per .modal-CSS
+// (max-width:min(...,94vw)) automatisch an die Bildschirmgroesse an.
+function openCarryDetail(pairName){
+  const parts=(pairName||'').split('/');
+  if(parts.length!==2)return;
+  const[b,q]=parts;
+  const rb=rateInfo(b),rq=rateInfo(q);
+  const body=document.getElementById('carryDetailBody');
+  document.getElementById('carryDetailTitle').textContent='📈 Carry: '+pairName;
+  if(!rb||!rq){
+    body.innerHTML=`<div style="font-size:12.5px;color:var(--t3)">Policy rate not known for both currencies yet.</div>`;
+    openM('mCarryDetail');return;
+  }
+  const d=Math.round((rb.rate-rq.rate)*100)/100;
+  const adj=pairCarryAdj(pairName);
+  const long=d>=0;
+  const col=d>0?'var(--green)':d<0?'var(--red)':'var(--t3)';
+  body.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px">
+      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${rb.rate}%</div></div>
+      <div style="font-size:16px;color:var(--t3)">−</div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${rq.rate}%</div></div>
+    </div>
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-size:11px;color:var(--t3);font-weight:700;text-transform:uppercase">Differential</div>
+      <div style="font-size:24px;font-weight:800;color:${col};font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${d>0?'+':''}${d}%</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px">${d===0?'No carry edge either way.':(long?`Favours going long ${escH(b)} / short ${escH(q)}`:`Favours going long ${escH(q)} / short ${escH(b)}`)}</div>
+    </div>
+    <div style="font-size:12.5px;color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px">
+      <b>Score effect: ${adj>0?'+':''}${adj}</b> toward the ${escH(pairName)} pair score.<br>
+      Staged from the |differential|: ≥1.5% → ±1, ≥0.5% → ±0.5, otherwise 0 — sign follows which side has the higher rate.
+    </div>`;
+  openM('mCarryDetail');
+}
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
   // Die Set-ups-Ansicht fasst ALLE Kategorien (z.B. Set-ups + Watchlist) zu
@@ -4593,18 +4634,18 @@ function renderPairs(){
   // enthalten (Non-FX-Assets sind keine Währungspaare und werden ausgeblendet).
   const shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
   // Zins-Differenz (Carry) je FX-Paar: Leitzins Basis minus Kurswaehrung.
-  // Positiv = Carry beguenstigt die Long-Seite des Paars. Reine
-  // Zusatz-Anzeige (gleiche rateInfo-Quelle wie der Carry-Tab) - der
-  // eigentliche Score-Beitrag laeuft ueber den "Carry Bias"-Indikator jeder
-  // Waehrung (Interest-Rates-Karte, automatisch aus dem Leitzins ggue. dem
-  // FX-Durchschnitt), nicht ueber diese pairweise Differenz direkt.
+  // Positiv = Carry beguenstigt die Long-Seite des Paars. Zaehlt ueber
+  // pairCarryAdj() direkt in den Paar-Score (nur auf Set-ups-/Paar-Ebene,
+  // nicht als Indikator pro Waehrung - siehe pairCarryAdj-Kommentar).
+  // Klickbar: oeffnet ein Detail-Fenster mit beiden Leitzinsen, der
+  // Differenz und dem konkreten Score-Effekt (openCarryDetail).
   const rateDiff=name=>{
     const parts=name.split('/');
     if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return'';
     const rb=rateInfo(parts[0]),rq=rateInfo(parts[1]);
     if(!rb||!rq)return'';
     const d=Math.round((rb.rate-rq.rate)*100)/100;
-    return`<span class="rate-diff${d>0?' pos':d<0?' neg':''}" title="Policy-rate differential: ${parts[0]} ${rb.rate}% − ${parts[1]} ${rq.rate}% - each currency's own Carry Bias indicator (Interest Rates card) feeds the score based on its rate vs. the FX average">Δ${d>0?'+':''}${d}%</span>`;
+    return`<button class="rate-diff${d>0?' pos':d<0?' neg':''}" onclick="openCarryDetail('${escH(name)}')" title="Click for the carry breakdown">Δ${d>0?'+':''}${d}%</button>`;
   };
   const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     <div class="sym-name dw-pname">${escH(it.name)}</div>
@@ -6993,42 +7034,6 @@ function rateInfo(ccy){
   if(c&&c.rate!=null&&(!best||c.date>best.date))best={rate:c.rate,date:c.date,src:'cache'};
   if(best&&(!c||best.date>c.date||best.rate!==c.rate)){cache[ccy]={rate:best.rate,date:best.date};saveRateCache(cache);}
   return best;
-}
-// Schwelle (Prozentpunkte) fuer bull/bear beim "Carry Bias"-Indikator:
-// Abstand des eigenen Leitzinses zum Durchschnitt der uebrigen 7 FX-Majors.
-const CARRY_DIFF_THRESH=1;
-// Berechnet fuer jede FX-Waehrung automatisch den "Carry Bias"-Indikator
-// (Interest-Rates-Rubrik) aus dem Leitzins ggue. dem Durchschnitt der
-// anderen Majors - bull = klar ueber dem Schnitt (Carry-Ziel), bear = klar
-// darunter (typische Finanzierungswaehrung). Nicht-FX-Assets bekommen ihren
-// Wert normal ueber deriveMacroBiasAll vom verlinkten Waehrungssymbol
-// gespiegelt (Namens-Match), bekommen hier aber - wie bei den Bond-Yields -
-// bereits die Anzeige-Werte (Actual/Previous) ihrer verlinkten Waehrung
-// gesetzt. Wird aus recomputeAuto() heraus aufgerufen: rateInfo() ist rein
-// synchron/gecacht, daher ohne Netzwerk-Overhead bei jedem Aufruf neu
-// berechenbar - die Bias-Buttons sind in der UI gesperrt (siehe
-// indAutoLocked), es gibt also keinen Nutzer-Klick, den das ueberschreiben
-// koennte.
-function applyCarryBias(){
-  const rates={};
-  FX.forEach(ccy=>{const ri=rateInfo(ccy);if(ri)rates[ccy]=ri.rate;});
-  const known=Object.keys(rates);
-  syms.forEach(c=>{
-    const ccy=macroCcyFor(c.id);
-    if(!ccy||!(ccy in rates)||known.length<2)return;
-    const others=known.filter(k=>k!==ccy);
-    if(!others.length)return;
-    const avg=others.reduce((s,k)=>s+rates[k],0)/others.length;
-    const diff=rates[ccy]-avg;
-    const bias=diff>=CARRY_DIFF_THRESH?'bull':diff<=-CARRY_DIFF_THRESH?'bear':'neu';
-    (c.rubrics||[]).forEach(rub=>{
-      if(rub.name!=='Interest Rates'||!rub.indicators)return;
-      const ind=rub.indicators.find(i=>i.name==='Carry Bias');
-      if(!ind)return;
-      ind.research={actual:fmtYield(rates[ccy]),forecast:null,previous:fmtYield(avg),date:todayStr(),prevDate:null,source:'',bond:true,bondColor:diff>0?'bond-up':diff<0?'bond-down':'bond-flat'};
-      if(!isNonFx(c.id))ind.bias=bias;
-    });
-  });
 }
 function carryRows(){
   return ALL_PAIRS.map(p=>{
