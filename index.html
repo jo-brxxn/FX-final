@@ -879,7 +879,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 </head>
 <body>
 
-<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: ZYAN-FEINSCHLIFF-8 (Asset Overview card at the top no longer caps at the first 5 rubric cards - Macro & Risk Environment and COT Data were silently cut off before, now every rubric card shows up there; new compact-view switch next to History hides bullet points/summaries for a denser view; Retail Sales now tracks m/m everywhere it exists, corrected investing.com links)</div>
+<div style="flex:none;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 10px">VERSION-CHECK: INDIGO-FEINSCHLIFF-9 (Fixed a startup race: cloud pull and the live data feeds - FF/indicators/bonds/COT - used to fire in parallel, so a cloud pull finishing later than a live feed could silently overwrite freshly-corrected indicator data with an older synced snapshot; live feeds now always apply after cloud pull resolves, so they always have the final say; Asset Overview no longer caps at 5 rubric cards; new compact-view switch next to History; Retail Sales tracks m/m everywhere it exists)</div>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -7068,11 +7068,20 @@ if(localStorage.getItem('fxpro_seed_cadcpi')!=='1'){
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
 updFFLastUpd();
-autoFetchFF();
-autoFetchIndData();
-autoFetchBondData();
-autoFetchCot();
-cloudPull(false);
+// Cloud-Pull ZUERST abwarten, dann erst die Live-Datenfeeds (FF/ind/bond/COT)
+// anwenden - nicht parallel/gleichzeitig starten. Vorher liefen beide Wege
+// als Race: falls Cloud-Pull SPAETER durchlief als ein Live-Feed, hat
+// applySnap() den kompletten syms-Baum (inkl. aller Indikator-Recherche-
+// werte/-namen) durch den womoeglich AELTEREN Cloud-Stand ersetzt und damit
+// gerade frisch korrigierte Live-Werte (z.B. Retail-Sales-Umstellung auf m/m)
+// wieder ueberschrieben - und das blieb dann bis zum naechsten Reload so
+// stehen. Jetzt garantiert: Live-Daten haben immer das letzte Wort.
+cloudPull(false).then(()=>{
+  autoFetchFF();
+  autoFetchIndData();
+  autoFetchBondData();
+  autoFetchCot();
+});
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
   autoFetchIndData();
