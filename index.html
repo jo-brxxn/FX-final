@@ -903,7 +903,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 <!-- VERSION-CHECK-Banner: pro Sitzung wegklickbar (×), damit es im Alltag
      keinen Platz frisst - bleibt aber Teil des Deploy-Workflows (Farbe +
      Beschreibung werden weiterhin bei JEDER Aenderung aktualisiert). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 34px">VERSION-CHECK: TUERKIS-DETAIL-12 (Bond yields: Previous is now the close from 15 days ago (today - 15) instead of ~10; indicator borders on asset cards are thicker (2px) while card borders grew to 3px so the hierarchy stays; Put/Call Ratio removed from COT Data everywhere incl. migration of saved data; asset settings fix: bias buttons on auto-derived non-FX cards are now visibly locked with an explanation instead of silently reverting, and the gear modal shows a live mirror preview (e.g. USD X -> Y) per category so you can see exactly what each rule currently does) selectable per currency on the Interest Rates card and shown next to the symbol; Set-ups pairs now show the policy-rate differential (carry) per pair; COT tab flags crowded one-sided positioning; optional browser alerts before high-impact releases; tidier mobile header)<button onclick="document.getElementById('verBanner').style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 34px">VERSION-CHECK: KORALL-SETTINGSFIX-13 (Settings bug fully fixed: manually set indicator biases on non-FX assets in categories set to Off/manual used to be wiped back to neutral on EVERY app start by resetNonFxIndBias - the Off setting effectively had no lasting effect; the reset now only touches categories that are auto-mirrored (same/inverse) anyway, manual categories keep their biases across reloads; also fixed a boot crash (TDZ) by using effLinkCcy instead of macroCcyFor during module init) instead of ~10; indicator borders on asset cards are thicker (2px) while card borders grew to 3px so the hierarchy stays; Put/Call Ratio removed from COT Data everywhere incl. migration of saved data; asset settings fix: bias buttons on auto-derived non-FX cards are now visibly locked with an explanation instead of silently reverting, and the gear modal shows a live mirror preview (e.g. USD X -> Y) per category so you can see exactly what each rule currently does) selectable per currency on the Interest Rates card and shown next to the symbol; Set-ups pairs now show the policy-rate differential (carry) per pair; COT tab flags crowded one-sided positioning; optional browser alerts before high-impact releases; tidier mobile header)<button onclick="document.getElementById('verBanner').style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>try{if(sessionStorage.getItem('fxpro_verbanner_hidden')==='1')document.getElementById('verBanner').style.display='none';}catch(e){}</script>
 
 <!-- INTRO-ANIMATION -->
@@ -2326,16 +2326,22 @@ function syncIndNotifs(){
   });
   return changed;
 }
-// Einmalige Migration: setzt bei Rohstoffen/Krypto/Indizes das Bias aller
-// Inflation-/Zins-/Arbeitsmarkt-Indikatoren, die zuvor automatisch (fälsch-
-// licherweise) verändert wurden, wieder auf neutral zurück.
+// Raeumt bei Rohstoffen/Krypto/Indizes automatisch (faelschlicherweise)
+// gesetzte Indikator-Biases auf - aber NUR in Rubriken, die per Zahnrad-Regel
+// (same/inverse) ohnehin von der Link-Waehrung gespiegelt werden; dort setzt
+// deriveMacroBiasAll() den Bias gleich danach sowieso neu. Rubriken auf
+// "Off" (= Bias manuell) bleiben unangetastet: frueher wurden auch dort bei
+// JEDEM App-Start alle manuell gesetzten Indikator-Biases auf neutral
+// zurueckgewipet - die Einstellung "Off -> manuell" hatte damit faktisch
+// keine Wirkung ueber einen Reload hinaus.
 function resetNonFxIndBias(sym){
   if(!isNonFx(sym.id))return;
   (sym.rubrics||[]).forEach(rub=>{
     if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
+    const derived=rubAutoDerived(sym,rub);
     rub.indicators.forEach(ind=>{
       if(ind.autoEvId!==undefined)delete ind.autoEvId;
-      if(ind.bias!=='neu')ind.bias='neu';
+      if(derived&&ind.bias!=='neu')ind.bias='neu';
     });
   });
 }
@@ -4032,7 +4038,11 @@ function pullMacroFromCcy(sym){
 // Buttons gesperrt dargestellt und der Setter blockt mit Hinweis.
 function rubAutoDerived(sym,rub){
   if(!sym||!rub||!isNonFx(sym.id))return false;
-  const ccy=macroCcyFor(sym.id);if(!ccy)return false;
+  // effLinkCcy statt macroCcyFor: liest direkt vom Symbol-Objekt und ist
+  // damit auch beim Modul-Aufbau (DEF.forEach(addMacroRub), VOR der
+  // let-syms-Initialisierung) sicher aufrufbar - macroCcyFor greift auf die
+  // globale syms-Variable zu und wirft dort einen TDZ-ReferenceError.
+  const ccy=effLinkCcy(sym);if(!ccy)return false;
   const rule=effDeriveRules(sym)[rub.name];
   return rule==='same'||rule==='inverse';
 }
