@@ -183,6 +183,11 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .rate-diff.neg{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
 /* COT: Warnung bei extrem einseitiger Positionierung (crowded trade) */
 .cot-crowded{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:var(--rs);padding:2px 6px;margin-left:7px;vertical-align:middle}
+/* Auto-abgeleitete Bias-Buttons (Non-FX, Regel same/inverse): gesperrt + Kettensymbol */
+.auto-lock button{opacity:.35;cursor:not-allowed}
+.auto-lock-ic{font-size:10px;margin-left:2px;opacity:.7}
+/* Spiegel-Vorschau im Asset-Einstellungs-Modal */
+.acfg-mirror{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
 /* Hilfe-Modal */
 .help-sec{margin:13px 0 5px;font-size:12px;font-weight:800;color:var(--t0);text-transform:uppercase;letter-spacing:.6px}
 .help-p{font-size:12.5px;color:var(--t2);line-height:1.65;margin:4px 0}
@@ -225,7 +230,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg3);border:2px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rub-card{background:var(--bg3);border:3px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
@@ -258,7 +263,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .rub-now-txt::placeholder{color:rgba(var(--red-rgb),.5)}
 .rub-summary-sep{border-top:1px solid var(--bd);margin:6px 0}
 /* ── INDICATOR ── */
-.ind-card{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
+.ind-card{background:var(--bg4);border:2px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
@@ -898,7 +903,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 <!-- VERSION-CHECK-Banner: pro Sitzung wegklickbar (×), damit es im Alltag
      keinen Platz frisst - bleibt aber Teil des Deploy-Workflows (Farbe +
      Beschreibung werden weiterhin bei JEDER Aenderung aktualisiert). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 34px">VERSION-CHECK: SILBER-UPGRADE-11 (Big feature pass: dismissible version banner; new Help button + first-run guide explaining the scoring system; new "Today's Movers" dashboard card showing which asset scores changed since yesterday; central-bank stance (hawkish/dovish) selectable per currency on the Interest Rates card and shown next to the symbol; Set-ups pairs now show the policy-rate differential (carry) per pair; COT tab flags crowded one-sided positioning; optional browser alerts before high-impact releases; tidier mobile header)<button onclick="document.getElementById('verBanner').style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 34px">VERSION-CHECK: TUERKIS-DETAIL-12 (Bond yields: Previous is now the close from 15 days ago (today - 15) instead of ~10; indicator borders on asset cards are thicker (2px) while card borders grew to 3px so the hierarchy stays; Put/Call Ratio removed from COT Data everywhere incl. migration of saved data; asset settings fix: bias buttons on auto-derived non-FX cards are now visibly locked with an explanation instead of silently reverting, and the gear modal shows a live mirror preview (e.g. USD X -> Y) per category so you can see exactly what each rule currently does) selectable per currency on the Interest Rates card and shown next to the symbol; Set-ups pairs now show the policy-rate differential (carry) per pair; COT tab flags crowded one-sided positioning; optional browser alerts before high-impact releases; tidier mobile header)<button onclick="document.getElementById('verBanner').style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>try{if(sessionStorage.getItem('fxpro_verbanner_hidden')==='1')document.getElementById('verBanner').style.display='none';}catch(e){}</script>
 
 <!-- INTRO-ANIMATION -->
@@ -2730,7 +2735,7 @@ function mkRubs(){return[
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])},
-  {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)','Put/Call Ratio'])},
+  {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
   {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
 // Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
@@ -2775,7 +2780,6 @@ const IND_INFO_DEFAULTS={
   'Net Bullish Positioning':'From the CFTC Commitments of Traders report: net long positions of speculators. Extreme longs can flag a crowded trade and reversal risk.',
   'Net Bearish Positioning':'Net short positions of speculators (CoT report). Extreme shorts can flag a crowded trade and squeeze risk.',
   'WoW Change in Net Position (%)':'Week-over-week change in net speculative positioning, in %. Shows the direction and speed of positioning shifts.',
-  'Put/Call Ratio':'Volume of put options vs. call options. Above 1 = bearish/hedging bias, below 1 = bullish sentiment. A contrarian sentiment gauge.',
   // Geopolitics
   'Regional Conflicts':'Wars or armed tensions affecting the region. Escalation drives safe-haven flows and broad risk aversion.',
   'Sanctions / Trade Restrictions':'Tariffs, sanctions or other trade barriers. Can disrupt trade flows and weigh on the affected economy and currency.',
@@ -2795,7 +2799,7 @@ function applyRubOrder(){
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -3725,7 +3729,8 @@ function renderRub(rub,ri,total){
       ${rub.name==='Interest Rates'&&FX.includes(getSym().id)?cbStanceButtons(getSym()):''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
-      <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
+      ${(()=>{const lock=rubAutoDerived(getSym(),rub);const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
+      return`<div class="rbg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}${lock?'<span class="auto-lock-ic">🔗</span>':''}</div>`;})()}
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
       <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -3871,7 +3876,8 @@ function renderInd(ind,ri,ii,total){
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
-      <div class="ibg">${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
+      ${(()=>{const lock=rubAutoDerived(getSym(),getRub(ri));const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
+      return`<div class="ibg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>`;})()}
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
       <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
       <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
@@ -4018,6 +4024,18 @@ function pullMacroFromCcy(sym){
     });
   });
 }
+// Ist die Rubrik dieses Symbols automatisch aus der verknuepften Waehrung
+// abgeleitet (Regel same/inverse im Zahnrad-Menue)? Dann sind manuelle
+// Bias-Klicks sinnlos - deriveMacroBiasAll() wuerde sie beim naechsten
+// recomputeAuto() sofort wieder ueberschreiben. Frueher verpufften solche
+// Klicks kommentarlos ("Einstellung hat keine Auswirkung"); jetzt werden die
+// Buttons gesperrt dargestellt und der Setter blockt mit Hinweis.
+function rubAutoDerived(sym,rub){
+  if(!sym||!rub||!isNonFx(sym.id))return false;
+  const ccy=macroCcyFor(sym.id);if(!ccy)return false;
+  const rule=effDeriveRules(sym)[rub.name];
+  return rule==='same'||rule==='inverse';
+}
 // ── ZENTRALBANK-STANCE (hawkish/dovish) ─────────────────────────────
 // Eigene Einschaetzung des Notenbank-Tons je Waehrung (nur FX). Bewusst
 // REIN informativ: fliesst NICHT in den Score ein, wird aber neben dem
@@ -4040,7 +4058,7 @@ function setCbStance(id,k){
   const s=syms.find(x=>x.id===id);if(!s)return;
   pushU();s.cbStance=k;save();renderDetail();
 }
-function setRubBias(ri,b){pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setRubBias(ri,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This card\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
@@ -4087,7 +4105,7 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
@@ -4274,8 +4292,22 @@ function renderAssetCfgBody(){
     const rules=effDeriveRules(c);
     h+=`<div class="acfg-sec">⚙️ Automatic bias (from ${escH(lc)})</div>
       <div class="acfg-hint">For each category, decide whether strong data is treated as bullish or bearish – or exclude the category, in which case its bias stays manual. The score is calculated from this automatically.</div>`;
+    const srcSym=syms.find(s=>s.id===lc);
+    const arrow=b=>b==='bull'?'▲':b==='bear'?'▼':'◆';
     (c.rubrics||[]).forEach(r=>{
       const rule=rules[r.name]||'off';
+      // Live-Vorschau: was ergibt die Regel GERADE (Quell-Bias -> Ergebnis)?
+      // Macht sofort sichtbar, dass z.B. bei neutraler Quelle Bullish und
+      // Bearish (noch) dasselbe Ergebnis liefern - frueher wirkte das wie
+      // "Einstellung hat keine Auswirkung".
+      let mirror='';
+      if(rule!=='off'&&srcSym){
+        const srcR=srcSym.rubrics.find(x=>x.name===r.name);
+        if(srcR){const res=rule==='same'?srcR.bias:invertBias(srcR.bias);
+          mirror=`<span class="acfg-mirror" title="Current mirror: ${lc} ${srcR.bias} → ${escH(c.name)} ${res}">${lc} ${arrow(srcR.bias)} → ${arrow(res)}</span>`;}
+      }else if(rule==='off'){
+        mirror=`<span class="acfg-mirror" title="Manual: bias follows this card's own score">manual</span>`;
+      }
       h+=`<div class="acfg-rubrow">
         <div class="acfg-rubname">${escH(r.displayName||r.name)}</div>
         <div class="acfg-seg">
@@ -4283,6 +4315,7 @@ function renderAssetCfgBody(){
           <button class="${rule==='inverse'?'on-bear':''}" onclick="setAssetDeriveRule('${escJs(r.name)}','inverse')" title="Strong data → Bearish">Bearish</button>
           <button class="${rule==='off'?'on-off':''}" onclick="setAssetDeriveRule('${escJs(r.name)}','off')" title="Exclude category (bias manual)">Off</button>
         </div>
+        ${mirror}
       </div>`;
     });
   }
@@ -4979,7 +5012,9 @@ function applyBondDataFeed(){
         if(!aEntry)return;
         const aDate=aEntry[0],aVal=Number(aEntry[1]);
         if(!isFinite(aVal))return;
-        const pEntry=bondPick(series,isoMinusDays(aDate,10));
+        // Previous = Schlusskurs von vor 15 Tagen (heute − 15, bzw. der
+        // letzte Handelstag davor) - Vergleichsbasis fuer Farbe & Bias.
+        const pEntry=bondPick(series,isoMinusDays(today,15));
         const pVal=pEntry?Number(pEntry[1]):null;
         let bondColor='bond-flat',bias='neu';
         if(pVal!=null&&isFinite(pVal)){
@@ -6535,7 +6570,6 @@ function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+
 // Net Bearish Positioning <- Short %, immer bearish (0% -> neutral).
 // WoW Change in Net Position (%) <- woechentliche Netto-%-Aenderung, zaehlt
 // als einziger der drei Indikatoren in den Score (bull >0 / bear <0 / neutral =0).
-// Put/Call Ratio bleibt unberuehrt (rein manuell).
 const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm';
 // ── Erkennung eines NEUEN COT-Reports (anhand report_date), unabhaengig
 // davon ob der Auto-Fetch oder der manuelle Refresh die Daten gebracht hat.
