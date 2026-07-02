@@ -1,70 +1,4 @@
 {
- "CHF": {
-  "GDP Growth QoQ": {
-   "actual": "0.4%",
-   "forecast": "0.5%",
-   "previous": "0.4%",
-   "date": "2026-06-01",
-   "event": "GDP Growth Rate QoQ Final",
-   "period": "q/q"
-  },
-  "Retail Sales": {
-   "actual": "3.5%",
-   "forecast": "0.8%",
-   "previous": "1.7%",
-   "date": "2026-07-01",
-   "event": "Retail Sales YoY",
-   "period": "y/y"
-  },
-  "Manufacturing PMI": {
-   "actual": "54.3",
-   "forecast": "56.5",
-   "previous": "57.3",
-   "date": "2026-07-01",
-   "event": "procure.ch Manufacturing PMI",
-   "period": null
-  },
-  "CPI": {
-   "actual": "0.2%",
-   "forecast": "0.3%",
-   "previous": "0.2%",
-   "date": "2026-06-04",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "CPI (Headline)": {
-   "actual": "0.6%",
-   "forecast": "0.8%",
-   "previous": "0.6%",
-   "date": "2026-06-04",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "Unemployment Rate": {
-   "actual": "3%",
-   "forecast": "2.9%",
-   "previous": "3%",
-   "date": "2026-06-04",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "Consumer Confidence": {
-   "actual": "-38",
-   "forecast": "-38",
-   "previous": "-40",
-   "date": "2026-06-15",
-   "event": "Consumer Confidence",
-   "period": null
-  },
-  "Central Bank Rate": {
-   "actual": "0%",
-   "forecast": "0%",
-   "previous": "0%",
-   "date": "2026-06-18",
-   "event": "SNB Interest Rate Decision",
-   "period": null
-  }
- },
  "JPY": {
   "GDP Growth QoQ": {
    "actual": "0.5%",
@@ -137,14 +71,6 @@
    "date": "2026-06-16",
    "event": "BoJ Interest Rate Decision",
    "period": null
-  },
-  "Manufacturing PMI": {
-   "actual": "54.8",
-   "forecast": "54.9",
-   "previous": "54.5",
-   "date": "2026-07-01",
-   "event": "S&P Global Manufacturing PMI Final",
-   "period": null
   }
  },
  "AUD": {
@@ -202,14 +128,6 @@
    "previous": "4.35%",
    "date": "2026-06-16",
    "event": "RBA Interest Rate Decision",
-   "period": null
-  },
-  "Manufacturing PMI": {
-   "actual": "51.5",
-   "forecast": "51.2",
-   "previous": "50.7",
-   "date": "2026-06-30",
-   "event": "S&P Global Manufacturing PMI Final",
    "period": null
   },
   "PPI": {
@@ -309,14 +227,6 @@
    "date": "2026-06-30",
    "event": "GDP Growth Rate QoQ Final",
    "period": "q/q"
-  },
-  "Manufacturing PMI": {
-   "actual": "52.5",
-   "forecast": "53.1",
-   "previous": "53.9",
-   "date": "2026-07-01",
-   "event": "S&P Global Manufacturing PMI Final",
-   "period": null
   }
  },
  "CAD": {
@@ -451,10 +361,10 @@
    "period": null
   },
   "Unemployment Rate": {
-   "actual": "6.3%",
-   "forecast": "6.2%",
-   "previous": "6.3%",
-   "date": "2026-06-01",
+   "actual": "6.2%",
+   "forecast": "6.3%",
+   "previous": "6.2%",
+   "date": "2026-07-02",
    "event": "Unemployment Rate",
    "period": null
   },
@@ -472,14 +382,6 @@
    "previous": "2.15%",
    "date": "2026-06-11",
    "event": "ECB Interest Rate Decision",
-   "period": null
-  },
-  "Manufacturing PMI": {
-   "actual": "51.4",
-   "forecast": "51.3",
-   "previous": "51.6",
-   "date": "2026-07-01",
-   "event": "S&P Global Manufacturing PMI Final",
    "period": null
   }
  },
@@ -684,6 +586,72 @@
    "previous": "5.4%",
    "date": "2026-05-05",
    "event": "Unemployment Rate",
+   "period": null
+  }
+ },
+ "CHF": {
+  "Retail Sales": {
+   "actual": "3.5%",
+   "forecast": "0.8%",
+   "previous": "1.7%",
+   "date": "2026-07-01",
+   "event": "Retail Sales YoY",
+   "period": "y/y"
+  },
+  "GDP Growth QoQ": {
+   "actual": "0.4%",
+   "forecast": "0.5%",
+   "previous": "0.4%",
+   "date": "2026-06-01",
+   "event": "GDP Growth Rate QoQ Final",
+   "period": "q/q"
+  },
+  "Manufacturing PMI": {
+   "actual": "54.3",
+   "forecast": "56.5",
+   "previous": "57.3",
+   "date": "2026-07-01",
+   "event": "procure.ch Manufacturing PMI",
+   "period": null
+  },
+  "CPI": {
+   "actual": "0%",
+   "forecast": "0.1%",
+   "previous": "0.2%",
+   "date": "2026-07-02",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
+  },
+  "CPI (Headline)": {
+   "actual": "0.5%",
+   "forecast": "0.5%",
+   "previous": "0.6%",
+   "date": "2026-07-02",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "Unemployment Rate": {
+   "actual": "3%",
+   "forecast": "2.9%",
+   "previous": "3%",
+   "date": "2026-06-04",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "Consumer Confidence": {
+   "actual": "-38",
+   "forecast": "-38",
+   "previous": "-40",
+   "date": "2026-06-15",
+   "event": "Consumer Confidence",
+   "period": null
+  },
+  "Central Bank Rate": {
+   "actual": "0%",
+   "forecast": "0%",
+   "previous": "0%",
+   "date": "2026-06-18",
+   "event": "SNB Interest Rate Decision",
    "period": null
   }
  }
