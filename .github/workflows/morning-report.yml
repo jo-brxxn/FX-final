@@ -1,0 +1,96 @@
+name: Morning Report (Telegram)
+
+on:
+  schedule:
+    # 05:00 UTC ~ 07:00 MESZ (Sommerzeit) / 06:00 MEZ (Winterzeit) -
+    # bei Bedarf anpassen. GitHub Actions kennt keine Zeitzonen-Cronjobs,
+    # daher fix in UTC.
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Morgenbericht aus ff_calendar.json zusammenstellen
+        run: |
+          node -e '
+            const fs = require("fs");
+            const cal = JSON.parse(fs.readFileSync("ff_calendar.json", "utf8"));
+            const tz = "Europe/Berlin";
+            const now = new Date();
+            const dayKey = d => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+            const todayKey = dayKey(now);
+            const fmtTime = iso => new Intl.DateTimeFormat("de-DE", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+            const dateHdr = new Intl.DateTimeFormat("de-DE", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
+            const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
+
+            const todays = cal
+              .filter(e => (e.impact === "High" || e.impact === "Medium") && dayKey(new Date(e.date)) === todayKey)
+              .sort((a, b) => new Date(a.date) - new Date(b.date));
+            const high = todays.filter(e => e.impact === "High");
+            const med = todays.filter(e => e.impact === "Medium");
+
+            const evLine = e => {
+              const marker = new Date(e.date) < now ? "✅" : "⏳";
+              const fc = esc(e.forecast);
+              const prev = esc(e.previous);
+              let vals = "";
+              if (fc || prev) {
+                const parts = [];
+                if (fc) parts.push("erw. " + fc);
+                if (prev) parts.push("zuletzt " + prev);
+                vals = " (" + parts.join(", ") + ")";
+              }
+              return marker + " " + fmtTime(e.date) + " · " + esc(e.country) + " — " + esc(e.title) + vals;
+            };
+
+            const lines = ["☀️ <b>Morgenbericht — " + esc(dateHdr) + "</b>", ""];
+            if (high.length) {
+              lines.push("🔴 <b>High Impact</b>");
+              high.forEach(e => lines.push(evLine(e)));
+              lines.push("");
+            }
+            if (med.length) {
+              lines.push("🟠 <b>Medium Impact</b>");
+              med.forEach(e => lines.push(evLine(e)));
+              lines.push("");
+            }
+            if (!todays.length) lines.push("Keine High/Medium-Impact-Termine heute.");
+            lines.push("Insgesamt heute: " + high.length + " High, " + med.length + " Medium Impact.");
+
+            fs.writeFileSync("morning-report.txt", lines.join("\n"));
+            console.log(lines.join("\n"));
+          '
+
+      - name: Per Telegram senden
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID nicht als Secrets gesetzt - Versand uebersprungen. Siehe README-Hinweis im Workflow-Kommentar."
+            exit 0
+          fi
+          TEXT="$(cat morning-report.txt)"
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "parse_mode=HTML"
+
+# ── Einmalige Einrichtung ────────────────────────────────────────────
+# 1. In Telegram nach "BotFather" suchen, /newbot senden, Namen vergeben.
+#    -> Bot-Token kopieren (Format: 123456789:ABC-Def...).
+# 2. Dem neuen Bot eine beliebige Nachricht schicken (z.B. "/start"),
+#    damit er antworten darf.
+# 3. Chat-ID ermitteln: im Browser
+#    https://api.telegram.org/bot<TOKEN>/getUpdates aufrufen (TOKEN aus
+#    Schritt 1 einsetzen) -> im JSON "chat":{"id":...} suchen.
+# 4. Im GitHub-Repo: Settings -> Secrets and variables -> Actions ->
+#    "New repository secret":
+#      TELEGRAM_BOT_TOKEN = Token aus Schritt 1
+#      TELEGRAM_CHAT_ID   = ID aus Schritt 3
+# 5. Workflow einmal manuell testen: Actions -> "Morning Report
+#    (Telegram)" -> "Run workflow".
