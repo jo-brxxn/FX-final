@@ -1,86 +1,4 @@
 {
- "CAD": {
-  "CPI": {
-   "actual": "1%",
-   "forecast": "0.8%",
-   "previous": "0.4%",
-   "date": "2026-06-22",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "Core CPI": {
-   "actual": "2.2%",
-   "forecast": null,
-   "previous": "2.1%",
-   "date": "2026-06-22",
-   "event": "Core Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "CPI (Headline)": {
-   "actual": "3.2%",
-   "forecast": "3%",
-   "previous": "2.8%",
-   "date": "2026-06-22",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "Retail Sales": {
-   "actual": "1%",
-   "forecast": null,
-   "previous": "0.5%",
-   "date": "2026-06-19",
-   "event": "Retail Sales MoM Prel",
-   "period": "m/m"
-  },
-  "PPI": {
-   "actual": "13.6%",
-   "forecast": null,
-   "previous": "11.4%",
-   "date": "2026-06-18",
-   "event": "PPI YoY",
-   "period": "y/y"
-  },
-  "GDP Growth QoQ": {
-   "actual": "0%",
-   "forecast": null,
-   "previous": "0%",
-   "date": "2026-05-29",
-   "event": "GDP Growth Rate QoQ",
-   "period": "q/q"
-  },
-  "NFP / Employment Change": {
-   "actual": "88K",
-   "forecast": "10K",
-   "previous": "88K",
-   "date": "2026-06-05",
-   "event": "Employment Change",
-   "period": null
-  },
-  "Unemployment Rate": {
-   "actual": "6.6%",
-   "forecast": "6.9%",
-   "previous": "6.9%",
-   "date": "2026-06-05",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "Central Bank Rate": {
-   "actual": "2.25%",
-   "forecast": "2.25%",
-   "previous": "2.25%",
-   "date": "2026-06-10",
-   "event": "BoC Interest Rate Decision",
-   "period": null
-  },
-  "Manufacturing PMI": {
-   "actual": "53",
-   "forecast": null,
-   "previous": "52.9",
-   "date": "2026-07-02",
-   "event": "S&P Global Manufacturing PMI",
-   "period": null
-  }
- },
  "GBP": {
   "PPI": {
    "actual": "4%",
@@ -354,8 +272,8 @@
   },
   "Consumer Confidence": {
    "actual": "91.2",
-   "forecast": "94.7",
-   "previous": "90.6",
+   "forecast": "94.4",
+   "previous": "93.1",
    "date": "2026-06-30",
    "event": "CB Consumer Confidence",
    "period": null
@@ -394,8 +312,8 @@
   },
   "JOLTS Job Openings": {
    "actual": "7.594M",
-   "forecast": "7.3M",
-   "previous": "7.585M",
+   "forecast": "7.28M",
+   "previous": "7.62M",
    "date": "2026-06-30",
    "event": "JOLTs Job Openings",
    "period": null
@@ -577,6 +495,80 @@
    "date": "2026-07-03",
    "event": "S&P Global Services PMI Final",
    "period": null
+  }
+ },
+ "CAD": {
+  "Retail Sales": {
+   "actual": "1%",
+   "forecast": null,
+   "previous": "0.5%",
+   "date": "2026-06-19",
+   "event": "Retail Sales MoM Prel",
+   "period": "m/m"
+  },
+  "PPI": {
+   "actual": "13.6%",
+   "forecast": null,
+   "previous": "11.4%",
+   "date": "2026-06-18",
+   "event": "PPI YoY",
+   "period": "y/y"
+  },
+  "GDP Growth QoQ": {
+   "actual": "0%",
+   "forecast": null,
+   "previous": "0%",
+   "date": "2026-05-29",
+   "event": "GDP Growth Rate QoQ",
+   "period": "q/q"
+  },
+  "NFP / Employment Change": {
+   "actual": "88K",
+   "forecast": "10K",
+   "previous": "88K",
+   "date": "2026-06-05",
+   "event": "Employment Change",
+   "period": null
+  },
+  "Unemployment Rate": {
+   "actual": "6.6%",
+   "forecast": "6.9%",
+   "previous": "6.6%",
+   "date": "2026-06-05",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "Central Bank Rate": {
+   "actual": "2.25%",
+   "forecast": "2.25%",
+   "previous": "2.25%",
+   "date": "2026-06-10",
+   "event": "BoC Interest Rate Decision",
+   "period": null
+  },
+  "CPI (Headline)": {
+   "actual": "3.2%",
+   "forecast": "3%",
+   "previous": "2.8%",
+   "date": "2026-06-22",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "Core CPI": {
+   "actual": "2.2%",
+   "forecast": null,
+   "previous": "2.1%",
+   "date": "2026-06-22",
+   "event": "Core Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "1%",
+   "forecast": "0.8%",
+   "previous": "0.4%",
+   "date": "2026-06-22",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
   }
  },
  "NZD": {

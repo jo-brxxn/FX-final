@@ -1,1 +1,122 @@
-{}
+{
+ "USD": {
+  "source": "https://www.tradingview.com/symbols/TVC-DXY/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    100.831
+   ]
+  ]
+ },
+ "EUR": {
+  "source": "https://www.tradingview.com/symbols/EURUSD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    1.14417
+   ]
+  ]
+ },
+ "GBP": {
+  "source": "https://www.tradingview.com/symbols/GBPUSD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    1.3353
+   ]
+  ]
+ },
+ "CHF": {
+  "source": "https://www.tradingview.com/symbols/USDCHF/",
+  "invert": true,
+  "series": [
+   [
+    "2026-07-03",
+    0.8033
+   ]
+  ]
+ },
+ "JPY": {
+  "source": "https://www.tradingview.com/symbols/USDJPY/",
+  "invert": true,
+  "series": [
+   [
+    "2026-07-03",
+    161.295
+   ]
+  ]
+ },
+ "CAD": {
+  "source": "https://www.tradingview.com/symbols/USDCAD/",
+  "invert": true,
+  "series": [
+   [
+    "2026-07-03",
+    1.42047
+   ]
+  ]
+ },
+ "AUD": {
+  "source": "https://www.tradingview.com/symbols/AUDUSD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    0.69359
+   ]
+  ]
+ },
+ "NZD": {
+  "source": "https://www.tradingview.com/symbols/NZDUSD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    0.57096
+   ]
+  ]
+ },
+ "GOLD": {
+  "source": "https://www.tradingview.com/symbols/TVC-GOLD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    4172.28
+   ]
+  ]
+ },
+ "SILVER": {
+  "source": "https://www.tradingview.com/symbols/TVC-SILVER/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    62.4662
+   ]
+  ]
+ },
+ "BTC": {
+  "source": "https://www.tradingview.com/symbols/BTCUSD/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    62163.63
+   ]
+  ]
+ },
+ "DAX": {
+  "source": "https://www.tradingview.com/symbols/TVC-DEU40/",
+  "invert": false,
+  "series": [
+   [
+    "2026-07-03",
+    25809.33
+   ]
+  ]
+ }
+}
