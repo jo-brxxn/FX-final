@@ -632,6 +632,14 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .cal-row-actions{display:flex;align-items:center;justify-content:center;gap:5px}
 .cal-alert-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0;line-height:1;opacity:.22;filter:grayscale(1);transition:opacity .12s,filter .12s}@media (hover:hover){.cal-row:hover .cal-alert-btn{opacity:.55}}@media (hover:hover){.cal-alert-btn:hover{opacity:1!important;filter:none}}
 .cal-alert-btn.on{opacity:1;filter:none}
+.evt-alert-row{display:flex;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid var(--bd)}
+.evt-alert-row:last-child{border-bottom:none}
+.evt-alert-row-main{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;background:none;border:none;text-align:left;cursor:pointer;padding:2px 4px;border-radius:6px;color:inherit;font:inherit}
+@media (hover:hover){.evt-alert-row-main:hover{background:var(--bg3)}}
+.evt-alert-row-time{flex:none;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
+.evt-alert-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--t1);font-weight:600}
+.evt-alert-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 3px;line-height:1;flex:none}@media (hover:hover){.evt-alert-row-del:hover{color:var(--red)}}
+.evt-alert-empty{font-size:12px;color:var(--t3);padding:4px 2px 8px}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 28px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
 /* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
@@ -918,7 +926,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSEWOOD-ALERTPICKER-28</span><span id="verBannerText"> (fixed the "🔔 New Alert" button from last round: it was only added to the shared calendar toolbar used by the Dashboard mini-calendar widget and the per-asset calendar - the main Calendar tab has its own separate header and was missing it; it's now there too, next to Refresh)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMETHYST-CUSTOMALERT-29</span><span id="verBannerText"> (the "🔔 New Alert" modal now also lists all of your existing alerts and lets you open/edit or delete any of them; added a "✏️ Custom Alert" option to create a fully custom Telegram alert with its own name, date, time and message, not tied to any calendar event - custom alerts don't get the Forex Factory link auto-appended since it only makes sense for calendar-event alerts)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1293,13 +1301,18 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
   </div>
 </div>
-<!-- MODAL: Event fuer neuen Alarm auswaehlen (Toolbar-Button "🔔 New Alert") -->
+<!-- MODAL: Alarm-Uebersicht + neuen Alarm anlegen (Toolbar-Button "🔔 New Alert") -->
 <div class="ov" id="mEvtAlertPicker" style="display:none">
   <div class="modal">
-    <h3>🔔 New Telegram Alert</h3>
-    <p style="font-size:12.5px;color:var(--t2);margin:-4px 0 10px">Choose an upcoming event to get notified about.</p>
+    <h3>🔔 Telegram Alerts</h3>
+    <div id="evtAlertListWrap"></div>
+    <div style="font-size:11px;color:var(--t3);margin:12px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">NEW ALERT FROM AN UPCOMING EVENT</div>
     <select class="m-inp" id="evtAlertPickerSel"></select>
-    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertPicker')">Cancel</button><button class="btn g" onclick="confirmEvtAlertPicker()">Next</button></div>
+    <div class="m-btns">
+      <button class="btn" onclick="closeM('mEvtAlertPicker')">Close</button>
+      <button class="btn" onclick="openEvtAlertCustom()">✏️ Custom Alert</button>
+      <button class="btn g" onclick="confirmEvtAlertPicker()">Next</button>
+    </div>
   </div>
 </div>
 <!-- MODAL: Event-Alarm (Telegram) fuer ein Kalender-Event anlegen/bearbeiten -->
@@ -1311,6 +1324,27 @@ function introLogin(){
     <textarea class="nbox" id="evtAlertTxt" style="min-height:110px"></textarea>
     <div style="font-size:11px;color:var(--t3);margin-top:6px">The Forex Factory link is appended automatically. Sent via the Telegram bot at the event's release time.</div>
     <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlert')">Cancel</button><button class="btn" id="evtAlertRemoveBtn" style="display:none;color:var(--red)" onclick="removeEvtAlert()">Remove alert</button><button class="btn g" onclick="saveEvtAlert()">Save</button></div>
+  </div>
+</div>
+<!-- MODAL: Custom-Alarm (frei waehlbarer Name/Datum/Uhrzeit/Nachricht, kein Kalender-Event) -->
+<div class="ov" id="mEvtAlertCustom" style="display:none">
+  <div class="modal">
+    <h3>🔔 Custom Telegram Alert</h3>
+    <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">ALERT NAME</div>
+    <input class="m-inp" id="evtAlertCustomName" placeholder="e.g. Check open trades" maxlength="80">
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">DATE</div>
+        <input class="m-inp" type="date" id="evtAlertCustomDate">
+      </div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">TIME</div>
+        <input class="m-inp" type="time" id="evtAlertCustomTime">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin:8px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">MESSAGE</div>
+    <textarea class="nbox" id="evtAlertCustomTxt" style="min-height:90px" placeholder="What should the Telegram message say?"></textarea>
+    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertCustom')">Cancel</button><button class="btn" id="evtAlertCustomRemoveBtn" style="display:none;color:var(--red)" onclick="removeCustomEvtAlert()">Remove alert</button><button class="btn g" onclick="saveCustomEvtAlert()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Rate-Watch-Link bearbeiten -->
@@ -4768,12 +4802,51 @@ function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();render
 // Browser legt hier nur fireAt+Nachricht in eventAlerts ab (Teil von snap(),
 // laeuft also automatisch ueber den normalen Cloud-Sync mit).
 let _evtAlertKey=null;
+let _evtAlertCustomEditId=null;
 function findCalEvtByKey(key){return calEvts.find(e=>evtDismissKey(e)===key);}
 function defaultEvtAlertMsg(ev){return`⏰ ${ev.currencies||''} ${ev.name||''} is releasing now.`;}
+// Anzeigename eines Alarms fuer die Uebersichtsliste: Kalender-Alarme nutzen
+// Waehrung+Eventname, Custom-Alarme ihren eigenen frei vergebenen Namen.
+function evtAlertLabel(a){
+  if(a.evKey){const ev=findCalEvtByKey(a.evKey);if(ev)return`${ev.currencies||''} ${ev.name||''}`.trim();}
+  return a.name||'(untitled alert)';
+}
+function fmtAlertFireAt(iso){
+  try{const d=new Date(iso);return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'})+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}catch(e){return iso;}
+}
+// Liste aller bereits angelegten Alarme im Picker-Modal - einzige Stelle, an
+// der auch Custom-Alarme (ohne Kalenderzeile mit eigener Glocke) wieder
+// bearbeitet/geloescht werden koennen.
+function renderEvtAlertList(){
+  const wrap=document.getElementById('evtAlertListWrap');if(!wrap)return;
+  const sorted=[...eventAlerts].sort((a,b)=>new Date(a.fireAt)-new Date(b.fireAt));
+  if(!sorted.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
+  wrap.innerHTML=`<div style="font-size:11px;color:var(--t3);margin:0 0 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">YOUR ALERTS</div>`+
+    sorted.map(a=>`<div class="evt-alert-row">
+      <button class="evt-alert-row-main" data-id="${escH(a.id)}" onclick="openEvtAlertEdit(this.dataset.id)">
+        <span class="evt-alert-row-time">${fmtAlertFireAt(a.fireAt)}</span>
+        <span class="evt-alert-row-name">${escH(evtAlertLabel(a))}</span>
+      </button>
+      <button class="evt-alert-row-del" data-id="${escH(a.id)}" onclick="deleteEvtAlertById(this.dataset.id)" title="Delete">×</button>
+    </div>`).join('');
+}
+function deleteEvtAlertById(id){
+  pushU();
+  eventAlerts=eventAlerts.filter(a=>a.id!==id);
+  save();renderEvtAlertList();rerender();
+}
+// Klick auf einen bestehenden Alarm in der Liste -> je nach Typ ins passende
+// Bearbeiten-Modal springen (Kalender-Event vs. frei angelegter Custom-Alarm).
+function openEvtAlertEdit(id){
+  const a=eventAlerts.find(x=>x.id===id);if(!a)return;
+  if(a.evKey&&findCalEvtByKey(a.evKey)){closeM('mEvtAlertPicker');openEvtAlertM(a.evKey);}
+  else openEvtAlertCustom(a);
+}
 // "🔔 New Alert" in der Kalender-Toolbar: Event-Auswahl VOR dem eigentlichen
 // Nachrichten-Modal, damit man einen Alarm anlegen kann, ohne erst zur
 // passenden Kalenderzeile scrollen zu muessen.
 function openEvtAlertPicker(){
+  renderEvtAlertList();
   const upcoming=calEvts.filter(ev=>!isEvtPast(ev)&&evtTimeValid(ev.time))
     .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
   const sel=document.getElementById('evtAlertPickerSel');
@@ -4812,6 +4885,50 @@ function removeEvtAlert(){
   pushU();
   eventAlerts=eventAlerts.filter(a=>a.evKey!==_evtAlertKey);
   save();closeM('mEvtAlert');rerender();
+}
+// Custom-Alarm: frei waehlbarer Name/Datum/Uhrzeit/Nachricht, ohne Bezug zu
+// einem Kalender-Event. "existing" gesetzt -> Bearbeiten-Modus (Werte
+// vorausfuellen, Loeschen-Button einblenden), sonst Neuanlage mit Vorschlag
+// "jetzt" als Datum/Uhrzeit.
+function openEvtAlertCustom(existing){
+  closeM('mEvtAlertPicker');
+  _evtAlertCustomEditId=existing?existing.id:null;
+  let d,t;
+  if(existing){
+    const dt=new Date(existing.fireAt);
+    d=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    t=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  }else{
+    const now=new Date();
+    d=todayStr();
+    t=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  }
+  document.getElementById('evtAlertCustomName').value=existing?(existing.name||''):'';
+  document.getElementById('evtAlertCustomDate').value=d;
+  document.getElementById('evtAlertCustomTime').value=t;
+  document.getElementById('evtAlertCustomTxt').value=existing?existing.msg:'';
+  document.getElementById('evtAlertCustomRemoveBtn').style.display=existing?'':'none';
+  openM('mEvtAlertCustom');
+}
+function saveCustomEvtAlert(){
+  const name=document.getElementById('evtAlertCustomName').value.trim();
+  const date=document.getElementById('evtAlertCustomDate').value;
+  const time=document.getElementById('evtAlertCustomTime').value;
+  const msg=document.getElementById('evtAlertCustomTxt').value.trim();
+  if(!name){alert('Please enter a name for the alert.');return;}
+  if(!date||!time){alert('Please pick a date and time.');return;}
+  if(!msg){alert('Please enter a message.');return;}
+  const fireAt=new Date(date+'T'+time+':00').toISOString();
+  pushU();
+  if(_evtAlertCustomEditId)eventAlerts=eventAlerts.filter(a=>a.id!==_evtAlertCustomEditId);
+  eventAlerts.push({id:_evtAlertCustomEditId||uid(),name,msg,fireAt});
+  save();closeM('mEvtAlertCustom');rerender();
+}
+function removeCustomEvtAlert(){
+  if(!_evtAlertCustomEditId)return;
+  pushU();
+  eventAlerts=eventAlerts.filter(a=>a.id!==_evtAlertCustomEditId);
+  save();closeM('mEvtAlertCustom');rerender();
 }
 
 // ── INBOX / POSTFACH ─────────────────────────────────────────────────
