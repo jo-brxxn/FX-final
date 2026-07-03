@@ -934,7 +934,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#312e81;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-HARDENING-34</span><span id="verBannerText"> (hardening round: the 2Y/10Y Spread no longer counts into the score - a 10Y move was double-counted and curve slope isn't a clean signal, its bias stays visible/settable but contributes 0 even with a star; the COT "crowded" warning (80%+ one-sided) now also shows in the single-asset COT view and is display-only, never part of the score; asset names are now HTML-escaped in the sidebar and detail header; the PIN is stored as a SHA-256 hash instead of plaintext in the public repo)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COPPER-FLIPALERT-35</span><span id="verBannerText"> (new: automatic Telegram score-flip alerts - whenever any asset's bias changes (bullish/neutral/bearish), a message like "EUR flipped to BULLISH - score +4 (was NEUTRAL)" is queued and sent by the existing alert workflow within ~10 minutes, deduplicated across devices; flip alerts appear under Custom Alerts in the bell list and clean themselves up after 3 days; plus a new Weekly Outlook sent every Sunday 08:00 Berlin time via Telegram (text + voice): the week's high-impact events, a COT positioning summary with crowded warnings, and your current fundamental scores)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -3694,6 +3694,9 @@ async function cloudPush(manual){
     // greenDismissed liegt bewusst außerhalb von snap()/Undo, muss aber
     // ebenfalls geräteübergreifend synchron sein.
     const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;
+    // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
+    // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
+    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScore(s),bias:s.bias}));
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
@@ -4641,9 +4644,38 @@ function autoPairBias(pairName){
   return scoreBias(pairScore(pairName));
 }
 
-// Symbol-Bias automatisch aus dem Symbol-Score einstufen.
+// Symbol-Bias automatisch aus dem Symbol-Score einstufen. Wechselt der Bias
+// eines Assets (bull/neu/bear), wird automatisch ein Telegram-Alarm in die
+// eventAlerts-Pipeline eingereiht (Versand via event-alerts.yml, dedupliziert
+// serverseitig ueber fx_alert_log). lastNotifBias liegt IM sym-Objekt und ist
+// damit Teil von snap()/Cloud-Sync: ein per Pull uebernommener Stand bringt
+// sein aktualisiertes lastNotifBias mit -> kein Doppel-Alarm vom Zweitgeraet;
+// Undo stellt Bias UND lastNotifBias konsistent zusammen wieder her.
+const BIAS_LBL={bull:'BULLISH',bear:'BEARISH',neu:'NEUTRAL'};
+function queueScoreFlipAlert(sym,oldB,newB){
+  // Deterministische ID (Symbol+Wechsel+Tag): erkennen zwei Geraete denselben
+  // Flip parallel, verhindert fx_alert_log den zweiten Versand.
+  const id='flip_'+sym.id+'_'+oldB+'_'+newB+'_'+todayStr();
+  if(eventAlerts.some(a=>a.id===id))return;
+  const sc=symScore(sym);
+  eventAlerts.push({
+    id,
+    name:'Score flip: '+sym.id+' → '+BIAS_LBL[newB],
+    msg:'📊 '+sym.id+' ('+(sym.name||'')+') flipped to '+BIAS_LBL[newB]+' — score '+(sc>0?'+':'')+sc+' (was '+BIAS_LBL[oldB]+').',
+    fireAt:new Date().toISOString(),
+    ffLink:false
+  });
+}
 function recomputeAllSymBiases(){
-  syms.forEach(s=>{s.bias=scoreBias(symScore(s));});
+  syms.forEach(s=>{
+    s.bias=scoreBias(symScore(s));
+    // Erstlauf (Feld existiert noch nicht): nur initialisieren, nicht melden.
+    if(s.lastNotifBias===undefined){s.lastNotifBias=s.bias;return;}
+    if(s.lastNotifBias!==s.bias){
+      queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
+      s.lastNotifBias=s.bias;
+    }
+  });
 }
 
 // Keep every pair's bias in sync with the underlying currency/asset biases
