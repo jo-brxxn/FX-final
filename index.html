@@ -640,6 +640,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .evt-alert-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--t1);font-weight:600}
 .evt-alert-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 3px;line-height:1;flex:none}@media (hover:hover){.evt-alert-row-del:hover{color:var(--red)}}
 .evt-alert-empty{font-size:12px;color:var(--t3);padding:4px 2px 8px}
+.evt-alert-lp{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .evt-alert-ff-chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t1);margin-top:9px;cursor:pointer;user-select:none}
 .evt-alert-ff-chk input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex:none}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 28px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
@@ -928,7 +929,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PERIWINKLE-FFLINKTOGGLE-30</span><span id="verBannerText"> (both alert modals now have an "Append the Forex Factory link" checkbox - it's no longer auto-decided by whether the alert is calendar-linked or custom; defaults to on for calendar-event alerts and off for custom alerts, but you can flip it either way per alert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GOLDENROD-LONGPRESS-31</span><span id="verBannerText"> (removed the old "Alerts off" browser-notification button, fully superseded by the Telegram alerts; the "🔔 New Alert" button now supports press-and-hold - tap to create a new alert as before, but press and hold to instead see a list of every alert you've created, split into "Calendar Alerts" and "Custom Alerts" sections, each editable/deletable from there)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1164,8 +1165,7 @@ function introLogin(){
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news">📁 All Impacts</button>
-      <button class="btn" id="evtAlertBtn" onclick="toggleEvtAlerts()" title="Browser notification ~15 minutes before every high-impact release (per device)">🔔 Alerts off</button>
-      <button class="btn" onclick="openEvtAlertPicker()" title="Create a Telegram alert for any upcoming event">🔔 New Alert</button>
+      <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts">🔔 New Alert</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)">🔄 Refresh</button>
     </div>
   </div>
@@ -1303,18 +1303,25 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
   </div>
 </div>
-<!-- MODAL: Alarm-Uebersicht + neuen Alarm anlegen (Toolbar-Button "🔔 New Alert") -->
+<!-- MODAL: Neuen Alarm anlegen (Toolbar-Button "🔔 New Alert", kurzer Tap) -->
 <div class="ov" id="mEvtAlertPicker" style="display:none">
   <div class="modal">
-    <h3>🔔 Telegram Alerts</h3>
-    <div id="evtAlertListWrap"></div>
-    <div style="font-size:11px;color:var(--t3);margin:12px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">NEW ALERT FROM AN UPCOMING EVENT</div>
+    <h3>🔔 New Telegram Alert</h3>
+    <div style="font-size:11px;color:var(--t3);margin:-4px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">FROM AN UPCOMING EVENT</div>
     <select class="m-inp" id="evtAlertPickerSel"></select>
     <div class="m-btns">
-      <button class="btn" onclick="closeM('mEvtAlertPicker')">Close</button>
+      <button class="btn" onclick="closeM('mEvtAlertPicker')">Cancel</button>
       <button class="btn" onclick="openEvtAlertCustom()">✏️ Custom Alert</button>
       <button class="btn g" onclick="confirmEvtAlertPicker()">Next</button>
     </div>
+  </div>
+</div>
+<!-- MODAL: Alle bestehenden Alarme, unterteilt Kalender/Custom (Toolbar-Button, Press-and-Hold) -->
+<div class="ov" id="mEvtAlertList" style="display:none">
+  <div class="modal">
+    <h3>🔔 Your Telegram Alerts</h3>
+    <div id="evtAlertListWrap"></div>
+    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertList')">Close</button><button class="btn g" onclick="closeM('mEvtAlertList');openEvtAlertPicker()">＋ New Alert</button></div>
   </div>
 </div>
 <!-- MODAL: Event-Alarm (Telegram) fuer ein Kalender-Event anlegen/bearbeiten -->
@@ -1688,7 +1695,7 @@ function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev)
 function calToolbarHtml(){
   const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
   const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}">📁 ${calHighOnly?'High-impact only':'All impacts'}</button>`;
-  const alertBtn=`<button class="btn" onclick="openEvtAlertPicker()" title="Create a Telegram alert for any upcoming event">🔔 New Alert</button>`;
+  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts">🔔 New Alert</button>`;
   const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values">🔄 Refresh</button>`;
   return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${alertBtn}${refresh}</div>`;
 }
@@ -4782,7 +4789,7 @@ function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs
 // ══ CALENDAR ══════════════════════════════════════════════════════
 function renderCalendar(){
   const el=document.getElementById('calEvents');if(!el)return;
-  updCalHighBtn();updCalCcySel();updAlertBtn();
+  updCalHighBtn();updCalCcySel();
   let list=[...calEvts];
   if(calHighOnly)list=list.filter(ev=>evtImpact(ev)==='high');
   if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
@@ -4818,21 +4825,27 @@ function evtAlertLabel(a){
 function fmtAlertFireAt(iso){
   try{const d=new Date(iso);return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'})+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}catch(e){return iso;}
 }
-// Liste aller bereits angelegten Alarme im Picker-Modal - einzige Stelle, an
-// der auch Custom-Alarme (ohne Kalenderzeile mit eigener Glocke) wieder
-// bearbeitet/geloescht werden koennen.
-function renderEvtAlertList(){
-  const wrap=document.getElementById('evtAlertListWrap');if(!wrap)return;
-  const sorted=[...eventAlerts].sort((a,b)=>new Date(a.fireAt)-new Date(b.fireAt));
-  if(!sorted.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
-  wrap.innerHTML=`<div style="font-size:11px;color:var(--t3);margin:0 0 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">YOUR ALERTS</div>`+
-    sorted.map(a=>`<div class="evt-alert-row">
+// Liste aller bereits angelegten Alarme (im Press-and-Hold-Modal) - einzige
+// Stelle, an der auch Custom-Alarme (ohne Kalenderzeile mit eigener Glocke)
+// wieder bearbeitet/geloescht werden koennen. In zwei Abschnitte unterteilt:
+// kalendergebunden vs. frei angelegte Custom-Alarme.
+function evtAlertRowsHtml(list){
+  return list.map(a=>`<div class="evt-alert-row">
       <button class="evt-alert-row-main" data-id="${escH(a.id)}" onclick="openEvtAlertEdit(this.dataset.id)">
         <span class="evt-alert-row-time">${fmtAlertFireAt(a.fireAt)}</span>
         <span class="evt-alert-row-name">${escH(evtAlertLabel(a))}</span>
       </button>
       <button class="evt-alert-row-del" data-id="${escH(a.id)}" onclick="deleteEvtAlertById(this.dataset.id)" title="Delete">×</button>
     </div>`).join('');
+}
+function renderEvtAlertList(){
+  const wrap=document.getElementById('evtAlertListWrap');if(!wrap)return;
+  const byTime=(a,b)=>new Date(a.fireAt)-new Date(b.fireAt);
+  const calAlerts=eventAlerts.filter(a=>a.evKey).sort(byTime);
+  const customAlerts=eventAlerts.filter(a=>!a.evKey).sort(byTime);
+  if(!calAlerts.length&&!customAlerts.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
+  const section=(title,list)=>list.length?`<div style="font-size:11px;color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${title}</div>${evtAlertRowsHtml(list)}`:'';
+  wrap.innerHTML=section('📅 CALENDAR ALERTS',calAlerts)+section('✏️ CUSTOM ALERTS',customAlerts);
 }
 function deleteEvtAlertById(id){
   pushU();
@@ -4843,14 +4856,38 @@ function deleteEvtAlertById(id){
 // Bearbeiten-Modal springen (Kalender-Event vs. frei angelegter Custom-Alarm).
 function openEvtAlertEdit(id){
   const a=eventAlerts.find(x=>x.id===id);if(!a)return;
-  if(a.evKey&&findCalEvtByKey(a.evKey)){closeM('mEvtAlertPicker');openEvtAlertM(a.evKey);}
+  if(a.evKey&&findCalEvtByKey(a.evKey)){closeM('mEvtAlertList');openEvtAlertM(a.evKey);}
   else openEvtAlertCustom(a);
 }
-// "🔔 New Alert" in der Kalender-Toolbar: Event-Auswahl VOR dem eigentlichen
-// Nachrichten-Modal, damit man einen Alarm anlegen kann, ohne erst zur
-// passenden Kalenderzeile scrollen zu muessen.
-function openEvtAlertPicker(){
+// "🔔 New Alert"-Button in der Kalender-Toolbar: kurzer Tap legt einen neuen
+// Alarm an, Press-and-Hold zeigt stattdessen die Liste aller bestehenden
+// Alarme (unterteilt Kalender/Custom). Auf Touch UND Maus, daher separate
+// down/up-Handler statt nur onclick.
+let _evtAlertPressTimer=null;
+let _evtAlertLongPressFired=false;
+function evtAlertPressStart(){
+  _evtAlertLongPressFired=false;
+  clearTimeout(_evtAlertPressTimer);
+  _evtAlertPressTimer=setTimeout(()=>{_evtAlertLongPressFired=true;openEvtAlertListModal();},500);
+}
+function evtAlertPressEnd(){
+  clearTimeout(_evtAlertPressTimer);
+}
+function onEvtAlertBtnClick(){
+  // Der Klick, der nach einem bereits ausgeloesten Long-Press folgt
+  // (touchend/mouseup loesen auf den meisten Browsern trotzdem noch ein
+  // "click" aus), darf NICHT zusaetzlich den Anlegen-Dialog oeffnen.
+  if(_evtAlertLongPressFired){_evtAlertLongPressFired=false;return;}
+  openEvtAlertPicker();
+}
+function openEvtAlertListModal(){
   renderEvtAlertList();
+  openM('mEvtAlertList');
+}
+// Event-Auswahl VOR dem eigentlichen Nachrichten-Modal, damit man einen
+// Alarm anlegen kann, ohne erst zur passenden Kalenderzeile scrollen zu
+// muessen.
+function openEvtAlertPicker(){
   const upcoming=calEvts.filter(ev=>!isEvtPast(ev)&&evtTimeValid(ev.time))
     .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
   const sel=document.getElementById('evtAlertPickerSel');
@@ -4900,7 +4937,7 @@ function removeEvtAlert(){
 // vorausfuellen, Loeschen-Button einblenden), sonst Neuanlage mit Vorschlag
 // "jetzt" als Datum/Uhrzeit.
 function openEvtAlertCustom(existing){
-  closeM('mEvtAlertPicker');
+  closeM('mEvtAlertPicker');closeM('mEvtAlertList');
   _evtAlertCustomEditId=existing?existing.id:null;
   let d,t;
   if(existing){
@@ -7362,56 +7399,6 @@ function maybeShowFirstRunHelp(){
   }catch(e){}
 }
 
-// ══ EVENT-ALERTS (Browser-Benachrichtigungen) ═══════════════════════
-// Optional: ~15 Minuten vor jedem High-Impact-Release eine Browser-
-// Notification. Opt-in pro Geraet (Notification-Permission ist ohnehin
-// geraetegebunden), daher bewusst NUR localStorage, kein Cloud-Sync.
-const EVT_ALERT_LEAD_MIN=15;
-let evtAlertsOn=localStorage.getItem('fxpro_evt_alerts')==='1';
-function updAlertBtn(){
-  const b=document.getElementById('evtAlertBtn');if(!b)return;
-  b.classList.toggle('active',evtAlertsOn);
-  b.textContent=evtAlertsOn?'🔔 Alerts on':'🔔 Alerts off';
-}
-function toggleEvtAlerts(){
-  if(!('Notification'in window)){alert('This browser does not support notifications.');return;}
-  if(!evtAlertsOn){
-    if(Notification.permission==='denied'){alert('Notifications are blocked for this site. Allow them in the browser settings first.');return;}
-    if(Notification.permission==='default'){
-      Notification.requestPermission().then(p=>{
-        if(p==='granted'){evtAlertsOn=true;localStorage.setItem('fxpro_evt_alerts','1');updAlertBtn();checkEvtAlerts();}
-      });
-      return;
-    }
-  }
-  evtAlertsOn=!evtAlertsOn;
-  localStorage.setItem('fxpro_evt_alerts',evtAlertsOn?'1':'0');
-  updAlertBtn();
-  if(evtAlertsOn)checkEvtAlerts();
-}
-// Bereits gemeldete Events (stabiler Schluessel Name|Datum|Waehrung), damit
-// dieselbe Release nicht bei jedem Minuten-Tick erneut aufpoppt.
-function _alertedSet(){try{return new Set(JSON.parse(localStorage.getItem('fxpro_evt_alerted'))||[]);}catch(e){return new Set();}}
-function checkEvtAlerts(){
-  if(!evtAlertsOn||!('Notification'in window)||Notification.permission!=='granted')return;
-  const today=todayStr(),now=new Date();
-  const done=_alertedSet();let changed=false;
-  calEvts.forEach(ev=>{
-    if(ev.date!==today||evtImpact(ev)!=='high'||!evtTimeValid(ev.time))return;
-    const[h,m]=ev.time.split(':').map(Number);
-    const evT=new Date(now);evT.setHours(h,m,0,0);
-    const minAway=(evT-now)/60000;
-    if(minAway<=0||minAway>EVT_ALERT_LEAD_MIN)return;
-    const key=(ev.name||'')+'|'+ev.date+'|'+(ev.currencies||'');
-    if(done.has(key))return;
-    try{
-      new Notification('⏰ '+(ev.currencies||'')+' '+(ev.name||''),{body:'High-impact release at '+ev.time+' (in ~'+Math.round(minAway)+' min)'+(ev.forecast?' · Forecast '+ev.forecast:''),tag:key});
-      done.add(key);changed=true;
-    }catch(e){}
-  });
-  if(changed){try{localStorage.setItem('fxpro_evt_alerted',JSON.stringify([...done].slice(-200)));}catch(e){}}
-}
-setInterval(checkEvtAlerts,60*1000);
 
 // ══ LOCK SCREEN ══════════════════════════════════════════════════
 const LOCK_CODE='0909';
@@ -7486,7 +7473,7 @@ if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
-maybeShowFirstRunHelp();checkEvtAlerts();
+maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
 // wurde (fxpro_updated != fxpro_cloud_seen - z.B. weil die Seite direkt nach
