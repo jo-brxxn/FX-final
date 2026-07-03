@@ -51,6 +51,18 @@ jobs:
           const FF_LINK = 'https://www.forexfactory.com/calendar';
 
           async function main() {
+            // Diagnose: fx_alert_log IMMER kurz antesten (unabhaengig davon, ob
+            // gerade ein Alarm faellig ist), damit ein Setup-Problem dort in
+            // jedem Lauf sichtbar ist (inkl. der tatsaechlichen Fehlermeldung
+            // von Supabase, nicht nur der Statuscode).
+            try {
+              const diag = await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log?select=alert_id&limit=1`, { headers });
+              if (diag.ok) console.log('fx_alert_log reachable (status ' + diag.status + ').');
+              else console.log('fx_alert_log NOT reachable - status ' + diag.status + ', body: ' + (await diag.text()));
+            } catch (e) {
+              console.log('fx_alert_log probe threw: ' + e.message);
+            }
+
             const syncRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_sync?id=eq.${encodeURIComponent(SUPABASE_SYNC_ID)}&select=data`, { headers });
             if (!syncRes.ok) throw new Error('fx_sync fetch failed: ' + syncRes.status);
             const syncRows = await syncRes.json();
