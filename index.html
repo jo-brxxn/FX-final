@@ -640,6 +640,8 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .evt-alert-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--t1);font-weight:600}
 .evt-alert-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 3px;line-height:1;flex:none}@media (hover:hover){.evt-alert-row-del:hover{color:var(--red)}}
 .evt-alert-empty{font-size:12px;color:var(--t3);padding:4px 2px 8px}
+.evt-alert-ff-chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t1);margin-top:9px;cursor:pointer;user-select:none}
+.evt-alert-ff-chk input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex:none}
 @media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 28px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
 /* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
@@ -926,7 +928,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMETHYST-CUSTOMALERT-29</span><span id="verBannerText"> (the "🔔 New Alert" modal now also lists all of your existing alerts and lets you open/edit or delete any of them; added a "✏️ Custom Alert" option to create a fully custom Telegram alert with its own name, date, time and message, not tied to any calendar event - custom alerts don't get the Forex Factory link auto-appended since it only makes sense for calendar-event alerts)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PERIWINKLE-FFLINKTOGGLE-30</span><span id="verBannerText"> (both alert modals now have an "Append the Forex Factory link" checkbox - it's no longer auto-decided by whether the alert is calendar-linked or custom; defaults to on for calendar-event alerts and off for custom alerts, but you can flip it either way per alert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1322,7 +1324,8 @@ function introLogin(){
     <div id="evtAlertInfo" style="font-size:12.5px;color:var(--t2);margin:-4px 0 10px"></div>
     <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">MESSAGE</div>
     <textarea class="nbox" id="evtAlertTxt" style="min-height:110px"></textarea>
-    <div style="font-size:11px;color:var(--t3);margin-top:6px">The Forex Factory link is appended automatically. Sent via the Telegram bot at the event's release time.</div>
+    <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertFFLink"> Append the Forex Factory link</label>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px">Sent via the Telegram bot at the event's release time.</div>
     <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlert')">Cancel</button><button class="btn" id="evtAlertRemoveBtn" style="display:none;color:var(--red)" onclick="removeEvtAlert()">Remove alert</button><button class="btn g" onclick="saveEvtAlert()">Save</button></div>
   </div>
 </div>
@@ -1344,6 +1347,7 @@ function introLogin(){
     </div>
     <div style="font-size:11px;color:var(--t3);margin:8px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">MESSAGE</div>
     <textarea class="nbox" id="evtAlertCustomTxt" style="min-height:90px" placeholder="What should the Telegram message say?"></textarea>
+    <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertCustomFFLink"> Append the Forex Factory link</label>
     <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertCustom')">Cancel</button><button class="btn" id="evtAlertCustomRemoveBtn" style="display:none;color:var(--red)" onclick="removeCustomEvtAlert()">Remove alert</button><button class="btn g" onclick="saveCustomEvtAlert()">Save</button></div>
   </div>
 </div>
@@ -4868,6 +4872,10 @@ function openEvtAlertM(evKey){
   document.getElementById('evtAlertInfo').textContent=`${ev.currencies||''} · ${ev.name||''} · ${ev.date} ${ev.time||''}`;
   document.getElementById('evtAlertTxt').value=existing?existing.msg:defaultEvtAlertMsg(ev);
   document.getElementById('evtAlertRemoveBtn').style.display=existing?'':'none';
+  // Default fuer neue, kalendergebundene Alarme: Link an (meistens gewuenscht,
+  // da es um ein News-Event geht) - bei einem bestehenden Alarm den zuletzt
+  // gewaehlten Wert uebernehmen.
+  document.getElementById('evtAlertFFLink').checked=existing?!!existing.ffLink:true;
   openM('mEvtAlert');
 }
 function saveEvtAlert(){
@@ -4875,10 +4883,11 @@ function saveEvtAlert(){
   if(!evtTimeValid(ev.time)){alert('This event has no valid release time.');return;}
   const msg=document.getElementById('evtAlertTxt').value.trim();
   if(!msg){alert('Please enter a message.');return;}
+  const ffLink=document.getElementById('evtAlertFFLink').checked;
   const fireAt=new Date(ev.date+'T'+ev.time+':00').toISOString();
   pushU();
   eventAlerts=eventAlerts.filter(a=>a.evKey!==_evtAlertKey);
-  eventAlerts.push({id:uid(),evKey:_evtAlertKey,msg,fireAt});
+  eventAlerts.push({id:uid(),evKey:_evtAlertKey,msg,fireAt,ffLink});
   save();closeM('mEvtAlert');rerender();
 }
 function removeEvtAlert(){
@@ -4908,6 +4917,9 @@ function openEvtAlertCustom(existing){
   document.getElementById('evtAlertCustomTime').value=t;
   document.getElementById('evtAlertCustomTxt').value=existing?existing.msg:'';
   document.getElementById('evtAlertCustomRemoveBtn').style.display=existing?'':'none';
+  // Default fuer neue Custom-Alarme: Link aus (meist eigene Erinnerung ohne
+  // Bezug zu Forex Factory) - bei Bearbeitung den zuletzt gewaehlten Wert.
+  document.getElementById('evtAlertCustomFFLink').checked=existing?!!existing.ffLink:false;
   openM('mEvtAlertCustom');
 }
 function saveCustomEvtAlert(){
@@ -4918,10 +4930,11 @@ function saveCustomEvtAlert(){
   if(!name){alert('Please enter a name for the alert.');return;}
   if(!date||!time){alert('Please pick a date and time.');return;}
   if(!msg){alert('Please enter a message.');return;}
+  const ffLink=document.getElementById('evtAlertCustomFFLink').checked;
   const fireAt=new Date(date+'T'+time+':00').toISOString();
   pushU();
   if(_evtAlertCustomEditId)eventAlerts=eventAlerts.filter(a=>a.id!==_evtAlertCustomEditId);
-  eventAlerts.push({id:_evtAlertCustomEditId||uid(),name,msg,fireAt});
+  eventAlerts.push({id:_evtAlertCustomEditId||uid(),name,msg,fireAt,ffLink});
   save();closeM('mEvtAlertCustom');rerender();
 }
 function removeCustomEvtAlert(){

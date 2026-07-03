@@ -70,11 +70,10 @@ jobs:
 
             for (const a of due) {
               if (!a.id || sentIds.has(a.id)) continue;
-              // Der FF-Link gehoert nur zu Alarmen, die an ein Kalender-Event
-              // gebunden sind (evKey gesetzt) - ein frei angelegter Custom-
-              // Alarm (z.B. "Check open trades") hat nichts mit Forex Factory
-              // zu tun und soll den Link nicht aufgedraengt bekommen.
-              const text = a.evKey ? (a.msg || '').trim() + '\n\nView here: ' + FF_LINK : (a.msg || '').trim();
+              // Der Nutzer waehlt beim Anlegen des Alarms per Checkbox selbst,
+              // ob der FF-Link angehaengt wird (ffLink-Feld) - kein impliziter
+              // Automatismus mehr ueber den Alarm-Typ.
+              const text = a.ffLink ? (a.msg || '').trim() + '\n\nView here: ' + FF_LINK : (a.msg || '').trim();
               const sendRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
