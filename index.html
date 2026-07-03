@@ -918,7 +918,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAPPHIRE-SYNCRACE-25</span><span id="verBannerText"> (fixed a cloud-sync data-loss bug: if a change was saved locally but the page was reloaded/closed before the 1.5s auto-upload could fire, the next app start would silently pull the cloud version first and discard that unsent local change; the app now uploads any pending unsent change BEFORE pulling on every start, and save() only bumps the sync timestamp when the content actually changed, so background auto-save ticks can no longer be mistaken for a real pending edit)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TURQUOISE-SYNCRACE-26</span><span id="verBannerText"> (extended the cloud-sync data-loss fix: if the catch-up upload of a pending local change fails at startup - e.g. a brief Supabase outage/error - the app no longer falls through to a pull afterwards, since that pull would have overwritten the still-unsent local change with the old cloud state; it now skips that pull and retries on the next real save or app start instead)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7347,12 +7347,18 @@ updFFLastUpd();
 // dann bis zum naechsten Reload so stehen. Jetzt garantiert: Live-Daten
 // haben immer das letzte Wort.
 (async()=>{
+  let pushFailed=false;
   if(getCloudCfg()){
     const pendingLocal=localStorage.getItem('fxpro_updated');
     const lastSynced=localStorage.getItem('fxpro_cloud_seen');
-    if(pendingLocal&&pendingLocal!==lastSynced)await cloudPush(false);
+    if(pendingLocal&&pendingLocal!==lastSynced)pushFailed=!(await cloudPush(false));
   }
-  await cloudPull(false);
+  // Schlaegt der nachgeholte Push fehl (z.B. kurzer Supabase-Ausfall/Timeout -
+  // Fehler landen sonst unsichtbar im try/catch von cloudPush), dann NICHT
+  // trotzdem pullen: der Pull wuerde sonst genau die eben nicht gesicherte
+  // Aenderung mit dem (unveraenderten) Cloud-Stand ueberschreiben. Der naechste
+  // echte save() (cloudAutoSync) bzw. der naechste Boot versucht es erneut.
+  if(!pushFailed)await cloudPull(false);
   autoFetchFF();
   autoFetchIndData();
   autoFetchBondData();
