@@ -83,9 +83,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
 .rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3}
-.rub-weight{font-size:10px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid var(--bd);border-radius:5px;padding:1px 5px;flex-shrink:0;line-height:1.3;background:none;color:var(--t3);cursor:pointer;opacity:.55;transition:all .12s}
-.rub-weight.on{opacity:1;color:var(--amber);border-color:var(--amber)}
-.rub-weight:hover{opacity:1}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
@@ -937,7 +934,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f766e;color:#f0fdfa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-BEATMISS-36</span><span id="verBannerText"> (new: instant Telegram beat/miss alerts - the moment a tracked indicator (CPI, NFP, PMI, GDP ...) gets a new actual value, a message like "USD - Nonfarm Payrolls (NFP): 210K vs 180K forecast -> Bullish" is queued and sent by the existing alert workflow, deduplicated per release/device; plus configurable card weights - every rubric card now has a clickable weight badge (0.5x/1x/1.5x/2x, default 1x) next to its score, so manual/text-only cards like Geopolitics can be toned down relative to data-driven cards like Inflation)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0fdfa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0fdfa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COPPER-FLIPALERT-35</span><span id="verBannerText"> (new: automatic Telegram score-flip alerts - whenever any asset's bias changes (bullish/neutral/bearish), a message like "EUR flipped to BULLISH - score +4 (was NEUTRAL)" is queued and sent by the existing alert workflow within ~10 minutes, deduplicated across devices; flip alerts appear under Custom Alerts in the bell list and clean themselves up after 3 days; plus a new Weekly Outlook sent every Sunday 08:00 Berlin time via Telegram (text + voice): the week's high-impact events, a COT positioning summary with crowded warnings, and your current fundamental scores)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1424,13 +1421,11 @@ function introLogin(){
     <h3>❓ How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
     <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release.</div>
-    <div class="help-p">Card score = sum of its indicators, then multiplied by the card's <b>weight</b> (the small "1×" badge next to the score — click it to cycle 0.5×/1×/1.5×/2×; use this to tone down manual/text-only cards like Geopolitics, or emphasize data-driven ones). A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all (weighted) cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
+    <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
     <div class="help-sec">Central bank & COT</div>
     <div class="help-p">The Interest Rates card has two extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 as before. The <b>2Y/10Y Spread</b> is display-only and counts 0 — a 10Y move would otherwise be double-counted, and curve steepening isn't a clean bullish/bearish signal on its own.</div>
-    <div class="help-sec">Automatic Telegram alerts</div>
-    <div class="help-p">On top of the calendar bell/custom alerts you set yourself, three alerts fire automatically once Telegram is set up: a <b>score-flip alert</b> whenever any symbol's bias changes, a <b>beat/miss alert</b> the moment a tracked indicator gets a new actual value (vs. forecast), and a <b>weekly outlook</b> every Sunday 8am (upcoming high-impact events, COT positioning, current scores).</div>
     <div class="help-sec">Data</div>
     <div class="help-p">Calendar & indicator values refresh automatically (Forex Factory / TradingView / CFTC / bond closes, hourly via GitHub).</div>
     <div class="help-sec">Sync</div>
@@ -1550,12 +1545,7 @@ function indScore(ind,rub){
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return 0;
   return biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));
 }
-// Karten-Gewicht (Standard 1x): multipliziert die Rubrik-Summe, bevor sie in
-// symScore einfliesst. Dagegen soll v.a. helfen, dass manuelle Karten (z.B.
-// Geopolitics, reine Text-/Bullet-Bewertung ohne Datenpunkte) nicht dasselbe
-// oder mehr Gewicht haben wie datengetriebene Karten (Inflation, Interest
-// Rates) - jetzt frei pro Karte per Klick auf die 1x/2x-Badge einstellbar.
-function rubScore(rub){const w=(rub&&rub.weight)||1;return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0)*w;}
+function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
 // dazwischen neutral/orange) - so ist die Zahl z.B. bei einem neutralen Asset mit
@@ -2453,26 +2443,6 @@ function mkScoreNotif(symId,rub,ind,ev){
     ts:Date.now()
   };
 }
-// Beat/Miss-Sofortmeldung per Telegram: sobald ein getrackter Indikator einen
-// neuen Actual-Wert bekommt, landet - zusaetzlich zur stillen Postfach-
-// Benachrichtigung oben - ein Eintrag in derselben eventAlerts-Pipeline wie
-// die Kalender-/Custom-Alarme und der Score-Flip-Alarm (wird vom bestehenden
-// event-alerts.yml-Workflow abgeholt und gesendet). Deterministische ID aus
-// Indikator+Release (wie evtDismissKey) verhindert Doppel-Versand ueber
-// mehrere Geraete/Sync-Laeufe hinweg.
-function queueBeatMissAlert(symId,label,ev,bias){
-  const id='beatmiss_'+symId+'_'+evtDismissKey(ev);
-  if(eventAlerts.some(a=>a.id===id))return;
-  const dir=bias==='bull'?'Bullish ▲':bias==='bear'?'Bearish ▼':'In line ◆';
-  const fc=(ev.forecast!=null&&ev.forecast!=='')?' vs '+ev.forecast+' forecast':'';
-  eventAlerts.push({
-    id,
-    name:'Beat/Miss: '+symId+' '+label,
-    msg:'📊 '+symId+' — '+label+': '+ev.actual+fc+' → '+dir,
-    fireAt:new Date().toISOString(),
-    ffLink:false
-  });
-}
 function syncIndicatorBiases(){
   let changed=false;
   syms.forEach(c=>{
@@ -2513,11 +2483,7 @@ function syncIndNotifs(){
         if(ind.notifKey===k)return;
         const base=stripPeriodSuffix(ind.name).base;
         const dup=inbox.find(m=>m.kind==='score'&&m.symId===c.id&&m.base===base&&m.date===ev.date);
-        if(!dup){
-          const notif=mkScoreNotif(c.id,rub,ind,ev);
-          inbox.unshift(notif);changed=true;
-          queueBeatMissAlert(c.id,notif.label,ev,notif.bias);
-        }
+        if(!dup){inbox.unshift(mkScoreNotif(c.id,rub,ind,ev));changed=true;}
         ind.notifKey=k;changed=true;
       });
     });
@@ -3944,7 +3910,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all cards across the symbol, each card first multiplied by its own weight badge (default 1x, click it to adjust) (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0)','det-'+c.id)}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0)','det-'+c.id)}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -4046,8 +4012,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card, multiplied by the card weight (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
-      ${(()=>{const w=rub.weight||1;return`<button class="rub-weight${w!==1?' on':''}" onclick="cycleRubWeight(${ri})" title="Card weight: multiplies this card's contribution to the symbol score (click to cycle 0.5x/1x/1.5x/2x). Use this to lower manual/text-only cards (e.g. Geopolitics) or raise data-driven cards.">${w}×</button>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
       ${(()=>{const lock=rubAutoDerived(getSym(),rub);const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
       return`<div class="rbg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}${lock?'<span class="auto-lock-ic">🔗</span>':''}</div>`;})()}
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
@@ -4373,18 +4338,7 @@ function mvRub(ri,d){
   applyRubOrder();
   save();renderDetail();
 }
-function addRub(){pushU();const c=getSym();if(!c)return;if(!c.rubrics)c.rubrics=[];c.rubrics.push({id:uid(),name:'New Category',bias:'neu',imp:false,weight:1,summary:'',indicators:[]});save();renderDetail();}
-// Zyklus der einstellbaren Kartengewichte (Klick auf die Gewichts-Badge).
-const RUB_WEIGHTS=[0.5,1,1.5,2];
-function cycleRubWeight(ri){
-  pushU();
-  const r=getRub(ri);if(!r)return;
-  const cur=r.weight||1;
-  const idx=RUB_WEIGHTS.indexOf(cur);
-  r.weight=RUB_WEIGHTS[(idx+1)%RUB_WEIGHTS.length];
-  recomputeAuto();save();renderSidebar();renderDetail();
-  if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();
-}
+function addRub(){pushU();const c=getSym();if(!c)return;if(!c.rubrics)c.rubrics=[];c.rubrics.push({id:uid(),name:'New Category',bias:'neu',imp:false,summary:'',indicators:[]});save();renderDetail();}
 
 // ══ INFO MODAL (Rubrik- & Indikator-Erklärungen) ═════════════════════
 let _infoRi=-1,_infoIi=-1;
