@@ -1,0 +1,125 @@
+name: Event Alerts (Telegram)
+
+on:
+  schedule:
+    # Alle 10 Minuten pruefen, ob ein im Kalender angelegter Event-Alarm
+    # faellig ist (fireAt <= jetzt). Kuerzeres Intervall waere praeziser,
+    # aber GitHub Actions garantiert Cron-Intervalle < 5 Min. ohnehin nicht
+    # zuverlaessig - 10 Minuten plus ein 30-Minuten-Toleranzfenster im Skript
+    # (siehe DUE_WINDOW_MS) fangen Verzoegerungen/Aussetzer ab.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  send-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Event-Alarme aus Supabase lesen und faellige per Telegram senden
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SYNC_ID: ${{ secrets.SUPABASE_SYNC_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          cat > send-alerts.js <<'EOF'
+          // eventAlerts liegen im ganz normalen App-State (fx_sync-Zeile, Feld
+          // "eventAlerts" - Teil von snap(), siehe index.html). Der Browser
+          // schreibt dort nur fireAt+Nachricht rein, weiss aber nichts vom
+          // Sendestatus. Damit ein Browser-Save (das immer den kompletten
+          // eventAlerts-Stand pusht) ein "gesendet"-Flag nicht versehentlich
+          // wieder zuruecksetzt, wird der Sendestatus komplett getrennt in
+          // einer eigenen, nur von diesem Workflow beschriebenen Supabase-
+          // Tabelle (fx_alert_log) gefuehrt.
+          const SUPABASE_URL = process.env.SUPABASE_URL;
+          const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+          const SUPABASE_SYNC_ID = process.env.SUPABASE_SYNC_ID;
+          const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+          const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+          if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SYNC_ID) {
+            console.log('Supabase secrets not configured - skipping (see setup instructions in this workflow file).');
+            process.exit(0);
+          }
+          if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+            console.log('Telegram secrets not configured - skipping.');
+            process.exit(0);
+          }
+
+          const headers = { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+          const DUE_WINDOW_MS = 30 * 60 * 1000; // Toleranzfenster fuer verpasste/verzoegerte Laeufe
+          const FF_LINK = 'https://www.forexfactory.com/calendar';
+
+          async function main() {
+            const syncRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_sync?id=eq.${encodeURIComponent(SUPABASE_SYNC_ID)}&select=data`, { headers });
+            if (!syncRes.ok) throw new Error('fx_sync fetch failed: ' + syncRes.status);
+            const syncRows = await syncRes.json();
+            const alerts = (syncRows[0] && syncRows[0].data && syncRows[0].data.eventAlerts) || [];
+            if (!alerts.length) { console.log('No event alerts configured.'); return; }
+
+            const now = Date.now();
+            const due = alerts.filter(a => {
+              const t = new Date(a.fireAt).getTime();
+              return !isNaN(t) && t <= now && t >= now - DUE_WINDOW_MS;
+            });
+            if (!due.length) { console.log('No alerts due right now (' + alerts.length + ' configured).'); return; }
+
+            const logRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log?select=alert_id`, { headers });
+            if (!logRes.ok) throw new Error('fx_alert_log fetch failed: ' + logRes.status);
+            const sentIds = new Set((await logRes.json()).map(r => r.alert_id));
+
+            for (const a of due) {
+              if (!a.id || sentIds.has(a.id)) continue;
+              const text = (a.msg || '').trim() + '\n\nView here: ' + FF_LINK;
+              const sendRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text }),
+              });
+              if (!sendRes.ok) { console.log('Telegram send failed for ' + a.id + ': ' + sendRes.status); continue; }
+              console.log('Sent alert ' + a.id);
+              const logInsert = await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log`, {
+                method: 'POST',
+                headers: { ...headers, Prefer: 'return=minimal' },
+                body: JSON.stringify({ alert_id: a.id, sent_at: new Date().toISOString() }),
+              });
+              if (!logInsert.ok) console.log('Warning: could not log sent alert ' + a.id + ': ' + logInsert.status);
+            }
+
+            // Alte Log-Eintraege (>7 Tage) aufraeumen, damit die Tabelle klein bleibt.
+            const cutoff = new Date(now - 7 * 86400000).toISOString();
+            await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log?sent_at=lt.${encodeURIComponent(cutoff)}`, {
+              method: 'DELETE',
+              headers,
+            }).catch(() => {});
+          }
+
+          main().catch(e => { console.error(e); process.exit(1); });
+          EOF
+          node send-alerts.js
+
+# ── Einmalige Einrichtung (zusaetzlich zu TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID,
+#    die bereits fuer morning-report.yml eingerichtet sind) ─────────────────
+# 1. In Supabase (SQL-Editor) eine neue Tabelle fuer den Sendestatus anlegen -
+#    bewusst getrennt von der App-eigenen "fx_sync"-Tabelle, damit ein
+#    normaler Browser-Save den Sendestatus nicht versehentlich ueberschreibt:
+#
+#      create table fx_alert_log (
+#        alert_id text primary key,
+#        sent_at timestamptz not null default now()
+#      );
+#      alter table fx_alert_log enable row level security;
+#      create policy "allow anon all" on fx_alert_log for all using (true) with check (true);
+#
+# 2. Im GitHub-Repo unter Settings -> Secrets and variables -> Actions drei
+#    weitere Secrets anlegen (dieselben Werte, die auch im Cloud-Sync-Dialog
+#    der App unter dem Zahnrad-/Account-Icon -> "Cloud Sync" stehen):
+#      SUPABASE_URL       = Project URL aus den Supabase-Projekteinstellungen
+#      SUPABASE_ANON_KEY  = anon/public API-Key aus den Supabase-Projekteinstellungen
+#      SUPABASE_SYNC_ID   = die in der App eingetragene Sync-ID
+#
+# 3. Workflow einmal manuell testen: Actions -> "Event Alerts (Telegram)" ->
+#    "Run workflow". In der App im Kalender bei einem Event auf die
+#    Glocke tippen, eine Nachricht speichern und (fuer den Test) die
+#    Event-Uhrzeit auf "gleich" stellen, damit der naechste Lauf sie sofort
+#    als faellig erkennt.
