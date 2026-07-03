@@ -471,8 +471,6 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .cot-notify-ic{font-size:16px}
 .cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px}
 .cot-notify-sub{font-size:11px;opacity:.85;margin-left:2px}
-.cot-notify-x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:20px;height:20px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1}
-.cot-notify-x:hover{background:rgba(255,255,255,.28)}
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.35)}50%{box-shadow:0 2px 18px rgba(28,100,242,.6)}}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
@@ -917,7 +915,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: JADE-HISTORYFIX-22</span><span id="verBannerText"> (bond yield "actual" color now follows the indicator's own bias field (bull/bear/neu, same green/red/amber as everywhere else) instead of a fixed up/down snapshot, so a manual bias override now visibly changes it too; the per-asset History panel now only lists genuinely score-driving events (no more minor speeches/auctions) and its per-day header shows the actual score value at that point in time - today's live score, each earlier day's end-of-day score - instead of that day's own net change, with the event breakdown (what moved it, +1/-1/0) kept below as before)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CITRIN-COTWINDOW-23</span><span id="verBannerText"> (reverted the bond-color change from last round per feedback: the yield "actual" color is back to a direct actual-vs-15-days-ago comparison (green/red/amber), independent of a manually overridden bias; the "NEW COT DATA!" dashboard card is no longer tied to detecting a new report date at all - it's now a pure time window, visible from Friday 15:30 New York time (the CFTC release) through the end of Sunday every week, and can no longer be dismissed)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1422,9 +1420,6 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
 function bRC(b){return b==='bull'?'#4fc3f720':b==='bear'?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='bull'?'bb':b==='bear'?'br':'bn';}
-// Bias -> "bond-up/down/flat"-Klassen (dieselben Bias-Farben gruen/rot/amber,
-// wiederverwendet fuer die Actual-Rendite-Faerbung, siehe renderInd/simpleBadge).
-function bClass2Bond(b){return b==='bull'?'bond-up':b==='bear'?'bond-down':'bond-flat';}
 function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
 // Symbol-Score = ueber alle Rubriken; Karten-Score = nur die Indikatoren
@@ -3458,13 +3453,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView,greenDismissed,cotSeenDate,cotNotifyUntil},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView,greenDismissed},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=_imp.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.cotSeenDate!==undefined){cotSeenDate=_imp.cotSeenDate||'';localStorage.setItem(COT_SEEN_KEY,cotSeenDate);}if(_imp.cotNotifyUntil!==undefined){cotNotifyUntil=+_imp.cotNotifyUntil||0;localStorage.setItem(COT_NOTIFY_KEY,String(cotNotifyUntil));}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=_imp.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -3519,9 +3514,9 @@ function updProfile(){
 async function cloudPush(manual){
   const cfg=getCloudCfg();if(!cfg)return false;
   try{
-    // greenDismissed/cotSeenDate/cotNotifyUntil liegen bewusst außerhalb von
-    // snap()/Undo, müssen aber ebenfalls geräteübergreifend synchron sein.
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;data.cotSeenDate=cotSeenDate;data.cotNotifyUntil=cotNotifyUntil;
+    // greenDismissed liegt bewusst außerhalb von snap()/Undo, muss aber
+    // ebenfalls geräteübergreifend synchron sein.
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
@@ -3570,8 +3565,6 @@ async function cloudPull(manual){
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
       if(cd.compactView!==undefined){compactView=cd.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}
-      if(cd.cotSeenDate!==undefined){cotSeenDate=cd.cotSeenDate||'';localStorage.setItem(COT_SEEN_KEY,cotSeenDate);}
-      if(cd.cotNotifyUntil!==undefined){cotNotifyUntil=+cd.cotNotifyUntil||0;localStorage.setItem(COT_NOTIFY_KEY,String(cotNotifyUntil));}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -3956,12 +3949,12 @@ function renderInd(ind,ri,ii,total){
     </details>`;
   }else if(ind.research){
     const r=ind.research;
-    // Bonds: Farbe der Akt-Rendite folgt dem Bias-Feld des Indikators
-    // (bull=gruen/bear=rot/neu=amber, dieselben Klassen/Farben wie ueberall
-    // sonst) statt einer eigenen, vom Bias losgeloesten Momentum-Farbe -
-    // so zieht ein manueller Bias-Override (▲/◆/▼) auch die Actual-Farbe
-    // mit, statt stur beim 15-Tage-Vergleich zu bleiben.
-    const ac=r.bond?bClass2Bond(ind.bias):r.cot?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    // Bonds: Farbe der Akt-Rendite kommt direkt aus dem Vergleich mit vor 15
+    // Tagen (r.bondColor: gruen wenn actual>previous/bullish, rot wenn
+    // actual<previous/bearish, amber wenn gleich/neutral - dieselben
+    // Bias-Farben wie ueberall sonst, aber unabhaengig von einem evtl.
+    // manuell ueberschriebenen ind.bias).
+    const ac=r.bond?r.bondColor:r.cot?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
@@ -5234,12 +5227,11 @@ const W_TYPES=[
 ];
 function renderCotNotify(){
   const el=document.getElementById('cotNotifyCard');if(!el)return;
-  if(!cotNotifyActive()){el.innerHTML='';return;}
+  if(!cotWarningActive()){el.innerHTML='';return;}
   el.innerHTML=`<div class="cot-notify-card" onclick="showTab('cot')">
     <span class="cot-notify-ic">📊</span>
     <span class="cot-notify-txt">NEW COT DATA!</span>
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
-    <button class="cot-notify-x" onclick="event.stopPropagation();dismissCotNotify()" title="Dismiss">×</button>
   </div>`;
 }
 function renderDash(){
@@ -5971,7 +5963,7 @@ function cmpCellData(symId,rubName,baseName){
   if(ind.research){
     const r=ind.research;
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
-    const color=r.bond?bClass2Bond(ind.bias):actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
     return{a:A.val,f:F.val,p:P.val,color,name:ind.name,badge};
   }
   return{a:null,f:null,p:null,color:'',name:ind.name,badge};
@@ -6703,45 +6695,21 @@ function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+
 // WoW Change in Net Position (%) <- woechentliche Netto-%-Aenderung, zaehlt
 // als einziger der drei Indikatoren in den Score (bull >0 / bear <0 / neutral =0).
 const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm';
-// ── Erkennung eines NEUEN COT-Reports (anhand report_date), unabhaengig
-// davon ob der Auto-Fetch oder der manuelle Refresh die Daten gebracht hat.
-// Wird ein bisher unbekanntes Datum erkannt, bleibt das Dashboard-Banner
-// "NEW COT DATA!" 3 Tage lang sichtbar (auch ueber Reloads hinweg).
-// Liegt bewusst ausserhalb von snap()/Undo, muss aber wie greenDismissed/
-// tabStacks/compactView trotzdem geraeteuebergreifend synchron sein - sonst
-// zeigt (wie urspruenglich gebaut) jedes Geraet sein eigenes, rein lokales
-// "schon gesehen"-Datum und der Hinweis erscheint nur zufaellig auf einem
-// Geraet, nicht auf allen (siehe cloudPush/cloudPull weiter unten).
-const COT_SEEN_KEY='fxpro_cot_seen_date';
-const COT_NOTIFY_KEY='fxpro_cot_notify_until';
-let cotSeenDate=localStorage.getItem(COT_SEEN_KEY)||'';
-let cotNotifyUntil=+localStorage.getItem(COT_NOTIFY_KEY)||0;
-function checkCotNewReport(){
-  const date=COT_DATA&&COT_DATA.report_date;
-  if(!date||cotSeenDate===date)return;
-  const hadSeen=!!cotSeenDate;
-  cotSeenDate=date;
-  localStorage.setItem(COT_SEEN_KEY,cotSeenDate);
-  if(hadSeen){
-    cotNotifyUntil=Date.now()+3*86400000;
-    localStorage.setItem(COT_NOTIFY_KEY,String(cotNotifyUntil));
-    localStorage.setItem('fxpro_updated',new Date().toISOString());
-    cloudAutoSync();
-  }
-}
-function cotNotifyActive(){
-  return Date.now()<cotNotifyUntil;
-}
-function dismissCotNotify(){
-  cotNotifyUntil=0;
-  localStorage.removeItem(COT_NOTIFY_KEY);
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  cloudAutoSync();
-  renderDash();
+// ── COT-Dashboard-Hinweis: rein zeitbasiertes Fenster (Freitag 15:30
+// New Yorker Zeit, dem CFTC-Release-Zeitpunkt, bis einschliesslich Sonntag),
+// nicht mehr an eine erkannte report_date-Aenderung gekoppelt und nicht
+// wegklickbar. Da es eine reine Funktion der aktuellen Uhrzeit ist (dieselbe
+// NY-Zeit-Umrechnung wie beim Countdown, cotNyParts/cotNyToUtc oben), zeigen
+// automatisch ALLE Geraete zur selben Zeit denselben Zustand - dafuer ist
+// keine eigene Cloud-Sync-Anbindung mehr noetig.
+function cotWarningActive(){
+  const m=cotNyParts(new Date());
+  if(m.weekday==='Sat'||m.weekday==='Sun')return true;
+  if(m.weekday==='Fri')return Date.now()>=cotNyToUtc(+m.year,+m.month,+m.day,15,30);
+  return false;
 }
 function applyCotDataFeed(){
   if(!COT_DATA||!COT_DATA.symbols)return false;
-  checkCotNewReport();
   const date=COT_DATA.report_date||null;
   let changed=false;
   const setOne=(rub,base,actual,previous,bias)=>{
