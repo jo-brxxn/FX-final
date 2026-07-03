@@ -1,234 +1,4 @@
 {
- "JPY": {
-  "GDP Growth QoQ": {
-   "actual": "0.5%",
-   "forecast": "0.3%",
-   "previous": "0.5%",
-   "date": "2026-06-07",
-   "event": "GDP Growth Rate QoQ Final",
-   "period": "q/q"
-  },
-  "CPI (Headline)": {
-   "actual": "1.5%",
-   "forecast": null,
-   "previous": "1.4%",
-   "date": "2026-06-18",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "Core CPI": {
-   "actual": "1.4%",
-   "forecast": "1.4%",
-   "previous": "1.4%",
-   "date": "2026-06-18",
-   "event": "Core Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "CPI": {
-   "actual": "0.4%",
-   "forecast": null,
-   "previous": "0.1%",
-   "date": "2026-06-18",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "Unemployment Rate": {
-   "actual": "2.5%",
-   "forecast": "2.5%",
-   "previous": "2.5%",
-   "date": "2026-06-29",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "Retail Sales": {
-   "actual": "1.9%",
-   "forecast": null,
-   "previous": "1.3%",
-   "date": "2026-06-28",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
-  },
-  "Consumer Confidence": {
-   "actual": "33.8",
-   "forecast": "34",
-   "previous": "33.6",
-   "date": "2026-07-01",
-   "event": "Consumer Confidence",
-   "period": null
-  },
-  "PPI": {
-   "actual": "6.3%",
-   "forecast": "5.5%",
-   "previous": "4.9%",
-   "date": "2026-06-09",
-   "event": "PPI YoY",
-   "period": "y/y"
-  },
-  "Central Bank Rate": {
-   "actual": "1%",
-   "forecast": "1%",
-   "previous": "0.75%",
-   "date": "2026-06-16",
-   "event": "BoJ Interest Rate Decision",
-   "period": null
-  }
- },
- "AUD": {
-  "Consumer Confidence": {
-   "actual": "80.6",
-   "forecast": null,
-   "previous": "83",
-   "date": "2026-06-09",
-   "event": "Westpac Consumer Confidence Index",
-   "period": null
-  },
-  "Unemployment Rate": {
-   "actual": "4.4%",
-   "forecast": "4.4%",
-   "previous": "4.5%",
-   "date": "2026-06-25",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "NFP / Employment Change": {
-   "actual": "40.3K",
-   "forecast": "30K",
-   "previous": "-18.6K",
-   "date": "2026-06-25",
-   "event": "Employment Change",
-   "period": null
-  },
-  "CPI (Headline)": {
-   "actual": "4%",
-   "forecast": "4.4%",
-   "previous": "4.2%",
-   "date": "2026-06-24",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "CPI": {
-   "actual": "-0.7%",
-   "forecast": "-0.3%",
-   "previous": "0.4%",
-   "date": "2026-06-24",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "GDP Growth QoQ": {
-   "actual": "0.3%",
-   "forecast": "0.5%",
-   "previous": "0.3%",
-   "date": "2026-06-03",
-   "event": "GDP Growth Rate QoQ",
-   "period": "q/q"
-  },
-  "Central Bank Rate": {
-   "actual": "4.35%",
-   "forecast": "4.35%",
-   "previous": "4.35%",
-   "date": "2026-06-16",
-   "event": "RBA Interest Rate Decision",
-   "period": null
-  },
-  "PPI": {
-   "actual": "3%",
-   "forecast": null,
-   "previous": "3.5%",
-   "date": "2026-05-01",
-   "event": "PPI YoY",
-   "period": "y/y"
-  }
- },
- "GBP": {
-  "Unemployment Claims": {
-   "actual": "31.2K",
-   "forecast": "25.8K",
-   "previous": "26.5K",
-   "date": "2026-06-18",
-   "event": "Claimant Count Change",
-   "period": null
-  },
-  "NFP / Employment Change": {
-   "actual": "100K",
-   "forecast": "75K",
-   "previous": "148K",
-   "date": "2026-06-18",
-   "event": "Employment Change",
-   "period": null
-  },
-  "Unemployment Rate": {
-   "actual": "4.9%",
-   "forecast": "5%",
-   "previous": "5%",
-   "date": "2026-06-18",
-   "event": "Unemployment Rate",
-   "period": null
-  },
-  "PPI": {
-   "actual": "4%",
-   "forecast": "4%",
-   "previous": "4%",
-   "date": "2026-06-17",
-   "event": "PPI Output YoY",
-   "period": "y/y"
-  },
-  "CPI (Headline)": {
-   "actual": "2.8%",
-   "forecast": "3%",
-   "previous": "2.8%",
-   "date": "2026-06-17",
-   "event": "Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "CPI": {
-   "actual": "0.2%",
-   "forecast": "0.4%",
-   "previous": "0.7%",
-   "date": "2026-06-17",
-   "event": "Inflation Rate MoM",
-   "period": "m/m"
-  },
-  "Core CPI": {
-   "actual": "2.6%",
-   "forecast": "2.7%",
-   "previous": "2.5%",
-   "date": "2026-06-17",
-   "event": "Core Inflation Rate YoY",
-   "period": "y/y"
-  },
-  "Consumer Confidence": {
-   "actual": "-23",
-   "forecast": "-24",
-   "previous": "-23",
-   "date": "2026-06-18",
-   "event": "Gfk Consumer Confidence",
-   "period": null
-  },
-  "Retail Sales": {
-   "actual": "1.2%",
-   "forecast": "0.5%",
-   "previous": "-1.3%",
-   "date": "2026-06-19",
-   "event": "Retail Sales MoM",
-   "period": "m/m"
-  },
-  "Central Bank Rate": {
-   "actual": "3.75%",
-   "forecast": "3.75%",
-   "previous": "3.75%",
-   "date": "2026-06-18",
-   "event": "BoE Interest Rate Decision",
-   "period": null
-  },
-  "GDP Growth QoQ": {
-   "actual": "0.6%",
-   "forecast": "0.6%",
-   "previous": "0.1%",
-   "date": "2026-06-30",
-   "event": "GDP Growth Rate QoQ Final",
-   "period": "q/q"
-  }
- },
  "CAD": {
   "CPI": {
    "actual": "1%",
@@ -281,7 +51,7 @@
   "NFP / Employment Change": {
    "actual": "88K",
    "forecast": "10K",
-   "previous": "-17.7K",
+   "previous": "88K",
    "date": "2026-06-05",
    "event": "Employment Change",
    "period": null
@@ -308,6 +78,104 @@
    "previous": "52.9",
    "date": "2026-07-02",
    "event": "S&P Global Manufacturing PMI",
+   "period": null
+  }
+ },
+ "GBP": {
+  "PPI": {
+   "actual": "4%",
+   "forecast": "4%",
+   "previous": "4%",
+   "date": "2026-06-17",
+   "event": "PPI Output YoY",
+   "period": "y/y"
+  },
+  "CPI (Headline)": {
+   "actual": "2.8%",
+   "forecast": "3%",
+   "previous": "2.8%",
+   "date": "2026-06-17",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "0.2%",
+   "forecast": "0.4%",
+   "previous": "0.7%",
+   "date": "2026-06-17",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
+  },
+  "Core CPI": {
+   "actual": "2.6%",
+   "forecast": "2.7%",
+   "previous": "2.5%",
+   "date": "2026-06-17",
+   "event": "Core Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "Consumer Confidence": {
+   "actual": "-23",
+   "forecast": "-24",
+   "previous": "-23",
+   "date": "2026-06-18",
+   "event": "Gfk Consumer Confidence",
+   "period": null
+  },
+  "Retail Sales": {
+   "actual": "1.2%",
+   "forecast": "0.5%",
+   "previous": "-1.3%",
+   "date": "2026-06-19",
+   "event": "Retail Sales MoM",
+   "period": "m/m"
+  },
+  "Unemployment Claims": {
+   "actual": "31.2K",
+   "forecast": "25.8K",
+   "previous": "26.5K",
+   "date": "2026-06-18",
+   "event": "Claimant Count Change",
+   "period": null
+  },
+  "Unemployment Rate": {
+   "actual": "4.9%",
+   "forecast": "5%",
+   "previous": "5%",
+   "date": "2026-06-18",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "NFP / Employment Change": {
+   "actual": "100K",
+   "forecast": "75K",
+   "previous": "148K",
+   "date": "2026-06-18",
+   "event": "Employment Change",
+   "period": null
+  },
+  "Central Bank Rate": {
+   "actual": "3.75%",
+   "forecast": "3.75%",
+   "previous": "3.75%",
+   "date": "2026-06-18",
+   "event": "BoE Interest Rate Decision",
+   "period": null
+  },
+  "GDP Growth QoQ": {
+   "actual": "0.6%",
+   "forecast": "0.6%",
+   "previous": "0.6%",
+   "date": "2026-06-30",
+   "event": "GDP Growth Rate QoQ Final",
+   "period": "q/q"
+  },
+  "Services PMI": {
+   "actual": "48.8",
+   "forecast": "48.7",
+   "previous": "49.3",
+   "date": "2026-07-03",
+   "event": "S&P Global Services PMI Final",
    "period": null
   }
  },
@@ -355,7 +223,7 @@
   "GDP Growth QoQ": {
    "actual": "-0.2%",
    "forecast": "0.1%",
-   "previous": "0.1%",
+   "previous": "-0.2%",
    "date": "2026-06-05",
    "event": "GDP Growth Rate QoQ 3rd Est",
    "period": "q/q"
@@ -391,6 +259,88 @@
    "date": "2026-06-11",
    "event": "ECB Interest Rate Decision",
    "period": null
+  },
+  "Services PMI": {
+   "actual": "49.4",
+   "forecast": "48.9",
+   "previous": "47.7",
+   "date": "2026-07-03",
+   "event": "S&P Global Services PMI Final",
+   "period": null
+  }
+ },
+ "AUD": {
+  "Unemployment Rate": {
+   "actual": "4.4%",
+   "forecast": "4.4%",
+   "previous": "4.5%",
+   "date": "2026-06-25",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "NFP / Employment Change": {
+   "actual": "40.3K",
+   "forecast": "30K",
+   "previous": "-18.6K",
+   "date": "2026-06-25",
+   "event": "Employment Change",
+   "period": null
+  },
+  "CPI (Headline)": {
+   "actual": "4%",
+   "forecast": "4.4%",
+   "previous": "4.2%",
+   "date": "2026-06-24",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "-0.7%",
+   "forecast": "-0.3%",
+   "previous": "0.4%",
+   "date": "2026-06-24",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
+  },
+  "GDP Growth QoQ": {
+   "actual": "0.3%",
+   "forecast": "0.5%",
+   "previous": "0.3%",
+   "date": "2026-06-03",
+   "event": "GDP Growth Rate QoQ",
+   "period": "q/q"
+  },
+  "Consumer Confidence": {
+   "actual": "80.6",
+   "forecast": null,
+   "previous": "83",
+   "date": "2026-06-09",
+   "event": "Westpac Consumer Confidence Index",
+   "period": null
+  },
+  "Central Bank Rate": {
+   "actual": "4.35%",
+   "forecast": "4.35%",
+   "previous": "4.35%",
+   "date": "2026-06-16",
+   "event": "RBA Interest Rate Decision",
+   "period": null
+  },
+  "Services PMI": {
+   "actual": "50.5",
+   "forecast": "49.9",
+   "previous": "48.7",
+   "date": "2026-07-02",
+   "event": "S&P Global Services PMI Final",
+   "period": null
+  },
+  "PPI": {
+   "actual": "3%",
+   "forecast": null,
+   "previous": "3.5%",
+   "date": "2026-05-01",
+   "event": "PPI YoY",
+   "period": "y/y"
   }
  },
  "USD": {
@@ -544,6 +494,88 @@
    "previous": "3.75%",
    "date": "2026-06-17",
    "event": "Fed Interest Rate Decision",
+   "period": null
+  }
+ },
+ "JPY": {
+  "CPI (Headline)": {
+   "actual": "1.5%",
+   "forecast": null,
+   "previous": "1.4%",
+   "date": "2026-06-18",
+   "event": "Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "Core CPI": {
+   "actual": "1.4%",
+   "forecast": "1.4%",
+   "previous": "1.4%",
+   "date": "2026-06-18",
+   "event": "Core Inflation Rate YoY",
+   "period": "y/y"
+  },
+  "CPI": {
+   "actual": "0.4%",
+   "forecast": null,
+   "previous": "0.1%",
+   "date": "2026-06-18",
+   "event": "Inflation Rate MoM",
+   "period": "m/m"
+  },
+  "Unemployment Rate": {
+   "actual": "2.5%",
+   "forecast": "2.5%",
+   "previous": "2.5%",
+   "date": "2026-06-29",
+   "event": "Unemployment Rate",
+   "period": null
+  },
+  "Retail Sales": {
+   "actual": "1.9%",
+   "forecast": null,
+   "previous": "1.3%",
+   "date": "2026-06-28",
+   "event": "Retail Sales MoM",
+   "period": "m/m"
+  },
+  "Consumer Confidence": {
+   "actual": "33.8",
+   "forecast": "34",
+   "previous": "33.6",
+   "date": "2026-07-01",
+   "event": "Consumer Confidence",
+   "period": null
+  },
+  "GDP Growth QoQ": {
+   "actual": "0.5%",
+   "forecast": "0.3%",
+   "previous": "0.5%",
+   "date": "2026-06-07",
+   "event": "GDP Growth Rate QoQ Final",
+   "period": "q/q"
+  },
+  "PPI": {
+   "actual": "6.3%",
+   "forecast": "5.5%",
+   "previous": "4.9%",
+   "date": "2026-06-09",
+   "event": "PPI YoY",
+   "period": "y/y"
+  },
+  "Central Bank Rate": {
+   "actual": "1%",
+   "forecast": "1%",
+   "previous": "0.75%",
+   "date": "2026-06-16",
+   "event": "BoJ Interest Rate Decision",
+   "period": null
+  },
+  "Services PMI": {
+   "actual": "52.2",
+   "forecast": "51.8",
+   "previous": "50",
+   "date": "2026-07-03",
+   "event": "S&P Global Services PMI Final",
    "period": null
   }
  },
