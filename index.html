@@ -918,7 +918,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TURQUOISE-SYNCRACE-26</span><span id="verBannerText"> (extended the cloud-sync data-loss fix: if the catch-up upload of a pending local change fails at startup - e.g. a brief Supabase outage/error - the app no longer falls through to a pull afterwards, since that pull would have overwritten the still-unsent local change with the old cloud state; it now skips that pull and retries on the next real save or app start instead)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-ALERTPICKER-27</span><span id="verBannerText"> (Calendar toolbar now has a "🔔 New Alert" button next to Refresh - pick any upcoming event from a dropdown to create a Telegram alert directly, without having to scroll to find its row first)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1292,6 +1292,15 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
   </div>
 </div>
+<!-- MODAL: Event fuer neuen Alarm auswaehlen (Toolbar-Button "🔔 New Alert") -->
+<div class="ov" id="mEvtAlertPicker" style="display:none">
+  <div class="modal">
+    <h3>🔔 New Telegram Alert</h3>
+    <p style="font-size:12.5px;color:var(--t2);margin:-4px 0 10px">Choose an upcoming event to get notified about.</p>
+    <select class="m-inp" id="evtAlertPickerSel"></select>
+    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertPicker')">Cancel</button><button class="btn g" onclick="confirmEvtAlertPicker()">Next</button></div>
+  </div>
+</div>
 <!-- MODAL: Event-Alarm (Telegram) fuer ein Kalender-Event anlegen/bearbeiten -->
 <div class="ov" id="mEvtAlert" style="display:none">
   <div class="modal">
@@ -1640,8 +1649,9 @@ function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev)
 function calToolbarHtml(){
   const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
   const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}">📁 ${calHighOnly?'High-impact only':'All impacts'}</button>`;
+  const alertBtn=`<button class="btn" onclick="openEvtAlertPicker()" title="Create a Telegram alert for any upcoming event">🔔 New Alert</button>`;
   const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values">🔄 Refresh</button>`;
-  return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${refresh}</div>`;
+  return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${alertBtn}${refresh}</div>`;
 }
 function calRowHtml(ev,opts){
   opts=opts||{};
@@ -4759,6 +4769,24 @@ function delCalEv(id){pushU();calEvts=calEvts.filter(e=>e.id!==id);save();render
 let _evtAlertKey=null;
 function findCalEvtByKey(key){return calEvts.find(e=>evtDismissKey(e)===key);}
 function defaultEvtAlertMsg(ev){return`⏰ ${ev.currencies||''} ${ev.name||''} is releasing now.`;}
+// "🔔 New Alert" in der Kalender-Toolbar: Event-Auswahl VOR dem eigentlichen
+// Nachrichten-Modal, damit man einen Alarm anlegen kann, ohne erst zur
+// passenden Kalenderzeile scrollen zu muessen.
+function openEvtAlertPicker(){
+  const upcoming=calEvts.filter(ev=>!isEvtPast(ev)&&evtTimeValid(ev.time))
+    .sort((a,b)=>a.date===b.date?a.time.localeCompare(b.time):a.date.localeCompare(b.date));
+  const sel=document.getElementById('evtAlertPickerSel');
+  sel.innerHTML=upcoming.length
+    ?upcoming.map(ev=>`<option value="${escH(evtDismissKey(ev))}">${escH(fmtDayHdr(ev.date))} ${escH(ev.time)} · ${escH(ev.currencies||'')} ${escH(ev.name||'')}</option>`).join('')
+    :'<option value="">No upcoming events with a known release time</option>';
+  openM('mEvtAlertPicker');
+}
+function confirmEvtAlertPicker(){
+  const key=document.getElementById('evtAlertPickerSel').value;
+  if(!key)return;
+  closeM('mEvtAlertPicker');
+  openEvtAlertM(key);
+}
 function openEvtAlertM(evKey){
   const ev=findCalEvtByKey(evKey);if(!ev)return;
   _evtAlertKey=evKey;
