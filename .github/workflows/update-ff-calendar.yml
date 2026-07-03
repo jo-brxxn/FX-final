@@ -1111,6 +1111,93 @@ jobs:
           '
           rm -f bond_tv.json
 
+      # ── ASSET-PREISE (price_data.json) ────────────────────────────────
+      # Fuer den "Score vs Price"-Chart im Trends-Tab: pro Waehrung/Asset ein
+      # taeglicher Schlusskurs (TradingView-Scanner, gleiche Quelle wie die
+      # Anleiherenditen oben). Waehrungen werden ueber ihr liquidestes
+      # USD-Paar abgebildet (kein eigener "Preis" fuer eine Waehrung an sich);
+      # bei Paaren, die als USD/XXX notieren (JPY/CHF/CAD), steigt der Kurs,
+      # wenn die Waehrung SCHWAECHER wird - "invert" markiert das, damit der
+      # Browser fuers Chart auf "hoeher = staerker" umdreht (konsistent mit
+      # der Score-Richtung). USD selbst nutzt den Dollar-Index (DXY).
+      - name: Fetch asset/FX prices (TradingView) -> price_data.json
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","TVC:USOIL","COINBASE:BTCUSD","TVC:SPX","TVC:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close"]}' \
+            "https://scanner.tradingview.com/global/scan" -o price_tv.json || true
+          echo "=== TradingView scanner response (first 500 chars) ==="
+          head -c 500 price_tv.json 2>/dev/null || echo "(missing)"
+          echo
+          node -e '
+            const fs=require("fs");
+            // TVC/FX-Ticker -> {id, invert}. invert=true: Kurs faellt, wenn die
+            // Waehrung STAERKER wird (USD/XXX-Notierung) - Anzeige dreht das um.
+            const MAP={
+              "TVC:DXY":{id:"USD",invert:false},
+              "FX:EURUSD":{id:"EUR",invert:false},
+              "FX:GBPUSD":{id:"GBP",invert:false},
+              "FX:USDCHF":{id:"CHF",invert:true},
+              "FX:USDJPY":{id:"JPY",invert:true},
+              "FX:USDCAD":{id:"CAD",invert:true},
+              "FX:AUDUSD":{id:"AUD",invert:false},
+              "FX:NZDUSD":{id:"NZD",invert:false},
+              "TVC:GOLD":{id:"GOLD",invert:false},
+              "TVC:SILVER":{id:"SILVER",invert:false},
+              "TVC:USOIL":{id:"OIL",invert:false},
+              "COINBASE:BTCUSD":{id:"BTC",invert:false},
+              "TVC:SPX":{id:"SP500",invert:false},
+              "TVC:NDX":{id:"NAS",invert:false},
+              "TVC:DEU40":{id:"DAX",invert:false}
+            };
+            const SRC={
+              USD:"https://www.tradingview.com/symbols/TVC-DXY/",
+              EUR:"https://www.tradingview.com/symbols/EURUSD/",
+              GBP:"https://www.tradingview.com/symbols/GBPUSD/",
+              CHF:"https://www.tradingview.com/symbols/USDCHF/",
+              JPY:"https://www.tradingview.com/symbols/USDJPY/",
+              CAD:"https://www.tradingview.com/symbols/USDCAD/",
+              AUD:"https://www.tradingview.com/symbols/AUDUSD/",
+              NZD:"https://www.tradingview.com/symbols/NZDUSD/",
+              GOLD:"https://www.tradingview.com/symbols/TVC-GOLD/",
+              SILVER:"https://www.tradingview.com/symbols/TVC-SILVER/",
+              OIL:"https://www.tradingview.com/symbols/TVC-USOIL/",
+              BTC:"https://www.tradingview.com/symbols/BTCUSD/",
+              SP500:"https://www.tradingview.com/symbols/SPX/",
+              NAS:"https://www.tradingview.com/symbols/NDX/",
+              DAX:"https://www.tradingview.com/symbols/TVC-DEU40/"
+            };
+            const today=new Date().toISOString().slice(0,10);
+            let resp;
+            try{resp=JSON.parse(fs.readFileSync("price_tv.json","utf8"));}catch(e){console.log("price_data: TradingView response unreadable, keeping existing file ("+e.message+")");process.exit(0);}
+            const rows=resp&&Array.isArray(resp.data)?resp.data:null;
+            if(!rows){console.log("price_data: unexpected TradingView shape, keeping existing file");process.exit(0);}
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("price_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            let okN=0;const miss=[];
+            rows.forEach(r=>{
+              const m=MAP[r.s];if(!m)return;
+              const v=r.d&&r.d[0];
+              if(v==null||!isFinite(Number(v))){miss.push(r.s);return;}
+              const val=Number(v);
+              const cur=out[m.id]||{};
+              let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
+              series.push([today,val]);
+              series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              series=series.slice(-100);
+              out[m.id]={source:SRC[m.id]||cur.source||"",invert:m.invert,series:series};
+              okN++;
+            });
+            const wantMiss=Object.keys(MAP).filter(k=>!out[MAP[k].id]);
+            if(okN>0){
+              fs.writeFileSync("price_data.json",JSON.stringify(out,null,1));
+              console.log("price_data.json: "+okN+"/"+Object.keys(MAP).length+" series appended for "+today+(miss.length?" [no value: "+miss.join(", ")+"]":"")+(wantMiss.length?" [never seen: "+wantMiss.join(", ")+"]":""));
+            }else{
+              console.log("price_data: no usable values from TradingView, keeping existing file"+(miss.length?" [no value: "+miss.join(", ")+"]":""));
+            }
+          '
+          rm -f price_tv.json
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
@@ -1224,6 +1311,7 @@ jobs:
           git add ff_calendar.json ind_data.json
           [ -f bond_data.json ] && git add bond_data.json
           [ -f cot_data.json ] && git add cot_data.json
+          [ -f price_data.json ] && git add price_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             git push

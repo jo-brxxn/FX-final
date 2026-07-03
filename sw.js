@@ -1,5 +1,5 @@
 // Service Worker fuer FX Analyst Pro: macht die App offline nutzbar.
-// Strategie fuer index.html + die 4 Live-JSON-Dateien: Netzwerk zuerst
+// Strategie fuer index.html + die 5 Live-JSON-Dateien: Netzwerk zuerst
 // (damit online immer der aktuelle Stand kommt, genau wie bisher ueber
 // die cache:'no-store'-Fetches im Hauptskript), Fallback auf den letzten
 // Cache-Stand nur wenn das Netz weg ist. Alles andere (Icons, Manifest):
@@ -7,7 +7,7 @@
 //
 // CACHE_VERSION bei groesseren Aenderungen an der App-Shell erhoehen,
 // damit alte Caches automatisch aufgeraeumt werden.
-const CACHE_VERSION = 'fxpro-v1';
+const CACHE_VERSION = 'fxpro-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -20,6 +20,7 @@ const APP_SHELL = [
   './ind_data.json',
   './bond_data.json',
   './cot_data.json',
+  './price_data.json',
 ];
 
 self.addEventListener('install', event => {
@@ -46,7 +47,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data)\.json$/.test(url.pathname);
+  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data)\.json$/.test(url.pathname);
 
   if (req.mode === 'navigate' || isDataFile) {
     // Cache-Key ohne die "?t=..."-Cache-Busting-Query, damit wiederholte

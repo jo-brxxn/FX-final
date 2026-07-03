@@ -934,7 +934,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COPPER-FLIPALERT-35</span><span id="verBannerText"> (new: automatic Telegram score-flip alerts - whenever any asset's bias changes (bullish/neutral/bearish), a message like "EUR flipped to BULLISH - score +4 (was NEUTRAL)" is queued and sent by the existing alert workflow within ~10 minutes, deduplicated across devices; flip alerts appear under Custom Alerts in the bell list and clean themselves up after 3 days; plus a new Weekly Outlook sent every Sunday 08:00 Berlin time via Telegram (text + voice): the week's high-impact events, a COT positioning summary with crowded warnings, and your current fundamental scores)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0c4a6e;color:#e0f2fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SKY-SCOREPRICE-36</span><span id="verBannerText"> (new: Score-vs-Price overlay in the Trends tab - pick a single asset or a custom pair, tap "vs Price" to see the fundamental Total Score plotted against its actual market price (dual axis, hourly via GitHub); event alarms (score-flip/calendar/custom) now clean themselves out of the history 1 day after they fired instead of 3, and it happens live while the app is open, not just after a reload)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1129,6 +1129,7 @@ function introLogin(){
         <span style="color:var(--t3);font-weight:700">/</span>
         <select class="btn" id="trendsPairQuoteSel" onchange="setTrendsPairQuote(this.value)" title="Quote currency" style="cursor:pointer"></select>
       </span>
+      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)">&#128200; vs Price</button>
     </div>
   </div>
   <div id="trendsBody"></div>
@@ -2088,6 +2089,12 @@ function processCalEvts(){
     return true;
   });
   if(inbox.length!==beforeInbox)changed=true;
+  // Ausgeloeste Event-Alarme raeumen sich 1 Tag nach ihrer Faelligkeit selbst
+  // aus der Historie (siehe pruneEventAlerts) - hier zusaetzlich zum Boot/
+  // Cloud-Pull, damit eine lange offene Sitzung sie nicht endlos anzeigt.
+  const beforeAlerts=eventAlerts.length;
+  eventAlerts=pruneEventAlerts(eventAlerts);
+  if(eventAlerts.length!==beforeAlerts)changed=true;
   // Wenn sich hier Indikator-Bias aendert, muss auch die Rubrik-Karte neu
   // eingestuft werden (score-abhaengige Karten-Bias, siehe recomputeAuto).
   if(syncIndicatorBiases()){changed=true;recomputeAuto();}
@@ -4961,6 +4968,12 @@ function evtAlertRowsHtml(list){
 }
 function renderEvtAlertList(){
   const wrap=document.getElementById('evtAlertListWrap');if(!wrap)return;
+  // Abgelaufene Alarme (fireAt laenger als EVT_ALERT_TTL_MS her) hier direkt
+  // ausraeumen statt erst beim naechsten Reload/Cloud-Pull - sonst zeigt die
+  // Liste waehrend einer langen offenen Sitzung noch laengst faellige Alarme.
+  const beforeN=eventAlerts.length;
+  eventAlerts=pruneEventAlerts(eventAlerts);
+  if(eventAlerts.length!==beforeN)save();
   const byTime=(a,b)=>new Date(a.fireAt)-new Date(b.fireAt);
   const calAlerts=eventAlerts.filter(a=>a.evKey).sort(byTime);
   const customAlerts=eventAlerts.filter(a=>!a.evKey).sort(byTime);
@@ -5111,12 +5124,12 @@ function pruneInbox(arr){
   return(arr||[]).filter(n=>!n.ts||n.ts>=cutoff);
 }
 // ── EVENT-ALARME (Telegram) ─────────────────────────────────────────
-// Ausgeloeste Alarme raeumen sich nach ein paar Tagen selbst auf, damit die
-// Liste nicht endlos waechst (der Versand/das "gesendet"-Tracking laeuft
-// komplett serverseitig im GitHub-Workflow gegen eine eigene Supabase-
-// Tabelle - der Browser weiss nichts vom Sendestatus und muss es auch
-// nicht wissen, siehe event-alerts.yml).
-const EVT_ALERT_TTL_MS=3*86400000;
+// Ausgeloeste Alarme raeumen sich 1 Tag nach ihrer Faelligkeit (fireAt)
+// automatisch aus der Historie, damit die Liste nicht endlos waechst (der
+// Versand/das "gesendet"-Tracking laeuft komplett serverseitig im GitHub-
+// Workflow gegen eine eigene Supabase-Tabelle - der Browser weiss nichts vom
+// Sendestatus und muss es auch nicht wissen, siehe event-alerts.yml).
+const EVT_ALERT_TTL_MS=1*86400000;
 function pruneEventAlerts(arr){
   const cutoff=Date.now()-EVT_ALERT_TTL_MS;
   return(arr||[]).filter(a=>a&&a.fireAt&&new Date(a.fireAt).getTime()>=cutoff);
@@ -5559,6 +5572,54 @@ function applyBondDataFeed(){
 }
 function autoFetchBondData(){
   fetchBondData().then(()=>{if(applyBondDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
+}
+// ── ASSET-PREISE (price_data.json) ────────────────────────────────
+// Fuer den "Score vs Price"-Chart im Trends-Tab: pro Waehrung/Asset eine
+// taegliche Kurs-Zeitreihe (TradingView, stuendlich per GitHub Action - siehe
+// price_data.json-Schritt im Workflow). Waehrungen sind ueber ihr liquidestes
+// USD-Paar abgebildet (invert=true bei USD/XXX-Notierungen wie JPY/CHF/CAD,
+// damit "hoeher = staerker" konsistent mit der Score-Richtung ist).
+let PRICE_DATA_FEED=null;
+async function fetchPriceData(){
+  try{
+    const res=await fetch('price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))PRICE_DATA_FEED=d;}
+  }catch(e){}
+}
+function autoFetchPriceData(){fetchPriceData().then(()=>rerender());}
+// Zeitreihe eines Assets in "eigener Richtung" (invert angewandt) - das ist
+// direkt die Linie fuer den Einzel-Asset-Chart (Waehrung ODER Non-FX-Asset).
+function priceSeriesFor(id){
+  const p=PRICE_DATA_FEED&&PRICE_DATA_FEED[id];
+  if(!p||!Array.isArray(p.series)||!p.series.length)return null;
+  if(!p.invert)return p.series;
+  return p.series.map(e=>[e[0],e[1]?1/e[1]:null]).filter(e=>e[1]!=null);
+}
+// Synthetischer Cross-Kurs zweier Waehrungen aus ihren (nicht invertierten)
+// USD-Kursen: base_in_usd / quote_in_usd (exakt, da beide auf denselben
+// Zeitpunkt/USD referenzieren) - nur fuer FX-Waehrungenpaare sinnvoll.
+function pairPriceSeries(base,quote){
+  const bp=PRICE_DATA_FEED&&PRICE_DATA_FEED[base],qp=PRICE_DATA_FEED&&PRICE_DATA_FEED[quote];
+  if(!bp||!qp||!Array.isArray(bp.series)||!Array.isArray(qp.series))return null;
+  const bInUsd=e=>bp.invert?(e?1/e:null):e;
+  const qInUsd=e=>qp.invert?(e?1/e:null):e;
+  const qMap={};qp.series.forEach(e=>{qMap[e[0]]=e[1];});
+  const out=[];
+  bp.series.forEach(e=>{
+    const qv=qMap[e[0]];if(qv==null)return;
+    const bU=bInUsd(e[1]),qU=qInUsd(qv);
+    if(bU==null||qU==null||!qU)return;
+    out.push([e[0],bU/qU]);
+  });
+  return out.length?out:null;
+}
+// Kompakte, kursgerechte Nachkommastellen: BTC/Indizes ohne Nachkommastellen,
+// Rohstoffe mit 2, FX-Paare mit 4.
+function fmtPriceTick(v){
+  const a=Math.abs(v);
+  if(a>=1000)return v.toFixed(0);
+  if(a>=10)return v.toFixed(2);
+  return v.toFixed(4);
 }
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
@@ -6666,6 +6727,76 @@ function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
     <div class="tr-scroll">${scoreTrendChart(ids,dates,vi,base,colorOverride)}</div>
   </div>`;
 }
+// ── SCORE VS PRICE (Ueberlagerung) ──────────────────────────────────
+// Nur sinnvoll fuer genau EIN Asset/Paar (kein "ALL"): Total-Score-Linie wie
+// gehabt (linke Achse, feste +/-Skala) plus die tatsaechliche Marktkurs-Linie
+// aus price_data.json (rechte Achse, eigene Min/Max-Skala je Chart - Score
+// und Kurs haben voellig unterschiedliche Groessenordnungen).
+let trendsShowPrice=false;
+function toggleTrendsPrice(){trendsShowPrice=!trendsShowPrice;renderTrends();}
+// Kurs eines Paars aus zwei Einzel-Assets (auch nicht-FX moeglich, z.B.
+// GOLD/JPY): USD ist Sonderfall, weil price_data fuer USD den Dollar-Index
+// (DXY) speichert statt eines echten USD-Kreuzkurses - dort direkt die
+// Gegenseite verwenden statt durch DXY zu teilen.
+function resolvePairPriceSeries(base,quote){
+  if(!base||!quote||base===quote)return null;
+  if(quote==='USD')return priceSeriesFor(base);
+  if(base==='USD'){
+    const s=priceSeriesFor(quote);
+    return s?s.map(e=>[e[0],e[1]?1/e[1]:null]).filter(e=>e[1]!=null):null;
+  }
+  return pairPriceSeries(base,quote);
+}
+function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
+  const n=dates.length;
+  let maxAbs=base;Object.values(scoreMap).forEach(v=>{if(v!=null&&Math.abs(v)>maxAbs)maxAbs=Math.abs(v);});
+  const scale=Math.ceil(maxAbs);
+  const priceMap={};(priceSeries||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))priceMap[e[0]]=e[1];});
+  const priceVals=dates.map(d=>priceMap[d]).filter(v=>v!=null);
+  const leftPad=42,rightPad=56,topPad=18,chartH=320,bottomPad=36,PD=48;
+  const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
+  const yMid=topPad+chartH/2;
+  const xOf=i=>leftPad+i*PD+PD/2;
+  const yOfScore=v=>yMid-(v/scale)*(chartH/2);
+  let svg=`<svg class="tr-svg" width="${w}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
+  [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
+    const y=yOfScore(t),mid=t===0;
+    svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+  });
+  const col=colorOverride||'#888';
+  const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push([xOf(i),yOfScore(v)]);});
+  if(scorePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${scorePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+  scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}"/>`;});
+  const PRICE_COL='#c084fc';
+  if(priceVals.length>1){
+    let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
+    if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
+    const pad=(pMax-pMin)*0.08;pMin-=pad;pMax+=pad;
+    const yOfPrice=v=>topPad+chartH-((v-pMin)/(pMax-pMin))*chartH;
+    [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
+      const y=yOfPrice(t);
+      svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:${PRICE_COL}">${fmtPriceTick(t)}</text>`;
+    });
+    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push([xOf(i),yOfPrice(v)]);});
+    if(pricePts.length>1)svg+=`<polyline pathLength="1" points="${pricePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${PRICE_COL}" stroke-width="2" stroke-dasharray="5,3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+    pricePts.forEach(p=>{svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.4" fill="${PRICE_COL}"/>`;});
+  }
+  dates.forEach((d,i)=>{
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
+    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
+  });
+  return svg+`</svg>`;
+}
+function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title){
+  const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
+  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:#c084fc"></span>Price</span>`:''}</div>`;
+  return`<div class="tr-card">
+    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
+    <div class="tr-scroll">${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries)}</div>
+    ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:11.5px">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
+  </div>`;
+}
 function renderTrends(){
   const el=document.getElementById('trendsBody');if(!el)return;
   const assets=trendAssets();
@@ -6680,6 +6811,16 @@ function renderTrends(){
   if(pairBtn)pairBtn.classList.toggle('active',trendsFilter==='PAIR');
   const pairWrap=document.getElementById('trendsPairWrap');
   if(pairWrap)pairWrap.style.display=trendsFilter==='PAIR'?'flex':'none';
+  // "vs Price" ist nur bei genau einem Asset/Paar sinnvoll (nicht bei "ALL",
+  // wo mehrere Score-Linien gleichzeitig gezeichnet werden).
+  const priceBtn=document.getElementById('trendsPriceBtn');
+  if(priceBtn){
+    const avail=trendsFilter!=='ALL';
+    priceBtn.classList.toggle('active',trendsShowPrice&&avail);
+    priceBtn.disabled=!avail;
+    priceBtn.style.opacity=avail?'':'.4';
+    priceBtn.style.cursor=avail?'pointer':'not-allowed';
+  }
   if(trendsFilter==='PAIR'){
     const baseSel=document.getElementById('trendsPairBaseSel'),quoteSel=document.getElementById('trendsPairQuoteSel');
     const baseOpts=groupedAssetOptions(assets,trendsPairBase),quoteOpts=groupedAssetOptions(assets,trendsPairQuote);
@@ -6702,7 +6843,13 @@ function renderTrends(){
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const dates=[...dset].sort();
   if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
-  let html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
+  let html;
+  if(trendsFilter!=='ALL'&&trendsShowPrice){
+    const scoreMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))scoreMap[e[0]]=e[1];});
+    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price');
+  }else{
+    html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
+  }
   if(macroIds.length){
     html+=scoreTrendCard(macroIds,dates,2,7,'Inflation',colorOverride)+
           scoreTrendCard(macroIds,dates,3,7,'Labour Market',colorOverride)+
@@ -6733,7 +6880,13 @@ function renderTrendsPair(el){
   // colors used everywhere else in the app), not a fixed identity color.
   const colorOverride=BC[scoreBias(pairScore(pairKey))];
   const dates=diffArr.map(e=>e[0]);
-  let html=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
+  let html;
+  if(trendsShowPrice){
+    const scoreMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];});
+    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)');
+  }else{
+    html=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
+  }
   if(FX.includes(base)&&FX.includes(quote)){
     html+=scoreTrendCard([pairKey],dates,2,7,'Inflation Difference',colorOverride)+
           scoreTrendCard([pairKey],dates,3,7,'Labour Market Difference',colorOverride)+
@@ -7388,7 +7541,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
   else if(tab==='mx')renderMatrix();
-  else if(tab==='trends')renderTrends();
+  else if(tab==='trends'){renderTrends();autoFetchPriceData();}
   else if(tab==='cot'){renderCot();autoFetchCot();}
   else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
@@ -7698,10 +7851,11 @@ updFFLastUpd();
   autoFetchIndData();
   autoFetchBondData();
   autoFetchCot();
+  autoFetchPriceData();
 })();
 
 // ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
-// Service Worker cached die App-Shell + die 4 Live-JSON-Dateien, damit die
+// Service Worker cached die App-Shell + die 5 Live-JSON-Dateien, damit die
 // Seite auch ganz ohne Netz laedt (siehe sw.js: Netzwerk zuerst, Cache als
 // Fallback). Aenderungen landen wie bisher sofort in localStorage - das
 // Einzige, was offline nicht sofort klappt, ist der Cloud-Push. Dafuer:
@@ -7741,6 +7895,7 @@ setInterval(()=>{
   autoFetchIndData();
   autoFetchBondData();
   autoFetchCot();
+  autoFetchPriceData();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
   }
