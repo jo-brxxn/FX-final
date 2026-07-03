@@ -1124,7 +1124,7 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
-            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","TVC:USOIL","COINBASE:BTCUSD","TVC:SPX","TVC:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close"]}' \
+            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close"]}' \
             "https://scanner.tradingview.com/global/scan" -o price_tv.json || true
           echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 price_tv.json 2>/dev/null || echo "(missing)"
@@ -1144,10 +1144,10 @@ jobs:
               "FX:NZDUSD":{id:"NZD",invert:false},
               "TVC:GOLD":{id:"GOLD",invert:false},
               "TVC:SILVER":{id:"SILVER",invert:false},
-              "TVC:USOIL":{id:"OIL",invert:false},
+              "NYMEX:CL1!":{id:"OIL",invert:false},
               "COINBASE:BTCUSD":{id:"BTC",invert:false},
-              "TVC:SPX":{id:"SP500",invert:false},
-              "TVC:NDX":{id:"NAS",invert:false},
+              "SP:SPX":{id:"SP500",invert:false},
+              "NASDAQ:NDX":{id:"NAS",invert:false},
               "TVC:DEU40":{id:"DAX",invert:false}
             };
             const SRC={
@@ -1161,7 +1161,7 @@ jobs:
               NZD:"https://www.tradingview.com/symbols/NZDUSD/",
               GOLD:"https://www.tradingview.com/symbols/TVC-GOLD/",
               SILVER:"https://www.tradingview.com/symbols/TVC-SILVER/",
-              OIL:"https://www.tradingview.com/symbols/TVC-USOIL/",
+              OIL:"https://www.tradingview.com/symbols/NYMEX-CL1!/",
               BTC:"https://www.tradingview.com/symbols/BTCUSD/",
               SP500:"https://www.tradingview.com/symbols/SPX/",
               NAS:"https://www.tradingview.com/symbols/NDX/",

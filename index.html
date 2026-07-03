@@ -934,7 +934,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0c4a6e;color:#e0f2fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SKY-SCOREPRICE-36</span><span id="verBannerText"> (new: Score-vs-Price overlay in the Trends tab - pick a single asset or a custom pair, tap "vs Price" to see the fundamental Total Score plotted against its actual market price (dual axis, hourly via GitHub); event alarms (score-flip/calendar/custom) now clean themselves out of the history 1 day after they fired instead of 3, and it happens live while the app is open, not just after a reload)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#9f1239;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-PINTOGGLE-37</span><span id="verBannerText"> (new: PIN lock can now be switched off entirely - next to the version-banner toggle in the Cloud Sync panel (👤), synced across your devices; the Score-vs-Price feed's Oil/S&P 500/Nasdaq tickers were fixed after the live TradingView test run (all 15 series now come through))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1065,7 +1065,7 @@ function introLogin(){
     <div class="lock-err" id="lockErr"></div>
   </div>
 </div>
-<script>if(sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
+<script>if(localStorage.getItem('fxpro_pin_enabled')==='0'||sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
 <div class="hdr">
   <div>
@@ -1397,6 +1397,10 @@ function introLogin(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">Version banner (update notes at the top)</span>
       <button class="btn" id="verBannerToggleBtn" onclick="toggleVerBannerVisible()">Hide banner</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
+      <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
+      <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
     </div>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
@@ -3614,13 +3618,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView,greenDismissed,eventAlerts},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView,greenDismissed,eventAlerts,pinEnabled},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=_imp.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=_imp.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -3635,6 +3639,7 @@ function cloudHeaders(cfg){
 }
 function openCloudM(fromIntro){
   try{updVerBannerToggleBtn()}catch(e){}
+  try{updPinToggleBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
@@ -3698,9 +3703,9 @@ async function cloudPush(manual){
         }
       }catch(e){}
     }
-    // greenDismissed liegt bewusst außerhalb von snap()/Undo, muss aber
-    // ebenfalls geräteübergreifend synchron sein.
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;
+    // greenDismissed/pinEnabled liegen bewusst außerhalb von snap()/Undo,
+    // müssen aber ebenfalls geräteübergreifend synchron sein.
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;data.pinEnabled=pinEnabled;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScore(s),bias:s.bias}));
@@ -3753,6 +3758,7 @@ async function cloudPull(manual){
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
       if(cd.compactView!==undefined){compactView=cd.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}
+      if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -7686,6 +7692,29 @@ function maybeShowFirstRunHelp(){
 // Basis-Schutz gegen Schulterblicke, kein echter Zugriffsschutz (die
 // Daten selbst liegen unverschluesselt in localStorage).
 const LOCK_HASH='9552e277ebcc7fa191292c6e900d94dfe6e837d8abf76a2da927d4530d2c8f69';
+// Ob die PIN-Sperre ueberhaupt aktiv ist (Schalter im Cloud-Sync-Panel, neben
+// dem Banner-Ein/Aus). Liegt bewusst ausserhalb von snap()/Undo (wie
+// greenDismissed/tabStacks), muss aber trotzdem geraeteuebergreifend
+// synchron sein - deshalb die volle Vier-Punkte-Anbindung (cloudPush/
+// cloudPull/Save-Bump/Export-Import). Der frueheste Boot-Check (ganz oben in
+// index.html, direkt nach #lockScreen) liest denselben localStorage-Schluessel,
+// damit der Sperrbildschirm bei deaktivierter PIN gar nicht erst aufblitzt.
+let pinEnabled=localStorage.getItem('fxpro_pin_enabled')!=='0';
+function updPinToggleBtn(){const btn=document.getElementById('pinToggleBtn');if(btn)btn.textContent=pinEnabled?'Disable PIN':'Enable PIN';}
+function togglePinEnabled(){
+  pinEnabled=!pinEnabled;
+  try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  cloudAutoSync();
+  updPinToggleBtn();
+  // Beim Deaktivieren sofort entsperren (kein Reload noetig, kein
+  // ueberraschendes erneutes Sperren mitten in der Sitzung beim Aktivieren).
+  if(!pinEnabled){
+    try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}
+    const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
+  }
+}
 async function checkLockCode(code){
   try{
     const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(code));
