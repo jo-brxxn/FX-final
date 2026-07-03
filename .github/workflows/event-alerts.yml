@@ -64,9 +64,19 @@ jobs:
             });
             if (!due.length) { console.log('No alerts due right now (' + alerts.length + ' configured).'); return; }
 
-            const logRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log?select=alert_id`, { headers });
-            if (!logRes.ok) throw new Error('fx_alert_log fetch failed: ' + logRes.status);
-            const sentIds = new Set((await logRes.json()).map(r => r.alert_id));
+            // fx_alert_log ist nur eine Nebentabelle zum Vermeiden von
+            // Doppel-Versand - wenn sie (z.B. RLS/Setup-Problem) nicht
+            // erreichbar ist, darf das NICHT den eigentlichen Versand
+            // blockieren. Lieber im schlimmsten Fall einmal doppelt senden,
+            // als bei einem Tabellen-Problem dauerhaft GAR NICHTS senden.
+            let sentIds = new Set();
+            try {
+              const logRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_alert_log?select=alert_id`, { headers });
+              if (logRes.ok) sentIds = new Set((await logRes.json()).map(r => r.alert_id));
+              else console.log('Warning: fx_alert_log fetch failed (' + logRes.status + ') - sending without dedup-check this run.');
+            } catch (e) {
+              console.log('Warning: fx_alert_log fetch threw (' + e.message + ') - sending without dedup-check this run.');
+            }
 
             for (const a of due) {
               if (!a.id || sentIds.has(a.id)) continue;
