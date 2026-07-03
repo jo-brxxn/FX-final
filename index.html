@@ -971,7 +971,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COPPER-TRENDLIVE-43</span><span id="verBannerText"> (fix: the new trend score-bonus only took effect for indicators the moment their next real release came in - since most indicators were already synced from before, it silently did nothing on reload. Now recomputed fresh on every load/sync regardless of whether a new release exists, so already-tracked indicators pick up the bonus immediately)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-VALHIST-44</span><span id="verBannerText"> (root-cause fix: trend-bias never actually fired for real data, because it compared releases from the 10-day calendar window - monthly indicators like NFP/CPI/PMI never have 2 releases in there at once. Trend now reads its own persistent per-indicator value history (ind.valHist) that survives independently of the calendar window and accumulates with every real release, so the feature can actually reach a first trend reading)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2438,19 +2438,31 @@ function findIndEventHistory(symId,indName,n){
 function findIndEvent(symId,indName){
   return findIndEventHistory(symId,indName,1)[0]||null;
 }
-// Momentum-Trend ueber 2 Perioden: braucht kein separates drittes Release -
-// das jeweilige "previous"-Feld der letzten beiden Releases liefert schon
-// 3 Datenpunkte (aktuell, vor 1 Periode, vor 2 Perioden). Bullish, wenn der
-// Wert 2x in Folge in die "gute" Richtung gelaufen ist (unter Beruecksichtigung
-// von LOWER_IS_BETTER, z.B. Arbeitslosenquote); bearish andersrum. Ohne
-// klaren 2-Schritt-Trend -> null (keine Aussage, siehe Aufrufer).
-function indTrendBias(symId,indName){
-  const hist=findIndEventHistory(symId,indName,2);
-  if(hist.length<2)return null;
-  const[latest,prior]=hist;
-  const actual=parseNumLike(latest.actual),prev1=parseNumLike(latest.previous),prev2=parseNumLike(prior.previous);
+// Eigene, rollierende Werte-Historie je Indikator (unabhaengig vom kurzen
+// calEvts-Rueckblickfenster von CAL_PAST_DAYS Tagen). calEvts behaelt naemlich
+// nur ~10 Tage Vergangenheit + den Kalender-Vorschau-Zeitraum - bei monatlichen
+// Indikatoren (NFP/CPI/PMI etc.) sind da NIE zwei Releases gleichzeitig drin,
+// der alte calEvts-basierte Trend-Check konnte also faktisch nie ausloesen.
+// ind.valHist ist ein einfaches Zahlen-Array (aeltester -> neuester Wert),
+// wird bei jedem echten neuen Release um den "actual"-Wert erweitert und lebt
+// in ind (Teil von syms), synct also automatisch ueber snap()/applySnap() mit.
+function pushValHist(ind,val){
+  if(val==null||!isFinite(val))return;
+  if(!Array.isArray(ind.valHist))ind.valHist=[];
+  ind.valHist.push(val);
+  if(ind.valHist.length>4)ind.valHist=ind.valHist.slice(-4);
+}
+// Momentum-Trend ueber 2 Perioden, basierend auf ind.valHist statt calEvts.
+// Bullish, wenn der Wert 2x in Folge in die "gute" Richtung gelaufen ist
+// (unter Beruecksichtigung von LOWER_IS_BETTER, z.B. Arbeitslosenquote);
+// bearish andersrum. Ohne klaren 2-Schritt-Trend oder <3 Werten -> null.
+function indTrendBias(ind,indName){
+  const h=ind&&Array.isArray(ind.valHist)?ind.valHist:[];
+  if(h.length<3)return null;
+  const n=h.length;
+  const actual=h[n-1],prev1=h[n-2],prev2=h[n-3];
   if(actual==null||prev1==null||prev2==null)return null;
-  const lowerBetter=LOWER_IS_BETTER_RE.test(latest.name||'');
+  const lowerBetter=LOWER_IS_BETTER_RE.test(indName||'');
   const rising=lowerBetter?(actual<prev1&&prev1<prev2):(actual>prev1&&prev1>prev2);
   const falling=lowerBetter?(actual>prev1&&prev1>prev2):(actual<prev1&&prev1<prev2);
   return rising?'bull':falling?'bear':null;
@@ -2553,7 +2565,15 @@ function syncIndicatorBiases(){
         // Klicks sollen bis zum naechsten ECHTEN Release stehen bleiben).
         if(ev.id!==ind.autoEvId){
           ind.autoEvId=ev.id;
-          const trend=indTrendBias(c.id,ind.name); // 'bull'|'bear'|null
+          // Erstkontakt: valHist mit dem "previous"-Wert vorbefuellen, damit
+          // schon der naechste Sync (nur noch 1 weiteres echtes Release
+          // entfernt) 3 Datenpunkte hat, statt bei 0 zu starten.
+          if(!ind.valHist||!ind.valHist.length){
+            const seed=parseNumLike(ev.previous);
+            if(seed!=null)pushValHist(ind,seed);
+          }
+          pushValHist(ind,parseNumLike(ev.actual));
+          const trend=indTrendBias(ind,ind.name); // 'bull'|'bear'|null
           const nb=noForecast?(trend||'neu'):indBiasFromEvent(ev);
           const trendDriven=noForecast&&!!trend;
           if(ind.bias!==nb||ind.trendDriven!==trendDriven){ind.bias=nb;ind.trendDriven=trendDriven;changed=true;}
@@ -2564,7 +2584,7 @@ function syncIndicatorBiases(){
         // Modelländerung an dieser Stelle erst, sobald zufaellig das naechste
         // Release GENAU dieses Indikators erscheint (koennte Wochen dauern),
         // statt sofort beim naechsten Laden/Sync.
-        const tb=noForecast?'neu':(indTrendBias(c.id,ind.name)||'neu');
+        const tb=noForecast?'neu':(indTrendBias(ind,ind.name)||'neu');
         if(ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
       });
     });
