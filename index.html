@@ -934,7 +934,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#9f1239;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CRIMSON-CUSTOMFFLINK-32</span><span id="verBannerText"> (the version banner now actually changes color on every update instead of always staying the same teal - so a stale cached page is visually obvious at a glance; also confirmed/re-verified: the Custom Alert modal already has the "Append the Forex Factory link" checkbox from last round, same as the calendar-event alert modal)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#14532d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-MULTITAB-33</span><span id="verBannerText"> (major cloud-sync data-loss fix: multiple open tabs of this app used to fight each other - a stale background tab's 15s auto-save silently overwrote the active tab's fresh changes in localStorage AND pushed them over the cloud, so edits vanished "after refreshing a few times"; tabs now sync live via storage events, a stale tab adopts the newer state instead of clobbering it, waking up from iOS freeze/bfcache re-syncs first, and a stale device's automatic push now detects that the cloud moved and pulls instead of overwriting - only real user edits still win)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1841,6 +1841,7 @@ function toggleCompactView(){
   compactView=!compactView;
   localStorage.setItem('fxpro_compactview',compactView?'1':'0');
   localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
   cloudAutoSync();
   applyCompactView();
   const b=document.getElementById('compactSw');
@@ -1984,6 +1985,7 @@ function dismissGreenEvt(key){
   // Zeitstempel bumpen + Cloud-Push anstoßen, damit der bestätigte Zustand auch
   // auf den anderen Geräten ankommt (greenDismissed liegt außerhalb von snap()).
   localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
   cloudAutoSync();
   renderSidebar();
   updGreenBadge();
@@ -3380,8 +3382,23 @@ function mkWidgets(){return[
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
 let uStack=[],rStack=[];
+// Multi-Tab-/Multi-Geraete-Schutz: pushU() laeuft vor praktisch jeder ECHTEN
+// Nutzeraktion (Undo-Punkt), aber nie bei automatischen Daten-Refreshes
+// (FF/ind/bond/COT laden silent, ohne pushU). Damit ist es das verlaesslichste
+// Signal, um "der Nutzer hat hier gerade selbst etwas geaendert" von reinen
+// Hintergrund-Saves zu unterscheiden - siehe save()-Guard, adoptExternalState()
+// und die optimistische Versionspruefung in cloudPush().
+// "Nutzer hat editiert, aber die Aenderung ist noch nicht in der Cloud"
+// wird zusaetzlich in localStorage persistiert (fxpro_user_pending), damit
+// das Signal einen Reload UND einen Tab-Wechsel ueberlebt - sonst wuerde
+// die optimistische Versionspruefung in cloudPush() eine frisch gemachte,
+// noch nicht hochgeladene Aenderung nach einem schnellen Reload fuer einen
+// reinen Auto-Refresh halten und den fremden Cloud-Stand drueberziehen.
+let _lastUserEditTs=0,_userEditedSinceSync=localStorage.getItem('fxpro_user_pending')==='1';
+let _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+function markUserSynced(){_userEditedSinceSync=false;try{localStorage.removeItem('fxpro_user_pending');}catch(e){}}
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts});}
-function pushU(){uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
+function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
@@ -3517,7 +3534,39 @@ function loadState(){
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
 }
+// Fremden localStorage-Stand (von einem anderen Tab geschrieben, oder nach
+// bfcache-/Suspend-Aufwachen) in DIESEN Tab uebernehmen, statt ihn zu
+// ueberschreiben. Bewusst OHNE pushU(): das laeuft potenziell bei jedem
+// fremden Save und wuerde sonst den Undo-Stack fluten.
+function adoptExternalState(){
+  try{
+    const s=localStorage.getItem(SK);if(!s)return;
+    applySnap(s);
+    try{greenDismissed=JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}');}catch(e){}
+    try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
+    compactView=localStorage.getItem('fxpro_compactview')!=='0';applyCompactView();
+    _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+    // Nicht pauschal auf "synchronisiert" setzen: der uebernommene Stand kann
+    // Nutzeraenderungen des ANDEREN Tabs enthalten, die noch nicht in der
+    // Cloud sind (dessen 1.5s-Push laeuft evtl. noch) - das geteilte
+    // localStorage-Flag weiss es am besten.
+    _userEditedSinceSync=localStorage.getItem('fxpro_user_pending')==='1';
+    renderSidebar();rerender();updateStat();updUB();updInboxBadge();updGreenBadge();
+  }catch(e){}
+}
 function save(){
+  // Multi-Tab-Schutz: hat ein ANDERER Tab localStorage inzwischen
+  // aktualisiert, ohne dass dieser Tab es mitbekommen hat (verpasstes
+  // storage-Event, z.B. weil iOS den Tab eingefroren hatte), darf ein reiner
+  // Hintergrund-Save (15s-Intervall/unload) den NEUEREN fremden Stand nicht
+  // mit dem alten In-Memory-Zustand dieses Tabs ueberschreiben - genau so
+  // verschwanden Aenderungen "nach mehrmaligem Aktualisieren", wenn mehrere
+  // Tabs derselben App offen waren. Nur wenn der Nutzer GERADE in diesem Tab
+  // aktiv editiert hat (pushU in den letzten Sekunden), gewinnt dieser Tab.
+  if(localStorage.getItem('fxpro_updated')!==_lsUpdatedSeen&&Date.now()-_lastUserEditTs>=3000){
+    adoptExternalState();
+    return;
+  }
   // Asset-Verbund: Änderungen am aktuell gewählten Asset vor dem Speichern
   // auf alle anderen Assets derselben Sync-Gruppe spiegeln (Krypto-Coins,
   // S&P 500/Nasdaq, oder per Zahnrad-Menü verbundene Assets). selId zeigt nur
@@ -3538,6 +3587,7 @@ function save(){
     changed=s!==localStorage.getItem(SK);
     localStorage.setItem(SK,s);
     if(changed)localStorage.setItem('fxpro_updated',new Date().toISOString());
+    _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
     const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
   }catch(e){}
   recordScoreHist();
@@ -3610,6 +3660,29 @@ function updProfile(){
 async function cloudPush(manual){
   const cfg=getCloudCfg();if(!cfg)return false;
   try{
+    // Optimistische Versionspruefung (nur Auto-Pushes): hat ein ANDERES
+    // Geraet/anderer Tab seit dem letzten Abgleich in die Cloud gepusht und
+    // gibt es hier seitdem keine eigenen NUTZER-Aenderungen (nur automatische
+    // Daten-Refreshes wie den stuendlichen Kalender-Fetch), dann den fremden
+    // Stand uebernehmen statt ihn blind zu ueberschreiben. Sonst radiert z.B.
+    // ein stundenlang im Hintergrund offenes iPad mit seinem naechsten
+    // Auto-Refresh-Push die frischen Handy-Aenderungen aus der Cloud.
+    const userPending=_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1';
+    if(!manual&&!userPending){
+      try{
+        const chk=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(cfg.syncId)+'&select=updated_at',{
+          headers:cloudHeaders(cfg),signal:AbortSignal.timeout(10000)
+        });
+        if(chk.ok){
+          const rows=await chk.json();
+          const seen=localStorage.getItem('fxpro_cloud_seen');
+          if(rows.length&&seen&&rows[0].updated_at!==seen){
+            await cloudPull(false);
+            return true;
+          }
+        }
+      }catch(e){}
+    }
     // greenDismissed liegt bewusst außerhalb von snap()/Undo, muss aber
     // ebenfalls geräteübergreifend synchron sein.
     const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;
@@ -3625,6 +3698,7 @@ async function cloudPush(manual){
     // (kein Größenvergleich von Uhren verschiedener Geräte) -> kein einseitiger
     // Sync-Ausfall mehr durch abweichende iPad/PC-Uhrzeiten.
     localStorage.setItem('fxpro_cloud_seen',sentUpdated);
+    markUserSynced();
     if(manual)setCloudStatus('✓ Uploaded: '+new Date().toLocaleString());
     return true;
   }catch(e){
@@ -3664,6 +3738,8 @@ async function cloudPull(manual){
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
+      _lsUpdatedSeen=cloudUpdated;
+      markUserSynced();
       renderSidebar();rerender();updateStat();updUB();updInboxBadge();updGreenBadge();
       if(manual)setCloudStatus('✓ Downloaded: '+new Date(cloudUpdated).toLocaleString());
     }else if(manual){
@@ -7176,7 +7252,7 @@ function saveTabStacks(){
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
   // Aenderung als neue Version markieren und (falls Cloud-Sync eingerichtet ist)
   // pushen, damit die Stapel ueber mehrere Geraete synchron sind.
-  try{localStorage.setItem('fxpro_updated',new Date().toISOString());}catch(e){}
+  try{localStorage.setItem('fxpro_updated',new Date().toISOString());_lsUpdatedSeen=localStorage.getItem('fxpro_updated');}catch(e){}
   cloudAutoSync();
 }
 function stackOf(tabId){return tabStacks.find(s=>s.members.includes(tabId));}
@@ -7453,6 +7529,56 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',flushAndSave);
 window.addEventListener('beforeunload',flushAndSave);
 setInterval(flushAndSave,15000);
+
+// ══ MULTI-TAB- & AUFWACH-SYNC ═══════════════════════════════════════
+// Mehrere offene Tabs derselben App teilen sich localStorage, hatten aber
+// bisher voellig unabhaengige In-Memory-Staende: der 15s-Sicherheitsnetz-Save
+// eines aelteren Hintergrund-Tabs hat den neueren Stand des aktiven Tabs
+// lokal UND (via Auto-Push) in der Cloud ueberschrieben - Aenderungen waren
+// dann "nach mehrmaligem Aktualisieren ploetzlich weg". Drei Schutzschichten:
+// (a) storage-Listener: fremde Saves live uebernehmen (Events feuern nur in
+//     anderen Tabs als dem schreibenden - genau richtig dafuer),
+// (b) save()-Guard (siehe oben): ein Tab, der ein fremdes Update verpasst
+//     hat (z.B. von iOS eingefroren), uebernimmt es beim naechsten
+//     Hintergrund-Save statt es zu ueberschreiben,
+// (c) Aufwachen (Tab wieder sichtbar/bfcache-Restore): erst fremden lokalen
+//     Stand uebernehmen, dann Cloud-Abgleich (Push-vor-Pull wie beim Boot).
+window.addEventListener('storage',e=>{
+  if(e.key!==SK&&e.key!=='fxpro_updated')return;
+  const cur=localStorage.getItem('fxpro_updated');
+  if(cur===_lsUpdatedSeen)return;
+  // Nicht mitten in eine aktive Bearbeitung in DIESEM Tab graetschen -
+  // dann gewinnt beim naechsten save() ohnehin die juengste Nutzeraktion.
+  if(Date.now()-_lastUserEditTs<3000)return;
+  adoptExternalState();
+});
+let _syncNowBusy=false;
+async function cloudSyncNow(){
+  if(_syncNowBusy||!getCloudCfg())return;
+  _syncNowBusy=true;
+  try{
+    const pending=localStorage.getItem('fxpro_updated');
+    const seen=localStorage.getItem('fxpro_cloud_seen');
+    if(pending&&pending!==seen){if(!(await cloudPush(false)))return;}
+    await cloudPull(false);
+  }finally{_syncNowBusy=false;}
+}
+let _hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){_hiddenAt=Date.now();return;}
+  if(localStorage.getItem('fxpro_updated')!==_lsUpdatedSeen)adoptExternalState();
+  // Cloud-Abgleich nur nach laengerer Abwesenheit (>30s) - kurze App-Wechsel
+  // sollen nicht bei jedem Zurueckkommen einen Netz-Roundtrip ausloesen.
+  if(_hiddenAt&&Date.now()-_hiddenAt>30000)cloudSyncNow();
+});
+// iOS Safari stellt Seiten beim Zurueck-Navigieren/Tab-Wechsel oft aus dem
+// bfcache wieder her: der JS-Zustand ist dann so alt wie der Moment des
+// Einfrierens, waehrend localStorage/Cloud laengst weiter sind.
+window.addEventListener('pageshow',e=>{
+  if(!e.persisted)return;
+  if(localStorage.getItem('fxpro_updated')!==_lsUpdatedSeen)adoptExternalState();
+  cloudSyncNow();
+});
 
 // Re-render only when the masonry column count actually changes (e.g.
 // rotating a tablet across the 1100px/1600px breakpoints) - never on
