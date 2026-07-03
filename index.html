@@ -971,7 +971,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-TRENDADD-42</span><span id="verBannerText"> (score model: the 2-period momentum trend is now checked on every release, not just ones without a forecast - with a forecast, the beat/miss bias stays in charge (±1 as usual) but a confirming trend can now additionally shift that indicator's score by up to ±1 (📈 +1/−1 chip); without a forecast the trend still replaces the bias entirely at ±1.5, unchanged)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COPPER-TRENDLIVE-43</span><span id="verBannerText"> (fix: the new trend score-bonus only took effect for indicators the moment their next real release came in - since most indicators were already synced from before, it silently did nothing on reload. Now recomputed fresh on every load/sync regardless of whether a new release exists, so already-tracked indicators pick up the bonus immediately)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2547,24 +2547,25 @@ function syncIndicatorBiases(){
       if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
       rub.indicators.forEach(ind=>{
         const ev=findIndEvent(c.id,ind.name);
-        if(ev&&ev.id!==ind.autoEvId){
+        if(!ev)return;
+        const noForecast=ev.forecast==null||ev.forecast==='';
+        // "Neues Release?"-Gate gilt weiterhin fuer ind.bias selbst (manuelle
+        // Klicks sollen bis zum naechsten ECHTEN Release stehen bleiben).
+        if(ev.id!==ind.autoEvId){
           ind.autoEvId=ev.id;
-          const noForecast=ev.forecast==null||ev.forecast==='';
           const trend=indTrendBias(c.id,ind.name); // 'bull'|'bear'|null
-          let nb,trendDriven,trendBias;
-          if(noForecast){
-            nb=trend||'neu';
-            trendDriven=!!trend;
-            trendBias='neu';
-          }else{
-            nb=indBiasFromEvent(ev);
-            trendDriven=false;
-            trendBias=trend||'neu';
-          }
-          if(ind.bias!==nb||ind.trendDriven!==trendDriven||ind.trendBias!==trendBias){
-            ind.bias=nb;ind.trendDriven=trendDriven;ind.trendBias=trendBias;changed=true;
-          }
+          const nb=noForecast?(trend||'neu'):indBiasFromEvent(ev);
+          const trendDriven=noForecast&&!!trend;
+          if(ind.bias!==nb||ind.trendDriven!==trendDriven){ind.bias=nb;ind.trendDriven=trendDriven;changed=true;}
         }
+        // ind.trendBias (der Zusatz-Bonus bei vorhandenem Forecast) ist rein
+        // abgeleitet und nie manuell setzbar - deshalb IMMER neu berechnen,
+        // nicht nur wenn ein neues Release reinkommt. Sonst wirkt eine
+        // Modelländerung an dieser Stelle erst, sobald zufaellig das naechste
+        // Release GENAU dieses Indikators erscheint (koennte Wochen dauern),
+        // statt sofort beim naechsten Laden/Sync.
+        const tb=noForecast?'neu':(indTrendBias(c.id,ind.name)||'neu');
+        if(ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
       });
     });
   });
