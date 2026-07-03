@@ -2,10 +2,13 @@ name: Morning Report (Telegram)
 
 on:
   schedule:
-    # 05:00 UTC ~ 07:00 MESZ (Sommerzeit) / 06:00 MEZ (Winterzeit) -
-    # bei Bedarf anpassen. GitHub Actions kennt keine Zeitzonen-Cronjobs,
-    # daher fix in UTC.
-    - cron: '0 5 * * *'
+    # GitHub Actions kennt keine Zeitzonen-Cronjobs, nur UTC. Damit es das
+    # ganze Jahr ueber wirklich 07:00 Uhr Berlin-Zeit ist (nicht nur im
+    # Sommer), zwei Eintraege - einer pro Zeitumstellung. Der Gate-Schritt
+    # unten sorgt dafuer, dass nur der jeweils "richtige" Lauf tatsaechlich
+    # etwas verschickt.
+    - cron: '0 5 * * *'  # 07:00 MESZ (Sommerzeit, UTC+2)
+    - cron: '0 6 * * *'  # 07:00 MEZ (Winterzeit, UTC+1)
   workflow_dispatch:
 
 jobs:
@@ -14,7 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Nur beim Lauf ausfuehren, der gerade 7 Uhr Berlin-Zeit trifft
+        id: gate
+        run: |
+          HOUR="$(TZ="Europe/Berlin" date +%H)"
+          echo "Aktuelle Stunde in Berlin: $HOUR"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$HOUR" != "07" ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Morning report aus ff_calendar.json zusammenstellen (Text + Sprach-Skript)
+        if: steps.gate.outputs.proceed == 'true'
         run: |
           node -e '
             const fs = require("fs");
@@ -83,15 +98,18 @@ jobs:
           '
 
       - name: espeak-ng und ffmpeg installieren (kostenlose TTS)
+        if: steps.gate.outputs.proceed == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng ffmpeg
 
       - name: Sprachnachricht erzeugen
+        if: steps.gate.outputs.proceed == 'true'
         run: |
           espeak-ng -v en-us -s 155 -f morning-report-speech.txt -w morning-report.wav
           # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
           ffmpeg -y -i morning-report.wav -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
 
       - name: Per Telegram senden (Text + Sprachnachricht)
+        if: steps.gate.outputs.proceed == 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -128,3 +146,7 @@ jobs:
 # Accounts noetig). Fuer eine natuerlichere Stimme muesste ein
 # kostenpflichtiger TTS-Dienst (z.B. OpenAI TTS, ElevenLabs) samt
 # eigenem API-Key als weiteres Secret eingebunden werden.
+#
+# Sendezeit: 07:00 Uhr Berlin-Zeit, ganzjaehrig (zwei Cron-Eintraege +
+# Gate-Schritt gleichen die Sommer-/Winterzeit-Verschiebung aus - siehe
+# Kommentare bei "on: schedule:" oben).
