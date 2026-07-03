@@ -916,7 +916,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
      Aenderung aktualisiert). Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TOPAS-COTSYNC-20</span><span id="verBannerText"> (fixed the "NEW COT DATA!" dashboard card: it used to track its seen/dismissed state purely in localStorage, so it only ever showed correctly on whichever device happened to check first, never in sync across devices - same class of bug as the old tabStacks issue - now wired into cloudPush/cloudPull/export/import like greenDismissed; bond yield "actual" values now show green when bullish (actual > previous, 15-day compare) instead of blue, matching the color used everywhere else for bullish; morning-report.yml now fires at 07:00 Berlin time year-round via a DST-aware dual-cron gate instead of drifting to 06:00 in winter)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: OPAL-PREVCOLOR-21</span><span id="verBannerText"> (the calendar's "Previous" column no longer gets a beat/miss color when a value gets revised on a later fetch - removed the revisionColor()/prevRevColor mechanism entirely so Previous always stays in the normal neutral color everywhere it's shown (main calendar, asset calendar, dashboard mini-calendar); Actual is unaffected and still shows green/red for beat/miss as before; revision counts still show in the manual-refresh confirmation, just without the coloring)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1610,16 +1610,6 @@ function actualColor(ev){
   const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
   return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
 }
-// Faerbt einen revidierten "Previous"-Wert ein: vergleicht den neuen
-// (revidierten) mit dem zuvor angezeigten Wert derselben Periode und
-// signalisiert, ob die Revision die Datenlage verbessert (act-good) oder
-// verschlechtert (act-bad) hat - analog zu actualColor (Beat/Miss-Logik).
-function revisionColor(oldVal,newVal,name){
-  const o=parseNumLike(oldVal),n=parseNumLike(newVal);
-  if(o===null||n===null||o===n)return'';
-  const lowerBetter=LOWER_IS_BETTER_RE.test(name||'');
-  return(lowerBetter?n<o:n>o)?'act-good':'act-bad';
-}
 // Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
 // Im "compact"-Modus (z.B. Dashboard-Widget) entfallen die Impact-Text- und Lösch-Spalte
 // zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
@@ -1657,7 +1647,7 @@ function calRowHtml(ev,opts){
       <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
       ${val(ev.actual,ac)}
       ${val(ev.forecast)}
-      ${val(ev.previous,ev.prevRevColor)}
+      ${val(ev.previous)}
       ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
     </div>`;
   }
@@ -1668,7 +1658,7 @@ function calRowHtml(ev,opts){
     <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
-    ${val(ev.previous,ev.prevRevColor)}
+    ${val(ev.previous)}
     ${opts.delAction
       ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`
       :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])
@@ -4949,7 +4939,6 @@ async function fetchFF(silent,btnEl){
           // (z.B. Vormonats-NFP beim Folgemonats-Release korrigiert)?
           const oldPrev=oldPrevMap[(newEvt.currencies||'')+'|'+newEvt.name+'|'+newEvt.date];
           if(oldPrev&&newEvt.previous&&oldPrev!==newEvt.previous){
-            newEvt.prevRevColor=revisionColor(oldPrev,newEvt.previous,newEvt.name);
             revisionsUpdated++;
           }
           calEvts.push(newEvt);
@@ -4976,10 +4965,11 @@ async function fetchFF(silent,btnEl){
       if(!match)return;
       if(!e.actual&&match.actual!=null&&match.actual!==''){e.actual=match.actual;actualsAdded++;}
       // "Previous" wurde nachträglich revidiert (z.B. NFP-Vormonatswert
-      // wurde beim Folgemonats-Release korrigiert): Richtung der Revision
-      // einmalig einfärben und den neuen Wert übernehmen.
+      // wurde beim Folgemonats-Release korrigiert): neuen Wert übernehmen.
+      // Bleibt bewusst in der normalen Farbe (kein Beat/Miss-Highlighting
+      // fuer "Previous") und wird nur für die "N revidiert"-Meldung gezählt.
       if(match.previous!=null&&match.previous!==''&&match.previous!==e.previous){
-        if(e.previous){e.prevRevColor=revisionColor(e.previous,match.previous,e.name);revisionsUpdated++;}
+        if(e.previous)revisionsUpdated++;
         e.previous=match.previous;
       }
     });
