@@ -33,7 +33,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
-.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hdr{background:rgba(17,22,31,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
@@ -44,11 +44,21 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
+/* Micro-interactions: Buttons federn beim Druecken leicht ein, wichtige
+   Karten heben sich beim Hover minimal an - macht die Oberflaeche insgesamt
+   "fester"/hochwertiger, ohne die Bedienung zu veraendern. */
+.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:transform .12s ease,box-shadow .12s ease,background .15s,border-color .15s,color .15s}
+.btn:active:not(:disabled),.ab:active,.cal-alert-btn:active,.evt-alert-lp:active{transform:scale(.96)}
+@media (hover:hover){
+  .mover-row:hover,.carry-row:hover{transform:translateY(-1.5px);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+  .dw:hover{box-shadow:0 6px 20px rgba(0,0,0,.18)}
+}
+@media (prefers-reduced-motion:reduce){.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:none}}
 .btn:disabled{opacity:.22;cursor:default}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.tabbar{background:rgba(17,22,31,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
@@ -71,6 +81,29 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
 .ab .av{font-size:11px;margin-top:1px;font-weight:600;display:inline-block}
 .ab .sb-score{font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;display:inline-block;margin-right:5px;margin-top:1px}
+.sb-spark{display:block;margin:2px auto 1px}
+/* Score-Flip-Moment: kurzer Glow-Sweep um die Sidebar-Zeile + Score-Puls,
+   wenn ein Symbol gerade sein Bias gewechselt hat (siehe triggerFlipGlow). */
+@keyframes flipGlowSweep{0%{box-shadow:0 0 0 0 var(--flipcol,transparent)}25%{box-shadow:0 0 16px 3px var(--flipcol,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes flipScorePulse{0%{transform:scale(1)}30%{transform:scale(1.4)}60%{transform:scale(.92)}100%{transform:scale(1)}}
+.flip-glow{animation:flipGlowSweep 1.4s ease-out}
+.flip-pulse{display:inline-block;animation:flipScorePulse .6s ease-out}
+/* Aurora-Hintergrund im Dashboard: 3 sehr langsam wandernde, stark
+   geblurrte Farbflaechen hinter dem Globus/den Karten, gefaerbt nach dem
+   aktuellen Risk-Sentiment (siehe updateAuroraColors) - der Hintergrund
+   ist damit selbst eine grobe Stimmungsanzeige. position:fixed + negativer
+   z-index, damit er unabhaengig vom Scroll immer den ganzen Viewport
+   ausfuellt, aber hinter allem normalen Content bleibt. Nur sichtbar,
+   waehrend das Dashboard aktiv ist (siehe showTab).*/
+.dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
+.aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
+.aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%;animation:auroraDrift2 50s ease-in-out infinite}
+.aurora-c{background:var(--aurora-c,#f4ad5c);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
+@keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
+@keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
+@keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
+@media (prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
 .ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
@@ -181,6 +214,9 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .mover-name{font-weight:700;color:var(--t0);font-size:13px;min-width:52px}
 .mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.movers-upd{font-size:10.5px;color:var(--t3);margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ticker-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:5px;padding:2px 6px;flex-shrink:0;white-space:nowrap;line-height:1.3}
+.ticker-chip-pct{opacity:.85}
 /* Zins-Differenz (Carry) Badge in den Set-ups-Zeilen */
 .rate-diff{font:700 10.5px 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);background:transparent;color:var(--t3);white-space:nowrap;cursor:pointer;transition:border-color .12s}
 .rate-diff.pos{color:var(--green);border-color:rgba(var(--green-rgb),.4)}
@@ -332,6 +368,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .ibo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
 .ibo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
+.trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4}
 .istar2{background:none;border:none;cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .istar2.on{opacity:1;color:var(--star)}@media (hover:hover){.ind-card:hover .istar2{opacity:.35}}.ind-card .istar2.on{opacity:1;color:var(--star)}
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.ind-card:hover .idel2{opacity:.4}}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
@@ -742,7 +779,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
-.modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.modal{background:rgba(17,22,31,.82);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:min(1300px,94vw)}
 #inboxList{max-height:65vh;overflow-y:auto}
@@ -934,7 +971,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#365314;color:#ecfccb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: OLIVE-PRICEDOT-38</span><span id="verBannerText"> (fix: the "vs Price" overlay in Trends showed nothing when only one day of price history existed yet (the feed just went live) - a single day now shows as one point on the price axis right away and grows into a full line day by day, instead of staying empty until day 2)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#581c87;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-LIVETICKER-39</span><span id="verBannerText"> (new: live price ticker chips (price + %-change vs. yesterday, coloured bullish/bearish) on every pair and non-FX asset row across Set-ups, Carry, Dashboard and detail pages; new "Biggest Movers FX" dashboard card (top-8 FX pairs by price move, refreshes every 10 min); indicators without a forecast now derive bias from a 2-period momentum trend at 1.5× weight (📈 Trend chip); design pass: score-flip glow + sidebar sparklines, aurora dashboard background tinted by risk sentiment, micro-interactions and glassmorphism throughout)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1205,6 +1242,11 @@ function introLogin(){
   <div id="noteCats"></div>
 </div>
 <!-- PAGE: DASHBOARD -->
+<div class="dash-aurora" id="dashAurora" style="display:none">
+  <div class="aurora-blob aurora-a"></div>
+  <div class="aurora-blob aurora-b"></div>
+  <div class="aurora-blob aurora-c"></div>
+</div>
 <div class="pc" id="pgDash">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between">
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live overview</div></div>
@@ -1425,7 +1467,7 @@ function introLogin(){
   <div class="modal" style="max-width:560px">
     <h3>❓ How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
-    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release.</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the bias instead comes from the <b>2-period momentum trend</b> - bullish if the actual improved on both the previous and the release before that, bearish if it worsened both times, otherwise neutral - marked with a <b>📈 Trend</b> chip and counted at <b>±1.5</b> (higher than the usual ±1, since it's the only signal available and needs two confirming moves).</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
@@ -1516,6 +1558,11 @@ function indBaseWeight(ind,rub){
   if(BOND_HALF_PT.has(ind.name))return 0.5;
   if(COT_NET_HALF.has(stripPeriodSuffix(ind.name).base))return 0.5;
   if(CB_TONE_HALF.has(ind.name))return 0.5;
+  // Fehlt der Forecast, kommt das Bias (falls gesetzt) aus dem 2-Perioden-
+  // Momentum-Trend statt aus Beat/Miss - als einziges Signal zaehlt das mit
+  // erhoehtem Gewicht 1,5 statt der sonst ueblichen 1 (siehe indBiasFromEvent/
+  // syncIndicatorBiases).
+  if(ind.trendDriven)return 1.5;
   const base=stripPeriodSuffix(ind.name).base;
   const inds=(rub&&rub.indicators)||[];
   for(const[a,b]of CORE_PAIRS){
@@ -2364,26 +2411,57 @@ function macroCcyFor(id){
   if(s)return effLinkCcy(s);
   return isNonFx(id)?'USD':id;
 }
-// Findet das jüngste veröffentlichte Event (mit "Actual"-Wert), das zum
-// Indikator-Namen und zur Symbol-Währung passt.
-function findIndEvent(symId,indName){
+// Findet die letzten N veröffentlichten Events (mit "Actual"-Wert, neueste
+// zuerst), die zum Indikator-Namen und zur Symbol-Währung passen. Basis für
+// findIndEvent() (jüngstes Event) UND für den Momentum-Trend-Fallback
+// (braucht das vorletzte Release, siehe indTrendBias).
+function findIndEventHistory(symId,indName,n){
   const{base,period}=stripPeriodSuffix(indName);
   const matcher=IND_EVENT_MATCHERS[base];
-  if(!matcher)return null;
+  if(!matcher)return[];
   const ccy=macroCcyFor(symId);
-  if(!ccy)return null; // "keine Verbindung" -> keine automatischen Events
+  if(!ccy)return[]; // "keine Verbindung" -> keine automatischen Events
   const pool=calEvts.filter(ev=>{
     if(!ev.actual||!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return false;
     if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return false;}
     return true;
   });
-  if(!pool.length)return null;
-  pool.sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
-  return pool[pool.length-1];
+  pool.sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))); // neueste zuerst
+  return pool.slice(0,n);
 }
-function indBiasFromEvent(ev){
+function findIndEvent(symId,indName){
+  return findIndEventHistory(symId,indName,1)[0]||null;
+}
+// Momentum-Trend ueber 2 Perioden: braucht kein separates drittes Release -
+// das jeweilige "previous"-Feld der letzten beiden Releases liefert schon
+// 3 Datenpunkte (aktuell, vor 1 Periode, vor 2 Perioden). Bullish, wenn der
+// Wert 2x in Folge in die "gute" Richtung gelaufen ist (unter Beruecksichtigung
+// von LOWER_IS_BETTER, z.B. Arbeitslosenquote); bearish andersrum. Ohne
+// klaren 2-Schritt-Trend -> null (keine Aussage, siehe Aufrufer).
+function indTrendBias(symId,indName){
+  const hist=findIndEventHistory(symId,indName,2);
+  if(hist.length<2)return null;
+  const[latest,prior]=hist;
+  const actual=parseNumLike(latest.actual),prev1=parseNumLike(latest.previous),prev2=parseNumLike(prior.previous);
+  if(actual==null||prev1==null||prev2==null)return null;
+  const lowerBetter=LOWER_IS_BETTER_RE.test(latest.name||'');
+  const rising=lowerBetter?(actual<prev1&&prev1<prev2):(actual>prev1&&prev1>prev2);
+  const falling=lowerBetter?(actual>prev1&&prev1>prev2):(actual<prev1&&prev1<prev2);
+  return rising?'bull':falling?'bear':null;
+}
+// Bias eines Releases: normalerweise Actual vs. Forecast (Beat/Miss). Fehlt
+// der Forecast (kein Vergleichswert von der Quelle), faellt es NICHT auf
+// neutral zurueck, sondern auf den 2-Perioden-Momentum-Trend (siehe
+// indTrendBias) - das ist der einzige Fall, in dem dieser Trend ueberhaupt
+// zaehlt. symId/indName sind optional (nur fuer den Fallback noetig).
+function indBiasFromEvent(ev,symId,indName){
   const ac=actualColor(ev);
-  return ac==='act-good'?'bull':ac==='act-bad'?'bear':'neu';
+  if(ac)return ac==='act-good'?'bull':'bear';
+  if((ev.forecast==null||ev.forecast==='')&&symId&&indName){
+    const t=indTrendBias(symId,indName);
+    if(t)return t;
+  }
+  return'neu';
 }
 // ── RECHERCHE → KALENDER ──
 // Der Forex-Factory-Feed liefert oft keine Actual-Werte. Für Events, deren
@@ -2448,7 +2526,7 @@ function mkScoreNotif(symId,rub,ind,ev){
     base:stripPeriodSuffix(ind.name).base,
     label:ind.displayName||ind.name,
     rubName:rub.name,
-    bias:ev?indBiasFromEvent(ev):ind.bias,
+    bias:ev?indBiasFromEvent(ev,symId,ind.name):ind.bias,
     actual:ev?ev.actual:null,forecast:ev?ev.forecast:null,previous:ev?ev.previous:null,
     date:ev?ev.date:todayStr(),time:ev?ev.time:'',
     ts:Date.now()
@@ -2464,8 +2542,13 @@ function syncIndicatorBiases(){
         const ev=findIndEvent(c.id,ind.name);
         if(ev&&ev.id!==ind.autoEvId){
           ind.autoEvId=ev.id;
-          const nb=indBiasFromEvent(ev);
-          if(ind.bias!==nb){ind.bias=nb;changed=true;}
+          const noForecast=ev.forecast==null||ev.forecast==='';
+          const nb=indBiasFromEvent(ev,c.id,ind.name);
+          // trendDriven: dieses Release hatte keinen Forecast, das Bias kam
+          // stattdessen (falls ueberhaupt) aus dem 2-Perioden-Momentum-Trend -
+          // indBaseWeight() gibt in diesem Fall 1.5 statt 1 Gewichtspunkte.
+          const trendDriven=noForecast&&nb!=='neu';
+          if(ind.bias!==nb||ind.trendDriven!==trendDriven){ind.bias=nb;ind.trendDriven=trendDriven;changed=true;}
         }
       });
     });
@@ -3391,12 +3474,13 @@ function cleanLegacySeedEvts(){
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'FX World Globe',order:0},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
-  {id:uid(),type:'score_changes',title:"Today's Movers",order:2},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:3},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:5},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:6},
-  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:7},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:2},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:3},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:4},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:5},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:6},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:7},
+  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:8},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -3418,7 +3502,7 @@ let _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
 function markUserSynced(){_userEditedSinceSync=false;try{localStorage.removeItem('fxpro_user_pending');}catch(e){}}
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats;pairs=d.pairs;noteCats=d.noteCats;calEvts=d.calEvts;widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -3468,13 +3552,13 @@ let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=
 // aelterer Stand aus der Cloud geladen wird (sonst ueberschreibt cloudPull die
 // migrierten Widgets) - und damit spaeter geloeschte Module nach dem Sync nicht
 // staendig zurueckkehren.
-const DASH_V=3;
+const DASH_V=4;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if((dashV||0)>=DASH_V)return;
-  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
+  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,score_changes:2,fx_bias:3,risk_sentiment:4,asset_heatmap:5,watchlist:6,mini_calendar:7,pairs_editor:8};
+  const rank={globe:0,ccy_ranking:1,movers_fx:2,score_changes:3,fx_bias:4,risk_sentiment:5,asset_heatmap:6,watchlist:7,mini_calendar:8,pairs_editor:9};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -3875,6 +3959,22 @@ function sbCatClick(catL){
   // Tippen auf die Überschrift im Reorder-Modus beendet ihn wieder.
   if(sbCatReorder===catL){sbCatReorder=null;renderSidebar();}
 }
+// Mini-Score-Verlauf (Sparkline) fuer die Sidebar: letzte ~14 Tage aus
+// scoreHist, keine Achsen/Labels - reine Momentum-Optik neben der Score-Zahl.
+// Faellt bei <2 Punkten Historie einfach weg (kein leeres/kaputtes SVG).
+function miniSparklineSvg(id,col){
+  const h=(scoreHist[id]||[]).slice(-14);
+  if(h.length<2)return'';
+  const vals=h.map(e=>e[1]);
+  const min=Math.min(...vals),max=Math.max(...vals),range=(max-min)||1;
+  const w=34,ht=11,pad=1;
+  const pts=vals.map((v,i)=>{
+    const x=pad+(vals.length>1?(i/(vals.length-1)):0)*(w-2*pad);
+    const y=ht-pad-((v-min)/range)*(ht-2*pad);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return`<svg class="sb-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/></svg>`;
+}
 function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
   const allCats=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
@@ -3896,9 +3996,9 @@ function renderSidebar(){
       const isCustom=customCatIds.includes(id);
       const reorder=sbReorderId===id;
       return`<div class="ab-wrap${reorder?' reorder':''}">
-        <button class="ab${on?' on':''} ${glowClass(c.bias)}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
+        <button class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
-          <div class="an">${escH(c.name)}</div>${(()=>{const sc=symScore(c);return`<div class="sb-score" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScore(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Move down">▼</button>`:''}
@@ -3923,7 +4023,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0)','det-'+c.id)}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast falls back to the 2-period momentum trend at ±1.5, marked with a 📈 Trend chip)','det-'+c.id)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -4178,6 +4278,7 @@ function renderInd(ind,ri,ii,total){
       ${datePart}
       ${(()=>{const lock=rubAutoDerived(getSym(),getRub(ri));const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
       return`<div class="ibg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>`;})()}
+      ${ind.trendDriven?`<span class="trend-chip" title="No forecast for this release - bias comes from the 2-period momentum trend instead (2 consecutive moves in the same direction), counted at 1.5× weight since it's the only signal">📈 Trend</span>`:''}
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
       <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
       <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
@@ -4679,6 +4780,15 @@ function queueScoreFlipAlert(sym,oldB,newB){
     ffLink:false
   });
 }
+// Transiente (nicht persistierte) Menge an Symbol-IDs, die GERADE eben ihr
+// Bias gewechselt haben - fuer den kurzen Glow-Sweep/Score-Puls in der
+// Sidebar (siehe renderSidebar). Raeumt sich nach der Animationsdauer selbst
+// wieder auf; kein Sync-Zustand, rein visuelles Ereignis pro Geraet/Tab.
+let _flipGlowIds=new Set();
+function triggerFlipGlow(symId){
+  _flipGlowIds.add(symId);
+  setTimeout(()=>{_flipGlowIds.delete(symId);renderSidebar();},1500);
+}
 function recomputeAllSymBiases(){
   syms.forEach(s=>{
     s.bias=scoreBias(symScore(s));
@@ -4686,6 +4796,7 @@ function recomputeAllSymBiases(){
     if(s.lastNotifBias===undefined){s.lastNotifBias=s.bias;return;}
     if(s.lastNotifBias!==s.bias){
       queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
+      triggerFlipGlow(s.id);
       s.lastNotifBias=s.bias;
     }
   });
@@ -4892,6 +5003,7 @@ function renderPairs(){
   };
   const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     <div class="sym-name dw-pname">${escH(it.name)}</div>
+    ${tickerChipHtml(tickerInfoForItem(it.kind,it.kind==='pair'?it.name:it.id))}
     ${it.kind==='pair'?rateDiff(it.name):''}
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score')}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
@@ -5586,13 +5698,81 @@ function autoFetchBondData(){
 // USD-Paar abgebildet (invert=true bei USD/XXX-Notierungen wie JPY/CHF/CAD,
 // damit "hoeher = staerker" konsistent mit der Score-Richtung ist).
 let PRICE_DATA_FEED=null;
+// Zeitpunkt des letzten (versuchten) Abrufs - unabhaengig vom Ergebnis, damit
+// Ticker/Movers-Karte immer "zuletzt geprueft um HH:MM" zeigen koennen, auch
+// wenn der stuendliche Workflow zwischen zwei Abrufen keine neuen Werte hatte.
+let priceDataLastFetch=null;
 async function fetchPriceData(){
   try{
     const res=await fetch('price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))PRICE_DATA_FEED=d;}
   }catch(e){}
+  priceDataLastFetch=Date.now();
 }
 function autoFetchPriceData(){fetchPriceData().then(()=>rerender());}
+// Letzter verfuegbarer Punkt einer Preis-Zeitreihe + %-Veraenderung zum
+// letzten verfuegbaren Punkt DAVOR (nicht zwingend "gestern" im Kalendersinn -
+// an Wochenenden/Feiertagen wird wie beim Bond-Feed der letzte verfuegbare
+// Vortageswert genommen). bias folgt direkt dem Vorzeichen der Veraenderung
+// (positiv = bullish, negativ = bearish, wie ueberall sonst in der App).
+function priceChangeInfo(series){
+  if(!Array.isArray(series)||!series.length)return null;
+  const latestEntry=series[series.length-1];
+  if(!latestEntry)return null;
+  const price=Number(latestEntry[1]);
+  if(!isFinite(price))return null;
+  const prevEntry=bondPick(series.slice(0,-1),isoMinusDays(latestEntry[0],1));
+  if(!prevEntry)return{price,date:latestEntry[0],prevDate:null,changePct:null,bias:'neu'};
+  const prevPrice=Number(prevEntry[1]);
+  if(!isFinite(prevPrice)||!prevPrice)return{price,date:latestEntry[0],prevDate:null,changePct:null,bias:'neu'};
+  const changePct=(price-prevPrice)/prevPrice*100;
+  const bias=changePct>0.001?'bull':changePct<-0.001?'bear':'neu';
+  return{price,date:latestEntry[0],prevDate:prevEntry[0],changePct,bias};
+}
+// Fuer eine Einzel-Waehrung/Non-FX-Asset (eigene Preisrichtung, invert schon
+// angewandt) bzw. fuer ein FX-Paar (synthetischer Kreuzkurs).
+function assetTickerInfo(id){return priceChangeInfo(priceSeriesFor(id));}
+function pairTickerInfo(base,quote){return priceChangeInfo(resolvePairPriceSeries(base,quote));}
+// Die 28 "kanonischen" FX-Kreuzpaare (8 ueber 2) in Marktkonvention - welche
+// Waehrung Basis/Kurs ist, richtet sich nach dieser festen Prioritaet (z.B.
+// EUR/USD statt USD/EUR, USD/JPY statt JPY/USD), damit nicht beide Richtungen
+// (die nur spiegelverkehrt dieselbe Bewegung waeren) doppelt auftauchen.
+const FX_PAIR_PRIORITY=['EUR','GBP','AUD','NZD','USD','CAD','CHF','JPY'];
+function canonicalFxPairs(){
+  const out=[];
+  for(let i=0;i<FX_PAIR_PRIORITY.length;i++)for(let j=i+1;j<FX_PAIR_PRIORITY.length;j++)out.push([FX_PAIR_PRIORITY[i],FX_PAIR_PRIORITY[j]]);
+  return out;
+}
+// Preis-Info fuer eine Set-ups-/Carry-/Watchlist-Zeile: "pair" parst den
+// Namen ("EUR/USD" -> base/quote), "asset" nutzt die ID direkt.
+function tickerInfoForItem(kind,idOrName){
+  if(kind==='pair'){
+    const parts=(idOrName||'').split('/');
+    if(parts.length!==2)return null;
+    return pairTickerInfo(parts[0],parts[1]);
+  }
+  return assetTickerInfo(idOrName);
+}
+// Wiederverwendbarer Live-Ticker-Chip: Preis + %-Veraenderung seit dem
+// letzten verfuegbaren Vortageswert, eingefaerbt nach Vorzeichen (positiv =
+// bullish, negativ = bearish - dieselben Bias-Farben wie ueberall sonst).
+// Erscheint ueberall, wo ein FX-Paar oder ein Non-FX-Asset in einer Zeile/
+// Karte steht (Set-ups, Carry, Dashboard-Watchlist, Non-FX-Detailkopf).
+function tickerChipHtml(info){
+  if(!info)return'';
+  const col=BC[info.bias];
+  const pctTxt=info.changePct==null?'':(info.changePct>0?'▲ +':info.changePct<0?'▼ ':'· ')+Math.abs(info.changePct).toFixed(2)+'%';
+  return`<span class="ticker-chip" style="color:${col};border-color:${col}44;background:${col}14" title="Live price, updates every 10 min${info.prevDate?' · vs. '+fmtDayHdr(info.prevDate):''}">${fmtPriceTick(info.price)}${pctTxt?`<span class="ticker-chip-pct">${pctTxt}</span>`:''}</span>`;
+}
+// Die 8 FX-Paare mit der groessten |%-Veraenderung| seit dem letzten
+// verfuegbaren Vortageswert (fuer die "Biggest Movers FX"-Dashboard-Karte).
+function computeFxMovers(){
+  return canonicalFxPairs().map(([base,quote])=>{
+    const info=pairTickerInfo(base,quote);
+    if(!info||info.changePct==null)return null;
+    return{base,quote,name:base+'/'+quote,...info};
+  }).filter(Boolean).sort((a,b)=>Math.abs(b.changePct)-Math.abs(a.changePct)).slice(0,8);
+}
 // Zeitreihe eines Assets in "eigener Richtung" (invert angewandt) - das ist
 // direkt die Linie fuer den Einzel-Asset-Chart (Waehrung ODER Non-FX-Asset).
 function priceSeriesFor(id){
@@ -5680,6 +5860,7 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 const W_TYPES=[
   {type:'globe',label:'FX World Globe',sub:'Rotating globe — currencies coloured by bias score'},
   {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
+  {type:'movers_fx',label:'Biggest Movers FX',sub:'The 8 FX pairs with the biggest price move vs. yesterday'},
   {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
@@ -5697,8 +5878,22 @@ function renderCotNotify(){
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
   </div>`;
 }
+// Faerbt den Aurora-Hintergrund nach dem aktuellen Risk-Sentiment (dieselbe
+// Risk-on/Risk-off-Rechnung wie im risk_sentiment-Widget): deutlich Risk-on
+// -> bullish Blauton, deutlich Risk-off -> bearish Rotton, dazwischen der
+// neutrale Amberton - der Hintergrund ist damit selbst eine grobe Anzeige.
+function updateAuroraColors(){
+  const host=document.getElementById('dashAurora');if(!host)return;
+  const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScore(s):null;};
+  const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+  const net=avg(RISK_ON_IDS)-avg(RISK_OFF_IDS);
+  const col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
+  host.style.setProperty('--aurora-a',col);
+  host.style.setProperty('--aurora-b',col);
+}
 function renderDash(){
   renderCotNotify();
+  updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
   el.innerHTML=sorted.map((w,wi)=>{
@@ -5719,6 +5914,7 @@ function renderDash(){
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
+          ${isNonFx(s.id)?tickerChipHtml(assetTickerInfo(s.id)):''}
           ${rowScore(symScore(s),'Symbol-Score',BC[s.bias])}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
           <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
@@ -5737,6 +5933,7 @@ function renderDash(){
       const wlList=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
+        ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
         ${rowScore(pairScore(p.name),'Paar-Score')}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
@@ -5754,6 +5951,7 @@ function renderDash(){
         const cat=pairCats.find(c=>c.id===p.catId);
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
+          ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score')}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
@@ -5800,6 +5998,22 @@ function renderDash(){
         </div>
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
+    }else if(w.type==='movers_fx'){
+      // Preisbasierte Bewegung (nicht Score!): die 8 FX-Kreuzpaare mit der
+      // groessten |%-Aenderung| seit dem letzten verfuegbaren Vortageswert,
+      // aus price_data.json (stuendlich per GitHub Action, im Browser alle
+      // 10 Min. neu abgefragt - siehe autoFetchPriceData). Farbe folgt direkt
+      // dem Vorzeichen: positiv = bullish, negativ = bearish.
+      const movers=computeFxMovers();
+      const updTxt=priceDataLastFetch?('Updated '+new Date(priceDataLastFetch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})):'Not updated yet';
+      content=`<div class="movers-upd">🕐 ${updTxt} · refreshes every 10 min</div>`+(movers.length?movers.map(m=>{
+        const col=BC[m.bias];
+        return`<div class="mover-row" style="cursor:default" title="${escH(m.name)} vs. ${m.prevDate?fmtDayHdr(m.prevDate):'previous close'}">
+          <span class="mover-name">${escH(m.name)}</span>
+          <span class="mover-vals">${fmtPriceTick(m.price)}</span>
+          <span class="mover-delta" style="color:${col}">${m.changePct>0?'▲ +':'▼ '}${Math.abs(m.changePct).toFixed(2)}%</span>
+        </div>`;
+      }).join(''):`<div class="dw-empty">No price history yet - fills in once price_data.json has at least 2 days of data for these pairs.</div>`);
     }else if(w.type==='score_changes'){
       // "Was hat sich heute bewegt?": vergleicht je Asset die letzten beiden
       // Tages-Schnappschuesse aus scoreHist (Gesamt-Score) und listet nur
@@ -7530,6 +7744,7 @@ function openTabMenu(kind,id,x,y){
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const auroraEl=document.getElementById('dashAurora');if(auroraEl)auroraEl.style.display=tab==='dash'?'':'none';
   if(tab!=='cot')cotStopCountdown();
   const pgEl=document.getElementById(PAGE_IDS[tab]);
   if(pgEl){
@@ -7622,6 +7837,7 @@ function carryRowHTML(r,rank,max){
     <div class="carry-main">
       <div class="carry-top">
         <span class="carry-pair">${r.pair}</span>
+        ${tickerChipHtml(pairTickerInfo(r.base,r.quote))}
         <span class="carry-dir" style="color:${col};border-color:${col};background:${col}14">${dir}</span>
         <span class="carry-val" style="color:${col}">+${r.carry.toFixed(2)}% p.a.</span>
       </div>
@@ -7924,12 +8140,16 @@ setInterval(()=>{
   autoFetchIndData();
   autoFetchBondData();
   autoFetchCot();
-  autoFetchPriceData();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
   }
   autoFetchFF();
 },60*60*1000);
+// Preise/Ticker/Biggest-Movers alle 10 Minuten neu abrufen (schnellerer
+// Rhythmus als die uebrigen Live-Daten, damit sich die Ticker-Leiste und die
+// Movers-Karte "live" anfuehlen - auch wenn der stuendliche GitHub-Workflow
+// dazwischen oft noch denselben Stand liefert).
+setInterval(autoFetchPriceData,10*60*1000);
 // Rote Jetzt-Linie + Dimmen vergangener Events aktuell halten: minütlich die
 // sichtbare Kalenderansicht neu rendern (Scroll-Position der Seite bleibt erhalten).
 setInterval(()=>{
