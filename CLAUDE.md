@@ -85,28 +85,72 @@ kommentiert ab ≈ Zeile 1584 `CORE_PAIRS`/`indIsHalfWeight` und ≈ Zeile 2684
   gemeinsame Quelle — nicht wieder auseinanderziehen (Regression: Bonds
   bekamen sonst versehentlich den vollen ±1-Bonus statt ±0,5).
 
-### Bekannte, diagnostizierte Datenlücken (kein Bug, echte Quellen-Lücke)
+### Manufacturing PMI (S&P Global/HCOB) — 5. Quelle Investing.com umgesetzt (Stand 2026-07-04, Abend)
 
-- **Manufacturing PMI ohne Trend** (EUR/GBP/JPY/CAD/AUD/NZD): `actual` bleibt
-  `null`, weil keine der 4 integrierten Quellen (TradingView wide/recent-
-  Fenster, FXStreet, ForexFactory-Website-Scrape, Trading-Economics-Guest-API)
-  den S&P-Global/HCOB-Composite-Wert liefert. Die `NAME_ALIASES`-Zuordnung im
-  Workflow ist korrekt (`"final manufacturing pmi"` → S&P/HCOB-Aliase) — das
-  ist also kein Matching-Bug. Nur USD (ISM, andere Quelle) und CHF
-  (procure.ch/UBS, andere Quelle) bekommen zuverlässig einen `actual`.
-  Nutzer hat konditional eine 5. Quelle freigegeben (z. B. investing.com-
-  Scrape analog zum FF-Website-Scrape), MUSS aber vollautomatisch
-  funktionieren (jede zukünftige Veröffentlichung ohne manuelles Zutun) —
-  noch NICHT umgesetzt.
-- **Viele Yields ohne Trend** (GBP/CHF/JPY/AUD/NZD): `bond_data.json` hat für
-  diese 5 nur ~21 Tage Historie (täglicher Einzelpunkt seit 2026-06-14, kein
-  Backfill), während USD/EUR/CAD ~35 Tage haben (Backfill via US Treasury
-  Direct/BoC Valet API/ECB SDW, alle ohne API-Key). Der Yields-Trend braucht
-  25 Tage Vergleich → löst sich für die 5 fehlenden Währungen automatisch in
-  ~5 Tagen auf (ab 2026-07-04), oder per Backfill sofort schließbar
-  (angedachte Quellen: Bank of England, Japan MoF, RBA, RBNZ, SNB — noch
-  ungeprüft, ob deren Formate/URLs wie erwartet funktionieren). Ebenfalls
-  konditional freigegeben, noch NICHT umgesetzt.
+Investing.com-Kalender-AJAX (`Service/getCalendarFilteredData`, Request-Format
+aus der investpy-Bibliothek reverse-engineered, siehe Schritt "Fetch alternative
+actual sources" im Workflow) wurde als 5. Quelle ergänzt und funktioniert:
+per workflow_dispatch bestätigt liefert sie den `actual` für **EUR, GBP, JPY,
+CAD** (z. B. EUR Final Manufacturing PMI 51.4, GBP 52.5, JPY 54.8, CAD 53.0 —
+vorher überall `null`). Zwei Stolpersteine dabei, falls das je wieder bricht:
+- **Matching NICHT über `canonKey()`/exakten Namen** — Investing.com mischt
+  Bank-Marke/Land in den Titel (z. B. "au Jibun Bank Japan Manufacturing PMI",
+  "Judo Bank Australia Manufacturing PMI"), das trifft nie gegen FFs
+  "Final Manufacturing PMI". Stattdessen matcht die investingcom-Quelle nur
+  über Land + Zeit-Nähe (30 h Toleranz) + `ev.title` selbst ist ein
+  Manufacturing-PMI-Titel (die Extraktion filtert vorher schon auf
+  `manufacturing pmi`-Titel, siehe `isMfgPmi` in der Enrich-Stufe).
+- **Datum kam aus dem `data-event-datetime`-Attribut der Event-Zeile selbst**,
+  NICHT aus dem vorangehenden `theDay`-Header (dessen `id` tatsächlich am
+  verschachtelten `<td>` hängt, nicht am `<tr>` — eine Regex, die das am
+  `<tr>` sucht, matcht nie und jedes Datum fällt auf "heute" zurück; genau das
+  ist beim ersten Anlauf passiert und hat 6 Testläufe gekostet, bis es per
+  Raw-HTML-Dump auffiel).
+
+**AUD/NZD bleiben ungeklärt**, aber aus Datengründen, nicht wegen der neuen
+Quelle: AUD hatte im getesteten Zeitfenster gerade kein "AUD Manufacturing
+PMI"-Event im rollierenden `ff_calendar.json`-Fenster (Investing.com hatte den
+Wert, aber es gab kein Kalender-Event zum Andocken — sollte sich beim
+nächsten Release-Zyklus von selbst klären). NZD trackt in FF nur den
+"Business NZ PMI" (andere Quelle/anderer Indikator als S&P Global) — dafür
+liefert Investing.com keinen passenden Wert, das ist keine Matching-Lücke,
+sondern ein anderer Indikator.
+
+### Bond-Yields-Backfill (GBP/CHF/JPY/AUD/NZD) — Endstand nach 7 workflow_dispatch-Runden (2026-07-04)
+
+- **AUD (RBA) — GELÖST.** `https://www.rba.gov.au/statistics/tables/csv/f2-data.csv`,
+  Tabelle F2 "Capital Market Yields - Government Bonds". 35 Tage Historie.
+- **JPY (Japan MOF) — GELÖST.** `https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcm_all.csv`.
+  Zwei Fallen: Shift-JIS-Encoding (→ `iconv -f SHIFT_JIS -t UTF-8`) UND das
+  Datum ist NICHT gregorianisch, sondern japanische Nengo-Aera-Schreibweise
+  (`R8.6.30` = Reiwa 8, 30. Juni = 2026-06-30; Reiwa 1 = 2019, also
+  gregorianisches Jahr = Aera-Jahr + 2018). 35 Tage Historie.
+- **GBP (Bank of England) — technisch integriert, aber ohne Mehrwert.**
+  ZIP mit XLSX-Arbeitsmappen (`latest-yield-curve-data.zip`), Sheet-Auswahl
+  über die einzige Tabelle mit monoton steigender Reifen-Kopfzeile 0.5→25+
+  Jahre. Liefert nur 2 Punkte, weil die kostenlose BoE-Datei laut eigenem
+  Dateinamen nur den LAUFENDEN MONAT enthält — das überschneidet sich mit dem
+  ohnehin täglichen TradingView-Fetch und bringt keine zusätzliche Historie.
+  GBP bleibt bei ~21-25 Tagen (löst sich wie ursprünglich prognostiziert von
+  selbst binnen weniger Tage auf, unabhängig von der BoE-Integration).
+- **CHF (SNB) — nicht lösbar, Quelle eingestellt.** Cube `rendoblid`
+  (`data.snb.ch/api/cube/rendoblid/data/csv/en`) parst korrekt (Format
+  `Date;D0;Value`, Laufzeit-Codes `2J`/`10J0`), aber die vom Cube selbst
+  mitgelieferten Metadaten (`PublishingDate`) zeigen **2025-09-01**, letzter
+  Datenpunkt **2025-07-31** — die Quelle wird seit ~11 Monaten nicht mehr
+  aktualisiert. Kein Fix möglich ohne eine SNB-Ersatzquelle (noch nicht
+  gesucht). CHF bleibt bei ~21-25 Tagen.
+- **NZD (RBNZ) — keine funktionierende URL gefunden.** 3 Kandidaten probiert
+  (`.../ReserveBank/Files/Statistics/tables/b2/hb2-daily.xlsx`,
+  `.../project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx`,
+  `.../hb2.xlsx`) — alle liefern eine HTML-Fehlerseite statt XLSX. RBNZs
+  Downloadstruktur scheint sich haeufig zu aendern; ohne Browser-Zugriff auf
+  die aktuelle Serien-Seite nicht zuverlaessig zu finden. NZD bleibt bei
+  ~21-25 Tagen.
+
+Alle Backfill-Schritte laufen mit `continue-on-error: true` und ausführlichem
+Debug-Logging (Byte-Größen, Kopfzeilen-Dumps, Diagnose-Zähler) — bei
+zukünftigen Problemen zuerst `workflow_dispatch` + Job-Logs statt zu raten.
 
 ### GitHub-MCP-Connector kann mitten in der Session die Verbindung verlieren
 
