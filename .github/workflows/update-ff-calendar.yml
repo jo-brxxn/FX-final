@@ -1162,7 +1162,12 @@ jobs:
           # hat sich ueber die 50 Jahre Historie schon mehrfach geaendert).
           iconv -f SHIFT_JIS -t UTF-8//TRANSLIT -c jgb.csv -o jgb_utf8.csv 2>/dev/null || cp jgb.csv jgb_utf8.csv
           curl -sL -A "$UA" "https://www.rba.gov.au/statistics/tables/csv/f2-data.csv" -o rba.csv || true
-          curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en" -o snb.csv || true
+          SNB_FROM=$(node -e 'console.log(new Date(Date.now()-45*86400e3).toISOString().slice(0,10))')
+          curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en?dimSel=D0(2J,10J0)&fromDate=${SNB_FROM}" -o snb.csv || true
+          if [ ! -s snb.csv ]; then
+            echo "[debug] snb.csv filtered request empty, falling back to unfiltered endpoint"
+            curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en" -o snb.csv || true
+          fi
           curl -sL -A "$UA" "https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/latest-yield-curve-data.zip" -o boe.zip || true
           curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/ReserveBank/Files/Statistics/tables/b2/hb2-daily.xlsx" -o rbnz.xlsx || true
           if [ -s rbnz.xlsx ] && ! head -c 4 rbnz.xlsx | grep -q "PK"; then
