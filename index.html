@@ -99,7 +99,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
 .aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
 .aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%;animation:auroraDrift2 50s ease-in-out infinite}
-.aurora-c{background:var(--aurora-c,#f4ad5c);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
+/* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
+   frueheren Amber - zusammen mit den anderen beiden Blobs ergab Amber einen
+   braunen statt einen kuehlen "Aurora"-Farbverlauf. */
+.aurora-c{background:var(--aurora-c,#3d6fa8);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
 @keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
 @keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
 @keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
@@ -215,6 +218,8 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .movers-upd{font-size:10.5px;color:var(--t3);margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mover-group-hdr{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:9px 0 5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mover-group-hdr:first-child{margin-top:0}
 .ticker-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:5px;padding:2px 6px;flex-shrink:0;white-space:nowrap;line-height:1.3}
 .ticker-chip-pct{opacity:.85}
 /* Zins-Differenz (Carry) Badge in den Set-ups-Zeilen */
@@ -972,7 +977,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: MAGENTA-AURORATREND-49</span><span id="verBannerText"> (fixed: the dashboard's aurora background used to stay hidden until you switched tabs away and back, since boot skipped the code path that reveals it - now visible immediately on first load. The 📈 trend category now also applies to non-FX assets (Gold, Oil, indices, BTC ...): it used to only mirror the linked currency's beat/miss bias, not its trend bonus - now the trend direction mirrors too (inverted where the asset's rule is "inverse"))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COBALT-MOVERSPLIT-50</span><span id="verBannerText"> (aurora's neutral tone (and the third background blob, which was always amber) is now blue instead of the brownish amber it used to blend into. Biggest Movers FX and Today's Movers now show separate Gainers/Losers groups instead of one list mixed by size regardless of sign - so a single big winner can no longer push every loser off the card)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6035,14 +6040,19 @@ function tickerChipHtml(info){
   const pctTxt=info.changePct==null?'':(info.changePct>0?'▲ +':info.changePct<0?'▼ ':'· ')+Math.abs(info.changePct).toFixed(2)+'%';
   return`<span class="ticker-chip" style="color:${col};border-color:${col}44;background:${col}14" title="Live price, updates every 10 min${info.prevDate?' · vs. '+fmtDayHdr(info.prevDate):''}">${fmtPriceTick(info.price)}${pctTxt?`<span class="ticker-chip-pct">${pctTxt}</span>`:''}</span>`;
 }
-// Die 8 FX-Paare mit der groessten |%-Veraenderung| seit dem letzten
-// verfuegbaren Vortageswert (fuer die "Biggest Movers FX"-Dashboard-Karte).
+// Die groessten FX-Gewinner/-Verlierer seit dem letzten verfuegbaren
+// Vortageswert (fuer die "Biggest Movers FX"-Dashboard-Karte) - getrennt nach
+// Vorzeichen statt einer gemischten Rangliste nach reinem Betrag, damit z.B.
+// ein einzelner grosser Ausreisser nicht alle Verlierer aus der Liste drueckt.
 function computeFxMovers(){
-  return canonicalFxPairs().map(([base,quote])=>{
+  const all=canonicalFxPairs().map(([base,quote])=>{
     const info=pairTickerInfo(base,quote);
     if(!info||info.changePct==null)return null;
     return{base,quote,name:base+'/'+quote,...info};
-  }).filter(Boolean).sort((a,b)=>Math.abs(b.changePct)-Math.abs(a.changePct)).slice(0,8);
+  }).filter(Boolean);
+  const gainers=all.filter(m=>m.changePct>0).sort((a,b)=>b.changePct-a.changePct).slice(0,4);
+  const losers=all.filter(m=>m.changePct<0).sort((a,b)=>a.changePct-b.changePct).slice(0,4);
+  return{gainers,losers};
 }
 // Zeitreihe eines Assets in "eigener Richtung" (invert angewandt) - das ist
 // direkt die Linie fuer den Einzel-Asset-Chart (Waehrung ODER Non-FX-Asset).
@@ -6131,7 +6141,7 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 const W_TYPES=[
   {type:'globe',label:'FX World Globe',sub:'Rotating globe — currencies coloured by bias score'},
   {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
-  {type:'movers_fx',label:'Biggest Movers FX',sub:'The 8 FX pairs with the biggest price move vs. yesterday'},
+  {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 4 gainers + top 4 losers vs. yesterday, in separate groups'},
   {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
@@ -6152,13 +6162,15 @@ function renderCotNotify(){
 // Faerbt den Aurora-Hintergrund nach dem aktuellen Risk-Sentiment (dieselbe
 // Risk-on/Risk-off-Rechnung wie im risk_sentiment-Widget): deutlich Risk-on
 // -> bullish Blauton, deutlich Risk-off -> bearish Rotton, dazwischen der
-// neutrale Amberton - der Hintergrund ist damit selbst eine grobe Anzeige.
+// neutralen Blauton (NICHT das amberfarbene BC.neu - das ergab zusammen mit
+// dem dritten Blob einen braunen statt einen kuehlen, "Aurora"-artigen Ton).
+const AURORA_NEU='#5b9bd8';
 function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
   const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScore(s):null;};
   const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
   const net=avg(RISK_ON_IDS)-avg(RISK_OFF_IDS);
-  const col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
+  const col=net>0.8?BC.bull:net<-0.8?BC.bear:AURORA_NEU;
   host.style.setProperty('--aurora-a',col);
   host.style.setProperty('--aurora-b',col);
 }
@@ -6270,28 +6282,36 @@ function renderDash(){
         <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
     }else if(w.type==='movers_fx'){
-      // Preisbasierte Bewegung (nicht Score!): die 8 FX-Kreuzpaare mit der
-      // groessten |%-Aenderung| seit dem letzten verfuegbaren Vortageswert,
-      // aus price_data.json (stuendlich per GitHub Action, im Browser alle
+      // Preisbasierte Bewegung (nicht Score!): die groessten FX-Gewinner UND
+      // -Verlierer seit dem letzten verfuegbaren Vortageswert, in getrennten
+      // Bloecken statt einer nach |Betrag| gemischten Rangliste - so draengt
+      // ein einzelner grosser Gewinner nicht alle Verlierer aus der Karte.
+      // Aus price_data.json (stuendlich per GitHub Action, im Browser alle
       // 10 Min. neu abgefragt - siehe autoFetchPriceData). Farbe folgt direkt
       // dem Vorzeichen: positiv = bullish, negativ = bearish.
-      const movers=computeFxMovers();
+      const{gainers,losers}=computeFxMovers();
       const updTxt=priceDataLastFetch?('Updated '+new Date(priceDataLastFetch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})):'Not updated yet';
-      content=`<div class="movers-upd">🕐 ${updTxt} · refreshes every 10 min</div>`+(movers.length?movers.map(m=>{
+      const moverRow=m=>{
         const col=BC[m.bias];
         return`<div class="mover-row" style="cursor:default" title="${escH(m.name)} vs. ${m.prevDate?fmtDayHdr(m.prevDate):'previous close'}">
           <span class="mover-name">${escH(m.name)}</span>
           <span class="mover-vals">${fmtPriceTick(m.price)}</span>
           <span class="mover-delta" style="color:${col}">${m.changePct>0?'▲ +':'▼ '}${Math.abs(m.changePct).toFixed(2)}%</span>
         </div>`;
-      }).join(''):`<div class="dw-empty">No price history yet - fills in once price_data.json has at least 2 days of data for these pairs.</div>`);
+      };
+      content=`<div class="movers-upd">🕐 ${updTxt} · refreshes every 10 min</div>`+((gainers.length||losers.length)?
+        `<div class="mover-group-hdr">📈 Gainers</div>${gainers.length?gainers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
+        `<div class="mover-group-hdr">📉 Losers</div>${losers.length?losers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`
+        :`<div class="dw-empty">No price history yet - fills in once price_data.json has at least 2 days of data for these pairs.</div>`);
     }else if(w.type==='score_changes'){
       // "Was hat sich heute bewegt?": vergleicht je Asset die letzten beiden
       // Tages-Schnappschuesse aus scoreHist (Gesamt-Score) und listet nur
-      // Assets mit Aenderung, sortiert nach |Delta|. Der juengste Eintrag ist
-      // der LIVE-Stand von heute (recordScoreHist ueberschreibt ihn im
-      // Tagesverlauf), der davor der letzte abgeschlossene Tag.
-      const movers=trendAssets().map(id=>{
+      // Assets mit Aenderung - in getrennten Gewinner-/Verlierer-Bloecken
+      // (je fuer sich nach |Delta| sortiert), statt einer gemischten
+      // Rangliste. Der juengste Eintrag ist der LIVE-Stand von heute
+      // (recordScoreHist ueberschreibt ihn im Tagesverlauf), der davor der
+      // letzte abgeschlossene Tag.
+      const all=trendAssets().map(id=>{
         const h=scoreHist[id]||[];
         if(h.length<2)return null;
         const now=h[h.length-1][1],prev=h[h.length-2][1];
@@ -6299,15 +6319,21 @@ function renderDash(){
         if(!d)return null;
         const sym=syms.find(s=>s.id===id);
         return{id,name:(sym&&sym.name)||id,now,prev,d};
-      }).filter(Boolean).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
-      content=movers.length?movers.map(m=>{
+      }).filter(Boolean);
+      const up=all.filter(m=>m.d>0).sort((a,b)=>b.d-a.d);
+      const down=all.filter(m=>m.d<0).sort((a,b)=>a.d-b.d);
+      const moverRow=m=>{
         const col=m.d>0?BC.bull:BC.bear;
         return`<div class="mover-row" onclick="gotoSym('${m.id}')" title="Open ${escH(m.id)}">
           <span class="mover-name">${escH(m.name)}</span>
           <span class="mover-vals">${m.prev>0?'+':''}${m.prev} → ${m.now>0?'+':''}${m.now}</span>
           <span class="mover-delta" style="color:${col}">${m.d>0?'▲ +':'▼ '}${m.d}</span>
         </div>`;
-      }).join(''):`<div class="dw-empty">No score changes vs. the previous day yet. This card fills up as soon as new data moves a score.</div>`;
+      };
+      content=(up.length||down.length)?
+        `<div class="mover-group-hdr">📈 Gainers</div>${up.length?up.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
+        `<div class="mover-group-hdr">📉 Losers</div>${down.length?down.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`
+        :`<div class="dw-empty">No score changes vs. the previous day yet. This card fills up as soon as new data moves a score.</div>`;
     }else if(w.type==='asset_heatmap'){
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
