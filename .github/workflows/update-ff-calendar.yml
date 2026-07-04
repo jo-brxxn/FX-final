@@ -365,18 +365,25 @@ jobs:
               if(!html){
                 console.log("Investing.com: no usable HTML in response"+(cf?" [CLOUDFLARE-BLOCK likely]":"")+" [len="+raw.length+"]");
               }else{
-                let n=0,curDate=null,rows=0;
-                const rowRe=/<tr[^>]*\bid="(theDay\d+|eventRowId_\d+)"[^>]*>([\s\S]*?)<\/tr>/g;
+                // Event-Zeilen tragen ihr Datum direkt als eigenes Attribut
+                // (data-event-datetime="2026/06/29 01:00:00") - robuster als
+                // die vorherige "theDay"-Header-Zeilen-Verfolgung, deren
+                // id-Attribut tatsaechlich am verschachtelten <td> haengt
+                // (nicht am <tr> selbst) und daher NIE traf: dateUtc fiel
+                // dadurch immer auf "heute" zurueck, was aeltere Releases
+                // (z.B. Monatsanfang-PMI, waehrend der Job Tage spaeter
+                // laeuft) aus jedem Zeit-Toleranzfenster warf - beobachtet
+                // in einem workflow_dispatch-Testlauf (alle 7 Eintraege
+                // hatten dateUtc=heute statt ihres echten Release-Tages).
+                let n=0,rows=0;
+                const rowRe=/<tr([^>]*\bid="eventRowId_\d+"[^>]*)>([\s\S]*?)<\/tr>/g;
                 let rm;
                 while((rm=rowRe.exec(html))){
-                  const id=rm[1],body=rm[2];
-                  if(id.startsWith("theDay")){
-                    const ts=Number(id.slice(6));
-                    if(isFinite(ts))curDate=new Date(ts*1000).toISOString().slice(0,10);
-                    continue;
-                  }
+                  const attrs=rm[1],body=rm[2];
+                  const idM=attrs.match(/\bid="eventRowId_(\d+)"/);
+                  if(!idM)continue;
+                  const evId=idM[1];
                   rows++;
-                  const evId=id.replace("eventRowId_","");
                   const flagM=body.match(/flagCur[^>]*>[\s\S]*?title="([^"]*)"/);
                   const country=flagM?INV_COUNTRY2CCY[flagM[1].trim().toLowerCase()]:null;
                   if(!country)continue;
@@ -389,7 +396,9 @@ jobs:
                   };
                   const actual=grab("Actual"),forecast=grab("Forecast"),previous=grab("Previous");
                   if(!actual&&!forecast&&!previous)continue;
-                  out.push({source:"investingcom",name:name,country:country,dateUtc:(curDate||new Date().toISOString().slice(0,10))+"T00:00:00Z",actual:actual,previous:previous,forecast:forecast});
+                  const dtM=attrs.match(/data-event-datetime="(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}:\d{2})"/);
+                  const dateUtc=dtM?(dtM[1]+"-"+dtM[2]+"-"+dtM[3]+"T"+dtM[4]+"Z"):(new Date().toISOString().slice(0,10)+"T00:00:00Z");
+                  out.push({source:"investingcom",name:name,country:country,dateUtc:dateUtc,actual:actual,previous:previous,forecast:forecast});
                   if(actual)n++;
                 }
                 console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" Manufacturing PMI actual(s) loaded");
