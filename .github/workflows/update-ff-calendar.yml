@@ -1169,6 +1169,10 @@ jobs:
             echo "[debug] rbnz.xlsx candidate 1 not a zip/xlsx (likely HTML error page), trying candidate 2"
             curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx" -o rbnz.xlsx || true
           fi
+          if [ -s rbnz.xlsx ] && ! head -c 4 rbnz.xlsx | grep -q "PK"; then
+            echo "[debug] rbnz.xlsx candidate 2 not a zip/xlsx either, trying candidate 3"
+            curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2.xlsx" -o rbnz.xlsx || true
+          fi
           for f in jgb.csv jgb_utf8.csv rba.csv snb.csv boe.zip rbnz.xlsx; do
             if [ -s "$f" ]; then
               echo "[debug] $f: $(wc -c <"$f" | tr -d ' ') bytes, first line/bytes: $(head -c 200 "$f" | tr -d '\0')"
@@ -1226,16 +1230,20 @@ jobs:
               }
               if(hdrIdx<0){hdrIdx=0;i2=2;i10=10;}
               const p2=[],p10=[];
+              let dateMatched=0,inCutoff=0;
               for(let i=hdrIdx+1;i<lines.length;i++){
                 const c=lines[i].split(",").map(s=>s.trim());
                 const m=c[0]&&c[0].match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
                 if(!m)continue;
+                dateMatched++;
                 const date=m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
                 if(date<CUTOFF)continue;
+                inCutoff++;
                 const v2=parseFloat(c[i2]),v10=parseFloat(c[i10]);
                 if(isFinite(v2))p2.push([date,v2]);
                 if(isFinite(v10))p10.push([date,v10]);
               }
+              console.log("JGB: "+(lines.length-hdrIdx-1)+" candidate rows, "+dateMatched+" date-matched, "+inCutoff+" within cutoff ("+CUTOFF+"); last line raw: "+JSON.stringify(lines[lines.length-1]));
               console.log("JGB: header row "+hdrIdx+" (col2="+i2+" col10="+i10+"), "+p2.length+"/"+p10.length+" pts in window");
               return {p2,p10};
             }
@@ -1300,13 +1308,25 @@ jobs:
               const delim=(rawLines.find(l=>l.trim())||"").includes(";")?";":",";
               const rows=rawLines.map(l=>l.split(delim).map(s=>s.replace(/^"|"$/g,"").trim())).filter(r=>r.some(c=>c));
               if(rows.length<2)return {p2:[],p10:[]};
-              let hdrIdx=rows.findIndex(r=>r.filter(c=>c).length>=2);
-              if(hdrIdx<0)hdrIdx=0;
-              const hdr=rows[hdrIdx].map(h=>h.toLowerCase());
+              // SNB-CSV-Exporte haben mehrere Metadaten-Zeilen ("CubeId",...)
+              // vor dem echten Tabellenkopf - die erste nicht-leere Zeile ist
+              // NICHT zuverlaessig der Header (traf im 2. Testlauf auf
+              // ["CubeId","rendoblid"]). Stattdessen die ersten 20 Zeilen als
+              // Header-Kandidaten pruefen und die erste nehmen, die
+              // tatsaechlich Date/Dimension/Value- oder 2J0/10J0-Spalten hat.
+              let hdrIdx=-1,di=-1,dimI=-1,valI=-1,wideC2=-1,wideC10=-1;
+              for(let i=0;i<Math.min(20,rows.length);i++){
+                const h=rows[i].map(c=>c.toLowerCase());
+                const cDi=h.findIndex(c=>/date/.test(c));
+                const cDimI=h.findIndex(c=>c==="d0"||c==="dimension"||c==="series");
+                const cValI=h.findIndex(c=>c==="value"||c==="obs_value"||c==="wert");
+                const cC2=h.findIndex(c=>/^0*2j0$/.test(c)),cC10=h.findIndex(c=>/^0*10j0$/.test(c));
+                if((cDi>=0&&cDimI>=0&&cValI>=0)||cC2>=0||cC10>=0){
+                  hdrIdx=i;di=cDi;dimI=cDimI;valI=cValI;wideC2=cC2;wideC10=cC10;break;
+                }
+              }
+              if(hdrIdx<0){console.log("SNB: no usable header found in first 20 rows (row0="+JSON.stringify(rows[0])+")");return {p2:[],p10:[]};}
               console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx]));
-              const di=hdr.findIndex(h=>/date/.test(h));
-              const dimI=hdr.findIndex(h=>h==="d0"||h==="dimension"||h==="series");
-              const valI=hdr.findIndex(h=>h==="value"||h==="obs_value"||h==="wert");
               const p2=[],p10=[];
               if(di>=0&&dimI>=0&&valI>=0){
                 for(let i=hdrIdx+1;i<rows.length;i++){
@@ -1322,7 +1342,7 @@ jobs:
                 if(p2.length||p10.length){console.log("SNB: long-format match, "+p2.length+"/"+p10.length+" pts");return {p2,p10};}
               }
               // Wide-Format-Fallback: Spalten direkt nach Laufzeit-Code suchen.
-              const c2=hdr.findIndex(h=>/^0*2j0$/.test(h)),c10=hdr.findIndex(h=>/^0*10j0$/.test(h));
+              const c2=wideC2,c10=wideC10;
               const dCol=di>=0?di:0;
               if(c2>=0||c10>=0){
                 for(let i=hdrIdx+1;i<rows.length;i++){
@@ -1442,13 +1462,18 @@ jobs:
             try{
               const dir="boe_xlsx/xl/worksheets";
               const files=fs.readdirSync(dir).filter(f=>/\.xml$/.test(f));
+              // Ueber ALLE Sheets die Kandidaten sammeln und den mit den
+              // meisten Datenpunkten nehmen - beim ersten Sheet, das
+              // ueberhaupt eine (auch nur duenn befuellte) Kopfzeile
+              // erfuellt, sofort abzubrechen traf im 2. Testlauf ein Sheet
+              // mit nur 2 verwertbaren Punkten, obwohl ein anderes Sheet
+              // vermutlich die eigentliche "spot curve"-Tabelle ist.
+              let best=null;
               for(const f of files){
                 const rows=readSheet(dir+"/"+f);
                 // Echte Maturity-Kopfzeile: mind. 5 numerische Zellen in
                 // Spaltenreihenfolge MONOTON steigend, Spanne von <=1 bis
-                // >=10 (die reine Anwesenheit von "irgendeiner Zelle nahe 2
-                // und irgendeiner nahe 10" in der Zeile traf im ersten Test
-                // eine falsche Zeile - zu schwaches Kriterium).
+                // >=10.
                 let headerRow=null,col2=null,col10=null;
                 for(const rIdx of Object.keys(rows)){
                   const cols=rows[rIdx];
@@ -1463,12 +1488,26 @@ jobs:
                   if(c2&&c10){headerRow=Number(rIdx);col2=c2.col;col10=c10.col;break;}
                 }
                 if(headerRow==null)continue;
+                // Datumsspalte nicht fest auf Spalte 1 (A) annehmen: die
+                // Spalte unter den ersten 3 Spalten nehmen, die in den
+                // meisten Zeilen unterhalb der Kopfzeile einen plausiblen
+                // Excel-Datums-Serienwert (Jahre ~2005-2035) enthaelt.
+                let dateCol=1,bestDateCount=-1;
+                for(const dc of [1,2,3]){
+                  let cnt=0;
+                  Object.keys(rows).forEach(rIdx=>{
+                    if(Number(rIdx)<=headerRow)return;
+                    const v=rows[rIdx][dc]&&rows[rIdx][dc].num;
+                    if(v!=null&&v>38000&&v<50000)cnt++;
+                  });
+                  if(cnt>bestDateCount){bestDateCount=cnt;dateCol=dc;}
+                }
                 const p2=[],p10=[];
                 Object.keys(rows).forEach(rIdx=>{
                   const ri=Number(rIdx);
                   if(ri<=headerRow)return;
                   const cols=rows[rIdx];
-                  const dateCell=cols[1];
+                  const dateCell=cols[dateCol];
                   if(!dateCell||dateCell.num==null)return;
                   const date=excelDateToIso(dateCell.num);
                   if(!date||date<CUTOFF)return;
@@ -1476,13 +1515,15 @@ jobs:
                   if(isFinite(v2))p2.push([date,v2]);
                   if(isFinite(v10))p10.push([date,v10]);
                 });
-                if(p2.length||p10.length){
-                  gbp2=merge("GBP","2Y Bond Yield",p2);gbp10=merge("GBP","10Y Bond Yield",p10);
-                  console.log("BoE: matched sheet "+f+" (header row "+headerRow+")");
-                  break;
-                }
+                console.log("BoE: candidate sheet "+f+" (header row "+headerRow+", dateCol "+dateCol+"): "+p2.length+"/"+p10.length+" pts");
+                if(!best||(p2.length+p10.length)>(best.p2.length+best.p10.length))best={f,p2,p10};
               }
-              if(!gbp2&&!gbp10)console.log("BoE: no sheet with both a ~2 and ~10 year header column found");
+              if(best&&(best.p2.length||best.p10.length)){
+                gbp2=merge("GBP","2Y Bond Yield",best.p2);gbp10=merge("GBP","10Y Bond Yield",best.p10);
+                console.log("BoE: using sheet "+best.f);
+              }else{
+                console.log("BoE: no sheet with both a ~2 and ~10 year header column found");
+              }
             }catch(e){console.log("BoE: unavailable ("+e.message+")");}
 
             // ── RBNZ: Spaltenkoepfe sind Text (Shared Strings) - Header-
