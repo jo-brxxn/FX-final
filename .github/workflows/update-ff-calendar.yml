@@ -1231,12 +1231,21 @@ jobs:
               if(hdrIdx<0){hdrIdx=0;i2=2;i10=10;}
               const p2=[],p10=[];
               let dateMatched=0,inCutoff=0;
+              // Datumsformat ist NICHT gregorianisch, sondern japanische
+              // Nengo-Aera: "R8.6.30" = Reiwa 8, 30. Juni = 2026-06-30
+              // (Reiwa 1 = 2019 -> gregorianisches Jahr = Aera-Jahr+2018).
+              // Aeltere Zeilen (vor 2019) nutzen H(eisei)/S(howa) - fuer
+              // unser 45-Tage-Cutoff-Fenster irrelevant, werden einfach
+              // uebersprungen (kein Regex-Treffer).
+              const ERA_BASE={R:2018,H:1988,S:1925};
               for(let i=hdrIdx+1;i<lines.length;i++){
                 const c=lines[i].split(",").map(s=>s.trim());
-                const m=c[0]&&c[0].match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+                const m=c[0]&&c[0].match(/^([RHS])(\d{1,2})\.(\d{1,2})\.(\d{1,2})$/);
                 if(!m)continue;
                 dateMatched++;
-                const date=m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+                const base=ERA_BASE[m[1]];
+                if(base==null)continue;
+                const date=(base+Number(m[2]))+"-"+m[3].padStart(2,"0")+"-"+m[4].padStart(2,"0");
                 if(date<CUTOFF)continue;
                 inCutoff++;
                 const v2=parseFloat(c[i2]),v10=parseFloat(c[i10]);
@@ -1326,20 +1335,24 @@ jobs:
                 }
               }
               if(hdrIdx<0){console.log("SNB: no usable header found in first 20 rows (row0="+JSON.stringify(rows[0])+")");return {p2:[],p10:[]};}
-              console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx]));
+              console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx])+", sample data rows: "+JSON.stringify(rows.slice(hdrIdx+1,hdrIdx+4)));
               const p2=[],p10=[];
               if(di>=0&&dimI>=0&&valI>=0){
+                const seenDim=new Set();
                 for(let i=hdrIdx+1;i<rows.length;i++){
                   const r=rows[i];
                   const date=(r[di]||"").slice(0,10);
+                  const dimRaw=(r[dimI]||"");
+                  if(seenDim.size<25)seenDim.add(dimRaw);
                   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<CUTOFF)continue;
-                  const dim=(r[dimI]||"").toLowerCase();
+                  const dim=dimRaw.toLowerCase();
                   const v=parseFloat(r[valI]);
                   if(!isFinite(v))continue;
                   if(/^0*2j0$/.test(dim))p2.push([date,v]);
                   if(/^0*10j0$/.test(dim))p10.push([date,v]);
                 }
                 if(p2.length||p10.length){console.log("SNB: long-format match, "+p2.length+"/"+p10.length+" pts");return {p2,p10};}
+                console.log("SNB: long-format columns found but 0 pts matched; distinct D0 values seen: "+JSON.stringify([...seenDim]));
               }
               // Wide-Format-Fallback: Spalten direkt nach Laufzeit-Code suchen.
               const c2=wideC2,c10=wideC10;
