@@ -64,3 +64,65 @@ sie NICHT — deshalb in der Save-Funktion bumpen.
 - Netzwerk in dieser Sandbox ist eingeschränkt: CFTC/FF/TradingView direkt sind
   meist blockiert. Live-Daten-Checks daher über die GitHub-Action-Logs bzw. den
   committed Stand auf `origin/main`, nicht über direkte Fetches.
+
+## Session-Notizen (Stand 2026-07-04) — worauf achten
+
+### Trend-Modell für Indikatoren (Design, in `index.html` bereits ausführlich
+kommentiert ab ≈ Zeile 1584 `CORE_PAIRS`/`indIsHalfWeight` und ≈ Zeile 2684
+`applyTrendModel`/`indTrendBias`/`indStepBias`)
+
+- **Additiv, nie ein Ersatz.** Ohne Forecast: `ind.stepDriven` (1-Schritt-
+  Vergleich actual≠previous, ±0,5 Basis, sofort verfügbar) UND zusätzlich
+  `ind.trendDriven` (bestätigter 2-Schritt-Trend, +1 Bonus obendrauf, macht
+  in Summe ±1,5). Bei Halbgewicht-Typen (`indIsHalfWeight`: Bond-Halbpunkt,
+  COT-Netto, CB Tone, Core-Paar) ist der Bonus nur +0,5 → Summe ±1, NICHT 1,5.
+  **Historischer Fehler:** Ich hatte das erst als Ersatz-Modell gebaut
+  (`stepDriven` XOR `trendDriven`, 1/0,5 ODER 1,5/1) — der Nutzer hat das
+  explizit korrigiert, es MUSS additiv sein. Bei jeder Änderung an diesem
+  Modell zuerst die Kommentare ab Zeile 1584/2684 lesen, nicht aus dem Bauch
+  heraus umbauen.
+- `indBaseWeight`/`indTrendAdjMag` teilen sich bewusst `indIsHalfWeight` als
+  gemeinsame Quelle — nicht wieder auseinanderziehen (Regression: Bonds
+  bekamen sonst versehentlich den vollen ±1-Bonus statt ±0,5).
+
+### Bekannte, diagnostizierte Datenlücken (kein Bug, echte Quellen-Lücke)
+
+- **Manufacturing PMI ohne Trend** (EUR/GBP/JPY/CAD/AUD/NZD): `actual` bleibt
+  `null`, weil keine der 4 integrierten Quellen (TradingView wide/recent-
+  Fenster, FXStreet, ForexFactory-Website-Scrape, Trading-Economics-Guest-API)
+  den S&P-Global/HCOB-Composite-Wert liefert. Die `NAME_ALIASES`-Zuordnung im
+  Workflow ist korrekt (`"final manufacturing pmi"` → S&P/HCOB-Aliase) — das
+  ist also kein Matching-Bug. Nur USD (ISM, andere Quelle) und CHF
+  (procure.ch/UBS, andere Quelle) bekommen zuverlässig einen `actual`.
+  Nutzer hat konditional eine 5. Quelle freigegeben (z. B. investing.com-
+  Scrape analog zum FF-Website-Scrape), MUSS aber vollautomatisch
+  funktionieren (jede zukünftige Veröffentlichung ohne manuelles Zutun) —
+  noch NICHT umgesetzt.
+- **Viele Yields ohne Trend** (GBP/CHF/JPY/AUD/NZD): `bond_data.json` hat für
+  diese 5 nur ~21 Tage Historie (täglicher Einzelpunkt seit 2026-06-14, kein
+  Backfill), während USD/EUR/CAD ~35 Tage haben (Backfill via US Treasury
+  Direct/BoC Valet API/ECB SDW, alle ohne API-Key). Der Yields-Trend braucht
+  25 Tage Vergleich → löst sich für die 5 fehlenden Währungen automatisch in
+  ~5 Tagen auf (ab 2026-07-04), oder per Backfill sofort schließbar
+  (angedachte Quellen: Bank of England, Japan MoF, RBA, RBNZ, SNB — noch
+  ungeprüft, ob deren Formate/URLs wie erwartet funktionieren). Ebenfalls
+  konditional freigegeben, noch NICHT umgesetzt.
+
+### GitHub-MCP-Connector kann mitten in der Session die Verbindung verlieren
+
+- Symptom: alle `mcp__github__*`-Tools verschwinden (auch per `ToolSearch`
+  nicht mehr auffindbar), ein System-Reminder verlangt Reauth, Session ist
+  non-interactive und kann den OAuth-Flow nicht selbst durchlaufen.
+- In einem beobachteten Fall war die GitHub-App-Installation selbst
+  nachweislich intakt (Permissions + Repository-Access auf GitHub.com korrekt
+  konfiguriert) — das Problem lag an der Session-internen Connector-
+  Verbindung, NICHT an der App-Autorisierung auf GitHub-Seite. Prüfen/
+  Ändern der App-Konfiguration auf GitHub.com hat die Tools nicht
+  zurückgebracht.
+- **Was geholfen hat:** nicht versuchen, die bestehende Session zu reparieren
+  (nicht möglich), sondern eine NEUE Code-Session für dasselbe Repo starten —
+  die baut die Connector-Verbindung frisch auf.
+- Falls das wieder passiert: dem Nutzer transparent erklären (nicht raten,
+  was genau die Ursache war), eine neue Session vorschlagen, und NICHT blind
+  ohne Verifikation an Workflow-Änderungen weiterarbeiten, die
+  `workflow_dispatch`/Job-Logs zur Bestätigung brauchen.
