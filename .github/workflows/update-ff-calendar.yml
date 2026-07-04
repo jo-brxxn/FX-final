@@ -393,6 +393,7 @@ jobs:
                   if(actual)n++;
                 }
                 console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" Manufacturing PMI actual(s) loaded");
+                console.log("Investing.com entries: "+JSON.stringify(out.filter(o=>o.source==="investingcom")));
               }
             }catch(e){console.log("Investing.com unavailable: "+e.message);}
             fs.writeFileSync("alt_actuals.json",JSON.stringify(out));
