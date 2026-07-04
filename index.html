@@ -971,7 +971,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-VALHIST-44</span><span id="verBannerText"> (root-cause fix: trend-bias never actually fired for real data, because it compared releases from the 10-day calendar window - monthly indicators like NFP/CPI/PMI never have 2 releases in there at once. Trend now reads its own persistent per-indicator value history (ind.valHist) that survives independently of the calendar window and accumulates with every real release, so the feature can actually reach a first trend reading)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAFFRON-TRENDSEED-45</span><span id="verBannerText"> (trend is finally LIVE: value-history seeding no longer waits for the next release (existing devices got nothing before), the hourly indicator feed now feeds the trend for ALL indicators - not just the 12 calendar-matched ones - and the missing third data point is backfilled from the curated research data, so trend chips (green/red arrow badge next to the star) and their score effects appear immediately: 15 indicators across 7 currencies show an active trend right now)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2452,6 +2452,73 @@ function pushValHist(ind,val){
   ind.valHist.push(val);
   if(ind.valHist.length>4)ind.valHist=ind.valHist.slice(-4);
 }
+// Fuehrt die persistierte Werte-Historie eines Indikators fort - Quelle egal
+// (Kalender-Event ODER ind_data-Feed), Entdopplung ueber ind.valDate (Datum
+// des zuletzt erfassten Releases; beide Quellen tragen i.d.R. dasselbe
+// Release-Datum, kleine Abweichungen faengt der Gleicher-Wert-Check ab).
+// WICHTIG: laeuft bei JEDEM Sync-Lauf, nicht nur bei neuen Releases - sonst
+// bekommen Bestandsgeraete (autoEvId laengst gesetzt) nie ein Seeding.
+// Beim Erstkontakt wird der aelteste dritte Punkt aus der statischen
+// Recherche (IND_RESEARCH_DATA) backgefuellt: ist deren Release mind. 8 Tage
+// aelter als das aktuelle, ist ihr "previous" der Wert von vor 2 Perioden -
+// damit ist der Trend SOFORT berechenbar statt erst nach dem naechsten echten
+// Release. Ein Plausibilitaets-Check (Recherche-Actual ~ aktuelles Previous,
+// Revisionen erlaubt) verhindert, dass z.B. y/y- mit m/m-Werten vermischt
+// werden. Rueckgabe true, wenn valHist veraendert wurde (Aufrufer -> save).
+function trackIndValues(ind,ccy,dateKey,actualRaw,prevRaw){
+  const act=parseNumLike(actualRaw);
+  if(act==null||!dateKey)return false;
+  dateKey=String(dateKey).slice(0,10);
+  if(!Array.isArray(ind.valHist)||!ind.valHist.length){
+    const prev=parseNumLike(prevRaw);
+    const re=ccy?indResearchEntry(ccy,stripPeriodSuffix(ind.name).base):null;
+    if(re&&re.previous!=null&&re.releaseDate&&prev!=null){
+      const ageDays=(new Date(dateKey)-new Date(re.releaseDate))/86400000;
+      const reAct=parseNumLike(re.actual),rePrev=parseNumLike(re.previous);
+      const plausible=reAct!=null&&Math.abs(reAct-prev)<=Math.max(0.6,0.5*Math.abs(prev));
+      if(ageDays>=8&&rePrev!=null&&plausible)pushValHist(ind,rePrev);
+    }
+    if(prev!=null)pushValHist(ind,prev);
+    pushValHist(ind,act);
+    ind.valDate=dateKey;
+    return true;
+  }
+  if(ind.valDate===dateKey)return false;
+  // Dasselbe Release aus einer zweiten Quelle mit leicht anderem Datum
+  // (Kalender vs. Feed): gleicher Wert innerhalb weniger Tage -> kein Push.
+  const last=ind.valHist[ind.valHist.length-1];
+  const dDays=ind.valDate?Math.abs(new Date(dateKey)-new Date(ind.valDate))/86400000:99;
+  if(dDays<5&&act===last){if(!ind.valDate||dateKey>ind.valDate)ind.valDate=dateKey;return false;}
+  if(ind.valDate&&dateKey<=ind.valDate)return false; // aelteres Release einer zweiten Quelle
+  pushValHist(ind,act);
+  ind.valDate=dateKey;
+  return true;
+}
+// Wendet das Trend-Modell auf einen Indikator an - EINE gemeinsame Logik fuer
+// beide Bias-Pfade (Kalender-Sync syncIndicatorBiases UND ind_data-Feed
+// applyIndDataFeed), damit sie nie auseinanderlaufen:
+// - Ohne Forecast: Trend ERSETZT das Bias (trendDriven -> Gewicht 1,5 in
+//   indBaseWeight). Manuell gesetzte, nicht-neutrale Biases werden dabei nur
+//   bei einem NEUEN Release ueberschrieben (allowBiasReplace), automatisch
+//   neutrale oder bereits trendDriven-Biases dagegen sofort.
+// - Mit Forecast: Beat/Miss bleibt der Bias-Treiber (setzt der Aufrufer),
+//   der Trend wirkt als separater +/-1-Bonus ueber ind.trendBias (indScore).
+function applyTrendModel(ind,noForecast,allowBiasReplace){
+  let changed=false;
+  const trend=indTrendBias(ind,ind.name);
+  if(noForecast){
+    if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+    if(allowBiasReplace||ind.bias==='neu'||ind.trendDriven){
+      const nb=trend||'neu',td=!!trend;
+      if(ind.bias!==nb||!!ind.trendDriven!==td){ind.bias=nb;ind.trendDriven=td;changed=true;}
+    }
+  }else{
+    if(ind.trendDriven){ind.trendDriven=false;changed=true;}
+    const tb=trend||'neu';
+    if(ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
+  }
+  return changed;
+}
 // Momentum-Trend ueber 2 Perioden, basierend auf ind.valHist statt calEvts.
 // Bullish, wenn der Wert 2x in Folge in die "gute" Richtung gelaufen ist
 // (unter Beruecksichtigung von LOWER_IS_BETTER, z.B. Arbeitslosenquote);
@@ -2561,31 +2628,22 @@ function syncIndicatorBiases(){
         const ev=findIndEvent(c.id,ind.name);
         if(!ev)return;
         const noForecast=ev.forecast==null||ev.forecast==='';
-        // "Neues Release?"-Gate gilt weiterhin fuer ind.bias selbst (manuelle
-        // Klicks sollen bis zum naechsten ECHTEN Release stehen bleiben).
-        if(ev.id!==ind.autoEvId){
+        // Werte-Historie bei JEDEM Sync-Lauf fortschreiben (Erstkontakt-
+        // Seeding inkl. Recherche-Backfill; Entdopplung via ind.valDate).
+        if(trackIndValues(ind,macroCcyFor(c.id),ev.date,ev.actual,ev.previous))changed=true;
+        // "Neues Release?"-Gate gilt weiterhin fuer das Beat/Miss-Bias selbst
+        // (manuelle Klicks sollen bis zum naechsten ECHTEN Release stehen
+        // bleiben) - Trend-Anteile berechnet applyTrendModel darunter IMMER.
+        const newRelease=ev.id!==ind.autoEvId;
+        if(newRelease){
           ind.autoEvId=ev.id;
-          // Erstkontakt: valHist mit dem "previous"-Wert vorbefuellen, damit
-          // schon der naechste Sync (nur noch 1 weiteres echtes Release
-          // entfernt) 3 Datenpunkte hat, statt bei 0 zu starten.
-          if(!ind.valHist||!ind.valHist.length){
-            const seed=parseNumLike(ev.previous);
-            if(seed!=null)pushValHist(ind,seed);
+          changed=true;
+          if(!noForecast){
+            const nb=indBiasFromEvent(ev);
+            if(ind.bias!==nb)ind.bias=nb;
           }
-          pushValHist(ind,parseNumLike(ev.actual));
-          const trend=indTrendBias(ind,ind.name); // 'bull'|'bear'|null
-          const nb=noForecast?(trend||'neu'):indBiasFromEvent(ev);
-          const trendDriven=noForecast&&!!trend;
-          if(ind.bias!==nb||ind.trendDriven!==trendDriven){ind.bias=nb;ind.trendDriven=trendDriven;changed=true;}
         }
-        // ind.trendBias (der Zusatz-Bonus bei vorhandenem Forecast) ist rein
-        // abgeleitet und nie manuell setzbar - deshalb IMMER neu berechnen,
-        // nicht nur wenn ein neues Release reinkommt. Sonst wirkt eine
-        // Modelländerung an dieser Stelle erst, sobald zufaellig das naechste
-        // Release GENAU dieses Indikators erscheint (koennte Wochen dauern),
-        // statt sofort beim naechsten Laden/Sync.
-        const tb=noForecast?'neu':(indTrendBias(ind,ind.name)||'neu');
-        if(ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
+        if(applyTrendModel(ind,noForecast,newRelease))changed=true;
       });
     });
   });
@@ -5623,6 +5681,15 @@ function applyIndDataFeed(){
         // Kuratierte investing.com-Quelle bevorzugen; nur wenn keine vorhanden
         // ist, die bisherige bzw. den TradingView-Fallback verwenden.
         const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
+        // Trend-System speist sich AUCH aus diesem Feed (deckt weit mehr
+        // Indikatoren ab als der Kalender-Sync): Werte-Historie fortschreiben
+        // und dasselbe Trend-Modell wie in syncIndicatorBiases anwenden -
+        // VOR dem "nichts geaendert"-Return, damit auch Bestandsgeraete ohne
+        // Feed-Aenderung ihr Erstkontakt-Seeding + die Trend-Anteile bekommen.
+        if(fx){
+          if(trackIndValues(ind,macroCcyFor(c.id),f.date,na,np))changed=true;
+          if(applyTrendModel(ind,nf==null,false))changed=true;
+        }
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
         // Previous = einfach der zuletzt gemeldete Actual-Wert der Vorperiode -
         // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
@@ -5632,7 +5699,9 @@ function applyIndDataFeed(){
         if(r.secondarySource){ind.research.secondarySource=r.secondarySource;ind.research.secondaryLabel=r.secondaryLabel;}
         if(r.unit)ind.research.unit=r.unit;
         if(r.interval)ind.research.interval=r.interval;
-        if(fx)ind.bias=researchBias(base,na,nf,np);
+        // Ohne Forecast gehoert das Bias dem Trend-Modell (applyTrendModel
+        // oben) - researchBias wuerde es nur wieder auf neutral setzen.
+        if(fx&&nf!=null)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;
       });
