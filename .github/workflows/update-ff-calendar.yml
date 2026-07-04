@@ -849,8 +849,18 @@ jobs:
               // im Fenster vorliegt.
               if(ccy==="EUR"){const eu=arr.filter(e=>e.origin==="EU");if(eu.length)arr=eu;}
               const list=arr.sort((a,b)=>b._t-a._t);
-              const v={...list[0]};delete v._t;delete v.origin;
-              if(list[1])v.previous=list[1].actual;
+              // Duplikate entdoppeln: recent- und wide-Fenster ueberlappen,
+              // dasselbe Release kann doppelt in der Liste stehen - fuer
+              // "previous" und die Historie zaehlt jedes Datum nur einmal.
+              const uniq=[];const seenD=new Set();
+              for(const e of list){if(seenD.has(e.date))continue;seenD.add(e.date);uniq.push(e);}
+              const v={...uniq[0]};delete v._t;delete v.origin;
+              if(uniq[1])v.previous=uniq[1].actual;
+              // Release-Historie fuer den Momentum-Trend der App: die letzten
+              // bis zu 4 veroeffentlichten Werte [[Datum,Actual],...], aeltester
+              // zuerst. Damit hat die App die noetigen 3 Datenpunkte sofort,
+              // statt auf kuenftige Releases warten zu muessen.
+              v.history=uniq.slice(0,4).map(e=>[e.date,e.actual]).reverse();
               (out[ccy]=out[ccy]||{})[ind]=v;
             });
 
