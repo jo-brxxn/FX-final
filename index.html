@@ -971,7 +971,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAFFRON-TRENDSEED-45</span><span id="verBannerText"> (trend is finally LIVE: value-history seeding no longer waits for the next release (existing devices got nothing before), the hourly indicator feed now feeds the trend for ALL indicators - not just the 12 calendar-matched ones - and the missing third data point is backfilled from the curated research data, so trend chips (green/red arrow badge next to the star) and their score effects appear immediately: 15 indicators across 7 currencies show an active trend right now)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PLUM-YIELDTREND-46</span><span id="verBannerText"> (new: 2Y/10Y yields get their own trend - higher than 25 days ago adds +0.5, lower -0.5, per maturity (they share the full ±1 but trigger independently). Paired half-weight indicators (CPI + Core CPI, PPI + Core PPI, PCE + Core PCE) now also get ±0.5 trend bonus each instead of ±1, sharing the 1 the same way. Chips show the real amount (📈 +0.5 / −0.5). Note on USD CPI: its research snapshot IS the current release, so no third data point exists yet - its trend activates with the next CPI release)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1467,7 +1467,7 @@ function introLogin(){
   <div class="modal" style="max-width:560px">
     <h3>❓ How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
-    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release. Every release is also checked for a <b>2-period momentum trend</b> (bullish if the actual improved on both the previous and the release before that, bearish if it worsened both times, otherwise no effect). If a release has <b>no forecast</b> to compare against, this trend replaces the bias entirely, counted at <b>±1.5</b> (higher than the usual ±1, since it's the only signal available). If a forecast <b>is</b> available, the beat/miss bias stays in charge as usual, but the same trend can still add up to <b>±1</b> on top of it (e.g. a beat plus two consecutive improving prints counts more than a beat alone) - both cases marked with a <b>📈</b> chip on the indicator.</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release. Every release is also checked for a <b>2-period momentum trend</b> (bullish if the actual improved on both the previous and the release before that, bearish if it worsened both times, otherwise no effect). If a release has <b>no forecast</b> to compare against, this trend replaces the bias entirely, counted at <b>±1.5</b> (higher than the usual ±1, since it's the only signal available). If a forecast <b>is</b> available, the beat/miss bias stays in charge as usual, but the same trend can still add up to <b>±1</b> on top of it (e.g. a beat plus two consecutive improving prints counts more than a beat alone). Half-weight indicators (CPI + Core CPI &amp; co.) get <b>±0.5</b> each instead - the pair shares the full ±1 but each side triggers independently. Bond yields have their own trend: if the 2Y/10Y yield is higher than 25 days ago it adds <b>+0.5</b> (lower: −0.5) per maturity, likewise sharing ±1. All cases are marked with a <b>📈</b> chip on the indicator.</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
@@ -1595,14 +1595,20 @@ const CB_TONE_HALF=new Set(['CB Tone']);
 const SCORE_ZERO=new Set(['2Y/10Y Spread']);
 function indScore(ind,rub){
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return 0;
-  const base=biasScore(ind.bias)*(indBaseWeight(ind,rub)+(ind.imp?0.5:0));
+  const w=indBaseWeight(ind,rub);
+  const base=biasScore(ind.bias)*(w+(ind.imp?0.5:0));
   // trendDriven (kein Forecast): der Trend IST bereits ind.bias (Gewicht 1,5
-  // via indBaseWeight) - kein Zusatzterm noetig. Forecast vorhanden: der
-  // Trend kommt separat in ind.trendBias und darf den Score dieses
-  // Indikators zusaetzlich um maximal +/-1 verschieben (siehe syncIndicatorBiases).
-  const trendAdj=ind.trendDriven?0:biasScore(ind.trendBias||'neu');
+  // via indBaseWeight) - kein Zusatzterm noetig. Sonst kommt der Trend separat
+  // in ind.trendBias und verschiebt den Score zusaetzlich - um +/-1 bei vollem
+  // Gewicht, um +/-0,5 bei Halbgewicht-Indikatoren (2Y/10Y Yield, CPI/Core CPI
+  // & Co.): die Partner teilen sich die 1 Score-Veraenderung, bleiben aber
+  // unabhaengig voneinander (jeder kann seinen Anteil einzeln ausloesen).
+  const trendAdj=ind.trendDriven?0:biasScore(ind.trendBias||'neu')*Math.min(w,1);
   return base+trendAdj;
 }
+// Trend-Bonus-Betrag eines Indikators (fuer den UI-Chip): 1 bei vollem
+// Gewicht, 0,5 bei Halbgewicht - identische Formel wie trendAdj in indScore.
+function indTrendAdjMag(ind,rub){return Math.min(indBaseWeight(ind,rub),1);}
 function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0);}
 function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
@@ -4117,7 +4123,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast falls back entirely to the 2-period momentum trend at ±1.5; with a forecast, the same momentum trend can still add up to ±1 on top of the beat/miss score - both marked with a 📈 chip)','det-'+c.id)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast falls back entirely to the 2-period momentum trend at ±1.5; with a forecast, the same momentum trend can still add ±1 on top of the beat/miss score (±0.5 for half-weight indicators, so a pair like CPI + Core CPI shares the full ±1); 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - all marked with a 📈 chip)','det-'+c.id)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -4373,7 +4379,7 @@ function renderInd(ind,ri,ii,total){
       ${(()=>{const lock=rubAutoDerived(getSym(),getRub(ri));const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
       return`<div class="ibg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>`;})()}
       ${ind.trendDriven?`<span class="trend-chip" title="No forecast for this release - bias comes from the 2-period momentum trend instead (2 consecutive moves in the same direction), counted at 1.5× weight since it's the only signal">📈 Trend</span>`
-      :(ind.trendBias&&ind.trendBias!=='neu')?`<span class="trend-chip" title="2 consecutive ${ind.trendBias==='bull'?'improving':'worsening'} releases add ${ind.trendBias==='bull'?'+1':'−1'} on top of the beat/miss score (max ±1 while a forecast exists)">📈 ${ind.trendBias==='bull'?'+1':'−1'}</span>`:''}
+      :(ind.trendBias&&ind.trendBias!=='neu')?(()=>{const mag=indTrendAdjMag(ind,getRub(ri));const lbl=(ind.trendBias==='bull'?'+':'−')+(mag===1?'1':'0.5');const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);const tt=isBond?`Yield is ${ind.trendBias==='bull'?'higher':'lower'} than 25 days ago - adds ${lbl} to the score. 2Y and 10Y each contribute ±0.5 (sharing the full ±1) but trigger independently`:`2 consecutive ${ind.trendBias==='bull'?'improving':'worsening'} releases add ${lbl} on top of the beat/miss score${mag===1?'':' (half-weight indicator: the pair shares the full ±1, each side triggers independently)'}`;return`<span class="trend-chip" title="${tt}">📈 ${lbl}</span>`;})():''}
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
       <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
       <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
@@ -5778,6 +5784,15 @@ function applyBondDataFeed(){
           if(aVal>pVal){bondColor='bond-up';bias='bull';}
           else if(aVal<pVal){bondColor='bond-down';bias='bear';}
         }
+        // Yields-Trend: aktueller Wert vs. Schlusskurs von vor 25 Tagen.
+        // Hoeher -> +0,5, tiefer -> -0,5 (trendAdj in indScore skaliert den
+        // +/-1-Bonus mit dem Halbgewicht 0,5 der Bond-Indikatoren). 2Y und
+        // 10Y teilen sich so die volle 1 Score-Veraenderung, loesen ihren
+        // Anteil aber unabhaengig voneinander aus. Der Spread bleibt via
+        // SCORE_ZERO ohnehin bei 0.
+        const tEntry=bondPick(series,isoMinusDays(today,25));
+        const tVal=tEntry?Number(tEntry[1]):null;
+        const tb=(tVal!=null&&isFinite(tVal))?(aVal>tVal?'bull':aVal<tVal?'bear':'neu'):'neu';
         const src=indResearchSource(macroCcyFor(c.id),base)||bd[base].source||(ind.research&&ind.research.source);
         const aStr=fmtYield(aVal),pStr=(pVal!=null&&isFinite(pVal))?fmtYield(pVal):null;
         const pDate=pEntry?pEntry[0]:null;
@@ -5787,6 +5802,7 @@ function applyBondDataFeed(){
           changed=true;
         }
         if(fx&&ind.bias!==bias){ind.bias=bias;changed=true;}
+        if(fx&&ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
       });
     });
   });
