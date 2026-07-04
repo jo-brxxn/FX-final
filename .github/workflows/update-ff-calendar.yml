@@ -1335,7 +1335,7 @@ jobs:
                 }
               }
               if(hdrIdx<0){console.log("SNB: no usable header found in first 20 rows (row0="+JSON.stringify(rows[0])+")");return {p2:[],p10:[]};}
-              console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx])+", sample data rows: "+JSON.stringify(rows.slice(hdrIdx+1,hdrIdx+4)));
+              console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx])+", first data rows: "+JSON.stringify(rows.slice(hdrIdx+1,hdrIdx+4))+", LAST rows (most recent): "+JSON.stringify(rows.slice(-8)));
               const p2=[],p10=[];
               if(di>=0&&dimI>=0&&valI>=0){
                 const seenDim=new Set();
