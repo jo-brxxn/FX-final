@@ -256,9 +256,9 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
-.ri{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#211c10;border-color:var(--star)!important}
+.ri{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#211c10;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
-.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.5;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:18px}
+.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:21px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
 .rb-g{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
 .rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s;line-height:1.4}
@@ -520,8 +520,8 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
 /* subpoints */
-.sp{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}@media (hover:hover){.sp:hover{background:#2c3a52}}
-.sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.45;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:16px}
+.sp{display:flex;align-items:center;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}@media (hover:hover){.sp:hover{background:#2c3a52}}
+.sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:19px}
 .sp-txt:focus{color:var(--t0)}
 .sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}@media (hover:hover){.sp:hover .sp-mv{opacity:.35}}@media (hover:hover){.sp-mv:hover{opacity:1!important;color:var(--blue)}}.sp-mv:disabled{opacity:.04;cursor:default}
 .sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}@media (hover:hover){.sp:hover .sp-del{opacity:.5}}@media (hover:hover){.sp-del:hover{opacity:1!important}}
@@ -751,9 +751,23 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}@media (hover:hover){.cal-green-dismiss:hover{color:var(--red)}}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
-.setups-cols .sym-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:5px;align-items:center}
 .setups-cols>div{border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
 .setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
+/* Preis-Chip/Δ/Score sollen ueber ALLE Zeilen einer Spalte (Bullish/Neutral/
+   Bearish) sauber untereinanderstehen, statt pro Zeile unabhaengig
+   ausgerichtet zu sein (jede Zeile war bisher ihr EIGENES Grid - dadurch
+   bekam z.B. der Ticker-Chip in jeder Zeile eine andere Breite, je nachdem
+   wie lang der Preistext war, und alles danach verschob sich). Die Zeilen-
+   liste ist jetzt selbst EIN Grid mit festen Spalten, jede Zeile "subgrid"-
+   et sich in dieselben Spalten ein (bleibt aber ein echter Kasten mit
+   eigenem Hintergrund/Rahmen, nur die INNEREN Zellen teilen die Breite).
+   Fallback fuer Browser ohne Subgrid-Support: normales pro-Zeile-Grid wie
+   zuvor (kein visueller Bruch, nur ohne spaltenweise Ausrichtung). */
+.setups-col-rows{display:grid;grid-template-columns:1fr auto auto auto auto;column-gap:5px}
+.setups-cols .sym-row{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto auto auto;gap:5px;align-items:center}
+@supports (grid-template-columns:subgrid){
+  .setups-cols .sym-row{grid-template-columns:subgrid}
+}
 .setups-cols .sym-row{padding-left:6px;padding-right:6px}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
 .ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
@@ -977,7 +991,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: COBALT-MOVERSPLIT-50</span><span id="verBannerText"> (aurora's neutral tone (and the third background blob, which was always amber) is now blue instead of the brownish amber it used to blend into. Biggest Movers FX and Today's Movers now show separate Gainers/Losers groups instead of one list mixed by size regardless of sign - so a single big winner can no longer push every loser off the card)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#ffedd5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-BULLETALIGN-51</span><span id="verBannerText"> (Set-ups columns: price/Δ/score used to be laid out per-row independently, so they didn't line up between rows - now the whole list shares one grid (subgrid) so everything sits in a clean column. Bullet-point text boxes (indicator data points, notes) weren't vertically centered and clipped descenders (g/j/p/q/y) at the bottom - fixed with more line-height and a small buffer)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffedd5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1552,7 +1566,11 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 // Quote-Maskierung konnte ein " im Text aus dem Attribut ausbrechen und
 // eigene Attribute/Event-Handler injizieren (XSS).
 const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-function ar(el){if(!el)return;el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+// +2px Puffer auf den gemessenen scrollHeight: ohne ihn sass die Boxhoehe
+// teils exakt auf der Kante der Zeilenhoehe - je nach Browser/Font-Rendering
+// (v.a. iOS Safari) wurden Unterlaengen (g/j/p/q/y) dadurch am unteren Rand
+// abgeschnitten, obwohl der Text selbst korrekt war.
+function ar(el){if(!el)return;el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
 function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a[i]];}
 function bCol(b){return b==='bull'?'var(--green)':b==='bear'?'var(--red)':'var(--amber)';}
 function bRC(b){return b==='bull'?'#4fc3f720':b==='bear'?'#ef6b7820':'#f4ad5c20';}
@@ -5259,7 +5277,7 @@ function renderPairs(){
   </div>`;
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
-    ${list.length?list.map(row).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
+    ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
   if(shown.length===0){
     el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs with ${escH(setupCcyFilter.join(', '))}. Add one via "＋ Add Pair" or pick another currency.</div>`;
