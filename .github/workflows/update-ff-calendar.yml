@@ -566,13 +566,22 @@ jobs:
               const t=new Date(ev.date).getTime();
               if(isNaN(t))return;
               const evKey=canonKey(ev.title);
-              const hits=altActuals.filter(a=>
-                (a.source==="tv"||a.source==="te"||a.source==="investingcom")&&a.country===ev.country&&
-                // Investing.com liefert nur ein Datum (Mitternacht UTC), keine
-                // exakte Uhrzeit - daher Toleranz auf einen vollen Kalendertag
-                // (+Puffer) statt der sonst 2h-genauen TV_TOL.
-                a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=(a.source==="investingcom"?30*60*60*1000:TV_TOL)&&
-                canonKey(a.name)===evKey
+              // Investing.com benennt denselben Release je Land unterschiedlich
+              // (Landesname/Bank-Marke im Titel, z.B. "au Jibun Bank Japan
+              // Manufacturing PMI", "Judo Bank Australia Manufacturing PMI") -
+              // das sprengt den sonst ueber canonKey() exakt verglichenen
+              // Namen. Da unsere Investing.com-Entnahme (s.o.) bereits VORAB
+              // auf "manufacturing pmi"-Titel gefiltert hat, reicht hier
+              // Land + Zeit-Naehe + "ist ev.title ueberhaupt ein Manufacturing-
+              // PMI-Event" als Match-Kriterium (kein zweiter, anderer
+              // Manufacturing-PMI-Release existiert je Land im selben Fenster).
+              const isMfgPmi=/manufacturing pmi/i.test(ev.title)&&!/non.?manufacturing/i.test(ev.title);
+              const hits=altActuals.filter(a=>{
+                if(a.source==="investingcom")return isMfgPmi&&a.country===ev.country&&a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                return (a.source==="tv"||a.source==="te")&&a.country===ev.country&&
+                  a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TV_TOL&&
+                  canonKey(a.name)===evKey;
+              }
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(!hits.length)return;
               const h=hits[0];
@@ -682,12 +691,17 @@ jobs:
               const ffw=altActuals.find(a=>a.source==="ffhtml"&&a.title===ev.title&&a.country===ev.country&&a.day===evDayET&&a.actual);
               if(ffw){ev.actual=ffw.actual;matchedFFW++;return;}
               // 3) TradingView/Trading Economics: kanonischer Name + Zeit-Toleranz
+              // (Investing.com: siehe Kommentar beim ersten Overlay oben -
+              // Land+Zeit-Naehe statt canonKey, da Investing.com Bank-
+              // Marken/Laendernamen in den PMI-Titel mischt.)
               const evKey=canonKey(ev.title);
-              const te=altActuals.filter(a=>
-                (a.source==="te"||a.source==="tv"||a.source==="investingcom")&&a.country===ev.country&&a.actual&&
-                Math.abs(new Date(a.dateUtc).getTime()-t)<=(a.source==="investingcom"?30*60*60*1000:TIME_TOL)&&
-                canonKey(a.name)===evKey
-              ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
+              const evIsMfgPmi=/manufacturing pmi/i.test(ev.title)&&!/non.?manufacturing/i.test(ev.title);
+              const te=altActuals.filter(a=>{
+                if(a.source==="investingcom")return evIsMfgPmi&&a.country===ev.country&&a.actual&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                return (a.source==="te"||a.source==="tv")&&a.country===ev.country&&a.actual&&
+                  Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&
+                  canonKey(a.name)===evKey;
+              }).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(te.length){ev.actual=te[0].actual;matchedTE++;return;}
               // Diagnose fuer kuerzlich faellige High/Medium-Events ohne Treffer
               if((ev.impact==="High"||ev.impact==="Medium")&&t<=Date.now()&&Date.now()-t<=48*60*60*1000){
@@ -1142,11 +1156,20 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcm_all.csv" -o jgb.csv || true
+          # MOF-CSV ist Shift-JIS-kodiert (Kopfzeile "1年,2年,...") - nach
+          # UTF-8 konvertieren, damit die Spaltensuche per Text ("2年"/"10年")
+          # statt auf einen rohen Spaltenindex angewiesen ist (Spaltenanzahl
+          # hat sich ueber die 50 Jahre Historie schon mehrfach geaendert).
+          iconv -f SHIFT_JIS -t UTF-8//TRANSLIT -c jgb.csv -o jgb_utf8.csv 2>/dev/null || cp jgb.csv jgb_utf8.csv
           curl -sL -A "$UA" "https://www.rba.gov.au/statistics/tables/csv/f2-data.csv" -o rba.csv || true
           curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en" -o snb.csv || true
           curl -sL -A "$UA" "https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/latest-yield-curve-data.zip" -o boe.zip || true
-          curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx" -o rbnz.xlsx || true
-          for f in jgb.csv rba.csv snb.csv boe.zip rbnz.xlsx; do
+          curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/ReserveBank/Files/Statistics/tables/b2/hb2-daily.xlsx" -o rbnz.xlsx || true
+          if [ -s rbnz.xlsx ] && ! head -c 4 rbnz.xlsx | grep -q "PK"; then
+            echo "[debug] rbnz.xlsx candidate 1 not a zip/xlsx (likely HTML error page), trying candidate 2"
+            curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx" -o rbnz.xlsx || true
+          fi
+          for f in jgb.csv jgb_utf8.csv rba.csv snb.csv boe.zip rbnz.xlsx; do
             if [ -s "$f" ]; then
               echo "[debug] $f: $(wc -c <"$f" | tr -d ' ') bytes, first line/bytes: $(head -c 200 "$f" | tr -d '\0')"
             else
@@ -1191,13 +1214,19 @@ jobs:
               let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
               const lines=csv.split(/\r?\n/).filter(Boolean);
               if(lines.length<2)return {p2:[],p10:[]};
-              const hdr=lines[0].split(",").map(s=>s.trim());
-              let i2=hdr.findIndex(h=>/^2年$/.test(h));
-              let i10=hdr.findIndex(h=>/^10年$/.test(h));
-              if(i2<0)i2=2;
-              if(i10<0)i10=10;
+              // Zeile 0 ist ein Titel ("国債金利情報 ... (単位：％)"), die
+              // eigentliche Kopfzeile ("基準日,1年,2年,...") folgt erst
+              // danach - erste 5 Zeilen nach "2年"+"10年" absuchen statt
+              // blind Zeile 0 zu nehmen.
+              let hdrIdx=-1,i2=-1,i10=-1;
+              for(let i=0;i<Math.min(5,lines.length);i++){
+                const hdr=lines[i].split(",").map(s=>s.trim());
+                const c2=hdr.findIndex(h=>/^2年$/.test(h)),c10=hdr.findIndex(h=>/^10年$/.test(h));
+                if(c2>=0&&c10>=0){hdrIdx=i;i2=c2;i10=c10;break;}
+              }
+              if(hdrIdx<0){hdrIdx=0;i2=2;i10=10;}
               const p2=[],p10=[];
-              for(let i=1;i<lines.length;i++){
+              for(let i=hdrIdx+1;i<lines.length;i++){
                 const c=lines[i].split(",").map(s=>s.trim());
                 const m=c[0]&&c[0].match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
                 if(!m)continue;
@@ -1207,9 +1236,10 @@ jobs:
                 if(isFinite(v2))p2.push([date,v2]);
                 if(isFinite(v10))p10.push([date,v10]);
               }
+              console.log("JGB: header row "+hdrIdx+" (col2="+i2+" col10="+i10+"), "+p2.length+"/"+p10.length+" pts in window");
               return {p2,p10};
             }
-            const jgb=parseJgb("jgb.csv");
+            const jgb=parseJgb("jgb_utf8.csv");
             const jpy2=merge("JPY","2Y Bond Yield",jgb.p2),jpy10=merge("JPY","10Y Bond Yield",jgb.p10);
 
             // ── RBA: Tabelle F2, Format mit mehreren Metadaten-Zeilen vor
@@ -1261,16 +1291,25 @@ jobs:
             // Wide-Format (eine Spalte je Laufzeit) - beides wird versucht.
             function parseSnb(file){
               let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
-              const delim=csv.split("\n")[0].includes(";")?";":",";
-              const rows=csv.split(/\r?\n/).filter(Boolean).map(l=>l.split(delim).map(s=>s.replace(/^"|"$/g,"").trim()));
+              // BOM entfernen, dann Header dynamisch suchen: SNB-Exporte
+              // haben teils eine leere/BOM-only erste Zeile vor dem echten
+              // Header - Zeile 0 blind als Header zu nehmen liefert dann 0
+              // Treffer (beobachtet in einem workflow_dispatch-Testlauf).
+              csv=csv.replace(/^﻿/,"");
+              const rawLines=csv.split(/\r?\n/);
+              const delim=(rawLines.find(l=>l.trim())||"").includes(";")?";":",";
+              const rows=rawLines.map(l=>l.split(delim).map(s=>s.replace(/^"|"$/g,"").trim())).filter(r=>r.some(c=>c));
               if(rows.length<2)return {p2:[],p10:[]};
-              const hdr=rows[0].map(h=>h.toLowerCase());
-              const di=hdr.findIndex(h=>h==="date"||h==="d0"&&false)>=0?hdr.indexOf("date"):hdr.findIndex(h=>/date/.test(h));
+              let hdrIdx=rows.findIndex(r=>r.filter(c=>c).length>=2);
+              if(hdrIdx<0)hdrIdx=0;
+              const hdr=rows[hdrIdx].map(h=>h.toLowerCase());
+              console.log("SNB: header row "+hdrIdx+": "+JSON.stringify(rows[hdrIdx]));
+              const di=hdr.findIndex(h=>/date/.test(h));
               const dimI=hdr.findIndex(h=>h==="d0"||h==="dimension"||h==="series");
               const valI=hdr.findIndex(h=>h==="value"||h==="obs_value"||h==="wert");
               const p2=[],p10=[];
               if(di>=0&&dimI>=0&&valI>=0){
-                for(let i=1;i<rows.length;i++){
+                for(let i=hdrIdx+1;i<rows.length;i++){
                   const r=rows[i];
                   const date=(r[di]||"").slice(0,10);
                   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<CUTOFF)continue;
@@ -1280,19 +1319,22 @@ jobs:
                   if(/^0*2j0$/.test(dim))p2.push([date,v]);
                   if(/^0*10j0$/.test(dim))p10.push([date,v]);
                 }
-                if(p2.length||p10.length)return {p2,p10};
+                if(p2.length||p10.length){console.log("SNB: long-format match, "+p2.length+"/"+p10.length+" pts");return {p2,p10};}
               }
               // Wide-Format-Fallback: Spalten direkt nach Laufzeit-Code suchen.
               const c2=hdr.findIndex(h=>/^0*2j0$/.test(h)),c10=hdr.findIndex(h=>/^0*10j0$/.test(h));
               const dCol=di>=0?di:0;
               if(c2>=0||c10>=0){
-                for(let i=1;i<rows.length;i++){
+                for(let i=hdrIdx+1;i<rows.length;i++){
                   const r=rows[i];
                   const date=(r[dCol]||"").slice(0,10);
                   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<CUTOFF)continue;
                   if(c2>=0){const v=parseFloat(r[c2]);if(isFinite(v))p2.push([date,v]);}
                   if(c10>=0){const v=parseFloat(r[c10]);if(isFinite(v))p10.push([date,v]);}
                 }
+                console.log("SNB: wide-format match (c2="+c2+" c10="+c10+"), "+p2.length+"/"+p10.length+" pts");
+              }else{
+                console.log("SNB: no date/dimension/value or 2J0/10J0 columns found in header");
               }
               return {p2,p10};
             }
@@ -1402,17 +1444,23 @@ jobs:
               const files=fs.readdirSync(dir).filter(f=>/\.xml$/.test(f));
               for(const f of files){
                 const rows=readSheet(dir+"/"+f);
+                // Echte Maturity-Kopfzeile: mind. 5 numerische Zellen in
+                // Spaltenreihenfolge MONOTON steigend, Spanne von <=1 bis
+                // >=10 (die reine Anwesenheit von "irgendeiner Zelle nahe 2
+                // und irgendeiner nahe 10" in der Zeile traf im ersten Test
+                // eine falsche Zeile - zu schwaches Kriterium).
                 let headerRow=null,col2=null,col10=null;
                 for(const rIdx of Object.keys(rows)){
                   const cols=rows[rIdx];
-                  let c2=null,c10=null;
-                  Object.keys(cols).forEach(ci=>{
-                    const cell=cols[ci];
-                    if(cell.num==null)return;
-                    if(Math.abs(cell.num-2)<0.01)c2=Number(ci);
-                    if(Math.abs(cell.num-10)<0.01)c10=Number(ci);
-                  });
-                  if(c2!=null&&c10!=null){headerRow=Number(rIdx);col2=c2;col10=c10;break;}
+                  const entries=Object.keys(cols).map(ci=>({col:Number(ci),v:cols[ci].num})).filter(e=>e.v!=null).sort((a,b)=>a.col-b.col);
+                  if(entries.length<5)continue;
+                  let monotonic=true;
+                  for(let k=1;k<entries.length;k++){if(entries[k].v<=entries[k-1].v){monotonic=false;break;}}
+                  if(!monotonic)continue;
+                  if(entries[0].v>1||entries[entries.length-1].v<10)continue;
+                  const c2=entries.find(e=>Math.abs(e.v-2)<0.01);
+                  const c10=entries.find(e=>Math.abs(e.v-10)<0.01);
+                  if(c2&&c10){headerRow=Number(rIdx);col2=c2.col;col10=c10.col;break;}
                 }
                 if(headerRow==null)continue;
                 const p2=[],p10=[];
@@ -1483,7 +1531,7 @@ jobs:
             fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
             console.log("bond backfill (XLSX sources): GBP 2Y="+gbp2+"/10Y="+gbp10+", NZD 2Y="+nzd2+"/10Y="+nzd10+" pts");
           '
-          rm -f jgb.csv rba.csv snb.csv boe.zip rbnz.xlsx
+          rm -f jgb.csv jgb_utf8.csv rba.csv snb.csv boe.zip rbnz.xlsx
           rm -rf boe_extract boe_xlsx rbnz_xlsx
 
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
