@@ -1304,7 +1304,7 @@ jobs:
 
             // ── SNB Datenportal (Cube "rendoblid" = Renditen auf
             // Obligationen, Tag): unterstuetzt sowohl Long-Format (eigene
-            // Dimensions-Spalte mit Laufzeit-Code wie "10J0") als auch
+            // Dimensions-Spalte mit Laufzeit-Code, z.B. "2J" oder "10J0") als auch
             // Wide-Format (eine Spalte je Laufzeit) - beides wird versucht.
             function parseSnb(file){
               let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
@@ -1322,14 +1322,14 @@ jobs:
               // NICHT zuverlaessig der Header (traf im 2. Testlauf auf
               // ["CubeId","rendoblid"]). Stattdessen die ersten 20 Zeilen als
               // Header-Kandidaten pruefen und die erste nehmen, die
-              // tatsaechlich Date/Dimension/Value- oder 2J0/10J0-Spalten hat.
+              // tatsaechlich Date/Dimension/Value- oder 2J/10J0-Spalten hat.
               let hdrIdx=-1,di=-1,dimI=-1,valI=-1,wideC2=-1,wideC10=-1;
               for(let i=0;i<Math.min(20,rows.length);i++){
                 const h=rows[i].map(c=>c.toLowerCase());
                 const cDi=h.findIndex(c=>/date/.test(c));
                 const cDimI=h.findIndex(c=>c==="d0"||c==="dimension"||c==="series");
                 const cValI=h.findIndex(c=>c==="value"||c==="obs_value"||c==="wert");
-                const cC2=h.findIndex(c=>/^0*2j0$/.test(c)),cC10=h.findIndex(c=>/^0*10j0$/.test(c));
+                const cC2=h.findIndex(c=>/^2j$/.test(c)),cC10=h.findIndex(c=>/^0*10j0$/.test(c));
                 if((cDi>=0&&cDimI>=0&&cValI>=0)||cC2>=0||cC10>=0){
                   hdrIdx=i;di=cDi;dimI=cDimI;valI=cValI;wideC2=cC2;wideC10=cC10;break;
                 }
@@ -1348,7 +1348,7 @@ jobs:
                   const dim=dimRaw.toLowerCase();
                   const v=parseFloat(r[valI]);
                   if(!isFinite(v))continue;
-                  if(/^0*2j0$/.test(dim))p2.push([date,v]);
+                  if(/^2j$/.test(dim))p2.push([date,v]);
                   if(/^0*10j0$/.test(dim))p10.push([date,v]);
                 }
                 if(p2.length||p10.length){console.log("SNB: long-format match, "+p2.length+"/"+p10.length+" pts");return {p2,p10};}
@@ -1367,7 +1367,7 @@ jobs:
                 }
                 console.log("SNB: wide-format match (c2="+c2+" c10="+c10+"), "+p2.length+"/"+p10.length+" pts");
               }else{
-                console.log("SNB: no date/dimension/value or 2J0/10J0 columns found in header");
+                console.log("SNB: no date/dimension/value or 2J/10J0 columns found in header");
               }
               return {p2,p10};
             }
