@@ -217,9 +217,39 @@ jobs:
       # 1) Die Forex-Factory-Webseite selbst - dort stehen die Actuals und
       #    die Event-Namen passen 1:1 zum Feed (kein Alias-Mapping noetig).
       # 2) Trading Economics Kalender-API (guest-Zugang).
-      - name: Fetch alternative actual sources (FF website + Trading Economics)
+      # 3) Investing.com Kalender-AJAX-Endpunkt - liefert (im Gegensatz zu
+      #    FXStreet/TradingView/Trading Economics) auch den S&P-Global/HCOB-
+      #    Manufacturing-PMI-Endwert fuer EUR/GBP/JPY/CAD/AUD/NZD (siehe
+      #    CLAUDE.md Session-Notizen 2026-07-04: "PMI ohne Trend"). Request-
+      #    Format + Country-IDs sind aus der oeffentlich dokumentierten
+      #    investpy-Bibliothek uebernommen (reverse-engineered, keine
+      #    offizielle Doku von investing.com). Der Endpunkt ist Cloudflare-
+      #    geschuetzt - kann daher auf GitHub-Runnern blockiert sein; Diagnose
+      #    unten (Laenge/"cf-"/"challenge") zeigt das im Job-Log.
+      - name: Fetch alternative actual sources (FF website + Trading Economics + Investing.com)
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          INV_FROM=$(node -e 'console.log(new Date(Date.now()-5*86400e3).toISOString().slice(0,10))')
+          INV_TO=$(node -e 'console.log(new Date(Date.now()+1*86400e3).toISOString().slice(0,10))')
+          curl -sL -A "$UA" \
+            -H "X-Requested-With: XMLHttpRequest" \
+            -H "Referer: https://www.investing.com/economic-calendar/" \
+            -H "Accept: application/json" \
+            --data-urlencode "country[]=17" --data-urlencode "country[]=22" \
+            --data-urlencode "country[]=72" --data-urlencode "country[]=4" \
+            --data-urlencode "country[]=35" --data-urlencode "country[]=6" \
+            --data-urlencode "country[]=25" --data-urlencode "country[]=43" \
+            --data-urlencode "dateFrom=$INV_FROM" \
+            --data-urlencode "dateTo=$INV_TO" --data-urlencode "timeZone=8" \
+            --data-urlencode "timeFilter=timeRemain" --data-urlencode "currentTab=custom" \
+            --data-urlencode "submitFilters=1" --data-urlencode "limit_from=0" \
+            "https://www.investing.com/economic-calendar/Service/getCalendarFilteredData" -o invcal.json || true
+          if [ -s invcal.json ]; then
+            echo "[debug] invcal.json: $(wc -c <invcal.json | tr -d ' ') bytes"
+            head -c 300 invcal.json; echo
+          else
+            echo "[debug] invcal.json: MISSING/EMPTY"
+          fi
           for d in $(node -e '
             const M=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
             const nowET=new Date(Date.now()-4*3600e3);
@@ -319,6 +349,52 @@ jobs:
                 console.log("Trading Economics: "+n+" actual(s) loaded");
               }
             }catch(e){console.log("Trading Economics unavailable: "+e.message);}
+            // ── Investing.com Manufacturing PMI (S&P Global/HCOB) ──────
+            // Response ist {data:"<html mit <tr id=theDayNNN> Datums-Header
+            // und <tr id=eventRowId_NNN> Event-Zeilen>",...}. Land kommt aus
+            // dem title-Attribut der flagCur-Zelle, Actual/Forecast/Previous
+            // aus den eventActual_/eventForecast_/eventPrevious_-IDs (Format
+            // uebernommen aus der investpy-Bibliothek, investing.com selbst
+            // dokumentiert das AJAX-Format nicht offiziell).
+            const INV_COUNTRY2CCY={"germany":"EUR","france":"EUR","euro zone":"EUR","united kingdom":"GBP","japan":"JPY","canada":"CAD","australia":"AUD","new zealand":"NZD"};
+            try{
+              const raw=fs.readFileSync("invcal.json","utf8");
+              const cf=/just a moment|challenge-platform|cf-browser|attention required/i.test(raw);
+              let payload;try{payload=JSON.parse(raw);}catch(e){payload=null;}
+              const html=payload&&typeof payload.data==="string"?payload.data:null;
+              if(!html){
+                console.log("Investing.com: no usable HTML in response"+(cf?" [CLOUDFLARE-BLOCK likely]":"")+" [len="+raw.length+"]");
+              }else{
+                let n=0,curDate=null,rows=0;
+                const rowRe=/<tr[^>]*\bid="(theDay\d+|eventRowId_\d+)"[^>]*>([\s\S]*?)<\/tr>/g;
+                let rm;
+                while((rm=rowRe.exec(html))){
+                  const id=rm[1],body=rm[2];
+                  if(id.startsWith("theDay")){
+                    const ts=Number(id.slice(6));
+                    if(isFinite(ts))curDate=new Date(ts*1000).toISOString().slice(0,10);
+                    continue;
+                  }
+                  rows++;
+                  const evId=id.replace("eventRowId_","");
+                  const flagM=body.match(/flagCur[^>]*>[\s\S]*?title="([^"]*)"/);
+                  const country=flagM?INV_COUNTRY2CCY[flagM[1].trim().toLowerCase()]:null;
+                  if(!country)continue;
+                  const nameM=body.match(/class="left event"[^>]*>([\s\S]*?)<\/td>/);
+                  const name=nameM?nameM[1].replace(/<[^>]*>/g,"").replace(/\s+/g," ").trim():"";
+                  if(!/manufacturing pmi/i.test(name)||/non.?manufacturing/i.test(name))continue;
+                  const grab=field=>{
+                    const m=body.match(new RegExp("id=\"event"+field+"_"+evId+"\"[^>]*>([^<]*)<"));
+                    return m?m[1].trim():"";
+                  };
+                  const actual=grab("Actual"),forecast=grab("Forecast"),previous=grab("Previous");
+                  if(!actual&&!forecast&&!previous)continue;
+                  out.push({source:"investingcom",name:name,country:country,dateUtc:(curDate||new Date().toISOString().slice(0,10))+"T00:00:00Z",actual:actual,previous:previous,forecast:forecast});
+                  if(actual)n++;
+                }
+                console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" Manufacturing PMI actual(s) loaded");
+              }
+            }catch(e){console.log("Investing.com unavailable: "+e.message);}
             fs.writeFileSync("alt_actuals.json",JSON.stringify(out));
             console.log("alt_actuals.json: "+out.length+" total entries");
           '
@@ -491,8 +567,11 @@ jobs:
               if(isNaN(t))return;
               const evKey=canonKey(ev.title);
               const hits=altActuals.filter(a=>
-                (a.source==="tv"||a.source==="te")&&a.country===ev.country&&
-                a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TV_TOL&&
+                (a.source==="tv"||a.source==="te"||a.source==="investingcom")&&a.country===ev.country&&
+                // Investing.com liefert nur ein Datum (Mitternacht UTC), keine
+                // exakte Uhrzeit - daher Toleranz auf einen vollen Kalendertag
+                // (+Puffer) statt der sonst 2h-genauen TV_TOL.
+                a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=(a.source==="investingcom"?30*60*60*1000:TV_TOL)&&
                 canonKey(a.name)===evKey
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(!hits.length)return;
@@ -605,8 +684,8 @@ jobs:
               // 3) TradingView/Trading Economics: kanonischer Name + Zeit-Toleranz
               const evKey=canonKey(ev.title);
               const te=altActuals.filter(a=>
-                (a.source==="te"||a.source==="tv")&&a.country===ev.country&&a.actual&&
-                Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&
+                (a.source==="te"||a.source==="tv"||a.source==="investingcom")&&a.country===ev.country&&a.actual&&
+                Math.abs(new Date(a.dateUtc).getTime()-t)<=(a.source==="investingcom"?30*60*60*1000:TIME_TOL)&&
                 canonKey(a.name)===evKey
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(te.length){ev.actual=te[0].actual;matchedTE++;return;}
@@ -1037,6 +1116,376 @@ jobs:
           '
           rm -f ust.csv boc.json ecb2.csv ecb10.csv
 
+      # Zweiter Backfill-Batch: schliesst die verbleibende 25-Tage-Truend-
+      # Luecke fuer GBP/JPY/AUD/CHF/NZD (siehe CLAUDE.md Session-Notizen
+      # 2026-07-04), alle Quellen offiziell/gratis/ohne API-Key:
+      # - Japan: MOF taegliche JGB-Par-Rendite-CSV (feste Spaltenstruktur
+      #   seit 1974, gut dokumentiert).
+      # - Australien: RBA Tabelle F2 (Capital Market Yields - Government
+      #   Bonds - Daily) als CSV.
+      # - Schweiz: SNB-Datenportal-API (Cube "rendoblid" = Renditen auf
+      #   Obligationen, Tageswerte).
+      # - UK: Bank of England Zinsstrukturkurven-Archiv (ZIP mit XLSX-
+      #   Arbeitsmappen je Kurventyp) - die "spot curve"-Tabelle enthaelt
+      #   Punkte in Halbjahres-Abstaenden, darunter exakt 2J/10J.
+      # - Neuseeland: RBNZ B2 "Wholesale interest rates" taegliche XLSX.
+      # BoE/RBNZ liefern kein CSV, nur XLSX - da keine Node-XLSX-Bibliothek
+      # verfuegbar ist (kein npm install im Workflow), wird das XLSX (= ZIP
+      # mit XML-Worksheets) per `unzip` entpackt und die Worksheet-XML direkt
+      # mit einem kleinen Parser gelesen (kein externes Package noetig).
+      # Alle Formate/URLs sind noch ungeprueft (Stand Anlage dieses Schritts)
+      # - `continue-on-error` + ausfuehrliches Debug-Logging, damit ein
+      # workflow_dispatch-Lauf zeigt, welche Quelle funktioniert und welche
+      # ggf. Format-Anpassungen braucht.
+      - name: Backfill bond history (BoE + Japan MOF + RBA + SNB + RBNZ, no key)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL -A "$UA" "https://www.mof.go.jp/jgbs/reference/interest_rate/data/jgbcm_all.csv" -o jgb.csv || true
+          curl -sL -A "$UA" "https://www.rba.gov.au/statistics/tables/csv/f2-data.csv" -o rba.csv || true
+          curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en" -o snb.csv || true
+          curl -sL -A "$UA" "https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/latest-yield-curve-data.zip" -o boe.zip || true
+          curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2-daily-close.xlsx" -o rbnz.xlsx || true
+          for f in jgb.csv rba.csv snb.csv boe.zip rbnz.xlsx; do
+            if [ -s "$f" ]; then
+              echo "[debug] $f: $(wc -c <"$f" | tr -d ' ') bytes, first line/bytes: $(head -c 200 "$f" | tr -d '\0')"
+            else
+              echo "[debug] $f: MISSING/EMPTY"
+            fi
+          done
+
+          node -e '
+            const fs=require("fs");
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            const SRC={
+              "JPY|10Y Bond Yield":"https://www.investing.com/rates-bonds/japan-10-year-bond-yield",
+              "JPY|2Y Bond Yield":"https://www.investing.com/rates-bonds/japan-2-year-bond-yield",
+              "AUD|10Y Bond Yield":"https://www.investing.com/rates-bonds/australia-10-year-bond-yield",
+              "AUD|2Y Bond Yield":"https://www.investing.com/rates-bonds/australia-2-year-bond-yield",
+              "CHF|10Y Bond Yield":"https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield",
+              "CHF|2Y Bond Yield":"https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield",
+              "GBP|10Y Bond Yield":"https://www.investing.com/rates-bonds/uk-10-year-bond-yield",
+              "GBP|2Y Bond Yield":"https://www.investing.com/rates-bonds/uk-2-year-bond-yield",
+              "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
+              "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
+            };
+            const CUTOFF=new Date(Date.now()-45*86400000).toISOString().slice(0,10);
+            function merge(ccy,ind,points){
+              if(!points.length)return 0;
+              const cur=(out[ccy]&&out[ccy][ind])||{};
+              const m=new Map();
+              (Array.isArray(cur.series)?cur.series:[]).forEach(e=>{if(e&&e[0])m.set(e[0],String(e[1]));});
+              points.forEach(p=>{if(p&&p[0]&&isFinite(Number(p[1])))m.set(p[0],String(Math.round(Number(p[1])*1000)/1000));});
+              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-35).map(e=>[e[0],e[1]]);
+              (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
+              return points.length;
+            }
+
+            // ── Japan MOF: feste CSV-Spaltenreihenfolge seit 1974 ──────────
+            // Kopfzeile (japanisch): Datum,1年,2年,3年,...,10年,15年,... Wird
+            // ueber den Spaltentext ("2年"/"10年") gesucht, mit Fallback auf
+            // die bekannte feste Position (Index 2 bzw. 10), falls die
+            // Kopfzeile aus Encoding-Gruenden nicht matcht.
+            function parseJgb(file){
+              let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
+              const lines=csv.split(/\r?\n/).filter(Boolean);
+              if(lines.length<2)return {p2:[],p10:[]};
+              const hdr=lines[0].split(",").map(s=>s.trim());
+              let i2=hdr.findIndex(h=>/^2年$/.test(h));
+              let i10=hdr.findIndex(h=>/^10年$/.test(h));
+              if(i2<0)i2=2;
+              if(i10<0)i10=10;
+              const p2=[],p10=[];
+              for(let i=1;i<lines.length;i++){
+                const c=lines[i].split(",").map(s=>s.trim());
+                const m=c[0]&&c[0].match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+                if(!m)continue;
+                const date=m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+                if(date<CUTOFF)continue;
+                const v2=parseFloat(c[i2]),v10=parseFloat(c[i10]);
+                if(isFinite(v2))p2.push([date,v2]);
+                if(isFinite(v10))p10.push([date,v10]);
+              }
+              return {p2,p10};
+            }
+            const jgb=parseJgb("jgb.csv");
+            const jpy2=merge("JPY","2Y Bond Yield",jgb.p2),jpy10=merge("JPY","10Y Bond Yield",jgb.p10);
+
+            // ── RBA: Tabelle F2, Format mit mehreren Metadaten-Zeilen vor
+            // den Datenzeilen. Statt fester Zeilen-/Spaltenindizes (koennen
+            // sich aendern) wird die "Title"-Zeile nach Spalten mit
+            // "Government"+"2 year"/"10 year" im Namen durchsucht, und der
+            // Beginn der Datenzeilen ueber ein Datumsmuster in Spalte 1
+            // erkannt (robust gegen Metadaten-Zeilenanzahl).
+            function parseRba(file){
+              let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
+              const rows=csv.split(/\r?\n/).filter(Boolean).map(l=>l.split(",").map(s=>s.replace(/^"|"$/g,"").trim()));
+              if(!rows.length)return {p2:[],p10:[]};
+              let i2=-1,i10=-1;
+              rows.forEach(r=>{
+                r.forEach((cell,ci)=>{
+                  const c=cell.toLowerCase();
+                  if(!/government/.test(c))return;
+                  if(i2<0&&/2[\s-]*year/.test(c))i2=ci;
+                  if(i10<0&&/10[\s-]*year/.test(c))i10=ci;
+                });
+              });
+              if(i2<0||i10<0)return {p2:[],p10:[]};
+              const MON={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+              function parseDate(s){
+                let m=s.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+                if(m&&MON[m[2].toLowerCase()]!=null)return m[3]+"-"+String(MON[m[2].toLowerCase()]+1).padStart(2,"0")+"-"+m[1].padStart(2,"0");
+                m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                if(m)return s;
+                m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if(m)return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");
+                return null;
+              }
+              const p2=[],p10=[];
+              rows.forEach(r=>{
+                const date=parseDate(r[0]||"");
+                if(!date||date<CUTOFF)return;
+                const v2=parseFloat(r[i2]),v10=parseFloat(r[i10]);
+                if(isFinite(v2))p2.push([date,v2]);
+                if(isFinite(v10))p10.push([date,v10]);
+              });
+              return {p2,p10};
+            }
+            const rba=parseRba("rba.csv");
+            const aud2=merge("AUD","2Y Bond Yield",rba.p2),aud10=merge("AUD","10Y Bond Yield",rba.p10);
+
+            // ── SNB Datenportal (Cube "rendoblid" = Renditen auf
+            // Obligationen, Tag): unterstuetzt sowohl Long-Format (eigene
+            // Dimensions-Spalte mit Laufzeit-Code wie "10J0") als auch
+            // Wide-Format (eine Spalte je Laufzeit) - beides wird versucht.
+            function parseSnb(file){
+              let csv;try{csv=fs.readFileSync(file,"utf8");}catch(e){return {p2:[],p10:[]};}
+              const delim=csv.split("\n")[0].includes(";")?";":",";
+              const rows=csv.split(/\r?\n/).filter(Boolean).map(l=>l.split(delim).map(s=>s.replace(/^"|"$/g,"").trim()));
+              if(rows.length<2)return {p2:[],p10:[]};
+              const hdr=rows[0].map(h=>h.toLowerCase());
+              const di=hdr.findIndex(h=>h==="date"||h==="d0"&&false)>=0?hdr.indexOf("date"):hdr.findIndex(h=>/date/.test(h));
+              const dimI=hdr.findIndex(h=>h==="d0"||h==="dimension"||h==="series");
+              const valI=hdr.findIndex(h=>h==="value"||h==="obs_value"||h==="wert");
+              const p2=[],p10=[];
+              if(di>=0&&dimI>=0&&valI>=0){
+                for(let i=1;i<rows.length;i++){
+                  const r=rows[i];
+                  const date=(r[di]||"").slice(0,10);
+                  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<CUTOFF)continue;
+                  const dim=(r[dimI]||"").toLowerCase();
+                  const v=parseFloat(r[valI]);
+                  if(!isFinite(v))continue;
+                  if(/^0*2j0$/.test(dim))p2.push([date,v]);
+                  if(/^0*10j0$/.test(dim))p10.push([date,v]);
+                }
+                if(p2.length||p10.length)return {p2,p10};
+              }
+              // Wide-Format-Fallback: Spalten direkt nach Laufzeit-Code suchen.
+              const c2=hdr.findIndex(h=>/^0*2j0$/.test(h)),c10=hdr.findIndex(h=>/^0*10j0$/.test(h));
+              const dCol=di>=0?di:0;
+              if(c2>=0||c10>=0){
+                for(let i=1;i<rows.length;i++){
+                  const r=rows[i];
+                  const date=(r[dCol]||"").slice(0,10);
+                  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date<CUTOFF)continue;
+                  if(c2>=0){const v=parseFloat(r[c2]);if(isFinite(v))p2.push([date,v]);}
+                  if(c10>=0){const v=parseFloat(r[c10]);if(isFinite(v))p10.push([date,v]);}
+                }
+              }
+              return {p2,p10};
+            }
+            const snb=parseSnb("snb.csv");
+            const chf2=merge("CHF","2Y Bond Yield",snb.p2),chf10=merge("CHF","10Y Bond Yield",snb.p10);
+
+            fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+            console.log("bond backfill (CSV sources): JPY 2Y="+jpy2+"/10Y="+jpy10+", AUD 2Y="+aud2+"/10Y="+aud10+", CHF 2Y="+chf2+"/10Y="+chf10+" pts");
+          '
+
+          # ── BoE (GBP) und RBNZ (NZD): XLSX-Dateien, keine CSV verfuegbar.
+          # Kein npm/Node-XLSX-Paket im Workflow (kein package.json/Install-
+          # Schritt) - stattdessen XLSX (= ZIP-Container mit XML-Worksheets)
+          # per `unzip` (auf ubuntu-latest vorinstalliert) entpacken und die
+          # Worksheet-XML mit einem kleinen Inline-Parser lesen.
+          if [ -s boe.zip ]; then
+            unzip -o -q boe.zip -d boe_extract 2>&1 | head -20 || true
+            echo "[debug] boe.zip entries: $(ls boe_extract 2>/dev/null | tr '\n' '|')"
+            NOMFILE=$(ls boe_extract 2>/dev/null | grep -i nominal | head -1)
+            if [ -n "$NOMFILE" ]; then
+              unzip -o -q "boe_extract/$NOMFILE" -d boe_xlsx 2>&1 | head -20 || true
+              echo "[debug] boe nominal workbook sheets: $(ls boe_xlsx/xl/worksheets 2>/dev/null | tr '\n' '|')"
+            fi
+          else
+            echo "[debug] boe.zip missing/empty, skipping BoE"
+          fi
+          if [ -s rbnz.xlsx ]; then
+            unzip -o -q rbnz.xlsx -d rbnz_xlsx 2>&1 | head -20 || true
+            echo "[debug] rbnz.xlsx sheets: $(ls rbnz_xlsx/xl/worksheets 2>/dev/null | tr '\n' '|')"
+          else
+            echo "[debug] rbnz.xlsx missing/empty, skipping RBNZ"
+          fi
+
+          node -e '
+            const fs=require("fs");
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            const SRC={
+              "GBP|10Y Bond Yield":"https://www.investing.com/rates-bonds/uk-10-year-bond-yield",
+              "GBP|2Y Bond Yield":"https://www.investing.com/rates-bonds/uk-2-year-bond-yield",
+              "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
+              "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
+            };
+            const CUTOFF=new Date(Date.now()-45*86400000).toISOString().slice(0,10);
+            function merge(ccy,ind,points){
+              if(!points.length)return 0;
+              const cur=(out[ccy]&&out[ccy][ind])||{};
+              const m=new Map();
+              (Array.isArray(cur.series)?cur.series:[]).forEach(e=>{if(e&&e[0])m.set(e[0],String(e[1]));});
+              points.forEach(p=>{if(p&&p[0]&&isFinite(Number(p[1])))m.set(p[0],String(Math.round(Number(p[1])*1000)/1000));});
+              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-35).map(e=>[e[0],e[1]]);
+              (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
+              return points.length;
+            }
+            function colToNum(letters){let n=0;for(let k=0;k<letters.length;k++)n=n*26+(letters.charCodeAt(k)-64);return n;}
+            // Liest ein XLSX-Worksheet-XML in ein sparses {row:{col:{v,isStr}}}.
+            function readSheet(xmlPath){
+              let xml;try{xml=fs.readFileSync(xmlPath,"utf8");}catch(e){return {};}
+              const rows={};
+              const rowRe=/<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
+              const cellRe=/<c r="([A-Z]+)\d+"([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+              let rm;
+              while((rm=rowRe.exec(xml))){
+                const rIdx=Number(rm[1]);
+                const cols={};
+                let cm;cellRe.lastIndex=0;
+                while((cm=cellRe.exec(rm[2]))){
+                  const col=colToNum(cm[1]);
+                  const attrs=cm[2]||"";
+                  const inner=cm[3]||"";
+                  const isStr=/t="s"/.test(attrs);
+                  const vm=inner.match(/<v>([^<]*)<\/v>/);
+                  if(!vm)continue;
+                  cols[col]=isStr?{str:vm[1]}:{num:parseFloat(vm[1])};
+                }
+                rows[rIdx]=cols;
+              }
+              return rows;
+            }
+            function readSharedStrings(dir){
+              let xml;try{xml=fs.readFileSync(dir+"/xl/sharedStrings.xml","utf8");}catch(e){return [];}
+              const out=[];
+              const siRe=/<si>([\s\S]*?)<\/si>/g;
+              let m;
+              while((m=siRe.exec(xml))){
+                const text=[...m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map(x=>x[1]).join("");
+                out.push(text);
+              }
+              return out;
+            }
+            function resolveStr(cell,shared){return cell&&cell.str!=null?(shared[Number(cell.str)]||""):null;}
+            function excelDateToIso(serial){
+              const ms=Math.round((serial-25569)*86400*1000);
+              const d=new Date(ms);
+              if(isNaN(d))return null;
+              return d.toISOString().slice(0,10);
+            }
+
+            // ── BoE: "spot curve"-Sheet automatisch anhand der Kopfzeile
+            // erkennen (enthaelt Reifen in Halbjahresschritten von 0.5 bis
+            // 25/40 - wir suchen die Zeile, die sowohl ~2 als auch ~10
+            // enthaelt; das ist robust gegen unbekannte Sheet-Reihenfolge/
+            // -namen).
+            let gbp2=0,gbp10=0;
+            try{
+              const dir="boe_xlsx/xl/worksheets";
+              const files=fs.readdirSync(dir).filter(f=>/\.xml$/.test(f));
+              for(const f of files){
+                const rows=readSheet(dir+"/"+f);
+                let headerRow=null,col2=null,col10=null;
+                for(const rIdx of Object.keys(rows)){
+                  const cols=rows[rIdx];
+                  let c2=null,c10=null;
+                  Object.keys(cols).forEach(ci=>{
+                    const cell=cols[ci];
+                    if(cell.num==null)return;
+                    if(Math.abs(cell.num-2)<0.01)c2=Number(ci);
+                    if(Math.abs(cell.num-10)<0.01)c10=Number(ci);
+                  });
+                  if(c2!=null&&c10!=null){headerRow=Number(rIdx);col2=c2;col10=c10;break;}
+                }
+                if(headerRow==null)continue;
+                const p2=[],p10=[];
+                Object.keys(rows).forEach(rIdx=>{
+                  const ri=Number(rIdx);
+                  if(ri<=headerRow)return;
+                  const cols=rows[rIdx];
+                  const dateCell=cols[1];
+                  if(!dateCell||dateCell.num==null)return;
+                  const date=excelDateToIso(dateCell.num);
+                  if(!date||date<CUTOFF)return;
+                  const v2=cols[col2]&&cols[col2].num,v10=cols[col10]&&cols[col10].num;
+                  if(isFinite(v2))p2.push([date,v2]);
+                  if(isFinite(v10))p10.push([date,v10]);
+                });
+                if(p2.length||p10.length){
+                  gbp2=merge("GBP","2Y Bond Yield",p2);gbp10=merge("GBP","10Y Bond Yield",p10);
+                  console.log("BoE: matched sheet "+f+" (header row "+headerRow+")");
+                  break;
+                }
+              }
+              if(!gbp2&&!gbp10)console.log("BoE: no sheet with both a ~2 and ~10 year header column found");
+            }catch(e){console.log("BoE: unavailable ("+e.message+")");}
+
+            // ── RBNZ: Spaltenkoepfe sind Text (Shared Strings) - Header-
+            // Zeile per Volltextsuche nach "2 year"/"10 year"+"government"
+            // finden, Datenzeilen ab der ersten Zeile mit gueltigem Excel-
+            // Datum in Spalte A.
+            let nzd2=0,nzd10=0;
+            try{
+              const shared=readSharedStrings("rbnz_xlsx");
+              const dir="rbnz_xlsx/xl/worksheets";
+              const files=fs.readdirSync(dir).filter(f=>/\.xml$/.test(f));
+              for(const f of files){
+                const rows=readSheet(dir+"/"+f);
+                let col2=null,col10=null;
+                Object.keys(rows).forEach(rIdx=>{
+                  const cols=rows[rIdx];
+                  Object.keys(cols).forEach(ci=>{
+                    const s=resolveStr(cols[ci],shared);
+                    if(s==null)return;
+                    const low=s.toLowerCase();
+                    if(!/government|nzgb|bond/.test(low))return;
+                    if(col2==null&&/2[\s-]*year|2yr/.test(low))col2=Number(ci);
+                    if(col10==null&&/10[\s-]*year|10yr/.test(low))col10=Number(ci);
+                  });
+                });
+                if(col2==null&&col10==null)continue;
+                const p2=[],p10=[];
+                Object.keys(rows).forEach(rIdx=>{
+                  const cols=rows[rIdx];
+                  const dateCell=cols[1];
+                  if(!dateCell||dateCell.num==null||dateCell.num<30000||dateCell.num>60000)return;
+                  const date=excelDateToIso(dateCell.num);
+                  if(!date||date<CUTOFF)return;
+                  if(col2!=null){const c=cols[col2];if(c&&c.num!=null)p2.push([date,c.num]);}
+                  if(col10!=null){const c=cols[col10];if(c&&c.num!=null)p10.push([date,c.num]);}
+                });
+                if(p2.length||p10.length){
+                  nzd2=merge("NZD","2Y Bond Yield",p2);nzd10=merge("NZD","10Y Bond Yield",p10);
+                  console.log("RBNZ: matched sheet "+f+" (col2="+col2+" col10="+col10+")");
+                  break;
+                }
+              }
+              if(!nzd2&&!nzd10)console.log("RBNZ: no sheet with a 2-year/10-year government bond column found");
+            }catch(e){console.log("RBNZ: unavailable ("+e.message+")");}
+
+            fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+            console.log("bond backfill (XLSX sources): GBP 2Y="+gbp2+"/10Y="+gbp10+", NZD 2Y="+nzd2+"/10Y="+nzd10+" pts");
+          '
+          rm -f jgb.csv rba.csv snb.csv boe.zip rbnz.xlsx
+          rm -rf boe_extract boe_xlsx rbnz_xlsx
+
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
       # 2J-/10J-Staatsanleiherenditen je Waehrung von TradingViews Scanner-API
       # (auf den Runnern erreichbar; Stooq/investing.com liefern Cloud-IPs nur
@@ -1312,7 +1761,7 @@ jobs:
           rm -f cot_raw.json
 
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html cot_raw.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json alt_actuals.json ffhtml_*.html cot_raw.json
 
       - name: Commit and push if changed
         run: |
