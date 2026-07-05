@@ -11,18 +11,37 @@ on:
     - cron: '0 6 * * *'  # 07:00 MEZ (Winterzeit, UTC+1)
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   send-report:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Nur beim Lauf ausfuehren, der gerade 7 Uhr Berlin-Zeit trifft
+      # GitHub fuehrt Cron-Laeufe bei Auslastung teils STUNDEN verspaetet aus
+      # (beobachtet 2026-07-03..05: Start erst 11-12 UTC statt 5/6 UTC). Das
+      # fruehere Gate "nur wenn gerade exakt 07 Uhr Berlin ist" hat solche
+      # Nachzuegler verworfen -> an diesen Tagen kam GAR KEIN Report an.
+      # Neues Gate: senden, sobald es 07 Uhr Berlin oder spaeter ist (bis
+      # 17 Uhr - danach ist ein "Morning" Report sinnlos) UND heute noch
+      # nicht gesendet wurde. Dedup ueber den Versand-Marker
+      # .report-state/morning_last.txt, der nach dem Versand nach main
+      # committet wird - faengt die zwei Cron-Eintraege UND Nachzuegler ab.
+      - name: Gate - Sendefenster erreicht und heute noch nicht verschickt
         id: gate
         run: |
+          DATE="$(TZ="Europe/Berlin" date +%F)"
           HOUR="$(TZ="Europe/Berlin" date +%H)"
-          echo "Aktuelle Stunde in Berlin: $HOUR"
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$HOUR" != "07" ]; then
+          LAST="$(cat .report-state/morning_last.txt 2>/dev/null || true)"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Berlin-Zeit: $DATE ${HOUR}:xx Uhr, letzter Versand: ${LAST:-nie}"
+          if [ "$LAST" = "$DATE" ]; then
+            echo "Heute bereits verschickt - ueberspringen."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ] && { [ "$HOUR" -lt 7 ] || [ "$HOUR" -gt 17 ]; }; then
+            echo "Ausserhalb des Sendefensters (07-17 Uhr Berlin) - ueberspringen."
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
             echo "proceed=true" >> "$GITHUB_OUTPUT"
@@ -126,6 +145,24 @@ jobs:
           curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "voice=@morning-report.ogg"
+
+      # Versand-Marker committen, damit der zweite Cron-Eintrag desselben
+      # Tages (und weitere Nachzuegler) nicht doppelt senden. Push-Konflikte
+      # mit dem stuendlichen Daten-Workflow werden per pull --rebase geloest.
+      - name: Versand-Marker committen
+        if: steps.gate.outputs.proceed == 'true'
+        run: |
+          mkdir -p .report-state
+          echo "${{ steps.gate.outputs.date }}" > .report-state/morning_last.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .report-state/morning_last.txt
+          if git diff --staged --quiet; then exit 0; fi
+          git commit -m "Morning report sent ${{ steps.gate.outputs.date }}"
+          for i in 1 2 3; do
+            if git push; then break; fi
+            git pull --rebase origin main
+          done
 
 # ── Einmalige Einrichtung ────────────────────────────────────────────
 # 1. In Telegram nach "BotFather" suchen, /newbot senden, Namen vergeben.

@@ -204,10 +204,19 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media (hover:hover){.compact-sw:hover{border-color:rgba(var(--blue-rgb),.5)}}
 .compact-sw .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--t3);transition:transform .18s cubic-bezier(.2,.7,.3,1),background .15s}
 .compact-sw.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue)}
-.compact-sw.on .knob{transform:translateX(18px);background:var(--blue)}
+.compact-sw.on .knob{transform:translateX(9px);background:var(--blue)}
+/* Stufe 2 (max): Knopf ganz rechts + Amber-Ton - blendet zusaetzlich Datum/
+   Perioden-Badges, den i-Knopf und den Trend-Chip der Indikatoren aus. */
+.compact-sw.max{background:rgba(255,171,64,.14);border-color:var(--amber)}
+.compact-sw.max .knob{transform:translateX(18px);background:var(--amber)}
 /* Kompaktansicht aktiv: Stichpunkte (Indikator-Datenpunkte) und
    Rubrik-Zusammenfassungen ausblenden, Karten ruecken enger zusammen. */
 body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
+/* Kompakt-Stufe 2 (max): zusaetzlich an den Indikator-Karten das Release-
+   Datum (wann der naechste Wert kommt), die Perioden-Badge (monthly/...),
+   den i-Info-Knopf und den Trend-Status-Chip ausblenden - es bleiben nur
+   Name, Werte und Bias. */
+body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.compact-view2 .ind-card .add-date-btn,body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{display:none}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}}
@@ -583,8 +592,12 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
-.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px;cursor:grab;touch-action:none;user-select:none}
-.globe-host.grabbing{cursor:grabbing}
+/* Grab-Cursor nur auf der Kugel selbst (die Kreis-Elemente decken exakt die
+   Kugelflaeche ab), nicht auf der gesamten Widget-Breite - passend zur
+   verkleinerten Drag-Hitbox in globeOnPointerDown. */
+.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px;touch-action:none;user-select:none}
+.globe-host svg circle{cursor:grab}
+.globe-host.grabbing,.globe-host.grabbing svg circle{cursor:grabbing}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
 .globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:6px}
@@ -991,7 +1004,7 @@ body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#4c1d95;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-TREND-EVERYWHERE-63</span><span id="verBannerText"> (workflow retry hardening: investing.com's Cloudflare blocked 2 consecutive verification runs (~6KB challenge page instead of ~230KB JSON) after 8/8 successes the day before - the calendar fetch now tries up to 3 times with a 20s pause and validates the response is real JSON above challenge-page size before accepting it; app code unchanged from -62: COT trend + chips + modal verified via Playwright)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#14532d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-UI-POLISH-64</span><span id="verBannerText"> (per user decision: COT trend removed again (WoW change IS the momentum signal) and Interest Rates rubric excluded from all trend bonuses/chips; compact-view switch now cycles 3 stages - stage 2 additionally hides date/interval badges, the i button and trend chips on indicator cards; clicking the dark backdrop next to any open window closes it; the world globe drag hitbox now covers only the sphere (+10px) instead of the whole widget; morning/weekly Telegram report gates fixed - delayed GitHub cron runs no longer skip sending (send window + committed dedup marker))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1635,10 +1648,17 @@ const CB_TONE_HALF=new Set(['CB Tone']);
 // und wird weiter angezeigt/auto-gesetzt - er fliesst nur nicht in die Summe
 // ein (auch nicht mit ★-Stern).
 const SCORE_ZERO=new Set(['2Y/10Y Spread']);
+// Rubriken OHNE Trend-Anteil (Nutzer-Entscheid 2026-07-05): in der Interest-
+// Rates-Rubrik zaehlt KEIN Trend-Bonus in den Score und es erscheint kein
+// Trend-Chip - weder fuer die Bond-Renditen (25-Tage-Vergleich) noch fuer
+// den Leitzins. Das Bias selbst (z.B. Bond 15-Tage-Vergleich, Beat/Miss der
+// Zinsentscheidung) bleibt unveraendert bestehen.
+const NO_TREND_RUBS=new Set(['Interest Rates']);
 function indScore(ind,rub){
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return 0;
   const w=indBaseWeight(ind,rub);
   const base=biasScore(ind.bias)*(w+(ind.imp?0.5:0));
+  if(rub&&NO_TREND_RUBS.has(rub.name))return base;
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
   //   (optionale) bestaetigte Trend kommt separat ueber ind.trendBias dazu.
@@ -1960,16 +1980,40 @@ function updCalHighBtn(){
   b.classList.toggle('active',calHighOnly);
   b.textContent=calHighOnly?'📁 High-impact only':'📁 All impacts';
 }
-function applyCompactView(){document.body.classList.toggle('compact-view',compactView);}
+// Kompaktansicht in 3 Stufen (0 = alles sichtbar, 1 = Stichpunkte/
+// Zusammenfassungen weg, 2 = zusaetzlich Datum-/Perioden-Badges, i-Knopf
+// und Trend-Chip der Indikatoren weg). Alte Boolean-Werte (true/'1' bzw.
+// false/'0') werden auf 1 bzw. 0 abgebildet.
+function normCompactLevel(v){
+  if(v===true)return 1;
+  if(v===false)return 0;
+  const n=Number(v);
+  return n>=2?2:n>=1?1:0;
+}
+const COMPACT_TITLES=[
+  'Compact view off - tap to hide bullet points & summaries (stage 1 of 2)',
+  'Compact stage 1 (bullet points & summaries hidden) - tap for stage 2: also hide date/interval, info button & trend chip',
+  'Compact stage 2 (max) - tap to show everything again'
+];
+function applyCompactView(){
+  document.body.classList.toggle('compact-view',compactView>=1);
+  document.body.classList.toggle('compact-view2',compactView>=2);
+}
+function updCompactSw(){
+  const b=document.getElementById('compactSw');
+  if(!b)return;
+  b.classList.toggle('on',compactView===1);
+  b.classList.toggle('max',compactView===2);
+  b.title=COMPACT_TITLES[compactView]||COMPACT_TITLES[0];
+}
 function toggleCompactView(){
-  compactView=!compactView;
-  localStorage.setItem('fxpro_compactview',compactView?'1':'0');
+  compactView=(compactView+1)%3;
+  localStorage.setItem('fxpro_compactview',String(compactView));
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
   cloudAutoSync();
   applyCompactView();
-  const b=document.getElementById('compactSw');
-  if(b){b.classList.toggle('on',compactView);b.title=compactView?'Show bullet points & summaries':'Hide bullet points & summaries (compact view)';}
+  updCompactSw();
 }
 function setCalCcyFilter(v){
   calCcyFilter=v||'ALL';
@@ -2087,7 +2131,7 @@ let greenDismissed=(()=>{try{return JSON.parse(localStorage.getItem('fxpro_green
 // werden und nur noch Actual/Forecast/Previous sichtbar bleibt. Standard: AN
 // (eingeklappt) - genau wie greenDismissed/tabStacks ausserhalb von snap()/
 // Undo, aber trotzdem geraeteuebergreifend synchron (siehe cloudPush/Pull).
-let compactView=localStorage.getItem('fxpro_compactview')!=='0';
+let compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);
 // Stabiler Schlüssel für greenDismissed (unabhängig von ev.id, das sich bei
 // jedem FF-Reload ändert): Name + Datum + Währung sind event-übergreifend stabil.
 function evtDismissKey(ev){return(ev.name||'')+'|'+(ev.date||'')+'|'+(ev.currencies||'');}
@@ -2602,19 +2646,6 @@ function fmtTrendVal(v){
   if(a>=1e3)return(v/1e3).toFixed(1).replace(/\.?0+$/,'')+'K';
   return String(Math.round(v*100)/100);
 }
-// Fortschritt Richtung 2-Schritt-Trend fuer COT-Indikatoren, analog zu
-// indTrendProgress, aber auf Basis der 3-Punkte-Reihe aus dem COT-Feed
-// (ind.cotTrendPts, [[Datum,Wert],...] aeltester zuerst).
-function cotTrendProgress(ind){
-  const p=Array.isArray(ind.cotTrendPts)?ind.cotTrendPts:[];
-  if(p.length<2)return 0;
-  const n=p.length;
-  const dir=(a,b)=>b>a?1:b<a?-1:0;
-  const last=dir(p[n-2][1],p[n-1][1]);
-  if(last===0)return 0;
-  if(n>=3&&dir(p[n-3][1],p[n-2][1])===last)return 2;
-  return 1;
-}
 // Detail-Modal zum 📈-Chip: zeigt die konkreten Werte hinter dem Trend-Check -
 // die letzten Releases (Actual + Previous) bzw. bei Bonds den 25-Tage-Vergleich.
 function openTrendInfo(ri,ii){
@@ -2637,23 +2668,6 @@ function openTrendInfo(ri,ii){
       html+=`<div style="margin-top:7px">${d===0?'Unchanged vs. 25 days ago → no trend adjustment (0).':`Yield is <b>${d>0?'higher':'lower'}</b> than 25 days ago → <b>${d>0?'+':'−'}0.5</b> on this indicator's score.`}</div>`;
       html+=`<div style="margin-top:5px;color:var(--t3)">2Y and 10Y each contribute ±0.5 (sharing the full ±1) but trigger independently.</div>`;
     }else html='<div>No yield history available yet for the 25-day comparison.</div>';
-  }else if(ind.cotTrendPts&&ind.cotTrendPts.length){
-    // COT: 2-Schritt-Trend ueber den Long%- (Net Bullish/WoW) bzw. Short%-
-    // Anteil (Net Bearish) der letzten 3 Wochenreports. Steigender Long%-
-    // Anteil ist waehrungs-bullisch, steigender Short%-Anteil bearisch.
-    const isShortSeries=base==='Net Bearish Positioning';
-    const p=ind.cotTrendPts,n=p.length;
-    const lbls=['2 reports ago','Previous report','Latest report'];
-    p.forEach((e,i)=>{html+=row(`${lbls[i+(3-n)]||''} (${escH(e[0])})`,e[1]+'%');});
-    const active=ind.trendBias&&ind.trendBias!=='neu';
-    if(active){
-      const dirWord=isShortSeries?(ind.trendBias==='bear'?'rising':'falling'):(ind.trendBias==='bull'?'rising':'falling');
-      html+=`<div style="margin-top:7px">Speculators' ${isShortSeries?'short':'long'} share has been ${dirWord} for 2 consecutive weekly reports (2/2) → <b>${ind.trendBias==='bull'?'+':'−'}${magS}</b> on top of this indicator's score.</div>`;
-    }else{
-      const prog=cotTrendProgress(ind);
-      html+=`<div style="margin-top:7px"><b>${prog}/2</b> steps met - the ${isShortSeries?'short':'long'} share needs to move in the same direction for 2 consecutive weekly reports to activate the ±${magS} trend adjustment.</div>`;
-    }
-    if(COT_NET_HALF.has(base))html+=`<div style="margin-top:5px;color:var(--t3)">Long % and short % are complementary, so Net Bullish and Net Bearish share the same underlying trend at ±0.5 each (together the full ±1).</div>`;
   }else{
     const h=Array.isArray(ind.valHist)?ind.valHist:[];
     const ds=Array.isArray(ind.valDates)?ind.valDates:[];
@@ -3984,7 +3998,7 @@ function adoptExternalState(){
     applySnap(s);
     try{greenDismissed=JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}');}catch(e){}
     try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
-    compactView=localStorage.getItem('fxpro_compactview')!=='0';applyCompactView();
+    compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);applyCompactView();
     _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
     // Nicht pauschal auf "synchronisiert" setzen: der uebernommene Stand kann
     // Nutzeraenderungen des ANDEREN Tabs enthalten, die noch nicht in der
@@ -4045,7 +4059,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=_imp.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4178,7 +4192,7 @@ async function cloudPull(manual){
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
-      if(cd.compactView!==undefined){compactView=cd.compactView;localStorage.setItem('fxpro_compactview',compactView?'1':'0');applyCompactView();}
+      if(cd.compactView!==undefined){compactView=normCompactLevel(cd.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}
       if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
@@ -4207,6 +4221,22 @@ function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
 function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
+// Klick/Tipp NEBEN das geoeffnete Fenster (auf den abgedunkelten Overlay-
+// Hintergrund) schliesst es - gilt einheitlich fuer alle Modals (.ov).
+// Der pointerdown-Anker verhindert, dass eine Textauswahl, die im Fenster
+// beginnt und auf dem Hintergrund endet (Click-Target = Overlay), das
+// Fenster ungewollt zuklappt: geschlossen wird nur, wenn der Druck auch
+// AUF dem Hintergrund begonnen hat.
+let _ovPressId=null;
+document.addEventListener('pointerdown',ev=>{
+  _ovPressId=(ev.target&&ev.target.classList&&ev.target.classList.contains('ov'))?ev.target.id:null;
+});
+document.addEventListener('click',ev=>{
+  if(!_ovPressId)return;
+  const t=ev.target;
+  if(t&&t.classList&&t.classList.contains('ov')&&t.id===_ovPressId)closeM(t.id);
+  _ovPressId=null;
+});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     ['mAddSym','mAssetCfg','mHist','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -4379,7 +4409,7 @@ function renderDetail(){
       </div>
       <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
       <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
-      <button class="compact-sw${compactView?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${compactView?'Show bullet points & summaries':'Hide bullet points & summaries (compact view)'}"><span class="knob"></span></button>
+      <button class="compact-sw${compactView===1?' on':compactView===2?' max':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
     </div>
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
@@ -4625,10 +4655,12 @@ function renderInd(ind,ri,ii,total){
         // relevant). Klick/Long-Press oeffnet das Detail-Modal mit den
         // letzten Actual/Previous-Werten hinter dem Check.
         const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);
-        const isCot=!!(ind.cotTrendPts&&ind.cotTrendPts.length);
-        const hasData=(ind.valHist&&ind.valHist.length)||(isBond&&ind.trendCmp)||isCot||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
-        if(!hasData)return'';
         const rub2=getRub(ri);
+        // Kein Trend in der Interest-Rates-Rubrik (Nutzer-Entscheid
+        // 2026-07-05): weder Chip noch Score-Bonus (siehe NO_TREND_RUBS).
+        if(rub2&&NO_TREND_RUBS.has(rub2.name))return'';
+        const hasData=(ind.valHist&&ind.valHist.length)||(isBond&&ind.trendCmp)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
+        if(!hasData)return'';
         const mag=indTrendAdjMag(ind,rub2);
         const magS=mag===1?'1':'0.5';
         const fmtMag=v=>v===1.5?'1.5':v===1?'1':'0.5';
@@ -4638,7 +4670,7 @@ function renderInd(ind,ri,ii,total){
           lbl='Trend '+(ind.bias==='bull'?'+':'−')+fmtMag(total);
         }else if(ind.trendBias==='bull')lbl='Trend +'+magS;
         else if(ind.trendBias==='bear')lbl='Trend −'+magS;
-        else{cls=' neu';lbl='Trend '+(isBond?'0':(isCot?cotTrendProgress(ind):indTrendProgress(ind,ind.name))+'/2');}
+        else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
         return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
       })()}
       <button class="istar2${ind.imp?' on':''}" onclick="togIndImp(${ri},${ii})">⭐</button>
@@ -6889,6 +6921,21 @@ function globeMarkerClick(ev,id){
 // sanft (exponentiell) wieder auf die normale Auto-Rotationsgeschwindigkeit abklingt.
 function globeOnPointerDown(ev,host){
   if(ev.target.closest('g[data-id]'))return; // Marker-Klicks nicht als Drag-Start behandeln
+  // Hitbox: Drag nur starten, wenn der Zeiger auf der Kugel oder knapp
+  // daneben liegt (Radius + 10px) - NICHT auf der gesamten Widget-Breite.
+  // Gerenderte Groesse kann durch max-width:100% von der viewBox abweichen,
+  // daher ueber den Skalierungsfaktor zurueckrechnen (R = vb/2 - 16, wie in
+  // globeSkeleton).
+  const svg=host.querySelector('svg');
+  if(svg){
+    const rc=svg.getBoundingClientRect();
+    if(rc.width>0){
+      const vb=(svg.viewBox&&svg.viewBox.baseVal&&svg.viewBox.baseVal.width)||rc.width;
+      const hitR=(vb/2-16)*(rc.width/vb)+10;
+      const dx=ev.clientX-(rc.left+rc.width/2),dy=ev.clientY-(rc.top+rc.height/2);
+      if(dx*dx+dy*dy>hitR*hitR)return;
+    }
+  }
   closeGlobeTip();
   _globeMode='drag';
   _globeDrag={lastX:ev.clientX,lastT:performance.now(),pid:ev.pointerId,host};
@@ -7891,13 +7938,12 @@ function applyCotDataFeed(){
   if(!COT_DATA||!COT_DATA.symbols)return false;
   const date=COT_DATA.report_date||null;
   let changed=false;
-  // trendPts: [[Datum, Wert der indikator-eigenen Reihe], ...] der letzten 3
-  // Reports (aeltester zuerst) fuers Trend-Detail-Modal; trend: 'bull'/'bear'/
-  // 'neu' fuer den additiven Trend-Bonus in indScore (via ind.trendBias, wie
-  // bei den Bond-Renditen - NICHT ueber stepDriven, da das Dominanz-Bias der
-  // COT-Indikatoren erhalten bleiben soll und COT wie Bonds Marktdaten ohne
-  // Forecast-Konzept sind, keine Releases).
-  const setOne=(rub,base,actual,previous,bias,trend,trendPts)=>{
+  // COT bekommt bewusst KEINEN Trend-Bonus (Nutzer-Entscheid 2026-07-05):
+  // die WoW-Veraenderung IST bereits das Momentum-Signal der COT-Karte, ein
+  // zusaetzlicher 2-Wochen-Trend wuerde dieselbe Bewegung doppelt zaehlen.
+  // setOne raeumt daher auch Reste der kurzlebigen Trend-Variante
+  // (PURPLE-TREND-EVERYWHERE-62/63) aus persistiertem State wieder ab.
+  const setOne=(rub,base,actual,previous,bias)=>{
     const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base===base);
     if(idx<0)return;
     const ind=rub.indicators[idx];
@@ -7908,10 +7954,8 @@ function applyCotDataFeed(){
       changed=true;
     }
     if(ind.bias!==bias){ind.bias=bias;changed=true;}
-    const tb=trend||'neu';
-    if(ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
-    const tp=trendPts||null;
-    if(JSON.stringify(ind.cotTrendPts||null)!==JSON.stringify(tp)){ind.cotTrendPts=tp;changed=true;}
+    if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+    if(ind.cotTrendPts){delete ind.cotTrendPts;changed=true;}
   };
   syms.forEach(c=>{
     if(!COT_SYMS.includes(c.id))return;
@@ -7919,34 +7963,12 @@ function applyCotDataFeed(){
     if(!m)return;
     const rub=(c.rubrics||[]).find(r=>r.name==='COT Data');
     if(!rub||!rub.indicators)return;
-    // 2-Schritt-Trend der Positionierung: Long%-Anteil der Spekulanten ueber
-    // die letzten 3 Wochenreports (aus der COT-Historie). 2x in Folge
-    // gestiegen -> bullischer Trend, 2x gefallen -> bearisch - dieselbe
-    // 2-Schritt-Bestaetigung wie bei den Release-Indikatoren. Da Long% und
-    // Short% komplementaer sind (Summe 100), teilen sich Net Bullish und
-    // Net Bearish denselben zugrundeliegenden Trend - sie zaehlen je nur
-    // +/-0,5 (COT_NET_HALF), zusammen also die volle +/-1 wie ein Core-Paar.
-    const hist=(COT_DATA.symbols[c.id]||{}).history;
-    let longPts=null;
-    if(Array.isArray(hist)&&hist.length>=3){
-      const pts=hist.slice(-3).map(e=>{const L=+e.long||0,S=+e.short||0,t=L+S;return t>0?[String(e.date||''),L/t*100]:null;});
-      if(pts.every(Boolean))longPts=pts;
-    }
-    let cotTrend='neu';
-    if(longPts){
-      const d1=longPts[1][1]>longPts[0][1]?1:longPts[1][1]<longPts[0][1]?-1:0;
-      const d2=longPts[2][1]>longPts[1][1]?1:longPts[2][1]<longPts[1][1]?-1:0;
-      if(d1===1&&d2===1)cotTrend='bull';else if(d1===-1&&d2===-1)cotTrend='bear';
-    }
-    const rnd=v=>Math.round(v*10)/10;
-    const longSeries=longPts?longPts.map(p=>[p[0],rnd(p[1])]):null;
-    const shortSeries=longPts?longPts.map(p=>[p[0],rnd(100-p[1])]):null;
     // Netto-Positionierung treibt den Score nur bei klarer Dominanz einer
     // Seite (>=60% Long bzw. Short); bei ausgeglichener Positionierung
     // bleiben beide Indikatoren neutral. Zaehlen je 0,5 (COT_NET_HALF).
-    setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),m.longPct>=60?'bull':'neu',cotTrend,longSeries);
-    setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct>=60?'bear':'neu',cotTrend,shortSeries);
-    setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu',cotTrend,longSeries);
+    setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),m.longPct>=60?'bull':'neu');
+    setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct>=60?'bear':'neu');
+    setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu');
     // Karten-Bias direkt aus dem Score-Vorzeichen ableiten: die COT-Karte
     // hat nur zwei kleine Score-Treiber (WoW-Aenderung +/-1 und Netto-
     // Positionierung +/-0,5), die normale +/-2-Schwelle wuerde also fast

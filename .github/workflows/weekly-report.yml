@@ -9,18 +9,35 @@ on:
     - cron: '0 7 * * 0'  # 08:00 MEZ (Winterzeit, UTC+1)
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   send-weekly:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Nur beim Lauf ausfuehren, der gerade 8 Uhr Berlin-Zeit trifft
+      # Wie beim Morning Report: GitHub-Cron laeuft teils Stunden verspaetet
+      # (2026-07-05: Start 11:48/12:04 UTC statt 6/7 UTC), das fruehere
+      # "exakt 08 Uhr"-Gate hat diese Laeufe verworfen -> kein Weekly
+      # Outlook an dem Sonntag. Neues Gate: senden ab 08 Uhr Berlin am
+      # Sonntag (ganztags - der Wochenausblick ist auch nachmittags noch
+      # nuetzlich), Dedup ueber committeten Versand-Marker.
+      - name: Gate - Sonntag ab 08 Uhr Berlin und diese Woche noch nicht verschickt
         id: gate
         run: |
+          DATE="$(TZ="Europe/Berlin" date +%F)"
           HOUR="$(TZ="Europe/Berlin" date +%H)"
-          echo "Aktuelle Stunde in Berlin: $HOUR"
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$HOUR" != "08" ]; then
+          DOW="$(TZ="Europe/Berlin" date +%u)"
+          LAST="$(cat .report-state/weekly_last.txt 2>/dev/null || true)"
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Berlin-Zeit: $DATE ${HOUR}:xx Uhr (Wochentag $DOW), letzter Versand: ${LAST:-nie}"
+          if [ "$LAST" = "$DATE" ]; then
+            echo "Heute bereits verschickt - ueberspringen."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ] && { [ "$DOW" != "7" ] || [ "$HOUR" -lt 8 ]; }; then
+            echo "Noch nicht Sonntag 08 Uhr Berlin - ueberspringen."
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
             echo "proceed=true" >> "$GITHUB_OUTPUT"
@@ -149,6 +166,23 @@ jobs:
           curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
             -F "chat_id=${TELEGRAM_CHAT_ID}" \
             -F "voice=@weekly-report.ogg"
+
+      # Versand-Marker committen (Dedup fuer den zweiten Cron-Eintrag und
+      # Nachzuegler-Laeufe desselben Sonntags).
+      - name: Versand-Marker committen
+        if: steps.gate.outputs.proceed == 'true'
+        run: |
+          mkdir -p .report-state
+          echo "${{ steps.gate.outputs.date }}" > .report-state/weekly_last.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .report-state/weekly_last.txt
+          if git diff --staged --quiet; then exit 0; fi
+          git commit -m "Weekly outlook sent ${{ steps.gate.outputs.date }}"
+          for i in 1 2 3; do
+            if git push; then break; fi
+            git pull --rebase origin main
+          done
 
 # Nutzt dieselben Secrets wie morning-report.yml (TELEGRAM_BOT_TOKEN,
 # TELEGRAM_CHAT_ID) und event-alerts.yml (SUPABASE_URL, SUPABASE_ANON_KEY,
