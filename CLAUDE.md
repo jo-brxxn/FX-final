@@ -85,6 +85,67 @@ kommentiert ab ≈ Zeile 1584 `CORE_PAIRS`/`indIsHalfWeight` und ≈ Zeile 2684
   gemeinsame Quelle — nicht wieder auseinanderziehen (Regression: Bonds
   bekamen sonst versehentlich den vollen ±1-Bonus statt ±0,5).
 
+### COT-Trend + Investing.com-Forecasts + JPY CSPI (Stand 2026-07-05)
+
+**COT-Indikatoren speisen jetzt das Trend-Modell** (Net Bullish/Bearish
+Positioning, WoW Change — in `applyCotDataFeed`):
+
+- Bewusst über den **`ind.trendBias`-Pfad wie bei den Bond-Renditen, NICHT
+  über `stepDriven`** — sonst würde das Dominanz-Bias (>=60 % Long/Short)
+  der Net-Indikatoren vom Step-Signal überschrieben. COT sind wie Bonds
+  Marktdaten ohne Forecast-Konzept, keine Releases.
+- Trend = Long%-Anteil der Spekulanten 2 Wochenreports in Folge gestiegen
+  (bull) bzw. gefallen (bear), aus `COT_DATA.symbols[id].history` (26
+  Wochen). Net Bullish + Net Bearish sind komplementär (Long%+Short%=100)
+  und teilen sich als Paar je ±0,5 (zusammen ±1, wie ein Core-Paar), WoW
+  zählt ±1. `ind.cotTrendPts` ([[Datum,Wert]×3], eigene Reihe je Indikator:
+  Long% bzw. Short%) füttert Chip-Fortschritt (`cotTrendProgress`) und
+  Trend-Modal (eigener COT-Zweig in `openTrendInfo`).
+- Gilt wie das COT-Auto-Bias auch für Non-FX (COT-Rubrik ist nicht in
+  `IND_AUTO_RUBS`, `resetNonFxIndBias` fasst sie nicht an).
+- Per Playwright verifiziert: GBP Trend −0,5/−0,5/−1 (Karte −3,5), EUR
+  neutral mit 1/2-Fortschritt, SP500 bull.
+
+**Investing.com liefert jetzt ALLE Kalender-Events** (nicht nur PMI; PMI-
+Zeilen tragen `mfg:true`, die Land+Zeit-Nähe-Konsumenten prüfen das Flag).
+Damit zwei neue Nutzungen im ind_data-Schritt:
+
+- **Fehlende Forecasts nachtragen** (TradingView führt für JPY CPI y/y+m/m,
+  JPY Retail Sales, EUR CPI m/m, CAD Core CPI/PPI/GDP/Retail Sales, AUD
+  PPI/Westpac, NZD Westpac keinen): Match über Währung + canonKey + Datum
+  (max. 3 Tage) + **Actual-Gleichheits-Guard** (beide Actuals vorhanden →
+  müssen numerisch übereinstimmen, sonst anderes Event). Einmal gefundene
+  Forecasts bleiben über das VORHERIGE ind_data.json am Release kleben
+  (`prevOut`-Carry-over) — das Investing.com-Fenster umfasst nur ~6 Tage,
+  die Anreicherung greift also nur am Release-Tag selbst.
+- **JPY Services Inflation (CSPI)** als neuer automatischer Feed-Eintrag
+  direkt aus Investing.com (Actual+Forecast+Previous; TV-RULES lassen CSPI
+  bewusst aus). Carry-over zwischen den Monats-Releases wie oben.
+
+**canonKey wurde in ALLEN 4 Workflow-Kopien synchron erweitert** (final/
+prel/preliminary/advance/index/national entfernt, "consumer sentiment" →
+"consumer confidence") — nötig, damit Investing.com-Titel ("Westpac
+Consumer Sentiment", "National CPI", "Retail Sales MoM Prel") gegen TV/FF-
+Titel matchen. Die Kopien MÜSSEN synchron bleiben.
+
+**Investing.com blockt intermittierend per Cloudflare:** am 2026-07-04
+liefen 8/8 Läufe durch, am 2026-07-05 wurden 5/5 Requests (2 Läufe + 3
+Retry-Versuche) mit einer ~6-KB-Challenge-Seite statt ~230 KB JSON
+geblockt. Der Fetch macht jetzt bis zu 3 Versuche mit 20 s Pause und
+validiert die Antwort (JSON-Anfang + >20 KB). Stündlicher Cron (24
+Chancen/Tag) + Forecast-Persistenz gleichen Blocks aus — EIN erfolgreicher
+Lauf im Release-Fenster genügt. Bei Problemen zuerst die
+"[debug] invcal.json: N bytes (attempt X)"-Zeile im Job-Log prüfen.
+Die Enrichment-Logik selbst lief in allen geblockten Läufen fehlerfrei
+durch (0 filled/0 kept + STILL-WITHOUT-FORECAST-Report).
+
+**Falle beim JS-Syntax-Check:** der frühere Einzeiler filterte den Skript-
+INHALT auf `'src=' not in s` und übersprang damit still das große App-
+Skript (das enthält `src=` in Template-Strings) — jahrelang wurde nur das
+Banner-Skript geprüft. Korrekt: auf die Attribute des `<script>`-TAGS
+filtern: `re.findall(r'<script((?:\s[^>]*)?)>(.*?)</script>', html, re.S)`
+und `'src=' not in attrs`.
+
 ### Manufacturing PMI (S&P Global/HCOB) — 5. Quelle Investing.com umgesetzt (Stand 2026-07-04, Abend)
 
 Investing.com-Kalender-AJAX (`Service/getCalendarFilteredData`, Request-Format
