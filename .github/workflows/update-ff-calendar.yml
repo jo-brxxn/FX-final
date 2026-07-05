@@ -127,6 +127,14 @@ jobs:
               // Economics ("France Manufacturing PMI" etc.) und das "actual"
               // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
               s=s.replace(/\bflash\b/g,"");
+              // Weitere Fuellwoerter/Release-Stufen-Marker entfernen, die je
+              // Quelle mal im Titel stehen und mal nicht ("Retail Sales MoM
+              // Prel" vs "Retail Sales (MoM)", "National CPI" vs "CPI",
+              // "Westpac Consumer Confidence Index" vs "... Sentiment") -
+              // noetig, damit Investing.com-Titel gegen TV/FF-Titel matchen.
+              s=s.replace(/\b(?:final|prel|prelim|preliminary|advance|adv|second estimate|2nd estimate)\b/g," ");
+              s=s.replace(/\bindex\b/g," ").replace(/\bnational\b/g," ");
+              s=s.replace(/consumer sentiment/g,"consumer confidence");
               s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
               // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
               // verschiedene Quellen nennen denselben Release mit/ohne Marke.
@@ -349,13 +357,21 @@ jobs:
                 console.log("Trading Economics: "+n+" actual(s) loaded");
               }
             }catch(e){console.log("Trading Economics unavailable: "+e.message);}
-            // ── Investing.com Manufacturing PMI (S&P Global/HCOB) ──────
+            // ── Investing.com Kalender-Events (alle, nicht nur PMI) ──────
             // Response ist {data:"<html mit <tr id=theDayNNN> Datums-Header
             // und <tr id=eventRowId_NNN> Event-Zeilen>",...}. Land kommt aus
             // dem title-Attribut der flagCur-Zelle, Actual/Forecast/Previous
             // aus den eventActual_/eventForecast_/eventPrevious_-IDs (Format
             // uebernommen aus der investpy-Bibliothek, investing.com selbst
             // dokumentiert das AJAX-Format nicht offiziell).
+            // Es werden ALLE Events der getrackten Laender extrahiert:
+            // - Manufacturing-PMI-Zeilen (mfg:true) fuer das bewaehrte
+            //   Land+Zeit-Naehe-Matching (Titel enthalten Bank-Marken).
+            // - Alle uebrigen Events als Forecast-/Actual-Quelle fuer den
+            //   ind_data-Schritt und das kanonische canonKey-Matching
+            //   (Investing.com liefert als einzige der 5 Quellen zuverlaessig
+            //   den Forecast fuer Releases, bei denen TradingView keinen
+            //   fuehrt, z.B. CAD Core CPI, AUD/NZD Westpac-Konsumklima).
             const INV_COUNTRY2CCY={"germany":"EUR","france":"EUR","euro zone":"EUR","united kingdom":"GBP","japan":"JPY","canada":"CAD","australia":"AUD","new zealand":"NZD"};
             try{
               const raw=fs.readFileSync("invcal.json","utf8");
@@ -389,7 +405,8 @@ jobs:
                   if(!country)continue;
                   const nameM=body.match(/class="left event"[^>]*>([\s\S]*?)<\/td>/);
                   const name=nameM?nameM[1].replace(/<[^>]*>/g,"").replace(/\s+/g," ").trim():"";
-                  if(!/manufacturing pmi/i.test(name)||/non.?manufacturing/i.test(name))continue;
+                  if(!name)continue;
+                  const mfg=/manufacturing pmi/i.test(name)&&!/non.?manufacturing/i.test(name);
                   const grab=field=>{
                     const m=body.match(new RegExp("id=\"event"+field+"_"+evId+"\"[^>]*>([^<]*)<"));
                     return m?m[1].trim():"";
@@ -398,11 +415,11 @@ jobs:
                   if(!actual&&!forecast&&!previous)continue;
                   const dtM=attrs.match(/data-event-datetime="(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}:\d{2})"/);
                   const dateUtc=dtM?(dtM[1]+"-"+dtM[2]+"-"+dtM[3]+"T"+dtM[4]+"Z"):(new Date().toISOString().slice(0,10)+"T00:00:00Z");
-                  out.push({source:"investingcom",name:name,country:country,dateUtc:dateUtc,actual:actual,previous:previous,forecast:forecast});
+                  out.push({source:"investingcom",mfg:mfg,name:name,country:country,dateUtc:dateUtc,actual:actual,previous:previous,forecast:forecast});
                   if(actual)n++;
                 }
-                console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" Manufacturing PMI actual(s) loaded");
-                console.log("Investing.com entries: "+JSON.stringify(out.filter(o=>o.source==="investingcom")));
+                console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" actual(s) loaded ("+out.filter(o=>o.source==="investingcom"&&o.mfg).length+" Manufacturing-PMI entries)");
+                console.log("Investing.com PMI entries: "+JSON.stringify(out.filter(o=>o.source==="investingcom"&&o.mfg)));
               }
             }catch(e){console.log("Investing.com unavailable: "+e.message);}
             fs.writeFileSync("alt_actuals.json",JSON.stringify(out));
@@ -514,6 +531,14 @@ jobs:
               // Economics ("France Manufacturing PMI" etc.) und das "actual"
               // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
               s=s.replace(/\bflash\b/g,"");
+              // Weitere Fuellwoerter/Release-Stufen-Marker entfernen, die je
+              // Quelle mal im Titel stehen und mal nicht ("Retail Sales MoM
+              // Prel" vs "Retail Sales (MoM)", "National CPI" vs "CPI",
+              // "Westpac Consumer Confidence Index" vs "... Sentiment") -
+              // noetig, damit Investing.com-Titel gegen TV/FF-Titel matchen.
+              s=s.replace(/\b(?:final|prel|prelim|preliminary|advance|adv|second estimate|2nd estimate)\b/g," ");
+              s=s.replace(/\bindex\b/g," ").replace(/\bnational\b/g," ");
+              s=s.replace(/consumer sentiment/g,"consumer confidence");
               s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
               // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
               // verschiedene Quellen nennen denselben Release mit/ohne Marke.
@@ -587,20 +612,31 @@ jobs:
               // Manufacturing-PMI-Release existiert je Land im selben Fenster).
               const isMfgPmi=/manufacturing pmi/i.test(ev.title)&&!/non.?manufacturing/i.test(ev.title);
               const hits=altActuals.filter(a=>{
-                if(a.source==="investingcom")return isMfgPmi&&a.country===ev.country&&a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                // Investing.com: PMI-Eintraege (a.mfg) matchen ueber Land+
+                // Zeit-Naehe (Titel enthalten Bank-Marken, die canonKey
+                // sprengen); alle uebrigen Eintraege wie TV/TE ueber den
+                // kanonischen Namen + enge Zeit-Toleranz.
+                if(a.source==="investingcom"){
+                  if(a.mfg)return isMfgPmi&&a.country===ev.country&&a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                  return a.country===ev.country&&a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TV_TOL&&canonKey(a.name)===evKey;
+                }
                 return (a.source==="tv"||a.source==="te")&&a.country===ev.country&&
                   a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TV_TOL&&
                   canonKey(a.name)===evKey;
               }
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(!hits.length)return;
-              const h=hits[0];
-              if(!ev._ffPrev&&h.previous&&h.previous!==ev.previous){ev.previous=h.previous;tvPrev++;}
-              if(!ev._ffFc&&h.forecast&&h.forecast!==ev.forecast){ev.forecast=h.forecast;tvFc++;}
+              // Pro Feld den zeitlich naechsten Treffer nehmen, der das Feld
+              // ueberhaupt fuehrt - der insgesamt naechste (oft TradingView)
+              // hat z.B. haeufig keinen Forecast, waehrend der Investing.com-
+              // Treffer direkt daneben einen liefert.
+              const hPrev=hits.find(x=>x.previous),hFc=hits.find(x=>x.forecast),hAct=hits.find(x=>x.actual);
+              if(!ev._ffPrev&&hPrev&&hPrev.previous!==ev.previous){ev.previous=hPrev.previous;tvPrev++;}
+              if(!ev._ffFc&&hFc&&hFc.forecast!==ev.forecast){ev.forecast=hFc.forecast;tvFc++;}
               // Actual nur fuellen, nicht ueberschreiben: vermeidet, dass ein
               // korrekter FF-Actual durch eine abweichend formatierte TV-Zahl
               // ersetzt wird (und faelschlich als Revision gefaerbt wird).
-              if(!ev._ffAct&&h.actual&&!ev.actual){ev.actual=h.actual;tvAct++;}
+              if(!ev._ffAct&&hAct&&!ev.actual){ev.actual=hAct.actual;tvAct++;}
             });
             // Temporaere FF-Vorrang-Markierungen wieder entfernen, bevor in
             // die Datei geschrieben wird.
@@ -707,7 +743,10 @@ jobs:
               const evKey=canonKey(ev.title);
               const evIsMfgPmi=/manufacturing pmi/i.test(ev.title)&&!/non.?manufacturing/i.test(ev.title);
               const te=altActuals.filter(a=>{
-                if(a.source==="investingcom")return evIsMfgPmi&&a.country===ev.country&&a.actual&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                if(a.source==="investingcom"){
+                  if(a.mfg)return evIsMfgPmi&&a.country===ev.country&&a.actual&&Math.abs(new Date(a.dateUtc).getTime()-t)<=30*60*60*1000;
+                  return a.country===ev.country&&a.actual&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&canonKey(a.name)===evKey;
+                }
                 return (a.source==="te"||a.source==="tv")&&a.country===ev.country&&a.actual&&
                   Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL&&
                   canonKey(a.name)===evKey;
@@ -759,6 +798,14 @@ jobs:
               // Economics ("France Manufacturing PMI" etc.) und das "actual"
               // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
               s=s.replace(/\bflash\b/g,"");
+              // Weitere Fuellwoerter/Release-Stufen-Marker entfernen, die je
+              // Quelle mal im Titel stehen und mal nicht ("Retail Sales MoM
+              // Prel" vs "Retail Sales (MoM)", "National CPI" vs "CPI",
+              // "Westpac Consumer Confidence Index" vs "... Sentiment") -
+              // noetig, damit Investing.com-Titel gegen TV/FF-Titel matchen.
+              s=s.replace(/\b(?:final|prel|prelim|preliminary|advance|adv|second estimate|2nd estimate)\b/g," ");
+              s=s.replace(/\bindex\b/g," ").replace(/\bnational\b/g," ");
+              s=s.replace(/consumer sentiment/g,"consumer confidence");
               s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
               // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
               // verschiedene Quellen nennen denselben Release mit/ohne Marke.
@@ -995,6 +1042,14 @@ jobs:
               // Economics ("France Manufacturing PMI" etc.) und das "actual"
               // bleibt trotz vorhandenem Forecast/Previous dauerhaft leer.
               s=s.replace(/\bflash\b/g,"");
+              // Weitere Fuellwoerter/Release-Stufen-Marker entfernen, die je
+              // Quelle mal im Titel stehen und mal nicht ("Retail Sales MoM
+              // Prel" vs "Retail Sales (MoM)", "National CPI" vs "CPI",
+              // "Westpac Consumer Confidence Index" vs "... Sentiment") -
+              // noetig, damit Investing.com-Titel gegen TV/FF-Titel matchen.
+              s=s.replace(/\b(?:final|prel|prelim|preliminary|advance|adv|second estimate|2nd estimate)\b/g," ");
+              s=s.replace(/\bindex\b/g," ").replace(/\bnational\b/g," ");
+              s=s.replace(/consumer sentiment/g,"consumer confidence");
               s=s.replace(/\bfrench\b/g,"france").replace(/\bgerman\b/g,"germany").replace(/\bspanish\b/g,"spain").replace(/\bitalian\b/g,"italy").replace(/\bdutch\b/g,"netherlands");
               // PMI-Anbieter-Marke ("S&P Global"/"HCOB"/"Markit") entfernen -
               // verschiedene Quellen nennen denselben Release mit/ohne Marke.
@@ -1030,6 +1085,78 @@ jobs:
                 });
               });
             }
+
+            // ── Investing.com-Anreicherung (alt_actuals.json, source
+            // "investingcom" - im Schritt "Fetch alternative actual sources"
+            // extrahiert). Zwei Aufgaben:
+            // 1) FEHLENDE FORECASTS nachtragen: TradingView liefert fuer
+            //    manche Releases keinen Forecast (CAD Core CPI/GDP/Retail
+            //    Sales, AUD/NZD Westpac, JPY CPI, EUR CPI m/m, ...) -
+            //    Investing.com fuehrt ihn. Match: gleiche Waehrung +
+            //    kanonischer Name + Release-Datum max. 3 Tage auseinander +
+            //    SICHERHEITS-CHECK: liegen beide Actuals vor, muessen sie
+            //    numerisch uebereinstimmen (sonst ist es ein anderes Event).
+            // 2) JPY "Services Inflation" (Corporate Services Price Index):
+            //    TradingViews Titel-Matching ist fuer die laenderspezifische
+            //    CSPI-Reihe bewusst nicht aktiv (siehe RULES-Kommentar) -
+            //    Investing.com liefert Actual+Forecast+Previous direkt.
+            // Beides ist nur im ~6-Tage-Abruffenster von Investing.com
+            // frisch verfuegbar -> Persistenz ueber das VORHERIGE
+            // ind_data.json (liegt im Checkout): einmal gefundene Forecasts
+            // bleiben am selben Release kleben, der CSPI-Eintrag wird
+            // zwischen den Monats-Releases unveraendert weitergetragen.
+            let prevOut={};
+            try{const p=JSON.parse(fs.readFileSync("ind_data.json","utf8"));if(p&&typeof p==="object"&&!Array.isArray(p))prevOut=p;}catch(e){}
+            let invEvts=[];
+            try{
+              const alt=JSON.parse(fs.readFileSync("alt_actuals.json","utf8"));
+              if(Array.isArray(alt))invEvts=alt.filter(a=>a.source==="investingcom");
+            }catch(e){}
+            const numOf=s=>{if(s==null)return null;const m=String(s).replace(/,/g,"").match(/-?\d+(?:\.\d+)?/);return m?parseFloat(m[0]):null;};
+            const dayDiff=(a,b)=>Math.abs(new Date(String(a).slice(0,10))-new Date(String(b).slice(0,10)))/86400e3;
+            // (1) Forecast-Luecken schliessen + Persistenz aus dem Vor-Lauf.
+            let invFc=0,keptFc=0;
+            Object.keys(out).forEach(ccy=>{
+              Object.keys(out[ccy]).forEach(indName=>{
+                const v=out[ccy][indName];
+                if(v.forecast!=null&&v.forecast!=="")return;
+                // Frischer Investing.com-Match (nur im Abruffenster moeglich).
+                const evKey=canonKey(v.event||"");
+                const hit=evKey?invEvts.find(a=>{
+                  if(a.mfg)return false; // PMI laeuft ueber den Kalender-Pfad
+                  if(a.country!==ccy||!a.forecast)return false;
+                  if(!v.date||!a.dateUtc||dayDiff(v.date,a.dateUtc)>3)return false;
+                  if(canonKey(a.name)!==evKey)return false;
+                  const na=numOf(a.actual),nv=numOf(v.actual);
+                  if(na!=null&&nv!=null&&na!==nv)return false;
+                  return true;
+                }):null;
+                if(hit){v.forecast=hit.forecast;invFc++;return;}
+                // Persistenz: derselbe Release (gleiches Datum + Actual) hatte
+                // im letzten Lauf schon einen Forecast -> behalten.
+                const pv=prevOut[ccy]&&prevOut[ccy][indName];
+                if(pv&&pv.forecast!=null&&pv.forecast!==""&&pv.date===v.date&&numOf(pv.actual)===numOf(v.actual)){
+                  v.forecast=pv.forecast;keptFc++;
+                }
+              });
+            });
+            // (2) JPY Services Inflation (CSPI) direkt aus Investing.com.
+            const cspi=invEvts.find(a=>a.country==="JPY"&&/cspi|corporate services? price/i.test(a.name)&&a.actual);
+            if(cspi){
+              const date=String(cspi.dateUtc).slice(0,10);
+              const prevEntry=prevOut.JPY&&prevOut.JPY["Services Inflation"];
+              const hist=(prevEntry&&Array.isArray(prevEntry.history)?prevEntry.history:[]).filter(h=>h&&h[0]!==date);
+              hist.push([date,cspi.actual]);
+              (out.JPY=out.JPY||{})["Services Inflation"]={
+                actual:cspi.actual,forecast:cspi.forecast||null,previous:cspi.previous||null,
+                date:date,event:cspi.name,period:null,history:hist.slice(-4)
+              };
+              console.log("ind_data <- Investing.com: JPY Services Inflation (CSPI) "+cspi.actual+" ("+date+")");
+            }else if(prevOut.JPY&&prevOut.JPY["Services Inflation"]){
+              // Kein frisches CSPI-Event im Fenster -> letzten Stand behalten.
+              (out.JPY=out.JPY||{})["Services Inflation"]=prevOut.JPY["Services Inflation"];
+            }
+
             fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
             // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
             const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];
@@ -1038,6 +1165,10 @@ jobs:
             console.log("ind_data.json: "+Object.values(out).reduce((n,o)=>n+Object.keys(o).length,0)+" indicator values written");
             console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
             console.log("ind_data <- FF calendar overlay: "+ffOverlaid+" indicator value(s) taken from Forex-Factory");
+            console.log("ind_data <- Investing.com forecasts: "+invFc+" filled fresh, "+keptFc+" kept from previous run");
+            const noFc=[];
+            Object.keys(out).forEach(ccy=>Object.keys(out[ccy]).forEach(n=>{const v=out[ccy][n];if(v.actual!=null&&(v.forecast==null||v.forecast===""))noFc.push(ccy+" "+n+" ("+(v.event||"?")+", "+v.date+")");}));
+            console.log("ind_data STILL WITHOUT FORECAST ("+noFc.length+"): "+noFc.join(" | "));
           '
 
       # ── BOND-HISTORIE BACKFILL (offizielle Gratis-Quellen, ohne Key) ──
