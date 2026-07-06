@@ -2,11 +2,12 @@ name: Weekly Outlook (Telegram)
 
 on:
   schedule:
-    # Sonntag 08:00 Berlin-Zeit, ganzjaehrig. GitHub-Cron kennt nur UTC,
-    # daher zwei Eintraege (Sommer-/Winterzeit) + Gate-Schritt wie beim
-    # Morning Report.
-    - cron: '0 6 * * 0'  # 08:00 MESZ (Sommerzeit, UTC+2)
-    - cron: '0 7 * * 0'  # 08:00 MEZ (Winterzeit, UTC+1)
+    # Sonntag ab 08:00 Berlin-Zeit, ganzjaehrig. GitHub-Cron kennt nur UTC,
+    # daher zwei Eintraege (Sommer-/Winterzeit) + Gate-Schritt. Minute
+    # bewusst nicht :00 (dort ist GitHubs Cron-Queue am vollsten und
+    # Laeufe starten Stunden verspaetet - beobachtet 2026-07-05).
+    - cron: '17 6 * * 0'  # 08:17 MESZ (Sommerzeit, UTC+2)
+    - cron: '17 7 * * 0'  # 08:17 MEZ (Winterzeit, UTC+1)
   workflow_dispatch:
 
 permissions:

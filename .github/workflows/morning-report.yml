@@ -2,13 +2,26 @@ name: Morning Report (Telegram)
 
 on:
   schedule:
-    # GitHub Actions kennt keine Zeitzonen-Cronjobs, nur UTC. Damit es das
-    # ganze Jahr ueber wirklich 07:00 Uhr Berlin-Zeit ist (nicht nur im
-    # Sommer), zwei Eintraege - einer pro Zeitumstellung. Der Gate-Schritt
-    # unten sorgt dafuer, dass nur der jeweils "richtige" Lauf tatsaechlich
-    # etwas verschickt.
-    - cron: '0 5 * * *'  # 07:00 MESZ (Sommerzeit, UTC+2)
-    - cron: '0 6 * * *'  # 07:00 MEZ (Winterzeit, UTC+1)
+    # Ziel: Versand um 07:00 Berlin (Toleranz +30 Minuten, Nutzervorgabe).
+    # GitHubs Cron ist fuer dieses Repo NICHT puenktlich - beobachtet
+    # 2026-07-03..06: Laeufe starten systematisch ~6 Stunden verspaetet
+    # (11-12 UTC statt 5/6 UTC). Strategie daher: VIELE Ausloese-Punkte
+    # ueber die Nacht verteilt (Minute bewusst nie :00 - dort ist GitHubs
+    # Cron-Queue am vollsten); jeder Lauf, der VOR 07:00 Berlin startet,
+    # schlaeft bis exakt 07:00 (+ kleiner Slot-Versatz gegen Doppelversand)
+    # und sendet dann; Laeufe, die zwischen 07:00 und 07:30 starten, senden
+    # sofort; spaetere werden verworfen. So reicht EIN Slot, der irgendwo
+    # in den ~6 Stunden vor 7 Uhr tatsaechlich startet, fuer puenktlichen
+    # Versand - egal ob Sommer- oder Winterzeit (das Ziel ist in
+    # Berlin-Zeit berechnet, nicht pro Cron-Eintrag).
+    - cron: '23 23 * * *'
+    - cron: '53 0 * * *'
+    - cron: '23 2 * * *'
+    - cron: '23 3 * * *'
+    - cron: '53 4 * * *'
+    - cron: '7 5 * * *'
+    - cron: '37 5 * * *'
+    - cron: '7 6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -17,35 +30,73 @@ permissions:
 jobs:
   send-report:
     runs-on: ubuntu-latest
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub fuehrt Cron-Laeufe bei Auslastung teils STUNDEN verspaetet aus
-      # (beobachtet 2026-07-03..05: Start erst 11-12 UTC statt 5/6 UTC). Das
-      # fruehere Gate "nur wenn gerade exakt 07 Uhr Berlin ist" hat solche
-      # Nachzuegler verworfen -> an diesen Tagen kam GAR KEIN Report an.
-      # Neues Gate: senden, sobald es 07 Uhr Berlin oder spaeter ist (bis
-      # 17 Uhr - danach ist ein "Morning" Report sinnlos) UND heute noch
-      # nicht gesendet wurde. Dedup ueber den Versand-Marker
-      # .report-state/morning_last.txt, der nach dem Versand nach main
-      # committet wird - faengt die zwei Cron-Eintraege UND Nachzuegler ab.
-      - name: Gate - Sendefenster erreicht und heute noch nicht verschickt
+      # Gate mit Schlaf-bis-07:00-Mechanik (Details siehe Kommentar oben am
+      # schedule-Block). Dedup ueber den Versand-Marker
+      # .report-state/morning_last.txt: VOR dem Senden (und nach dem
+      # Aufwachen nochmal frisch von origin) geprueft, NACH dem Senden
+      # committet. Der Slot-Versatz (90s je Cron-Eintrag) staffelt die
+      # Aufwachzeiten, damit zwei parallel schlafende Laeufe nicht
+      # gleichzeitig senden - der spaetere sieht beim Aufwachen den Marker
+      # des frueheren. workflow_dispatch sendet immer sofort (manueller
+      # Test/Nachlieferung), sofern heute noch nicht gesendet wurde.
+      - name: Gate - bis 07:00 Berlin schlafen, Fenster 07:00-07:30, Dedup
         id: gate
         run: |
           DATE="$(TZ="Europe/Berlin" date +%F)"
-          HOUR="$(TZ="Europe/Berlin" date +%H)"
-          LAST="$(cat .report-state/morning_last.txt 2>/dev/null || true)"
           echo "date=$DATE" >> "$GITHUB_OUTPUT"
-          echo "Berlin-Zeit: $DATE ${HOUR}:xx Uhr, letzter Versand: ${LAST:-nie}"
+          LAST="$(cat .report-state/morning_last.txt 2>/dev/null || true)"
           if [ "$LAST" = "$DATE" ]; then
             echo "Heute bereits verschickt - ueberspringen."
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event_name }}" = "schedule" ] && { [ "$HOUR" -lt 7 ] || [ "$HOUR" -gt 17 ]; }; then
-            echo "Ausserhalb des Sendefensters (07-17 Uhr Berlin) - ueberspringen."
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "proceed=true" >> "$GITHUB_OUTPUT"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "Manueller Lauf - sofort senden."
+            echo "proceed=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          case "${{ github.event.schedule }}" in
+            '23 23 * * *') OFF=0;;
+            '53 0 * * *')  OFF=90;;
+            '23 2 * * *')  OFF=180;;
+            '23 3 * * *')  OFF=270;;
+            '53 4 * * *')  OFF=360;;
+            '7 5 * * *')   OFF=450;;
+            '37 5 * * *')  OFF=540;;
+            '7 6 * * *')   OFF=630;;
+            *)             OFF=0;;
+          esac
+          NOW="$(date +%s)"
+          TARGET="$(( $(TZ="Europe/Berlin" date -d "$DATE 07:00:00" +%s) + OFF ))"
+          WAIT="$((TARGET-NOW))"
+          echo "Slot '${{ github.event.schedule }}' (+${OFF}s), Berlin jetzt: $(TZ="Europe/Berlin" date '+%F %T'), bis Ziel: ${WAIT}s"
+          if [ "$WAIT" -gt 19800 ]; then
+            echo "Mehr als 5,5h bis 07:00 Berlin - dieser Slot ueberlaesst es einem spaeteren."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$WAIT" -lt -1800 ]; then
+            echo "Nach 07:30 Berlin gestartet - Fenster verpasst, kein verspaeteter Versand (Nutzervorgabe: max. +30 Min)."
+            echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$WAIT" -gt 0 ]; then
+            echo "Schlafe ${WAIT}s bis 07:00 Berlin (+${OFF}s Slot-Versatz)..."
+            sleep "$WAIT"
+            # Nach dem Aufwachen frisch von origin pruefen, ob ein anderer
+            # Slot inzwischen gesendet hat.
+            git fetch --quiet origin main || true
+            LAST2="$(git show origin/main:.report-state/morning_last.txt 2>/dev/null || true)"
+            if [ "$LAST2" = "$DATE" ]; then
+              echo "Anderer Slot hat inzwischen gesendet - ueberspringen."
+              echo "proceed=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            # Frischesten Kalenderstand uebernehmen (der Checkout ist nach
+            # stundenlangem Schlafen veraltet; der Daten-Workflow pusht
+            # stuendlich neue ff_calendar.json-Staende).
+            git merge --ff-only origin/main || true
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
 
       - name: Morning report aus ff_calendar.json zusammenstellen (Text + Sprach-Skript)
         if: steps.gate.outputs.proceed == 'true'
