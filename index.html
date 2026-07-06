@@ -1004,7 +1004,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0c4a6e;color:#e0f2fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SKY-MORNING-0700-65</span><span id="verBannerText"> (workflow-only change - morning report is now delivered AT 07:00 Berlin (+30 min hard cap, per user): 8 cron slots spread across the night (off-:00 minutes), each run that starts early sleeps until exactly 07:00 (+90s per-slot stagger) and re-checks the sent-marker from origin after waking; runs starting after 07:30 are dropped instead of sending an afternoon "morning" report. Background: GitHub delayed this repo's crons by ~6h on 4 consecutive days, so no run existed today before 07:21 UTC. Weekly crons moved off the congested :00 minute)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0f2fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#881337;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-SCORE-BREAKDOWN-66</span><span id="verBannerText"> (every score is now tappable - symbol badge, card scores, sidebar scores, dashboard ranking/heatmap/watchlist/pair rows - opening a breakdown modal that lists exactly which indicators contribute what (base weight, ★, trend part; single source of truth via indScoreParts so the modal can never diverge from the real math). Trend chip relabelled: a bare 1-step signal now reads "Step +0.5 · 1/2" - "Trend" only appears when the 2-step criterion is actually met (JPY CPI y/y case), and stale synced stepDriven/trendDriven flags are self-healed. Compact-view stage no longer jumps back: new compactLevel cloud field takes precedence, legacy boolean pushes from cached old app versions can no longer downgrade stage 2)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1384,6 +1384,16 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
   </div>
 </div>
+<!-- MODAL: Score-Aufschluesselung (Klick auf einen beliebigen Score - Symbol,
+     Karte oder Paar): zeigt, aus welchen Indikator-Beitraegen sich die Zahl
+     zusammensetzt (Basis-Gewicht, Stern, Trend-Anteil). -->
+<div class="ov" id="mScoreInfo" style="display:none">
+  <div class="modal" style="max-width:460px">
+    <h3 id="scoreInfoTitle">Score</h3>
+    <div id="scoreInfoBody" style="font-size:12.5px;line-height:1.55"></div>
+    <div class="m-btns"><button class="btn" onclick="closeM('mScoreInfo')">Close</button></div>
+  </div>
+</div>
 <!-- MODAL: Trend-Detail (Klick/Long-Press auf den 📈-Chip eines Indikators):
      zeigt die letzten Actual/Previous-Werte, aus denen der 2-Schritt-Trend
      berechnet wird (bzw. bei Bonds den 25-Tage-Vergleich) -->
@@ -1654,11 +1664,17 @@ const SCORE_ZERO=new Set(['2Y/10Y Spread']);
 // den Leitzins. Das Bias selbst (z.B. Bond 15-Tage-Vergleich, Beat/Miss der
 // Zinsentscheidung) bleibt unveraendert bestehen.
 const NO_TREND_RUBS=new Set(['Interest Rates']);
-function indScore(ind,rub){
-  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return 0;
+// Zerlegt den Score-Beitrag EINES Indikators in seine Bestandteile - die
+// einzige Quelle der Score-Arithmetik (indScore summiert nur noch total),
+// damit die Aufschluesselung im Score-Modal nie von der echten Rechnung
+// abweichen kann. Rueckgabe: {w, impAdd, base, trend, total, zero, noTrend}.
+function indScoreParts(ind,rub){
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,impAdd:0,base:0,trend:0,total:0,zero:true,noTrend:false};
   const w=indBaseWeight(ind,rub);
-  const base=biasScore(ind.bias)*(w+(ind.imp?0.5:0));
-  if(rub&&NO_TREND_RUBS.has(rub.name))return base;
+  const impAdd=ind.imp?0.5:0;
+  const base=biasScore(ind.bias)*(w+impAdd);
+  const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name));
+  if(noTrend)return{w,impAdd,base,trend:0,total:base,zero:false,noTrend:true};
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
   //   (optionale) bestaetigte Trend kommt separat ueber ind.trendBias dazu.
@@ -1674,7 +1690,78 @@ function indScore(ind,rub){
   const trendAdj=ind.stepDriven
     ?(ind.trendDriven?biasScore(ind.bias)*mag:0)
     :biasScore(ind.trendBias||'neu')*mag;
-  return base+trendAdj;
+  return{w,impAdd,base,trend:trendAdj,total:base+trendAdj,zero:false,noTrend:false};
+}
+function indScore(ind,rub){return indScoreParts(ind,rub).total;}
+// ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
+function fmtScNum(v){v=Math.round(v*100)/100;return(v>0?'+':'')+v;}
+function scoreInfoIndRow(ind,rub){
+  const p=indScoreParts(ind,rub);
+  let sub;
+  if(p.zero)sub='display-only, counts 0 by design';
+  else{
+    const bits=[];
+    const bl=ind.bias==='bull'?'Bullish':ind.bias==='bear'?'Bearish':'Neutral';
+    bits.push(bl+(p.base?` × ${p.w+p.impAdd}`:'')+(p.impAdd?' (incl. ★ +0.5)':''));
+    if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
+    else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
+    if(p.noTrend)bits.push('card excluded from trend adjustments');
+    sub=bits.join(' · ');
+  }
+  const nm=ind.displayName||ind.name;
+  return`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px">
+    <span style="min-width:0"><span style="font-weight:600">${escH(nm)}</span><br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span></span>
+    <span style="font-weight:700;white-space:nowrap;color:${scoreColor(p.total*3)}">${fmtScNum(p.total)}</span>
+  </div>`;
+}
+function scoreInfoTotalRow(label,val){
+  return`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 8px;margin-top:7px;border-top:1px solid var(--bd2);font-weight:700"><span>${escH(label)}</span><span style="color:${scoreColor(val)}">${fmtScNum(val)}</span></div>`;
+}
+function openScoreInfoRub(symId,rubId){
+  const sym=syms.find(s=>s.id===symId);if(!sym)return;
+  const rub=(sym.rubrics||[]).find(r=>r.id===rubId);if(!rub)return;
+  const inds=rub.indicators||[];
+  const active=inds.filter(i=>indScoreParts(i,rub).total!==0);
+  const zero=inds.length-active.length;
+  let html=active.map(i=>scoreInfoIndRow(i,rub)).join('');
+  if(!active.length)html+='<div style="color:var(--t3)">No indicator currently contributes to this card\'s score.</div>';
+  if(zero>0)html+=`<div style="color:var(--t3);font-size:11px;margin-top:3px">${zero} more indicator${zero===1?'':'s'} at 0 (neutral / no signal).</div>`;
+  html+=scoreInfoTotalRow('Card score',rubScore(rub));
+  document.getElementById('scoreInfoTitle').textContent='Score – '+(rub.name)+' ('+sym.id+')';
+  document.getElementById('scoreInfoBody').innerHTML=html;
+  openM('mScoreInfo');
+}
+function openScoreInfoSym(symId){
+  const sym=syms.find(s=>s.id===symId);if(!sym)return;
+  let html='';
+  (sym.rubrics||[]).forEach(rub=>{
+    const inds=rub.indicators||[];
+    const active=inds.filter(i=>indScoreParts(i,rub).total!==0);
+    const sc=rubScore(rub);
+    html+=`<div style="display:flex;justify-content:space-between;gap:10px;margin:9px 0 4px;font-weight:700;color:var(--t2)"><span>${escH(rub.name)}</span><span style="color:${scoreColor(sc)}">${fmtScNum(sc)}</span></div>`;
+    if(active.length)html+=active.map(i=>scoreInfoIndRow(i,rub)).join('');
+    else html+=`<div style="color:var(--t3);font-size:11px">all indicators at 0</div>`;
+  });
+  html+=scoreInfoTotalRow('Symbol score',symScore(sym));
+  document.getElementById('scoreInfoTitle').textContent='Score – '+sym.id+(sym.full?' ('+sym.full+')':'');
+  document.getElementById('scoreInfoBody').innerHTML=html;
+  openM('mScoreInfo');
+}
+function openScoreInfoPair(pairName){
+  const parts=(pairName||'').split('/');
+  const codeToId={XAU:'GOLD',XAG:'SILVER',WTI:'OIL',BTC:'BTC',ETH:'ETH'};
+  const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
+  const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
+  const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span><span style="font-weight:600">${escH(l)}</span>${sub?`<br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>`:''}</span><span style="font-weight:700">${fmtScNum(v)}</span></div>`;
+  let html='';
+  if(bSym)html+=row(bSym.id+' (base)',symScore(bSym),'tap the symbol score in its detail view for the full breakdown');
+  if(qSym)html+=row(qSym.id+' (quote, subtracted)',-symScore(qSym),'pair score = base score − quote score');
+  const carry=typeof pairCarryAdj==='function'?pairCarryAdj(pairName):0;
+  if(carry)html+=row('Carry adjustment',carry,'interest-rate differential adjustment');
+  html+=scoreInfoTotalRow('Pair score',pairScore(pairName));
+  document.getElementById('scoreInfoTitle').textContent='Score – '+pairName;
+  document.getElementById('scoreInfoBody').innerHTML=html;
+  openM('mScoreInfo');
 }
 // Trend-Bonus-Betrag eines Indikators (fuer indScore UND den UI-Chip): 1 bei
 // normalem, 0,5 bei einem Halbgewicht-Indikator (Core-Paar, Bond, COT-Netto,
@@ -1690,7 +1777,7 @@ function scoreColor(n){return n>=3?'var(--blue)':n<=-3?'var(--red)':'var(--amber
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
 // dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
 function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
-function scoreBadge(n,title,key){return`<span class="score-badge"${key?` data-anim-score="${key}" data-sv="${n}"`:''} style="color:${scoreColor(n)};border-color:${scoreColor(n)}" title="${escH(title||'Score = sum of the indicators (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}">${n>0?'+':''}${n}</span>`;}
+function scoreBadge(n,title,key,oc){return`<span class="score-badge"${key?` data-anim-score="${key}" data-sv="${n}"`:''}${oc?` onclick="${oc}" role="button"`:''} style="color:${scoreColor(n)};border-color:${scoreColor(n)}${oc?';cursor:pointer':''}" title="${escH(title||'Score = sum of the indicators (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}">${n>0?'+':''}${n}</span>`;}
 // Animiert Score-/Bias-Wechsel: Score-Zahlen zaehlen fließend hoch/runter mit
 // Puls, Bias-Pfeile flippen. Vergleicht data-sv/data-bv mit dem zuletzt
 // gesehenen Wert (pro Key). Wird nach Sidebar-/Detail-Render aufgerufen.
@@ -1753,7 +1840,7 @@ function pairScore(pairName){
   if(!bSym||!qSym)return 0;
   return symScore(bSym)-symScore(qSym)+pairCarryAdj(pairName);
 }
-function rowScore(n,title,color){return`<span class="row-score" style="color:${color||scoreColor(n)}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
+function rowScore(n,title,color,oc){return`<span class="row-score"${oc?` onclick="event.stopPropagation();${oc}" role="button"`:''} style="color:${color||scoreColor(n)}${oc?';cursor:pointer':''}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
 
 // ── CALENDAR ↔ SYMBOL MATCHING ──
@@ -2739,6 +2826,12 @@ function applyTrendModel(ind,noForecast,allowBiasReplace){
       if(ind.bias!==nb||!!ind.stepDriven!==sd||!!ind.trendDriven!==td){
         ind.bias=nb;ind.stepDriven=sd;ind.trendDriven=td;changed=true;
       }
+    }else if(ind.trendDriven||ind.stepDriven){
+      // Manuell gehaltenes Bias: die Trend-Flags duerfen dann nicht aus
+      // einem aelteren (synchronisierten) Zustand kleben bleiben - sonst
+      // zeigt der Chip einen Trend, dessen Kriterien die aktuelle
+      // Werte-Historie gar nicht mehr erfuellt.
+      ind.trendDriven=false;ind.stepDriven=false;changed=true;
     }
   }else{
     if(ind.trendDriven||ind.stepDriven){ind.trendDriven=false;ind.stepDriven=false;changed=true;}
@@ -4053,13 +4146,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView,greenDismissed,eventAlerts,pinEnabled},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4140,7 +4233,11 @@ async function cloudPush(manual){
     }
     // greenDismissed/pinEnabled liegen bewusst außerhalb von snap()/Undo,
     // müssen aber ebenfalls geräteübergreifend synchron sein.
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView;data.pinEnabled=pinEnabled;
+    // compactLevel (0/1/2) ist das massgebliche Feld; compactView bleibt als
+    // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
+    // das sie verstehen (sonst wuerde deren naechster Push die Stufe
+    // zuruecksetzen - siehe cloudPull-Kommentar).
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScore(s),bias:s.bias}));
@@ -4192,7 +4289,18 @@ async function cloudPull(manual){
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
-      if(cd.compactView!==undefined){compactView=normCompactLevel(cd.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}
+      // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
+      // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
+      // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
+      // Zustand tatsaechlich unterscheidet - sonst wuerde jede beliebige
+      // Aenderung des alten Geraets die Stufe 2 hier auf 1 zurueckwerfen
+      // ("Hide-Button springt zurueck").
+      if(cd.compactLevel!==undefined){
+        const lv=normCompactLevel(cd.compactLevel);
+        if(lv!==compactView){compactView=lv;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}
+      }else if(cd.compactView!==undefined&&(cd.compactView?1:0)!==(compactView>=1?1:0)){
+        compactView=cd.compactView?1:0;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();
+      }
       if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
@@ -4365,7 +4473,7 @@ function renderSidebar(){
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
-          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScore(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}" title="Score">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScore(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" role="button" onclick="event.stopPropagation();openScoreInfoSym('${c.id}')" style="cursor:pointer;color:${BC[c.bias]}" title="Score - tap for the breakdown">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Move down">▼</button>`:''}
@@ -4390,7 +4498,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check)','det-'+c.id)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check)','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -4492,7 +4600,7 @@ function renderRub(rub,ri,total){
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score = sum of the indicators in this card (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)">${sc>0?'+':''}${sc}</span>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
       ${(()=>{const lock=rubAutoDerived(getSym(),rub);const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
       return`<div class="rbg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}${lock?'<span class="auto-lock-ic">🔗</span>':''}</div>`;})()}
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
@@ -4666,8 +4774,13 @@ function renderInd(ind,ri,ii,total){
         const fmtMag=v=>v===1.5?'1.5':v===1?'1':'0.5';
         let lbl,cls='';
         if(ind.stepDriven){
-          const total=0.5+(ind.trendDriven?mag:0);
-          lbl='Trend '+(ind.bias==='bull'?'+':'−')+fmtMag(total);
+          // "Trend" steht nur am Chip, wenn das 2-Schritt-Kriterium wirklich
+          // erfuellt ist (trendDriven). Das blosse 1-Schritt-Basissignal
+          // heisst "Step" und traegt den Fortschritt (1/2) - vorher stand
+          // dort irrefuehrend "Trend +0.5", obwohl kein bestaetigter Trend
+          // vorlag (z.B. JPY CPI y/y mit 1.5 -> 1.4 -> 1.5).
+          const sign=ind.bias==='bull'?'+':'−';
+          lbl=ind.trendDriven?'Trend '+sign+fmtMag(0.5+mag):'Step '+sign+'0.5 · 1/2';
         }else if(ind.trendBias==='bull')lbl='Trend +'+magS;
         else if(ind.trendBias==='bear')lbl='Trend −'+magS;
         else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
@@ -5399,7 +5512,7 @@ function renderPairs(){
     <div class="sym-name dw-pname">${escH(it.name)}</div>
     ${tickerChipHtml(tickerInfoForItem(it.kind,it.kind==='pair'?it.name:it.id))}
     ${it.kind==='pair'?rateDiff(it.name):''}
-    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score')}
+    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${it.name}')`)}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
   </div>`;
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
@@ -6343,7 +6456,7 @@ function renderDash(){
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           ${isNonFx(s.id)?tickerChipHtml(assetTickerInfo(s.id)):''}
-          ${rowScore(symScore(s),'Symbol-Score',BC[s.bias])}
+          ${rowScore(symScore(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
           <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
         </div>`;
@@ -6362,7 +6475,7 @@ function renderDash(){
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
         ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-        ${rowScore(pairScore(p.name),'Paar-Score')}
+        ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
@@ -6380,7 +6493,7 @@ function renderDash(){
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
           ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-          ${rowScore(pairScore(p.name),'Paar-Score')}
+          ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
           <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
@@ -6396,7 +6509,7 @@ function renderDash(){
       content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" onclick="gotoSym('${r.s.id}')">
         <span class="rank-pos">${i+1}</span><span class="rank-name">${r.s.id}</span>
         <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
-        <span class="rank-sc" style="color:${BC[r.s.bias]}">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
+        <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${BC[r.s.bias]}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
     }else if(w.type==='risk_sentiment'){
       const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
@@ -6483,7 +6596,7 @@ function renderDash(){
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
         <div class="heat-name">${escH(s.name)}</div>
-        <div class="heat-sc" style="color:${BC[s.bias]}">${symScore(s)>0?'+':''}${Math.round(symScore(s)*10)/10}</div>
+        <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${BC[s.bias]}" title="Score - tap for the breakdown">${symScore(s)>0?'+':''}${Math.round(symScore(s)*10)/10}</div>
         <div class="heat-bias" style="color:${BC[s.bias]}">${BL[s.bias]}</div>
       </div>`).join('')+`</div>`:`<div class="dw-empty">No non-FX assets.</div>`;
     }else if(w.type==='mini_calendar'){
