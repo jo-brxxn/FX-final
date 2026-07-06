@@ -1004,7 +1004,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#881337;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-SCORE-BREAKDOWN-66</span><span id="verBannerText"> (every score is now tappable - symbol badge, card scores, sidebar scores, dashboard ranking/heatmap/watchlist/pair rows - opening a breakdown modal that lists exactly which indicators contribute what (base weight, ★, trend part; single source of truth via indScoreParts so the modal can never diverge from the real math). Trend chip relabelled: a bare 1-step signal now reads "Step +0.5 · 1/2" - "Trend" only appears when the 2-step criterion is actually met (JPY CPI y/y case), and stale synced stepDriven/trendDriven flags are self-healed. Compact-view stage no longer jumps back: new compactLevel cloud field takes precedence, legacy boolean pushes from cached old app versions can no longer downgrade stage 2)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#713f12;color:#fef9c3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GOLD-SCORE-AUDIT-67</span><span id="verBannerText"> (full score-logic audit: fixed two real double-counts - one CPI release could score up to 2.0 via m/m (full) + y/y (0.5) + Core (0.5), CPI m/m now shares the CPI group weight; NFP + ADP (both US payrolls) now share weight too - halving only applies when the partner is actually present on the card. Score breakdown modal now also shows release date + age (amber when >45d), group-sharing notes, contributing/total indicator counts per symbol and a pair-asymmetry footnote. Deliberately unchanged: discrete beat/miss (no magnitude scaling), no cross-symbol normalisation, no time-decay - documented in CLAUDE.md)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef9c3;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef9c3;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1605,20 +1605,46 @@ function glowClass(b){return b==='bull'?'glow-bull':b==='bear'?'glow-bear':'glow
 function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
 // 2Y Bond Yield und 10Y Bond Yield zählen je nur 0,5 Punkte (zusammen max. ±1).
 const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
-// Indikatoren mit einer eigenen "Core"-Variante: stehen Headline UND Core
-// zusammen in einer Rubrik, zählt jeder nur 0,5 (gemeinsam max. ±1), weil sie
-// dasselbe misst und sonst doppelt gewichtet würde. Basisnamen (ohne y/y-Suffix).
-const CORE_PAIRS=[['CPI (Headline)','Core CPI'],['PPI','Core PPI'],['PCE','Core PCE']];
+// Indikator-Gruppen, die DENSELBEN Sachverhalt messen: stehen mehrere
+// Mitglieder einer Gruppe zusammen in einer Rubrik, zählt jedes nur 0,5
+// (die Gruppe teilt sich das Gewicht), weil dasselbe Release/Signal sonst
+// mehrfach in den Score eingeht. Basisnamen (ohne y/y-/m/m-Suffix).
+// - CPI-Gruppe enthaelt auch "CPI" (den m/m-Blick auf DENSELBEN Release
+//   wie "CPI (Headline)" y/y) - vorher zaehlte die eine CPI-Veroeffent-
+//   lichung ueber m/m (voll) + y/y (0,5) + Core (0,5) bis zu 2,0 Punkte,
+//   also doppelt so viel wie jede andere Karte.
+// - NFP + ADP messen beide US-Payrolls (ADP ist der private Vorlaeufer
+//   desselben Arbeitsmarkt-Sachverhalts) und teilen sich jetzt das Gewicht.
+const CORE_PAIRS=[['CPI (Headline)','Core CPI','CPI'],['PPI','Core PPI'],['PCE','Core PCE'],['NFP / Employment Change','ADP Employment']];
 function indIsCorePaired(ind,rub){
   const base=stripPeriodSuffix(ind.name).base;
   const inds=(rub&&rub.indicators)||[];
-  for(const[a,b]of CORE_PAIRS){
-    if(base===a||base===b){
-      const partner=base===a?b:a;
-      if(inds.some(i=>stripPeriodSuffix(i.name).base===partner))return true;
-    }
+  for(const group of CORE_PAIRS){
+    if(!group.includes(base))continue;
+    const hasPartner=inds.some(i=>{
+      if(i===ind)return false;
+      const b=stripPeriodSuffix(i.name).base;
+      return b!==base&&group.includes(b);
+    });
+    if(hasPartner)return true;
   }
   return false;
+}
+// Liefert die anwesenden Gruppen-Partner eines Indikators in seiner Rubrik
+// (Anzeigenamen) - fuers Score-Aufschluesselungs-Modal.
+function indGroupPartners(ind,rub){
+  const base=stripPeriodSuffix(ind.name).base;
+  const inds=(rub&&rub.indicators)||[];
+  for(const group of CORE_PAIRS){
+    if(!group.includes(base))continue;
+    const partners=inds.filter(i=>{
+      if(i===ind)return false;
+      const b=stripPeriodSuffix(i.name).base;
+      return b!==base&&group.includes(b);
+    }).map(i=>i.displayName||i.name);
+    if(partners.length)return partners;
+  }
+  return null;
 }
 // Ist dieser Indikator grundsaetzlich ein Halbgewicht-Typ (Bond-Halbpunkt,
 // COT-Netto, CB Tone, oder Teil eines Core-Paares)? Gemeinsame Pruefung fuer
@@ -1706,11 +1732,23 @@ function scoreInfoIndRow(ind,rub){
     if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
     else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
     if(p.noTrend)bits.push('card excluded from trend adjustments');
+    const partners=indGroupPartners(ind,rub);
+    if(partners)bits.push('shares weight with '+partners.join(' + '));
     sub=bits.join(' · ');
+  }
+  // Release-Alter: macht sichtbar, wie frisch das Signal hinter dem Beitrag
+  // ist (ein Bias aus einem alten Release zaehlt sonst unsichtbar weiter).
+  // >45 Tage wird amber markiert - bei Quartalsdaten normal, bei
+  // Monatsdaten ein Hinweis auf einen verpassten/ausgefallenen Release.
+  const relDate=(ind.research&&ind.research.date)||(Array.isArray(ind.valDates)?ind.valDates[ind.valDates.length-1]:null);
+  let ageHtml='';
+  if(relDate){
+    const days=Math.round((new Date(todayStr())-new Date(String(relDate).slice(0,10)))/86400000);
+    if(isFinite(days)&&days>=0)ageHtml=`<span style="color:${days>45?'var(--amber)':'var(--t3)'};font-size:11px"> · release ${escH(String(relDate).slice(0,10))} (${days}d ago)</span>`;
   }
   const nm=ind.displayName||ind.name;
   return`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px">
-    <span style="min-width:0"><span style="font-weight:600">${escH(nm)}</span><br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span></span>
+    <span style="min-width:0"><span style="font-weight:600">${escH(nm)}</span><br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>${ageHtml}</span>
     <span style="font-weight:700;white-space:nowrap;color:${scoreColor(p.total*3)}">${fmtScNum(p.total)}</span>
   </div>`;
 }
@@ -1743,9 +1781,22 @@ function openScoreInfoSym(symId){
     else html+=`<div style="color:var(--t3);font-size:11px">all indicators at 0</div>`;
   });
   html+=scoreInfoTotalRow('Symbol score',symScore(sym));
+  // Transparenz zur Vergleichbarkeit: Symbole haben unterschiedlich viele
+  // AKTIVE Indikatoren (USD trackt z.B. ADP/JOLTS/Claims/AHE, die es fuer
+  // andere Waehrungen nicht gibt) - die absolute Score-Amplitude ist daher
+  // zwischen Symbolen nicht 1:1 vergleichbar.
+  const cnt=countActiveInds(sym);
+  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">${cnt.active} of ${cnt.total} indicators currently contribute. Symbols track different indicator sets, so absolute scores are not 1:1 comparable across symbols - tap each side of a pair for its own breakdown.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+sym.id+(sym.full?' ('+sym.full+')':'');
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');
+}
+// Zaehlt beitragende (total != 0) und insgesamt vorhandene Indikatoren eines
+// Symbols - fuer die Vergleichbarkeits-Fussnote der Score-Modale.
+function countActiveInds(sym){
+  let active=0,total=0;
+  (sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(i=>{total++;if(indScoreParts(i,rub).total!==0)active++;}));
+  return{active,total};
 }
 function openScoreInfoPair(pairName){
   const parts=(pairName||'').split('/');
@@ -1754,11 +1805,12 @@ function openScoreInfoPair(pairName){
   const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
   const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span><span style="font-weight:600">${escH(l)}</span>${sub?`<br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>`:''}</span><span style="font-weight:700">${fmtScNum(v)}</span></div>`;
   let html='';
-  if(bSym)html+=row(bSym.id+' (base)',symScore(bSym),'tap the symbol score in its detail view for the full breakdown');
-  if(qSym)html+=row(qSym.id+' (quote, subtracted)',-symScore(qSym),'pair score = base score − quote score');
+  if(bSym){const c=countActiveInds(bSym);html+=row(bSym.id+' (base)',symScore(bSym),c.active+' contributing indicators - tap the symbol score in its detail view for the full breakdown');}
+  if(qSym){const c=countActiveInds(qSym);html+=row(qSym.id+' (quote, subtracted)',-symScore(qSym),c.active+' contributing indicators - pair score = base score − quote score');}
   const carry=typeof pairCarryAdj==='function'?pairCarryAdj(pairName):0;
-  if(carry)html+=row('Carry adjustment',carry,'interest-rate differential adjustment');
+  if(carry)html+=row('Carry adjustment',carry,'policy-rate differential: ±0.5 from 0.5%, ±1 from 1.5%');
   html+=scoreInfoTotalRow('Pair score',pairScore(pairName));
+  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">Note: the two sides may track different indicator sets (different number of releases), so their score ranges are not perfectly symmetric.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+pairName;
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');

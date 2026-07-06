@@ -213,6 +213,36 @@ Alle Backfill-Schritte laufen mit `continue-on-error: true` und ausführlichem
 Debug-Logging (Byte-Größen, Kopfzeilen-Dumps, Diagnose-Zähler) — bei
 zukünftigen Problemen zuerst `workflow_dispatch` + Job-Logs statt zu raten.
 
+### Score-Logik-Analyse (2026-07-06) — Entscheidungen, nicht neu aufrollen
+
+Komplette Score-Pipeline auditiert (Bias-Quellen → Gewichte → Trend →
+Karte → Symbol → Paar). Gefixt wurden zwei echte Doppelzählungen:
+
+- **CPI m/m gehört zur CPI-Gruppe**: `CORE_PAIRS` sind jetzt GRUPPEN
+  beliebiger Größe; `['CPI (Headline)','Core CPI','CPI']` teilt sich das
+  Gewicht (vorher zählte EIN CPI-Release über m/m voll + y/y 0,5 + Core
+  0,5 = bis zu 2,0 Punkte). `['NFP / Employment Change','ADP Employment']`
+  ebenso (beide messen US-Payrolls). Halbierung greift nur, wenn Partner
+  tatsächlich auf derselben Karte anwesend sind (JPY-PPI ohne Core bleibt 1).
+- Score-Modal (Klick auf jeden Score) zeigt seither: Gruppen-Hinweis
+  ("shares weight with…"), Release-Datum + Alter (amber >45 Tage),
+  aktive/gesamt Indikatoren je Symbol, Paar-Asymmetrie-Fußnote.
+  Arithmetik-Quelle ist ausschließlich `indScoreParts` (indScore summiert
+  nur) — Modal kann nie von der echten Rechnung abweichen.
+
+BEWUSST NICHT geändert (mit Nutzer-Kontext, nicht heimlich "fixen"):
+- **Magnitude-Blindheit** (0,01-Beat zählt wie Riesen-Beat): diskretes
+  Modell ist Nutzer-Design; Skalierung bräuchte willkürliche Schwellen.
+- **Keine Normalisierung über Symbole** (USD trackt mehr Indikatoren als
+  z. B. CHF → größere Amplitude): würde die vertraute Skala und die
+  ±3-Schwellen brechen; stattdessen Transparenz-Fußnoten in den Modalen.
+- **Alte Releases zählen weiter** (kein Zeit-Decay): Quartalsdaten sind
+  legitim alt; stattdessen Alters-Anzeige im Modal.
+- **Manuelles Bias ohne Forecast wiegt 1,0** (Step-Auto nur 0,5): bewusste
+  Nutzer-Überzeugung zählt voll; im Modal sichtbar.
+- Interest Rates ohne Trend, COT ohne Trend, Spread=0: Nutzer-Entscheide
+  vom 05.07., stehen weiter oben dokumentiert.
+
 ### GitHub-MCP-Connector kann mitten in der Session die Verbindung verlieren
 
 - Symptom: alle `mcp__github__*`-Tools verschwinden (auch per `ToolSearch`
