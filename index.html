@@ -1033,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#581c87;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-CMP-EVERYWHERE-78</span><span id="verBannerText"> (the normalised comparison score is now THE displayed symbol score everywhere - sidebar, asset title badge, globe labels/tooltip, symbol widgets, risk rows, heatmap, matrix ranking, set-ups asset list and the weekly report snapshot all show raw sum x normalisation factor (avg FX indicator count / own tracked count), so assets tracking fewer indicators reach the same heights. Score modal now leads with "Displayed score: raw x factor"; the automatic +/-3 bias threshold still evaluates the raw sum (disclosed in modal + badge tooltip). Insights: stack categories now open as a dropdown BELOW the tab instead of inline next to it - closes on selecting a category, tapping the tab again, or clicking anywhere else)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#064e3b;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-TREND-BACKFILL-79</span><span id="verBannerText"> (Set-ups: non-FX asset rows now always render all 5 grid cells (name/ticker/delta/score/star) with empty placeholders where a badge does not apply - score and star line up in one column with the pair rows again. Trend history backfill: audited all assets for indicators lacking the 2 previous values the 2-step trend needs - 12 affected (all quarterly: GDP QoQ for AUD/NZD/CAD/JPY/CHF/GBP, AUD PPI, NZD CPI/Employment/Unemployment/Consumer Confidence, EUR Employment Change). Root cause: the TradingView window only covered 95 days. The hourly workflow now additionally fetches five older 60-day windows (back to ~13 months) so quarterly indicators get >=3 history points; the app adopts the longer history automatically via adoptFeedHistory on the next data refresh)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5720,13 +5720,21 @@ function renderPairs(){
     const d=Math.round((rb.rate-rq.rate)*100)/100;
     return`<button class="rate-diff${d>0?' pos':d<0?' neg':''}" onclick="openCarryDetail('${escH(name)}')" title="Click for the carry breakdown">Δ${d>0?'+':''}${d}%</button>`;
   };
-  const row=it=>`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
+  // Jede Zeile hat IMMER exakt 5 Zellen (Name/Chip/Δ/Score/★): das Subgrid
+  // ordnet Kinder nach Spalten-INDEX zu - fehlt bei Non-FX-Assets das
+  // Δ-Badge (oder der Ticker-Chip, z.B. GER 100), rutschten Score und Stern
+  // sonst eine Spalte nach links und standen nicht mehr in einer Spalte mit
+  // den Paar-Zeilen (User-Screenshot 2026-07-07). Leere <span> als Platzhalter.
+  const row=it=>{
+    const chip=tickerChipHtml(tickerInfoForItem(it.kind,it.kind==='pair'?it.name:it.id))||'<span></span>';
+    const rd=(it.kind==='pair'?rateDiff(it.name):'')||'<span></span>';
+    return`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     <div class="sym-name dw-pname">${escH(it.name)}</div>
-    ${tickerChipHtml(tickerInfoForItem(it.kind,it.kind==='pair'?it.name:it.id))}
-    ${it.kind==='pair'?rateDiff(it.name):''}
+    ${chip}
+    ${rd}
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${it.name}')`)}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
-  </div>`;
+  </div>`;};
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
     ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
