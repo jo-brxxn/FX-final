@@ -113,7 +113,8 @@ Positioning, WoW Change — in `applyCotDataFeed`):
   (bull) bzw. gefallen (bear), aus `COT_DATA.symbols[id].history` (26
   Wochen). Net Bullish + Net Bearish sind komplementär (Long%+Short%=100)
   und teilen sich als Paar je ±0,5 (zusammen ±1, wie ein Core-Paar), WoW
-  zählt ±1. `ind.cotTrendPts` ([[Datum,Wert]×3], eigene Reihe je Indikator:
+  zählt ±1 nur ab |Δ| ≥ 3 Prozentpunkten, kleinere Bewegungen ±0,5
+  (`cotWowIsSmall` in `indIsHalfWeight`, Nutzer-Entscheid 2026-07-07). `ind.cotTrendPts` ([[Datum,Wert]×3], eigene Reihe je Indikator:
   Long% bzw. Short%) füttert Chip-Fortschritt (`cotTrendProgress`) und
   Trend-Modal (eigener COT-Zweig in `openTrendInfo`).
 - Gilt wie das COT-Auto-Bias auch für Non-FX (COT-Rubrik ist nicht in

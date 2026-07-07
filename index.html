@@ -1033,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#4a044e;color:#fae8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: FUCHSIA-SB-SCROLL-IOS-76</span><span id="verBannerText"> (iOS sidebar scroll freeze after switching assets - second root cause: the backdrop blur added with the aurora sat directly on the sidebar scroll container, and the repaint caused by rebuilding the detail pane next to it (asset switch) throws the blurred scroll layer away on iOS - the bar stops responding to touch scrolling until re-tapped. Blur removed from the sidebar (translucency stays at .55 so the aurora still shimmers through), legacy -webkit-overflow-scrolling removed, and the 450ms long-press reorder timer is now cancelled while the bar scrolls so it can no longer trigger a full rebuild mid-scroll)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fae8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fae8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1e293b;color:#e2e8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-COT-WOW-WEIGHT-77</span><span id="verBannerText"> (COT WoW change now weighs by magnitude: the week-over-week shift in net positioning moves the score by the full +/-1 only when it is at least 3 percentage points away from 0 - smaller shifts count +/-0.5. Implemented via the shared half-weight check so the score modal, card score and symbol score all stay consistent; the modal discloses "small WoW shift (<3 pp), half weight" on affected rows. Help text and comments updated)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1568,7 +1568,7 @@ function introLogin(){
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
     <div class="help-sec">Central bank & COT</div>
-    <div class="help-p">The Interest Rates card has two extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 as before. The <b>2Y/10Y Spread</b> is display-only and counts 0 — a 10Y move would otherwise be double-counted, and curve steepening isn't a clean bullish/bearish signal on its own.</div>
+    <div class="help-p">The Interest Rates card has two extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 only when the shift is at least 3 percentage points away from 0 — smaller moves count ±0.5. The <b>2Y/10Y Spread</b> is display-only and counts 0 — a 10Y move would otherwise be double-counted, and curve steepening isn't a clean bullish/bearish signal on its own.</div>
     <div class="help-sec">Data</div>
     <div class="help-p">Calendar & indicator values refresh automatically (Forex Factory / TradingView / CFTC / bond closes, hourly via GitHub).</div>
     <div class="help-sec">Sync</div>
@@ -1694,7 +1694,22 @@ function indIsHalfWeight(ind,rub){
   if(BOND_HALF_PT.has(ind.name))return true;
   if(COT_NET_HALF.has(stripPeriodSuffix(ind.name).base))return true;
   if(CB_TONE_HALF.has(ind.name))return true;
+  if(cotWowIsSmall(ind))return true;
   return indIsCorePaired(ind,rub);
+}
+// COT WoW-Aenderung: die volle +/-1-Score-Wirkung gibt es nur bei einer
+// DEUTLICHEN Verschiebung der Netto-Positionierung (|Delta| >= 3 Prozent-
+// punkte); kleinere Bewegungen zaehlen nur 0,5 (Nutzer-Entscheid
+// 2026-07-07). Der Betrag kommt aus dem automatisch gesetzten
+// research.actual ("+2.5%", cotPct-Format aus applyCotDataFeed); ohne
+// parsebaren Wert (rein manuelle Karte) bleibt es beim vollen Gewicht.
+const COT_WOW_BASE='WoW Change in Net Position (%)';
+const COT_WOW_FULL_AT=3;
+function cotWowIsSmall(ind){
+  if(stripPeriodSuffix(ind.name).base!==COT_WOW_BASE)return false;
+  const r=ind.research||{};
+  const v=parseFloat(String(r.actual==null?'':r.actual).replace(',','.'));
+  return isFinite(v)&&Math.abs(v)<COT_WOW_FULL_AT;
 }
 // Grundgewicht eines Indikators - Halbgewicht-Typen (s.o.) zaehlen immer 0,5;
 // fehlt der Forecast, ist auch das schwaechere 1-Schritt-Basissignal
@@ -1772,6 +1787,7 @@ function scoreInfoIndRow(ind,rub){
     if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
     else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
     if(p.noTrend)bits.push('card excluded from trend adjustments');
+    if(cotWowIsSmall(ind))bits.push('small WoW shift (<3 pp), half weight');
     const partners=indGroupPartners(ind,rub);
     if(partners)bits.push('shares weight with '+partners.join(' + '));
     sub=bits.join(' · ');
@@ -8282,8 +8298,11 @@ function cotPct(n,signed){n=+n;if(!isFinite(n))return'–';return(signed&&n>0?'+
 // ── COT-Werte in die "COT Data"-Karte jedes Symbols eintragen ──────
 // Net Bullish Positioning <- Long %, immer bullish (0% -> neutral).
 // Net Bearish Positioning <- Short %, immer bearish (0% -> neutral).
-// WoW Change in Net Position (%) <- woechentliche Netto-%-Aenderung, zaehlt
-// als einziger der drei Indikatoren in den Score (bull >0 / bear <0 / neutral =0).
+// WoW Change in Net Position (%) <- woechentliche Netto-%-Aenderung
+// (bull >0 / bear <0 / neutral =0). Gewicht haengt an der Staerke der
+// Verschiebung: +/-1 erst ab |Delta| >= 3 Prozentpunkten, kleinere
+// Bewegungen zaehlen +/-0,5 (cotWowIsSmall in indIsHalfWeight,
+// Nutzer-Entscheid 2026-07-07).
 const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm';
 // ── COT-Dashboard-Hinweis: rein zeitbasiertes Fenster (Freitag 15:30
 // New Yorker Zeit, dem CFTC-Release-Zeitpunkt, bis einschliesslich Sonntag),
@@ -8334,9 +8353,10 @@ function applyCotDataFeed(){
     setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct>=60?'bear':'neu');
     setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu');
     // Karten-Bias direkt aus dem Score-Vorzeichen ableiten: die COT-Karte
-    // hat nur zwei kleine Score-Treiber (WoW-Aenderung +/-1 und Netto-
-    // Positionierung +/-0,5), die normale +/-2-Schwelle wuerde also fast
-    // nie bull/bear ergeben. -> Karte kippt direkt mit dem Vorzeichen.
+    // hat nur zwei kleine Score-Treiber (WoW-Aenderung +/-1 ab 3pp, sonst
+    // +/-0,5, und Netto-Positionierung +/-0,5), die normale +/-2-Schwelle
+    // wuerde also fast nie bull/bear ergeben. -> Karte kippt direkt mit
+    // dem Vorzeichen.
     const sc=rubScore(rub),cardBias=sc>0?'bull':sc<0?'bear':'neu';
     if(rub.bias!==cardBias){rub.bias=cardBias;changed=true;}
   });
