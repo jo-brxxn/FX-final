@@ -1025,7 +1025,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#14532d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-HIDE-STICKY-73</span><span id="verBannerText"> (second root cause of the hide button jumping back fixed: toggling it never set the user-pending flag, so the optimistic version check in cloudPush treated the fresh toggle as an auto-refresh, replaced the push with a pull and restored the OLD cloud stage whenever another device had pushed anything in between. Preference saves (hide stage, designer hue, green-dismiss) now mark a pending user edit; while pending, auto-pulls keep the local stage/hue and re-push them as a new version. A manual download still takes everything from the cloud)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SIDEBAR-SCROLL-74</span><span id="verBannerText"> (asset sidebar scrolling fixed for real: switching assets no longer rebuilds the whole sidebar via innerHTML - on iOS that replacement of the scroll container killed native momentum scrolling until you re-tapped ("cant scroll properly after switching"). Selecting now only toggles the .on highlight class on the buttons (data-sym), leaving the scroll container and its DOM intact; full re-renders still happen for score updates, flip-glow, reorder and tab switches. Sidebar scores remain plain text, not clickable - the breakdown stays on the scores inside the asset view)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -4575,7 +4575,11 @@ function sbClick(id){
   if(_sbSuppressClick){_sbSuppressClick=false;return;}
   const was=sbReorderId;
   sbReorderId=null;
-  if(was===id){renderSidebar();return;}
+  // Reorder-Modus verlassen: hier ist ein voller Render noetig, um die
+  // eingeblendeten ▲▼-Buttons wieder zu entfernen. Ansonsten (normaler
+  // Asset-Wechsel) laeuft die Auswahl ueber selSym() als reiner
+  // Klassen-Wechsel, ohne die Leiste neu aufzubauen (Scroll-Fix, s.o.).
+  if(was){renderSidebar();if(was===id)return;}
   selSym(id);
 }
 // Lang-Druck auf eine KATEGORIE-Überschrift blendet ▲/▼-Buttons ein, mit denen
@@ -4627,7 +4631,7 @@ function renderSidebar(){
       const isCustom=customCatIds.includes(id);
       const reorder=sbReorderId===id;
       return`<div class="ab-wrap${reorder?' reorder':''}">
-        <button class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
+        <button data-sym="${id}" class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
           <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScore(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
@@ -5039,7 +5043,21 @@ function renderNoteRub(rub,ri,total){
   </div>`;}
 
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
-function selSym(id){selId=id;curSub='specific';renderSidebar();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
+// Nur die Auswahl-Markierung (.on) in der Assets-Leiste umsetzen, OHNE die
+// ganze Leiste per innerHTML neu zu bauen. Wichtig fuers Scrollen auf iOS:
+// ein innerHTML-Ersatz des Scroll-Containers (-webkit-overflow-scrolling:
+// touch) killt beim Asset-Wechsel die native Scroll-Mechanik, bis man neu
+// antippt ("kann nach dem Wechseln nicht mehr vernuenftig scrollen"). Der
+// Leisten-Inhalt (Name/Score/Sparkline) aendert sich beim Auswaehlen nicht,
+// also genuegt der Klassen-Wechsel. Volle Re-Renders (Score-Update, Flip-
+// Glow, Reorder, Tab-Wechsel) laufen weiter ueber renderSidebar().
+function updateSidebarSelection(){
+  const active=curPage==='cur';
+  document.querySelectorAll('#sidebar .ab').forEach(b=>{
+    b.classList.toggle('on',active&&b.dataset.sym===selId);
+  });
+}
+function selSym(id){selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite und wechselt dabei automatisch auf den passenden FX/Non-FX-Tab.
 function gotoSym(id){
