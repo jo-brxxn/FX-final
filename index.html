@@ -33,7 +33,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
-.hdr{background:rgba(13,17,23,.82);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
@@ -97,9 +97,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
    auf ALLEN Tabs sichtbar (vorher nur Dashboard); die Karten behalten
    bewusst ihre deckenden Hintergruende als Kontrast. Kopfleiste (.hdr),
    Tab-Leiste (.tabbar) und Seitenleiste (.sb) liegen mit UNTERSCHIEDLICH
-   starken halbtransparenten Overlays darueber (hdr .82 dunkler als tabbar
-   .60 als sb .45), damit sich die Leisten sichtbar vom Content und
-   voneinander separieren, statt alles gleich stark schimmern zu lassen. */
+   getoenten halbtransparenten Overlays darueber, damit sich die Leisten
+   sichtbar vom Content und voneinander separieren: hdr HELLER Ton
+   (--bg4-Basis, rgba(35,43,58,.58)) - ein dunkler Ton nahe --bg0 war dort
+   unsichtbar ("hat noch keinen Hintergrund", User 2026-07-07) -, tabbar
+   dunkler (rgba(17,22,31,.60)), sb am durchlaessigsten (.45). */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
 .aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
@@ -112,6 +114,11 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
 @keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
 @media (prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
+/* Designer (🌈 im Header): Regler laeuft durch das volle Farbspektrum,
+   Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
+.hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
+.hue-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.hue-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
 .ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
@@ -1009,7 +1016,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#2e1065;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-AURORA-EVERYWHERE-69</span><span id="verBannerText"> (the animated risk-sentiment aurora background is no longer dashboard-only - it now shows on every tab, incl. Assets, with the opaque cards kept as contrast on top. Header, tab bar and asset sidebar sit on it with deliberately different overlay strengths so the bars separate visually: header darkest (.82), tab bar lighter (.60), sidebar lightest (.45, now translucent with blur instead of solid). Aurora colors refresh on every tab switch)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#881337;color:#ffe4e6;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-DESIGNER-70</span><span id="verBannerText"> (new 🌈 Design button in the header opens the Designer: a slider runs through the full colour spectrum with live preview, Apply recolours the aurora + page background with the chosen hue (synced across devices), Auto returns to risk-sentiment colouring; closing without Apply reverts the preview. Header bar (Export/Backups etc.) now has its own visible glassy tone (lighter, .58) distinct from tab bar (.60 darker) and sidebar (.45). Comparison-base normalisation is fully dynamic: factors recompute live from the current indicator counts on every render - verified by adding/removing an indicator)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ffe4e6;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1160,6 +1167,7 @@ function introLogin(){
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆<span class="btn-lbl"> Import</span></button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" onclick="openBackupM()" title="Local backups (last 5 snapshots)">🕐<span class="btn-lbl"> Backups</span></button>
+    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour">🌈<span class="btn-lbl"> Design</span></button>
     <button class="btn" onclick="openHelpM()" title="How the scoring works">❓<span class="btn-lbl"> Help</span></button>
     <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox">📥<span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
     <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
@@ -1294,6 +1302,19 @@ function introLogin(){
   <div id="dashWidgets"></div>
 </div>
 
+<!-- MODAL: Designer (Hintergrund-Farbwahl ueber das Farbspektrum) -->
+<div class="ov" id="mDesigner" style="display:none">
+  <div class="modal" style="max-width:430px">
+    <h3>🌈 Designer</h3>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.5">Slide through the colour spectrum – the app background previews the colour live. <b>Apply</b> keeps it (synced to your other devices), <b>Auto</b> returns to the risk-sentiment colouring that shifts with the market mood.</div>
+    <input type="range" class="hue-slider" id="designHueSlider" min="0" max="360" step="1" value="210" oninput="previewDesignHue(this.value)">
+    <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+      <div id="designHueSwatch" style="width:36px;height:36px;border-radius:9px;border:1px solid var(--bd2);flex-shrink:0"></div>
+      <div id="designHueLbl" style="font-size:12px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Hue 210°</div>
+    </div>
+    <div class="m-btns"><button class="btn" onclick="resetDesignHue()">Auto (sentiment)</button><button class="btn" onclick="closeM('mDesigner')">Cancel</button><button class="btn g" onclick="applyDesignerHue()">Apply</button></div>
+  </div>
+</div>
 <!-- MODAL: Add Symbol -->
 <div class="ov" id="mAddSym" style="display:none">
   <div class="modal">
@@ -4236,13 +4257,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4327,7 +4348,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScore(s),bias:s.bias}));
@@ -4392,6 +4413,9 @@ async function cloudPull(manual){
         compactView=cd.compactView?1:0;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();
       }
       if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
+      // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
+      // vom anderen Geraet ankommt.
+      if(cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -4418,7 +4442,11 @@ function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
 function openM(id){document.getElementById(id).style.display='flex';}
-function closeM(id){document.getElementById(id).style.display='none';}
+function closeM(id){document.getElementById(id).style.display='none';
+  // Designer ohne Apply geschlossen (Cancel ODER Klick neben das Fenster):
+  // Live-Vorschau auf den gespeicherten Zustand zuruecksetzen.
+  if(id==='mDesigner')updateAuroraColors();
+}
 // Klick/Tipp NEBEN das geoeffnete Fenster (auf den abgedunkelten Overlay-
 // Hintergrund) schliesst es - gilt einheitlich fuer alle Modals (.ov).
 // Der pointerdown-Anker verhindert, dass eine Textauswahl, die im Fenster
@@ -6515,12 +6543,65 @@ function renderCotNotify(){
 const AURORA_NEU='#5b9bd8';
 function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
+  // Vom Nutzer im Designer (🌈 im Header) gewaehlter Farbton hat Vorrang
+  // vor der Risk-Sentiment-Faerbung; designHue=null bedeutet Auto.
+  if(designHue!=null){applyDesignHue(designHue);return;}
+  document.body.style.background='';
+  host.style.removeProperty('--aurora-c');
   const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScore(s):null;};
   const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
   const net=avg(RISK_ON_IDS)-avg(RISK_OFF_IDS);
   const col=net>0.8?BC.bull:net<-0.8?BC.bear:AURORA_NEU;
   host.style.setProperty('--aurora-a',col);
   host.style.setProperty('--aurora-b',col);
+}
+// ── Designer: Hintergrund-Farbwahl ueber das Farbspektrum ──
+// designHue: null = Auto (Aurora folgt dem Risk-Sentiment), Zahl 0-360 =
+// vom Nutzer gewaehlter Farbton. Faerbt die drei Aurora-Blobs UND den
+// Seiten-Hintergrund (sehr dunkle Variante desselben Tons). Liegt wie
+// greenDismissed/tabStacks ausserhalb von snap()/Undo und ist deshalb an
+// allen vier Sync-Stellen angebunden (cloudPush/cloudPull/exportData/
+// importData, siehe CLAUDE.md-Kernregel).
+let designHue=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_hue')||'null');return typeof v==='number'?v:null;}catch(e){return null;}})();
+function applyDesignHue(h){
+  const host=document.getElementById('dashAurora');if(!host)return;
+  host.style.setProperty('--aurora-a','hsl('+h+',72%,62%)');
+  host.style.setProperty('--aurora-b','hsl('+h+',72%,62%)');
+  host.style.setProperty('--aurora-c','hsl('+h+',60%,42%)');
+  document.body.style.background='hsl('+h+',30%,8%)';
+}
+function saveDesignHue(){
+  try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}
+  // fxpro_updated bumpen + Auto-Push, damit die Wahl als neue Version in
+  // die Cloud geht und auf den anderen Geraeten ankommt.
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  cloudAutoSync();
+}
+function openDesignerM(){
+  const h=designHue!=null?designHue:210;
+  const sl=document.getElementById('designHueSlider');if(sl)sl.value=h;
+  previewDesignHue(h);
+  openM('mDesigner');
+}
+function previewDesignHue(v){
+  v=+v;
+  applyDesignHue(v);
+  const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background='hsl('+v+',72%,55%)';
+  const lb=document.getElementById('designHueLbl');if(lb)lb.textContent='Hue '+v+'°';
+}
+function applyDesignerHue(){
+  const sl=document.getElementById('designHueSlider');if(!sl)return;
+  designHue=+sl.value;
+  saveDesignHue();
+  updateAuroraColors();
+  closeM('mDesigner');
+}
+function resetDesignHue(){
+  designHue=null;
+  saveDesignHue();
+  updateAuroraColors();
+  closeM('mDesigner');
 }
 function renderDash(){
   renderCotNotify();
