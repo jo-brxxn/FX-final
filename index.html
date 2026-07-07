@@ -738,7 +738,13 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .evt-flag{font-size:16px;line-height:1}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
-.evt-body .cal-table{margin-bottom:0;border-radius:0 0 var(--rs) var(--rs);border-top:none}
+/* .evt-body verbindet Toggle-Zeile und Tabelle zu EINER durchgehenden
+   Karte: die Toolbar (FF/All impacts/New Alert/Refresh) schwebte vorher
+   auf transparentem Grund zwischen beiden - seit die Aurora hinter dem
+   Content sichtbar ist, wirkte das wie ein Loch im Mini-Kalender
+   (User-Screenshot 2026-07-07). */
+.evt-body{background:var(--bg2);border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--rs) var(--rs);padding:9px 10px 10px}
+.evt-body .cal-table{margin-bottom:0}
 /* ── HISTORY STRIP (DETAIL PAGE, letzte 10 Tage) ── */
 .hist-strip{display:flex;gap:4px;padding:9px 8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto}
 .hist-day{flex:1 0 0;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
@@ -1019,7 +1025,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1e3a8a;color:#dbeafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-SCROLL-FIX-71</span><span id="verBannerText"> (globe widget no longer blocks page scrolling: touch-action pan-y on the widget area, only the sphere circles themselves capture the drag-to-rotate - matching the small hitbox. Asset sidebar scroll fixed: #sidebar is its own scroll container and every re-render reset scrollTop to 0 via innerHTML replacement - scroll position is now preserved across asset switches and the flip-glow re-render. Sidebar scores are plain text again (not clickable) - the score breakdown stays available on the scores inside the asset view itself)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d12;color:#fde68a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-CALENDAR-GAP-72</span><span id="verBannerText"> (mini calendar in the asset view no longer has a see-through gap: the toolbar row (Forex Factory / All impacts / New Alert / Refresh) used to float on the transparent page background between the ECONOMIC EVENTS header and the events table - visible as a hole since the aurora background shows behind the content. The .evt-body now carries the card background/border itself, connecting header bar, toolbar and table into one continuous card)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
