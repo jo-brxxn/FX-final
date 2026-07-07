@@ -1033,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#064e3b;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-TREND-BACKFILL-79</span><span id="verBannerText"> (Set-ups: non-FX asset rows now always render all 5 grid cells (name/ticker/delta/score/star) with empty placeholders where a badge does not apply - score and star line up in one column with the pair rows again. Trend history backfill: audited all assets for indicators lacking the 2 previous values the 2-step trend needs - 12 affected (all quarterly: GDP QoQ for AUD/NZD/CAD/JPY/CHF/GBP, AUD PPI, NZD CPI/Employment/Unemployment/Consumer Confidence, EUR Employment Change). Root cause: the TradingView window only covered 95 days. The hourly workflow now additionally fetches five older 60-day windows (back to ~13 months) so quarterly indicators get >=3 history points; the app adopts the longer history automatically via adoptFeedHistory on the next data refresh)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7f1d1d;color:#fee2e2;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-HISTORY-SCALE-80</span><span id="verBannerText"> (score history modal now shows the same displayed score as everywhere else: it used to back-calculate and show the RAW day totals (USD "+3.5") while sidebar/badge/widgets show the normalised comparison score ("+3") - day badges are now scaled with the same factor (raw x avg-indicator-base), disclosed in their tooltip. The per-event +/-1 effect chips deliberately stay raw, matching the raw part rows in the score breakdown modal)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fee2e2;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fee2e2;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2583,15 +2583,23 @@ function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
   const days=symHistoryDays(id,HIST_DAYS).slice().reverse(); // neueste zuerst
-  let running=sym?symScore(sym):0; // Score-Wert des jeweils angezeigten Tages
+  // Intern wird ROH gerechnet (die Event-Effekte sind rohe +/-1-Beitraege),
+  // ANGEZEIGT wird aber der normalisierte Vergleichs-Score (raw x Faktor) -
+  // derselbe Wert wie ueberall sonst (Sidebar, Badge, Widgets). Sonst stand
+  // hier "3.5", waehrend das Asset ueberall "+3" zeigte (User-Report
+  // 2026-07-07). Der Faktor ist der HEUTIGE (Indikator-Anzahlen aendern
+  // sich rueckwirkend nicht) - die Event-Zeilen behalten bewusst ihre
+  // rohen +/-1-Effekte, wie im Score-Breakdown-Modal.
+  const cmpF=sym?symCmpFactor(sym):1;
+  let running=sym?symScore(sym):0; // ROHER Score-Wert des jeweils angezeigten Tages
   const rows=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
     const isToday=d.date===today;
     const hdrTxt=escH(fmtDayHdr(d.date))+(isToday?' · Today':'');
-    const dayScore=running;
+    const dayScore=Math.round(running*cmpF*10)/10;
     const scoreCol=scoreColor(dayScore);
     const scoreLbl=(dayScore>0?'+':'')+dayScore;
-    const scoreTip=isToday?'Current live score':'Score at the end of this day';
+    const scoreTip=(isToday?'Current live score':'Score at the end of this day')+' (displayed scale: raw × '+cmpF+')';
     let net=0;
     const evHtml=evs.map(ev=>{
       const b=indBiasFromEvent(ev);
