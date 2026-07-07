@@ -33,7 +33,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   --r:10px;--rs:7px;--rss:5px;
 }
 /* ── LAYOUT ── */
-.hdr{background:rgba(17,22,31,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hdr{background:rgba(13,17,23,.82);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
@@ -58,7 +58,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:rgba(17,22,31,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.tabbar{background:rgba(17,22,31,.60);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
@@ -71,7 +71,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
-.sb{width:72px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
+.sb{width:72px;background:rgba(17,22,31,.45);backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
 .sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
@@ -88,13 +88,18 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @keyframes flipScorePulse{0%{transform:scale(1)}30%{transform:scale(1.4)}60%{transform:scale(.92)}100%{transform:scale(1)}}
 .flip-glow{animation:flipGlowSweep 1.4s ease-out}
 .flip-pulse{display:inline-block;animation:flipScorePulse .6s ease-out}
-/* Aurora-Hintergrund im Dashboard: 3 sehr langsam wandernde, stark
-   geblurrte Farbflaechen hinter dem Globus/den Karten, gefaerbt nach dem
-   aktuellen Risk-Sentiment (siehe updateAuroraColors) - der Hintergrund
-   ist damit selbst eine grobe Stimmungsanzeige. position:fixed + negativer
-   z-index, damit er unabhaengig vom Scroll immer den ganzen Viewport
-   ausfuellt, aber hinter allem normalen Content bleibt. Nur sichtbar,
-   waehrend das Dashboard aktiv ist (siehe showTab).*/
+/* Aurora-Hintergrund: 3 sehr langsam wandernde, stark geblurrte
+   Farbflaechen hinter den Karten, gefaerbt nach dem aktuellen
+   Risk-Sentiment (siehe updateAuroraColors) - der Hintergrund ist damit
+   selbst eine grobe Stimmungsanzeige. position:fixed + negativer z-index,
+   damit er unabhaengig vom Scroll immer den ganzen Viewport ausfuellt,
+   aber hinter allem normalen Content bleibt. Seit User-Wunsch 2026-07-07
+   auf ALLEN Tabs sichtbar (vorher nur Dashboard); die Karten behalten
+   bewusst ihre deckenden Hintergruende als Kontrast. Kopfleiste (.hdr),
+   Tab-Leiste (.tabbar) und Seitenleiste (.sb) liegen mit UNTERSCHIEDLICH
+   starken halbtransparenten Overlays darueber (hdr .82 dunkler als tabbar
+   .60 als sb .45), damit sich die Leisten sichtbar vom Content und
+   voneinander separieren, statt alles gleich stark schimmern zu lassen. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
 .aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
@@ -1004,7 +1009,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#134e4a;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-FAIR-COMPARE-68</span><span id="verBannerText"> (reverted the CPI-m/m and NFP/ADP groupings per user decision - CORE_PAIRS are only the classic Headline/Core pairs again, NFP and ADP each count a full +/-1. New fair comparison basis for symbol-vs-symbol: pair score and currency-strength ranking now use symScoreCmp = raw score x (avg FX indicator count / own count), e.g. USD 34 tracked -> x0.86, CHF 28 -> x1.04. Raw symbol score, cards, heatmap and +/-3 thresholds unchanged. The factor is disclosed per side in the score modals: "raw x 0.86 (34 tracked vs avg 29.3)")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#2e1065;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-AURORA-EVERYWHERE-69</span><span id="verBannerText"> (the animated risk-sentiment aurora background is no longer dashboard-only - it now shows on every tab, incl. Assets, with the opaque cards kept as contrast on top. Header, tab bar and asset sidebar sit on it with deliberately different overlay strengths so the bars separate visually: header darkest (.82), tab bar lighter (.60), sidebar lightest (.45, now translucent with blur instead of solid). Aurora colors refresh on every tab switch)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1275,7 +1280,7 @@ function introLogin(){
   <div id="noteCats"></div>
 </div>
 <!-- PAGE: DASHBOARD -->
-<div class="dash-aurora" id="dashAurora" style="display:none">
+<div class="dash-aurora" id="dashAurora">
   <div class="aurora-blob aurora-a"></div>
   <div class="aurora-blob aurora-b"></div>
   <div class="aurora-blob aurora-c"></div>
@@ -8408,7 +8413,7 @@ function openTabMenu(kind,id,x,y){
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  const auroraEl=document.getElementById('dashAurora');if(auroraEl)auroraEl.style.display=tab==='dash'?'':'none';
+  updateAuroraColors();
   if(tab!=='cot')cotStopCountdown();
   const pgEl=document.getElementById(PAGE_IDS[tab]);
   if(pgEl){
@@ -8723,11 +8728,6 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-// Aurora-Hintergrund ist im HTML mit display:none vorbelegt (nur showTab()
-// blendet ihn sonst ein) - da der Boot hier bewusst NICHT ueber showTab()
-// laeuft, muss der gleiche Schritt hier nachgeholt werden, sonst bleibt der
-// Effekt beim allerersten Laden unsichtbar, bis einmal der Tab gewechselt wird.
-const _auroraBoot=document.getElementById('dashAurora');if(_auroraBoot)_auroraBoot.style.display='';
 renderDash();updateStat();updUB();updInboxBadge();updProfile();
 maybeShowFirstRunHelp();
 updFFLastUpd();
