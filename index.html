@@ -1033,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1e293b;color:#e2e8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-COT-WOW-WEIGHT-77</span><span id="verBannerText"> (COT WoW change now weighs by magnitude: the week-over-week shift in net positioning moves the score by the full +/-1 only when it is at least 3 percentage points away from 0 - smaller shifts count +/-0.5. Implemented via the shared half-weight check so the score modal, card score and symbol score all stay consistent; the modal discloses "small WoW shift (<3 pp), half weight" on affected rows. Help text and comments updated)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#581c87;color:#f3e8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-CMP-EVERYWHERE-78</span><span id="verBannerText"> (the normalised comparison score is now THE displayed symbol score everywhere - sidebar, asset title badge, globe labels/tooltip, symbol widgets, risk rows, heatmap, matrix ranking, set-ups asset list and the weekly report snapshot all show raw sum x normalisation factor (avg FX indicator count / own tracked count), so assets tracking fewer indicators reach the same heights. Score modal now leads with "Displayed score: raw x factor"; the automatic +/-3 bias threshold still evaluates the raw sum (disclosed in modal + badge tooltip). Insights: stack categories now open as a dropdown BELOW the tab instead of inline next to it - closes on selecting a category, tapping the tab again, or clicking anywhere else)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3e8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1836,13 +1836,14 @@ function openScoreInfoSym(symId){
     if(active.length)html+=active.map(i=>scoreInfoIndRow(i,rub)).join('');
     else html+=`<div style="color:var(--t3);font-size:11px">all indicators at 0</div>`;
   });
-  html+=scoreInfoTotalRow('Symbol score',symScore(sym));
-  // Vergleichs-Score offenlegen: fuer Paare & Currency-Strength-Ranking
-  // wird auf die gemeinsame Indikator-Basis skaliert (siehe symScoreCmp).
+  html+=scoreInfoTotalRow('Raw sum of all indicators',symScore(sym));
+  // Der ANGEZEIGTE Symbol-Score ist seit 2026-07-07 ueberall der
+  // Vergleichs-Score (raw x Normalisierungs-Faktor) - hier die Rechnung
+  // dahinter offenlegen.
   const cnt=countActiveInds(sym);
   const f=symCmpFactor(sym);
-  html+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:4px 8px;color:var(--t3)"><span>Comparison score (pairs & ranking): raw × ${f}</span><span style="font-weight:700">${fmtScNum(symScoreCmp(sym))}</span></div>`;
-  html+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">${cnt.active} of ${cnt.total} indicators currently contribute (${symTrackedCount(sym)} scoreable, Ø ${Math.round(fxRefCount()*10)/10} across FX). Wherever symbols are compared head-to-head, the score is scaled to this common base so tracking more releases does not inflate a symbol structurally.</div>`;
+  html+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 8px;margin-top:2px;border-top:1px solid var(--bd);font-weight:700;color:var(--t1)"><span>Displayed score: raw ${fmtScNum(symScore(sym))} × ${f}</span><span style="color:${scoreColor(symScoreCmp(sym))}">${fmtScNum(symScoreCmp(sym))}</span></div>`;
+  html+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">${cnt.active} of ${cnt.total} indicators currently contribute (${symTrackedCount(sym)} scoreable, Ø ${Math.round(fxRefCount()*10)/10} across FX). The displayed score is normalised to this common indicator base: raw sum × (Ø FX indicator count / own tracked count). Assets tracking fewer indicators (e.g. CHF) can therefore reach the same score heights as heavily tracked ones (e.g. USD) - the factor updates automatically whenever indicators are added or removed. The automatic ▲/▼ bias threshold (±3) still evaluates the raw sum.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+sym.id+(sym.full?' ('+sym.full+')':'');
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');
@@ -4394,7 +4395,7 @@ async function cloudPush(manual){
     const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
-    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScore(s),bias:s.bias}));
+    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias}));
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
@@ -4663,7 +4664,7 @@ function renderSidebar(){
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button data-sym="${id}" class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
           ${evtFlagAbs(c.id)}
-          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScore(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScoreCmp(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Move down">▼</button>`:''}
@@ -4695,7 +4696,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScore(c),'Symbol score = sum of all indicators across all cards (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check)','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -5689,7 +5690,7 @@ function renderPairs(){
   const seenPair=new Set();
   const items=[
     ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
-    ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScore(s)})),
+    ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScoreCmp(s)})),
   ];
   // Filterleiste: einzelne Währungen auswählen -> nur Paare mit dieser Währung.
   const active=setupCcyFilter.length>0;
@@ -6715,13 +6716,13 @@ function renderDash(){
         </div>
         ${sessionBarHtml()}`;
     }else if(w.type==='fx_bias'){
-      const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
-      const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScore(b)-symScore(a));
+      const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
+      const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           ${isNonFx(s.id)?tickerChipHtml(assetTickerInfo(s.id)):''}
-          ${rowScore(symScore(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
+          ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
           <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
         </div>`;
@@ -6786,7 +6787,7 @@ function renderDash(){
       const net=on-off,pct=Math.max(2,Math.min(98,50+net*8));
       const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
       const mx=Math.max(1,...[...ON_IDS,...OFF_IDS].map(id=>Math.abs(sc(id)||0)));
-      const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScore(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
+      const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
         <span class="risk-asset-name">${escH(s.name||id)}</span>
         <div class="risk-asset-track"><div class="risk-asset-bar" style="width:${Math.round(Math.abs(v)/mx*100)}%;background:${BC[s.bias]}"></div></div>
         <span class="risk-asset-sc" style="color:${BC[s.bias]}">${v>0?'+':''}${Math.round(v*10)/10}</span>
@@ -6863,7 +6864,7 @@ function renderDash(){
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScore(b)-symScore(a));
       content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
         <div class="heat-name">${escH(s.name)}</div>
-        <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${BC[s.bias]}" title="Score - tap for the breakdown">${symScore(s)>0?'+':''}${Math.round(symScore(s)*10)/10}</div>
+        <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${BC[s.bias]}" title="Score - tap for the breakdown">${symScoreCmp(s)>0?'+':''}${symScoreCmp(s)}</div>
         <div class="heat-bias" style="color:${BC[s.bias]}">${BL[s.bias]}</div>
       </div>`).join('')+`</div>`:`<div class="dw-empty">No non-FX assets.</div>`;
     }else if(w.type==='mini_calendar'){
@@ -7227,7 +7228,7 @@ function globeUpdateOne(st){
     const p=sym?globeProject(GLOBE_GEO[id][0],GLOBE_GEO[id][1],lon0,R):{vis:false};
     if(!p.vis){m.g.style.display='none';return;}
     m.g.style.display='';
-    const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScore(sym);
+    const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScoreCmp(sym);
     m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
     const label=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
     visMarkers.push({id,m,x,y,col,label});
@@ -7286,7 +7287,7 @@ function globeMarkerClick(ev,id){
   closeGlobeTip();
   const rect=host.getBoundingClientRect();
   const x=ev.clientX-rect.left,y=ev.clientY-rect.top;
-  const sc=symScore(sym),col=BC[sym.bias]||'#888';
+  const sc=symScoreCmp(sym),col=BC[sym.bias]||'#888';
   const mySessions=GLOBE_SESSIONS.filter(s=>s.ccys.includes(id)&&sessionActiveNow(s,new Date().getUTCHours()+new Date().getUTCMinutes()/60));
   const tip=document.createElement('div');
   tip.className='globe-tip';
@@ -7669,7 +7670,7 @@ function mxHeatColor(v,maxAbs){
 }
 function renderMatrix(){
   const el=document.getElementById('mxBody');if(!el)return;
-  const scores={};FX.forEach(id=>{const s=syms.find(x=>x.id===id);scores[id]=s?Math.round(symScore(s)*10)/10:0;});
+  const scores={};FX.forEach(id=>{const s=syms.find(x=>x.id===id);scores[id]=s?symScoreCmp(s):0;});
   // ── Stärke-Ranking ──
   const ranked=[...FX].sort((a,b)=>scores[b]-scores[a]);
   const maxAbs=Math.max(1,...FX.map(id=>Math.abs(scores[id])));
@@ -8538,8 +8539,10 @@ function renderTabBar(){
     if(st){
       if(done.has(st.id))return;done.add(st.id);
       const open=expandedStack===st.id,hasActive=st.members.includes(activeTabId);
+      // Mitglieder-Tabs erscheinen NICHT mehr inline daneben in der Leiste,
+      // sondern als Dropdown UNTER dem Stack-Button (openStackMenu,
+      // User-Wunsch 2026-07-07).
       html+=`<button class="tp tp-stack${open?' open':''}${hasActive?' has-active':''}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')">${escH(st.name)}<span class="tp-arrow">${open?'▾':'▸'}</span></button>`;
-      if(open)st.members.forEach(mid=>{html+=tabBtnHtml(mid,true);});
     }else{
       html+=tabBtnHtml(id,false);
     }
@@ -8553,7 +8556,32 @@ function tabPressStart(e,kind,id){
 }
 function tabPressEnd(){if(_tabPressTimer){clearTimeout(_tabPressTimer);_tabPressTimer=null;}}
 function onTabClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}selectTab(id);}
-function onStackClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}expandedStack=expandedStack===id?null:id;renderTabBar();}
+function onStackClick(e,id){
+  if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
+  if(expandedStack===id){closeTabMenu();return;}
+  openStackMenu(id,e.currentTarget);
+}
+// Kategorien eines Stack-Tabs (z.B. "Insights") als Dropdown UNTER dem
+// Button oeffnen. Schliesst sich beim Auswaehlen einer Kategorie, beim
+// erneuten Tippen auf den Stack und beim Klick irgendwo anders
+// (tabMenuOutside-Mechanik, geteilt mit dem Langdruck-Menue).
+function openStackMenu(id,btn){
+  const r=btn.getBoundingClientRect(); // VOR closeTabMenu/renderTabBar lesen - danach ist der Button-Knoten ersetzt
+  closeTabMenu();
+  const st=tabStacks.find(x=>x.id===id);if(!st)return;
+  expandedStack=id;renderTabBar();
+  const m=document.createElement('div');m.className='tab-menu';m.id='tabMenu';
+  m.innerHTML=st.members.map(mid=>{
+    const d=TABS[mid];if(!d)return'';
+    return`<button class="tab-menu-item" data-mid="${mid}" style="${activeTabId===mid?'background:var(--bg4);color:var(--t0);font-weight:700':''}">${escH(d.label)}</button>`;
+  }).join('');
+  document.body.appendChild(m);
+  const mw=Math.max(185,m.offsetWidth);
+  m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
+  m.style.top=(r.bottom+4)+'px';
+  m.querySelectorAll('.tab-menu-item').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();const mid=b.getAttribute('data-mid');closeTabMenu();selectTab(mid);};});
+  setTimeout(()=>document.addEventListener('pointerdown',tabMenuOutside,true),0);
+}
 function createStack(name){const id=uid();tabStacks.push({id,name,members:[]});saveTabStacks();return id;}
 function addTabToStack(tabId,stackId){
   tabStacks.forEach(s=>{s.members=s.members.filter(m=>m!==tabId);});
@@ -8567,8 +8595,17 @@ function removeTabFromStack(tabId){
   saveTabStacks();renderTabBar();
 }
 function dissolveStack(stackId){tabStacks=tabStacks.filter(s=>s.id!==stackId);if(expandedStack===stackId)expandedStack=null;saveTabStacks();renderTabBar();}
-function closeTabMenu(){const m=document.getElementById('tabMenu');if(m)m.remove();document.removeEventListener('pointerdown',tabMenuOutside,true);}
-function tabMenuOutside(e){const m=document.getElementById('tabMenu');if(m&&!m.contains(e.target))closeTabMenu();}
+function closeTabMenu(){
+  const m=document.getElementById('tabMenu');if(m)m.remove();
+  document.removeEventListener('pointerdown',tabMenuOutside,true);
+  // Offenen Stack-Pfeil (▾) zuruecksetzen, wenn das Dropdown zugeht.
+  if(expandedStack){expandedStack=null;renderTabBar();}
+}
+// Klick auf einen Stack-Button NICHT hier schliessen - das macht
+// onStackClick selbst (Toggle bzw. Wechsel auf den anderen Stack); sonst
+// wuerde pointerdown das Menue schliessen und der Click es sofort wieder
+// oeffnen.
+function tabMenuOutside(e){const m=document.getElementById('tabMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.tp-stack')))closeTabMenu();}
 function openTabMenu(kind,id,x,y){
   closeTabMenu();
   const items=[];

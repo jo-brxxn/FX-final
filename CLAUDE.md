@@ -245,10 +245,15 @@ Karte → Symbol → Paar). Endstand nach Nutzer-Korrektur:
   (Nutzer-Wunsch, weil USD mehr Indikatoren trackt als z. B. CHF):
   `symScoreCmp(sym) = symScore × (Ø-Indikatoranzahl der FX-Majors /
   eigene Anzahl)` — genutzt von `pairScore` (beide Seiten skaliert, dann
-  Differenz + Carry) und dem Currency-Strength-Ranking. Der SYMBOL-Score
-  selbst (Detail, Karten, Heatmap, ±3-Schwellen) bleibt die vertraute
-  rohe Summe. Der Faktor ist in den Score-Modalen je Seite offengelegt
-  ("raw × 0.86 (34 tracked vs Ø 29.3)").
+  Differenz + Carry) und dem Currency-Strength-Ranking. **Update
+  2026-07-07 (Nutzer-Wunsch): der ANGEZEIGTE Symbol-Score ist jetzt
+  ÜBERALL der Vergleichs-Score** (Sidebar, Detail-Badge, Globe,
+  Symbol-Widgets, Risk-Zeilen, Heatmap, Matrix-Ranking, Set-ups-Liste,
+  Weekly-Report-Snapshot). Die ±3-Auto-Bias-Schwelle wertet weiterhin
+  die ROHE Summe aus (im Modal + Badge-Tooltip offengelegt); ebenso
+  bleiben Score-Historie (`recordScoreHist`), Tages-History-Panel und
+  Flip-Alerts auf roher Basis. Das Symbol-Modal zeigt beide Zeilen:
+  "Raw sum of all indicators" und "Displayed score: raw × Faktor".
 - Score-Modal (Klick auf jeden Score) zeigt: Zusammensetzung je Indikator,
   Gruppen-Hinweis, Release-Datum + Alter (amber >45 Tage), Comparison-
   Score-Zeile, aktive/gesamt Indikatoren, Paar-Skalierungs-Fußnote.
