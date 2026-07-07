@@ -1004,7 +1004,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#713f12;color:#fef9c3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GOLD-SCORE-AUDIT-67</span><span id="verBannerText"> (full score-logic audit: fixed two real double-counts - one CPI release could score up to 2.0 via m/m (full) + y/y (0.5) + Core (0.5), CPI m/m now shares the CPI group weight; NFP + ADP (both US payrolls) now share weight too - halving only applies when the partner is actually present on the card. Score breakdown modal now also shows release date + age (amber when >45d), group-sharing notes, contributing/total indicator counts per symbol and a pair-asymmetry footnote. Deliberately unchanged: discrete beat/miss (no magnitude scaling), no cross-symbol normalisation, no time-decay - documented in CLAUDE.md)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef9c3;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef9c3;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#134e4a;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-FAIR-COMPARE-68</span><span id="verBannerText"> (reverted the CPI-m/m and NFP/ADP groupings per user decision - CORE_PAIRS are only the classic Headline/Core pairs again, NFP and ADP each count a full +/-1. New fair comparison basis for symbol-vs-symbol: pair score and currency-strength ranking now use symScoreCmp = raw score x (avg FX indicator count / own count), e.g. USD 34 tracked -> x0.86, CHF 28 -> x1.04. Raw symbol score, cards, heatmap and +/-3 thresholds unchanged. The factor is disclosed per side in the score modals: "raw x 0.86 (34 tracked vs avg 29.3)")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1607,15 +1607,12 @@ function biasScore(b){return b==='bull'?1:b==='bear'?-1:0;}
 const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
 // Indikator-Gruppen, die DENSELBEN Sachverhalt messen: stehen mehrere
 // Mitglieder einer Gruppe zusammen in einer Rubrik, zählt jedes nur 0,5
-// (die Gruppe teilt sich das Gewicht), weil dasselbe Release/Signal sonst
-// mehrfach in den Score eingeht. Basisnamen (ohne y/y-/m/m-Suffix).
-// - CPI-Gruppe enthaelt auch "CPI" (den m/m-Blick auf DENSELBEN Release
-//   wie "CPI (Headline)" y/y) - vorher zaehlte die eine CPI-Veroeffent-
-//   lichung ueber m/m (voll) + y/y (0,5) + Core (0,5) bis zu 2,0 Punkte,
-//   also doppelt so viel wie jede andere Karte.
-// - NFP + ADP messen beide US-Payrolls (ADP ist der private Vorlaeufer
-//   desselben Arbeitsmarkt-Sachverhalts) und teilen sich jetzt das Gewicht.
-const CORE_PAIRS=[['CPI (Headline)','Core CPI','CPI'],['PPI','Core PPI'],['PCE','Core PCE'],['NFP / Employment Change','ADP Employment']];
+// (die Gruppe teilt sich das Gewicht). Basisnamen (ohne y/y-/m/m-Suffix).
+// Nutzer-Entscheid 2026-07-06: NUR die klassischen Headline/Core-Paare -
+// "CPI m/m" existiert nicht als eigener Indikator (nur als Zweit-Link im
+// CPI-Indikator), und NFP + ADP bleiben bewusst getrennte Indikatoren mit
+// je voller +/-1-Score-Wirkung.
+const CORE_PAIRS=[['CPI (Headline)','Core CPI'],['PPI','Core PPI'],['PCE','Core PCE']];
 function indIsCorePaired(ind,rub){
   const base=stripPeriodSuffix(ind.name).base;
   const inds=(rub&&rub.indicators)||[];
@@ -1781,12 +1778,12 @@ function openScoreInfoSym(symId){
     else html+=`<div style="color:var(--t3);font-size:11px">all indicators at 0</div>`;
   });
   html+=scoreInfoTotalRow('Symbol score',symScore(sym));
-  // Transparenz zur Vergleichbarkeit: Symbole haben unterschiedlich viele
-  // AKTIVE Indikatoren (USD trackt z.B. ADP/JOLTS/Claims/AHE, die es fuer
-  // andere Waehrungen nicht gibt) - die absolute Score-Amplitude ist daher
-  // zwischen Symbolen nicht 1:1 vergleichbar.
+  // Vergleichs-Score offenlegen: fuer Paare & Currency-Strength-Ranking
+  // wird auf die gemeinsame Indikator-Basis skaliert (siehe symScoreCmp).
   const cnt=countActiveInds(sym);
-  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">${cnt.active} of ${cnt.total} indicators currently contribute. Symbols track different indicator sets, so absolute scores are not 1:1 comparable across symbols - tap each side of a pair for its own breakdown.</div>`;
+  const f=symCmpFactor(sym);
+  html+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:4px 8px;color:var(--t3)"><span>Comparison score (pairs & ranking): raw × ${f}</span><span style="font-weight:700">${fmtScNum(symScoreCmp(sym))}</span></div>`;
+  html+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">${cnt.active} of ${cnt.total} indicators currently contribute (${symTrackedCount(sym)} scoreable, Ø ${Math.round(fxRefCount()*10)/10} across FX). Wherever symbols are compared head-to-head, the score is scaled to this common base so tracking more releases does not inflate a symbol structurally.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+sym.id+(sym.full?' ('+sym.full+')':'');
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');
@@ -1805,12 +1802,16 @@ function openScoreInfoPair(pairName){
   const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
   const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span><span style="font-weight:600">${escH(l)}</span>${sub?`<br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>`:''}</span><span style="font-weight:700">${fmtScNum(v)}</span></div>`;
   let html='';
-  if(bSym){const c=countActiveInds(bSym);html+=row(bSym.id+' (base)',symScore(bSym),c.active+' contributing indicators - tap the symbol score in its detail view for the full breakdown');}
-  if(qSym){const c=countActiveInds(qSym);html+=row(qSym.id+' (quote, subtracted)',-symScore(qSym),c.active+' contributing indicators - pair score = base score − quote score');}
+  const sideSub=(s,neg)=>{
+    const f=symCmpFactor(s),n=symTrackedCount(s);
+    return`raw ${fmtScNum(neg?-symScore(s):symScore(s))} × ${f} (${n} tracked indicators vs Ø ${Math.round(fxRefCount()*10)/10} across FX) - tap the symbol score in its detail view for the full breakdown`;
+  };
+  if(bSym)html+=row(bSym.id+' (base)',symScoreCmp(bSym),sideSub(bSym,false));
+  if(qSym)html+=row(qSym.id+' (quote, subtracted)',-symScoreCmp(qSym),sideSub(qSym,true));
   const carry=typeof pairCarryAdj==='function'?pairCarryAdj(pairName):0;
   if(carry)html+=row('Carry adjustment',carry,'policy-rate differential: ±0.5 from 0.5%, ±1 from 1.5%');
   html+=scoreInfoTotalRow('Pair score',pairScore(pairName));
-  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">Note: the two sides may track different indicator sets (different number of releases), so their score ranges are not perfectly symmetric.</div>`;
+  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">Both sides are scaled to a common indicator base before subtracting, so a symbol that simply tracks more releases (e.g. USD) does not dominate the pair score structurally.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+pairName;
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');
@@ -1882,15 +1883,47 @@ function pairCarryAdj(pairName){
   const d=rb.rate-rq.rate;
   return d>=1.5?1:d>=0.5?0.5:d<=-1.5?-1:d<=-0.5?-0.5:0;
 }
-// Paar-Score = Score der Basiswaehrung minus Score der Kurswaehrung
-// (z.B. EUR -5, USD +5 -> EUR/USD = -10) plus Carry-Komponente (s.o.).
+// ── Faire Vergleichsbasis zwischen Symbolen ─────────────────────────
+// Symbole tracken unterschiedlich viele wertbare Indikatoren (USD z.B.
+// zusaetzlich ADP/JOLTS/Claims/AHE, die es fuer CHF & Co. nicht gibt) -
+// die absolute Score-Amplitude ist dadurch strukturell verschieden gross.
+// Ueberall dort, wo Symbole GEGENEINANDER gestellt werden (Paar-Score,
+// Currency-Strength-Ranking), wird der Score deshalb auf eine gemeinsame
+// Indikator-Basis skaliert: Faktor = (Durchschnitts-Anzahl der FX-Majors)
+// geteilt durch die eigene Anzahl. Ein Symbol mit ueberdurchschnittlich
+// vielen Indikatoren wird leicht herunterskaliert, eines mit wenigen
+// leicht hochskaliert - "Signalstaerke pro getracktem Indikator" statt
+// roher Summe. Der Symbol-Score selbst (Detailansicht, Karten, Heatmap,
+// ±3-Schwellen) bleibt unveraendert die vertraute rohe Summe; der
+// Umrechnungsschritt ist im Score-Modal je Seite offengelegt.
+function symTrackedCount(sym){
+  let n=0;
+  (sym&&sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(i=>{if(!SCORE_ZERO.has(stripPeriodSuffix(i.name).base))n++;}));
+  return n;
+}
+function fxRefCount(){
+  const cs=syms.filter(s=>FX.includes(s.id));
+  if(!cs.length)return 1;
+  return cs.reduce((a,s)=>a+symTrackedCount(s),0)/cs.length;
+}
+function symCmpFactor(sym){
+  const n=symTrackedCount(sym);
+  if(!n)return 1;
+  return Math.round(fxRefCount()/n*100)/100;
+}
+function symScoreCmp(sym){
+  return Math.round(symScore(sym)*symCmpFactor(sym)*10)/10;
+}
+// Paar-Score = VERGLEICHS-Score der Basiswaehrung minus dem der
+// Kurswaehrung (auf gemeinsame Indikator-Basis skaliert, s.o.) plus
+// Carry-Komponente.
 function pairScore(pairName){
   const parts=(pairName||'').split('/');if(parts.length!==2)return 0;
   const codeToId={XAU:'GOLD',XAG:'SILVER',WTI:'OIL',BTC:'BTC',ETH:'ETH'};
   const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
   const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
   if(!bSym||!qSym)return 0;
-  return symScore(bSym)-symScore(qSym)+pairCarryAdj(pairName);
+  return Math.round((symScoreCmp(bSym)-symScoreCmp(qSym)+pairCarryAdj(pairName))*10)/10;
 }
 function rowScore(n,title,color,oc){return`<span class="row-score"${oc?` onclick="event.stopPropagation();${oc}" role="button"`:''} style="color:${color||scoreColor(n)}${oc?';cursor:pointer':''}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
 function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
@@ -6556,7 +6589,9 @@ function renderDash(){
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }else if(w.type==='ccy_ranking'){
-      const ranked=syms.filter(s=>FX.includes(s.id)).map(s=>({s,sc:symScore(s)})).sort((a,b)=>b.sc-a.sc);
+      // Ranking auf der fairen Vergleichsbasis (symScoreCmp): Waehrungen
+      // mit mehr getrackten Indikatoren (USD) dominieren sonst strukturell.
+      const ranked=syms.filter(s=>FX.includes(s.id)).map(s=>({s,sc:symScoreCmp(s)})).sort((a,b)=>b.sc-a.sc);
       const mx=Math.max(1,...ranked.map(r=>Math.abs(r.sc)));
       content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" onclick="gotoSym('${r.s.id}')">
         <span class="rank-pos">${i+1}</span><span class="rank-name">${r.s.id}</span>
