@@ -36,6 +36,15 @@ Nach diesem Muster angebundene Felder (Stand 2026-07-07): `greenDismissed`,
 Zahl 0–360 = Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch
 "zurück auf Auto" = null ankommt).
 
+**Zusätzlich in der Save-Funktion `markPrefEdit()` aufrufen** (2. Ursache des
+"Hide-Button springt zurück"-Bugs, gefixt 2026-07-07): Ohne das Flag stuft die
+optimistische Versionsprüfung in `cloudPush()` den Toggle als "nur
+Auto-Refresh" ein, ersetzt den Push durch einen Pull und zieht die alte
+Cloud-Stufe drüber, sobald irgendein anderes Gerät zwischen Toggle und
+1,5-s-Push gepusht hat. `cloudPull` lässt bei gesetztem Pending-Flag die
+lokalen Präferenz-Felder (Kompakt-Stufe, designHue) in Ruhe und schiebt sie
+danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
+
 ## Arbeits-Workflow (vom Nutzer durchgehend eingefordert)
 
 - **VERSION-CHECK-Banner**: oben in `index.html` gibt es ein Banner

@@ -1025,7 +1025,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d12;color:#fde68a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-CALENDAR-GAP-72</span><span id="verBannerText"> (mini calendar in the asset view no longer has a see-through gap: the toolbar row (Forex Factory / All impacts / New Alert / Refresh) used to float on the transparent page background between the ECONOMIC EVENTS header and the events table - visible as a hole since the aurora background shows behind the content. The .evt-body now carries the card background/border itself, connecting header bar, toolbar and table into one continuous card)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#14532d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-HIDE-STICKY-73</span><span id="verBannerText"> (second root cause of the hide button jumping back fixed: toggling it never set the user-pending flag, so the optimistic version check in cloudPush treated the fresh toggle as an auto-refresh, replaced the push with a pull and restored the OLD cloud stage whenever another device had pushed anything in between. Preference saves (hide stage, designer hue, green-dismiss) now mark a pending user edit; while pending, auto-pulls keep the local stage/hue and re-push them as a new version. A manual download still takes everything from the cloud)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2218,6 +2218,7 @@ function toggleCompactView(){
   localStorage.setItem('fxpro_compactview',String(compactView));
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
   cloudAutoSync();
   applyCompactView();
   updCompactSw();
@@ -2361,6 +2362,7 @@ function dismissGreenEvt(key){
   // auf den anderen Geräten ankommt (greenDismissed liegt außerhalb von snap()).
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
   cloudAutoSync();
   renderSidebar();
   updGreenBadge();
@@ -4064,6 +4066,14 @@ let uStack=[],rStack=[];
 let _lastUserEditTs=0,_userEditedSinceSync=localStorage.getItem('fxpro_user_pending')==='1';
 let _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
 function markUserSynced(){_userEditedSinceSync=false;try{localStorage.removeItem('fxpro_user_pending');}catch(e){}}
+// Markiert eine NUTZER-Aenderung an einem Ausserhalb-von-snap()-Feld
+// (Kompakt-Stufe/Hide-Button, Design-Farbton, Green-Dismiss): dieselbe
+// Pending-Mechanik wie pushU(), nur ohne Undo-Stack. Ohne dieses Flag
+// stufte die optimistische Versionspruefung in cloudPush() den frischen
+// Toggle als "nur Auto-Refresh" ein, ersetzte den Push durch einen Pull
+// und zog die ALTE Cloud-Stufe drueber - der Hide-Button "sprang zurueck",
+// sobald irgendein anderes Geraet zwischenzeitlich gepusht hatte.
+function markPrefEdit(){_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
@@ -4405,6 +4415,15 @@ async function cloudPull(manual){
     // kamen nie auf dem iPad an (Sync funktionierte nur iPad -> PC).
     if(manual||!seen||cloudUpdated!==seen){
       const cd=rows[0].data;
+      // Lokal wartende NUTZER-Praeferenz-Aenderung (Hide-Button/Designer,
+      // markPrefEdit vor dem noch nicht gelaufenen Auto-Push)? Dann behalten
+      // die lokalen Werte fuer Kompakt-Stufe/designHue beim Auto-Pull
+      // Vorrang vor dem (aelteren) Cloud-Stand und werden danach als neue
+      // Version hochgeschoben - sonst "springt der Hide-Button zurueck",
+      // sobald irgendein anderes Geraet zwischen Toggle und Push irgendwas
+      // gepusht hat. Ein MANUELLER Download uebernimmt weiterhin alles.
+      // WICHTIG: vor pushU() lesen - pushU() setzt das Flag selbst.
+      const prefPending=!manual&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
@@ -4415,7 +4434,8 @@ async function cloudPull(manual){
       // Zustand tatsaechlich unterscheidet - sonst wuerde jede beliebige
       // Aenderung des alten Geraets die Stufe 2 hier auf 1 zurueckwerfen
       // ("Hide-Button springt zurueck").
-      if(cd.compactLevel!==undefined){
+      if(prefPending){/* lokale Stufe behalten, wird gleich re-gepusht */}
+      else if(cd.compactLevel!==undefined){
         const lv=normCompactLevel(cd.compactLevel);
         if(lv!==compactView){compactView=lv;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}
       }else if(cd.compactView!==undefined&&(cd.compactView?1:0)!==(compactView>=1?1:0)){
@@ -4424,12 +4444,21 @@ async function cloudPull(manual){
       if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
       // vom anderen Geraet ankommt.
-      if(cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
+      if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
       _lsUpdatedSeen=cloudUpdated;
-      markUserSynced();
+      if(prefPending){
+        // Die behaltenen lokalen Praeferenzen als NEUE Version einplanen:
+        // fxpro_updated frisch bumpen und den Auto-Push anstossen, damit die
+        // Kombination (Cloud-Stand + lokale Stufe/Farbe) in die Cloud geht.
+        localStorage.setItem('fxpro_updated',new Date().toISOString());
+        _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+        cloudAutoSync();
+      }else{
+        markUserSynced();
+      }
       renderSidebar();rerender();updateStat();updUB();updInboxBadge();updGreenBadge();
       if(manual)setCloudStatus('✓ Downloaded: '+new Date(cloudUpdated).toLocaleString());
     }else if(manual){
@@ -6592,6 +6621,7 @@ function saveDesignHue(){
   // die Cloud geht und auf den anderen Geraeten ankommt.
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
   cloudAutoSync();
 }
 function openDesignerM(){
