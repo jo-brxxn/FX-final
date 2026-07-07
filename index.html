@@ -114,7 +114,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
 @keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
 @media (prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
-/* Designer (🌈 im Header): Regler laeuft durch das volle Farbspektrum,
+/* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
 .hue-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
@@ -1025,7 +1025,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SIDEBAR-SCROLL-74</span><span id="verBannerText"> (asset sidebar scrolling fixed for real: switching assets no longer rebuilds the whole sidebar via innerHTML - on iOS that replacement of the scroll container killed native momentum scrolling until you re-tapped ("cant scroll properly after switching"). Selecting now only toggles the .on highlight class on the buttons (data-sym), leaving the scroll container and its DOM intact; full re-renders still happen for score updates, flip-glow, reorder and tab switches. Sidebar scores remain plain text, not clickable - the breakdown stays on the scores inside the asset view)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#fed7aa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ORANGE-PALETTE-ICON-75</span><span id="verBannerText"> (Design button icon changed from the rainbow to a colour-palette emoji per user request - header button, designer modal heading and code comments)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1176,7 +1176,7 @@ function introLogin(){
     <button class="btn" onclick="document.getElementById('impFile').click()">⬆<span class="btn-lbl"> Import</span></button>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" onclick="openBackupM()" title="Local backups (last 5 snapshots)">🕐<span class="btn-lbl"> Backups</span></button>
-    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour">🌈<span class="btn-lbl"> Design</span></button>
+    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour">🎨<span class="btn-lbl"> Design</span></button>
     <button class="btn" onclick="openHelpM()" title="How the scoring works">❓<span class="btn-lbl"> Help</span></button>
     <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox">📥<span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
     <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
@@ -1314,7 +1314,7 @@ function introLogin(){
 <!-- MODAL: Designer (Hintergrund-Farbwahl ueber das Farbspektrum) -->
 <div class="ov" id="mDesigner" style="display:none">
   <div class="modal" style="max-width:430px">
-    <h3>🌈 Designer</h3>
+    <h3>🎨 Designer</h3>
     <div style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.5">Slide through the colour spectrum – the app background previews the colour live. <b>Apply</b> keeps it (synced to your other devices), <b>Auto</b> returns to the risk-sentiment colouring that shifts with the market mood.</div>
     <input type="range" class="hue-slider" id="designHueSlider" min="0" max="360" step="1" value="210" oninput="previewDesignHue(this.value)">
     <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
@@ -6606,7 +6606,7 @@ function renderCotNotify(){
 const AURORA_NEU='#5b9bd8';
 function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
-  // Vom Nutzer im Designer (🌈 im Header) gewaehlter Farbton hat Vorrang
+  // Vom Nutzer im Designer (🎨 im Header) gewaehlter Farbton hat Vorrang
   // vor der Risk-Sentiment-Faerbung; designHue=null bedeutet Auto.
   if(designHue!=null){applyDesignHue(designHue);return;}
   document.body.style.background='';

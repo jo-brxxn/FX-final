@@ -32,7 +32,7 @@ sie NICHT — deshalb in der Save-Funktion bumpen.
 
 Nach diesem Muster angebundene Felder (Stand 2026-07-07): `greenDismissed`,
 `tabStacks`, `compactLevel` (+Legacy-Boolean `compactView`), `pinEnabled`,
-`designHue` (Designer/🌈: null = Auto-Risk-Sentiment-Färbung der Aurora,
+`designHue` (Designer/🎨: null = Auto-Risk-Sentiment-Färbung der Aurora,
 Zahl 0–360 = Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch
 "zurück auf Auto" = null ankommt).
 
