@@ -71,7 +71,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
-.sb{width:72px;background:rgba(17,22,31,.45);backdrop-filter:blur(14px) saturate(130%);-webkit-backdrop-filter:blur(14px) saturate(130%);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0;-webkit-overflow-scrolling:touch}
+/* KEIN backdrop-filter und KEIN -webkit-overflow-scrolling:touch auf .sb:
+   beides zusammen brach auf iOS das Scrollen der Assets-Leiste, sobald
+   daneben #detail neu aufgebaut wurde (Asset-Wechsel) - der Repaint wirft
+   den geblurrten Scroll-Layer weg und die Leiste reagiert nicht mehr auf
+   Touch-Scroll, bis man neu antippt. Halbtransparenz (Aurora schimmert
+   durch) bleibt, nur ohne Blur; Momentum-Scroll ist seit iOS 13 ohnehin
+   Standard. */
+.sb{width:72px;background:rgba(17,22,31,.55);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0}
 .sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
@@ -101,7 +108,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
    sichtbar vom Content und voneinander separieren: hdr HELLER Ton
    (--bg4-Basis, rgba(35,43,58,.58)) - ein dunkler Ton nahe --bg0 war dort
    unsichtbar ("hat noch keinen Hintergrund", User 2026-07-07) -, tabbar
-   dunkler (rgba(17,22,31,.60)), sb am durchlaessigsten (.45). */
+   dunkler (rgba(17,22,31,.60)), sb .55 OHNE Blur (Blur auf dem Scroll-
+   Container brach iOS-Scrollen, siehe Kommentar an .sb selbst). */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
 .aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
@@ -1025,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#fed7aa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ORANGE-PALETTE-ICON-75</span><span id="verBannerText"> (Design button icon changed from the rainbow to a colour-palette emoji per user request - header button, designer modal heading and code comments)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#4a044e;color:#fae8ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: FUCHSIA-SB-SCROLL-IOS-76</span><span id="verBannerText"> (iOS sidebar scroll freeze after switching assets - second root cause: the backdrop blur added with the aurora sat directly on the sidebar scroll container, and the repaint caused by rebuilding the detail pane next to it (asset switch) throws the blurred scroll layer away on iOS - the bar stops responding to touch scrolling until re-tapped. Blur removed from the sidebar (translucency stays at .55 so the aurora still shimmers through), legacy -webkit-overflow-scrolling removed, and the 450ms long-press reorder timer is now cancelled while the bar scrolls so it can no longer trigger a full rebuild mid-scroll)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fae8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fae8ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -4590,6 +4598,12 @@ function sbCatPressStart(catL){
   _sbCatPressTimer=setTimeout(()=>{sbCatReorder=catL;sbReorderId=null;renderSidebar();},450);
 }
 function sbCatPressEnd(){clearTimeout(_sbCatPressTimer);_sbCatPressTimer=null;}
+// Waehrend die Leiste scrollt, keinen Langdruck werten: sonst feuert der
+// 450ms-Reorder-Timer bei einem langsamen Finger-Scroll (pointercancel
+// kommt auf iOS nicht immer rechtzeitig) mitten in der Bewegung einen
+// vollen renderSidebar - Scroll bricht ab und der Reorder-Modus geht
+// ungewollt auf.
+(()=>{const sb=document.getElementById('sidebar');if(sb)sb.addEventListener('scroll',()=>{sbPressEnd();sbCatPressEnd();},{passive:true});})();
 function sbCatClick(catL){
   // Tippen auf die Überschrift im Reorder-Modus beendet ihn wieder.
   if(sbCatReorder===catL){sbCatReorder=null;renderSidebar();}
