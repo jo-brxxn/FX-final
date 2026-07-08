@@ -1033,7 +1033,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3730a3;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-SENTIMENT-81</span><span id="verBannerText"> (new market-sentiment feature: hourly workflow fetches Crypto Fear&amp;Greed (alternative.me), Stock Fear&amp;Greed (CNN), CBOE Put/Call and VIX into sentiment_data.json. Contrarian indicators land in the COT/positioning card of BTC (crypto F&amp;G) and S&amp;P 500 / Nasdaq (put/call + stock F&amp;G): half weight, no trend, only count at extremes (fear ≤25 bullish, greed ≥75 bearish; put/call ≥1.0 bullish, ≤0.7 bearish). New Insights → Sentiment tab with gauges + history charts and threshold bands. Score modal + indicator info explain the contrarian logic)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e75;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SENTIMENT-VIX-82</span><span id="verBannerText"> (sentiment sources verified on a live workflow run: Crypto Fear&amp;Greed (alternative.me) and VIX (TradingView) come through reliably; CNN Stock Fear&amp;Greed returns HTTP 418 bot-block and the TradingView scanner exposes no put/call ticker. So scoring now uses Crypto F&amp;G for BTC and the VIX for S&amp;P 500 / Nasdaq (contrarian: VIX ≥28 bullish, ≤13 bearish, half weight, extremes only). Stock F&amp;G and Put/Call stay chart-only in the Sentiment tab and fill in automatically if a run ever gets through. CNN fetch got better browser headers as a cheap retry)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1748,11 +1748,18 @@ const SENT_SOURCE={
 // Welches Symbol bekommt welche Sentiment-Indikatoren (Basisname -> Feed-Key).
 // Nur Krypto (Fear&Greed) und Aktienindizes (Put/Call + Fear&Greed) - fuer
 // FX gibt es keine vergleichbar zugaengliche Sentiment-Quelle.
+// Nur die per Live-Lauf bestaetigt erreichbaren Quellen speisen den Score:
+// Crypto Fear&Greed (alternative.me) fuer Krypto und VIX (TradingView) fuer
+// die Aktienindizes. Stock Fear&Greed (CNN, HTTP-418-Bot-Block) und CBOE
+// Put/Call (vom TradingView-Scanner nicht geliefert) bleiben Chart-only im
+// Sentiment-Tab, sobald/falls sie doch mal Daten liefern - sie zaehlen dann
+// bewusst NICHT zusaetzlich in den Score (kein Doppelzaehlen mit VIX, das
+// ohnehin die groesste Komponente des Stock-F&G ist).
 const SENT_MAP={
   BTC:[['Crypto Fear & Greed','cryptoFng']],
   ETH:[['Crypto Fear & Greed','cryptoFng']],
-  SP500:[['Put/Call Ratio','putCall'],['Fear & Greed Index','stockFng']],
-  NAS:[['Put/Call Ratio','putCall'],['Fear & Greed Index','stockFng']],
+  SP500:[['VIX (Volatility)','vix']],
+  NAS:[['VIX (Volatility)','vix']],
 };
 // Alle Sentiment-Indikator-Basisnamen (fuers Seeding + Halbgewicht).
 const SENT_IND_NAMES=[...new Set(Object.values(SENT_MAP).flat().map(p=>p[0]))];
@@ -3664,7 +3671,8 @@ const IND_INFO_DEFAULTS={
   'WoW Change in Net Position (%)':'Week-over-week change in net speculative positioning, in %. Shows the direction and speed of positioning shifts.',
   'Crypto Fear & Greed':'Crypto Fear & Greed Index (0–100, source alternative.me). Aggregates volatility, momentum, volume, social media, dominance and search trends. Read CONTRARIAN: extreme fear (≤25) tends to mark bottoms (bullish), extreme greed (≥75) tops (bearish). Counts ±0.5 only at those extremes.',
   'Fear & Greed Index':'CNN Fear & Greed Index for US equities (0–100). Aggregates 7 gauges incl. put/call ratio, market volatility (VIX), safe-haven demand and junk-bond demand. Read CONTRARIAN: extreme fear (≤25) is bullish, extreme greed (≥75) bearish. Counts ±0.5 only at those extremes.',
-  'Put/Call Ratio':'CBOE options Put/Call ratio (put volume ÷ call volume). Read CONTRARIAN: a high ratio (≥1.0) means heavy hedging/fear → often a bottom (bullish); a low ratio (≤0.7) means complacency/greed → often a top (bearish). Counts ±0.5 only past those thresholds.',
+  'Put/Call Ratio':'CBOE options Put/Call ratio (put volume ÷ call volume). Read CONTRARIAN: a high ratio (≥1.0) means heavy hedging/fear → often a bottom (bullish); a low ratio (≤0.7) means complacency/greed → often a top (bearish). Shown in the Sentiment tab when the source is reachable; not scored (data source blocks datacenter IPs).',
+  'VIX (Volatility)':'CBOE Volatility Index — the market\'s "fear gauge" (expected 30-day S&P volatility). Read CONTRARIAN: a spike (≥28) signals panic and often marks a bottom (bullish); a very low reading (≤13) signals complacency and often a top (bearish). Counts ±0.5 only at those extremes. Applies to S&P 500 & Nasdaq.',
   // Geopolitics
   'Regional Conflicts':'Wars or armed tensions affecting the region. Escalation drives safe-haven flows and broad risk aversion.',
   'Sanctions / Trade Restrictions':'Tariffs, sanctions or other trade barriers. Can disrupt trade flows and weigh on the affected economy and currency.',
@@ -3684,9 +3692,12 @@ function applyRubOrder(){
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
-// 'Put/Call Ratio' NICHT mehr entfernen - es ist jetzt ein datengetriebener
-// Sentiment-Indikator (SP500/NAS, siehe SENT_MAP), kein alter Platzhalter.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility']};
+// COT-Karte: alte Platzhalter + die jetzt CHART-ONLY-Sentiment-Werte
+// ('Put/Call Ratio', 'Fear & Greed Index') aus der Karte fernhalten - sie
+// werden nicht mehr gescort (Quellen aus GitHub-Actions-IPs geblockt), nur
+// noch im Sentiment-Tab gezeigt. Gescort werden 'Crypto Fear & Greed'
+// (BTC) und 'VIX (Volatility)' (SP500/NAS), per SENT_MAP eingesetzt.
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -8450,6 +8461,12 @@ function sentEval(key,d){
     // <= 0.7 = Sorglosigkeit -> contrarian bearish.
     return{bias:v>=1.0?'bull':v<=0.7?'bear':'neu',actual:v.toFixed(2),extreme:v>=1.0||v<=0.7};
   }
+  if(key==='vix'){
+    // VIX = erwartete S&P-Volatilitaet ("Angstbarometer"). Hoch (>=28) =
+    // Panik -> contrarian bullish (oft nahe Boeden); niedrig (<=13) =
+    // Sorglosigkeit -> contrarian bearish (oft nahe Tops).
+    return{bias:v>=28?'bull':v<=13?'bear':'neu',actual:v.toFixed(1),extreme:v>=28||v<=13};
+  }
   return null;
 }
 function fetchSentimentData(){
@@ -8554,7 +8571,7 @@ function renderSentiment(){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const card=(title,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   let html=`<div style="font-size:12px;color:var(--t3);line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px">
-    <b style="color:var(--t2)">How to read this:</b> sentiment is a <b>contrarian</b> gauge. When the crowd is euphoric (greed), risk of a top rises; when it panics (fear), a bottom is often near. These only feed the score at <b>extremes</b> (±0.5 each, half weight), and they sit in the COT&nbsp;/&nbsp;Positioning card of the affected assets. Updated: ${escH(upd)}.</div>
+    <b style="color:var(--t2)">How to read this:</b> sentiment is a <b>contrarian</b> gauge. When the crowd is euphoric (greed), risk of a top rises; when it panics (fear), a bottom is often near. Scored at <b>extremes</b> only (±0.5, half weight, in the COT&nbsp;/&nbsp;Positioning card): <b>Crypto Fear&amp;Greed</b> for BTC and the <b>VIX</b> for S&amp;P&nbsp;500 / Nasdaq. Stock Fear&amp;Greed and Put/Call are shown for context when their source is reachable (both currently block the hourly job). Updated: ${escH(upd)}.</div>
   <div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
 
   // Crypto Fear & Greed
@@ -8566,29 +8583,34 @@ function renderSentiment(){
     </div>
     <div style="margin-top:8px">${sentSpark(cf&&cf.series,0,100,25,75)}</div>`);
 
-  // Stock Fear & Greed
-  const sf=D.stockFng,sfEv=sentEval('stockFng',sf);
-  html+=card('📈 Stock Fear &amp; Greed',sf?escH(sf.label||''):'',
-    `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${sf?sentGauge(Math.round(sf.value),0,100,''):'<div style=\"color:var(--t3);font-size:12px\">no data (CNN may block bots)</div>'}</div>
-      <div style="flex:1;min-width:150px">${sentReadBadge(sfEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">Applies to: S&amp;P 500, Nasdaq. Source: CNN.</div></div>
-    </div>
-    <div style="margin-top:8px">${sentSpark(sf&&sf.series,0,100,25,75)}</div>`);
-
-  // Put/Call Ratio
-  const pc=D.putCall,pcEv=sentEval('putCall',pc);
-  html+=card('⚖️ CBOE Put/Call Ratio',pc?('now '+(+pc.value).toFixed(2)):'',
-    `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${pc?sentGauge((+pc.value).toFixed(2),0.4,1.4,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
-      <div style="flex:1;min-width:150px">${sentReadBadge(pcEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">≥1.0 = heavy hedging (bullish), ≤0.7 = complacency (bearish). Applies to: S&amp;P 500, Nasdaq.</div></div>
-    </div>
-    <div style="margin-top:8px">${sentSpark(pc&&pc.series,0.4,1.4,0.7,1.0)}</div>`);
-
-  // VIX
-  const vx=D.vix;
+  // VIX (scored for indices)
+  const vx=D.vix,vxEv=sentEval('vix',vx);
   html+=card('🌪️ VIX (Volatility)',vx?('now '+(+vx.value).toFixed(1)):'',
-    `<div style="color:var(--t2);font-size:12.5px;line-height:1.5">The market's "fear gauge" — expected 30-day S&amp;P volatility. Spikes above ~30 mark panic (often near bottoms), readings below ~14 signal complacency. Shown for context; it already feeds the Stock Fear &amp; Greed index, so it is not double-counted in the score.</div>
-    <div style="margin-top:8px">${sentSpark(vx&&vx.series,8,45,null,30)}</div>`);
+    `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
+      <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). Applies to: S&amp;P 500, Nasdaq. Source: TradingView.</div></div>
+    </div>
+    <div style="margin-top:8px">${sentSpark(vx&&vx.series,8,45,13,28)}</div>`);
+
+  // Stock Fear & Greed (chart-only; CNN blocks datacenter IPs)
+  const sf=D.stockFng;
+  html+=card('📈 Stock Fear &amp; Greed',sf?escH(sf.label||''):'chart only',
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'')}</div>
+      <div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores the index sentiment.</span><div style="color:var(--t3);font-size:11px;margin-top:6px">Source: CNN.</div></div>
+    </div>
+    <div style="margin-top:8px">${sentSpark(sf.series,0,100,25,75)}</div>`
+    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN's endpoint blocks datacenter IPs (HTTP 418) from the hourly job, so this gauge is usually empty here. VIX (above) covers index sentiment for the score. It fills in automatically on any run that gets through.</div>`);
+
+  // Put/Call Ratio (chart-only; TradingView scanner does not expose the ticker)
+  const pc=D.putCall;
+  html+=card('⚖️ CBOE Put/Call Ratio',pc?('now '+(+pc.value).toFixed(2)):'chart only',
+    pc?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">${sentGauge((+pc.value).toFixed(2),0.4,1.4,'')}</div>
+      <div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only. ≥1.0 = hedging (bullish), ≤0.7 = complacency (bearish).</span></div>
+    </div>
+    <div style="margin-top:8px">${sentSpark(pc.series,0.4,1.4,0.7,1.0)}</div>`
+    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">No reliable free daily source reachable from the job right now (the TradingView scanner does not expose a put/call ticker). Shown here automatically if a source becomes available.</div>`);
 
   html+=`</div>`;
   el.innerHTML=html;

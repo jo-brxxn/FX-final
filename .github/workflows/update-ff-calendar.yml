@@ -1951,7 +1951,11 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL "https://api.alternative.me/fng/?limit=90&format=json" -o sent_cfng.json || true
-          curl -sL -A "$UA" "https://production.dataviz.cnn.io/index/fearandgreed/graphdata" -o sent_sfng.json || true
+          # CNN blockt Datacenter-IPs teils per HTTP 418 ("teapot"); bessere
+          # Browser-Header (Accept/Referer/Origin) sind ein guenstiger Versuch,
+          # aendern aber nichts, wenn der Block rein IP-basiert ist. Der Schritt
+          # degradiert sauber (stockFng bleibt dann leer; VIX scort die Indizes).
+          curl -sL -A "$UA" -H "Accept: application/json, text/plain, */*" -H "Referer: https://www.cnn.com/markets/fear-and-greed" -H "Origin: https://www.cnn.com" "https://production.dataviz.cnn.io/index/fearandgreed/graphdata" -o sent_sfng.json || true
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
             --data '{"symbols":{"tickers":["CBOE:VIX","USI:PC","USI:PCC"],"query":{"types":[]}},"columns":["close"]}' \
             "https://scanner.tradingview.com/global/scan" -o sent_tv.json || true
