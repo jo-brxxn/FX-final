@@ -193,6 +193,39 @@ nächsten Release-Zyklus von selbst klären). NZD trackt in FF nur den
 liefert Investing.com keinen passenden Wert, das ist keine Matching-Lücke,
 sondern ein anderer Indikator.
 
+### Markt-Sentiment (sentiment_data.json) — Stand nach Live-Verifikation (2026-07-08)
+
+Contrarian-Stimmungs-Layer, Workflow-Schritt "Fetch market sentiment"
+(continue-on-error, Carry-over, jede Quelle eigenes try/catch). Nach EINEM
+`workflow_dispatch`-Lauf verifiziert, welche Quellen aus GitHub-Actions-IPs
+erreichbar sind:
+
+- **Crypto Fear & Greed** (`api.alternative.me/fng/`) — ✓ zuverlässig, eigene
+  Historie. Scort **BTC** (auch ETH, falls angelegt).
+- **VIX** (TradingView-Scanner `CBOE:VIX`, wie price_data) — ✓ zuverlässig,
+  Tagesschluss + Carry-over-Serie. Scort **SP500/NAS** (contrarian: ≥28
+  Panik=bullish, ≤13 Sorglosigkeit=bearish).
+- **Stock Fear & Greed** (CNN `production.dataviz.cnn.io`) — ✗ HTTP 418
+  ("I'm a teapot. You're a bot."), Datacenter-IP-Block. Bessere Header
+  (Accept/Referer/Origin) als Versuch drin, hilft bei reinem IP-Block nicht.
+  **Chart-only** im Sentiment-Tab.
+- **CBOE Put/Call** (TradingView `USI:PC`/`USI:PCC`) — ✗ Scanner liefert den
+  Ticker nicht (nur VIX kam zurück). **Chart-only**.
+
+Scoring nach dem `applyCotDataFeed`-Muster (`applySentimentFeed`,
+`research.sent`-Flag, halbes Gewicht via `SENT_HALF`, KEIN Trend, nur an
+Extremen nicht-neutral) — die Indikatoren leben in der COT-Data-Karte der
+betroffenen Symbole (`SENT_MAP`). **Wichtig:** `SENT_MAP`/`SENT_HALF`/
+`SENT_SOURCE` stehen bewusst FRÜH (bei `COT_NET_HALF` ~Z.1714), weil die
+Rubrik-Migration `migrateRubInds` sie beim Boot schon braucht (sonst TDZ).
+Chart-only-Namen ('Put/Call Ratio','Fear & Greed Index') stehen in
+`RUB_IND_REMOVE['COT Data']`, damit sie nicht als leere Karten auftauchen.
+Neuer Insights-Tab "Sentiment" (`renderSentiment`, `pgSent`), in den
+Insights-Stack einsortiert (auch Migration für Bestandsnutzer in
+`loadTabStacks`). VIX zaehlt bewusst NICHT zusätzlich zum Stock-F&G (steckt
+dort schon drin) — da CNN eh blockt, ist VIX aktuell das einzige gescorte
+Index-Signal.
+
 ### Bond-Yields-Backfill (GBP/CHF/JPY/AUD/NZD) — Endstand nach 7 workflow_dispatch-Runden (2026-07-04)
 
 - **AUD (RBA) — GELÖST.** `https://www.rba.gov.au/statistics/tables/csv/f2-data.csv`,
