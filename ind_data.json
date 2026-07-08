@@ -725,17 +725,13 @@
  },
  "NZD": {
   "Central Bank Rate": {
-   "actual": "2.25%",
-   "forecast": "2.25%",
+   "actual": "2.5%",
+   "forecast": "2.5%",
    "previous": "2.25%",
-   "date": "2026-05-27",
+   "date": "2026-07-08",
    "event": "RBNZ Interest Rate Decision",
    "period": null,
    "history": [
-    [
-     "2025-11-26",
-     "2.25%"
-    ],
     [
      "2026-02-18",
      "2.25%"
@@ -747,6 +743,10 @@
     [
      "2026-05-27",
      "2.25%"
+    ],
+    [
+     "2026-07-08",
+     "2.5%"
     ]
    ]
   },
