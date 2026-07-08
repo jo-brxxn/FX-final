@@ -1937,6 +1937,77 @@ jobs:
           '
           rm -f price_tv.json
 
+      # ── MARKT-SENTIMENT (sentiment_data.json) ─────────────────────────
+      # Contrarian-Positionierungs-/Stimmungsdaten fuer Krypto (BTC) und
+      # Aktienindizes (SP500/NAS): Crypto Fear & Greed (alternative.me, sehr
+      # stabile JSON-API), Stock Fear & Greed (CNN), VIX und CBOE Put/Call
+      # (TradingView-Scanner, dieselbe erprobte Quelle wie price_data). Alle
+      # mit Carry-over aus der vorherigen sentiment_data.json (Serie
+      # fortschreiben); EINE fehlende Quelle darf die anderen NICHT kippen
+      # (jede Quelle in eigenem try/catch). continue-on-error, damit ein
+      # Ausfall den Gesamt-Workflow nicht rot faerbt.
+      - name: Fetch market sentiment -> sentiment_data.json
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL "https://api.alternative.me/fng/?limit=90&format=json" -o sent_cfng.json || true
+          curl -sL -A "$UA" "https://production.dataviz.cnn.io/index/fearandgreed/graphdata" -o sent_sfng.json || true
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["CBOE:VIX","USI:PC","USI:PCC"],"query":{"types":[]}},"columns":["close"]}' \
+            "https://scanner.tradingview.com/global/scan" -o sent_tv.json || true
+          echo "=== crypto F&G (first 200) ==="; head -c 200 sent_cfng.json 2>/dev/null; echo
+          echo "=== stock F&G (first 200) ==="; head -c 200 sent_sfng.json 2>/dev/null; echo
+          echo "=== TV VIX/PC (first 300) ==="; head -c 300 sent_tv.json 2>/dev/null; echo
+          node -e '
+            const fs=require("fs");
+            const today=new Date().toISOString().slice(0,10);
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            const appendSeries=(prev,val)=>{
+              let s=Array.isArray(prev)?prev.filter(e=>e&&e[0]!==today):[];
+              s.push([today,val]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              return s.slice(-120);
+            };
+            const log=[];
+            // 1. Crypto Fear & Greed (alternative.me) - liefert eigene Historie
+            try{
+              const j=JSON.parse(fs.readFileSync("sent_cfng.json","utf8"));
+              const arr=j&&Array.isArray(j.data)?j.data:[];
+              if(arr.length){
+                const cur=arr[0];
+                const series=arr.map(e=>[new Date(Number(e.timestamp)*1000).toISOString().slice(0,10),Number(e.value)]).filter(e=>isFinite(e[1])).reverse();
+                out.cryptoFng={value:Number(cur.value),label:String(cur.value_classification||""),series:series.slice(-120)};
+                log.push("cryptoFng="+cur.value);
+              }else log.push("cryptoFng:no-data");
+            }catch(e){log.push("cryptoFng ERR "+e.message);}
+            // 2. Stock Fear & Greed (CNN) - kann per Bot-Schutz blocken
+            try{
+              const j=JSON.parse(fs.readFileSync("sent_sfng.json","utf8"));
+              const fg=j&&j.fear_and_greed;
+              if(fg&&isFinite(Number(fg.score))){
+                const hist=j.fear_and_greed_historical&&Array.isArray(j.fear_and_greed_historical.data)?j.fear_and_greed_historical.data:[];
+                const series=hist.map(e=>[new Date(Number(e.x)).toISOString().slice(0,10),Math.round(Number(e.y))]).filter(e=>isFinite(e[1]));
+                out.stockFng={value:Math.round(Number(fg.score)),label:String(fg.rating||""),series:series.slice(-120)};
+                log.push("stockFng="+Math.round(Number(fg.score)));
+              }else log.push("stockFng:no-score(blocked?)");
+            }catch(e){log.push("stockFng ERR "+e.message);}
+            // 3. VIX + Put/Call (TradingView-Scanner) - nur Tagesschluss, Serie
+            // per Carry-over fortgeschrieben (wie price_data).
+            try{
+              const j=JSON.parse(fs.readFileSync("sent_tv.json","utf8"));
+              const rows=j&&Array.isArray(j.data)?j.data:[];
+              const get=t=>{const r=rows.find(x=>x.s===t);return r&&r.d&&isFinite(Number(r.d[0]))?Number(r.d[0]):null;};
+              const vix=get("CBOE:VIX");
+              if(vix!=null){out.vix={value:vix,series:appendSeries(out.vix&&out.vix.series,vix)};log.push("vix="+vix);}else log.push("vix:no-value");
+              let pc=get("USI:PC");if(pc==null)pc=get("USI:PCC");
+              if(pc!=null){out.putCall={value:pc,series:appendSeries(out.putCall&&out.putCall.series,pc)};log.push("putCall="+pc);}else log.push("putCall:no-value");
+            }catch(e){log.push("tv ERR "+e.message);}
+            out.updated=new Date().toISOString();
+            fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+            console.log("sentiment_data.json: "+log.join(" | "));
+          '
+          rm -f sent_cfng.json sent_sfng.json sent_tv.json
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
@@ -2051,6 +2122,7 @@ jobs:
           [ -f bond_data.json ] && git add bond_data.json
           [ -f cot_data.json ] && git add cot_data.json
           [ -f price_data.json ] && git add price_data.json
+          [ -f sentiment_data.json ] && git add sentiment_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             git push
