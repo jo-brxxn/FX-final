@@ -28,16 +28,12 @@
   },
   "Unemployment Claims": {
    "actual": "215K",
-   "forecast": "220K",
-   "previous": "215K",
-   "date": "2026-07-02",
+   "forecast": "218K",
+   "previous": "217K",
+   "date": "2026-07-09",
    "event": "Initial Jobless Claims",
    "period": null,
    "history": [
-    [
-     "2026-06-11",
-     "229K"
-    ],
     [
      "2026-06-18",
      "226K"
@@ -48,6 +44,10 @@
     ],
     [
      "2026-07-02",
+     "215K"
+    ],
+    [
+     "2026-07-09",
      "215K"
     ]
    ]
@@ -210,7 +210,7 @@
   },
   "Services PMI": {
    "actual": "54",
-   "forecast": "54",
+   "forecast": "54.2",
    "previous": "54.5",
    "date": "2026-07-06",
    "event": "ISM Services PMI",
