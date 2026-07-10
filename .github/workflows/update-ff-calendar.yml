@@ -1973,12 +1973,22 @@ jobs:
           if [ -n "$MYFXBOOK_EMAIL" ] && [ -n "$MYFXBOOK_PASSWORD" ]; then
             EMAIL_ENC=$(node -e 'console.log(encodeURIComponent(process.env.MYFXBOOK_EMAIL))')
             PASS_ENC=$(node -e 'console.log(encodeURIComponent(process.env.MYFXBOOK_PASSWORD))')
-            curl -sL -A "$UA" "https://www.myfxbook.com/api/login.json?email=${EMAIL_ENC}&password=${PASS_ENC}" -o sent_mfxlogin.json || true
+            # Cookie-Jar mitfuehren: Myfxbook bindet die API-Session teils an
+            # ein Cookie, nicht nur an den session-Query-Param ("Invalid
+            # session" trotz frischem Login). Debug zeigt error/message/Laenge
+            # (NICHT die Session selbst).
+            curl -sL -A "$UA" -c mfx_cookies.txt "https://www.myfxbook.com/api/login.json?email=${EMAIL_ENC}&password=${PASS_ENC}" -o sent_mfxlogin.json || true
+            echo "[debug] Myfxbook login: $(node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_mfxlogin.json","utf8"));console.log("error="+j.error+" msg="+JSON.stringify(j.message||"")+" sessionLen="+String(j.session||"").length);}catch(e){console.log("unparseable: "+require("fs").readFileSync("sent_mfxlogin.json","utf8").slice(0,140));}' 2>/dev/null)"
             SESSION=$(node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_mfxlogin.json","utf8"));process.stdout.write(j&&!j.error&&j.session?String(j.session):"");}catch(e){}' 2>/dev/null)
             if [ -n "$SESSION" ]; then
               SESS_ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$SESSION")
-              curl -sL -A "$UA" "https://www.myfxbook.com/api/get-community-outlook.json?session=${SESS_ENC}" -o sent_retail.json || true
-              curl -sL -A "$UA" "https://www.myfxbook.com/api/logout.json?session=${SESS_ENC}" -o /dev/null || true
+              for attempt in 1 2 3; do
+                curl -sL -A "$UA" -b mfx_cookies.txt -c mfx_cookies.txt "https://www.myfxbook.com/api/get-community-outlook.json?session=${SESS_ENC}" -o sent_retail.json || true
+                if node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_retail.json","utf8"));process.exit(j&&!j.error&&Array.isArray(j.symbols)&&j.symbols.length?0:1);}catch(e){process.exit(1);}'; then echo "[debug] Myfxbook outlook ok (attempt $attempt)"; break; fi
+                echo "[debug] Myfxbook outlook attempt $attempt: $(head -c 120 sent_retail.json 2>/dev/null)"
+                sleep 4
+              done
+              curl -sL -A "$UA" -b mfx_cookies.txt "https://www.myfxbook.com/api/logout.json?session=${SESS_ENC}" -o /dev/null || true
             else
               echo "[debug] Myfxbook login failed (check MYFXBOOK_EMAIL/PASSWORD)"; head -c 200 sent_mfxlogin.json 2>/dev/null; echo
             fi
@@ -2056,7 +2066,7 @@ jobs:
             fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
             console.log("sentiment_data.json: "+log.join(" | "));
           '
-          rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_retail.json sent_mfxlogin.json
+          rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
