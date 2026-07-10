@@ -772,15 +772,20 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .histp-day.histp-today .histp-date{color:var(--blue)}
 .histp-net{font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px;border:1px solid var(--bd2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace}
 .histp-net-none{color:var(--t3);border-color:var(--bd)}
-.histp-evt{display:flex;align-items:center;gap:8px;padding:3px 2px;font-size:12px}
-.histp-arrow{flex:none;font-size:12px;font-weight:800;width:12px;text-align:center}
-.histp-name{flex:1 1 auto;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.histp-val{flex:none;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:11px}
+/* Grid statt Flex, damit die Uhrzeit links in einer festen Spalte steht und
+   ALLE Zeilen (Events wie manuelle Aenderungen) ihren Text an derselben
+   x-Position beginnen (Nutzer-Wunsch 2026-07-11). Spalten:
+   Zeit | Pfeil | Text | Werte | Effekt. */
+.histp-evt{display:grid;grid-template-columns:44px 13px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:3px 2px;font-size:12px}
+.histp-time{color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:10.5px;text-align:right;white-space:nowrap}
+.histp-arrow{font-size:12px;font-weight:800;text-align:center}
+.histp-name{color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.histp-val{color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:11px;white-space:nowrap;text-align:right}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
-.histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px}
-.histp-eff{flex:none;font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px}
-@media(max-width:560px){.histp-eff{display:none}.histp-name{white-space:normal}}
+.histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px 54px}
+.histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+@media(max-width:560px){.histp-val{display:none}.histp-name{white-space:normal}}
 /* ── GREEN ALERT BADGE (Toolbar) ── */
 .green-alert-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 5px;cursor:default;transition:opacity .2s,transform .2s;line-height:1;gap:1px;min-width:24px}
 .green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
@@ -1047,7 +1052,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1e3a8a;color:#dbeafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-HISTORY-MANUAL-85</span><span id="verBannerText"> (the 10-day asset history now documents ALL score changes, not just calendar events: every manual edit you make - changing an indicator bias, toggling the ★ important flag - is logged with a timestamp, old to new value and its exact score effect, shown in the day with a ✏️ "you" row. The persistent scoreLog lives in snap() so it syncs across devices and an Undo removes the entry with the change. Day scores are back-calculated including these manual deltas)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#134e4a;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-COT-RELEASE-86</span><span id="verBannerText"> (COT tab now shows the real report date prominently ("Report as of: Tue, Jul 7 (4 days ago)", from the CFTC report_date field) and the next-release countdown is holiday-aware: the CFTC delays the Friday release to Monday on US-federal-holiday weeks, and the system now detects that (verified: Thanksgiving week -> Mon Nov 30, July-4 week -> Mon Jul 6, normal week -> Fri; a "holiday-delayed" note shows on shifted weeks). History rows now have the time in a fixed left column so every entry - events and your manual edits - starts its text at the same position)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2678,6 +2683,7 @@ function renderSymHistoryPanel(id){
       const fcv=(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–';
       const pvv=(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–';
       return`<div class="histp-evt">
+        <span class="histp-time">${escH(ev.time&&evtTimeValid(ev.time)?ev.time:'—')}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
         <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
         <span class="histp-val">${acv} <span class="histp-fc">fc ${fcv} · prev ${pvv}</span></span>
@@ -2690,14 +2696,15 @@ function renderSymHistoryPanel(id){
       const dl=+m.delta||0;manNet+=dl;
       const col=dl>0?BC.bull:dl<0?BC.bear:BC.neu;
       const arr=dl>0?'▲':dl<0?'▼':'◆';
-      const tm=new Date(m.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const tm=new Date(m.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
       const desc=m.kind==='bias'
         ?`${escH(m.ind)}: ${BLAB[m.from]||escH(m.from)} → <b>${BLAB[m.to]||escH(m.to)}</b>`
         :`${escH(m.ind)}: ${escH(m.from||'')} → <b>${escH(m.to||'')}</b>`;
       return`<div class="histp-evt" style="background:rgba(var(--purple-rgb),.06)">
+        <span class="histp-time">${escH(tm)}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
-        <span class="histp-name" title="Manual change">✏️ ${desc}</span>
-        <span class="histp-val"><span class="histp-fc">you · ${escH(tm)}</span></span>
+        <span class="histp-name" title="Manual change (you)">✏️ ${desc}</span>
+        <span class="histp-val"><span class="histp-fc">you</span></span>
         <span class="histp-eff" style="color:${col};border-color:${col}">${(dl>0?'+':'')+(Math.round(dl*10)/10)}</span>
       </div>`;
     }).join('');
@@ -8239,17 +8246,81 @@ function cotNyToUtc(y,mo,d,h,mi){
   const asUTC=Date.UTC(+m.year,+m.month-1,+m.day,m.hour==='24'?0:+m.hour,+m.minute,+m.second);
   return guess-(asUTC-guess);
 }
-function cotNextReportTs(){
+// ── US-Bundesfeiertage (fuer CFTC-Release-Verschiebung) ────────────────
+// Die CFTC veroeffentlicht den COT-Report normal Freitag 15:30 ET (Daten
+// "Stand Dienstag"). Faellt in die Release-Woche (Mo-Fr) ein Bundesfeiertag,
+// verschiebt sich die Veroeffentlichung um die Anzahl Feiertage nach hinten
+// (praktisch auf Montag). "R8.6"-artige Feiertagsregeln:
+function cotNthWeekday(y,mo,weekday,n){ // n-ter <weekday> (0=So..6=Sa) im Monat mo (1-12)
+  const first=new Date(Date.UTC(y,mo-1,1)).getUTCDay();
+  const day=1+((weekday-first+7)%7)+(n-1)*7;
+  return `${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+function cotLastWeekday(y,mo,weekday){
+  const last=new Date(Date.UTC(y,mo,0)).getUTCDate();
+  const lastDow=new Date(Date.UTC(y,mo-1,last)).getUTCDay();
+  const day=last-((lastDow-weekday+7)%7);
+  return `${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+function cotObserved(y,mo,d){ // Sa->Fr davor, So->Mo danach (Bundes-Beobachtung)
+  const dt=new Date(Date.UTC(y,mo-1,d)),dow=dt.getUTCDay();
+  if(dow===6)dt.setUTCDate(dt.getUTCDate()-1);
+  else if(dow===0)dt.setUTCDate(dt.getUTCDate()+1);
+  return dt.toISOString().slice(0,10);
+}
+function cotUsFederalHolidays(y){
+  return new Set([
+    cotObserved(y,1,1),                 // New Year's Day
+    cotNthWeekday(y,1,1,3),             // MLK (3. Mo Jan)
+    cotNthWeekday(y,2,1,3),             // Washington's Birthday (3. Mo Feb)
+    cotLastWeekday(y,5,1),             // Memorial Day (letzter Mo Mai)
+    cotObserved(y,6,19),               // Juneteenth
+    cotObserved(y,7,4),                // Independence Day
+    cotNthWeekday(y,9,1,1),            // Labor Day (1. Mo Sep)
+    cotNthWeekday(y,10,1,2),           // Columbus Day (2. Mo Okt)
+    cotObserved(y,11,11),              // Veterans Day
+    cotNthWeekday(y,11,4,4),           // Thanksgiving (4. Do Nov)
+    cotObserved(y,12,25),              // Christmas
+  ]);
+}
+function cotIsHoliday(ymd){
+  const y=+ymd.slice(0,4);
+  return cotUsFederalHolidays(y).has(ymd)||cotUsFederalHolidays(y-1).has(ymd)||cotUsFederalHolidays(y+1).has(ymd);
+}
+// Naechster tatsaechlicher COT-Release-Zeitpunkt (ET), feiertagsbereinigt.
+// Rueckgabe: {ts, ymd, shifted, holidayName}. shifted=true, wenn der Release
+// wegen eines Feiertags in der Woche NICHT am normalen Freitag liegt.
+function cotNextReleaseInfo(){
   const now=Date.now();
-  for(let add=0;add<14;add++){
+  for(let add=0;add<21;add++){
     const m=cotNyParts(new Date(now+add*864e5));
-    if(m.weekday==='Fri'){
-      const ts=cotNyToUtc(+m.year,+m.month,+m.day,15,30);
-      if(ts>=now)return ts;
+    if(m.weekday!=='Fri')continue;
+    // Diese Freitags-Woche (Mo-Fr) auf Feiertage pruefen.
+    const friUtc=Date.UTC(+m.year,+m.month-1,+m.day);
+    let holidaysInWeek=0;
+    for(let back=0;back<5;back++){
+      const dd=new Date(friUtc-back*864e5).toISOString().slice(0,10);
+      if(cotIsHoliday(dd))holidaysInWeek++;
+    }
+    // Release = Freitag 15:30 ET + je Feiertag ein Geschaeftstag nach hinten.
+    let rel=new Date(friUtc);
+    let steps=holidaysInWeek;
+    while(steps>0){
+      rel.setUTCDate(rel.getUTCDate()+1);
+      const dow=rel.getUTCDay(),ds=rel.toISOString().slice(0,10);
+      if(dow===0||dow===6||cotIsHoliday(ds))continue; // Wochenende/Feiertag ueberspringen
+      steps--;
+    }
+    const ry=rel.getUTCFullYear(),rmo=rel.getUTCMonth()+1,rd=rel.getUTCDate();
+    const ts=cotNyToUtc(ry,rmo,rd,15,30);
+    if(ts>=now){
+      const ymd=rel.toISOString().slice(0,10);
+      return {ts,ymd,shifted:holidaysInWeek>0,weekday:cotNyParts(new Date(ts)).weekday};
     }
   }
   return null;
 }
+function cotNextReportTs(){const i=cotNextReleaseInfo();return i?i.ts:null;}
 function cotStartCountdown(){cotStopCountdown();cotTickCountdown();cotCdTimer=setInterval(cotTickCountdown,1000);}
 function cotStopCountdown(){if(cotCdTimer){clearInterval(cotCdTimer);cotCdTimer=null;}}
 function cotTickCountdown(){
@@ -8451,9 +8522,21 @@ const COT_SOURCE_URL='https://www.cftc.gov/MarketReports/CommitmentsofTraders/in
 // automatisch ALLE Geraete zur selben Zeit denselben Zustand - dafuer ist
 // keine eigene Cloud-Sync-Anbindung mehr noetig.
 function cotWarningActive(){
-  const m=cotNyParts(new Date());
-  if(m.weekday==='Sat'||m.weekday==='Sun')return true;
-  if(m.weekday==='Fri')return Date.now()>=cotNyToUtc(+m.year,+m.month,+m.day,15,30);
+  // Aktiv vom tatsaechlichen (feiertagsbereinigten) Release-Zeitpunkt an bis
+  // ~60 h danach - deckt Release-Nachmittag + Wochenende ab und verschiebt
+  // sich automatisch mit, wenn der Release wegen eines Feiertags auf Montag
+  // rutscht (statt fest Freitag anzunehmen).
+  const now=Date.now();
+  for(let back=0;back<21;back++){
+    const m=cotNyParts(new Date(now-back*864e5));
+    if(m.weekday!=='Fri')continue;
+    const friUtc=Date.UTC(+m.year,+m.month-1,+m.day);
+    let hol=0;for(let b=0;b<5;b++){if(cotIsHoliday(new Date(friUtc-b*864e5).toISOString().slice(0,10)))hol++;}
+    let rel=new Date(friUtc),steps=hol;
+    while(steps>0){rel.setUTCDate(rel.getUTCDate()+1);const dow=rel.getUTCDay(),ds=rel.toISOString().slice(0,10);if(dow===0||dow===6||cotIsHoliday(ds))continue;steps--;}
+    const relTs=cotNyToUtc(rel.getUTCFullYear(),rel.getUTCMonth()+1,rel.getUTCDate(),15,30);
+    if(relTs<=now)return (now-relTs)<60*36e5; // juengster vergangener Release
+  }
   return false;
 }
 function applyCotDataFeed(){
@@ -8815,8 +8898,10 @@ function renderCot(){
   // Control bar: countdown to the next report + manual refresh.
   const refreshSpin=cotRefreshing?' spin':'';
   const note=cotRefreshNote?`<span class="cot-note">${escH(cotRefreshNote)}</span>`:'';
+  const _rel=cotNextReleaseInfo();
+  const _relLbl=_rel?(fmtDayHdr(_rel.ymd)+(_rel.shifted?' · ⚠ holiday-delayed':'')):'';
   const ctrl=`<div class="cot-ctrl">
-    <div class="cot-cd-box"><span class="cot-cd-lbl">Next report in</span><span class="cot-cd" id="cotCountdown">–</span></div>
+    <div class="cot-cd-box"><span class="cot-cd-lbl">Next report${_relLbl?` (${escH(_relLbl)})`:''} in</span><span class="cot-cd" id="cotCountdown">–</span></div>
     <div class="cot-ctrl-r">${note}<button class="cot-refresh${refreshSpin}" id="cotRefreshBtn" onclick="cotManualRefresh()" title="Load live from the CFTC now"><span class="cot-refresh-ic">↻</span> Refresh</button></div>
   </div>`;
   if(!COT_DATA||!COT_DATA.symbols){
@@ -8859,6 +8944,12 @@ function renderCot(){
   }).join('');
   // Detail table sorted by week-over-week net % change (largest swing first).
   const date=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
+  // Alter des angezeigten Reports (Tage seit dem "Stand"-Datum) + Hinweis,
+  // falls er ungewoehnlich alt ist (>10 Tage = ein Report ausgefallen/verspaetet).
+  const _rd=COT_DATA.report_date||'';
+  const _ageD=_rd?Math.max(0,Math.round((Date.now()-new Date(_rd+'T00:00:00Z').getTime())/864e5)):null;
+  const _ageTxt=_ageD!=null?` (${_ageD===0?'today':_ageD===1?'1 day ago':_ageD+' days ago'})`:'';
+  const _stale=_ageD!=null&&_ageD>10?` · <span style="color:var(--amber)">⚠ older than usual — a release may have been delayed</span>`:'';
   // Verlaufsdiagramm + Verlaufstabelle nur, wenn genau ein Asset gefiltert
   // ist; ansonsten die normale Symbol-Vergleichstabelle (alle Assets).
   let histCard='',tblTitle,head,body;
@@ -8922,7 +9013,7 @@ function renderCot(){
       <div class="cot-bars">${bars}</div>
     </div>`;
   el.innerHTML=ctrl+filterBar+`
-    <div class="cot-meta">Report date: <b>${escH(date)}</b> · Source: CFTC (Legacy, Non-Commercial) · COT is released weekly (as of Tuesday, published Friday)</div>
+    <div class="cot-meta">Report as of: <b>${escH(date)}</b>${escH(_ageTxt)} · Source: CFTC (Legacy, Non-Commercial) · weekly, data as of Tuesday, normally published Friday 15:30 ET (delayed to Monday on holiday weeks)${_stale}</div>
     ${histCard}
     ${barsCard}
     <div class="cot-card">
