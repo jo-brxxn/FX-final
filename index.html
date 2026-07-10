@@ -1052,7 +1052,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#134e4a;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-COT-RELEASE-86</span><span id="verBannerText"> (COT tab now shows the real report date prominently ("Report as of: Tue, Jul 7 (4 days ago)", from the CFTC report_date field) and the next-release countdown is holiday-aware: the CFTC delays the Friday release to Monday on US-federal-holiday weeks, and the system now detects that (verified: Thanksgiving week -> Mon Nov 30, July-4 week -> Mon Jul 6, normal week -> Fri; a "holiday-delayed" note shows on shifted weeks). History rows now have the time in a fixed left column so every entry - events and your manual edits - starts its text at the same position)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d12;color:#fde68a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-COT-PUBDATE-87</span><span id="verBannerText"> (COT meta line now shows BOTH dates: the "as of" Tuesday (the positioning date the report reflects) AND the actual publication day - "Report as of: Tue, Jul 7 · published Fri, Jul 10". Publication is computed as Tuesday+3 (that week's Friday), holiday-shifted to Monday on US-federal-holiday weeks (verified: Independence week -> Mon Jul 6, Thanksgiving week -> Mon Nov 30) with a "holiday-shifted from Friday" note. The Friday/Monday shift logic is now one shared helper (cotShiftRelease) used by the countdown, the warning window and the publication date)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fde68a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8287,38 +8287,44 @@ function cotIsHoliday(ymd){
   const y=+ymd.slice(0,4);
   return cotUsFederalHolidays(y).has(ymd)||cotUsFederalHolidays(y-1).has(ymd)||cotUsFederalHolidays(y+1).has(ymd);
 }
+// Verschiebt einen Freitags-Release (UTC-Mitternacht des Freitags, ms) um die
+// Feiertage seiner Mo-Fr-Woche nach hinten auf den naechsten Geschaeftstag
+// (praktisch Montag). Gemeinsamer Helfer fuer Next-Release, Warn-Fenster und
+// die Veroeffentlichungs-Datums-Anzeige. Rueckgabe {ymd, shifted}.
+function cotShiftRelease(friUtc){
+  let hol=0;
+  for(let b=0;b<5;b++){if(cotIsHoliday(new Date(friUtc-b*864e5).toISOString().slice(0,10)))hol++;}
+  let rel=new Date(friUtc),steps=hol;
+  while(steps>0){
+    rel.setUTCDate(rel.getUTCDate()+1);
+    const dow=rel.getUTCDay(),ds=rel.toISOString().slice(0,10);
+    if(dow===0||dow===6||cotIsHoliday(ds))continue; // Wochenende/Feiertag ueberspringen
+    steps--;
+  }
+  return {ymd:rel.toISOString().slice(0,10),shifted:hol>0};
+}
 // Naechster tatsaechlicher COT-Release-Zeitpunkt (ET), feiertagsbereinigt.
-// Rueckgabe: {ts, ymd, shifted, holidayName}. shifted=true, wenn der Release
-// wegen eines Feiertags in der Woche NICHT am normalen Freitag liegt.
 function cotNextReleaseInfo(){
   const now=Date.now();
   for(let add=0;add<21;add++){
     const m=cotNyParts(new Date(now+add*864e5));
     if(m.weekday!=='Fri')continue;
-    // Diese Freitags-Woche (Mo-Fr) auf Feiertage pruefen.
-    const friUtc=Date.UTC(+m.year,+m.month-1,+m.day);
-    let holidaysInWeek=0;
-    for(let back=0;back<5;back++){
-      const dd=new Date(friUtc-back*864e5).toISOString().slice(0,10);
-      if(cotIsHoliday(dd))holidaysInWeek++;
-    }
-    // Release = Freitag 15:30 ET + je Feiertag ein Geschaeftstag nach hinten.
-    let rel=new Date(friUtc);
-    let steps=holidaysInWeek;
-    while(steps>0){
-      rel.setUTCDate(rel.getUTCDate()+1);
-      const dow=rel.getUTCDay(),ds=rel.toISOString().slice(0,10);
-      if(dow===0||dow===6||cotIsHoliday(ds))continue; // Wochenende/Feiertag ueberspringen
-      steps--;
-    }
-    const ry=rel.getUTCFullYear(),rmo=rel.getUTCMonth()+1,rd=rel.getUTCDate();
-    const ts=cotNyToUtc(ry,rmo,rd,15,30);
-    if(ts>=now){
-      const ymd=rel.toISOString().slice(0,10);
-      return {ts,ymd,shifted:holidaysInWeek>0,weekday:cotNyParts(new Date(ts)).weekday};
-    }
+    const sh=cotShiftRelease(Date.UTC(+m.year,+m.month-1,+m.day));
+    const p=sh.ymd.split('-').map(Number);
+    const ts=cotNyToUtc(p[0],p[1],p[2],15,30);
+    if(ts>=now)return {ts,ymd:sh.ymd,shifted:sh.shifted,weekday:cotNyParts(new Date(ts)).weekday};
   }
   return null;
+}
+// Tatsaechlicher Veroeffentlichungstag EINES Reports anhand seines
+// "Stand"-Datums (Dienstag): Freitag derselben Woche (Di+3), feiertags-
+// bereinigt auf Montag. Rueckgabe {ymd, shifted, weekday} oder null.
+function cotPublicationDate(tuesYmd){
+  if(!tuesYmd)return null;
+  const t=new Date(tuesYmd+'T00:00:00Z');if(isNaN(t))return null;
+  const friUtc=t.getTime()+3*864e5; // Dienstag + 3 = Freitag
+  const sh=cotShiftRelease(friUtc);
+  return {ymd:sh.ymd,shifted:sh.shifted,weekday:new Date(sh.ymd+'T12:00:00Z').toLocaleDateString('en',{weekday:'short'})};
 }
 function cotNextReportTs(){const i=cotNextReleaseInfo();return i?i.ts:null;}
 function cotStartCountdown(){cotStopCountdown();cotTickCountdown();cotCdTimer=setInterval(cotTickCountdown,1000);}
@@ -8530,11 +8536,9 @@ function cotWarningActive(){
   for(let back=0;back<21;back++){
     const m=cotNyParts(new Date(now-back*864e5));
     if(m.weekday!=='Fri')continue;
-    const friUtc=Date.UTC(+m.year,+m.month-1,+m.day);
-    let hol=0;for(let b=0;b<5;b++){if(cotIsHoliday(new Date(friUtc-b*864e5).toISOString().slice(0,10)))hol++;}
-    let rel=new Date(friUtc),steps=hol;
-    while(steps>0){rel.setUTCDate(rel.getUTCDate()+1);const dow=rel.getUTCDay(),ds=rel.toISOString().slice(0,10);if(dow===0||dow===6||cotIsHoliday(ds))continue;steps--;}
-    const relTs=cotNyToUtc(rel.getUTCFullYear(),rel.getUTCMonth()+1,rel.getUTCDate(),15,30);
+    const sh=cotShiftRelease(Date.UTC(+m.year,+m.month-1,+m.day));
+    const p=sh.ymd.split('-').map(Number);
+    const relTs=cotNyToUtc(p[0],p[1],p[2],15,30);
     if(relTs<=now)return (now-relTs)<60*36e5; // juengster vergangener Release
   }
   return false;
@@ -8950,6 +8954,11 @@ function renderCot(){
   const _ageD=_rd?Math.max(0,Math.round((Date.now()-new Date(_rd+'T00:00:00Z').getTime())/864e5)):null;
   const _ageTxt=_ageD!=null?` (${_ageD===0?'today':_ageD===1?'1 day ago':_ageD+' days ago'})`:'';
   const _stale=_ageD!=null&&_ageD>10?` · <span style="color:var(--amber)">⚠ older than usual — a release may have been delayed</span>`:'';
+  // Veroeffentlichungstag: der angezeigte Wert ist der Dienstags-"Stand",
+  // erschienen ist der Report aber erst am Freitag derselben Woche (bzw.
+  // Montag, wenn ein US-Feiertag ihn verschoben hat).
+  const _pub=cotPublicationDate(_rd);
+  const _pubTxt=_pub?` · <b>published ${escH(fmtDayHdr(_pub.ymd))}</b>${_pub.shifted?` <span style="color:var(--amber)">(⚠ holiday-shifted from Friday to ${escH(_pub.weekday)})</span>`:' (Friday)'}`:'';
   // Verlaufsdiagramm + Verlaufstabelle nur, wenn genau ein Asset gefiltert
   // ist; ansonsten die normale Symbol-Vergleichstabelle (alle Assets).
   let histCard='',tblTitle,head,body;
@@ -9013,7 +9022,7 @@ function renderCot(){
       <div class="cot-bars">${bars}</div>
     </div>`;
   el.innerHTML=ctrl+filterBar+`
-    <div class="cot-meta">Report as of: <b>${escH(date)}</b>${escH(_ageTxt)} · Source: CFTC (Legacy, Non-Commercial) · weekly, data as of Tuesday, normally published Friday 15:30 ET (delayed to Monday on holiday weeks)${_stale}</div>
+    <div class="cot-meta">Report as of: <b>${escH(date)}</b>${escH(_ageTxt)}${_pubTxt} · Source: CFTC (Legacy, Non-Commercial) · data reflects positioning as of Tuesday's close${_stale}</div>
     ${histCard}
     ${barsCard}
     <div class="cot-card">
