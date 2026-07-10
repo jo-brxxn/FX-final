@@ -506,6 +506,15 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .cot-hist-svg{display:block}
 .cot-hit{cursor:pointer}
 .cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
+/* Generisches Chart-Hover (chartHoverWrap/attachChartHovers): Fuehrungslinie,
+   Punkt und Werte-Fenster folgen dem Finger/der Maus; touch-action:pan-y am
+   Wrapper erlaubt vertikales Seiten-Scrollen, verhindert aber horizontales
+   Wischen/Verschieben des Diagramms (Nutzer-Wunsch 2026-07-11). */
+.chv{position:relative;touch-action:pan-y}
+.chv-line{position:absolute;top:4px;bottom:22px;width:1px;background:var(--t3);opacity:.45;pointer-events:none}
+.chv-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:transparent;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.chv-tip{position:absolute;z-index:6;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px))}
+.chv-tip b{color:var(--t0)}.chv-tip .chv-tip-d{color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
 .cot-tip-date{font-weight:700;color:var(--t1);margin-bottom:4px;font-size:10px;letter-spacing:.3px;text-transform:uppercase}
 .cot-tip-row{display:flex;align-items:center;justify-content:space-between;gap:10px;line-height:1.5}
 .cot-tip-row span{color:var(--t3)}
@@ -1052,7 +1061,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#4c1d95;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-MYFXBOOK-API-88</span><span id="verBannerText"> (retail sentiment now uses the official Myfxbook login API instead of scraping HTML: the hourly job logs in with the MYFXBOOK_EMAIL / MYFXBOOK_PASSWORD repo secrets, gets a session and pulls get-community-outlook.json (real long/short per symbol), then logs out. Without the secrets set it degrades cleanly (retail chart stays empty, all other sources keep working). Add the two secrets under repo Settings -> Secrets and variables -> Actions to switch it on)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-CHART-HOVER-89</span><span id="verBannerText"> (jedes Diagramm mit mehreren Datenpunkten reagiert jetzt auf Finger/Maus: beim Darueberfahren erscheint ein Punkt auf der naechsten Datenstelle plus ein kleines Fenster mit dem genauen Datum und Wert; sobald Finger/Maus weg ist, verschwindet beides wieder. Diagramme lassen sich dabei NICHT mehr versehentlich horizontal wegwischen/verschieben - vertikales Scrollen der Seite bleibt moeglich. Gilt fuer die Sentiment-Sparklines (Fear &amp; Greed), Put/Call- und Net-Options-Flow-Charts; der COT-Chart hatte bereits eine eigene Tooltip-Funktion)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8692,6 +8701,37 @@ function sentGauge(val,lo,hi,unit){
 // Kleines Liniendiagramm einer [[Datum,Wert],…]-Reihe mit optionalen
 // Schwellen-Baendern (contrarian: unter loTh = bullish-Zone, ueber hiTh =
 // bearish-Zone).
+// ── Generisches Chart-Hover: Fuehrungslinie, Punkt und Werte-Fenster folgen
+// Finger/Maus; verschwinden beim Loslassen. touch-action:pan-y (CSS) laesst
+// vertikales Scrollen zu, blockt aber horizontales Wischen/Verschieben. ──
+const _chvReg={};let _chvSeq=0;
+// svg fuellt den Wrapper; pts: [{fx,fy,col,tip}] mit fx,fy in 0..1 der SVG-Box.
+function chartHoverWrap(svg,pts){
+  const id='chv'+(_chvSeq++);_chvReg[id]=pts||[];
+  return`<div class="chv" data-chv="${id}">${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
+}
+function attachChartHovers(root){
+  (root||document).querySelectorAll('.chv[data-chv]').forEach(w=>{
+    if(w._chvWired)return;w._chvWired=1;
+    const pts=_chvReg[w.dataset.chv]||[];
+    const line=w.querySelector('.chv-line'),dot=w.querySelector('.chv-dot'),tip=w.querySelector('.chv-tip');
+    const hide=()=>{if(line)line.style.display='none';if(dot)dot.style.display='none';if(tip)tip.style.display='none';};
+    const move=cx=>{
+      const r=w.getBoundingClientRect();if(!r.width||!pts.length){hide();return;}
+      const fx=(cx-r.left)/r.width;if(fx<-0.03||fx>1.03){hide();return;}
+      let best=pts[0],bd=1e9;pts.forEach(p=>{const d=Math.abs(p.fx-fx);if(d<bd){bd=d;best=p;}});
+      const px=best.fx*r.width,py=best.fy*r.height;
+      if(line){line.style.left=px+'px';line.style.display='';}
+      if(dot){dot.style.left=px+'px';dot.style.top=py+'px';dot.style.borderColor=best.col||'#fff';dot.style.display='';}
+      if(tip){tip.innerHTML=best.tip;tip.style.display='';const tw=tip.offsetWidth||120;tip.style.left=Math.max(tw/2+2,Math.min(r.width-tw/2-2,px))+'px';tip.style.top=Math.max(4,py)+'px';}
+    };
+    w.addEventListener('mousemove',e=>move(e.clientX));
+    w.addEventListener('mouseleave',hide);
+    w.addEventListener('touchstart',e=>{const t=e.touches[0];if(t)move(t.clientX);},{passive:true});
+    w.addEventListener('touchmove',e=>{const t=e.touches[0];if(t)move(t.clientX);},{passive:true});
+    w.addEventListener('touchend',hide);w.addEventListener('touchcancel',hide);
+  });
+}
 function sentSpark(series,lo,hi,loTh,hiTh){
   const pts=(series||[]).filter(e=>e&&isFinite(+e[1]));
   if(pts.length<2)return`<div style="color:var(--t3);font-size:11px;padding:8px 0">Not enough history yet (builds up daily).</div>`;
@@ -8701,13 +8741,15 @@ function sentSpark(series,lo,hi,loTh,hiTh){
   const band=(a,b,col)=>`<rect x="0" y="${yOf(b).toFixed(1)}" width="${W}" height="${(yOf(a)-yOf(b)).toFixed(1)}" fill="${col}"/>`;
   const path=pts.map((e,i)=>`${i?'L':'M'}${xOf(i).toFixed(1)} ${yOf(+e[1]).toFixed(1)}`).join(' ');
   const last=pts[pts.length-1];
-  return`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:100px">
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:100px">
     ${loTh!=null?band(lo,loTh,'rgba(79,195,247,.10)'):''}${hiTh!=null?band(hiTh,hi,'rgba(239,83,80,.10)'):''}
     ${loTh!=null?`<line x1="0" y1="${yOf(loTh).toFixed(1)}" x2="${W}" y2="${yOf(loTh).toFixed(1)}" stroke="rgba(79,195,247,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
     ${hiTh!=null?`<line x1="0" y1="${yOf(hiTh).toFixed(1)}" x2="${W}" y2="${yOf(hiTh).toFixed(1)}" stroke="rgba(239,83,80,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
     <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>
     <circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(+last[1]).toFixed(1)}" r="3.2" fill="var(--blue)"/>
   </svg>`;
+  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#5fa8ed';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
+  return chartHoverWrap(svg,hpts);
 }
 function sentReadBadge(ev){
   if(!ev)return`<span style="color:var(--t3);font-size:12px">no data</span>`;
@@ -8776,6 +8818,7 @@ function renderSentiment(){
   // Symbol-Filter nur dort zeigen, wo per-Symbol-Daten existieren (Retail).
   const filt=(D&&sentSub==='retail')?sentFilterBar():'';
   el.innerHTML=nav+filt+body;
+  attachChartHovers(el);
 }
 // ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
 function renderRetailBars(D){
@@ -8820,9 +8863,11 @@ function renderPutCallChart(D){
   // Datums-Achse: erstes, mittleres, letztes
   let xlab='';
   if(series.length){const idxs=[0,Math.floor((series.length-1)/2),series.length-1];[...new Set(idxs)].forEach(i=>{const d=String(series[i][0]).slice(5);xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(d)}</text>`;});}
-  const chart=series.length<2
-    ? `<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. A clean free daily source is hard to reach from the hourly job (data providers block datacenter IPs); it fills in automatically once values come through. Tap the <b>i</b> to learn what this shows.</div>`
-    : `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+  let chart;
+  if(series.length<2){
+    chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. A clean free daily source is hard to reach from the hourly job (data providers block datacenter IPs); it fills in automatically once values come through. Tap the <b>i</b> to learn what this shows.</div>`;
+  }else{
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
         <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(79,195,247,.08)"/>
         <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${(H-padB-yOf(LO)).toFixed(1)}" fill="rgba(239,83,80,.08)"/>
         ${gy}
@@ -8834,8 +8879,10 @@ function renderPutCallChart(D){
         <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>
         <path d="${step}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
         ${xlab}
-      </svg>
-      <div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${vals[vals.length-1]>=HI?BC.bull:vals[vals.length-1]<=LO?BC.bear:'var(--t1)'}">${vals[vals.length-1].toFixed(2)}</b> — ${vals[vals.length-1]>=HI?'high put volume → contrarian bullish':vals[vals.length-1]<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+      </svg>`;
+    const hpts=series.map((e,i)=>{const v=+e[1];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b> · ${zone}`};});
+    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${vals[vals.length-1]>=HI?BC.bull:vals[vals.length-1]<=LO?BC.bear:'var(--t1)'}">${vals[vals.length-1].toFixed(2)}</b> — ${vals[vals.length-1]>=HI?'high put volume → contrarian bullish':vals[vals.length-1]<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+  }
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${chart}</div></div>`;
 }
 // ── Net Options Flow: Balken = 5-Tage- minus 20-Tage-Schnitt des
@@ -8865,12 +8912,13 @@ function renderNetFlowChart(D){
   const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
   let xlab='';const idxs=[...new Set([0,Math.floor((n-1)/2),n-1])];idxs.forEach(i=>{xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(String(net[i][0]).slice(5))}</text>`;});
   const last=vals[vals.length-1];
-  const chart=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bull}">Bullish options flow</text>
     <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bear}">Bearish options flow</text>
     ${gy}${bars}${xlab}
-  </svg>
-  <div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
+  </svg>`;
+  const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> · ${up?'bullish flow':'bearish flow'}`};});
+  const chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
