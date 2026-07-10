@@ -555,7 +555,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}@media (hover:hover){.sp:hover .sp-mv{opacity:.35}}@media (hover:hover){.sp-mv:hover{opacity:1!important;color:var(--blue)}}.sp-mv:disabled{opacity:.04;cursor:default}
 .sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}@media (hover:hover){.sp:hover .sp-del{opacity:.5}}@media (hover:hover){.sp-del:hover{opacity:1!important}}
 /* ── FULL PAGE ── */
-.pc{padding:14px;overflow-y:auto;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
 .pcc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px}
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
@@ -793,6 +793,11 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .cal-green-dismiss{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;transition:color .15s}@media (hover:hover){.cal-green-dismiss:hover{color:var(--red)}}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
 .setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
+/* Bei schmaler Breite passen 3 Set-ups-Spalten nicht mehr ohne Abschneiden
+   (Namensspalte + Ticker/Delta/Score/Stern haben eine Mindestbreite) -> auf
+   eine Spalte stapeln, statt das Dashboard horizontal ueberlaufen zu lassen.
+   Betrifft Dashboard-Widget UND den Set-ups-Tab gleichermassen. */
+@media(max-width:680px){.setups-cols{grid-template-columns:1fr}}
 .setups-cols>div{border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
 .setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
 /* Preis-Chip/Δ/Score sollen ueber ALLE Zeilen einer Spalte (Bullish/Neutral/
@@ -812,8 +817,14 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 }
 .setups-cols .sym-row{padding-left:6px;padding-right:6px}
 /* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
-.ba-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:4px}
+/* minmax(0,1fr) statt 1fr: sonst schrumpfen die Spalten nicht unter die
+   Mindestbreite ihrer Zeilen (Ticker-Chips) und schieben das Dashboard
+   ueber den Rand. Unter 620px auf eine Spalte stapeln. */
+.ba-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;margin-top:4px}
+.ba-cols>div{min-width:0}
+.ba-cols .sym-row{min-width:0}
 .ba-cols .sym-row .sym-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:620px){.ba-cols{grid-template-columns:1fr}}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -937,7 +948,10 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Dashboard das Geraet ausfuellt; breite Karten (Set-ups/Pairs-Editor) spannen
      die ganze Zeile. */
   #dashWidgets{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
-  #dashWidgets .dw{margin-bottom:0}
+  /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
+     Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
+     ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
+  #dashWidgets .dw{margin-bottom:0;min-width:0}
   #dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-mini_calendar{grid-column:1/-1}
   @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
@@ -1033,7 +1047,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e75;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SENTIMENT-VIX-82</span><span id="verBannerText"> (sentiment sources verified on a live workflow run: Crypto Fear&amp;Greed (alternative.me) and VIX (TradingView) come through reliably; CNN Stock Fear&amp;Greed returns HTTP 418 bot-block and the TradingView scanner exposes no put/call ticker. So scoring now uses Crypto F&amp;G for BTC and the VIX for S&amp;P 500 / Nasdaq (contrarian: VIX ≥28 bullish, ≤13 bearish, half weight, extremes only). Stock F&amp;G and Put/Call stay chart-only in the Sentiment tab and fill in automatically if a run ever gets through. CNN fetch got better browser headers as a cheap retry)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#334155;color:#e2e8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-DASH-NOPAN-83</span><span id="verBannerText"> (dashboard no longer pans horizontally: the FX-Bias/Assets widget (.ba-cols) and the widget grid used plain 1fr columns, whose grid items keep their content min-width and push the whole dashboard past the screen edge - now minmax(0,1fr) + min-width:0 so cards shrink to fit, .ba-cols and the set-ups columns stack to one column on narrow screens, and .pc gets overscroll-behavior-x:none to kill the elastic sideways drag. Verified 0 horizontal overflow from 320px to 1366px. Horizontal scroll stays available (overflow-x:auto) only if a card genuinely can not fit)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
