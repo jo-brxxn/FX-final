@@ -1982,8 +1982,23 @@ jobs:
             SESSION=$(node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_mfxlogin.json","utf8"));process.stdout.write(j&&!j.error&&j.session?String(j.session):"");}catch(e){}' 2>/dev/null)
             if [ -n "$SESSION" ]; then
               SESS_ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$SESSION")
+              # Diagnose (leakt den Token NICHT): welche Sonderzeichen-Klassen
+              # enthaelt der Session-Token? Wenn rein alphanumerisch, ist ein
+              # Encoding-Problem AUSGESCHLOSSEN und "Invalid session" ist ein
+              # Account-/API-seitiges Thema, nicht das Query-Encoding.
+              echo "[debug] Myfxbook session charclasses: $(node -e 'const s=process.argv[1];console.log((/[+]/.test(s)?"plus ":"")+(/[/]/.test(s)?"slash ":"")+(/=/.test(s)?"eq ":"")+(/[^A-Za-z0-9+/=]/.test(s)?"other":"")||"alnum-only")' "$SESSION" 2>/dev/null)"
+              # "Invalid session" trotz frischem Login kann daran liegen, wie
+              # der Token in der Query steht. Drei Strategien nacheinander
+              # durchprobieren: (1) curl kodiert selbst via --data-urlencode,
+              # (2) Token roh (Myfxbook dekodiert die Query evtl. NICHT), (3)
+              # encodeURIComponent wie bisher. So trifft eine der Varianten das
+              # von Myfxbook erwartete Format.
               for attempt in 1 2 3; do
-                curl -sL -A "$UA" -b mfx_cookies.txt -c mfx_cookies.txt "https://www.myfxbook.com/api/get-community-outlook.json?session=${SESS_ENC}" -o sent_retail.json || true
+                case "$attempt" in
+                  1) curl -sL -A "$UA" -b mfx_cookies.txt -c mfx_cookies.txt -G --data-urlencode "session=${SESSION}" "https://www.myfxbook.com/api/get-community-outlook.json" -o sent_retail.json || true ;;
+                  2) curl -sL -A "$UA" -b mfx_cookies.txt -c mfx_cookies.txt "https://www.myfxbook.com/api/get-community-outlook.json?session=${SESSION}" -o sent_retail.json || true ;;
+                  *) curl -sL -A "$UA" -b mfx_cookies.txt -c mfx_cookies.txt "https://www.myfxbook.com/api/get-community-outlook.json?session=${SESS_ENC}" -o sent_retail.json || true ;;
+                esac
                 if node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_retail.json","utf8"));process.exit(j&&!j.error&&Array.isArray(j.symbols)&&j.symbols.length?0:1);}catch(e){process.exit(1);}'; then echo "[debug] Myfxbook outlook ok (attempt $attempt)"; break; fi
                 echo "[debug] Myfxbook outlook attempt $attempt: $(head -c 120 sent_retail.json 2>/dev/null)"
                 sleep 4
