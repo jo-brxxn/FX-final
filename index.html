@@ -1047,7 +1047,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3b0764;color:#f5d0fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-SENTIMENT-CHARTS-84</span><span id="verBannerText"> (Insights > Sentiment reworked into sub-views: Retail Sentiment (diverging long/short bars per symbol, contrarian tag), Put-Call Ratio (stepped line with high-put/high-call threshold bands + contrarian zones), Net Options Flow (5d-20d MA bars, bullish/bearish), and Fear & Greed / VIX gauges - all in your bias colours, each with a detailed i-info modal and a source link. Symbol filter on the retail view. Workflow now also tries to fetch retail long/short from Myfxbook and the CBOE put/call; verifying live which sources come through (per-symbol options data is a paid-feed feature, so those charts fill only if a free source is reachable))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f5d0fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f5d0fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1e3a8a;color:#dbeafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-HISTORY-MANUAL-85</span><span id="verBannerText"> (the 10-day asset history now documents ALL score changes, not just calendar events: every manual edit you make - changing an indicator bias, toggling the ★ important flag - is logged with a timestamp, old to new value and its exact score effect, shown in the day with a ✏️ "you" row. The persistent scoreLog lives in snap() so it syncs across devices and an Undo removes the entry with the change. Day scores are back-calculated including these manual deltas)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dbeafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2651,9 +2651,15 @@ function renderSymHistoryPanel(id){
   // sich rueckwirkend nicht) - die Event-Zeilen behalten bewusst ihre
   // rohen +/-1-Effekte, wie im Score-Breakdown-Modal.
   const cmpF=sym?symCmpFactor(sym):1;
+  // Manuelle Score-Aenderungen dieses Symbols nach Datum gruppieren (neueste
+  // zuerst innerhalb des Tages), damit sie neben den Events erscheinen.
+  const logByDate={};
+  (scoreLog||[]).filter(x=>x&&x.sym===id).forEach(x=>{const dk=String(x.t).slice(0,10);(logByDate[dk]=logByDate[dk]||[]).push(x);});
+  const BLAB={bull:'▲ Bullish',bear:'▼ Bearish',neu:'◆ Neutral'};
   let running=sym?symScore(sym):0; // ROHER Score-Wert des jeweils angezeigten Tages
   const rows=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
+    const manual=(logByDate[d.date]||[]).slice().sort((a,b)=>String(b.t).localeCompare(String(a.t)));
     const isToday=d.date===today;
     const hdrTxt=escH(fmtDayHdr(d.date))+(isToday?' · Today':'');
     const dayScore=Math.round(running*cmpF*10)/10;
@@ -2678,11 +2684,28 @@ function renderSymHistoryPanel(id){
         <span class="histp-eff" style="color:${col};border-color:${col}">${eff}</span>
       </div>`;
     }).join('');
-    running-=net; // Ausgangswert fuer den naechsten (aelteren) Tag vorbereiten
-    const noEvt=evs.length?'':`<div class="histp-noevt">No score-driving events</div>`;
+    // Manuelle Aenderungen dieses Tages (mit ihrem exakten Score-Delta).
+    let manNet=0;
+    const manHtml=manual.map(m=>{
+      const dl=+m.delta||0;manNet+=dl;
+      const col=dl>0?BC.bull:dl<0?BC.bear:BC.neu;
+      const arr=dl>0?'▲':dl<0?'▼':'◆';
+      const tm=new Date(m.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      const desc=m.kind==='bias'
+        ?`${escH(m.ind)}: ${BLAB[m.from]||escH(m.from)} → <b>${BLAB[m.to]||escH(m.to)}</b>`
+        :`${escH(m.ind)}: ${escH(m.from||'')} → <b>${escH(m.to||'')}</b>`;
+      return`<div class="histp-evt" style="background:rgba(var(--purple-rgb),.06)">
+        <span class="histp-arrow" style="color:${col}">${arr}</span>
+        <span class="histp-name" title="Manual change">✏️ ${desc}</span>
+        <span class="histp-val"><span class="histp-fc">you · ${escH(tm)}</span></span>
+        <span class="histp-eff" style="color:${col};border-color:${col}">${(dl>0?'+':'')+(Math.round(dl*10)/10)}</span>
+      </div>`;
+    }).join('');
+    running-=(net+manNet); // Ausgangswert fuer den naechsten (aelteren) Tag
+    const nothing=(!evs.length&&!manual.length)?`<div class="histp-noevt">No score-driving events</div>`:'';
     return`<div class="histp-day${isToday?' histp-today':''}">
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span><span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
-      ${evHtml}${noEvt}
+      ${evHtml}${manHtml}${nothing}
     </div>`;
   }).join('');
   return`<div class="histp">${rows}</div>`;
@@ -4186,9 +4209,29 @@ function markUserSynced(){_userEditedSinceSync=false;try{localStorage.removeItem
 // und zog die ALTE Cloud-Stufe drueber - der Hide-Button "sprang zurueck",
 // sobald irgendein anderes Geraet zwischenzeitlich gepusht hatte.
 function markPrefEdit(){_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts});}
+// ── Manuelles Score-Aenderungs-Log ──────────────────────────────────
+// Protokolliert JEDE vom Nutzer selbst ausgeloeste Score-Aenderung
+// (Indikator-Bias per Klick, ★-Wichtig-Toggle) mit Zeitstempel, alt->neu
+// und dem konkreten Score-Effekt, damit das 10-Tage-History-Fenster nicht
+// nur Kalender-Events, sondern WIRKLICH alles zeigt, was den Score bewegt
+// (Nutzer-Wunsch 2026-07-11). Liegt in snap() -> synct + ist Undo-fest
+// (ein Undo der Bias-Aenderung nimmt den Log-Eintrag automatisch mit zurueck,
+// weil pushU() den Stand VOR dem Eintrag sichert).
+let scoreLog=[];
+function pruneScoreLog(log){
+  if(!Array.isArray(log))return[];
+  // Nur die letzten HIST_DAYS+2 Tage behalten (Panel zeigt HIST_DAYS), Deckel 400.
+  const cut=dateAddStr(todayStr(),-(HIST_DAYS+2));
+  return log.filter(x=>x&&x.t&&String(x.t).slice(0,10)>=cut).slice(-400);
+}
+function logScoreChange(symId,e){
+  if(!symId)return;
+  scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
+  scoreLog=pruneScoreLog(scoreLog);
+}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -4388,7 +4431,7 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue,scoreLog},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
@@ -5294,8 +5337,8 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;ind.bias=b;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;ind.imp=!ind.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _old=ind.bias,_before=indScore(ind,_r0);ind.bias=b;const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function togIndImp(ri,ii){pushU();const ind=getInd(ri,ii);if(!ind)return;const _r=getRub(ri),_c=getSym(),_before=indScore(ind,_r);ind.imp=!ind.imp;const _after=indScore(ind,_r);if(_c&&Math.abs(_after-_before)>1e-9)logScoreChange(_c.id,{kind:'imp',ind:ind.displayName||ind.name,rub:_r.name,from:ind.imp?'☆':'★',to:ind.imp?'★ important':'☆ normal',delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
