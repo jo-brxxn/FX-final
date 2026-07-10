@@ -1773,17 +1773,13 @@
    ]
   },
   "Consumer Confidence": {
-   "actual": "-38",
-   "forecast": "-38",
-   "previous": "-40",
-   "date": "2026-06-15",
+   "actual": "-36",
+   "forecast": "-35",
+   "previous": "-38",
+   "date": "2026-07-10",
    "event": "Consumer Confidence",
    "period": null,
    "history": [
-    [
-     "2026-03-09",
-     "-30"
-    ],
     [
      "2026-04-10",
      "-43"
@@ -1795,6 +1791,10 @@
     [
      "2026-06-15",
      "-38"
+    ],
+    [
+     "2026-07-10",
+     "-36"
     ]
    ]
   },
