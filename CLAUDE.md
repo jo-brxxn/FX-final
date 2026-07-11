@@ -65,6 +65,16 @@ danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
 
 ## Daten & Workflow
 
+- **⚠️ GRUNDSATZ — nur nützliche Daten ziehen (Nutzer-Wunsch 2026-07-11):**
+  Beim Abrufen von Daten aus dem Internet über APIs IMMER nur die Daten
+  speichern/ziehen, die tatsächlich einen Nutzen haben — konkret nur für die
+  Assets, die in der App gelistet sind (FX-Majors `USD/EUR/GBP/CHF/JPY/CAD/
+  AUD/NZD` + Non-FX `GOLD/SILVER/OIL(WTI)/BTC/SP500/NAS`, siehe `FX`/`COT_NAME`
+  in `index.html`). Kein „alles speichern und im Browser filtern". Beispiel:
+  die Myfxbook-Retail-Quelle liefert ~186 Symbole (viele Exoten/Einzelaktien)
+  — im Workflow werden davon nur die FX-Major-Paare + je ein kanonisches
+  Non-FX-Symbol behalten (Schritt „Fetch market sentiment"). Neue Feeds nach
+  demselben Prinzip von vornherein auf die gelisteten Assets filtern.
 - Daten-JSONs (`ff_calendar.json`, `ind_data.json`, `bond_data.json`,
   `cot_data.json`) werden stündlich vom GitHub-Action-Workflow
   `.github/workflows/update-ff-calendar.yml` erzeugt und nach `main` gepusht.

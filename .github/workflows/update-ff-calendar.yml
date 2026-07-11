@@ -2062,21 +2062,34 @@ jobs:
             }catch(e){log.push("tv ERR "+e.message);}
             // 4. Retail-Positionierung (Myfxbook get-community-outlook.json).
             // JSON: {error, symbols:[{name, shortPercentage, longPercentage}]}.
-            // Ohne gesetzte Secrets existiert die Datei nicht -> retail bleibt.
+            // NUR Assets speichern, die in der App auch gelistet sind
+            // (Nutzer-Grundsatz 2026-07-11: keine ungenutzten Daten ziehen).
+            // Myfxbook liefert ~186 Symbole (viele Exoten/Einzelaktien) - davon
+            // behalten wir die FX-Paare aus den 8 Majors PLUS je ein
+            // kanonisches Symbol fuer die gelisteten Non-FX-Assets (Gold,
+            // Silber, BTC, S&P 500, Nasdaq, WTI-Oel). Ohne gesetzte Secrets
+            // existiert die Datei nicht -> retail bleibt.
             try{
               const j=JSON.parse(fs.readFileSync("sent_retail.json","utf8"));
               if(j&&j.error){log.push("retail:api-error("+(j.message||"")+")");}
               else{
-                const syms=(j&&Array.isArray(j.symbols))?j.symbols:[];
-                const retail=[];
-                syms.forEach(s=>{
+                const MAJ=new Set(["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"]);
+                // je Non-FX-Asset Kandidaten in Prioritaetsreihenfolge (Broker-
+                // Namen variieren) - das erste vorhandene Symbol wird genommen.
+                const NONFX=[["XAUUSD"],["XAGUSD"],["BTCUSD"],["US500","SP500","SPX500"],["NAS100","USTEC","NDX100","US100"],["USOIL","XTIUSD","WTIUSD","WTI"]];
+                const bySym={};
+                (Array.isArray(j.symbols)?j.symbols:[]).forEach(s=>{
                   const sym=String(s.name||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
                   const lo=parseFloat(s.longPercentage),sh=parseFloat(s.shortPercentage);
                   if(!sym||!isFinite(lo)||!isFinite(sh))return;
-                  retail.push({sym,long:Math.round(lo),short:Math.round(sh)});
+                  if(!bySym[sym])bySym[sym]={sym,long:Math.round(lo),short:Math.round(sh)};
                 });
-                if(retail.length>=5){out.retail=retail;out.retailSource="https://www.myfxbook.com/community/outlook";log.push("retail="+retail.length+" symbols");}
-                else log.push("retail:parsed-"+retail.length);
+                const total=Object.keys(bySym).length;
+                const retail=[];
+                Object.keys(bySym).forEach(sym=>{if(sym.length===6&&MAJ.has(sym.slice(0,3))&&MAJ.has(sym.slice(3)))retail.push(bySym[sym]);});
+                NONFX.forEach(cands=>{for(const c of cands){if(bySym[c]){retail.push(bySym[c]);break;}}});
+                if(retail.length>=5){out.retail=retail;out.retailSource="https://www.myfxbook.com/community/outlook";log.push("retail="+retail.length+"/"+total+" kept (listed assets only)");}
+                else log.push("retail:parsed-"+retail.length+"/"+total);
               }
             }catch(e){log.push("retail:no-file/secrets-unset");}
             out.updated=new Date().toISOString();
