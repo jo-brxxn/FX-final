@@ -75,6 +75,27 @@ danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
   — im Workflow werden davon nur die FX-Major-Paare + je ein kanonisches
   Non-FX-Symbol behalten (Schritt „Fetch market sentiment"). Neue Feeds nach
   demselben Prinzip von vornherein auf die gelisteten Assets filtern.
+- **⚠️ GRUNDSATZ — nie Schätzungen oder veraltend-manuelle Werte (Nutzer-
+  Wunsch 2026-07-11):** Niemals geschätzte/geratene Zahlen in die App oder
+  die Daten-JSONs schreiben. Und niemals einen Wert, der sich über Zeit
+  ändert (Kurs, Ratio, Score, Zins, Volumen, …), als fester manuell
+  eingetragener Wert im Code oder in einer Daten-Datei hinterlegen — der
+  wird nie wieder aktualisiert und ist ab dem Moment des Schreibens falsch.
+  Variable Werte kommen IMMER aus einem lebenden Feed (Workflow-Fetch,
+  API-Call), der bei jedem Lauf neu zieht — oder das Feld bleibt leer/fehlt,
+  bis eine echte Quelle existiert. Das gilt auch für Backfills: nur echte
+  historische Werte einer Quelle nachladen (wie beim OCC-Put/Call-Backfill),
+  nie Zwischenwerte interpolieren oder schätzen, um eine Lücke zu füllen.
+- **⚠️ GRUNDSATZ — ein nötiges kostenloses Konto ist KEIN Abbruchgrund
+  (Nutzer-Wunsch 2026-07-11):** Wenn eine Datenquelle nur nach Anmeldung
+  (kostenloses Konto/Login) Daten herausgibt, ist das kein Grund, die Suche
+  dort zu beenden — der Nutzer registriert sich bei Bedarf überall kostenlos
+  und legt die Zugangsdaten als Repo-Secrets an (Muster: `MYFXBOOK_EMAIL`/
+  `MYFXBOOK_PASSWORD`, siehe Retail-Positionierung unten). Erst wenn eine
+  Quelle nachweislich eine BEZAHLTE Stufe für die gebrauchten Daten verlangt
+  (nicht nur Registrierung), ist das ein echter Abbruchgrund. Vor dem
+  Verwerfen einer Quelle wegen "braucht Login" daher IMMER erst klären, ob
+  ein kostenloses Konto reicht, statt das anzunehmen.
 - Daten-JSONs (`ff_calendar.json`, `ind_data.json`, `bond_data.json`,
   `cot_data.json`) werden stündlich vom GitHub-Action-Workflow
   `.github/workflows/update-ff-calendar.yml` erzeugt und nach `main` gepusht.
@@ -257,16 +278,23 @@ erreichbar sind:
   vier- bis sechsstellig liegen — Tages-Ratios wie AUD 3.63 aus nur 37
   Kontrakten sind Ausreisser, kein echtes Signal. Deshalb ⚠-Kennzeichnung im
   Filter-Dropdown + Warnhinweis in der Karte unter 1000 Kontrakten/Tag.
-  **KEINE Historie nachladbar**: Yahoos Options-Endpoint liefert nur die
-  aktuelle Kette, kein Datums-Parameter für historisches Volumen (anders als
-  bei der markt-weiten OCC-Zahl, die tägliche Reports publiziert). Proberunde
-  11.07. bestätigte das: OCC-Symbol-Endpunkte existieren nicht (404), OCCs
-  `daily-volume-totals` ignoriert einen angehängten `symbol`-Parameter
-  (bleibt markt-weit), CBOEs per-Symbol-Optionskette
-  (`delayed_quotes/options/{SYM}.json`, funktioniert, 3,5 MB Antwort) ist
-  ebenfalls nur eine Momentaufnahme ohne Verlauf, Barchart verlangt ein
-  Konto (401). Nicht wieder nach einer Backfill-Quelle für Pro-Asset-Put/Call
-  suchen — die Serien wachsen wie jeder neue Feed ab jetzt einen Punkt pro
+  **Historie schwierig, aber nicht endgültig aufgegeben**: Yahoos Options-
+  Endpoint liefert nur die aktuelle Kette, kein Datums-Parameter für
+  historisches Volumen (anders als bei der markt-weiten OCC-Zahl, die
+  tägliche Reports publiziert). Proberunde 11.07. bestätigte: OCC-Symbol-
+  Endpunkte existieren nicht (404), OCCs `daily-volume-totals` ignoriert
+  einen angehängten `symbol`-Parameter (bleibt markt-weit), CBOEs per-
+  Symbol-Optionskette (`delayed_quotes/options/{SYM}.json`, funktioniert,
+  3,5 MB Antwort) ist ebenfalls nur eine Momentaufnahme ohne Verlauf.
+  **Barchart** gab bei der anonymen Anfrage 401 — das ist aber laut
+  Nutzer-Grundsatz oben KEIN Abbruchgrund: der Nutzer legt bei Bedarf ein
+  kostenloses Barchart-Konto an. **Nächster Schritt, falls erneut versucht
+  wird**: Nutzer nach `BARCHART_EMAIL`/`BARCHART_PASSWORD`-Secrets fragen
+  (Muster wie Myfxbook), Login-Flow bauen und testen, ob die kostenlose
+  Stufe historische Put/Call-Daten pro Symbol freischaltet (typisch bei
+  Freemium-Finanzseiten: oft nur ein kurzes rollierendes Fenster, nicht die
+  volle Historie — das ist erst nach dem Login-Test sicher zu sagen). Bis
+  dahin wachsen die Serien wie jeder neue Feed ab jetzt einen Punkt pro
   Handelstag.
 
 Scoring nach dem `applyCotDataFeed`-Muster (`applySentimentFeed`,
