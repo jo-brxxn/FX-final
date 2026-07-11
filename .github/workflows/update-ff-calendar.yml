@@ -2136,6 +2136,33 @@ jobs:
             console.log("sentiment_data.json: "+log.join(" | "));
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_pc.csv sent_retail.json sent_mfxlogin.json mfx_cookies.txt
+
+      # ── TEMPORAERER PROBE-SCHRITT 2 (Put/Call, HTML-Analyse 2026-07-11) ──
+      # totalpc.csv ist ein eingefrorenes Archiv (endet 2019-10-04). Die
+      # market-statistics-daily-HTML-Seite antwortet mit 200 + 441 KB - dieser
+      # Schritt analysiert, ob/wo das Tages-JSON darin eingebettet ist bzw.
+      # welche JSON-Endpunkte die Seite laedt. Wird danach wieder ENTFERNT.
+      - name: Probe put/call HTML (temporary)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          curl -sL --max-time 30 -A "$UA" "https://www.cboe.com/us/options/market_statistics/daily/" -o pcpage.html || true
+          echo "[probe2] page bytes: $(wc -c < pcpage.html 2>/dev/null || echo 0)"
+          echo "[probe2] json urls in page:"; grep -oE 'https?://[^"'"'"' ]*\.json[^"'"'"' ]*' pcpage.html | sort -u | head -20
+          echo "[probe2] api paths in page:"; grep -oE '"/[^"]*(api|json|market_statistics|ratio)[^"]*"' pcpage.html | sort -u | head -20
+          echo "[probe2] NEXT_DATA?"; grep -c '__NEXT_DATA__' pcpage.html || true
+          echo "[probe2] ratio mentions:"; grep -ioE '[a-z_ /-]*put[/ _-]?call[a-z_ -]*' pcpage.html | sort -u | head -12
+          echo "[probe2] embedded ratios json (first 500):"; grep -oE '\{[^{}]*[Rr]atio[^{}]*\}' pcpage.html | head -3 | cut -c1-500
+          # Kandidaten-Endpunkte, die solche Seiten typischerweise laden:
+          for u in \
+            "https://www.cboe.com/us/options/market_statistics/daily/?dt=&format=json" \
+            "https://cdn.cboe.com/data/us/options/market_statistics/daily/$(date -u -d yesterday +%Y-%m-%d)_daily_options.json" \
+            "https://www.cboe.com/json/options/market_statistics/daily/" ; do
+            CODE=$(curl -sL --max-time 20 -A "$UA" -H "Referer: https://www.cboe.com/us/options/market_statistics/daily/" "$u" -o pj.bin -w "%{http_code}" || echo ERR)
+            echo "[probe2] $u -> http=$CODE bytes=$(wc -c < pj.bin 2>/dev/null || echo 0) head=$(head -c 120 pj.bin 2>/dev/null | tr '\n' ' ')"
+          done
+          rm -f pcpage.html pj.bin
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
