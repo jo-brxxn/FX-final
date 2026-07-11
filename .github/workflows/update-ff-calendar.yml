@@ -2137,32 +2137,28 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_pc.csv sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
-      # ── TEMPORAERER PROBE-SCHRITT 3 (Put/Call, Bundle-Analyse 2026-07-11) ──
-      # Die daily-HTML-Seite ist eine reine Client-Shell (kein eingebettetes
-      # JSON, kein __NEXT_DATA__, kein "put/call" im Markup). Dieser Schritt
-      # laedt die referenzierten JS-Bundles und sucht darin nach dem echten
-      # API-Endpunkt (market_statistics/ratio/api-Strings). Wird danach
+      # ── TEMPORAERER PROBE-SCHRITT 4 (Put/Call: Chunk-Kontext + OCC 2026-07-11) ──
+      # Bundle-Scan fand "ratios" in einem Next.js-Chunk. Dieser Schritt dumpt
+      # den Kontext um "ratios" (dort steht der fetch-Pfad) UND testet die OCC
+      # (Options Clearing Corp.) als alternative Quelle: deren taegliche
+      # Call/Put-Volumina ergeben die Put/Call-Ratio direkt. Wird danach
       # wieder ENTFERNT.
-      - name: Probe put/call JS bundles (temporary)
+      - name: Probe put/call chunk context + OCC (temporary)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          curl -sL --max-time 30 -A "$UA" "https://www.cboe.com/us/options/market_statistics/daily/" -o pcpage.html || true
-          echo "[probe3] page bytes: $(wc -c < pcpage.html 2>/dev/null || echo 0)"
-          echo "[probe3] script srcs:"
-          grep -oE '<script[^>]+src="[^"]+"' pcpage.html | grep -oE 'src="[^"]+"' | sort -u | head -25
-          i=0
-          grep -oE '<script[^>]+src="[^"]+"' pcpage.html | grep -oE 'src="[^"]+"' | sed 's/^src="//; s/"$//' | sort -u | head -12 > bundle_urls.txt
-          while read -r s; do
-            case "$s" in http*) URL="$s";; /*) URL="https://www.cboe.com$s";; *) URL="https://www.cboe.com/$s";; esac
-            i=$((i+1))
-            curl -sL --max-time 25 -A "$UA" "$URL" -o "bundle_$i.js" || true
-            SZ=$(wc -c < "bundle_$i.js" 2>/dev/null || echo 0)
-            HITS=$(grep -oE '"[^"]*(market_statistics|ratios|put[_-]?call)[^"]*"' "bundle_$i.js" 2>/dev/null | sort -u | head -8 | tr '\n' ' ')
-            APIS=$(grep -oE 'https?://[a-z0-9.-]*cboe[a-z0-9.-]*/[^"'"'"' ]{0,80}' "bundle_$i.js" 2>/dev/null | sort -u | head -6 | tr '\n' ' ')
-            echo "[probe3] $URL -> $SZ bytes | hits: $HITS | cboe urls: $APIS"
-          done < bundle_urls.txt
-          rm -f pcpage.html bundle_urls.txt bundle_*.js
+          curl -sL --max-time 25 -A "$UA" "https://www.cboe.com/_next/static/chunks/0g0_nf~qdf~rw.js" -o chunk.js || true
+          echo "[probe4] chunk bytes: $(wc -c < chunk.js 2>/dev/null || echo 0)"
+          echo "[probe4] ratios context:"; grep -oE '.{140}ratios.{240}' chunk.js | head -4
+          echo "[probe4] fetch/url strings:"; grep -oE '"[^"]*(daily|market_statistics|/data/|api)[^"]*"' chunk.js | sort -u | head -20
+          YD=$(date -u -d "yesterday" +%Y-%m-%d)
+          YD_US=$(date -u -d "yesterday" +%m/%d/%Y)
+          probe(){ CODE=$(curl -sL --max-time 25 -A "$UA" -H "Accept: application/json,*/*" "$1" -o pr.bin -w "%{http_code}" || echo ERR); echo "[probe4] $2 -> http=$CODE bytes=$(wc -c < pr.bin 2>/dev/null || echo 0) head=$(head -c 200 pr.bin 2>/dev/null | tr '\n' ' ')"; }
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=${YD}" "occ daily-volume-totals ${YD}"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=$(date -u -d yesterday +%Y%m%d)" "occ daily-volume-totals YYYYMMDD"
+          probe "https://www.theocc.com/api/daily-volume-statistics?reportDate=${YD_US}" "occ www api"
+          probe "https://marketdata.theocc.com/mdapi/download-daily-volume?reportDate=${YD}" "occ download-daily-volume"
+          rm -f chunk.js pr.bin
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
