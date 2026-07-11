@@ -1,232 +1,4 @@
 {
- "AUD": {
-  "CPI (Headline)": {
-   "actual": "4%",
-   "forecast": "4.4%",
-   "previous": "4.2%",
-   "date": "2026-06-24",
-   "event": "Inflation Rate YoY",
-   "period": "y/y",
-   "history": [
-    [
-     "2026-03-25",
-     "3.7%"
-    ],
-    [
-     "2026-04-29",
-     "4.6%"
-    ],
-    [
-     "2026-05-27",
-     "4.2%"
-    ],
-    [
-     "2026-06-24",
-     "4%"
-    ]
-   ]
-  },
-  "CPI": {
-   "actual": "-0.7%",
-   "forecast": "-0.3%",
-   "previous": "0.4%",
-   "date": "2026-06-24",
-   "event": "Inflation Rate MoM",
-   "period": "m/m",
-   "history": [
-    [
-     "2026-03-25",
-     "0%"
-    ],
-    [
-     "2026-04-29",
-     "1.1%"
-    ],
-    [
-     "2026-05-27",
-     "0.4%"
-    ],
-    [
-     "2026-06-24",
-     "-0.7%"
-    ]
-   ]
-  },
-  "GDP Growth QoQ": {
-   "actual": "0.3%",
-   "forecast": "0.5%",
-   "previous": "0.8%",
-   "date": "2026-06-03",
-   "event": "GDP Growth Rate QoQ",
-   "period": "q/q",
-   "history": [
-    [
-     "2025-09-03",
-     "0.6%"
-    ],
-    [
-     "2025-12-03",
-     "0.4%"
-    ],
-    [
-     "2026-03-04",
-     "0.8%"
-    ],
-    [
-     "2026-06-03",
-     "0.3%"
-    ]
-   ]
-  },
-  "Consumer Confidence": {
-   "actual": "80.6",
-   "forecast": null,
-   "previous": "83",
-   "date": "2026-06-09",
-   "event": "Westpac Consumer Confidence Index",
-   "period": null,
-   "history": [
-    [
-     "2026-03-09",
-     "91.6"
-    ],
-    [
-     "2026-04-14",
-     "80.1"
-    ],
-    [
-     "2026-05-19",
-     "83"
-    ],
-    [
-     "2026-06-09",
-     "80.6"
-    ]
-   ]
-  },
-  "Central Bank Rate": {
-   "actual": "4.35%",
-   "forecast": "4.35%",
-   "previous": "4.35%",
-   "date": "2026-06-16",
-   "event": "RBA Interest Rate Decision",
-   "period": null,
-   "history": [
-    [
-     "2026-02-03",
-     "3.85%"
-    ],
-    [
-     "2026-03-17",
-     "4.1%"
-    ],
-    [
-     "2026-05-05",
-     "4.35%"
-    ],
-    [
-     "2026-06-16",
-     "4.35%"
-    ]
-   ]
-  },
-  "Unemployment Rate": {
-   "actual": "4.4%",
-   "forecast": "4.4%",
-   "previous": "4.5%",
-   "date": "2026-06-25",
-   "event": "Unemployment Rate",
-   "period": null,
-   "history": [
-    [
-     "2026-03-19",
-     "4.3%"
-    ],
-    [
-     "2026-04-16",
-     "4.3%"
-    ],
-    [
-     "2026-05-21",
-     "4.5%"
-    ],
-    [
-     "2026-06-25",
-     "4.4%"
-    ]
-   ]
-  },
-  "NFP / Employment Change": {
-   "actual": "40.3K",
-   "forecast": "30K",
-   "previous": "-18.6K",
-   "date": "2026-06-25",
-   "event": "Employment Change",
-   "period": null,
-   "history": [
-    [
-     "2026-03-19",
-     "48.9K"
-    ],
-    [
-     "2026-04-16",
-     "17.9K"
-    ],
-    [
-     "2026-05-21",
-     "-18.6K"
-    ],
-    [
-     "2026-06-25",
-     "40.3K"
-    ]
-   ]
-  },
-  "PPI": {
-   "actual": "3%",
-   "forecast": null,
-   "previous": "3.5%",
-   "date": "2026-05-01",
-   "event": "PPI YoY",
-   "period": "y/y",
-   "history": [
-    [
-     "2025-08-01",
-     "3.4%"
-    ],
-    [
-     "2025-10-31",
-     "3.5%"
-    ],
-    [
-     "2026-01-30",
-     "3.5%"
-    ],
-    [
-     "2026-05-01",
-     "3%"
-    ]
-   ]
-  },
-  "Retail Sales": {
-   "actual": "1.2%",
-   "forecast": "0.4%",
-   "previous": "0.2%",
-   "date": "2025-07-31",
-   "event": "Retail Sales MoM",
-   "period": "m/m",
-   "history": [
-    [
-     "2025-07-02",
-     "0.2%"
-    ],
-    [
-     "2025-07-31",
-     "1.2%"
-    ]
-   ]
-  }
- },
  "NZD": {
   "Central Bank Rate": {
    "actual": "2.5%",
@@ -1821,6 +1593,234 @@
     [
      "2026-06-18",
      "0%"
+    ]
+   ]
+  }
+ },
+ "AUD": {
+  "GDP Growth QoQ": {
+   "actual": "0.3%",
+   "forecast": "0.5%",
+   "previous": "0.8%",
+   "date": "2026-06-03",
+   "event": "GDP Growth Rate QoQ",
+   "period": "q/q",
+   "history": [
+    [
+     "2025-09-03",
+     "0.6%"
+    ],
+    [
+     "2025-12-03",
+     "0.4%"
+    ],
+    [
+     "2026-03-04",
+     "0.8%"
+    ],
+    [
+     "2026-06-03",
+     "0.3%"
+    ]
+   ]
+  },
+  "Consumer Confidence": {
+   "actual": "80.6",
+   "forecast": null,
+   "previous": "83",
+   "date": "2026-06-09",
+   "event": "Westpac Consumer Confidence Index",
+   "period": null,
+   "history": [
+    [
+     "2026-03-09",
+     "91.6"
+    ],
+    [
+     "2026-04-14",
+     "80.1"
+    ],
+    [
+     "2026-05-19",
+     "83"
+    ],
+    [
+     "2026-06-09",
+     "80.6"
+    ]
+   ]
+  },
+  "Central Bank Rate": {
+   "actual": "4.35%",
+   "forecast": "4.35%",
+   "previous": "4.35%",
+   "date": "2026-06-16",
+   "event": "RBA Interest Rate Decision",
+   "period": null,
+   "history": [
+    [
+     "2026-02-03",
+     "3.85%"
+    ],
+    [
+     "2026-03-17",
+     "4.1%"
+    ],
+    [
+     "2026-05-05",
+     "4.35%"
+    ],
+    [
+     "2026-06-16",
+     "4.35%"
+    ]
+   ]
+  },
+  "CPI": {
+   "actual": "-0.7%",
+   "forecast": "-0.3%",
+   "previous": "0.4%",
+   "date": "2026-06-24",
+   "event": "Inflation Rate MoM",
+   "period": "m/m",
+   "history": [
+    [
+     "2026-03-25",
+     "0%"
+    ],
+    [
+     "2026-04-29",
+     "1.1%"
+    ],
+    [
+     "2026-05-27",
+     "0.4%"
+    ],
+    [
+     "2026-06-24",
+     "-0.7%"
+    ]
+   ]
+  },
+  "CPI (Headline)": {
+   "actual": "4%",
+   "forecast": "4.4%",
+   "previous": "4.2%",
+   "date": "2026-06-24",
+   "event": "Inflation Rate YoY",
+   "period": "y/y",
+   "history": [
+    [
+     "2026-03-25",
+     "3.7%"
+    ],
+    [
+     "2026-04-29",
+     "4.6%"
+    ],
+    [
+     "2026-05-27",
+     "4.2%"
+    ],
+    [
+     "2026-06-24",
+     "4%"
+    ]
+   ]
+  },
+  "Unemployment Rate": {
+   "actual": "4.4%",
+   "forecast": "4.4%",
+   "previous": "4.5%",
+   "date": "2026-06-25",
+   "event": "Unemployment Rate",
+   "period": null,
+   "history": [
+    [
+     "2026-03-19",
+     "4.3%"
+    ],
+    [
+     "2026-04-16",
+     "4.3%"
+    ],
+    [
+     "2026-05-21",
+     "4.5%"
+    ],
+    [
+     "2026-06-25",
+     "4.4%"
+    ]
+   ]
+  },
+  "NFP / Employment Change": {
+   "actual": "40.3K",
+   "forecast": "30K",
+   "previous": "-18.6K",
+   "date": "2026-06-25",
+   "event": "Employment Change",
+   "period": null,
+   "history": [
+    [
+     "2026-03-19",
+     "48.9K"
+    ],
+    [
+     "2026-04-16",
+     "17.9K"
+    ],
+    [
+     "2026-05-21",
+     "-18.6K"
+    ],
+    [
+     "2026-06-25",
+     "40.3K"
+    ]
+   ]
+  },
+  "PPI": {
+   "actual": "3%",
+   "forecast": null,
+   "previous": "3.5%",
+   "date": "2026-05-01",
+   "event": "PPI YoY",
+   "period": "y/y",
+   "history": [
+    [
+     "2025-08-01",
+     "3.4%"
+    ],
+    [
+     "2025-10-31",
+     "3.5%"
+    ],
+    [
+     "2026-01-30",
+     "3.5%"
+    ],
+    [
+     "2026-05-01",
+     "3%"
+    ]
+   ]
+  },
+  "Retail Sales": {
+   "actual": "1.2%",
+   "forecast": "0.4%",
+   "previous": "0.2%",
+   "date": "2025-07-31",
+   "event": "Retail Sales MoM",
+   "period": "m/m",
+   "history": [
+    [
+     "2025-07-02",
+     "0.2%"
+    ],
+    [
+     "2025-07-31",
+     "1.2%"
     ]
    ]
   }
