@@ -203,11 +203,11 @@ nächsten Release-Zyklus von selbst klären). NZD trackt in FF nur den
 liefert Investing.com keinen passenden Wert, das ist keine Matching-Lücke,
 sondern ein anderer Indikator.
 
-### Markt-Sentiment (sentiment_data.json) — Stand nach Live-Verifikation (2026-07-08)
+### Markt-Sentiment (sentiment_data.json) — Stand nach Live-Verifikation (2026-07-11)
 
 Contrarian-Stimmungs-Layer, Workflow-Schritt "Fetch market sentiment"
-(continue-on-error, Carry-over, jede Quelle eigenes try/catch). Nach EINEM
-`workflow_dispatch`-Lauf verifiziert, welche Quellen aus GitHub-Actions-IPs
+(continue-on-error, Carry-over, jede Quelle eigenes try/catch). Per
+`workflow_dispatch`-Läufen verifiziert, welche Quellen aus GitHub-Actions-IPs
 erreichbar sind:
 
 - **Crypto Fear & Greed** (`api.alternative.me/fng/`) — ✓ zuverlässig, eigene
@@ -215,12 +215,26 @@ erreichbar sind:
 - **VIX** (TradingView-Scanner `CBOE:VIX`, wie price_data) — ✓ zuverlässig,
   Tagesschluss + Carry-over-Serie. Scort **SP500/NAS** (contrarian: ≥28
   Panik=bullish, ≤13 Sorglosigkeit=bearish).
-- **Stock Fear & Greed** (CNN `production.dataviz.cnn.io`) — ✗ HTTP 418
-  ("I'm a teapot. You're a bot."), Datacenter-IP-Block. Bessere Header
-  (Accept/Referer/Origin) als Versuch drin, hilft bei reinem IP-Block nicht.
-  **Chart-only** im Sentiment-Tab.
-- **CBOE Put/Call** (TradingView `USI:PC`/`USI:PCC`) — ✗ Scanner liefert den
-  Ticker nicht (nur VIX kam zurück). **Chart-only**.
+- **Stock Fear & Greed** (CNN `production.dataviz.cnn.io`) — war am 08.07.
+  per HTTP 418 geblockt, liefert seit 10.07. wieder Daten (der Block ist
+  intermittierend; Carry-over überbrückt Lücken). Chart-only.
+- **Retail-Positionierung** (Myfxbook Login-API) — ✓ seit 11.07. LIVE.
+  Login via `MYFXBOOK_EMAIL`/`MYFXBOOK_PASSWORD`-Secrets; **die Session MUSS
+  ROH (ohne URL-Encoding) in die Query** — mit encodeURIComponent kommt
+  "Invalid session" (Token enthält Sonderzeichen, Myfxbook dekodiert nicht).
+  Gefiltert auf gelistete Assets: 28 Major-Paare + XAU/XAG/BTC/US500/NAS100/
+  USOIL (34 von ~186). Chart-only.
+- **Put/Call Ratio** (OCC `marketdata.theocc.com/mdapi/daily-volume-totals
+  ?report_date=YYYY-MM-DD`) — ✓ seit 11.07. LIVE, nach 5 Proberunden.
+  **snake_case `report_date` ist der Trick** (camelCase `reportDate` → 400).
+  Summe Calls+Puts über alle US-Optionsbörsen, Ratio=Puts/Calls, Serie am
+  Report-Datum, bis 5 Tage Rückwärtssuche (Wochenende/Feiertage). Füttert
+  auch den Net-Options-Flow-Chart. **CBOEs freie Feeds sind endgültig tot**:
+  delayed-quotes kennt kein `_PCC`/`_PC` (403), `totalpc.csv` ist ein bei
+  2019-10-04 eingefrorenes Archiv (Stale-Guard im Skript verwarf sie korrekt),
+  die daily-Seite ist eine reine Client-Shell ohne öffentlich erreichbare
+  Endpunkte, TradingView-Scanner liefert `USI:PC`/`PCC` nie. Nicht wieder
+  bei CBOE suchen. Chart-only (kein Score).
 
 Scoring nach dem `applyCotDataFeed`-Muster (`applySentimentFeed`,
 `research.sent`-Flag, halbes Gewicht via `SENT_HALF`, KEIN Trend, nur an
@@ -233,8 +247,8 @@ Chart-only-Namen ('Put/Call Ratio','Fear & Greed Index') stehen in
 Neuer Insights-Tab "Sentiment" (`renderSentiment`, `pgSent`), in den
 Insights-Stack einsortiert (auch Migration für Bestandsnutzer in
 `loadTabStacks`). VIX zaehlt bewusst NICHT zusätzlich zum Stock-F&G (steckt
-dort schon drin) — da CNN eh blockt, ist VIX aktuell das einzige gescorte
-Index-Signal.
+dort schon drin) — VIX ist das einzige gescorte Index-Signal; Put/Call und
+Retail sind bewusst Chart-only.
 
 ### Bond-Yields-Backfill (GBP/CHF/JPY/AUD/NZD) — Endstand nach 7 workflow_dispatch-Runden (2026-07-04)
 
