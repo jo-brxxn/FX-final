@@ -386,7 +386,7 @@
    ]
   ]
  },
- "updated": "2026-07-11T17:46:01.820Z",
+ "updated": "2026-07-11T18:44:44.087Z",
  "stockFng": {
   "value": 49,
   "label": "neutral",
@@ -1220,7 +1220,7 @@
   "SILVER": {
    "value": 0.63,
    "proxy": "SLV",
-   "callVol": 14632,
+   "callVol": 14627,
    "putVol": 9182,
    "series": [
     [
@@ -1232,7 +1232,7 @@
   "SP500": {
    "value": 1.1,
    "proxy": "SPY",
-   "callVol": 716674,
+   "callVol": 716574,
    "putVol": 786258,
    "series": [
     [
@@ -1242,14 +1242,14 @@
    ]
   },
   "GBP": {
-   "value": 7.25,
+   "value": 7.19,
    "proxy": "FXB",
    "callVol": 16,
-   "putVol": 116,
+   "putVol": 115,
    "series": [
     [
      "2026-07-11",
-     7.25
+     7.19
     ]
    ]
   },
@@ -1278,14 +1278,14 @@
    ]
   },
   "GOLD": {
-   "value": 1.11,
+   "value": 1.12,
    "proxy": "GLD",
-   "callVol": 9030,
-   "putVol": 10010,
+   "callVol": 8903,
+   "putVol": 9992,
    "series": [
     [
      "2026-07-11",
-     1.11
+     1.12
     ]
    ]
   },
@@ -1304,8 +1304,8 @@
   "BTC": {
    "value": 0.43,
    "proxy": "IBIT",
-   "callVol": 24966,
-   "putVol": 10817,
+   "callVol": 24866,
+   "putVol": 10815,
    "series": [
     [
      "2026-07-11",
@@ -1316,7 +1316,7 @@
   "NAS": {
    "value": 1.09,
    "proxy": "QQQ",
-   "callVol": 292333,
+   "callVol": 292332,
    "putVol": 317817,
    "series": [
     [
@@ -1340,7 +1340,7 @@
   "OIL": {
    "value": 0.45,
    "proxy": "USO",
-   "callVol": 6522,
+   "callVol": 6516,
    "putVol": 2915,
    "series": [
     [
