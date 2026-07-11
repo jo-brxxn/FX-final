@@ -830,31 +830,18 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
   .setups-cols .sym-row{grid-template-columns:subgrid}
 }
 .setups-cols .sym-row{padding-left:6px;padding-right:6px}
-/* FX-Bias + Other-Assets in einer Karte, zwei getrennte Spalten */
-/* minmax(0,1fr) statt 1fr: sonst schrumpfen die Spalten nicht unter die
-   Mindestbreite ihrer Zeilen (Ticker-Chips) und schieben das Dashboard
-   ueber den Rand. Unter 620px auf eine Spalte stapeln. */
-/* Zwei Spalten NUR, wenn die Karte breit genug ist, dass jede Spalte den
-   ganzen Zeileninhalt (Name + Ticker-Chip + Score + Badge + Stern) traegt -
-   sonst EINE Spalte, damit nie etwas ueber den Kartenrand laeuft. Gemessen an
-   der KARTENbreite (container query), nicht am Viewport, weil die Karte im
-   Dashboard-Raster viel schmaler sein kann als das Fenster. */
-.dw-biasassets{container-type:inline-size}
-.ba-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;margin-top:4px}
-.ba-cols>div{min-width:0}
-@container (max-width:619px){.ba-cols{grid-template-columns:1fr}}
-.ba-cols .ticker-chip{font-size:10.5px;padding:2px 5px;gap:3px}
-/* Wie bei den Set-ups (Kommentar oben): die Zeilen einer Spalte teilen sich
-   per Subgrid dieselben Spaltenbreiten, damit Name/Chip/Score/Badge/Stern in
-   JEDER Zeile exakt untereinander stehen - egal ob eine Zeile einen Ticker-Chip
-   hat oder nicht. minmax(0,1fr) auf der Namensspalte + overflow-hidden sorgt
-   dafuer, dass nie etwas ueber den Kartenrand laeuft (Nutzer-Wunsch 2026-07-11). */
-.ba-col-rows{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;column-gap:8px}
+/* FX-Bias-Karte: nur noch die FX-Majors in EINER vollen Spalte (die uebrigen
+   Assets stehen in der Heatmap-Karte). Die Zeilen teilen sich per Subgrid
+   dieselben Spaltenbreiten, damit Name/Chip/Score/Badge/Stern in JEDER Zeile
+   exakt untereinander stehen - egal ob eine Zeile einen Ticker-Chip hat oder
+   nicht. minmax(0,1fr) auf der Namensspalte + overflow-hidden sorgt dafuer,
+   dass nie etwas ueber den Kartenrand laeuft (Nutzer-Wunsch 2026-07-11). */
+.ba-col-rows{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;column-gap:8px;margin-top:4px}
 .ba-col-rows>.dw-empty{grid-column:1/-1}
-.ba-cols .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;gap:8px;align-items:center}
-@supports (grid-template-columns:subgrid){.ba-cols .sym-row{grid-template-columns:subgrid}}
-.ba-cols .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(max-width:620px){.ba-cols{grid-template-columns:1fr}}
+.ba-col-rows .ticker-chip{font-size:10.5px;padding:2px 5px;gap:3px}
+.ba-col-rows .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;gap:8px;align-items:center}
+@supports (grid-template-columns:subgrid){.ba-col-rows .sym-row{grid-template-columns:subgrid}}
+.ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -1077,7 +1064,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f766e;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-CHARTS-FIT-91</span><span id="verBannerText"> (Chart-Hover jetzt auf ALLEN Diagrammen mit mehreren Daten - auch Dashboard-Risk-Verlauf, Trend-Charts und Score-vs-Kurs: Punkt + Fenster mit genauem Datum/Wert folgen dem Finger/der Maus, verschwinden beim Loslassen. Alle Diagramme passen sich jetzt automatisch an die Kartenbreite an und lassen sich NICHT mehr horizontal wegwischen/verschieben (auch der COT-Chart nicht mehr). FX-Bias-Karte: Name/Chip/Score/Badge/Stern stehen per Subgrid in jeder Zeile exakt untereinander und laufen nie ueber den Kartenrand. Myfxbook-Retail ist LIVE: die Session muss roh (ohne URL-Encoding) uebergeben werden - 186 Symbole kommen jetzt an)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#047857;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-FXBIAS-ONLY-92</span><span id="verBannerText"> (Dashboard-Karte "FX Bias & Other Assets" zeigt jetzt nur noch die FX-Majors - die uebrigen Assets stehen ohnehin in der Asset-Heatmap-Karte, daher nicht mehr doppelt. Eine einzige, volle Spalte; Name/Score/Badge/Stern bleiben per Subgrid exakt untereinander. Davor: Chart-Hover auf allen Diagrammen, Fit-to-Width statt Wegwischen, Myfxbook-Retail live)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6887,7 +6874,6 @@ function renderDash(){
         ${sessionBarHtml()}`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
-      const others=syms.filter(s=>!FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
@@ -6896,14 +6882,11 @@ function renderDash(){
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
           <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
         </div>`;
-      const col=(label,list,empty)=>`<div>
-          <div class="setups-col-hdr" style="background:var(--bg3);color:var(--t2)">${label}</div>
-          <div class="ba-col-rows">${list.length?list.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">${empty}</div>`}</div>
-        </div>`;
-      content=`<div class="ba-cols">
-          ${col('FX Majors',fxSorted,'–')}
-          ${col('Other Assets',others,'No custom assets.')}
-        </div>`;
+      // Nur noch die FX-Majors ("FX Bias") - die anderen Assets stehen bereits
+      // in der Asset-Heatmap-Karte, daher hier nicht mehr doppelt (Nutzer-
+      // Wunsch 2026-07-11). Eine einzige, volle Spalte; Subgrid haelt weiterhin
+      // Name/Chip/Score/Badge/Stern exakt untereinander.
+      content=`<div class="ba-col-rows">${fxSorted.length?fxSorted.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}</div>`;
     }else if(w.type==='watchlist'){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
