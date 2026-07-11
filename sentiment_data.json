@@ -386,7 +386,7 @@
    ]
   ]
  },
- "updated": "2026-07-11T10:36:18.352Z",
+ "updated": "2026-07-11T10:45:31.815Z",
  "stockFng": {
   "value": 49,
   "label": "neutral",
@@ -1045,5 +1045,15 @@
    "short": 100
   }
  ],
- "retailSource": "https://www.myfxbook.com/community/outlook"
+ "retailSource": "https://www.myfxbook.com/community/outlook",
+ "putCall": {
+  "value": 0.69,
+  "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
+  "series": [
+   [
+    "2026-07-10",
+    0.69
+   ]
+  ]
+ }
 }
