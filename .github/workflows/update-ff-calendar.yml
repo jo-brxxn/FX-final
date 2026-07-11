@@ -2210,6 +2210,29 @@ jobs:
           '
           rm -f yopt_all.json ycookies.txt
 
+      # ── TEMPORAERER PROBE-SCHRITT (Pro-Asset-Put/Call-HISTORIE 2026-07-11) ──
+      # Nutzer-Wunsch: auch beim Pro-Asset-Put/Call die Vergangenheit
+      # nachladen, nicht nur den heutigen Snapshot. Yahoos Options-Endpoint
+      # liefert nachweislich NUR die aktuelle Kette (kein Datums-Parameter
+      # fuer historisches Volumen). Testet, ob es fuer EINZELNE Symbole
+      # (anders als beim markt-weiten OCC-Report) doch eine kostenlose
+      # historische Quelle gibt: OCC-Serien-Endpunkte mit Symbol-Parameter,
+      # CBOEs per-Symbol delayed-quotes. Wird nach Auswertung ENTFERNT.
+      - name: Probe historical per-symbol put/call sources (temporary)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          YD=$(date -u -d "yesterday" +%Y-%m-%d)
+          probe(){ CODE=$(curl -sL --max-time 20 -A "$UA" -H "Accept: application/json" "$1" -o pr.bin -w "%{http_code}" || echo ERR); echo "[probeH] $2 -> http=$CODE bytes=$(wc -c < pr.bin 2>/dev/null || echo 0) head=$(head -c 220 pr.bin 2>/dev/null | tr '\n' ' ')"; }
+          probe "https://marketdata.theocc.com/mdapi/symbol-volume?symbol=GLD&report_date=${YD}" "occ symbol-volume GLD"
+          probe "https://marketdata.theocc.com/mdapi/series-volume?symbol=GLD&report_date=${YD}" "occ series-volume GLD"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?report_date=${YD}&symbol=GLD" "occ daily-volume-totals +symbol"
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/quotes/GLD.json" "cboe delayed quote GLD"
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/options/GLD.json" "cboe delayed options GLD"
+          probe "https://www.cboe.com/delayed_quote/api/symbol/GLD/history" "cboe symbol history GLD"
+          probe "https://www.barchart.com/proxies/core-api/v1/quotes/get?symbols=GLD&fields=putCallRatioVolume10Day" "barchart put/call GLD"
+          rm -f pr.bin
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
