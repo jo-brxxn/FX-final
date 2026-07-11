@@ -2144,27 +2144,33 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_occ.json sent_occ_date.txt sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
-      # ── TEMPORAERER PROBE-SCHRITT 2 (Pro-Asset-Put/Call: Yahoo Crumb-Auth) ──
-      # Runde 1: alle 13 ETF-Symbole kamen SOFORT (~85ms) mit leerem Ergebnis
-      # zurueck (expirations=0, kein Fehler beim JSON-Parse) - typisches
-      # Zeichen fuer Yahoos Anti-Bot-Schutz seit 2023: die Options-API
-      # verlangt jetzt Cookie+Crumb (bekannt aus der yfinance-Bibliothek).
-      # Dieser Schritt holt zuerst einen Cookie (fc.yahoo.com), dann einen
-      # Crumb-Token (getcrumb), und haengt beides an die Options-Anfrage an.
-      # Dump der Rohantwort fuer SPY zur Fehlerdiagnose. Wird nach Auswertung
-      # wieder ENTFERNT.
-      - name: Probe per-asset put/call via Yahoo (crumb auth, temporary)
+      # ── Pro-Asset-Put/Call ueber ETF-Optionsketten (Yahoo Finance) ─────
+      # Nutzer-Wunsch 2026-07-11: Put/Call nicht nur markt-weit (OCC oben),
+      # sondern pro gelistetem Asset. OCCs Daten sind nur nach Boerse
+      # aufgeschluesselt, nicht nach Symbol. Liquide ETF-Proxys haben aber
+      # eigene Optionsketten mit Call/Put-Volumen (Yahoo Finance, kein
+      # API-Key - braucht seit 2023 aber einen Cookie+Crumb-Handshake gegen
+      # den Anti-Bot-Schutz, siehe fc.yahoo.com/getcrumb unten). NZD hat
+      # keinen etablierten Options-ETF und bleibt bewusst aussen vor.
+      # WICHTIG: anders als die OCC-Historie ist das hier eine reine
+      # Tages-Momentaufnahme (Yahoo liefert kein historisches Volumen) - die
+      # Serie waechst wie bei allen anderen Feeds ab jetzt taeglich um einen
+      # Punkt, kein Backfill moeglich.
+      - name: Fetch per-asset put/call via ETF option chains -> sentiment_data.json
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
           curl -sL --max-time 15 -A "$UA" -c ycookies.txt "https://fc.yahoo.com" -o /dev/null || true
           CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ycookies.txt -c ycookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
-          echo "[probe] crumb: len=${#CRUMB} value_head=$(echo "$CRUMB" | head -c 30)"
-          for SYM in SPY GLD FXE IBIT; do
+          echo "[debug] Yahoo crumb: len=${#CRUMB}"
+          declare -A PROXY=( [USD]=UUP [EUR]=FXE [GBP]=FXB [JPY]=FXY [CHF]=FXF [CAD]=FXC [AUD]=FXA [GOLD]=GLD [SILVER]=SLV [OIL]=USO [BTC]=IBIT [SP500]=SPY [NAS]=QQQ )
+          rm -f yopt_all.json
+          echo "{" > yopt_all.json
+          first=1
+          for ASSET in "${!PROXY[@]}"; do
+            SYM="${PROXY[$ASSET]}"
             curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?crumb=${CRUMB}" -o "yopt_${SYM}.json" || true
-            SZ=$(wc -c < "yopt_${SYM}.json" 2>/dev/null || echo 0)
-            echo "[probe] $SYM raw ($SZ bytes): $(head -c 300 "yopt_${SYM}.json" 2>/dev/null | tr '\n' ' ')"
-            node -e '
+            LINE=$(node -e '
               try{
                 const j=JSON.parse(require("fs").readFileSync("yopt_'"$SYM"'.json","utf8"));
                 const r=j&&j.optionChain&&j.optionChain.result&&j.optionChain.result[0];
@@ -2172,13 +2178,37 @@ jobs:
                 const calls=(opt&&opt.calls)||[],puts=(opt&&opt.puts)||[];
                 const cv=calls.reduce((s,c)=>s+(Number(c.volume)||0),0);
                 const pv=puts.reduce((s,c)=>s+(Number(c.volume)||0),0);
-                const nExp=(r&&r.expirationDates&&r.expirationDates.length)||0;
-                const err=j&&j.optionChain&&j.optionChain.error;
-                console.log("[probe] '"$SYM"' -> callsN="+calls.length+" putsN="+puts.length+" callVol="+cv+" putVol="+pv+" expirations="+nExp+" error="+JSON.stringify(err));
-              }catch(e){console.log("[probe] '"$SYM"' ERR "+e.message);}
-            ' 2>/dev/null
+                if(cv>0&&pv>0)console.log(JSON.stringify({asset:"'"$ASSET"'",proxy:"'"$SYM"'",callVol:cv,putVol:pv}));
+              }catch(e){}
+            ' 2>/dev/null)
+            rm -f "yopt_${SYM}.json"
+            if [ -n "$LINE" ]; then
+              [ "$first" -eq 0 ] && echo "," >> yopt_all.json
+              echo "\"$ASSET\": $LINE" >> yopt_all.json
+              first=0
+            fi
           done
-          rm -f yopt_*.json ycookies.txt
+          echo "}" >> yopt_all.json
+          node -e '
+            const fs=require("fs");
+            const raw=JSON.parse(fs.readFileSync("yopt_all.json","utf8"));
+            const today=new Date().toISOString().slice(0,10);
+            const out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));
+            const byAsset=out.putCallByAsset||{};
+            let n=0;
+            Object.keys(raw).forEach(asset=>{
+              const e=raw[asset];
+              const ratio=Math.round(e.putVol/e.callVol*100)/100;
+              let s=(byAsset[asset]&&Array.isArray(byAsset[asset].series)?byAsset[asset].series:[]).filter(x=>x&&x[0]!==today);
+              s.push([today,ratio]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              byAsset[asset]={value:ratio,proxy:e.proxy,callVol:e.callVol,putVol:e.putVol,series:s.slice(-120)};
+              n++;
+            });
+            out.putCallByAsset=byAsset;
+            fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+            console.log("sentiment_data.json: putCallByAsset "+n+"/"+Object.keys(raw).length+" assets updated ("+Object.keys(byAsset).sort().join(",")+")");
+          '
+          rm -f yopt_all.json ycookies.txt
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
