@@ -1967,14 +1967,27 @@ jobs:
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
             --data '{"symbols":{"tickers":["CBOE:VIX","USI:PC","USI:PCC"],"query":{"types":[]}},"columns":["close"]}' \
             "https://scanner.tradingview.com/global/scan" -o sent_tv.json || true
-          # Put/Call-Ratio direkt von CBOE (Quellen-Probe 2026-07-11: die
-          # delayed-quotes-API kennt kein _PCC/_PC (403), aber die legacy
-          # totalpc.csv liefert 200 + ~139 KB Historie). Aktualitaet wird im
-          # Node-Skript geprueft (letzte Zeile <= 10 Tage alt, sonst wird die
-          # CSV verworfen und putCall bleibt leer). Tail-Debug zeigt, wo die
-          # CSV endet.
-          curl -sL -A "$UA" "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/totalpc.csv" -o sent_pc.csv || true
-          echo "[debug] totalpc.csv: $(wc -c < sent_pc.csv 2>/dev/null || echo 0) bytes, tail: $(tail -c 220 sent_pc.csv 2>/dev/null | tr '\n' ' ')"
+          # Put/Call-Ratio von der OCC (Options Clearing Corp.) - Endstand der
+          # 5-Runden-Quellen-Suche 2026-07-11: CBOEs freie Feeds sind tot
+          # (delayed-quotes kennt kein _PCC (403), totalpc.csv ist ein
+          # eingefrorenes Archiv bis 2019-10-04, die daily-Seite ist eine
+          # Client-Shell hinter nicht oeffentlichen Endpunkten). Die OCC
+          # liefert dagegen offiziell die taeglichen Call/Put-Volumina ALLER
+          # US-Optionsboersen als JSON - Parameter heisst report_date
+          # (snake_case; reportDate/camelCase gibt 400!). Wochenende/Feiertage
+          # abfangen: bis 5 Tage rueckwaerts den juengsten Handelstag suchen.
+          # Datum des Reports in sent_occ_date.txt fuer das Node-Skript.
+          rm -f sent_occ.json sent_occ_date.txt
+          for back in 1 2 3 4 5; do
+            D=$(date -u -d "-${back} day" +%Y-%m-%d)
+            curl -sL --max-time 25 -A "$UA" -H "Accept: application/json" "https://marketdata.theocc.com/mdapi/daily-volume-totals?report_date=${D}" -o sent_occ.json || true
+            if node -e 'try{const j=JSON.parse(require("fs").readFileSync("sent_occ.json","utf8"));const a=j&&j.entity&&j.entity.total_volume;process.exit(Array.isArray(a)&&a.length?0:1);}catch(e){process.exit(1);}'; then
+              echo "$D" > sent_occ_date.txt
+              echo "[debug] OCC put/call: report_date=$D ($(wc -c < sent_occ.json) bytes)"
+              break
+            fi
+            echo "[debug] OCC put/call: $D no data ($(head -c 80 sent_occ.json 2>/dev/null | tr '\n' ' '))"
+          done
           # Retail-Positionierung von Myfxbook ueber die offizielle API:
           # login.json (Session-Token) -> get-community-outlook.json (JSON mit
           # long/short je Symbol). Nur wenn beide Secrets gesetzt sind.
@@ -2068,37 +2081,31 @@ jobs:
               let pc=get("USI:PC");if(pc==null)pc=get("USI:PCC");
               if(pc!=null){out.putCall={value:pc,series:appendSeries(out.putCall&&out.putCall.series,pc)};gotPcTv=true;log.push("putCall="+pc);}else log.push("putCall:tv-no-value");
             }catch(e){log.push("tv ERR "+e.message);}
-            // 3b. Put/Call von CBOE totalpc.csv (Quellen-Probe 2026-07-11; der
+            // 3b. Put/Call von der OCC (Options Clearing Corp.; der
             // TradingView-Scanner oben liefert USI:PC/PCC nachweislich nie -
-            // der Versuch bleibt nur als Gratis-Chance drin). Format: einige
-            // Disclaimer-Zeilen, dann "DATE,CALLS,PUTS,TOTAL,P/C Ratio", dann
-            // Zeilen "M/D/YYYY,n,n,n,0.87". Liefert die komplette eigene
-            // Historie - ersetzt die Serie (wie cryptoFng), statt nur
-            // anzuhaengen. Nur akzeptieren, wenn aktuell (letzte Zeile
-            // hoechstens 10 Tage alt) - sonst ist die Datei ein eingefrorenes
-            // Archiv und putCall bleibt leer.
+            // der Versuch bleibt nur als Gratis-Chance drin). sent_occ.json =
+            // {entity:{total_volume:[{exchange,calls,puts,ratio,...}]}} mit
+            // einer Zeile je US-Optionsboerse; wir summieren Calls+Puts ueber
+            // alle Boersen und teilen (marktbreite Total-Ratio, wie CBOEs
+            // fruehere Total-P/C). Der Report-Tag steht in sent_occ_date.txt
+            // (der Fetch sucht bis 5 Tage rueckwaerts den juengsten
+            // Handelstag) - Serie haengt am REPORT-Datum, nicht an "heute".
             try{
               if(!gotPcTv){
-                const csv=fs.readFileSync("sent_pc.csv","utf8");
-                const rows=[];
-                csv.split(/\r?\n/).forEach(l=>{
-                  const m=l.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}),.*,(\d*\.?\d+)\s*$/);
-                  if(!m)return;
-                  const iso=m[3]+"-"+String(m[1]).padStart(2,"0")+"-"+String(m[2]).padStart(2,"0");
-                  const v=Number(m[4]);
-                  if(isFinite(v)&&v>0&&v<10)rows.push([iso,v]);
-                });
-                rows.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-                if(rows.length){
-                  const last=rows[rows.length-1];
-                  const ageDays=(Date.now()-new Date(last[0]+"T00:00:00Z").getTime())/864e5;
-                  if(ageDays<=10){
-                    out.putCall={value:last[1],source:"https://www.cboe.com/us/options/market_statistics/daily/",series:rows.slice(-120)};
-                    log.push("putCall="+last[1]+" (cboe csv, "+last[0]+", "+rows.length+" rows)");
-                  }else log.push("putCall:csv-stale(last "+last[0]+")");
-                }else log.push("putCall:csv-no-rows");
+                const j=JSON.parse(fs.readFileSync("sent_occ.json","utf8"));
+                const rd=fs.readFileSync("sent_occ_date.txt","utf8").trim();
+                const arr=j&&j.entity&&Array.isArray(j.entity.total_volume)?j.entity.total_volume:[];
+                let calls=0,puts=0;
+                arr.forEach(r=>{const c=Number(r.calls),p=Number(r.puts);if(isFinite(c)&&isFinite(p)){calls+=c;puts+=p;}});
+                if(calls>0&&puts>0&&/^\d{4}-\d{2}-\d{2}$/.test(rd)){
+                  const ratio=Math.round(puts/calls*100)/100;
+                  let s=(out.putCall&&Array.isArray(out.putCall.series)?out.putCall.series:[]).filter(e=>e&&e[0]!==rd);
+                  s.push([rd,ratio]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+                  out.putCall={value:ratio,source:"https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",series:s.slice(-120)};
+                  log.push("putCall="+ratio+" (occ "+rd+", "+arr.length+" exchanges, P "+puts+" / C "+calls+")");
+                }else log.push("putCall:occ-no-usable-totals");
               }
-            }catch(e){log.push("putCall csv ERR "+e.message);}
+            }catch(e){log.push("putCall:occ-no-file ("+e.message.slice(0,60)+")");}
             // 4. Retail-Positionierung (Myfxbook get-community-outlook.json).
             // JSON: {error, symbols:[{name, shortPercentage, longPercentage}]}.
             // NUR Assets speichern, die in der App auch gelistet sind
@@ -2135,29 +2142,7 @@ jobs:
             fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
             console.log("sentiment_data.json: "+log.join(" | "));
           '
-          rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_pc.csv sent_retail.json sent_mfxlogin.json mfx_cookies.txt
-
-      # ── TEMPORAERER PROBE-SCHRITT 5 (Put/Call: OCC-Parameter + Chunk-Fix) ──
-      # Runde 4: OCC /mdapi/daily-volume-totals antwortet 400 (Pfad EXISTIERT,
-      # Parameter falsch); der Chunk-Kontext-grep hatte feste Laengen-
-      # Quantifier und matchte deshalb nie. Runde 5: flexible Quantifier +
-      # OCC-Parameter-Varianten (auch ohne Datum = evtl. Default auf den
-      # letzten Handelstag). Wird danach wieder ENTFERNT.
-      - name: Probe put/call OCC params (temporary)
-        continue-on-error: true
-        run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          curl -sL --max-time 25 -A "$UA" "https://www.cboe.com/_next/static/chunks/0g0_nf~qdf~rw.js" -o chunk.js || true
-          echo "[probe5] ratios context:"; grep -a -oE '.{0,120}\"ratios\".{0,260}' chunk.js | head -3
-          YD=$(date -u -d "yesterday" +%Y-%m-%d)
-          probe(){ CODE=$(curl -sL --max-time 25 -A "$UA" -H "Accept: application/json" "$1" -o pr.bin -w "%{http_code}" || echo ERR); echo "[probe5] $2 -> http=$CODE bytes=$(wc -c < pr.bin 2>/dev/null || echo 0) head=$(head -c 220 pr.bin 2>/dev/null | tr '\n' ' ')"; }
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals" "occ totals NO param"
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=$(date -u -d yesterday +%m/%d/%Y)" "occ totals MM/DD/YYYY"
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?report_date=${YD}" "occ totals report_date"
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=${YD}&format=json" "occ totals +format=json"
-          probe "https://marketdata.theocc.com/mdapi/daily-volume?reportDate=${YD}" "occ daily-volume"
-          probe "https://marketdata.theocc.com/mdapi/volume-totals" "occ volume-totals"
-          rm -f chunk.js pr.bin
+          rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_occ.json sent_occ_date.txt sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
