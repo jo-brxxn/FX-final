@@ -2137,27 +2137,26 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_pc.csv sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
-      # ── TEMPORAERER PROBE-SCHRITT 4 (Put/Call: Chunk-Kontext + OCC 2026-07-11) ──
-      # Bundle-Scan fand "ratios" in einem Next.js-Chunk. Dieser Schritt dumpt
-      # den Kontext um "ratios" (dort steht der fetch-Pfad) UND testet die OCC
-      # (Options Clearing Corp.) als alternative Quelle: deren taegliche
-      # Call/Put-Volumina ergeben die Put/Call-Ratio direkt. Wird danach
-      # wieder ENTFERNT.
-      - name: Probe put/call chunk context + OCC (temporary)
+      # ── TEMPORAERER PROBE-SCHRITT 5 (Put/Call: OCC-Parameter + Chunk-Fix) ──
+      # Runde 4: OCC /mdapi/daily-volume-totals antwortet 400 (Pfad EXISTIERT,
+      # Parameter falsch); der Chunk-Kontext-grep hatte feste Laengen-
+      # Quantifier und matchte deshalb nie. Runde 5: flexible Quantifier +
+      # OCC-Parameter-Varianten (auch ohne Datum = evtl. Default auf den
+      # letzten Handelstag). Wird danach wieder ENTFERNT.
+      - name: Probe put/call OCC params (temporary)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
           curl -sL --max-time 25 -A "$UA" "https://www.cboe.com/_next/static/chunks/0g0_nf~qdf~rw.js" -o chunk.js || true
-          echo "[probe4] chunk bytes: $(wc -c < chunk.js 2>/dev/null || echo 0)"
-          echo "[probe4] ratios context:"; grep -oE '.{140}ratios.{240}' chunk.js | head -4
-          echo "[probe4] fetch/url strings:"; grep -oE '"[^"]*(daily|market_statistics|/data/|api)[^"]*"' chunk.js | sort -u | head -20
+          echo "[probe5] ratios context:"; grep -a -oE '.{0,120}\"ratios\".{0,260}' chunk.js | head -3
           YD=$(date -u -d "yesterday" +%Y-%m-%d)
-          YD_US=$(date -u -d "yesterday" +%m/%d/%Y)
-          probe(){ CODE=$(curl -sL --max-time 25 -A "$UA" -H "Accept: application/json,*/*" "$1" -o pr.bin -w "%{http_code}" || echo ERR); echo "[probe4] $2 -> http=$CODE bytes=$(wc -c < pr.bin 2>/dev/null || echo 0) head=$(head -c 200 pr.bin 2>/dev/null | tr '\n' ' ')"; }
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=${YD}" "occ daily-volume-totals ${YD}"
-          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=$(date -u -d yesterday +%Y%m%d)" "occ daily-volume-totals YYYYMMDD"
-          probe "https://www.theocc.com/api/daily-volume-statistics?reportDate=${YD_US}" "occ www api"
-          probe "https://marketdata.theocc.com/mdapi/download-daily-volume?reportDate=${YD}" "occ download-daily-volume"
+          probe(){ CODE=$(curl -sL --max-time 25 -A "$UA" -H "Accept: application/json" "$1" -o pr.bin -w "%{http_code}" || echo ERR); echo "[probe5] $2 -> http=$CODE bytes=$(wc -c < pr.bin 2>/dev/null || echo 0) head=$(head -c 220 pr.bin 2>/dev/null | tr '\n' ' ')"; }
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals" "occ totals NO param"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=$(date -u -d yesterday +%m/%d/%Y)" "occ totals MM/DD/YYYY"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?report_date=${YD}" "occ totals report_date"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume-totals?reportDate=${YD}&format=json" "occ totals +format=json"
+          probe "https://marketdata.theocc.com/mdapi/daily-volume?reportDate=${YD}" "occ daily-volume"
+          probe "https://marketdata.theocc.com/mdapi/volume-totals" "occ volume-totals"
           rm -f chunk.js pr.bin
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
