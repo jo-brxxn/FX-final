@@ -229,7 +229,11 @@ erreichbar sind:
   **snake_case `report_date` ist der Trick** (camelCase `reportDate` → 400).
   Summe Calls+Puts über alle US-Optionsbörsen, Ratio=Puts/Calls, Serie am
   Report-Datum, bis 5 Tage Rückwärtssuche (Wochenende/Feiertage). Füttert
-  auch den Net-Options-Flow-Chart. **CBOEs freie Feeds sind endgültig tot**:
+  auch den Net-Options-Flow-Chart. **Einmaliger Backfill (11.07.) hat 41
+  Handelstage Historie nachgeladen** (12.05.–10.07., Wochenenden sauber
+  ausgelassen) — der temporäre Workflow-Schritt dafür ist wieder entfernt;
+  die reguläre stündliche Stufe trägt ab jetzt täglich einen neuen Punkt
+  nach. **CBOEs freie Feeds sind endgültig tot**:
   delayed-quotes kennt kein `_PCC`/`_PC` (403), `totalpc.csv` ist ein bei
   2019-10-04 eingefrorenes Archiv (Stale-Guard im Skript verwarf sie korrekt),
   die daily-Seite ist eine reine Client-Shell ohne öffentlich erreichbare
