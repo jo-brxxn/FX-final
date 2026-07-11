@@ -502,8 +502,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
-.cot-hist-wrap{overflow-x:auto;padding:10px 8px;position:relative}
-.cot-hist-svg{display:block}
+.cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
+.cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
 .cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
 /* Generisches Chart-Hover (chartHoverWrap/attachChartHovers): Fuehrungslinie,
@@ -834,10 +834,26 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 /* minmax(0,1fr) statt 1fr: sonst schrumpfen die Spalten nicht unter die
    Mindestbreite ihrer Zeilen (Ticker-Chips) und schieben das Dashboard
    ueber den Rand. Unter 620px auf eine Spalte stapeln. */
+/* Zwei Spalten NUR, wenn die Karte breit genug ist, dass jede Spalte den
+   ganzen Zeileninhalt (Name + Ticker-Chip + Score + Badge + Stern) traegt -
+   sonst EINE Spalte, damit nie etwas ueber den Kartenrand laeuft. Gemessen an
+   der KARTENbreite (container query), nicht am Viewport, weil die Karte im
+   Dashboard-Raster viel schmaler sein kann als das Fenster. */
+.dw-biasassets{container-type:inline-size}
 .ba-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;margin-top:4px}
 .ba-cols>div{min-width:0}
-.ba-cols .sym-row{min-width:0}
-.ba-cols .sym-row .sym-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container (max-width:619px){.ba-cols{grid-template-columns:1fr}}
+.ba-cols .ticker-chip{font-size:10.5px;padding:2px 5px;gap:3px}
+/* Wie bei den Set-ups (Kommentar oben): die Zeilen einer Spalte teilen sich
+   per Subgrid dieselben Spaltenbreiten, damit Name/Chip/Score/Badge/Stern in
+   JEDER Zeile exakt untereinander stehen - egal ob eine Zeile einen Ticker-Chip
+   hat oder nicht. minmax(0,1fr) auf der Namensspalte + overflow-hidden sorgt
+   dafuer, dass nie etwas ueber den Kartenrand laeuft (Nutzer-Wunsch 2026-07-11). */
+.ba-col-rows{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;column-gap:8px}
+.ba-col-rows>.dw-empty{grid-column:1/-1}
+.ba-cols .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;gap:8px;align-items:center}
+@supports (grid-template-columns:subgrid){.ba-cols .sym-row{grid-template-columns:subgrid}}
+.ba-cols .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:620px){.ba-cols{grid-template-columns:1fr}}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
@@ -1061,7 +1077,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e7490;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-CHART-HOVER-90</span><span id="verBannerText"> (jedes Diagramm mit mehreren Datenpunkten reagiert jetzt auf Finger/Maus: beim Darueberfahren erscheint ein Punkt auf der naechsten Datenstelle plus ein kleines Fenster mit dem genauen Datum und Wert; sobald Finger/Maus weg ist, verschwindet beides wieder. Diagramme lassen sich dabei NICHT mehr versehentlich horizontal wegwischen/verschieben - vertikales Scrollen der Seite bleibt moeglich. Gilt fuer die Sentiment-Sparklines (Fear &amp; Greed), Put/Call- und Net-Options-Flow-Charts; der COT-Chart hatte bereits eine eigene Tooltip-Funktion. Zusaetzlich: Myfxbook-Retail-Diagnose im Sentiment-Workflow - der Login liefert eine Session, aber get-community-outlook lehnt sie ab; der Job probiert die Session jetzt in drei Query-Formaten und loggt die Zeichen-Klassen des Tokens)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f766e;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-CHARTS-FIT-91</span><span id="verBannerText"> (Chart-Hover jetzt auf ALLEN Diagrammen mit mehreren Daten - auch Dashboard-Risk-Verlauf, Trend-Charts und Score-vs-Kurs: Punkt + Fenster mit genauem Datum/Wert folgen dem Finger/der Maus, verschwinden beim Loslassen. Alle Diagramme passen sich jetzt automatisch an die Kartenbreite an und lassen sich NICHT mehr horizontal wegwischen/verschieben (auch der COT-Chart nicht mehr). FX-Bias-Karte: Name/Chip/Score/Badge/Stern stehen per Subgrid in jeder Zeile exakt untereinander und laufen nie ueber den Kartenrand. Myfxbook-Retail ist LIVE: die Session muss roh (ohne URL-Encoding) uebergeben werden - 186 Symbole kommen jetzt an)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6875,14 +6891,14 @@ function renderDash(){
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${s.name}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
-          ${isNonFx(s.id)?tickerChipHtml(assetTickerInfo(s.id)):''}
+          ${(isNonFx(s.id)&&tickerChipHtml(assetTickerInfo(s.id)))||'<span></span>'}
           ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
           <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
         </div>`;
       const col=(label,list,empty)=>`<div>
           <div class="setups-col-hdr" style="background:var(--bg3);color:var(--t2)">${label}</div>
-          ${list.length?list.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">${empty}</div>`}
+          <div class="ba-col-rows">${list.length?list.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">${empty}</div>`}</div>
         </div>`;
       content=`<div class="ba-cols">
           ${col('FX Majors',fxSorted,'–')}
@@ -7045,6 +7061,7 @@ function renderDash(){
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
   startSessionBar();
+  attachChartHovers(el);
   requestAnimationFrame(syncRiskHistHeight);
 }
 // Die Risk-Sentiment-Karte steht im Dashboard-Grid (align-items:stretch) neben
@@ -7798,7 +7815,17 @@ function riskHistChart(col,chartH){
     let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=p[0];}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+16).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
-  return`<div class="tr-scroll risk-hist-scroll">${svg}</svg></div>`;
+  // Fit-to-width (kein horizontales Wischen/Verschieben) + Hover-Tooltip:
+  // die SVG skaliert auf die Kartenbreite, natuerliche Breite als max-width,
+  // damit wenige Punkte nicht ueberdehnt werden.
+  const fitSvg=svg.replace('<svg class="tr-svg risk-hist-svg"','<svg class="tr-svg risk-hist-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
+  const hpts=pts.map((p,i)=>{
+    const val=p[1];const pc=val>0.8?BC.bull:val<-0.8?BC.bear:BC.neu;
+    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=p[0];}
+    const zone=val>0.8?'Risk-on':val<-0.8?'Risk-off':'Neutral';
+    return{fx:xOf(i)/w,fy:yOf(val)/h,col:pc,tip:`<div class="chv-tip-d">${escH(lbl)}</div><b style="color:${pc}">${val>0?'+':''}${val.toFixed(2)}</b> · ${zone}`};
+  });
+  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
@@ -7931,12 +7958,26 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
-  return svg+`</svg>`;
+  // Fit-to-width (kein horizontales Wischen) + Hover-Tooltip: pro Datum ein
+  // Punkt; das Fenster listet ALLE Linien-Werte dieses Tages, der Punkt sitzt
+  // auf der ersten Linie mit Wert an diesem Tag.
+  const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
+  const hpts=dates.map((d,i)=>{
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
+    let dotY=yMid,dotCol='#fff',hasDot=false;
+    const rows=ids.map(id=>{
+      const v=valOf[id][d];const c=colorOverride||TREND_COLORS[id]||'#888';
+      if(v!=null&&isFinite(v)&&!hasDot){dotY=yOf(v);dotCol=c;hasDot=true;}
+      return v==null||!isFinite(v)?'':`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${c}">${escH(id)}</span><b>${v>0?'+':''}${v}</b></div>`;
+    }).filter(Boolean).join('');
+    return{fx:xOf(i)/w,fy:dotY/h,col:dotCol,tip:`<div class="chv-tip-d">${escH(lbl)}</div>${rows||'<span style="color:var(--t3)">no data</span>'}`};
+  });
+  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride)}</div>
-    <div class="tr-scroll">${scoreTrendChart(ids,dates,vi,base,colorOverride)}</div>
+    ${scoreTrendChart(ids,dates,vi,base,colorOverride)}
   </div>`;
 }
 // ── SCORE VS PRICE (Ueberlagerung) ──────────────────────────────────
@@ -7998,14 +8039,25 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
-  return svg+`</svg>`;
+  // Fit-to-width + Hover: das Fenster zeigt Score und (falls vorhanden) Kurs
+  // des jeweiligen Tages, der Punkt sitzt auf der Score-Linie.
+  const PRICE_COL2='#c084fc';
+  const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
+  const hpts=[];
+  dates.forEach((d,i)=>{
+    const sv=scoreMap[d];if(sv==null||!isFinite(sv))return;
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
+    const pv=priceMap[d];
+    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${PRICE_COL2}">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
+  });
+  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title){
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
   const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:#c084fc"></span>Price</span>`:''}</div>`;
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
-    <div class="tr-scroll">${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries)}</div>
+    ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries)}
     ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:11.5px">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
 }
@@ -8070,6 +8122,7 @@ function renderTrends(){
     html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currencies &ndash; these macro scores aren\'t derived from data for this asset.</div>';
   }
   el.innerHTML=html;
+  attachChartHovers(el);
 }
 // Custom pair filter: from two freely selectable assets (base/quote, like the
 // pairs in the Pairs tab) the score difference is computed daily and drawn as
@@ -8107,6 +8160,7 @@ function renderTrendsPair(el){
     html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currency pairs &ndash; these macro scores aren\'t derived from data for non-FX assets.</div>';
   }
   el.innerHTML=html;
+  attachChartHovers(el);
 }
 // ══ COT (Commitments of Traders) ═══════════════════════════════════
 // Quelle: CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
@@ -8706,9 +8760,9 @@ function sentGauge(val,lo,hi,unit){
 // vertikales Scrollen zu, blockt aber horizontales Wischen/Verschieben. ──
 const _chvReg={};let _chvSeq=0;
 // svg fuellt den Wrapper; pts: [{fx,fy,col,tip}] mit fx,fy in 0..1 der SVG-Box.
-function chartHoverWrap(svg,pts){
+function chartHoverWrap(svg,pts,wrapStyle){
   const id='chv'+(_chvSeq++);_chvReg[id]=pts||[];
-  return`<div class="chv" data-chv="${id}">${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
+  return`<div class="chv" data-chv="${id}"${wrapStyle?` style="${wrapStyle}"`:''}>${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
 }
 function attachChartHovers(root){
   (root||document).querySelectorAll('.chv[data-chv]').forEach(w=>{
