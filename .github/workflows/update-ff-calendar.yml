@@ -2144,6 +2144,61 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_occ.json sent_occ_date.txt sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
+      # ── EINMALIGER BACKFILL: Put/Call-Historie von der OCC (2026-07-11) ──
+      # Die OCC-Quelle ist brandneu (nur 1 Tag Historie ab heute) - damit der
+      # Put/Call-Chart UND der Net-Options-Flow-Chart (braucht 20+ Tage fuer
+      # den gleitenden Schnitt) nicht erst wochenlang leer/fast-leer bleiben,
+      # holt dieser Schritt EINMALIG bis zu 60 Kalendertage rueckwaerts
+      # (Wochenenden uebersprungen, US-Feiertage liefern einfach keine Daten
+      # und werden ignoriert). Nach erfolgreicher Auswertung wird dieser
+      # Schritt wieder ENTFERNT - die normale stuendliche "Fetch market
+      # sentiment"-Stufe traegt ab dann taeglich einen neuen Punkt nach.
+      - name: Backfill put/call history from OCC (one-time)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          rm -f occ_backfill.json
+          echo "[" > occ_backfill.json
+          first=1
+          for back in $(seq 1 60); do
+            D=$(date -u -d "-${back} day" +%Y-%m-%d)
+            DOW=$(date -u -d "-${back} day" +%u)
+            [ "$DOW" -ge 6 ] && continue
+            curl -sL --max-time 20 -A "$UA" -H "Accept: application/json" "https://marketdata.theocc.com/mdapi/daily-volume-totals?report_date=${D}" -o occ_bf.json || true
+            LINE=$(node -e '
+              try{
+                const j=JSON.parse(require("fs").readFileSync("occ_bf.json","utf8"));
+                const arr=j&&j.entity&&Array.isArray(j.entity.total_volume)?j.entity.total_volume:[];
+                let c=0,p=0;arr.forEach(r=>{const cc=Number(r.calls),pp=Number(r.puts);if(isFinite(cc)&&isFinite(pp)){c+=cc;p+=pp;}});
+                if(c>0&&p>0)console.log(JSON.stringify(["'"$D"'",Math.round(p/c*100)/100]));
+              }catch(e){}
+            ' 2>/dev/null)
+            if [ -n "$LINE" ]; then
+              [ "$first" -eq 0 ] && echo "," >> occ_backfill.json
+              echo "$LINE" >> occ_backfill.json
+              first=0
+            fi
+          done
+          echo "]" >> occ_backfill.json
+          rm -f occ_bf.json
+          echo "[debug] occ_backfill.json: $(node -e 'console.log(JSON.parse(require("fs").readFileSync("occ_backfill.json","utf8")).length)') days fetched"
+          node -e '
+            const fs=require("fs");
+            const bf=JSON.parse(fs.readFileSync("occ_backfill.json","utf8"));
+            const out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));
+            let s=(out.putCall&&Array.isArray(out.putCall.series)?out.putCall.series:[]).slice();
+            const have=new Set(s.map(e=>e[0]));
+            bf.forEach(e=>{if(!have.has(e[0])){s.push(e);have.add(e[0]);}});
+            s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+            s=s.slice(-120);
+            out.putCall=out.putCall||{};
+            out.putCall.series=s;
+            if(!out.putCall.source)out.putCall.source="https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics";
+            fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+            console.log("sentiment_data.json: putCall series now "+s.length+" days ("+s[0][0]+" .. "+s[s.length-1][0]+")");
+          '
+          rm -f occ_backfill.json
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
