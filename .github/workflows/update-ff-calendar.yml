@@ -2144,19 +2144,26 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_occ.json sent_occ_date.txt sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
-      # ── TEMPORAERER PROBE-SCHRITT (Pro-Asset-Put/Call 2026-07-11) ──────
-      # Nutzer-Wunsch: Put/Call NICHT nur markt-weit, sondern pro gelistetem
-      # Asset. OCC hat keine Pro-Symbol-Aufschluesselung; Idee: liquide ETF-
-      # Proxys (SPY, GLD, FXE, IBIT, ...) haben eigene Optionsketten mit
-      # Call/Put-Volumen, ueber Yahoo Finance's (kein API-Key noetigen)
-      # options-Endpoint erreichbar. Testet Erreichbarkeit + JSON-Form aus
-      # GitHub-Actions-IPs. Wird nach Auswertung wieder ENTFERNT.
-      - name: Probe per-asset put/call via ETF option chains (temporary)
+      # ── TEMPORAERER PROBE-SCHRITT 2 (Pro-Asset-Put/Call: Yahoo Crumb-Auth) ──
+      # Runde 1: alle 13 ETF-Symbole kamen SOFORT (~85ms) mit leerem Ergebnis
+      # zurueck (expirations=0, kein Fehler beim JSON-Parse) - typisches
+      # Zeichen fuer Yahoos Anti-Bot-Schutz seit 2023: die Options-API
+      # verlangt jetzt Cookie+Crumb (bekannt aus der yfinance-Bibliothek).
+      # Dieser Schritt holt zuerst einen Cookie (fc.yahoo.com), dann einen
+      # Crumb-Token (getcrumb), und haengt beides an die Options-Anfrage an.
+      # Dump der Rohantwort fuer SPY zur Fehlerdiagnose. Wird nach Auswertung
+      # wieder ENTFERNT.
+      - name: Probe per-asset put/call via Yahoo (crumb auth, temporary)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          for SYM in SPY QQQ GLD SLV USO IBIT UUP FXE FXB FXY FXF FXC FXA; do
-            curl -sL --max-time 20 -A "$UA" -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}" -o "yopt_${SYM}.json" || true
+          curl -sL --max-time 15 -A "$UA" -c ycookies.txt "https://fc.yahoo.com" -o /dev/null || true
+          CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ycookies.txt -c ycookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
+          echo "[probe] crumb: len=${#CRUMB} value_head=$(echo "$CRUMB" | head -c 30)"
+          for SYM in SPY GLD FXE IBIT; do
+            curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?crumb=${CRUMB}" -o "yopt_${SYM}.json" || true
+            SZ=$(wc -c < "yopt_${SYM}.json" 2>/dev/null || echo 0)
+            echo "[probe] $SYM raw ($SZ bytes): $(head -c 300 "yopt_${SYM}.json" 2>/dev/null | tr '\n' ' ')"
             node -e '
               try{
                 const j=JSON.parse(require("fs").readFileSync("yopt_'"$SYM"'.json","utf8"));
@@ -2166,11 +2173,12 @@ jobs:
                 const cv=calls.reduce((s,c)=>s+(Number(c.volume)||0),0);
                 const pv=puts.reduce((s,c)=>s+(Number(c.volume)||0),0);
                 const nExp=(r&&r.expirationDates&&r.expirationDates.length)||0;
-                console.log("[probe] '"$SYM"' -> callsN="+calls.length+" putsN="+puts.length+" callVol="+cv+" putVol="+pv+" expirations="+nExp);
+                const err=j&&j.optionChain&&j.optionChain.error;
+                console.log("[probe] '"$SYM"' -> callsN="+calls.length+" putsN="+puts.length+" callVol="+cv+" putVol="+pv+" expirations="+nExp+" error="+JSON.stringify(err));
               }catch(e){console.log("[probe] '"$SYM"' ERR "+e.message);}
             ' 2>/dev/null
           done
-          rm -f yopt_*.json
+          rm -f yopt_*.json ycookies.txt
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
