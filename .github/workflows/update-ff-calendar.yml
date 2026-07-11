@@ -2098,6 +2098,27 @@ jobs:
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_retail.json sent_mfxlogin.json mfx_cookies.txt
 
+      # ── TEMPORAERER PROBE-SCHRITT (Put/Call-Quellen-Suche 2026-07-11) ──
+      # Testet Kandidaten-URLs fuer die CBOE Put/Call-Ratio aus GitHub-Actions-
+      # IPs (Sandbox blockt CBOE direkt). Loggt HTTP-Code + Groesse + Anfang.
+      # Wird nach der Auswertung wieder ENTFERNT.
+      - name: Probe put/call sources (temporary)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          YD=$(date -u -d "yesterday" +%Y-%m-%d)
+          probe(){ CODE=$(curl -sL --max-time 25 -A "$UA" -H "Accept: application/json,text/csv,*/*" "$1" -o probe.bin -w "%{http_code}" || echo ERR); SIZE=$(wc -c < probe.bin 2>/dev/null || echo 0); echo "[probe] $2 -> http=$CODE bytes=$SIZE head=$(head -c 160 probe.bin 2>/dev/null | tr '\n' ' ')"; }
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_PCC.json" "cdn _PCC.json"
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_PCVT.json" "cdn _PCVT.json"
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_PC.json" "cdn _PC.json"
+          probe "https://cdn.cboe.com/api/global/delayed_quotes/quotes/_VIX.json" "cdn _VIX.json (Referenz)"
+          probe "https://cdn.cboe.com/data/us/options/market_statistics/daily/?dt=${YD}" "data daily ?dt=${YD}"
+          probe "https://www.cboe.com/us/options/market_statistics/daily/?dt=${YD}" "www daily HTML"
+          probe "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/totalpc.csv" "totalpc.csv (legacy)"
+          probe "https://markets.cboe.com/us/options/market_statistics/daily/?dt=${YD}" "markets daily"
+          probe "https://cdn.cboe.com/api/global/us_indices/daily_prices/PCC_History.csv" "PCC_History.csv"
+          rm -f probe.bin
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
