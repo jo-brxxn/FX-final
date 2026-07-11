@@ -1064,7 +1064,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#047857;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-PUTCALL-PERASSET-105</span><span id="verBannerText"> (Put/Call Ratio + Net Options Flow haben jetzt einen echten Asset-Filter: Cookie+Crumb-Auth gegen Yahoos Anti-Bot-Schutz oeffnet die Optionsketten liquider ETF-Proxys (GLD=Gold, SPY=S&amp;P500, FXE=EUR, IBIT=BTC, ...) mit echtem Call/Put-Volumen pro Symbol. "Market-wide" bleibt die OCC-Gesamtsumme, jedes gelistete Asset ausser NZD (kein passender Options-ETF) hat jetzt eine eigene Ratio. Die Pro-Asset-Serie ist eine taegliche Momentaufnahme ohne Backfill-Historie, waechst also Tag fuer Tag)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#065f46;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-PUTCALL-THINVOL-106</span><span id="verBannerText"> (Live-Check des neuen Pro-Asset-Put/Call ergab: die FX-Waehrungs-ETFs (FXA/FXB/FXC/FXF/FXY/UUP) handeln nur 37-807 Optionskontrakte/Tag, waehrend GOLD/SILVER/OIL/BTC/Index-ETFs im vier- bis sechsstelligen Bereich liegen - Tages-Ratios bei duennem Volumen (AUD 3.63 aus nur 37 Kontrakten) waeren sonst als gleichwertiges Signal missverstaendlich. Jetzt: ⚠-Kennzeichnung direkt im Asset-Filter-Dropdown + Warnhinweis mit Kontrakt-Zahl in der Karte selbst bei unter 1000 Kontrakten/Tag)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8849,8 +8849,9 @@ function sentFilterBar(){
 // (D.putCallByAsset, siehe Workflow-Schritt "Fetch per-asset put/call").
 function pcFilterBar(D){
   const ids=Object.keys(D.putCallByAsset||{}).sort();
-  const opts=['<option value="">🌐 Market-wide (all U.S. options)</option>'].concat(ids.map(id=>`<option value="${escH(id)}"${pcAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`)).join('');
-  return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setPcAsset(this.value)" title="Filter by asset" style="cursor:pointer">${opts}</select></div>`;
+  const thin=id=>{const a=D.putCallByAsset[id];return a&&((+a.callVol||0)+(+a.putVol||0))<PC_THIN_VOL?' ⚠':'';};
+  const opts=['<option value="">🌐 Market-wide (all U.S. options)</option>'].concat(ids.map(id=>`<option value="${escH(id)}"${pcAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}${thin(id)}</option>`)).join('');
+  return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setPcAsset(this.value)" title="Filter by asset (⚠ = low options volume today, reading may be noisy)" style="cursor:pointer">${opts}</select></div>`;
 }
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
@@ -8895,6 +8896,20 @@ function renderRetailBars(D){
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${legend}${rows}</div></div>`;
 }
 // ── Put-Call Ratio: Stufenlinien-Chart mit Schwellen + Contrarian-Zonen ──
+// Dünnes Options-Volumen (v.a. die FX-Waehrungs-ETFs FXA/FXB/FXC/FXF/FXY/UUP
+// liegen typisch unter 1000 Kontrakten/Tag, waehrend GOLD/SILVER/OIL/BTC/
+// Index-ETFs im vierstelligen bis sechsstelligen Bereich liegen - live
+// gemessen 2026-07-11: AUD 37, CHF 69, GBP 132, EUR 167, USD 210, CAD 261,
+// JPY 807 vs. OIL 9437+). Unter der Schwelle ist die Tages-Ratio potenziell
+// ein einzelner Ausreisser statt ein echtes Signal - das wird sichtbar
+// gekennzeichnet statt es gleichwertig neben liquiden Maerkten zu zeigen.
+const PC_THIN_VOL=1000;
+function pcThinNote(perAsset){
+  if(!perAsset)return'';
+  const tot=(+perAsset.callVol||0)+(+perAsset.putVol||0);
+  if(tot>=PC_THIN_VOL)return'';
+  return`<span style="display:block;color:var(--amber);font-size:11.5px;margin-top:4px">⚠ Low options volume today (${tot} contracts total) — this reading can be noisy, treat as a rough signal only.</span>`;
+}
 function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
@@ -8902,7 +8917,7 @@ function renderPutCallChart(D){
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
   const series=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const scopeNote=perAsset
-    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.`
+    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
   const HI=1.0,LO=0.7; // Schwellen: >=1.0 High Put (bullish), <=0.7 High Call (bearish)
@@ -8959,7 +8974,7 @@ function renderNetFlowChart(D){
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
   const scopeNote=perAsset
-    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})`
+    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
   const s=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
