@@ -239,6 +239,35 @@ erreichbar sind:
   die daily-Seite ist eine reine Client-Shell ohne öffentlich erreichbare
   Endpunkte, TradingView-Scanner liefert `USI:PC`/`PCC` nie. Nicht wieder
   bei CBOE suchen. Chart-only (kein Score).
+- **Put/Call Ratio PRO ASSET** (Nutzer-Wunsch 11.07., da OCC nur markt-weit
+  ist) — ✓ LIVE für 13/14 gelistete Assets über liquide ETF-Optionsketten
+  bei Yahoo Finance (`query1.finance.yahoo.com/v7/finance/options/{SYM}`).
+  **Braucht seit 2023 Cookie+Crumb-Auth** gegen Yahoos Anti-Bot-Schutz (bekannt
+  aus der `yfinance`-Bibliothek): erst `fc.yahoo.com` für den Cookie, dann
+  `query2.finance.yahoo.com/v1/test/getcrumb` für den Crumb-Token, beides an
+  die Options-Anfrage anhängen — ohne das kommt sofort ein leeres Ergebnis
+  (kein Fehler, nur `expirations:0`). Proxy-Zuordnung: `UUP`=USD, `FXE`=EUR,
+  `FXB`=GBP, `FXY`=JPY, `FXF`=CHF, `FXC`=CAD, `FXA`=AUD, `GLD`=Gold,
+  `SLV`=Silber, `USO`=Öl, `IBIT`=BTC, `SPY`=S&P500, `QQQ`=Nasdaq. **NZD hat
+  keinen etablierten Options-ETF**, bleibt aussen vor. In der App über
+  `putCallByAsset` + Asset-Filter (Dropdown wie bei Retail Sentiment)
+  abrufbar, Fallback bleibt die markt-weite OCC-Zahl.
+  **Dünnes Volumen bei den FX-Proxys**: FXA/FXB/FXC/FXF/FXY/UUP handeln nur
+  37–807 Kontrakte/Tag (live gemessen), während GOLD/SILVER/OIL/BTC/Index-ETFs
+  vier- bis sechsstellig liegen — Tages-Ratios wie AUD 3.63 aus nur 37
+  Kontrakten sind Ausreisser, kein echtes Signal. Deshalb ⚠-Kennzeichnung im
+  Filter-Dropdown + Warnhinweis in der Karte unter 1000 Kontrakten/Tag.
+  **KEINE Historie nachladbar**: Yahoos Options-Endpoint liefert nur die
+  aktuelle Kette, kein Datums-Parameter für historisches Volumen (anders als
+  bei der markt-weiten OCC-Zahl, die tägliche Reports publiziert). Proberunde
+  11.07. bestätigte das: OCC-Symbol-Endpunkte existieren nicht (404), OCCs
+  `daily-volume-totals` ignoriert einen angehängten `symbol`-Parameter
+  (bleibt markt-weit), CBOEs per-Symbol-Optionskette
+  (`delayed_quotes/options/{SYM}.json`, funktioniert, 3,5 MB Antwort) ist
+  ebenfalls nur eine Momentaufnahme ohne Verlauf, Barchart verlangt ein
+  Konto (401). Nicht wieder nach einer Backfill-Quelle für Pro-Asset-Put/Call
+  suchen — die Serien wachsen wie jeder neue Feed ab jetzt einen Punkt pro
+  Handelstag.
 
 Scoring nach dem `applyCotDataFeed`-Muster (`applySentimentFeed`,
 `research.sent`-Flag, halbes Gewicht via `SENT_HALF`, KEIN Trend, nur an
