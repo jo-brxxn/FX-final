@@ -1064,7 +1064,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#065f46;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-PUTCALL-SCOPE-104</span><span id="verBannerText"> (Klargestellt, dass Put/Call Ratio und Net Options Flow markt-weit sind (Summe ueber alle US-Optionsboersen, nicht pro Symbol) - deshalb gibt es dort bewusst KEINEN Asset-Filter, anders als bei Retail Sentiment (das echte Pro-Symbol-Daten hat). Beide Karten zeigen jetzt einen sichtbaren Hinweis direkt unter dem Titel, die Info-i-Buttons erklaeren es ausfuehrlich)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#047857;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-PUTCALL-PERASSET-105</span><span id="verBannerText"> (Put/Call Ratio + Net Options Flow haben jetzt einen echten Asset-Filter: Cookie+Crumb-Auth gegen Yahoos Anti-Bot-Schutz oeffnet die Optionsketten liquider ETF-Proxys (GLD=Gold, SPY=S&amp;P500, FXE=EUR, IBIT=BTC, ...) mit echtem Call/Put-Volumen pro Symbol. "Market-wide" bleibt die OCC-Gesamtsumme, jedes gelistete Asset ausser NZD (kein passender Options-ETF) hat jetzt eine eigene Ratio. Die Pro-Asset-Serie ist eine taegliche Momentaufnahme ohne Backfill-Historie, waechst also Tag fuer Tag)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8812,14 +8812,14 @@ const SENT_INFO={
      <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#ef6b78'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
      <p><b>How to read the chart:</b> the stepped line is the daily ratio. The cyan-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
-     <p><b>Market-wide, not per-asset:</b> the source (OCC) reports total call/put volume summed across ALL U.S. options exchanges and ALL underlyings combined - it is one broad "how scared is the market" reading, like the VIX, not broken down by symbol. That is why there is no asset filter here (unlike Retail Sentiment, which genuinely has one long/short split per market).</p>`],
+     <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Net Options Flow (5d MA − 20d MA)',
     `<p><b>What it is:</b> a momentum view of the options market. It takes the daily call-vs-put balance, then subtracts its <b>20-day average</b> (the slow baseline) from its <b>5-day average</b> (the recent trend). So it answers: "is options flow leaning more bullish than usual right now, or more bearish?"</p>
      <p><b>How to read it here:</b> each bar is one day.</p>
      <ul><li><b style="color:${'#4fc3f7'}">Cyan bar (above 0)</b> — recent flow is more <b>call-heavy</b> than the 20-day norm → bullish options flow.</li>
      <li><b style="color:${'#ef6b78'}">Red bar (below 0)</b> — recent flow is more <b>put-heavy</b> than the norm → bearish options flow.</li></ul>
      <p>Unlike the raw put/call ratio (which is read contrarian at extremes), this is a <b>trend/momentum</b> read: a swing from deep red up through zero into cyan shows sentiment flipping from bearish to bullish. It is derived here from the daily put/call series, so it needs a few weeks of history before the bars appear.</p>
-     <p><b>Market-wide, not per-asset:</b> same underlying data as the Put/Call Ratio above (total U.S. options volume, all exchanges/underlyings combined) - a single market-breadth reading, not something that can be filtered per symbol.</p>`],
+     <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (needs a few weeks to build up since it starts fresh per asset).</p>`],
   feargreed:['Fear & Greed / VIX',
     `<p><b>Fear & Greed Index (0–100):</b> a single number that blends several market signals into one mood reading. <b>Low = fear</b> (everyone scared), <b>high = greed</b> (everyone euphoric). Read contrarian: extreme fear (≤25) is often a buying opportunity (bullish), extreme greed (≥75) a warning (bearish). There is one for crypto (drives BTC) and one for US stocks.</p>
      <p><b>VIX (the "fear gauge"):</b> the market's expected swing size for the S&P 500 over the next 30 days. A <b>spike (≥28)</b> means panic — often near a bottom (contrarian bullish); a <b>very low reading (≤13)</b> means calm/complacency — often near a top (contrarian bearish).</p>
@@ -8832,9 +8832,10 @@ function openSentInfoM(key){
   openM('mSentInfo');
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
-let sentSub='retail',sentSym='';
+let sentSub='retail',sentSym='',pcAsset='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
+function setPcAsset(v){pcAsset=v||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
 function sentFilterBar(){
@@ -8842,6 +8843,14 @@ function sentFilterBar(){
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
   const opts=['<option value="">🌐 All symbols</option>'].concat([...set].sort().map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`)).join('');
   return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
+}
+// Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
+// Summe (alle US-Optionsboersen), sonst der ETF-Proxy des gewaehlten Assets
+// (D.putCallByAsset, siehe Workflow-Schritt "Fetch per-asset put/call").
+function pcFilterBar(D){
+  const ids=Object.keys(D.putCallByAsset||{}).sort();
+  const opts=['<option value="">🌐 Market-wide (all U.S. options)</option>'].concat(ids.map(id=>`<option value="${escH(id)}"${pcAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`)).join('');
+  return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setPcAsset(this.value)" title="Filter by asset" style="cursor:pointer">${opts}</select></div>`;
 }
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
@@ -8854,8 +8863,10 @@ function renderSentiment(){
   else if(sentSub==='netflow')body=renderNetFlowChart(D);
   else if(sentSub==='feargreed')body=renderFearGreedCards(D);
   else body=renderRetailBars(D);
-  // Symbol-Filter nur dort zeigen, wo per-Symbol-Daten existieren (Retail).
-  const filt=(D&&sentSub==='retail')?sentFilterBar():'';
+  // Symbol-/Asset-Filter nur dort zeigen, wo per-Symbol-Daten existieren.
+  const filt=(D&&sentSub==='retail')?sentFilterBar()
+    :(D&&(sentSub==='putcall'||sentSub==='netflow')&&D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D)
+    :'';
   el.innerHTML=nav+filt+body;
   attachChartHovers(el);
 }
@@ -8886,9 +8897,14 @@ function renderRetailBars(D){
 // ── Put-Call Ratio: Stufenlinien-Chart mit Schwellen + Contrarian-Zonen ──
 function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
-  const src=D.putCall&&D.putCall.source||SENT_SOURCE.putCall;
-  const series=(D.putCall&&Array.isArray(D.putCall.series)?D.putCall.series:[]).filter(e=>e&&isFinite(+e[1]));
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">OCC ↗</a> · ${escH(upd)}</span><small style="width:100%">Market-wide (all U.S. options exchanges combined) — not filterable by asset, unlike Retail Sentiment</small></div>`;
+  const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
+  const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
+  const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
+  const series=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const scopeNote=perAsset
+    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.`
+    :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
   const HI=1.0,LO=0.7; // Schwellen: >=1.0 High Put (bullish), <=0.7 High Call (bearish)
   const W=760,H=360,padL=42,padR=64,padT=24,padB=44;
   const vals=series.map(e=>+e[1]);
@@ -8939,9 +8955,14 @@ function renderPutCallChart(D){
 // Puts = bearisher Fluss (rot). ──
 function renderNetFlowChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
-  const src=D.putCall&&D.putCall.source||SENT_SOURCE.putCall;
-  const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">OCC ↗</a> · ${escH(upd)}</span><small style="width:100%">Market-wide (all U.S. options exchanges combined) — not filterable by asset, unlike Retail Sentiment</small></div>`;
-  const s=(D.putCall&&Array.isArray(D.putCall.series)?D.putCall.series:[]).filter(e=>e&&isFinite(+e[1]));
+  const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
+  const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
+  const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
+  const scopeNote=perAsset
+    ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})`
+    :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
+  const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
+  const s=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   // Taeglicher "Fluss": 1 - Put/Call (>0 = mehr Calls = bullish). Dann
   // gleitender 5- vs 20-Tage-Schnitt.
   const flow=s.map(e=>({d:e[0],v:1-(+e[1])}));
