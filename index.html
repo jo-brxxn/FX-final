@@ -1064,7 +1064,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#166534;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-PUTCALL-LIVE-100</span><span id="verBannerText"> (Put/Call-Ratio ist GELOEST - nach 5 Proberunden: die OCC (Options Clearing Corp.) liefert die taeglichen Call/Put-Volumina ALLER US-Optionsboersen als JSON unter /mdapi/daily-volume-totals?report_date=YYYY-MM-DD (snake_case ist der Trick - camelCase gibt 400). Der Workflow summiert Calls+Puts ueber alle Boersen, Ratio = Puts/Calls, Serie waechst am Report-Datum (bis 5 Tage Rueckwaertssuche fuer Wochenenden/Feiertage). Damit fuellen sich Put/Call-Chart UND Net Options Flow. Alle Probe-Schritte entfernt. CBOEs freie Feeds sind endgueltig tot: _PCC 403, totalpc.csv eingefroren 2019, daily-Seite Client-Shell)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#15803d;color:#dcfce7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-PUTCALL-DAY1-101</span><span id="verBannerText"> (Put/Call-Ratio zeigt am ersten Tag (nur 1 OCC-Report bisher) jetzt sofort den aktuellen Wert gross an statt nur "noch nicht genug Historie" - der Linien-Chart selbst braucht weiterhin 2+ Tage, das ist normal und kein Fehler. Quellen-Label/Link in Put/Call- und Net-Flow-Karte korrigiert: zeigt jetzt "OCC" statt des alten toten "CBOE"-Links)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#dcfce7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1781,7 +1781,7 @@ const COT_NET_HALF=new Set(['Net Bullish Positioning','Net Bearish Positioning']
 const SENT_SOURCE={
   cryptoFng:'https://alternative.me/crypto/fear-and-greed-index/',
   stockFng:'https://www.cnn.com/markets/fear-and-greed',
-  putCall:'https://www.cboe.com/us/options/market_statistics/daily/',
+  putCall:'https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics',
   vix:'https://www.tradingview.com/symbols/CBOE-VIX/'
 };
 // Welches Symbol bekommt welche Sentiment-Indikatoren (Basisname -> Feed-Key).
@@ -8886,7 +8886,7 @@ function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const src=D.putCall&&D.putCall.source||SENT_SOURCE.putCall;
   const series=(D.putCall&&Array.isArray(D.putCall.series)?D.putCall.series:[]).filter(e=>e&&isFinite(+e[1]));
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">CBOE ↗</a> · ${escH(upd)}</span></div>`;
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">OCC ↗</a> · ${escH(upd)}</span></div>`;
   const HI=1.0,LO=0.7; // Schwellen: >=1.0 High Put (bullish), <=0.7 High Call (bearish)
   const W=760,H=360,padL=42,padR=64,padT=24,padB=44;
   const vals=series.map(e=>+e[1]);
@@ -8901,8 +8901,17 @@ function renderPutCallChart(D){
   let xlab='';
   if(series.length){const idxs=[0,Math.floor((series.length-1)/2),series.length-1];[...new Set(idxs)].forEach(i=>{const d=String(series[i][0]).slice(5);xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(d)}</text>`;});}
   let chart;
-  if(series.length<2){
-    chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. A clean free daily source is hard to reach from the hourly job (data providers block datacenter IPs); it fills in automatically once values come through. Tap the <b>i</b> to learn what this shows.</div>`;
+  if(series.length===1){
+    // Erst ein Report-Tag: noch kein Linien-Chart moeglich, aber der
+    // aktuelle Wert selbst ist schon da - den zeigen statt nur "warten".
+    const v=vals[0];
+    chart=`<div style="text-align:center;padding:10px 6px 4px">
+        <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${v>=HI?BC.bull:v<=LO?BC.bear:'var(--t1)'}">${v.toFixed(2)}</div>
+        <div style="font-size:13px;color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
+        <div style="color:var(--t3);font-size:12px;line-height:1.6;margin-top:12px">Chart builds up one point per trading day (weekends/holidays carry the last value forward) — check back tomorrow for a trend line.</div>
+      </div>`;
+  }else if(series.length<2){
+    chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
   }else{
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
         <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(79,195,247,.08)"/>
@@ -8929,7 +8938,7 @@ function renderPutCallChart(D){
 function renderNetFlowChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const src=D.putCall&&D.putCall.source||SENT_SOURCE.putCall;
-  const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">CBOE ↗</a> · ${escH(upd)}</span></div>`;
+  const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">OCC ↗</a> · ${escH(upd)}</span></div>`;
   const s=(D.putCall&&Array.isArray(D.putCall.series)?D.putCall.series:[]).filter(e=>e&&isFinite(+e[1]));
   // Taeglicher "Fluss": 1 - Put/Call (>0 = mehr Calls = bullish). Dann
   // gleitender 5- vs 20-Tage-Schnitt.
