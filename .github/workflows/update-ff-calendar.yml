@@ -2492,45 +2492,8 @@ jobs:
           '
           rm -f cot_pct_url.txt cot_pct_raw.json
 
-      # ── TEMPORAER: Massive/Polygon.io Probe (Nutzer-Wunsch 2026-07-12,
-      # volle Put/Call-Historie pro Asset). Testet mit dem echten MASSIVE_
-      # API_KEY-Secret: (1) wie viele aktive Optionskontrakte SPY gerade hat
-      # (bestimmt, ob eine Tages-Summe pro Asset bei 5 req/min ueberhaupt
-      # machbar ist), (2) ob die kostenlose Stufe fuer EINEN Kontrakt echte
-      # historische Tages-Aggregate (Volumen) liefert oder blockt. Wird nach
-      # Auswertung wieder entfernt.
-      - name: TEMP probe Massive/Polygon.io options API (round 2 - long-dated contract, multiple dates)
-        continue-on-error: true
-        env:
-          MKEY: ${{ secrets.MASSIVE_API_KEY }}
-        run: |
-          if [ -z "$MKEY" ]; then
-            echo "[debug] massive-probe2: MASSIVE_API_KEY secret is EMPTY/unset"
-          else
-            # LEAPS-artiger, weit datierter Call (Exp. >6 Monate) - existiert mit
-            # hoher Wahrscheinlichkeit schon seit Monaten, damit ein "resultsCount:0"
-            # nicht einfach heisst "Kontrakt gab es damals noch nicht".
-            HCODE=$(curl -sL --max-time 20 -w "%{http_code}" "https://api.massive.com/v3/reference/options/contracts?underlying_ticker=SPY&contract_type=call&expired=false&expiration_date.gte=2027-01-01&limit=1&apiKey=$MKEY" -o contracts2.json || echo "000")
-            echo "[debug] massive-probe2 contracts: http=$HCODE size=$(wc -c < contracts2.json 2>/dev/null)"
-            SAMPLE=$(node -e 'try{const d=JSON.parse(require("fs").readFileSync("contracts2.json","utf8"));const r=d.results&&d.results[0];if(r)console.log(r.ticker+"|"+r.expiration_date);}catch(e){}')
-            echo "[debug] massive-probe2 sample: $SAMPLE"
-            TICKER=$(echo "$SAMPLE" | cut -d'|' -f1)
-            rm -f contracts2.json
-            if [ -n "$TICKER" ]; then
-              for DAYSAGO in 3 20 60; do
-                D=$(date -u -d "$DAYSAGO days ago" +%Y-%m-%d 2>/dev/null || date -u -v-${DAYSAGO}d +%Y-%m-%d)
-                curl -sL --max-time 20 "https://api.massive.com/v2/aggs/ticker/$TICKER/range/1/day/$D/$D?adjusted=true&apiKey=$MKEY" -o "aggs_$DAYSAGO.json" || true
-                echo "[debug] massive-probe2 aggs daysago=$DAYSAGO date=$D body=$(cat aggs_$DAYSAGO.json 2>/dev/null | head -c 400)"
-                rm -f "aggs_$DAYSAGO.json"
-                sleep 12
-              done
-            else
-              echo "[debug] massive-probe2: no long-dated sample ticker found"
-            fi
-          fi
-
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt contracts2.json aggs_*.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
 
       - name: Commit and push if changed
         run: |
