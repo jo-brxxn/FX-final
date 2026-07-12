@@ -1,31 +1,5 @@
 {
  "JPY": {
-  "Unemployment Rate": {
-   "actual": "2.5%",
-   "forecast": "2.5%",
-   "previous": "2.5%",
-   "date": "2026-06-29",
-   "event": "Unemployment Rate",
-   "period": null,
-   "history": [
-    [
-     "2026-03-30",
-     "2.6%"
-    ],
-    [
-     "2026-04-27",
-     "2.7%"
-    ],
-    [
-     "2026-05-28",
-     "2.5%"
-    ],
-    [
-     "2026-06-29",
-     "2.5%"
-    ]
-   ]
-  },
   "Retail Sales": {
    "actual": "1.9%",
    "forecast": null,
@@ -231,6 +205,32 @@
     [
      "2026-06-18",
      "1.4%"
+    ]
+   ]
+  },
+  "Unemployment Rate": {
+   "actual": "2.5%",
+   "forecast": "2.5%",
+   "previous": "2.5%",
+   "date": "2026-06-29",
+   "event": "Unemployment Rate",
+   "period": null,
+   "history": [
+    [
+     "2026-03-30",
+     "2.6%"
+    ],
+    [
+     "2026-04-27",
+     "2.7%"
+    ],
+    [
+     "2026-05-28",
+     "2.5%"
+    ],
+    [
+     "2026-06-29",
+     "2.5%"
     ]
    ]
   }
