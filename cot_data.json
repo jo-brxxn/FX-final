@@ -1,6 +1,6 @@
 {
  "report_date": "2026-07-07",
- "updated": "2026-07-10T20:59:50.432Z",
+ "updated": "2026-07-12T09:49:57.367Z",
  "symbols": {
   "EUR": {
    "long": 223430,
@@ -166,7 +166,8 @@
      "short": 239657,
      "oi": 794833
     }
-   ]
+   ],
+   "contract": "EURO FX - CHICAGO MERCANTILE EXCHANGE"
   },
   "GBP": {
    "long": 44564,
@@ -332,7 +333,8 @@
      "short": 132467,
      "oi": 282969
     }
-   ]
+   ],
+   "contract": "BRITISH POUND - CHICAGO MERCANTILE EXCHANGE"
   },
   "JPY": {
    "long": 112247,
@@ -498,7 +500,8 @@
      "short": 236025,
      "oi": 398103
     }
-   ]
+   ],
+   "contract": "JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE"
   },
   "CHF": {
    "long": 10561,
@@ -664,7 +667,8 @@
      "short": 47975,
      "oi": 107672
     }
-   ]
+   ],
+   "contract": "SWISS FRANC - CHICAGO MERCANTILE EXCHANGE"
   },
   "CAD": {
    "long": 31566,
@@ -830,7 +834,8 @@
      "short": 204692,
      "oi": 363847
     }
-   ]
+   ],
+   "contract": "CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"
   },
   "AUD": {
    "long": 71962,
@@ -996,7 +1001,8 @@
      "short": 96613,
      "oi": 204837
     }
-   ]
+   ],
+   "contract": "AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"
   },
   "NZD": {
    "long": 10919,
@@ -1162,7 +1168,8 @@
      "short": 76108,
      "oi": 113535
     }
-   ]
+   ],
+   "contract": "NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE"
   },
   "USD": {
    "long": 31921,
@@ -1328,7 +1335,8 @@
      "short": 18652,
      "oi": 53384
     }
-   ]
+   ],
+   "contract": "USD INDEX - ICE FUTURES U.S."
   },
   "BTC": {
    "long": 154696,
@@ -1494,7 +1502,8 @@
      "short": 163345,
      "oi": 169368
     }
-   ]
+   ],
+   "contract": "NANO BITCOIN PERP STYLE - COINBASE DERIVATIVES, LLC"
   },
   "GOLD": {
    "long": 233713,
@@ -1660,7 +1669,8 @@
      "short": 39467,
      "oi": 371776
     }
-   ]
+   ],
+   "contract": "GOLD - COMMODITY EXCHANGE INC."
   },
   "SILVER": {
    "long": 39446,
@@ -1826,7 +1836,8 @@
      "short": 11431,
      "oi": 104859
     }
-   ]
+   ],
+   "contract": "SILVER - COMMODITY EXCHANGE INC."
   },
   "OIL": {
    "long": 80726,
@@ -1992,7 +2003,8 @@
      "short": 71523,
      "oi": 801410
     }
-   ]
+   ],
+   "contract": "CRUDE OIL, LIGHT SWEET-WTI - ICE FUTURES EUROPE"
   },
   "SP500": {
    "long": 244103,
@@ -2158,7 +2170,8 @@
      "short": 286994,
      "oi": 1969636
     }
-   ]
+   ],
+   "contract": "E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE"
   },
   "NAS": {
    "long": 65583,
@@ -2324,7 +2337,62 @@
      "short": 74324,
      "oi": 303152
     }
-   ]
+   ],
+   "contract": "NASDAQ-100 CONSOLIDATED - CHICAGO MERCANTILE EXCHANGE"
+  }
+ },
+ "pct3y": {
+  "report_date": "2026-07-07",
+  "updated": "2026-07-12T09:49:58.432Z",
+  "data": {
+   "EUR": {
+    "pct": 10,
+    "n": 182
+   },
+   "GBP": {
+    "pct": 2,
+    "n": 182
+   },
+   "JPY": {
+    "pct": 46,
+    "n": 182
+   },
+   "CHF": {
+    "pct": 46,
+    "n": 182
+   },
+   "CAD": {
+    "pct": 24,
+    "n": 182
+   },
+   "AUD": {
+    "pct": 74,
+    "n": 182
+   },
+   "NZD": {
+    "pct": 1,
+    "n": 182
+   },
+   "USD": {
+    "pct": 66,
+    "n": 182
+   },
+   "GOLD": {
+    "pct": 84,
+    "n": 182
+   },
+   "SILVER": {
+    "pct": 75,
+    "n": 182
+   },
+   "OIL": {
+    "pct": 37,
+    "n": 182
+   },
+   "SP500": {
+    "pct": 80,
+    "n": 182
+   }
   }
  }
 }
