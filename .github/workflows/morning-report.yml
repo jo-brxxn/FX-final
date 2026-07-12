@@ -167,16 +167,18 @@ jobs:
             console.log(speech.join(" "));
           '
 
-      - name: espeak-ng und ffmpeg installieren (kostenlose TTS)
+      - name: edge-tts und ffmpeg installieren (kostenlose Neural-TTS)
         if: steps.gate.outputs.proceed == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng ffmpeg
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install --quiet edge-tts
 
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          espeak-ng -v en-us -s 155 -f morning-report-speech.txt -w morning-report.wav
+          edge-tts --voice en-US-AriaNeural --file morning-report-speech.txt --write-media morning-report.mp3
           # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
-          ffmpeg -y -i morning-report.wav -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          ffmpeg -y -i morning-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
 
       - name: Per Telegram senden (Text + Sprachnachricht)
         if: steps.gate.outputs.proceed == 'true'
@@ -230,10 +232,12 @@ jobs:
 # 5. Workflow einmal manuell testen: Actions -> "Morning Report
 #    (Telegram)" -> "Run workflow".
 #
-# Sprachnachricht: kostenlose espeak-ng-TTS (robotisch, keine weiteren
-# Accounts noetig). Fuer eine natuerlichere Stimme muesste ein
-# kostenpflichtiger TTS-Dienst (z.B. OpenAI TTS, ElevenLabs) samt
-# eigenem API-Key als weiteres Secret eingebunden werden.
+# Sprachnachricht: kostenlose edge-tts-Neural-TTS (nutzt Microsofts
+# Edge-Vorlesestimmen ueber deren oeffentlichen Endpoint, kein API-Key/
+# Account noetig - klingt deutlich natuerlicher als das fruehere
+# espeak-ng, Nutzer-Wunsch 2026-07-12). Inoffizieller Endpoint, daher
+# theoretisches Blockier-Risiko; espeak-ng-Fallback bewusst nicht
+# eingebaut, da bei Ausfall der Text-Report per Telegram trotzdem geht.
 #
 # Sendezeit: 07:00 Uhr Berlin-Zeit, ganzjaehrig (zwei Cron-Eintraege +
 # Gate-Schritt gleichen die Sommer-/Winterzeit-Verschiebung aus - siehe

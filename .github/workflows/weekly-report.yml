@@ -139,15 +139,17 @@ jobs:
           EOF
           node build-weekly.js
 
-      - name: espeak-ng und ffmpeg installieren (kostenlose TTS)
+      - name: edge-tts und ffmpeg installieren (kostenlose Neural-TTS)
         if: steps.gate.outputs.proceed == 'true'
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq espeak-ng ffmpeg
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install --quiet edge-tts
 
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          espeak-ng -v en-us -s 155 -f weekly-report-speech.txt -w weekly-report.wav
-          ffmpeg -y -i weekly-report.wav -c:a libopus -b:a 32k -ar 48000 -ac 1 weekly-report.ogg
+          edge-tts --voice en-US-AriaNeural --file weekly-report-speech.txt --write-media weekly-report.mp3
+          ffmpeg -y -i weekly-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 weekly-report.ogg
 
       - name: Per Telegram senden (Text + Sprachnachricht)
         if: steps.gate.outputs.proceed == 'true'
