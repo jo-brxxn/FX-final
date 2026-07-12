@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-YAHOO-114</span><span id="verBannerText"> (Saisonalitaet-Quelle gewechselt: Stooq blockt seit heute jede Anfrage mit einer 796-Byte JS-Challenge-Seite statt echter CSV-Historie - stattdessen jetzt dieselben liquiden ETF-Proxys + derselbe Yahoo-Cookie+Crumb-Handshake wie beim Pro-Asset-Put/Call-Feed, gegen den Chart-Endpunkt (Monats-Balken, volle Historie). Vorteil: die CurrencyShares-ETFs sind schon in Waehrungsrichtung notiert, die fruehere USD-first-Invertierung entfaellt. Ausserdem: alle Asset-Filter-Dropdowns jetzt EIN gemeinsames, nach Kategorie gruppiertes Muster (COT/Put-Call/Net-Flow/Seasonality/Retail))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-YAHOO-115</span><span id="verBannerText"> (Kleiner Folge-Fix zu 114: veraltete Stooq-Texte im Seasonality-Tab durch Yahoo-Finance-Hinweise ersetzt (Header, Proxy-Link, Info-Modal); Live-Verifikation bestaetigt 12 Assets mit echten 15-16 Jahren Historie, BTC/IBIT korrekt ausgeschlossen wegen zu junger echter Historie statt falscher Wochen-als-Monats-Daten)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1313,7 +1313,7 @@ function introLogin(){
 <div class="pc" id="pgSeas" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Seasonality</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Average calendar-month return &amp; hit rate over the last 15 years · source: Stooq daily history · context layer, not a signal</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
   </div>
   <div id="seasBody"></div>
 </div>
@@ -9307,7 +9307,7 @@ function renderCot(){
   cotWireChartHover();
 }
 // ══ SAISONALITAET (seasonality_data.json) ═══════════════════════════
-// 15-Jahres-Monatsstatistik je gelistetem Asset (Stooq-Langzeithistorie,
+// 15-Jahres-Monatsstatistik je gelistetem Asset (Yahoo-ETF-Proxy-Historie,
 // 1x taeglich vom Workflow-Schritt "Fetch seasonality" geschrieben):
 // Durchschnitts-Return + Trefferquote je Kalendermonat. Bewusst REINE
 // Anzeige-Ebene ohne Score-Einfluss - Saisonalitaet ist ein Kontext-
@@ -9354,7 +9354,7 @@ function renderSeasonality(){
   const el=document.getElementById('seasBody');if(!el)return;
   const D=SEASONALITY_DATA;
   if(!D||!D.assets||!Object.keys(D.assets).length){
-    el.innerHTML=`<div class="cot-empty">Loading seasonality data… (computed once a day by the GitHub workflow from long-run Stooq price history into seasonality_data.json — if this stays empty, the first daily run simply hasn't happened yet).</div>`;
+    el.innerHTML=`<div class="cot-empty">Loading seasonality data… (computed once a day by the GitHub workflow from long-run ETF price history into seasonality_data.json — if this stays empty, the first daily run simply hasn't happened yet).</div>`;
     return;
   }
   const ids=seasSortIds(Object.keys(D.assets));
@@ -9364,7 +9364,7 @@ function renderSeasonality(){
   const cur=A.months.find(m=>m[0]===curMon);
   const upd=D.updated?new Date(D.updated).toLocaleDateString():'–';
   const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
-  const proxyLink=`<a href="https://stooq.com/q/d/?s=${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
+  const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
   const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
   const chartCard=`<div class="cot-card">
     <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">15y stats · proxy: ${proxyLink} · ${escH(upd)}</span></div>
@@ -9392,10 +9392,10 @@ function renderSeasonality(){
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
-  `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run daily price history (Stooq), refreshed once a day.</p>
+  `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
    <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#4fc3f7">Cyan up-bars</b> = the month was positive on average; <b style="color:#ef6b78">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
-   <p><b>Note for FX:</b> currencies are measured the same way round as elsewhere in the app (e.g. the JPY profile is the yen itself, computed from the inverted USD/JPY quote where needed — flagged under the chart when that applies). USD uses the dollar index as proxy.</p>`];
+   <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
