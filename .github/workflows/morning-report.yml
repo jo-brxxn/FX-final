@@ -48,29 +48,29 @@ jobs:
             echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
             exit 0
           fi
-          echo "This is a test of the new voice for your market reports. Good morning. There are two high impact events today. Testing complete." > en-speech.txt
+          echo "This is a test of the new voice for your market reports. Good morning, sir. There are two high impact events scheduled today. All systems are functioning within normal parameters." > en-speech.txt
           echo "Dies ist ein Test der neuen Stimme fuer deine Marktberichte. Guten Morgen. Heute gibt es zwei wichtige Ereignisse." > de-speech.txt
+          # Jarvis-Kandidaten: ruhige, britische Butler-Stimmen, teils per
+          # --rate/--pitch verlangsamt+vertieft fuer mehr "AI-Assistant"-Gefuehl.
           declare -A VOICES=(
-            [en-US-GuyNeural]="en:US Guy (energisch, bereits getestet)"
-            [en-US-ChristopherNeural]="en:US Christopher (tief, autoritaer)"
-            [en-US-RogerNeural]="en:US Roger (sachlich, tief)"
-            [en-US-EricNeural]="en:US Eric (rational)"
-            [en-GB-RyanNeural]="en:GB Ryan (britisch, selbstbewusst)"
-            [en-AU-WilliamNeural]="en:AU William (australisch)"
-            [en-IE-ConnorNeural]="en:IE Connor (irisch)"
-            [de-DE-ConradNeural]="de:DE Conrad (deutsch)"
-            [de-DE-KillianNeural]="de:DE Killian (deutsch, neuer)"
-            [de-AT-JonasNeural]="de:AT Jonas (oesterreichisch)"
+            [en-GB-RyanNeural]="en::: GB Ryan pur (Community-Standard fuer Jarvis-Klone)"
+            [en-GB-RyanNeural-slow]="en:-10%:-6Hz: GB Ryan, verlangsamt+vertieft (Jarvis-Tuning)"
+            [en-GB-ThomasNeural]="en::: GB Thomas pur"
+            [en-GB-ThomasNeural-slow]="en:-10%:-6Hz: GB Thomas, verlangsamt+vertieft (Jarvis-Tuning)"
           )
-          for V in "${!VOICES[@]}"; do
-            IFS=":" read -r LANG LABEL <<< "${VOICES[$V]}"
+          for KEY in "${!VOICES[@]}"; do
+            IFS=":" read -r LANG RATE PITCH LABEL <<< "${VOICES[$KEY]}"
+            V="${KEY%-slow}"
             SRC="en-speech.txt"; [ "$LANG" = "de" ] && SRC="de-speech.txt"
-            edge-tts --voice "$V" --file "$SRC" --write-media "v.mp3" || { echo "[debug] $V failed"; continue; }
+            ARGS=(--voice "$V" --file "$SRC" --write-media "v.mp3")
+            [ -n "$RATE" ] && ARGS+=(--rate="$RATE")
+            [ -n "$PITCH" ] && ARGS+=(--pitch="$PITCH")
+            edge-tts "${ARGS[@]}" || { echo "[debug] $KEY failed"; continue; }
             ffmpeg -y -i v.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 v.ogg
             curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
               -F "chat_id=${TELEGRAM_CHAT_ID}" \
               -F "voice=@v.ogg" \
-              -F "caption=🎙️ ${V} — ${LABEL}" > /dev/null
+              -F "caption=🎙️${LABEL}" > /dev/null
             rm -f v.mp3 v.ogg
             sleep 1
           done
