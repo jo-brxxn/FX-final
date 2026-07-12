@@ -28,6 +28,38 @@ permissions:
   contents: write
 
 jobs:
+  # TEMP: sucht eine funktionierende direkte URL fuer einen lizenzfreien
+  # Rock-Instrumental-Track (Nutzer-Wunsch 2026-07-12, Hintergrundmusik
+  # statt eines urheberrechtlich geschuetzten Songs). Wird nach Auswertung
+  # entfernt. Sandbox blockt incompetech.com/archive.org komplett (403),
+  # daher Test ueber den GH-Actions-Runner.
+  test-music:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kandidaten-URLs fuer "Big Rock" (Kevin MacLeod, CC-BY) testen
+        run: |
+          probe(){
+            local label="$1" url="$2"
+            HCODE=$(curl -sL --max-time 20 -w "%{http_code}" -A "Mozilla/5.0" "$url" -o probe.bin || echo "000")
+            SZ=$(wc -c < probe.bin 2>/dev/null || echo 0)
+            CT=$(file -b probe.bin 2>/dev/null | head -c 80)
+            echo "[debug] music-probe $label: http=$HCODE size=$SZ type=$CT url=$url"
+            rm -f probe.bin
+          }
+          probe "incompetech-spaced" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3"
+          probe "incompetech-nospace" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/BigRock.mp3"
+          curl -sL --max-time 20 -A "Mozilla/5.0" "https://archive.org/metadata/Incompetech" -o meta.json || true
+          echo "[debug] archive.org metadata size: $(wc -c < meta.json 2>/dev/null)"
+          node -e '
+            try{
+              const d=JSON.parse(require("fs").readFileSync("meta.json","utf8"));
+              const files=(d.files||[]).map(f=>f.name).filter(n=>/big.?rock/i.test(n));
+              console.log("[debug] archive.org matches: "+JSON.stringify(files.slice(0,10)));
+            }catch(e){console.log("[debug] archive.org metadata parse fail: "+e.message);}
+          '
+          rm -f meta.json
+
   send-report:
     runs-on: ubuntu-latest
     timeout-minutes: 350
