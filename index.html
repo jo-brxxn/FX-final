@@ -150,15 +150,22 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.025),rgba(var(--green-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.07)}
 .ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.025),rgba(var(--red-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.07)}
 .ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.025),rgba(var(--amber-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.07)}
-.rub-card.glow-bull,.pair-card.glow-bull{border-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.03),rgba(var(--green-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--green-rgb),.08)}
-.rub-card.glow-bear,.pair-card.glow-bear{border-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.03),rgba(var(--red-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--red-rgb),.08)}
-.rub-card.glow-neu,.pair-card.glow-neu{border-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.03),rgba(var(--amber-rgb),.03));box-shadow:inset 0 0 12px 3px rgba(var(--amber-rgb),.08)}
-.ind-card.glow-bull,.ri.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.015),rgba(var(--green-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--green-rgb),.04)}
-.ind-card.glow-bear,.ri.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.015),rgba(var(--red-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--red-rgb),.04)}
-.ind-card.glow-neu,.ri.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.015),rgba(var(--amber-rgb),.015));box-shadow:inset 0 0 7px 2px rgba(var(--amber-rgb),.04)}
-.sym-row.glow-bull{border:1px solid rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.05),rgba(var(--green-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.06)}
-.sym-row.glow-bear{border:1px solid rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.05),rgba(var(--red-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.06)}
-.sym-row.glow-neu{border:1px solid rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.05),rgba(var(--amber-rgb),.05));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.06)}
+/* Bias-Faerbung der Karten (Redesign 2026-07-11, Nutzer-Wunsch "zu viele
+   Farben"): statt VOLLFARBIGER Rahmen um jede Rubrik-/Indikator-Karte gibt es
+   nur noch einen schmalen farbigen Kantenstreifen links - die Farbe bleibt
+   als Signal erhalten (plus Badge im Header), aber die Seite wirkt ruhig.
+   Die "wichtig markiert"-Regeln (.imp/.row-marked weiter unten) duerfen
+   weiterhin voll faerben - das ist dann eine bewusste Hervorhebung. */
+.rub-card.glow-bull,.pair-card.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.02),rgba(var(--green-rgb),.02))}
+.rub-card.glow-bear,.pair-card.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.02),rgba(var(--red-rgb),.02))}
+.rub-card.glow-neu,.pair-card.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.02),rgba(var(--amber-rgb),.02))}
+.ind-card.glow-bull,.ri.glow-bull{border-left-color:rgba(var(--green-rgb),.75)}
+.ind-card.glow-bear,.ri.glow-bear{border-left-color:rgba(var(--red-rgb),.75)}
+.ind-card.glow-neu,.ri.glow-neu{border-left-color:rgba(var(--amber-rgb),.75)}
+.sym-row.glow-bull,.sym-row.glow-bear,.sym-row.glow-neu{border:1px solid var(--bd);border-left-width:3px}
+.sym-row.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.035),rgba(var(--green-rgb),.035))}
+.sym-row.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.035),rgba(var(--red-rgb),.035))}
+.sym-row.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.035),rgba(var(--amber-rgb),.035))}
 .dw-chip.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.07),rgba(var(--green-rgb),.07))}
 .dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
@@ -305,7 +312,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg3);border:3px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-left:4px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
@@ -338,7 +345,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .rub-now-txt::placeholder{color:rgba(var(--red-rgb),.5)}
 .rub-summary-sep{border-top:1px solid var(--bd);margin:6px 0}
 /* ── INDICATOR ── */
-.ind-card{background:var(--bg4);border:2px solid var(--bd);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
+.ind-card{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--bd2);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:3px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
@@ -574,7 +581,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .pcc-name::placeholder{color:var(--t3)}
 .pcc-body{display:none;padding:10px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px}
 .pcc.open .pcc-body{display:grid}
-.pair-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;transition:border-color .12s}
+.pair-card{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--bd2);border-radius:var(--rs);overflow:hidden;transition:border-color .12s}
 .pair-card.open{border-color:var(--bd2)}
 .pair-hdr{display:flex;align-items:center;padding:9px 10px;cursor:pointer;background:var(--bg3);transition:background .12s;gap:6px;user-select:none}
 @media (hover:hover){.pair-hdr:hover{background:var(--bg4)}}
@@ -731,7 +738,28 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .evt-alert-lp{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .evt-alert-ff-chk{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t1);margin-top:9px;cursor:pointer;user-select:none}
 .evt-alert-ff-chk input{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex:none}
-@media(max-width:380px){.cal-col-hdr,.cal-row{grid-template-columns:36px 38px 48px 1fr 46px 46px 46px 28px;gap:4px;padding-left:6px;padding-right:6px;min-width:350px}}
+/* ── KALENDER AUF SCHMALEN SCREENS: ZWEIZEILIG (Audit-Fix 2026-07-11) ──
+   Im 8-Spalten-Grid blieben dem Event-Namen auf ~430px nur ~48px ("F…" statt
+   "Fed Funds Rate"). Unter 560px wird jede Zeile deshalb per Flex-Wrap
+   zweizeilig: oben Zeit/Symbol/Impact + Aktions-Buttons, dann der VOLLE
+   Event-Name, darunter Actual/Forecast/Previous mit A:/F:/P:-Labels (der
+   Spalten-Header entfaellt, die Labels ersetzen ihn). Nur fuer die grosse
+   Tabelle - .compact (Dashboard-Widget) hat ihr eigenes enges Layout. */
+@media(max-width:560px){
+  .cal-col-hdr:not(.compact){display:none}
+  .cal-row:not(.compact){display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;min-width:0}
+  .cal-row:not(.compact) .cal-time{order:1}
+  .cal-row:not(.compact) .cal-ccy{order:2}
+  .cal-row:not(.compact) .cal-imp{order:3}
+  .cal-row:not(.compact) .cal-row-actions{order:4;margin-left:auto}
+  .cal-row:not(.compact) .cal-evname{order:5;flex:1 1 100%;white-space:normal}
+  .cal-row:not(.compact) .cal-val{order:6;text-align:left}
+  .cal-row:not(.compact) .cal-val::before{color:var(--t3);font-weight:400;margin-right:3px}
+  .cal-row:not(.compact) .cal-val:nth-child(5)::before{content:'A:'}
+  .cal-row:not(.compact) .cal-val:nth-child(6)::before{content:'F:'}
+  .cal-row:not(.compact) .cal-val:nth-child(7)::before{content:'P:'}
+  .cal-row:not(.compact) .cal-evsub{order:7;flex:1 1 100%}
+}
 /* ── CALENDAR TABLE: COMPACT (DASHBOARD WIDGET) ── */
 /* Weniger Spalten (Time/Sym/Event/Actual/Forecast, "Previous" wandert in die Subzeile)
    + farbiger Rahmen für Impact, damit nichts im schmalen Dashboard-Widget abgeschnitten wird. */
@@ -1064,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#334155;color:#e2e8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-PUTCALL-NOHIST-107</span><span id="verBannerText"> (Quellen-Suche fuer Pro-Asset-Put/Call-HISTORIE ergebnislos: OCC-Symbol-Endpunkte existieren nicht (404), OCCs daily-volume-totals ignoriert einen Symbol-Parameter (bleibt markt-weit), CBOEs per-Symbol-Optionskette funktioniert zwar, ist aber ebenfalls nur eine Momentaufnahme ohne Verlauf, Barchart verlangt ein Konto. Yahoos Options-Endpoint liefert grundsaetzlich kein historisches Volumen - anders als bei der markt-weiten OCC-Zahl ist hier kein Backfill moeglich. Die Pro-Asset-Serien wachsen wie jeder neue Feed ab jetzt einen Punkt pro Handelstag, Sackgassen in CLAUDE.md dokumentiert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e2e8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3730a3;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-CALM-CARDS-108</span><span id="verBannerText"> (Design-Audit Teil 1: die Bias-Farbflut auf den Asset-Seiten ist gezaehmt - Rubrik-, Indikator-, Overview- und Set-ups-Karten haben statt vollfarbiger Rahmen jetzt einen schmalen farbigen Kantenstreifen links (Farbe bleibt als Signal, Seite wirkt ruhig und professioneller; bewusst markierte Karten (Stern) duerfen weiter voll leuchten). Dazu 2 Mobile-Fixes: Kalender-Kopfzeile bricht jetzt um statt ueber den Rand zu laufen, und die Kalender-Zeilen sind unter 560px zweizeilig mit vollem Event-Namen + A:/F:/P:-Labels statt abgeschnittener 1-Buchstaben-Namen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1305,7 +1333,7 @@ function introLogin(){
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
-    <div style="display:flex;align-items:center;gap:7px">
+    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
