@@ -28,57 +28,6 @@ permissions:
   contents: write
 
 jobs:
-  # TEMP: Ende-zu-Ende-Test der finalen Pipeline (Ryan-Stimme + Zitat des
-  # Tages + Hintergrundmusik), unabhaengig vom Gate/Dedup des echten
-  # send-report-Jobs. Wird nach dem Test entfernt.
-  test-final:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: edge-tts und ffmpeg installieren
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          pip install --quiet edge-tts
-      - name: Musik-Kandidaten (Build-up-Charakter) mit lauterer Mischung testen
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
-            exit 0
-          fi
-          echo "Good morning. Markets are moving, and today brings two high impact events worth watching closely." > sample-speech.txt
-          edge-tts --voice en-GB-RyanNeural --file sample-speech.txt --write-media sample-voice.mp3
-          declare -A TRACKS=(
-            [Impact Moderato]="dramatischer Spannungsaufbau"
-            [Rise Up]="klassischer Build-up, name sagt alles"
-            [Take a Chance]="motivierend, treibend"
-            [Investigations]="spannungsvoller Aufbau"
-            [Onward]="triumphal, energisch"
-          )
-          for NAME in "${!TRACKS[@]}"; do
-            DESC="${TRACKS[$NAME]}"
-            ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$NAME")
-            HCODE=$(curl -sL --max-time 20 -A "Mozilla/5.0" -w "%{http_code}" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/${ENC}.mp3" -o track.mp3 || echo "000")
-            SZ=$(wc -c < track.mp3 2>/dev/null || echo 0)
-            echo "[debug] track '$NAME': http=$HCODE size=$SZ"
-            if [ "$HCODE" != "200" ] || [ "$SZ" -lt 100000 ]; then
-              echo "[debug] '$NAME' nicht verfuegbar, ueberspringe"
-              rm -f track.mp3
-              continue
-            fi
-            ffmpeg -y -i sample-voice.mp3 -i track.mp3 -filter_complex \
-              "[1:a]atrim=0:20,volume=0.22[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
-              -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 sample.ogg
-            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
-              -F "chat_id=${TELEGRAM_CHAT_ID}" \
-              -F "voice=@sample.ogg" \
-              -F "caption=🎵 ${NAME} — ${DESC} (22% Lautstaerke)" > /dev/null
-            rm -f track.mp3 sample.ogg
-            sleep 1
-          done
-
   send-report:
     runs-on: ubuntu-latest
     timeout-minutes: 350
@@ -220,7 +169,7 @@ jobs:
             }
             if (!todays.length) lines.push("No High/Medium impact events today.");
             lines.push("Total today: " + high.length + " High, " + med.length + " Medium impact.");
-            lines.push("", "🎵 <i>Music: \"Big Rock\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
+            lines.push("", "🎵 <i>Music: \"Take a Chance\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
             fs.writeFileSync("morning-report.txt", lines.join("\n"));
 
             // ── Sprach-Skript (Klartext ohne HTML/Emoji, fuer TTS) ──
@@ -258,22 +207,23 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install --quiet edge-tts
 
-      # Hintergrundmusik (Nutzer-Wunsch 2026-07-12): "Big Rock" von Kevin
+      # Hintergrundmusik (Nutzer-Wunsch 2026-07-12): "Take a Chance" von Kevin
       # MacLeod (incompetech.com), Creative Commons BY 4.0 - lizenzfrei bei
-      # Namensnennung, live per Playwright/workflow_dispatch verifizierte
-      # direkte URL (auf archive.org gespiegelt als Backup). NICHT der vom
-      # Nutzer urspruenglich gewuenschte urheberrechtlich geschuetzte Song -
-      # siehe Erklaerung im Chat. Wird bei jedem Lauf frisch geladen statt
-      # im Repo gespeichert (keine Weiterverbreitung einer eigenen Kopie).
+      # Namensnennung, live per workflow_dispatch verifizierte direkte URL.
+      # Nach Nutzer-Vergleich mehrerer Build-up-Kandidaten ausgewaehlt
+      # (test-final-Job, 22% Mischlautstaerke statt anfangs 10%). NICHT der
+      # vom Nutzer urspruenglich gewuenschte urheberrechtlich geschuetzte
+      # Song - siehe Erklaerung im Chat. Wird bei jedem Lauf frisch geladen
+      # statt im Repo gespeichert (keine Weiterverbreitung einer eigenen
+      # Kopie); Track ist nur 37s lang, -stream_loop -1 wiederholt ihn.
       - name: Sprachnachricht mit Hintergrundmusik erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
           edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report-voice.mp3
-          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 \
-            || curl -sL --max-time 30 -A "Mozilla/5.0" "https://archive.org/download/Incompetech/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 || true
+          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Take%20a%20Chance.mp3" -o bgmusic.mp3 || true
           if [ -s bgmusic.mp3 ]; then
             ffmpeg -y -i morning-report-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
-              "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+              "[1:a]volume=0.22[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
               -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
           else
             echo "[debug] bgmusic download failed - Sprachnachricht ohne Musik"

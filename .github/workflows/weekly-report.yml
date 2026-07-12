@@ -156,7 +156,7 @@ jobs:
               } catch (e) { console.log("Score section skipped: " + e.message); }
             }
 
-            lines.push("", "🎵 <i>Music: \"Big Rock\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
+            lines.push("", "🎵 <i>Music: \"Take a Chance\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
             fs.writeFileSync("weekly-report.txt", lines.join("\n"));
             fs.writeFileSync("weekly-report-speech.txt", speech.join(" "));
             console.log(lines.join("\n"));
@@ -173,17 +173,17 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install --quiet edge-tts
 
-      # Hintergrundmusik: siehe Kommentar in morning-report.yml (Big Rock,
-      # Kevin MacLeod, CC-BY 4.0, lizenzfrei).
+      # Hintergrundmusik: siehe Kommentar in morning-report.yml (Take a
+      # Chance, Kevin MacLeod, CC-BY 4.0, lizenzfrei; 22% Lautstaerke,
+      # nach Nutzer-Vergleich mehrerer Build-up-Kandidaten ausgewaehlt).
       - name: Sprachnachricht mit Hintergrundmusik erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
           edge-tts --voice en-GB-RyanNeural --file weekly-report-speech.txt --write-media weekly-report-voice.mp3
-          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 \
-            || curl -sL --max-time 30 -A "Mozilla/5.0" "https://archive.org/download/Incompetech/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 || true
+          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Take%20a%20Chance.mp3" -o bgmusic.mp3 || true
           if [ -s bgmusic.mp3 ]; then
             ffmpeg -y -i weekly-report-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
-              "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+              "[1:a]volume=0.22[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
               -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 weekly-report.ogg
           else
             echo "[debug] bgmusic download failed - Sprachnachricht ohne Musik"
