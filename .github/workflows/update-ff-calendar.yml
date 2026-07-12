@@ -2492,6 +2492,46 @@ jobs:
           '
           rm -f cot_pct_url.txt cot_pct_raw.json
 
+      # ── TEMPORAER: Massive/Polygon.io Probe (Nutzer-Wunsch 2026-07-12,
+      # volle Put/Call-Historie pro Asset). Testet mit dem echten MASSIVE_
+      # API_KEY-Secret: (1) wie viele aktive Optionskontrakte SPY gerade hat
+      # (bestimmt, ob eine Tages-Summe pro Asset bei 5 req/min ueberhaupt
+      # machbar ist), (2) ob die kostenlose Stufe fuer EINEN Kontrakt echte
+      # historische Tages-Aggregate (Volumen) liefert oder blockt. Wird nach
+      # Auswertung wieder entfernt.
+      - name: TEMP probe Massive/Polygon.io options API
+        continue-on-error: true
+        env:
+          MKEY: ${{ secrets.MASSIVE_API_KEY }}
+        run: |
+          if [ -z "$MKEY" ]; then
+            echo "[debug] massive-probe: MASSIVE_API_KEY secret is EMPTY/unset"
+          else
+            echo "[debug] massive-probe: key present, length=${#MKEY}"
+            HCODE=$(curl -sL --max-time 20 -w "%{http_code}" "https://api.massive.com/v3/reference/options/contracts?underlying_ticker=SPY&contract_type=call&expired=false&limit=5&apiKey=$MKEY" -o contracts.json || echo "000")
+            echo "[debug] massive-probe contracts: http=$HCODE size=$(wc -c < contracts.json 2>/dev/null)"
+            node -e '
+              try{
+                const d=JSON.parse(require("fs").readFileSync("contracts.json","utf8"));
+                console.log("[debug] massive-probe contracts status="+d.status+" count field="+d.count+" results.length="+((d.results||[]).length)+" next_url="+(d.next_url?"yes":"no"));
+                if(d.results&&d.results[0])console.log("[debug] massive-probe sample ticker="+d.results[0].ticker+" exp="+d.results[0].expiration_date+" strike="+d.results[0].strike_price);
+                if(d.error)console.log("[debug] massive-probe error="+d.error);
+                if(d.message)console.log("[debug] massive-probe message="+d.message);
+              }catch(e){console.log("[debug] massive-probe contracts parse-fail: "+e.message+" body="+require("fs").readFileSync("contracts.json","utf8").slice(0,300));}
+            '
+            SAMPLE=$(node -e 'try{const d=JSON.parse(require("fs").readFileSync("contracts.json","utf8"));console.log((d.results&&d.results[0]&&d.results[0].ticker)||"");}catch(e){console.log("");}')
+            rm -f contracts.json
+            if [ -n "$SAMPLE" ]; then
+              PASTDATE=$(date -u -d "30 days ago" +%Y-%m-%d 2>/dev/null || date -u -v-30d +%Y-%m-%d)
+              HCODE2=$(curl -sL --max-time 20 -w "%{http_code}" "https://api.massive.com/v2/aggs/ticker/$SAMPLE/range/1/day/$PASTDATE/$PASTDATE?adjusted=true&apiKey=$MKEY" -o aggs.json || echo "000")
+              echo "[debug] massive-probe aggs: http=$HCODE2 ticker=$SAMPLE date=$PASTDATE size=$(wc -c < aggs.json 2>/dev/null)"
+              echo "[debug] massive-probe aggs body: $(cat aggs.json 2>/dev/null | head -c 500)"
+              rm -f aggs.json
+            else
+              echo "[debug] massive-probe: no sample ticker, skipping aggs test"
+            fi
+          fi
+
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
 
