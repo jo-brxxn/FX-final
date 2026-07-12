@@ -2492,8 +2492,37 @@ jobs:
           '
           rm -f cot_pct_url.txt cot_pct_raw.json
 
+      # ── TEMPORAER: CBOE Per-Symbol-Historie-Probe (Nutzer-Wunsch 2026-07-12,
+      # volle Put/Call-Historie pro Asset statt nur ab 07-11) ──────────────
+      # Testet mehrere Kandidaten-URLs fuer CBOEs "historische Optionsvolumen
+      # nach Einzel-Symbol"-Formular (cboe.com/us/options/market_statistics/
+      # historical_data/) + die neu gefundene equitypc.csv-CDN-Datei. Von der
+      # Sandbox aus ist cboe.com komplett blockiert (403 auf jede URL, auch
+      # cdn.cboe.com) - dieser Schritt prueft, ob GH-Actions-Runner mehr
+      # Glueck haben (wie schon bei OCC/Bond-Yields). Wird nach Auswertung
+      # der Logs wieder entfernt, unabhaengig vom Ergebnis.
+      - name: TEMP probe CBOE per-symbol historical options volume
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          probe(){
+            local label="$1" url="$2"
+            HCODE=$(curl -sL --max-time 20 -A "$UA" -w "%{http_code}" "$url" -o "probe_out.txt" || echo "000")
+            SZ=$(wc -c < probe_out.txt 2>/dev/null || echo 0)
+            echo "[debug] cboe-probe $label: http=$HCODE size=$SZ url=$url"
+            echo "[debug] cboe-probe $label head: $(head -c 200 probe_out.txt 2>/dev/null | tr -d '\r\n')"
+            rm -f probe_out.txt
+          }
+          probe "equitypc-csv" "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/equitypc.csv"
+          probe "hist-data-page" "https://www.cboe.com/us/options/market_statistics/historical_data/"
+          probe "hist-download-v1" "https://www.cboe.com/us/options/market_statistics/historical_data/download_csv/?dt=2026-06&mkt=cone&symbol=SPY"
+          probe "hist-download-v2" "https://markets.cboe.com/us/options/market_statistics/historical_data/download_csv/?dt=2026-06&mkt=cone&symbol=SPY"
+          probe "hist-download-v3" "https://www.cboe.com/us/options/market_statistics/historical_data/download_csv/?symbol=SPY&year=2026&month=06"
+          probe "symbol-cdn-guess" "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/SPY.csv"
+          probe "api-global-guess" "https://www.cboe.com/api/global/us_options/market_statistics/historical_data/?symbol=SPY&dt=2026-06"
+
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt probe_out.txt
 
       - name: Commit and push if changed
         run: |
