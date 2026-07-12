@@ -2210,6 +2210,96 @@ jobs:
           '
           rm -f yopt_all.json ycookies.txt
 
+      # ── Saisonalitaet (seasonality_data.json) ──────────────────────────
+      # Nutzer-Wunsch 2026-07-12: historische Monats-Tendenz je gelistetem
+      # Asset als eigene Analyse-Ebene. Quelle: Stooq-Tageshistorie als CSV
+      # (kostenlos, kein Login, volle Historie). Pro Asset ein Proxy-Symbol;
+      # bei USD-first-Paaren (usdjpy usw.) wird der Return invertiert, damit
+      # die Statistik die BASIS-Waehrung des Assets beschreibt (JPY-Saison,
+      # nicht USDJPY-Saison). Berechnet wird je Kalendermonat ueber die
+      # letzten 15 Jahre: durchschnittlicher Monats-Return in Prozent und
+      # Trefferquote (Anteil positiver Jahre) - echte Statistik aus echten
+      # Kursen, keine Schaetzung. Nur 1x pro Tag neu gezogen (Guard unten),
+      # Saisonalitaet aendert sich nicht stuendlich.
+      - name: Fetch seasonality (Stooq monthly stats) -> seasonality_data.json
+        continue-on-error: true
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("seasonality_data.json","utf8"));process.exit(String(d.updated||"").slice(0,10)==="'"$TODAY"'"?0:1);}catch(e){process.exit(1);}'; then
+            echo "[debug] seasonality: already fetched today, skipping"
+            exit 0
+          fi
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          # Kandidaten je Asset: "symbol" oder "!symbol" (! = Return invertieren).
+          declare -A CAND=( [USD]="dx.f" [EUR]="eurusd" [GBP]="gbpusd" [JPY]="!usdjpy" [CHF]="!usdchf" [CAD]="!usdcad" [AUD]="audusd" [NZD]="nzdusd" [GOLD]="xauusd" [SILVER]="xagusd" [OIL]="cl.f" [BTC]="btcusd" [SP500]="^spx" [NAS]="^ndx" )
+          rm -f stooq_meta.txt
+          for ASSET in "${!CAND[@]}"; do
+            for RAW in ${CAND[$ASSET]}; do
+              INV=0; SYM="$RAW"
+              case "$RAW" in "!"*) INV=1; SYM="${RAW#!}";; esac
+              ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$SYM")
+              curl -sL --max-time 30 -A "$UA" "https://stooq.com/q/d/l/?s=${ENC}&i=d" -o "stooq_${ASSET}.csv" || true
+              SZ=$(wc -c < "stooq_${ASSET}.csv" 2>/dev/null || echo 0)
+              HEAD1=$(head -c 4 "stooq_${ASSET}.csv" 2>/dev/null)
+              echo "[debug] seasonality $ASSET <- $SYM: $SZ bytes"
+              if [ "$HEAD1" = "Date" ] && [ "$SZ" -gt 2000 ]; then
+                echo "$ASSET $SYM $INV" >> stooq_meta.txt
+                break
+              fi
+              rm -f "stooq_${ASSET}.csv"
+            done
+          done
+          node -e '
+            const fs=require("fs");
+            const YEARS=15, MIN_YEARS=8;
+            let meta=[];
+            try{meta=fs.readFileSync("stooq_meta.txt","utf8").trim().split("\n").filter(Boolean).map(l=>{const p=l.split(" ");return{id:p[0],sym:p[1],inv:p[2]==="1"};});}catch(e){}
+            const out={updated:new Date().toISOString(),assets:{}};
+            const log=[];
+            meta.forEach(m=>{
+              let csv;try{csv=fs.readFileSync("stooq_"+m.id+".csv","utf8");}catch(e){return;}
+              // Tageszeilen -> letzter Schlusskurs je Jahr-Monat
+              const lastClose={};
+              csv.split("\n").forEach(l=>{
+                const c=l.split(",");
+                if(c.length<5||!/^\d{4}-\d{2}-\d{2}$/.test(c[0]))return;
+                const v=Number(c[4]);
+                if(isFinite(v)&&v>0)lastClose[c[0].slice(0,7)]=v; // Zeilen sind chronologisch
+              });
+              const yms=Object.keys(lastClose).sort();
+              const cutoff=(new Date().getFullYear()-YEARS)+"-01";
+              // Monats-Returns (Prozent), bei inv exakt der Return des Kehrwerts
+              const byMonth={};
+              for(let i=1;i<yms.length;i++){
+                if(yms[i]<cutoff)continue;
+                const r0=lastClose[yms[i-1]],r1=lastClose[yms[i]];
+                let ret=(r1/r0-1)*100;
+                if(m.inv)ret=(r0/r1-1)*100;
+                const mon=Number(yms[i].slice(5,7));
+                (byMonth[mon]=byMonth[mon]||[]).push(ret);
+              }
+              const months=[];
+              for(let mon=1;mon<=12;mon++){
+                const arr=byMonth[mon]||[];
+                if(!arr.length)continue;
+                const avg=arr.reduce((a,b)=>a+b,0)/arr.length;
+                const hit=arr.filter(v=>v>0).length/arr.length*100;
+                months.push([mon,Math.round(avg*100)/100,Math.round(hit),arr.length]);
+              }
+              if(months.length===12&&months.every(e=>e[3]>=MIN_YEARS)){
+                out.assets[m.id]={proxy:m.sym,inv:m.inv?1:0,months};
+                log.push(m.id+"("+m.sym+","+months[0][3]+"y)");
+              }else log.push(m.id+":too-little-history");
+            });
+            if(Object.keys(out.assets).length>=5){
+              fs.writeFileSync("seasonality_data.json",JSON.stringify(out,null,1));
+              console.log("seasonality_data.json: "+log.join(" | "));
+            }else{
+              console.log("seasonality: only "+Object.keys(out.assets).length+" assets usable, keeping existing file ("+log.join(" | ")+")");
+            }
+          '
+          rm -f stooq_*.csv stooq_meta.txt
+
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
       # Erscheint woechentlich (Stand Dienstag, Veroeffentlichung Freitag). Es wird
@@ -2292,6 +2382,7 @@ jobs:
                 oi:Number(r.open_interest_all)||0
               })).sort((a,b)=>a.date.localeCompare(b.date));
               if(d>reportDate)reportDate=d;
+              out[mk.id].contract=best; // fuer den 3y-Perzentil-Enrich-Schritt unten
               matched.push(mk.id+" <- "+best+" ("+d+", OI "+bestOi+")");
             }
             const got=Object.keys(out).length;
@@ -2308,13 +2399,77 @@ jobs:
             let prev=null;try{prev=JSON.parse(fs.readFileSync("cot_data.json","utf8"));}catch(e){}
             if(prev&&JSON.stringify(prev.symbols)===JSON.stringify(out)){console.log("cot: unchanged, keeping existing file");process.exit(0);}
             const result={report_date:reportDate,updated:new Date().toISOString(),symbols:out};
+            if(prev&&prev.pct3y)result.pct3y=prev.pct3y; // Enrich-Ergebnis nicht wegwerfen
             fs.writeFileSync("cot_data.json",JSON.stringify(result,null,1));
             console.log("cot_data.json written: "+got+" markets, report "+reportDate+", history up to "+HIST_LEN+" weeks");
           '
           rm -f cot_raw.json
 
+      # ── COT-Anreicherung: 3-Jahres-Perzentil der Netto-Positionierung ──
+      # Nutzer-Wunsch 2026-07-12: "crowded trade"-Warnung. Zweiter, gezielt
+      # gefilterter CFTC-Fetch (nur die 14 kanonischen Kontrakte, 3,5 Jahre)
+      # liefert die woechentliche Netto-%-Historie ((L-S)/(L+S)); daraus das
+      # Perzentil des aktuellen Werts je Markt (0 = extremstes Netto-Short
+      # der 3 Jahre, 100 = extremstes Netto-Long). Ergebnis wandert als
+      # TOP-LEVEL-Block pct3y in cot_data.json (bewusst NICHT in symbols -
+      # sonst wuerde der Unchanged-Vergleich im Hauptschritt nie mehr
+      # greifen und jede Stunde neu fetchen). Laeuft nur, wenn zum
+      # aktuellen report_date noch kein Perzentil berechnet wurde.
+      - name: Enrich cot_data.json with 3y net-position percentile
+        continue-on-error: true
+        run: |
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("cot_data.json","utf8"));process.exit(d.pct3y&&d.pct3y.report_date===d.report_date?0:1);}catch(e){process.exit(1);}'; then
+            echo "[debug] cot pct3y: current report already enriched, skipping"
+            exit 0
+          fi
+          node -e '
+            const fs=require("fs");
+            const d=JSON.parse(fs.readFileSync("cot_data.json","utf8"));
+            const names=Object.values(d.symbols||{}).map(s=>s.contract).filter(Boolean);
+            if(!names.length){console.log("cot pct3y: no contract names stored yet (main step must run once first)");process.exit(0);}
+            const since=new Date(Date.now()-3.5*365.25*864e5).toISOString().slice(0,10);
+            // Apostrophe NICHT literal schreiben (auch nicht in Kommentaren!):
+            // dieses Skript steckt in einem einfach-gequoteten bash node -e
+            // Block, ein literales Hochkomma wuerde ihn sofort beenden.
+            const q=String.fromCharCode(39);
+            const inList=names.map(n=>q+n.split(q).join(q+q)+q).join(",");
+            const url="https://publicreporting.cftc.gov/resource/6dca-aqww.json?$select=market_and_exchange_names,report_date_as_yyyy_mm_dd,noncomm_positions_long_all,noncomm_positions_short_all&$where="+encodeURIComponent("market_and_exchange_names in("+inList+") AND report_date_as_yyyy_mm_dd>="+q+since+q)+"&$limit=15000";
+            fs.writeFileSync("cot_pct_url.txt",url);
+          '
+          [ -f cot_pct_url.txt ] || exit 0
+          curl -sL --max-time 90 "$(cat cot_pct_url.txt)" -o cot_pct_raw.json || true
+          echo "[debug] cot pct3y raw: $(wc -c < cot_pct_raw.json 2>/dev/null || echo 0) bytes"
+          node -e '
+            const fs=require("fs");
+            const d=JSON.parse(fs.readFileSync("cot_data.json","utf8"));
+            let rows;try{rows=JSON.parse(fs.readFileSync("cot_pct_raw.json","utf8"));}catch(e){console.log("cot pct3y: raw unreadable, skipping");process.exit(0);}
+            if(!Array.isArray(rows)||rows.length<100){console.log("cot pct3y: too few rows ("+(rows&&rows.length)+"), skipping");process.exit(0);}
+            const byName={};
+            rows.forEach(r=>{
+              const L=Number(r.noncomm_positions_long_all),S=Number(r.noncomm_positions_short_all);
+              if(!isFinite(L)||!isFinite(S)||L+S<=0)return;
+              (byName[r.market_and_exchange_names]=byName[r.market_and_exchange_names]||[]).push({d:String(r.report_date_as_yyyy_mm_dd||"").slice(0,10),v:(L-S)/(L+S)});
+            });
+            const data={};const log=[];
+            Object.keys(d.symbols||{}).forEach(id=>{
+              const s=d.symbols[id];
+              const hist=byName[s.contract];
+              if(!hist||hist.length<80){log.push(id+":thin("+((hist&&hist.length)||0)+"w)");return;}
+              const cur=(s.long-s.short)/(s.long+s.short);
+              const below=hist.filter(e=>e.v<=cur).length;
+              data[id]={pct:Math.round(below/hist.length*100),n:hist.length};
+              log.push(id+"="+data[id].pct+"%("+hist.length+"w)");
+            });
+            if(Object.keys(data).length>=5){
+              d.pct3y={report_date:d.report_date,updated:new Date().toISOString(),data};
+              fs.writeFileSync("cot_data.json",JSON.stringify(d,null,1));
+              console.log("cot pct3y written: "+log.join(" | "));
+            }else console.log("cot pct3y: too few markets ("+log.join(" | ")+"), skipping");
+          '
+          rm -f cot_pct_url.txt cot_pct_raw.json
+
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
 
       - name: Commit and push if changed
         run: |
@@ -2324,6 +2479,7 @@ jobs:
           [ -f bond_data.json ] && git add bond_data.json
           [ -f cot_data.json ] && git add cot_data.json
           [ -f price_data.json ] && git add price_data.json
+          [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
