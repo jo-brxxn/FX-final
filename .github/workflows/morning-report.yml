@@ -28,6 +28,38 @@ permissions:
   contents: write
 
 jobs:
+  # TEMP: Probe-Sprachnachricht fuer edge-tts, unabhaengig vom Gate/Dedup
+  # der eigentlichen send-report-Job (die hat den heutigen Report schon
+  # verschickt). Nur per workflow_dispatch, wird nach dem Test entfernt.
+  test-voice:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: edge-tts und ffmpeg installieren
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install --quiet edge-tts
+      - name: Test-Sprachnachricht erzeugen
+        run: |
+          echo "This is a test of the new voice for your market reports. Good morning. There are two high impact events today. Testing complete." > test-speech.txt
+          edge-tts --voice en-US-AriaNeural --file test-speech.txt --write-media test-voice.mp3
+          ffmpeg -y -i test-voice.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 test-voice.ogg
+      - name: Per Telegram senden
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
+            exit 0
+          fi
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=🎙️ Test: neue edge-tts-Stimme (statt espeak-ng)"
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "voice=@test-voice.ogg"
+
   send-report:
     runs-on: ubuntu-latest
     timeout-minutes: 350
