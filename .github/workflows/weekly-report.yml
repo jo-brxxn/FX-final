@@ -148,7 +148,7 @@ jobs:
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-US-AriaNeural --file weekly-report-speech.txt --write-media weekly-report.mp3
+          edge-tts --voice en-US-GuyNeural --file weekly-report-speech.txt --write-media weekly-report.mp3
           ffmpeg -y -i weekly-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 weekly-report.ogg
 
       - name: Per Telegram senden (Text + Sprachnachricht)

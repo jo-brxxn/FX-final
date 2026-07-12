@@ -42,7 +42,7 @@ jobs:
       - name: Test-Sprachnachricht erzeugen
         run: |
           echo "This is a test of the new voice for your market reports. Good morning. There are two high impact events today. Testing complete." > test-speech.txt
-          edge-tts --voice en-US-AriaNeural --file test-speech.txt --write-media test-voice.mp3
+          edge-tts --voice en-US-GuyNeural --file test-speech.txt --write-media test-voice.mp3
           ffmpeg -y -i test-voice.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 test-voice.ogg
       - name: Per Telegram senden
         env:
@@ -208,7 +208,7 @@ jobs:
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-US-AriaNeural --file morning-report-speech.txt --write-media morning-report.mp3
+          edge-tts --voice en-US-GuyNeural --file morning-report-speech.txt --write-media morning-report.mp3
           # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
           ffmpeg -y -i morning-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
 
