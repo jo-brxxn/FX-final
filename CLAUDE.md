@@ -311,6 +311,28 @@ Insights-Stack einsortiert (auch Migration für Bestandsnutzer in
 dort schon drin) — VIX ist das einzige gescorte Index-Signal; Put/Call und
 Retail sind bewusst Chart-only.
 
+### Drei neue Anzeige-Ebenen (2026-07-12, Nutzer-Auswahl "2,3,4") — ALLE display-only, KEIN Score-Einfluss
+
+1. **Saisonalität** (`seasonality_data.json`, Workflow-Schritt "Fetch
+   seasonality", 1×/Tag Stooq-Langzeithistorie; Sandbox erreicht Stooq NICHT
+   — Verifikation nur über committed JSON auf main): je Asset je Kalendermonat
+   Ø-Return + Trefferquote über 15 Jahre. USD-first-Paare (JPY/CHF/CAD) werden
+   im Workflow exakt invertiert (`(r0/r1-1)*100`). App: Insights-Tab
+   "Seasonality" (`pgSeas`/`renderSeasonality`, Migration in `loadTabStacks`
+   nach dem Sentiment-Muster), Info-Text via `SENT_INFO.seas` (generisches
+   Sentiment-Info-Modal wird mitbenutzt).
+2. **COT-3-Jahres-Perzentil** (`cot_data.json.pct3y`, eigener CFTC-Enrich-
+   Schritt, läuft nur bei neuem `report_date`): Perzentil der aktuellen
+   Netto-Positionierung in der eigenen 3-Jahres-Historie. UI: Spalte
+   "3y %ile" in der COT-Vergleichstabelle + Hinweiszeile in der Einzel-
+   Ansicht (`cotPct3yOf`/`cotPct3yCell`); erscheint NUR wenn
+   `pct3y.report_date === cot report_date`, sonst komplett ausgeblendet.
+3. **Korrelations-Matrix + realisierte Vol** (rein client-seitig aus
+   `price_data`, Matrix-Tab, `renderCorrCard`): Pearson r der Log-Returns
+   (bis 60 gemeinsame Tage, ehrlich ab 8 mit Tiefen-Ausweis in der
+   Unterzeile — die price_data-Serie ist jung und wächst 1 Punkt/Tag),
+   Diagonale = 20-Tage-Vol annualisiert.
+
 ### Bond-Yields-Backfill (GBP/CHF/JPY/AUD/NZD) — Endstand nach 7 workflow_dispatch-Runden (2026-07-04)
 
 - **AUD (RBA) — GELÖST.** `https://www.rba.gov.au/statistics/tables/csv/f2-data.csv`,
