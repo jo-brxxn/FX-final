@@ -2492,33 +2492,8 @@ jobs:
           '
           rm -f cot_pct_url.txt cot_pct_raw.json
 
-      # ── TEMPORAER: CBOE Per-Symbol-Historie-Probe (Nutzer-Wunsch 2026-07-12,
-      # volle Put/Call-Historie pro Asset statt nur ab 07-11) ──────────────
-      # Testet mehrere Kandidaten-URLs fuer CBOEs "historische Optionsvolumen
-      # nach Einzel-Symbol"-Formular (cboe.com/us/options/market_statistics/
-      # historical_data/) + die neu gefundene equitypc.csv-CDN-Datei. Von der
-      # Sandbox aus ist cboe.com komplett blockiert (403 auf jede URL, auch
-      # cdn.cboe.com) - dieser Schritt prueft, ob GH-Actions-Runner mehr
-      # Glueck haben (wie schon bei OCC/Bond-Yields). Wird nach Auswertung
-      # der Logs wieder entfernt, unabhaengig vom Ergebnis.
-      - name: TEMP probe CBOE per-symbol historical options volume
-        continue-on-error: true
-        run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          curl -sL --max-time 20 -A "$UA" "https://cdn.cboe.com/resources/options/volume_and_call_put_ratios/equitypc.csv" -o equitypc_full.csv || true
-          echo "[debug] equitypc.csv total lines: $(wc -l < equitypc_full.csv 2>/dev/null)"
-          echo "[debug] equitypc.csv lines 1-3: $(sed -n '1,3p' equitypc_full.csv | tr '\n' '|')"
-          echo "[debug] equitypc.csv lines 4-6: $(sed -n '4,6p' equitypc_full.csv | tr '\n' '|')"
-          echo "[debug] equitypc.csv lines 7-10: $(sed -n '7,10p' equitypc_full.csv | tr '\n' '|')"
-          echo "[debug] equitypc.csv last 5 lines: $(tail -5 equitypc_full.csv | tr '\n' '|')"
-          rm -f equitypc_full.csv
-          curl -sL --max-time 20 -A "$UA" "https://www.cboe.com/us/options/market_statistics/historical_data/" -o hist_page.html || true
-          echo "[debug] hist_page symbol-form hits: $(grep -oE '(action|href|api|endpoint)=[^ >]{0,80}' hist_page.html 2>/dev/null | grep -i 'histor\|volume\|symbol\|download' | sort -u | tr '\n' '|' | head -c 800)"
-          echo "[debug] hist_page next-data script hits: $(grep -oE '\"[a-zA-Z0-9_/.-]*(historical|volume|symbol)[a-zA-Z0-9_/.-]*\"' hist_page.html 2>/dev/null | sort -u | tr '\n' '|' | head -c 800)"
-          rm -f hist_page.html
-
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt equitypc_full.csv hist_page.html
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
 
       - name: Commit and push if changed
         run: |
