@@ -201,6 +201,7 @@ jobs:
             }
             if (!todays.length) lines.push("No High/Medium impact events today.");
             lines.push("Total today: " + high.length + " High, " + med.length + " Medium impact.");
+            lines.push("", "🎵 <i>Music: \"Big Rock\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
             fs.writeFileSync("morning-report.txt", lines.join("\n"));
 
             // ── Sprach-Skript (Klartext ohne HTML/Emoji, fuer TTS) ──
@@ -233,12 +234,28 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install --quiet edge-tts
 
-      - name: Sprachnachricht erzeugen
+      # Hintergrundmusik (Nutzer-Wunsch 2026-07-12): "Big Rock" von Kevin
+      # MacLeod (incompetech.com), Creative Commons BY 4.0 - lizenzfrei bei
+      # Namensnennung, live per Playwright/workflow_dispatch verifizierte
+      # direkte URL (auf archive.org gespiegelt als Backup). NICHT der vom
+      # Nutzer urspruenglich gewuenschte urheberrechtlich geschuetzte Song -
+      # siehe Erklaerung im Chat. Wird bei jedem Lauf frisch geladen statt
+      # im Repo gespeichert (keine Weiterverbreitung einer eigenen Kopie).
+      - name: Sprachnachricht mit Hintergrundmusik erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report.mp3
-          # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
-          ffmpeg -y -i morning-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report-voice.mp3
+          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 \
+            || curl -sL --max-time 30 -A "Mozilla/5.0" "https://archive.org/download/Incompetech/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 || true
+          if [ -s bgmusic.mp3 ]; then
+            ffmpeg -y -i morning-report-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
+              "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+              -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          else
+            echo "[debug] bgmusic download failed - Sprachnachricht ohne Musik"
+            ffmpeg -y -i morning-report-voice.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          fi
+          rm -f morning-report-voice.mp3 bgmusic.mp3
 
       - name: Per Telegram senden (Text + Sprachnachricht)
         if: steps.gate.outputs.proceed == 'true'
