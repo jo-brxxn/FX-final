@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f6212;color:#ecfccb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LIME-SEASONALITY-TAB-111</span><span id="verBannerText"> (Neuer Insights-Tab SEASONALITY: 12-Monats-Balkenchart je Asset mit Durchschnitts-Return + Trefferquote der letzten 15 Jahre (Stooq-Historie, taeglich vom Workflow), aktueller Monat hervorgehoben, Hover-Tooltips, Asset-Dropdown, i-Erklaerung, plus Uebersichtskarte aller Assets im aktuellen Monat. Reine Kontext-Ebene ohne Score-Einfluss. Zeigt "Loading..." bis der erste taegliche Workflow-Lauf seasonality_data.json erzeugt hat)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-COT-PCT3Y-112</span><span id="verBannerText"> (COT-Tab zeigt jetzt das 3-JAHRES-PERZENTIL der Netto-Positionierung aus cot_data.json.pct3y: neue Spalte "3y %ile" in der Vergleichstabelle (mit Warnsymbol bei >=90 historisch extrem long bzw. <=10 extrem short) + Hinweiszeile in der Einzel-Asset-Ansicht unter dem Verlaufschart. Reine Anzeige wie das CROWDED-Badge, kein Score-Einfluss. Spalte und Zeile erscheinen erst, wenn der Workflow-Enrich das Perzentil zum aktuellen Report geliefert hat, und bleiben sonst komplett ausgeblendet)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -9135,6 +9135,27 @@ function renderFearGreedCards(D){
   html+=`</div>`;
   return html;
 }
+// ── COT-3-Jahres-Perzentil (cot_data.json.pct3y, Workflow-Enrich) ──
+// Einordnung der AKTUELLEN Netto-Positionierung in die eigenen letzten
+// ~3 Jahre Wochenreports: pct = Anteil der Historie UNTER dem aktuellen
+// Netto-%. >=90 = historisch extrem long, <=10 = historisch extrem short.
+// Reine Anzeige (Contrarian-Warnung wie das CROWDED-Badge), kein Score.
+// Wird nur gezeigt, wenn das Perzentil zum angezeigten Report gehoert
+// (der Enrich-Schritt laeuft im selben Workflow-Lauf direkt nach dem
+// COT-Fetch, ein Mismatch ist also nur ein kurzes Uebergangsfenster).
+function cotPct3yOf(id){
+  const P=COT_DATA&&COT_DATA.pct3y;
+  if(!P||!P.data||!COT_DATA.report_date||P.report_date!==COT_DATA.report_date)return null;
+  const p=P.data[id];
+  return p&&isFinite(+p.pct)?{pct:+p.pct,n:+p.n||0}:null;
+}
+function cotPct3yCell(id){
+  const p=cotPct3yOf(id);
+  if(!p)return`<td style="color:var(--t3)">–</td>`;
+  const v=Math.round(p.pct),ext=v>=90||v<=10;
+  const tip=`Net positioning is above ${v}% of the last ~3 years of weekly reports (${p.n} weeks). ${v>=90?'Historically extreme LONG — crowded, contrarian caution.':v<=10?'Historically extreme SHORT — crowded, contrarian caution.':'Mid-range, nothing unusual.'} Display-only.`;
+  return`<td style="color:${ext?'var(--amber)':'var(--t2)'}${ext?';font-weight:700':''}" title="${tip}">${ext?'⚠ ':''}${v}</td>`;
+}
 function renderCot(){
   const el=document.getElementById('cotBody');if(!el)return;
   cotStopCountdown();
@@ -9217,10 +9238,13 @@ function renderCot(){
     const fm=rows[0]&&rows[0].m;
     const fCrowded=fm&&(fm.longPct>=COT_CROWDED_PCT||fm.shortPct>=COT_CROWDED_PCT)
       ?`<span class="cot-crowded" title="${fm.longPct>=COT_CROWDED_PCT?fm.longPct.toFixed(0)+'% long':fm.shortPct.toFixed(0)+'% short'} - extremely one-sided positioning raises the risk of a sharp squeeze in the other direction">⚠ CROWDED</span>`:'';
+    // 3-Jahres-Perzentil-Hinweis (nur Einzel-Ansicht; Anzeige-only wie CROWDED)
+    const p3=cotPct3yOf(cotFilter);
+    const p3Note=p3?`<div class="cot-meta">3-year percentile: today&#39;s net positioning is at the <b>${Math.round(p3.pct)}th percentile</b> of its own last ~3 years (${p3.n} weekly reports)${p3.pct>=90?` · <span style="color:var(--amber)">⚠ historically extreme long — crowded trade, contrarian caution</span>`:p3.pct<=10?` · <span style="color:var(--amber)">⚠ historically extreme short — crowded trade, contrarian caution</span>`:''} · display-only</div>`:'';
     histCard=`<div class="cot-card">
       <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span>${fCrowded}<small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale) · hover/tap a bar for details</small></div>
       ${chartSvg?`<div class="cot-hist-wrap" id="cotHistWrap"><div class="cot-tip" id="cotHoverTip" style="display:none"></div>${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
-    </div>`;
+    </div>`+p3Note;
     tblTitle=`<span>📋 Report-by-report history — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>newest first · Δ = change vs. the previous report</small>`;
     head=`<tr><th class="cot-corner">Date</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
     const rowsDesc=histArr.map((e,i)=>({e,m:cotHistRowMetrics(e,histArr[i-1])})).reverse();
@@ -9240,13 +9264,15 @@ function renderCot(){
   }else{
     cotChartMeta=null;
     const tblRows=rows.slice().sort((a,b)=>b.m.dNetPct-a.m.dNetPct);
-    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week</small>`;
-    head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
+    const hasP3=tblRows.some(r=>cotPct3yOf(r.id));
+    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>`;
+    head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th>${hasP3?'<th title="Percentile of the current net positioning within the last ~3 years of weekly reports — 100 = most net-long in 3 years, 0 = most net-short. ⚠ at ≥90 / ≤10 (historically extreme, contrarian caution). Display-only, no score effect.">3y %ile</th>':''}<th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
     body=tblRows.map(r=>{const m=r.m;return`<tr onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
       <th class="cot-rowh">${escH(r.name)}</th>
       <td class="cot-c-long">${m.longPct.toFixed(1)}%</td>
       <td class="cot-c-short">${m.shortPct.toFixed(1)}%</td>
       <td style="color:${cotColor(m.net)};font-weight:700">${cotPct(m.netPct,true)}</td>
+      ${hasP3?cotPct3yCell(r.id):''}
       <td class="cot-c-hl" style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true)}</td>
       <td>${cotNum(m.L)}</td><td>${cotNum(m.S)}</td>
       <td style="color:${cotColor(m.dL)}">${cotSigned(m.dL)}</td>
