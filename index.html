@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-YAHOO-115</span><span id="verBannerText"> (Kleiner Folge-Fix zu 114: veraltete Stooq-Texte im Seasonality-Tab durch Yahoo-Finance-Hinweise ersetzt (Header, Proxy-Link, Info-Modal); Live-Verifikation bestaetigt 12 Assets mit echten 15-16 Jahren Historie, BTC/IBIT korrekt ausgeschlossen wegen zu junger echter Historie statt falscher Wochen-als-Monats-Daten)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-MINWIDTH-116</span><span id="verBannerText"> (Seasonality-Balkenchart hatte auf schmalen Bildschirmen ein preserveAspectRatio="none"-Problem: Monats-Labels/%-Zahlen skalierten proportional zur Container-Breite mit und wurden auf Handy-Breite unlesbar klein. Fix nach dem allgemeinen Karten-Grundsatz - Inhalt darf nie unter eine Mindestgroesse schrumpfen, stattdessen wird die Karte horizontal scrollbar (Chart bekommt min-width:600px, Card-Container overflow-x:auto) - per Playwright auf 375px-Breite verifiziert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -9348,7 +9348,11 @@ function seasBarChart(months,curMon){
     <line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${parts.join('')}
   </svg>`;
-  return chartHoverWrap(svg,hpts);
+  // Mindestbreite, damit Monats-Labels/%-Zahlen bei preserveAspectRatio="none"
+  // nie unter die native Groesse herunterskaliert werden (auf schmalen
+  // Bildschirmen wird die Karte stattdessen horizontal scrollbar, siehe
+  // overflow-x:auto am umschliessenden Card-Container in renderSeasonality).
+  return chartHoverWrap(svg,hpts,'min-width:600px');
 }
 function renderSeasonality(){
   const el=document.getElementById('seasBody');if(!el)return;
@@ -9368,7 +9372,7 @@ function renderSeasonality(){
   const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
   const chartCard=`<div class="cot-card">
     <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">15y stats · proxy: ${proxyLink} · ${escH(upd)}</span></div>
-    <div style="padding:12px 14px">${seasBarChart(A.months,curMon)}${curLine}</div>
+    <div style="padding:12px 14px;overflow-x:auto">${seasBarChart(A.months,curMon)}${curLine}</div>
   </div>`;
   // Kompakte Uebersicht: der AKTUELLE Monat quer ueber alle Assets,
   // staerkster historischer Rueckenwind zuerst.

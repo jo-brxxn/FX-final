@@ -45,6 +45,67 @@ Cloud-Stufe drüber, sobald irgendein anderes Gerät zwischen Toggle und
 lokalen Präferenz-Felder (Kompakt-Stufe, designHue) in Ruhe und schiebt sie
 danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
 
+## ⚠️ GRUNDSATZ: wiederkehrende UI-Bausteine müssen einheitlich sein
+
+**Nutzer-Wunsch 2026-07-12:** Elemente, die an mehreren Stellen der Webseite
+vorkommen (Kalender, Filter-Dropdowns, usw.), müssen überall gleich aufgebaut
+sein — gleiche Optik, gleiches Verhalten. Unterschiede sind nur ok, wenn sie
+sachlich begründet sind (z.B. filtert die eine Stelle nach etwas anderem als
+die andere) — das ist selbstverständlich kein Widerspruch zur Regel.
+
+Umgesetztes Beispiel: `assetFilterSelect(ids, selected, onChange, allLabel,
+titleAttr, labelFn)` (≈ Zeile 1701, direkt nach `SB_CATS`) ist der EINE
+gemeinsame Helper für alle Asset-Filter-Dropdowns (COT, Put/Call, Net Options
+Flow, Seasonality) — gruppiert nach `SB_CATS`-Kategorie (FX/Crypto/Metals/
+Energy/Indices/Stocks), einheitliche Größe über `.cot-filterbar select` in
+der CSS (nicht mehr `#cotFilterSel`-only). Retail Sentiment filtert nach
+Broker-PAAR statt Asset-ID (passt nicht in `SB_CATS`) und bekommt daher eine
+eigene, aber optisch gleich aussehende Zweifach-Gruppierung (FX Pairs /
+Other Assets). Beim Anlegen eines NEUEN Filters immer zuerst prüfen, ob
+`assetFilterSelect` passt, statt einen eigenen `<select>` zu bauen.
+
+Weitere bereits geltende Cross-Cutting-UI-Regeln (durchgehend, nicht nur wo
+gerade dran gearbeitet wird):
+- **Charts mit mehreren Datenpunkten**: überall Hover/Touch mit Linie + Punkt
+  + Tooltip-Fenster (Muster: `chartHoverWrap()` + `attachChartHovers()`,
+  ≈ Zeile 8845) — Fenster verschwindet, sobald Finger/Maus weg ist. Charts
+  dürfen NICHT horizontal wegwischbar/verschiebbar sein.
+- **Karten-Inhalt darf nie über den Kartenrand hinausgehen.** Ist der Inhalt
+  zu breit, wird er INNERHALB der Karte horizontal scrollbar gemacht (nicht
+  abgeschnitten, nicht die Karte selbst verschoben) — alles bleibt zu jeder
+  Zeit exakt untereinander ausgerichtet, nichts "rutscht".
+- **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird über
+  einen linken Rand-Streifen gezeigt (`.rub-card` 4px, `.ind-card`/
+  `.pair-card`/`.sym-row` 3px) auf neutralem 1px-Rahmen, `glow-*`-Klassen
+  setzen nur `border-left-color` (+ schwacher Gradient), nicht die ganze
+  Karte einfärben.
+
+## ⚠️ META-GRUNDSATZ: jede dauerhafte Nutzer-Vorgabe gehört ins CLAUDE.md
+
+**Nutzer-Wunsch 2026-07-12:** Alles, was der Nutzer als dauerhafte Präferenz
+äußert (nicht nur einmalige Task-Anweisungen), muss direkt hier im CLAUDE.md
+vermerkt werden — damit eine NEUE Session sofort weiß, wie der Nutzer es
+haben will, ohne die komplette Chat-Historie erneut durchgehen zu müssen. Bei
+Unsicherheit, ob etwas dauerhaft oder einmalig gemeint ist: lieber
+dokumentieren als auslassen. Nach diesem Prinzip auch rückwirkend prüfen, ob
+ältere Vorgaben aus dem Gespräch schon eingetragen sind, und fehlende
+nachtragen (genau das ist der Auslöser für diesen Abschnitt gewesen).
+
+## Arbeitsweise: Agent/Modell-Triage (Nutzer-Wunsch 2026-07-12)
+
+Bei jeder neuen Top-Level-Anfrage zuerst kurz die Komplexität einschätzen,
+dann entscheiden, ob und mit welchem Agent/Modell delegiert wird — Ziel:
+bestes Ergebnis bei geringstem Tokenverbrauch, nicht Delegation um der
+Delegation willen:
+- Kleinkram (einzelner Grep, kurzer Fix, ein Log lesen) selbst erledigen —
+  ein Sub-Agent-Spawn kostet hier mehr Overhead als er spart.
+- Echte Bulk-/Recherche-Teilaufgaben (breite Codebase-Suche, unabhängige
+  Parallel-Checks, reine Recherche ohne Syntheseaufwand) an `Explore` oder
+  `general-purpose` delegieren.
+- Modellwahl nach Schwierigkeit: Haiku für simple/mechanische Suchen, Sonnet
+  als Standard, Opus nur wenn wirklich komplexes Urteilsvermögen gebraucht
+  wird.
+
 ## Arbeits-Workflow (vom Nutzer durchgehend eingefordert)
 
 - **VERSION-CHECK-Banner**: oben in `index.html` gibt es ein Banner
