@@ -2201,7 +2201,7 @@ jobs:
               const ratio=Math.round(e.putVol/e.callVol*100)/100;
               let s=(byAsset[asset]&&Array.isArray(byAsset[asset].series)?byAsset[asset].series:[]).filter(x=>x&&x[0]!==today);
               s.push([today,ratio]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-              byAsset[asset]={value:ratio,proxy:e.proxy,callVol:e.callVol,putVol:e.putVol,series:s.slice(-120)};
+              byAsset[asset]={value:ratio,proxy:e.proxy,callVol:e.callVol,putVol:e.putVol,series:s.slice(-400)};
               n++;
             });
             out.putCallByAsset=byAsset;
@@ -2209,6 +2209,102 @@ jobs:
             console.log("sentiment_data.json: putCallByAsset "+n+"/"+Object.keys(raw).length+" assets updated ("+Object.keys(byAsset).sort().join(",")+")");
           '
           rm -f yopt_all.json ycookies.txt
+
+      # ── Historischer Backfill Put/Call pro Asset (Marketdata.app) ────────
+      # Nutzer-Wunsch 2026-07-12: Yahoo (oben) liefert nur den TAGESAKTUELLEN
+      # Snapshot, keine Historie. Marketdata.app liefert die komplette EOD-
+      # Optionskette (inkl. Volumen + Call/Put) fuer ein HISTORISCHES Datum in
+      # einem einzigen Request (columnar JSON: optionSymbol/side/volume als
+      # parallele Arrays) - anders als Massive.com/Polygon.io (das gleiche
+      # Prinzip, aber nur mit hunderten Einzel-Kontrakt-Requests pro Tag bei
+      # 5 req/min, siehe CLAUDE.md). Fuellt NUR Luecken auf (Datumsangaben,
+      # die die Yahoo-Serie oben noch nicht hat) - der taegliche Yahoo-Wert
+      # bleibt die autoritative Quelle fuer HEUTE. Kein expiration-Parameter
+      # -> naechster Monats-Verfall relativ zum jeweiligen Datum, dieselbe
+      # "naechster Expiry"-Grobigkeit wie Yahoos Default-Verhalten oben, damit
+      # Backfill und taegliche Fortschreibung methodisch konsistent bleiben.
+      # 100/10.000/100.000 Credits/Tag je nach Plan (Free Forever/Starter-
+      # /Trader-Trial) reichen fuer den kompletten 1-Jahres-Backfill locker
+      # (13 Assets x ~250 Handelstage = ~3250 Requests = ~3250 Credits) -
+      # danach nur noch ~13 Credits/Tag fuer neu hinzukommende Luecken-Tage.
+      - name: Backfill historical put/call by asset (Marketdata.app, fills gaps only) -> sentiment_data.json
+        continue-on-error: true
+        env:
+          MDTOKEN: ${{ secrets.MARKETDATA_TOKEN }}
+        run: |
+          if [ -z "$MDTOKEN" ]; then
+            echo "[debug] marketdata: MARKETDATA_TOKEN secret not set, skipping"
+          else
+            declare -A PROXY=( [USD]=UUP [EUR]=FXE [GBP]=FXB [JPY]=FXY [CHF]=FXF [CAD]=FXC [AUD]=FXA [GOLD]=GLD [SILVER]=SLV [OIL]=USO [BTC]=IBIT [SP500]=SPY [NAS]=QQQ )
+            rm -f md_series_all.txt
+            for ASSET in "${!PROXY[@]}"; do
+              SYM="${PROXY[$ASSET]}"
+              MISSING=$(node -e '
+                const fs=require("fs");
+                let out={};
+                try{out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));}catch(e){}
+                const ex=out.putCallByAsset&&out.putCallByAsset["'"$ASSET"'"];
+                const have=new Set(((ex&&ex.series)||[]).map(e=>e[0]));
+                const days=[];
+                const now=new Date();
+                for(let i=1;i<=370;i++){
+                  const dt=new Date(now);dt.setUTCDate(dt.getUTCDate()-i);
+                  const iso=dt.toISOString().slice(0,10);
+                  const dow=dt.getUTCDay();
+                  if(dow===0||dow===6)continue;
+                  if(!have.has(iso))days.push(iso);
+                }
+                console.log(days.join(" "));
+              ')
+              N=0; F=0
+              for D in $MISSING; do
+                curl -sL --max-time 15 "https://api.marketdata.app/v1/options/chain/${SYM}/?date=${D}&token=${MDTOKEN}" -o md_resp.json || true
+                RATIO=$(node -e '
+                  try{
+                    const d=JSON.parse(require("fs").readFileSync("md_resp.json","utf8"));
+                    if(d.s!=="ok"||!Array.isArray(d.side)){process.exit(0);}
+                    let cv=0,pv=0;
+                    for(let i=0;i<d.side.length;i++){
+                      const v=Number(d.volume&&d.volume[i])||0;
+                      if(d.side[i]==="call")cv+=v;else if(d.side[i]==="put")pv+=v;
+                    }
+                    if(cv>0&&pv>0)console.log(Math.round(pv/cv*100)/100);
+                  }catch(e){}
+                ')
+                rm -f md_resp.json
+                if [ -n "$RATIO" ]; then echo "$ASSET $D $RATIO" >> md_series_all.txt; N=$((N+1)); else F=$((F+1)); fi
+              done
+              echo "[debug] marketdata $ASSET <- $SYM: $N days filled, $F no-data/skipped"
+            done
+            node -e '
+              const fs=require("fs");
+              const out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));
+              const byAsset=out.putCallByAsset||{};
+              let lines=[];
+              try{lines=fs.readFileSync("md_series_all.txt","utf8").trim().split("\n").filter(Boolean);}catch(e){}
+              const byA={};
+              lines.forEach(l=>{
+                const p=l.split(" ");
+                (byA[p[0]]=byA[p[0]]||[]).push([p[1],Number(p[2])]);
+              });
+              let totalNew=0;
+              Object.keys(byA).forEach(a=>{
+                const cur=byAsset[a]||{};
+                const existing=Array.isArray(cur.series)?cur.series:[];
+                const seen=new Set(existing.map(e=>e[0]));
+                const add=byA[a].filter(e=>!seen.has(e[0]));
+                const merged=existing.concat(add);
+                merged.sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0);
+                cur.series=merged.slice(-400);
+                byAsset[a]=cur;
+                totalNew+=add.length;
+              });
+              out.putCallByAsset=byAsset;
+              fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+              console.log("marketdata backfill: "+totalNew+" new points merged across "+Object.keys(byA).length+" assets");
+            '
+            rm -f md_series_all.txt
+          fi
 
       # ── Saisonalitaet (seasonality_data.json) ──────────────────────────
       # Nutzer-Wunsch 2026-07-12: historische Monats-Tendenz je gelistetem
