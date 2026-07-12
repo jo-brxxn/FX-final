@@ -2238,13 +2238,16 @@ jobs:
               INV=0; SYM="$RAW"
               case "$RAW" in "!"*) INV=1; SYM="${RAW#!}";; esac
               ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$SYM")
-              curl -sL --max-time 30 -A "$UA" "https://stooq.com/q/d/l/?s=${ENC}&i=d" -o "stooq_${ASSET}.csv" || true
+              HCODE=$(curl -sL --max-time 30 -A "$UA" -w "%{http_code}" "https://stooq.com/q/d/l/?s=${ENC}&i=d" -o "stooq_${ASSET}.csv" || echo "000")
               SZ=$(wc -c < "stooq_${ASSET}.csv" 2>/dev/null || echo 0)
               HEAD1=$(head -c 4 "stooq_${ASSET}.csv" 2>/dev/null)
-              echo "[debug] seasonality $ASSET <- $SYM: $SZ bytes"
+              echo "[debug] seasonality $ASSET <- $SYM: http=$HCODE $SZ bytes"
               if [ "$HEAD1" = "Date" ] && [ "$SZ" -gt 2000 ]; then
                 echo "$ASSET $SYM $INV" >> stooq_meta.txt
                 break
+              fi
+              if [ "$SZ" -gt 0 ] && [ "$SZ" -lt 2000 ]; then
+                echo "[debug] seasonality $ASSET body: $(head -c 300 "stooq_${ASSET}.csv" 2>/dev/null | tr -d '\r')"
               fi
               rm -f "stooq_${ASSET}.csv"
             done
