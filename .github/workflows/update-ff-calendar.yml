@@ -2270,7 +2270,20 @@ jobs:
               let j;try{j=JSON.parse(fs.readFileSync("seas_"+m.id+".json","utf8"));}catch(e){log.push(m.id+":bad-json");return;}
               const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
               const ts=r&&r.timestamp,closes=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              const gran=r&&r.meta&&r.meta.dataGranularity;
+              console.log("[debug] seasonality "+m.id+" granularity="+gran+" bars="+(ts?ts.length:0));
               if(!ts||!closes||!ts.length){log.push(m.id+":no-bars");return;}
+              // Absicherung gegen zu junge Ticker (z.B. IBIT/BTC seit 01/2024):
+              // Yahoo liefert fuer sehr kurze Historien manchmal feinere Bars
+              // als angefordert statt eines Fehlers - echte Monats-Bars pruefen
+              // (Median-Abstand >=25 Tage), sonst Asset ueberspringen statt
+              // Tages-Rauschen faelschlich als "Monats-Saisonalitaet" zu zeigen.
+              if(ts.length>=2){
+                const gaps=[];for(let i=1;i<ts.length;i++)gaps.push((ts[i]-ts[i-1])/86400);
+                gaps.sort((a,b)=>a-b);
+                const medGap=gaps[Math.floor(gaps.length/2)];
+                if(medGap<25){log.push(m.id+":bars-too-fine("+medGap.toFixed(1)+"d)");return;}
+              }
               const cutoff=new Date();cutoff.setUTCFullYear(cutoff.getUTCFullYear()-YEARS);
               // Return je Bar ggue. dem VORHERIGEN Bar (chronologisch; prevClose
               // laeuft auch vor dem Cutoff schon mit, damit der erste Monat IM
