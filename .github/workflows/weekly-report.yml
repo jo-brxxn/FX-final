@@ -44,6 +44,24 @@ jobs:
             echo "proceed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Motivierender Spruch/Zitat des Tages (Nutzer-Wunsch 2026-07-12):
+      # ZenQuotes /api/today - kostenlos, kein Key, echtes taegliches Zitat.
+      # continue-on-error, damit ein kurzer API-Ausfall nicht den ganzen
+      # Report blockiert.
+      - name: Zitat des Tages holen (ZenQuotes, kostenlos)
+        if: steps.gate.outputs.proceed == 'true'
+        continue-on-error: true
+        run: |
+          curl -sL --max-time 10 "https://zenquotes.io/api/today" -o quote.json || true
+          node -e '
+            try{
+              const d=JSON.parse(require("fs").readFileSync("quote.json","utf8"));
+              const q=d&&d[0];
+              if(q&&q.q&&q.a)require("fs").writeFileSync("quote.txt",q.q+"|"+q.a);
+            }catch(e){}
+          '
+          rm -f quote.json
+
       - name: Wochenausblick zusammenstellen (Events + COT + Scores)
         if: steps.gate.outputs.proceed == 'true'
         env:
@@ -63,8 +81,17 @@ jobs:
           const weekHdr = new Intl.DateTimeFormat("en-GB", { timeZone: tz, day: "numeric", month: "long", year: "numeric" }).format(now);
 
           async function main() {
+            let quoteText = "", quoteAuthor = "";
+            try {
+              const raw = fs.readFileSync("quote.txt", "utf8");
+              const idx = raw.lastIndexOf("|");
+              if (idx > 0) { quoteText = raw.slice(0, idx).trim(); quoteAuthor = raw.slice(idx + 1).trim(); }
+            } catch (e) {}
+
             const lines = ["🗓 <b>Weekly Outlook — week of " + esc(weekHdr) + "</b>", ""];
+            if (quoteText) { lines.push("💬 <i>\"" + esc(quoteText) + "\"</i> — " + esc(quoteAuthor), ""); }
             const speech = ["Good morning. Here is your weekly outlook."];
+            if (quoteText) { speech.push("This week's quote: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
 
             // ── 1. High-Impact-Events der naechsten 7 Tage ──
             const cal = JSON.parse(fs.readFileSync("ff_calendar.json", "utf8"));
@@ -148,7 +175,7 @@ jobs:
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-US-GuyNeural --file weekly-report-speech.txt --write-media weekly-report.mp3
+          edge-tts --voice en-GB-RyanNeural --file weekly-report-speech.txt --write-media weekly-report.mp3
           ffmpeg -y -i weekly-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 weekly-report.ogg
 
       - name: Per Telegram senden (Text + Sprachnachricht)

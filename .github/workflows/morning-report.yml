@@ -28,53 +28,6 @@ permissions:
   contents: write
 
 jobs:
-  # TEMP: Probe-Sprachnachricht fuer edge-tts, unabhaengig vom Gate/Dedup
-  # der eigentlichen send-report-Job (die hat den heutigen Report schon
-  # verschickt). Nur per workflow_dispatch, wird nach dem Test entfernt.
-  test-voice:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: edge-tts und ffmpeg installieren
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          pip install --quiet edge-tts
-      - name: Mehrere Stimmen/Dialekte erzeugen und per Telegram senden
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
-            exit 0
-          fi
-          echo "This is a test of the new voice for your market reports. Good morning, sir. There are two high impact events scheduled today. All systems are functioning within normal parameters." > en-speech.txt
-          echo "Dies ist ein Test der neuen Stimme fuer deine Marktberichte. Guten Morgen. Heute gibt es zwei wichtige Ereignisse." > de-speech.txt
-          # Jarvis-Kandidaten: ruhige, britische Butler-Stimmen, teils per
-          # --rate/--pitch verlangsamt+vertieft fuer mehr "AI-Assistant"-Gefuehl.
-          declare -A VOICES=(
-            [en-GB-RyanNeural]="en::: GB Ryan pur (Community-Standard fuer Jarvis-Klone)"
-            [en-GB-RyanNeural-slow]="en:-10%:-6Hz: GB Ryan, verlangsamt+vertieft (Jarvis-Tuning)"
-            [en-GB-ThomasNeural]="en::: GB Thomas pur"
-            [en-GB-ThomasNeural-slow]="en:-10%:-6Hz: GB Thomas, verlangsamt+vertieft (Jarvis-Tuning)"
-          )
-          for KEY in "${!VOICES[@]}"; do
-            IFS=":" read -r LANG RATE PITCH LABEL <<< "${VOICES[$KEY]}"
-            V="${KEY%-slow}"
-            SRC="en-speech.txt"; [ "$LANG" = "de" ] && SRC="de-speech.txt"
-            ARGS=(--voice "$V" --file "$SRC" --write-media "v.mp3")
-            [ -n "$RATE" ] && ARGS+=(--rate="$RATE")
-            [ -n "$PITCH" ] && ARGS+=(--pitch="$PITCH")
-            edge-tts "${ARGS[@]}" || { echo "[debug] $KEY failed"; continue; }
-            ffmpeg -y -i v.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 v.ogg
-            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
-              -F "chat_id=${TELEGRAM_CHAT_ID}" \
-              -F "voice=@v.ogg" \
-              -F "caption=🎙️${LABEL}" > /dev/null
-            rm -f v.mp3 v.ogg
-            sleep 1
-          done
-
   send-report:
     runs-on: ubuntu-latest
     timeout-minutes: 350
@@ -145,6 +98,25 @@ jobs:
           fi
           echo "proceed=true" >> "$GITHUB_OUTPUT"
 
+      # Motivierender Spruch/Zitat des Tages (Nutzer-Wunsch 2026-07-12):
+      # ZenQuotes /api/today - kostenlos, kein Key, echtes taegliches Zitat
+      # (kein erfundener/geschaetzter Text). continue-on-error, damit ein
+      # kurzer API-Ausfall nicht den ganzen Report blockiert - der Report
+      # geht dann einfach ohne Zitat-Zeile raus.
+      - name: Zitat des Tages holen (ZenQuotes, kostenlos)
+        if: steps.gate.outputs.proceed == 'true'
+        continue-on-error: true
+        run: |
+          curl -sL --max-time 10 "https://zenquotes.io/api/today" -o quote.json || true
+          node -e '
+            try{
+              const d=JSON.parse(require("fs").readFileSync("quote.json","utf8"));
+              const q=d&&d[0];
+              if(q&&q.q&&q.a)require("fs").writeFileSync("quote.txt",q.q+"|"+q.a);
+            }catch(e){}
+          '
+          rm -f quote.json
+
       - name: Morning report aus ff_calendar.json zusammenstellen (Text + Sprach-Skript)
         if: steps.gate.outputs.proceed == 'true'
         run: |
@@ -159,6 +131,13 @@ jobs:
             const dateHdr = new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(now);
             const esc = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
             const clean = s => String(s || "").trim();
+
+            let quoteText = "", quoteAuthor = "";
+            try {
+              const raw = fs.readFileSync("quote.txt", "utf8");
+              const idx = raw.lastIndexOf("|");
+              if (idx > 0) { quoteText = raw.slice(0, idx).trim(); quoteAuthor = raw.slice(idx + 1).trim(); }
+            } catch (e) {}
 
             const todays = cal
               .filter(e => (e.impact === "High" || e.impact === "Medium") && dayKey(new Date(e.date)) === todayKey)
@@ -177,6 +156,7 @@ jobs:
               return marker + " " + fmtTime(e.date) + " · " + esc(e.country) + " — " + esc(e.title) + vals;
             };
             const lines = ["☀️ <b>Morning Report — " + esc(dateHdr) + "</b>", ""];
+            if (quoteText) { lines.push("💬 <i>\"" + esc(quoteText) + "\"</i> — " + esc(quoteAuthor), ""); }
             if (high.length) {
               lines.push("🔴 <b>High Impact</b>");
               high.forEach(e => lines.push(evLineHtml(e)));
@@ -200,6 +180,7 @@ jobs:
               return parts.join(", ");
             };
             const speech = ["Good morning. Here is your market report for " + dateHdr + "."];
+            if (quoteText) { speech.push("Quote of the day: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
             if (high.length) {
               speech.push("There " + (high.length === 1 ? "is one high impact event" : "are " + high.length + " high impact events") + " today.");
               high.forEach(e => speech.push(evLineSpeech(e) + "."));
@@ -223,7 +204,7 @@ jobs:
       - name: Sprachnachricht erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-US-GuyNeural --file morning-report-speech.txt --write-media morning-report.mp3
+          edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report.mp3
           # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
           ffmpeg -y -i morning-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
 
@@ -282,9 +263,12 @@ jobs:
 # Sprachnachricht: kostenlose edge-tts-Neural-TTS (nutzt Microsofts
 # Edge-Vorlesestimmen ueber deren oeffentlichen Endpoint, kein API-Key/
 # Account noetig - klingt deutlich natuerlicher als das fruehere
-# espeak-ng, Nutzer-Wunsch 2026-07-12). Inoffizieller Endpoint, daher
-# theoretisches Blockier-Risiko; espeak-ng-Fallback bewusst nicht
-# eingebaut, da bei Ausfall der Text-Report per Telegram trotzdem geht.
+# espeak-ng, Nutzer-Wunsch 2026-07-12). Stimme: en-GB-RyanNeural (nach
+# Live-Vergleich von 10+ Stimmen/Dialekten per Telegram-Testlauf gewaehlt -
+# britisch, gilt in der Community als Standard fuer Jarvis-artige
+# Assistenten). Inoffizieller Endpoint, daher theoretisches Blockier-
+# Risiko; espeak-ng-Fallback bewusst nicht eingebaut, da bei Ausfall der
+# Text-Report per Telegram trotzdem geht.
 #
 # Sendezeit: 07:00 Uhr Berlin-Zeit, ganzjaehrig (zwei Cron-Eintraege +
 # Gate-Schritt gleichen die Sommer-/Winterzeit-Verschiebung aus - siehe
