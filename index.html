@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#115e59;color:#ccfbf1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-NEW-FEEDS-109</span><span id="verBannerText"> (Zwei neue Daten-Ebenen im Workflow: 1. SAISONALITAET - Stooq-Langzeithistorie je gelistetem Asset, je Kalendermonat Durchschnitts-Return + Trefferquote der letzten 15 Jahre nach seasonality_data.json (1x taeglich, USD-first-Paare korrekt invertiert). 2. COT-3-JAHRES-PERZENTIL - zweiter gezielter CFTC-Fetch der kanonischen Kontrakte, Perzentil der aktuellen Netto-Positionierung in cot_data.json.pct3y (nur bei neuem Report). Die App-Ansichten dazu folgen im naechsten Update; die Daten sammeln ab dem naechsten stuendlichen Lauf)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ccfbf1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3730a3;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-CORR-MATRIX-110</span><span id="verBannerText"> (Neue Karte im Matrix-Tab: KORRELATION & VOLATILITAET - Pearson-r der taeglichen Returns aller gelisteten Assets (bis 60 gemeinsame Handelstage, Blau=laufen zusammen, Rot=gegenlaeufig, Waehrungen vs. USD) + 20-Tage realisierte Volatilitaet annualisiert auf der Diagonale. Da die price_data-Serie noch jung ist, rechnet die Karte ehrlich ab 8 gemeinsamen Tagen und weist die aktuelle Tiefe in der Unterzeile aus - sie festigt sich taeglich Richtung 60-Tage-Fenster)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7860,6 +7860,76 @@ function mxHeatColor(v,maxAbs){
   const a=(0.1+t*0.55).toFixed(2);
   return(v>0?'rgba(var(--blue-rgb),':'rgba(var(--red-rgb),')+a+')';
 }
+// ── Korrelations-Matrix + realisierte Volatilitaet (aus price_data) ─────
+// Nutzer-Wunsch 2026-07-12: Risiko-Cluster sichtbar machen. 60-Tage-Pearson-
+// Korrelation der taeglichen Log-Returns aller gelisteten Assets mit Preis-
+// Serie. Fuer Waehrungen ist die Serie der USD-Kurs (bzw. DXY fuer USD) -
+// die Korrelation beschreibt also Bewegungen GEGEN den USD. Diagonale zeigt
+// statt r=1 die annualisierte 20-Tage-Volatilitaet des Assets. Alles rein
+// aus der vorhandenen price_data berechnet (echte Kurse, kein Score-Einfluss).
+function assetReturnMap(id){
+  const s=priceSeriesFor(id);
+  if(!s||s.length<6)return null;
+  const m={};
+  for(let i=1;i<s.length;i++){
+    const p0=+s[i-1][1],p1=+s[i][1];
+    if(p0>0&&p1>0)m[s[i][0]]=Math.log(p1/p0);
+  }
+  return Object.keys(m).length>=5?m:null;
+}
+function pearsonR(xs,ys){
+  const n=xs.length;if(n<2)return null;
+  let sx=0,sy=0;for(let i=0;i<n;i++){sx+=xs[i];sy+=ys[i];}
+  const mx=sx/n,my=sy/n;
+  let num=0,dx=0,dy=0;
+  for(let i=0;i<n;i++){const a=xs[i]-mx,b=ys[i]-my;num+=a*b;dx+=a*a;dy+=b*b;}
+  if(dx<=0||dy<=0)return null;
+  return num/Math.sqrt(dx*dy);
+}
+function corrHeatColor(r){
+  if(r==null)return'transparent';
+  const a=(0.08+Math.abs(r)*0.55).toFixed(2);
+  return(r>=0?'rgba(var(--blue-rgb),':'rgba(var(--red-rgb),')+a+')';
+}
+function renderCorrCard(){
+  const maps={};
+  const ids=trendAssets().filter(id=>{const m=assetReturnMap(id);if(m)maps[id]=m;return!!m;});
+  if(ids.length<3)return'';
+  // 20d realisierte Vol (annualisiert, %)
+  const volOf={};
+  ids.forEach(id=>{
+    const vals=Object.keys(maps[id]).sort().slice(-20).map(d=>maps[id][d]);
+    if(vals.length>=5){
+      const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+      const va=vals.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(vals.length-1);
+      volOf[id]=Math.sqrt(va)*Math.sqrt(252)*100;
+    }
+  });
+  // Fenster: bis 60 gemeinsame Handelstage; die price_data-Serie ist noch
+  // jung (waechst 1 Punkt/Tag), daher schon ab 8 Tagen rechnen und die
+  // aktuelle Tiefe ehrlich ausweisen statt wochenlang nichts zu zeigen.
+  let depthMin=Infinity;
+  const corr=(a,b)=>{
+    const days=Object.keys(maps[a]).filter(d=>maps[b][d]!=null).sort().slice(-60);
+    if(days.length<8)return null;
+    if(days.length<depthMin)depthMin=days.length;
+    return pearsonR(days.map(d=>maps[a][d]),days.map(d=>maps[b][d]));
+  };
+  const head=`<tr><th class="mx-hm-corner" title="Pearson r der taeglichen Returns (letzte 60 gemeinsame Handelstage)">r</th>${ids.map(q=>`<th>${q}</th>`).join('')}</tr>`;
+  const body=ids.map(a=>{
+    const cells=ids.map(b=>{
+      if(a===b){const v=volOf[a];return`<td class="mx-hm-diag" title="${a}: 20-day realized volatility, annualized">${v!=null?v.toFixed(0)+'%':'·'}</td>`;}
+      const r=corr(a,b);
+      return`<td style="background:${corrHeatColor(r)}" title="${a} vs ${b}: r = ${r==null?'not enough overlapping days yet':r.toFixed(2)}">${r==null?'–':r.toFixed(2)}</td>`;
+    }).join('');
+    return`<tr><th class="mx-hm-rowh">${a}</th>${cells}</tr>`;
+  }).join('');
+  const depthNote=isFinite(depthMin)?(depthMin<60?` · currently based on ${depthMin}+ shared trading days — firms up daily toward the full 60-day window`:''):'';
+  return`<div class="mx-card">
+    <div class="mx-card-title"><span>🔗 Correlation &amp; Volatility (60d)</span><small>Pearson r of daily returns — blue = move together (one risk, not two trades), red = move opposite (hedge) · currencies measured vs. USD · diagonal = 20-day realized volatility (annualized)${depthNote} · display-only</small></div>
+    <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
+  </div>`;
+}
 function renderMatrix(){
   const el=document.getElementById('mxBody');if(!el)return;
   const scores={};FX.forEach(id=>{const s=syms.find(x=>x.id===id);scores[id]=s?symScoreCmp(s):0;});
@@ -7898,7 +7968,8 @@ function renderMatrix(){
   <div class="mx-card">
     <div class="mx-card-title"><span>🔥 Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
-  </div>`;
+  </div>
+  ${renderCorrCard()}`;
 }
 // ══ SCORE TRENDS (Verlaufs-Kategorie) ══════════════════════════════
 // Pro FX-Waehrung der taegliche Score-Verlauf (aus scoreHist): ein Chart fuer
