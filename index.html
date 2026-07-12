@@ -553,7 +553,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 @keyframes cotSpin{to{transform:rotate(360deg)}}
 /* COT single Filter button + grouped pop-up list */
 .cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-#cotFilterSel{font-size:14px;padding:8px 15px}
+.cot-filterbar select{font-size:14px;padding:8px 15px}
 /* ── NEW COT DATA BANNER ── */
 .cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:linear-gradient(90deg,#0b3d91,#1c64f2);color:#fff;box-shadow:0 2px 10px rgba(28,100,242,.35);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:16px}
@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-COT-PCT3Y-112</span><span id="verBannerText"> (COT-Tab zeigt jetzt das 3-JAHRES-PERZENTIL der Netto-Positionierung aus cot_data.json.pct3y: neue Spalte "3y %ile" in der Vergleichstabelle (mit Warnsymbol bei >=90 historisch extrem long bzw. <=10 extrem short) + Hinweiszeile in der Einzel-Asset-Ansicht unter dem Verlaufschart. Reine Anzeige wie das CROWDED-Badge, kein Score-Einfluss. Spalte und Zeile erscheinen erst, wenn der Workflow-Enrich das Perzentil zum aktuellen Report geliefert hat, und bleiben sonst komplett ausgeblendet)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-YAHOO-114</span><span id="verBannerText"> (Saisonalitaet-Quelle gewechselt: Stooq blockt seit heute jede Anfrage mit einer 796-Byte JS-Challenge-Seite statt echter CSV-Historie - stattdessen jetzt dieselben liquiden ETF-Proxys + derselbe Yahoo-Cookie+Crumb-Handshake wie beim Pro-Asset-Put/Call-Feed, gegen den Chart-Endpunkt (Monats-Balken, volle Historie). Vorteil: die CurrencyShares-ETFs sind schon in Waehrungsrichtung notiert, die fruehere USD-first-Invertierung entfaellt. Ausserdem: alle Asset-Filter-Dropdowns jetzt EIN gemeinsames, nach Kategorie gruppiertes Muster (COT/Put-Call/Net-Flow/Seasonality/Retail))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1706,6 +1706,23 @@ const SB_CATS=[
   {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
   {l:'Stocks',ids:['AMZN','NVDA']}
 ];
+// ── Gemeinsamer Asset-Filter-Dropdown, EIN Muster fuer alle Tabs mit
+// Asset-Auswahl (COT, Put/Call, Net Options Flow, Seasonality): Optionen
+// gruppiert nach SB_CATS (FX/Crypto/Metals/Energy/Indices/Stocks), nur
+// Kategorien mit mindestens einem verfuegbaren Asset werden gezeigt.
+// allLabel=null unterdrueckt die Kopf-Option (fuer Tabs ohne "alle"-Ansicht,
+// z.B. Seasonality - dort ist immer genau ein Asset aktiv).
+function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
+  const avail=new Set(ids);
+  const groups=SB_CATS.map(cat=>{
+    const items=cat.ids.filter(id=>avail.has(id));
+    if(!items.length)return'';
+    const opts=items.map(id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`).join('');
+    return`<optgroup label="${escH(cat.l)}">${opts}</optgroup>`;
+  }).join('');
+  const head=allLabel?`<option value=""${selected?'':' selected'}>${allLabel}</option>`:'';
+  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${groups}</select></div>`;
+}
 
 // ══ HELPERS ════════════════════════════════════════════════════════
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -8945,20 +8962,26 @@ function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
+// Retail-Sentiment filtert nach Broker-PAAR (z.B. EURUSD), nicht nach
+// unserer Asset-ID - passt nicht 1:1 in SB_CATS, bekommt daher eine eigene
+// zweigeteilte Gruppierung (FX Pairs / Other Assets), aber dieselbe Optik
+// wie der gemeinsame assetFilterSelect-Helper (gleiche .cot-filterbar-CSS).
+const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOIL']);
 function sentFilterBar(){
   const set=new Set();
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
-  const opts=['<option value="">🌐 All symbols</option>'].concat([...set].sort().map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`)).join('');
-  return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
+  const ids=[...set].sort();
+  const grp=(label,arr)=>arr.length?`<optgroup label="${escH(label)}">${arr.map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`).join('')}</optgroup>`:'';
+  const opts=`<option value=""${sentSym?'':' selected'}>🌐 All symbols</option>${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
+  return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
 // Summe (alle US-Optionsboersen), sonst der ETF-Proxy des gewaehlten Assets
 // (D.putCallByAsset, siehe Workflow-Schritt "Fetch per-asset put/call").
 function pcFilterBar(D){
-  const ids=Object.keys(D.putCallByAsset||{}).sort();
+  const ids=Object.keys(D.putCallByAsset||{});
   const thin=id=>{const a=D.putCallByAsset[id];return a&&((+a.callVol||0)+(+a.putVol||0))<PC_THIN_VOL?' ⚠':'';};
-  const opts=['<option value="">🌐 Market-wide (all U.S. options)</option>'].concat(ids.map(id=>`<option value="${escH(id)}"${pcAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}${thin(id)}</option>`)).join('');
-  return`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setPcAsset(this.value)" title="Filter by asset (⚠ = low options volume today, reading may be noisy)" style="cursor:pointer">${opts}</select></div>`;
+  return assetFilterSelect(ids,pcAsset,'setPcAsset','🌐 Market-wide (all U.S. options)','Filter by asset (⚠ = low options volume today, reading may be noisy)',id=>`${escH(COT_NAME[id]||id)}${thin(id)}`);
 }
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
@@ -9175,21 +9198,7 @@ function renderCot(){
   const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
   const avail=allRows.map(r=>r.id);
   if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
-  // Native <select> mit <optgroup> je Asset-Kategorie (FX, Crypto, Metals, …
-  // – dieselbe Reihenfolge wie in der Sidebar) statt eines eigenen Pop-ups,
-  // damit der Filter sich wie z.B. der Waehrungs-Filter im Kalender oeffnet.
-  const grpHtml=SB_CATS.map(cat=>{
-    const items=cat.ids.filter(id=>avail.includes(id));
-    if(!items.length)return'';
-    const opts=items.map(id=>`<option value="${id}"${cotFilter===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('');
-    return`<optgroup label="${escH(cat.l)}">${opts}</optgroup>`;
-  }).join('');
-  const filterBar=`<div class="cot-filterbar">
-    <select class="btn" id="cotFilterSel" onchange="pickCotFilter(this.value)" title="Filter by a single asset" style="cursor:pointer">
-      <option value=""${cotFilter?'':' selected'}>🌐 All assets</option>
-      ${grpHtml}
-    </select>
-  </div>`;
+  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','🌐 All assets','Filter by a single asset',null);
   const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
   if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
   // Ab 80% auf einer Seite gilt die Positionierung als "crowded": extrem
@@ -9354,8 +9363,7 @@ function renderSeasonality(){
   const curMon=new Date().getMonth()+1;
   const cur=A.months.find(m=>m[0]===curMon);
   const upd=D.updated?new Date(D.updated).toLocaleDateString():'–';
-  const opts=ids.map(id=>`<option value="${escH(id)}"${seasAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('');
-  const filt=`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setSeasAsset(this.value)" title="Pick an asset" style="cursor:pointer">${opts}</select></div>`;
+  const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
   const proxyLink=`<a href="https://stooq.com/q/d/?s=${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
   const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
   const chartCard=`<div class="cot-card">

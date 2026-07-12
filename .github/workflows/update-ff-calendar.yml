@@ -2212,16 +2212,28 @@ jobs:
 
       # ── Saisonalitaet (seasonality_data.json) ──────────────────────────
       # Nutzer-Wunsch 2026-07-12: historische Monats-Tendenz je gelistetem
-      # Asset als eigene Analyse-Ebene. Quelle: Stooq-Tageshistorie als CSV
-      # (kostenlos, kein Login, volle Historie). Pro Asset ein Proxy-Symbol;
-      # bei USD-first-Paaren (usdjpy usw.) wird der Return invertiert, damit
-      # die Statistik die BASIS-Waehrung des Assets beschreibt (JPY-Saison,
-      # nicht USDJPY-Saison). Berechnet wird je Kalendermonat ueber die
-      # letzten 15 Jahre: durchschnittlicher Monats-Return in Prozent und
+      # Asset als eigene Analyse-Ebene. Berechnet wird je Kalendermonat ueber
+      # die letzten 15 Jahre: durchschnittlicher Monats-Return in Prozent und
       # Trefferquote (Anteil positiver Jahre) - echte Statistik aus echten
       # Kursen, keine Schaetzung. Nur 1x pro Tag neu gezogen (Guard unten),
       # Saisonalitaet aendert sich nicht stuendlich.
-      - name: Fetch seasonality (Stooq monthly stats) -> seasonality_data.json
+      # Quelle: urspruenglich Stooqs CSV-Endpoint (kostenlos, kein Login) -
+      # seit 2026-07-12 liefert der aber fuer JEDES Symbol identisch 796
+      # Bytes einer Cloudflare-JS-Challenge-Seite ("requires JavaScript to
+      # verify your browser") statt echter Daten, per Debug-Log bestaetigt
+      # (HTTP 200, aber HTML statt CSV) - mit reinem curl nicht loesbar.
+      # Ersetzt durch dieselben liquiden ETF-Proxys + denselben Yahoo-
+      # Cookie+Crumb-Handshake wie beim Pro-Asset-Put/Call-Schritt oben
+      # (fc.yahoo.com -> Cookie, query2.../getcrumb -> Crumb), diesmal gegen
+      # den Chart-Endpoint (v8/finance/chart, interval=1mo, range=max) statt
+      # der Optionskette. Vorteil gegenueber Stooq: CurrencyShares-ETFs
+      # (FXE/FXB/FXF/FXY/FXC/FXA/UUP) sind bereits in der WAEHRUNGS-Richtung
+      # notiert (FXY steigt, wenn JPY staerker wird) - die fruehere
+      # USD-first-Invertierung (usdjpy usw.) entfaellt dadurch komplett,
+      # "inv" bleibt nur als Schema-Feld (immer 0) fuer App-Kompatibilitaet.
+      # NZD hat wie beim Put/Call-Schritt keinen etablierten ETF und bleibt
+      # aussen vor.
+      - name: Fetch seasonality (Yahoo ETF proxies, monthly bars) -> seasonality_data.json
         continue-on-error: true
         run: |
           TODAY=$(date -u +%Y-%m-%d)
@@ -2230,56 +2242,52 @@ jobs:
             exit 0
           fi
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-          # Kandidaten je Asset: "symbol" oder "!symbol" (! = Return invertieren).
-          declare -A CAND=( [USD]="dx.f" [EUR]="eurusd" [GBP]="gbpusd" [JPY]="!usdjpy" [CHF]="!usdchf" [CAD]="!usdcad" [AUD]="audusd" [NZD]="nzdusd" [GOLD]="xauusd" [SILVER]="xagusd" [OIL]="cl.f" [BTC]="btcusd" [SP500]="^spx" [NAS]="^ndx" )
-          rm -f stooq_meta.txt
-          for ASSET in "${!CAND[@]}"; do
-            for RAW in ${CAND[$ASSET]}; do
-              INV=0; SYM="$RAW"
-              case "$RAW" in "!"*) INV=1; SYM="${RAW#!}";; esac
-              ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$SYM")
-              HCODE=$(curl -sL --max-time 30 -A "$UA" -w "%{http_code}" "https://stooq.com/q/d/l/?s=${ENC}&i=d" -o "stooq_${ASSET}.csv" || echo "000")
-              SZ=$(wc -c < "stooq_${ASSET}.csv" 2>/dev/null || echo 0)
-              HEAD1=$(head -c 4 "stooq_${ASSET}.csv" 2>/dev/null)
+          curl -sL --max-time 15 -A "$UA" -c yscookies.txt "https://fc.yahoo.com" -o /dev/null || true
+          CRUMB=$(curl -sL --max-time 15 -A "$UA" -b yscookies.txt -c yscookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
+          echo "[debug] seasonality Yahoo crumb: len=${#CRUMB}"
+          declare -A PROXY=( [USD]=UUP [EUR]=FXE [GBP]=FXB [JPY]=FXY [CHF]=FXF [CAD]=FXC [AUD]=FXA [GOLD]=GLD [SILVER]=SLV [OIL]=USO [BTC]=IBIT [SP500]=SPY [NAS]=QQQ )
+          rm -f seas_meta.txt
+          for ASSET in "${!PROXY[@]}"; do
+            SYM="${PROXY[$ASSET]}"
+            HCODE=$(curl -sL --max-time 30 -A "$UA" -b yscookies.txt -H "Accept: application/json" -w "%{http_code}" "https://query1.finance.yahoo.com/v8/finance/chart/${SYM}?range=max&interval=1mo&crumb=${CRUMB}" -o "seas_${ASSET}.json" || echo "000")
+              SZ=$(wc -c < "seas_${ASSET}.json" 2>/dev/null || echo 0)
               echo "[debug] seasonality $ASSET <- $SYM: http=$HCODE $SZ bytes"
-              if [ "$HEAD1" = "Date" ] && [ "$SZ" -gt 2000 ]; then
-                echo "$ASSET $SYM $INV" >> stooq_meta.txt
-                break
+              if [ "$HCODE" = "200" ] && [ "$SZ" -gt 500 ]; then
+                echo "$ASSET $SYM" >> seas_meta.txt
+              else
+                echo "[debug] seasonality $ASSET body: $(head -c 300 "seas_${ASSET}.json" 2>/dev/null | tr -d '\r')"
+                rm -f "seas_${ASSET}.json"
               fi
-              if [ "$SZ" -gt 0 ] && [ "$SZ" -lt 2000 ]; then
-                echo "[debug] seasonality $ASSET body: $(head -c 300 "stooq_${ASSET}.csv" 2>/dev/null | tr -d '\r')"
-              fi
-              rm -f "stooq_${ASSET}.csv"
-            done
           done
           node -e '
             const fs=require("fs");
             const YEARS=15, MIN_YEARS=8;
             let meta=[];
-            try{meta=fs.readFileSync("stooq_meta.txt","utf8").trim().split("\n").filter(Boolean).map(l=>{const p=l.split(" ");return{id:p[0],sym:p[1],inv:p[2]==="1"};});}catch(e){}
+            try{meta=fs.readFileSync("seas_meta.txt","utf8").trim().split("\n").filter(Boolean).map(l=>{const p=l.split(" ");return{id:p[0],sym:p[1]};});}catch(e){}
             const out={updated:new Date().toISOString(),assets:{}};
             const log=[];
             meta.forEach(m=>{
-              let csv;try{csv=fs.readFileSync("stooq_"+m.id+".csv","utf8");}catch(e){return;}
-              // Tageszeilen -> letzter Schlusskurs je Jahr-Monat
-              const lastClose={};
-              csv.split("\n").forEach(l=>{
-                const c=l.split(",");
-                if(c.length<5||!/^\d{4}-\d{2}-\d{2}$/.test(c[0]))return;
-                const v=Number(c[4]);
-                if(isFinite(v)&&v>0)lastClose[c[0].slice(0,7)]=v; // Zeilen sind chronologisch
-              });
-              const yms=Object.keys(lastClose).sort();
-              const cutoff=(new Date().getFullYear()-YEARS)+"-01";
-              // Monats-Returns (Prozent), bei inv exakt der Return des Kehrwerts
+              let j;try{j=JSON.parse(fs.readFileSync("seas_"+m.id+".json","utf8"));}catch(e){log.push(m.id+":bad-json");return;}
+              const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
+              const ts=r&&r.timestamp,closes=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              if(!ts||!closes||!ts.length){log.push(m.id+":no-bars");return;}
+              const cutoff=new Date();cutoff.setUTCFullYear(cutoff.getUTCFullYear()-YEARS);
+              // Return je Bar ggue. dem VORHERIGEN Bar (chronologisch; prevClose
+              // laeuft auch vor dem Cutoff schon mit, damit der erste Monat IM
+              // Fenster einen echten Vormonats-Bezugswert hat statt verworfen
+              // zu werden), gebucket nach Kalendermonat.
               const byMonth={};
-              for(let i=1;i<yms.length;i++){
-                if(yms[i]<cutoff)continue;
-                const r0=lastClose[yms[i-1]],r1=lastClose[yms[i]];
-                let ret=(r1/r0-1)*100;
-                if(m.inv)ret=(r0/r1-1)*100;
-                const mon=Number(yms[i].slice(5,7));
-                (byMonth[mon]=byMonth[mon]||[]).push(ret);
+              let prevClose=null;
+              for(let i=0;i<ts.length;i++){
+                const c=closes[i];
+                if(c==null||!isFinite(c)||c<=0)continue;
+                const d=new Date(ts[i]*1000);
+                if(prevClose!=null&&d>=cutoff){
+                  const ret=(c/prevClose-1)*100;
+                  const mon=d.getUTCMonth()+1;
+                  (byMonth[mon]=byMonth[mon]||[]).push(ret);
+                }
+                prevClose=c;
               }
               const months=[];
               for(let mon=1;mon<=12;mon++){
@@ -2290,9 +2298,9 @@ jobs:
                 months.push([mon,Math.round(avg*100)/100,Math.round(hit),arr.length]);
               }
               if(months.length===12&&months.every(e=>e[3]>=MIN_YEARS)){
-                out.assets[m.id]={proxy:m.sym,inv:m.inv?1:0,months};
+                out.assets[m.id]={proxy:m.sym,inv:0,months};
                 log.push(m.id+"("+m.sym+","+months[0][3]+"y)");
-              }else log.push(m.id+":too-little-history");
+              }else log.push(m.id+":too-little-history("+months.length+"mo)");
             });
             if(Object.keys(out.assets).length>=5){
               fs.writeFileSync("seasonality_data.json",JSON.stringify(out,null,1));
@@ -2301,7 +2309,7 @@ jobs:
               console.log("seasonality: only "+Object.keys(out.assets).length+" assets usable, keeping existing file ("+log.join(" | ")+")");
             }
           '
-          rm -f stooq_*.csv stooq_meta.txt
+          rm -f seas_*.json seas_meta.txt yscookies.txt
 
       # ── COT / Commitments of Traders (cot_data.json) ──────────────────
       # CFTC "Legacy Futures-Only", Kategorie Non-Commercial (Grossspekulanten).
