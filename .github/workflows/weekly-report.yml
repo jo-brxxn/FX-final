@@ -90,8 +90,8 @@ jobs:
 
             const lines = ["🗓 <b>Weekly Outlook — week of " + esc(weekHdr) + "</b>", ""];
             if (quoteText) { lines.push("💬 <i>\"" + esc(quoteText) + "\"</i> — " + esc(quoteAuthor), ""); }
-            const speech = ["Good morning. Here is your weekly outlook."];
-            if (quoteText) { speech.push("This week's quote: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
+            const speech = ["Good morning, and welcome to your weekly outlook."];
+            if (quoteText) { speech.push("Before we dive in, here is this week's quote: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
 
             // ── 1. High-Impact-Events der naechsten 7 Tage ──
             const cal = JSON.parse(fs.readFileSync("ff_calendar.json", "utf8"));
@@ -110,13 +110,13 @@ jobs:
                 const fc = esc(e.forecast) ? " (exp. " + esc(e.forecast) + ")" : "";
                 lines.push("⏳ " + fmtTime(e.date) + " · " + esc(e.country) + " — " + esc(e.title) + fc);
               }
-              speech.push("There " + (week.length === 1 ? "is one high impact event" : "are " + week.length + " high impact events") + " scheduled this week.");
+              speech.push("Looking ahead, " + (week.length === 1 ? "there is one high impact event" : "there are " + week.length + " high impact events") + " scheduled this week.");
               const byCcy = {};
               week.forEach(e => { byCcy[e.country] = (byCcy[e.country] || 0) + 1; });
-              speech.push("Busiest currencies: " + Object.entries(byCcy).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => c + " with " + n).join(", ") + ".");
+              speech.push("The busiest currencies are " + Object.entries(byCcy).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c, n]) => c + " with " + n).join(", ") + ".");
             } else {
               lines.push("No high-impact events found for the coming week.");
-              speech.push("No high impact events are scheduled this week.");
+              speech.push("It looks like a quiet week ahead, with no high impact events scheduled.");
             }
 
             // ── 2. COT-Zusammenfassung ──
@@ -132,7 +132,7 @@ jobs:
                 lines.push("Most long: " + rows.slice(0, 3).map(fmtRow).join(" · "));
                 lines.push("Most short: " + rows.slice(-3).reverse().map(fmtRow).join(" · "));
                 const crowded = rows.filter(r => r.longPct >= 80 || r.longPct <= 20);
-                if (crowded.length) speech.push("Watch out: " + crowded.map(r => r.id).join(", ") + " " + (crowded.length === 1 ? "is" : "are") + " extremely one-sided in the COT report.");
+                if (crowded.length) speech.push("On the positioning front, keep an eye on " + crowded.map(r => r.id).join(" and ") + ", which " + (crowded.length === 1 ? "is" : "are") + " extremely one-sided in the latest COT report.");
               }
             } catch (e) { console.log("COT section skipped: " + e.message); }
 
@@ -151,7 +151,7 @@ jobs:
                   lines.push("", "🧭 <b>Current fundamental scores</b>");
                   lines.push(sorted.map(fmtS).join(" · "));
                   const top = sorted[0], bottom = sorted[sorted.length - 1];
-                  speech.push("Strongest asset by score: " + top.id + " at " + (top.score > 0 ? "plus " : "") + top.score + ". Weakest: " + bottom.id + " at " + bottom.score + ".");
+                  speech.push("Turning to fundamentals, " + top.id + " leads the pack at " + (top.score > 0 ? "plus " : "") + top.score + ", while " + bottom.id + " trails at " + bottom.score + ".");
                 }
               } catch (e) { console.log("Score section skipped: " + e.message); }
             }

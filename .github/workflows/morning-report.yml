@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install --quiet edge-tts
-      - name: Zitat holen, Sprache+Musik erzeugen, senden
+      - name: Musik-Kandidaten (Build-up-Charakter) mit lauterer Mischung testen
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -48,26 +48,36 @@ jobs:
             echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
             exit 0
           fi
-          curl -sL --max-time 10 "https://zenquotes.io/api/today" -o quote.json || true
-          QUOTE=$(node -e '
-            try{
-              const d=JSON.parse(require("fs").readFileSync("quote.json","utf8"));
-              const q=d&&d[0];
-              if(q&&q.q&&q.a)console.log(q.q+" — "+q.a);
-            }catch(e){}
-          ')
-          echo "This is the final combined test. Good morning. Quote of the day: ${QUOTE}. There are two high impact events today. This is how your reports will sound from now on." > final-speech.txt
-          edge-tts --voice en-GB-RyanNeural --file final-speech.txt --write-media final-voice.mp3
-          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 || true
-          ffmpeg -y -i final-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
-            "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
-            -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 final.ogg
-          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=🎙️ Final combined test: Ryan voice + quote of the day + Big Rock (Kevin MacLeod, CC BY 4.0) background music" > /dev/null
-          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
-            -F "chat_id=${TELEGRAM_CHAT_ID}" \
-            -F "voice=@final.ogg" > /dev/null
+          echo "Good morning. Markets are moving, and today brings two high impact events worth watching closely." > sample-speech.txt
+          edge-tts --voice en-GB-RyanNeural --file sample-speech.txt --write-media sample-voice.mp3
+          declare -A TRACKS=(
+            [Impact Moderato]="dramatischer Spannungsaufbau"
+            [Rise Up]="klassischer Build-up, name sagt alles"
+            [Take a Chance]="motivierend, treibend"
+            [Investigations]="spannungsvoller Aufbau"
+            [Onward]="triumphal, energisch"
+          )
+          for NAME in "${!TRACKS[@]}"; do
+            DESC="${TRACKS[$NAME]}"
+            ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$NAME")
+            HCODE=$(curl -sL --max-time 20 -A "Mozilla/5.0" -w "%{http_code}" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/${ENC}.mp3" -o track.mp3 || echo "000")
+            SZ=$(wc -c < track.mp3 2>/dev/null || echo 0)
+            echo "[debug] track '$NAME': http=$HCODE size=$SZ"
+            if [ "$HCODE" != "200" ] || [ "$SZ" -lt 100000 ]; then
+              echo "[debug] '$NAME' nicht verfuegbar, ueberspringe"
+              rm -f track.mp3
+              continue
+            fi
+            ffmpeg -y -i sample-voice.mp3 -i track.mp3 -filter_complex \
+              "[1:a]atrim=0:20,volume=0.22[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+              -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 sample.ogg
+            curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
+              -F "chat_id=${TELEGRAM_CHAT_ID}" \
+              -F "voice=@sample.ogg" \
+              -F "caption=🎵 ${NAME} — ${DESC} (22% Lautstaerke)" > /dev/null
+            rm -f track.mp3 sample.ogg
+            sleep 1
+          done
 
   send-report:
     runs-on: ubuntu-latest
@@ -214,22 +224,27 @@ jobs:
             fs.writeFileSync("morning-report.txt", lines.join("\n"));
 
             // ── Sprach-Skript (Klartext ohne HTML/Emoji, fuer TTS) ──
+            // Fliessende Uebergaenge statt einer abgearbeiteten Liste
+            // (Nutzer-Wunsch 2026-07-12): rotierende Anschluss-Phrasen +
+            // Ereignisse als ganze Saetze statt Komma-Fragmente.
             const evLineSpeech = e => {
-              const parts = [clean(e.country) + " " + clean(e.title)];
+              const title = clean(e.country) + " " + clean(e.title);
               const fc = clean(e.forecast), prev = clean(e.previous);
-              if (fc) parts.push("expected " + fc);
-              if (prev) parts.push("previous " + prev);
-              return parts.join(", ");
+              if (fc && prev) return title + ", forecast at " + fc + ", up against a previous reading of " + prev;
+              if (fc) return title + ", with a forecast of " + fc;
+              if (prev) return title + ", previously at " + prev;
+              return title;
             };
-            const speech = ["Good morning. Here is your market report for " + dateHdr + "."];
-            if (quoteText) { speech.push("Quote of the day: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
+            const speech = ["Good morning, and welcome to your market report for " + dateHdr + "."];
+            if (quoteText) { speech.push("Before we dive in, here is your quote of the day: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
             if (high.length) {
-              speech.push("There " + (high.length === 1 ? "is one high impact event" : "are " + high.length + " high impact events") + " today.");
-              high.forEach(e => speech.push(evLineSpeech(e) + "."));
+              const TRANS = ["First up, ", "Next, ", "Also worth watching, ", "Rounding things out, ", "And finally, "];
+              speech.push("On the calendar today, " + (high.length === 1 ? "there is one high impact event to watch." : "there are " + high.length + " high impact events to watch."));
+              high.forEach((e, i) => { speech.push((TRANS[i] || "Also, ") + evLineSpeech(e) + "."); });
             } else {
-              speech.push("No high impact events today.");
+              speech.push("It is a quiet day on the calendar, with no high impact events scheduled.");
             }
-            speech.push(med.length + (med.length === 1 ? " medium impact event is" : " medium impact events are") + " also scheduled.");
+            speech.push("Beyond that, " + med.length + (med.length === 1 ? " medium impact event is" : " medium impact events are") + " also on the radar.");
             fs.writeFileSync("morning-report-speech.txt", speech.join(" "));
 
             console.log(lines.join("\n"));
