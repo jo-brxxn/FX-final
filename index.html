@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3730a3;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-CORR-MATRIX-110</span><span id="verBannerText"> (Neue Karte im Matrix-Tab: KORRELATION & VOLATILITAET - Pearson-r der taeglichen Returns aller gelisteten Assets (bis 60 gemeinsame Handelstage, Blau=laufen zusammen, Rot=gegenlaeufig, Waehrungen vs. USD) + 20-Tage realisierte Volatilitaet annualisiert auf der Diagonale. Da die price_data-Serie noch jung ist, rechnet die Karte ehrlich ab 8 gemeinsamen Tagen und weist die aktuelle Tiefe in der Unterzeile aus - sie festigt sich taeglich Richtung 60-Tage-Fenster)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f6212;color:#ecfccb;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LIME-SEASONALITY-TAB-111</span><span id="verBannerText"> (Neuer Insights-Tab SEASONALITY: 12-Monats-Balkenchart je Asset mit Durchschnitts-Return + Trefferquote der letzten 15 Jahre (Stooq-Historie, taeglich vom Workflow), aktueller Monat hervorgehoben, Hover-Tooltips, Asset-Dropdown, i-Erklaerung, plus Uebersichtskarte aller Assets im aktuellen Monat. Reine Kontext-Ebene ohne Score-Einfluss. Zeigt "Loading..." bis der erste taegliche Workflow-Lauf seasonality_data.json erzeugt hat)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ecfccb;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1308,6 +1308,14 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Contrarian crowd sentiment &amp; options positioning · Fear &amp; Greed, Put/Call, VIX · read against the crowd at extremes</div>
   </div>
   <div id="sentBody"></div>
+</div>
+<!-- PAGE: SEASONALITY -->
+<div class="pc" id="pgSeas" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Seasonality</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Average calendar-month return &amp; hit rate over the last 15 years · source: Stooq daily history · context layer, not a signal</div>
+  </div>
+  <div id="seasBody"></div>
 </div>
 <!-- PAGE: CARRY TRADE SCANNER -->
 <div class="pc" id="pgCarry" style="display:none">
@@ -9263,12 +9271,103 @@ function renderCot(){
   cotStartCountdown();
   cotWireChartHover();
 }
+// ══ SAISONALITAET (seasonality_data.json) ═══════════════════════════
+// 15-Jahres-Monatsstatistik je gelistetem Asset (Stooq-Langzeithistorie,
+// 1x taeglich vom Workflow-Schritt "Fetch seasonality" geschrieben):
+// Durchschnitts-Return + Trefferquote je Kalendermonat. Bewusst REINE
+// Anzeige-Ebene ohne Score-Einfluss - Saisonalitaet ist ein Kontext-
+// Filter ("hat der Monat historisch Rueckenwind?"), kein Signal.
+// Schema: {updated, assets:{ID:{proxy,inv,months:[[mon,avgPct,hitPct,nYears]x12]}}}
+let SEASONALITY_DATA=null,seasAsset='';
+function fetchSeasonalityData(){
+  return fetch('seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets)SEASONALITY_DATA=d;}).catch(()=>{});
+}
+function autoFetchSeasonality(){fetchSeasonalityData().then(()=>{if(curPage==='seas')renderSeasonality();});}
+function setSeasAsset(v){seasAsset=v||'';renderSeasonality();}
+const SEAS_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Anzeige-Reihenfolge = Reihenfolge der App-Listung (FX-Majors, dann Non-FX)
+const SEAS_ORDER=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
+function seasSortIds(ids){return[...ids].sort((a,b)=>{const ia=SEAS_ORDER.indexOf(a),ib=SEAS_ORDER.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});}
+// 12-Monats-Balkenchart: Balken = O-Return des Monats, Label darunter =
+// Monat + Trefferquote, aktueller Monat mit hellem Band + Rahmen markiert.
+function seasBarChart(months,curMon){
+  const W=580,H=190,padT=16,padB=40,padL=8,padR=8;
+  const iw=(W-padL-padR)/12;
+  const maxAbs=Math.max(0.3,...months.map(m=>Math.abs(m[1])));
+  const yOf=v=>padT+(1-(v+maxAbs)/(2*maxAbs))*(H-padT-padB);
+  const y0=yOf(0);
+  const parts=[],hpts=[];
+  months.forEach(m=>{
+    const[mon,avg,hit,n]=m;
+    const cx=padL+(mon-.5)*iw;
+    if(mon===curMon)parts.push(`<rect x="${(padL+(mon-1)*iw).toFixed(1)}" y="2" width="${iw.toFixed(1)}" height="${H-14}" rx="4" fill="rgba(255,255,255,.06)"/>`);
+    const col=avg>=0?BC.bull:BC.bear;
+    const yv=yOf(avg),top=Math.min(y0,yv),h=Math.max(1.5,Math.abs(y0-yv));
+    parts.push(`<rect x="${(cx-iw*.36).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.72).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${col}" opacity="${mon===curMon?1:.8}"${mon===curMon?' stroke="rgba(255,255,255,.8)" stroke-width="1"':''}/>`);
+    parts.push(`<text x="${cx.toFixed(1)}" y="${H-24}" text-anchor="middle" font-size="11" font-weight="${mon===curMon?'800':'600'}" fill="${mon===curMon?'var(--t0)':'var(--t3)'}">${SEAS_MON[mon-1]}</text>`);
+    parts.push(`<text x="${cx.toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="9.5" fill="${hit>=60?BC.bull:hit<=40?BC.bear:'var(--t3)'}">${hit}%</text>`);
+    hpts.push({fx:cx/W,fy:yv/H,col,tip:`<div class="chv-tip-d">${SEAS_MON[mon-1]} · ${n} years</div><b>${avg>0?'+':''}${avg.toFixed(2)}%</b> avg · up in ${hit}% of years`});
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:170px">
+    <line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+    ${parts.join('')}
+  </svg>`;
+  return chartHoverWrap(svg,hpts);
+}
+function renderSeasonality(){
+  const el=document.getElementById('seasBody');if(!el)return;
+  const D=SEASONALITY_DATA;
+  if(!D||!D.assets||!Object.keys(D.assets).length){
+    el.innerHTML=`<div class="cot-empty">Loading seasonality data… (computed once a day by the GitHub workflow from long-run Stooq price history into seasonality_data.json — if this stays empty, the first daily run simply hasn't happened yet).</div>`;
+    return;
+  }
+  const ids=seasSortIds(Object.keys(D.assets));
+  if(!seasAsset||!D.assets[seasAsset])seasAsset=ids[0];
+  const A=D.assets[seasAsset];
+  const curMon=new Date().getMonth()+1;
+  const cur=A.months.find(m=>m[0]===curMon);
+  const upd=D.updated?new Date(D.updated).toLocaleDateString():'–';
+  const opts=ids.map(id=>`<option value="${escH(id)}"${seasAsset===id?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('');
+  const filt=`<div class="cot-filterbar" style="margin-bottom:12px"><select class="btn" onchange="setSeasAsset(this.value)" title="Pick an asset" style="cursor:pointer">${opts}</select></div>`;
+  const proxyLink=`<a href="https://stooq.com/q/d/?s=${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
+  const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
+  const chartCard=`<div class="cot-card">
+    <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">15y stats · proxy: ${proxyLink} · ${escH(upd)}</span></div>
+    <div style="padding:12px 14px">${seasBarChart(A.months,curMon)}${curLine}</div>
+  </div>`;
+  // Kompakte Uebersicht: der AKTUELLE Monat quer ueber alle Assets,
+  // staerkster historischer Rueckenwind zuerst.
+  const rows=ids.map(id=>{const e=D.assets[id].months.find(m=>m[0]===curMon);return e?{id,avg:e[1],hit:e[2],n:e[3]}:null;}).filter(Boolean).sort((a,b)=>b.avg-a.avg);
+  const maxA=Math.max(0.2,...rows.map(r=>Math.abs(r.avg)));
+  const ovRows=rows.map(r=>{
+    const col=r.avg>=0?BC.bull:BC.bear,w=(Math.abs(r.avg)/maxA*100).toFixed(0);
+    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSeasAsset('${r.id}')" title="Show the full 12-month profile of ${escH(COT_NAME[r.id]||r.id)}">
+      <div style="flex:none;width:64px;font-weight:700;font-size:12px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${escH(r.id)}</div>
+      <div style="flex:1;height:16px;border-radius:4px;background:var(--bg3);overflow:hidden"><div style="width:${w}%;height:100%;background:${col};opacity:.85"></div></div>
+      <div style="flex:none;width:64px;text-align:right;font-size:12px;font-weight:700;color:${col}">${r.avg>0?'+':''}${r.avg.toFixed(2)}%</div>
+      <div style="flex:none;width:56px;text-align:right;font-size:11px;color:${r.hit>=60?BC.bull:r.hit<=40?BC.bear:'var(--t3)'}">${r.hit}% up</div>
+    </div>`;
+  }).join('');
+  const ovCard=`<div class="cot-card" style="margin-top:12px">
+    <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span></div>
+    <div style="padding:12px 14px">${ovRows}</div>
+  </div>`;
+  el.innerHTML=filt+chartCard+ovCard;
+  attachChartHovers(el);
+}
+// Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
+SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
+  `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run daily price history (Stooq), refreshed once a day.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#4fc3f7">Cyan up-bars</b> = the month was positive on average; <b style="color:#ef6b78">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
+   <p><b>Note for FX:</b> currencies are measured the same way round as elsewhere in the app (e.g. the JPY profile is the yen itself, computed from the inverted USD/JPY quote where needed — flagged under the chart when that applies). USD uses the dollar index as proxy.</p>`];
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. fx/nonfx zeigen beide die
 // 'cur'-Seite, nur mit anderem Modus.
-const TAB_ORDER=['dash','fx','nonfx','cmp','mx','trends','cot','sent','carry','pairs','cal','notes'];
+const TAB_ORDER=['dash','fx','nonfx','cmp','mx','trends','cot','sent','seas','carry','pairs','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   fx:{label:'FX',tab:'cur',mode:'fx'},
@@ -9278,6 +9377,7 @@ const TABS={
   trends:{label:'Trends',tab:'trends'},
   cot:{label:'COT',tab:'cot'},
   sent:{label:'Sentiment',tab:'sent'},
+  seas:{label:'Seasonality',tab:'seas'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   cal:{label:'Calendar',tab:'cal'},
@@ -9294,9 +9394,12 @@ function loadTabStacks(){
     // Bestandsnutzern nicht heimatlos in der Hauptleiste landet.
     const ins=tabStacks.find(st=>st.members&&st.members.includes('cot')&&!st.members.includes('sent'));
     if(ins){const i=ins.members.indexOf('cot');ins.members.splice(i+1,0,'sent');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
+    // Seasonality ebenso nachtraeglich einreihen (direkt nach Sentiment).
+    const ins2=tabStacks.find(st=>st.members&&st.members.includes('sent')&&!st.members.includes('seas'));
+    if(ins2){const i=ins2.members.indexOf('sent');ins2.members.splice(i+1,0,'seas');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','carry']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -9433,6 +9536,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='trends'){renderTrends();autoFetchPriceData();}
   else if(tab==='cot'){renderCot();autoFetchCot();}
   else if(tab==='sent'){renderSentiment();autoFetchSentiment();}
+  else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
   else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
@@ -9446,6 +9550,7 @@ function rerender(){
   else if(curPage==='trends')renderTrends();
   else if(curPage==='cot')renderCot();
   else if(curPage==='sent')renderSentiment();
+  else if(curPage==='seas')renderSeasonality();
   else if(curPage==='carry')renderCarry();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
