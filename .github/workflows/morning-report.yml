@@ -28,37 +28,46 @@ permissions:
   contents: write
 
 jobs:
-  # TEMP: sucht eine funktionierende direkte URL fuer einen lizenzfreien
-  # Rock-Instrumental-Track (Nutzer-Wunsch 2026-07-12, Hintergrundmusik
-  # statt eines urheberrechtlich geschuetzten Songs). Wird nach Auswertung
-  # entfernt. Sandbox blockt incompetech.com/archive.org komplett (403),
-  # daher Test ueber den GH-Actions-Runner.
-  test-music:
+  # TEMP: Ende-zu-Ende-Test der finalen Pipeline (Ryan-Stimme + Zitat des
+  # Tages + Hintergrundmusik), unabhaengig vom Gate/Dedup des echten
+  # send-report-Jobs. Wird nach dem Test entfernt.
+  test-final:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - name: Kandidaten-URLs fuer "Big Rock" (Kevin MacLeod, CC-BY) testen
+      - name: edge-tts und ffmpeg installieren
         run: |
-          probe(){
-            local label="$1" url="$2"
-            HCODE=$(curl -sL --max-time 20 -w "%{http_code}" -A "Mozilla/5.0" "$url" -o probe.bin || echo "000")
-            SZ=$(wc -c < probe.bin 2>/dev/null || echo 0)
-            CT=$(file -b probe.bin 2>/dev/null | head -c 80)
-            echo "[debug] music-probe $label: http=$HCODE size=$SZ type=$CT url=$url"
-            rm -f probe.bin
-          }
-          probe "incompetech-spaced" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3"
-          probe "incompetech-nospace" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/BigRock.mp3"
-          curl -sL --max-time 20 -A "Mozilla/5.0" "https://archive.org/metadata/Incompetech" -o meta.json || true
-          echo "[debug] archive.org metadata size: $(wc -c < meta.json 2>/dev/null)"
-          node -e '
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install --quiet edge-tts
+      - name: Zitat holen, Sprache+Musik erzeugen, senden
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "TELEGRAM-Secrets nicht gesetzt - Testversand uebersprungen."
+            exit 0
+          fi
+          curl -sL --max-time 10 "https://zenquotes.io/api/today" -o quote.json || true
+          QUOTE=$(node -e '
             try{
-              const d=JSON.parse(require("fs").readFileSync("meta.json","utf8"));
-              const files=(d.files||[]).map(f=>f.name).filter(n=>/big.?rock/i.test(n));
-              console.log("[debug] archive.org matches: "+JSON.stringify(files.slice(0,10)));
-            }catch(e){console.log("[debug] archive.org metadata parse fail: "+e.message);}
-          '
-          rm -f meta.json
+              const d=JSON.parse(require("fs").readFileSync("quote.json","utf8"));
+              const q=d&&d[0];
+              if(q&&q.q&&q.a)console.log(q.q+" — "+q.a);
+            }catch(e){}
+          ')
+          echo "This is the final combined test. Good morning. Quote of the day: ${QUOTE}. There are two high impact events today. This is how your reports will sound from now on." > final-speech.txt
+          edge-tts --voice en-GB-RyanNeural --file final-speech.txt --write-media final-voice.mp3
+          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3" -o bgmusic.mp3 || true
+          ffmpeg -y -i final-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
+            "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+            -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 final.ogg
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=🎙️ Final combined test: Ryan voice + quote of the day + Big Rock (Kevin MacLeod, CC BY 4.0) background music" > /dev/null
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVoice" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "voice=@final.ogg" > /dev/null
 
   send-report:
     runs-on: ubuntu-latest
