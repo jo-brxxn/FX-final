@@ -1092,7 +1092,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-SEASONALITY-BIGGER-118</span><span id="verBannerText"> (Seasonality-Chart nochmal insgesamt vergroessert (73px statt 60px pro Monat, Labels 17px/14px) und die Highlight-Box des aktuellen Monats fest um Balken+beide Text-Zeilen herum dimensioniert - vorher stand die Trefferquoten-Prozentzahl unten aus der Box heraus, jetzt mit Puffer komplett innerhalb. Auf iPad- und Handy-Breite per Playwright verifiziert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-NO-GEOPOLITICS-119</span><span id="verBannerText"> (Geopolitics-Karte komplett entfernt: aus allen Default-Templates, der Karten-Reihenfolge, dem Makro-Sync und der Vergleichs-Matrix gestrichen, kein Score-Beitrag mehr. Bestehende gespeicherte Symbole (lokal + Cloud/Undo/Redo/Backup) verlieren die Karte automatisch bei Laden/Sync ueber neue stripGeopoliticsRub()-Migration)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -3740,15 +3740,14 @@ function mkRubs(){return[
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
-  {id:uid(),name:'Geopolitics',bias:'neu',imp:false,summary:'',indicators:mkInds(['Regional Conflicts','Sanctions / Trade Restrictions','Election Risk','Energy Supply Risk','CB Independence Risk'])},
 ];}
 // Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
 // Verschieben einer Karte (mvRub) aktualisiert und auf alle Symbole
 // angewendet, damit überall die gleiche Kartenreihenfolge gilt.
 // Globale Kartenreihenfolge der Makro-Kategorien (für jedes Symbol gleich):
-// Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches,
-// Risikoumfeld, COT Data.
-function mkRubOrder(){return['Inflation','Interest Rates','Labour Market','Economic Growth','Geopolitics',MACRO_NAME,'COT Data'];}
+// Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, Risikoumfeld,
+// COT Data.
+function mkRubOrder(){return['Inflation','Interest Rates','Labour Market','Economic Growth',MACRO_NAME,'COT Data'];}
 // Kurze englische Standard-Erklärung pro Indikator (Basisname ohne y/y-Suffix):
 // was/wen er misst, wie er angegeben ist, was er bedeutet. Wird schreibgeschützt
 // im Info-Fenster ("i") über den eigenen Notizen angezeigt.
@@ -3790,12 +3789,6 @@ const IND_INFO_DEFAULTS={
   'Fear & Greed Index':'CNN Fear & Greed Index for US equities (0–100). Aggregates 7 gauges incl. put/call ratio, market volatility (VIX), safe-haven demand and junk-bond demand. Read CONTRARIAN: extreme fear (≤25) is bullish, extreme greed (≥75) bearish. Counts ±0.5 only at those extremes.',
   'Put/Call Ratio':'CBOE options Put/Call ratio (put volume ÷ call volume). Read CONTRARIAN: a high ratio (≥1.0) means heavy hedging/fear → often a bottom (bullish); a low ratio (≤0.7) means complacency/greed → often a top (bearish). Shown in the Sentiment tab when the source is reachable; not scored (data source blocks datacenter IPs).',
   'VIX (Volatility)':'CBOE Volatility Index — the market\'s "fear gauge" (expected 30-day S&P volatility). Read CONTRARIAN: a spike (≥28) signals panic and often marks a bottom (bullish); a very low reading (≤13) signals complacency and often a top (bearish). Counts ±0.5 only at those extremes. Applies to S&P 500 & Nasdaq.',
-  // Geopolitics
-  'Regional Conflicts':'Wars or armed tensions affecting the region. Escalation drives safe-haven flows and broad risk aversion.',
-  'Sanctions / Trade Restrictions':'Tariffs, sanctions or other trade barriers. Can disrupt trade flows and weigh on the affected economy and currency.',
-  'Election Risk':'Political uncertainty around elections or leadership changes. Higher uncertainty tends to weaken the currency.',
-  'Energy Supply Risk':'Risk of disruptions to energy supply. Matters most for big energy importers/exporters; affects inflation and the currency.',
-  'CB Independence Risk':'Risk of political interference in central-bank policy. Threats to independence undermine confidence and the currency.',
 };
 function applyRubOrder(){
   if(!rubOrder||!rubOrder.length)return;
@@ -3821,7 +3814,19 @@ const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW 
 // Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
 // zu vermeiden.
 const OLD_NEWINDS_REMOVE=['ISM Manufacturing PMI','ZEW Economic Sentiment Index','GDP m/m','KOF Economic Barometer','Tankan Large Manufacturers Index','Ivey PMI','NAB Business Confidence','GDT Dairy Auction Price Index'];
+// Geopolitics-Karte komplett entfernt (Nutzer-Wunsch 2026-07-13): kein
+// eigener Score-Beitrag mehr, aus allen Templates/Reihenfolgen/Sync-Listen
+// gestrichen. Bestehende gespeicherte Symbole (lokal + Cloud) verlieren die
+// Karte hier bei jedem Laden bzw. Sync - siehe Aufrufe in migrateRubInds()
+// und applySnap() (Cloud-Pull/Undo/Redo/Backup-Restore laufen nicht durch
+// migrateRubInds, deshalb dort ein eigener Aufruf).
+function stripGeopoliticsRub(rubrics){
+  if(!Array.isArray(rubrics))return;
+  const gi=rubrics.findIndex(r=>r.name==='Geopolitics');
+  if(gi>=0)rubrics.splice(gi,1);
+}
 function migrateRubInds(rubrics,sym){
+  stripGeopoliticsRub(rubrics);
   rubrics.forEach(rub=>{
     if(!rub.indicators)return;
     const rm=RUB_IND_REMOVE[rub.name];
@@ -3955,17 +3960,6 @@ function enrichRubrics(id,rubrics,name){
       : cls==='stock'
       ? `For single stocks like ${name}, the options put/call ratio, the short-interest ratio (% of float) and institutional 13F filings (building up/winding down large fund positions) serve as positioning indicators. Very high short interest can trigger short squeezes on positive surprises, while extreme net-long positioning raises the correction risk on disappointments.`
       : `The CFTC Commitment of Traders (COT) data show the positioning of large speculators (asset managers, hedge funds) in ${name} futures. Extremely one-sided positioning (a crowded trade) raises the risk of sharp counter-moves at trend reversals. A growing net-long position signals bullish sentiment, a growing net-short position bearish – the week-over-week change (WoW) is often a leading indicator for shifts in sentiment.`,
-    'Geopolitics': cls==='metal'
-      ? `Geopolitical crises (wars, sanctions, trade conflicts) typically drive up demand for ${name} as a safe haven and store of value. In addition, central banks (especially in emerging markets) structurally buy ${name} as part of reserve diversification – a trend that intensifies during geopolitical uncertainty.`
-      : cls==='energy'
-      ? `For ${name}, geopolitical risks act primarily via the supply side: conflicts or sanctions in key producing regions (the Middle East, Russia, OPEC+ states) can disrupt deliveries and drive the price up despite weak demand (a supply shock). De-escalation is correspondingly price-dampening.`
-      : cls==='crypto'
-      ? `In a geopolitical escalation, ${name} reacts inconsistently: in the short term often risk-off selling (correlation with tech stocks), while over the long term a "digital flight currency" narrative (e.g. amid capital controls, sanctions, currency collapse in crisis countries) can be supportive.`
-      : cls==='index'
-      ? `Geopolitical escalations usually weigh on ${name} via rising risk premia, higher energy prices (cost inflation) and falling risk appetite (risk-off). De-escalation is supportive. Especially relevant: conflicts that affect energy prices and global supply chains.`
-      : cls==='stock'
-      ? `Geopolitical escalations usually weigh on ${name} via rising risk premia and falling risk appetite (risk-off), and additionally via company-specific channels (e.g. supply chains/semiconductor dependence on Taiwan/Asia, export restrictions, regulatory intervention by individual countries). De-escalation is supportive.`
-      : `Geopolitical risks (conflicts, sanctions, elections, trade conflicts) act on ${name} via two channels: (1) safe-haven flows – in times of crisis capital flows into currencies regarded as safe, (2) direct economic exposure (e.g. energy dependence, trade relationships, geographic proximity). Assess concretely how strongly each event directly affects ${name}.`,
   };
   rubrics.forEach(r=>{if(txt[r.name]!==undefined&&!r.info)r.info=txt[r.name];});
 }
@@ -4050,7 +4044,7 @@ const MACRO_NAME='Macro & Risk Environment';
 const MACRO_NAME_LEGACY='Makro & Risikoumfeld';
 // Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
 // (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
-const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market','Geopolitics',MACRO_NAME];
+const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market',MACRO_NAME];
 // Leitet Rubrik- und Indikator-Bias (Karte + jeder einzelne Indikator) eines
 // Nicht-FX-Assets automatisch aus der verbundenen Währung ab, statt es manuell
 // einzutragen. Pro Rubrik: 'same' = starke Daten gelten als bullish (identisch
@@ -4303,7 +4297,7 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>stripGeopoliticsRub(sy.rubrics));pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY?MACRO_NAME:n);applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -4389,7 +4383,7 @@ function loadState(){
       syms.filter(s=>customIds.find(c=>c.id===s.id)).forEach(addMacroRub);
       rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();
       // Einmalige Migration auf die neue Karten-Reihenfolge (Inflation, Leitzins,
-      // Arbeitsmarkt, Wirtschaftswachstum, Geopolitisches, Risikoumfeld, COT).
+      // Arbeitsmarkt, Wirtschaftswachstum, Risikoumfeld, COT).
       if(localStorage.getItem('fxpro_ruborder_v3')!=='1'){rubOrder=mkRubOrder();localStorage.setItem('fxpro_ruborder_v3','1');}
       applyRubOrder();
       pairCats=d.pairCats||mkPairCats();
@@ -5303,7 +5297,7 @@ function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();
 // ══ ACTIONS – RUBRICS ═══════════════════════════════════════════════
 function getRub(ri){const c=getSym();return c&&c.rubrics?c.rubrics[ri]:null;}
 function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii]:null;}
-// Hält die Makro-Rubriken (Zinsen, Inflation, Arbeitsmarkt, Geopolitik,
+// Hält die Makro-Rubriken (Zinsen, Inflation, Arbeitsmarkt,
 // Makro & Risikoumfeld) zwischen USD und allen USD-getriebenen Assets
 // (Gold, Silber, Öl, BTC, Indizes) bei der SUMMARY synchron, da sie
 // dieselbe globale Makro-Lage beschreiben. Bias (Rubrik- und
@@ -5433,7 +5427,7 @@ function syncIndOrderGlobal(ri){
   });
 }
 // 2) Hinzufügen/Entfernen: in den Makro-Rubriken (Interest Rates,
-//    Inflation, Labour Market, Geopolitics, Makro & Risikoumfeld) wird
+//    Inflation, Labour Market, Makro & Risikoumfeld) wird
 //    ein neuer/gelöschter Indikator von USD zu allen USD-getriebenen
 //    Assets (Rohstoffe, Krypto, Indizes) gespiegelt - NICHT umgekehrt,
 //    da diese Assets eigene, USD-unabhängige Indikatoren haben können.
@@ -7647,8 +7641,8 @@ function addWidget(){
 // Vergleichsseite: pro Makro-Karte eine Tabelle - Symbole oben (Spalten),
 // Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous), plus
 // eine Score-Zeile pro Karte/Spalte. Spalten frei wählbar (FX + Non-FX).
-const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data','Geopolitics',MACRO_NAME];
-const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐','COT Data':'📊','Geopolitics':'🌍',[MACRO_NAME]:'⚖️'};
+const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data',MACRO_NAME];
+const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐','COT Data':'📊',[MACRO_NAME]:'⚖️'};
 // Auswählbare Vergleichsspalten: alle FX-Währungen + alle Non-FX-Assets.
 function cmpAvailableIds(){return[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
 // Aktuell gewählte Spalten (persistiert). Default: alle FX-Währungen.
