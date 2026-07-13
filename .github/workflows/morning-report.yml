@@ -28,38 +28,6 @@ permissions:
   contents: write
 
 jobs:
-  # TEMP: sucht eine funktionierende direkte URL fuer einen lizenzfreien
-  # Rock-Instrumental-Track (Nutzer-Wunsch 2026-07-12, Hintergrundmusik
-  # statt eines urheberrechtlich geschuetzten Songs). Wird nach Auswertung
-  # entfernt. Sandbox blockt incompetech.com/archive.org komplett (403),
-  # daher Test ueber den GH-Actions-Runner.
-  test-music:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Kandidaten-URLs fuer "Big Rock" (Kevin MacLeod, CC-BY) testen
-        run: |
-          probe(){
-            local label="$1" url="$2"
-            HCODE=$(curl -sL --max-time 20 -w "%{http_code}" -A "Mozilla/5.0" "$url" -o probe.bin || echo "000")
-            SZ=$(wc -c < probe.bin 2>/dev/null || echo 0)
-            CT=$(file -b probe.bin 2>/dev/null | head -c 80)
-            echo "[debug] music-probe $label: http=$HCODE size=$SZ type=$CT url=$url"
-            rm -f probe.bin
-          }
-          probe "incompetech-spaced" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Big%20Rock.mp3"
-          probe "incompetech-nospace" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/BigRock.mp3"
-          curl -sL --max-time 20 -A "Mozilla/5.0" "https://archive.org/metadata/Incompetech" -o meta.json || true
-          echo "[debug] archive.org metadata size: $(wc -c < meta.json 2>/dev/null)"
-          node -e '
-            try{
-              const d=JSON.parse(require("fs").readFileSync("meta.json","utf8"));
-              const files=(d.files||[]).map(f=>f.name).filter(n=>/big.?rock/i.test(n));
-              console.log("[debug] archive.org matches: "+JSON.stringify(files.slice(0,10)));
-            }catch(e){console.log("[debug] archive.org metadata parse fail: "+e.message);}
-          '
-          rm -f meta.json
-
   send-report:
     runs-on: ubuntu-latest
     timeout-minutes: 350
@@ -201,25 +169,31 @@ jobs:
             }
             if (!todays.length) lines.push("No High/Medium impact events today.");
             lines.push("Total today: " + high.length + " High, " + med.length + " Medium impact.");
+            lines.push("", "🎵 <i>Music: \"Take a Chance\" by Kevin MacLeod (incompetech.com), CC BY 4.0</i>");
             fs.writeFileSync("morning-report.txt", lines.join("\n"));
 
             // ── Sprach-Skript (Klartext ohne HTML/Emoji, fuer TTS) ──
+            // Fliessende Uebergaenge statt einer abgearbeiteten Liste
+            // (Nutzer-Wunsch 2026-07-12): rotierende Anschluss-Phrasen +
+            // Ereignisse als ganze Saetze statt Komma-Fragmente.
             const evLineSpeech = e => {
-              const parts = [clean(e.country) + " " + clean(e.title)];
+              const title = clean(e.country) + " " + clean(e.title);
               const fc = clean(e.forecast), prev = clean(e.previous);
-              if (fc) parts.push("expected " + fc);
-              if (prev) parts.push("previous " + prev);
-              return parts.join(", ");
+              if (fc && prev) return title + ", forecast at " + fc + ", up against a previous reading of " + prev;
+              if (fc) return title + ", with a forecast of " + fc;
+              if (prev) return title + ", previously at " + prev;
+              return title;
             };
-            const speech = ["Good morning. Here is your market report for " + dateHdr + "."];
-            if (quoteText) { speech.push("Quote of the day: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
+            const speech = ["Good morning, and welcome to your market report for " + dateHdr + "."];
+            if (quoteText) { speech.push("Before we dive in, here is your quote of the day: \"" + clean(quoteText) + "\", by " + clean(quoteAuthor) + "."); }
             if (high.length) {
-              speech.push("There " + (high.length === 1 ? "is one high impact event" : "are " + high.length + " high impact events") + " today.");
-              high.forEach(e => speech.push(evLineSpeech(e) + "."));
+              const TRANS = ["First up, ", "Next, ", "Also worth watching, ", "Rounding things out, ", "And finally, "];
+              speech.push("On the calendar today, " + (high.length === 1 ? "there is one high impact event to watch." : "there are " + high.length + " high impact events to watch."));
+              high.forEach((e, i) => { speech.push((TRANS[i] || "Also, ") + evLineSpeech(e) + "."); });
             } else {
-              speech.push("No high impact events today.");
+              speech.push("It is a quiet day on the calendar, with no high impact events scheduled.");
             }
-            speech.push(med.length + (med.length === 1 ? " medium impact event is" : " medium impact events are") + " also scheduled.");
+            speech.push("Beyond that, " + med.length + (med.length === 1 ? " medium impact event is" : " medium impact events are") + " also on the radar.");
             fs.writeFileSync("morning-report-speech.txt", speech.join(" "));
 
             console.log(lines.join("\n"));
@@ -233,12 +207,29 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           pip install --quiet edge-tts
 
-      - name: Sprachnachricht erzeugen
+      # Hintergrundmusik (Nutzer-Wunsch 2026-07-12): "Take a Chance" von Kevin
+      # MacLeod (incompetech.com), Creative Commons BY 4.0 - lizenzfrei bei
+      # Namensnennung, live per workflow_dispatch verifizierte direkte URL.
+      # Nach Nutzer-Vergleich mehrerer Build-up-Kandidaten ausgewaehlt
+      # (test-final-Job, 22% Mischlautstaerke statt anfangs 10%). NICHT der
+      # vom Nutzer urspruenglich gewuenschte urheberrechtlich geschuetzte
+      # Song - siehe Erklaerung im Chat. Wird bei jedem Lauf frisch geladen
+      # statt im Repo gespeichert (keine Weiterverbreitung einer eigenen
+      # Kopie); Track ist nur 37s lang, -stream_loop -1 wiederholt ihn.
+      - name: Sprachnachricht mit Hintergrundmusik erzeugen
         if: steps.gate.outputs.proceed == 'true'
         run: |
-          edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report.mp3
-          # Telegram-Sprachnachrichten brauchen OGG/Opus, mono, 48kHz.
-          ffmpeg -y -i morning-report.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          edge-tts --voice en-GB-RyanNeural --file morning-report-speech.txt --write-media morning-report-voice.mp3
+          curl -sL --max-time 30 -A "Mozilla/5.0" "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Take%20a%20Chance.mp3" -o bgmusic.mp3 || true
+          if [ -s bgmusic.mp3 ]; then
+            ffmpeg -y -i morning-report-voice.mp3 -stream_loop -1 -i bgmusic.mp3 -filter_complex \
+              "[1:a]volume=0.22[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+              -map "[aout]" -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          else
+            echo "[debug] bgmusic download failed - Sprachnachricht ohne Musik"
+            ffmpeg -y -i morning-report-voice.mp3 -c:a libopus -b:a 32k -ar 48000 -ac 1 morning-report.ogg
+          fi
+          rm -f morning-report-voice.mp3 bgmusic.mp3
 
       - name: Per Telegram senden (Text + Sprachnachricht)
         if: steps.gate.outputs.proceed == 'true'
