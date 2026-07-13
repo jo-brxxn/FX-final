@@ -366,7 +366,7 @@
   ]
  },
  "vix": {
-  "value": 16.28,
+  "value": 16.27,
   "series": [
    [
     "2026-07-08",
@@ -390,11 +390,11 @@
    ],
    [
     "2026-07-13",
-    16.28
+    16.27
    ]
   ]
  },
- "updated": "2026-07-13T08:47:42.330Z",
+ "updated": "2026-07-13T11:51:43.456Z",
  "stockFng": {
   "value": 49,
   "label": "neutral",
@@ -884,8 +884,8 @@
  "retail": [
   {
    "sym": "EURUSD",
-   "long": 62,
-   "short": 38
+   "long": 61,
+   "short": 39
   },
   {
    "sym": "GBPUSD",
@@ -934,8 +934,8 @@
   },
   {
    "sym": "AUDUSD",
-   "long": 44,
-   "short": 56
+   "long": 45,
+   "short": 55
   },
   {
    "sym": "CADJPY",
@@ -949,8 +949,8 @@
   },
   {
    "sym": "EURCHF",
-   "long": 42,
-   "short": 58
+   "long": 41,
+   "short": 59
   },
   {
    "sym": "EURGBP",
@@ -959,8 +959,8 @@
   },
   {
    "sym": "EURNZD",
-   "long": 66,
-   "short": 34
+   "long": 65,
+   "short": 35
   },
   {
    "sym": "GBPCAD",
@@ -974,8 +974,8 @@
   },
   {
    "sym": "NZDCAD",
-   "long": 12,
-   "short": 88
+   "long": 13,
+   "short": 87
   },
   {
    "sym": "NZDJPY",
@@ -999,8 +999,8 @@
   },
   {
    "sym": "AUDCHF",
-   "long": 20,
-   "short": 80
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "GBPNZD",
@@ -1009,8 +1009,8 @@
   },
   {
    "sym": "NZDCHF",
-   "long": 44,
-   "short": 56
+   "long": 43,
+   "short": 57
   },
   {
    "sym": "CADCHF",
