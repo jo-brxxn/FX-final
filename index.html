@@ -689,6 +689,18 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .risk-env-cfg-btn.bull.on{border-color:var(--green);background:rgba(var(--green-rgb),.15);color:var(--green)}
 .risk-env-cfg-btn.bear.on{border-color:var(--red);background:rgba(var(--red-rgb),.15);color:var(--red)}
 .risk-env-cfg-btn.neu.on{border-color:var(--amber);background:rgba(var(--amber-rgb),.15);color:var(--amber)}
+/* Gespeicherte Risk-Szenarien (Nutzer-Wunsch 2026-07-13 abends) */
+.risk-env-lists-sec{padding:10px 11px;background:var(--bg2);border-radius:var(--rs);margin-bottom:14px}
+.risk-env-lists-hd{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.risk-env-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0}
+.risk-env-list-name{font-size:12.5px;color:var(--purple);font-weight:600;cursor:pointer;flex:1}
+@media (hover:hover){.risk-env-list-name:hover{text-decoration:underline}}
+.risk-env-list-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0}
+@media (hover:hover){.risk-env-list-del:hover{color:var(--red)}}
+.risk-env-list-empty{font-size:11.5px;color:var(--t3);padding:2px 0}
+.risk-env-list-add{display:flex;gap:6px;margin-top:8px}
+.risk-env-list-add input{flex:1;background:var(--bg1);border:1px solid var(--bd2);border-radius:6px;color:var(--t1);font-size:12px;padding:6px 8px}
+.risk-env-list-add .btn{flex-shrink:0;font-size:11.5px;white-space:nowrap}
 .risk-track{position:relative;height:12px;border-radius:7px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green))}
 .risk-ptr{position:absolute;top:50%;width:15px;height:15px;border-radius:50%;border:2px solid var(--bg0);transform:translate(-50%,-50%);box-shadow:0 0 7px rgba(0,0,0,.6);transition:left .5s ease}
 .risk-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1119,7 +1131,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-RISK-ENV-SUNDAY-121</span><span id="verBannerText"> (Risk-Environment-Richtung korrigiert: Bullish/Bearish/Neutral statt Normal/Inverse/None, Safe Havens (USD/CHF/JPY/Gold) werden jetzt bei riskanter Umgebung GUTgeschrieben statt abgezogen - Zahnrad-Menue nach FX/Crypto/Metals/Energy/Indices/Stocks gruppiert + je Gruppe nach Bias sortiert, Bias-Farben statt Blau. Neue Sonntags-Erinnerung "Check your Risk Environment" unter dem COT-Hinweis (wegklickbar, bis Montag aktiv, springt zum Dashboard-Regler). update-ff-calendar.yml: Commit-Push retryt jetzt mit Rebase statt Fehler-Mail bei Kollision)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-RISK-ENV-LISTS-122</span><span id="verBannerText"> (Zahnrad-Menue der Risk Environment: benannte, speicherbare Szenarien - "Save current as list" sichert die aktuelle Asset-Konfiguration unter einem Namen, Klick auf den Namen laedt sie sofort wieder, x loescht. Sinnvoll um z.B. "Oil Supply Shock" oder "Banking Crisis" vorzubereiten und im Ernstfall mit einem Klick zu aktivieren statt jedes Asset einzeln umzustellen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1704,6 +1716,14 @@ function introLogin(){
   <div class="modal">
     <h3>⚙️ Risk Environment reaction per asset</h3>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose how each asset's <b>Risk Correlation</b> indicator reacts to the Risk Environment dial above (None/Half/Full = how risky the current environment is): <b>Bullish</b> = credited when the environment is risky (classic safe haven), <b>Bearish</b> = penalized when the environment is risky (risk asset), <b>Neutral</b> = always neutral.</div>
+    <div class="risk-env-lists-sec">
+      <div class="risk-env-lists-hd">📋 Saved risk scenarios — tap a name to apply it instantly</div>
+      <div id="mRiskEnvLists"></div>
+      <div class="risk-env-list-add">
+        <input id="riskEnvListName" placeholder="Name this scenario (e.g. Oil Supply Shock)..." onkeydown="if(event.key==='Enter'){createRiskEnvList();event.preventDefault()}">
+        <button class="btn g" onclick="createRiskEnvList()">＋ Save current as list</button>
+      </div>
+    </div>
     <div id="mRiskEnvCfgList"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mRiskEnvCfg')">Done</button></div>
   </div>
@@ -4414,9 +4434,9 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog,riskEnvLevel,riskEnvCfg});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -4462,10 +4482,18 @@ setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automat
 // ══ STATE ═══════════════════════════════════════════════════════════
 let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
-// 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'normal'|
-// 'inverse'|'none'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-Menue).
-// Treibt den "Risk Correlation"-Indikator - siehe recomputeRiskCorr().
-let riskEnvLevel=0,riskEnvCfg={};
+// 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
+// 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
+// Menue). Treibt den "Risk Correlation"-Indikator - siehe recomputeRiskCorr().
+// riskEnvLists (Nutzer-Wunsch 2026-07-13 abends): benannte, speicherbare
+// Szenarien ([{id,name,cfg}], cfg = eigene riskEnvCfg-Kopie) - "Save current
+// as list" sichert die AKTUELL eingestellte Reaktionsrichtung aller Assets
+// unter einem Namen, Klick auf den Namen laedt sie wieder in riskEnvCfg (so
+// laesst sich z.B. "Oil Supply Shock" vorbereiten und bei Bedarf sofort
+// aktivieren statt jedes Asset einzeln neu einzustellen). Entkoppelt von
+// riskEnvCfg (kein "aktive Liste"-Tracking) - Bearbeiten nach dem Laden
+// schreibt nicht automatisch in die Liste zurueck, dafuer erneut speichern.
+let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // Dashboard-Schema-Migration: ergaenzt fehlende neue Module (Globus, Currency
 // Strength, Risk Sentiment, Asset-Heatmap, Mini-Kalender). dashV ist Teil des
 // synchronisierten States (snap), damit die Migration auch dann greift, wenn ein
@@ -4553,10 +4581,11 @@ function loadState(){
       eventAlerts=pruneEventAlerts(d.eventAlerts||[]);
       riskEnvLevel=d.riskEnvLevel||0;
       riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});
+      riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];riskEnvLevel=0;riskEnvCfg={};
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -5509,7 +5538,39 @@ function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_D
 function setRiskEnvDir(id,dir){
   pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
-function openRiskEnvCfgM(){renderRiskEnvCfgM();openM('mRiskEnvCfg');}
+function openRiskEnvCfgM(){renderRiskEnvCfgM();renderRiskEnvLists();openM('mRiskEnvCfg');}
+// ── Gespeicherte Risk-Szenarien (Nutzer-Wunsch 2026-07-13 abends) ──
+function createRiskEnvList(){
+  const inp=document.getElementById('riskEnvListName');if(!inp)return;
+  const name=(inp.value||'').trim();if(!name)return;
+  pushU();
+  if(!Array.isArray(riskEnvLists))riskEnvLists=[];
+  riskEnvLists.push({id:uid(),name,cfg:{...(riskEnvCfg||{})}});
+  inp.value='';
+  save();renderRiskEnvLists();
+}
+function deleteRiskEnvList(id){
+  const l=(riskEnvLists||[]).find(x=>x.id===id);
+  if(!l||!confirm('Delete the saved scenario "'+l.name+'"?'))return;
+  pushU();
+  riskEnvLists=(riskEnvLists||[]).filter(x=>x.id!==id);
+  save();renderRiskEnvLists();
+}
+function applyRiskEnvList(id){
+  const l=(riskEnvLists||[]).find(x=>x.id===id);if(!l)return;
+  pushU();
+  riskEnvCfg={...(l.cfg||{})};
+  recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
+}
+function renderRiskEnvLists(){
+  const el=document.getElementById('mRiskEnvLists');if(!el)return;
+  const lists=riskEnvLists||[];
+  el.innerHTML=lists.length?lists.map(l=>`<div class="risk-env-list-row">
+      <span class="risk-env-list-name" onclick="applyRiskEnvList('${l.id}')" title="Apply this saved scenario">${escH(l.name)}</span>
+      <button class="risk-env-list-del" onclick="deleteRiskEnvList('${l.id}')" title="Delete">×</button>
+    </div>`).join('')
+    :'<div class="risk-env-list-empty">No saved scenarios yet — set up the assets below, then save.</div>';
+}
 // Direction-Buttons in Bias-Farben statt neutralem Blau (Nutzer-Wunsch
 // 2026-07-13 abends) + Gruppierung nach SB_CATS (FX/Crypto/Metals/Energy/
 // Indices/Stocks, wie ueberall sonst im Projekt, siehe assetFilterSelect) +
