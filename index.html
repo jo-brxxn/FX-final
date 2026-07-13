@@ -563,7 +563,13 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .cot-notify-ic{font-size:16px}
 .cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px}
 .cot-notify-sub{font-size:11px;opacity:.85;margin-left:2px}
+.cot-notify-x{margin-left:auto;flex-shrink:0;background:rgba(255,255,255,.18);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:.85}
+.cot-notify-x:hover{opacity:1;background:rgba(255,255,255,.3)}
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.35)}50%{box-shadow:0 2px 18px rgba(28,100,242,.6)}}
+/* Sonntags-Erinnerung Risk Environment: gleicher Aufbau wie die COT-
+   Benachrichtigung, eigener Farbton (lila statt blau) zur Unterscheidung. */
+.risk-env-notify-card{background:linear-gradient(90deg,#4c1d95,#7c3aed);box-shadow:0 2px 10px rgba(124,58,237,.35);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
+@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.35)}50%{box-shadow:0 2px 18px rgba(124,58,237,.6)}}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -674,11 +680,15 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 .risk-env-pos{flex:1;padding:6px 4px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:700;transition:all .12s}
 .risk-env-pos.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
 .risk-env-set-note{font-size:10px;color:var(--t3);margin-top:6px;line-height:1.4}
+.risk-env-cfg-grp+.risk-env-cfg-grp{margin-top:10px}
+.risk-env-cfg-grp-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);padding:6px 0 3px}
 .risk-env-cfg-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .risk-env-cfg-name{font-size:12.5px;color:var(--t1);flex-shrink:0}
 .risk-env-cfg-btns{display:flex;gap:4px}
 .risk-env-cfg-btn{padding:3px 7px;border-radius:5px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
-.risk-env-cfg-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
+.risk-env-cfg-btn.bull.on{border-color:var(--green);background:rgba(var(--green-rgb),.15);color:var(--green)}
+.risk-env-cfg-btn.bear.on{border-color:var(--red);background:rgba(var(--red-rgb),.15);color:var(--red)}
+.risk-env-cfg-btn.neu.on{border-color:var(--amber);background:rgba(var(--amber-rgb),.15);color:var(--amber)}
 .risk-track{position:relative;height:12px;border-radius:7px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green))}
 .risk-ptr{position:absolute;top:50%;width:15px;height:15px;border-radius:50%;border:2px solid var(--bg0);transform:translate(-50%,-50%);box-shadow:0 0 7px rgba(0,0,0,.6);transition:left .5s ease}
 .risk-ends{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1109,7 +1119,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-RISK-ENVIRONMENT-120</span><span id="verBannerText"> ("Macro & Risk Environment" -> "Risk Environment" umbenannt, jetzt letzte Karte, nur noch 2 Indikatoren (Risk Correlation + Geopolitics). Neuer Risk-Sentiment-Regler im Dashboard (None/Half/Full + Zahnrad-Menue pro Asset) setzt Risk Correlation automatisch auf 5-stufiges Bias (strongly bullish...strongly bearish, +/-1 bzw. +/-0.5 Score). Migration fuer bestehende Symbole (lokal + Cloud/Undo/Redo/Backup) inklusive)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-RISK-ENV-SUNDAY-121</span><span id="verBannerText"> (Risk-Environment-Richtung korrigiert: Bullish/Bearish/Neutral statt Normal/Inverse/None, Safe Havens (USD/CHF/JPY/Gold) werden jetzt bei riskanter Umgebung GUTgeschrieben statt abgezogen - Zahnrad-Menue nach FX/Crypto/Metals/Energy/Indices/Stocks gruppiert + je Gruppe nach Bias sortiert, Bias-Farben statt Blau. Neue Sonntags-Erinnerung "Check your Risk Environment" unter dem COT-Hinweis (wegklickbar, bis Montag aktiv, springt zum Dashboard-Regler). update-ff-calendar.yml: Commit-Push retryt jetzt mit Rebase statt Fehler-Mail bei Kollision)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1408,6 +1418,7 @@ function introLogin(){
     <button class="btn g" onclick="addWidget()">＋ Widget</button>
   </div>
   <div id="cotNotifyCard"></div>
+  <div id="riskEnvRemindCard"></div>
   <div id="dashWidgets"></div>
 </div>
 
@@ -1692,7 +1703,7 @@ function introLogin(){
 <div class="ov" id="mRiskEnvCfg" style="display:none">
   <div class="modal">
     <h3>⚙️ Risk Environment reaction per asset</h3>
-    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose how each asset's <b>Risk Correlation</b> indicator reacts to the Risk Environment dial above: <b>Normal</b> = bullish when risk is on, <b>Inverse</b> = bearish when risk is on (classic safe haven), <b>None</b> = always neutral.</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose how each asset's <b>Risk Correlation</b> indicator reacts to the Risk Environment dial above (None/Half/Full = how risky the current environment is): <b>Bullish</b> = credited when the environment is risky (classic safe haven), <b>Bearish</b> = penalized when the environment is risky (risk asset), <b>Neutral</b> = always neutral.</div>
     <div id="mRiskEnvCfgList"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mRiskEnvCfg')">Done</button></div>
   </div>
@@ -3827,7 +3838,7 @@ const IND_INFO_DEFAULTS={
   'Put/Call Ratio':'CBOE options Put/Call ratio (put volume ÷ call volume). Read CONTRARIAN: a high ratio (≥1.0) means heavy hedging/fear → often a bottom (bullish); a low ratio (≤0.7) means complacency/greed → often a top (bearish). Shown in the Sentiment tab when the source is reachable; not scored (data source blocks datacenter IPs).',
   'VIX (Volatility)':'CBOE Volatility Index — the market\'s "fear gauge" (expected 30-day S&P volatility). Read CONTRARIAN: a spike (≥28) signals panic and often marks a bottom (bullish); a very low reading (≤13) signals complacency and often a top (bearish). Counts ±0.5 only at those extremes. Applies to S&P 500 & Nasdaq.',
   // Risk Environment
-  'Risk Correlation':'Set automatically, not manual: driven by the Risk Environment dial on the Dashboard (Risk Sentiment card) — None/Half/Full — combined with this asset\'s reaction direction (⚙️ gear icon there: Normal = bullish when risk is on, Inverse = bearish when risk is on / safe haven, None = always neutral). 5 levels: strongly bullish/bullish/neutral/bearish/strongly bearish, counting ±1 (strong) or ±0.5 (mild).',
+  'Risk Correlation':'Set automatically, not manual: driven by the Risk Environment dial on the Dashboard (Risk Sentiment card) — None/Half/Full = how risky the current environment is — combined with this asset\'s reaction direction (⚙️ gear icon there: Bullish = credited when the environment is risky / safe haven, Bearish = penalized when the environment is risky / risk asset, Neutral = always neutral). 5 levels: strongly bullish/bullish/neutral/bearish/strongly bearish, counting ±1 (strong) or ±0.5 (mild).',
   'Geopolitics':'Your own read of active geopolitical risk (wars, sanctions, elections, trade conflicts) and how directly it affects this asset — via safe-haven flows, energy/trade exposure, or general risk aversion. Set manually.',
 };
 function applyRubOrder(){
@@ -4263,15 +4274,30 @@ const MACRO_DATA={
     extraInfo:'Demand for AI accelerator chips (especially from hyperscalers like Microsoft, Google, Amazon, Meta to build out AI data centers) is the dominant driver. Quarterly capex guidance from the major cloud providers, as well as geopolitical export restrictions (particularly China/Taiwan, chip export controls), are among the most immediate price drivers.'},
 };
 // Default-Reaktionsrichtung je Asset auf den Risk-Sentiment-Regler (Nutzer-
-// Wunsch 2026-07-13), aus den ron/roff-Texten oben abgeleitet: 'normal' =
-// bullish wenn Risk-On (Risk-Assets: Aktien/Krypto/Rohstoff-Waehrungen),
-// 'inverse' = bearish wenn Risk-On (klassische Safe Havens). Nur ein
-// Startwert - frei ueberschreibbar ueber riskEnvCfg (Zahnrad-Menue im
-// Dashboard). Nicht gelistete/eigene Assets fallen auf 'normal' zurueck.
+// Wunsch 2026-07-13, Bedeutung am 2026-07-13 abends korrigiert): der Regler
+// beschreibt, wie RISKANT/GEFAEHRLICH die aktuelle Umgebung ist (None = ruhig,
+// Full = akute Krise) - NICHT "Risk-On-Sentiment" im klassischen FX-Jargon.
+// 'bullish' = wird gut geschrieben, wenn die Umgebung riskant ist (klassische
+// Safe Havens: USD/CHF/JPY/Gold), 'bearish' = wird abgezogen, wenn die
+// Umgebung riskant ist (Risk-Assets: Aktien/Krypto/Rohstoff-Waehrungen),
+// 'neutral' = keine Reaktion. Nur ein Startwert - frei ueberschreibbar ueber
+// riskEnvCfg (Zahnrad-Menue im Dashboard). Nicht gelistete/eigene Assets
+// fallen auf 'bearish' zurueck (die meisten Custom-Assets sind Risk-Assets,
+// keine Safe Havens).
 const RISK_ENV_DEFAULT_DIR={
-  USD:'inverse',EUR:'normal',GBP:'normal',CHF:'inverse',JPY:'inverse',CAD:'normal',AUD:'normal',NZD:'normal',
-  BTC:'normal',GOLD:'inverse',SILVER:'normal',OIL:'normal',SP500:'normal',NAS:'normal',AMZN:'normal',NVDA:'normal',
+  USD:'bullish',EUR:'bearish',GBP:'bearish',CHF:'bullish',JPY:'bullish',CAD:'bearish',AUD:'bearish',NZD:'bearish',
+  BTC:'bearish',GOLD:'bullish',SILVER:'bearish',OIL:'bearish',SP500:'bearish',NAS:'bearish',AMZN:'bearish',NVDA:'bearish',
 };
+// Migration (Nutzer-Wunsch 2026-07-13 abends): alte Werte 'normal'/'inverse'/
+// 'none' aus riskEnvCfg auf die neuen, semantisch korrigierten Namen heben -
+// 'normal' war "bullish bei Risk-On" = jetzt 'bearish' (Risk-Asset), 'inverse'
+// war "bearish bei Risk-On" = jetzt 'bullish' (Safe Haven).
+const RISK_ENV_DIR_MIGRATE={normal:'bearish',inverse:'bullish',none:'neutral'};
+function migrateRiskEnvCfg(cfg){
+  if(!cfg)return cfg;
+  Object.keys(cfg).forEach(id=>{if(RISK_ENV_DIR_MIGRATE[cfg[id]])cfg[id]=RISK_ENV_DIR_MIGRATE[cfg[id]];});
+  return cfg;
+}
 // Nur noch 2 Indikatoren (Nutzer-Wunsch 2026-07-13): "Risk Correlation"
 // (automatisch aus dem Risk-Sentiment-Regler im Dashboard, siehe
 // recomputeRiskCorr/RISK_ENV_INDS) und "Geopolitics" (manuell, wie ein
@@ -4287,7 +4313,7 @@ function mkMacroRub(id,name){
     roff:{info:`Check whether ${name} tends to lose in phases of falling risk appetite (risk-off: falling equity markets, rising VIX) or serves as a hedge.`},
   };
   const infoFn=MACRO_RUB_INFO[cls]||MACRO_RUB_INFO.fx;
-  const corrInfo=`${m.ron.info} ${m.roff.info} Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - configure ${name}'s reaction direction there via the ⚙️ gear icon, not editable here.`;
+  const corrInfo=`${m.ron.info} ${m.roff.info} Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card): None/Half/Full = how risky the current environment is. Configure whether ${name} is Bullish (credited when risky, safe haven), Bearish (penalized when risky, risk asset) or Neutral there via the ⚙️ gear icon - not editable here.`;
   return{id:uid(),name:MACRO_NAME,bias:'neu',imp:false,summary:'',info:infoFn(name),
     indicators:[
       {id:uid(),name:'Risk Correlation',bias:'neu',imp:false,date:'',interval:'',points:[],info:corrInfo},
@@ -4390,7 +4416,7 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog,riskEnvLevel,riskEnvCfg});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=d.riskEnvCfg||{};(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -4402,7 +4428,7 @@ const BACKUP_KEY='fxpro_backups';
 function saveLocalBackup(label){
   try{
     const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
-    bs.unshift({ts:new Date().toISOString(),label:label||'Auto',data:snap(),gd:JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}')});
+    bs.unshift({ts:new Date().toISOString(),label:label||'Auto',data:snap(),gd:JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}'),rerd:localStorage.getItem('fxpro_riskenv_remind_dismissed')||''});
     if(bs.length>5)bs.length=5;
     localStorage.setItem(BACKUP_KEY,JSON.stringify(bs));
   }catch(e){}
@@ -4426,6 +4452,7 @@ function restoreLocalBackup(i){
     if(!confirm('Restore state from '+new Date(b.ts).toLocaleString('en-GB')+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
     pushU();applySnap(b.data);
     if(b.gd){greenDismissed=b.gd;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(b.gd));}catch(e){}}
+    if(b.rerd!==undefined){riskEnvRemindDismissed=b.rerd;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',b.rerd);}catch(e){}}
     processCalEvts();save();renderSidebar();rerender();updUB();updInboxBadge();updGreenBadge();
     closeM('mBackup');
   }catch(e){alert('Error while restoring: '+e.message);}
@@ -4525,7 +4552,7 @@ function loadState(){
       indLinkCustom=d.indLinkCustom||{};
       eventAlerts=pruneEventAlerts(d.eventAlerts||[]);
       riskEnvLevel=d.riskEnvLevel||0;
-      riskEnvCfg=d.riskEnvCfg||{};
+      riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});
       recomputeAuto();
       return;}
   }catch(e){}
@@ -4543,6 +4570,7 @@ function adoptExternalState(){
     const s=localStorage.getItem(SK);if(!s)return;
     applySnap(s);
     try{greenDismissed=JSON.parse(localStorage.getItem('fxpro_green_dismissed')||'{}');}catch(e){}
+    try{riskEnvRemindDismissed=localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';renderRiskEnvRemind();}catch(e){}
     try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
     compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);applyCompactView();
     _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
@@ -4599,13 +4627,13 @@ function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue,scoreLog},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4690,7 +4718,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias}));
@@ -4751,6 +4779,7 @@ async function cloudPull(manual){
       pushU();applySnap(JSON.stringify(cd));
       if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
       if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
+      if(cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
       // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
       // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
       // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
@@ -5476,21 +5505,38 @@ function setRiskEnvLevel(lv){
   if(lv===riskEnvLevel)return;
   pushU();riskEnvLevel=lv;recomputeAuto();save();renderSidebar();rerender();
 }
-function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'normal';}
+function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';}
 function setRiskEnvDir(id,dir){
   pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
 function openRiskEnvCfgM(){renderRiskEnvCfgM();openM('mRiskEnvCfg');}
+// Direction-Buttons in Bias-Farben statt neutralem Blau (Nutzer-Wunsch
+// 2026-07-13 abends) + Gruppierung nach SB_CATS (FX/Crypto/Metals/Energy/
+// Indices/Stocks, wie ueberall sonst im Projekt, siehe assetFilterSelect) +
+// innerhalb jeder Gruppe sortiert nach aktueller Richtung: bullish zuerst,
+// dann neutral, dann bearish.
+const RISK_ENV_DIRS=[['bullish','▲ Bullish','Credited (bullish) when the environment is risky - typical for safe havens'],['bearish','▼ Bearish','Penalized (bearish) when the environment is risky - typical for risk assets'],['neutral','◆ Neutral','Always neutral, no reaction']];
+const RISK_ENV_DIR_CLS={bullish:'bull',bearish:'bear',neutral:'neu'};
+const RISK_ENV_DIR_ORDER={bullish:0,neutral:1,bearish:2};
 function renderRiskEnvCfgM(){
   const el=document.getElementById('mRiskEnvCfgList');if(!el)return;
-  const DIRS=[['normal','▲ Normal','Bullish when risk is on (risk asset)'],['inverse','▼ Inverse','Bearish when risk is on (safe haven)'],['none','◆ None','Always neutral, no reaction']];
-  el.innerHTML=(syms||[]).map(s=>{
-    const cur=riskEnvDirOf(s.id);
+  const avail=new Set((syms||[]).map(s=>s.id));
+  const rowHtml=id=>{
+    const s=syms.find(x=>x.id===id);if(!s)return'';
+    const cur=riskEnvDirOf(id);
     return`<div class="risk-env-cfg-row">
-      <span class="risk-env-cfg-name">${escH(s.name||s.id)}</span>
-      <div class="risk-env-cfg-btns">${DIRS.map(([k,lbl,tt])=>`<button class="risk-env-cfg-btn${cur===k?' on':''}" title="${escH(tt)}" onclick="setRiskEnvDir('${s.id}','${k}')">${lbl}</button>`).join('')}</div>
+      <span class="risk-env-cfg-name">${escH(s.name||id)}</span>
+      <div class="risk-env-cfg-btns">${RISK_ENV_DIRS.map(([k,lbl,tt])=>`<button class="risk-env-cfg-btn ${RISK_ENV_DIR_CLS[k]}${cur===k?' on':''}" title="${escH(tt)}" onclick="setRiskEnvDir('${id}','${k}')">${lbl}</button>`).join('')}</div>
     </div>`;
-  }).join('');
+  };
+  const groupHtml=(label,ids)=>{
+    const list=ids.filter(id=>avail.has(id)).sort((a,b)=>RISK_ENV_DIR_ORDER[riskEnvDirOf(a)]-RISK_ENV_DIR_ORDER[riskEnvDirOf(b)]);
+    if(!list.length)return'';
+    return`<div class="risk-env-cfg-grp"><div class="risk-env-cfg-grp-hd">${escH(label)}</div>${list.map(rowHtml).join('')}</div>`;
+  };
+  const catIds=new Set(SB_CATS.flatMap(c=>c.ids));
+  const otherIds=(syms||[]).map(s=>s.id).filter(id=>!catIds.has(id));
+  el.innerHTML=SB_CATS.map(cat=>groupHtml(cat.l,cat.ids)).join('')+groupHtml('Other',otherIds);
 }
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
@@ -5902,16 +5948,18 @@ function recomputeRubricAutoBias(){
 // Auto-Einsortierung der Paare.
 // "Risk Correlation"-Indikator (Karte "Risk Environment") automatisch aus dem
 // globalen Risk-Sentiment-Regler (riskEnvLevel: 0=keine/1=halbe/2=volle
-// Risiko-Umgebung, Dashboard-Widget "Risk Sentiment") + der pro Asset
-// hinterlegten Reaktionsrichtung (riskEnvCfg, Zahnrad-Menue dort) setzen.
-// Bei "keine" IMMER neutral (unabhaengig von der Richtung) - erst ab "halb"/
-// "voll" schlaegt die Richtung durch: normal -> bull/sbull, inverse ->
-// bear/sbear. Nicht manuell editierbar, siehe Sperre in setIndBias/togIndImp.
+// Risiko-Umgebung = wie GEFAEHRLICH/RISKANT die aktuelle Lage ist, Dashboard-
+// Widget "Risk Sentiment") + der pro Asset hinterlegten Reaktionsrichtung
+// (riskEnvCfg, Zahnrad-Menue dort) setzen. Bei "keine" IMMER neutral
+// (unabhaengig von der Richtung) - erst ab "halb"/"voll" schlaegt die
+// Richtung durch: 'bullish' (Safe Haven, wird bei Risiko gut geschrieben) ->
+// bull/sbull, 'bearish' (Risk-Asset, wird bei Risiko abgezogen) -> bear/sbear.
+// Nicht manuell editierbar, siehe Sperre in setIndBias/togIndImp.
 function riskCorrBiasFor(id){
-  const dir=(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'normal';
-  if(dir==='none'||!riskEnvLevel)return'neu';
+  const dir=(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';
+  if(dir==='neutral'||!riskEnvLevel)return'neu';
   const strong=riskEnvLevel>=2;
-  return dir==='inverse'?(strong?'sbear':'bear'):(strong?'sbull':'bull');
+  return dir==='bullish'?(strong?'sbull':'bull'):(strong?'sbear':'bear');
 }
 function recomputeRiskCorr(){
   (syms||[]).forEach(sym=>{
@@ -6986,6 +7034,53 @@ function renderCotNotify(){
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
   </div>`;
 }
+// ── Sonntags-Erinnerung "Risk Environment pruefen" (Nutzer-Wunsch
+// 2026-07-13): erscheint unter dem COT-Hinweis im GLEICHEN Stil
+// (.cot-notify-card), aber anders als dieser wegklickbar - dann bis zum
+// naechsten Sonntag weg. Aktiv den ganzen Sonntag (Geraete-Lokalzeit) bis
+// Montag; Klick auf die Karte springt zum Risk-Sentiment-Widget im
+// Dashboard. Dismiss-Stand ist eine reine UI-Erinnerung (kein Undo/kein
+// snap()) - geraeteuebergreifend synchron nach dem greenDismissed/
+// tabStacks-Muster (siehe CLAUDE.md): cloudPush/cloudPull/Save-Funktion
+// (inkl. markPrefEdit) + exportData/importData.
+let riskEnvRemindDismissed=(()=>{try{return localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';}catch(e){return'';}})();
+function riskEnvRemindSundayKey(){
+  const now=new Date();
+  if(now.getDay()!==0)return null;
+  return now.toISOString().slice(0,10);
+}
+function riskEnvRemindActive(){
+  const k=riskEnvRemindSundayKey();
+  return!!k&&riskEnvRemindDismissed!==k;
+}
+function dismissRiskEnvRemind(ev){
+  if(ev)ev.stopPropagation();
+  const k=riskEnvRemindSundayKey();if(!k)return;
+  riskEnvRemindDismissed=k;
+  try{localStorage.setItem('fxpro_riskenv_remind_dismissed',k);}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+  renderRiskEnvRemind();
+}
+function goToRiskEnvWidget(){
+  showTab('dash');
+  setTimeout(()=>{
+    const el=document.querySelector('.risk-env-set');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+  },60);
+}
+function renderRiskEnvRemind(){
+  const el=document.getElementById('riskEnvRemindCard');if(!el)return;
+  if(!riskEnvRemindActive()){el.innerHTML='';return;}
+  el.innerHTML=`<div class="cot-notify-card risk-env-notify-card" onclick="goToRiskEnvWidget()">
+    <span class="cot-notify-ic">🎚️</span>
+    <span class="cot-notify-txt">CHECK YOUR RISK ENVIRONMENT</span>
+    <span class="cot-notify-sub">Weekly reminder — tap to review the dial</span>
+    <button class="cot-notify-x" onclick="dismissRiskEnvRemind(event)" title="Dismiss until next Sunday">×</button>
+  </div>`;
+}
 // Faerbt den Aurora-Hintergrund nach dem aktuellen Risk-Sentiment (dieselbe
 // Risk-on/Risk-off-Rechnung wie im risk_sentiment-Widget): deutlich Risk-on
 // -> bullish Blauton, deutlich Risk-off -> bearish Rotton, dazwischen der
@@ -7057,6 +7152,7 @@ function resetDesignHue(){
 }
 function renderDash(){
   renderCotNotify();
+  renderRiskEnvRemind();
   updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));

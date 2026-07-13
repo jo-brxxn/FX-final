@@ -2603,5 +2603,17 @@ jobs:
           [ -f sentiment_data.json ] && git add sentiment_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
-            git push
+            # Retry mit Rebase bei Push-Kollision (Nutzer-Wunsch 2026-07-13:
+            # keine Fehler-E-Mails mehr) - vorher fuehrte ein zeitgleicher
+            # manueller Push auf main (z.B. ein Code-Commit waehrend dieser
+            # Lauf noch lief) zu "! [rejected] ... fetch first" und einer
+            # GitHub-Fehlermail, obwohl alle Datenabrufe erfolgreich waren.
+            # Die JSON-Dateien hier sind reine Workflow-Outputs, ein Rebase
+            # auf den aktuellen origin/main-Stand ist daher immer konfliktfrei.
+            for i in 1 2 3 4 5; do
+              if git push; then break; fi
+              echo "[debug] push rejected (attempt $i/5) - rebasing onto origin/main and retrying"
+              git pull --rebase origin main
+              sleep 3
+            done
           fi
