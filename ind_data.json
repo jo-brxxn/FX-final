@@ -1,57 +1,5 @@
 {
  "EUR": {
-  "NFP / Employment Change": {
-   "actual": "0.5%",
-   "forecast": "0.5%",
-   "previous": "0.1%",
-   "date": "2026-06-05",
-   "event": "Employment Change YoY Final",
-   "period": null,
-   "history": [
-    [
-     "2026-02-13",
-     "0.7%"
-    ],
-    [
-     "2026-03-06",
-     "0.2%"
-    ],
-    [
-     "2026-05-13",
-     "0.1%"
-    ],
-    [
-     "2026-06-05",
-     "0.5%"
-    ]
-   ]
-  },
-  "Unemployment Rate": {
-   "actual": "6.2%",
-   "forecast": "6.3%",
-   "previous": "6.3%",
-   "date": "2026-07-02",
-   "event": "Unemployment Rate",
-   "period": null,
-   "history": [
-    [
-     "2026-04-01",
-     "6.2%"
-    ],
-    [
-     "2026-04-30",
-     "6.2%"
-    ],
-    [
-     "2026-06-01",
-     "6.3%"
-    ],
-    [
-     "2026-07-02",
-     "6.2%"
-    ]
-   ]
-  },
   "CPI (Headline)": {
    "actual": "2.8%",
    "forecast": "3%",
@@ -130,6 +78,32 @@
     ]
    ]
   },
+  "Unemployment Rate": {
+   "actual": "6.2%",
+   "forecast": "6.3%",
+   "previous": "6.3%",
+   "date": "2026-07-02",
+   "event": "Unemployment Rate",
+   "period": null,
+   "history": [
+    [
+     "2026-04-01",
+     "6.2%"
+    ],
+    [
+     "2026-04-30",
+     "6.2%"
+    ],
+    [
+     "2026-06-01",
+     "6.3%"
+    ],
+    [
+     "2026-07-02",
+     "6.2%"
+    ]
+   ]
+  },
   "Core CPI": {
    "actual": "2.4%",
    "forecast": "2.6%",
@@ -179,6 +153,32 @@
     [
      "2026-07-06",
      "5.9%"
+    ]
+   ]
+  },
+  "NFP / Employment Change": {
+   "actual": "0.5%",
+   "forecast": "0.5%",
+   "previous": "0.1%",
+   "date": "2026-06-05",
+   "event": "Employment Change YoY Final",
+   "period": null,
+   "history": [
+    [
+     "2026-02-13",
+     "0.7%"
+    ],
+    [
+     "2026-03-06",
+     "0.2%"
+    ],
+    [
+     "2026-05-13",
+     "0.1%"
+    ],
+    [
+     "2026-06-05",
+     "0.5%"
     ]
    ]
   },
