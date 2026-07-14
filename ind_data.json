@@ -995,17 +995,13 @@
    ]
   },
   "Consumer Confidence": {
-   "actual": "80.6",
+   "actual": "83.9",
    "forecast": null,
-   "previous": "83",
-   "date": "2026-06-09",
+   "previous": "80.6",
+   "date": "2026-07-14",
    "event": "Westpac Consumer Confidence Index",
    "period": null,
    "history": [
-    [
-     "2026-03-09",
-     "91.6"
-    ],
     [
      "2026-04-14",
      "80.1"
@@ -1017,6 +1013,10 @@
     [
      "2026-06-09",
      "80.6"
+    ],
+    [
+     "2026-07-14",
+     "83.9"
     ]
    ]
   },
