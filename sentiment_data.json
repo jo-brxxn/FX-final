@@ -398,15 +398,11 @@
    ]
   ]
  },
- "updated": "2026-07-14T01:24:08.631Z",
+ "updated": "2026-07-14T04:41:11.439Z",
  "stockFng": {
   "value": 44,
   "label": "fear",
   "series": [
-   [
-    "2026-01-22",
-    55
-   ],
    [
     "2026-01-23",
     55
@@ -880,7 +876,11 @@
     44
    ],
    [
-    "2026-07-13",
+    "2026-07-14",
+    44
+   ],
+   [
+    "2026-07-14",
     44
    ]
   ]
@@ -893,8 +893,8 @@
   },
   {
    "sym": "GBPUSD",
-   "long": 41,
-   "short": 59
+   "long": 47,
+   "short": 53
   },
   {
    "sym": "USDJPY",
@@ -903,38 +903,38 @@
   },
   {
    "sym": "GBPJPY",
-   "long": 41,
-   "short": 59
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "USDCAD",
-   "long": 22,
-   "short": 78
+   "long": 23,
+   "short": 77
   },
   {
    "sym": "EURAUD",
-   "long": 66,
-   "short": 34
+   "long": 67,
+   "short": 33
   },
   {
    "sym": "EURJPY",
-   "long": 30,
-   "short": 70
+   "long": 32,
+   "short": 68
   },
   {
    "sym": "AUDCAD",
-   "long": 46,
-   "short": 54
+   "long": 48,
+   "short": 52
   },
   {
    "sym": "AUDJPY",
-   "long": 49,
-   "short": 51
+   "long": 50,
+   "short": 50
   },
   {
    "sym": "AUDNZD",
-   "long": 34,
-   "short": 66
+   "long": 37,
+   "short": 63
   },
   {
    "sym": "AUDUSD",
@@ -953,8 +953,8 @@
   },
   {
    "sym": "EURCHF",
-   "long": 17,
-   "short": 83
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "EURGBP",
@@ -963,33 +963,33 @@
   },
   {
    "sym": "EURNZD",
-   "long": 72,
-   "short": 28
+   "long": 75,
+   "short": 25
   },
   {
    "sym": "GBPCAD",
-   "long": 24,
-   "short": 76
+   "long": 25,
+   "short": 75
   },
   {
    "sym": "GBPCHF",
-   "long": 12,
-   "short": 88
+   "long": 11,
+   "short": 89
   },
   {
    "sym": "NZDCAD",
-   "long": 22,
-   "short": 78
+   "long": 21,
+   "short": 79
   },
   {
    "sym": "NZDJPY",
-   "long": 41,
-   "short": 59
+   "long": 40,
+   "short": 60
   },
   {
    "sym": "NZDUSD",
-   "long": 55,
-   "short": 45
+   "long": 56,
+   "short": 44
   },
   {
    "sym": "USDCHF",
@@ -998,23 +998,23 @@
   },
   {
    "sym": "CHFJPY",
-   "long": 32,
-   "short": 68
+   "long": 33,
+   "short": 67
   },
   {
    "sym": "AUDCHF",
-   "long": 14,
-   "short": 86
+   "long": 15,
+   "short": 85
   },
   {
    "sym": "GBPNZD",
-   "long": 31,
-   "short": 69
+   "long": 35,
+   "short": 65
   },
   {
    "sym": "NZDCHF",
-   "long": 16,
-   "short": 84
+   "long": 15,
+   "short": 85
   },
   {
    "sym": "CADCHF",
@@ -1023,13 +1023,13 @@
   },
   {
    "sym": "GBPAUD",
-   "long": 18,
-   "short": 82
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "XAUUSD",
-   "long": 61,
-   "short": 39
+   "long": 58,
+   "short": 42
   },
   {
    "sym": "XAGUSD",
@@ -1038,8 +1038,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 45,
-   "short": 55
+   "long": 47,
+   "short": 53
   },
   {
    "sym": "US500",
