@@ -451,10 +451,21 @@ Karte → Symbol → Paar). Endstand nach Nutzer-Korrektur:
   ÜBERALL der Vergleichs-Score** (Sidebar, Detail-Badge, Globe,
   Symbol-Widgets, Risk-Zeilen, Heatmap, Matrix-Ranking, Set-ups-Liste,
   Weekly-Report-Snapshot). Die ±3-Auto-Bias-Schwelle wertet weiterhin
-  die ROHE Summe aus (im Modal + Badge-Tooltip offengelegt); ebenso
-  bleiben Score-Historie (`recordScoreHist`), Tages-History-Panel und
-  Flip-Alerts auf roher Basis. Das Symbol-Modal zeigt beide Zeilen:
-  "Raw sum of all indicators" und "Displayed score: raw × Faktor".
+  die ROHE Summe aus (im Modal + Badge-Tooltip offengelegt) — diese
+  EINE Stelle bleibt bewusst roh (Bias-Klassifikation, keine Anzeige-
+  Zahl). Das Symbol-Modal zeigt beide Zeilen: "Raw sum of all
+  indicators" und "Displayed score: raw × Faktor".
+  **Update 2026-07-13 (Nutzer-Bugreport):** `recordScoreHist` (Score-
+  Historie/Trends-Chart/"Today's Movers"), das `risk_sentiment`-Widget
+  (Summenzeile + Aurora-Färbung) und der Flip-Alert-Text liefen noch auf
+  roher Basis — dadurch konnte sich der angezeigte (Vergleichs-)Score
+  eines Symbols ändern, OHNE dass die History das zeigte (z. B. NZDs
+  Score verschob sich, weil sich `symCmpFactor` durch eine ANDERE
+  Währung mit geänderter Indikatoren-Anzahl verschob, NZDs roher Score
+  blieb aber gleich). Alle vier jetzt auf `symScoreCmp` umgestellt —
+  ÜBERALL exakt derselbe angezeigte Wert, auf die Nachkommastelle genau.
+  Die Bias-Flip-AUSLÖSUNG selbst (`scoreBias`/`recomputeAllSymBiases`)
+  bleibt roh, nur die im Alert-Text angezeigte Zahl wurde umgestellt.
 - Score-Modal (Klick auf jeden Score) zeigt: Zusammensetzung je Indikator,
   Gruppen-Hinweis, Release-Datum + Alter (amber >45 Tage), Comparison-
   Score-Zeile, aktive/gesamt Indikatoren, Paar-Skalierungs-Fußnote.
