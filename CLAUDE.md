@@ -500,3 +500,87 @@ BEWUSST NICHT geändert (mit Nutzer-Kontext, nicht heimlich "fixen"):
   was genau die Ursache war), eine neue Session vorschlagen, und NICHT blind
   ohne Verifikation an Workflow-Änderungen weiterarbeiten, die
   `workflow_dispatch`/Job-Logs zur Bestätigung brauchen.
+
+### Geopolitics entfernt, Risk Environment neu (Nutzer-Wunsch 2026-07-13/14)
+
+- Die eigenständige "Geopolitics"-Karte wurde bei ALLEN Assets entfernt
+  (`stripGeopoliticsRub`, in `migrateRubInds`/`applySnap` eingehängt).
+- `Macro & Risk Environment` heißt jetzt nur noch **`Risk Environment`**
+  (`MACRO_NAME`), enthält nur noch genau 2 Indikatoren — `Risk Correlation`
+  und `Geopolitics` (wieder da, aber innerhalb dieser einen Karte, nicht mehr
+  als eigene Rubrik) — und steht als LETZTE Karte (`addMacroRub` pusht statt
+  unshiftet; `ensureRiskEnvLast()` migriert Bestandsreihenfolgen einmalig).
+- Dashboard-Regler (`riskEnvLevel`: 0=None/0.5=Half/1=Full) auf der
+  Risk-Sentiment-Karte steuert automatisch den 5-stufigen Bias von
+  `Risk Correlation` (strongly bullish/bullish/neutral/bearish/strongly
+  bearish, ±2/±1/0 roh → durch `indIsHalfWeight` ±1/±0,5 Score-Wirkung).
+  Zahnrad-Menü (`openRiskEnvCfgM`) legt PRO ASSET fest, wie es reagiert:
+  **`bullish`** = wird bei riskantem Umfeld GUTGESCHRIEBEN (Safe Haven, z.B.
+  USD/CHF/JPY/Gold), **`bearish`** = wird ABGEZOGEN (Risk Asset, alles
+  andere), **`neutral`** = keine Reaktion (`RISK_ENV_DEFAULT_DIR`). **Nicht
+  verwechseln mit "risk-on/risk-off"-Jargon** — die Richtung sagt NICHT "wie
+  verhält sich der Markt", sondern direkt "wird dieses Asset bei viel Risiko
+  besser oder schlechter bewertet". Zahnrad-Liste ist nach `SB_CATS`
+  gruppiert (FX/Crypto/Metals/…) und innerhalb jeder Gruppe nach aktuellem
+  Bias sortiert (bullish → neutral → bearish). Gespeicherte Szenarien
+  (`riskEnvLists`, Name + Snapshot der `riskEnvCfg`) lassen sich anlegen,
+  anwenden, löschen. Alle drei State-Variablen (`riskEnvLevel`, `riskEnvCfg`,
+  `riskEnvLists`) sind Teil von `snap()`/`applySnap()` (Undo + Cloud-Sync).
+  Sonntags-Erinnerung (`riskEnvRemindActive()`, unter der COT-Erinnerung,
+  gleicher Stil, bleibt bis Montag/bis weggeklickt) erinnert daran, die
+  Einstellung zu überprüfen; Klick springt zur Risk-Sentiment-Karte.
+
+### Score-History-Bug: "History"-Karte zeigte falsche/zu viele Events (Bugreport 2026-07-15)
+
+- Nutzer bemerkte in der Asset-"History"-Karte (🕰️-Button, `openHistModal`)
+  Zeilen wie "CPI m/m: -1" an einem CPI-Release-Tag, obwohl sich der
+  tatsächliche (Live-)Score dadurch gar nicht verändert hatte.
+- Ursache: `symHistoryDays()` nutzte `isScoreDrivingEvent()` — ein reiner
+  Namens-Regex-Match über ALLE Kalenderzeilen des Tages. Ein CPI-Release
+  liefert aber oft mehrere Kalenderzeilen fürs selbe Thema (CPI m/m, CPI y/y,
+  CPI s.a., Core CPI m/m, Core CPI y/y), die alle denselben Matcher treffen
+  — die History-Karte zählte jede einzeln als eigenen ±1-Effekt, obwohl der
+  echte Score pro Indikator-KARTE nur EIN Event zieht (`findIndEvent`, mit
+  Perioden-Filter aus `stripPeriodSuffix`) und "CPI m/m" als Basisname "CPI"
+  gar keinen eigenen `IND_EVENT_MATCHERS`-Eintrag hat, also nie automatisch
+  bepreist wird.
+- Fix: neue Funktion `symScoreDrivingEventsByDate(id)` iteriert stattdessen
+  über die ECHTEN Indikator-Karten des Symbols (nur `IND_AUTO_RUBS`-Rubriken,
+  nur FX — Nicht-FX wird von `syncIndicatorBiases()` ohnehin nie automatisch
+  aus Kalender-Events bepreist) und holt sich über `findIndEvent(id,
+  ind.name)` GENAU das Event, das auch die echte Karte bepreist — dieselbe
+  Selektion wie im Live-Score. `symHistoryDays()` nutzt das jetzt für Anzeige
+  UND Score-Rückrechnung. Bei einer Änderung an `IND_EVENT_MATCHERS` oder an
+  `findIndEvent`/`stripPeriodSuffix` daran denken, dass `symHistoryDays()`
+  genau diese Selektion spiegelt — nicht wieder auf einen losen Namens-Match
+  zurückfallen.
+
+### Indikator-Historie-Chart (Nutzer-Wunsch 2026-07-15)
+
+- Neue, von `ind.valHist` (4-Punkte-Trend-Array, unverändert) komplett
+  GETRENNTE Reihe `ind.chartHist` (`[Datum, actual, forecast][]`, bis zu 3
+  Jahre) — befüllt über `adoptChartHist()` in `applyIndDataFeed()`. Workflow
+  (`update-ff-calendar.yml`, Schritt "Fetch TradingView wide window for
+  indicator values") lädt dafür schrittweise (max. 1 zusätzlicher 60-Tage-
+  TradingView-Chunk pro Stunde, Fortschritt in `ind_data.json.
+  _histChunksFetched`, Ziel 18 Chunks ≈ 3 Jahre) und mergt über den
+  `prevOut`-Bestand (`historyFull` je Indikator), damit nichts verloren
+  geht. CSPI ("Services Inflation") bekommt bewusst kein `historyFull", da
+  es erst nach der Merge-Stelle konstruiert wird — akzeptierte Lücke.
+- UI: `indHistChart(ind)` — Balken=Actual (mit Wert-Label), andersfarbige
+  Linie=Forecast, Range-Filter `IND_HIST_RANGES` (3Y/2Y/1Y/6M/3M/1M, Default
+  1Y). Erscheint (a) beim Ausklappen eines Indikators auf der Asset-
+  Detailseite (`<details class="ind-data">`, nur wenn `chartHist.length>=2`)
+  und (b) im neuen Insights-Tab **"Data"** (`renderDataTab`, Asset-Filter via
+  `assetFilterSelect`, dann Indikator-`<select>` gruppiert nach den Rubriken
+  DIESES Assets — unterschiedliche Assets zeigen automatisch unterschiedliche
+  Listen, da direkt aus `sym.rubrics` gebaut).
+- **Bug gefixt:** natives `<details>` hat keinen persistenten Open-Status —
+  ein Klick auf einen Range-Filter-Button ruft `setIndHistRange()` →
+  `renderDetail()` auf, was das gesamte `#detail`-Panel neu baut und damit
+  das gerade geöffnete `<details>` wieder zuklappte (Buttons/Chart
+  verschwanden mitten in der Interaktion). Fix: transientes (kein Sync, kein
+  Undo) `indDetailsOpen{}`-Objekt, `<details ${indDetailsOpen[ind.id]?'
+  open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">` — dasselbe
+  Muster bei künftigen `<details>`-Elementen verwenden, die von einem
+  inneren Klick aus neu gerendert werden können.

@@ -514,6 +514,12 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
+/* Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14) */
+.ind-hist-wrap{padding:8px 4px 4px}
+.ind-hist-range-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.ind-hist-range-btn{padding:3px 9px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
+.ind-hist-range-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
+.ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
 .cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
@@ -1131,7 +1137,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#155e63;color:#cffafe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-SCORE-CONSISTENCY-123</span><span id="verBannerText"> (Bugfix: recordScoreHist (Score-Historie/Trends-Chart/"Today's Movers"), das Risk-Sentiment-Widget (Summenzeile+Aurora-Faerbung) und der Flip-Alert-Text liefen noch auf dem ROHEN Score statt dem ueberall angezeigten Vergleichs-Score (symScoreCmp) - dadurch konnte sich z.B. NZDs angezeigter Score aendern, ohne dass die History es zeigte, weil sich der Vergleichsfaktor durch eine ANDERE Waehrung verschob. Jetzt ueberall exakt derselbe Wert bis auf die Nachkommastelle)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#cffafe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3730a3;color:#e0e7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-INDICATOR-HISTORY-124</span><span id="verBannerText"> (Neu: Indikator-Historie-Chart (Balken=Actual, Linie=Forecast, bis 3 Jahre, Range-Filter 3Y/2Y/1Y/6M/3M/1M) beim Ausklappen eines Indikators + neuer Insights-Tab "Data" (Asset- + Indikator-Auswahl, nach Rubrik gruppiert). Bugfix: <details> klappte bei jedem Range-Filter-Klick wieder zu (renderDetail() baut das Panel neu, Offen-Status war nicht persistiert - jetzt ueber indDetailsOpen gemerkt). Bugfix: die "History"-Karte pro Asset zeigte faelschlich JEDE Kalender-Zeile (z.B. CPI m/m UND CPI y/y UND CPI s.a am selben Tag) als eigenen -1/+1-Score-Effekt, obwohl "CPI m/m" gar keinen eigenen Score-Indikator hat und der echte Score sich gar nicht bewegte - jetzt zaehlt nur noch genau das Event, das auch die echte Indikator-Karte bepreist)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e0e7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1355,6 +1361,14 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
   </div>
   <div id="seasBody"></div>
+</div>
+<!-- PAGE: DATA (Nutzer-Wunsch 2026-07-14: Indikator-Verlaufschart-Browser) -->
+<div class="pc" id="pgData" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Data</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Browse any indicator's release history — actual vs. forecast, up to 3 years</div>
+  </div>
+  <div id="dataBody"></div>
 </div>
 <!-- PAGE: CARRY TRADE SCANNER -->
 <div class="pc" id="pgCarry" style="display:none">
@@ -2725,6 +2739,11 @@ function getSymEventsCompact(id){
 }
 const evtSectionOpen={};
 function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetail();}
+// Offen/Zu-Status der Indikator-Datenhistorie (<details class="ind-data">) -
+// rein transient (kein Sync, kein Undo), nur damit ein Klick auf einen
+// Range-Filter-Button INNERHALB der Chart (der renderDetail() neu aufruft)
+// das gerade geoeffnete Details-Element nicht wieder zuklappt.
+const indDetailsOpen={};
 
 // ── ASSET HISTORY (letzte HIST_DAYS Tage) ──
 // Reine Ableitung aus calEvts (derselben Quelle wie Kalender/Postfach) - es
@@ -2734,17 +2753,41 @@ function toggleEvtSection(id){evtSectionOpen[id]=!evtSectionOpen[id];renderDetai
 // in dieselbe Bias-Farbe wie überall sonst (BC) übersetzt. Tage ohne Event
 // bleiben leer/grau statt fälschlich "neutral" zu zeigen.
 const HIST_DAYS=10;
+// Score-treibende Events pro Tag = GENAU die Events, die syncIndicatorBiases()
+// tatsaechlich fuer die echten Indikator-Karten heranzieht (ein Event pro
+// Indikator, via findIndEvent - dieselbe Matcher+Perioden-Selektion). Ein
+// simpler Namens-Match (frueher: isScoreDrivingEvent auf ALLE Kalender-
+// Zeilen) zaehlte faelschlich jede Perioden-Variante eines Releases einzeln
+// mit (z.B. "CPI m/m" UND "CPI y/y" UND "CPI s.a" am selben CPI-Tag als 3
+// getrennte -1/+1), obwohl der echte Score sich nur ueber die tatsaechliche
+// Indikator-Karte bewegt (Bugreport 2026-07-15: History zeigte "CPI m/m: -1"
+// etc., obwohl sich der Live-Score dadurch gar nicht geaendert hatte - "CPI
+// m/m" hat als Basisname "CPI" gar keinen eigenen IND_EVENT_MATCHERS-Eintrag
+// und wird nie automatisch bepreist). Nicht-FX-Assets werden von
+// syncIndicatorBiases() nie automatisch aus Kalender-Events bepreist -fuer
+// sie bleibt die Liste konsequent leer statt Kalender-Rauschen zu zeigen.
+function symScoreDrivingEventsByDate(id){
+  const byDate={};
+  if(isNonFx(id))return byDate;
+  const c=syms.find(s=>s.id===id);
+  ((c&&c.rubrics)||[]).forEach(rub=>{
+    if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
+    rub.indicators.forEach(ind=>{
+      const ev=findIndEvent(id,ind.name);
+      if(!ev)return;
+      (byDate[ev.date]=byDate[ev.date]||[]).push(ev);
+    });
+  });
+  return byDate;
+}
 function symHistoryDays(id,days){
   days=days||HIST_DAYS;
-  const all=getSymEventsAll(id);
   const today=todayStr();
+  const evsByDate=symScoreDrivingEventsByDate(id);
   const out=[];
   for(let i=days-1;i>=0;i--){
     const date=dateAddStr(today,-i);
-    // Nur score-treibende Events (CPI, NFP, Zins, PMI, GDP ...) zaehlen fuer
-    // Tages-Bias UND fuer die Event-Liste - sonst faerben/listen belanglose
-    // Nebenmeldungen (z.B. Anleihe-Auktionen, Reden) den Tag mit ein.
-    const evs=all.filter(ev=>ev.date===date&&ev.actual!=null&&ev.actual!==''&&isScoreDrivingEvent(ev));
+    const evs=evsByDate[date]||[];
     let bias='';
     if(evs.length){
       const biases=[...new Set(evs.map(ev=>indBiasFromEvent(ev)))];
@@ -3085,6 +3128,19 @@ function adoptFeedHistory(ind,f){
   ind.valHist=nh;
   ind.valDates=ndates;
   ind.valDate=nd;
+  return true;
+}
+// Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14): uebernimmt
+// f.historyFull = [[Datum,Actual,Forecast],...] (aeltester zuerst, bis zu 3
+// Jahre, akkumuliert vom Workflow ueber viele Laeufe) als ind.chartHist -
+// komplett GETRENNT von ind.valHist (4-Punkte-Trend-Array, unveraendert).
+// Forecast kann pro Punkt null sein (nicht jedes Release hat einen).
+function adoptChartHist(ind,f){
+  if(!f||!Array.isArray(f.historyFull)||!f.historyFull.length)return false;
+  const pts=f.historyFull.map(h=>[String((h&&h[0])||'').slice(0,10),parseNumLike(h&&h[1]),h&&h[2]!=null?parseNumLike(h[2]):null]).filter(p=>p[1]!=null);
+  if(!pts.length)return false;
+  if(JSON.stringify(ind.chartHist||[])===JSON.stringify(pts))return false;
+  ind.chartHist=pts;
   return true;
 }
 // Fortschritt Richtung 2-Schritt-Trend: zaehlt die zusammenhaengenden,
@@ -5077,6 +5133,7 @@ function renderDetail(){
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
+  attachChartHovers(document.getElementById('detail'));
   animChanges();
   updateStat();
 }
@@ -5264,13 +5321,14 @@ function renderInd(ind,ri,ii,total){
     // Overlay erhalten) – sonst erschiene der m/m-Link nur bei Indikatoren
     // ohne Live-Daten.
     const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${escH(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
-    dataPart=`<details class="ind-data">
+    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
+      ${ind.chartHist&&ind.chartHist.length>=2?indHistChart(ind):''}
     </details>`;
   }else if(ind.research){
     const r=ind.research;
@@ -5291,13 +5349,14 @@ function renderInd(ind,ri,ii,total){
     const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
     const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">As of:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
-    dataPart=`<details class="ind-data">
+    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">
       <summary class="ind-data-sum" title="Last known value${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         ${(r.bond||r.cot||r.sent)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>`}
       </summary>
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
+      ${ind.chartHist&&ind.chartHist.length>=2?indHistChart(ind):''}
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
@@ -6786,6 +6845,10 @@ function applyIndDataFeed(){
           if(trackIndValues(ind,macroCcyFor(c.id),f.date,na,np))changed=true;
           if(applyTrendModel(ind,nf==null,false))changed=true;
         }
+        // Verlaufschart-Historie unabhaengig von fx/non-fx (non-FX-Assets
+        // zeigen dieselbe gespiegelte Makro-Karte wie ihre verbundene
+        // Waehrung, siehe macroCcyFor - der Chart soll dort genauso stehen).
+        if(adoptChartHist(ind,f))changed=true;
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
         // Previous = einfach der zuletzt gemeldete Actual-Wert der Vorperiode -
         // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
@@ -9248,6 +9311,114 @@ function sentSpark(series,lo,hi,loTh,hiTh){
   const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#5fa8ed';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
   return chartHoverWrap(svg,hpts);
 }
+// ── Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14): Balken = Actual,
+// andersfarbige Linie = Forecast, ueber ind.chartHist ([[Datum,Actual,
+// Forecast],...], aeltester zuerst, bis zu 3 Jahre vom Workflow akkumuliert,
+// siehe adoptChartHist). Feste viewBox-Breite + width:100% (wie sentSpark/
+// seasBarChart) statt dynamischer Breite - der Chart passt sich damit IMMER
+// der Kartenbreite an, egal wie viele Punkte (1 Monat = 1 Balken bis 3 Jahre
+// bei woechentlichen Releases = ~156 Balken) - kein Ueberlauf, kein
+// horizontales Wegwischen noetig (Projekt-Grundsatz). Werte-Labels IN den
+// Balken nur, wenn genug Platz ist; sonst nur ueber den Hover/Touch-Tooltip
+// (chartHoverWrap/attachChartHovers, Standard-Pattern fuer alle Charts hier).
+const IND_HIST_RANGES=[[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M']];
+let indHistRange=12; // Default beim Oeffnen: 1 Jahr (Nutzer-Wunsch)
+function setIndHistRange(months){
+  indHistRange=months;
+  renderDetail();
+}
+function indHistChart(ind){
+  const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const rangeBar=`<div class="ind-hist-range-bar">${IND_HIST_RANGES.map(([m,lbl])=>`<button class="ind-hist-range-btn${indHistRange===m?' on':''}" onclick="setIndHistRange(${m})">${lbl}</button>`).join('')}</div>`;
+  if(all.length<2){
+    return`<div class="ind-hist-wrap">${rangeBar}<div class="ind-hist-empty">Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).</div></div>`;
+  }
+  const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-indHistRange);
+  let use=all.filter(p=>new Date(p[0]+'T00:00:00')>=cutoff);
+  if(use.length<2)use=all.slice(-Math.min(all.length,4)); // Filter zu eng (junger Indikator) -> letzte verfuegbare Punkte statt leer
+  const n=use.length;
+  const W=720,H=230,padL=10,padR=10,padT=24,padB=28;
+  const vals=[];use.forEach(p=>{vals.push(p[1]);if(p[2]!=null)vals.push(p[2]);});
+  let vMin=Math.min(0,...vals),vMax=Math.max(0,...vals);
+  if(vMin===vMax){vMin-=1;vMax+=1;}
+  const span=vMax-vMin;
+  const yOf=v=>padT+(1-(v-vMin)/span)*(H-padT-padB);
+  const y0=yOf(0);
+  const bw=Math.max(1.5,(W-padL-padR)/n*0.56);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  const showLbl=bw>=22;
+  const unit=(ind.research&&ind.research.unit)||'';
+  const fmtV=v=>v==null?'':(Math.round(v*100)/100)+unit;
+  let bars='';
+  use.forEach((p,i)=>{
+    const x=xOf(i),y=yOf(p[1]),top=Math.min(y,y0),h=Math.abs(y-y0);
+    bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)"/>`;
+    if(showLbl)bars+=`<text x="${x.toFixed(1)}" y="${(top-4).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0)">${escH(fmtV(p[1]))}</text>`;
+  });
+  let fcPath='',started=false,fcDots='';
+  use.forEach((p,i)=>{
+    if(p[2]==null){started=false;return;}
+    const x=xOf(i),y=yOf(p[2]);
+    fcPath+=(started?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+    started=true;
+    fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${n>40?1.6:3.2}" fill="var(--red)"/>`;
+  });
+  // Datumsbeschriftung ausduennen, wenn zu viele Punkte fuer lesbare Labels.
+  const lblEvery=Math.max(1,Math.ceil(n/10));
+  let xlab='';
+  use.forEach((p,i)=>{
+    if(i%lblEvery!==0&&i!==n-1)return;
+    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=dt.toLocaleDateString('en',{month:'short',year:'2-digit'});}catch(e){lbl=p[0];}
+    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+    <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
+    <text x="${W-padR}" y="14" text-anchor="end" style="font-size:9.5px;font-weight:700;fill:var(--blue)">■ Actual</text>
+    <text x="${W-padR-64}" y="14" text-anchor="end" style="font-size:9.5px;font-weight:700;fill:var(--red)">— Forecast</text>
+    ${bars}
+    ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`:''}
+    ${fcDots}
+    ${xlab}
+  </svg>`;
+  const hpts=use.map((p,i)=>{
+    let lbl;try{lbl=fmtDayHdr(p[0]);}catch(e){lbl=p[0];}
+    return{fx:xOf(i)/W,fy:yOf(p[1])/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
+  });
+  return`<div class="ind-hist-wrap">${rangeBar}${chartHoverWrap(svg,hpts)}</div>`;
+}
+// ── Insights-Tab "Data" (Nutzer-Wunsch 2026-07-14): Asset waehlen, dann
+// einen Indikator (gruppiert nach dessen Karte - Inflation, Interest Rates,
+// ...; unterschiedliche Assets tracken unterschiedliche Indikatoren, daher
+// wird die Liste live aus sym.rubrics des GEWAEHLTEN Assets gebaut statt
+// aus einer festen Liste). Zeigt darunter denselben indHistChart wie beim
+// Ausklappen eines Indikators auf der Asset-Seite.
+let dataAsset='',dataIndBase='';
+function setDataAsset(v){dataAsset=v||'';dataIndBase='';renderDataTab();}
+function setDataInd(v){dataIndBase=v||'';renderDataTab();}
+function renderDataTab(){
+  const el=document.getElementById('dataBody');if(!el)return;
+  const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
+  if(dataAsset&&!ids.includes(dataAsset))dataAsset='';
+  const assetPicker=assetFilterSelect(ids,dataAsset,'setDataAsset','Choose an asset...','Filter by asset',null);
+  const sym=dataAsset?syms.find(s=>s.id===dataAsset):null;
+  let indPicker='',chartSection='';
+  if(sym){
+    const groups=(sym.rubrics||[]).map(rub=>{
+      const items=(rub.indicators||[]).map(ind=>({base:stripPeriodSuffix(ind.name).base,name:ind.displayName||ind.name,ind}));
+      return items.length?{name:rub.name,items}:null;
+    }).filter(Boolean);
+    if(dataIndBase&&!groups.some(g=>g.items.some(it=>it.base===dataIndBase)))dataIndBase='';
+    const opts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
+    indPicker=`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Filter by indicator" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator...</option>${opts}</select></div>`;
+    if(dataIndBase){
+      const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
+      const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
+      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind)}</div></div>`;
+    }
+  }
+  el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${assetPicker}${indPicker}</div>${chartSection||`<div class="cot-empty">${sym?'Pick an indicator above.':'Pick an asset above to browse its indicator history.'}</div>`}`;
+  attachChartHovers(el);
+}
 function sentReadBadge(ev){
   if(!ev)return`<span style="color:var(--t3);font-size:12px">no data</span>`;
   const col=ev.bias==='bull'?BC.bull:ev.bias==='bear'?BC.bear:BC.neu;
@@ -9746,11 +9917,11 @@ SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. fx/nonfx zeigen beide die
 // 'cur'-Seite, nur mit anderem Modus.
-const TAB_ORDER=['dash','fx','nonfx','cmp','mx','trends','cot','sent','seas','carry','pairs','cal','notes'];
+const TAB_ORDER=['dash','fx','nonfx','cmp','mx','trends','cot','sent','seas','data','carry','pairs','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   fx:{label:'FX',tab:'cur',mode:'fx'},
@@ -9761,6 +9932,7 @@ const TABS={
   cot:{label:'COT',tab:'cot'},
   sent:{label:'Sentiment',tab:'sent'},
   seas:{label:'Seasonality',tab:'seas'},
+  data:{label:'Data',tab:'data'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   cal:{label:'Calendar',tab:'cal'},
@@ -9780,9 +9952,13 @@ function loadTabStacks(){
     // Seasonality ebenso nachtraeglich einreihen (direkt nach Sentiment).
     const ins2=tabStacks.find(st=>st.members&&st.members.includes('sent')&&!st.members.includes('seas'));
     if(ins2){const i=ins2.members.indexOf('sent');ins2.members.splice(i+1,0,'seas');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
+    // Data (Indikator-Verlaufschart-Browser) ebenso nachtraeglich einreihen
+    // (direkt nach Seasonality, Nutzer-Wunsch 2026-07-14).
+    const ins3=tabStacks.find(st=>st.members&&st.members.includes('seas')&&!st.members.includes('data'));
+    if(ins3){const i=ins3.members.indexOf('seas');ins3.members.splice(i+1,0,'data');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','carry']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -9920,6 +10096,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='cot'){renderCot();autoFetchCot();}
   else if(tab==='sent'){renderSentiment();autoFetchSentiment();}
   else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
+  else if(tab==='data')renderDataTab();
   else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
@@ -9934,6 +10111,7 @@ function rerender(){
   else if(curPage==='cot')renderCot();
   else if(curPage==='sent')renderSentiment();
   else if(curPage==='seas')renderSeasonality();
+  else if(curPage==='data')renderDataTab();
   else if(curPage==='carry')renderCarry();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
