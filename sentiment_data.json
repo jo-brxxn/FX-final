@@ -366,7 +366,7 @@
   ]
  },
  "vix": {
-  "value": 16.19,
+  "value": 16.34,
   "series": [
    [
     "2026-07-08",
@@ -398,13 +398,13 @@
    ],
    [
     "2026-07-15",
-    16.19
+    16.34
    ]
   ]
  },
- "updated": "2026-07-15T15:18:32.394Z",
+ "updated": "2026-07-15T17:05:14.986Z",
  "stockFng": {
-  "value": 47,
+  "value": 45,
   "label": "neutral",
   "series": [
    [
@@ -881,34 +881,34 @@
    ],
    [
     "2026-07-15",
-    47
+    45
    ],
    [
     "2026-07-15",
-    47
+    45
    ]
   ]
  },
  "retail": [
   {
    "sym": "EURUSD",
-   "long": 59,
-   "short": 41
+   "long": 58,
+   "short": 42
   },
   {
    "sym": "GBPUSD",
-   "long": 43,
-   "short": 57
+   "long": 37,
+   "short": 63
   },
   {
    "sym": "USDJPY",
-   "long": 29,
-   "short": 71
+   "long": 30,
+   "short": 70
   },
   {
    "sym": "GBPJPY",
-   "long": 28,
-   "short": 72
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "USDCAD",
@@ -922,18 +922,18 @@
   },
   {
    "sym": "EURJPY",
-   "long": 27,
-   "short": 73
+   "long": 26,
+   "short": 74
   },
   {
    "sym": "AUDCAD",
-   "long": 37,
-   "short": 63
+   "long": 35,
+   "short": 65
   },
   {
    "sym": "AUDJPY",
-   "long": 25,
-   "short": 75
+   "long": 24,
+   "short": 76
   },
   {
    "sym": "AUDNZD",
@@ -942,78 +942,78 @@
   },
   {
    "sym": "AUDUSD",
-   "long": 36,
-   "short": 64
+   "long": 35,
+   "short": 65
   },
   {
    "sym": "CADJPY",
-   "long": 29,
-   "short": 71
+   "long": 31,
+   "short": 69
   },
   {
    "sym": "EURCAD",
-   "long": 81,
-   "short": 19
+   "long": 80,
+   "short": 20
   },
   {
    "sym": "EURCHF",
-   "long": 32,
-   "short": 68
+   "long": 40,
+   "short": 60
   },
   {
    "sym": "EURGBP",
-   "long": 92,
-   "short": 8
+   "long": 94,
+   "short": 6
   },
   {
    "sym": "EURNZD",
-   "long": 83,
-   "short": 17
+   "long": 85,
+   "short": 15
   },
   {
    "sym": "GBPCAD",
-   "long": 30,
-   "short": 70
+   "long": 22,
+   "short": 78
   },
   {
    "sym": "GBPCHF",
+   "long": 12,
+   "short": 88
+  },
+  {
+   "sym": "NZDCAD",
    "long": 15,
    "short": 85
   },
   {
-   "sym": "NZDCAD",
-   "long": 17,
-   "short": 83
-  },
-  {
    "sym": "NZDJPY",
-   "long": 21,
-   "short": 79
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "NZDUSD",
-   "long": 38,
-   "short": 62
+   "long": 36,
+   "short": 64
   },
   {
    "sym": "USDCHF",
-   "long": 44,
-   "short": 56
+   "long": 46,
+   "short": 54
   },
   {
    "sym": "CHFJPY",
-   "long": 23,
-   "short": 77
+   "long": 22,
+   "short": 78
   },
   {
    "sym": "AUDCHF",
-   "long": 9,
-   "short": 91
+   "long": 11,
+   "short": 89
   },
   {
    "sym": "GBPNZD",
-   "long": 45,
-   "short": 55
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "NZDCHF",
@@ -1022,13 +1022,13 @@
   },
   {
    "sym": "CADCHF",
-   "long": 59,
-   "short": 41
+   "long": 66,
+   "short": 34
   },
   {
    "sym": "GBPAUD",
-   "long": 38,
-   "short": 62
+   "long": 35,
+   "short": 65
   },
   {
    "sym": "XAUUSD",
@@ -1037,13 +1037,13 @@
   },
   {
    "sym": "XAGUSD",
-   "long": 62,
-   "short": 38
+   "long": 63,
+   "short": 37
   },
   {
    "sym": "BTCUSD",
-   "long": 52,
-   "short": 48
+   "long": 49,
+   "short": 51
   },
   {
    "sym": "US500",
@@ -1242,10 +1242,10 @@
  },
  "putCallByAsset": {
   "SILVER": {
-   "value": 1.02,
+   "value": 0.87,
    "proxy": "SLV",
-   "callVol": 10082,
-   "putVol": 10264,
+   "callVol": 21297,
+   "putVol": 18442,
    "series": [
     [
      "2025-07-14",
@@ -2265,15 +2265,15 @@
     ],
     [
      "2026-07-15",
-     1.02
+     0.87
     ]
    ]
   },
   "SP500": {
-   "value": 1.07,
+   "value": 1.1,
    "proxy": "SPY",
-   "callVol": 1254891,
-   "putVol": 1346039,
+   "callVol": 2373947,
+   "putVol": 2616610,
    "series": [
     [
      "2025-07-14",
@@ -3277,7 +3277,7 @@
     ],
     [
      "2026-07-15",
-     1.07
+     1.1
     ]
    ]
   },
@@ -3858,9 +3858,9 @@
    ]
   },
   "JPY": {
-   "value": 1.38,
+   "value": 1.2,
    "proxy": "FXY",
-   "callVol": 66,
+   "callVol": 76,
    "putVol": 91,
    "series": [
     [
@@ -4825,15 +4825,15 @@
     ],
     [
      "2026-07-15",
-     1.38
+     1.2
     ]
    ]
   },
   "GOLD": {
-   "value": 0.8,
+   "value": 2.09,
    "proxy": "GLD",
-   "callVol": 7660,
-   "putVol": 6150,
+   "callVol": 12248,
+   "putVol": 25549,
    "series": [
     [
      "2025-07-14",
@@ -5853,15 +5853,15 @@
     ],
     [
      "2026-07-15",
-     0.8
+     2.09
     ]
    ]
   },
   "CHF": {
-   "value": 1.58,
+   "value": 1.61,
    "proxy": "FXF",
    "callVol": 36,
-   "putVol": 57,
+   "putVol": 58,
    "series": [
     [
      "2025-07-15",
@@ -6317,15 +6317,15 @@
     ],
     [
      "2026-07-15",
-     1.58
+     1.61
     ]
    ]
   },
   "BTC": {
-   "value": 0.37,
+   "value": 0.31,
    "proxy": "IBIT",
-   "callVol": 20935,
-   "putVol": 7647,
+   "callVol": 36833,
+   "putVol": 11272,
    "series": [
     [
      "2025-07-14",
@@ -7329,15 +7329,15 @@
     ],
     [
      "2026-07-15",
-     0.37
+     0.31
     ]
    ]
   },
   "NAS": {
    "value": 0.84,
    "proxy": "QQQ",
-   "callVol": 1122120,
-   "putVol": 947414,
+   "callVol": 2066775,
+   "putVol": 1737616,
    "series": [
     [
      "2025-07-14",
@@ -9242,10 +9242,10 @@
    ]
   },
   "OIL": {
-   "value": 0.38,
+   "value": 0.32,
    "proxy": "USO",
-   "callVol": 6606,
-   "putVol": 2510,
+   "callVol": 12931,
+   "putVol": 4173,
    "series": [
     [
      "2025-07-14",
@@ -10265,14 +10265,14 @@
     ],
     [
      "2026-07-15",
-     0.38
+     0.32
     ]
    ]
   },
   "USD": {
-   "value": 1.38,
+   "value": 1.08,
    "proxy": "UUP",
-   "callVol": 29,
+   "callVol": 37,
    "putVol": 40,
    "series": [
     [
@@ -11253,14 +11253,14 @@
     ],
     [
      "2026-07-15",
-     1.38
+     1.08
     ]
    ]
   },
   "CAD": {
    "value": 0.06,
    "proxy": "FXC",
-   "callVol": 246,
+   "callVol": 247,
    "putVol": 15,
    "series": [
     [
