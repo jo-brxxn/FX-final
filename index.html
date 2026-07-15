@@ -241,11 +241,15 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 /* Kompaktansicht aktiv: Stichpunkte (Indikator-Datenpunkte) und
    Rubrik-Zusammenfassungen ausblenden, Karten ruecken enger zusammen. */
 body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
+/* Kompakt-Stufe 1 (mittig) blendet zusaetzlich die Perioden-Badge (wie oft
+   ein Indikator veroeffentlicht wird, z.B. monthly/daily/every 6-8 weeks)
+   aus (Nutzer-Wunsch 2026-07-15) - eine Stufe frueher als der Rest der
+   Datum-/Info-Badges unten. */
+body.compact-view .ind-card .ibadge{display:none}
 /* Kompakt-Stufe 2 (max): zusaetzlich an den Indikator-Karten das Release-
-   Datum (wann der naechste Wert kommt), die Perioden-Badge (monthly/...),
-   den i-Info-Knopf und den Trend-Status-Chip ausblenden - es bleiben nur
-   Name, Werte und Bias. */
-body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.compact-view2 .ind-card .add-date-btn,body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{display:none}
+   Datum (wann der naechste Wert kommt), den i-Info-Knopf und den Trend-
+   Status-Chip ausblenden - es bleiben nur Name, Werte und Bias. */
+body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{display:none}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}}
@@ -1137,7 +1141,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#fed7aa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUST-DATA-TAB-DEFAULT-126</span><span id="verBannerText"> (Insights &gt; Data zeigt beim Oeffnen jetzt sofort USD CPI (Headline) y/y statt leerer Dropdowns)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1e3a5f;color:#bfdbfe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-COMPACT-INTERVAL-127</span><span id="verBannerText"> (Kompaktansicht-Stufe 1 (mittlere Position) blendet an den Indikator-Karten jetzt zusaetzlich die Perioden-Badge aus (wie oft der Indikator veroeffentlicht wird, z.B. "monthly"/"daily") - vorher erst ab Stufe 2/max)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2425,8 +2429,9 @@ function updCalHighBtn(){
   b.textContent=calHighOnly?'📁 High-impact only':'📁 All impacts';
 }
 // Kompaktansicht in 3 Stufen (0 = alles sichtbar, 1 = Stichpunkte/
-// Zusammenfassungen weg, 2 = zusaetzlich Datum-/Perioden-Badges, i-Knopf
-// und Trend-Chip der Indikatoren weg). Alte Boolean-Werte (true/'1' bzw.
+// Zusammenfassungen UND die Perioden-Badge (wie oft ein Indikator
+// veroeffentlicht wird) weg, 2 = zusaetzlich Datum-Badge, i-Knopf und
+// Trend-Chip der Indikatoren weg). Alte Boolean-Werte (true/'1' bzw.
 // false/'0') werden auf 1 bzw. 0 abgebildet.
 function normCompactLevel(v){
   if(v===true)return 1;
@@ -2435,8 +2440,8 @@ function normCompactLevel(v){
   return n>=2?2:n>=1?1:0;
 }
 const COMPACT_TITLES=[
-  'Compact view off - tap to hide bullet points & summaries (stage 1 of 2)',
-  'Compact stage 1 (bullet points & summaries hidden) - tap for stage 2: also hide date/interval, info button & trend chip',
+  'Compact view off - tap to hide bullet points, summaries & interval badge (stage 1 of 2)',
+  'Compact stage 1 (bullet points, summaries & interval badge hidden) - tap for stage 2: also hide date, info button & trend chip',
   'Compact stage 2 (max) - tap to show everything again'
 ];
 function applyCompactView(){
