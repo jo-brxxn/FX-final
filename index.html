@@ -5328,7 +5328,7 @@ function renderInd(ind,ri,ii,total){
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
-      ${ind.chartHist&&ind.chartHist.length>=2?indHistChart(ind):''}
+      ${indHistChart(ind)}
     </details>`;
   }else if(ind.research){
     const r=ind.research;
@@ -5356,7 +5356,7 @@ function renderInd(ind,ri,ii,total){
         ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>`}
       </summary>
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
-      ${ind.chartHist&&ind.chartHist.length>=2?indHistChart(ind):''}
+      ${indHistChart(ind)}
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">

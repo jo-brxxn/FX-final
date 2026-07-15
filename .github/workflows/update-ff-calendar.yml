@@ -904,28 +904,33 @@ jobs:
               "https://economic-calendar.tradingview.com/events?from=${H_FROM}&to=${H_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o "tv_hist_$i.json" || true
             sleep 2
           done
-          # Graduelle TIEFEN-Historie ueber die bestehenden 395 Tage hinaus,
-          # bis zu 3 Jahre (Nutzer-Wunsch 2026-07-14, Indikator-Verlaufschart
-          # mit Actual+Forecast). NICHT alle fehlenden 60-Tage-Haeppchen auf
-          # einmal (das waeren bis zu 13 zusaetzliche Requests JEDE Stunde,
-          # obwohl sich lang vergangene Haeppchen nie wieder aendern) -
-          # stattdessen EIN weiteres Haeppchen pro Lauf, Fortschritt in
-          # ind_data.json._histChunksFetched persistiert. Nach ca. 13 weiteren
-          # Stunden sind alle 18 Haeppchen (3 Jahre) einmalig geholt, danach
-          # Ruhezustand (keine weiteren Requests mehr fuer diesen Teil).
+          # TIEFEN-Historie ueber die bestehenden 395 Tage hinaus, bis zu 3
+          # Jahre (Nutzer-Wunsch 2026-07-14/15, Indikator-Verlaufschart mit
+          # Actual+Forecast) - ALLE noch fehlenden 60-Tage-Haeppchen in
+          # diesem EINEN Lauf holen (Nutzer-Wunsch 2026-07-15: nicht ueber
+          # 13 Stunden strecken, sondern die komplette Vergangenheit sofort).
+          # Fortschritt bleibt trotzdem in ind_data.json._histChunksFetched
+          # persistiert, damit ein Lauf, der wegen Rate-Limiting mittendrin
+          # abbricht, beim naechsten Mal nur die NOCH fehlenden Haeppchen
+          # nachholt statt wieder bei 0 anzufangen; sind einmal alle 18
+          # Haeppchen (3 Jahre) da, werden fuer diesen Teil keine weiteren
+          # Requests mehr gestellt.
           CHUNKS_DONE=$(node -e '
             try{const d=JSON.parse(require("fs").readFileSync("ind_data.json","utf8"));console.log(Math.max(5,Math.min(18,+d._histChunksFetched||5)));}catch(e){console.log(5);}
           ')
           TARGET_CHUNKS=18
-          if [ "$CHUNKS_DONE" -lt "$TARGET_CHUNKS" ]; then
-            H_FROM=$(node -e "console.log(new Date(Date.now()-(95+60*($CHUNKS_DONE+1))*86400e3).toISOString())")
-            H_TO=$(node -e "console.log(new Date(Date.now()-(95+60*$CHUNKS_DONE)*86400e3).toISOString())")
+          rm -f tv_hist_deep_*.json
+          i=$CHUNKS_DONE
+          while [ "$i" -lt "$TARGET_CHUNKS" ]; do
+            H_FROM=$(node -e "console.log(new Date(Date.now()-(95+60*($i+1))*86400e3).toISOString())")
+            H_TO=$(node -e "console.log(new Date(Date.now()-(95+60*$i)*86400e3).toISOString())")
             curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
-              "https://economic-calendar.tradingview.com/events?from=${H_FROM}&to=${H_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o tv_hist_deep.json || true
-            echo "[debug] deep history chunk $CHUNKS_DONE fetched (window $H_FROM .. $H_TO)"
-          fi
-          NEXT_CHUNKS_DONE=$([ "$CHUNKS_DONE" -lt "$TARGET_CHUNKS" ] && echo "$((CHUNKS_DONE+1))" || echo "$CHUNKS_DONE")
-          export NEXT_CHUNKS_DONE
+              "https://economic-calendar.tradingview.com/events?from=${H_FROM}&to=${H_TO}&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" -o "tv_hist_deep_$i.json" || true
+            echo "[debug] deep history chunk $i fetched (window $H_FROM .. $H_TO)"
+            i=$((i+1))
+            sleep 2
+          done
+          export CHUNKS_DONE TARGET_CHUNKS
           node -e '
             const fs=require("fs");
             // TradingView-Laendercode -> unsere Symbol-Waehrung. DE wird als
@@ -1000,9 +1005,20 @@ jobs:
             // fehlen (continue-on-error-Charakter: hist ist reine Anreicherung).
             let histEvts=[],histN=[];
             for(let i=0;i<5;i++){const h=readEvts("tv_hist_"+i+".json");histN.push(h?h.length:0);if(h)histEvts=histEvts.concat(h);}
-            // Ein zusaetzliches, graduell weiter zurueckliegendes Haeppchen
-            // (bis zu 3 Jahre insgesamt) fuer den Indikator-Verlaufschart.
-            const deepH=readEvts("tv_hist_deep.json");if(deepH)histEvts=histEvts.concat(deepH);
+            // Alle in diesem Lauf geholten TIEFEN-Haeppchen (bis zu 3 Jahre
+            // insgesamt) fuer den Indikator-Verlaufschart einsammeln - und
+            // dabei merken, ob eines fehlgeschlagen ist (leer/kaputtes JSON,
+            // z.B. Rate-Limit), damit der naechste Lauf genau dort statt bei
+            // 0 weitermacht (siehe _histChunksFetched unten).
+            const CHUNKS_DONE_ENV=+process.env.CHUNKS_DONE||5;
+            const TARGET_CHUNKS_ENV=+process.env.TARGET_CHUNKS||18;
+            let firstFailedChunk=null;
+            for(let i=CHUNKS_DONE_ENV;i<TARGET_CHUNKS_ENV;i++){
+              const h=readEvts(`tv_hist_deep_${i}.json`);
+              if(h)histEvts=histEvts.concat(h);
+              else if(firstFailedChunk===null)firstFailedChunk=i;
+            }
+            const nextChunksDone=firstFailedChunk===null?TARGET_CHUNKS_ENV:firstFailedChunk;
             // Enges Fenster zuerst -> bei gleichem Datum gewinnt trotzdem das
             // spaetere Event (s.u.), aber so sind die juengsten Actuals nicht
             // vom 2000er-Limit der 95-Tage-Abfrage betroffen.
@@ -1193,7 +1209,7 @@ jobs:
                 delete v._newHistFull;
               });
             });
-            out._histChunksFetched=Math.max(5,Math.min(18,+process.env.NEXT_CHUNKS_DONE||5));
+            out._histChunksFetched=Math.max(5,Math.min(18,nextChunksDone));
             let invEvts=[];
             try{
               const alt=JSON.parse(fs.readFileSync("alt_actuals.json","utf8"));
