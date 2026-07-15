@@ -402,7 +402,7 @@
    ]
   ]
  },
- "updated": "2026-07-15T21:47:45.769Z",
+ "updated": "2026-07-15T22:48:54.551Z",
  "stockFng": {
   "value": 46,
   "label": "neutral",
@@ -897,8 +897,8 @@
   },
   {
    "sym": "GBPUSD",
-   "long": 27,
-   "short": 73
+   "long": 26,
+   "short": 74
   },
   {
    "sym": "USDJPY",
@@ -942,8 +942,8 @@
   },
   {
    "sym": "AUDUSD",
-   "long": 28,
-   "short": 72
+   "long": 27,
+   "short": 73
   },
   {
    "sym": "CADJPY",
@@ -997,8 +997,8 @@
   },
   {
    "sym": "USDCHF",
-   "long": 50,
-   "short": 50
+   "long": 49,
+   "short": 51
   },
   {
    "sym": "CHFJPY",
@@ -1027,8 +1027,8 @@
   },
   {
    "sym": "GBPAUD",
-   "long": 27,
-   "short": 73
+   "long": 26,
+   "short": 74
   },
   {
    "sym": "XAUUSD",
@@ -1042,8 +1042,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 51,
-   "short": 49
+   "long": 53,
+   "short": 47
   },
   {
    "sym": "US500",
@@ -1242,10 +1242,10 @@
  },
  "putCallByAsset": {
   "SILVER": {
-   "value": 0.72,
+   "value": 0.73,
    "proxy": "SLV",
-   "callVol": 51739,
-   "putVol": 37155,
+   "callVol": 52375,
+   "putVol": 38340,
    "series": [
     [
      "2025-07-14",
@@ -2265,15 +2265,15 @@
     ],
     [
      "2026-07-15",
-     0.72
+     0.73
     ]
    ]
   },
   "SP500": {
    "value": 1.01,
    "proxy": "SPY",
-   "callVol": 4311620,
-   "putVol": 4355251,
+   "callVol": 4311957,
+   "putVol": 4355308,
    "series": [
     [
      "2025-07-14",
@@ -4830,10 +4830,10 @@
    ]
   },
   "GOLD": {
-   "value": 3.21,
+   "value": 3.19,
    "proxy": "GLD",
-   "callVol": 19852,
-   "putVol": 63711,
+   "callVol": 20354,
+   "putVol": 64973,
    "series": [
     [
      "2025-07-14",
@@ -5853,7 +5853,7 @@
     ],
     [
      "2026-07-15",
-     3.21
+     3.19
     ]
    ]
   },
@@ -6322,10 +6322,10 @@
    ]
   },
   "BTC": {
-   "value": 0.25,
+   "value": 0.26,
    "proxy": "IBIT",
-   "callVol": 55856,
-   "putVol": 14125,
+   "callVol": 58296,
+   "putVol": 15023,
    "series": [
     [
      "2025-07-14",
@@ -7329,15 +7329,15 @@
     ],
     [
      "2026-07-15",
-     0.25
+     0.26
     ]
    ]
   },
   "NAS": {
    "value": 0.89,
    "proxy": "QQQ",
-   "callVol": 3576123,
-   "putVol": 3184769,
+   "callVol": 3577497,
+   "putVol": 3185738,
    "series": [
     [
      "2025-07-14",
@@ -9242,10 +9242,10 @@
    ]
   },
   "OIL": {
-   "value": 0.28,
+   "value": 0.41,
    "proxy": "USO",
-   "callVol": 23360,
-   "putVol": 6513,
+   "callVol": 23456,
+   "putVol": 9513,
    "series": [
     [
      "2025-07-14",
@@ -10265,14 +10265,14 @@
     ],
     [
      "2026-07-15",
-     0.28
+     0.41
     ]
    ]
   },
   "USD": {
    "value": 0.06,
    "proxy": "UUP",
-   "callVol": 570,
+   "callVol": 573,
    "putVol": 37,
    "series": [
     [
