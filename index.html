@@ -1137,7 +1137,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .ibadge,body.c
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0e5b3a;color:#d1fae5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: EMERALD-FULL-HIST-BACKFILL-125</span><span id="verBannerText"> (Indikator-Verlaufschart erscheint jetzt beim Ausklappen eines Indikators IMMER automatisch - inkl. "Not enough history yet"-Meldung statt vorher gar nichts, wenn noch keine chartHist-Daten da sind (Konsistenz mit dem Data-Tab). Workflow holt die restlichen bis zu 3 Jahre TradingView-Historie jetzt in EINEM Lauf statt ueber ~13 Stunden gestreckt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d1fae5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7c2d12;color:#fed7aa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUST-DATA-TAB-DEFAULT-126</span><span id="verBannerText"> (Insights &gt; Data zeigt beim Oeffnen jetzt sofort USD CPI (Headline) y/y statt leerer Dropdowns)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -9392,7 +9392,7 @@ function indHistChart(ind){
 // wird die Liste live aus sym.rubrics des GEWAEHLTEN Assets gebaut statt
 // aus einer festen Liste). Zeigt darunter denselben indHistChart wie beim
 // Ausklappen eines Indikators auf der Asset-Seite.
-let dataAsset='',dataIndBase='';
+let dataAsset='USD',dataIndBase='CPI (Headline)';
 function setDataAsset(v){dataAsset=v||'';dataIndBase='';renderDataTab();}
 function setDataInd(v){dataIndBase=v||'';renderDataTab();}
 function renderDataTab(){
