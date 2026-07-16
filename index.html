@@ -1141,7 +1141,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1e3a5f;color:#bfdbfe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-COMPACT-INTERVAL-127</span><span id="verBannerText"> (Kompaktansicht-Stufe 1 (mittlere Position) blendet an den Indikator-Karten jetzt zusaetzlich die Perioden-Badge aus (wie oft der Indikator veroeffentlicht wird, z.B. "monthly"/"daily") - vorher erst ab Stufe 2/max)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7f1d1d;color:#fecaca;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CRIMSON-SCOREHIST-FIX-128</span><span id="verBannerText"> (Bugfix: die Asset-Score-Historie (🕰️) rechnete rueckwaerts vom AKTUELLEN Live-Score und schrieb dadurch vergangene Tage um, sobald sich der heutige Score aus irgendeinem Grund aenderte - stand dann im Widerspruch zum Trends-Chart. Beide lesen jetzt aus derselben persistierten scoreHist, zeigen also immer exakt dieselben vergangenen Werte)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2819,43 +2819,39 @@ function renderSymHistory(id){
 // UNTEREINANDER auf - pro Tag NUR die score-treibenden Events (CPI, NFP, Zins, PMI,
 // GDP ...) mit ihrem Actual/Forecast und der daraus abgeleiteten Richtung (Beat ->
 // bullish/Score hoch, Miss -> bearish/Score runter), in denselben Bias-Farben (BC)
-// wie ueberall sonst. Neben dem Datum steht NICHT die Tages-Aenderung, sondern der
-// tatsaechliche Score-Wert an diesem Tag (heute = aktueller Live-Score, jeder
-// aeltere Tag = Stand am Ende dieses Tages) - dafuer ausgehend vom aktuellen
-// symScore() rueckwaerts durch die Tage gerechnet und pro Tag der Netto-Effekt
-// seiner score-treibenden Events wieder abgezogen. Es gibt keinen separaten
-// persistenten Score-Verlauf (symScore() ist rein live), daher diese Ableitung.
+// wie ueberall sonst. Neben dem Datum steht der tatsaechliche Score-Wert an diesem
+// Tag - aus der PERSISTIERTEN scoreHist (dieselbe Quelle wie der Trends-Chart),
+// nicht aus einer Live-Rueckrechnung. Bugreport 2026-07-16: vorher wurde vom
+// aktuellen symScore() aus rueckwaerts durch die Tage gerechnet (Netto-Effekt
+// der Events pro Tag abgezogen) - dadurch schrieb sich die Historie vergangener
+// Tage komplett um, sobald sich der HEUTIGE Score aus irgendeinem Grund aenderte
+// (z.B. weil symCmpFactor durch eine ANDERE Waehrung verschob), obwohl sich an
+// den vergangenen Tagen selbst nichts geaendert hatte - Trends-Chart und Score-
+// History zeigten dadurch unterschiedliche vergangene Werte. Jetzt beide aus
+// derselben scoreHist gespeist, also immer exakt deckungsgleich.
 function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
   const days=symHistoryDays(id,HIST_DAYS).slice().reverse(); // neueste zuerst
-  // Intern wird ROH gerechnet (die Event-Effekte sind rohe +/-1-Beitraege),
-  // ANGEZEIGT wird aber der normalisierte Vergleichs-Score (raw x Faktor) -
-  // derselbe Wert wie ueberall sonst (Sidebar, Badge, Widgets). Sonst stand
-  // hier "3.5", waehrend das Asset ueberall "+3" zeigte (User-Report
-  // 2026-07-07). Der Faktor ist der HEUTIGE (Indikator-Anzahlen aendern
-  // sich rueckwirkend nicht) - die Event-Zeilen behalten bewusst ihre
-  // rohen +/-1-Effekte, wie im Score-Breakdown-Modal.
-  const cmpF=sym?symCmpFactor(sym):1;
   // Manuelle Score-Aenderungen dieses Symbols nach Datum gruppieren (neueste
   // zuerst innerhalb des Tages), damit sie neben den Events erscheinen.
   const logByDate={};
   (scoreLog||[]).filter(x=>x&&x.sym===id).forEach(x=>{const dk=String(x.t).slice(0,10);(logByDate[dk]=logByDate[dk]||[]).push(x);});
   const BLAB={bull:'▲ Bullish',bear:'▼ Bearish',neu:'◆ Neutral'};
-  let running=sym?symScore(sym):0; // ROHER Score-Wert des jeweils angezeigten Tages
+  const histMap={};
+  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];});
+  const liveScore=sym?symScoreCmp(sym):0; // Fallback fuer "heute", falls recordScoreHist() diese Sitzung noch nicht lief
   const rows=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
     const manual=(logByDate[d.date]||[]).slice().sort((a,b)=>String(b.t).localeCompare(String(a.t)));
     const isToday=d.date===today;
     const hdrTxt=escH(fmtDayHdr(d.date))+(isToday?' · Today':'');
-    const dayScore=Math.round(running*cmpF*10)/10;
-    const scoreCol=scoreColor(dayScore);
-    const scoreLbl=(dayScore>0?'+':'')+dayScore;
-    const scoreTip=(isToday?'Current live score':'Score at the end of this day')+' (displayed scale: raw × '+cmpF+')';
-    let net=0;
+    const dayScore=histMap[d.date]!=null?histMap[d.date]:(isToday?liveScore:null);
+    const scoreCol=dayScore!=null?scoreColor(dayScore):'var(--t3)';
+    const scoreLbl=dayScore!=null?(dayScore>0?'+':'')+dayScore:'–';
+    const scoreTip=dayScore==null?'No recorded score for this day':(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
     const evHtml=evs.map(ev=>{
       const b=indBiasFromEvent(ev);
-      if(b==='bull')net++;else if(b==='bear')net--;
       const col=BC[b]||BC.neu;
       const arr=b==='bull'?'▲':b==='bear'?'▼':'◆';
       const eff=b==='bull'?'+1':b==='bear'?'-1':'0';
@@ -2872,9 +2868,8 @@ function renderSymHistoryPanel(id){
       </div>`;
     }).join('');
     // Manuelle Aenderungen dieses Tages (mit ihrem exakten Score-Delta).
-    let manNet=0;
     const manHtml=manual.map(m=>{
-      const dl=+m.delta||0;manNet+=dl;
+      const dl=+m.delta||0;
       const col=dl>0?BC.bull:dl<0?BC.bear:BC.neu;
       const arr=dl>0?'▲':dl<0?'▼':'◆';
       const tm=new Date(m.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
@@ -2889,7 +2884,6 @@ function renderSymHistoryPanel(id){
         <span class="histp-eff" style="color:${col};border-color:${col}">${(dl>0?'+':'')+(Math.round(dl*10)/10)}</span>
       </div>`;
     }).join('');
-    running-=(net+manNet); // Ausgangswert fuer den naechsten (aelteren) Tag
     const nothing=(!evs.length&&!manual.length)?`<div class="histp-noevt">No score-driving events</div>`:'';
     return`<div class="histp-day${isToday?' histp-today':''}">
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span><span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>

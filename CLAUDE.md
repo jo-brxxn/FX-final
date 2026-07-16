@@ -584,3 +584,33 @@ BEWUSST NICHT geändert (mit Nutzer-Kontext, nicht heimlich "fixen"):
   open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">` — dasselbe
   Muster bei künftigen `<details>`-Elementen verwenden, die von einem
   inneren Klick aus neu gerendert werden können.
+
+### Asset-Score-Historie (🕰️) widersprach dem Trends-Chart (Bugreport 2026-07-16)
+
+- Nutzer bemerkte: die Score-Historie eines Assets (🕰️-Button,
+  `renderSymHistoryPanel`) zeigte für vergangene Tage ANDERE Werte als der
+  Trends-Chart für dasselbe Asset/dieselben Tage — beide sollten identisch
+  sein.
+- Ursache: `renderSymHistoryPanel` rechnete den Score pro Tag NICHT aus einer
+  persistierten Historie, sondern rückwärts vom AKTUELLEN `symScore()` aus
+  (`running`, pro Tag um den Netto-Effekt seiner Events reduziert). Sobald
+  sich der heutige Score aus irgendeinem Grund änderte — auch aus Gründen,
+  die mit den vergangenen Tagen selbst nichts zu tun hatten (z.B. `symCmpFactor`
+  verschiebt sich, weil eine ANDERE Währung ihre Indikatorenzahl änderte,
+  siehe die 2026-07-13-Notiz oben) — verschob sich die GESAMTE rückgerechnete
+  Reihe, und vergangene Tage zeigten plötzlich andere Werte als vorher. Der
+  Trends-Chart dagegen liest aus `scoreHist` (`recordScoreHist()`), das
+  Einträge für vergangene Tage NIE nachträglich überschreibt (nur der
+  heutige Eintrag wird aktualisiert) — daher der Widerspruch.
+- Fix: `renderSymHistoryPanel` liest den Score pro Tag jetzt ebenfalls aus
+  `scoreHist[id]` (Datum → Wert, dieselbe Quelle wie Trends) statt ihn
+  selbst zurückzurechnen. Für "heute" (falls `recordScoreHist()` in der
+  aktuellen Sitzung noch nicht gelaufen ist) Fallback auf den Live-Wert
+  `symScoreCmp(sym)`. Tage ohne Eintrag in `scoreHist` (älter als die
+  Aufzeichnung) zeigen bewusst "–" statt einen erfundenen Wert. Die Event-
+  Liste pro Tag (welche Kalender-Events, Beat/Miss) bleibt weiterhin aus
+  `symHistoryDays()`/`symScoreDrivingEventsByDate()` abgeleitet — nur die
+  angezeigte TAGES-SCORE-ZAHL kommt jetzt aus `scoreHist`. Bei künftigen
+  Änderungen an `scoreHist`/`recordScoreHist()` daran denken, dass die
+  History-Karte davon direkt mitgespeist wird — nicht wieder eine eigene
+  Rückrechnung einbauen.
