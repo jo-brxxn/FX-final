@@ -1141,7 +1141,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7f1d1d;color:#fecaca;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CRIMSON-SCOREHIST-FIX-128</span><span id="verBannerText"> (Bugfix: die Asset-Score-Historie (🕰️) rechnete rueckwaerts vom AKTUELLEN Live-Score und schrieb dadurch vergangene Tage um, sobald sich der heutige Score aus irgendeinem Grund aenderte - stand dann im Widerspruch zum Trends-Chart. Beide lesen jetzt aus derselben persistierten scoreHist, zeigen also immer exakt dieselben vergangenen Werte)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-PPI-HISTORY-129</span><span id="verBannerText"> (Bugfix: PPI-Releases (und andere Indikatoren, die FF nur in einer anderen Perioden-Variante fuehrt, z.B. nur "m/m" statt der erwarteten "y/y") fehlten komplett in der Asset-History (🕰️), obwohl sie den echten Score bewegen - der Live-Bias kommt fuer diese ueber ind_data.json/TradingView (ind.research), nicht ueber den FF-Kalender. History nutzt jetzt denselben Fallback wie die Indikator-Karte selbst)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2758,9 +2758,9 @@ const indDetailsOpen={};
 // in dieselbe Bias-Farbe wie überall sonst (BC) übersetzt. Tage ohne Event
 // bleiben leer/grau statt fälschlich "neutral" zu zeigen.
 const HIST_DAYS=10;
-// Score-treibende Events pro Tag = GENAU die Events, die syncIndicatorBiases()
-// tatsaechlich fuer die echten Indikator-Karten heranzieht (ein Event pro
-// Indikator, via findIndEvent - dieselbe Matcher+Perioden-Selektion). Ein
+// Score-treibende Events pro Tag = GENAU die Events, die die echten
+// Indikator-Karten tatsaechlich bepreisen - ein Eintrag pro Indikator, aus
+// GENAU DER Quelle, die auch den Live-Score dieses Indikators treibt. Ein
 // simpler Namens-Match (frueher: isScoreDrivingEvent auf ALLE Kalender-
 // Zeilen) zaehlte faelschlich jede Perioden-Variante eines Releases einzeln
 // mit (z.B. "CPI m/m" UND "CPI y/y" UND "CPI s.a" am selben CPI-Tag als 3
@@ -2768,8 +2768,20 @@ const HIST_DAYS=10;
 // Indikator-Karte bewegt (Bugreport 2026-07-15: History zeigte "CPI m/m: -1"
 // etc., obwohl sich der Live-Score dadurch gar nicht geaendert hatte - "CPI
 // m/m" hat als Basisname "CPI" gar keinen eigenen IND_EVENT_MATCHERS-Eintrag
-// und wird nie automatisch bepreist). Nicht-FX-Assets werden von
-// syncIndicatorBiases() nie automatisch aus Kalender-Events bepreist -fuer
+// und wird nie automatisch bepreist).
+// ZWEI Quellen speisen einen Indikator live, je nachdem was FF's Kalender
+// hergibt: (1) findIndEvent()/calEvts (ForexFactory) - trifft nur, wenn FF
+// GENAU die erwartete Perioden-Variante fuehrt (z.B. "CPI y/y"); (2) sonst
+// applyIndDataFeed()/ind.research (TradingView-Feed aus ind_data.json), der
+// tatsaechlich den Bias setzt (`ind.bias=researchBias(...)`), wenn FF die
+// Variante gar nicht anbietet. Bugreport 2026-07-16: PPI fehlte komplett in
+// der History, obwohl es den Score bewegt - FF fuehrt fuer die USA nur
+// "PPI m/m", unsere Karte heisst aber "PPI y/y" (period="Y/Y"), sodass
+// findIndEvent() nie traf; der echte Bias kam die ganze Zeit ueber
+// ind.research (TradingView-y/y-Reihe). Jetzt Fallback auf ind.research,
+// wenn findIndEvent nichts liefert - `ind.research.feed===true` markiert
+// einen echten Live-Treffer (nicht die einmalige Erstbefuellung).
+// Nicht-FX-Assets werden nie automatisch aus Kalender-Events bepreist - fuer
 // sie bleibt die Liste konsequent leer statt Kalender-Rauschen zu zeigen.
 function symScoreDrivingEventsByDate(id){
   const byDate={};
@@ -2779,8 +2791,12 @@ function symScoreDrivingEventsByDate(id){
     if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
     rub.indicators.forEach(ind=>{
       const ev=findIndEvent(id,ind.name);
-      if(!ev)return;
-      (byDate[ev.date]=byDate[ev.date]||[]).push(ev);
+      if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
+      const r=ind.research;
+      if(r&&r.feed&&r.date&&r.actual!=null){
+        const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
+        (byDate[r.date]=byDate[r.date]||[]).push(synth);
+      }
     });
   });
   return byDate;

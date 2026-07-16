@@ -614,3 +614,35 @@ BEWUSST NICHT geändert (mit Nutzer-Kontext, nicht heimlich "fixen"):
   Änderungen an `scoreHist`/`recordScoreHist()` daran denken, dass die
   History-Karte davon direkt mitgespeist wird — nicht wieder eine eigene
   Rückrechnung einbauen.
+
+### PPI (und andere) fehlten komplett in der Asset-History (Bugreport 2026-07-16)
+
+- Nutzer bemerkte: PPI-Releases (mit echten Actual/Forecast-Werten, sichtbar
+  auf der Indikator-Karte) tauchten nie in der Asset-"History"-Karte (🕰️)
+  auf, obwohl sie den Score sichtbar bewegen.
+- Ursache: **zwei parallele Live-Update-Pfade** pro Indikator, je nachdem was
+  ForexFactory anbietet. (1) `findIndEvent()`/`calEvts` (FF-Kalender,
+  `ff_calendar.json`) — trifft nur, wenn FF GENAU die vom Indikator erwartete
+  Perioden-Variante führt (unser "PPI"-Indikator heißt intern "PPI y/y",
+  `stripPeriodSuffix` verlangt also ein FF-Event mit y/y-Kennung). (2) sonst
+  `applyIndDataFeed()` (`ind_data.json`/TradingView-Feed) → schreibt
+  `ind.research` und setzt darüber **tatsächlich** den Bias
+  (`ind.bias=researchBias(...)`). Für US-PPI führt FF nur "PPI m/m" (keine
+  y/y-Zeile) — `findIndEvent()` findet deshalb NIE etwas, obwohl der
+  Live-Bias die ganze Zeit über Pfad (2) korrekt lief. Die Indikator-Karte
+  selbst (`renderInd`) hat für genau diesen Fall schon einen Fallback
+  (`ev`-Zweig → `ind.research`-Zweig) — aber `symScoreDrivingEventsByDate()`
+  (die History-Auswahl-Logik) hatte nur Pfad (1), keinen Fallback auf Pfad
+  (2), und ließ PPI (und potenziell jeden anderen Indikator mit derselben
+  Perioden-Diskrepanz) komplett unter den Tisch fallen.
+- Fix: `symScoreDrivingEventsByDate()` fällt jetzt genau wie die Karte selbst
+  auf `ind.research` zurück, wenn `findIndEvent()` nichts liefert — aber NUR
+  wenn `ind.research.feed===true` (echter Live-Treffer, nicht die einmalige
+  Erstbefüllung aus `IND_RESEARCH_DATA`) und `ind.research.date`/`.actual`
+  gesetzt sind. Erzeugt ein synthetisches Event-Objekt (`name/date/actual/
+  forecast/previous`) aus `ind.research`, das dieselben Downstream-Funktionen
+  (`indBiasFromEvent`/`actualColor`) unverändert weiterverarbeiten. Bei
+  künftigen Änderungen an `applyIndDataFeed()`/`ind.research` oder an
+  `IND_EVENT_MATCHERS`-Perioden daran denken, dass History diesen
+  Zwei-Pfad-Fallback exakt spiegeln muss — sonst fehlen wieder Indikatoren,
+  bei denen FF und die interne Perioden-Erwartung auseinanderlaufen.
