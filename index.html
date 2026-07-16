@@ -1141,7 +1141,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-PPI-HISTORY-129</span><span id="verBannerText"> (Bugfix: PPI-Releases (und andere Indikatoren, die FF nur in einer anderen Perioden-Variante fuehrt, z.B. nur "m/m" statt der erwarteten "y/y") fehlten komplett in der Asset-History (🕰️), obwohl sie den echten Score bewegen - der Live-Bias kommt fuer diese ueber ind_data.json/TradingView (ind.research), nicht ueber den FF-Kalender. History nutzt jetzt denselben Fallback wie die Indikator-Karte selbst)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f6212;color:#d9f99d;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LIME-DATA-RANGE-FIX-130</span><span id="verBannerText"> (Bugfix: die Range-Filter-Buttons (3Y/2Y/1Y/6M/3M/1M) am Indikator-Chart im Insights &gt; Data-Tab reagierten scheinbar nicht - setIndHistRange() rief immer renderDetail() auf, also das FX-Detailseiten-Panel, statt je nach aktueller Seite renderDataTab() aufzurufen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9f99d;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9f99d;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -9340,7 +9340,14 @@ const IND_HIST_RANGES=[[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M']]
 let indHistRange=12; // Default beim Oeffnen: 1 Jahr (Nutzer-Wunsch)
 function setIndHistRange(months){
   indHistRange=months;
-  renderDetail();
+  // Chart kann an zwei Stellen stehen (Asset-Detailseite ODER Insights >
+  // Data) - je nach aktuell sichtbarer Seite das richtige Panel neu rendern,
+  // sonst aendert sich der Range-Wert zwar (indHistRange), aber der
+  // SICHTBARE Chart bleibt stehen, weil das falsche Panel aktualisiert wird
+  // (Bugreport 2026-07-16: Range-Buttons im Data-Tab reagierten scheinbar
+  // gar nicht).
+  if(curPage==='data')renderDataTab();
+  else renderDetail();
 }
 function indHistChart(ind){
   const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
