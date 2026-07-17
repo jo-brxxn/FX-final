@@ -1179,7 +1179,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#7f1d1d;color:#fecaca;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-BOND-HISTORY-133</span><span id="verBannerText"> (Bugfix: Bond-Renditen (2Y/10Y) konnten den Score taeglich bewegen (Bias = aktueller Wert vs. vor 15 Tagen), tauchten aber NIE in der Asset-History (🕰️) auf, weil weder ein Kalender-Release existiert noch das feed-Flag gesetzt wird - dadurch konnte der Tages-Score sinken, obwohl alle gelisteten Events positiv/neutral waren. History faellt jetzt auch auf Bond-Daten zurueck)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1e3a5f;color:#bfdbfe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-SETUPS-FX-FILTER-134</span><span id="verBannerText"> (Neu: Set-ups-Tab hat jetzt einen "FX"-Quick-Filter neben "All" - blendet Non-FX-Assets (Gold, Oel, BTC, Indizes, Aktien) und Kreuz-Paare mit einem Non-FX-Bein aus, zeigt nur reine Waehrungspaare. Kombinierbar mit den Waehrungs-Chips)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#bfdbfe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6419,6 +6419,13 @@ let setupCcyFilter=(()=>{try{const a=JSON.parse(localStorage.getItem('fxpro_setu
 function saveSetupCcy(){localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}
 function toggleSetupCcy(c){const i=setupCcyFilter.indexOf(c);if(i>=0)setupCcyFilter.splice(i,1);else setupCcyFilter.push(c);saveSetupCcy();renderPairs();}
 function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();renderPairs();}
+// Nutzer-Wunsch 2026-07-17: eigener Quick-Filter "FX" neben "All" - blendet
+// Non-FX-Assets (Gold, Oel, BTC, Indizes, Einzelaktien) UND Kreuz-Paare mit
+// einem Non-FX-Bein (z.B. XAU/USD) aus, zeigt nur reine Waehrungspaare.
+// Kombinierbar mit den Waehrungs-Chips (UND-Verknuepfung, siehe renderPairs).
+let setupFxOnly=localStorage.getItem('fxpro_setup_fxonly')==='1';
+function toggleSetupFxOnly(){setupFxOnly=!setupFxOnly;localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');renderPairs();}
+function isPureFxPair(name){const p=(name||'').split('/');return p.length===2&&FX.includes(p[0])&&FX.includes(p[1]);}
 // Enthält ein Paar(name) eine der gewählten Währungen (als Basis ODER Kurs)?
 function pairHasCcy(name,ccys){const parts=(name||'').split('/').map(s=>s.trim().toUpperCase());return ccys.some(c=>parts.includes(c));}
 // Carry-Detail-Fenster (Klick auf das Δ%-Badge bei den Set-ups): zeigt beide
@@ -6473,15 +6480,20 @@ function renderPairs(){
   const chip=c=>`<button class="cmp-chip${setupCcyFilter.includes(c)?' on':''}" onclick="toggleSetupCcy('${c}')">${c}</button>`;
   const filterBar=`<div class="cmp-filter" style="margin-bottom:11px">
     <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Filter by currency</span>${FX.map(chip).join('')}</div>
-    <div class="cmp-filter-grp"><button class="cmp-quick${active?'':' on'}" onclick="clearSetupCcy()" title="Show all pairs &amp; assets">All</button></div>
+    <div class="cmp-filter-grp">
+      <button class="cmp-quick${active?'':' on'}" onclick="clearSetupCcy()" title="Show all pairs &amp; assets">All</button>
+      <button class="cmp-quick${setupFxOnly?' on':''}" onclick="toggleSetupFxOnly()" title="Only FX currency pairs - hides Gold/Oil/BTC/indices/stocks and any cross pairs with them">FX</button>
+    </div>
   </div>`;
   if(items.length===0){
     el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
     return;
   }
-  // Bei aktivem Filter NUR Paare zeigen, die eine der gewählten Währungen
-  // enthalten (Non-FX-Assets sind keine Währungspaare und werden ausgeblendet).
-  const shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
+  // Bei aktivem Waehrungsfilter NUR Paare mit einer der gewaehlten Waehrungen;
+  // bei aktivem FX-Filter zusaetzlich NUR reine Waehrungspaare (kein Non-FX-
+  // Bein) - beide Filter sind UND-verknuepft kombinierbar.
+  let shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
+  if(setupFxOnly)shown=shown.filter(it=>it.kind==='pair'&&isPureFxPair(it.name));
   // Zins-Differenz (Carry) je FX-Paar: Leitzins Basis minus Kurswaehrung.
   // Positiv = Carry beguenstigt die Long-Seite des Paars. Zaehlt ueber
   // pairCarryAdj() direkt in den Paar-Score (nur auf Set-ups-/Paar-Ebene,
@@ -6516,7 +6528,8 @@ function renderPairs(){
     ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
   if(shown.length===0){
-    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs with ${escH(setupCcyFilter.join(', '))}. Add one via "＋ Add Pair" or pick another currency.</div>`;
+    const why=[active?setupCcyFilter.join(', '):'',setupFxOnly?'FX-only':''].filter(Boolean).join(' · ');
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
     return;
   }
   const bull=shown.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
