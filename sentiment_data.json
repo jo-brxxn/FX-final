@@ -410,9 +410,9 @@
    ]
   ]
  },
- "updated": "2026-07-17T04:54:17.547Z",
+ "updated": "2026-07-17T07:10:51.779Z",
  "stockFng": {
-  "value": 42,
+  "value": 43,
   "label": "fear",
   "series": [
    [
@@ -885,15 +885,15 @@
    ],
    [
     "2026-07-16",
-    42
+    43
    ],
    [
     "2026-07-17",
-    42
+    43
    ],
    [
     "2026-07-17",
-    42
+    43
    ]
   ]
  },
@@ -905,13 +905,13 @@
   },
   {
    "sym": "GBPUSD",
-   "long": 38,
-   "short": 62
+   "long": 39,
+   "short": 61
   },
   {
    "sym": "USDJPY",
-   "long": 34,
-   "short": 66
+   "long": 33,
+   "short": 67
   },
   {
    "sym": "GBPJPY",
@@ -925,8 +925,8 @@
   },
   {
    "sym": "EURAUD",
-   "long": 72,
-   "short": 28
+   "long": 69,
+   "short": 31
   },
   {
    "sym": "EURJPY",
@@ -935,8 +935,8 @@
   },
   {
    "sym": "AUDCAD",
-   "long": 37,
-   "short": 63
+   "long": 39,
+   "short": 61
   },
   {
    "sym": "AUDJPY",
@@ -950,18 +950,18 @@
   },
   {
    "sym": "AUDUSD",
-   "long": 27,
-   "short": 73
+   "long": 29,
+   "short": 71
   },
   {
    "sym": "CADJPY",
-   "long": 24,
-   "short": 76
+   "long": 23,
+   "short": 77
   },
   {
    "sym": "EURCAD",
-   "long": 80,
-   "short": 20
+   "long": 81,
+   "short": 19
   },
   {
    "sym": "EURCHF",
@@ -975,13 +975,13 @@
   },
   {
    "sym": "EURNZD",
-   "long": 87,
-   "short": 13
+   "long": 86,
+   "short": 14
   },
   {
    "sym": "GBPCAD",
-   "long": 19,
-   "short": 81
+   "long": 23,
+   "short": 77
   },
   {
    "sym": "GBPCHF",
@@ -990,8 +990,8 @@
   },
   {
    "sym": "NZDCAD",
-   "long": 14,
-   "short": 86
+   "long": 15,
+   "short": 85
   },
   {
    "sym": "NZDJPY",
@@ -1000,8 +1000,8 @@
   },
   {
    "sym": "NZDUSD",
-   "long": 27,
-   "short": 73
+   "long": 26,
+   "short": 74
   },
   {
    "sym": "USDCHF",
@@ -1015,8 +1015,8 @@
   },
   {
    "sym": "AUDCHF",
-   "long": 10,
-   "short": 90
+   "long": 11,
+   "short": 89
   },
   {
    "sym": "GBPNZD",
