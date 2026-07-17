@@ -686,3 +686,33 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   direkt unter dem Ranking (Touch hat keinen Hover).
 - **PWA war bereits komplett eingerichtet** (manifest.json, sw.js
   network-first, Icons, Registrierung) — nicht doppelt anlegen.
+
+### Bond-Renditen fehlten komplett in der Asset-History (Bugreport 2026-07-17)
+
+- Nutzer bemerkte: an einem Tag sank der USD-Tagesscore (History-Karte,
+  🕰️) gegenüber dem Vortag, obwohl die einzigen gelisteten Events (Jobless
+  Claims, Retail Sales) klar positiv/neutral waren — der Rückgang war durch
+  nichts Sichtbares erklärt.
+- Ursache: **dritte Live-Update-Quelle**, die der PPI-Fix vom Vortag noch
+  nicht abdeckte. `applyBondDataFeed()` setzt `ind.bias` für 2Y/10Y Bond
+  Yield JEDEN Tag direkt (aktueller Wert vs. Wert vor 15 Tagen, `aVal>pVal
+  → bull`) — komplett ohne Kalender-Release. `ind.research` wird dabei zwar
+  auch befüllt, aber bewusst OHNE `feed:true` (das Flag ist reserviert für
+  den `applyIndDataFeed()`-Pfad). Der PPI-Fix (`symScoreDrivingEventsByDate`)
+  prüfte nur `r.feed` als Fallback — Bond-Bias-Kipper blieben dadurch
+  komplett unsichtbar in der History, obwohl sie den Score taeglich bewegen
+  können.
+- Fix: `symScoreDrivingEventsByDate()` fällt jetzt zusätzlich auf `r.bond`
+  zurück. Da Bonds kein echtes Forecast haben, trägt das synthetische Event
+  den 15-Tage-Vergleichswert (`r.previous`) als `forecast`-Feld, damit
+  `actualColor()`/`indBiasFromEvent()` dieselbe Höher-ist-besser-Logik wie
+  überall sonst anwenden (kein Treffer in `LOWER_IS_BETTER_RE`, also
+  `a>f → bullish` — exakt `bondColor`s `aVal>pVal → bull`). Die Anzeige
+  labelt das aber NICHT als "fc" (kein echter Forecast), sondern als
+  "vs X (15d ago)" (`ev.bond`-Flag in `renderSymHistoryPanel`/
+  `renderSymHistory`). **Merksatz für künftige Score-Quellen:** JEDE neue
+  Stelle, die `ind.bias` automatisch setzt, MUSS auch in
+  `symScoreDrivingEventsByDate()` einen Fallback bekommen — sonst wird sie
+  in der History unsichtbar, obwohl sie den Score bewegt. Bisher drei
+  Pfade: (1) `findIndEvent`/calEvts, (2) `ind.research.feed`, (3)
+  `ind.research.bond`.

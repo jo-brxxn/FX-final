@@ -1179,7 +1179,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-ALERTS-CSV-132</span><span id="verBannerText"> (Neu: PREIS-ALERTS - im Set-ups-Tab per Glocken-Button ein Level je Paar/Asset anlegen (steigt ueber / faellt unter), gemeldet in der Inbox + per Telegram ueber denselben Workflow wie Event-Alarme. Neu: CSV-Export fuer Indikator-Historie (Data-Tab), COT-Positionierungs-Historie und Score-Historie (Trends))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#7f1d1d;color:#fecaca;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-BOND-HISTORY-133</span><span id="verBannerText"> (Bugfix: Bond-Renditen (2Y/10Y) konnten den Score taeglich bewegen (Bias = aktueller Wert vs. vor 15 Tagen), tauchten aber NIE in der Asset-History (🕰️) auf, weil weder ein Kalender-Release existiert noch das feed-Flag gesetzt wird - dadurch konnte der Tages-Score sinken, obwohl alle gelisteten Events positiv/neutral waren. History faellt jetzt auch auf Bond-Daten zurueck)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fecaca;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2883,6 +2883,21 @@ const HIST_DAYS=10;
 // ind.research (TradingView-y/y-Reihe). Jetzt Fallback auf ind.research,
 // wenn findIndEvent nichts liefert - `ind.research.feed===true` markiert
 // einen echten Live-Treffer (nicht die einmalige Erstbefuellung).
+// (3) Bond-Renditen (applyBondDataFeed()) sind eine DRITTE Quelle, die
+// ind.bias TAEGLICH direkt setzt (aktueller Wert vs. Wert vor 15 Tagen,
+// KEIN Kalender-Release) - ind.research wird dort zwar auch befuellt, aber
+// bewusst OHNE feed:true (das Flag markiert nur den Release-Feed-Pfad).
+// Bugreport 2026-07-17: die USD-History zeigte an einem Tag einen
+// Score-Rueckgang, obwohl die gelisteten Events (Jobless Claims, Retail
+// Sales) klar positiv/neutral waren - Ursache war ein an diesem Tag
+// gekippter Bond-Bias, der komplett unsichtbar blieb, weil weder
+// findIndEvent() (kein Kalender-Release) noch der r.feed-Fallback (Bonds
+// setzen feed nie) ihn erfassten. Bonds haben kein Forecast - fuer die
+// Farb-/Bias-Ableitung wird deshalb der 15-Tage-Vergleichswert (r.previous)
+// als "forecast" ins synthetische Event gelegt, damit actualColor()/
+// indBiasFromEvent() dieselbe hoeher-ist-besser-Logik anwenden wie bei den
+// echten Karten (bondColor: aVal>pVal -> bullish, exakt das Ergebnis von
+// actualColor bei a>f ohne LOWER_IS_BETTER_RE-Treffer).
 // Nicht-FX-Assets werden nie automatisch aus Kalender-Events bepreist - fuer
 // sie bleibt die Liste konsequent leer statt Kalender-Rauschen zu zeigen.
 function symScoreDrivingEventsByDate(id){
@@ -2897,6 +2912,11 @@ function symScoreDrivingEventsByDate(id){
       const r=ind.research;
       if(r&&r.feed&&r.date&&r.actual!=null){
         const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
+        (byDate[r.date]=byDate[r.date]||[]).push(synth);
+        return;
+      }
+      if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
+        const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true};
         (byDate[r.date]=byDate[r.date]||[]).push(synth);
       }
     });
@@ -2927,7 +2947,7 @@ function renderSymHistory(id){
     const col=has?(BC[d.bias]||BC.neu):'';
     const wd=new Date(d.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'}).slice(0,2);
     const dn=new Date(d.date+'T00:00:00').getDate();
-    const tip=has?d.events.map(ev=>`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
+    const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 15d ago)`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
     return`<div class="hist-day${has?' hist-has':''}${d.date===today?' hist-today':''}" style="${has?`--hc:${col}`:''}" title="${escH(fmtDayHdr(d.date)+': '+tip)}">
       <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
     </div>`;
@@ -2975,13 +2995,15 @@ function renderSymHistoryPanel(id){
       const eff=b==='bull'?'+1':b==='bear'?'-1':'0';
       const ac=actualColor(ev);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
-      const fcv=(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–';
-      const pvv=(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–';
+      // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
+      // den 15-Tage-Vergleichswert fuer die Bias-Berechnung (s.o.), wird aber
+      // NICHT als "fc" beschriftet, um keinen echten Analysten-Forecast vorzutaeuschen.
+      const fcLine=ev.bond?`vs ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'} (15d ago)`:`fc ${(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–'} · prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`;
       return`<div class="histp-evt">
         <span class="histp-time">${escH(ev.time&&evtTimeValid(ev.time)?ev.time:'—')}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
         <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
-        <span class="histp-val">${acv} <span class="histp-fc">fc ${fcv} · prev ${pvv}</span></span>
+        <span class="histp-val">${acv} <span class="histp-fc">${fcLine}</span></span>
         <span class="histp-eff" style="color:${col};border-color:${col}">${eff}</span>
       </div>`;
     }).join('');
