@@ -43,6 +43,19 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 .profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Initialen im Profil-Kreis (statt generischem Personen-Icon), sobald ein
+   Sync-Name bekannt ist - siehe updProfile(). */
+.profile-circle.ini{font-size:17px;font-weight:800;letter-spacing:.5px;color:#fff}
+.profile-circle svg{width:22px;height:22px}
+/* Einheitliches Inline-SVG-Icon-Set (statt Emojis): erbt currentColor,
+   sitzt optisch auf der Textlinie der Buttons. */
+svg.ic{vertical-align:-2px;flex:none}
+/* Kleines Dropdown-Menue im Header (Data: Export/Import/Backups) */
+.hdr-menu-wrap{position:relative;display:inline-block}
+.hdr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:5px;z-index:300;min-width:176px;box-shadow:0 10px 26px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
+.hdr-menu button{display:flex;align-items:center;gap:9px;background:transparent;border:none;color:var(--t1);padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;text-align:left;width:100%;font-family:inherit}
+@media (hover:hover){.hdr-menu button:hover{background:var(--bg4)}}
+.hdr-menu button:active{background:var(--bg4)}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 /* Micro-interactions: Buttons federn beim Druecken leicht ein, wichtige
    Karten heben sich beim Hover minimal an - macht die Oberflaeche insgesamt
@@ -252,7 +265,16 @@ body.compact-view .ind-card .ibadge{display:none}
 body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{display:none}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
-@media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}}
+@media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}
+/* Mobiler Header kompakter (Nutzer-Wunsch 2026-07-16): kleinerer Avatar
+   ohne Namenszeile, engere Abstaende - der Header fraß vorher fast den
+   halben Bildschirm (Banner + Logo + Buttons + grosser Avatar-Block). */
+.hdr{padding:7px 10px;gap:5px}
+.profile-circle{width:36px;height:36px;font-size:19px}
+.profile-circle.ini{font-size:13px}
+.profile-circle svg{width:17px;height:17px}
+.profile-name{display:none}
+.profile-btn{margin-left:2px}}
 /* Today's-Movers-Dashboard-Karte */
 .mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
 @media(hover:hover){.mover-row:hover{border-color:rgba(var(--blue-rgb),.5)}}
@@ -775,7 +797,23 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.cal-row:hover .cal-row-del{opacity:.5}}@media (hover:hover){.cal-row-del:hover{opacity:1!important;color:var(--red)}}
 .cal-row-actions{display:flex;align-items:center;justify-content:center;gap:5px}
 .cal-alert-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0;line-height:1;opacity:.22;filter:grayscale(1);transition:opacity .12s,filter .12s}@media (hover:hover){.cal-row:hover .cal-alert-btn{opacity:.55}}@media (hover:hover){.cal-alert-btn:hover{opacity:1!important;filter:none}}
-.cal-alert-btn.on{opacity:1;filter:none}
+.cal-alert-btn.on{opacity:1;filter:none;color:var(--amber)}
+/* Sichtbare Kurz-Legende unter dem Currency-Strength-Ranking (Touch hat
+   keinen Hover-Tooltip, die +1/2-Notation war sonst unverstaendlich). */
+.mx-surp-legend{margin-top:8px;padding:7px 10px;border-top:1px solid var(--bd);color:var(--t3);font-size:10.5px;line-height:1.55}
+/* Globale Suche */
+.search-modal{max-width:520px;width:min(520px,92vw);padding:10px;align-self:flex-start;margin-top:9vh}
+.search-inp-wrap{display:flex;align-items:center;gap:9px;padding:4px 8px;border:1px solid var(--bd2);border-radius:10px;background:var(--bg1);color:var(--t3)}
+.search-inp-wrap input{flex:1;background:transparent;border:none;outline:none;color:var(--t0);font-size:14.5px;padding:8px 0;font-family:inherit}
+.search-close{background:none;border:none;color:var(--t3);font-size:19px;cursor:pointer;padding:0 3px;line-height:1}
+.search-results{margin-top:8px;max-height:min(52vh,440px);overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.search-grp{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);padding:8px 8px 3px}
+.search-row{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;background:transparent;border:none;color:var(--t1);cursor:pointer;text-align:left;width:100%;font-size:13px;font-family:inherit}
+@media (hover:hover){.search-row:hover{background:var(--bg4)}}
+.search-row.sel{background:var(--bg4);outline:1px solid rgba(var(--blue-rgb),.4)}
+.search-row small{color:var(--t3);margin-left:auto;flex:none;font-size:10.5px}
+.search-row .sr-id{flex:none;min-width:44px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11.5px;color:var(--t2)}
+.search-empty{color:var(--t3);font-size:12px;padding:14px 10px;text-align:center}
 .evt-alert-row{display:flex;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid var(--bd)}
 .evt-alert-row:last-child{border-bottom:none}
 .evt-alert-row-main{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;background:none;border:none;text-align:left;cursor:pointer;padding:2px 4px;border-radius:6px;color:inherit;font:inherit}
@@ -1141,7 +1179,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f6212;color:#d9f99d;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LIME-DATA-RANGE-FIX-130</span><span id="verBannerText"> (Bugfix: die Range-Filter-Buttons (3Y/2Y/1Y/6M/3M/1M) am Indikator-Chart im Insights &gt; Data-Tab reagierten scheinbar nicht - setIndHistRange() rief immer renderDetail() auf, also das FX-Detailseiten-Panel, statt je nach aktueller Seite renderDataTab() aufzurufen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9f99d;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9f99d;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#4c1d95;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-PRO-UI-131</span><span id="verBannerText"> (Grosses UI-Update: einheitliches SVG-Icon-Set statt Emojis (Header, Kalender, Zahnrad/History/Refresh-Buttons), Export/Import/Backups in EIN Data-Menue zusammengefasst, Initialen-Avatar, globale Suche (Lupe oder "/": Assets, Indikatoren, Kalender-Events, Tabs), mobiler Header deutlich kompakter + Banner auf dem Handy default eingeklappt, sichtbare Surprise-Legende in der Matrix)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1159,7 +1197,11 @@ function toggleVerBannerCollapse(){
 }
 try{
   if(sessionStorage.getItem('fxpro_verbanner_hidden')==='1'){const b=document.getElementById('verBanner');if(b)b.style.display='none';}
-  if(localStorage.getItem('fxpro_verbanner_collapsed')==='1'){const b=document.getElementById('verBanner');if(b)b.classList.add('ver-collapsed');const btn=document.getElementById('verBannerCollapseBtn');if(btn)btn.textContent='▸';}
+  // Auf schmalen Screens (Handy) ist der ausgeklappte Banner-Text zu hoch
+  // (frass fast den halben Bildschirm) - dort default EINGEKLAPPT, solange
+  // der Nutzer den Zustand nicht selbst umgestellt hat (dann gilt seine Wahl).
+  const _vbc=localStorage.getItem('fxpro_verbanner_collapsed');
+  if(_vbc==='1'||(_vbc===null&&window.innerWidth<760)){const b=document.getElementById('verBanner');if(b)b.classList.add('ver-collapsed');const btn=document.getElementById('verBannerCollapseBtn');if(btn)btn.textContent='▸';}
 }catch(e){}
 </script>
 
@@ -1282,21 +1324,27 @@ function introLogin(){
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
   <div class="hdr-r">
-    <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday">
+    <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
       <span class="green-alert-icon">!</span>
       <span class="green-alert-count" id="greenAlertCount">0</span>
     </div>
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
     <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)">→</button>
-    <button class="btn" onclick="exportData()">⬇<span class="btn-lbl"> Export</span></button>
-    <button class="btn" onclick="document.getElementById('impFile').click()">⬆<span class="btn-lbl"> Import</span></button>
+    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
+    <div class="hdr-menu-wrap">
+      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
+      <div class="hdr-menu" id="dataMenu" style="display:none">
+        <button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
+        <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
+        <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>
+      </div>
+    </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" onclick="openBackupM()" title="Local backups (last 5 snapshots)">🕐<span class="btn-lbl"> Backups</span></button>
-    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour">🎨<span class="btn-lbl"> Design</span></button>
-    <button class="btn" onclick="openHelpM()" title="How the scoring works">❓<span class="btn-lbl"> Help</span></button>
-    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox">📥<span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
+    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
+    <button class="btn" onclick="openHelpM()" title="How the scoring works"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
+    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
     <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
-      <span class="profile-circle">👤</span>
+      <span class="profile-circle" id="profileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       <span class="profile-name" id="profileName">Sync</span>
     </button>
   </div>
@@ -1402,9 +1450,9 @@ function introLogin(){
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
-      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news">📁 All Impacts</button>
-      <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts">🔔 New Alert</button>
-      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)">🔄 Refresh</button>
+      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
+      <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
+      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
     </div>
   </div>
   <div id="calEvents"></div>
@@ -1700,6 +1748,17 @@ function introLogin(){
   </div>
 </div>
 <!-- MODAL: Hilfe / Scoring-Erklaerung (auch als Erststart-Guide) -->
+<!-- MODAL: Globale Suche (Assets, Indikatoren, Kalender-Events, Tabs) -->
+<div class="ov" id="mSearch" style="display:none" onclick="if(event.target===this)closeM('mSearch')">
+  <div class="modal search-modal">
+    <div class="search-inp-wrap">
+      <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInp" type="text" placeholder="Search assets, indicators, events, tabs..." autocomplete="off" oninput="renderSearch()" onkeydown="searchKey(event)">
+      <button class="search-close" onclick="closeM('mSearch')">×</button>
+    </div>
+    <div id="searchResults" class="search-results"></div>
+  </div>
+</div>
 <div class="ov" id="mHelp" style="display:none">
   <div class="modal" style="max-width:560px">
     <h3>❓ How FX Analyst Pro works</h3>
@@ -1807,6 +1866,26 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 // Quote-Maskierung konnte ein " im Text aus dem Attribut ausbrechen und
 // eigene Attribute/Event-Handler injizieren (XSS).
 const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// ── Gemeinsames Inline-SVG-Icon-Set (statt Emojis, Nutzer-Wunsch 2026-07-16:
+// professionellere Optik; Emojis rendern je Plattform unterschiedlich).
+// Stroke-Stil, erbt currentColor. icn(name,size) liefert das <svg>-Markup
+// fuer dynamisch gerenderte Buttons; die statischen Header-Buttons tragen
+// dieselben Pfade direkt im HTML. Bei NEUEN Buttons dieses Set nutzen,
+// keine neuen Emojis einfuehren.
+const ICONS={
+  filter:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>',
+  bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  refresh:'<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  gear:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  csv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>'
+};
+function icn(name,size){
+  const p=ICONS[name];if(!p)return'';
+  return`<svg class="ic" width="${size||15}" height="${size||15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
 // +2px Puffer auf den gemessenen scrollHeight: ohne ihn sass die Boxhoehe
 // teils exakt auf der Kante der Zeilenhoehe - je nach Browser/Font-Rendering
 // (v.a. iOS Safari) wurden Unterlaengen (g/j/p/q/y) dadurch am unteren Rand
@@ -2291,9 +2370,9 @@ function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev)
 // Asset (inkl. verknuepfter Waehrung) gefiltert.
 function calToolbarHtml(){
   const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
-  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}">📁 ${calHighOnly?'High-impact only':'All impacts'}</button>`;
-  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts">🔔 New Alert</button>`;
-  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values">🔄 Refresh</button>`;
+  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> ${calHighOnly?'High-impact only':'All impacts'}</button>`;
+  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>`;
+  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>`;
   return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${alertBtn}${refresh}</div>`;
 }
 function calRowHtml(ev,opts){
@@ -2330,7 +2409,7 @@ function calRowHtml(ev,opts){
       const ekey=evtDismissKey(ev);
       const hasAlert=eventAlerts.some(a=>a.evKey===ekey);
       const canAlert=!isPast&&evtTimeValid(ev.time);
-      const alertBtn=canAlert?`<button class="cal-alert-btn${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Telegram alert set — tap to edit or remove':'Set a Telegram alert for this event'}">🔔</button>`:'';
+      const alertBtn=canAlert?`<button class="cal-alert-btn${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Telegram alert set — tap to edit or remove':'Set a Telegram alert for this event'}">${icn('bell',13)}</button>`:'';
       const other=opts.delAction
         ?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`
         :(opts.showGreenFlag&&isEvtGreenNow(ev)&&!greenDismissed[evtDismissKey(ev)])
@@ -2426,7 +2505,7 @@ function toggleCalHighOnly(){
 function updCalHighBtn(){
   const b=document.getElementById('calHighBtn');if(!b)return;
   b.classList.toggle('active',calHighOnly);
-  b.textContent=calHighOnly?'📁 High-impact only':'📁 All impacts';
+  b.innerHTML=icn('filter')+(calHighOnly?' High-impact only':' All impacts');
 }
 // Kompaktansicht in 3 Stufen (0 = alles sichtbar, 1 = Stichpunkte/
 // Zusammenfassungen UND die Perioden-Badge (wie oft ein Indikator
@@ -4781,8 +4860,111 @@ function saveCloudCfg(){
 function updProfile(){
   const el=document.getElementById('profileName');if(!el)return;
   const cfg=getCloudCfg();
-  el.textContent=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Sync';
+  const name=cfg&&(cfg.username||cfg.syncId)?(cfg.username||cfg.syncId):'Sync';
+  el.textContent=name;
+  // Profil-Kreis: Initialen des Sync-Namens (professioneller als das
+  // generische Personen-Icon); ohne eingerichteten Sync bleibt das
+  // Personen-SVG aus dem statischen HTML stehen.
+  const c=document.getElementById('profileCircle');
+  if(c&&cfg&&(cfg.username||cfg.syncId)){
+    const ini=String(cfg.username||cfg.syncId).replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'FX';
+    c.textContent=ini;c.classList.add('ini');
+  }
 }
+// Kleines Header-Dropdown "Data" (Export/Import/Backups zusammengefasst,
+// statt drei gleichrangiger Header-Buttons). Schliesst bei Klick daneben.
+function toggleDataMenu(ev){
+  ev.stopPropagation();
+  const m=document.getElementById('dataMenu');if(!m)return;
+  m.style.display=m.style.display==='none'?'flex':'none';
+}
+// ── Globale Suche (Nutzer-Wunsch 2026-07-16): ein Feld fuer Assets,
+// Indikatoren, Kalender-Events und Tabs. "/" oeffnet sie, Pfeiltasten +
+// Enter navigieren, Klick springt direkt an die Stelle.
+let _searchSel=0;
+function openSearchM(){
+  openM('mSearch');
+  const i=document.getElementById('searchInp');
+  if(i){i.value='';_searchSel=0;renderSearch();setTimeout(()=>i.focus(),50);}
+}
+function searchEntries(q){
+  q=(q||'').trim().toLowerCase();
+  const out=[];
+  if(!q)return out;
+  const push=(grp,label,sub,id,go)=>out.push({grp,label,sub,id,go});
+  // Assets (ID + Name)
+  (syms||[]).forEach(s=>{
+    if(s.id.toLowerCase().includes(q)||String(s.name||'').toLowerCase().includes(q))
+      push('Assets',s.name||s.id,`score ${(symScoreCmp(s)>0?'+':'')+symScoreCmp(s)}`,s.id,`gotoSym('${s.id}')`);
+  });
+  // Indikatoren (einmal pro Basisname, springt zum ersten Asset das ihn trackt)
+  const seenInd=new Set();
+  (syms||[]).forEach(s=>(s.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(ind=>{
+    const nm=ind.displayName||ind.name;
+    if(!nm.toLowerCase().includes(q))return;
+    const key=nm+'|'+s.id;
+    if(seenInd.has(nm))return;seenInd.add(nm);
+    push('Indicators',nm,`${r.name} · e.g. ${s.id}`,s.id,`gotoSym('${s.id}')`);
+  })));
+  // Kalender-Events (kommende + letzte Tage aus calEvts)
+  const seenEv=new Set();
+  (calEvts||[]).forEach(ev=>{
+    if(!ev.name||!ev.name.toLowerCase().includes(q))return;
+    const key=ev.name+'|'+ev.date;
+    if(seenEv.has(key)||seenEv.size>200)return;seenEv.add(key);
+    push('Calendar events',ev.name,`${(ev.currencies||'').split(/[,/&\s]+/)[0]||''} · ${fmtDayHdr(ev.date)}`,'',`showTab('cal')`);
+  });
+  // Tabs
+  Object.entries(TABS).forEach(([tid,t])=>{
+    if(t.label.toLowerCase().includes(q))
+      push('Tabs',t.label,'',',',`showTab('${t.tab}',null,${t.mode?`'${t.mode}'`:'undefined'})`);
+  });
+  // Gruppen-Reihenfolge stabil, max 8 je Gruppe
+  const order=['Assets','Indicators','Calendar events','Tabs'];
+  const grouped=[];
+  order.forEach(g=>{const items=out.filter(e=>e.grp===g).slice(0,8);grouped.push(...items);});
+  return grouped.slice(0,24);
+}
+function renderSearch(){
+  const i=document.getElementById('searchInp'),el=document.getElementById('searchResults');
+  if(!i||!el)return;
+  const entries=searchEntries(i.value);
+  window._searchEntries=entries;
+  if(_searchSel>=entries.length)_searchSel=0;
+  if(!i.value.trim()){el.innerHTML=`<div class="search-empty">Type to search assets, indicators, calendar events and tabs.</div>`;return;}
+  if(!entries.length){el.innerHTML=`<div class="search-empty">No results for "${escH(i.value)}".</div>`;return;}
+  let html='',lastGrp='';
+  entries.forEach((e,idx)=>{
+    if(e.grp!==lastGrp){html+=`<div class="search-grp">${e.grp}</div>`;lastGrp=e.grp;}
+    html+=`<button class="search-row${idx===_searchSel?' sel':''}" onclick="searchGo(${idx})">${e.id&&e.id!==','?`<span class="sr-id">${escH(e.id)}</span>`:''}<span>${escH(e.label)}</span>${e.sub?`<small>${escH(e.sub)}</small>`:''}</button>`;
+  });
+  el.innerHTML=html;
+}
+function searchGo(idx){
+  const e=(window._searchEntries||[])[idx];if(!e)return;
+  closeM('mSearch');
+  try{eval(e.go);}catch(err){}
+}
+function searchKey(ev){
+  const n=(window._searchEntries||[]).length;
+  if(ev.key==='ArrowDown'&&n){_searchSel=(_searchSel+1)%n;renderSearch();ev.preventDefault();}
+  else if(ev.key==='ArrowUp'&&n){_searchSel=(_searchSel-1+n)%n;renderSearch();ev.preventDefault();}
+  else if(ev.key==='Enter'&&n){searchGo(_searchSel);ev.preventDefault();}
+  else if(ev.key==='Escape'){closeM('mSearch');}
+  else{_searchSel=0;}
+}
+// "/" von ueberall (ausser in Eingabefeldern) oeffnet die Suche.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='/'||e.metaKey||e.ctrlKey||e.altKey)return;
+  const t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+  e.preventDefault();openSearchM();
+});
+function closeDataMenu(){const m=document.getElementById('dataMenu');if(m)m.style.display='none';}
+document.addEventListener('click',e=>{
+  const m=document.getElementById('dataMenu');
+  if(m&&m.style.display!=='none'&&!e.target.closest('.hdr-menu-wrap'))closeDataMenu();
+});
 // Gibt true/false zurueck (Erfolg/Misserfolg), damit z.B. der
 // Online-Reconnect-Handler (siehe unten) einen fehlgeschlagenen Push
 // automatisch nochmal versuchen kann.
@@ -5141,9 +5323,9 @@ function renderDetail(){
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
       </div>
       <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
-      <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">🕰️</button>
+      <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',14)}</button>
       <button class="compact-sw${compactView===1?' on':compactView===2?' max':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
-      ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">⚙️</button>`:''}
+      ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',14)}</button>`:''}
     </div>
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
@@ -5318,7 +5500,7 @@ function renderInd(ind,ri,ii,total){
   const bco=bCol(ind.bias);
   let datePart='';
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
-  if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">🔄 <span>${escH(ind.interval)}</span></button>`;}
+  if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">${icn('refresh',11)} <span>${escH(ind.interval)}</span></button>`;}
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
   const ev=findIndEvent(getSym().id,ind.name);
   let dataPart='';
@@ -6785,7 +6967,7 @@ async function fetchFF(silent,btnEl){
     updFFLastUpd();
     if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
   }
-  if(btn){btn.textContent='🔄 Refresh';btn.disabled=false;}
+  if(btn){btn.innerHTML=icn('refresh')+' Refresh';btn.disabled=false;}
 }
 // Bei jedem Laden/Öffnen der Seite frische Daten von Forex Factory (+
 // FXStreet/Trading-Economics-Fallbacks via ff_calendar.json) abrufen,
@@ -7397,7 +7579,7 @@ function renderDash(){
       // JEDEM Asset mit einer Risk-Environment-Karte (siehe recomputeRiskCorr).
       const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
       const envSetUI=`<div class="risk-env-set">
-        <div class="risk-env-set-hdr"><span>🎚️ Your Risk Environment read</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">⚙️</button></div>
+        <div class="risk-env-set-hdr"><span>🎚️ Your Risk Environment read</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',13)}</button></div>
         <div class="risk-env-slider">${envBtn(0,'None')}${envBtn(1,'Half')}${envBtn(2,'Full')}</div>
         <div class="risk-env-set-note">Drives the "Risk Correlation" indicator on the Risk Environment card of every asset (⚙️ = set which assets react how).</div>
       </div>`;
@@ -8403,6 +8585,7 @@ function renderMatrix(){
     <div class="mx-card-title"><span>💪 Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small></div>
     <div class="mx-rank-head"><div class="mx-rank-pos">#</div><div class="mx-rank-id">CCY</div><div class="mx-rank-bar-wrap"></div><div class="mx-rank-score">Score</div><div class="mx-rank-surp">Surprise</div></div>
     ${rankRows}
+    <div class="mx-surp-legend">Surprise = data releases of the last 30 days: beats − misses / total releases with a forecast. E.g. <b>+1/2</b> = 2 releases, net 1 more beat than miss; <b style="color:var(--red)">−7/7</b> = all 7 came in below forecast. <b>0</b> without "/" = no rated releases in the window.</div>
   </div>
   <div class="mx-card">
     <div class="mx-card-title"><span>🔥 Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
