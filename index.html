@@ -1179,7 +1179,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#4c1d95;color:#ede9fe;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-PRO-UI-131</span><span id="verBannerText"> (Grosses UI-Update: einheitliches SVG-Icon-Set statt Emojis (Header, Kalender, Zahnrad/History/Refresh-Buttons), Export/Import/Backups in EIN Data-Menue zusammengefasst, Initialen-Avatar, globale Suche (Lupe oder "/": Assets, Indikatoren, Kalender-Events, Tabs), mobiler Header deutlich kompakter + Banner auf dem Handy default eingeklappt, sichtbare Surprise-Legende in der Matrix)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#ede9fe;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#92400e;color:#fef3c7;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-ALERTS-CSV-132</span><span id="verBannerText"> (Neu: PREIS-ALERTS - im Set-ups-Tab per Glocken-Button ein Level je Paar/Asset anlegen (steigt ueber / faellt unter), gemeldet in der Inbox + per Telegram ueber denselben Workflow wie Event-Alarme. Neu: CSV-Export fuer Indikator-Historie (Data-Tab), COT-Positionierungs-Historie und Score-Historie (Trends))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fef3c7;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1380,6 +1380,7 @@ function introLogin(){
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair">&#128256; Pair</button>
+      <button class="btn" onclick="dlTrendsCSV()" title="Download the daily score history of all assets as CSV"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> CSV</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
         <select class="btn" id="trendsPairBaseSel" onchange="setTrendsPairBase(this.value)" title="Base currency" style="cursor:pointer"></select>
         <span style="color:var(--t3);font-weight:700">/</span>
@@ -1437,10 +1438,32 @@ function introLogin(){
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
+      <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
     </div>
   </div>
   <div id="pairCats"></div>
+</div>
+
+<!-- MODAL: Preis-Alerts (Level ueber-/unterschritten -> Inbox + Telegram) -->
+<div class="ov" id="mPriceAlert" style="display:none" onclick="if(event.target===this)closeM('mPriceAlert')">
+  <div class="modal" style="max-width:430px">
+    <h3>Price Alerts</h3>
+    <div class="help-p" style="margin-bottom:10px">Get a message when a pair or asset crosses a level. Checked against the hourly price feed — in the app (Inbox) and via Telegram (same setup as event alerts). An alert fires once and stays in the list until you delete it.</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <select class="btn" id="paTarget" style="cursor:pointer"></select>
+      <div style="display:flex;gap:7px">
+        <select class="btn" id="paDir" style="cursor:pointer;flex:1">
+          <option value="above">rises above</option>
+          <option value="below">falls below</option>
+        </select>
+        <input class="btn" id="paLevel" type="number" step="any" placeholder="Level (e.g. 1.1500)" style="flex:1">
+      </div>
+      <button class="btn g" onclick="createPriceAlert()">＋ Create alert</button>
+    </div>
+    <div id="paList" style="margin-top:12px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="closeM('mPriceAlert')">Close</button></div>
+  </div>
 </div>
 <!-- PAGE: CALENDAR -->
 <div class="pc" id="pgCal" style="display:none">
@@ -4584,9 +4607,9 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -4630,7 +4653,7 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[];
+let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -4729,13 +4752,14 @@ function loadState(){
       rateWatchCustom=d.rateWatchCustom||{};
       indLinkCustom=d.indLinkCustom||{};
       eventAlerts=pruneEventAlerts(d.eventAlerts||[]);
+      priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];
       riskEnvLevel=d.riskEnvLevel||0;
       riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});
       riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -4805,8 +4829,19 @@ let _saveSoonTimer=null;
 function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,400);}
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
+// Generischer CSV-Download (Nutzer-Wunsch 2026-07-16): header = Spaltennamen,
+// rows = Array von Zeilen-Arrays. Werte mit Komma/Anfuehrungszeichen werden
+// RFC-konform gequotet. Genutzt vom Data-Tab (Indikator-Historie), COT-Tab
+// (Positionierungs-Historie) und Trends (Score-Historie).
+function dlCSV(filename,header,rows){
+  const esc=v=>{const s=v==null?'':String(v);return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csv=[header,...rows].map(r=>r.map(esc).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+csv);
+  a.download=filename;a.click();
+}
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,priceAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
@@ -6697,6 +6732,87 @@ function pruneEventAlerts(arr){
   const cutoff=Date.now()-EVT_ALERT_TTL_MS;
   return(arr||[]).filter(a=>a&&a.fireAt&&new Date(a.fireAt).getTime()>=cutoff);
 }
+
+// ── PREIS-ALERTS (Nutzer-Wunsch 2026-07-16) ─────────────────────────
+// Level-Alarme je Paar/Asset gegen den stuendlichen price_data-Feed.
+// priceAlerts ist Teil von snap() (Undo + Cloud-Sync); der Telegram-Versand
+// laeuft wie bei den Event-Alarmen SERVERSEITIG (event-alerts.yml liest
+// priceAlerts aus fx_sync + price_data.json von main und dedupliziert ueber
+// fx_alert_log). Der Browser prueft zusaetzlich bei jedem Preis-Refresh und
+// legt beim Ueberschreiten eine Inbox-Nachricht ab (a.notified verhindert
+// Wiederholung; der Alarm bleibt sichtbar in der Liste, bis er geloescht wird).
+function currentPriceOf(target){
+  if(String(target).includes('/')){
+    const[b,q]=target.split('/');
+    const s=pairPriceSeries(b,q);
+    return s&&s.length?s[s.length-1][1]:null;
+  }
+  const s=priceSeriesFor(target);
+  return s&&s.length?s[s.length-1][1]:null;
+}
+// Waehlbare Ziele: alle angelegten Paare + alle Assets mit Preis-Serie.
+function priceAlertTargets(){
+  const out=[];
+  const seen=new Set();
+  (pairs||[]).forEach(p=>{const n=p.name||p;if(typeof n==='string'&&n.includes('/')&&!seen.has(n)){seen.add(n);out.push(n);}});
+  (syms||[]).forEach(s=>{if(!seen.has(s.id)&&priceSeriesFor(s.id)){seen.add(s.id);out.push(s.id);}});
+  return out;
+}
+function openPriceAlertM(){
+  const sel=document.getElementById('paTarget');
+  if(sel)sel.innerHTML=priceAlertTargets().map(t=>{
+    const p=currentPriceOf(t);
+    return`<option value="${escH(t)}">${escH(t)}${p!=null?` — now ${fmtPriceTick(p)}`:''}</option>`;
+  }).join('')||'<option value="">No priceable pairs/assets yet</option>';
+  renderPriceAlertList();
+  openM('mPriceAlert');
+}
+function createPriceAlert(){
+  const t=document.getElementById('paTarget').value;
+  const dir=document.getElementById('paDir').value;
+  const lv=parseFloat(document.getElementById('paLevel').value);
+  if(!t||!isFinite(lv)){alert('Please pick a target and enter a level.');return;}
+  pushU();
+  priceAlerts.push({id:uid(),target:t,dir,level:lv,created:Date.now()});
+  save();
+  document.getElementById('paLevel').value='';
+  renderPriceAlertList();
+}
+function delPriceAlert(id){pushU();priceAlerts=priceAlerts.filter(a=>a.id!==id);save();renderPriceAlertList();}
+function renderPriceAlertList(){
+  const el=document.getElementById('paList');if(!el)return;
+  if(!(priceAlerts||[]).length){el.innerHTML=`<div class="inbox-empty" style="padding:10px">No price alerts yet.</div>`;return;}
+  el.innerHTML=priceAlerts.map(a=>{
+    const p=currentPriceOf(a.target);
+    const fired=!!a.notified;
+    const col=a.dir==='above'?'var(--blue)':'var(--red)';
+    return`<div class="evt-alert-row">
+      <div class="evt-alert-row-main" style="cursor:default">
+        <span class="evt-alert-row-time" style="color:${col}">${a.dir==='above'?'≥':'≤'} ${a.level}</span>
+        <span class="evt-alert-row-name">${escH(a.target)}${p!=null?` · now ${fmtPriceTick(p)}`:''}${fired?' · <b style="color:var(--amber)">fired</b>':''}</span>
+      </div>
+      <button class="evt-alert-row-del" onclick="delPriceAlert('${a.id}')" title="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+function checkPriceAlerts(){
+  let changed=false;
+  (priceAlerts||[]).forEach(a=>{
+    if(a.notified)return;
+    const p=currentPriceOf(a.target);
+    if(p==null)return;
+    const crossed=a.dir==='above'?p>=a.level:p<=a.level;
+    if(!crossed)return;
+    a.notified=true;a.notifiedAt=Date.now();
+    inbox.unshift({id:uid(),kind:'price',symId:a.target,currencies:a.target,base:'',
+      label:`Price ${a.dir==='above'?'rose above':'fell below'} ${a.level}`,
+      rubName:'Price alert',bias:a.dir==='above'?'bull':'bear',
+      actual:fmtPriceTick(p),forecast:null,previous:null,date:todayStr(),time:'',ts:Date.now()});
+    changed=true;
+  });
+  if(changed){save();updInboxBadge();}
+  return changed;
+}
 function updInboxBadge(){
   const before=inbox.length;
   inbox=pruneInbox(inbox);
@@ -6749,6 +6865,9 @@ function renderInbox(){
 function gotoIndicatorByNotif(id){
   const n=inbox.find(x=>x.id===id);if(!n)return;
   closeM('mInbox');
+  // Preis-Alert-Nachrichten haben kein Indikator-Ziel - zur Set-ups-Seite
+  // (dort leben die Paar-Preise und das Preis-Alert-Modal).
+  if(n.kind==='price'){showTab('pairs');return;}
   const sym=syms.find(s=>s.id===n.symId);
   if(sym){const rub=(sym.rubrics||[]).find(r=>r.name===n.rubName);if(rub&&rub.collapsed){rub.collapsed=false;save();}}
   gotoSym(n.symId);
@@ -7186,7 +7305,7 @@ async function fetchPriceData(){
   }catch(e){}
   priceDataLastFetch=Date.now();
 }
-function autoFetchPriceData(){fetchPriceData().then(()=>rerender());}
+function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rerender();});}
 // Letzter verfuegbarer Punkt einer Preis-Zeitreihe + %-Veraenderung zum
 // letzten verfuegbaren Punkt DAVOR (nicht zwingend "gestern" im Kalendersinn -
 // an Wochenenden/Feiertagen wird wie beim Bond-Feed der letzte verfuegbare
@@ -8765,6 +8884,17 @@ function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title){
     ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:11.5px">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
 }
+// CSV-Export der taeglichen Score-Historie (scoreHist): eine Zeile pro
+// Datum, eine Spalte pro Asset (Gesamt-Score im Vergleichs-Massstab).
+function dlTrendsCSV(){
+  const assets=trendAssets();
+  const dates=new Set();
+  assets.forEach(id=>(scoreHist[id]||[]).forEach(e=>dates.add(e[0])));
+  if(!dates.size){alert('No score history recorded yet.');return;}
+  const maps={};assets.forEach(id=>{maps[id]={};(scoreHist[id]||[]).forEach(e=>{maps[id][e[0]]=e[1];});});
+  const rows=[...dates].sort().map(d=>[d,...assets.map(id=>maps[id][d]!=null?maps[id][d]:'')]);
+  dlCSV('score-history.csv',['date',...assets],rows);
+}
 function renderTrends(){
   const el=document.getElementById('trendsBody');if(!el)return;
   const assets=trendAssets();
@@ -9119,6 +9249,22 @@ function cotMetrics(s){
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
 function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
+// CSV-Export der kompletten COT-Positionierungs-Historie (alle gelisteten
+// Symbole, bis 26 Wochenreports je Symbol, roh: Long/Short/OI + Long%).
+function dlCotCSV(){
+  if(!COT_DATA||!COT_DATA.symbols){alert('No COT data loaded yet.');return;}
+  const rows=[];
+  COT_SYMS.forEach(id=>{
+    const s=COT_DATA.symbols[id];if(!s)return;
+    (Array.isArray(s.history)?s.history:[]).forEach(h=>{
+      const L=+h.long,S=+h.short,tot=L+S;
+      rows.push([id,h.date,L,S,h.oi!=null?h.oi:'',tot>0?(L/tot*100).toFixed(1):'']);
+    });
+  });
+  if(!rows.length){alert('No COT history to export.');return;}
+  rows.sort((a,b)=>a[0]===b[0]?String(a[1]).localeCompare(String(b[1])):String(a[0]).localeCompare(String(b[0])));
+  dlCSV('cot-positioning-history.csv',['symbol','report_date','noncomm_long','noncomm_short','open_interest','long_pct'],rows);
+}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -9599,6 +9745,14 @@ function indHistChart(ind){
 // Ausklappen eines Indikators auf der Asset-Seite.
 let dataAsset='USD',dataIndBase='CPI (Headline)';
 function setDataAsset(v){dataAsset=v||'';dataIndBase='';renderDataTab();}
+// CSV-Export des im Data-Tab gewaehlten Indikators (volle chartHist-Reihe).
+function dlDataTabCSV(){
+  const sym=dataAsset?syms.find(s=>s.id===dataAsset):null;if(!sym||!dataIndBase)return;
+  const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
+  const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
+  if(!ind||!Array.isArray(ind.chartHist)||!ind.chartHist.length){alert('No history data for this indicator yet.');return;}
+  dlCSV(`${dataAsset}-${dataIndBase.replace(/[^A-Za-z0-9]+/g,'_')}-history.csv`,['date','actual','forecast'],ind.chartHist.map(p=>[p[0],p[1],p[2]==null?'':p[2]]));
+}
 function setDataInd(v){dataIndBase=v||'';renderDataTab();}
 function renderDataTab(){
   const el=document.getElementById('dataBody');if(!el)return;
@@ -9618,7 +9772,7 @@ function renderDataTab(){
     if(dataIndBase){
       const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
       const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
-      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind)}</div></div>`;
+      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${escH(rub.name)}</span><button class="btn" style="margin-left:10px;padding:4px 9px;font-size:11px" onclick="dlDataTabCSV()" title="Download this indicator's history as CSV">${icn('csv',13)} CSV</button></div><div style="padding:12px 14px">${indHistChart(ind)}</div></div>`;
     }
   }
   el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${assetPicker}${indPicker}</div>${chartSection||`<div class="cot-empty">${sym?'Pick an indicator above.':'Pick an asset above to browse its indicator history.'}</div>`}`;
@@ -10004,7 +10158,7 @@ function renderCot(){
     </tr>`;}).join('');
   }
   const barsCard=cotFilter?'':`<div class="cot-card">
-      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small></div>
+      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small><button class="btn" style="margin-left:auto;padding:4px 9px;font-size:11px" onclick="dlCotCSV()" title="Download the COT positioning history (all symbols, 26 weeks) as CSV">${icn('csv',13)} CSV</button></div>
       <div class="cot-bars">${bars}</div>
     </div>`;
   el.innerHTML=ctrl+filterBar+`

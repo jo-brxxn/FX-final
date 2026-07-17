@@ -646,3 +646,43 @@ BEWUSST NICHT geändert (mit Nutzer-Kontext, nicht heimlich "fixen"):
   `IND_EVENT_MATCHERS`-Perioden daran denken, dass History diesen
   Zwei-Pfad-Fallback exakt spiegeln muss — sonst fehlen wieder Indikatoren,
   bei denen FF und die interne Perioden-Erwartung auseinanderlaufen.
+
+### Pro-UI-Update + neue Funktionen (Nutzer-Auftrag 2026-07-16 "mach alles")
+
+Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
+
+- **SVG-Icon-Set statt Emojis (NEUE UI-REGEL):** `ICONS`/`icn(name,size)`
+  (bei `escH`, ~Z.1840) ist das gemeinsame Inline-SVG-Icon-Set (Stroke-Stil,
+  erbt currentColor). Alle BEDIEN-Buttons nutzen es (Header, Kalender-
+  Toolbar + Zeilen-Glocke, Zahnrad/History/Refresh, Perioden-Badge).
+  Bei neuen Buttons IMMER `icn()` verwenden, keine neuen Emojis einführen
+  (Emojis in Info-TEXTEN/Karten-Titeln sind ok). Statisches HTML (Header)
+  trägt dieselben SVG-Pfade direkt inline, da `icn()` dort nicht läuft.
+- **Header konsolidiert:** Export/Import/Backups stecken in EINEM
+  "Data"-Dropdown (`toggleDataMenu`/`#dataMenu`); Profil-Kreis zeigt
+  Initialen des Sync-Namens (`updProfile`), ohne Sync ein Personen-SVG.
+  Mobil (<760px): kompakter Header (kleiner Avatar ohne Namen) und
+  VERSION-CHECK-Banner default EINGEKLAPPT (nur solange der Nutzer den
+  Zustand nie selbst umgeschaltet hat — localStorage-Wert hat Vorrang).
+- **Globale Suche:** Lupe im Header oder Taste "/" → `openSearchM()`;
+  findet Assets, Indikatoren, Kalender-Events, Tabs (`searchEntries`),
+  Pfeiltasten+Enter. Neue durchsuchbare Dinge dort ergänzen.
+- **Preis-Alerts** (`priceAlerts`, Teil von `snap()`/Cloud-Sync wie
+  `eventAlerts`): Set-ups-Tab → Glocken-Button → `mPriceAlert`-Modal
+  (Ziel = angelegtes Paar oder Asset mit Preis-Serie, Richtung
+  über/unter, Level). Client prüft bei jedem Preis-Refresh
+  (`checkPriceAlerts` in `autoFetchPriceData`) und legt EINMAL eine
+  Inbox-Nachricht ab (`a.notified`); der TELEGRAM-Versand läuft wie bei
+  Event-Alarmen serverseitig in `event-alerts.yml` (liest `priceAlerts`
+  aus fx_sync + `price_data.json` von main, invert-Logik exakt wie
+  `priceSeriesFor`/`pairPriceSeries`, Dedup über `fx_alert_log`).
+  Wichtig: fx_alert_log räumt nach 7 Tagen auf — ein nie gelöschter,
+  weiter überschrittener Preis-Alert kann danach erneut senden (bewusst
+  als Erinnerung akzeptiert).
+- **CSV-Export** (`dlCSV(filename,header,rows)` bei `exportData`):
+  Data-Tab (Indikator-Historie), COT-Tab (Positionierungs-Historie,
+  `dlCotCSV`), Trends (`dlTrendsCSV`, Score-Historie aus `scoreHist`).
+- **Matrix:** sichtbare Legende erklärt die Surprise-Notation (+1/2 …)
+  direkt unter dem Ranking (Touch hat keinen Hover).
+- **PWA war bereits komplett eingerichtet** (manifest.json, sw.js
+  network-first, Icons, Registrierung) — nicht doppelt anlegen.

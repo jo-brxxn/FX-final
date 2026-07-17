@@ -67,14 +67,63 @@ jobs:
             if (!syncRes.ok) throw new Error('fx_sync fetch failed: ' + syncRes.status);
             const syncRows = await syncRes.json();
             const alerts = (syncRows[0] && syncRows[0].data && syncRows[0].data.eventAlerts) || [];
-            if (!alerts.length) { console.log('No event alerts configured.'); return; }
+            const priceAlerts = (syncRows[0] && syncRows[0].data && syncRows[0].data.priceAlerts) || [];
 
             const now = Date.now();
             const due = alerts.filter(a => {
               const t = new Date(a.fireAt).getTime();
               return !isNaN(t) && t <= now && t >= now - DUE_WINDOW_MS;
             });
-            if (!due.length) { console.log('No alerts due right now (' + alerts.length + ' configured).'); return; }
+
+            // ── Preis-Alerts (Level ueber-/unterschritten) ──────────────
+            // Dieselbe Preisbasis wie die App: price_data.json vom main-
+            // Branch (stuendlich aktualisiert). Kurslogik exakt wie im
+            // Browser (priceSeriesFor/pairPriceSeries inkl. invert-Flag).
+            // Ausgeloeste Alerts werden ueber fx_alert_log dedupliziert
+            // (alert_id) - genau wie Event-Alarme; die App markiert sie
+            // zusaetzlich clientseitig als "fired" fuer die Inbox.
+            const priceDue = [];
+            if (priceAlerts.length) {
+              try {
+                const pdRes = await fetch('https://raw.githubusercontent.com/jo-brxxn/FX-final/main/price_data.json');
+                if (pdRes.ok) {
+                  const PD = await pdRes.json();
+                  // Letzter Kurs eines Eintrags, invert-Flag angewandt - das ist
+                  // sowohl die "eigene Richtung" eines Einzel-Assets als auch der
+                  // USD-Kurs einer Waehrung (im Browser identische Formel, siehe
+                  // priceSeriesFor/pairPriceSeries in index.html).
+                  const last = id => {
+                    const p = PD && PD[id];
+                    if (!p || !Array.isArray(p.series) || !p.series.length) return null;
+                    const v = p.series[p.series.length - 1][1];
+                    if (v == null) return null;
+                    return p.invert ? (v ? 1 / v : null) : v;
+                  };
+                  const priceOf = target => {
+                    if (String(target).includes('/')) {
+                      const [b, q] = target.split('/');
+                      const bU = last(b), qU = last(q);
+                      return bU != null && qU ? bU / qU : null;
+                    }
+                    return last(target);
+                  };
+                  for (const a of priceAlerts) {
+                    if (!a || !a.id || !isFinite(+a.level)) continue;
+                    const p = priceOf(a.target);
+                    if (p == null) continue;
+                    const crossed = a.dir === 'above' ? p >= +a.level : p <= +a.level;
+                    if (crossed) priceDue.push({ id: a.id, msg: `💹 ${a.target}: price ${a.dir === 'above' ? 'rose above' : 'fell below'} ${a.level} (now ${p >= 1000 ? p.toFixed(0) : p >= 10 ? p.toFixed(2) : p.toFixed(4)})`, ffLink: false });
+                  }
+                } else {
+                  console.log('price_data.json fetch failed: ' + pdRes.status);
+                }
+              } catch (e) {
+                console.log('price alert check threw: ' + e.message);
+              }
+            }
+
+            if (!due.length && !priceDue.length) { console.log('No alerts due right now (' + alerts.length + ' event / ' + priceAlerts.length + ' price configured).'); return; }
+            due.push(...priceDue);
 
             // fx_alert_log ist nur eine Nebentabelle zum Vermeiden von
             // Doppel-Versand - wenn sie (z.B. RLS/Setup-Problem) nicht
