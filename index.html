@@ -1149,6 +1149,10 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .cot-bar-in{animation:cotBarIn .5s cubic-bezier(.2,.7,.3,1) both}
 @keyframes trDraw{0%{stroke-dashoffset:1}100%{stroke-dashoffset:0}}
 .tr-line-in{stroke-dasharray:1;animation:trDraw .9s ease forwards}
+@keyframes trFadeIn{0%{opacity:0}100%{opacity:1}}
+.tr-line-fade{animation:trFadeIn .35s ease both}
+@keyframes trHaloFadeIn{0%{opacity:0}100%{opacity:0.7}}
+.tr-halo-fade{animation:trHaloFadeIn .35s ease both}
 @keyframes trDotIn{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
 .tr-dot-in{animation:trDotIn .35s ease both;transform-box:fill-box;transform-origin:center}
 @keyframes listRowIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
@@ -1183,7 +1187,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-CANDLE-CONTRAST-140</span><span id="verBannerText"> (Trends "vs Price": Kerzen gedaempft (Deckkraft 0.42) + luecken los (volle Slot-Breite) + hinter der Score-Linie gezeichnet, die jetzt dicker ist und einen dunklen Kontrast-Rand traegt, damit sie nie in gleichfarbigen Kerzen verschwindet. Flip-Dreiecke komplett entfernt (auch aus dem vs-Price-Chart). Bugfix: Header-Menue "Data" (Export/Import/Backups) verschwand teilweise hinter der Tab-Leiste auf Mobil, weil .hdr per backdrop-filter einen eigenen Stacking-Context aufmacht, der das Dropdown einfaengt - jetzt wie das Stack-Tab-Menue per position:fixed an document.body gehaengt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-TREND-FADE-141</span><span id="verBannerText"> (Bugfix: die bias-eingefaerbte Trends-Linie besteht aus mehreren <polyline>-Stuecken (eins je Bias-Abschnitt) - die frueher genutzte Zeichnen-Animation liess jedes Stueck EINZELN unabhaengig in 0.9s aufbauen, sichtbar als mehrere nacheinander/durcheinander auftauchende Teile statt einem einzigen Links-nach-rechts-Sweep. Jetzt zeichnen sich alle Stuecke synchron per einfachem Opacity-Fade auf einmal)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8852,8 +8856,15 @@ function biasLineSegments(pts,halo){
       // gegen die Kerzen dahinter - sonst verschwindet z.B. eine bullishe
       // (blaue) Score-Linie optisch in einer ebenfalls bullishen (bläulichen)
       // Kerze gleicher Farbe (Nutzer-Bugreport 2026-07-19).
-      if(halo)lines+=`<polyline points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>`;
-      lines+=`<polyline class="tr-line-in" pathLength="1" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+      // KEINE tr-line-in-Zeichen-Animation (stroke-dashoffset) hier: die zerlegt
+      // die Linie in mehrere <polyline>-Stuecke (eins je Bias-Lauf), jedes mit
+      // eigenem pathLength=1 zeichnete sich frueher UNABHAENGIG in 0.9s -
+      // sichtbar als mehrere einzeln nacheinander/durcheinander auftauchende
+      // Stuecke statt einem einzigen Links-nach-rechts-Sweep. Nutzer-Wunsch
+      // 2026-07-19: alles auf einmal erscheinen lassen (tr-line-fade = simples
+      // synchrones Opacity-Fade, kein Stueckweise-Zeichnen).
+      if(halo)lines+=`<polyline class="tr-halo-fade" points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>`;
+      lines+=`<polyline class="tr-line-fade" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     }
   });
   return lines;

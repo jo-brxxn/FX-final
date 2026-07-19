@@ -870,3 +870,25 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   `.tabbar`, `.sb`) herausragen könnte, MUSS nach diesem Muster gebaut
   werden (`document.body.appendChild` + `position:fixed`), ein simples
   `z-index` auf einem statischen Kind-Element reicht nicht.**
+
+### Bias-Linie zeichnete sich in einzelnen Stücken statt als ein Sweep (Nutzer-Korrektur 2026-07-19, selber Tag)
+
+- Die mehrfarbige Bias-Linie besteht technisch aus mehreren `<polyline>`-
+  Elementen (einer je zusammenhängendem Bias-Abschnitt, siehe
+  `biasLineSegments()`). Die alte Zeichnen-Animation (`.tr-line-in`,
+  `stroke-dasharray:1` + `stroke-dashoffset` 1→0 über 0.9s) lief auf JEDEM
+  dieser Stücke UNABHÄNGIG — jedes Stück "zeichnete sich" in denselben
+  0.9s von 0 auf 100% SEINER EIGENEN Länge, unabhängig von den Nachbar-
+  Stücken. Ergebnis: statt einem einzigen durchgehenden Links-nach-rechts-
+  Sweep (wie vor der Bias-Einfärbung, als es nur EIN `<polyline>` pro Linie
+  gab) wirkten die einzelnen Bias-Abschnitte wie separat/durcheinander
+  auftauchende Teile.
+- Fix: neue Klassen `tr-line-fade`/`tr-halo-fade` (einfaches synchrones
+  Opacity-Fade, `@keyframes trFadeIn`/`trHaloFadeIn`, kein
+  `stroke-dashoffset`) ersetzen `tr-line-in` NUR für die Bias-Segment-
+  Polylines in `biasLineSegments()` — alle Stücke erscheinen jetzt
+  gemeinsam/gleichzeitig. Die eigentliche `tr-line-in`-Zeichnen-Animation
+  bleibt unverändert für alle EINZEL-Polyline-Faelle (z.B. "All assets"/
+  "FX only" Mehrfarben-Charts, die nicht-bias-eingefärbte Score-vs-Price-
+  Linie) — dort gab es das Problem nie, weil dort nur ein durchgehendes
+  `<polyline>` existiert.
