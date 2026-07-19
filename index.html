@@ -1183,7 +1183,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#78350f;color:#fed7aa;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ORANGE-CROWDED-BADGE-135</span><span id="verBannerText"> (COT: das "⚠ CROWDED"-Badge in der Balkenliste ist jetzt ein kleines Icon statt Text (voller Hinweis weiterhin im Tooltip) - vorher brach der Text in der schmalen Symbolspalte um und machte Zeilen mit Warnung hoeher als Zeilen ohne)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#fed7aa;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-RISKENV-FIXES-136</span><span id="verBannerText"> (Bugfix: der Dashboard-Regler (Risk Sentiment) liess die Seite hoch-/runterspringen - Ursache war window.scrollTo statt des echten Scroll-Containers #pgDash + fehlendes blur() vor dem Neu-Rendern. Regler-Reihenfolge jetzt Full/Half/None. Regler-Aenderungen erscheinen jetzt in der Asset-History. Trends-Tab: neuer "FX only"-Filter neben "All assets")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2979,7 +2979,7 @@ function renderSymHistoryPanel(id){
   // zuerst innerhalb des Tages), damit sie neben den Events erscheinen.
   const logByDate={};
   (scoreLog||[]).filter(x=>x&&x.sym===id).forEach(x=>{const dk=String(x.t).slice(0,10);(logByDate[dk]=logByDate[dk]||[]).push(x);});
-  const BLAB={bull:'▲ Bullish',bear:'▼ Bearish',neu:'◆ Neutral'};
+  const BLAB={sbull:'▲ Strongly bullish',bull:'▲ Bullish',neu:'◆ Neutral',bear:'▼ Bearish',sbear:'▼ Strongly bearish'};
   const histMap={};
   (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];});
   const liveScore=sym?symScoreCmp(sym):0; // Fallback fuer "heute", falls recordScoreHist() diese Sitzung noch nicht lief
@@ -5849,7 +5849,25 @@ function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.colla
 function setRiskEnvLevel(lv){
   lv=Math.max(0,Math.min(2,+lv||0));
   if(lv===riskEnvLevel)return;
-  pushU();riskEnvLevel=lv;recomputeAuto();save();renderSidebar();rerender();
+  pushU();
+  riskEnvLevel=lv;
+  // "Risk Correlation" wird automatisch ueber recomputeRiskCorr() unten
+  // gesetzt (fuer diesen Indikator ist setIndBias/togIndImp gesperrt, siehe
+  // dort) - dadurch blieb eine Regler-Aenderung bisher KOMPLETT unsichtbar in
+  // der Asset-History (Nutzer-Bugreport 2026-07-19). Hier deshalb denselben
+  // scoreLog-Eintrag wie bei einer manuellen Bias-Aenderung nachtragen, pro
+  // betroffenem Asset (jedes mit einer Risk-Environment-Karte), inkl. des
+  // tatsaechlichen Score-Effekts aus Vorher/Nachher-Vergleich.
+  (syms||[]).forEach(sym=>{
+    const rub=(sym.rubrics||[]).find(r=>r.name===MACRO_NAME);
+    const ind=rub&&(rub.indicators||[]).find(i=>i.name==='Risk Correlation');
+    if(!ind)return;
+    const before=indScore(ind,rub),oldBias=ind.bias;
+    ind.bias=riskCorrBiasFor(sym.id);
+    const after=indScore(ind,rub);
+    if(oldBias!==ind.bias)logScoreChange(sym.id,{kind:'bias',ind:ind.displayName||ind.name,rub:rub.name,from:oldBias,to:ind.bias,delta:Math.round((after-before)*100)/100});
+  });
+  recomputeAuto();save();renderSidebar();rerender();
 }
 function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';}
 function setRiskEnvDir(id,dir){
@@ -7641,6 +7659,22 @@ function renderDash(){
   renderRiskEnvRemind();
   updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
+  // Scroll-Position sichern: el.innerHTML unten ersetzt ALLE Widgets komplett
+  // (auch das gerade angeklickte, z.B. der Risk-Environment-Regler). Zwei
+  // Ursachen fuer den gemeldeten Sprung nach oben/unten (Nutzer-Bugreport
+  // 2026-07-17): (1) der Body ist NICHT der Scroll-Container - #pgDash (Klasse
+  // .pc) scrollt, window.scrollY/scrollTo greifen dort ins Leere, also den
+  // ECHTEN Container sichern; (2) iOS Safari scrollt teils von selbst, wenn
+  // ein fokussiertes/gerade angetipptes Element synchron aus dem DOM entfernt
+  // wird (genau das macht innerHTML= mit dem eben geklickten Regler-Button) -
+  // davor blur() vermeidet diesen Trigger. Betrifft besonders den Risk-
+  // Sentiment-Regler, weil dessen Karte danach per syncRiskHistHeight() unten
+  // sogar einen ZWEITEN, verzoegerten renderDash()-Aufruf ausloesen kann
+  // (Hoehenabgleich mit der Nachbarkarte) - deshalb die Sicherung HIER drin,
+  // nicht nur beim Aufrufer, damit auch dieser zweite Aufruf abgedeckt ist.
+  const _dashScroll=document.getElementById('pgDash');
+  const _scrollY=_dashScroll?_dashScroll.scrollTop:0;
+  if(document.activeElement&&el.contains(document.activeElement))document.activeElement.blur();
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
@@ -7738,7 +7772,7 @@ function renderDash(){
       const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
       const envSetUI=`<div class="risk-env-set">
         <div class="risk-env-set-hdr"><span>🎚️ Your Risk Environment read</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',13)}</button></div>
-        <div class="risk-env-slider">${envBtn(0,'None')}${envBtn(1,'Half')}${envBtn(2,'Full')}</div>
+        <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
         <div class="risk-env-set-note">Drives the "Risk Correlation" indicator on the Risk Environment card of every asset (⚙️ = set which assets react how).</div>
       </div>`;
       content=`<div class="risk-gauge">
@@ -7840,6 +7874,7 @@ function renderDash(){
       </div>
       ${content}
     </div>`;}).join('');
+  if(_dashScroll)_dashScroll.scrollTop=_scrollY;
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
   startSessionBar();
@@ -8940,7 +8975,7 @@ function renderTrends(){
   // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
   const sel=document.getElementById('trendsCcySel');
   if(sel){
-    const opts='<option value="ALL">\u{1F310} All assets</option>'+groupedAssetOptions(assets);
+    const opts='<option value="ALL">\u{1F310} All assets</option><option value="FX">\u{1F4B1} FX only</option>'+groupedAssetOptions(assets);
     if(sel.innerHTML!==opts)sel.innerHTML=opts;
     sel.value=trendsFilter==='PAIR'?'ALL':trendsFilter;
   }
@@ -8952,7 +8987,7 @@ function renderTrends(){
   // wo mehrere Score-Linien gleichzeitig gezeichnet werden).
   const priceBtn=document.getElementById('trendsPriceBtn');
   if(priceBtn){
-    const avail=trendsFilter!=='ALL';
+    const avail=trendsFilter!=='ALL'&&trendsFilter!=='FX';
     priceBtn.classList.toggle('active',trendsShowPrice&&avail);
     priceBtn.disabled=!avail;
     priceBtn.style.opacity=avail?'':'.4';
@@ -8969,19 +9004,20 @@ function renderTrends(){
   // Total Score: ALL assets. Macro cards (Inflation/Labour/Growth) only for
   // currencies - for non-FX assets these scores aren't derived from data
   // (they'd be constantly 0).
-  const totalIds=trendsFilter==='ALL'?assets:[trendsFilter];
-  const macroIds=trendsFilter==='ALL'?assets.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
+  const totalIds=trendsFilter==='ALL'?assets:trendsFilter==='FX'?assets.filter(id=>FX.includes(id)):[trendsFilter];
+  const macroIds=(trendsFilter==='ALL'||trendsFilter==='FX')?assets.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
   // Once filtered down to a single asset, color the line by its current bias
   // instead of the fixed per-currency identity color (only makes sense for
-  // one line at a time - with "All assets" the colors need to stay distinct).
+  // one line at a time - with "All assets"/"FX only" the colors need to stay
+  // distinct since multiple lines are drawn together).
   let colorOverride=null;
-  if(trendsFilter!=='ALL'){const sym=syms.find(s=>s.id===trendsFilter);if(sym)colorOverride=BC[sym.bias];}
+  if(trendsFilter!=='ALL'&&trendsFilter!=='FX'){const sym=syms.find(s=>s.id===trendsFilter);if(sym)colorOverride=BC[sym.bias];}
   const dset=new Set();
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const dates=[...dset].sort();
   if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
   let html;
-  if(trendsFilter!=='ALL'&&trendsShowPrice){
+  if(trendsFilter!=='ALL'&&trendsFilter!=='FX'&&trendsShowPrice){
     const scoreMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))scoreMap[e[0]]=e[1];});
     html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price');
   }else{
