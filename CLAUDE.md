@@ -1052,3 +1052,31 @@ Per Playwright verifiziert (Desktop+Mobile, Dashboard/Matrix/COT/FX-Detail/
 Intro): Widget-Reihenfolge stimmt (`ccy_ranking` zuerst, `globe` zuletzt),
 keine JS-Fehler, alle ersetzten Icons rendern korrekt, Intro wirkt sichtbar
 ruhiger (Screenshot-Vergleich).
+
+### Intro-Lade-Anzeige nach Referenz-Screenshot (Nutzer-Wunsch 2026-07-19)
+
+Nutzer schickte einen Screenshot des myfxbook-Splash-Screens: Reihe kleiner
+Quadrate unter dem Untertitel, eines davon leuchtet farbig auf und wird
+etwas breiter, wandert sichtbar von links nach rechts durch die Reihe,
+Zyklus wiederholt sich. Ausdrücklicher Wunsch: NUR dieses Lade-Element
+übernehmen, der eigene Hintergrund (dunkles Karo-Raster, `.intro-grid`)
+UND die eigene Wortmarke bleiben unverändert - keine komplette Vorlagen-
+Übernahme.
+
+- Neues `.intro-loader` (5× `.intro-loader-sq`) unter `.intro-sub`
+  eingefügt, `@keyframes introLoaderSweep` + `animation-delay` pro
+  Quadrat (0/.16/.32/.48/.64s) erzeugt den Sweep-Effekt.
+- **Falle beim ersten Anlauf:** mit `ease-in-out` und einem Hell-Fenster
+  (Breite/Farbe aktiv) von 8-20 % einer 1,6-s-Animation UND nur 0,16 s
+  Versatz zwischen den Quadraten überlappten sich die weichen Übergangs-
+  Rampen benachbarter Quadrate zeitlich - per Playwright-Sampling
+  (`getComputedStyle().width` alle 100 ms) bestätigt: 2-4 Quadrate waren
+  gleichzeitig teilweise aufgeweitet statt sauber EINES nacheinander.
+  Fix: `steps(1)` statt `ease-in-out` (digitales Umschalten ohne
+  Zwischenwerte) + Hell-Fenster auf 10-18 % verkürzt (0,128 s), kürzer als
+  der 0,16-s-Versatz - dadurch nie zwei Quadrate gleichzeitig aktiv,
+  per erneutem Sampling bestätigt (sauber EIN aktives Quadrat pro Frame,
+  wandert 1→2→3→4→5→Pause→1…).
+- Akzentfarbe = `var(--blue)` (App-eigener Ton), nicht das Orange aus dem
+  myfxbook-Referenzbild - der Nutzer wollte das Element uebernehmen, nicht
+  eine fremde Markenfarbe einführen.

@@ -1146,6 +1146,18 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
    .62->1). */
 .intro-title{font-weight:800;font-size:clamp(32px,7vw,80px);letter-spacing:clamp(1px,.6vw,6px);white-space:nowrap;padding:0 4vw;color:#e8eef7;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
 .intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
+/* Lade-Indikator: eine Reihe kleiner Quadrate, eines "wandert" hell
+   aufleuchtend und leicht breiter von links nach rechts durch (Nutzer-
+   Referenz-Screenshot 2026-07-19, myfxbook-Splash-Screen-Stil) - eigener
+   Hintergrund bleibt (Nutzer-Wunsch: nur dieses Element uebernehmen). */
+.intro-loader{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:clamp(16px,2.6vw,30px);opacity:0;animation:introSubIn .8s ease .9s both}
+.intro-loader-sq{width:10px;height:10px;border-radius:3px;background:rgba(255,255,255,.16);animation:introLoaderSweep 1.6s steps(1) infinite}
+.intro-loader-sq:nth-child(1){animation-delay:0s}
+.intro-loader-sq:nth-child(2){animation-delay:.16s}
+.intro-loader-sq:nth-child(3){animation-delay:.32s}
+.intro-loader-sq:nth-child(4){animation-delay:.48s}
+.intro-loader-sq:nth-child(5){animation-delay:.64s}
+@keyframes introLoaderSweep{0%{width:10px;background:rgba(255,255,255,.16)}10%{width:22px;background:var(--blue,#5fa8ed)}18%{width:10px;background:rgba(255,255,255,.16)}100%{width:10px;background:rgba(255,255,255,.16)}}
 .intro-hint{position:absolute;bottom:5%;left:0;right:0;height:1.4em;pointer-events:none}
 .ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
 .ih-2{animation-delay:3s}
@@ -1203,7 +1215,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-PRO-AUDIT-144</span><span id="verBannerText"> (Professionalitaets-Audit Runde 2 (Agent-Vorschlaege umgesetzt): Aurora-Hintergrund statisch + dezenter statt endlos driftend; Globus vom Dashboard-Hero ans Ende verschoben (Currency Strength jetzt zuerst); Overshoot-Bounce/Glow-Sweeps + endlose Puls-Animationen (Benachrichtigungs-Badges, COT/Risk-Banner) entschaerft/entfernt; Emoji in Kern-Buttons/Karten-Titeln/Logo durch das SVG-Icon-Set ersetzt; globale Eckenradien etwas eckiger; Intro-Screen einfarbig ohne Glow/starken Zoom; tabular-nums global)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-INTRO-LOADER-145</span><span id="verBannerText"> (Intro-Screen: neue Lade-Anzeige unter dem Untertitel - 5 kleine Quadrate, eines leuchtet auf, wird kurz breiter und "wandert" von links nach rechts durch (Nutzer-Referenz: myfxbook-Splash-Screen-Stil), eigener Hintergrund/Wortmarke bleibt unveraendert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1237,6 +1249,7 @@ try{
   <div id="introZoom">
     <div class="intro-title">FX ANALYST&nbsp;PRO</div>
     <div class="intro-sub">created by Jonathan Brinkmann</div>
+    <div class="intro-loader" aria-hidden="true"><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span></div>
   </div>
   <div class="intro-hint" id="introHint">
     <span class="ih-txt ih-1">tap to continue</span>
