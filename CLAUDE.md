@@ -892,3 +892,51 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   "FX only" Mehrfarben-Charts, die nicht-bias-eingefärbte Score-vs-Price-
   Linie) — dort gab es das Problem nie, weil dort nur ein durchgehendes
   `<polyline>` existiert.
+- **Nutzer-Korrektur 2026-07-19 (später am selben Tag):** Kerzen waren nach
+  der "weniger stark + keine Lücken"-Änderung zu blass/zu breit geworden.
+  Zurückkorrigiert auf Deckkraft 0.68 (statt 0.42) und Breite `PD*0.6`
+  (statt volle Slot-Breite `PD`) — klassischerer Kerzen-Look mit sichtbarer
+  Lücke zwischen den Kerzen, aber kräftiger als das Original vor der
+  ersten Anpassung (0.88). Die Score-Linie bleibt trotzdem immer lesbar
+  (dicker + dunkler Kontrast-Rand, s.o.), unabhängig von der Kerzenbreite.
+
+### "CB Consumer Confidence" zeigte bullish trotz klarem Miss (Bugreport 2026-07-19)
+
+- Nutzer-Screenshot: Actual 91.2, Forecast 94.7, Previous 93.1 — eindeutig
+  ein Rückgang UND ein Miss gegen Forecast, trotzdem stand der Bias-Badge
+  auf ▲ (bullish).
+- Ursache: **vierter Score-treibender Pfad**, den frühere Fixes (PPI/Bonds,
+  Session-Notizen oben) noch nicht abdeckten — diesmal keine fehlende
+  History-Anzeige, sondern ein tatsächlich FALSCHER `ind.bias`-Wert selbst.
+  `applyIndDataFeed()` (der `ind_data.json`/TradingView-Feed-Pfad, den u.a.
+  GDP/PMI/Retail Sales/Consumer Confidence nutzen) hatte einen "nichts
+  geändert"-Frühausstieg (`if(r.feed&&r.actual===na&&r.forecast===nf&&...)
+  return;`), der die Bias-Neuberechnung IMMER mit übersprang, sobald sich
+  die Feed-Werte seit dem letzten Lauf nicht mehr änderten. War `ind.bias`
+  aus IRGENDEINEM Grund einmal falsch (z.B. ein Bug in einer früheren
+  Code-Version zum Zeitpunkt der Erstverarbeitung dieses Release, der seither
+  gefixt wurde, aber dessen falsches Ergebnis im gespeicherten State
+  hängen blieb), konnte sich das nie mehr von selbst korrigieren — der
+  Guard fror die Diskrepanz zwischen echten Daten (korrekt angezeigt in
+  der Karte, da direkt aus `ind.research`) und Bias (falsch, aus
+  `ind.bias`) dauerhaft ein. Playwright-Reproduktion: `ind.bias='bull'`
+  erzwingen, `applyIndDataFeed()` erneut aufrufen → blieb VORHER bei
+  `'bull'` stehen, obwohl `researchBias()` mit denselben Daten `'bear'`
+  berechnet.
+- Fix: Bias wird jetzt bei JEDEM `applyIndDataFeed()`-Lauf unconditional
+  mit den aktuellen Feed-Werten neu berechnet (`researchBias(base,na,nf,
+  np)`, Vergleich mit dem bestehenden `ind.bias`) — VOR dem "nichts
+  geändert"-Frühausstieg, nicht mehr danach. Idempotent (stimmt der Bias
+  schon, passiert nichts, kein zusätzliches `changed=true`) und
+  selbstheilend (stimmt er nicht, wird er repariert). Per Playwright
+  bestätigt: dieselbe erzwungene Diskrepanz heilt jetzt beim nächsten Lauf
+  zurück auf `'bear'`, und ein dritter Lauf mit bereits korrektem Bias
+  liefert weiterhin `changed:false` (kein unnötiger Save/Cloud-Push bei
+  jedem stündlichen Poll). **Merksatz:** anders als der `syncIndicatorBiases()`-
+  Pfad (calEvts, hält einen manuellen Klick bewusst bis zum nächsten ECHTEN
+  Release über `ind.autoEvId`-Tracking) hat der `applyIndDataFeed()`-Pfad
+  kein explizites "manuell überschrieben"-Flag — sein "nichts geändert"-Guard
+  war rein eine Update-Optimierung, keine bewusste Manual-Override-Funktion.
+  Bei zukünftigen Bugs dieser Art (Karte zeigt korrekte Zahlen, Bias-Badge
+  widerspricht ihnen) zuerst prüfen, ob die Bias-Neuberechnung versehentlich
+  hinter einem "nichts geändert"-Frühausstieg hängt.

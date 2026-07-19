@@ -1187,7 +1187,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-TREND-FADE-141</span><span id="verBannerText"> (Bugfix: die bias-eingefaerbte Trends-Linie besteht aus mehreren <polyline>-Stuecken (eins je Bias-Abschnitt) - die frueher genutzte Zeichnen-Animation liess jedes Stueck EINZELN unabhaengig in 0.9s aufbauen, sichtbar als mehrere nacheinander/durcheinander auftauchende Teile statt einem einzigen Links-nach-rechts-Sweep. Jetzt zeichnen sich alle Stuecke synchron per einfachem Opacity-Fade auf einmal)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-BIAS-SELFHEAL-142</span><span id="verBannerText"> (Bugfix: "CB Consumer Confidence" (Actual 91.2, klar unter Forecast 94.7 und Previous 93.1) zeigte trotzdem bullish - applyIndDataFeed() ueberprang die Bias-Neuberechnung IMMER, sobald sich die Feed-Werte seit dem letzten Lauf nicht mehr aenderten; blieb der Bias einmal falsch stehen, konnte er sich nie mehr selbst korrigieren. Jetzt wird er bei jedem Lauf mit den aktuellen Werten neu berechnet - idempotent, selbstheilend. Ausserdem Trends "vs Price": Kerzen wieder kraeftiger (Deckkraft 0.68) und schmaler (60% der Slot-Breite, sichtbare Luecke) statt der zuvor zu blassen, luecken los vollen Breite)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7243,6 +7243,22 @@ function applyIndDataFeed(){
         // zeigen dieselbe gespiegelte Makro-Karte wie ihre verbundene
         // Waehrung, siehe macroCcyFor - der Chart soll dort genauso stehen).
         if(adoptChartHist(ind,f))changed=true;
+        // Bias-Selbstheilung (Nutzer-Bugreport 2026-07-19: "CB Consumer
+        // Confidence" (Actual 91.2, klar unter Forecast 94.7 UND Previous
+        // 93.1) zeigte trotzdem bullish an). Ursache: der "nichts geaendert"-
+        // Fruehausstieg direkt darunter uebersprang IMMER auch die
+        // Bias-Neuberechnung, sobald sich die Feed-Werte seit dem letzten
+        // Lauf nicht mehr aenderten - blieb ind.bias aus irgendeinem Grund
+        // (Migrations-Bug, Race Condition, alter manueller Klick auf einem
+        // Auto-Indikator) einmal falsch stehen, konnte sich das nie mehr von
+        // selbst korrigieren. Jetzt wird der Bias bei JEDEM Lauf mit den
+        // AKTUELLEN Feed-Werten neu berechnet, UNABHAENGIG davon, ob sich
+        // sonst etwas geaendert hat - idempotent (stimmt er schon, passiert
+        // nichts) und selbstheilend (stimmt er nicht, wird er repariert).
+        if(fx&&nf!=null){
+          const healedBias=researchBias(base,na,nf,np);
+          if(ind.bias!==healedBias){ind.bias=healedBias;changed=true;}
+        }
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
         // Previous = einfach der zuletzt gemeldete Actual-Wert der Vorperiode -
         // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
@@ -7252,9 +7268,6 @@ function applyIndDataFeed(){
         if(r.secondarySource){ind.research.secondarySource=r.secondarySource;ind.research.secondaryLabel=r.secondaryLabel;}
         if(r.unit)ind.research.unit=r.unit;
         if(r.interval)ind.research.interval=r.interval;
-        // Ohne Forecast gehoert das Bias dem Trend-Modell (applyTrendModel
-        // oben) - researchBias wuerde es nur wieder auf neutral setzen.
-        if(fx&&nf!=null)ind.bias=researchBias(base,na,nf,np);
         ind.name=f.period?base+' '+f.period:base;
         changed=true;
       });
@@ -9025,10 +9038,13 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   // genau das liefert price_data.json (ein Tagesschlusskurs), also keine
   // erfundenen Daten (Nutzer-Wunsch 2026-07-19). Body = Vortagesschluss bis
   // heutiger Schluss, gruen=gestiegen/rot=gefallen (dieselbe Farbkonvention
-  // wie das Carry-Differential in openCarryDetail). Gedaempfte Deckkraft +
-  // volle Slot-Breite (keine Luecken zwischen Kerzen) + VOR der Score-Linie
-  // gezeichnet, damit die Linie immer sichtbar oben drueber liegt (Nutzer-
-  // Wunsch 2026-07-19).
+  // wie das Carry-Differential in openCarryDetail). VOR der Score-Linie
+  // gezeichnet, damit die Linie immer sichtbar oben drueber liegt. Breite
+  // + Deckkraft nach zwei Nutzer-Korrekturen 2026-07-19 justiert: erst
+  // "weniger stark" + luecken los (volle Breite, 0.42) auf Wunsch, dann
+  // "wieder kraeftiger und schmaler" zurueckkorrigiert (0.68, ~60% Breite
+  // mit sichtbarer Luecke - klassischerer Kerzen-Look).
+  const CANDLE_W=PD*0.6;
   const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
@@ -9045,7 +9061,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
       const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
       const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
       const bh=Math.max(yBot-yTop,1.5);
-      svg+=`<rect x="${(cur.x-PD/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${PD.toFixed(1)}" height="${bh.toFixed(1)}" fill="${bcol}" opacity="0.42"/>`;
+      svg+=`<rect x="${(cur.x-CANDLE_W/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${CANDLE_W.toFixed(1)}" height="${bh.toFixed(1)}" fill="${bcol}" opacity="0.68"/>`;
     }
   }
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
