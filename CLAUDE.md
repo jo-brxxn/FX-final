@@ -1080,3 +1080,26 @@ UND die eigene Wortmarke bleiben unverändert - keine komplette Vorlagen-
 - Akzentfarbe = `var(--blue)` (App-eigener Ton), nicht das Orange aus dem
   myfxbook-Referenzbild - der Nutzer wollte das Element uebernehmen, nicht
   eine fremde Markenfarbe einführen.
+
+### Zwei Korrekturen zum Professionalitäts-Audit (Nutzer-Wunsch 2026-07-19, selber Tag)
+
+Nach dem Live-Ansehen der Runde-2-Änderungen zwei Rückmeldungen:
+
+- **Aurora-Hintergrund war zu schwach geworden.** Die Reduktion auf
+  `opacity:.10` (Audit-Runde 2) machte den Effekt praktisch unsichtbar -
+  Nutzer-Eindruck "dunkel auf dunkel", obwohl der Hintergrund technisch
+  noch da war. Per Pixel-Sampling bestätigt (Playwright-Screenshot,
+  `PIL.Image.getpixel`): Ecke mit Aurora-Blob (26,41,57) vs. reine
+  Body-Farbe (17,22,31) - der Unterschied war real, aber zu gering, um
+  gegen die UI-Chrome (Header/Karten) wahrnehmbar zu sein. Auf `.18`
+  angehoben (statisch bleibt es, keine Animation zurück) - deutlich unter
+  dem ursprünglichen `.28` (Video-Game-Kritik), aber wieder sichtbar genug
+  gegen den sonst sehr dunklen Hintergrund.
+- **Globus zurück als Dashboard-Hero.** Der Nutzer wollte den Globus nach
+  dem Ansehen der Demotion (Audit-Runde 2, Punkt 2) wieder an seiner alten
+  Stelle ganz oben haben - Professionalität ja, aber nicht auf Kosten
+  dieses Features. `DASH_V` auf 6 erhöht, `migrateDash()`-Rang-Tabelle und
+  `mkWidgets()` beide auf `globe:0` zurückgesetzt. **Merksatz:** bei
+  Meinungsverschiedenheiten zwischen einem Audit-Agenten-Vorschlag und dem
+  tatsächlichen Nutzer-Feedback nach dem Live-Ansehen zählt IMMER Letzteres
+  - Agent-Vorschläge sind Ausgangspunkt, keine Endabnahme.

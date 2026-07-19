@@ -131,11 +131,15 @@ svg.ic{vertical-align:-2px;flex:none}
    Container brach iOS-Scrollen, siehe Kommentar an .sb selbst). */
 /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): die drei endlos
    driftenden, verschwommenen Farbwolken wirkten wie ein Screensaver statt
-   ein Analyse-Tool. Jetzt statisch (keine animation mehr) und deutlich
-   dezenter (opacity .28->.10) - traegt weiterhin die Risk-Sentiment-Faerbung
-   (updateAuroraColors()), ohne staendig in Bewegung zu sein. */
+   ein Analyse-Tool. Jetzt statisch (keine animation mehr) - traegt
+   weiterhin die Risk-Sentiment-Faerbung (updateAuroraColors()), ohne
+   staendig in Bewegung zu sein. Deckkraft war danach mit .10 zu schwach
+   (Nutzer-Korrektur: wirkte "dunkel auf dunkel", kaum noch sichtbar) -
+   auf .18 angehoben, immer noch deutlich dezenter als das urspruengliche
+   .28, aber wieder sichtbar genug, um den reinen Dunkel-Hintergrund
+   aufzulockern. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.1}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.18}
 .aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%}
 .aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%}
 /* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
@@ -1215,7 +1219,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-INTRO-LOADER-145</span><span id="verBannerText"> (Intro-Screen: neue Lade-Anzeige unter dem Untertitel - 5 kleine Quadrate, eines leuchtet auf, wird kurz breiter und "wandert" von links nach rechts durch (Nutzer-Referenz: myfxbook-Splash-Screen-Stil), eigener Hintergrund/Wortmarke bleibt unveraendert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-AURORA-GLOBE-BACK-146</span><span id="verBannerText"> (Zwei Nutzer-Korrekturen zum Professionalitaets-Audit: Aurora-Hintergrund war mit Deckkraft .10 quasi unsichtbar ("dunkel auf dunkel") - auf .18 angehoben, bleibt statisch, deutlich dezenter als das urspruengliche .28. Globus wieder als erstes Dashboard-Widget ganz oben (DASH_V 6) - die Demotion ans Ende aus der letzten Runde wurde zurueckgenommen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -4614,15 +4618,15 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:0},
-  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:1},
-  {id:uid(),type:'score_changes',title:"Today's Movers",order:2},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:3},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:5},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:6},
-  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:7},
-  {id:uid(),type:'globe',title:'FX World Globe',order:8},
+  {id:uid(),type:'globe',title:'FX World Globe',order:0},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:2},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:3},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:4},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:5},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:6},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:7},
+  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:8},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -4736,19 +4740,18 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // aelterer Stand aus der Cloud geladen wird (sonst ueberschreibt cloudPull die
 // migrierten Widgets) - und damit spaeter geloeschte Module nach dem Sync nicht
 // staendig zurueckkehren.
-// DASH_V 5 (Nutzer-Wunsch 2026-07-19, Professionalitaets-Audit): der
-// rotierende 3D-Globus war das staerkste "Gadget"-Signal der App als
-// Haupt-Widget ganz oben - jetzt ans Ende gerueckt, die dichte Currency-
-// Strength-Tabelle fuehrt stattdessen. Bestandsnutzer bekommen die neue
-// Reihenfolge einmalig ueber denselben Versions-Mechanismus wie jede
-// vorherige Dashboard-Schema-Aenderung.
-const DASH_V=5;
+// DASH_V 6 (Nutzer-Wunsch 2026-07-19): DASH_V 5 hatte den Globus vom
+// Haupt-Widget ganz oben ans Ende verschoben (Professionalitaets-Audit-
+// Vorschlag) - der Nutzer wollte ihn nach dem Sehen aber wieder an seiner
+// urspruenglichen Stelle ganz oben haben. Bestandsnutzer bekommen das
+// wieder ueber denselben Versions-Mechanismus.
+const DASH_V=6;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if((dashV||0)>=DASH_V)return;
   [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={ccy_ranking:0,movers_fx:1,score_changes:2,fx_bias:3,risk_sentiment:4,asset_heatmap:5,watchlist:6,mini_calendar:7,globe:8,pairs_editor:9};
+  const rank={globe:0,ccy_ranking:1,movers_fx:2,score_changes:3,fx_bias:4,risk_sentiment:5,asset_heatmap:6,watchlist:7,mini_calendar:8,pairs_editor:9};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
