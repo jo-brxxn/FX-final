@@ -1103,3 +1103,60 @@ Nach dem Live-Ansehen der Runde-2-Änderungen zwei Rückmeldungen:
   Meinungsverschiedenheiten zwischen einem Audit-Agenten-Vorschlag und dem
   tatsächlichen Nutzer-Feedback nach dem Live-Ansehen zählt IMMER Letzteres
   - Agent-Vorschläge sind Ausgangspunkt, keine Endabnahme.
+
+### Performance-Audit: empirisch profiliert, drei Bottlenecks behoben (2026-07-19)
+
+Nutzer meldete "sehr schlechte Performance, haengt an vielen Stellen". Statt
+zu raten mit Playwright empirisch profiliert (window-Funktionen gewrappt,
+Zeit+Aufrufzahl pro Funktion gemessen, Median ueber 25 Iterationen, Vorher via
+`git stash`). Drei bestaetigte Bottlenecks - alle waren VOLLE Neuberechnungen,
+die pro Render vielfach unnoetig liefen:
+
+1. **`indHistChart()` wurde fuer JEDEN Indikator vorab gebaut, obwohl in
+   eingeklapptem `<details>` unsichtbar.** Gemessen: ~1,3 ms je Chart × 24
+   Indikatoren = ~30 ms, die HAELFTE der gesamten `renderDetail`-Stringarbeit
+   (`renderSpecTab` 33 ms). Der Nutzer sieht diese Charts erst beim Aufklappen.
+   Fix: eingeklapptes `<details>` bekommt nur einen leeren Platzhalter
+   `<div class="ind-hist-holder">`; `onIndDetailsToggle()` (neu) rendert den
+   Chart erst beim ERSTEN Aufklappen einmalig hinein (Marker `data-filled`,
+   danach nie wieder) und ruft `attachChartHovers(holder)` separat auf (das
+   globale renderDetail-attachChartHovers ist dann schon durch). Ist das
+   `<details>` beim Rendern schon offen (Range-Filter-Klick ->
+   `setIndHistRange()` -> `renderDetail()`), wird der Chart wie bisher inline
+   gebaut, damit die Range-Buttons unveraendert laufen. **Merksatz:** teure
+   SVG-/Chart-Strings NIE unbedingt in ein standardmaessig eingeklapptes
+   `<details>` bauen - lazy erst beim Aufklappen (Lookup ueber `ind.id` via
+   `findIndById`).
+2. **`stripPeriodSuffix()` (reine Funktion des Namens-Strings) memoisiert.**
+   Lief auf heissen Pfaden ~36.000 Regex-Matches pro `renderDash`
+   (`symTrackedCount` -> `fxRefCount`). Cache nach Name (`_stripPeriodCache`),
+   Ergebnis `Object.freeze`d, weil geteilt zurueckgegeben (Aufrufer lesen nur
+   `.base`/`.period`). 100 % risikofrei (deterministisch, Cache-Groesse durch
+   endliche Namensmenge beschraenkt).
+3. **`fxRefCount()` in `symScoreCmp()` memoisiert.** Haengt AUSSCHLIESSLICH von
+   der Indikator-ANZAHL der FX-Majors ab (nicht von Bias/Score), lieferte in
+   einem Render-Durchlauf immer denselben Wert, wurde aber pro `symScoreCmp`
+   neu gerechnet (in `renderDash` 164×, jedes Mal alle 8 Majors iteriert).
+   `_fxRefCountCache` + `invalidateCmpCache()`, geleert in `recomputeAuto()`
+   (laeuft nach jedem Add/Remove von Indikatoren/Rubriken, nach `applySnap`
+   fuer Undo/Import/Load, und beim Boot) UND in `save()` als Sicherheitsnetz.
+   **Wichtig:** Per Playwright verifiziert, dass die Invalidierung greift -
+   nach einem Bias-Klick aenderte sich der angezeigte Vergleichs-Score korrekt
+   (0.4 -> 1.2) und Undo stellte ihn wieder her (-> 0.4), d. h. der Cache wird
+   NICHT stale. Bei kuenftigen neuen Stellen, die Indikatoren/Rubriken
+   strukturell aendern OHNE ueber `recomputeAuto`/`save` zu laufen, dort
+   `invalidateCmpCache()` ergaenzen (Ueber-Invalidierung ist harmlos).
+
+Ergebnis (Median, Playwright, Chromium): **`renderDetail` 66 -> 24 ms**
+(Worst-Case 212 -> 55 ms - das war der eigentliche spuerbare "Haenger" beim
+Oeffnen eines Assets), **`renderDash` 51 -> 43 ms** (symScoreCmp-Anteil darin
+16 -> 3 ms). Zusaetzlich: der minuetliche Full-Rebuild-`setInterval` (renderDash
+/renderMatrix/renderCompare/renderCalendar) pausiert jetzt bei `document.hidden`
+(kein Neuaufbau fuer einen Hintergrund-Tab; beim Zurueckkehren rendert der
+`visibilitychange`-Handler ohnehin neu). Regression-frei getestet: alle 13 Tabs
+rendern fehlerfrei, Bias-Klick/Undo/History/Risk-Dial/snap-Roundtrip ok, keine
+Page-Errors. **Merksatz fuer kuenftige Perf-Arbeit:** zuerst mit dem
+window-Wrap-Profiler (Scratchpad `prof.js`) messen WELCHE Funktion wie oft/lange
+laeuft, dann gezielt fixen - nicht aus dem Code-Lesen raten. Die dominierenden
+Kosten waren nie einzelne langsame Funktionen, sondern billige Funktionen, die
+pro Render zig- bis hundertfach unnoetig wiederholt liefen.

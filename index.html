@@ -1219,7 +1219,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-AURORA-GLOBE-BACK-146</span><span id="verBannerText"> (Zwei Nutzer-Korrekturen zum Professionalitaets-Audit: Aurora-Hintergrund war mit Deckkraft .10 quasi unsichtbar ("dunkel auf dunkel") - auf .18 angehoben, bleibt statisch, deutlich dezenter als das urspruengliche .28. Globus wieder als erstes Dashboard-Widget ganz oben (DASH_V 6) - die Demotion ans Ende aus der letzten Runde wurde zurueckgenommen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PERF-LAZY-CHARTS-147</span><span id="verBannerText"> (Performance-Audit: empirisch profiliert, drei bestaetigte Bottlenecks behoben. (1) indHistChart-SVGs wurden fuer JEDEN Indikator vorab gebaut, obwohl sie in eingeklappten &lt;details&gt; stecken - jetzt lazy erst beim Aufklappen: renderDetail-Stringarbeit 33->2 ms. (2) stripPeriodSuffix (reine Funktion) memoisiert. (3) fxRefCount in symScoreCmp memoisiert mit Invalidierung bei jeder Strukturaenderung: in renderDash 16->3 ms. Ergebnis Median: renderDetail 66->24 ms (Worst-Case 212->55 ms), renderDash 51->43 ms. Plus: minuetlicher Full-Rebuild-Interval pausiert bei verstecktem Tab)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2324,10 +2324,22 @@ function symTrackedCount(sym){
   (sym&&sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(i=>{if(!SCORE_ZERO.has(stripPeriodSuffix(i.name).base))n++;}));
   return n;
 }
+// Memoisiert (Performance-Fix 2026-07-19): fxRefCount haengt AUSSCHLIESSLICH
+// von der Anzahl getrackter Indikatoren der FX-Majors ab (NICHT von Bias-
+// Werten/Scores) und liefert innerhalb eines Render-Durchlaufs immer denselben
+// Wert - wurde aber pro symScoreCmp() neu berechnet (in renderDash 164x, dabei
+// jedes Mal alle 8 Majors durchiteriert). Der Cache wird bei jeder moeglichen
+// Strukturaenderung geleert: recomputeAuto() laeuft nach jedem Hinzufuegen/
+// Entfernen von Indikatoren/Rubriken sowie nach applySnap() (Undo/Import/Load)
+// und beim Boot; save() invalidiert zusaetzlich als Sicherheitsnetz. Ueber-
+// Invalidierung ist harmlos (dann wird einmal neu gerechnet).
+let _fxRefCountCache=null;
+function invalidateCmpCache(){_fxRefCountCache=null;}
 function fxRefCount(){
+  if(_fxRefCountCache!==null)return _fxRefCountCache;
   const cs=syms.filter(s=>FX.includes(s.id));
-  if(!cs.length)return 1;
-  return cs.reduce((a,s)=>a+symTrackedCount(s),0)/cs.length;
+  _fxRefCountCache=cs.length?cs.reduce((a,s)=>a+symTrackedCount(s),0)/cs.length:1;
+  return _fxRefCountCache;
 }
 function symCmpFactor(sym){
   const n=symTrackedCount(sym);
@@ -3934,9 +3946,23 @@ function periodLabel(tag){
 // Migration weiterhin auf dem Basisnamen arbeiten. Liefert zusätzlich das
 // erkannte Zeitraum-Kürzel zurück (für die Kalender-Event-Filterung).
 const NAME_PERIOD_SUFFIX_RE=/\s+(y\/y|m\/m|q\/q)$/i;
+// Memoisiert (Performance-Fix 2026-07-19): stripPeriodSuffix ist eine REINE
+// Funktion des Namens-Strings (haengt nur von NAME_PERIOD_SUFFIX_RE +
+// periodLabel ab, beide konstant) und wird auf sehr heissen Pfaden extrem oft
+// mit denselben ~dutzenden Indikatornamen aufgerufen (symTrackedCount ->
+// fxRefCount -> symScoreCmp lief ~36.000 Regex-Matches pro renderDash). Cache
+// nach Name; das Ergebnis wird eingefroren, weil es geteilt zurueckgegeben
+// wird und Aufrufer nur .base/.period lesen. Cache-Groesse ist durch die
+// endliche Zahl vorkommender Indikatornamen beschraenkt.
+const _stripPeriodCache=new Map();
 function stripPeriodSuffix(name){
-  const m=(name||'').match(NAME_PERIOD_SUFFIX_RE);
-  return m?{base:name.slice(0,-m[0].length),period:periodLabel(m[1])}:{base:name||'',period:null};
+  const key=name||'';
+  const hit=_stripPeriodCache.get(key);
+  if(hit)return hit;
+  const m=key.match(NAME_PERIOD_SUFFIX_RE);
+  const res=Object.freeze(m?{base:key.slice(0,-m[0].length),period:periodLabel(m[1])}:{base:key,period:null});
+  _stripPeriodCache.set(key,res);
+  return res;
 }
 // Trennt einen Recherche-Wert wie "53.9 (S&P Global/CIPS)" in den reinen
 // Wert ("53.9") und die Zusatzinfo aus den Klammern ("S&P Global/CIPS").
@@ -4875,6 +4901,7 @@ function save(){
   // S&P 500/Nasdaq, oder per Zahnrad-Menü verbundene Assets). selId zeigt nur
   // dann auf ein Asset, wenn der Nutzer es geöffnet hat.
   if(selId)syncAssetGroup(selId);
+  invalidateCmpCache();
   let changed=false;
   try{
     const s=snap();
@@ -5649,14 +5676,14 @@ function renderInd(ind,ri,ii,total){
     // Overlay erhalten) – sonst erschiene der m/m-Link nur bei Indikatoren
     // ohne Live-Daten.
     const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${escH(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
-    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">
+    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="onIndDetailsToggle(this,'${ind.id}')">
       <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
       </summary>
       <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
-      ${indHistChart(ind)}
+      ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
     </details>`;
   }else if(ind.research){
     const r=ind.research;
@@ -5677,14 +5704,14 @@ function renderInd(ind,ri,ii,total){
     const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
     const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">As of:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
-    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="indDetailsOpen['${ind.id}']=this.open">
+    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="onIndDetailsToggle(this,'${ind.id}')">
       <summary class="ind-data-sum" title="Last known value${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         ${(r.bond||r.cot||r.sent)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>`}
       </summary>
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
-      ${indHistChart(ind)}
+      ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
@@ -6439,7 +6466,7 @@ function recomputeRiskCorr(){
     if(ind)ind.bias=riskCorrBiasFor(sym.id);
   });
 }
-function recomputeAuto(){recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).
@@ -9958,6 +9985,35 @@ function setIndHistRange(months){
   if(curPage==='data')renderDataTab();
   else renderDetail();
 }
+// Lazy-Load des Indikator-Historie-Charts (Performance-Fix 2026-07-19):
+// indHistChart() baut ein ~700-Element-SVG und kostet ~1,3 ms je Indikator -
+// bei 24 Indikatoren auf einer Asset-Detailseite war das die HAELFTE der
+// gesamten renderDetail()-Zeit (~30 von ~65 ms), OBWOHL die Charts in einem
+// standardmaessig EINGEKLAPPTEN <details> stecken und der Nutzer sie gar nicht
+// sieht. Deshalb wird der Chart beim Rendern nicht mehr vorab gebaut: ein
+// eingeklapptes <details> bekommt nur einen leeren Platzhalter, der Chart wird
+// erst beim ERSTEN Aufklappen einmalig hineingerendert (und danach nie wieder,
+// Marker data-filled). Ist das <details> beim Rendern schon offen (z.B.
+// Range-Filter-Klick -> setIndHistRange() -> renderDetail()), wird der Chart
+// wie bisher direkt inline gebaut, damit die Range-Buttons unveraendert
+// funktionieren. attachChartHovers() muss nach dem Lazy-Fill separat laufen,
+// weil das globale renderDetail-attachChartHovers zu diesem Zeitpunkt schon
+// durch ist.
+function findIndById(id){
+  const c=getSym();if(!c)return null;
+  for(const r of(c.rubrics||[]))for(const i of(r.indicators||[]))if(i.id===id)return i;
+  return null;
+}
+function onIndDetailsToggle(el,indId){
+  indDetailsOpen[indId]=el.open;
+  if(!el.open)return;
+  const holder=el.querySelector('.ind-hist-holder');
+  if(!holder||holder.dataset.filled)return;
+  const ind=findIndById(indId);if(!ind)return;
+  holder.innerHTML=indHistChart(ind);
+  holder.dataset.filled='1';
+  attachChartHovers(holder);
+}
 function indHistChart(ind){
   const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
   const rangeBar=`<div class="ind-hist-range-bar">${IND_HIST_RANGES.map(([m,lbl])=>`<button class="ind-hist-range-btn${indHistRange===m?' on':''}" onclick="setIndHistRange(${m})">${lbl}</button>`).join('')}</div>`;
@@ -11133,6 +11189,13 @@ setInterval(autoFetchPriceData,10*60*1000);
 // Rote Jetzt-Linie + Dimmen vergangener Events aktuell halten: minütlich die
 // sichtbare Kalenderansicht neu rendern (Scroll-Position der Seite bleibt erhalten).
 setInterval(()=>{
+  // Kein voller Neuaufbau der sichtbaren Seite, wenn der Browser-Tab im
+  // Hintergrund liegt (Performance-Fix 2026-07-19): renderDash()/renderMatrix()
+  // sind teure Full-innerHTML-Rebuilds - sie minuetlich fuer einen unsichtbaren
+  // Tab laufen zu lassen ist reine Verschwendung. Beim Zurueckkehren rendert
+  // der visibilitychange-Handler ohnehin neu (adoptExternalState/cloudSyncNow),
+  // und der naechste Tick holt die Jetzt-Linie/Countdowns binnen 60 s nach.
+  if(document.hidden)return;
   if(curPage==='cal'){const y=window.scrollY;renderCalendar();window.scrollTo(0,y);}
   else if(curPage==='dash'){renderDash();}
   else if(curPage==='cmp'){renderCompare();}
