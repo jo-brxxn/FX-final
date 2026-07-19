@@ -1183,7 +1183,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-CANDLES-138</span><span id="verBannerText"> (Trends-Tab "vs Price": Kurs jetzt als Kerzen OHNE Docht (Body=Vortagesschluss zu heutigem Schluss, gruen/rot) - braucht nur Open+Close, keine High/Low, also keine erfundenen Daten. Flip-Dreiecke jetzt NUR noch im vs-Price-Chart, nicht mehr bei der reinen Score-Linie. Paar-Filter waehlt jetzt DIREKT ein fertiges Paar (z.B. "EUR/USD") aus einem Dropdown statt Basis+Kurswaehrung einzeln zu waehlen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-BIAS-FALLBACK-139</span><span id="verBannerText"> (Bugfix: bei Einzelassets war die Bias-Farbe im Trends-Chart nur am letzten (heutigen) Tag sichtbar, alle aelteren Tage blieben neutral-orange, weil der persistierte Bias erst seit heute mitgespeichert wird. Fallback ergaenzt: fehlt der persistierte Bias, wird er ueber scoreBias() aus dem bereits bekannten historischen Score-Wert klassifiziert - dieselbe Formel, die live schon fuer die Score-Farbe des Assets gilt, angewandt auf echte vorhandene Werte statt geraten)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8881,13 +8881,15 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
       if(v!=null&&isFinite(v)){
         m[e[0]]=v;if(Math.abs(v)>maxAbs)maxAbs=Math.abs(v);
         // Echte persistierte Bias-Klassifikation (nur scoreHist-Eintraege,
-        // Index 5) - fuer Paar-Diff-Reihen (trendsEphemeral, kein Index 5)
-        // ersatzweise ueber denselben scoreBias()-Schwellenwert aus dem Diff-
-        // Wert selbst, konsistent zur bisherigen Live-Farbe der Paar-Linie
-        // (die ebenfalls scoreBias() auf einen aehnlich skalierten Wert
-        // anwendet - siehe renderTrendsPair).
+        // Index 5, erst ab 2026-07-19 vorhanden) - fuer aeltere Tage (vor
+        // diesem Feature) UND fuer Paar-Diff-Reihen (trendsEphemeral, nie
+        // Index 5) ersatzweise ueber denselben scoreBias()-Schwellenwert aus
+        // dem (Vergleichs-)Wert selbst, konsistent zur bisherigen Live-Farbe
+        // (Einzelasset: BC[sym.bias] naehert scoreBias(symScoreCmp) an; Paar:
+        // renderTrendsPair nutzt exakt scoreBias(pairScore()) - kein Raten
+        // eines neuen Werts, nur Klassifikation eines bereits bekannten).
         if(e.length>5&&e[5])bm[e[0]]=e[5];
-        else if(id.includes('/')&&vi===1)bm[e[0]]=scoreBias(v);
+        else if(vi===1)bm[e[0]]=scoreBias(v);
       }
     });
     valOf[id]=m;biasOf[id]=bm;
@@ -9117,7 +9119,7 @@ function renderTrends(){
   if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
   let html;
   if(trendsFilter!=='ALL'&&trendsFilter!=='FX'&&trendsShowPrice){
-    const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))scoreMap[e[0]]=e[1];if(e[5])biasMap[e[0]]=e[5];});
+    const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1])){scoreMap[e[0]]=e[1];biasMap[e[0]]=e[5]||scoreBias(e[1]);}});
     html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
   }else{
     html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);

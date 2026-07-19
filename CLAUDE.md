@@ -808,3 +808,16 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   `scoreHist`/`resolvePairPriceSeries`/`FX.includes`-Zugriffe, behält aber
   den Anzeigenamen (`XAU/USD`) für `pairScore()`/`trendsEphemeral`/die
   Kartentitel bei.
+- **Bugfix (Nutzer-Bugreport 2026-07-19, selber Tag):** bei Einzelassets war
+  die Bias-Einfärbung nur am aktuellen (heutigen) Tag sichtbar, alle
+  älteren Punkte blieben orange/neutral — weil `recordScoreHist()` den Bias
+  erst ab dem Tag der Feature-Einführung mitspeichert (Index 5), ältere
+  `scoreHist`-Einträge haben ihn nicht. Der Fallback (`scoreBias(v)` auf
+  den historischen Wert selbst) war zuvor nur für Paar-Diff-Reihen aktiv
+  (`id.includes('/')`), nicht für einzelne Assets. Fix: Fallback in
+  `scoreTrendChart()` gilt jetzt für JEDEN Total-Score-Datenpunkt ohne
+  persistierten Bias (`vi===1`, unabhängig davon ob Asset oder Paar), und
+  `renderTrends()` baut die `biasMap` für den vs-Price-Call jetzt genauso
+  mit `e[5]||scoreBias(e[1])`. Kein Raten eines neuen Werts — nur
+  Klassifikation eines bereits bekannten, echten historischen Scores über
+  dieselbe Schwelle, die auch live gilt.
