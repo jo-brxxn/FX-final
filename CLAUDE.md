@@ -940,3 +940,50 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   Bei zukünftigen Bugs dieser Art (Karte zeigt korrekte Zahlen, Bias-Badge
   widerspricht ihnen) zuerst prüfen, ob die Bias-Neuberechnung versehentlich
   hinter einem "nichts geändert"-Frühausstieg hängt.
+
+### Farbaudit Runde 1: weniger Vollflächen, gedämpftere Palette (Nutzer-Wunsch 2026-07-19)
+
+Nutzer-Auftrag: "Website wirkt zu bunt/wie eine Hobby-Seite, soll professioneller
+aussehen, Bedeutung der Farben aber erhalten bleiben." Ein Opus-Agent hat die
+App per Playwright-Screenshots (Desktop+Mobile, alle Kern-Tabs) + Code-Grep
+auditiert und 7 priorisierte Vorschläge geliefert — alle umgesetzt:
+
+1. **`TREND_COLORS`** (≈ Z. 8836, Trends-Tab "All assets"/"FX only"): von 14
+   vollgesättigten Regenbogenfarben (kollidierten teils mit den Bias-Farben,
+   z. B. USD-Blau ≈ `BC.bull`-Blau) auf eine gedämpfte, einheitliche Palette
+   (gleiche Lightness/Sättigung, nur der Hue unterscheidet) umgestellt.
+2. **Score-/Rank-Balken**: `.rank-bar` (Currency-Strength-Widget),
+   `.mx-rank-bar` (Matrix-Tab), `.risk-asset-bar` (Risk-Sentiment-Widget) —
+   alle vorher `background:${BC[bias]}` als Vollfläche, jetzt zusätzlich
+   `opacity:.6` in der CSS-Klasse (nicht inline, wirkt dadurch überall
+   einheitlich).
+3. **COT-/Net-Options-Flow-/Seasonality-Balken**: `.cot-bar-long`/
+   `.cot-bar-short` (COT-Tab, waren `opacity` los), die Balken in
+   `renderNetFlowChart()` (0.9→0.6) und `seasBarChart()` (0.8→0.6 für
+   Nicht-aktuelle Monate, aktueller Monat bleibt bei .92 als bewusster
+   Hervorhebung) auf gedämpfte Deckkraft.
+4. **Dashboard-Banner** ("New COT Data!", "Check Your Risk Environment",
+   `.cot-notify-card`/`.risk-env-notify-card`): von vollflächigem
+   Farbverlauf (Blau bzw. Lila) + starkem Pulse-Glow auf neutralen
+   `--bg2`-Grund + 4px farbigen linken Rand-Streifen (dieselbe Konvention
+   wie `.rub-card`) umgestellt; Text/Icon tragen die Akzentfarbe, der
+   Pulse-Schatten ist deutlich schwächer (0.1→0.25 statt 0.35→0.6 Alpha).
+5. **Retail-Sentiment-Symbol-Pills** (`renderRetailBars()`): das Symbol-Tag
+   (z. B. "NAS100") war ein vollfarbig gefüllter Chip mit weißer Schrift,
+   jetzt getönter Chip nach `ticker-chip`-Muster (Rand 27%, Grund 8%,
+   Text in voller Farbe) — Long/Short-Split-Balken daneben ebenfalls auf
+   `opacity:.62`.
+6. **Logo + Profil-Kreis** (`.logo`, `.profile-circle`): vorher
+   `linear-gradient(135deg,var(--blue),var(--purple))` als Text- bzw.
+   Flächenfüllung, jetzt einfarbig (`var(--t0)` bzw. `var(--bg5)` mit
+   `--bd2`-Rahmen) — reines Deko-Element, kein Bedeutungsverlust.
+7. Bewusst NICHT angefasst: der Bias-Randstreifen selbst und die
+   Kalender-Impact-Farben (High/Medium) — dort trägt Farbe echte,
+   dichte Information.
+
+**Runde 2 angestoßen** (Nutzer-Feedback nach Foto: "sieht aus wie ein
+Video-Spiel, nicht professionell") — ein zweiter Opus-Agent prüft
+zusätzlich Formsprache/Rundungen, Schatten/Glow-Effekte, Animationen,
+das 3D-Globus-Widget, Typografie/Emoji-Nutzung und Iconographie auf
+"Gadget/Spiel"- vs. "professionelles Analyse-Tool"-Wirkung — Ergebnis und
+Umsetzung folgen als eigener Eintrag, sobald abgeschlossen.

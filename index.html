@@ -34,13 +34,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 }
 /* ── LAYOUT ── */
 .hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.logo{font-size:20px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo{font-size:20px;font-weight:900;letter-spacing:.3px;color:var(--t0)}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
 .hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+.profile-circle{width:52px;height:52px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Initialen im Profil-Kreis (statt generischem Personen-Icon), sobald ein
@@ -514,7 +514,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .mx-rank-pos{color:var(--t3);font-size:12px;font-weight:700;text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mx-rank-id{font-size:14px;font-weight:700;color:var(--t0)}
 .mx-rank-bar-wrap{height:9px;background:var(--bg4);border-radius:5px;overflow:hidden}
-.mx-rank-bar{height:100%;border-radius:5px;transition:width .3s}
+.mx-rank-bar{height:100%;border-radius:5px;transition:width .3s;opacity:.6}
 .mx-rank-score{font-size:14px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mx-rank-spark{display:flex;justify-content:center;align-items:center}
 .mx-rank-surp{text-align:right;font-size:13px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -539,8 +539,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#4fc3f7;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#ef6b78;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#2f9ecf,#4fc3f7);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#2f9ecf,#4fc3f7);min-width:0;transition:width .3s;opacity:.65}
+.cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s;opacity:.65}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -594,18 +594,23 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 /* COT single Filter button + grouped pop-up list */
 .cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
 .cot-filterbar select{font-size:14px;padding:8px 15px}
-/* ── NEW COT DATA BANNER ── */
-.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:linear-gradient(90deg,#0b3d91,#1c64f2);color:#fff;box-shadow:0 2px 10px rgba(28,100,242,.35);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+/* ── NEW COT DATA BANNER ──
+   Nutzer-Wunsch 2026-07-19 (Farbaudit): vorher ein voll ausgemalter
+   Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
+   Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
+   die Akzentfarbe statt der ganzen Flaeche. */
+.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.1);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:16px}
-.cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px}
-.cot-notify-sub{font-size:11px;opacity:.85;margin-left:2px}
-.cot-notify-x{margin-left:auto;flex-shrink:0;background:rgba(255,255,255,.18);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:.85}
-.cot-notify-x:hover{opacity:1;background:rgba(255,255,255,.3)}
-@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.35)}50%{box-shadow:0 2px 18px rgba(28,100,242,.6)}}
+.cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px;color:#5b9bd8}
+.cot-notify-sub{font-size:11px;opacity:.75;margin-left:2px;color:var(--t2)}
+.cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:.85}
+.cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
+@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
 /* Sonntags-Erinnerung Risk Environment: gleicher Aufbau wie die COT-
    Benachrichtigung, eigener Farbton (lila statt blau) zur Unterscheidung. */
-.risk-env-notify-card{background:linear-gradient(90deg,#4c1d95,#7c3aed);box-shadow:0 2px 10px rgba(124,58,237,.35);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
-@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.35)}50%{box-shadow:0 2px 18px rgba(124,58,237,.6)}}
+.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.1);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
+.risk-env-notify-card .cot-notify-txt{color:#a78bfa}
+@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.1)}50%{box-shadow:0 2px 16px rgba(124,58,237,.25)}}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -704,7 +709,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .rank-pos{font-size:11px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .rank-name{font-size:14px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
-.rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
+.rank-bar{height:100%;border-radius:5px;transition:width .4s ease;opacity:.6}
 .rank-sc{font-size:13px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Risk Sentiment Gauge */
 .risk-gauge{padding:8px 4px 2px}
@@ -750,7 +755,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
 .risk-asset-name{font-size:11.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
-.risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease;opacity:.6}
 .risk-asset-sc{font-size:11px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
 .risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1187,7 +1192,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-BIAS-SELFHEAL-142</span><span id="verBannerText"> (Bugfix: "CB Consumer Confidence" (Actual 91.2, klar unter Forecast 94.7 und Previous 93.1) zeigte trotzdem bullish - applyIndDataFeed() ueberprang die Bias-Neuberechnung IMMER, sobald sich die Feed-Werte seit dem letzten Lauf nicht mehr aenderten; blieb der Bias einmal falsch stehen, konnte er sich nie mehr selbst korrigieren. Jetzt wird er bei jedem Lauf mit den aktuellen Werten neu berechnet - idempotent, selbstheilend. Ausserdem Trends "vs Price": Kerzen wieder kraeftiger (Deckkraft 0.68) und schmaler (60% der Slot-Breite, sichtbare Luecke) statt der zuvor zu blassen, luecken los vollen Breite)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-COLOR-AUDIT-143</span><span id="verBannerText"> (Farbaudit-Runde 1 (Agent-Vorschlaege umgesetzt): TREND_COLORS von 14 Regenbogenfarben auf gedaempfte Palette; Score-/Rank-Balken (Currency Strength, Matrix, Risk Sentiment), COT-, Net-Options-Flow- und Seasonality-Balken auf reduzierte Deckkraft statt Vollflaeche; Dashboard-Banner "New COT Data"/"Check Risk Environment" von Vollfarbverlauf auf neutralen Grund + farbigen Rand-Streifen umgestellt; Retail-Sentiment-Symbol-Pills von Vollfarbe auf getoenten Chip (wie ticker-chip); Logo/Profil-Kreis-Verlauf auf neutralen Ton)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8833,7 +8838,12 @@ function renderMatrix(){
 // den Gesamt-Score (Skala +/-14) und je ein Chart fuer Inflation, Labour
 // Market und Economic Growth (Skala +/-7, automatisch groesser bei Bedarf).
 // Gut unterscheidbare Farben je Waehrung, Legende ueber jedem Chart.
-const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:'#b07aa1',CAD:'#76b7b2',AUD:'#edc948',NZD:'#ff9da7',GOLD:'#d4af37',SILVER:'#9aa0a6',OIL:'#8c564b',BTC:'#17becf',SP500:'#e7298a',NAS:'#7570b3'};
+// Gedaempfte, entsaettigte Palette statt Regenbogenfarben (Nutzer-Wunsch
+// 2026-07-19, Farbaudit): die vorherigen Vollsaettigungs-Farben kollidierten
+// zudem mit dem Bias-Farbcode (z.B. USD-Blau ~ BC.bull-Blau). Gleiche
+// Lightness/Saettigung ueber alle 14 Werte, nur der Hue unterscheidet -
+// wirkt als zusammenhaengende Palette statt als bunte Ansammlung.
+const TREND_COLORS={USD:'#7c9cba',EUR:'#c9a26a',GBP:'#7fa88a',JPY:'#b97e7e',CHF:'#9788ad',CAD:'#6fa3a3',AUD:'#b5a571',NZD:'#bd8aa0',GOLD:'#c2a869',SILVER:'#98a0ab',OIL:'#957f6c',BTC:'#6f9aa8',SP500:'#a17690',NAS:'#8482ab'};
 // Score-Verlauf in Bias-Farben statt einer einzelnen festen Linienfarbe
 // (Nutzer-Wunsch 2026-07-19): pts=[{x,y,bias}], ein <polyline>-Segment je
 // zusammenhaengendem gleich-Bias-Abschnitt (sbull/sbear zaehlen farblich wie
@@ -10106,11 +10116,14 @@ function renderRetailBars(D){
     const L=Math.round(r.long),S=100-L;
     const cb=L>=60?'bear':L<=40?'bull':'neu'; // Contrarian: viel long -> bearish
     const tag=BC[cb];
+    // Getoenter Pill statt Vollflaeche (Nutzer-Wunsch 2026-07-19, Farbaudit) -
+    // gleiches Muster wie tickerChipHtml (Rand 27%, Grund 8%, Text/Bedeutung
+    // bleibt ueber die volle Textfarbe erhalten).
     return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:12px;color:#fff;background:${tag};border-radius:5px;padding:5px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
+      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:12px;color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
       <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
-        <div style="width:${L}%;background:${BC.bull};display:flex;align-items:center;justify-content:flex-start;padding:0 6px;font-size:11px;font-weight:700;color:#04222f;min-width:0" title="${L}% of retail traders are long">${L>=12?L+'%':''}</div>
-        <div style="width:${S}%;background:${BC.bear};display:flex;align-items:center;justify-content:flex-end;padding:0 6px;font-size:11px;font-weight:700;color:#3a0d0d;min-width:0" title="${S}% of retail traders are short">${S>=12?S+'%':''}</div>
+        <div style="width:${L}%;background:${BC.bull};opacity:.62;display:flex;align-items:center;justify-content:flex-start;padding:0 6px;font-size:11px;font-weight:700;color:#04222f;min-width:0" title="${L}% of retail traders are long">${L>=12?L+'%':''}</div>
+        <div style="width:${S}%;background:${BC.bear};opacity:.62;display:flex;align-items:center;justify-content:flex-end;padding:0 6px;font-size:11px;font-weight:700;color:#3a0d0d;min-width:0" title="${S}% of retail traders are short">${S>=12?S+'%':''}</div>
       </div>
     </div>`;
   }).join('');
@@ -10214,7 +10227,7 @@ function renderNetFlowChart(D){
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const yOf=v=>padT+(1-(v+maxA)/(2*maxA))*(H-padT-padB);
   const y0=yOf(0);
-  const bars=net.map((e,i)=>{const y=yOf(e[1]),up=e[1]>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.abs(y-y0).toFixed(1)}" fill="${up?BC.bull:BC.bear}" opacity="0.9"/>`;}).join('');
+  const bars=net.map((e,i)=>{const y=yOf(e[1]),up=e[1]>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.abs(y-y0).toFixed(1)}" fill="${up?BC.bull:BC.bear}" opacity="0.6"/>`;}).join('');
   const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
   let xlab='';const idxs=[...new Set([0,Math.floor((n-1)/2),n-1])];idxs.forEach(i=>{xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(String(net[i][0]).slice(5))}</text>`;});
   const last=vals[vals.length-1];
@@ -10440,7 +10453,7 @@ function seasBarChart(months,curMon){
     if(mon===curMon)parts.push(`<rect x="${(padL+(mon-1)*iw).toFixed(1)}" y="${hlTop}" width="${iw.toFixed(1)}" height="${(hlBottom-hlTop).toFixed(1)}" rx="6" fill="rgba(255,255,255,.06)"/>`);
     const col=avg>=0?BC.bull:BC.bear;
     const yv=yOf(avg),top=Math.min(y0,yv),h=Math.max(1.5,Math.abs(y0-yv));
-    parts.push(`<rect x="${(cx-iw*.36).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.72).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${mon===curMon?1:.8}"${mon===curMon?' stroke="rgba(255,255,255,.8)" stroke-width="1"':''}/>`);
+    parts.push(`<rect x="${(cx-iw*.36).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.72).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${mon===curMon?.92:.6}"${mon===curMon?' stroke="rgba(255,255,255,.8)" stroke-width="1"':''}/>`);
     parts.push(`<text x="${cx.toFixed(1)}" y="${monthLblY}" text-anchor="middle" font-size="17" font-weight="${mon===curMon?'800':'600'}" fill="${mon===curMon?'var(--t0)':'var(--t3)'}">${SEAS_MON[mon-1]}</text>`);
     parts.push(`<text x="${cx.toFixed(1)}" y="${hitLblY}" text-anchor="middle" font-size="14" fill="${hit>=60?BC.bull:hit<=40?BC.bear:'var(--t3)'}">${hit}%</text>`);
     hpts.push({fx:cx/W,fy:yv/H,col,tip:`<div class="chv-tip-d">${SEAS_MON[mon-1]} · ${n} years</div><b>${avg>0?'+':''}${avg.toFixed(2)}%</b> avg · up in ${hit}% of years`});
