@@ -716,3 +716,73 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   in der History unsichtbar, obwohl sie den Score bewegt. Bisher drei
   Pfade: (1) `findIndEvent`/calEvts, (2) `ind.research.feed`, (3)
   `ind.research.bond`.
+
+### Set-ups-FX-Filter, COT-Crowded-Badge, Dashboard-Scroll-Sprung, Trends-FX-Filter, Bias-eingefärbte Trend-Linien (Nutzer-Wünsche 2026-07-18/19)
+
+- **Set-ups-Tab**: eigener "FX"-Filter-Button neben "All" (`setupFxOnly`,
+  localStorage `fxpro_setup_fxonly`), zeigt nur reine FX-Paare
+  (`isPureFxPair(name)`), kombinierbar mit den Währungs-Chips.
+- **COT-Tab "⚠ CROWDED"-Badge**: schrumpfte auf ein 14×14px reines
+  Icon-Badge (Text nur noch im `title`-Tooltip) + `.cot-bar-sym`-Spalte auf
+  80px verbreitert + `white-space:nowrap` — vorher brach der Text bei
+  3-stelligen Symbolen in eine zweite Zeile um und machte NUR diese Zeilen
+  höher als die übrigen (Nutzer-Grundsatz "wiederkehrende UI-Bausteine
+  einheitlich" oben gilt auch für Zeilenhöhen innerhalb einer Liste).
+- **Dashboard-Scroll-Sprung beim Risk-Sentiment-Regler:** `renderDash()`
+  ersetzt bei jedem Regler-Klick `#dashWidgets.innerHTML` komplett, was die
+  Scroll-Position resettete. Der Bug-Ursache war NICHT `window.scrollY`/
+  `window.scrollTo` (das ist in dieser App immer 0 — `body` hat
+  `overflow:hidden;position:fixed`, das Fenster scrollt hier NIE), sondern
+  der eigentliche Scroll-Container ist `#pgDash` (`.pc`-Klasse,
+  `overflow-y:auto`). Fix: `#pgDash.scrollTop` vor dem `innerHTML=` merken
+  und danach wiederherstellen, plus `document.activeElement.blur()` davor
+  (iOS-Safari-Absicherung gegen Auto-Scroll bei Entfernen eines fokussierten
+  Elements). **Bei künftigen "Seite springt beim Neu-Rendern"-Bugs zuerst
+  `#pgDash.scrollTop` prüfen, nicht `window.scrollY`** — das App-Layout hat
+  keinen scrollenden `body`/`window`.
+- Regler-Reihenfolge umgedreht: **Full, Half, None** (von links nach
+  rechts) statt vorher None/Half/Full.
+- Regler-Änderungen (`setRiskEnvLevel`) landen jetzt im `scoreLog` (wie
+  jede manuelle Bias-Änderung) und erscheinen dadurch in der Asset-History
+  (🕰️) als "✏️ Risk Correlation: ◆ Neutral → ▲ Strongly bullish" o.ä.
+- **Trends-Tab**: neue Option "💱 FX only" direkt unter "🌐 All assets" im
+  Filter-Dropdown (`groupedAssetOptions` weiterhin für die einzelnen Asset-
+  Optionen darunter) — zeigt wie "All assets" mehrere Linien gleichzeitig,
+  aber nur die 8 FX-Majors statt aller gelisteten Assets. "vs Price"-Button
+  bleibt wie bei "All assets" deaktiviert (mehrere Linien gleichzeitig,
+  Preis-Overlay ergibt nur bei genau einem Asset/Paar Sinn).
+- **Score-Verlauf in Bias-Farben statt fester Identitätsfarbe:** sobald der
+  Trends-Chart auf GENAU EIN Asset/Paar gefiltert ist (nicht bei "All"/"FX
+  only", da dort mehrere Linien pro Farbe unterscheidbar bleiben müssen),
+  färbt sich die Total-Score-Linie (und die Score-Linie im "Score vs
+  Price"-Chart) abschnittsweise in den Bias-Farben (`BC.bull/neu/bear`) —
+  der Farbwechsel sitzt exakt am Tag des Bias-Flips, nicht verzögert.
+  Zusätzlich erscheint ein Dreieck-Marker oben im Chart an jedem Tag, an
+  dem der Bias neu auf bullish oder bearish kippt (nicht bei jedem Wechsel
+  zurück auf neutral). Umsetzung: `recordScoreHist()` persistiert jetzt
+  zusätzlich `sym.bias` als 6. Tupel-Element in `scoreHist[id]`
+  (`[date,total,infl,labour,growth,bias]`) — alte Einträge ohne dieses
+  Feld bleiben bewusst uneingefärbt statt einen Bias zu erraten. Gemeinsame
+  Helfer `biasGroup(b)` (bildet `sbull`/`sbear` auf `bull`/`bear` ab) und
+  `biasLineSegments(pts,topPad)` (zerlegt Punkte in Läufe gleicher
+  Bias-Gruppe, zeichnet pro Lauf eine eigene `<polyline>` — überlappend am
+  Laufübergang, damit die Linie nicht optisch abreißt — und die
+  Dreieck-`<polygon>`-Marker nur an echten Bull-/Bear-Einstiegen) werden
+  von `scoreTrendChart()` UND `scoreVsPriceChart()` genutzt.
+  **Paar-Modus hat keine persistierte historische Bias** (Diff-Reihen leben
+  nur in `trendsEphemeral`, nie in `scoreHist`) — dort wird ersatzweise
+  `scoreBias()` direkt auf den historischen Diff-Wert angewendet, exakt
+  dieselbe Formel/Schwelle, die auch die bisherige (nicht-historische)
+  Live-Farbe der Paar-Linie verwendet (`BC[scoreBias(pairScore(pairKey))]`
+  in `renderTrendsPair`) — das ist eine Erweiterung einer bereits
+  akzeptierten Näherung auf die ganze Reihe, keine neue Schätzung.
+- **Echte Kerzen (Candlesticks) für den Preis wurden NICHT umgesetzt** und
+  sollten auch künftig nicht ohne echte OHLC-Quelle gebaut werden:
+  `price_data.json` speichert je Asset nur EINEN Tagesschlusskurs
+  (`series:[[date,value],...]`), keine Open/High/Low-Werte. Ein Kerzen-Chart
+  bräuchte diese und dürfte sie laut Projekt-Grundsatz ("niemals
+  geschätzte/geratene Zahlen") nicht aus dem einzelnen Schlusskurs erfinden.
+  Falls der Nutzer das weiterverfolgen will, bräuchte es zuerst eine
+  eigene OHLC-Datenquelle (neuer Workflow-Schritt) — bis dahin bleibt die
+  Preis-Linie im "Score vs Price"-Chart eine gestrichelte Linie
+  (`PRICE_COL`).

@@ -1183,7 +1183,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CYAN-RISKENV-FIXES-136</span><span id="verBannerText"> (Bugfix: der Dashboard-Regler (Risk Sentiment) liess die Seite hoch-/runterspringen - Ursache war window.scrollTo statt des echten Scroll-Containers #pgDash + fehlendes blur() vor dem Neu-Rendern. Regler-Reihenfolge jetzt Full/Half/None. Regler-Aenderungen erscheinen jetzt in der Asset-History. Trends-Tab: neuer "FX only"-Filter neben "All assets")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-BIAS-COLORED-TRENDS-137</span><span id="verBannerText"> (Trends-Tab: Score-Linie faerbt sich jetzt in den Bias-Farben (bullish/neutral/bearish), Farbwechsel exakt am Flip-Tag; Dreieck-Marker oben im Chart bei jedem Wechsel auf bullish/bearish (Total Score und Score-vs-Price, Einzelasset und Paar-Modus). Echte Kerzen fuer den Preis sind NICHT umgesetzt - price_data.json speichert nur einen Tagesschlusskurs, keine O/H/L-Werte; das haette Daten erfunden, was das Projekt-Grundprinzip verbietet)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8578,6 +8578,14 @@ function trendAssets(){
 // ueberall sonst sichtbar war. Jetzt ueberall derselbe Wert, siehe auch
 // risk_sentiment-Widget/Aurora/Heatmap-Sort/Flip-Alert-Text, die aus
 // demselben Grund ebenfalls auf symScoreCmp umgestellt wurden).
+// 6. Element = die tatsaechliche Bias-Klassifikation des Tages (sym.bias:
+// bull/neu/bear), NICHT nachtraeglich aus dem Score-Wert hergeleitet - der
+// waere ohne die historische Vergleichsbasis (symCmpFactor kann taeglich
+// leicht driften, siehe oben) nicht zuverlaessig rekonstruierbar. Speist die
+// bias-eingefaerbte Trends-Linie (Nutzer-Wunsch 2026-07-19: Score-Verlauf
+// soll die Linienfarbe wechseln, sobald der Bias flippt). Alte Eintraege
+// ohne dieses Feld (vor diesem Feature) bleiben bewusst ohne Bias-Farbe,
+// statt sie zu erraten.
 function recordScoreHist(){
   const t=todayStr();let changed=false;
   trendAssets().forEach(id=>{
@@ -8586,9 +8594,9 @@ function recordScoreHist(){
     const inf=rubScoreByName(sym,'Inflation'),lab=rubScoreByName(sym,'Labour Market'),gro=rubScoreByName(sym,'Economic Growth');
     const arr=scoreHist[id]||(scoreHist[id]=[]);
     const last=arr[arr.length-1];
-    const e=[t,tot,inf,lab,gro];
+    const e=[t,tot,inf,lab,gro,sym.bias];
     if(last&&last[0]===t){
-      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro){arr[arr.length-1]=e;changed=true;}
+      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias){arr[arr.length-1]=e;changed=true;}
     }else{arr.push(e);changed=true;}
     if(arr.length>95)arr.splice(0,arr.length-95);
   });
@@ -8792,6 +8800,46 @@ function renderMatrix(){
 // Market und Economic Growth (Skala +/-7, automatisch groesser bei Bedarf).
 // Gut unterscheidbare Farben je Waehrung, Legende ueber jedem Chart.
 const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:'#b07aa1',CAD:'#76b7b2',AUD:'#edc948',NZD:'#ff9da7',GOLD:'#d4af37',SILVER:'#9aa0a6',OIL:'#8c564b',BTC:'#17becf',SP500:'#e7298a',NAS:'#7570b3'};
+// Score-Verlauf in Bias-Farben statt einer einzelnen festen Linienfarbe
+// (Nutzer-Wunsch 2026-07-19): pts=[{x,y,bias}], ein <polyline>-Segment je
+// zusammenhaengendem gleich-Bias-Abschnitt (sbull/sbear zaehlen farblich wie
+// bull/bear), Segmente ueberlappen sich am Uebergangspunkt, damit die Linie
+// nicht optisch abreisst. Zusaetzlich ein kleines Dreieck oberhalb des
+// Charts GENAU an dem Punkt, an dem der Bias neu auf bullish/bearish kippt
+// (nicht bei jedem Tag innerhalb eines Laufs) - zeigt nach oben (bullish)
+// oder unten (bearish) in der jeweiligen Bias-Farbe. Punkte ohne Bias
+// (aeltere scoreHist-Eintraege von vor diesem Feature) gelten als neutral/
+// grau, statt einen Bias zu erfinden.
+function biasGroup(b){return b==='sbull'?'bull':b==='sbear'?'bear':(b||'neu');}
+function biasLineSegments(pts,topPad){
+  if(pts.length<2)return{lines:'',triangles:''};
+  // Punkte in Laeufe gleicher Bias-Gruppe zerlegen (Indexbereiche).
+  const runs=[];
+  let start=0;
+  for(let i=1;i<=pts.length;i++){
+    if(i===pts.length||biasGroup(pts[i].bias)!==biasGroup(pts[start].bias)){
+      runs.push({group:biasGroup(pts[start].bias),from:start,to:i-1});
+      start=i;
+    }
+  }
+  let lines='',triangles='';
+  runs.forEach((run,ri)=>{
+    // Segment beginnt am letzten Punkt des VORHERIGEN Laufs (falls vorhanden),
+    // damit die Linie an der Farbgrenze nicht optisch abreisst.
+    const segFrom=ri>0?runs[ri-1].to:run.from;
+    const seg=pts.slice(segFrom,run.to+1);
+    if(seg.length>1){
+      const col=BC[run.group]||'var(--t3)';
+      lines+=`<polyline class="tr-line-in" pathLength="1" points="${seg.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+    }
+    if(ri>0&&(run.group==='bull'||run.group==='bear')&&run.group!==runs[ri-1].group){
+      const p=pts[run.from],col=BC[run.group],up=run.group==='bull';
+      const ty=topPad-9;
+      triangles+=`<polygon points="${up?`${(p.x-5).toFixed(1)},${(ty+6).toFixed(1)} ${(p.x+5).toFixed(1)},${(ty+6).toFixed(1)} ${p.x.toFixed(1)},${(ty-4).toFixed(1)}`:`${(p.x-5).toFixed(1)},${(ty-4).toFixed(1)} ${(p.x+5).toFixed(1)},${(ty-4).toFixed(1)} ${p.x.toFixed(1)},${(ty+6).toFixed(1)}`}" fill="${col}"><title>Flipped ${run.group==='bull'?'bullish':'bearish'}</title></polygon>`;
+    }
+  });
+  return{lines,triangles};
+}
 // Group label per asset class (assetCls) for the subdivided filter dropdowns.
 const CLS_LABELS={fx:'Currencies',index:'Indices',metal:'Commodities',energy:'Commodities',crypto:'Crypto',stock:'Stocks'};
 function groupedAssetOptions(ids,selected){
@@ -8828,10 +8876,24 @@ function trendLegend(ids,colorOverride){
 // instead of a fixed identity color (only makes sense for a single line).
 function scoreTrendChart(ids,dates,vi,base,colorOverride){
   const n=dates.length;
-  const valOf={};let maxAbs=base;
+  const valOf={},biasOf={};let maxAbs=base;
   ids.forEach(id=>{
-    const m={};(scoreHist[id]||trendsEphemeral[id]||[]).forEach(e=>{const v=e[vi];if(v!=null&&isFinite(v)){m[e[0]]=v;if(Math.abs(v)>maxAbs)maxAbs=Math.abs(v);}});
-    valOf[id]=m;
+    const m={},bm={};
+    (scoreHist[id]||trendsEphemeral[id]||[]).forEach(e=>{
+      const v=e[vi];
+      if(v!=null&&isFinite(v)){
+        m[e[0]]=v;if(Math.abs(v)>maxAbs)maxAbs=Math.abs(v);
+        // Echte persistierte Bias-Klassifikation (nur scoreHist-Eintraege,
+        // Index 5) - fuer Paar-Diff-Reihen (trendsEphemeral, kein Index 5)
+        // ersatzweise ueber denselben scoreBias()-Schwellenwert aus dem Diff-
+        // Wert selbst, konsistent zur bisherigen Live-Farbe der Paar-Linie
+        // (die ebenfalls scoreBias() auf einen aehnlich skalierten Wert
+        // anwendet - siehe renderTrendsPair).
+        if(e.length>5&&e[5])bm[e[0]]=e[5];
+        else if(id.includes('/')&&vi===1)bm[e[0]]=scoreBias(v);
+      }
+    });
+    valOf[id]=m;biasOf[id]=bm;
   });
   const scale=Math.ceil(maxAbs);
   const leftPad=42,rightPad=20,topPad=18,chartH=320,bottomPad=36,PD=48;
@@ -8845,12 +8907,25 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
     svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
+  // Bias-eingefaerbte Linie nur bei GENAU EINER Linie sinnvoll ("All assets"/
+  // "FX only" brauchen unterscheidbare Farben je Asset) UND nur beim Gesamt-
+  // Score (vi===1) - Inflation/Labour/Growth sind Teil-Scores, keine Bias-
+  // Klassifikation (Nutzer-Wunsch 2026-07-19).
+  const useBiasColor=!!colorOverride&&ids.length===1&&vi===1;
+  let triangleSvg='';
   ids.forEach(id=>{
     const col=colorOverride||TREND_COLORS[id]||'#888';const pts=[];
-    dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push([xOf(i),yOf(v)]);});
-    if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-    pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}"/>`;});
+    dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
+    if(useBiasColor){
+      const seg=biasLineSegments(pts,topPad);
+      svg+=seg.lines;triangleSvg+=seg.triangles;
+      pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
+    }else{
+      if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+      pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
+    }
   });
+  svg+=triangleSvg;
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
@@ -8863,7 +8938,7 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
     let dotY=yMid,dotCol='#fff',hasDot=false;
     const rows=ids.map(id=>{
-      const v=valOf[id][d];const c=colorOverride||TREND_COLORS[id]||'#888';
+      const v=valOf[id][d];const c=useBiasColor?(BC[biasGroup(biasOf[id][d])]||colorOverride):(colorOverride||TREND_COLORS[id]||'#888');
       if(v!=null&&isFinite(v)&&!hasDot){dotY=yOf(v);dotCol=c;hasDot=true;}
       return v==null||!isFinite(v)?'':`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${c}">${escH(id)}</span><b>${v>0?'+':''}${v}</b></div>`;
     }).filter(Boolean).join('');
@@ -8897,7 +8972,7 @@ function resolvePairPriceSeries(base,quote){
   }
   return pairPriceSeries(base,quote);
 }
-function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
+function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap){
   const n=dates.length;
   let maxAbs=base;Object.values(scoreMap).forEach(v=>{if(v!=null&&Math.abs(v)>maxAbs)maxAbs=Math.abs(v);});
   const scale=Math.ceil(maxAbs);
@@ -8915,9 +8990,17 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
     svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
   const col=colorOverride||'#888';
-  const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push([xOf(i),yOfScore(v)]);});
-  if(scorePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${scorePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-  scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}"/>`;});
+  const useBiasColor=!!colorOverride&&!!biasMap;
+  let triangleSvg='';
+  const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
+  if(useBiasColor){
+    const seg=biasLineSegments(scorePts,topPad);
+    svg+=seg.lines;triangleSvg=seg.triangles;
+    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
+  }else{
+    if(scorePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
+    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
+  }
   const PRICE_COL='#c084fc';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
@@ -8932,6 +9015,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
     if(pricePts.length>1)svg+=`<polyline pathLength="1" points="${pricePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${PRICE_COL}" stroke-width="2" stroke-dasharray="5,3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     pricePts.forEach(p=>{svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.4" fill="${PRICE_COL}"/>`;});
   }
+  svg+=triangleSvg;
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
@@ -8949,12 +9033,12 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries){
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
-function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title){
+function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,biasMap){
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
   const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:#c084fc"></span>Price</span>`:''}</div>`;
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
-    ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries)}
+    ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
     ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:11.5px">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
 }
@@ -9018,8 +9102,8 @@ function renderTrends(){
   if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
   let html;
   if(trendsFilter!=='ALL'&&trendsFilter!=='FX'&&trendsShowPrice){
-    const scoreMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))scoreMap[e[0]]=e[1];});
-    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price');
+    const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))scoreMap[e[0]]=e[1];if(e[5])biasMap[e[0]]=e[5];});
+    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
   }else{
     html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
   }
@@ -9056,8 +9140,8 @@ function renderTrendsPair(el){
   const dates=diffArr.map(e=>e[0]);
   let html;
   if(trendsShowPrice){
-    const scoreMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];});
-    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)');
+    const scoreMap={},biasMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
+    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)',biasMap);
   }else{
     html=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
   }
