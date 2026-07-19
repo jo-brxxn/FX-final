@@ -985,5 +985,70 @@ auditiert und 7 priorisierte Vorschläge geliefert — alle umgesetzt:
 Video-Spiel, nicht professionell") — ein zweiter Opus-Agent prüft
 zusätzlich Formsprache/Rundungen, Schatten/Glow-Effekte, Animationen,
 das 3D-Globus-Widget, Typografie/Emoji-Nutzung und Iconographie auf
-"Gadget/Spiel"- vs. "professionelles Analyse-Tool"-Wirkung — Ergebnis und
-Umsetzung folgen als eigener Eintrag, sobald abgeschlossen.
+"Gadget/Spiel"- vs. "professionelles Analyse-Tool"-Wirkung.
+
+### Professionalitäts-Audit Runde 2: kein "Video-Game"-Eindruck mehr (Nutzer-Wunsch 2026-07-19)
+
+Der zweite Agent kam zum Schluss: der "Video-Game"-Eindruck kam NICHT von
+den Farben (Runde 1 schon erledigt), sondern von bewegter Ambient-Grafik,
+verspielter Motion, Emoji statt Icons und einer Badge-/Pill-Flut. Alle
+8 Vorschläge umgesetzt (bis auf einen bewusst nur teilweise, siehe unten):
+
+1. **Aurora-Hintergrund** (`.dash-aurora`/`.aurora-blob`): die drei endlos
+   driftenden Farbwolken (`auroraDrift1-3 … infinite`) sind jetzt statisch
+   (keine `animation` mehr) und deutlich dezenter (`opacity` 0.28→0.1) —
+   trägt weiterhin die Risk-Sentiment-Färbung (`updateAuroraColors()`).
+2. **Globus nicht mehr Dashboard-Hero**: `DASH_V` auf 5 erhöht, neue
+   `migrateDash()`-Rangfolge stellt `ccy_ranking` an Position 0 und
+   `globe` ans Ende (Position 8) — greift auch bei Bestandsnutzern
+   automatisch beim nächsten Laden (derselbe Versions-Mechanismus wie
+   jede vorherige Dashboard-Schema-Änderung). `mkWidgets()` (Default für
+   neue Nutzer) entsprechend mit angepasst.
+3. **Verspielte Motion beruhigt**: `flipScorePulse`/`scorePop` hatten
+   Overshoot (`scale(1.35-1.4)`) — jetzt kein Überschwingen mehr
+   (`scale(1.06-1.08)`, `ease-out` statt Bounce-Kurve). `flipGlowSweep`
+   deutlich schwächer (`16px 3px`→`8px 1px`). Endlose Puls-Animationen
+   komplett entfernt (nicht nur abgeschwächt): `.green-alert-wrap.ga-many
+   .green-alert-icon` und `.inbox-badge` (vorher `pulse-badge … infinite`)
+   sowie die beiden Dashboard-Banner (`cotNotifyPulse`/
+   `riskEnvNotifyPulse`) — statischer Schatten reicht als Hinweis.
+4. **Emoji → SVG-Icon-Set** (`ICONS`/`icn()`, ~Z. 1908): neue Icons
+   `bars`/`trendUp`/`globe`/`zap`/`pin`/`shuffle`/`flame`/`note` ergänzt.
+   Ersetzt in: Logo ("📊 FX Analyst Pro" → reine Wortmarke), Currency-
+   Strength- und Pair-Heatmap-Kartentitel (💪/🔥), COT "Net Long/Short"-
+   Titel (📊), Macro/Notes-Tab-Buttons (⚡/📝) auf der Asset-Detailseite,
+   Trends-Header-Buttons "Pair"/"vs Price" (🔀/📈, als statisches Inline-
+   SVG da `icn()` in statischem Header-HTML nicht läuft, siehe bestehende
+   Konvention). Emoji in `<select><option>`/`<textarea placeholder>`
+   (können kein SVG enthalten) einfach entfernt statt ersetzt: "🌐 All
+   assets/currencies/symbols", "💱 FX only", "📌 Quick Note", die beiden
+   `.nt-sub-lbl`-Marker im Notes-Tab. **Bewusst NICHT angefasst:**
+   `CMP_RUB_ICON` (Emoji als Zeilen-Unterscheidung in der Compare-Tabelle)
+   und sonstige Emoji in Info-/Hilfetexten — das fällt unter die bereits
+   bestehende Regel "Emoji in Info-Texten/Karten-Titeln sind ok", nur
+   Chrome-Elemente (Buttons, Sektions-/Karten-Titel, Logo) wurden bereinigt.
+5. **Badge-/Pill-Flut**: NICHT strukturell umgebaut (Risiko zu hoch, die
+   Bias-Buttons/Sterne-Bewertung sind funktional - Sterne = "important"-
+   Flag mit echter Score-Auswirkung, kein reines Gamification-Element).
+   `.ibo`/`.trend-chip`/`.dbadge`/`.istar2` waren beim Nachprüfen bereits
+   gedämpft (transparent/getönt statt vollflächig) - hier nur die globale
+   Radius-Reduktion (Punkt 6) angewendet, keine Struktur-Änderung.
+6. **Border-Radius global reduziert**: `--r`/`--rs`/`--rss` (die App-weit
+   verwendeten Radius-Variablen) von 10/7/5px auf 8/6/4px gesenkt - wirkt
+   auf Dutzende Elemente konsistent, ohne jede Fundstelle einzeln anfassen
+   zu müssen. Einzelne hartcodierte Radien (12-20px an einzelnen Stellen)
+   bewusst NICHT durchgefegt - zu hohes Regressionsrisiko für den Umfang.
+7. **Intro-Screen entschärft**: `.intro-title` von 3-Farben-Gradient-Text
+   + starkem Glow (`drop-shadow(0 0 26px …)`) + dramatischem Zoom-in
+   (`scale(.62→1)`) auf einfarbig (`#e8eef7`), kein Glow, dezenter Zoom
+   (`scale(.94→1)`) umgestellt.
+8. **Zahlen-Typografie**: `font-variant-numeric:tabular-nums` global auf
+   `body` ergänzt. Die eigentliche Monospace-Nutzung (SF Mono) war beim
+   Nachprüfen bereits sehr weit verbreitet (155 Fundstellen) - die
+   Agent-Einschätzung "nur in der Globe-Legende" traf nicht zu, `tabular-
+   nums` ist hier nur eine zusätzliche Absicherung für Nicht-Mono-Stellen.
+
+Per Playwright verifiziert (Desktop+Mobile, Dashboard/Matrix/COT/FX-Detail/
+Intro): Widget-Reihenfolge stimmt (`ccy_ranking` zuerst, `globe` zuletzt),
+keine JS-Fehler, alle ersetzten Icons rendern korrekt, Intro wirkt sichtbar
+ruhiger (Screenshot-Vergleich).

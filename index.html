@@ -18,7 +18,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
@@ -30,7 +30,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   --green:#4fc3f7;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:79,195,247;--red-rgb:239,83,80;--amber-rgb:244,173,92;
   --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
-  --r:10px;--rs:7px;--rss:5px;
+  /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): global etwas
+     eckiger statt vieler unterschiedlicher, tendenziell zu runder Radien
+     app-weit (Terminals/Fintech-Tools bleiben meist bei 2-6px). */
+  --r:8px;--rs:6px;--rss:4px;
 }
 /* ── LAYOUT ── */
 .hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -102,12 +105,15 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab .av{font-size:11px;margin-top:1px;font-weight:600;display:inline-block}
 .ab .sb-score{font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;display:inline-block;margin-right:5px;margin-top:1px}
 .sb-spark{display:block;margin:2px auto 1px}
-/* Score-Flip-Moment: kurzer Glow-Sweep um die Sidebar-Zeile + Score-Puls,
-   wenn ein Symbol gerade sein Bias gewechselt hat (siehe triggerFlipGlow). */
-@keyframes flipGlowSweep{0%{box-shadow:0 0 0 0 var(--flipcol,transparent)}25%{box-shadow:0 0 16px 3px var(--flipcol,transparent)}100%{box-shadow:0 0 0 0 transparent}}
-@keyframes flipScorePulse{0%{transform:scale(1)}30%{transform:scale(1.4)}60%{transform:scale(.92)}100%{transform:scale(1)}}
-.flip-glow{animation:flipGlowSweep 1.4s ease-out}
-.flip-pulse{display:inline-block;animation:flipScorePulse .6s ease-out}
+/* Score-Flip-Moment: kurzer Hinweis um die Sidebar-Zeile + Score-Puls, wenn
+   ein Symbol gerade sein Bias gewechselt hat (siehe triggerFlipGlow).
+   Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): kein Overshoot-
+   Bounce/Glow-Sweep mehr (wirkte spielerisch) - gedaempfter, kein
+   Ueberschwingen ueber die Zielgroesse hinaus. */
+@keyframes flipGlowSweep{0%{box-shadow:0 0 0 0 var(--flipcol,transparent)}25%{box-shadow:0 0 8px 1px var(--flipcol,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes flipScorePulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+.flip-glow{animation:flipGlowSweep 1s ease-out}
+.flip-pulse{display:inline-block;animation:flipScorePulse .4s ease-out}
 /* Aurora-Hintergrund: 3 sehr langsam wandernde, stark geblurrte
    Farbflaechen hinter den Karten, gefaerbt nach dem aktuellen
    Risk-Sentiment (siehe updateAuroraColors) - der Hintergrund ist damit
@@ -123,18 +129,19 @@ svg.ic{vertical-align:-2px;flex:none}
    unsichtbar ("hat noch keinen Hintergrund", User 2026-07-07) -, tabbar
    dunkler (rgba(17,22,31,.60)), sb .55 OHNE Blur (Blur auf dem Scroll-
    Container brach iOS-Scrollen, siehe Kommentar an .sb selbst). */
+/* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): die drei endlos
+   driftenden, verschwommenen Farbwolken wirkten wie ein Screensaver statt
+   ein Analyse-Tool. Jetzt statisch (keine animation mehr) und deutlich
+   dezenter (opacity .28->.10) - traegt weiterhin die Risk-Sentiment-Faerbung
+   (updateAuroraColors()), ohne staendig in Bewegung zu sein. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;will-change:transform}
-.aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
-.aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%;animation:auroraDrift2 50s ease-in-out infinite}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.1}
+.aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%}
+.aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%}
 /* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
    frueheren Amber - zusammen mit den anderen beiden Blobs ergab Amber einen
    braunen statt einen kuehlen "Aurora"-Farbverlauf. */
-.aurora-c{background:var(--aurora-c,#3d6fa8);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
-@keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
-@keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
-@keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
-@media (prefers-reduced-motion:reduce){.aurora-blob{animation:none}}
+.aurora-c{background:var(--aurora-c,#3d6fa8);width:38vw;height:38vw;top:28%;right:8%}
 /* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
@@ -599,18 +606,19 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
-.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.1);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14)}
 .cot-notify-ic{font-size:16px}
 .cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px;color:#5b9bd8}
 .cot-notify-sub{font-size:11px;opacity:.75;margin-left:2px;color:var(--t2)}
 .cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
-@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
 /* Sonntags-Erinnerung Risk Environment: gleicher Aufbau wie die COT-
-   Benachrichtigung, eigener Farbton (lila statt blau) zur Unterscheidung. */
-.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.1);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
+   Benachrichtigung, eigener Farbton (lila statt blau) zur Unterscheidung.
+   Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): kein endloses Pulsen
+   mehr auf beiden Benachrichtigungs-Karten - statischer Schatten reicht als
+   Hinweis, ohne staendig in Bewegung zu sein. */
+.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.14)}
 .risk-env-notify-card .cot-notify-txt{color:#a78bfa}
-@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.1)}50%{box-shadow:0 2px 16px rgba(124,58,237,.25)}}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -768,7 +776,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .heat-sc{font-size:18px;font-weight:800;margin:3px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .heat-bias{font-size:10px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-mini_calendar .cal-scroll{max-height:52vh;overflow-y:auto}
-@keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 /* ── CALENDAR TABLE (FF-Style) ── */
 .cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto;margin-bottom:6px}
 .cal-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
@@ -924,7 +931,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
 .green-alert-count{color:#22c55e;font-size:10px;font-weight:800;line-height:1;display:block;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-align:center}
 .green-alert-wrap.ga-zero{opacity:.22;transform:scale(.72)}
-.green-alert-wrap.ga-many .green-alert-icon{font-size:22px;animation:pulse-badge 1.4s ease-in-out infinite}
+.green-alert-wrap.ga-many .green-alert-icon{font-size:22px}
 .green-alert-wrap.ga-many .green-alert-count{font-size:13px;font-weight:900}
 /* Green flag + dismiss button in mini-calendar */
 .cal-green-row-wrap{display:flex;align-items:center;gap:3px}
@@ -968,7 +975,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
-.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1}
 .inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
 /* ── INBOX SCORE NOTIFICATIONS ── */
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
@@ -1133,7 +1140,11 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1a2538 0%,#0d1117 58%,#070a0f 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-.intro-title{font-weight:900;font-size:clamp(32px,7vw,88px);letter-spacing:clamp(1px,.6vw,7px);white-space:nowrap;padding:0 4vw;background:linear-gradient(135deg,#5fa8ed 0%,#4fc3f7 45%,#a78bfa 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center;line-height:1.02;filter:drop-shadow(0 0 26px rgba(79,195,247,.55));opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
+/* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
+   Spiele-Startbildschirm (Gradient-Text + starker Glow + dramatischer
+   Zoom-in). Jetzt einfarbig, kein Glow, dezenterer Zoom (.94->1 statt
+   .62->1). */
+.intro-title{font-weight:800;font-size:clamp(32px,7vw,80px);letter-spacing:clamp(1px,.6vw,6px);white-space:nowrap;padding:0 4vw;color:#e8eef7;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
 .intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#8097b0;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
 .intro-hint{position:absolute;bottom:5%;left:0;right:0;height:1.4em;pointer-events:none}
 .ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
@@ -1141,7 +1152,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 @keyframes ihCycle{0%{opacity:0}5%{opacity:1}45%{opacity:1}50%{opacity:0}100%{opacity:0}}
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
 #introLoginBtn:active{transform:scale(.95)}
-@keyframes introTitleIn{0%{opacity:0;transform:scale(.62);filter:drop-shadow(0 0 0 rgba(79,195,247,0)) blur(10px)}100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 26px rgba(79,195,247,.55)) blur(0)}}
+@keyframes introTitleIn{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
@@ -1162,8 +1173,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .tr-dot-in{animation:trDotIn .35s ease both;transform-box:fill-box;transform-origin:center}
 @keyframes listRowIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
 .list-in{animation:listRowIn .4s cubic-bezier(.2,.7,.3,1) both}
-@keyframes scorePop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
-.score-pop{animation:scorePop .5s cubic-bezier(.3,1.4,.5,1)}
+@keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+.score-pop{animation:scorePop .35s ease-out}
 @keyframes biasFlip{0%{transform:rotateX(85deg);opacity:.2}100%{transform:rotateX(0);opacity:1}}
 .bias-flip{animation:biasFlip .4s ease;display:inline-block}
 /* ── MODAL-ÜBERGANG (Ein-/Ausblenden) ── */
@@ -1192,7 +1203,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-COLOR-AUDIT-143</span><span id="verBannerText"> (Farbaudit-Runde 1 (Agent-Vorschlaege umgesetzt): TREND_COLORS von 14 Regenbogenfarben auf gedaempfte Palette; Score-/Rank-Balken (Currency Strength, Matrix, Risk Sentiment), COT-, Net-Options-Flow- und Seasonality-Balken auf reduzierte Deckkraft statt Vollflaeche; Dashboard-Banner "New COT Data"/"Check Risk Environment" von Vollfarbverlauf auf neutralen Grund + farbigen Rand-Streifen umgestellt; Retail-Sentiment-Symbol-Pills von Vollfarbe auf getoenten Chip (wie ticker-chip); Logo/Profil-Kreis-Verlauf auf neutralen Ton)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CHARCOAL-PRO-AUDIT-144</span><span id="verBannerText"> (Professionalitaets-Audit Runde 2 (Agent-Vorschlaege umgesetzt): Aurora-Hintergrund statisch + dezenter statt endlos driftend; Globus vom Dashboard-Hero ans Ende verschoben (Currency Strength jetzt zuerst); Overshoot-Bounce/Glow-Sweeps + endlose Puls-Animationen (Benachrichtigungs-Badges, COT/Risk-Banner) entschaerft/entfernt; Emoji in Kern-Buttons/Karten-Titeln/Logo durch das SVG-Icon-Set ersetzt; globale Eckenradien etwas eckiger; Intro-Screen einfarbig ohne Glow/starken Zoom; tabular-nums global)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1331,7 +1342,7 @@ function introLogin(){
 
 <div class="hdr">
   <div>
-    <div class="logo">📊 FX Analyst Pro</div>
+    <div class="logo">FX Analyst Pro</div>
     <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
@@ -1387,12 +1398,12 @@ function introLogin(){
     <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset over ~3 months &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
-      <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair">&#128256; Pair</button>
+      <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
       <button class="btn" onclick="dlTrendsCSV()" title="Download the daily score history of all assets as CSV"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> CSV</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
         <select class="btn" id="trendsPairSel" onchange="setTrendsPair(this.value)" title="Choose pair" style="cursor:pointer"></select>
       </span>
-      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)">&#128200; vs Price</button>
+      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> vs Price</button>
     </div>
   </div>
   <div id="trendsBody"></div>
@@ -1478,7 +1489,7 @@ function introLogin(){
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
-      <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">🌐 All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
+      <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
       <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
@@ -1909,7 +1920,18 @@ const ICONS={
   gear:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
   search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-  csv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>'
+  csv:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/>',
+  // Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): weitere Emoji durch
+  // dasselbe SVG-Set ersetzt, das schon fuer die Bedien-Buttons gilt -
+  // Karten-/Sektions-Titel sollen dieselbe schlichte Optik tragen.
+  bars:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  trendUp:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  shuffle:'<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>',
+  flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  note:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/>'
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
@@ -4579,15 +4601,15 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'globe',title:'FX World Globe',order:0},
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
-  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:2},
-  {id:uid(),type:'score_changes',title:"Today's Movers",order:3},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:4},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:5},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:6},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:7},
-  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:8},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:0},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:1},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:2},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:3},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:5},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:6},
+  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:7},
+  {id:uid(),type:'globe',title:'FX World Globe',order:8},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -4701,13 +4723,19 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // aelterer Stand aus der Cloud geladen wird (sonst ueberschreibt cloudPull die
 // migrierten Widgets) - und damit spaeter geloeschte Module nach dem Sync nicht
 // staendig zurueckkehren.
-const DASH_V=4;
+// DASH_V 5 (Nutzer-Wunsch 2026-07-19, Professionalitaets-Audit): der
+// rotierende 3D-Globus war das staerkste "Gadget"-Signal der App als
+// Haupt-Widget ganz oben - jetzt ans Ende gerueckt, die dichte Currency-
+// Strength-Tabelle fuehrt stattdessen. Bestandsnutzer bekommen die neue
+// Reihenfolge einmalig ueber denselben Versions-Mechanismus wie jede
+// vorherige Dashboard-Schema-Aenderung.
+const DASH_V=5;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if((dashV||0)>=DASH_V)return;
   [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,movers_fx:2,score_changes:3,fx_bias:4,risk_sentiment:5,asset_heatmap:6,watchlist:7,mini_calendar:8,pairs_editor:9};
+  const rank={ccy_ranking:0,movers_fx:1,score_changes:2,fx_bias:3,risk_sentiment:4,asset_heatmap:5,watchlist:6,mini_calendar:7,globe:8,pairs_editor:9};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -5406,10 +5434,10 @@ function renderDetail(){
     <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs-row">
       <div class="stabs">
-        <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">⚡ Macro</button>
-        <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">📝 Notes</button>
+        <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">${icn('zap',13)} Macro</button>
+        <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">${icn('note',13)} Notes</button>
       </div>
-      <textarea class="quick-note" rows="1" placeholder="📌 Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
+      <textarea class="quick-note" rows="1" placeholder="Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
       <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',14)}</button>
       <button class="compact-sw${compactView===1?' on':compactView===2?' max':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',14)}</button>`:''}
@@ -5731,11 +5759,11 @@ function renderNotesSubTab(c){
   const grp=(side,group,items)=>items.map((it,i)=>item(side,group,it,i,items.length)).join('');
   const col=(side,label,color,d)=>`<div class="nt-col" style="--ntc:${color}">
     <div class="nt-col-hd">${label}</div>
-    <div class="nt-sub-lbl">⚡ CURRENT</div>
+    <div class="nt-sub-lbl">CURRENT</div>
     ${grp(side,'cur',d.cur)}
     <button class="nt-add" onclick="addNoteTableItem('${side}','cur')">＋ Current</button>
     <div class="nt-divider"></div>
-    <div class="nt-sub-lbl">🌐 GENERAL</div>
+    <div class="nt-sub-lbl">GENERAL</div>
     ${grp(side,'gen',d.gen)}
     <button class="nt-add" onclick="addNoteTableItem('${side}','gen')">＋ General</button>
   </div>`;
@@ -8822,13 +8850,13 @@ function renderMatrix(){
   }).join('');
   el.innerHTML=`
   <div class="mx-card">
-    <div class="mx-card-title"><span>💪 Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small></div>
+    <div class="mx-card-title"><span>${icn('bars',15)} Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small></div>
     <div class="mx-rank-head"><div class="mx-rank-pos">#</div><div class="mx-rank-id">CCY</div><div class="mx-rank-bar-wrap"></div><div class="mx-rank-score">Score</div><div class="mx-rank-surp">Surprise</div></div>
     ${rankRows}
     <div class="mx-surp-legend">Surprise = data releases of the last 30 days: beats − misses / total releases with a forecast. E.g. <b>+1/2</b> = 2 releases, net 1 more beat than miss; <b style="color:var(--red)">−7/7</b> = all 7 came in below forecast. <b>0</b> without "/" = no rated releases in the window.</div>
   </div>
   <div class="mx-card">
-    <div class="mx-card-title"><span>🔥 Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
+    <div class="mx-card-title"><span>${icn('flame',15)} Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>
   ${renderCorrCard()}`;
@@ -9131,7 +9159,7 @@ function renderTrends(){
   // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
   const sel=document.getElementById('trendsCcySel');
   if(sel){
-    const opts='<option value="ALL">\u{1F310} All assets</option><option value="FX">\u{1F4B1} FX only</option>'+groupedAssetOptions(assets);
+    const opts='<option value="ALL">All assets</option><option value="FX">FX only</option>'+groupedAssetOptions(assets);
     if(sel.innerHTML!==opts)sel.innerHTML=opts;
     sel.value=trendsFilter==='PAIR'?'ALL':trendsFilter;
   }
@@ -10074,7 +10102,7 @@ function sentFilterBar(){
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
   const ids=[...set].sort();
   const grp=(label,arr)=>arr.length?`<optgroup label="${escH(label)}">${arr.map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`).join('')}</optgroup>`:'';
-  const opts=`<option value=""${sentSym?'':' selected'}>🌐 All symbols</option>${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
+  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
   return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
@@ -10083,7 +10111,7 @@ function sentFilterBar(){
 function pcFilterBar(D){
   const ids=Object.keys(D.putCallByAsset||{});
   const thin=id=>{const a=D.putCallByAsset[id];return a&&((+a.callVol||0)+(+a.putVol||0))<PC_THIN_VOL?' ⚠':'';};
-  return assetFilterSelect(ids,pcAsset,'setPcAsset','🌐 Market-wide (all U.S. options)','Filter by asset (⚠ = low options volume today, reading may be noisy)',id=>`${escH(COT_NAME[id]||id)}${thin(id)}`);
+  return assetFilterSelect(ids,pcAsset,'setPcAsset','Market-wide (all U.S. options)','Filter by asset (⚠ = low options volume today, reading may be noisy)',id=>`${escH(COT_NAME[id]||id)}${thin(id)}`);
 }
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
@@ -10303,7 +10331,7 @@ function renderCot(){
   const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
   const avail=allRows.map(r=>r.id);
   if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
-  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','🌐 All assets','Filter by a single asset',null);
+  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','All assets','Filter by a single asset',null);
   const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
   if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
   // Ab 80% auf einer Seite gilt die Positionierung als "crowded": extrem
@@ -10397,7 +10425,7 @@ function renderCot(){
     </tr>`;}).join('');
   }
   const barsCard=cotFilter?'':`<div class="cot-card">
-      <div class="cot-card-title"><span>📊 Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small><button class="btn" style="margin-left:auto;padding:4px 9px;font-size:11px" onclick="dlCotCSV()" title="Download the COT positioning history (all symbols, 26 weeks) as CSV">${icn('csv',13)} CSV</button></div>
+      <div class="cot-card-title"><span>${icn('bars',15)} Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small><button class="btn" style="margin-left:auto;padding:4px 9px;font-size:11px" onclick="dlCotCSV()" title="Download the COT positioning history (all symbols, 26 weeks) as CSV">${icn('csv',13)} CSV</button></div>
       <div class="cot-bars">${bars}</div>
     </div>`;
   el.innerHTML=ctrl+filterBar+`
