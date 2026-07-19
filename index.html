@@ -133,19 +133,26 @@ svg.ic{vertical-align:-2px;flex:none}
    driftenden, verschwommenen Farbwolken wirkten wie ein Screensaver statt
    ein Analyse-Tool. Jetzt statisch (keine animation mehr) - traegt
    weiterhin die Risk-Sentiment-Faerbung (updateAuroraColors()), ohne
-   staendig in Bewegung zu sein. Deckkraft war danach mit .10 zu schwach
-   (Nutzer-Korrektur: wirkte "dunkel auf dunkel", kaum noch sichtbar) -
-   auf .18 angehoben, immer noch deutlich dezenter als das urspruengliche
-   .28, aber wieder sichtbar genug, um den reinen Dunkel-Hintergrund
-   aufzulockern. */
+   staendig in Bewegung zu sein.
+   Bugfix (Nutzer-Screenshot 2026-07-19, spaeter am selben Tag): die
+   vorherige Umsetzung (harte Kreisflaeche + filter:blur(90px)) zeigte bei
+   der auf .18 angehobenen Deckkraft eine sichtbare harte Kante/einen
+   "verbogenen" Rand - der Blur allein reichte nicht, um den Kreisrand
+   komplett auszublenden. filter:blur() auf so grossen Elementen (bis
+   56vw) ist ausserdem teuer neu zu berechnen bei JEDER Seiten-Aenderung
+   in der Naehe (z.B. document.body.style.background beim Ziehen des
+   Design-Farbreglers) - das war die Ursache fuer den spuerbar hakeligen
+   Regler. Fix: radial-gradient statt Vollflaeche+Blur - per Definition
+   KEINE harte Kante (faedet selbst auf transparent aus) und braucht kein
+   teures Blur-Filter-Neuzeichnen mehr, nur noch die guenstige opacity. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.18}
-.aurora-a{background:var(--aurora-a,#4fc3f7);width:56vw;height:56vw;top:-18%;left:-12%}
-.aurora-b{background:var(--aurora-b,#4fc3f7);width:50vw;height:50vw;bottom:-22%;right:-14%}
+.aurora-blob{position:absolute;border-radius:50%;opacity:.4}
+.aurora-a{background:radial-gradient(circle,var(--aurora-a,#4fc3f7) 0%,transparent 70%);width:56vw;height:56vw;top:-18%;left:-12%}
+.aurora-b{background:radial-gradient(circle,var(--aurora-b,#4fc3f7) 0%,transparent 70%);width:50vw;height:50vw;bottom:-22%;right:-14%}
 /* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
    frueheren Amber - zusammen mit den anderen beiden Blobs ergab Amber einen
    braunen statt einen kuehlen "Aurora"-Farbverlauf. */
-.aurora-c{background:var(--aurora-c,#3d6fa8);width:38vw;height:38vw;top:28%;right:8%}
+.aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%}
 /* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
@@ -1219,7 +1226,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PERF-LAZY-CHARTS-147</span><span id="verBannerText"> (Performance-Audit: empirisch profiliert, drei bestaetigte Bottlenecks behoben. (1) indHistChart-SVGs wurden fuer JEDEN Indikator vorab gebaut, obwohl sie in eingeklappten &lt;details&gt; stecken - jetzt lazy erst beim Aufklappen: renderDetail-Stringarbeit 33->2 ms. (2) stripPeriodSuffix (reine Funktion) memoisiert. (3) fxRefCount in symScoreCmp memoisiert mit Invalidierung bei jeder Strukturaenderung: in renderDash 16->3 ms. Ergebnis Median: renderDetail 66->24 ms (Worst-Case 212->55 ms), renderDash 51->43 ms. Plus: minuetlicher Full-Rebuild-Interval pausiert bei verstecktem Tab)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-AURORA-GRADIENT-148</span><span id="verBannerText"> (Bugfix: Aurora-Hintergrund zeigte bei Deckkraft .18 eine sichtbare harte Kante ("verbogen") - lag an filter:blur(90px) auf sehr grossen Flaechen, das den Kreisrand nicht sauber ausblendete UND teuer neu zu berechnen war. Umgestellt auf radial-gradient (per Definition keine harte Kante, kein Blur-Filter mehr noetig). Gleicher Fund erklaerte den zweiten Bugreport: der Design-Farbregler haengte beim Ziehen, weil jedes "input"-Event das teure Blur-Filter-Repaint auf drei riesigen Flaechen ausloeste - jetzt zusaetzlich per requestAnimationFrame gebuendelt (181 rasche Events -> 1 tatsaechliches Update, statt vorher 181)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7745,11 +7752,20 @@ function openDesignerM(){
   previewDesignHue(h);
   openM('mDesigner');
 }
+// rAF-gebuendelt (Nutzer-Bugreport 2026-07-19: Regler haengte beim Ziehen) -
+// ein Touch-Drag kann "input" viel schneller feuern als der Browser
+// rendert; ohne Buendelung stapeln sich Style-Updates schneller als das
+// Bild aktualisiert werden kann. Nur der JEWEILS LETZTE Wert pro Frame zaehlt.
+let _previewHueRAF=null;
 function previewDesignHue(v){
   v=+v;
-  applyDesignHue(v);
-  const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background='hsl('+v+',72%,55%)';
-  const lb=document.getElementById('designHueLbl');if(lb)lb.textContent='Hue '+v+'°';
+  if(_previewHueRAF)cancelAnimationFrame(_previewHueRAF);
+  _previewHueRAF=requestAnimationFrame(()=>{
+    _previewHueRAF=null;
+    applyDesignHue(v);
+    const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background='hsl('+v+',72%,55%)';
+    const lb=document.getElementById('designHueLbl');if(lb)lb.textContent='Hue '+v+'°';
+  });
 }
 function applyDesignerHue(){
   const sl=document.getElementById('designHueSlider');if(!sl)return;

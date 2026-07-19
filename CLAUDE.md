@@ -1160,3 +1160,40 @@ window-Wrap-Profiler (Scratchpad `prof.js`) messen WELCHE Funktion wie oft/lange
 laeuft, dann gezielt fixen - nicht aus dem Code-Lesen raten. Die dominierenden
 Kosten waren nie einzelne langsame Funktionen, sondern billige Funktionen, die
 pro Render zig- bis hundertfach unnoetig wiederholt liefen.
+
+### Aurora-Hintergrund: harte Kante + hakeliger Design-Regler (Bugreport 2026-07-19, per Foto)
+
+- Nutzer-Screenshot zeigte auf der EUR-Detailseite eine deutlich sichtbare,
+  fast diagonale harte Kante im Hintergrund ("verbogen") statt eines
+  weichen Glühens. Zusätzlich: der Farbregler im Designer (🎨) "hängte"
+  beim Ziehen, reagierte nicht fluessig.
+- Ursache fuer BEIDES dieselbe Stelle: `.aurora-blob` war eine volle
+  Kreisflaeche (`background:var(--aurora-a)`) mit `filter:blur(90px)` bei
+  `opacity:.18` (siehe Eintrag "Zwei Korrekturen..." oben, wo die
+  Deckkraft von .10 auf .18 angehoben wurde). Ein CSS-Blur-Filter blendet
+  eine harte Kante nur INNERHALB des Blur-Radius weich aus - bei einem so
+  grossen Element (bis 56vw) und der jetzt hoeheren Deckkraft blieb der
+  Kreisrand als sichtbare Kante uebrig. Gleichzeitig ist `filter:blur()`
+  auf so grossen Flaechen teuer: der Browser muss es bei JEDER Aenderung
+  in der Naehe neu rendern - und genau das passierte bei jedem einzelnen
+  `input`-Event des Farbreglers (`previewDesignHue()` setzt
+  `document.body.style.background` + drei CSS-Variablen auf den Blobs).
+  Ein Touch-Drag feuert `input` weit haeufiger, als der Browser das teure
+  Blur-Repaint hinterherrendern konnte → spuerbares Haengen.
+- Fix: `.aurora-blob` nutzt jetzt `background:radial-gradient(circle,
+  <farbe> 0%, transparent 70%)` statt Vollflaeche+Blur - ein radialer
+  Verlauf hat PER DEFINITION keine harte Kante (faedet selbst bis
+  transparent aus), braucht also kein Blur-Filter mehr (nur noch die
+  guenstige `opacity`, jetzt `.4` am Gradient-Zentrum, visuell aehnliche
+  Gesamt-Intensitaet wie vorher). Zusaetzlich `previewDesignHue()` per
+  `requestAnimationFrame` gebuendelt (nur der jeweils letzte Wert pro
+  Frame wird angewendet) - per Playwright bestaetigt: 181 rasch
+  aufeinanderfolgende `input`-Events lösten vorher 181 `applyDesignHue()`-
+  Aufrufe aus, jetzt nur noch 1.
+- **Merksatz:** `filter:blur()` auf grossen/vielen Elementen ist ein
+  wiederkehrender Perf-Fallstrick in dieser App (aehnlich den bereits
+  dokumentierten Vollflaechen-Bottlenecks) - bei kuenftigen Hintergrund-/
+  Glow-Effekten bevorzugt `radial-gradient`/`box-shadow` statt
+  `filter:blur()` auf grossflaechigen Elementen verwenden, v.a. wenn sie
+  sich haeufig neu zeichnen (z.B. durch haeufige Style-Aenderungen in der
+  Naehe).
