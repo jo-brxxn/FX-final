@@ -1183,7 +1183,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-BIAS-COLORED-TRENDS-137</span><span id="verBannerText"> (Trends-Tab: Score-Linie faerbt sich jetzt in den Bias-Farben (bullish/neutral/bearish), Farbwechsel exakt am Flip-Tag; Dreieck-Marker oben im Chart bei jedem Wechsel auf bullish/bearish (Total Score und Score-vs-Price, Einzelasset und Paar-Modus). Echte Kerzen fuer den Preis sind NICHT umgesetzt - price_data.json speichert nur einen Tagesschlusskurs, keine O/H/L-Werte; das haette Daten erfunden, was das Projekt-Grundprinzip verbietet)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-CANDLES-138</span><span id="verBannerText"> (Trends-Tab "vs Price": Kurs jetzt als Kerzen OHNE Docht (Body=Vortagesschluss zu heutigem Schluss, gruen/rot) - braucht nur Open+Close, keine High/Low, also keine erfundenen Daten. Flip-Dreiecke jetzt NUR noch im vs-Price-Chart, nicht mehr bei der reinen Score-Linie. Paar-Filter waehlt jetzt DIREKT ein fertiges Paar (z.B. "EUR/USD") aus einem Dropdown statt Basis+Kurswaehrung einzeln zu waehlen)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1386,9 +1386,7 @@ function introLogin(){
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair">&#128256; Pair</button>
       <button class="btn" onclick="dlTrendsCSV()" title="Download the daily score history of all assets as CSV"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg> CSV</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
-        <select class="btn" id="trendsPairBaseSel" onchange="setTrendsPairBase(this.value)" title="Base currency" style="cursor:pointer"></select>
-        <span style="color:var(--t3);font-weight:700">/</span>
-        <select class="btn" id="trendsPairQuoteSel" onchange="setTrendsPairQuote(this.value)" title="Quote currency" style="cursor:pointer"></select>
+        <select class="btn" id="trendsPairSel" onchange="setTrendsPair(this.value)" title="Choose pair" style="cursor:pointer"></select>
       </span>
       <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)">&#128200; vs Price</button>
     </div>
@@ -8859,12 +8857,11 @@ let trendsFilter='ALL';
 // to localStorage by recordScoreHist() - storing the pair key there would
 // permanently leak it into fxpro_scorehist on the next real score update and
 // grow with every pair the user has ever tried.
-let trendsPairBase='EUR',trendsPairQuote='USD';
+let trendsPairSel='EUR/USD';
 let trendsEphemeral={};
 function setTrendsFilter(v){trendsFilter=v||'ALL';renderTrends();}
 function toggleTrendsPairMode(){setTrendsFilter(trendsFilter==='PAIR'?'ALL':'PAIR');}
-function setTrendsPairBase(v){trendsPairBase=v;renderTrends();}
-function setTrendsPairQuote(v){trendsPairQuote=v;renderTrends();}
+function setTrendsPair(v){trendsPairSel=v;renderTrends();}
 function trendLegend(ids,colorOverride){
   return`<div class="tr-legend">`+ids.map(id=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||TREND_COLORS[id]||'#888'}"></span>${id}</span>`).join('')+`</div>`;
 }
@@ -8911,21 +8908,22 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   // "FX only" brauchen unterscheidbare Farben je Asset) UND nur beim Gesamt-
   // Score (vi===1) - Inflation/Labour/Growth sind Teil-Scores, keine Bias-
   // Klassifikation (Nutzer-Wunsch 2026-07-19).
+  // Flip-Dreiecke NUR im "vs Price"-Chart (scoreVsPriceChart), NICHT hier -
+  // Nutzer-Wunsch 2026-07-19: die reine Score-Linie bleibt ohne Marker, nur
+  // die Bias-Farbsegmente selbst zeigen den Verlauf.
   const useBiasColor=!!colorOverride&&ids.length===1&&vi===1;
-  let triangleSvg='';
   ids.forEach(id=>{
     const col=colorOverride||TREND_COLORS[id]||'#888';const pts=[];
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
     if(useBiasColor){
       const seg=biasLineSegments(pts,topPad);
-      svg+=seg.lines;triangleSvg+=seg.triangles;
+      svg+=seg.lines;
       pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
     }else{
       if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
       pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
     }
   });
-  svg+=triangleSvg;
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
@@ -9001,7 +8999,12 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
     if(scorePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
     scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
   }
-  const PRICE_COL='#c084fc';
+  // Preis als Kerzen OHNE Docht: braucht nur Open+Close, keine High/Low -
+  // genau das liefert price_data.json (ein Tagesschlusskurs), also keine
+  // erfundenen Daten (Nutzer-Wunsch 2026-07-19). Body = Vortagesschluss bis
+  // heutiger Schluss, gruen=gestiegen/rot=gefallen (dieselbe Farbkonvention
+  // wie das Carry-Differential in openCarryDetail).
+  const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
     if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
@@ -9009,11 +9012,17 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
     const yOfPrice=v=>topPad+chartH-((v-pMin)/(pMax-pMin))*chartH;
     [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
       const y=yOfPrice(t);
-      svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:${PRICE_COL}">${fmtPriceTick(t)}</text>`;
+      svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
-    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push([xOf(i),yOfPrice(v)]);});
-    if(pricePts.length>1)svg+=`<polyline pathLength="1" points="${pricePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${PRICE_COL}" stroke-width="2" stroke-dasharray="5,3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
-    pricePts.forEach(p=>{svg+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.4" fill="${PRICE_COL}"/>`;});
+    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
+    const bodyW=Math.min(PD*0.5,18);
+    for(let k=1;k<pricePts.length;k++){
+      const prev=pricePts[k-1],cur=pricePts[k];
+      const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
+      const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
+      const bh=Math.max(yBot-yTop,1.5);
+      svg+=`<rect x="${(cur.x-bodyW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5" fill="${bcol}" opacity="0.88"/>`;
+    }
   }
   svg+=triangleSvg;
   dates.forEach((d,i)=>{
@@ -9022,20 +9031,22 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   });
   // Fit-to-width + Hover: das Fenster zeigt Score und (falls vorhanden) Kurs
   // des jeweiligen Tages, der Punkt sitzt auf der Score-Linie.
-  const PRICE_COL2='#c084fc';
   const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
   const hpts=[];
+  let prevPv=null;
   dates.forEach((d,i)=>{
-    const sv=scoreMap[d];if(sv==null||!isFinite(sv))return;
+    const sv=scoreMap[d];const pv=priceMap[d];
+    if(sv==null||!isFinite(sv)){if(pv!=null&&isFinite(pv))prevPv=pv;return;}
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
-    const pv=priceMap[d];
-    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${PRICE_COL2}">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
+    const pvCol=pv==null||prevPv==null?'var(--t3)':pv>prevPv?PRICE_UP:pv<prevPv?PRICE_DOWN:PRICE_FLAT;
+    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${pvCol}">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
+    if(pv!=null&&isFinite(pv))prevPv=pv;
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,biasMap){
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
-  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:#c084fc"></span>Price</span>`:''}</div>`;
+  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:linear-gradient(90deg,var(--green) 50%,var(--red) 50%)"></span>Price (candle)</span>`:''}</div>`;
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
     ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
@@ -9078,10 +9089,14 @@ function renderTrends(){
     priceBtn.style.cursor=avail?'pointer':'not-allowed';
   }
   if(trendsFilter==='PAIR'){
-    const baseSel=document.getElementById('trendsPairBaseSel'),quoteSel=document.getElementById('trendsPairQuoteSel');
-    const baseOpts=groupedAssetOptions(assets,trendsPairBase),quoteOpts=groupedAssetOptions(assets,trendsPairQuote);
-    if(baseSel){if(baseSel.dataset.opts!==baseOpts){baseSel.innerHTML=baseOpts;baseSel.dataset.opts=baseOpts;}baseSel.value=trendsPairBase;}
-    if(quoteSel){if(quoteSel.dataset.opts!==quoteOpts){quoteSel.innerHTML=quoteOpts;quoteSel.dataset.opts=quoteOpts;}quoteSel.value=trendsPairQuote;}
+    const pairSel=document.getElementById('trendsPairSel');
+    if(pairSel&&!pairSel.dataset.opts){
+      const otherPairs=ALL_PAIRS.filter(p=>!FX_PAIRS.includes(p));
+      const opts=`<optgroup label="FX Pairs">`+FX_PAIRS.map(p=>`<option value="${p}">${p}</option>`).join('')+`</optgroup>`+
+                  `<optgroup label="Other Assets">`+otherPairs.map(p=>`<option value="${p}">${p}</option>`).join('')+`</optgroup>`;
+      pairSel.innerHTML=opts;pairSel.dataset.opts='1';
+    }
+    if(pairSel)pairSel.value=trendsPairSel;
     renderTrendsPair(el);
     return;
   }
@@ -9123,16 +9138,17 @@ function renderTrends(){
 // "EUR/USD") ONLY in trendsEphemeral (never in scoreHist!) - it's recomputed
 // on every render and never ends up in localStorage.
 function renderTrendsPair(el){
-  const base=trendsPairBase,quote=trendsPairQuote;
-  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Please choose two different assets for the pair.</div>';return;}
+  const pairKey=trendsPairSel;
+  const parts=pairKey.split('/');
+  const base=PAIR_CODE_TO_ID[parts[0]]||parts[0],quote=PAIR_CODE_TO_ID[parts[1]]||parts[1];
+  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Please choose a pair with two different assets.</div>';return;}
   const baseArr=scoreHist[base]||[],quoteMap={};(scoreHist[quote]||[]).forEach(e=>quoteMap[e[0]]=e);
   const diffArr=[];
   baseArr.forEach(be=>{
     const qe=quoteMap[be[0]];if(!qe)return;
     diffArr.push([be[0],Math.round((be[1]-qe[1])*10)/10,Math.round((be[2]-qe[2])*10)/10,Math.round((be[3]-qe[3])*10)/10,Math.round((be[4]-qe[4])*10)/10]);
   });
-  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No shared history data for ${escH(base)}/${escH(quote)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
-  const pairKey=base+'/'+quote;
+  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No shared history data for ${escH(pairKey)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
   trendsEphemeral={};trendsEphemeral[pairKey]=diffArr;
   // Color the pair's line by its current overall bias (same bull/bear/neutral
   // colors used everywhere else in the app), not a fixed identity color.

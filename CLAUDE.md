@@ -776,13 +776,35 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   Live-Farbe der Paar-Linie verwendet (`BC[scoreBias(pairScore(pairKey))]`
   in `renderTrendsPair`) — das ist eine Erweiterung einer bereits
   akzeptierten Näherung auf die ganze Reihe, keine neue Schätzung.
-- **Echte Kerzen (Candlesticks) für den Preis wurden NICHT umgesetzt** und
-  sollten auch künftig nicht ohne echte OHLC-Quelle gebaut werden:
-  `price_data.json` speichert je Asset nur EINEN Tagesschlusskurs
-  (`series:[[date,value],...]`), keine Open/High/Low-Werte. Ein Kerzen-Chart
-  bräuchte diese und dürfte sie laut Projekt-Grundsatz ("niemals
-  geschätzte/geratene Zahlen") nicht aus dem einzelnen Schlusskurs erfinden.
-  Falls der Nutzer das weiterverfolgen will, bräuchte es zuerst eine
-  eigene OHLC-Datenquelle (neuer Workflow-Schritt) — bis dahin bleibt die
-  Preis-Linie im "Score vs Price"-Chart eine gestrichelte Linie
-  (`PRICE_COL`).
+- **Kerzen ohne Docht für den Preis (Nutzer-Korrektur 2026-07-19):** der
+  ursprüngliche Candlestick-Refusal ("keine OHLC-Daten vorhanden") war zu
+  pauschal — ein Docht braucht High/Low, der KÖRPER einer Kerze aber nur
+  Open+Close. Da `price_data.json` einen fortlaufenden Tagesschlusskurs
+  liefert, ist "Open" eines Tages schlicht der Schlusskurs des VORTAGS —
+  keine erfundene Zahl, sondern derselbe Wert, der ohnehin schon im Datensatz
+  steht. `scoreVsPriceChart()` zeichnet den Preis deshalb jetzt als
+  Kerzen-Körper OHNE Docht (`<rect>` von `yOfPrice(min(prevClose,close))`
+  bis `yOfPrice(max(...))`, `var(--green)`/`var(--red)`/`var(--t3)` bei
+  gestiegen/gefallen/unverändert — dieselbe Farbkonvention wie das Carry-
+  Differential in `openCarryDetail`). Der erste Tag einer Serie hat keine
+  Kerze (kein Vortageswert verfügbar). Kein neuer Workflow-Schritt nötig.
+- **Flip-Dreiecke nur noch im "vs Price"-Chart** (Nutzer-Korrektur
+  2026-07-19): `scoreTrendChart()` (reine Score-Linie, Total Score /
+  Inflation / Labour / Growth) behält die Bias-Farbsegmente, zeichnet aber
+  KEINE Dreieck-Marker mehr — die tauchen jetzt ausschließlich in
+  `scoreVsPriceChart()` auf. `biasLineSegments()` liefert weiterhin beides
+  (`lines`+`triangles`) zurück, `scoreTrendChart` verwirft `seg.triangles`
+  einfach.
+- **Paar-Filter wählt jetzt DIREKT ein Paar** (Nutzer-Korrektur 2026-07-19):
+  vorher zwei Selects (Basis- + Kurswährung einzeln), jetzt EIN Dropdown
+  (`#trendsPairSel`/`trendsPairSel`-State, ersetzt `trendsPairBase`/
+  `trendsPairQuote`) mit dem bestehenden kanonischen `ALL_PAIRS`
+  (dieselbe Liste wie im "Add Pair"-Modal, 28 FX-Kreuze + 7 Non-FX/USD-
+  Paare, gruppiert "FX Pairs"/"Other Assets" wie beim Retail-Sentiment-
+  Filter). Nicht-FX-Paare nutzen Kürzel (`XAU`,`XAG`,`WTI`) statt interner
+  IDs — `renderTrendsPair()` übersetzt über das bestehende
+  `PAIR_CODE_TO_ID`-Mapping (`XAU→GOLD` usw., schon vorher für
+  `pairScore()`/`autoPairBias()` genutzt) auf die echten Asset-IDs für
+  `scoreHist`/`resolvePairPriceSeries`/`FX.includes`-Zugriffe, behält aber
+  den Anzeigenamen (`XAU/USD`) für `pairScore()`/`trendsEphemeral`/die
+  Kartentitel bei.
