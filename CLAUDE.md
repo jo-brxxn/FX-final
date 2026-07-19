@@ -821,3 +821,52 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   mit `e[5]||scoreBias(e[1])`. Kein Raten eines neuen Werts — nur
   Klassifikation eines bereits bekannten, echten historischen Scores über
   dieselbe Schwelle, die auch live gilt.
+- **Kerzen-Kontrast + Dreiecke ganz entfernt (Nutzer-Korrektur 2026-07-19,
+  selber Tag):** die Kerzen (grün/rot, `var(--green)`/`var(--red)`) trafen
+  bei gleicher Kursrichtung farblich exakt die Bias-Farbe der Score-Linie
+  (`BC.bull` ist buchstäblich derselbe Hex-Wert wie `var(--green)`) — die
+  Linie verschwand optisch in gleichfarbigen Kerzen. Fix in
+  `scoreVsPriceChart()`: Kerzen jetzt gedämpft (`opacity:0.42`, vorher
+  0.88) UND in voller Slot-Breite (`width:PD`, keine Lücken zwischen
+  Kerzen mehr) UND VOR der Score-Linie gezeichnet (SVG-Zeichenreihenfolge
+  = Stapelreihenfolge, spätere Elemente liegen oben); die Linie selbst ist
+  jetzt dicker (`stroke-width:3` statt 2.4) und bekommt einen dunklen
+  Kontrast-„Kasar" (`biasLineSegments(pts,halo)`-Parameter: zeichnet vor
+  der farbigen Linie eine breitere `var(--bg0)`-Linie bei 0.7 Opazität) —
+  bleibt dadurch IMMER lesbar, unabhängig von der Kerzenfarbe darunter.
+  **Flip-Dreiecke wurden komplett entfernt** (auch aus dem vs-Price-Chart,
+  wo sie zuvor als einziger Ort noch erlaubt waren) — `biasLineSegments()`
+  gibt nur noch die Linien-SVG-Strings zurück, keine Dreiecke mehr; bei
+  Bedarf müsste diese Funktionalität komplett neu gebaut werden, nicht nur
+  wieder freigeschaltet werden.
+
+### Header-Dropdown "Data" verschwand teilweise hinter der Tab-Leiste auf Mobil (Bugreport 2026-07-19, per Foto)
+
+- Nutzer-Screenshot zeigte: im ausgeklappten "Data"-Menü (Export JSON /
+  Import JSON / Backups) war die MITTLERE Zeile ("Import JSON") von einem
+  dunklen Balken komplett verdeckt, obere und untere Zeile blieben lesbar.
+- Ursache: `.hdr` (Header-Leiste) hat `backdrop-filter:blur(18px)` — das
+  erzeugt einen EIGENEN CSS-Stacking-Context. Das `#dataMenu`-Dropdown lag
+  als statisches Kind darin mit `z-index:300`, aber dieses z-index wirkt
+  NUR innerhalb von `.hdr`s eigenem Stacking-Context, kann also nicht über
+  `.hdr`s spätere Geschwister-Elemente im DOM hinausragen. `.tabbar` (die
+  Dashboard/FX/Non-FX/…-Leiste direkt unter dem Header) hat EBENFALLS
+  `backdrop-filter` (eigener Stacking-Context) und kommt im DOM NACH
+  `.hdr` — malt sich dadurch immer über `.hdr`s gesamten Inhalt drüber,
+  z-index hin oder her. Reicht das 3-zeilige Dropdown auf dem kompakten
+  Mobil-Header (kleinerer Header, siehe oben) über die Kopfzeile hinaus in
+  den `.tabbar`-Streifen hinein, verschwindet genau die Zeile, die dort
+  liegt — reproduzierbar per Playwright bestätigt (`overlapsTabbar:true`
+  vor dem Fix, Klickziel-Element an der "Import JSON"-Position war die
+  Tabbar, nicht der Button).
+- Fix: `#dataMenu` wird jetzt genau wie das Stack-Tab-Dropdown
+  (`openStackMenu`, dasselbe Muster) dynamisch per `document.body.
+  appendChild()` erzeugt, mit `position:fixed` und `z-index:100001`
+  (identisch zu `.tab-menu`) — dadurch lebt es AUSSERHALB von `.hdr`s
+  Stacking-Context und kann von keinem späteren Geschwister-Element mehr
+  verdeckt werden. Position wird aus `getBoundingClientRect()` des
+  "Data"-Buttons berechnet (rechtsbündig, wie vorher optisch). **Merksatz:
+  jedes Dropdown/Overlay, das aus einer `backdrop-filter`-Leiste (`.hdr`,
+  `.tabbar`, `.sb`) herausragen könnte, MUSS nach diesem Muster gebaut
+  werden (`document.body.appendChild` + `position:fixed`), ein simples
+  `z-index` auf einem statischen Kind-Element reicht nicht.**

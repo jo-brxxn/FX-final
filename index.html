@@ -1183,7 +1183,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: INDIGO-BIAS-FALLBACK-139</span><span id="verBannerText"> (Bugfix: bei Einzelassets war die Bias-Farbe im Trends-Chart nur am letzten (heutigen) Tag sichtbar, alle aelteren Tage blieben neutral-orange, weil der persistierte Bias erst seit heute mitgespeichert wird. Fallback ergaenzt: fehlt der persistierte Bias, wird er ueber scoreBias() aus dem bereits bekannten historischen Score-Wert klassifiziert - dieselbe Formel, die live schon fuer die Score-Farbe des Assets gilt, angewandt auf echte vorhandene Werte statt geraten)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#164e63;color:#a5f3fc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SLATE-CANDLE-CONTRAST-140</span><span id="verBannerText"> (Trends "vs Price": Kerzen gedaempft (Deckkraft 0.42) + luecken los (volle Slot-Breite) + hinter der Score-Linie gezeichnet, die jetzt dicker ist und einen dunklen Kontrast-Rand traegt, damit sie nie in gleichfarbigen Kerzen verschwindet. Flip-Dreiecke komplett entfernt (auch aus dem vs-Price-Chart). Bugfix: Header-Menue "Data" (Export/Import/Backups) verschwand teilweise hinter der Tab-Leiste auf Mobil, weil .hdr per backdrop-filter einen eigenen Stacking-Context aufmacht, der das Dropdown einfaengt - jetzt wie das Stack-Tab-Menue per position:fixed an document.body gehaengt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1337,11 +1337,6 @@ function introLogin(){
     <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
     <div class="hdr-menu-wrap">
       <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
-      <div class="hdr-menu" id="dataMenu" style="display:none">
-        <button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
-        <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
-        <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>
-      </div>
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
@@ -4932,11 +4927,36 @@ function updProfile(){
 }
 // Kleines Header-Dropdown "Data" (Export/Import/Backups zusammengefasst,
 // statt drei gleichrangiger Header-Buttons). Schliesst bei Klick daneben.
+// Wird - wie das Stack-Tab-Menue (openStackMenu) - dynamisch an document.body
+// gehaengt statt als statisches Kind von .hdr zu leben: .hdr hat
+// backdrop-filter, das erzeugt einen eigenen Stacking-Context und faengt
+// jedes z-index darin ein. Ragt das Menue (3 Zeilen) auf kompaktem Mobil-
+// Header ueber die Kopfzeile in die .tabbar-Leiste hinein (die ebenfalls
+// backdrop-filter hat und als spaeteres Geschwisterelement im DOM darueber
+// gemalt wird), verschwand die mittlere Zeile optisch dahinter (Nutzer-
+// Bugreport 2026-07-19, Screenshot: "Import JSON" unlesbar/verdeckt). Fix:
+// wie .tab-menu per position:fixed + document.body.appendChild rendern,
+// dann kann keine spaetere Geschwister-Stacking-Context mehr darueber malen.
 function toggleDataMenu(ev){
   ev.stopPropagation();
-  const m=document.getElementById('dataMenu');if(!m)return;
-  m.style.display=m.style.display==='none'?'flex':'none';
+  const existing=document.getElementById('dataMenu');
+  if(existing){closeDataMenu();return;}
+  const btn=ev.currentTarget;
+  const r=btn.getBoundingClientRect();
+  const m=document.createElement('div');
+  m.className='hdr-menu';m.id='dataMenu';
+  m.innerHTML=`<button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
+    <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
+    <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>`;
+  document.body.appendChild(m);
+  const mw=Math.max(176,m.offsetWidth);
+  m.style.position='fixed';
+  m.style.left=Math.max(8,Math.min(r.right-mw,window.innerWidth-mw-8))+'px';
+  m.style.top=(r.bottom+6)+'px';
+  m.style.zIndex='100001';
+  setTimeout(()=>document.addEventListener('pointerdown',dataMenuOutside,true),0);
 }
+function dataMenuOutside(e){const m=document.getElementById('dataMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.hdr-menu-wrap')))closeDataMenu();}
 // ── Globale Suche (Nutzer-Wunsch 2026-07-16): ein Feld fuer Assets,
 // Indikatoren, Kalender-Events und Tabs. "/" oeffnet sie, Pfeiltasten +
 // Enter navigieren, Klick springt direkt an die Stelle.
@@ -5019,11 +5039,10 @@ document.addEventListener('keydown',e=>{
   if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
   e.preventDefault();openSearchM();
 });
-function closeDataMenu(){const m=document.getElementById('dataMenu');if(m)m.style.display='none';}
-document.addEventListener('click',e=>{
-  const m=document.getElementById('dataMenu');
-  if(m&&m.style.display!=='none'&&!e.target.closest('.hdr-menu-wrap'))closeDataMenu();
-});
+function closeDataMenu(){
+  const m=document.getElementById('dataMenu');if(m)m.remove();
+  document.removeEventListener('pointerdown',dataMenuOutside,true);
+}
 // Gibt true/false zurueck (Erfolg/Misserfolg), damit z.B. der
 // Online-Reconnect-Handler (siehe unten) einen fehlgeschlagenen Push
 // automatisch nochmal versuchen kann.
@@ -8809,8 +8828,8 @@ const TREND_COLORS={USD:'#4e79a7',EUR:'#f28e2b',GBP:'#59a14f',JPY:'#e15759',CHF:
 // (aeltere scoreHist-Eintraege von vor diesem Feature) gelten als neutral/
 // grau, statt einen Bias zu erfinden.
 function biasGroup(b){return b==='sbull'?'bull':b==='sbear'?'bear':(b||'neu');}
-function biasLineSegments(pts,topPad){
-  if(pts.length<2)return{lines:'',triangles:''};
+function biasLineSegments(pts,halo){
+  if(pts.length<2)return'';
   // Punkte in Laeufe gleicher Bias-Gruppe zerlegen (Indexbereiche).
   const runs=[];
   let start=0;
@@ -8820,7 +8839,7 @@ function biasLineSegments(pts,topPad){
       start=i;
     }
   }
-  let lines='',triangles='';
+  let lines='';
   runs.forEach((run,ri)=>{
     // Segment beginnt am letzten Punkt des VORHERIGEN Laufs (falls vorhanden),
     // damit die Linie an der Farbgrenze nicht optisch abreisst.
@@ -8828,15 +8847,16 @@ function biasLineSegments(pts,topPad){
     const seg=pts.slice(segFrom,run.to+1);
     if(seg.length>1){
       const col=BC[run.group]||'var(--t3)';
-      lines+=`<polyline class="tr-line-in" pathLength="1" points="${seg.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-    }
-    if(ri>0&&(run.group==='bull'||run.group==='bear')&&run.group!==runs[ri-1].group){
-      const p=pts[run.from],col=BC[run.group],up=run.group==='bull';
-      const ty=topPad-9;
-      triangles+=`<polygon points="${up?`${(p.x-5).toFixed(1)},${(ty+6).toFixed(1)} ${(p.x+5).toFixed(1)},${(ty+6).toFixed(1)} ${p.x.toFixed(1)},${(ty-4).toFixed(1)}`:`${(p.x-5).toFixed(1)},${(ty-4).toFixed(1)} ${(p.x+5).toFixed(1)},${(ty-4).toFixed(1)} ${p.x.toFixed(1)},${(ty+6).toFixed(1)}`}" fill="${col}"><title>Flipped ${run.group==='bull'?'bullish':'bearish'}</title></polygon>`;
+      const ptsStr=seg.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      // Dunkle "Kasar"-Linie zuerst (breiter, halbtransparent) fuer Kontrast
+      // gegen die Kerzen dahinter - sonst verschwindet z.B. eine bullishe
+      // (blaue) Score-Linie optisch in einer ebenfalls bullishen (bläulichen)
+      // Kerze gleicher Farbe (Nutzer-Bugreport 2026-07-19).
+      if(halo)lines+=`<polyline points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>`;
+      lines+=`<polyline class="tr-line-in" pathLength="1" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     }
   });
-  return{lines,triangles};
+  return lines;
 }
 // Group label per asset class (assetCls) for the subdivided filter dropdowns.
 const CLS_LABELS={fx:'Currencies',index:'Indices',metal:'Commodities',energy:'Commodities',crypto:'Crypto',stock:'Stocks'};
@@ -8918,8 +8938,7 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     const col=colorOverride||TREND_COLORS[id]||'#888';const pts=[];
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
     if(useBiasColor){
-      const seg=biasLineSegments(pts,topPad);
-      svg+=seg.lines;
+      svg+=biasLineSegments(pts);
       pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
     }else{
       if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
@@ -8991,21 +9010,14 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   });
   const col=colorOverride||'#888';
   const useBiasColor=!!colorOverride&&!!biasMap;
-  let triangleSvg='';
-  const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
-  if(useBiasColor){
-    const seg=biasLineSegments(scorePts,topPad);
-    svg+=seg.lines;triangleSvg=seg.triangles;
-    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
-  }else{
-    if(scorePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
-  }
   // Preis als Kerzen OHNE Docht: braucht nur Open+Close, keine High/Low -
   // genau das liefert price_data.json (ein Tagesschlusskurs), also keine
   // erfundenen Daten (Nutzer-Wunsch 2026-07-19). Body = Vortagesschluss bis
   // heutiger Schluss, gruen=gestiegen/rot=gefallen (dieselbe Farbkonvention
-  // wie das Carry-Differential in openCarryDetail).
+  // wie das Carry-Differential in openCarryDetail). Gedaempfte Deckkraft +
+  // volle Slot-Breite (keine Luecken zwischen Kerzen) + VOR der Score-Linie
+  // gezeichnet, damit die Linie immer sichtbar oben drueber liegt (Nutzer-
+  // Wunsch 2026-07-19).
   const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
@@ -9017,16 +9029,26 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
       svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
     const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
-    const bodyW=Math.min(PD*0.5,18);
     for(let k=1;k<pricePts.length;k++){
       const prev=pricePts[k-1],cur=pricePts[k];
       const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
       const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
       const bh=Math.max(yBot-yTop,1.5);
-      svg+=`<rect x="${(cur.x-bodyW/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5" fill="${bcol}" opacity="0.88"/>`;
+      svg+=`<rect x="${(cur.x-PD/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${PD.toFixed(1)}" height="${bh.toFixed(1)}" fill="${bcol}" opacity="0.42"/>`;
     }
   }
-  svg+=triangleSvg;
+  const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
+  if(useBiasColor){
+    svg+=biasLineSegments(scorePts,true);
+    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${BC[biasGroup(p.bias)]||col}" stroke="var(--bg1)" stroke-width="1.2"/>`;});
+  }else{
+    if(scorePts.length>1){
+      const ptsStr=scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      svg+=`<polyline points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>`;
+      svg+=`<polyline class="tr-line-in" pathLength="1" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${col}" stroke="var(--bg1)" stroke-width="1.2"/>`;});
+  }
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
