@@ -2849,13 +2849,34 @@ jobs:
 
             // 4) Sitzung fuer Sitzung verketten: R_nachher einer Sitzung wird
             //    zu R_vorher der naechsten (tageszahl-gewichtete CME-Formel).
+            //    Erster Live-Testlauf zeigte unplausible Spruenge (z.B. Okt
+            //    -81bp direkt gefolgt von Dez +122bp), obwohl die zugrunde
+            //    liegende Monats-Kurve selbst glatt und leicht steigend war -
+            //    Ursache: Sitzungen kurz vor Monatsende (z.B. 29. von 31 Tagen)
+            //    haben ein winziges "after"-Fenster (hier: 2 Tage), das jede
+            //    kleine Ungenauigkeit im Kontraktpreis stark verstaerkt, und
+            //    dieser verstaerkte Fehler pflanzt sich durch die Kette fort.
+            //    Fix: wo ein Kalendermonat OHNE Sitzung zwischen zwei
+            //    Sitzungen liegt (z.B. August zwischen Jul- und Sep-Meeting),
+            //    ist dessen Monats-Durchschnitt ein sauberer DIREKTER Messwert
+            //    fuer den zu dem Zeitpunkt geltenden Zins (kein Meeting =
+            //    keine Rechnung noetig) - wird bevorzugt genutzt statt der
+            //    verketteten (fehleranfaelligen) Herleitung aus der vorherigen
+            //    Sitzung, wann immer ein solcher sauberer Monat existiert.
             let Rprev=Rcurrent;
             const meetings=[];
-            MEETINGS.filter(([d])=>d>=today).forEach(([date,label])=>{
+            const filtered=MEETINGS.filter(([d])=>d>=today);
+            filtered.forEach(([date,label],idx)=>{
               const [y,mo,day]=date.split("-").map(Number);
               const monthKey=y+"-"+String(mo).padStart(2,"0");
               const contractRate=monthlyRate[monthKey];
               if(contractRate==null){meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:null,deltaBp:null});return;}
+              // Sauberen Vormonat suchen: den Monat direkt vor diesem Meeting,
+              // falls er selbst KEIN Meeting enthaelt und Kursdaten vorliegen.
+              const prevMonthDate=new Date(y,mo-2,1);
+              const prevMonthKey=prevMonthDate.getFullYear()+"-"+String(prevMonthDate.getMonth()+1).padStart(2,"0");
+              const prevMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===prevMonthKey);
+              if(!prevMeetingInThatMonth&&monthlyRate[prevMonthKey]!=null)Rprev=monthlyRate[prevMonthKey];
               const daysInMonth=new Date(y,mo,0).getDate();
               const before=day,after=daysInMonth-before;
               const Rafter=after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after;

@@ -2060,3 +2060,54 @@ richtig.**
   der der urspruenglich gemeldete Bug auftrat - Score/Bias und Anzeige
   sind oft getrennte Code-Pfade, die dieselbe Regel unabhaengig
   respektieren muessen.
+
+### Rate Probabilities: 5. Testlauf lief endlich durch, aber Sitzungs-Deltas unplausibel - Berechnung stabilisiert (2026-07-20)
+
+Fuenfter `workflow_dispatch`-Testlauf (NY-Fed-Quelle statt FRED): **endlich
+Erfolg** - `rate_probabilities.json` wurde zum ersten Mal geschrieben,
+EFFR=3.63% korrekt gelesen, alle 14 ZQ-Kontrakte kamen an. ABER: die
+berechneten Sitzungs-Deltas oszillierten unplausibel -
+`Jul29:-4bp, Sep16:+30bp, Oct28:-81bp, Dec9:+122bp` - obwohl die
+zugrunde liegende Monats-Durchschnittskurve selbst glatt und gleichmaessig
+steigend war (Jul 3.63% → Aug 3.665% → Sep 3.73% → Okt 3.81% → Nov 3.87%
+→ Dez 3.94% → Jan 3.97%). Kein reales Marktpreis-Szenario wuerde
+meeting-zu-meeting derart wilde Ausschlaege zeigen (+122bp nach -81bp
+in aufeinanderfolgenden Sitzungen ist praktisch unmoeglich).
+
+- **Ursache:** die Verkettungs-Formel (`R_nachher` einer Sitzung wird zu
+  `R_vorher` der naechsten) ist numerisch instabil, wenn eine Sitzung nahe
+  am Monatsende liegt - die Sitzung Jul 28-29 hat nur 2 Tage "danach" von
+  31 Tagen im Monat. Da die Formel durch dieses "after"-Fenster teilt,
+  wird jede kleine Ungenauigkeit im Kontraktpreis um den Faktor
+  `Tage_im_Monat/Tage_danach` verstaerkt (hier: ~15,5x) - UND dieser
+  verstaerkte Fehler wird zum Ausgangswert der naechsten Sitzung, pflanzt
+  sich also durch die ganze Kette fort und akkumuliert.
+- **Fix:** wo ein Kalendermonat OHNE eigene Sitzung zwischen zwei
+  Sitzungen liegt (hier: August zwischen Jul29 und Sep16, November
+  zwischen Okt28 und Dez9), ist dessen Monats-Durchschnitt ein SAUBERER
+  DIREKTER Messwert fuer den zu dem Zeitpunkt geltenden Zins - kein
+  Meeting in diesem Monat heisst kein Zinswechsel, der komplette
+  Monats-Durchschnitt MUSS also gleich dem konstanten Zins sein, ganz
+  ohne Tageszahl-Gewichtung noetig. Dieser saubere Wert wird jetzt bevorzugt
+  genutzt statt der fehleranfaelligen Herleitung aus der vorherigen
+  Sitzung, wann immer ein solcher Monat existiert. Ergebnis nach dem Fix:
+  `Jul29:-4bp, Sep16:+14bp, Oct28:+6bp, Dec9:+10bp` - ein gleichmaessig
+  leicht steigender Pfad, konsistent mit der beobachteten glatten Kurve.
+  Per Node-Testskript lokal nachgerechnet und gegen die echten Kurswerte
+  aus dem 5. Testlauf verifiziert (siehe Session), bevor es in den
+  Workflow uebernommen wurde.
+- **Kein neuer Live-Testlauf noetig, um dies zu verifizieren** (die
+  Eingabedaten - EFFR + ZQ-Kurve - kamen bereits real an, nur die
+  Ableitungs-Formel wurde korrigiert; die Rechnung selbst ist deterministisch
+  und wurde lokal mit den echten, bereits abgerufenen Werten nachvollzogen).
+  Naechster stuendlicher Lauf schreibt die korrigierten Werte automatisch.
+- **Merksatz:** bei tageszahl-gewichteten Ableitungen aus Monats-
+  Durchschnitten IMMER pruefen, ob ein "sauberer" (nicht-abgeleiteter)
+  Referenzpunkt existiert, BEVOR eine fehleranfaellige Verkettung/Division
+  durch ein kleines Zeitfenster genutzt wird - besonders wenn das Ergebnis
+  als Eingabe fuer eine weitere Ableitung dient (Fehlerfortpflanzung).
+  Plausibilitaets-Check ("wuerde ein echter Markt das so einpreisen?")
+  haette diesen Bug schon vor dem ersten Live-Testlauf auffangen koennen -
+  fuer kuenftige neue Berechnungs-Features immer einen Sanity-Check der
+  Ergebnisgroessenordnung einbauen, nicht nur auf "der Code lief ohne
+  Fehler durch" vertrauen.
