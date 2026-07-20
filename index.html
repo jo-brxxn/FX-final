@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SETUPS-QUICKNOTE-FIX-153</span><span id="verBannerText"> (Zwei UI-Fixes: (1) Set-ups-Tab - der "FX"-Quick-Filter und die Waehrungs-Chips liefen bisher als UND-Verknuepfung nebeneinander, jetzt schliessen sie sich gegenseitig aus (Klick auf einen Chip deaktiviert FX, Klick auf FX leert die Chips). (2) Quick-Note-Textfeld auf der Asset-Detailseite warf beim Tippen staendig aus dem Feld - ein Hintergrund-Rerender (periodischer Feed-Poll/Cloud-Sync ruft renderDetail() unabhaengig vom Tippen auf) baute #detail komplett neu und zerstoerte damit die aktive Textarea. Fokus + Cursor-Position werden jetzt ueber den Rebuild gerettet (gleiches Muster wie die #pgDash.scrollTop-Rettung beim Risk-Regler))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SERVERHIST-154</span><span id="verBannerText"> (Neu: server-seitige Score-Historie - bisher konnte score_hist NUR entstehen, wenn ein Geraet die App tatsaechlich oeffnete (recordScoreHist() laeuft rein im Browser); an Tagen ganz ohne Geraete-Besuch blieb die Trends-Historie luckenhaft, selbst mit dem Cross-Device-Sync von vorhin. Neuer stuendlicher Workflow-Schritt "Fetch score snapshot from cloud sync" (update-ff-calendar.yml, nutzt dieselben SUPABASE_*-Secrets wie weekly-report.yml) liest den zuletzt gepushten scoreSnapshot und schreibt taeglich einen Eintrag pro Asset in score_hist.json - unabhaengig davon ob heute ein Geraet offen war. Browser merged diese Datei beim Laden als Basis in sein eigenes scoreHist (lokale, frisch korrigierte Werte haben immer Vorrang, der Server fuellt nur echte Luecken))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5171,9 +5171,16 @@ async function cloudPush(manual){
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
     const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
-    // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
-    // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
-    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias}));
+    // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
+    // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
+    // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
+    // Nutzer-Wunsch 2026-07-20: Historie soll auch an Tagen weiterwachsen,
+    // an denen KEIN Geraet die App geoeffnet hat) - die Score-Logik lebt nur
+    // im Browser, die Workflows lesen hier nur ab. infl/labour/growth
+    // zusaetzlich zu score/bias, damit score_hist.json dasselbe 6er-Tupel-
+    // Format wie das client-seitige scoreHist fuellen kann (Inflation/
+    // Labour/Growth-Karten im Trends-Tab, nicht nur Total Score).
+    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias,infl:rubScoreByName(s,'Inflation'),labour:rubScoreByName(s,'Labour Market'),growth:rubScoreByName(s,'Economic Growth')}));
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{
@@ -11285,10 +11292,40 @@ async function bootFetchScoreFeeds(){
     fetchIndData().then(()=>{try{return applyIndDataFeed();}catch(e){return false;}}),
     fetchBondData().then(()=>{try{return applyBondDataFeed();}catch(e){return false;}}),
     fetchCotData().then(()=>{try{return applyCotDataFeed();}catch(e){return false;}}),
-    fetchSentimentData().then(()=>{try{return applySentimentFeed();}catch(e){return false;}})
+    fetchSentimentData().then(()=>{try{return applySentimentFeed();}catch(e){return false;}}),
+    fetchScoreHistServer().then(()=>{try{return applyScoreHistServerFeed();}catch(e){return false;}})
   ]);
   if(results.some(Boolean)){recomputeAuto();save();renderSidebar();}
   rerender();
+}
+// Server-seitige Score-Historie (score_hist.json, vom stuendlichen GitHub-
+// Workflow "update-ff-calendar.yml" -> Schritt "Fetch score snapshot from
+// cloud sync" geschrieben, liest dafuer den zuletzt in die Cloud gepushten
+// scoreSnapshot, siehe cloudPush() oben) - schliesst die Luecke an Tagen,
+// an denen KEIN Geraet die App geoeffnet hat (Nutzer-Bugreport 2026-07-20,
+// per Screenshot: iPad taeglich offen zeigte trotzdem Luecken, PC selten
+// offen zeigte nur die Tage, an denen es lief - reines Client-Recording
+// kann Tage ohne JEDEN Geraete-Besuch grundsaetzlich nicht abdecken). Wird
+// als BASIS gemerged (mergeScoreHist(server,local)) - eine gerade im
+// Browser frisch korrigierte lokale Aenderung hat immer Vorrang, der
+// Server-Stand fuellt nur echte Luecken auf. Sehr leichtgewichtig (eine
+// weitere kleine JSON-Datei, gleiches Muster wie ind_data.json usw. -
+// laeuft im selben Promise.all wie die anderen Boot-Feeds, kein
+// zusaetzlicher Render-Zyklus).
+let SCORE_HIST_SERVER=null;
+async function fetchScoreHistServer(){
+  try{
+    const res=await fetch('score_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))SCORE_HIST_SERVER=d;}
+  }catch(e){}
+}
+function applyScoreHistServerFeed(){
+  if(!SCORE_HIST_SERVER)return false;
+  const merged=mergeScoreHist(SCORE_HIST_SERVER,scoreHist);
+  if(JSON.stringify(merged)===JSON.stringify(scoreHist))return false;
+  scoreHist=merged;
+  try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}
+  return true;
 }
 (async()=>{
   let pushFailed=false;

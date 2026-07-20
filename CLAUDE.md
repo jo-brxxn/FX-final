@@ -1380,6 +1380,57 @@ sondern ein durch den scoreHist-Fix selbst eingefuehrter Bug**:
   tatsaechlichem Boot-Timing (nicht nur isolierten Funktionsaufrufen) ist
   hier der einzige zuverlaessige Test.
 
+### Server-seitige Score-Historie: schliesst Luecken an Tagen ohne Geraete-Besuch (Nutzer-Wunsch 2026-07-20)
+
+Nutzer schickte Screenshots: iPad (nach eigener Aussage taeglich geoeffnet)
+zeigte trotzdem Luecken in der Trends-Historie, PC (selten geoeffnet) nur
+vier vereinzelte Punkte. Der am selben Tag weiter oben gefixte Cross-
+Device-Sync von `scoreHist` behebt das NICHT vollstaendig - er sorgt nur
+dafuer, dass verschiedene Geraete sich die Tage TEILEN, an denen JEWEILS
+EIN Geraet offen war. An einem Tag, an dem ÜBERHAUPT KEIN Geraet die App
+oeffnet, kann `recordScoreHist()` (laeuft ausschliesslich im Browser) gar
+nicht erst laufen - eine echte Luecke, die reiner Client-Sync strukturell
+nicht schliessen kann.
+
+**Loesung: server-seitige Aufzeichnung im stuendlichen Workflow.**
+`cloudPush()`s `scoreSnapshot`-Feld (schon vorher fuer `weekly-report.yml`
+da, jetzt um `infl`/`labour`/`growth` erweitert, damit es dasselbe 6er-
+Tupel-Format wie `scoreHist` selbst liefert) wird beim Push IMMER aktuell
+gehalten - unabhaengig davon, ob das die einzige Aenderung ist. Neuer
+Schritt **"Fetch score snapshot from cloud sync"** in
+`update-ff-calendar.yml` (nach der COT-3y%ile-Anreicherung, vor "Cleanup
+temp files") liest bei jedem stuendlichen Lauf den aktuellen
+`scoreSnapshot` aus der Supabase `fx_sync`-Tabelle (dieselben
+`SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SYNC_ID`-Secrets, die
+`weekly-report.yml`/`event-alerts.yml` schon nutzen - keine neue
+Einrichtung noetig) und schreibt/aktualisiert daraus **taeglich EINEN
+Eintrag pro Asset** in einer neuen Datei `score_hist.json` (Format:
+`{[assetId]: [[datum,total,infl,labour,growth,bias], ...]}`, identisch zum
+client-seitigen `scoreHist` - Cap ebenfalls 1100 Tage). Laeuft unabhaengig
+davon, ob an diesem Tag ein Geraet die App geoeffnet hat - solange
+IRGENDWANN vorher mindestens einmal gepusht wurde, liefert die Cloud einen
+(ggf. leicht "alten", aber immer noch besser als gar keinen) Snapshot, der
+taeglich fortgeschrieben wird.
+- Client-seitig: `fetchScoreHistServer()`/`applyScoreHistServerFeed()`
+  (≈ Zeile 11290 bei `bootFetchScoreFeeds()`, laeuft im selben `Promise.all`
+  wie die anderen Boot-Feeds - ein weiterer kleiner JSON-Fetch, kein
+  zusaetzlicher Render-Zyklus, daher kein spuerbarer Performance-Impact,
+  Nutzer-Vorgabe "nicht viel Performance ziehen" beruecksichtigt).
+  `applyScoreHistServerFeed()` merged die Server-Datei als **Basis**
+  (`mergeScoreHist(SCORE_HIST_SERVER, scoreHist)`) - eine lokale, gerade im
+  Browser frisch berechnete Aenderung hat bei einer Datums-Kollision immer
+  Vorrang (per Playwright verifiziert: lokaler Wert fuer "heute" bleibt bei
+  gleichzeitig vorhandenem Server-Wert fuer "heute" unveraendert erhalten;
+  ein Server-Eintrag fuer eine Luecke, die lokal fehlt, wird uebernommen).
+- Ohne konfigurierte `SUPABASE_*`-Secrets (z.B. bei einem Fork ohne Cloud-
+  Sync) bleibt `score_hist.json` einfach leer/nicht vorhanden - der Schritt
+  degradiert sauber (`continue-on-error: true`, klare Debug-Zeile), das
+  bisherige rein client-seitige Recording funktioniert unveraendert weiter.
+  Rein additiv, kein Breaking Change.
+- Per Node-Skript-Test lokal verifiziert: Idempotent (zweiter Lauf mit
+  identischem Snapshot meldet "0 aktualisiert"), schreibt das exakt gleiche
+  Tupel-Format wie der Client.
+
 ### Set-ups-FX-Filter jetzt exklusiv zu den Waehrungs-Chips (Nutzer-Wunsch 2026-07-20)
 
 `toggleSetupCcy(c)`/`toggleSetupFxOnly()` (≈ Zeile 6555): liefen bisher als
