@@ -2335,3 +2335,38 @@ Cross-Cutting-Grundsatz weiter oben dokumentiert).
   ein Tooltip/Overlay, das ausserhalb des sichtbaren Elements rendert
   (z.B. oberhalb per negativem Transform), von einem `overflow:hidden`-
   Container abgeschnitten werden (genug Innen-Padding einplanen).
+
+### Rate-Probabilities-Chart: Hover-Tooltip zeigte nur EINE Linie statt aller Ausgaenge (Bugreport 2026-07-20)
+
+Nutzer: "Und bei der Info wird auch nicht alle 3 Linien Info zu gegeben" -
+beim Hovern nahe einer Sitzung mit mehreren gleichzeitig sichtbaren
+Basispunkt-Linien (z.B. Hold/+25bp/-25bp bei "Oct 27-28, 2026") zeigte das
+Tooltip-Fenster nur den Wert der EINEN naechstliegenden Linie, nicht aller.
+
+- **Ursache:** `rateProbTimelineChart()` registrierte bisher einen eigenen
+  `chartHoverWrap()`-Punkt PRO (Level, Index)-Kombination. Die geteilte
+  `attachChartHovers()`-Logik (≈ Zeile 10228) sucht bei Mausbewegung den
+  EINEN Punkt mit dem kleinsten `|fx-Maus_fx|`-Abstand und zeigt nur dessen
+  `tip` - lagen mehrere Linien am selben X (Sitzungsdatum), gewann
+  zwangslaeufig nur eine davon (die mit dem geringsten Abstand/zuerst im
+  Array).
+- **Fix:** exakt das bereits etablierte Muster aus `scoreTrendChart()`
+  ("All assets"/"FX only"-Trends-Chart, hat identisch dasselbe Mehrlinien-
+  Problem und loest es schon so) uebernommen: EIN `hpts`-Eintrag PRO
+  X-Position (Today/Meeting) statt pro Linie-Punkt, das Tooltip-Fenster
+  listet darin ALLE an diesem Index sichtbaren Level (>1%) zusammen auf
+  (jede Zeile in ihrer eigenen Linienfarbe), der Hover-Punkt selbst sitzt
+  auf der ersten (niedrigsten Basispunkt-Stufe) mit einem Wert an diesem
+  Index.
+- Per Playwright verifiziert: Tooltip bei "Jul 28-29, 2026" zeigt beide
+  Level (Hold 84,0% + -25bp 16,0%), bei "Dec 8-9, 2026" alle fuenf Level
+  (Hold 24,1% / +25bp 42,7% / +50bp 25,5% / +75bp 4,5% / -25bp 3,2%) -
+  vorher nur je ein einzelner Wert. Voller Tab-Regressionstest weiterhin
+  fehlerfrei.
+- **Merksatz:** bei JEDEM neuen Mehrlinien-Chart mit `chartHoverWrap()`
+  IMMER das "ein Tooltip-Punkt pro X-Position, listet alle Linien"-Muster
+  aus `scoreTrendChart()` verwenden statt einen Hover-Punkt pro Linie zu
+  registrieren - sonst zeigt `attachChartHovers()`s Naechster-Punkt-Suche
+  bei mehreren Linien am selben X immer nur eine davon (Grundsatz
+  "wiederkehrende UI-Bausteine muessen einheitlich sein" gilt auch fuer
+  diese Tooltip-Aggregations-Logik, nicht nur fuer die Optik).

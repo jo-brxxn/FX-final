@@ -1246,7 +1246,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-NOOVERLAP-171</span><span id="verBannerText"> (Bugfix nach Nutzer-Screenshot: im Rate-Probabilities-Mehrlinien-Chart ueberlappten sich Endpunkt-Labels bei nah beieinander liegenden Prozentwerten (z.B. Hold/+50bp beim letzten Meeting) unlesbar, und der "Hold: 100.0%"-Hover-Tooltip am Today-Punkt wurde vom neuen overflow:hidden-Slide-Viewport oben abgeschnitten. Fix: Kollisions-Vermeidung (Mindestabstand) fuer alle Labels an derselben X-Position + mehr interne Kopf-Freiheit (padT 20→56) im SVG-Koordinatensystem, damit der Tooltip Platz hat. Neuer Grundsatz ins CLAUDE.md: Elemente duerfen sich niemals so ueberlappen, dass etwas unsichtbar wird)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-COMBINEDTIP-172</span><span id="verBannerText"> (Bugfix: Hover-Tooltip im Rate-Probabilities-Mehrlinien-Chart zeigte nur die EINE naechstliegende Linie statt aller an dieser Sitzung sichtbaren Ausgaenge. Fix: EIN Hover-Punkt pro X-Position (Today/Meeting) statt einer pro Linie-Punkt, das Fenster listet jetzt ALLE dort sichtbaren Linien mit eigener Farbe/Wert zusammen auf - selbes Muster wie beim "All assets"-Trends-Chart)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11016,7 +11016,7 @@ function rateProbTimelineChart(pts,distTimeline){
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
   const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===0?800:600};fill:${i===0?'var(--t0)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
   let paths='',dots='';
-  const hpts=[],lblItems=[];
+  const lblItems=[];
   sortedLevels.forEach(lvl=>{
     const col=rateProbLineColor(lvl);
     const lbl=lvl===0?'Hold':(lvl>0?'+':'')+lvl+'bp';
@@ -11036,14 +11036,31 @@ function rateProbTimelineChart(pts,distTimeline){
     };
     distTimeline.forEach((d,i)=>{
       const p=d[lvl];
-      if(p!=null&&p>1){
-        seg.push([i,p]);
-        lastVisible={i,p};
-        hpts.push({fx:xOf(i)/W,fy:yOf(p)/H,col,tip:`<div class="chv-tip-d">${escH(pts[i].label)}</div><b>${escH(lbl)}</b>: ${p.toFixed(1)}%`});
-      }else flush();
+      if(p!=null&&p>1){seg.push([i,p]);lastVisible={i,p};}
+      else flush();
     });
     flush();
     if(lastVisible)lblItems.push({x:xOf(lastVisible.i)+9,y:yOf(lastVisible.p)+3,i:lastVisible.i,col,lbl});
+  });
+  // Hover-Tooltip: EIN Punkt pro X-Position (Today/Meeting), listet ALLE dort
+  // sichtbaren Linien zusammen auf (Nutzer-Bugreport 2026-07-20: vorher ein
+  // hpts-Eintrag PRO Linie-Punkt, wodurch die naechste-Punkt-Suche in
+  // attachChartHovers() bei mehreren Linien am selben X immer nur die EINE
+  // naechstliegende zeigte - "bei der Info wird nicht alle 3 Linien Info zu
+  // gegeben"). Selbes Muster wie scoreTrendChart() ("All assets"): der Punkt
+  // sitzt auf der ersten Linie mit Wert an diesem Index, das Tooltip-Fenster
+  // listet aber jede Linie mit ihrer eigenen Farbe/ihrem Wert.
+  const hpts=pts.map((p,i)=>{
+    let dotY=null,dotCol='#fff';
+    const rows=sortedLevels.map(lvl=>{
+      const pct=distTimeline[i][lvl];
+      if(pct==null||pct<=1)return'';
+      const col=rateProbLineColor(lvl);
+      if(dotY==null){dotY=yOf(pct);dotCol=col;}
+      const lbl=lvl===0?'Hold':(lvl>0?'+':'')+lvl+'bp';
+      return`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">${escH(lbl)}</span><b>${pct.toFixed(1)}%</b></div>`;
+    }).filter(Boolean).join('');
+    return{fx:xOf(i)/W,fy:(dotY!=null?dotY:yOf(0))/H,col:dotCol,tip:`<div class="chv-tip-d">${escH(p.label)}</div>${rows||'<span style="color:var(--t3)">no data</span>'}`};
   });
   // Kollisions-Vermeidung fuer die Endpunkt-Labels (Nutzer-Grundsatz
   // 2026-07-20: "Es duerfen niemals Elemente ueberlappen sodass man etwas
