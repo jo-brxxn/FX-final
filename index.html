@@ -571,6 +571,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .ind-hist-legend{display:flex;gap:10px;font-size:9.5px;font-weight:700;white-space:nowrap}
 .ind-hist-legend span{color:var(--blue)}
 .ind-hist-legend span:last-child{color:var(--red)}
+.time-range-custom{display:flex;align-items:center;gap:5px;color:var(--t3);font-size:10.5px;white-space:nowrap}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
@@ -1230,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SCOREHIST-SYNC-150</span><span id="verBannerText"> (Bugfix: scoreHist (Trends/History-Datenbasis) war bisher NUR localStorage, nicht cloud-synchronisiert - dieselbe Bug-Klasse wie einst tabStacks (siehe CLAUDE.md "WICHTIGSTE REGEL"). Ergebnis: Handy zeigte nur 2 Tage Trends-Historie, iPad viel mehr, weil jedes Geraet nur seine eigenen Tage sammelte. Jetzt in cloudPush/cloudPull/exportData/importData eingebunden, mit MERGE statt Overwrite (mergeScoreHist, lokal gewinnt bei Datums-Kollision) - Geraete ergaenzen sich jetzt statt sich gegenseitig zu ueberschreiben. Zusaetzlich Cap von ~95 Tagen auf ~1100 Tage (3 Jahre) angehoben, angelehnt an den 3-Jahres-Horizont von chartHist/IND_HIST_RANGES/COT-3y%ile)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-TIMERANGE-FILTER-151</span><span id="verBannerText"> (Neu: gemeinsamer Zeitraum-Filter (Max/3Y/2Y/1Y/6M/3M/1M/Custom) fuer Zeitreihen-Diagramme - Trends-Tab (Total Score/Inflation/Labour/Growth/vs Price, auch im Paar-Modus) zeigt jetzt per Default die MAXIMALE verfuegbare Historie statt fix ~3 Monate, mit Buttons zum Eingrenzen. Der bestehende Indikator-Verlaufschart-Filter (Ausklappen einer Indikator-Karte bzw. Insights > Data) wurde um "Max" und "Custom" (freier Datumsbereich) ergaenzt, damit beide Stellen identisch aussehen/funktionieren (CLAUDE.md: wiederkehrende UI-Bausteine muessen einheitlich sein))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1423,7 +1424,7 @@ function introLogin(){
 <!-- PAGE: TRENDS (Score-Verlauf) -->
 <div class="pc" id="pgTrends" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset over ~3 months &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
@@ -9034,7 +9035,32 @@ function groupedAssetOptions(ids,selected){
   });
   return groups.map(lbl=>`<optgroup label="${escH(lbl)}">`+byLbl[lbl].map(id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('')+`</optgroup>`).join('');
 }
+// Generischer Zeitraum-Filter fuer Zeitreihen-Diagramme (Nutzer-Wunsch
+// 2026-07-20: "ueberall wo es Diagramme gibt" 1Y/2Y/.../Monate/Custom, UND
+// dieselbe Zeitspanne ueberall wo der Score dokumentiert wird). Wiederverwendet
+// dieselbe Optik wie der bisherige IND_HIST_RANGES-Filter (CLAUDE.md:
+// wiederkehrende UI-Bausteine muessen einheitlich sein) - 'Max' zeigt die
+// volle verfuegbare Historie (Standard, "maximale Historie" Nutzer-Wunsch),
+// 'Custom' schaltet zwei Datums-Felder frei.
+const TIME_RANGES=[['MAX','Max'],[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M'],['CUSTOM','Custom']];
+function timeRangeBarHtml(current,setFnName){
+  return `<div class="ind-hist-range-bar">${TIME_RANGES.map(([v,lbl])=>`<button class="ind-hist-range-btn${String(current)===String(v)?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
+}
+function timeRangeCustomHtml(current,from,to,setFnName){
+  if(current!=='CUSTOM')return'';
+  return`<span class="time-range-custom"><input type="date" class="btn" value="${from||''}" onchange="${setFnName}Custom(this.value,${to?`'${to}'`:'null'})" style="padding:3px 7px;font-size:10.5px"> &ndash; <input type="date" class="btn" value="${to||''}" onchange="${setFnName}Custom(${from?`'${from}'`:'null'},this.value)" style="padding:3px 7px;font-size:10.5px"></span>`;
+}
+function filterDatesByRange(dates,range,customFrom,customTo){
+  if(range==null||range==='MAX')return dates;
+  if(range==='CUSTOM')return dates.filter(d=>(!customFrom||d>=customFrom)&&(!customTo||d<=customTo));
+  const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-range);
+  const cutoffStr=cutoff.toISOString().slice(0,10);
+  return dates.filter(d=>d>=cutoffStr);
+}
 let trendsFilter='ALL';
+let trendsRange='MAX',trendsCustomFrom=null,trendsCustomTo=null;
+function setTrendsRange(v){trendsRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderTrends();}
+function setTrendsRangeCustom(from,to){if(from!==null)trendsCustomFrom=from||null;if(to!==null)trendsCustomTo=to||null;renderTrends();}
 // For the "custom currency pair" filter: two freely selectable assets whose
 // score difference (base − quote, like the pairs in the Pairs tab) is
 // computed daily as its own history line. The diff series lives ONLY in
@@ -9305,14 +9331,17 @@ function renderTrends(){
   if(trendsFilter!=='ALL'&&trendsFilter!=='FX'){const sym=syms.find(s=>s.id===trendsFilter);if(sym)colorOverride=BC[sym.bias];}
   const dset=new Set();
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
-  const dates=[...dset].sort();
-  if(!dates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
-  let html;
+  const allDates=[...dset].sort();
+  if(!allDates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
+  const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
+  const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
+  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
+  let html=rangeBar;
   if(trendsFilter!=='ALL'&&trendsFilter!=='FX'&&trendsShowPrice){
     const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1])){scoreMap[e[0]]=e[1];biasMap[e[0]]=e[5]||scoreBias(e[1]);}});
-    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
+    html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
   }else{
-    html=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
+    html+=scoreTrendCard(totalIds,dates,1,14,'Total Score',colorOverride);
   }
   if(macroIds.length){
     html+=scoreTrendCard(macroIds,dates,2,7,'Inflation',colorOverride)+
@@ -9345,13 +9374,15 @@ function renderTrendsPair(el){
   // Color the pair's line by its current overall bias (same bull/bear/neutral
   // colors used everywhere else in the app), not a fixed identity color.
   const colorOverride=BC[scoreBias(pairScore(pairKey))];
-  const dates=diffArr.map(e=>e[0]);
-  let html;
+  const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
+  const dates=filterDatesByRange(diffArr.map(e=>e[0]),trendsRange,trendsCustomFrom,trendsCustomTo);
+  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
+  let html=rangeBar;
   if(trendsShowPrice){
     const scoreMap={},biasMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
-    html=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)',biasMap);
+    html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)',biasMap);
   }else{
-    html=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
+    html+=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
   }
   if(FX.includes(base)&&FX.includes(quote)){
     html+=scoreTrendCard([pairKey],dates,2,7,'Inflation Difference',colorOverride)+
@@ -10032,16 +10063,21 @@ function sentSpark(series,lo,hi,loTh,hiTh){
 // horizontales Wegwischen noetig (Projekt-Grundsatz). Werte-Labels IN den
 // Balken nur, wenn genug Platz ist; sonst nur ueber den Hover/Touch-Tooltip
 // (chartHoverWrap/attachChartHovers, Standard-Pattern fuer alle Charts hier).
-const IND_HIST_RANGES=[[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M']];
-let indHistRange=12; // Default beim Oeffnen: 1 Jahr (Nutzer-Wunsch)
-function setIndHistRange(months){
-  indHistRange=months;
+let indHistRange=12,indHistCustomFrom=null,indHistCustomTo=null; // Default beim Oeffnen: 1 Jahr (Nutzer-Wunsch)
+function setIndHistRange(v){
+  indHistRange=(v==='MAX'||v==='CUSTOM')?v:+v;
   // Chart kann an zwei Stellen stehen (Asset-Detailseite ODER Insights >
   // Data) - je nach aktuell sichtbarer Seite das richtige Panel neu rendern,
   // sonst aendert sich der Range-Wert zwar (indHistRange), aber der
   // SICHTBARE Chart bleibt stehen, weil das falsche Panel aktualisiert wird
   // (Bugreport 2026-07-16: Range-Buttons im Data-Tab reagierten scheinbar
   // gar nicht).
+  if(curPage==='data')renderDataTab();
+  else renderDetail();
+}
+function setIndHistRangeCustom(from,to){
+  if(from!==null)indHistCustomFrom=from||null;
+  if(to!==null)indHistCustomTo=to||null;
   if(curPage==='data')renderDataTab();
   else renderDetail();
 }
@@ -10076,14 +10112,23 @@ function onIndDetailsToggle(el,indId){
 }
 function indHistChart(ind){
   const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
-  const rangeBar=`<div class="ind-hist-range-bar">${IND_HIST_RANGES.map(([m,lbl])=>`<button class="ind-hist-range-btn${indHistRange===m?' on':''}" onclick="setIndHistRange(${m})">${lbl}</button>`).join('')}</div>`;
+  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange');
   const legend=`<div class="ind-hist-legend"><span>■ Actual</span><span>— Forecast</span></div>`;
-  const toolbar=`<div class="ind-hist-toolbar">${rangeBar}${legend}</div>`;
+  const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
+  const toolbar=`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
   if(all.length<2){
     return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).</div></div>`;
   }
-  const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-indHistRange);
-  let use=all.filter(p=>new Date(p[0]+'T00:00:00')>=cutoff);
+  let use;
+  if(indHistRange==='MAX'){
+    use=all;
+  }else if(indHistRange==='CUSTOM'){
+    use=all.filter(p=>(!indHistCustomFrom||p[0]>=indHistCustomFrom)&&(!indHistCustomTo||p[0]<=indHistCustomTo));
+  }else{
+    const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-indHistRange);
+    let cutoffStr;try{cutoffStr=cutoff.toISOString().slice(0,10);}catch(e){cutoffStr='';}
+    use=all.filter(p=>p[0]>=cutoffStr);
+  }
   if(use.length<2)use=all.slice(-Math.min(all.length,4)); // Filter zu eng (junger Indikator) -> letzte verfuegbare Punkte statt leer
   const n=use.length;
   const W=720,H=230,padL=10,padR=10,padT=24,padB=28;

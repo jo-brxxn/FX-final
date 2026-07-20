@@ -1273,7 +1273,34 @@ Werts auf, `recordScoreHist()` bumpt `fxpro_updated`+ruft `cloudAutoSync()`
 zuverlaessig auf bei echter Aenderung, alle 13 Tabs + Bias-Klick
 regressions-frei.
 
-**Naechster Schritt (noch offen):** Nutzer wollte zusaetzlich einen
-Zeitraum-Filter (1Y/2Y/.../Monate/Custom) fuer Trends und alle
-Zeitreihen-Diagramme, nach dem Muster von `IND_HIST_RANGES` - noch nicht
-umgesetzt.
+### Gemeinsamer Zeitraum-Filter fuer Zeitreihen-Diagramme (Nutzer-Wunsch 2026-07-20)
+
+Neue, wiederverwendbare Filter-Komponente (`TIME_RANGES`/`timeRangeBarHtml()`/
+`timeRangeCustomHtml()`/`filterDatesByRange()`, ≈ Zeile 9037) - Optionen
+Max/3Y/2Y/1Y/6M/3M/1M/Custom (Custom blendet zwei `<input type="date">`
+inline ein). Ersetzt/generalisiert den bisherigen indikator-spezifischen
+`IND_HIST_RANGES`-Filter (der hatte kein Max/Custom).
+
+- **Trends-Tab** (`renderTrends()`/`renderTrendsPair()`): eigener State
+  `trendsRange`/`trendsCustomFrom`/`trendsCustomTo`, Default **`'MAX'`**
+  (Nutzer-Wunsch "maximale Historie ueberall" als Startzustand - anders als
+  beim Indikator-Chart, der weiterhin bei 1Y startet, siehe unten). Filtert
+  die `dates`-Liste VOR dem Aufruf von `scoreTrendCard`/`scoreVsPriceCard` -
+  alle vier Karten (Total/Inflation/Labour/Growth bzw. vs Price) teilen sich
+  dieselbe gefilterte Datumsliste, die Range-Bar erscheint deshalb nur EINMAL
+  oben, nicht pro Karte.
+- **Indikator-Verlaufschart** (`indHistChart()`, Ausklappen einer Indikator-
+  Karte ODER Insights > Data): `indHistRange`/`indHistCustomFrom`/
+  `indHistCustomTo` ersetzen die alten `IND_HIST_RANGES`/`setIndHistRange`-
+  Variablen, Default bleibt 1Y (unveraendert, war schon vorher so gewaehlt).
+  Jetzt zusaetzlich Max und Custom moeglich, exakt dieselbe Optik wie im
+  Trends-Tab (dieselben CSS-Klassen `.ind-hist-range-bar`/`.ind-hist-range-
+  btn`/`.time-range-custom`).
+- Bei kuenftigen neuen Zeitreihen-Diagrammen (COT-Historie, Retail-
+  Sentiment-Verlauf, Put/Call-Verlauf, ...) diesen Filter wiederverwenden
+  statt einen eigenen zu bauen (CLAUDE.md-Grundsatz "wiederkehrende UI-
+  Bausteine muessen einheitlich sein"). Noch NICHT umgesetzt fuer:
+  COT-Positionierungshistorie, Risk-Sentiment-Mini-Chart, Put/Call/Retail-
+  Sentiment-Charts (die haben meist ohnehin keinen langen Zeit-Horizont
+  oder sind Balken-Aggregate ohne echte "Zeitspanne"-Semantik wie
+  Saisonalitaet) - bei Bedarf nachruesten.
