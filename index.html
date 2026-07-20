@@ -107,13 +107,13 @@ svg.ic{vertical-align:-2px;flex:none}
 .sb-spark{display:block;margin:2px auto 1px}
 /* Score-Flip-Moment: kurzer Hinweis um die Sidebar-Zeile + Score-Puls, wenn
    ein Symbol gerade sein Bias gewechselt hat (siehe triggerFlipGlow).
-   Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): kein Overshoot-
-   Bounce/Glow-Sweep mehr (wirkte spielerisch) - gedaempfter, kein
-   Ueberschwingen ueber die Zielgroesse hinaus. */
-@keyframes flipGlowSweep{0%{box-shadow:0 0 0 0 var(--flipcol,transparent)}25%{box-shadow:0 0 8px 1px var(--flipcol,transparent)}100%{box-shadow:0 0 0 0 transparent}}
-@keyframes flipScorePulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
-.flip-glow{animation:flipGlowSweep 1s ease-out}
-.flip-pulse{display:inline-block;animation:flipScorePulse .4s ease-out}
+   Nutzer-Wunsch 2026-07-20: der im Professionalitaets-Audit (2026-07-19)
+   gedaempfte Overshoot-Bounce/Glow-Sweep wieder zurueckgesetzt auf die
+   urspruenglichen, staerkeren Werte. */
+@keyframes flipGlowSweep{0%{box-shadow:0 0 0 0 var(--flipcol,transparent)}25%{box-shadow:0 0 16px 3px var(--flipcol,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes flipScorePulse{0%{transform:scale(1)}30%{transform:scale(1.4)}60%{transform:scale(.92)}100%{transform:scale(1)}}
+.flip-glow{animation:flipGlowSweep 1.4s ease-out}
+.flip-pulse{display:inline-block;animation:flipScorePulse .6s ease-out}
 /* Aurora-Hintergrund: 3 sehr langsam wandernde, stark geblurrte
    Farbflaechen hinter den Karten, gefaerbt nach dem aktuellen
    Risk-Sentiment (siehe updateAuroraColors) - der Hintergrund ist damit
@@ -147,12 +147,15 @@ svg.ic{vertical-align:-2px;flex:none}
    teures Blur-Filter-Neuzeichnen mehr, nur noch die guenstige opacity. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .aurora-blob{position:absolute;border-radius:50%;opacity:.4}
-.aurora-a{background:radial-gradient(circle,var(--aurora-a,#4fc3f7) 0%,transparent 70%);width:56vw;height:56vw;top:-18%;left:-12%}
-.aurora-b{background:radial-gradient(circle,var(--aurora-b,#4fc3f7) 0%,transparent 70%);width:50vw;height:50vw;bottom:-22%;right:-14%}
+.aurora-a{background:radial-gradient(circle,var(--aurora-a,#4fc3f7) 0%,transparent 70%);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
+.aurora-b{background:radial-gradient(circle,var(--aurora-b,#4fc3f7) 0%,transparent 70%);width:50vw;height:50vw;bottom:-22%;right:-14%;animation:auroraDrift2 50s ease-in-out infinite}
 /* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
    frueheren Amber - zusammen mit den anderen beiden Blobs ergab Amber einen
    braunen statt einen kuehlen "Aurora"-Farbverlauf. */
-.aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%}
+.aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
+@keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
+@keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
+@keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
 /* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
@@ -622,7 +625,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
-.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14)}
+@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
+.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:16px}
 .cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px;color:#5b9bd8}
 .cot-notify-sub{font-size:11px;opacity:.75;margin-left:2px;color:var(--t2)}
@@ -633,7 +637,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
    Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): kein endloses Pulsen
    mehr auf beiden Benachrichtigungs-Karten - statischer Schatten reicht als
    Hinweis, ohne staendig in Bewegung zu sein. */
-.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.14)}
+@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.1)}50%{box-shadow:0 2px 16px rgba(124,58,237,.25)}}
+.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.14);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
 .risk-env-notify-card .cot-notify-txt{color:#a78bfa}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
@@ -947,7 +952,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
 .green-alert-count{color:#22c55e;font-size:10px;font-weight:800;line-height:1;display:block;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-align:center}
 .green-alert-wrap.ga-zero{opacity:.22;transform:scale(.72)}
-.green-alert-wrap.ga-many .green-alert-icon{font-size:22px}
+@keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.green-alert-wrap.ga-many .green-alert-icon{font-size:22px;animation:pulse-badge 1.4s ease-in-out infinite}
 .green-alert-wrap.ga-many .green-alert-count{font-size:13px;font-weight:900}
 /* Green flag + dismiss button in mini-calendar */
 .cal-green-row-wrap{display:flex;align-items:center;gap:3px}
@@ -991,7 +997,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
-.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1}
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
 .inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
 /* ── INBOX SCORE NOTIFICATIONS ── */
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
@@ -1180,7 +1186,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 @keyframes ihCycle{0%{opacity:0}5%{opacity:1}45%{opacity:1}50%{opacity:0}100%{opacity:0}}
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
 #introLoginBtn:active{transform:scale(.95)}
-@keyframes introTitleIn{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
+@keyframes introTitleIn{0%{opacity:0;transform:scale(.62)}100%{opacity:1;transform:scale(1)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
@@ -1201,8 +1207,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .tr-dot-in{animation:trDotIn .35s ease both;transform-box:fill-box;transform-origin:center}
 @keyframes listRowIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
 .list-in{animation:listRowIn .4s cubic-bezier(.2,.7,.3,1) both}
-@keyframes scorePop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
-.score-pop{animation:scorePop .35s ease-out}
+@keyframes scorePop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
+.score-pop{animation:scorePop .5s cubic-bezier(.3,1.4,.5,1)}
 @keyframes biasFlip{0%{transform:rotateX(85deg);opacity:.2}100%{transform:rotateX(0);opacity:1}}
 .bias-flip{animation:biasFlip .4s ease;display:inline-block}
 /* ── MODAL-ÜBERGANG (Ein-/Ausblenden) ── */
@@ -1231,7 +1237,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-RATEPROBS-163</span><span id="verBannerText"> (Rate Probabilities: --http1.1 hat den HTTP/2-Fehler beim FRED-Fetch behoben, aber der naechste Testlauf zeigte "exit 28" Timeout auf beiden Versuchen - ohne Datumsbereich liefert fredgraph.csv die komplette Historie seit Serienbeginn. Jetzt mit cosd=heute-120Tage eingegrenzt + laengeren Timeouts, naechster Testlauf laeuft)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-ANIM-RESTORE-164</span><span id="verBannerText"> (Nutzer-Wunsch: die im Professionalitaets-Audit Runde 2 entfernten/gedaempften Animationen wieder zurueckgesetzt - Aurora-Hintergrund driftet wieder (auroraDrift1-3), Score-Flip-Puls/-Glow + Score-Pop wieder mit urspruenglichem Overshoot, Inbox-Badge + Green-Alert-Icon pulsieren wieder endlos, COT-/Risk-Env-Dashboard-Banner pulsieren wieder, Intro-Titel zoomt wieder dramatischer (scale .62→1) rein)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}

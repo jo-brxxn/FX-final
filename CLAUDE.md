@@ -1915,3 +1915,65 @@ Vorgehen wie bei den Bond-Yield-Backfills - jeder Fehlercode einzeln
 diagnostiziert statt geraten). Die ZQ-Futures-Kurve selbst lief bei
 ALLEN drei Testlaeufen fehlerfrei durch, betrifft ausschliesslich den
 FRED-EFFR-Teil.
+
+### Professionalitaets-Audit-Rueckbau: entfernte/gedaempfte Animationen wiederhergestellt (Nutzer-Wunsch 2026-07-20)
+
+Nutzer: "Und s gibt auch keine Animationen mehr die die Balken erscheinen
+lässt und generell hatten wie viele Animationen entfernt bitte mach das
+auch wieder rückgängig" - bezieht sich auf die Bewegungs-Reduktionen aus
+dem "Professionalitaets-Audit Runde 2" (2026-07-19, Eintrag oben, Punkt 1+3
+"weniger Video-Game"). Per `git show` auf den damaligen Audit-Commit
+(8f27068) die exakten Vorher-Werte zurueckgeholt, NUR die Bewegungs-
+/Animations-Teile - Globus-Position, Radius-Reduktion, Emoji→Icon-Ersatz
+und `tabular-nums` aus demselben Commit bewusst NICHT angefasst (nicht
+Teil des Nutzer-Wunsches, waeren zudem teils von spaeteren, gezielteren
+Aenderungen ueberholt, z.B. Globus wurde schon einmal zurueckgeholt).
+
+- **Aurora-Hintergrund** (`.aurora-a`/`.aurora-b`/`.aurora-c`): treibt
+  wieder endlos (`auroraDrift1/2/3`, 42s/50s/58s, `transform:translate(...)
+  scale(...)`). Die `@keyframes` existierten nach der Entfernung gar nicht
+  mehr im File, wieder ergaenzt (Werte aus dem alten Commit uebernommen).
+  Laeuft jetzt auf der GUENSTIGEN radial-gradient-Struktur (siehe Bugfix-
+  Eintrag "Aurora-Hintergrund: harte Kante..." oben) statt der alten
+  teuren Blur-Kreisflaeche - `transform`-Animation ist billig (Compositor),
+  reisst also NICHT das Performance-Problem wieder auf, das damals zur
+  Entfernung fuehrte.
+- **Score-Flip-Puls/-Glow** (`flipScorePulse`/`flipGlowSweep`, beim
+  Bias-Wechsel eines Symbols): Overshoot zurueck (`scale(1.4)`→`.92`→`1`
+  statt gedaempftem `scale(1.06)`), Glow-Sweep wieder staerker (`16px 3px`
+  statt `8px 1px`), beide Animationen wieder mit ihrer urspruenglichen
+  laengeren Dauer (1.4s/.6s statt 1s/.4s).
+- **Score-Pop** (`scorePop`, beim manuellen Bias-Klick): Overshoot zurueck
+  (`scale(1.35)` statt `1.08`), urspruengliche Bounce-Kurve
+  (`cubic-bezier(.3,1.4,.5,1)` statt `ease-out`).
+- **Endlose Puls-Animationen wiederhergestellt** (waren im Audit komplett
+  entfernt, nicht nur abgeschwaecht - `@keyframes pulse-badge` existierte
+  nicht mehr): `.inbox-badge` (Header-Glocke) und
+  `.green-alert-wrap.ga-many .green-alert-icon` (mehrere aktive Alerts)
+  pulsieren wieder endlos. `cotNotifyPulse`/`riskEnvNotifyPulse` (die
+  beiden Dashboard-Banner "New COT Data!"/"Check Your Risk Environment")
+  ebenso - `@keyframes` wiederhergestellt, `animation:...infinite` wieder
+  auf `.cot-notify-card`/`.risk-env-notify-card` gesetzt.
+- **Intro-Titel-Zoom** (`introTitleIn`): dramatischerer Zoom-In
+  (`scale(.62→1)` statt des gedaempften `scale(.94→1)`) - bewusst NUR die
+  Skalierung zurueckgeholt, nicht den damals ebenfalls entfernten Glow-
+  Filter (`drop-shadow`)/die Gradient-Textfarbe, da das eher Farb-/Stil-
+  Entscheidungen aus dem Audit sind als "Animation" im engeren Sinne des
+  Nutzer-Wunsches.
+- **Nicht gefunden / nicht angefasst:** eine explizite "Balken wachsen beim
+  Erscheinen rein"-Animation für die einfachen Prozent-Balken (Dashboard
+  Currency-Strength `.rank-bar`, Risk-Sentiment `.risk-asset-bar`) liess
+  sich per `git log -S` NICHT in der Historie finden - diese Balken hatten
+  nie eine eigene Eintritts-Animation (nur `transition:width` fuer spaetere
+  Updates, seit jeher). Die Matrix-Tab-Zeilen (`.mx-rank-row`, enthaelt
+  `.mx-rank-bar`) haben dagegen bereits eine gestaffelte Eintritts-
+  Animation (`list-in`/`listRowIn`, `animation-delay:${i*45ms}`) - die war
+  nie entfernt, existiert unveraendert. Falls der Nutzer eine bestimmte,
+  jetzt fehlende Balken-Animation an einer konkreten Stelle meint, die
+  hier nicht identifiziert wurde: gezielt nachfragen WO genau, statt eine
+  neue Animation zu erfinden (waere kein "Rueckgaengigmachen" mehr,
+  sondern ein neues Feature).
+- Per Playwright verifiziert: `getComputedStyle().animationName` liefert
+  `auroraDrift1` auf `.aurora-a` und `pulse-badge` auf `#inboxBadge` nach
+  dem Fix (vorher: `none`). Voller 14-Tab-Regressionstest weiterhin ohne
+  JS-Fehler.
