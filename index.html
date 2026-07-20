@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SERVERHIST-154</span><span id="verBannerText"> (Neu: server-seitige Score-Historie - bisher konnte score_hist NUR entstehen, wenn ein Geraet die App tatsaechlich oeffnete (recordScoreHist() laeuft rein im Browser); an Tagen ganz ohne Geraete-Besuch blieb die Trends-Historie luckenhaft, selbst mit dem Cross-Device-Sync von vorhin. Neuer stuendlicher Workflow-Schritt "Fetch score snapshot from cloud sync" (update-ff-calendar.yml, nutzt dieselben SUPABASE_*-Secrets wie weekly-report.yml) liest den zuletzt gepushten scoreSnapshot und schreibt taeglich einen Eintrag pro Asset in score_hist.json - unabhaengig davon ob heute ein Geraet offen war. Browser merged diese Datei beim Laden als Basis in sein eigenes scoreHist (lokale, frisch korrigierte Werte haben immer Vorrang, der Server fuellt nur echte Luecken))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-FILTERSYNC-155</span><span id="verBannerText"> (Audit-Agent fand drei weitere localStorage-only-Filter derselben Bug-Klasse wie scoreHist: Set-ups-Waehrungsfilter/FX-Quick-Filter (setupCcyFilter/setupFxOnly), Kalender-Filter (calHighOnly/calCcyFilter), Compare-Tab-Spaltenauswahl (cmpCols) - alle jetzt in cloudPush/cloudPull/exportData/importData eingebunden. Ausserdem: exportData() nutzt jetzt snap() als Basis statt einer manuell gepflegten Feldliste (die hatte rubOrder/riskEnvLevel/riskEnvCfg/riskEnvLists u.a. vergessen - gingen bei manuellem Export/Import stillschweigend verloren, obwohl der automatische Cloud-Sync sie laengst korrekt mitnahm))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2588,6 +2588,10 @@ function toggleCalDay(date,pfx){
 function toggleCalHighOnly(){
   calHighOnly=!calHighOnly;
   localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
   updCalHighBtn();
   renderCalendar();
   renderInbox();
@@ -2639,6 +2643,10 @@ function toggleCompactView(){
 function setCalCcyFilter(v){
   calCcyFilter=v||'ALL';
   localStorage.setItem('fxpro_cal_ccy',calCcyFilter);
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
   renderCalendar();
 }
 function updCalCcySel(){
@@ -4951,14 +4959,24 @@ function dlCSV(filename,header,rows){
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+csv);
   a.download=filename;a.click();
 }
+// Export nutzt snap() als Basis (Nutzer-Bugreport 2026-07-20, Audit-Agent-
+// Fund: eine manuell gepflegte Feldliste hatte rubOrder/sbOrder/catOrder/
+// rateWatchCustom/indLinkCustom/dashV/riskEnvLevel/riskEnvCfg/riskEnvLists
+// vergessen - die gingen bei Export+Import stillschweigend verloren, obwohl
+// der automatische Cloud-Sync sie laengst korrekt mitnahm. snap() als Basis
+// kann dieses Vergessen bei kuenftigen neuen snap()-Feldern nicht mehr
+// passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,priceAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed,scoreHist},null,2));
+  const data=JSON.parse(snap());
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.greenDismissed=greenDismissed;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5170,7 +5188,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5262,6 +5280,17 @@ async function cloudPull(manual){
       // andere Historie loeschen (genau das war der gemeldete Bug:
       // Handy-Historie viel kuerzer als iPad-Historie).
       if(cd.scoreHist){scoreHist=mergeScoreHist(cd.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
+      // Set-ups-/Kalender-/Compare-Filter (Audit-Agent-Fund 2026-07-20,
+      // gleiches Muster wie compactLevel/designHue oben): bei anstehender
+      // lokaler Praeferenz-Aenderung (prefPending) die lokalen Werte in
+      // Ruhe lassen, sie werden gleich als neue Version hochgeschoben.
+      if(!prefPending){
+        if(Array.isArray(cd.setupCcyFilter)){setupCcyFilter=cd.setupCcyFilter.filter(c=>FX.includes(c));try{localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}catch(e){}}
+        if(cd.setupFxOnly!==undefined){setupFxOnly=cd.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}
+        if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
+        if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
+        if(Array.isArray(cd.cmpCols)){cmpCols=cd.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}
+      }
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -6575,9 +6604,17 @@ function confirmAddPair(){
 }
 
 // Währungs-Filter der Set-ups-Ansicht (Mehrfachauswahl). Leer = alle anzeigen.
-// Persistiert eigenständig im localStorage.
+// Cloud-synct wie greenDismissed/tabStacks (Nutzer-Bugreport 2026-07-20:
+// Audit-Agent fand diesen und zwei weitere Filter als reine localStorage-
+// Bugs derselben Klasse - siehe CLAUDE.md "WICHTIGSTE REGEL").
 let setupCcyFilter=(()=>{try{const a=JSON.parse(localStorage.getItem('fxpro_setup_ccy')||'[]');return Array.isArray(a)?a.filter(c=>FX.includes(c)):[];}catch(e){return[];}})();
 function saveSetupCcy(){localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}
+function syncSetupFilterPref(){
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+}
 // Waehrungs-Chips und der "FX"-Quick-Filter schliessen sich gegenseitig aus
 // (Nutzer-Wunsch 2026-07-20: vorher liefen beide als UND-Verknuepfung
 // nebeneinander, was verwirrend war) - Klick auf einen Waehrungs-Chip
@@ -6586,9 +6623,9 @@ function toggleSetupCcy(c){
   const i=setupCcyFilter.indexOf(c);
   if(i>=0)setupCcyFilter.splice(i,1);
   else{setupCcyFilter.push(c);if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}}
-  saveSetupCcy();renderPairs();
+  saveSetupCcy();syncSetupFilterPref();renderPairs();
 }
-function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}renderPairs();}
+function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}syncSetupFilterPref();renderPairs();}
 // Nutzer-Wunsch 2026-07-17: eigener Quick-Filter "FX" neben "All" - blendet
 // Non-FX-Assets (Gold, Oel, BTC, Indizes, Einzelaktien) UND Kreuz-Paare mit
 // einem Non-FX-Bein (z.B. XAU/USD) aus, zeigt nur reine Waehrungspaare.
@@ -6598,6 +6635,7 @@ function toggleSetupFxOnly(){
   setupFxOnly=!setupFxOnly;
   localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');
   if(setupFxOnly&&setupCcyFilter.length){setupCcyFilter=[];saveSetupCcy();}
+  syncSetupFilterPref();
   renderPairs();
 }
 function isPureFxPair(name){const p=(name||'').split('/');return p.length===2&&FX.includes(p[0])&&FX.includes(p[1]);}
@@ -8607,13 +8645,22 @@ const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth','
 const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐','COT Data':'📊',[MACRO_NAME]:'⚖️'};
 // Auswählbare Vergleichsspalten: alle FX-Währungen + alle Non-FX-Assets.
 function cmpAvailableIds(){return[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
-// Aktuell gewählte Spalten (persistiert). Default: alle FX-Währungen.
+// Aktuell gewählte Spalten (persistiert, cloud-synct wie greenDismissed/
+// tabStacks - Audit-Agent-Fund 2026-07-20, siehe CLAUDE.md "WICHTIGSTE
+// REGEL"). Default: alle FX-Währungen.
 let cmpCols=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_cmp_cols'));return Array.isArray(v)&&v.length?v:[...FX];}catch(e){return[...FX];}})();
 function cmpColIds(){const avail=cmpAvailableIds();let sel=cmpCols.filter(id=>avail.includes(id));if(!sel.length)sel=[...FX];return avail.filter(id=>sel.includes(id));}
-function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
-function cmpSelectAllFx(){cmpCols=[...FX];localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
-function cmpSelectAllAssets(){cmpCols=cmpAvailableIds().filter(id=>isNonFx(id));localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
-function cmpSelectAll(){cmpCols=cmpAvailableIds();localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));renderCompare();}
+function saveCmpCols(){
+  localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+}
+function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);saveCmpCols();renderCompare();}
+function cmpSelectAllFx(){cmpCols=[...FX];saveCmpCols();renderCompare();}
+function cmpSelectAllAssets(){cmpCols=cmpAvailableIds().filter(id=>isNonFx(id));saveCmpCols();renderCompare();}
+function cmpSelectAll(){cmpCols=cmpAvailableIds();saveCmpCols();renderCompare();}
 // Maße/Einheiten, die je Währung für ein und denselben Indikatornamen
 // abweichen können (z.B. "NFP / Employment Change": USD = monatliche
 // Job-Veränderung in Tsd., EUR = q/q %-Wachstum, GBP = absolutes Level).

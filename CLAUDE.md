@@ -34,7 +34,10 @@ Nach diesem Muster angebundene Felder (Stand 2026-07-07): `greenDismissed`,
 `tabStacks`, `compactLevel` (+Legacy-Boolean `compactView`), `pinEnabled`,
 `designHue` (Designer/🎨: null = Auto-Risk-Sentiment-Färbung der Aurora,
 Zahl 0–360 = Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch
-"zurück auf Auto" = null ankommt).
+"zurück auf Auto" = null ankommt). **Ergänzt 2026-07-20** (Audit-Agent-Fund,
+siehe Session-Eintrag weiter unten): `setupCcyFilter`/`setupFxOnly`
+(Set-ups-Waehrungsfilter/FX-Quick-Filter), `calHighOnly`/`calCcyFilter`
+(Kalender-Filter), `cmpCols` (Compare-Tab-Spaltenauswahl).
 
 **`scoreHist` (Score-Verlauf für Trends/History, Stand 2026-07-20) ist ein
 Sonderfall des Musters:** normalerweise gewinnt beim Pull einfach der
@@ -1430,6 +1433,49 @@ taeglich fortgeschrieben wird.
 - Per Node-Skript-Test lokal verifiziert: Idempotent (zweiter Lauf mit
   identischem Snapshot meldet "0 aktualisiert"), schreibt das exakt gleiche
   Tupel-Format wie der Client.
+
+### Audit-Agent: weitere localStorage-only-Bugs derselben Klasse gefunden + gefixt (2026-07-20)
+
+Nutzer bat explizit um einen Agenten, der pruefen soll, ob der scoreHist-
+Sync-Bug (siehe oben) noch an anderen Stellen vorkommt. Ergebnis (alle
+121 `localStorage`-Zugriffe im File gegen `cloudPush`/`cloudPull`/
+`exportData`/`importData`/`snap` abgeglichen) - drei echte Funde, alle
+sofort nach dem etablierten Muster gefixt:
+
+- **`setupCcyFilter`/`setupFxOnly`** (Set-ups-Waehrungsfilter/FX-Quick-
+  Filter, erst am 2026-07-17/20 gebaut) - der Code-Kommentar sagte sogar
+  woertlich "Persistiert eigenstaendig im localStorage", der dokumentierte
+  Anti-Pattern-Satz selbst. Neuer gemeinsamer Helper `syncSetupFilterPref()`
+  (bumpt `fxpro_updated`+`_lsUpdatedSeen`+`markPrefEdit()`+`cloudAutoSync()`)
+  wird von `toggleSetupCcy()`/`clearSetupCcy()`/`toggleSetupFxOnly()`
+  aufgerufen.
+- **`calHighOnly`/`calCcyFilter`** (Kalender "High-Impact only" + Waehrungs-
+  Filter) - `toggleCalHighOnly()`/`setCalCcyFilter()` bumpen jetzt genauso.
+- **`cmpCols`** (Compare-Tab Spaltenauswahl) - neuer Helper `saveCmpCols()`,
+  genutzt von `toggleCmpCol()`/`cmpSelectAllFx()`/`cmpSelectAllAssets()`/
+  `cmpSelectAll()`.
+
+Alle drei zusaetzlich in `cloudPush()`/`cloudPull()` (mit `prefPending`-
+Schutz wie `compactLevel`/`designHue`, da jetzt `markPrefEdit()` nutzend)
+und `exportData()`/`importData()` eingebunden.
+
+**Separater, verwandter Fund:** `exportData()` pflegte eine manuelle
+Feldliste statt `snap()` als Basis zu nutzen - dabei waren `rubOrder`/
+`sbOrder`/`catOrder`/`rateWatchCustom`/`indLinkCustom`/`dashV`/
+`riskEnvLevel`/`riskEnvCfg`/`riskEnvLists` vergessen worden. Die gingen
+zwar NICHT beim normalen Cloud-Sync verloren (der nutzt `snap()` direkt),
+aber bei einem manuellen "Export JSON" → "Import JSON" (z.B. Backup ohne
+Cloud) fielen sie auf ihre Defaults zurueck. Fix: `exportData()` nutzt jetzt
+`JSON.parse(snap())` als Basis (plus die Nicht-Snap-Felder oben) statt einer
+Handliste - kann bei kuenftigen neuen `snap()`-Feldern nicht mehr passieren.
+**Merksatz:** bei `exportData()` nie wieder eine manuelle Feldliste pflegen,
+immer von `snap()` ausgehen.
+
+**Bewusst NICHT als Bug eingestuft:** `fxpro_verbanner_collapsed`
+(VERSION-CHECK-Banner ein-/ausgeklappt) - reine Chrome-/Debug-Praeferenz,
+kein App-Inhalt; bleibt lokal (auffaellig ist nur, dass es `localStorage`
+statt `sessionStorage` nutzt wie das verwandte `fxpro_verbanner_hidden` -
+falls das je stoert, gesondert klaeren, kein dringender Fix).
 
 ### Set-ups-FX-Filter jetzt exklusiv zu den Waehrungs-Chips (Nutzer-Wunsch 2026-07-20)
 
