@@ -1246,7 +1246,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-RATEPROB-MULTILINE-170</span><span id="verBannerText"> (Nutzer-Korrektur: statt EINER Linie fuer den impliziten Zinspfad jetzt MEHRERE Linien - eine je moeglichem Zins-Ausgang relativ zu heute (Hold/+25bp/-25bp/...), sichtbar sobald die Wahrscheinlichkeit über 1% liegt. Verkettet die Zwei-Stufen-Verteilung jeder Sitzung (probsFromDelta) kumulativ ueber alle Sitzungen - dadurch tauchen bei weiter entfernten Sitzungen automatisch mehr Linien auf, genau wie bei CMEs eigenem Mehr-Balken-Chart. Gegen Handrechnung verifiziert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-NOOVERLAP-171</span><span id="verBannerText"> (Bugfix nach Nutzer-Screenshot: im Rate-Probabilities-Mehrlinien-Chart ueberlappten sich Endpunkt-Labels bei nah beieinander liegenden Prozentwerten (z.B. Hold/+50bp beim letzten Meeting) unlesbar, und der "Hold: 100.0%"-Hover-Tooltip am Today-Punkt wurde vom neuen overflow:hidden-Slide-Viewport oben abgeschnitten. Fix: Kollisions-Vermeidung (Mindestabstand) fuer alle Labels an derselben X-Position + mehr interne Kopf-Freiheit (padT 20→56) im SVG-Koordinatensystem, damit der Tooltip Platz hat. Neuer Grundsatz ins CLAUDE.md: Elemente duerfen sich niemals so ueberlappen, dass etwas unsichtbar wird)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11001,7 +11001,12 @@ function rateProbLineColor(bp){
   return bp>=-25?BC.bear:'#c23a46';
 }
 function rateProbTimelineChart(pts,distTimeline){
-  const H=230,padT=20,padB=36;
+  // padT braucht genug Kopffreiheit fuer den Hover-Tooltip (chv-tip rendert
+  // per transform:translate(-50%,calc(-100% - 10px)) OBERHALB seines Ankers,
+  // ~45-55px) - die .rateprob-chart-viewport hat overflow:hidden (fuer die
+  // Slide-Navigation), ein zu kleines padT schnitt den Tooltip am Top-Rand
+  // ab (Nutzer-Bugreport 2026-07-20, "Hold: 100.0%" bei Today unsichtbar).
+  const H=266,padT=56,padB=36;
   const W=RATEPROB_PADL+RATEPROB_PADR+RATEPROB_SLOT*Math.max(1,pts.length-1);
   const xOf=i=>RATEPROB_PADL+i*RATEPROB_SLOT;
   const yOf=pct=>padT+(1-pct/100)*(H-padT-padB);
@@ -11010,8 +11015,8 @@ function rateProbTimelineChart(pts,distTimeline){
   const sortedLevels=[...levels].sort((a,b)=>a-b);
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
   const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===0?800:600};fill:${i===0?'var(--t0)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
-  let paths='',dots='',labels='';
-  const hpts=[];
+  let paths='',dots='';
+  const hpts=[],lblItems=[];
   sortedLevels.forEach(lvl=>{
     const col=rateProbLineColor(lvl);
     const lbl=lvl===0?'Hold':(lvl>0?'+':'')+lvl+'bp';
@@ -11038,8 +11043,26 @@ function rateProbTimelineChart(pts,distTimeline){
       }else flush();
     });
     flush();
-    if(lastVisible)labels+=`<text x="${(xOf(lastVisible.i)+9).toFixed(1)}" y="${(yOf(lastVisible.p)+3).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${col}">${escH(lbl)}</text>`;
+    if(lastVisible)lblItems.push({x:xOf(lastVisible.i)+9,y:yOf(lastVisible.p)+3,i:lastVisible.i,col,lbl});
   });
+  // Kollisions-Vermeidung fuer die Endpunkt-Labels (Nutzer-Grundsatz
+  // 2026-07-20: "Es duerfen niemals Elemente ueberlappen sodass man etwas
+  // nicht sehen kann") - Labels an DERSELBEN X-Position (gleicher letzter
+  // sichtbarer Punkt-Index) wurden vorher unabhaengig auf ihrer eigenen
+  // Rohe-Y-Koordinate platziert und ueberlappten sich bei nah beieinander
+  // liegenden Prozentwerten (z.B. Hold/+50bp beim letzten Meeting). Gruppiert
+  // nach Index, je Gruppe von oben nach unten sortiert und ein Mindestabstand
+  // erzwungen.
+  const byIdx={};
+  lblItems.forEach(it=>{(byIdx[it.i]=byIdx[it.i]||[]).push(it);});
+  const MIN_GAP=13;
+  Object.values(byIdx).forEach(group=>{
+    group.sort((a,b)=>a.y-b.y);
+    for(let k=1;k<group.length;k++){
+      if(group[k].y-group[k-1].y<MIN_GAP)group[k].y=group[k-1].y+MIN_GAP;
+    }
+  });
+  const labels=lblItems.map(it=>`<text x="${it.x.toFixed(1)}" y="${it.y.toFixed(1)}" style="font-size:10px;font-weight:700;fill:${it.col}">${escH(it.lbl)}</text>`).join('');
   const svg=`<svg id="rateProbSvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">
       ${gy}
       ${paths}

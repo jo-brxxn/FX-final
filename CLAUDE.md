@@ -97,6 +97,21 @@ gerade dran gearbeitet wird):
   zu breit, wird er INNERHALB der Karte horizontal scrollbar gemacht (nicht
   abgeschnitten, nicht die Karte selbst verschoben) — alles bleibt zu jeder
   Zeit exakt untereinander ausgerichtet, nichts "rutscht".
+- **⚠️ Elemente dürfen sich NIEMALS so überlappen, dass etwas dadurch
+  unsichtbar/unlesbar wird** (Nutzer-Grundsatz 2026-07-20, per Screenshot:
+  im Rate-Probabilities-Mehrlinien-Chart überlappten sich Endpunkt-Labels
+  bei nah beieinander liegenden Werten, und ein Hover-Tooltip wurde vom
+  `overflow:hidden`-Slide-Viewport oben abgeschnitten). Gilt generell, nicht
+  nur für diesen einen Chart — bei JEDEM neuen UI-Element mit mehreren
+  dynamisch positionierten Beschriftungen/Overlays (Chart-Labels, Tooltips,
+  Badges, Dropdowns) immer eine Kollisions-/Clipping-Prüfung einbauen
+  (Muster: Labels an ähnlicher Position gruppieren, sortieren, Mindestabstand
+  erzwingen; bei Tooltips/Overlays in einem `overflow:hidden`-Container genug
+  eigene Innen-Freiheit einplanen, statt sich auf den Container-Rand zu
+  verlassen). Siehe auch den bereits bestehenden `overflow:hidden`-Overlay-
+  Merksatz weiter unten (Data-Dropdown/Header) — dieselbe Problemklasse
+  (etwas rutscht hinter/unter/über etwas anderes), hier aber Labels/Tooltips
+  statt Dropdown-Stacking-Context.
 - **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird über
   einen linken Rand-Streifen gezeigt (`.rub-card` 4px, `.ind-card`/
   `.pair-card`/`.sym-row` 3px) auf neutralem 1px-Rahmen, `glow-*`-Klassen
@@ -2273,3 +2288,50 @@ Balken, weil sich Unsicherheit ueber mehrere Sitzungen aufsummiert).
   `<circle>`-Anzahl im SVG stimmt exakt mit der von Hand vorhergesagten
   Segment-/Punkt-Anzahl ueberein, alle 5 erwarteten Linien-Labels im DOM
   vorhanden, voller Tab-Regressionstest weiterhin fehlerfrei.
+
+### Rate-Probabilities-Mehrlinien-Chart: Label-Ueberlappung + abgeschnittener Tooltip (Bugreport 2026-07-20, per Screenshot)
+
+Nutzer schickte einen Screenshot der Live-Seite: beim letzten Meeting
+("Dec 8-9, 2026") ueberlappten sich die Endpunkt-Labels "Hold"/"+50bp" und
+separat "+75bp"/"-25bp" unlesbar, und der Hover-Tooltip "Hold: 100.0%" am
+Today-Punkt war am oberen Kartenrand abgeschnitten/unsichtbar. Dazu die
+explizite, als DAUERHAFT formulierte Vorgabe: "Es duerfen niemals Elemente
+ueberlappen sodass man etwas nicht sehen kann" (jetzt als eigener
+Cross-Cutting-Grundsatz weiter oben dokumentiert).
+
+- **Label-Ueberlappung:** `rateProbTimelineChart()` platzierte das
+  Endpunkt-Label jeder Basispunkt-Linie unabhaengig auf der Roh-Y-Koordinate
+  ihres letzten sichtbaren Punkts - lagen zwei Linien am selben X (meist der
+  letzte Punkt) prozentual nah beieinander, ueberlappten sich ihre Labels.
+  Fix: alle Endpunkt-Labels werden gesammelt und nach ihrem X-Index (Punkt,
+  an dem sie enden) gruppiert; innerhalb jeder Gruppe nach Y sortiert und ein
+  Mindestabstand (13px) erzwungen (spaetere Labels werden nach unten
+  verschoben, falls zu nah am vorherigen) - genau das Kollisions-Vermeidungs-
+  Muster, das jetzt als generischer Grundsatz weiter oben dokumentiert ist.
+- **Abgeschnittener Tooltip:** `.rateprob-chart-viewport{overflow:hidden}`
+  (fuer die Slide-Navigation zwischen Meetings noetig) schnitt den
+  Hover-Tooltip (`.chv-tip`, rendert per `transform:translate(-50%,
+  calc(-100% - 10px))` OBERHALB seines Ankerpunkts, braucht ~45-55px
+  Kopf-Freiheit) ab, wenn der Ankerpunkt nahe am oberen SVG-Rand lag (Today/
+  Hold=100% ist der hoechste Punkt im ganzen Chart, `padT` war nur 20px).
+  Fix: `padT` von 20 auf 56 erhoeht (Chart-Hoehe entsprechend von 230 auf
+  266, damit die eigentliche Plot-Flaeche gleich gross bleibt) - schafft
+  genug Innen-Freiheit im SVG-eigenen Koordinatensystem, OHNE die geteilte
+  `chartHoverWrap()`/`attachChartHovers()`-Funktion selbst anzufassen (die
+  wird app-weit von vielen anderen Charts genutzt, eine Aenderung dort haette
+  ein deutlich hoeheres Regressionsrisiko gehabt als eine lokale Anpassung
+  nur in diesem einen Chart).
+- Per Playwright verifiziert: `getBBox()`-Kollisionscheck ueber alle 5
+  Endpunkt-Labels bei jedem der 5 Meeting-Fokus-Zustaende (Today + 4
+  Sitzungen) liefert 0 Ueberlappungen (vorher: 2 Paare ueberlappend beim
+  letzten Meeting); Hover auf den Today/Hold-Punkt zeigt den Tooltip jetzt
+  vollstaendig sichtbar (`top`-Koordinate deutlich > 0, nicht mehr negativ/
+  abgeschnitten). Voller Tab-Regressionstest weiterhin fehlerfrei.
+- **Merksatz:** bei JEDEM neuen Chart/Overlay mit mehreren dynamisch
+  positionierten Text-Labels oder einem `overflow:hidden`-Ahnen-Container
+  immer explizit pruefen (nicht nur "sieht im Testlauf gut aus"): (1) koennen
+  sich zwei Labels bei ungluecklichen Datenwerten ueberlappen (Kollisions-
+  Pass einbauen, nicht auf "wird schon nicht passieren" vertrauen), (2) kann
+  ein Tooltip/Overlay, das ausserhalb des sichtbaren Elements rendert
+  (z.B. oberhalb per negativem Transform), von einem `overflow:hidden`-
+  Container abgeschnitten werden (genug Innen-Padding einplanen).
