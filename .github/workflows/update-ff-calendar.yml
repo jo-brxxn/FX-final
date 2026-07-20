@@ -2896,8 +2896,35 @@ jobs:
             out.history.push([today,round2(Rcurrent),meetings.filter(m=>m.deltaBp!=null).map(m=>[m.date,m.deltaBp])]);
             out.history.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
             if(out.history.length>400)out.history.splice(0,out.history.length-400);
+
+            // 6) Zuletzt VERGANGENER Termin (Nutzer-Wunsch 2026-07-20: "wenn
+            //    das Meeting kommt und die Rate rauskommt soll das
+            //    gekennzeichnet sein... welche Rate wirklich rauskam") - das
+            //    Ergebnis wird NICHT geschaetzt, sondern ausschliesslich aus
+            //    der taeglich akkumulierten EFFR-Historie (out.history, echte
+            //    NY-Fed-Werte) abgeleitet: EFFR am letzten Tag VOR dem Termin
+            //    vs. am ersten Tag NACH dem Termin. Da diese Historie erst ab
+            //    2026-07-20 zu laufen beginnt (kein Backfill, siehe Grundsatz
+            //    oben), liefert das fuer den naechsten anstehenden Termin
+            //    (aktuell 2026-07-29) erst ab Ende Juli/Anfang August ein
+            //    Ergebnis - bis dahin bleibt pastMeeting bewusst null statt
+            //    eine Vermutung zu zeigen.
+            const pastCandidates=MEETINGS.filter(([d])=>d<today).slice(-1);
+            let pastMeeting=null;
+            if(pastCandidates.length){
+              const[pd,plabel]=pastCandidates[0];
+              const before=out.history.filter(h=>h[0]<pd).slice(-1)[0];
+              const after=out.history.filter(h=>h[0]>pd).slice(0,1)[0];
+              if(before&&after){
+                const deltaBp=Math.round((after[1]-before[1])*100);
+                const bucket=Math.round(deltaBp/25)*25;
+                pastMeeting={date:pd,label:plabel,realizedDeltaBp:deltaBp,realizedBucket:bucket,rateBefore:before[1],rateAfter:after[1]};
+              }
+            }
+            out.pastMeeting=pastMeeting;
+
             fs.writeFileSync("rate_probabilities.json",JSON.stringify(out,null,1));
-            console.log("rate_probabilities.json: EFFR="+Rcurrent+"%, "+okN+" ZQ contracts read"+(miss.length?" [no data: "+miss.join(", ")+"]":"")+", "+meetings.length+" upcoming meetings, history="+out.history.length+" days");
+            console.log("rate_probabilities.json: EFFR="+Rcurrent+"%, "+okN+" ZQ contracts read"+(miss.length?" [no data: "+miss.join(", ")+"]":"")+", "+meetings.length+" upcoming meetings, history="+out.history.length+" days"+(pastMeeting?", pastMeeting="+pastMeeting.label+" realized "+pastMeeting.realizedDeltaBp+"bp":", pastMeeting=none yet"));
           '
           rm -f rate_fred.json rate_tv.json rate_tv_tickers.json
 

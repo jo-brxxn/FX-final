@@ -582,6 +582,8 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .rateprob-pill{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 12px;border-radius:16px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
 .rateprob-pill small{font-size:9.5px;font-weight:600;opacity:.75}
 .rateprob-pill.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
+.rateprob-pill.realized{color:var(--t3);background:var(--bg2)}
+.rateprob-pill.realized.on{border-color:var(--blue);color:var(--blue)}
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
@@ -1246,7 +1248,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-COMBINEDTIP-172</span><span id="verBannerText"> (Bugfix: Hover-Tooltip im Rate-Probabilities-Mehrlinien-Chart zeigte nur die EINE naechstliegende Linie statt aller an dieser Sitzung sichtbaren Ausgaenge. Fix: EIN Hover-Punkt pro X-Position (Today/Meeting) statt einer pro Linie-Punkt, das Fenster listet jetzt ALLE dort sichtbaren Linien mit eigener Farbe/Wert zusammen auf - selbes Muster wie beim "All assets"-Trends-Chart)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-TODAYODDS-173</span><span id="verBannerText"> (Nutzer-Korrektur: "Today" im Rate-Probabilities-Chart zeigte bisher trivial nur "100% Hold" (der aktuelle Zins ist ja per Definition sicher). Zeigt jetzt stattdessen dieselbe Verteilung wie das naechste Meeting - das ist die heute vom Markt eingepreiste Wahrscheinlichkeit fuer den naechsten Fed-Entscheid, genau wie CMEs eigenes Tool es fuer eine Sitzung zeigt. Zusaetzlich: ein bereits VERGANGENES Meeting bleibt kurz mit Haekchen + realisiertem Ergebnis sichtbar (aus der echten taeglichen NY-Fed-EFFR-Historie abgeleitet, nie geschaetzt), getrennt durch eine gestrichelte Linie von der Prognose)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -10956,7 +10958,9 @@ function probsFromDelta(bp){
 }
 SENT_INFO.rateprob=['Rate Probabilities (Fed hike/hold/cut odds)',
   `<p><b>What it is:</b> the market-implied probability of each possible Fed Funds rate outcome across upcoming FOMC meetings, derived the same way the official (paid) CME FedWatch tool does: 30-Day Fed Funds futures (ticker ZQ) price in the average overnight rate for each calendar month, so a meeting mid-month lets you back out the rate the market expects <b>after</b> the decision, weighted by how many days of that month fall before vs. after it.</p>
-   <p><b>How to read the chart:</b> each line tracks one possible outcome level (e.g. "Hold", "+25bp", "-25bp" relative to today's rate) across the sequence of meetings. A line only appears where that outcome's probability is above 1% - as meetings compound, outlier outcomes (two hikes, a hike then a cut, ...) can cross that threshold and a new line appears, exactly like extra bars showing up on CME's own chart for meetings further out. Hover/tap a point for the exact percentage. Use the pills above to jump the chart to a specific meeting instead of scrolling.</p>
+   <p><b>How to read the chart:</b> each line tracks one possible outcome level (e.g. "Hold", "+25bp", "-25bp" relative to today's rate) across the sequence of meetings. A line only appears where that outcome's probability is above 1% - as meetings compound, outlier outcomes (two hikes, a hike then a cut, ...) can cross that threshold and a new line appears, exactly like extra bars showing up on CME's own chart for meetings further out. Hover/tap a point for the exact percentage - the tooltip lists every outcome visible at that meeting, not just the closest one. Use the pills above to jump the chart to a specific meeting instead of scrolling.</p>
+   <p><b>"Today" isn't the current rate</b> (that's already shown above the chart) - it's today's market-implied odds for what the <b>next</b> meeting decides, exactly what CME's own tool shows when you open a specific meeting date. That's why "Today" already shows multiple lines, and why the line is flat between "Today" and the first meeting: nothing resolves until the meeting actually happens.</p>
+   <p><b>Once a meeting has passed</b>, it stays visible for a while with a ✓ checkmark and its outcome (e.g. "✓ Hold" or "✓ +25bp"), separated from the forecast by a dashed divider. That outcome is never guessed - it's read directly off the real daily EFFR history this app has been recording (the rate just before vs. just after the meeting), so it only appears once enough days of real data exist on both sides of the meeting date.</p>
    <p><b>Limits vs. the official tool:</b> the split at each individual meeting only resolves the two nearest standard 25bp steps from the futures curve (linear interpolation) — CME's paid version additionally uses options-implied volatility for a smoother distribution. Combining meetings assumes each meeting's split shape doesn't change materially across the small rate differences between branches - a reasonable approximation, not measured separately per branch (that would need options data this app doesn't have a free source for).</p>
    <p><b>History:</b> builds one snapshot per day going forward (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources (CME's own API is paid, and free scraping sources for the historical multi-contract futures curve were unavailable). Display-only, does not affect any score.</p>`];
 // Fixe Punktabstaende (Trends-Stil: index-basiert, nicht kalendertag-
@@ -11000,7 +11004,8 @@ function rateProbLineColor(bp){
   if(bp>0)return bp<=25?BC.bull:'#2f9ecf';
   return bp>=-25?BC.bear:'#c23a46';
 }
-function rateProbTimelineChart(pts,distTimeline){
+function rateProbTimelineChart(pts,distTimeline,todayIdx){
+  todayIdx=todayIdx||0;
   // padT braucht genug Kopffreiheit fuer den Hover-Tooltip (chv-tip rendert
   // per transform:translate(-50%,calc(-100% - 10px)) OBERHALB seines Ankers,
   // ~45-55px) - die .rateprob-chart-viewport hat overflow:hidden (fuer die
@@ -11014,7 +11019,27 @@ function rateProbTimelineChart(pts,distTimeline){
   distTimeline.forEach(d=>Object.entries(d).forEach(([l,p])=>{if(p>1)levels.add(Number(l));}));
   const sortedLevels=[...levels].sort((a,b)=>a-b);
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
-  const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===0?800:600};fill:${i===0?'var(--t0)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
+  const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===todayIdx?800:600};fill:${i===todayIdx?'var(--t0)':i<todayIdx?'var(--t3)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
+  // Gestrichelte Trenn-Linie zwischen einem bereits VERGANGENEN Meeting
+  // (realisiertes Ergebnis, kein Prozent-Wert) und "Today"/den kuenftigen
+  // Wahrscheinlichkeits-Linien - macht den Bruch zwischen "feststehende
+  // Vergangenheit" und "Prognose" sichtbar (Nutzer-Wunsch 2026-07-20).
+  const divider=todayIdx>0?`<line x1="${(xOf(todayIdx)-RATEPROB_SLOT/2).toFixed(1)}" y1="${(padT-16).toFixed(1)}" x2="${(xOf(todayIdx)-RATEPROB_SLOT/2).toFixed(1)}" y2="${(H-padB+6).toFixed(1)}" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="3,4"/>`:'';
+  // Realisierte(s) vergangene(s) Meeting(s): fixer Marker (kein Punkt auf der
+  // Prozent-Achse, da der Basispunkt-Wert relativ zum Zins VOR JENEM Termin
+  // ist, nicht relativ zu heute - andere Referenz als die Wahrscheinlichkeits-
+  // Linien) - Haekchen + Basispunkt-Label oben im Chart, aus der echten
+  // NY-Fed-EFFR-Historie abgeleitet (D.pastMeeting, siehe Workflow), niemals
+  // geschaetzt.
+  let pastMarkup='';
+  for(let i=0;i<todayIdx;i++){
+    const p=pts[i];
+    if(p.realizedBucket==null)continue;
+    const col=rateProbLineColor(p.realizedBucket);
+    const lbl=p.realizedBucket===0?'Hold':(p.realizedBucket>0?'+':'')+p.realizedBucket+'bp';
+    const x=xOf(i),y=yOf(100);
+    pastMarkup+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--bg1)" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${(y-11).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;font-weight:700;fill:${col}">✓ ${escH(lbl)}</text>`;
+  }
   let paths='',dots='';
   const lblItems=[];
   sortedLevels.forEach(lvl=>{
@@ -11051,6 +11076,12 @@ function rateProbTimelineChart(pts,distTimeline){
   // sitzt auf der ersten Linie mit Wert an diesem Index, das Tooltip-Fenster
   // listet aber jede Linie mit ihrer eigenen Farbe/ihrem Wert.
   const hpts=pts.map((p,i)=>{
+    if(i<todayIdx){
+      if(p.realizedBucket==null)return{fx:xOf(i)/W,fy:yOf(100)/H,col:'#888',tip:`<div class="chv-tip-d">${escH(p.label)}</div><span style="color:var(--t3)">outcome pending</span>`};
+      const col=rateProbLineColor(p.realizedBucket);
+      const lbl=p.realizedBucket===0?'Hold':(p.realizedBucket>0?'+':'')+p.realizedBucket+'bp';
+      return{fx:xOf(i)/W,fy:yOf(100)/H,col,tip:`<div class="chv-tip-d">${escH(p.label)}</div><b style="color:${col}">✓ ${escH(lbl)}</b> (realized - from NY Fed EFFR)`};
+    }
     let dotY=null,dotCol='#fff';
     const rows=sortedLevels.map(lvl=>{
       const pct=distTimeline[i][lvl];
@@ -11082,8 +11113,10 @@ function rateProbTimelineChart(pts,distTimeline){
   const labels=lblItems.map(it=>`<text x="${it.x.toFixed(1)}" y="${it.y.toFixed(1)}" style="font-size:10px;font-weight:700;fill:${it.col}">${escH(it.lbl)}</text>`).join('');
   const svg=`<svg id="rateProbSvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">
       ${gy}
+      ${divider}
       ${paths}
       ${dots}
+      ${pastMarkup}
       ${xlab}
       ${labels}
     </svg>`;
@@ -11097,10 +11130,15 @@ function rateProbTimelineChart(pts,distTimeline){
 // oben: "Charts duerfen nicht horizontal wegwischbar sein") - der Track
 // sitzt in einem overflow:hidden-Viewport, ausschliesslich per Pillen-Klick
 // gesteuert.
+// Ein bereits realisiertes vergangenes Meeting (aus der echten EFFR-
+// Historie abgeleitet, siehe Workflow) schiebt "Today" um einen Slot nach
+// rechts - dieselbe Berechnung wird beim Rendern UND beim Pillen-Klick
+// gebraucht, daher als gemeinsamer Helfer statt zweimal dupliziert.
+function rateProbTodayIdx(D){return(D&&D.pastMeeting&&D.pastMeeting.realizedBucket!=null)?1:0;}
 function scrollRateProbTo(idx,animate){
   if(animate===undefined)animate=true;
   const D=RATE_PROB_DATA;if(!D)return;
-  const maxIdx=(D.meetings||[]).filter(m=>m.deltaBp!=null).length;
+  const maxIdx=rateProbTodayIdx(D)+(D.meetings||[]).filter(m=>m.deltaBp!=null).length;
   rateProbFocus=Math.max(0,Math.min(idx,maxIdx));
   document.querySelectorAll('.rateprob-pill').forEach((b,i)=>b.classList.toggle('on',i===rateProbFocus));
   const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
@@ -11122,14 +11160,41 @@ function renderRateProb(){
     el.innerHTML=`<div class="cot-empty">No futures contract data for the upcoming meetings yet.</div>`;
     return;
   }
-  const pts=[{label:'Today',date:D.asOf}];
+  // Zuletzt vergangener Termin bleibt kurz sichtbar, MIT dem tatsaechlichen
+  // Ergebnis (Nutzer-Wunsch 2026-07-20: "wenn das Meeting kommt und die Rate
+  // rauskommt soll das gekennzeichnet sein... auch gezeigt werden welche
+  // Rate jetzt wirklich rauskam") - rein aus der taeglichen EFFR-Historie
+  // abgeleitet (D.pastMeeting, siehe Workflow), NIEMALS geschaetzt. Nur
+  // vorhanden, sobald genug echte Historie ueber den Termin hinaus existiert.
+  const pts=[];
+  if(D.pastMeeting&&D.pastMeeting.realizedBucket!=null)pts.push({label:D.pastMeeting.label,date:D.pastMeeting.date,realizedBucket:D.pastMeeting.realizedBucket});
+  const todayIdx=rateProbTodayIdx(D);
+  pts.push({label:'Today',date:D.asOf});
   withData.forEach(m=>pts.push({label:m.label,date:m.date}));
-  if(rateProbFocus>=pts.length)rateProbFocus=0;
-  const distTimeline=rateProbDistTimeline(withData);
+  if(rateProbFocus>=pts.length)rateProbFocus=todayIdx;
+  // "Today" zeigt jetzt NICHT mehr trivial "100% Hold" (das war blosser
+  // Fakt: der aktuelle Zins ist per Definition sicher bekannt), sondern
+  // dieselbe Verteilung wie das naechste Meeting - das IST die heute vom
+  // Markt eingepreiste Wahrscheinlichkeit fuer den naechsten Fed-Entscheid
+  // (Nutzer-Korrektur 2026-07-20: "today ist einfach nicht welche Rate
+  // aktuell ist sondern was die Wahrscheinlichkeit heute... ist fuer welche
+  // Rate beim naechsten Meeting"). Ergibt eine flache Linie zwischen Today
+  // und dem ersten Meeting, bis die Sitzung tatsaechlich stattfindet. Ein
+  // bereits realisiertes vergangenes Meeting (falls vorhanden) bekommt
+  // keinen Prozent-Wert (eigene Marker-Logik in rateProbTimelineChart,
+  // andere Referenz: sein Basispunkt-Wert bezieht sich auf den Zins VOR
+  // JENEM Termin, nicht auf heute).
+  const rawDist=rateProbDistTimeline(withData); // [dist0(trivial),dist1,dist2,...]
+  const distTimeline=pts.map((p,i)=>{
+    if(i<todayIdx)return{};
+    const k=i-todayIdx; // 0=Today,1=Meeting1,...
+    return rawDist[k===0?Math.min(1,rawDist.length-1):k]||{};
+  });
   const days=daysUntil(withData[0].date);
   const pills=pts.map((p,i)=>{
-    const short=i===0?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
-    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}" title="${escH(p.label)}" onclick="scrollRateProbTo(${i})">${escH(short)}</button>`;
+    const isPast=i<todayIdx;
+    const short=i===todayIdx?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
+    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
   }).join('');
   const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
   el.innerHTML=`<div class="cot-card">
@@ -11137,7 +11202,7 @@ function renderRateProb(){
       <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
       <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next FOMC meeting (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(RATE_WATCH.USD)}" target="_blank" rel="noopener" title="CME FedWatch Tool">📈 CME FedWatch Tool ↗</a></div>
       <div class="rateprob-pillbar">${pills}</div>
-      ${rateProbTimelineChart(pts,distTimeline)}
+      ${rateProbTimelineChart(pts,distTimeline,todayIdx)}
     </div>`;
   attachChartHovers(el);
   scrollRateProbTo(rateProbFocus,false);

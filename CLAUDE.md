@@ -2370,3 +2370,54 @@ Tooltip-Fenster nur den Wert der EINEN naechstliegenden Linie, nicht aller.
   bei mehreren Linien am selben X immer nur eine davon (Grundsatz
   "wiederkehrende UI-Bausteine muessen einheitlich sein" gilt auch fuer
   diese Tooltip-Aggregations-Logik, nicht nur fuer die Optik).
+
+### Rate Probabilities: "Today" zeigte trivial nur 1 Linie + fehlende Kennzeichnung vergangener Meetings (Nutzer-Feedback 2026-07-20, per Screenshot vom echten CME-Tool)
+
+Nutzer verglich mit dem echten CME-FedWatch-Tool (Screenshot: Balken-Chart
+fuer EIN Meeting mit mehreren Ausgaengen) und fragte: "es gibt heute mehrere
+Wahrscheinlichkeiten fuer mehrere Szenarien [...] warum gibt es bei today nur
+eine Linie? [...] today ist einfach nicht welche Rate aktuell ist sondern was
+die Wahrscheinlichkeit heute [...] ist fuer welche Rate beim naechsten
+Meeting. Und wenn das Meeting kommt und die Rate rauskommt soll das
+gekennzeichnet sein. Und auch gezeigt werden welche Rate jetzt wirklich
+rauskam."
+
+- **Ursache Teil 1 ("Today" trivial):** `rateProbDistTimeline()` startet die
+  Verteilungs-Kette bei `dist[0]={0:100}` - der HEUTIGE Zins ist per
+  Definition sicher bekannt, es gibt keine "Wahrscheinlichkeit" dafuer, was
+  er JETZT ist. Der Chart plottete diesen trivialen Fakt 1:1 am "Today"-
+  Index, was sich fuer den Nutzer wie ein Bug anfuehlte, weil er "Today" als
+  "heutige Prognose fuer den naechsten Entscheid" verstand (korrekt so) -
+  numerisch ist das aber exakt `dist[1]` (die Verteilung NACH dem ersten
+  Meeting), nicht `dist[0]`.
+- **Fix Teil 1:** `renderRateProb()` baut `distTimeline` jetzt so, dass der
+  "Today"-Index dieselben Werte wie das erste Meeting bekommt (`rawDist[1]`
+  statt `rawDist[0]`) - ergibt eine flache Linie zwischen "Today" und dem
+  ersten Meeting (nichts aendert sich, bis die Sitzung tatsaechlich
+  stattfindet), danach faechert sich die Verteilung wie gehabt weiter auf.
+- **Ursache/Fix Teil 2 (vergangene Meetings unsichtbar, kein Ergebnis
+  gezeigt):** der Workflow filterte Meetings bisher komplett auf
+  `d>=today` - ein gerade stattgefundenes Meeting verschwand sofort
+  spurlos aus `rate_probabilities.json.meetings`. Neu: `out.pastMeeting`
+  (Workflow, ≈ Zeile 2888) berechnet fuer das zuletzt VERGANGENE Meeting
+  das tatsaechliche Ergebnis - NICHT geschaetzt, sondern aus der bereits
+  bestehenden taeglichen EFFR-Historie (`out.history`, waechst seit
+  2026-07-20 einen echten Punkt pro Tag) abgeleitet: EFFR am letzten Tag
+  VOR dem Termin vs. am ersten Tag NACH dem Termin, Differenz auf die
+  naechste 25bp-Stufe gerundet. Nur gesetzt, wenn echte Historie auf BEIDEN
+  Seiten des Termins existiert - kein Backfill, kein Raten (Grundsatz "nie
+  Schaetzungen"). Client (`renderRateProb()`/`rateProbTimelineChart()`):
+  zeigt diesen einen vergangenen Termin als zusaetzliche Pille ("✓ 17 JUN")
+  links von "Today", im Chart als fixer Haekchen-Marker (eigene Referenz -
+  sein Basispunkt-Wert bezieht sich auf den Zins VOR JENEM Termin, nicht auf
+  heute, deshalb bewusst KEINE Linie durch die Wahrscheinlichkeits-Kette,
+  nur ein separater Punkt) mit gestrichelter Trenn-Linie zur Prognose.
+- Per Playwright mit synthetisch injiziertem `pastMeeting` verifiziert (auf
+  main gibt es noch keinen echten vergangenen Termin seit Feature-Einfuehrung
+  - erstes echtes Ergebnis fruehestens nach dem 2026-07-29-Meeting, sobald
+  genug EFFR-Historie auf beiden Seiten existiert): Pille + Haekchen-Marker +
+  gestrichelte Trennlinie + Tooltip ("✓ +25bp (realized - from NY Fed EFFR)")
+  rendern korrekt, Pillen-Navigation/Bounds-Clamping (`rateProbTodayIdx()`)
+  funktioniert mit der zusaetzlichen Pille, "Today" zeigt jetzt dieselbe
+  Verteilung wie das erste Meeting (flache Linie dazwischen). Voller
+  Tab-Regressionstest weiterhin fehlerfrei.
