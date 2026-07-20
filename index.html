@@ -1230,7 +1230,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-INDHIST-LEGENDROW-149</span><span id="verBannerText"> (UI-Fix: im Indikator-Verlaufschart (Ausklappen einer Indikator-Karte bzw. Insights > Data) stand die "Actual/Forecast"-Legende bisher als eigener Text oben rechts IM SVG, optisch getrennt von den Zeitraum-Buttons (3Y/2Y/1Y/...) darueber. Legende jetzt aus dem SVG raus und als HTML-Element in denselben Flex-Container wie die Range-Buttons gesetzt (neue .ind-hist-toolbar-Zeile) - auf ausreichend breiten Bildschirmen stehen Range-Filter und Legende jetzt in einer Zeile, auf schmalen faellt es sauber in eine zweite Zeile um)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SCOREHIST-SYNC-150</span><span id="verBannerText"> (Bugfix: scoreHist (Trends/History-Datenbasis) war bisher NUR localStorage, nicht cloud-synchronisiert - dieselbe Bug-Klasse wie einst tabStacks (siehe CLAUDE.md "WICHTIGSTE REGEL"). Ergebnis: Handy zeigte nur 2 Tage Trends-Historie, iPad viel mehr, weil jedes Geraet nur seine eigenen Tage sammelte. Jetzt in cloudPush/cloudPull/exportData/importData eingebunden, mit MERGE statt Overwrite (mergeScoreHist, lokal gewinnt bei Datums-Kollision) - Geraete ergaenzen sich jetzt statt sich gegenseitig zu ueberschreiben. Zusaetzlich Cap von ~95 Tagen auf ~1100 Tage (3 Jahre) angehoben, angelehnt an den 3-Jahres-Horizont von chartHist/IND_HIST_RANGES/COT-3y%ile)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -4951,13 +4951,13 @@ function dlCSV(filename,header,rows){
   a.download=filename;a.click();
 }
 function exportData(){
-  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,priceAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed},null,2));
+  const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,tabStacks,compactView:compactView>=1,compactLevel:compactView,greenDismissed,eventAlerts,priceAlerts,pinEnabled,designHue,scoreLog,riskEnvRemindDismissed,scoreHist},null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5169,7 +5169,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml):
     // die Score-Logik lebt nur im Browser, der Workflow liest hier nur ab.
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias}));
@@ -5248,6 +5248,12 @@ async function cloudPull(manual){
       // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
       // vom anderen Geraet ankommt.
       if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
+      // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
+      // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
+      // Tagen, an denen es offen war), ein Overwrite wuerde die jeweils
+      // andere Historie loeschen (genau das war der gemeldete Bug:
+      // Handy-Historie viel kuerzer als iPad-Historie).
+      if(cd.scoreHist){scoreHist=mergeScoreHist(cd.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
       processCalEvts();
       localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
@@ -8681,13 +8687,36 @@ function renderCompare(){
   el.innerHTML=filterBar+(cards||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No columns selected.</div>`);
 }
 // ══ MATRIX / STÄRKE ════════════════════════════════════════════════
-// Persistenter Score-Verlauf: pro FX-Währung 1 Wert je Tag (max. 30 Tage).
-// Separat vom Haupt-State gespeichert, damit Undo/Redo & Cloud-Sync nicht
-// bei jedem Snapshot mit anwachsen. Wird beim Start geladen und bei jedem
-// save() fortgeschrieben (überschreibt den heutigen Wert, fügt neue Tage an).
+// Persistenter Score-Verlauf: pro FX-Währung 1 Wert je Tag (bis zu 3 Jahre,
+// wie chartHist/COT-3y%ile anderswo in der App). Separat vom Haupt-State
+// gespeichert, damit Undo/Redo nicht bei jedem Snapshot mit anwaechst - aber
+// (Nutzer-Bugreport 2026-07-20: iPad hatte weit mehr Trends-Historie als das
+// Handy mit nur 2 Tagen) trotzdem geraeteuebergreifend synchronisiert, per
+// cloudPush/cloudPull/exportData/importData nach dem Standard-Muster (siehe
+// CLAUDE.md "WICHTIGSTE REGEL"). Merge statt Overwrite beim Pull/Import,
+// weil zwei Geraete typischerweise DISJUNKTE Tage angesammelt haben (jedes
+// Geraet schreibt nur Tage, an denen es tatsaechlich offen war) - ein simples
+// Ueberschreiben wuerde das jeweils andere Geraets Historie loeschen.
+// Wird beim Start geladen und bei jedem save() fortgeschrieben (ueberschreibt
+// den heutigen Wert, fuegt neue Tage an).
 const SCOREHIST_KEY='fxpro_scorehist';
 let scoreHist={};
 function loadScoreHist(){try{scoreHist=JSON.parse(localStorage.getItem(SCOREHIST_KEY))||{};}catch(e){scoreHist={};}}
+// Vereinigt zwei scoreHist-Objekte je Symbol nach Datum - "override" gewinnt
+// bei einer Datums-Kollision (z.B. der lokale, gerade frisch per Live-Feed
+// korrigierte Wert von "heute" gegenueber einem aelteren Cloud-Stand von
+// "heute"), alle anderen Tage aus beiden Quellen bleiben erhalten.
+function mergeScoreHist(base,override){
+  const out={};
+  const ids=new Set([...Object.keys(base||{}),...Object.keys(override||{})]);
+  ids.forEach(id=>{
+    const byDate={};
+    (base[id]||[]).forEach(e=>{if(Array.isArray(e)&&e[0])byDate[e[0]]=e;});
+    (override[id]||[]).forEach(e=>{if(Array.isArray(e)&&e[0])byDate[e[0]]=e;});
+    out[id]=Object.keys(byDate).sort().map(d=>byDate[d]);
+  });
+  return out;
+}
 function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name===name);return r?Math.round(rubScore(r)*10)/10:0;}
 // Assets fuer Score-History/Trends: alle FX-Waehrungen plus die vorhandenen
 // Non-FX-Assets (Gold, Silber, Oel, BTC, Indizes) - in stabiler Reihenfolge.
@@ -8728,9 +8757,20 @@ function recordScoreHist(){
     if(last&&last[0]===t){
       if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias){arr[arr.length-1]=e;changed=true;}
     }else{arr.push(e);changed=true;}
-    if(arr.length>95)arr.splice(0,arr.length-95);
+    // 1100 Tage (~3 Jahre) statt vorher 95 (~3 Monate) - "maximale Historie"
+    // (Nutzer-Wunsch 2026-07-20), angelehnt an den 3-Jahres-Horizont, den
+    // chartHist/IND_HIST_RANGES/COT-3y%ile anderswo in der App schon nutzen.
+    if(arr.length>1100)arr.splice(0,arr.length-1100);
   });
-  if(changed){try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
+  if(changed){
+    try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}
+    // scoreHist liegt ausserhalb von snap() (siehe Kommentar oben), daher
+    // bumpt save()s eigener snap()-Diff-Check das hier NICHT automatisch -
+    // ohne den expliziten Bump+Sync-Anstoss wuerde eine reine Score-History-
+    // Aenderung (ohne sonstige State-Aenderung) nie in die Cloud gehen.
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    cloudAutoSync();
+  }
 }
 // Taeglicher Netto-Verlauf (Risk assets − Safe havens) fuer das Mini-Chart in
 // der Risk-Sentiment-Karte, aus scoreHist abgeleitet - waechst von selbst um

@@ -36,6 +36,26 @@ Nach diesem Muster angebundene Felder (Stand 2026-07-07): `greenDismissed`,
 Zahl 0–360 = Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch
 "zurück auf Auto" = null ankommt).
 
+**`scoreHist` (Score-Verlauf für Trends/History, Stand 2026-07-20) ist ein
+Sonderfall des Musters:** normalerweise gewinnt beim Pull einfach der
+Cloud-Stand (`cd.<feld>` übernehmen). Bei `scoreHist` würde das aber Historie
+LÖSCHEN, weil zwei Geräte typischerweise DISJUNKTE Tage angesammelt haben
+(jedes Gerät schreibt nur Tage, an denen es tatsächlich offen war) — ein
+simples Overwrite hätte genau den gemeldeten Bug verursacht (Handy nur 2 Tage
+Historie, obwohl das iPad viel mehr hatte). Deshalb **`mergeScoreHist(base,
+override)`** (bei `SCOREHIST_KEY`, ≈ Zeile 8688): vereinigt beide Objekte je
+Symbol nach Datum, `override` gewinnt nur bei einer echten Datums-Kollision
+(typischerweise "heute", falls beide Geräte am selben Tag schon einen
+Eintrag geschrieben haben — dann gewinnt der lokale, weil der gerade frisch
+per Live-Feed korrigiert wurde). Bei künftigen `scoreHist`-artigen Feldern
+(Log/Historie, die auf mehreren Geräten UNABHÄNGIG voneinander waechst)
+immer prüfen, ob ein Merge statt Overwrite nötig ist, statt blind dem
+Standard-Muster zu folgen. Die Save-Funktion ist hier `recordScoreHist()`
+selbst (nicht `save()`, da `scoreHist` bewusst außerhalb von `snap()` liegt
+und `save()`s eigener Change-Diff es daher nicht automatisch erkennt) —
+bumpt `fxpro_updated`+ruft `cloudAutoSync()` selbst auf, wenn sich etwas
+geändert hat.
+
 **Zusätzlich in der Save-Funktion `markPrefEdit()` aufrufen** (2. Ursache des
 "Hide-Button springt zurück"-Bugs, gefixt 2026-07-07): Ohne das Flag stuft die
 optimistische Versionsprüfung in `cloudPush()` den Toggle als "nur
@@ -1211,3 +1231,49 @@ pro Render zig- bis hundertfach unnoetig wiederholt liefen.
   gepackt - auf schmalen Screens faellt die Legende sauber in eine zweite
   Zeile um, statt zu ueberlaufen (Grundsatz "Karten-Inhalt darf nie ueber
   den Kartenrand hinausgehen" oben gilt sinngemaess auch hier).
+
+### EUR-Score "flippt" beim Laden (1.5 -> 0.5) + scoreHist-Sync-Bug (Bugreport 2026-07-20)
+
+Nutzer meldete zwei zusammenhaengende Beobachtungen: (1) EUR zeigt beim
+Oeffnen der Seite kurz einen Score, der dann auf einen anderen Wert wechselt
+("das liegt daran das manche indikatoren sich erst dann mit neuen werten
+fuellen") und (2) die Trends-Historie ist je Geraet unterschiedlich lang
+(iPad deutlich mehr Tage als das Handy, das nur 2 Tage zeigte).
+
+**(1) Score-Flip empirisch geprueft (Playwright, `symScoreCmp('EUR')` alle
+150ms gepollt ueber 8s ab Seitenaufruf) - KEIN Datenfehler:** der Boot
+rendert sofort mit dem zwischengespeicherten/eingebauten Stand (fuer
+Offline-Faehigkeit noetig, siehe Service-Worker-Abschnitt), danach laufen
+die Live-Feed-Fetches (`autoFetchIndData`/`autoFetchBondData`/...)
+asynchron und korrigieren `ind.bias`/den Score, sobald sie durch sind (im
+Test nach ~2,6s). Getestet: `scoreHist`s heutiger Eintrag wird dabei
+korrekt UEBERSCHRIEBEN (nicht doppelt/verwaist), History zeigt also nach
+der Korrektur den richtigen Wert. Das ist die - durch den kuerzlich
+geshippten `applyIndDataFeed()`-Bias-Selbstheilungs-Fix (siehe Eintrag
+weiter oben zu "CB Consumer Confidence") jetzt sichtbarere - erwartete
+Offline-first-Mechanik (sofort aus Cache rendern, dann mit Live-Daten
+korrigieren), kein eigener Bug. Der Nutzer hatte die Ursache selbst schon
+richtig vermutet.
+
+**(2) scoreHist-Historie-Laenge PRO GERAET war dagegen ein echter Bug** -
+und die eigentliche Erklaerung fuer die iPad/Handy-Diskrepanz: `scoreHist`
+war rein `localStorage`, nie an `cloudPush`/`cloudPull`/`exportData`/
+`importData` angebunden - exakt die `tabStacks`-Bug-Klasse aus der
+"WICHTIGSTE REGEL" oben. Jedes Geraet sammelte nur seine EIGENEN Tage
+(schrieb nur, wenn es tatsaechlich offen war), nie synchronisiert. Fix nach
+dem etablierten Muster, aber mit **Merge statt Overwrite beim Pull/Import**
+(`mergeScoreHist()`, siehe "WICHTIGSTE REGEL"-Abschnitt oben fuer Details) -
+ein normales Overwrite haette die jeweils andere Geraete-Historie geloescht.
+Zusaetzlich Cap in `recordScoreHist()` von ~95 auf ~1100 Tage (3 Jahre)
+angehoben ("maximale Historie", Nutzer-Wunsch), angelehnt an den
+3-Jahres-Horizont von `chartHist`/`IND_HIST_RANGES`/COT-3y%ile. Per
+Playwright verifiziert: `mergeScoreHist()` vereinigt disjunkte Tage
+korrekt, loest Datums-Kollisionen zugunsten des lokalen (frischeren)
+Werts auf, `recordScoreHist()` bumpt `fxpro_updated`+ruft `cloudAutoSync()`
+zuverlaessig auf bei echter Aenderung, alle 13 Tabs + Bias-Klick
+regressions-frei.
+
+**Naechster Schritt (noch offen):** Nutzer wollte zusaetzlich einen
+Zeitraum-Filter (1Y/2Y/.../Monate/Custom) fuer Trends und alle
+Zeitreihen-Diagramme, nach dem Muster von `IND_HIST_RANGES` - noch nicht
+umgesetzt.
