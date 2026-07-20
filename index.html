@@ -1237,7 +1237,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-RATEPROBS-165</span><span id="verBannerText"> (Rate Probabilities: 4. FRED-Testlauf zeigte trotz cosd+--http1.1+45s Timeout weiterhin "exit 28" auf beiden Versuchen, exakt bis zum Timeout haengend, 0 Bytes - deutet auf einen harten Netzwerk-Stillstand gegen fred.stlouisfed.org von GitHub-Actions-IPs hin, kein Konfigurationsproblem mehr. Komplett auf die NY Fed Markets Data API umgestellt (andere Quelle/Host fuer denselben EFFR-Wert, kein API-Key noetig), naechster Testlauf laeuft)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-DUALSOURCE-DISPLAY-166</span><span id="verBannerText"> (Bugfix: EUR PPI-Karte zeigte 1.8% (deutsches Landesrelease, faelschlich als EUR im Kalender), Chart darunter korrekt 5.9% (Eurozone-Feed) - derselbe Dual-Source-Bug wie beim EUR-Score-Flip, aber diesmal auf dem ANZEIGE-Pfad statt Bias/Score: renderInd()/symScoreDrivingEventsByDate()/syncIndNotifs()/cmpCellData() riefen findIndEvent() weiterhin unabhaengig auf, ohne die Feed-Exklusivitaet zu kennen. Alle vier jetzt korrigiert - Karte, History-Panel, Postfach-Benachrichtigungen und Compare-Tab zeigen jetzt konsistent den echten Feed-Wert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2998,14 +2998,21 @@ function symScoreDrivingEventsByDate(id){
   ((c&&c.rubrics)||[]).forEach(rub=>{
     if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
     rub.indicators.forEach(ind=>{
-      const ev=findIndEvent(id,ind.name);
-      if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
       const r=ind.research;
+      // Feed-abgedeckte Indikatoren (r.feed===true) haben volle Exklusivitaet
+      // gegenueber dem Kalender-Pfad (siehe Dual-Source-Fix, CLAUDE.md) - das
+      // galt bisher nur fuer Bias/Score, hier lief findIndEvent() weiterhin
+      // ZUERST und zeigte bei einem falsch zugeordneten Kalender-Treffer
+      // dessen (falschen) Wert in der History-Karte statt des echten Feed-
+      // Werts (Bugreport 2026-07-20, EUR PPI). Reihenfolge umgedreht: Feed
+      // zuerst pruefen, Kalender nur fuer NICHT feed-abgedeckte Indikatoren.
       if(r&&r.feed&&r.date&&r.actual!=null){
         const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
         (byDate[r.date]=byDate[r.date]||[]).push(synth);
         return;
       }
+      const ev=findIndEvent(id,ind.name);
+      if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
       if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
         const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true};
         (byDate[r.date]=byDate[r.date]||[]).push(synth);
@@ -3704,7 +3711,20 @@ function syncIndNotifs(){
     (c.rubrics||[]).forEach(rub=>{
       if(!rub.indicators)return;
       rub.indicators.forEach(ind=>{
-        const ev=findIndEvent(c.id,ind.name);
+        // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben volle
+        // Exklusivitaet gegenueber dem Kalender-Pfad (siehe Dual-Source-Fix,
+        // CLAUDE.md) - sonst koennte hier ein falsch zugeordnetes Kalender-
+        // Event (z.B. ein Landesrelease unter der falschen Waehrung) eine
+        // irrefuehrende Postfach-Meldung mit falschem Wert erzeugen
+        // (Bugreport 2026-07-20, EUR PPI). Synthetisches Event aus
+        // ind.research statt findIndEvent() - gleiches Muster wie in
+        // symScoreDrivingEventsByDate() - damit feed-abgedeckte Indikatoren
+        // weiterhin (korrekte) Release-Benachrichtigungen bekommen, statt sie
+        // komplett zu verlieren.
+        const r=ind.research;
+        const ev=(r&&r.feed)
+          ?{name:ind.name,date:r.date,time:'',currencies:c.id,actual:r.actual,forecast:r.forecast,previous:r.previous}
+          :findIndEvent(c.id,ind.name);
         if(!ev||!ev.actual)return;
         const k=evtDismissKey(ev);
         if(ind.notifKey===k)return;
@@ -5807,7 +5827,17 @@ function renderInd(ind,ri,ii,total){
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">${icn('refresh',11)} <span>${escH(ind.interval)}</span></button>`;}
   if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
-  const ev=findIndEvent(getSym().id,ind.name);
+  // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben seit dem
+  // Dual-Source-Fix (siehe CLAUDE.md "EUR-Score flippte...") volle
+  // Exklusivitaet gegenueber dem Kalender-Pfad fuer Bias/Werte-Historie/
+  // Trend in syncIndicatorBiases() - dieser Render-Pfad hier rief
+  // findIndEvent() aber unabhaengig davon weiter auf und zeigte bei einem
+  // (falsch unter der Waehrung einsortierten) Kalender-Treffer dessen Werte
+  // an, obwohl die Karte eigentlich vom Feed gespeist wird (Bugreport
+  // 2026-07-20: EUR PPI zeigte auf der Karte einen deutschen National-
+  // Release, der Chart darunter zurecht den echten Eurozone-Wert). Gleiche
+  // Exklusivitaetsregel jetzt auch hier.
+  const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
   let dataPart='';
   if(ev){
     const ac=actualColor(ev);
@@ -8759,7 +8789,11 @@ function cmpCellData(symId,rubName,baseName){
   const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===baseName);
   if(!ind)return null;
   const badge=cmpUnitBadge(ind);
-  const ev=findIndEvent(symId,ind.name);
+  // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben volle
+  // Exklusivitaet gegenueber dem Kalender-Pfad (Dual-Source-Fix, siehe
+  // CLAUDE.md) - sonst konnte hier ein falsch zugeordnetes Kalender-Event
+  // einen falschen Wert im Compare-Tab zeigen (Bugreport 2026-07-20, EUR PPI).
+  const ev=(ind.research&&ind.research.feed)?null:findIndEvent(symId,ind.name);
   if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name,badge};
   if(ind.research){
     const r=ind.research;

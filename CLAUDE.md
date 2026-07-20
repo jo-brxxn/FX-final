@@ -2007,3 +2007,56 @@ Schritt waere FREDs offizielle `api.stlouisfed.org`-API (braucht einen
 kostenlosen API-Key - nach dem Grundsatz oben "kostenloses Konto ist kein
 Abbruchgrund" waere das der naechste Versuch, nicht das Aufgeben der
 Live-Berechnung).
+
+### Dual-Source-Bug erneut aufgetreten - diesmal auf dem ANZEIGE-Pfad statt Bias/Score (Bugreport 2026-07-20)
+
+Nutzer: "EUR ppi zeigt anderen Wert als die Grafik dadrunter welcher isr
+richtig?" - Karte zeigte Actual 1.8%/Previous 2.2%, Chart darunter Actual
+5.9%/Forecast 5.7% fuer denselben Release. **Antwort: der Chart war
+richtig.**
+
+- **Ursache:** exakt derselbe Dual-Source-Konflikt wie beim vorherigen
+  EUR-Score-Flip-Bugreport (siehe Eintrag oben "zwei konkurrierende Live-
+  Quellen") - ein Kalender-Event "PPI YoY" mit Datum HEUTE (2026-07-20)
+  war unter der Waehrung EUR einsortiert, obwohl es inhaltlich vermutlich
+  ein deutsches Landesrelease ist (Actual 1.8%, klar verschieden vom
+  echten Eurozone-Aggregat-Feed-Wert 5.9% vom 2026-07-06). Der damalige
+  Fix gab dem TradingView-Feed (`ind.research.feed===true`) volle
+  Exklusivitaet gegenueber dem Kalender-Pfad - aber NUR in
+  `syncIndicatorBiases()` (Bias/Werte-Historie/Trend). VIER weitere
+  Stellen riefen `findIndEvent()` weiterhin unabhaengig und ohne Wissen
+  von dieser Exklusivitaetsregel auf und zeigten deshalb weiterhin den
+  falschen Kalender-Treffer an, obwohl der Score/Bias laengst korrekt vom
+  Feed kam:
+  1. `renderInd()` (≈ Zeile 5810, die Indikator-Karte selbst) -
+     `if(ev){...}else if(ind.research){...}` bevorzugte `ev` bedingungslos.
+  2. `symScoreDrivingEventsByDate()` (≈ Zeile 3001, History-Panel/🕰️) -
+     pruefte `findIndEvent()` VOR dem `r.feed`-Fallback.
+  3. `syncIndNotifs()` (≈ Zeile 3714, Postfach-Benachrichtigungen) - haette
+     bei einem neuen (falschen) Kalender-Match eine irrefuehrende Meldung
+     mit falschem Wert erzeugt.
+  4. `cmpCellData()` (≈ Zeile 8792, Compare-Tab) - der Code-Kommentar sagte
+     sogar woertlich "exakt dieselbe Quelle/Prioritaet wie die Detailkarte"
+     - stimmte, aber die Detailkarte hatte zu dem Zeitpunkt selbst noch
+     den Bug.
+- **Fix:** an allen vier Stellen dieselbe Regel wie in
+  `syncIndicatorBiases()` ergaenzt - ist `ind.research.feed===true`, wird
+  `findIndEvent()` gar nicht erst aufgerufen (Karte/Compare-Tab: `ev=null`
+  erzwungen) bzw. der Feed-Wert VOR dem Kalender-Fallback geprueft
+  (History-Panel/Notifications, die `ind.research` bereits als Fallback
+  kannten, aber in der falschen Reihenfolge). Bei den Notifications
+  zusaetzlich ein synthetisches Event aus `ind.research` gebaut (statt die
+  Meldung fuer feed-abgedeckte Indikatoren komplett zu unterdruecken) -
+  sonst haetten viele Indikatoren (PPI, GDP, PMI, Consumer Confidence, ...)
+  gar keine Release-Benachrichtigungen mehr bekommen, das waere eine
+  Funktions-Regression gewesen, keine reine Bugfix.
+- Per Playwright verifiziert: Karte, History-Panel, Compare-Tab zeigen
+  jetzt konsistent 5.9%/5.7%/4.9% (identisch zum Chart). Voller
+  Tab-Regressionstest weiterhin ohne JS-Fehler.
+- **Merksatz (Ergaenzung zum bereits bestehenden Merksatz oben):** wird
+  einer Datenquelle Exklusivitaet gegenueber einer konkurrierenden Quelle
+  eingeraeumt, IMMER nach ALLEN Aufrufstellen der konkurrierenden Quelle
+  suchen (hier: `grep -n "findIndEvent("`), nicht nur der einen Stelle, an
+  der der urspruenglich gemeldete Bug auftrat - Score/Bias und Anzeige
+  sind oft getrennte Code-Pfade, die dieselbe Regel unabhaengig
+  respektieren muessen.
