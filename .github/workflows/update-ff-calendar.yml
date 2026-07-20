@@ -2753,11 +2753,16 @@ jobs:
           # (curl legt bei komplettem Verbindungsfehler die -o-Datei gar nicht erst
           # an) - jetzt mit sichtbarem HTTP-Code/Groesse + einem Retry nach 5s,
           # gleiches iteratives Debug-Muster wie bei den anderen Feeds hier.
-          curl -sL --max-time 30 -A "$UA" -w "[debug] FRED curl: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl: command failed (exit $?)"
+          # workflow_dispatch-Testlauf 2026-07-20 zeigte "exit 92"
+          # (CURLE_HTTP2_STREAM_ERROR) - FRED/deren CDN vertraegt curls
+          # HTTP/2-Aushandlung offenbar nicht sauber, --http1.1 erzwingt das
+          # altbewaehrte Protokoll (bekannter, dokumentierter Fix fuer diesen
+          # Fehlercode bei manchen Servern).
+          curl -sL --http1.1 --max-time 30 -A "$UA" -w "[debug] FRED curl: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl: command failed (exit $?)"
           if [ ! -s rate_fred.csv ]; then
             echo "[debug] FRED curl: empty/missing, retrying once after 5s"
             sleep 5
-            curl -sL --max-time 30 -A "$UA" -w "[debug] FRED curl retry: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl retry: command failed (exit $?)"
+            curl -sL --http1.1 --max-time 30 -A "$UA" -w "[debug] FRED curl retry: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl retry: command failed (exit $?)"
           fi
           echo "[debug] rate_fred.csv: $([ -f rate_fred.csv ] && wc -c < rate_fred.csv || echo 0) bytes"
           echo "=== FRED response (first 200 chars) ==="
