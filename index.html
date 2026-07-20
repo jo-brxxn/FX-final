@@ -564,9 +564,13 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
 /* Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14) */
 .ind-hist-wrap{padding:8px 4px 4px}
-.ind-hist-range-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.ind-hist-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.ind-hist-range-bar{display:flex;gap:4px;flex-wrap:wrap}
 .ind-hist-range-btn{padding:3px 9px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
 .ind-hist-range-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
+.ind-hist-legend{display:flex;gap:10px;font-size:9.5px;font-weight:700;white-space:nowrap}
+.ind-hist-legend span{color:var(--blue)}
+.ind-hist-legend span:last-child{color:var(--red)}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
@@ -1226,7 +1230,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-AURORA-GRADIENT-148</span><span id="verBannerText"> (Bugfix: Aurora-Hintergrund zeigte bei Deckkraft .18 eine sichtbare harte Kante ("verbogen") - lag an filter:blur(90px) auf sehr grossen Flaechen, das den Kreisrand nicht sauber ausblendete UND teuer neu zu berechnen war. Umgestellt auf radial-gradient (per Definition keine harte Kante, kein Blur-Filter mehr noetig). Gleicher Fund erklaerte den zweiten Bugreport: der Design-Farbregler haengte beim Ziehen, weil jedes "input"-Event das teure Blur-Filter-Repaint auf drei riesigen Flaechen ausloeste - jetzt zusaetzlich per requestAnimationFrame gebuendelt (181 rasche Events -> 1 tatsaechliches Update, statt vorher 181)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-INDHIST-LEGENDROW-149</span><span id="verBannerText"> (UI-Fix: im Indikator-Verlaufschart (Ausklappen einer Indikator-Karte bzw. Insights > Data) stand die "Actual/Forecast"-Legende bisher als eigener Text oben rechts IM SVG, optisch getrennt von den Zeitraum-Buttons (3Y/2Y/1Y/...) darueber. Legende jetzt aus dem SVG raus und als HTML-Element in denselben Flex-Container wie die Range-Buttons gesetzt (neue .ind-hist-toolbar-Zeile) - auf ausreichend breiten Bildschirmen stehen Range-Filter und Legende jetzt in einer Zeile, auf schmalen faellt es sauber in eine zweite Zeile um)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -10033,8 +10037,10 @@ function onIndDetailsToggle(el,indId){
 function indHistChart(ind){
   const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
   const rangeBar=`<div class="ind-hist-range-bar">${IND_HIST_RANGES.map(([m,lbl])=>`<button class="ind-hist-range-btn${indHistRange===m?' on':''}" onclick="setIndHistRange(${m})">${lbl}</button>`).join('')}</div>`;
+  const legend=`<div class="ind-hist-legend"><span>■ Actual</span><span>— Forecast</span></div>`;
+  const toolbar=`<div class="ind-hist-toolbar">${rangeBar}${legend}</div>`;
   if(all.length<2){
-    return`<div class="ind-hist-wrap">${rangeBar}<div class="ind-hist-empty">Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).</div></div>`;
+    return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).</div></div>`;
   }
   const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-indHistRange);
   let use=all.filter(p=>new Date(p[0]+'T00:00:00')>=cutoff);
@@ -10076,8 +10082,6 @@ function indHistChart(ind){
   });
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
-    <text x="${W-padR}" y="14" text-anchor="end" style="font-size:9.5px;font-weight:700;fill:var(--blue)">■ Actual</text>
-    <text x="${W-padR-64}" y="14" text-anchor="end" style="font-size:9.5px;font-weight:700;fill:var(--red)">— Forecast</text>
     ${bars}
     ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`:''}
     ${fcDots}
@@ -10087,7 +10091,7 @@ function indHistChart(ind){
     let lbl;try{lbl=fmtDayHdr(p[0]);}catch(e){lbl=p[0];}
     return{fx:xOf(i)/W,fy:yOf(p[1])/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
   });
-  return`<div class="ind-hist-wrap">${rangeBar}${chartHoverWrap(svg,hpts)}</div>`;
+  return`<div class="ind-hist-wrap">${toolbar}${chartHoverWrap(svg,hpts)}</div>`;
 }
 // ── Insights-Tab "Data" (Nutzer-Wunsch 2026-07-14): Asset waehlen, dann
 // einen Indikator (gruppiert nach dessen Karte - Inflation, Interest Rates,

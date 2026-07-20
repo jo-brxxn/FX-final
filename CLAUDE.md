@@ -1197,3 +1197,17 @@ pro Render zig- bis hundertfach unnoetig wiederholt liefen.
   `filter:blur()` auf grossflaechigen Elementen verwenden, v.a. wenn sie
   sich haeufig neu zeichnen (z.B. durch haeufige Style-Aenderungen in der
   Naehe).
+
+### Indikator-Verlaufschart: Legende in dieselbe Zeile wie Zeitraum-Filter (Nutzer-Wunsch 2026-07-20)
+
+- Die "■ Actual"/"— Forecast"-Legende von `indHistChart()` (Ausklappen einer
+  Indikator-Karte auf der Asset-Detailseite ODER Insights-Tab "Data") stand
+  bisher als `<text>` oben rechts IM SVG selbst - strukturell getrennt von
+  der `.ind-hist-range-bar` (3Y/2Y/1Y/6M/3M/1M-Buttons), die als eigenes
+  HTML-`<div>` DARUEBER sass. Nutzer wollte beides in derselben Zeile.
+  Fix: Legende raus aus dem SVG, als HTML `.ind-hist-legend`-Div gebaut und
+  zusammen mit `.ind-hist-range-bar` in einen gemeinsamen Flex-Container
+  `.ind-hist-toolbar` (`justify-content:space-between;flex-wrap:wrap`)
+  gepackt - auf schmalen Screens faellt die Legende sauber in eine zweite
+  Zeile um, statt zu ueberlaufen (Grundsatz "Karten-Inhalt darf nie ueber
+  den Kartenrand hinausgehen" oben gilt sinngemaess auch hier).
