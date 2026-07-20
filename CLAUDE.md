@@ -2227,3 +2227,49 @@ separater Dropdown-History-Chart) komplett ersetzt durch:
   Pille verschiebt den sichtbaren Ausschnitt sichtbar nach rechts
   (Screenshots vor/nach verglichen), Hover-Tooltip zeigt Datum + Prozente,
   voller 15-Tab-Regressionstest weiterhin fehlerfrei.
+
+### Rate Probabilities: EINE Linie war falsch, Nutzer will MEHRERE (kumulative Wahrscheinlichkeitsverteilung) (2026-07-20, selber Tag)
+
+Nutzer-Korrektur direkt nach der obigen Umstellung: "Ich will doch mehrere
+Linien die die warscheinligkeit für die jeweiligen Ausgänge des meetings
+zeigen. Eine Linie soll angezeigt werden wenn die warscheinligkeit für
+einen Ausgang über 1% liegt. Deswegen gibt es auch auf der Seite die
+Balken also mehrere davon" - die EINE Linie (impliziter Zinspfad) hatte
+genau die Information versteckt, die CMEs eigenes Mehr-Balken-Chart pro
+Sitzung zeigt (bei weiter entfernten Sitzungen typischerweise MEHR als 2
+Balken, weil sich Unsicherheit ueber mehrere Sitzungen aufsummiert).
+
+- **Neue Funktion `rateProbDistTimeline(meetingsWithData)`** (≈ Zeile
+  10972): verkettet (convolved) die bereits vorhandene Zwei-Stufen-
+  Verteilung JEDER Sitzung (`probsFromDelta(deltaBp)`, unveraendert) zu
+  einer KUMULATIVEN Verteilung ueber ALLE Sitzungen hinweg. Level = Basis-
+  punkte relativ zum HEUTIGEN Zins (nicht relativ zur jeweils vorherigen
+  Sitzung) - dadurch bleibt "Hold" z.B. ueber alle Sitzungen hinweg
+  dieselbe vergleichbare Linie. Reines Client-seitiges Post-Processing
+  der bereits abgerufenen `meetings[].deltaBp`-Werte - KEINE Workflow-
+  Aenderung noetig, kein erneuter `workflow_dispatch`-Testlauf noetig.
+- **Vereinfachung bewusst im Info-Text dokumentiert**: die Verkettung
+  nimmt an, dass sich die lokale Zwei-Stufen-Aufteilung EINER Sitzung
+  nicht je nach Vorgeschichte (welcher Zweig/welche Vorentscheidung)
+  aendert - eine wirklich zweig-spezifische Neuberechnung braeuchte
+  optionen-implizite Daten, die frei nicht verfuegbar sind (bereits an
+  anderer Stelle als Limitierung dokumentiert).
+- **`rateProbTimelineChart(pts,distTimeline)`** zeichnet jetzt pro
+  Level (Basispunkt-Stufe) eine EIGENE Linie, aber NUR durch die
+  Abschnitte, in denen die Wahrscheinlichkeit ueber 1% liegt (Nutzer-
+  Vorgabe woertlich umgesetzt) - fehlt ein Level an einer Sitzung unter
+  der Schwelle, entsteht eine Luecke statt eines durchgezogenen
+  Segments. Farbe nach Richtung (`rateProbLineColor`: Hold=BC.neu,
+  Hikes=BC.bull-Toene, Cuts=BC.bear-Toene, dunklere Schattierung fuer
+  groessere Bewegungen), Beschriftung direkt am Linienende statt einer
+  separaten Legende (skaliert auf beliebig viele gleichzeitig sichtbare
+  Linien, ohne Farbpalette-Kollisionen zu riskieren).
+- Per Handrechnung UND per Node-Testskript mit den echten Live-Daten
+  (deltaBp -4/+14/+6/+10) gegengeprueft, exakt uebereinstimmend: nach
+  Sitzung 1 zwei Level (Hold 84%/-25bp 16%), nach Sitzung 4 fuenf Level
+  (Hold 24,1% / +25bp 42,7% / +50bp 25,5% / +75bp 4,5% / -25bp 3,2%) -
+  alle ueber der 1%-Schwelle, zeigt also plausibel bei allen vier
+  Sitzungen mehrere Linien. Per Playwright verifiziert: `<path>`/
+  `<circle>`-Anzahl im SVG stimmt exakt mit der von Hand vorhergesagten
+  Segment-/Punkt-Anzahl ueberein, alle 5 erwarteten Linien-Labels im DOM
+  vorhanden, voller Tab-Regressionstest weiterhin fehlerfrei.
