@@ -2175,3 +2175,55 @@ HTML/Template-Code, die Funktionen `dlCSV()` (generischer Downloader),
 ungenutzt gewordene `csv`-SVG-Icon aus `ICONS`. Per Playwright verifiziert:
 alle vier Funktionsnamen sind `undefined`, kein "CSV"-Text mehr irgendwo
 im gerenderten DOM ueber alle 15 Tabs, keine JS-Fehler.
+
+### Rate Probabilities komplett neu gebaut: CME-FedWatch-Optik + gleitender Linien-Chart (Nutzer-Wunsch 2026-07-20, per Foto)
+
+Nutzer schickte einen Screenshot des ECHTEN CME-FedWatch-Tools:
+"Mach das in dem Design und dann einfach das mit Linien wie bei den
+Trends. Und Mann kann dann oben wechseln für Meeting und die Grafik ist
+dann aber nicht neu sondern bewegt sich soweit nach rechts das das
+nächste Meeting Datum kommt." Nach einer Rückfrage (welche Grösse die
+Linie zeigen soll) praezisiert: "Ne damit soll sich die Grafik direkt zu
+den Meetings verschieben. Also es gibt dann den Button today und die
+Buttons mit den nächsten drei kommenden Meetings wo auch das Datum
+steht. Es soll auch wie bei der Karte interest Rates ein link zu dem cme
+watch Tool geben. Und ein Countdown bis zum nächsten Meeting brauche
+ich."
+
+Die alte Version (Meeting-Karten mit horizontalen Hike/Hold/Cut-Balken +
+separater Dropdown-History-Chart) komplett ersetzt durch:
+
+- **Meeting-Pillen** (`.rateprob-pillbar`, CME-Optik: runde Buttons in
+  einer Reihe): "Today" + ein Button pro anstehendem Meeting mit
+  Kurz-Datum (z.B. "29 Jul"), volles Label als `title`-Tooltip. Aktive
+  Pille farblich hervorgehoben.
+- **EIN durchgehender Linien-Chart** (`rateProbTimelineChart()`) statt
+  einzelner Balken je Sitzung: X-Achse = Today + Meetings mit FESTEM
+  Slot-Abstand (`RATEPROB_SLOT=170px`, index-basiert wie bei den Trends-
+  Charts, nicht kalendertag-proportional), Y-Achse = impliziter Fed-Funds-
+  Satz in % (verkettete `rateBefore`/`rateAfter`-Werte aus
+  `rate_probabilities.json`). Hover/Tap auf einen Punkt zeigt Datum +
+  impliziten Satz + die Hike/Hold/Cut-Aufschluesselung (`probsFromDelta`)
+  als Tooltip - die Wahrscheinlichkeits-Info geht dadurch nicht verloren,
+  steckt nur nicht mehr in der Balkenbreite selbst.
+- **Pillen bewegen den Chart, statt ihn neu zu rendern**
+  (`scrollRateProbTo(idx)`): der SVG-Chart ist BREITER als der sichtbare
+  Ausschnitt (`.rateprob-chart-viewport{overflow:hidden}`), ein innerer
+  Track (`.rateprob-chart-track`) wird per `transform:translateX(...)` mit
+  CSS-Transition (0,5s) zum gewaehlten Punkt verschoben - derselbe SVG-
+  DOM-Knoten bleibt bestehen (per Playwright verifiziert: ein Test-Marker
+  auf dem Track-Element ueberlebt den Pillen-Klick), es gibt keinen
+  Re-Render-Flackerer. **Bewusst KEIN natives Scrollen/Wischen** auf dem
+  Viewport - deckt sich mit dem bereits bestehenden App-Grundsatz "Charts
+  dürfen NICHT horizontal wegwischbar sein" (siehe Cross-Cutting-UI-Regeln
+  oben) - die Bewegung ist ausschliesslich ueber die Pillen steuerbar.
+- **Countdown + CME-Link**: Tage bis zum naechsten FOMC-Meeting
+  (`daysUntil()`, bereits bestehender App-Helper) + ein Link im selben
+  `.rate-watch`-Stil wie auf der Interest-Rates-Karte, Ziel
+  `RATE_WATCH.USD` (die echte CME-FedWatch-URL, dieselbe Konstante wie
+  dort - kein Duplikat).
+- Per Playwright verifiziert (420px schmale Ansicht simuliert Handy):
+  Pillen/Countdown/Link/Chart rendern korrekt, Klick auf eine spaetere
+  Pille verschiebt den sichtbaren Ausschnitt sichtbar nach rechts
+  (Screenshots vor/nach verglichen), Hover-Tooltip zeigt Datum + Prozente,
+  voller 15-Tab-Regressionstest weiterhin fehlerfrei.

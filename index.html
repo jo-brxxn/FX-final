@@ -575,6 +575,15 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .ind-hist-legend span{color:var(--blue)}
 .ind-hist-legend span:last-child{color:var(--red)}
 .time-range-custom{display:flex;align-items:center;gap:5px;color:var(--t3);font-size:10.5px;white-space:nowrap}
+/* Rate Probabilities: CME-FedWatch-artige Meeting-Pillen + Timeline-Chart
+   (Nutzer-Wunsch 2026-07-20). Pillen navigieren per scrollRateProbTo() eine
+   CSS-Transform-Verschiebung des Charts - kein natives Scrollen/Wischen. */
+.rateprob-pillbar{display:flex;gap:7px;overflow-x:auto;padding:0 14px 12px;-webkit-overflow-scrolling:touch}
+.rateprob-pill{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 12px;border-radius:16px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
+.rateprob-pill small{font-size:9.5px;font-weight:600;opacity:.75}
+.rateprob-pill.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
+.rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
+.rateprob-chart-track{display:inline-block}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
@@ -1237,7 +1246,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-YIELDMOVE-168</span><span id="verBannerText"> (Nutzer-Wunsch: die drei Rendite-/Spread-Indikatoren (2Y Bond Yield, 10Y Bond Yield, 2Y/10Y Spread) ziehen aus der Interest-Rates- in die Inflation-Karte um, jeweils ans Ende - fuer alle Waehrungen, Default-Vorlage UND bestehende Nutzer-Daten per Migration (Bias/Notizen/Historie bleiben erhalten). Score-Verhalten unveraendert: kein Trend-Bonus fuer die Renditen, jetzt indikator- statt rubrik-basiert geprueft. Ausserdem: alle CSV-Export-Buttons + zugehoeriger Code komplett entfernt (Nutzer-Wunsch, ungenutzt))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-RATEPROB-REDESIGN-169</span><span id="verBannerText"> (Rate Probabilities komplett neu gebaut nach CME-FedWatch-Vorbild: Meeting-Pillen (Today + kommende Sitzungen mit Datum) oben, EIN durchgehender Linien-Chart des impliziten Zinspfads statt einzelner Balken je Sitzung, Klick auf eine Pille bewegt den Chart per CSS-Transform zum gewaehlten Punkt statt neu zu rendern (keine native Wisch-/Scroll-Geste, nur Pillen-gesteuert). Neu dazu: Countdown bis zum naechsten FOMC-Meeting + CME-FedWatch-Link im selben Stil wie bei der Interest-Rates-Karte)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -10928,15 +10937,12 @@ SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
 // wie beim Rest der App: Hike-Wahrscheinlichkeit=BC.bull (hawkish),
 // Cut=BC.bear (dovish), Hold=BC.neu - deckt sich mit "CB Tone"/"Next CB
 // Move" (bullish=hawkish/hike, bearish=dovish/cut).
-let RATE_PROB_DATA=null,rateProbRange='MAX',rateProbCustomFrom=null,rateProbCustomTo=null,rateProbSel='';
+let RATE_PROB_DATA=null,rateProbFocus=0;
 function fetchRateProbData(){
   return fetch('rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object')RATE_PROB_DATA=d;}).catch(()=>{});
 }
 function autoFetchRateProb(){fetchRateProbData().then(()=>{if(curPage==='rate')renderRateProb();});}
-function setRateProbRange(v){rateProbRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderRateProb();}
-function setRateProbRangeCustom(from,to){if(from!==null)rateProbCustomFrom=from||null;if(to!==null)rateProbCustomTo=to||null;renderRateProb();}
-function setRateProbSel(v){rateProbSel=v||'';renderRateProb();}
 // Reine Funktion von deltaBp (Basispunkte Aenderung ggue. dem Zins VOR der
 // Sitzung) -> die zwei benachbarten 25bp-Stufen + ihr jeweiliger Anteil,
 // linear interpoliert. Muss exakt der Node-Version im Workflow entsprechen
@@ -10948,41 +10954,64 @@ function probsFromDelta(bp){
   const frac=(bp-lower)/STEP;
   return[[lower,Math.round((1-frac)*1000)/10],[upper,Math.round(frac*1000)/10]];
 }
-function rateProbBarHtml(deltaBp){
-  const pairs=probsFromDelta(deltaBp);
-  const colFor=bp=>bp<0?BC.bear:bp>0?BC.bull:BC.neu;
-  const lblFor=bp=>bp===0?'Hold':(bp>0?'+':'')+bp+'bp';
-  const segs=pairs.map(([bp,pct])=>pct<=0.05?'':`<div style="width:${pct}%;background:${colFor(bp)};display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:var(--t0);white-space:nowrap;overflow:hidden" title="${escH(lblFor(bp))}: ${pct.toFixed(1)}%">${pct>=12?pct.toFixed(0)+'%':''}</div>`).join('');
-  const legend=pairs.filter(([,pct])=>pct>0.05).map(([bp,pct])=>`<span style="color:${colFor(bp)};font-weight:700">${escH(lblFor(bp))}</span> <span style="color:var(--t3)">${pct.toFixed(1)}%</span>`).join('<span style="color:var(--t4);margin:0 6px">·</span>');
-  return`<div style="display:flex;height:20px;border-radius:5px;overflow:hidden;background:var(--bg3)">${segs}</div><div style="margin-top:5px;font-size:11.5px">${legend}</div>`;
-}
-function rateProbHistChart(pts){
-  const W=760,H=280,padL=42,padR=16,padT=20,padB=34;
-  const vals=pts.map(p=>p[1]);
-  const yMax=Math.max(12,...vals.map(v=>Math.abs(v)))*1.15;
-  const yMin=-yMax;
-  const xOf=i=>padL+(pts.length>1?i/(pts.length-1):0)*(W-padL-padR);
-  const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
-  let path='';
-  pts.forEach((p,i)=>{const x=xOf(i),y=yOf(p[1]);path+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${y.toFixed(1)}`);});
-  const ticks=[...new Set([Math.round(yMax),Math.round(yMax/2),0,-Math.round(yMax/2),-Math.round(yMax)])];
-  const gy=ticks.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t>0?'+':''}${t}bp</text>`).join('');
-  let xlab='';
-  if(pts.length){const idxs=[...new Set([0,Math.floor((pts.length-1)/2),pts.length-1])];idxs.forEach(i=>{const d=String(pts[i][0]).slice(5);xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(d)}</text>`;});}
-  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-      ${gy}
-      <line x1="${padL}" y1="${yOf(0).toFixed(1)}" x2="${W-padR}" y2="${yOf(0).toFixed(1)}" stroke="var(--t3)" stroke-width="1"/>
-      <path d="${path}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
-      ${xlab}
-    </svg>`;
-  const hpts=pts.map((p,i)=>{const v=p[1];const col=v>0?BC.bull:v<0?BC.bear:'#e8eef7';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(p[0]))}</div><b>${v>0?'+':''}${v}bp</b> implied vs. rate going in`};});
-  return chartHoverWrap(svg,hpts);
-}
 SENT_INFO.rateprob=['Rate Probabilities (Fed hike/hold/cut odds)',
-  `<p><b>What it is:</b> the market-implied probability of a Fed rate move at each upcoming FOMC meeting, derived the same way the official (paid) CME FedWatch tool does: 30-Day Fed Funds futures (ticker ZQ) price in the average overnight rate for each calendar month, so a meeting mid-month lets you back out the rate the market expects <b>after</b> the decision, weighted by how many days of that month fall before vs. after it.</p>
-   <p><b>How to read the bar:</b> each meeting shows the two adjacent 25bp outcomes (e.g. "Hold" and "-25bp") with their implied share, interpolated linearly from the futures-implied average. <span style="color:${BC.bull}">Cyan</span> = hike, <span style="color:${BC.neu}">amber</span> = hold, <span style="color:${BC.bear}">red</span> = cut — the same hawkish/dovish colour convention as CB Tone and Next CB Move elsewhere in the app.</p>
+  `<p><b>What it is:</b> the market-implied path of the Fed Funds rate across upcoming FOMC meetings, derived the same way the official (paid) CME FedWatch tool does: 30-Day Fed Funds futures (ticker ZQ) price in the average overnight rate for each calendar month, so a meeting mid-month lets you back out the rate the market expects <b>after</b> the decision, weighted by how many days of that month fall before vs. after it.</p>
+   <p><b>How to read the chart:</b> the line connects today's actual rate to the implied rate after each upcoming meeting - a step up means the market leans toward a hike there, a step down toward a cut. Hover/tap a point for the exact implied hike/hold/cut split at that meeting (the two nearest 25bp outcomes, linearly interpolated from the futures curve). Use the pills above to jump the chart to a specific meeting instead of scrolling.</p>
    <p><b>Limits vs. the official tool:</b> this only resolves the two nearest standard steps from the futures curve alone. CME's paid version additionally uses options-implied volatility to size probabilities for less-likely outlier outcomes (e.g. a 50bp move when a 25bp move is the market's base case) — that needs options data this app doesn't have a free source for, so it isn't shown here.</p>
    <p><b>History:</b> builds one snapshot per day going forward (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources (CME's own API is paid, and free scraping sources for the historical multi-contract futures curve were unavailable). Display-only, does not affect any score.</p>`];
+// Fixe Punktabstaende (Trends-Stil: index-basiert, nicht kalendertag-
+// proportional) - macht die Klick-Navigation ueber die Meeting-Pillen
+// vorhersagbar (jeder Schritt bewegt exakt eine Slot-Breite).
+const RATEPROB_SLOT=170,RATEPROB_PADL=54,RATEPROB_PADR=40;
+function rateProbTimelineChart(pts){
+  const H=210,padT=22,padB=36;
+  const W=RATEPROB_PADL+RATEPROB_PADR+RATEPROB_SLOT*Math.max(1,pts.length-1);
+  const rates=pts.map(p=>p.rate).filter(v=>v!=null);
+  const pad=Math.max(0.1,(Math.max(...rates)-Math.min(...rates))*0.25||0.15);
+  const yMax=Math.max(...rates)+pad,yMin=Math.min(...rates)-pad;
+  const xOf=i=>RATEPROB_PADL+i*RATEPROB_SLOT;
+  const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
+  let path='';
+  pts.forEach((p,i)=>{if(p.rate==null)return;const x=xOf(i),y=yOf(p.rate);path+=(path?' L ':'M ')+x.toFixed(1)+' '+y.toFixed(1);});
+  const ticks=[...new Set([yMax,(yMax+yMin)/2,yMin].map(v=>Math.round(v*100)/100))];
+  const gy=ticks.map(t=>`<line x1="${(RATEPROB_PADL-10).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+10).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-16).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(2)}%</text>`).join('');
+  const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===0?800:600};fill:${i===0?'var(--t0)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
+  const dots=pts.filter(p=>p.rate!=null).map(p=>{const i=pts.indexOf(p);return`<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(p.rate).toFixed(1)}" r="4" fill="var(--blue)"/>`;}).join('');
+  const svg=`<svg id="rateProbSvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">
+      ${gy}
+      <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      ${xlab}
+    </svg>`;
+  const hpts=pts.filter(p=>p.rate!=null).map(p=>{
+    const i=pts.indexOf(p);
+    const probs=p.deltaBp!=null?probsFromDelta(p.deltaBp):null;
+    const probTxt=probs?probs.filter(([,pc])=>pc>0.05).map(([bp,pc])=>(bp===0?'Hold':(bp>0?'+':'')+bp+'bp')+': '+pc.toFixed(1)+'%').join(' · '):'';
+    return{fx:xOf(i)/W,fy:yOf(p.rate)/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(p.label)}${i>0?' · '+escH(fmtDayHdr(p.date)):''}</div><b>${p.rate.toFixed(2)}%</b>${probTxt?'<br>'+escH(probTxt):''}`};
+  });
+  return`<div class="rateprob-chart-viewport" id="rateProbViewport"><div class="rateprob-chart-track" id="rateProbTrack">${chartHoverWrap(svg,hpts,`width:${W}px;max-width:none`)}</div></div>`;
+}
+// Meeting-Pillen (CME-FedWatch-Optik) navigieren OHNE die Karte neu zu
+// rendern - die Linie bleibt derselbe DOM-Knoten, nur eine CSS-Transform-
+// Verschiebung des Tracks bewegt den sichtbaren Ausschnitt zum gewaehlten
+// Punkt (Nutzer-Wunsch 2026-07-20: "die Grafik ist dann aber nicht neu
+// sondern bewegt sich"). Bewusst KEIN natives Scrollen/Wischen (Grundsatz
+// oben: "Charts duerfen nicht horizontal wegwischbar sein") - der Track
+// sitzt in einem overflow:hidden-Viewport, ausschliesslich per Pillen-Klick
+// gesteuert.
+function scrollRateProbTo(idx,animate){
+  if(animate===undefined)animate=true;
+  const D=RATE_PROB_DATA;if(!D)return;
+  const maxIdx=(D.meetings||[]).filter(m=>m.deltaBp!=null).length;
+  rateProbFocus=Math.max(0,Math.min(idx,maxIdx));
+  document.querySelectorAll('.rateprob-pill').forEach((b,i)=>b.classList.toggle('on',i===rateProbFocus));
+  const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
+  if(!track||!viewport)return;
+  const vw=viewport.clientWidth||300;
+  const targetX=Math.max(0,rateProbFocus*RATEPROB_SLOT-vw/2+RATEPROB_PADL);
+  track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
+  track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
+}
 function renderRateProb(){
   const el=document.getElementById('rateBody');if(!el)return;
   const D=RATE_PROB_DATA;
@@ -10990,34 +11019,29 @@ function renderRateProb(){
     el.innerHTML=`<div class="cot-empty">Loading Fed rate probabilities… (computed hourly by the GitHub workflow from 30-Day Fed Funds futures into rate_probabilities.json — if this stays empty, the first run simply hasn't happened yet).</div>`;
     return;
   }
-  const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
-  const curCard=`<div class="cot-card"><div class="cot-card-title">Current Effective Fed Funds Rate${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: FRED (EFFR) · ${escH(upd)}</span></div><div style="padding:12px 14px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div></div>`;
-  const meetingCards=D.meetings.map(m=>{
-    const bar=m.deltaBp!=null?rateProbBarHtml(m.deltaBp):`<div class="cot-empty" style="padding:8px 0">No futures contract data yet for this meeting's month.</div>`;
-    const sub=m.deltaBp!=null?`<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">implied ${m.rateBefore.toFixed(2)}% → ${m.rateAfter.toFixed(2)}%</span>`:'';
-    return`<div class="cot-card" style="margin-top:10px"><div class="cot-card-title">${escH(m.label)}${sub}</div><div style="padding:12px 14px">${bar}</div></div>`;
-  }).join('');
   const withData=D.meetings.filter(m=>m.deltaBp!=null);
-  if(!rateProbSel||!withData.some(m=>m.date===rateProbSel))rateProbSel=(withData[0]||{}).date||'';
-  let histCard='';
-  if(rateProbSel&&Array.isArray(D.history)&&D.history.length){
-    const meetingOpts=withData.map(m=>`<option value="${escH(m.date)}"${rateProbSel===m.date?' selected':''}>${escH(m.label)}</option>`).join('');
-    const rangeBar=timeRangeBarHtml(rateProbRange,'setRateProbRange')+timeRangeCustomHtml(rateProbRange,rateProbCustomFrom,rateProbCustomTo,'setRateProbRange');
-    let dates=D.history.map(h=>h[0]);
-    dates=filterDatesByRange(dates,rateProbRange,rateProbCustomFrom,rateProbCustomTo);
-    const dateSet=new Set(dates);
-    const pts=D.history.filter(h=>dateSet.has(h[0])).map(h=>{
-      const mm=(h[2]||[]).find(x=>x[0]===rateProbSel);
-      return mm?[h[0],mm[1]]:null;
-    }).filter(Boolean);
-    const chart=pts.length>=2?rateProbHistChart(pts):`<div class="cot-empty">Not enough history yet for this meeting — grows by one point per day.</div>`;
-    histCard=`<div class="cot-card" style="margin-top:12px">
-      <div class="cot-card-title" style="flex-wrap:wrap;gap:8px"><span>Probability History</span><select class="btn" onchange="setRateProbSel(this.value)" style="margin-left:auto;cursor:pointer">${meetingOpts}</select></div>
-      <div style="padding:10px 14px 12px"><div class="ind-hist-toolbar">${rangeBar}</div>${chart}</div>
-    </div>`;
+  if(!withData.length){
+    el.innerHTML=`<div class="cot-empty">No futures contract data for the upcoming meetings yet.</div>`;
+    return;
   }
-  el.innerHTML=curCard+meetingCards+histCard;
+  const pts=[{label:'Today',date:D.asOf,rate:D.currentRate,deltaBp:null}];
+  withData.forEach(m=>pts.push({label:m.label,date:m.date,rate:m.rateAfter,deltaBp:m.deltaBp}));
+  if(rateProbFocus>=pts.length)rateProbFocus=0;
+  const days=daysUntil(withData[0].date);
+  const pills=pts.map((p,i)=>{
+    const short=i===0?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
+    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}" title="${escH(p.label)}" onclick="scrollRateProbTo(${i})">${escH(short)}</button>`;
+  }).join('');
+  const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
+  el.innerHTML=`<div class="cot-card">
+      <div class="cot-card-title">Current Effective Fed Funds Rate${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: NY Fed (EFFR) · ${escH(upd)}</span></div>
+      <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
+      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next FOMC meeting (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(RATE_WATCH.USD)}" target="_blank" rel="noopener" title="CME FedWatch Tool">📈 CME FedWatch Tool ↗</a></div>
+      <div class="rateprob-pillbar">${pills}</div>
+      ${rateProbTimelineChart(pts)}
+    </div>`;
   attachChartHovers(el);
+  scrollRateProbTo(rateProbFocus,false);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
