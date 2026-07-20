@@ -1560,3 +1560,97 @@ grundsaetzlich noch (bekannte, bereits an mehreren Stellen oben
 dokumentierte Feed-Abdeckungsluecke, kein neuer Befund) - betroffene
 Karten zeigen dann weiterhin nur die statische Erstbefuellung
 (`IND_RESEARCH_DATA`) ohne "feed:true" und folgerichtig auch ohne Chart.
+
+### EUR-Score flippte weiterhin bei JEDEM Laden - echter Ursachenfund: zwei konkurrierende Live-Quellen (Bugreport 2026-07-20, nach den vorherigen Fixes)
+
+Nutzer meldete: der scoreHist-Sync-Regressionsfix (siehe oben) hatte das
+Symptom nicht behoben - EUR zeigte weiterhin bei JEDEM Laden erst 1.5, dann
+0.5, nicht nur einmalig beim allerersten Cache->Live-Uebergang. Per
+Playwright bis auf die konkrete Ursache zurueckverfolgt (Reload-Persistenz-
+Test, dann gezielter Diff der Indikator-Bias-Werte zwischen "vor" und
+"transientem Zwischenstand"):
+
+- **Ursache gefunden: EUR "PPI y/y" wird von ZWEI unabhaengigen Live-
+  Quellen gleichzeitig bedient**, die sich auf VERSCHIEDENE Releases
+  beziehen koennen: `applyIndDataFeed()` (TradingView-Feed, `ind_data.json`)
+  hatte korrekt das Eurozone-Aggregat (Actual 5.9%, Forecast 5.7%, Datum
+  2026-07-06 -> bullish). `syncIndicatorBiases()` (FF-Kalender-Abgleich,
+  `findIndEvent()`) hatte ZUSAETZLICH ein Kalender-Event "PPI YoY"/EUR
+  gematcht (Actual 1.8%, Datum 2026-07-20 - laut Rohdaten vermutlich ein
+  deutsches Landesrelease, das ohne "German"-Praefix faelschlich unter der
+  "EUR"-Landeskennung im Kalender landete, siehe Grundsatz oben "EUR-
+  Indikatoren: Eurozone-Aggregat bevorzugen, nicht nationale Releases" -
+  dieser Grundsatz galt bisher nur fuer `ind_data.json`s EIGENE Quellwahl,
+  nicht fuer den separaten Kalender-Matcher). Beide Pfade setzen `ind.bias`
+  unabhaengig voneinander - je nachdem, welcher der beiden asynchronen
+  Boot-Feeds (Live-Feed vs. Kalender-Fetch) zuletzt durchlief, "gewann" mal
+  der eine, mal der andere Wert. Ein reiner Datums-Vergleich (juengeres
+  Release gewinnt) haette das NICHT geloest, weil das fehlgematchte
+  Kalender-Event trotzdem ein neueres Datum hatte als das echte Feed-
+  Release.
+- Betraf nicht nur die direkte Bias-Zuweisung, sondern auch
+  `trackIndValues()` (vermischte zwei verschiedene Release-Serien in
+  derselben Werte-Historie `ind.valHist`) und darueber indirekt
+  `applyTrendModel()`/`indStepBias()` - DAS war der tatsaechliche zweite
+  Ueberschreiber: selbst mit einer ersten, engeren Fix-Version (die nur die
+  direkte Bias-Zuweisung schuetzte) flippte es weiter, weil
+  `applyTrendModel()` das vom Feed korrekt gesetzte Bias ueber den durch
+  die vermischte Werte-Historie verunreinigten Trend/Step-Wert erneut
+  ueberschrieb.
+- **Fix in `syncIndicatorBiases()`** (≈ Zeile 3617): sobald ein Indikator
+  ueberhaupt vom TradingView-Feed abgedeckt ist (`ind.research.feed===
+  true`), hat dieser Pfad JETZT DURCHGEHEND Vorrang - fuer Bias-Zuweisung,
+  Werte-Historie (`trackIndValues`) UND Trend-Modell
+  (`applyTrendModel(...,allowBiasReplace)`) gleichermassen. Der Kalender-
+  Pfad bleibt nur noch fuer Indikatoren OHNE Feed-Abdeckung die alleinige
+  Quelle (unveraendertes Verhalten dort). Bewusst KEIN Datums-Vergleich
+  mehr als Kriterium - der Feed laeuft im selben stuendlichen Rhythmus wie
+  der Kalender-Fetch und holt ein echtes neues Release ohnehin genauso
+  schnell selbst nach.
+- Per Playwright verifiziert: EUR "PPI y/y" bleibt nach `fetchFF()` UND
+  `processCalEvts()` jetzt stabil bei der vom Feed gesetzten Klassifikation
+  (vorher: flippte bei jedem Aufruf). 4 aufeinanderfolgende Reloads mit
+  ausreichend Settle-Zeit blieben stabil beim selben Score. Zusaetzlich
+  alle 8 FX-Majors/`IND_AUTO_RUBS`-Indikatoren nach dem Fix auf verbleibende
+  Feed-vs-Kalender-Konflikte gescannt (Nutzer-Wunsch "guck ob das auch bei
+  allen anderen Assets ein Bug ist") - **0 verbleibende Konflikte
+  gefunden** (der Fix ist eine generische Regel, kein EUR-spezifischer
+  Patch, deckt daher automatisch alle Waehrungen ab).
+
+### Quick-Note-Text konnte sich beim Tippen selbst leeren (Bugreport 2026-07-20, tiefere Ursache als der vorherige Fokus-Fix)
+
+Der zuvor gefixte Fokus-Verlust (`renderDetail()` rettet Fokus/Cursor ueber
+den Rebuild, siehe Eintrag oben) loeste nur EINEN Teil des Problems -
+Nutzer meldete weiterhin: der eingegebene Text "entfernt sich manchmal
+einfach so", nicht nur der Cursor springt raus. Per Playwright-Testfall
+(getippten Text setzen, dann `fxpro_updated` wie ein zufaelliges
+Hintergrund-Update bumpen, dann `save()` aufrufen) reproduziert:
+
+- **Ursache:** `saveSoon()` (der 400ms-Debounce hinter JEDEM Tipp-Feld -
+  Quick Note, alle Notiz-/Zusammenfassungs-Textareas) bumpte bisher NICHT
+  `_lastUserEditTs`. `save()`s Multi-Tab-Schutz (≈ Zeile 4959:
+  `localStorage.fxpro_updated !== _lsUpdatedSeen && Date.now()-
+  _lastUserEditTs>=3000` -> `adoptExternalState()`) haelt dadurch JEDES
+  Hintergrund-Update, das zufaellig waehrend des Tippens `fxpro_updated`
+  bumpt (ein Live-Feed-Fund, `recordScoreHist()`, ...), faelschlich fuer
+  eine Aenderung eines ANDEREN Tabs/Geraets - obwohl der Nutzer gerade
+  aktiv in DIESEM Tab tippt. `adoptExternalState()` laedt `syms` dann
+  komplett aus dem AKTUELL in localStorage stehenden (den getippten Text
+  noch NICHT enthaltenden) Snapshot neu - der gerade eingegebene, nur im
+  Speicher stehende Text ist damit weg, BEVOR der naechste debounced
+  `save()` ihn je gespeichert hat.
+- **Fix:** `saveSoon()` markiert jetzt selbst bei jedem Aufruf
+  `_lastUserEditTs=Date.now()` (+ `_userEditedSinceSync`/
+  `fxpro_user_pending`, wie `pushU()` es fuer diskrete Aktionen tut) -
+  zentral an EINER Stelle, da `saveSoon()` ausschliesslich von echten
+  Tipp-Handlern aufgerufen wird (nie von automatisierten/Hintergrund-
+  Prozessen), daher risikofrei als "gerade aktiv editiert" zu werten.
+  Deckt automatisch ALLE ueber `saveSoon()` laufenden Textfelder ab, nicht
+  nur Quick Note. Per Playwright verifiziert: derselbe Race-Test verliert
+  den Text jetzt nicht mehr (vorher: reproduzierbar leer nach `save()`).
+- **Merksatz:** `pushU()` (Undo-Stack + `_lastUserEditTs`) ist fuer
+  diskrete Aktionen gedacht: kontinuierliches Tippen soll NICHT bei jedem
+  Tastendruck einen Undo-Eintrag erzeugen, aber MUSS trotzdem
+  `_lastUserEditTs` pflegen, damit der Multi-Tab-Schutz aktive Eingaben
+  erkennt. `saveSoon()` ist dafuer die richtige zentrale Stelle, nicht die
+  einzelnen `oninput`-Handler.

@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-CHARTFORECAST-156</span><span id="verBannerText"> (Bugfix nach 3-Agenten-Audit ueber alle 14 Assets/~250 Indikatoren: adoptChartHist() baute den Indikator-Verlaufschart bisher NUR aus dem rohen Feed-historyFull, das fuer manche Releases (z.B. CAD "GDP Growth QoQ q/q") keinen Forecast fuehrt - obwohl applyIndDataFeed() fuer genau denselben Release laengst einen kuratierten Fallback-Forecast gefunden und auf der Karte selbst angezeigt hatte. Chart und Karte liefen dadurch fuer den letzten Punkt auseinander (Karte zeigte einen Forecast, Chart keinen). adoptChartHist() bekommt den kuratierten Forecast jetzt mitgegeben und gleicht damit nur den LETZTEN Punkt an, falls der rohe Wert dort fehlt. Audit-Ergebnis sonst: von ~250 geprueften Indikatoren war das der einzige echte Mismatch - alle anderen "kein Chart"-Faelle sind strukturell erwartet (Bonds/COT/Sentiment/manuelle Felder befuellen chartHist nie) oder bekannte Feed-Abdeckungsluecken)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-DUALSOURCE-FLIP-157</span><span id="verBannerText"> (Zwei kritische Bugfixes: (1) Score flippte bei JEDEM Laden zwischen zwei Werten (nicht nur einmalig Cache->Live) - Ursache: fuer manche Indikatoren laufen zwei unabhaengige Live-Quellen parallel (TradingView-Feed via applyIndDataFeed() UND FF-Kalender-Abgleich via syncIndicatorBiases()), die sich auf unterschiedliche Releases beziehen koennen (z.B. EUR PPI y/y: Feed korrekt auf dem Eurozone-Aggregat, Kalender faelschlich auf einem als "EUR" gefuehrten Landesrelease) und je nach Lade-Reihenfolge abwechselnd gewannen. Sobald ein Indikator vom Feed abgedeckt ist (ind.research.feed), hat dieser jetzt durchgehend Vorrang (Bias UND Werte-Historie) - der Kalender-Pfad bleibt nur noch fuer Indikatoren ohne Feed-Abdeckung zustaendig. (2) Quick-Note-Text (und alle anderen per saveSoon() debounced getippten Textfelder) konnte sich beim Tippen einfach selbst leeren: saveSoon() bumpte nicht _lastUserEditTs, wodurch save()s Multi-Tab-Schutz ein zufaelliges Hintergrund-Update faelschlich als fremde Geraete-Aenderung wertete und den gerade getippten, noch ungespeicherten Text per adoptExternalState() verwarf. saveSoon() markiert jetzt bei jedem Tastendruck "gerade aktiv editiert")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -3624,9 +3624,43 @@ function syncIndicatorBiases(){
         const ev=findIndEvent(c.id,ind.name);
         if(!ev)return;
         const noForecast=ev.forecast==null||ev.forecast==='';
+        // Bugreport 2026-07-20 (Nutzer, EUR-Score "flippt" bei JEDEM Laden
+        // zwischen zwei Werten hin und her, kein einmaliger Cache->Live-
+        // Uebergang): fuer denselben Indikator laufen ZWEI unabhaengige
+        // Live-Quellen parallel - der TradingView-Feed
+        // (applyIndDataFeed()/ind.research.feed) UND der FF-Kalender-
+        // Abgleich hier. Beide koennen sich auf UNTERSCHIEDLICHE Releases
+        // beziehen: EUR "PPI y/y" z.B. hat der Feed korrekt das Eurozone-
+        // Aggregat (Actual 5.9%, Datum 2026-07-06), waehrend der Kalender
+        // ein ANDERES, unter demselben Namen/derselben "EUR"-Landeskennung
+        // gefuehrtes Release matcht (Actual 1.8%, Datum 2026-07-20 - laut
+        // Rohdaten vermutlich ein deutsches Landesrelease, das faelschlich
+        // ohne "German"-Praefix als EUR-Aggregat durchrutscht - siehe
+        // Grundsatz oben "EUR-Indikatoren: Eurozone-Aggregat bevorzugen,
+        // nicht nationale Releases"). Ein reiner Datums-Vergleich (juengeres
+        // Release gewinnt) loest das NICHT zuverlaessig, weil das Kalender-
+        // Datum hier trotz Fehlmatch neuer ist als das echte Feed-Release.
+        // Betraf nicht nur die direkte Bias-Zuweisung unten, sondern AUCH
+        // trackIndValues() (vermischt zwei verschiedene Release-Serien in
+        // derselben Werte-Historie ind.valHist) und darueber indirekt
+        // applyTrendModel()/indStepBias() (das wiederum den zuvor korrekt
+        // vom Feed gesetzten Bias ueber den verunreinigten Trend-Verlauf
+        // erneut ueberschreiben konnte - das war der tatsaechliche zweite
+        // Ueberschreiber, den eine fruehere, engere Version dieses Fixes
+        // noch nicht abdeckte).
+        // Fix: sobald ein Indikator ueberhaupt vom TradingView-Feed
+        // abgedeckt ist (ind.research.feed===true), hat dieser Pfad
+        // GRUNDSAETZLICH Vorrang - unabhaengig vom Kalender-Datum. Der Feed
+        // laeuft im selben stuendlichen Rhythmus wie der Kalender-Fetch und
+        // holt ein echtes neues Release also ohnehin genauso schnell selbst
+        // nach; der Kalender-Pfad bleibt nur noch fuer Indikatoren ohne
+        // Feed-Abdeckung (research.feed nie gesetzt) die alleinige Quelle.
+        const feedCovered=!!(ind.research&&ind.research.feed);
         // Werte-Historie bei JEDEM Sync-Lauf fortschreiben (Erstkontakt-
-        // Seeding inkl. Recherche-Backfill; Entdopplung via ind.valDate).
-        if(trackIndValues(ind,macroCcyFor(c.id),ev.date,ev.actual,ev.previous))changed=true;
+        // Seeding inkl. Recherche-Backfill; Entdopplung via ind.valDate) -
+        // aber nicht mit einer fremden Release-Serie verunreinigen, wenn
+        // der Feed diesen Indikator ohnehin schon selbst abdeckt.
+        if(!feedCovered&&trackIndValues(ind,macroCcyFor(c.id),ev.date,ev.actual,ev.previous))changed=true;
         // "Neues Release?"-Gate gilt weiterhin fuer das Beat/Miss-Bias selbst
         // (manuelle Klicks sollen bis zum naechsten ECHTEN Release stehen
         // bleiben) - Trend-Anteile berechnet applyTrendModel darunter IMMER.
@@ -3634,12 +3668,12 @@ function syncIndicatorBiases(){
         if(newRelease){
           ind.autoEvId=ev.id;
           changed=true;
-          if(!noForecast){
+          if(!noForecast&&!feedCovered){
             const nb=indBiasFromEvent(ev);
             if(ind.bias!==nb)ind.bias=nb;
           }
         }
-        if(applyTrendModel(ind,noForecast,newRelease))changed=true;
+        if(applyTrendModel(ind,noForecast,newRelease&&!feedCovered))changed=true;
       });
     });
   });
@@ -4953,9 +4987,32 @@ function save(){
   recordScoreHist();
   if(changed)cloudAutoSync();
 }
-// Debounced save while typing, so a reload mid-edit doesn't lose anything
+// Debounced save while typing, so a reload mid-edit doesn't lose anything.
+// Bugreport 2026-07-20 (Nutzer: Quick-Note-Text "entfernt sich manchmal
+// einfach so" beim Tippen - mehr als nur der zuvor gefixte Fokus-Verlust):
+// saveSoon() bumpte bisher NICHT _lastUserEditTs. save()s Multi-Tab-Schutz
+// (≈ Zeile 4959: localStorage.fxpro_updated !== _lsUpdatedSeen &&
+// Date.now()-_lastUserEditTs>=3000 -> adoptExternalState()) haelt ein
+// beliebiges Hintergrund-Update (Live-Feed-Korrektur, scoreHist-Sync, ...),
+// das waehrend des Tippens zufaellig fxpro_updated bumpt, dadurch faelschlich
+// fuer eine ANDERE Tab-/Geraete-Aenderung - obwohl der Nutzer gerade aktiv
+// tippt. adoptExternalState() laedt dann syms() komplett aus dem AKTUELL in
+// localStorage stehenden (noch unkorrigierten) Snapshot neu und verwirft
+// damit den gerade getippten, nur im Speicher stehenden Text, BEVOR der
+// naechste debounced save() ihn je gespeichert hat - erklaert das
+// beobachtete "Text verschwindet beim Tippen einfach". saveSoon() ist
+// AUSSCHLIESSLICH von echten Tipp-Handlern aufgerufen (Quick Note, alle
+// Notiz-/Zusammenfassungs-Textfelder) - daher hier zentral (nicht an jedem
+// einzelnen oninput) als "gerade aktiv editiert" markieren, damit der
+// Multi-Tab-Schutz fuer die naechsten 3s nicht eingreift.
 let _saveSoonTimer=null;
-function saveSoon(){clearTimeout(_saveSoonTimer);_saveSoonTimer=setTimeout(save,400);}
+function saveSoon(){
+  _lastUserEditTs=Date.now();
+  _userEditedSinceSync=true;
+  try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}
+  clearTimeout(_saveSoonTimer);
+  _saveSoonTimer=setTimeout(save,400);
+}
 
 // ══ EXPORT / IMPORT ═════════════════════════════════════════════════
 // Generischer CSV-Download (Nutzer-Wunsch 2026-07-16): header = Spaltennamen,
