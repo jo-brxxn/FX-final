@@ -2110,4 +2110,68 @@ in aufeinanderfolgenden Sitzungen ist praktisch unmoeglich).
   haette diesen Bug schon vor dem ersten Live-Testlauf auffangen koennen -
   fuer kuenftige neue Berechnungs-Features immer einen Sanity-Check der
   Ergebnisgroessenordnung einbauen, nicht nur auf "der Code lief ohne
-  Fehler durch" vertrauen.
+  Fehler durch" vertrauen. **Update:** der naechste stuendliche Lauf hat
+  die stabilisierte Formel bestaetigt - `rate_probabilities.json` zeigt
+  jetzt durchgehend die plausiblen Werte (-4/+14/+6/+10bp), Feature ist
+  fertig und live.
+
+### Drei Rendite-Indikatoren von Interest Rates in die Inflation-Karte umgezogen (Nutzer-Wunsch 2026-07-20)
+
+Nutzer: "ich will das du das dreipack mit den drei Indikatoren zu yields
+aus der arte interest rate rausnimmst und in die Karte Inflation
+reinpackst. An die letzte Stelle bitte und überall." - gemeint sind
+`2Y Bond Yield`, `10Y Bond Yield`, `2Y/10Y Spread`.
+
+- **Default-Vorlage** (`mkRubs()`, ≈ Zeile 4170): Inflation endet jetzt mit
+  den drei Renditen-Indikatoren, Interest Rates hat nur noch `Central Bank
+  Rate`/`CB Tone`/`Next CB Move`.
+- **`IND_RESEARCH_DATA`** (Recherche-Erstbefuellung, alle 8 Waehrungen):
+  `rubric:'Interest Rates'` auf `rubric:'Inflation'` fuer die drei
+  Indikatoren umgestellt (24 Fundstellen, per `sed`), damit
+  `applyIndResearch()` sie in der richtigen Karte findet.
+- **Migration fuer Bestandsnutzer**: neue Funktion
+  `moveYieldIndsToInflation(rubrics)` (≈ Zeile 4294, direkt nach
+  `migrateRiskEnvRub`) verschiebt die drei Indikator-OBJEKTE (nicht neu
+  erzeugt - Bias/Notizen/Recherche-Werte/Verlaufshistorie bleiben
+  erhalten) ans Ende von Inflation. Eingehaengt an beiden Stellen, die
+  laut der "WICHTIGSTE REGEL" oben fuer sowas noetig sind:
+  `migrateRubInds()` (normaler Boot-Pfad) UND `applySnap()` (Cloud-Pull/
+  Undo/Redo/Backup-Restore, die NICHT durch migrateRubInds laufen - exakt
+  dasselbe Muster wie `stripGeopoliticsRub`/`migrateRiskEnvRub` dort).
+  Idempotent: nach der ersten Ausfuehrung sind die Indikatoren nicht mehr
+  in Interest Rates, ein erneuter Lauf findet nichts und tut nichts.
+- **Score-Verhalten bewusst UNVERAENDERT** (reine Karten-Umsortierung,
+  keine Scoring-Regel-Aenderung): der Nutzer-Entscheid vom 05.07.
+  ("Bond-Renditen bekommen keinen Trend-Bonus") war bisher ueber
+  `NO_TREND_RUBS=new Set(['Interest Rates'])` RUBRIK-basiert geprueft
+  (`indScoreParts()`, ≈ Zeile 2140) - haette die Renditen nach dem Umzug
+  in die Inflation-Karte faelschlich einen Trend-Bonus bekommen lassen.
+  Fix: zusaetzlich direkt `BOND_HALF_PT.has(ind.name)` geprueft (indikator-
+  statt rubrik-basiert) - sowohl in `indScoreParts()` als auch im Trend-
+  Chip-Anzeige-Gate in `renderInd()` (≈ Zeile 5929). Per Playwright
+  verifiziert: Gesamt-Score eines Symbols vor/nach der Migration exakt
+  identisch (1.5 → 1.5), nur die Karten-Zuordnung aendert sich.
+  `SCORE_ZERO`/`BOND_HALF_PT`/`indIsHalfWeight` waren schon vorher
+  indikator- statt rubrik-basiert (keine Aenderung noetig), ebenso
+  `IND_AUTO_RUBS`/`MACRO_SYNC_RUBS`/`MACRO_DERIVE_RUBS`/`NONFX_RUB_DERIVE`
+  (enthalten/behandeln beide Rubriken ohnehin identisch) und
+  `applyBondDataFeed()` (matcht ueber Indikator-Name quer durch alle
+  Rubriken, nie rubrik-spezifisch).
+- Per Playwright verifiziert: frischer Nutzer bekommt die neue Struktur
+  direkt: Migrations-Test mit einem simulierten Alt-Layout (Renditen noch
+  in Interest Rates, mit Test-Bias/Notizen versehen) zeigt nach
+  `moveYieldIndsToInflation()` die Indikatoren korrekt in Inflation MIT
+  erhaltenen Bias-/Notiz-Werten. Voller 15-Tab-Regressionstest weiterhin
+  fehlerfrei.
+
+### CSV-Export komplett entfernt (Nutzer-Wunsch 2026-07-20)
+
+Nutzer: "entfern alle csv Button und den Code dazu das brauch ich nicht" -
+das am 2026-07-16 eingefuehrte CSV-Export-Feature (Trends-Tab
+Score-Historie, COT-Tab Positionierungs-Historie, Insights>Data
+Indikator-Historie) wurde komplett entfernt: alle drei Buttons aus dem
+HTML/Template-Code, die Funktionen `dlCSV()` (generischer Downloader),
+`dlTrendsCSV()`, `dlCotCSV()`, `dlDataTabCSV()`, sowie das dadurch
+ungenutzt gewordene `csv`-SVG-Icon aus `ICONS`. Per Playwright verifiziert:
+alle vier Funktionsnamen sind `undefined`, kein "CSV"-Text mehr irgendwo
+im gerenderten DOM ueber alle 15 Tabs, keine JS-Fehler.
