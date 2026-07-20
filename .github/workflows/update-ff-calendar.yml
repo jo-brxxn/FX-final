@@ -2749,8 +2749,20 @@ jobs:
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || true
-          echo "[debug] rate_fred.csv: $(wc -c < rate_fred.csv 2>/dev/null || echo 0) bytes"
+          # workflow_dispatch-Testlauf 2026-07-20 zeigte 0 Bytes ohne HTTP-Status
+          # (curl legt bei komplettem Verbindungsfehler die -o-Datei gar nicht erst
+          # an) - jetzt mit sichtbarem HTTP-Code/Groesse + einem Retry nach 5s,
+          # gleiches iteratives Debug-Muster wie bei den anderen Feeds hier.
+          curl -sL --max-time 30 -A "$UA" -w "[debug] FRED curl: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl: command failed (exit $?)"
+          if [ ! -s rate_fred.csv ]; then
+            echo "[debug] FRED curl: empty/missing, retrying once after 5s"
+            sleep 5
+            curl -sL --max-time 30 -A "$UA" -w "[debug] FRED curl retry: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || echo "[debug] FRED curl retry: command failed (exit $?)"
+          fi
+          echo "[debug] rate_fred.csv: $([ -f rate_fred.csv ] && wc -c < rate_fred.csv || echo 0) bytes"
+          echo "=== FRED response (first 200 chars) ==="
+          head -c 200 rate_fred.csv 2>/dev/null || echo "(missing)"
+          echo
           node -e '
             const fs=require("fs");
             const today=new Date();
@@ -2777,7 +2789,7 @@ jobs:
             // 1) Aktueller Referenzzins (EFFR, FRED, taeglich).
             let Rcurrent=null;
             try{
-              const csv=fs.readFileSync("rate_fred.csv","utf8").trim().split("\n");
+              const csv=fs.readFileSync("rate_fred.csv","utf8").trim().split(/\r?\n/);
               for(let i=csv.length-1;i>=1;i--){
                 const parts=csv[i].split(",");
                 const v=Number(parts[1]);
