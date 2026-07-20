@@ -1379,3 +1379,32 @@ sondern ein durch den scoreHist-Fix selbst eingefuehrter Bug**:
   zweiten `save()`-Aufruf gar nicht auffaellt - Playwright-Verifikation mit
   tatsaechlichem Boot-Timing (nicht nur isolierten Funktionsaufrufen) ist
   hier der einzige zuverlaessige Test.
+
+### Set-ups-FX-Filter jetzt exklusiv zu den Waehrungs-Chips (Nutzer-Wunsch 2026-07-20)
+
+`toggleSetupCcy(c)`/`toggleSetupFxOnly()` (≈ Zeile 6555): liefen bisher als
+UND-Verknuepfung nebeneinander (beide gleichzeitig aktivierbar). Jetzt
+gegenseitig exklusiv - Aktivieren eines Waehrungs-Chips leert
+`setupFxOnly`, Aktivieren von "FX" leert `setupCcyFilter` (auch "All"/
+`clearSetupCcy()` raeumt beides). Die bestehende Filter-Logik in
+`renderPairs()` (UND-verknuepfte Filter-Kette) musste dafuer nicht
+geaendert werden, da jetzt ohnehin nie beide gleichzeitig aktiv sind.
+
+### Quick-Note-Textfeld warf beim Tippen aus dem Feld (Bugreport 2026-07-20)
+
+`renderDetail()` baut `#detail` bei JEDEM Aufruf komplett per `innerHTML=`
+neu - u.a. das Quick-Note-`<textarea>`. Ausgeloest wird `renderDetail()`
+aber nicht nur durch Nutzer-Aktionen, sondern auch durch Hintergrund-
+Vorgaenge, die waehrend des Tippens laufen koennen (periodischer Feed-Poll,
+Cloud-Pull, `bootFetchScoreFeeds()` usw. rufen `rerender()`/`renderDetail()`
+unabhaengig vom aktuellen Fokus auf) - das ersetzt die aktive Textarea durch
+einen neuen DOM-Knoten und der Browser wirft den Fokus/die Cursor-Position
+weg, mitten im Tippen. Fix: `renderDetail()` merkt sich vor dem Rebuild, ob
+`document.activeElement` das `.quick-note`-Feld ist (inkl.
+`selectionStart`/`selectionEnd`), und stellt Fokus + Cursor-Position nach
+dem Rebuild auf dem NEUEN Textarea-Element wieder her - selbes Muster wie
+die `#pgDash.scrollTop`-Rettung beim Risk-Sentiment-Regler (oben
+dokumentiert). **Bei kuenftigen "Feld wirft beim Tippen raus"-Bugs**: prüfen,
+ob die umgebende Render-Funktion das Feld per `innerHTML=`-Rebuild ersetzt,
+und denselben Capture-vor-Rebuild/Restore-danach-Ansatz anwenden statt das
+Feld aus dem Rebuild komplett herauszulösen (waere ein groesserer Umbau).

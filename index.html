@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-SCOREHIST-SAVE-REGRESSION-152</span><span id="verBannerText"> (Kritischer Bugfix eines Regressions-Bugs vom selben Tag: der scoreHist-Sync-Fix hatte recordScoreHist() dazu gebracht, fxpro_updated zu bumpen OHNE die In-Memory-Variable _lsUpdatedSeen mitzuziehen - dadurch loeste JEDER folgende save() faelschlich den Multi-Tab-Schutz aus (haelt eine ANDERE Tab/Geraet fuer die Quelle der Aenderung) und verwarf die frisch korrigierten Live-Feed-Daten wieder (adoptExternalState() lud den ALTEN, noch unkorrigierten localStorage-Stand zurueck) - das war die eigentliche Ursache des gemeldeten "Score bleibt auf altem Wert stehen"-Bugs, nicht die Feed-Logik selbst. Ausserdem: die vier score-treibenden Live-Feeds (Ind/Bond/COT/Sentiment) werden jetzt beim Laden gebuendelt verarbeitet (ein gemeinsamer Recompute/Save/Render-Zyklus statt vier gestaffelter) - weniger sichtbare Sprünge beim Oeffnen der Seite)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SETUPS-QUICKNOTE-FIX-153</span><span id="verBannerText"> (Zwei UI-Fixes: (1) Set-ups-Tab - der "FX"-Quick-Filter und die Waehrungs-Chips liefen bisher als UND-Verknuepfung nebeneinander, jetzt schliessen sie sich gegenseitig aus (Klick auf einen Chip deaktiviert FX, Klick auf FX leert die Chips). (2) Quick-Note-Textfeld auf der Asset-Detailseite warf beim Tippen staendig aus dem Feld - ein Hintergrund-Rerender (periodischer Feed-Poll/Cloud-Sync ruft renderDetail() unabhaengig vom Tippen auf) baute #detail komplett neu und zerstoerte damit die aktive Textarea. Fokus + Cursor-Position werden jetzt ueber den Rebuild gerettet (gleiches Muster wie die #pgDash.scrollTop-Rettung beim Risk-Regler))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5469,6 +5469,19 @@ function renderSidebar(){
 // ══ DETAIL ═════════════════════════════════════════════════════════
 function renderDetail(){
   const c=getSym();if(!c)return;
+  // Quick-Note-Fokus ueber den Rebuild retten (Bugreport 2026-07-20: Tippen
+  // im Quick-Note-Feld warf staendig raus) - renderDetail() baut #detail
+  // komplett per innerHTML neu, u.a. ausgeloest von Hintergrund-Vorgaengen
+  // waehrend der Nutzer noch tippt (periodischer Feed-Poll, Cloud-Pull,
+  // bootFetchScoreFeeds usw. rufen rerender()/renderDetail() unabhaengig
+  // vom Tippen auf) - das zerstoert die aktive Textarea und der Fokus geht
+  // verloren. Gleiches Muster wie die #pgDash.scrollTop-Rettung beim
+  // Risk-Sentiment-Regler (oben dokumentiert): Zustand vor dem Rebuild
+  // merken, danach wiederherstellen.
+  const detailEl=document.getElementById('detail');
+  const qnActive=document.activeElement;
+  const qnFocused=!!(qnActive&&qnActive.classList&&qnActive.classList.contains('quick-note')&&detailEl&&detailEl.contains(qnActive));
+  const qnSelStart=qnFocused?qnActive.selectionStart:null,qnSelEnd=qnFocused?qnActive.selectionEnd:null;
   const bull=c.genBull||[],bear=c.genBear||[];
   // Nur Einträge mit tatsächlichem Bias zählen - ein einzelner Eintrag, der
   // per Toggle auf "neutral" (0) gesetzt wurde, soll die Bullish/Bearish-
@@ -5506,6 +5519,10 @@ function renderDetail(){
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
+  if(qnFocused){
+    const qn=detailEl.querySelector('.quick-note');
+    if(qn){qn.focus();try{qn.setSelectionRange(qnSelStart,qnSelEnd);}catch(e){}}
+  }
   attachChartHovers(document.getElementById('detail'));
   animChanges();
   updateStat();
@@ -6554,14 +6571,28 @@ function confirmAddPair(){
 // Persistiert eigenständig im localStorage.
 let setupCcyFilter=(()=>{try{const a=JSON.parse(localStorage.getItem('fxpro_setup_ccy')||'[]');return Array.isArray(a)?a.filter(c=>FX.includes(c)):[];}catch(e){return[];}})();
 function saveSetupCcy(){localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}
-function toggleSetupCcy(c){const i=setupCcyFilter.indexOf(c);if(i>=0)setupCcyFilter.splice(i,1);else setupCcyFilter.push(c);saveSetupCcy();renderPairs();}
-function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();renderPairs();}
+// Waehrungs-Chips und der "FX"-Quick-Filter schliessen sich gegenseitig aus
+// (Nutzer-Wunsch 2026-07-20: vorher liefen beide als UND-Verknuepfung
+// nebeneinander, was verwirrend war) - Klick auf einen Waehrungs-Chip
+// deaktiviert "FX", Klick auf "FX" leert die Waehrungs-Chips.
+function toggleSetupCcy(c){
+  const i=setupCcyFilter.indexOf(c);
+  if(i>=0)setupCcyFilter.splice(i,1);
+  else{setupCcyFilter.push(c);if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}}
+  saveSetupCcy();renderPairs();
+}
+function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}renderPairs();}
 // Nutzer-Wunsch 2026-07-17: eigener Quick-Filter "FX" neben "All" - blendet
 // Non-FX-Assets (Gold, Oel, BTC, Indizes, Einzelaktien) UND Kreuz-Paare mit
 // einem Non-FX-Bein (z.B. XAU/USD) aus, zeigt nur reine Waehrungspaare.
-// Kombinierbar mit den Waehrungs-Chips (UND-Verknuepfung, siehe renderPairs).
+// Schliesst sich mit den Waehrungs-Chips gegenseitig aus (siehe oben).
 let setupFxOnly=localStorage.getItem('fxpro_setup_fxonly')==='1';
-function toggleSetupFxOnly(){setupFxOnly=!setupFxOnly;localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');renderPairs();}
+function toggleSetupFxOnly(){
+  setupFxOnly=!setupFxOnly;
+  localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');
+  if(setupFxOnly&&setupCcyFilter.length){setupCcyFilter=[];saveSetupCcy();}
+  renderPairs();
+}
 function isPureFxPair(name){const p=(name||'').split('/');return p.length===2&&FX.includes(p[0])&&FX.includes(p[1]);}
 // Enthält ein Paar(name) eine der gewählten Währungen (als Basis ODER Kurs)?
 function pairHasCcy(name,ccys){const parts=(name||'').split('/').map(s=>s.trim().toUpperCase());return ccys.some(c=>parts.includes(c));}
