@@ -2718,6 +2718,138 @@ jobs:
             main().catch(e=>{console.log("[debug] score_hist: error "+e.message);});
           '
 
+      # ── FED-ZINS-WAHRSCHEINLICHKEITEN (rate_probabilities.json) ────────
+      # Nutzer-Wunsch 2026-07-20: CME-FedWatch-aehnliche Anzeige ("Rate
+      # Probabilities", Insights-Tab), aber das offizielle CME-Tool/API ist
+      # kostenpflichtig (~25 $+/Monat) - nach dem Grundsatz oben ("ein
+      # kostenloses Konto ist kein Abbruchgrund, eine BEZAHLTE Stufe schon")
+      # daher eine freie Eigenberechnung nach CMEs eigener, oeffentlich
+      # dokumentierter Methodik: 30-Day Fed Funds Futures (Ticker ZQ, CBOT)
+      # geben je Kalendermonat den durchschnittlichen Tages-Zinssatz an
+      # (100-Future-Preis). Faellt eine FOMC-Sitzung MITTEN in einen Monat,
+      # lässt sich daraus tageszahl-gewichtet der Zins NACH der Sitzung
+      # herausrechnen (R_avg = Anteil_vorher*R_vorher + Anteil_nachher*
+      # R_nachher, nach R_nachher aufgeloest) - Kette wird Sitzung fuer
+      # Sitzung fortgesetzt (R_nachher einer Sitzung wird zu R_vorher der
+      # naechsten). Als Startwert (R_vorher der ersten anstehenden Sitzung)
+      # dient der aktuelle Effective Federal Funds Rate (EFFR) von FRED
+      # (frei, kein Key, taeglich - derselbe Referenzzins, gegen den ZQ
+      # selbst abrechnet). Vereinfachung ggue. dem bezahlten CME-Tool: nur
+      # 2 Nachbar-Stufen (naechst-tiefere/-hoehere 25bp-Stufe) interpoliert,
+      # keine optionen-implizite Verteilung ueber mehr als 2 Ausgaenge - das
+      # ist mit oeffentlich freien Futures-Daten allein nicht replizierbar
+      # (im Client dokumentiert). Historie: taeglich EIN Snapshot ergaenzt
+      # (wie bond_data/price_data/score_hist) - ein rueckwirkender 1-Jahres-
+      # Backfill war NICHT moeglich (CME-API bezahlt, Investing.com-
+      # Einzelkontrakt-Seiten blockten jeden Zugriffsversuch per Cloudflare,
+      # abgelaufene Alt-Kontrakte liefern bei TradingView keine verlaesslichen
+      # historischen Settlement-Preise) - waechst deshalb wie mehrere andere
+      # Feeds in dieser App ab jetzt einen Punkt pro Tag (siehe CLAUDE.md).
+      - name: Fetch Fed rate probabilities (FRED + CME-style ZQ futures) -> rate_probabilities.json
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL -A "$UA" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR" -o rate_fred.csv || true
+          echo "[debug] rate_fred.csv: $(wc -c < rate_fred.csv 2>/dev/null || echo 0) bytes"
+          node -e '
+            const fs=require("fs");
+            const today=new Date();
+            const CODE=["","F","G","H","J","K","M","N","Q","U","V","X","Z"];
+            const tickers=[];
+            for(let i=0;i<14;i++){
+              const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+              tickers.push("CBOT:ZQ"+CODE[d.getMonth()+1]+d.getFullYear());
+            }
+            fs.writeFileSync("rate_tv_tickers.json",JSON.stringify(tickers));
+          '
+          TICKERS=$(node -e 'console.log(JSON.stringify(JSON.parse(require("fs").readFileSync("rate_tv_tickers.json","utf8"))))')
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data "{\"symbols\":{\"tickers\":${TICKERS},\"query\":{\"types\":[]}},\"columns\":[\"close\"]}" \
+            "https://scanner.tradingview.com/global/scan" -o rate_tv.json || true
+          echo "=== TradingView ZQ scanner response (first 500 chars) ==="
+          head -c 500 rate_tv.json 2>/dev/null || echo "(missing)"
+          echo
+          node -e '
+            const fs=require("fs");
+            const today=new Date().toISOString().slice(0,10);
+            const round2=v=>Math.round(v*100)/100;
+
+            // 1) Aktueller Referenzzins (EFFR, FRED, taeglich).
+            let Rcurrent=null;
+            try{
+              const csv=fs.readFileSync("rate_fred.csv","utf8").trim().split("\n");
+              for(let i=csv.length-1;i>=1;i--){
+                const parts=csv[i].split(",");
+                const v=Number(parts[1]);
+                if(parts.length>=2&&isFinite(v)){Rcurrent=v;break;}
+              }
+            }catch(e){}
+            if(Rcurrent==null){console.log("rate_probabilities: EFFR unreadable from FRED, skipping (keeping existing file)");process.exit(0);}
+
+            // 2) ZQ-Futures-Kurve (ein Kontrakt je Kalendermonat, 14 Monate voraus).
+            let tvResp;
+            try{tvResp=JSON.parse(fs.readFileSync("rate_tv.json","utf8"));}catch(e){console.log("rate_probabilities: TradingView response unreadable, skipping");process.exit(0);}
+            const rows=tvResp&&Array.isArray(tvResp.data)?tvResp.data:null;
+            if(!rows||!rows.length){console.log("rate_probabilities: no ZQ contract data from TradingView (ticker format likely wrong - check ZQ scanner response above), skipping");process.exit(0);}
+            const monthlyRate={};let okN=0;const miss=[];
+            rows.forEach(r=>{
+              const m=/^CBOT:ZQ([A-Z])(\d{4})$/.exec(r.s);
+              const v=r.d&&r.d[0];
+              if(!m||v==null||!isFinite(Number(v))){miss.push(r.s);return;}
+              const CODE=["F","G","H","J","K","M","N","Q","U","V","X","Z"];
+              const mo=CODE.indexOf(m[1])+1;if(mo<1)return;
+              monthlyRate[m[2]+"-"+String(mo).padStart(2,"0")]=100-Number(v);
+              okN++;
+            });
+            if(!okN){console.log("rate_probabilities: 0 usable ZQ contracts (all missed: "+miss.join(", ")+"), skipping");process.exit(0);}
+
+            // 3) FOMC-Sitzungstermine (offiziell bestaetigt via federalreserve.gov,
+            //    Entscheidungstag = 2. Tag der Sitzung). 2027-Termine noch nicht
+            //    veroeffentlicht - sobald verfuegbar hier ergaenzen.
+            const MEETINGS=[
+              ["2025-01-29","Jan 28-29, 2025"],["2025-03-19","Mar 18-19, 2025"],
+              ["2025-05-07","May 6-7, 2025"],["2025-06-18","Jun 17-18, 2025"],
+              ["2025-07-30","Jul 29-30, 2025"],["2025-09-17","Sep 16-17, 2025"],
+              ["2025-10-29","Oct 28-29, 2025"],["2025-12-10","Dec 9-10, 2025"],
+              ["2026-01-28","Jan 27-28, 2026"],["2026-03-18","Mar 17-18, 2026"],
+              ["2026-04-29","Apr 28-29, 2026"],["2026-06-17","Jun 16-17, 2026"],
+              ["2026-07-29","Jul 28-29, 2026"],["2026-09-16","Sep 15-16, 2026"],
+              ["2026-10-28","Oct 27-28, 2026"],["2026-12-09","Dec 8-9, 2026"]
+            ];
+
+            // 4) Sitzung fuer Sitzung verketten: R_nachher einer Sitzung wird
+            //    zu R_vorher der naechsten (tageszahl-gewichtete CME-Formel).
+            let Rprev=Rcurrent;
+            const meetings=[];
+            MEETINGS.filter(([d])=>d>=today).forEach(([date,label])=>{
+              const [y,mo,day]=date.split("-").map(Number);
+              const monthKey=y+"-"+String(mo).padStart(2,"0");
+              const contractRate=monthlyRate[monthKey];
+              if(contractRate==null){meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:null,deltaBp:null});return;}
+              const daysInMonth=new Date(y,mo,0).getDate();
+              const before=day,after=daysInMonth-before;
+              const Rafter=after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after;
+              const deltaBp=Math.round((Rafter-Rprev)*100);
+              meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:round2(Rafter),deltaBp});
+              Rprev=Rafter;
+            });
+
+            // 5) Datei schreiben + taeglichen Historien-Punkt ergaenzen (ein
+            //    Eintrag pro Kalendertag, wie bond_data/price_data/score_hist).
+            let out={history:[]};
+            try{const d=JSON.parse(fs.readFileSync("rate_probabilities.json","utf8"));if(d&&typeof d==="object")out=d;}catch(e){}
+            out.asOf=today;
+            out.currentRate=round2(Rcurrent);
+            out.meetings=meetings;
+            out.history=Array.isArray(out.history)?out.history.filter(e=>e&&e[0]!==today):[];
+            out.history.push([today,round2(Rcurrent),meetings.filter(m=>m.deltaBp!=null).map(m=>[m.date,m.deltaBp])]);
+            out.history.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+            if(out.history.length>400)out.history.splice(0,out.history.length-400);
+            fs.writeFileSync("rate_probabilities.json",JSON.stringify(out,null,1));
+            console.log("rate_probabilities.json: EFFR="+Rcurrent+"%, "+okN+" ZQ contracts read"+(miss.length?" [no data: "+miss.join(", ")+"]":"")+", "+meetings.length+" upcoming meetings, history="+out.history.length+" days");
+          '
+          rm -f rate_fred.csv rate_tv.json rate_tv_tickers.json
+
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
 
@@ -2732,6 +2864,7 @@ jobs:
           [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json
+          [ -f rate_probabilities.json ] && git add rate_probabilities.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             # Retry mit Rebase bei Push-Kollision (Nutzer-Wunsch 2026-07-13:

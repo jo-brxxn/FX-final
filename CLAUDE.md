@@ -1702,3 +1702,99 @@ Aenderung" gemeldet, weil die eigentliche Aenderung ganz woanders lag):
   (`JSON.stringify`-Rekursion ueber alle Felder) deckte `trendBias` als
   zweiten, uebersehenen Ueberschreiber auf. Bei aehnlichen kuenftigen
   Bugs diese Technik zuerst einsetzen, statt einzelne Felder zu raten.
+
+### Neuer Insights-Tab "Rate Probabilities" (Nutzer-Wunsch 2026-07-20)
+
+Nutzer fragte, ob Zugriff auf das CME-FedWatch-Tool besteht (Fed-Zins-
+Wahrscheinlichkeiten je FOMC-Sitzung) und ob sich das dokumentieren +
+mit Historie versehen liesse. Recherche: die offizielle CME-FedWatch-API
+ist **kostenpflichtig** (~25 $+/Monat, CME Global Account Management) -
+das ist nach dem oben dokumentierten Grundsatz ("ein kostenloses Konto ist
+KEIN Abbruchgrund, eine BEZAHLTE Stufe schon") ein legitimer Grund, eine
+freie Eigenberechnung zu bauen statt die Quelle zu nutzen. Nutzer bestaetigt
+("Ja mach das und mach das in insights und nenn es Rate probabilities"),
+plus explizite Frage nach 1 Jahr Historie.
+
+- **Methodik (frei nachgebaut, CMEs eigene oeffentlich dokumentierte
+  Formel):** 30-Day Fed Funds Futures (Ticker `ZQ`, CBOT) geben je
+  Kalendermonat den durchschnittlichen taeglichen Zinssatz an (`100 -
+  Future-Preis`). Faellt eine FOMC-Sitzung mitten in einen Monat, laesst
+  sich daraus tageszahl-gewichtet der Zins NACH der Sitzung herausrechnen:
+  `R_avg = (Tage_vorher/Tage_gesamt)*R_vorher + (Tage_nachher/Tage_gesamt)*
+  R_nachher`, nach `R_nachher` aufgeloest. Die Sitzungen werden verkettet
+  (`R_nachher` einer Sitzung wird zu `R_vorher` der naechsten). Startwert:
+  der aktuelle Effective Federal Funds Rate (EFFR) von FRED (frei, kein
+  Key, taeglich, `fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR` - genau
+  der Referenzzins, gegen den ZQ selbst abrechnet).
+- **Vereinfachung ggue. dem bezahlten CME-Tool:** nur die zwei
+  benachbarten 25bp-Stufen werden linear interpoliert (`probsFromDelta()`,
+  in `index.html` UND im Workflow identisch implementiert - DRY-Verstoss
+  bewusst in Kauf genommen, da eine gemeinsame Datei fuer beide Laufzeiten
+  hier nicht existiert, aber im Info-Text/Kommentar aufeinander verwiesen).
+  Keine optionen-implizite Verteilung ueber mehr als 2 Ausgaenge (z.B.
+  50bp-Ausreisser-Wahrscheinlichkeit) - dafuer fehlt eine freie
+  Optionsdaten-Quelle. Im "i"-Info-Text (`SENT_INFO.rateprob`) fuer den
+  Nutzer transparent gemacht, keine stille Abweichung.
+- **Farbkonvention bewusst wie beim Rest der App:** Hike=`BC.bull`
+  (deckt sich mit "CB Tone"/"Next CB Move": bullish=hawkish), Cut=`BC.bear`
+  (dovish), Hold=`BC.neu` - keine neue Farbsprache eingefuehrt.
+- **Neuer Workflow-Schritt** "Fetch Fed rate probabilities (FRED + CME-
+  style ZQ futures)" in `update-ff-calendar.yml` (nach dem COT-3y%ile-
+  Schritt, vor "Cleanup temp files"): holt EFFR (FRED-CSV) + die ZQ-Kurve
+  (TradingView-Scanner, Ticker-Format `CBOT:ZQ<Monatscode><4-stelliges
+  Jahr>`, z.B. `CBOT:ZQN2026` fuer Juli 2026 - **ungetestet, da diese
+  Sandbox keinen direkten Netzwerkzugriff auf TradingView hat** (curl-Test
+  schlug mit Verbindungsfehler fehl); muss nach dem ersten
+  `workflow_dispatch`-Lauf per Job-Log verifiziert werden, ob TradingView
+  dieses Format akzeptiert - bei Fehlschlag zeigt die Debug-Zeile
+  "no ZQ contract data from TradingView" im Log, dann Ticker-Format
+  anpassen, exakt das etablierte iterative Vorgehen wie bei den Bond-Yield-
+  Backfills). 14 Monatskontrakte vorausschauend (deckt alle konfirmierten
+  FOMC-Termine + 1 Puffermonat ab). FOMC-Termine sind fest im Skript
+  hinterlegt (offiziell bestaetigt via federalreserve.gov, nur 2025+2026 -
+  **2027-Termine folgen, sobald die Fed sie veroeffentlicht**, dann hier
+  ergaenzen). `continue-on-error:true`, degradiert sauber ohne Daten.
+- **1-Jahres-Historie-Backfill NICHT moeglich, transparent dokumentiert
+  statt stillschweigend uebergangen:** drei gepruefte Wege scheiterten -
+  (1) CMEs offizielle API ist bezahlt (s.o.). (2) Investing.com fuehrt
+  historische Einzelkontrakt-Seiten (potenziell die volle Kurve), aber
+  WebFetch auf die Kontrakt-Listing-Seite lieferte durchgehend HTTP 403
+  (Cloudflare-Block, deckt sich mit dem bereits an anderer Stelle
+  dokumentierten "Investing.com blockt intermittierend"-Befund) - die
+  fuer den AJAX-Zugriff noetigen Kontrakt-IDs liessen sich dadurch nicht
+  ermitteln. (3) Yahoo Finance `ZQ=F` liefert zwar freie historische
+  Tagesdaten, aber nur als KONTINUIERLICHER Frontmonat-Kontrakt (eine
+  Serie, kein Mehrfach-Kontrakt-Kalender) - fuer die vollstaendige
+  Mehr-Sitzungen-Entflechtung (jede Sitzung braucht ihren EIGENEN
+  Kalendermonat-Kontrakt) strukturell unzureichend, und eine vereinfachte
+  Frontmonat-Naeherung waere genau die Art von Zwischenwert-Schaetzung, die
+  der Grundsatz oben ("nie Schaetzungen oder veraltend-manuelle Werte")
+  ausschliesst. Entscheidung: **wie bei mehreren anderen Feeds in dieser
+  App** (Put/Call pro Asset, Seasonality vor dem Stooq-Fund, etc.) waechst
+  die Historie ab jetzt echt/unverfaelscht **einen Punkt pro Tag** -
+  `rate_probabilities.json.history` (Cap 400 Eintraege, ≈13 Monate). Dem
+  Nutzer im finalen Antworttext ehrlich kommuniziert statt als "erledigt"
+  hingestellt.
+- **Client:** neuer Insights-Tab "Rate Probabilities" (`renderRateProb()`,
+  ≈ Zeile 10921 direkt nach der Seasonality-Sektion) - Karte mit aktuellem
+  EFFR, je eine Karte pro anstehender FOMC-Sitzung mit Wahrscheinlichkeits-
+  Balken (`rateProbBarHtml()`), plus History-Chart fuer eine per Dropdown
+  waehlbare Sitzung (`rateProbHistChart()`, nutzt den bestehenden
+  `TIME_RANGES`/`timeRangeBarHtml()`/`filterDatesByRange()`-Filter aus dem
+  CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine muessen einheitlich
+  sein" - kein neuer eigener Zeitraum-Filter gebaut). In `TABS`/
+  `TAB_ORDER`/`PAGE_IDS` eingehaengt, `loadTabStacks()`-Migration reiht ihn
+  bei Bestandsnutzern direkt nach "Data" in den Insights-Stapel ein (analog
+  zum bereits etablierten Muster fuer Sentiment/Seasonality/Data). Rein
+  display-only, kein Score-Einfluss, kein `snap()`/Cloud-Sync-Feld noetig
+  (nur Lesezustand `rateProbSel`/`rateProbRange` bleiben bewusst lokal wie
+  andere reine Chart-Auswahl-States z.B. `dataAsset`/`seasAsset`).
+- Per Playwright verifiziert (synthetische `RATE_PROB_DATA` injiziert,
+  da `rate_probabilities.json` erst nach dem ersten Workflow-Lauf real
+  existiert): Karten, Wahrscheinlichkeits-Balken, Meeting-Dropdown und
+  History-Chart rendern korrekt und fehlerfrei; voller 14-Tab-
+  Regressionstest weiterhin sauber. Die eigentliche Live-Berechnung
+  (TradingView-Ticker-Format, FRED-Erreichbarkeit) ist NICHT von dieser
+  Sandbox aus testbar - Verifikation erst nach Push per
+  `workflow_dispatch` + Job-Log (wie bei jeder neuen Datenquelle in
+  diesem Projekt ueblich).
