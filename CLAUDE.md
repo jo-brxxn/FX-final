@@ -1505,3 +1505,58 @@ dokumentiert). **Bei kuenftigen "Feld wirft beim Tippen raus"-Bugs**: prüfen,
 ob die umgebende Render-Funktion das Feld per `innerHTML=`-Rebuild ersetzt,
 und denselben Capture-vor-Rebuild/Restore-danach-Ansatz anwenden statt das
 Feld aus dem Rebuild komplett herauszulösen (waere ein groesserer Umbau).
+
+### 3-Agenten-Audit: stimmen Indikator-Verlaufschart und Karten-Werte ueberein? (Nutzer-Wunsch 2026-07-20)
+
+Nutzer bat um einen Audit "bei jedem Indikator, wenn man ihn ausklappt: was
+steht im Chart, passt das zu den Werten direkt am Indikator, gibt es
+ueberhaupt Werte im Chart" - drei parallele Agenten (Playwright/lokaler
+Server, je eigener Port), aufgeteilt in 3x ~5 Assets (alle 14 Assets/
+~250 Indikatoren insgesamt: USD/EUR/GBP/CHF/JPY, CAD/AUD/NZD/BTC/GOLD,
+SILVER/OIL/SP500/NAS/DAX), jeder Agent rein lesend (keine Datei-Aenderungen
+parallel, um Kollisionen auf derselben `index.html` zu vermeiden) - Befunde
+danach zentral gesichtet und EIN Fix angewendet.
+
+**Ergebnis: genau EIN echter Bug** unter ~250 geprueften Indikatoren:
+**CAD "GDP Growth QoQ q/q"** - Karte zeigte Forecast 0.1%, Chart (letzter
+Punkt) zeigte GAR KEINEN Forecast, obwohl Datum+Actual uebereinstimmten.
+
+- **Ursache:** `applyIndDataFeed()` hat schon LANGE eine Faellback-Logik
+  (Zeile ~7395-7398, Kommentar "Liefert der Live-Feed KEINEN Forecast..."):
+  liefert der rohe Feed fuer ein Release keinen Forecast, wird der
+  kuratierte Research-Forecast als Fallback uebernommen (wenn Datum
+  ≤4 Tage auseinander) - dieser angereicherte Wert (`nf`) landet in
+  `ind.research.forecast`, also auf der Karte. `adoptChartHist(ind,f)`
+  (Zeile 3354) baute den Chart-Verlauf aber komplett SEPARAT aus
+  `f.historyFull` (dem rohen, unangereicherten Feed-Verlauf) - kannte den
+  kuratierten Fallback also gar nicht und zeigte fuer denselben Release
+  weiterhin `forecast:null`.
+- **Fix:** `adoptChartHist(ind,f,curatedForecast)` bekommt den bereits
+  berechneten `nf`-Wert als drittes Argument mitgegeben (Call-Site in
+  `applyIndDataFeed()` unveraendert an derselben Stelle, nur der Parameter
+  ergaenzt) und gleicht NUR den LETZTEN Chart-Punkt an, falls dessen Datum
+  exakt dem aktuellen Release (`f.date`) entspricht UND der rohe Forecast
+  dort `null` ist UND ein kuratierter Fallback existiert - historische
+  Punkte (die schon einen eigenen, damals kuratierten Fallback in
+  `ind.research` hatten, aber nie rueckwirkend in `chartHist` einflossen)
+  bleiben bewusst unangetastet, das waere ein grösserer, hier nicht
+  gerechtfertigter Umbau (`historyFull` selbst wird server-seitig vom
+  Workflow erzeugt, nicht hier).
+- Per Playwright verifiziert: CAD "GDP Growth QoQ q/q" zeigt jetzt am
+  letzten Chart-Punkt `forecast:"0.1%"`, identisch zur Karte.
+
+**Alle "kein Chart"-Faelle strukturell erklaerbar, kein Bug:**
+`adoptChartHist()`/`chartHist` wird AUSSCHLIESSLICH innerhalb von
+`applyIndDataFeed()` befuellt - drei ganz andere Live-Update-Pfade
+(`applyBondDataFeed()`/`ind.research.bond`, `applyCotDataFeed()`/
+`ind.research.cot`, `applySentimentFeed()`/Chart-only wie VIX oder Crypto
+Fear&Greed) sowie rein manuelle/qualitative Felder (CB Tone, Next CB Move,
+Risk Correlation, Geopolitics, 2Y/10Y Spread) ruehren `chartHist` nie an -
+identisch zum bereits dokumentierten Dreiwege-Bias-Modell (PPI-/Bond-
+History-Fixes vom 2026-07-16/17 oben). Zusaetzlich: bei einigen kleineren
+FX-Majors (v.a. AUD/CAD/NZD: Manufacturing/Services PMI, Avg Hourly
+Earnings, teils Core CPI/PPI) fehlt der Live-Feed-Key in `ind_data.json`
+grundsaetzlich noch (bekannte, bereits an mehreren Stellen oben
+dokumentierte Feed-Abdeckungsluecke, kein neuer Befund) - betroffene
+Karten zeigen dann weiterhin nur die statische Erstbefuellung
+(`IND_RESEARCH_DATA`) ohne "feed:true" und folgerichtig auch ohne Chart.

@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-FILTERSYNC-155</span><span id="verBannerText"> (Audit-Agent fand drei weitere localStorage-only-Filter derselben Bug-Klasse wie scoreHist: Set-ups-Waehrungsfilter/FX-Quick-Filter (setupCcyFilter/setupFxOnly), Kalender-Filter (calHighOnly/calCcyFilter), Compare-Tab-Spaltenauswahl (cmpCols) - alle jetzt in cloudPush/cloudPull/exportData/importData eingebunden. Ausserdem: exportData() nutzt jetzt snap() als Basis statt einer manuell gepflegten Feldliste (die hatte rubOrder/riskEnvLevel/riskEnvCfg/riskEnvLists u.a. vergessen - gingen bei manuellem Export/Import stillschweigend verloren, obwohl der automatische Cloud-Sync sie laengst korrekt mitnahm))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-CHARTFORECAST-156</span><span id="verBannerText"> (Bugfix nach 3-Agenten-Audit ueber alle 14 Assets/~250 Indikatoren: adoptChartHist() baute den Indikator-Verlaufschart bisher NUR aus dem rohen Feed-historyFull, das fuer manche Releases (z.B. CAD "GDP Growth QoQ q/q") keinen Forecast fuehrt - obwohl applyIndDataFeed() fuer genau denselben Release laengst einen kuratierten Fallback-Forecast gefunden und auf der Karte selbst angezeigt hatte. Chart und Karte liefen dadurch fuer den letzten Punkt auseinander (Karte zeigte einen Forecast, Chart keinen). adoptChartHist() bekommt den kuratierten Forecast jetzt mitgegeben und gleicht damit nur den LETZTEN Punkt an, falls der rohe Wert dort fehlt. Audit-Ergebnis sonst: von ~250 geprueften Indikatoren war das der einzige echte Mismatch - alle anderen "kein Chart"-Faelle sind strukturell erwartet (Bonds/COT/Sentiment/manuelle Felder befuellen chartHist nie) oder bekannte Feed-Abdeckungsluecken)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -3351,10 +3351,20 @@ function adoptFeedHistory(ind,f){
 // Jahre, akkumuliert vom Workflow ueber viele Laeufe) als ind.chartHist -
 // komplett GETRENNT von ind.valHist (4-Punkte-Trend-Array, unveraendert).
 // Forecast kann pro Punkt null sein (nicht jedes Release hat einen).
-function adoptChartHist(ind,f){
+function adoptChartHist(ind,f,curatedForecast){
   if(!f||!Array.isArray(f.historyFull)||!f.historyFull.length)return false;
   const pts=f.historyFull.map(h=>[String((h&&h[0])||'').slice(0,10),parseNumLike(h&&h[1]),h&&h[2]!=null?parseNumLike(h[2]):null]).filter(p=>p[1]!=null);
   if(!pts.length)return false;
+  // Bugreport 2026-07-20 (Audit-Agent, CAD "GDP Growth QoQ q/q"): liefert
+  // der rohe Feed fuer GENAU das aktuelle Release keinen Forecast, aber
+  // applyIndDataFeed() hat via indResearchEntry() einen kuratierten
+  // Fallback-Forecast gefunden (der auf der Karte selbst in
+  // ind.research.forecast landet) - dann denselben Fallback auch auf den
+  // letzten Chart-Punkt anwenden, sonst zeigt die Karte einen Forecast, den
+  // der Chart nicht hat (raw historyFull kennt den kuratierten Fallback
+  // nicht, der wird erst weiter unten in applyIndDataFeed() berechnet).
+  const last=pts[pts.length-1];
+  if(last&&last[0]===f.date&&last[2]==null&&curatedForecast!=null)last[2]=curatedForecast;
   if(JSON.stringify(ind.chartHist||[])===JSON.stringify(pts))return false;
   ind.chartHist=pts;
   return true;
@@ -7412,7 +7422,7 @@ function applyIndDataFeed(){
         // Verlaufschart-Historie unabhaengig von fx/non-fx (non-FX-Assets
         // zeigen dieselbe gespiegelte Makro-Karte wie ihre verbundene
         // Waehrung, siehe macroCcyFor - der Chart soll dort genauso stehen).
-        if(adoptChartHist(ind,f))changed=true;
+        if(adoptChartHist(ind,f,nf))changed=true;
         // Bias-Selbstheilung (Nutzer-Bugreport 2026-07-19: "CB Consumer
         // Confidence" (Actual 91.2, klar unter Forecast 94.7 UND Previous
         // 93.1) zeigte trotzdem bullish an). Ursache: der "nichts geaendert"-
