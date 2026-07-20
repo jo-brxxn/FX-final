@@ -2421,3 +2421,46 @@ rauskam."
   funktioniert mit der zusaetzlichen Pille, "Today" zeigt jetzt dieselbe
   Verteilung wie das erste Meeting (flache Linie dazwischen). Voller
   Tab-Regressionstest weiterhin fehlerfrei.
+
+### Rate Probabilities: Vorzeichen-Fehler bei Meetings nahe Monatsende (Bugreport 2026-07-20, Nutzer-Vergleich mit dem echten CME-Tool)
+
+Nutzer verglich meine Sep-16-Zahlen (aus der App: -25bp 7,0% / Hold 45,9% /
++25bp 47,0%) mit dem echten CME-FedWatch-Tool fuer denselben Termin (Ease
+0,0% / No Change 36,3% / Hike 63,7%, Zielbaender 350-375: 36,3%, 375-400:
+54,4%, 400-425: 9,4%) und fragte "wie kann sich das unterscheiden?". Nach-
+rechnung zeigte: auch das JULI-Meeting (Basis fuer die Sept-Kette) war klar
+falsch - CME zeigt fuer Jul 29 83,4% Hold/16,6% Hike/0% Ease (impliziert
++4,15bp), meine App hatte live deltaBp=-4 fuer Juli - fast exakt dieselbe
+Magnitude, nur mit gedrehtem Vorzeichen. Das war kein Zufall.
+
+- **Ursache:** derselbe Verstaerkungs-Effekt, der schon einmal (siehe Eintrag
+  "Rate Probabilities: 5. Testlauf..." oben) fuer die Sitzungs-VERKETTUNG
+  gefixt wurde, trat hier INNERHALB des Juli-Meetings selbst auf: Jul 29 hat
+  von 31 Tagen im Monat nur 2 Tage "danach" (Jul 30-31) - die tageszahl-
+  gewichtete Formel teilt jede Ungenauigkeit im rohen Juli-Kontraktpreis
+  durch dieses winzige Fenster, Verstaerkungsfaktor 31/2=15,5x. Eine
+  Abweichung von nur ~0,5bp im rohen ZQ-Kontraktpreis (z.B. durch Timing
+  zwischen meinem stuendlichen Abruf und CMEs eigenem Snapshot, oder
+  normales Kursrauschen) reichte, um das Ergebnis von "leichte Hike-Erwartung"
+  auf "leichte Cut-Erwartung" zu drehen. Der vorherige Fix deckte nur die
+  KETTE zwischen Sitzungen ab (Rprev aus einem sauberen Zwischenmonat), nicht
+  diesen symmetrischen Fall INNERHALB einer einzelnen Sitzung nahe
+  Monatsende.
+- **Fix:** genau dasselbe Prinzip auf die andere Seite angewendet - existiert
+  der Kalendermonat DIREKT NACH dem Meeting (hier: August) und enthaelt
+  SELBST kein eigenes Meeting, ist sein Monats-Durchschnitt ein sauberer
+  DIREKTER Messwert fuer R_nachher (der Zins aendert sich zwischen der
+  Sitzung und dem naechsten Meeting nicht mehr) - wird jetzt bevorzugt
+  genutzt statt der verstaerkungsanfaelligen tageszahl-gewichteten Herleitung
+  aus dem eigenen (oft kurzen) "Danach"-Fenster.
+- Per Node-Testskript mit realistischen Werten verifiziert: der noisy
+  Juli-Eigenwert (3,6274, ergab live deltaBp=-4) wird durch den sauberen
+  August-Wert (3,6715) ersetzt, ergibt deltaBp=+4 - `probsFromDelta(4)`
+  liefert [84%,16%], praktisch identisch zu CMEs echten 83,4%/16,6%.
+- **Merksatz:** dieser Verstaerkungs-Effekt (kleine Kontraktpreis-Ungenauigkeit
+  wird durch ein kurzes Tage-Fenster geteilt und dadurch vervielfacht) kann an
+  ZWEI Stellen auftreten, die getrennt behandelt werden muessen - beim
+  Verketten zum NAECHSTEN Meeting (Rprev, zuerst gefixt) UND innerhalb der
+  Sitzung selbst, wenn ihr eigenes "Danach"-Fenster im Monat kurz ist (Rafter,
+  hier gefixt). Bei kuenftigen Aenderungen an dieser Formel immer beide
+  Richtungen pruefen, nicht nur eine.

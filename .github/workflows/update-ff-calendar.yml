@@ -2863,6 +2863,24 @@ jobs:
             //    keine Rechnung noetig) - wird bevorzugt genutzt statt der
             //    verketteten (fehleranfaelligen) Herleitung aus der vorherigen
             //    Sitzung, wann immer ein solcher sauberer Monat existiert.
+            //
+            //    Nutzer-Bugreport 2026-07-20 (Vergleich mit dem echten CME-
+            //    FedWatch-Tool): fuer Jul 29, 2026 zeigte CME 83,4% Hold/16,6%
+            //    Hike/0% Ease, mein Wert war deltaBp=-4 (also Cut-lastig) -
+            //    fast exakt dieselbe Magnitude wie CMEs implizites +4bp, nur
+            //    mit gedrehtem Vorzeichen. Ursache: derselbe Verstaerkungs-
+            //    Effekt wie oben, aber diesmal INNERHALB des Juli-Meetings
+            //    selbst (29 von 31 Tagen VOR der Sitzung -> nur 2 Tage
+            //    DANACH im eigenen Monat -> Verstaerkungsfaktor 31/2=15,5x),
+            //    nicht in der Verkettung zum naechsten Meeting - der obige
+            //    Fix deckte nur die Verkettung ab, nicht diesen Fall. Analoger
+            //    Fix: existiert der Monat DIREKT NACH diesem Meeting und
+            //    enthaelt SELBST kein Meeting (hier: August), ist dessen
+            //    Monats-Durchschnitt ein sauberer DIREKTER Messwert fuer
+            //    R_nachher (der Zins aendert sich zwischen der Sitzung und dem
+            //    naechsten Meeting nicht mehr) - wird bevorzugt genutzt statt
+            //    der verstaerkungsanfaelligen tageszahl-gewichteten Herleitung
+            //    aus dem eigenen (u.U. sehr kurzen) "Danach"-Fenster.
             let Rprev=Rcurrent;
             const meetings=[];
             const filtered=MEETINGS.filter(([d])=>d>=today);
@@ -2879,7 +2897,15 @@ jobs:
               if(!prevMeetingInThatMonth&&monthlyRate[prevMonthKey]!=null)Rprev=monthlyRate[prevMonthKey];
               const daysInMonth=new Date(y,mo,0).getDate();
               const before=day,after=daysInMonth-before;
-              const Rafter=after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after;
+              // Sauberen Folgemonat suchen: existiert er (kein eigenes
+              // Meeting, Kursdaten vorhanden), liefert er R_nachher direkt
+              // und unverstaerkt - immer genauer als die tageszahl-gewichtete
+              // Herleitung aus dem eigenen (oft kurzen) "Danach"-Fenster.
+              const nextMonthDate=new Date(y,mo,1);
+              const nextMonthKey=nextMonthDate.getFullYear()+"-"+String(nextMonthDate.getMonth()+1).padStart(2,"0");
+              const nextMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===nextMonthKey);
+              const cleanNext=(!nextMeetingInThatMonth&&monthlyRate[nextMonthKey]!=null)?monthlyRate[nextMonthKey]:null;
+              const Rafter=cleanNext!=null?cleanNext:(after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after);
               const deltaBp=Math.round((Rafter-Rprev)*100);
               meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:round2(Rafter),deltaBp});
               Rprev=Rafter;
