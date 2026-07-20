@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-TIMERANGE-FILTER-151</span><span id="verBannerText"> (Neu: gemeinsamer Zeitraum-Filter (Max/3Y/2Y/1Y/6M/3M/1M/Custom) fuer Zeitreihen-Diagramme - Trends-Tab (Total Score/Inflation/Labour/Growth/vs Price, auch im Paar-Modus) zeigt jetzt per Default die MAXIMALE verfuegbare Historie statt fix ~3 Monate, mit Buttons zum Eingrenzen. Der bestehende Indikator-Verlaufschart-Filter (Ausklappen einer Indikator-Karte bzw. Insights > Data) wurde um "Max" und "Custom" (freier Datumsbereich) ergaenzt, damit beide Stellen identisch aussehen/funktionieren (CLAUDE.md: wiederkehrende UI-Bausteine muessen einheitlich sein))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-SCOREHIST-SAVE-REGRESSION-152</span><span id="verBannerText"> (Kritischer Bugfix eines Regressions-Bugs vom selben Tag: der scoreHist-Sync-Fix hatte recordScoreHist() dazu gebracht, fxpro_updated zu bumpen OHNE die In-Memory-Variable _lsUpdatedSeen mitzuziehen - dadurch loeste JEDER folgende save() faelschlich den Multi-Tab-Schutz aus (haelt eine ANDERE Tab/Geraet fuer die Quelle der Aenderung) und verwarf die frisch korrigierten Live-Feed-Daten wieder (adoptExternalState() lud den ALTEN, noch unkorrigierten localStorage-Stand zurueck) - das war die eigentliche Ursache des gemeldeten "Score bleibt auf altem Wert stehen"-Bugs, nicht die Feed-Logik selbst. Ausserdem: die vier score-treibenden Live-Feeds (Ind/Bond/COT/Sentiment) werden jetzt beim Laden gebuendelt verarbeitet (ein gemeinsamer Recompute/Save/Render-Zyklus statt vier gestaffelter) - weniger sichtbare Sprünge beim Oeffnen der Seite)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8769,7 +8769,22 @@ function recordScoreHist(){
     // bumpt save()s eigener snap()-Diff-Check das hier NICHT automatisch -
     // ohne den expliziten Bump+Sync-Anstoss wuerde eine reine Score-History-
     // Aenderung (ohne sonstige State-Aenderung) nie in die Cloud gehen.
+    // WICHTIG: _lsUpdatedSeen sofort mitziehen (wie an JEDER anderen Stelle,
+    // die fxpro_updated bumpt) - sonst haelt save()s Multi-Tab-Schutz
+    // (≈ Zeile 4907: localStorage.fxpro_updated !== _lsUpdatedSeen ->
+    // adoptExternalState()) den eigenen Bump hier faelschlich fuer eine
+    // Aenderung eines ANDEREN Tabs. Ohne dieses Nachziehen loeste
+    // recordScoreHist() beim Boot (laeuft VOR jeder Live-Feed-Korrektur,
+    // siehe INIT) genau diesen Schutz aus, sobald kurz danach der erste
+    // korrigierende save() (aus bootFetchScoreFeeds/autoFetchIndData/...)
+    // lief - der verwarf dann seine eigene frisch korrigierte
+    // In-Memory-Aenderung und laden STATTDESSEN den (noch unkorrigierten)
+    // localStorage-Stand zurueck (adoptExternalState()) - Bugreport
+    // 2026-07-20: "score bleibt beim Laden auf altem Wert haengen, obwohl
+    // applyIndDataFeed() die richtigen Live-Daten gefunden hat", per
+    // Playwright bis auf genau diese Zeile zurueckverfolgt.
     localStorage.setItem('fxpro_updated',new Date().toISOString());
+    _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
     cloudAutoSync();
   }
 }
@@ -11218,6 +11233,32 @@ updFFLastUpd();
 // Retail-Sales-Umstellung auf m/m) wieder ueberschrieben - und das blieb
 // dann bis zum naechsten Reload so stehen. Jetzt garantiert: Live-Daten
 // haben immer das letzte Wort.
+// Nutzer-Bugreport 2026-07-20: der Score eines Assets "flippt" beim Laden
+// sichtbar mehrfach nacheinander (z.B. EUR 1.5 -> -1 -> 2.5), weil ind/bond/
+// COT/Sentiment vorher UNABHAENGIG voneinander autoFetchX() aufriefen und
+// JEDES beim eigenen Abschluss sofort einzeln recomputeAuto()+save()+
+// rerender() feuerte - bis zu vier gestaffelte sichtbare Sprünge statt eines
+// einzigen sauberen Uebergangs von "aus dem Cache" zu "live" (Feed-Antworten
+// aus derselben Instanz sind ohnehin idempotent/deterministisch, siehe
+// Playwright-Verifikation im CLAUDE.md-Eintrag weiter unten - das Problem war
+// rein die gestaffelte SICHTBARKEIT, nicht falsche Werte). Diese vier teilen
+// sich das exakt gleiche fetch->apply->recompute->save->render-Muster und
+// werden beim Boot jetzt gebuendelt (`bootFetchScoreFeeds()`) - EIN
+// gemeinsamer Recompute/Save/Render-Zyklus, sobald ALLE vier durch sind.
+// FF-Kalender (eigene, komplexere Speicher-/Render-Logik direkt in
+// fetchFF()) und Preis-Feed (kein Bias-Einfluss) bleiben bewusst separat.
+// Ausserhalb des Boots (manueller Refresh-Button, minuetlicher Poll) rufen
+// die einzelnen autoFetchX()-Funktionen weiterhin wie gehabt sofort/einzeln.
+async function bootFetchScoreFeeds(){
+  const results=await Promise.all([
+    fetchIndData().then(()=>{try{return applyIndDataFeed();}catch(e){return false;}}),
+    fetchBondData().then(()=>{try{return applyBondDataFeed();}catch(e){return false;}}),
+    fetchCotData().then(()=>{try{return applyCotDataFeed();}catch(e){return false;}}),
+    fetchSentimentData().then(()=>{try{return applySentimentFeed();}catch(e){return false;}})
+  ]);
+  if(results.some(Boolean)){recomputeAuto();save();renderSidebar();}
+  rerender();
+}
 (async()=>{
   let pushFailed=false;
   if(getCloudCfg()){
@@ -11232,11 +11273,8 @@ updFFLastUpd();
   // echte save() (cloudAutoSync) bzw. der naechste Boot versucht es erneut.
   if(!pushFailed)await cloudPull(false);
   autoFetchFF();
-  autoFetchIndData();
-  autoFetchBondData();
-  autoFetchCot();
+  bootFetchScoreFeeds();
   autoFetchPriceData();
-  autoFetchSentiment();
 })();
 
 // ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
@@ -11277,10 +11315,7 @@ updNetStatus();
 
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
-  autoFetchIndData();
-  autoFetchBondData();
-  autoFetchCot();
-  autoFetchSentiment();
+  bootFetchScoreFeeds();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
   }

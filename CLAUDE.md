@@ -1304,3 +1304,78 @@ inline ein). Ersetzt/generalisiert den bisherigen indikator-spezifischen
   Sentiment-Charts (die haben meist ohnehin keinen langen Zeit-Horizont
   oder sind Balken-Aggregate ohne echte "Zeitspanne"-Semantik wie
   Saisonalitaet) - bei Bedarf nachruesten.
+
+### KRITISCHER Regressions-Bug im scoreHist-Sync-Fix: Live-Korrekturen wurden verworfen (Bugreport 2026-07-20, selber Tag wie der Fix)
+
+Nutzer meldete weiterhin (nach dem obigen scoreHist-Sync-Fix): "Score bleibt
+beim Laden auf dem alten Wert stehen, obwohl schon neue Daten da sind - soll
+nicht jedes Mal neu gefragt werden muessen." Per Playwright empirisch bis auf
+die Zeile zurueckverfolgt (window.__DBG-Instrumentierung direkt in
+`applyIndDataFeed()`, dann wieder entfernt) - **das war kein Feed-Problem,
+sondern ein durch den scoreHist-Fix selbst eingefuehrter Bug**:
+
+- `recordScoreHist()` bumpt bei einer Aenderung `localStorage['fxpro_updated']`
+  direkt (noetig, da `scoreHist` ausserhalb von `snap()` liegt, siehe oben).
+  Das tat es aber OHNE die In-Memory-Variable `_lsUpdatedSeen` mitzuziehen -
+  an JEDER anderen Stelle im Code, die `fxpro_updated` schreibt, passiert das
+  im GLEICHEN Atemzug (`_lsUpdatedSeen=localStorage.getItem('fxpro_updated')`,
+  grep zeigt das Muster an >8 Stellen).
+- `save()`s Multi-Tab-Schutz (≈ Zeile 4907) vergleicht bei JEDEM Aufruf
+  `localStorage.getItem('fxpro_updated') !== _lsUpdatedSeen` - eine
+  Abweichung wird als "ein ANDERES Geraet/Tab hat inzwischen gepusht"
+  interpretiert und `adoptExternalState()` aufgerufen, was `syms` (inkl.
+  aller `ind.research`) aus dem AKTUELL in localStorage stehenden (noch
+  UNKORRIGIERTEN) Snapshot neu laedt - und damit die frisch im Speicher
+  korrigierten Live-Feed-Werte wieder verwirft, BEVOR sie je gespeichert
+  wurden.
+- Ablauf des Bugs: `recordScoreHist()` laeuft beim Boot ZUERST (synchron,
+  vor jedem Live-Fetch) und bumpt oft `fxpro_updated` (neuer Tag/neuer
+  Score) - ohne `_lsUpdatedSeen` nachzuziehen. Kurz danach korrigiert
+  `applyIndDataFeed()`/`applyBondDataFeed()`/etc. `ind.research` im Speicher
+  korrekt (per Playwright bestaetigt: die Korrektur selbst lief immer
+  fehlerfrei durch) - aber der ANSCHLIESSENDE `save()`-Aufruf sieht die
+  Diskrepanz aus dem ersten Punkt, denkt "fremde Aenderung" und verwirft die
+  gerade korrigierten Daten wieder. Das erklaert auch, warum es sich wie
+  "wird immer wieder neu gefragt, kommt aber nie an" anfuehlte - die
+  Korrektur passierte durchaus, wurde aber nie persistiert.
+- Fix: `recordScoreHist()` zieht `_lsUpdatedSeen` jetzt im selben Atemzug
+  mit (`localStorage.setItem('fxpro_updated',...);_lsUpdatedSeen=
+  localStorage.getItem('fxpro_updated');`), exakt wie an jeder anderen
+  Bump-Stelle. Per Playwright verifiziert: `CPI (Headline) y/y` (EUR) zeigt
+  jetzt sofort/durchgehend die korrekte Live-Feed-Zahl (`feed:true`) statt
+  auf den Ship-Time-Fallback-Wert zurueckzufallen, auch nach mehrfachem
+  Reload mit bereits bestehendem localStorage-Stand.
+- **Zusaetzlich**: die vier score-treibenden Live-Feeds (Ind/Bond/COT/
+  Sentiment) liefen bisher komplett unabhaengig - jeder feuerte bei eigenem
+  Abschluss sofort einzeln `recomputeAuto()+save()+rerender()`, was den
+  sichtbaren "Flip" beim Laden auf bis zu vier gestaffelte Spruenge
+  aufteilte. Neue Funktion `bootFetchScoreFeeds()` (≈ Zeile 11221, ersetzt
+  die vier einzelnen `autoFetchX()`-Aufrufe im Boot UND im stuendlichen
+  `setInterval`) buendelt alle vier per `Promise.all` und macht EINEN
+  gemeinsamen Recompute/Save/Render-Zyklus, sobald alle durch sind - ein
+  sauberer Uebergang von "aus dem Cache" zu "live" statt mehrerer.
+  `autoFetchFF()` (Kalender, eigene komplexere Speicherlogik direkt in
+  `fetchFF()`) und `autoFetchPriceData()` (kein Bias-Einfluss) bleiben
+  bewusst separat/unbatched - dort nicht angefasst, um das Risiko fuer
+  diesen Fix klein zu halten.
+- **Bekannter, kleinerer Restbefund** (nicht der urspruenglich gemeldete
+  Bug, deutlich enger): vereinzelt wurde beobachtet, dass die Bias-
+  Klassifikation EINES einzelnen Indikators (beobachtet: EUR PPI y/y)
+  zwischen zwei aufeinanderfolgenden Aufrufen bei IDENTISCHEN
+  Actual/Forecast/Previous-Werten kippte (bull -> bear, keine Werte-
+  Aenderung) - vermutlich der separate, hier bewusst nicht angefasste
+  Kalender-Abgleichspfad (`syncIndicatorBiases()`/`findIndEvent()`, dritter
+  Bias-Pfad neben `ind.research.feed`/`ind.research.bond`, siehe PPI-
+  Eintrag vom 2026-07-16 oben). Noch nicht tiefer untersucht - bei
+  Wiederauftreten zuerst dort ansetzen, nicht wieder bei `applyIndDataFeed()`
+  suchen (die ist inzwischen per Playwright als deterministisch/idempotent
+  bestaetigt).
+- **Merksatz fuer kuenftigen Code:** JEDE Stelle, die
+  `localStorage.setItem('fxpro_updated', ...)` schreibt, MUSS im selben
+  Atemzug `_lsUpdatedSeen` nachziehen - sonst greift `save()`s Multi-Tab-
+  Schutz faelschlich und verwirft frische In-Memory-Aenderungen. Dieser
+  Fehler ist leicht zu uebersehen, weil er in der lokalen Entwicklung ohne
+  parallel geoeffnete Tabs/Geraete UND ohne einen echten, zeitlich nahen
+  zweiten `save()`-Aufruf gar nicht auffaellt - Playwright-Verifikation mit
+  tatsaechlichem Boot-Timing (nicht nur isolierten Funktionsaufrufen) ist
+  hier der einzige zuverlaessige Test.
