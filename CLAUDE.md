@@ -1798,3 +1798,63 @@ plus explizite Frage nach 1 Jahr Historie.
   Sandbox aus testbar - Verifikation erst nach Push per
   `workflow_dispatch` + Job-Log (wie bei jeder neuen Datenquelle in
   diesem Projekt ueblich).
+
+**Live-Verifikation per `workflow_dispatch` (2026-07-20, direkt im Anschluss):**
+per `mcp__github__actions_run_trigger`/`actions_list`/`get_job_logs` drei
+Iterationsrunden gefahren (gleiches Vorgehen wie bei den Bond-Yield-
+Backfills - Job-Log lesen statt raten):
+1. Erster Lauf: die ZQ-Futures-Ticker (`CBOT:ZQ<Monatscode><4-stelliges
+   Jahr>`, z.B. `CBOT:ZQN2026`) kamen auf Anhieb korrekt von TradingView
+   zurueck (alle 14 Kontrakte mit echten Kursen) - aber der FRED-EFFR-
+   Fetch lieferte 0 Bytes ohne sichtbaren Fehler, der Schritt brach daher
+   still ab (`Rcurrent==null` -> `process.exit(0)`).
+2. Diagnose-Ausgabe ergaenzt (`-w "http=%{http_code} size=%{size_download}"`
+   + Retry nach 5s + CRLF-sicheres CSV-Parsing) und erneut getestet: jetzt
+   sichtbar `curl exit 92` = `CURLE_HTTP2_STREAM_ERROR` - FREDs Server/CDN
+   vertraegt curls automatische HTTP/2-Aushandlung offenbar nicht sauber.
+3. `--http1.1` erzwingt das alte Protokoll (bekannter, dokumentierter Fix
+   fuer diesen Fehlercode). Dritter Testlauf lief zum Zeitpunkt dieses
+   Eintrags noch (per `Monitor`-Tool im Hintergrund beobachtet, nicht
+   `Bash sleep` - Sandbox kann `fred.stlouisfed.org`/
+   `scanner.tradingview.com` selbst NICHT erreichen, beide liefern vom
+   Sandbox-Proxy ein `403` als bewusste Org-Policy-Sperre, siehe
+   `/root/.ccr/README.md`: "do not retry organization policy denials" -
+   Live-Daten-Fetches fuer dieses Projekt sind daher AUSSCHLIESSLICH ueber
+   den echten GitHub-Actions-Runner moeglich, nicht durch einen manuellen
+   Fetch-Versuch aus dieser Sandbox ersetzbar, exakt wie im bestehenden
+   CLAUDE.md-Grundsatz "Netzwerk in dieser Sandbox ist eingeschraenkt"
+   oben schon dokumentiert).
+
+### Bugfix: "Rate Probabilities" landete als eigener Top-Level-Tab statt im Insights-Dropdown (Nutzer-Foto 2026-07-20)
+
+Nutzer schickte einen Screenshot der LIVE-Seite (jo-brxxn.github.io):
+"Rate Probabilities" erschien in der Tab-Leiste als EIGENER Button neben
+dem "Insights ▸"-Dropdown, nicht als Eintrag darin - Nutzer-Wunsch war
+klar, es sollte "in die insights" gepackt werden.
+
+- **Ursache:** `renderTabBar()` rendert einen Tab nur dann als Eintrag
+  IM Stack-Dropdown, wenn `stackOf(id)` einen Treffer liefert - findet
+  sich die ID in KEINEM `tabStacks[].members`-Array, faellt sie auf den
+  `else`-Zweig zurueck und wird als eigener Top-Level-Button gerendert.
+  Die urspruengliche Migration in `loadTabStacks()` (`ins4`) fügte `'rate'`
+  nur dann ein, wenn irgendein Stapel bereits `'data'` enthielt - bei
+  diesem Bestandsnutzer (oder generell bei jedem mit einer vom Standard
+  abweichenden eigenen Tab-Anordnung, z.B. `'data'` schon einmal aus dem
+  Insights-Stapel herausgezogen) griff dieser Anker nicht, `'rate'` landete
+  dadurch in KEINEM Stapel.
+- **Fix:** neuer Fallback direkt nach der `ins4`-Migration - ist `'rate'`
+  nach allen vier spezifischen Migrationen immer noch in keinem Stapel,
+  wird es in JEDEN Stapel gepackt, der mindestens eines der bekannten
+  Analyse-Tab-Mitglieder (`cot`/`data`/`sent`/`seas`/`trends`) enthaelt,
+  statt sich auf genau einen Anker (`'data'`) zu verlassen. Per Playwright
+  gegen drei Szenarien verifiziert: (1) Bestandsnutzer-Stapel ohne `'data'`
+  (genau der gemeldete Bug) - `'rate'` landet jetzt korrekt im Insights-
+  Stapel; (2) normaler Fall mit `'data'` im Stapel - unveraendertes
+  Verhalten; (3) komplett neuer Nutzer ohne `tabStacks`-Eintrag - Default
+  greift wie gehabt. Selbstheilend beim naechsten Laden, keine manuelle
+  Nutzer-Aktion noetig.
+- **Merksatz:** bei kuenftigen neuen Tabs, die nachtraeglich in einen
+  bestehenden Stack einsortiert werden sollen, IMMER einen stapel-weiten
+  Fallback (nicht nur einen einzelnen Anker-Tab) vorsehen - Bestandsnutzer
+  koennen durch fruehere manuelle Umsortierung/Feature-Historie von der
+  angenommenen Standard-Struktur abweichen.
