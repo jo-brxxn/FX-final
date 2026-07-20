@@ -1654,3 +1654,51 @@ Hintergrund-Update bumpen, dann `save()` aufrufen) reproduziert:
   `_lastUserEditTs` pflegen, damit der Multi-Tab-Schutz aktive Eingaben
   erkennt. `saveSoon()` ist dafuer die richtige zentrale Stelle, nicht die
   einzelnen `oninput`-Handler.
+
+### Score-Flip-Fix war unvollstaendig: applyTrendModel() ueberschrieb trendBias weiterhin (Bugreport 2026-07-20, selber Tag)
+
+Nutzer meldete nach dem obigen Score-Flip-Fix mehrfach hintereinander "eur
+score bug immernoch da" - der Fix hatte das Symptom NICHT vollstaendig
+behoben. Per Playwright empirisch weiterverfolgt (wiederholte Reload-
+Zyklen bis ein Flip gefangen wurde, dann kompletter Tiefen-Diff des
+gesamten EUR-Symbol-Objekts zwischen den beiden Zustaenden - ein reiner
+`ind.bias`-Vergleich hatte in der vorherigen Runde faelschlich "keine
+Aenderung" gemeldet, weil die eigentliche Aenderung ganz woanders lag):
+
+- **Ursache: der erste Fix war nur TEILWEISE.** Er schuetzte die direkte
+  Bias-Zuweisung (`nb=indBiasFromEvent(ev)`) und `trackIndValues()` vor
+  dem konkurrierenden Kalender-Pfad, uebergab aber weiterhin
+  `newRelease&&!feedCovered` als `allowBiasReplace`-Parameter an
+  `applyTrendModel(ind,noForecast,allowBiasReplace)`. Diese Funktion hat
+  ZWEI Zweige: der `if(noForecast)`-Zweig respektiert `allowBiasReplace`
+  korrekt, aber der `else`-Zweig (laeuft, wenn das Kalender-Event SELBST
+  einen Forecast hat) setzt `ind.trendBias=trend||'neu'` **unbedingt**,
+  komplett unabhaengig von `allowBiasReplace`. Der Trend-Bonus (`trendBias`)
+  fliesst additiv in den Rubrik-Score ein (siehe Trend-Modell-Grundsatz
+  oben) - EUR "PPI y/y" hatte dadurch trotz stabilem `ind.bias='bull'`
+  weiterhin einen flippenden `trendBias` ('neu' bei Kalender-Lauf,
+  korrekterweise 'bull' bei Feed-Lauf, da `valHist=[-3,2.1,4.9,5.9]` einen
+  echten 2-Schritt-Aufwaertstrend zeigt) - macht den sichtbaren
+  Score-Unterschied von genau 1 Punkt (2.5 vs. 1.5).
+- **Fix: `syncIndicatorBiases()` fasst feed-abgedeckte Indikatoren jetzt
+  KOMPLETT nicht mehr an** - ein fruehes `if(ind.research&&ind.research.feed)
+  return;` direkt zu Beginn der Indikator-Verarbeitung (≈ Zeile 3617),
+  statt einzelne Teilschritte (Bias/Werte-Historie/Trend) separat mit
+  `feedCovered`-Flags abzusichern. Damit ist ausgeschlossen, dass IRGENDEIN
+  Teil des Kalender-Pfads (auch zukuenftige Erweiterungen von
+  `applyTrendModel()`/`syncIndicatorBiases()`) einen feed-abgedeckten
+  Indikator noch beeinflusst - der Feed hat vollstaendige Exklusivitaet,
+  nicht nur fuer den Hauptwert.
+- Per Playwright verifiziert: 6 aufeinanderfolgende Reload-Zyklen (mit
+  vollstaendigem Tiefen-Diff des kompletten EUR-Objekts bei jedem Zyklus)
+  blieben alle stabil - keine Oszillation mehr gefangen (vorher: in ~1 von
+  6 Versuchen reproduzierbar). Voller Tab-Regressionstest weiterhin sauber.
+- **Merksatz:** bei einem Bugfix, der zwei konkurrierende Datenquellen fuer
+  dieselbe Ausgabegroesse entkoppeln soll, IMMER pruefen, ob die
+  "gewinnende" Quelle wirklich JEDEN Pfad abdeckt, der die Ausgabegroesse
+  beeinflusst - nicht nur den offensichtlichsten (hier: `ind.bias`). Ein
+  Diff auf Feld-Ebene (nur `ind.bias` verglichen) haette dieses Leck
+  uebersehen; erst ein vollstaendiger Tiefen-Diff des gesamten Objekts
+  (`JSON.stringify`-Rekursion ueber alle Felder) deckte `trendBias` als
+  zweiten, uebersehenen Ueberschreiber auf. Bei aehnlichen kuenftigen
+  Bugs diese Technik zuerst einsetzen, statt einzelne Felder zu raten.

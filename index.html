@@ -1231,7 +1231,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-DUALSOURCE-FLIP-157</span><span id="verBannerText"> (Zwei kritische Bugfixes: (1) Score flippte bei JEDEM Laden zwischen zwei Werten (nicht nur einmalig Cache->Live) - Ursache: fuer manche Indikatoren laufen zwei unabhaengige Live-Quellen parallel (TradingView-Feed via applyIndDataFeed() UND FF-Kalender-Abgleich via syncIndicatorBiases()), die sich auf unterschiedliche Releases beziehen koennen (z.B. EUR PPI y/y: Feed korrekt auf dem Eurozone-Aggregat, Kalender faelschlich auf einem als "EUR" gefuehrten Landesrelease) und je nach Lade-Reihenfolge abwechselnd gewannen. Sobald ein Indikator vom Feed abgedeckt ist (ind.research.feed), hat dieser jetzt durchgehend Vorrang (Bias UND Werte-Historie) - der Kalender-Pfad bleibt nur noch fuer Indikatoren ohne Feed-Abdeckung zustaendig. (2) Quick-Note-Text (und alle anderen per saveSoon() debounced getippten Textfelder) konnte sich beim Tippen einfach selbst leeren: saveSoon() bumpte nicht _lastUserEditTs, wodurch save()s Multi-Tab-Schutz ein zufaelliges Hintergrund-Update faelschlich als fremde Geraete-Aenderung wertete und den gerade getippten, noch ungespeicherten Text per adoptExternalState() verwarf. saveSoon() markiert jetzt bei jedem Tastendruck "gerade aktiv editiert")</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3f2d16;color:#fcd9a5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-DUALSOURCE-FLIP-158</span><span id="verBannerText"> (Nachbesserung zum vorherigen Score-Flip-Fix: der schuetzte nur die direkte Bias-Zuweisung + Werte-Historie vor dem konkurrierenden FF-Kalender-Pfad, aber applyTrendModel()s zweiter Zweig ueberschrieb ind.trendBias weiterhin unbedingt (der Trend-Bonus fliesst additiv in den Rubrik-Score ein, siehe Trend-Modell-Grundsatz) - EUR "PPI y/y" flippte dadurch trotz stabilem Bias weiter zwischen zwei Score-Werten. syncIndicatorBiases() fasst feed-abgedeckte Indikatoren jetzt KOMPLETT nicht mehr an (Bias, Werte-Historie UND Trend), statt nur Teile davon zu schuetzen - 6 aufeinanderfolgende Boot-Zyklen per Playwright verifiziert, keine Oszillation mehr)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -3621,9 +3621,6 @@ function syncIndicatorBiases(){
     (c.rubrics||[]).forEach(rub=>{
       if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
       rub.indicators.forEach(ind=>{
-        const ev=findIndEvent(c.id,ind.name);
-        if(!ev)return;
-        const noForecast=ev.forecast==null||ev.forecast==='';
         // Bugreport 2026-07-20 (Nutzer, EUR-Score "flippt" bei JEDEM Laden
         // zwischen zwei Werten hin und her, kein einmaliger Cache->Live-
         // Uebergang): fuer denselben Indikator laufen ZWEI unabhaengige
@@ -3633,34 +3630,32 @@ function syncIndicatorBiases(){
         // beziehen: EUR "PPI y/y" z.B. hat der Feed korrekt das Eurozone-
         // Aggregat (Actual 5.9%, Datum 2026-07-06), waehrend der Kalender
         // ein ANDERES, unter demselben Namen/derselben "EUR"-Landeskennung
-        // gefuehrtes Release matcht (Actual 1.8%, Datum 2026-07-20 - laut
-        // Rohdaten vermutlich ein deutsches Landesrelease, das faelschlich
-        // ohne "German"-Praefix als EUR-Aggregat durchrutscht - siehe
-        // Grundsatz oben "EUR-Indikatoren: Eurozone-Aggregat bevorzugen,
-        // nicht nationale Releases"). Ein reiner Datums-Vergleich (juengeres
-        // Release gewinnt) loest das NICHT zuverlaessig, weil das Kalender-
-        // Datum hier trotz Fehlmatch neuer ist als das echte Feed-Release.
-        // Betraf nicht nur die direkte Bias-Zuweisung unten, sondern AUCH
-        // trackIndValues() (vermischt zwei verschiedene Release-Serien in
-        // derselben Werte-Historie ind.valHist) und darueber indirekt
-        // applyTrendModel()/indStepBias() (das wiederum den zuvor korrekt
-        // vom Feed gesetzten Bias ueber den verunreinigten Trend-Verlauf
-        // erneut ueberschreiben konnte - das war der tatsaechliche zweite
-        // Ueberschreiber, den eine fruehere, engere Version dieses Fixes
-        // noch nicht abdeckte).
+        // gefuehrtes Release matcht (vermutlich ein deutsches Landesrelease,
+        // das faelschlich ohne "German"-Praefix als EUR-Aggregat durch-
+        // rutscht - siehe Grundsatz oben "EUR-Indikatoren: Eurozone-
+        // Aggregat bevorzugen, nicht nationale Releases"). Eine erste,
+        // engere Version dieses Fixes hatte nur die direkte Bias-Zuweisung
+        // und trackIndValues() geschuetzt - das reichte NICHT: applyTrendModel()s
+        // ELSE-Zweig (wenn der Kalender-Event selbst einen Forecast hat)
+        // ueberschreibt `ind.trendBias` UNBEDINGT, unabhaengig vom
+        // allowBiasReplace-Parameter - dieser Trend-Bonus fliesst additiv in
+        // den Rubrik-Score ein (siehe Trend-Modell-Grundsatz oben) und
+        // liess den Score trotz stabilem ind.bias weiter flippen.
         // Fix: sobald ein Indikator ueberhaupt vom TradingView-Feed
-        // abgedeckt ist (ind.research.feed===true), hat dieser Pfad
-        // GRUNDSAETZLICH Vorrang - unabhaengig vom Kalender-Datum. Der Feed
-        // laeuft im selben stuendlichen Rhythmus wie der Kalender-Fetch und
-        // holt ein echtes neues Release also ohnehin genauso schnell selbst
-        // nach; der Kalender-Pfad bleibt nur noch fuer Indikatoren ohne
-        // Feed-Abdeckung (research.feed nie gesetzt) die alleinige Quelle.
-        const feedCovered=!!(ind.research&&ind.research.feed);
+        // abgedeckt ist (ind.research.feed===true), fasst der Kalender-Pfad
+        // ihn GAR NICHT MEHR an (weder Bias noch Werte-Historie noch Trend) -
+        // der Feed laeuft im selben stuendlichen Rhythmus wie der Kalender-
+        // Fetch und holt ein echtes neues Release ohnehin genauso schnell
+        // selbst nach (inkl. seines eigenen applyTrendModel()-Aufrufs); der
+        // Kalender-Pfad bleibt nur noch fuer Indikatoren OHNE Feed-Abdeckung
+        // die alleinige Quelle.
+        if(ind.research&&ind.research.feed)return;
+        const ev=findIndEvent(c.id,ind.name);
+        if(!ev)return;
+        const noForecast=ev.forecast==null||ev.forecast==='';
         // Werte-Historie bei JEDEM Sync-Lauf fortschreiben (Erstkontakt-
-        // Seeding inkl. Recherche-Backfill; Entdopplung via ind.valDate) -
-        // aber nicht mit einer fremden Release-Serie verunreinigen, wenn
-        // der Feed diesen Indikator ohnehin schon selbst abdeckt.
-        if(!feedCovered&&trackIndValues(ind,macroCcyFor(c.id),ev.date,ev.actual,ev.previous))changed=true;
+        // Seeding inkl. Recherche-Backfill; Entdopplung via ind.valDate).
+        if(trackIndValues(ind,macroCcyFor(c.id),ev.date,ev.actual,ev.previous))changed=true;
         // "Neues Release?"-Gate gilt weiterhin fuer das Beat/Miss-Bias selbst
         // (manuelle Klicks sollen bis zum naechsten ECHTEN Release stehen
         // bleiben) - Trend-Anteile berechnet applyTrendModel darunter IMMER.
@@ -3668,12 +3663,12 @@ function syncIndicatorBiases(){
         if(newRelease){
           ind.autoEvId=ev.id;
           changed=true;
-          if(!noForecast&&!feedCovered){
+          if(!noForecast){
             const nb=indBiasFromEvent(ev);
             if(ind.bias!==nb)ind.bias=nb;
           }
         }
-        if(applyTrendModel(ind,noForecast,newRelease&&!feedCovered))changed=true;
+        if(applyTrendModel(ind,noForecast,newRelease))changed=true;
       });
     });
   });
