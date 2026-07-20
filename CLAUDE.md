@@ -1858,3 +1858,41 @@ klar, es sollte "in die insights" gepackt werden.
   Fallback (nicht nur einen einzelnen Anker-Tab) vorsehen - Bestandsnutzer
   koennen durch fruehere manuelle Umsortierung/Feature-Historie von der
   angenommenen Standard-Struktur abweichen.
+
+### Farbaudit-Rueckbau: gedaempfte Balken ueberall wieder auf volle Deckkraft (Nutzer-Wunsch 2026-07-20, per Foto)
+
+Nutzer-Screenshot (COT-Tab, "Net Long/Short %"-Karte): die im "Farbaudit
+Runde 1" (siehe Eintrag oben, 2026-07-19) eingefuehrte Balken-Daempfung
+(`opacity:.6`-artig, "weniger Vollflaechen") wird nicht mehr gewuenscht -
+"Ich will das du das wieder ueberall rueckgaengig machst". Alle
+betroffenen Stellen zurueckgesetzt:
+
+- `.cot-bar-long`/`.cot-bar-short` (COT-Tab Net Long/Short, ≈ Zeile 560):
+  `opacity:.65` entfernt.
+- `.rank-bar` (Dashboard Currency-Strength-Widget, ≈ Zeile 736),
+  `.mx-rank-bar` (Matrix-Tab, ≈ Zeile 535), `.risk-asset-bar` (Risk-
+  Sentiment-Widget, ≈ Zeile 782): `opacity:.6` je entfernt.
+- `renderNetFlowChart()` Balken (≈ Zeile 10605): `opacity="0.6"` zurueck
+  auf `0.9` (Original-Wert vor dem Audit).
+- `seasBarChart()` Monatsbalken (≈ Zeile 10831): Nicht-aktueller-Monat
+  zurueck von `.6` auf `.8` (aktueller Monat bleibt bei `.92`, war vom
+  Audit nicht betroffen).
+- Retail-Sentiment Long/Short-Split-Balken (`renderRetailBars()`,
+  ≈ Zeile 10500): `opacity:.62` entfernt.
+- `rateProbBarHtml()` (der am selben Tag neu gebaute Rate-Probabilities-
+  Balken, siehe Eintrag oben) hatte bewusst dieselbe gedaempfte Konvention
+  uebernommen - ebenfalls zurueckgesetzt, damit die Balken app-weit wieder
+  einheitlich volle Deckkraft haben (Grundsatz "wiederkehrende UI-
+  Bausteine muessen einheitlich sein" gilt auch rueckwaerts: aendert sich
+  die Konvention, zieht das JEDE Stelle nach, auch brandneue).
+- Per Playwright verifiziert (`getComputedStyle().opacity`): alle
+  genannten Klassen liefern jetzt `1`. Bewusst NICHT angefasst: `.rinfo`
+  (Info-Icon-Button-Deckkraft, kein Balken), `.cot-refresh:disabled`
+  (Button-Disabled-Zustand), gestrichelte Referenzlinien in Charts - das
+  sind keine Balken-Farbdaempfungen im Sinne des Nutzer-Wunsches.
+- Bewusst NICHT angefasst (Nutzer bezog sich explizit auf "Balken
+  abgedunkelt", nicht auf die anderen Farbaudit-Punkte): `TREND_COLORS`-
+  Palette, Dashboard-Banner-Umbau (Gradient→Randstreifen), Retail-Symbol-
+  Chip-Taeuung, Logo/Profil-Kreis-Vereinfachung, Radius-Reduktion,
+  Aurora/Intro-Aenderungen aus Runde 1+2 - diese bleiben wie im Audit
+  umgesetzt, nur die Opacity-Daempfung der Balken wurde zurueckgerollt.
