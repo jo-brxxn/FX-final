@@ -1896,3 +1896,22 @@ betroffenen Stellen zurueckgesetzt:
   Chip-Taeuung, Logo/Profil-Kreis-Vereinfachung, Radius-Reduktion,
   Aurora/Intro-Aenderungen aus Runde 1+2 - diese bleiben wie im Audit
   umgesetzt, nur die Opacity-Daempfung der Balken wurde zurueckgerollt.
+
+### Rate Probabilities: FRED-Fetch dritte Iteration - "exit 28" Timeout, cosd grenzt ein (2026-07-20, selber Tag)
+
+Dritter `workflow_dispatch`-Testlauf (nach dem `--http1.1`-Fix fuer den
+HTTP/2-Fehler): der HTTP/2-Fehler (`exit 92`) war weg, aber JETZT ein
+sauberer Timeout (`curl exit 28` = `CURLE_OPERATION_TIMEDOUT`) auf BEIDEN
+Versuchen, konstant bei den vollen 30s (`--max-time 30`). Ursache:
+`fredgraph.csv?id=EFFR` OHNE Datumsbereich liefert die KOMPLETTE Historie
+der Serie seit Beginn (EFFR startet 2016) - das Generieren/Uebertragen
+dieser vollen CSV dauert offenbar zu lange. Fix: `&cosd=<heute-120 Tage>`
+(FRED-Standardparameter "Chart Observation Start Date") grenzt auf die
+letzten 120 Tage ein - mehr als genug fuer den aktuellen Wert, macht die
+Antwort winzig und schnell generierbar. Zusaetzlich `--connect-timeout 15`
++ `--max-time` auf 45s angehoben als Sicherheitsmarge. Naechster Testlauf
+per `workflow_dispatch` + Job-Log verifiziert das (gleiches iteratives
+Vorgehen wie bei den Bond-Yield-Backfills - jeder Fehlercode einzeln
+diagnostiziert statt geraten). Die ZQ-Futures-Kurve selbst lief bei
+ALLEN drei Testlaeufen fehlerfrei durch, betrifft ausschliesslich den
+FRED-EFFR-Teil.
