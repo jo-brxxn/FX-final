@@ -2753,28 +2753,34 @@ jobs:
           # (curl legt bei komplettem Verbindungsfehler die -o-Datei gar nicht erst
           # an) - jetzt mit sichtbarem HTTP-Code/Groesse + einem Retry nach 5s,
           # gleiches iteratives Debug-Muster wie bei den anderen Feeds hier.
-          # workflow_dispatch-Testlauf 2026-07-20 zeigte "exit 92"
-          # (CURLE_HTTP2_STREAM_ERROR) - FRED/deren CDN vertraegt curls
-          # HTTP/2-Aushandlung offenbar nicht sauber, --http1.1 erzwingt das
-          # altbewaehrte Protokoll (bekannter, dokumentierter Fix fuer diesen
-          # Fehlercode bei manchen Servern).
-          # Naechster Testlauf (nach dem --http1.1-Fix) zeigte "exit 28"
-          # (CURLE_OPERATION_TIMEDOUT) auf BEIDEN Versuchen bei konstant 30s -
-          # ohne Datumsbereich liefert fredgraph.csv die KOMPLETTE Historie
-          # seit Serienbeginn, was offenbar zu lange dauert. cosd grenzt auf
-          # die letzten 120 Tage ein (mehr als genug fuer den aktuellen Wert),
-          # macht die Antwort winzig + schnell generierbar.
-          COSD=$(date -u -d '-120 days' +%Y-%m-%d)
-          FRED_URL="https://fred.stlouisfed.org/graph/fredgraph.csv?id=EFFR&cosd=${COSD}"
-          curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] FRED curl: http=%{http_code} size=%{size_download}\n" "$FRED_URL" -o rate_fred.csv || echo "[debug] FRED curl: command failed (exit $?)"
-          if [ ! -s rate_fred.csv ]; then
-            echo "[debug] FRED curl: empty/missing, retrying once after 5s"
+          # 2. Testlauf zeigte "exit 92" (CURLE_HTTP2_STREAM_ERROR) - FRED/deren
+          # CDN vertraegt curls HTTP/2-Aushandlung offenbar nicht sauber,
+          # --http1.1 erzwingt das altbewaehrte Protokoll.
+          # 3. Testlauf zeigte "exit 28" (CURLE_OPERATION_TIMEDOUT) - ohne
+          # Datumsbereich liefert fredgraph.csv die komplette Historie seit
+          # Serienbeginn, vermutet als Ursache; cosd auf 120 Tage eingegrenzt.
+          # 4. Testlauf (mit cosd UND --http1.1 UND 45s Timeout) zeigte
+          # IMMER NOCH "exit 28", beide Versuche haengen exakt bis zum
+          # --max-time fest (0 Bytes, http=000, keine Server-Antwort ueberhaupt)
+          # - kein Konfigurationsproblem mehr, sondern ein harter Netzwerk-
+          # Stillstand spezifisch gegen fred.stlouisfed.org von GitHub-Actions-
+          # IP-Bereichen aus (die ZQ-Futures-Kurve von TradingView kam bei
+          # ALLEN 4 Laeufen sofort und fehlerfrei an - kein generelles
+          # Netzwerkproblem des Runners). Deshalb komplett auf die NY Fed
+          # Markets Data API umgestellt (markets.newyorkfed.org) - das ist die
+          # PRIMAERE Quelle, die FRED selbst nur spiegelt, oeffentlich, ohne
+          # API-Key, aber ein anderer Host/CDN als FRED und daher potenziell
+          # nicht vom selben Block betroffen.
+          NYFED_URL="https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json"
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR curl: http=%{http_code} size=%{size_download}\n" "$NYFED_URL" -o rate_fred.json || echo "[debug] NY Fed EFFR curl: command failed (exit $?)"
+          if [ ! -s rate_fred.json ]; then
+            echo "[debug] NY Fed EFFR curl: empty/missing, retrying once after 5s"
             sleep 5
-            curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] FRED curl retry: http=%{http_code} size=%{size_download}\n" "$FRED_URL" -o rate_fred.csv || echo "[debug] FRED curl retry: command failed (exit $?)"
+            curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR curl retry: http=%{http_code} size=%{size_download}\n" "$NYFED_URL" -o rate_fred.json || echo "[debug] NY Fed EFFR curl retry: command failed (exit $?)"
           fi
-          echo "[debug] rate_fred.csv: $([ -f rate_fred.csv ] && wc -c < rate_fred.csv || echo 0) bytes"
-          echo "=== FRED response (first 200 chars) ==="
-          head -c 200 rate_fred.csv 2>/dev/null || echo "(missing)"
+          echo "[debug] rate_fred.json: $([ -f rate_fred.json ] && wc -c < rate_fred.json || echo 0) bytes"
+          echo "=== NY Fed EFFR response (first 300 chars) ==="
+          head -c 300 rate_fred.json 2>/dev/null || echo "(missing)"
           echo
           node -e '
             const fs=require("fs");
@@ -2799,17 +2805,16 @@ jobs:
             const today=new Date().toISOString().slice(0,10);
             const round2=v=>Math.round(v*100)/100;
 
-            // 1) Aktueller Referenzzins (EFFR, FRED, taeglich).
+            // 1) Aktueller Referenzzins (EFFR, NY Fed Markets Data API, taeglich -
+            //    primaere Quelle, die FRED selbst nur spiegelt).
             let Rcurrent=null;
             try{
-              const csv=fs.readFileSync("rate_fred.csv","utf8").trim().split(/\r?\n/);
-              for(let i=csv.length-1;i>=1;i--){
-                const parts=csv[i].split(",");
-                const v=Number(parts[1]);
-                if(parts.length>=2&&isFinite(v)){Rcurrent=v;break;}
-              }
+              const d=JSON.parse(fs.readFileSync("rate_fred.json","utf8"));
+              const r=d&&Array.isArray(d.refRates)&&d.refRates[0];
+              const v=r&&Number(r.percentRate);
+              if(isFinite(v))Rcurrent=v;
             }catch(e){}
-            if(Rcurrent==null){console.log("rate_probabilities: EFFR unreadable from FRED, skipping (keeping existing file)");process.exit(0);}
+            if(Rcurrent==null){console.log("rate_probabilities: EFFR unreadable from NY Fed, skipping (keeping existing file)");process.exit(0);}
 
             // 2) ZQ-Futures-Kurve (ein Kontrakt je Kalendermonat, 14 Monate voraus).
             let tvResp;
@@ -2873,7 +2878,7 @@ jobs:
             fs.writeFileSync("rate_probabilities.json",JSON.stringify(out,null,1));
             console.log("rate_probabilities.json: EFFR="+Rcurrent+"%, "+okN+" ZQ contracts read"+(miss.length?" [no data: "+miss.join(", ")+"]":"")+", "+meetings.length+" upcoming meetings, history="+out.history.length+" days");
           '
-          rm -f rate_fred.csv rate_tv.json rate_tv_tickers.json
+          rm -f rate_fred.json rate_tv.json rate_tv_tickers.json
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt

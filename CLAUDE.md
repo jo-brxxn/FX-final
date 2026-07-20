@@ -1977,3 +1977,33 @@ Aenderungen ueberholt, z.B. Globus wurde schon einmal zurueckgeholt).
   `auroraDrift1` auf `.aurora-a` und `pulse-badge` auf `#inboxBadge` nach
   dem Fix (vorher: `none`). Voller 14-Tab-Regressionstest weiterhin ohne
   JS-Fehler.
+
+### Rate Probabilities: FRED komplett gegen die NY Fed Markets Data API ausgetauscht (2026-07-20, 4. Iteration)
+
+Vierter `workflow_dispatch`-Testlauf (nach `--http1.1` + `cosd`-Eingrenzung):
+weiterhin `curl exit 28` (Timeout) auf BEIDEN Versuchen, jetzt mit 45s
+Timeout - und beide Versuche haengen exakt bis zur vollen `--max-time`-
+Grenze fest (0 Bytes, `http=000`, keine Server-Antwort ueberhaupt, nicht
+mal ein abgelehntes TCP/TLS-Handshake). Vier verschiedene, gezielte Fixes
+(HTTP-Version, Datumsbereich, Timeout-Dauer) haben das Problem NICHT
+gelöst - das deutet nicht mehr auf ein Konfigurationsproblem hin, sondern
+auf einen harten Netzwerk-Stillstand speziell gegen `fred.stlouisfed.org`
+von GitHub-Actions-IP-Bereichen aus (die ZQ-Futures-Kurve von TradingView
+kam bei ALLEN 4 Laeufen sofort und fehlerfrei an - kein generelles
+Netzwerkproblem des Runners, sondern spezifisch FRED).
+
+**Fix: komplett auf die NY Fed Markets Data API umgestellt**
+(`https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json`) -
+das ist die PRIMAERE Quelle fuer den EFFR (die NY Fed veroeffentlicht ihn
+selbst taeglich, FRED spiegelt ihn nur), oeffentlich erreichbar, KEIN
+API-Key noetig, aber ein voellig anderer Host/CDN als FRED - falls der
+Stillstand tatsaechlich FRED-spezifisch ist (WAF/Bot-Schutz gegen Cloud-
+Datacenter-IP-Bereiche, wie es andere Finanzseiten teils auch machen, vgl.
+CBOE/Investing.com-Cloudflare-Faelle oben), sollte dieser andere Host
+davon nicht betroffen sein. JSON statt CSV (`refRates[0].percentRate`),
+node-Parsing entsprechend vereinfacht. Naechster Testlauf per
+`workflow_dispatch` verifiziert das. **Falls auch das blockt:** naechster
+Schritt waere FREDs offizielle `api.stlouisfed.org`-API (braucht einen
+kostenlosen API-Key - nach dem Grundsatz oben "kostenloses Konto ist kein
+Abbruchgrund" waere das der naechste Versuch, nicht das Aufgeben der
+Live-Berechnung).
