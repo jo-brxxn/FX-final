@@ -1248,7 +1248,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-MERGEDHIST-176</span><span id="verBannerText"> (Nutzer-Korrektur: "Die Historie soll auch oben mit in die Grafik rein" - die separate "Forecast history"-Karte unter dem Meeting-Chart wurde entfernt, die taegliche Historie fuer das naechste Meeting haengt jetzt NAHTLOS links an "Today" im Haupt-Chart an (dist[1] entspricht mathematisch exakt der eigenen Zwei-Stufen-Aufteilung des Meetings, keine Bruchstelle im Uebergang). Zeitraum-Filter (Max/3Y/.../1M/Custom) sitzt jetzt direkt unter den Pillen und steuert, wie viel Historie angehaengt wird. Pillen bleiben auf Today/Meetings beschraenkt, keine Pille pro Historientag)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3a1f1f;color:#f0b8b8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-CLAIMANTFIX-177</span><span id="verBannerText"> (Nutzer-Bugreport per Screenshot: GBP "Claimant Count Change" zeigte im Score-Modal korrekt bullish (+1), aber fuer denselben Tag/Release in der Asset-History rot/bearish (-1). Ursache: LOWER_IS_BETTER_RE matchte nur "claims", nicht "claimant" - der interne kanonische Indikator-Name ("Unemployment Claims") matchte zwar, aber GBPs waehrungsspezifischer Anzeigename ("Claimant Count Change"), den die History-Karte fuer die Bias-Klassifikation nutzt, nicht. Fix: Regex auf den Wortstamm "claim" verkuerzt (Praefix-Match deckt beide Varianten ab) - alle IND_DISPLAY_NAMES auf Regex-Konsistenz zwischen kanonischem und Anzeigenamen durchgescannt, keine weiteren Treffer)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2446,7 +2446,16 @@ function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.t
 // je nachdem ob der Wert für die jeweilige Währung gut oder schlecht ist -
 // oder lässt ihn neutral, wenn er dem Forecast entspricht.
 // Bei Indikatoren wie Unemployment/Claims/Deficit ist "niedriger" besser.
-const LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i;
+// "claim" statt "claims" (Praefix-Match), damit auch GBPs Anzeigename
+// "Claimant Count Change" erfasst wird - der interne kanonische Name des
+// Indikators ("Unemployment Claims") matchte zwar schon vorher, aber Stellen,
+// die den waehrungsspezifischen ANZEIGENAMEN fuer die Bias-Klassifikation
+// nutzen (z.B. symScoreDrivingEventsByDate()'s synthetisches Event fuer die
+// History-Karte, das bewusst ind.displayName fuers Label bevorzugt), gaben
+// dadurch trotz identischer Daten das GEGENTEIL des korrekten Live-Scores
+// aus (Nutzer-Bugreport 2026-07-21: Score-Modal zeigte "Claimant Count
+// Change" korrekt bullish, History-Karte fuer denselben Tag/Release bearish).
+const LOWER_IS_BETTER_RE=/unemployment|jobless|claim|deficit/i;
 function parseNumLike(s){
   if(s==null||s==='')return null;
   const str=String(s).trim();

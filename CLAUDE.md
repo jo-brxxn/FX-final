@@ -2558,3 +2558,52 @@ Historie sollte stattdessen Teil DESSELBEN Charts sein, direkt links an
   (inkl. letzter Meeting-Pille) verschieben weiterhin korrekt und markieren
   die richtige Pille aktiv. Voller Tab-Regressionstest weiterhin
   fehlerfrei.
+
+### Dual-Source-Bug erneut aufgetreten - diesmal auf dem ANZEIGE-Pfad statt Bias/Score (Bugreport 2026-07-21)
+
+Nutzer: "Eigentlich ist das gut aber es wird im Score negativ gewertet
+warum?" - Screenshot zeigte GBP "Claimant Count Change" (Actual 6.7K,
+Forecast 29.4K - klar weniger neue Arbeitslosenmeldungen als erwartet, gute
+Nachricht) im Score-Modal korrekt als bullish (+1), aber in der Asset-
+History (🕰️) fuer denselben Tag/Release mit rotem ▼ (-1).
+
+- **Ursache:** `LOWER_IS_BETTER_RE=/unemployment|jobless|claims|deficit/i`
+  matchte nur die exakte Zeichenkette "claims" - der interne kanonische
+  Indikator-Name ("Unemployment Claims") matchte damit, GBPs waehrungs-
+  spezifischer ANZEIGENAME ("Claimant Count Change", aus
+  `IND_DISPLAY_NAMES.GBP`) aber NICHT ("Claimant" enthaelt "claims" nicht
+  als Teilstring). Der Live-Score-Pfad (`applyIndDataFeed()`s Bias-
+  Selbstheilung, ≈ Zeile 7567) ruft `researchBias(base,...)` mit
+  `base=stripPeriodSuffix(ind.name).base` auf - dem KANONISCHEN Namen,
+  matchte also korrekt. Die History-Karte
+  (`symScoreDrivingEventsByDate()`, ≈ Zeile 3025) baut ihr synthetisches
+  Event dagegen bewusst mit `name:ind.displayName||ind.name` (der
+  Anzeigename soll ja in der Liste lesbar erscheinen) - genau dieses Feld
+  wird aber von `indBiasFromEvent()`/`actualColor()` AUCH fuer den
+  Regex-Test wiederverwendet, matchte fuer GBP nicht, kippte die Farbe.
+- **Fix:** Regex auf den Wortstamm `claim` verkuerzt (Praefix-Match trifft
+  sowohl "claims" als auch "claimant") statt eine zweite Alternative
+  hinzuzufuegen - deckt beide Faelle einheitlich ab, an JEDER Stelle, die
+  `actualColor()` mit irgendeinem Namen aufruft (kanonisch, Anzeigename,
+  oder ein rohes FF-Kalender-Event-Titel-Feld, das ebenfalls "Claimant
+  Count Change" heissen kann).
+- Per Skript alle `IND_DISPLAY_NAMES`-Eintraege gegen die Regex gescannt
+  (kanonischer Name vs. Anzeigename), ob es woanders aehnliche
+  Diskrepanzen gibt - **0 weitere Treffer**, der Fix war vollstaendig.
+- Per Playwright verifiziert: `ind.bias` (Live-Score) und
+  `indBiasFromEvent()` auf dem synthetischen History-Event liefern jetzt
+  beide `'bull'` fuer identische Daten; die echte History-Modal-UI zeigt
+  "Claimant Count Change" jetzt mit blauem ▲ (bullish), identisch zum
+  Score-Modal. Voller Tab-Regressionstest weiterhin fehlerfrei.
+- **Merksatz:** dritte Variante derselben Bug-Klasse in dieser Session
+  (nach EUR-PPI/Kalender-Dual-Source): dasselbe zugrunde liegende Faktum
+  (Actual/Forecast) kann je nachdem, WELCHE STRING-REPRAESENTATION eines
+  Indikator-Namens ein Code-Pfad fuer eine Klassifikations-Entscheidung
+  (hier: Regex-Test) heranzieht, unterschiedlich klassifiziert werden -
+  auch wenn beide Pfade denselben zugrunde liegenden `ind`-Datensatz lesen.
+  Bei kuenftigen Bugs dieser Art (Karte X zeigt etwas anderes als Karte Y
+  fuer dieselben Rohdaten) immer pruefen, ob unterschiedliche Namensfelder
+  (kanonisch vs. Anzeigename vs. Kalender-Event-Titel) in eine
+  namensbasierte Klassifikationsregel (Regex, Lookup-Tabelle) eingespeist
+  werden - eine Regex-Erweiterung auf den gemeinsamen Wortstamm ist meist
+  robuster als das Umsortieren, welches Namensfeld wo verwendet wird.
