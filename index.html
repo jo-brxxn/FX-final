@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#2c1f4a;color:#d9c7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-AUTOSUMMARY-183</span><span id="verBannerText"> (Nutzer-Wunsch: die manuelle "SUMMARY"-Textbox je Karte plus das separate "What matters right now"-Feld ersetzt durch EINE automatisch generierte, natuerlichsprachige Zusammenfassung - reine Template-Engine ohne KI-Aufruf (summarizeRub/sumFrag/sumIndSource in index.html), damit es auch standalone ohne mich weiterlaeuft. Jeder Indikator der Karte wird kurz erwaehnt (Beat/Miss/Trend inkl. Revisionshinweis) und zu einem Satz verbunden, wichtige Fakten **fett** markiert (mdBold() wandelt das beim Anzeigen in &lt;b&gt; um, Rohtext mit den ** bleibt beim Bearbeiten in der Textbox sichtbar). Bleibt manuell ueberschreibbar, aber nur bis zur naechsten echten Datenaenderung der Karte (rub._summarySig-Fingerprint, exakt das bestehende rub._biasScore-Pin-Muster) - dann verschwindet die eigene Fassung und der frische Auto-Text erscheint wieder, wie vom Nutzer explizit gewuenscht)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9c7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9c7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#143028;color:#a8e6c9;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-SUMMARY-PLAINTEXT-184</span><span id="verBannerText"> (Nutzer-Feedback zur Auto-Zusammenfassung: die **fett**-Markdown-Marker aus V183 blieben in der editierbaren SUMMARY-Textbox als stoerende Rohzeichen sichtbar - eine Textarea kann kein &lt;b&gt; rendern, das war nur in der Overview-Kachel umgewandelt. Bold-Markup komplett entfernt, Zusammenfassung ist jetzt reiner Klartext ueberall. Wortwahl-Verbesserung (Trend-Framing statt reiner Daten-Aneinanderreihung, Indikatoren nach Familie gruppiert statt einzeln aufgezaehlt) folgt als naechster Schritt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8e6c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8e6c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5742,7 +5742,7 @@ function renderOverviewCard(rubs){
   const fields=top.map((rub,ri)=>{
     const bco=bCol(rub.bias);
     const sc=rubScore(rub);
-    const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${mdBold(rub.summary)}</div>`:'';
+    const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
     const txt=sumLine||'<span class="ov-empty">No summary yet.</span>';
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
@@ -6722,8 +6722,10 @@ function recomputeRiskCorr(){
 // Ersetzt das bisherige rein manuelle SUMMARY-Feld: baut aus den
 // tatsaechlichen Indikator-Werten (Bias/Actual/Forecast/Previous/Revision)
 // einen kurzen, natuerlichsprachigen Absatz - JEDER Indikator der Karte wird
-// kurz erwaehnt und zu Saetzen verbunden, wichtige Fakten (Bias-Wort, Werte)
-// als **fett** markiert (per mdBold() beim Anzeigen in <b> umgewandelt).
+// kurz erwaehnt und zu Saetzen verbunden. Bewusst KEIN Markdown-Bold-Markup
+// im Text (frueherer Versuch, per Nutzer-Feedback 2026-07-21 zurueckgebaut -
+// die Textarea kann **-Marker nicht als <b> rendern, sie blieben dort als
+// stoerende Rohzeichen sichtbar) - reiner Klartext.
 // Reine Template-Engine, KEIN KI-Aufruf - muss auch laufen, wenn die Seite
 // irgendwann ohne mich betrieben wird. Generisch je Indikator (nicht
 // rubrik-namensgetrieben), deckt daher automatisch auch Custom-Karten ab.
@@ -6766,7 +6768,7 @@ function sumIndSource(sym,ind){
   if(r&&r.actual!=null)return{actual:r.actual,forecast:r.forecast,previous:r.previous,revisedFrom:r.revisedFrom};
   return null;
 }
-// Ein kurzes Fragment pro Indikator ("NFP **missed** at **10K** (fc. 40K)").
+// Ein kurzes Fragment pro Indikator ("NFP missed at 10K (fc. 40K)").
 function sumFrag(sym,ind){
   const base=stripPeriodSuffix(ind.name).base;
   if(SCORE_ZERO.has(base))return null;
@@ -6777,7 +6779,7 @@ function sumFrag(sym,ind){
     // Tone ohne Feed-Abdeckung, Geopolitics) - nur ueber ihr Bias erwaehnen.
     if(ind.bias&&ind.bias!=='neu'){
       const w=(ind.bias==='bull'||ind.bias==='sbull')?'bullish':'bearish';
-      return`${disp} tilted **${w}**`;
+      return`${disp} tilted ${w}`;
     }
     return null;
   }
@@ -6785,14 +6787,14 @@ function sumFrag(sym,ind){
   const a=parseNumLike(src.actual),f=src.forecast!=null&&src.forecast!==''?parseNumLike(src.forecast):null,p=src.previous!=null&&src.previous!==''?parseNumLike(src.previous):null;
   const revNote=src.revisedFrom?` (rev. from ${src.revisedFrom})`:'';
   if(f!=null&&a!=null){
-    if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return`${disp} in line at **${src.actual}**${revNote}`;
+    if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return`${disp} in line at ${src.actual}${revNote}`;
     const good=lowerBetter?a<f:a>f;
-    return`${disp} **${good?'beat':'missed'}** at **${src.actual}** (fc. ${src.forecast})${revNote}`;
+    return`${disp} ${good?'beat':'missed'} at ${src.actual} (fc. ${src.forecast})${revNote}`;
   }
   if(p!=null&&a!=null&&a!==p){
-    return`${disp} **${a>p?'up':'down'}** to **${src.actual}**${revNote}`;
+    return`${disp} ${a>p?'up':'down'} to ${src.actual}${revNote}`;
   }
-  return`${disp} at **${src.actual}**${revNote}`;
+  return`${disp} at ${src.actual}${revNote}`;
 }
 function joinFrags(frags){
   if(frags.length<=1)return frags.join('');
@@ -6808,10 +6810,10 @@ function summarizeRub(sym,rub){
   // Bias ("bullish") dem "kein Signal"-Satz widersprechen.
   if(!frags.length){
     return rub.bias==='neu'
-      ?`The ${topic} picture for ${sym.id} is currently **neutral**, with no indicator currently sending a clear signal.`
-      :`The ${topic} picture for ${sym.id} is currently marked **${biasWord}**, though no individual indicator is currently sending a clear signal.`;
+      ?`The ${topic} picture for ${sym.id} is currently neutral, with no indicator currently sending a clear signal.`
+      :`The ${topic} picture for ${sym.id} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
   }
-  return`The ${topic} picture for ${sym.id} is currently **${biasWord}**, with ${joinFrags(frags)}.`;
+  return`The ${topic} picture for ${sym.id} is currently ${biasWord}, with ${joinFrags(frags)}.`;
 }
 // Fingerprint aller Werte, die summarizeRub() beeinflussen - aendert er
 // sich, ist ein manueller/alter Text nicht mehr aktuell und wird ersetzt.
@@ -6832,10 +6834,6 @@ function syncRubSummaries(){
     });
   });
 }
-// **fett**-Markup aus summarizeRub() in <b> umwandeln, NACH dem Escapen
-// (sicher: die per ** markierten Abschnitte sind zu diesem Zeitpunkt schon
-// escaped, ** selbst ist kein HTML-Sonderzeichen).
-function mdBold(s){return escH(s||'').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
 function recomputeAuto(){invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
