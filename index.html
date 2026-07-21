@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3a1226;color:#f0a8cc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-STALESUM-NOGLOW-192</span><span id="verBannerText"> (Zwei Fixes aus einem Bugreport-Foto: 1) Bestandsnutzer sahen nach dem Umstieg auf die 6 fest verdrahteten Karten-Summarizer weiterhin die ALTE generische Formulierung ("driven mainly by X, while Y held in line") - dieselbe Bug-Klasse wie die **/rev.-from-Selbstheilung zuvor, nur ohne erkennbaren Text-Marker (Signatur haengt nur von Indikator-WERTEN ab, nicht vom Engine-Code). Fix: neue `SUMMARY_ENGINE_VERSION`-Konstante fliesst in `rubSummarySig()` ein - ab jetzt bei JEDER Formulierungs-Aenderung bumpen statt einen neuen Ad-hoc-Marker-Check zu bauen. 2) Hintergrundleuchten (V189/V191) auf Nutzer-Wunsch "mach den glow wieder aus" komplett entfernt - `glow-*`-Klassen setzen wieder nur `border-left-color`, kein Hintergrund-Tint mehr, wie vor dem 2026-07-20-Farbaudit)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8cc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8cc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#12332e;color:#8fe3d1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: MINT-SUMMARY-WORDING-193</span><span id="verBannerText"> (Drei Formulierungs-Feinschliffe an der Auto-Zusammenfassung, vom Nutzer per Beispielsaetzen abgestimmt bevor der Code angefasst wurde: 1) Eroeffnungs-Anker (Headline CPI/Unemployment Rate/GDP) nennt jetzt per Verb, ob der Wert seit dem Vorwert gestiegen/gefallen/gleich geblieben ist ("eased to"/"climbed to"/"held at" statt neutralem "is at"). 2) Yields-Satz in der Inflation-Karte beschreibt jetzt direkt, welche Inflation die Yields selbst einpreisen ("pricing in strengthening/cooling inflation"), mit "even though"-Kontrast nur bei echtem Widerspruch zur uebrigen Karte - ohne CPI/PPI dabei nochmal namentlich zu wiederholen. 3) "supporting/not supporting that trend" bei PMIs/Retail Sales/JOLTS+Wages ersetzt durch einen konkreten Themen-Bezug ("that growth picture"/"that labour market picture"), damit jeder Satz auch ohne den Kartenanfang im Kopf verstaendlich bleibt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fe3d1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fe3d1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7070,7 +7070,35 @@ const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than
 // Rein partizipial (kein finites Verb) - wird nach "with " eingefuegt
 // ("with fewer jobs than expected added recently"), nicht als eigener Satz.
 const JOBS_WORDS={pos:'more jobs than expected added recently','partly-pos':'partly more jobs than expected added recently',neutral:'jobs added broadly in line with expectations',neg:'fewer jobs than expected added recently','partly-neg':'partly fewer jobs than expected added recently',mixed:'a mixed picture on job creation'};
-const SUPPORT_WORDS={pos:'supporting that trend','partly-pos':'partly supporting that trend',neutral:'not showing a clear signal either way','partly-neg':'partly not supporting that trend',neg:'not supporting that trend, trending the other way',mixed:'sending mixed signals'};
+// Topic-bewusst statt "that trend" (Nutzer-Wunsch 2026-07-21: "sonst muss
+// man immer wissen was davor stand") - jeder Satz bleibt dadurch fuer sich
+// verstaendlich, ohne den Kartenanfang im Kopf behalten zu muessen.
+function supportPhrase(cls,topic){
+  if(cls==='pos')return`supporting that ${topic}`;
+  if(cls==='partly-pos')return`partly supporting that ${topic}`;
+  if(cls==='neutral')return'not showing a clear signal either way';
+  if(cls==='partly-neg')return`partly not supporting that ${topic}, pointing the other way`;
+  if(cls==='neg')return`not supporting that ${topic}, pointing the other way`;
+  return'sending mixed signals';
+}
+// Richtungswort fuer die Yields-"pricing in"-Formulierung (nur pos/neg,
+// "partly" faellt auf dieselben Worte zurueck - keine dritte Abstufung
+// noetig, siehe genehmigtes Beispiel).
+function inflDirWord(cls){
+  if(cls==='pos'||cls==='partly-pos')return'strengthening';
+  if(cls==='neg'||cls==='partly-neg')return'cooling';
+  return null;
+}
+// Verb-Phrase fuer den Eroeffnungs-Anker (Nutzer-Wunsch 2026-07-21: "wie
+// dieser aktuell aussieht ... mit einem Verb direkt dazufuegen") - vergleicht
+// den aktuellen Wert mit dem VORWERT (nicht Forecast) und liefert
+// {phrase,dir}, dir=1/-1/0/null fuer spaetere Kontrast-Logik (z.B. GDP).
+function anchorClause(rs){
+  if(!rs)return null;
+  if(rs.pNum==null)return{phrase:`is at ${rs.actual}`,dir:null};
+  if(rs.aNum===rs.pNum)return{phrase:`held at ${rs.actual}`,dir:0};
+  return{phrase:`${rs.aNum>rs.pNum?'climbed to':'eased to'} ${rs.actual}`,dir:rs.aNum>rs.pNum?1:-1};
+}
 function noSignalFallback(sym,rub){
   const topic=(rub.name||'this card').toLowerCase();
   const biasWord=rub.bias==='bull'?'bullish':rub.bias==='bear'?'bearish':'neutral';
@@ -7084,21 +7112,33 @@ function summarizeInflation(sym,rub){
   const pceH=findIndByBase(rub,'PCE'),pceC=findIndByBase(rub,'Core PCE');
   const y2=findIndByBase(rub,'2Y Bond Yield'),y10=findIndByBase(rub,'10Y Bond Yield');
   const hRS=sumRawState(sym,headline);
+  const hAnchor=anchorClause(hRS);
   const cpiCls=classifyPair(fcState(hRS),fcState(sumRawState(sym,core)));
   const sentences=[];
-  if(hRS&&cpiCls)sentences.push(`Headline CPI is at ${hRS.actual}, with CPIs coming in ${HOTCOLD_WORDS[cpiCls]}`);
-  else if(hRS)sentences.push(`Headline CPI is at ${hRS.actual}`);
+  if(hAnchor&&cpiCls)sentences.push(`Headline CPI ${hAnchor.phrase}, with CPIs coming in ${HOTCOLD_WORDS[cpiCls]}`);
+  else if(hAnchor)sentences.push(`Headline CPI ${hAnchor.phrase}`);
   else if(cpiCls)sentences.push(`CPIs came in ${HOTCOLD_WORDS[cpiCls]}`);
   const ppiCls=classifyPair(fcState(sumRawState(sym,ppiH)),fcState(sumRawState(sym,ppiC)));
   if(ppiCls)sentences.push(`PPIs came in ${HOTCOLD_WORDS[ppiCls]}`);
   const pceCls=classifyPair(fcState(sumRawState(sym,pceH)),fcState(sumRawState(sym,pceC)));
   if(pceCls)sentences.push(`PCEs came in ${HOTCOLD_WORDS[pceCls]}`);
+  // Yields haben keinen Forecast - statt sie gegen CPI/PPI/PCE zu "spiegeln"
+  // (frueherer Ansatz), sagen wir jetzt direkt, welche Inflation die Yields
+  // SELBST einpreisen, und stellen das nur bei einem echten Widerspruch zur
+  // uebrigen Karte per "even though" gegenueber - ohne CPI/PPI namentlich zu
+  // wiederholen (Nutzer-Wunsch 2026-07-21: "sonst ist das doppelt").
   const yieldsCls=classifyPair(trendState(sumRawState(sym,y2)),trendState(sumRawState(sym,y10)));
   if(yieldsCls){
-    const refCls=cpiCls||ppiCls||pceCls;
-    const aligned=refCls?alignCls(yieldsCls,refCls):null;
-    if(aligned)sentences.push(`Yields are ${SUPPORT_WORDS[aligned]}`);
-    else sentences.push(`Yields are ${yieldsCls==='pos'?'trending higher':yieldsCls==='neg'?'trending lower':'little changed'}`);
+    const yWord=inflDirWord(yieldsCls);
+    if(!yWord){
+      sentences.push(yieldsCls==='mixed'?'Yields are sending mixed signals':'Yields are little changed');
+    }else{
+      const refCls=cpiCls||ppiCls||pceCls;
+      const refWord=refCls?inflDirWord(refCls):null;
+      if(refWord&&refWord!==yWord)sentences.push(`Yields, however, are pricing in ${yWord} inflation, even though the broader picture is ${refWord}`);
+      else if(refWord)sentences.push(`Yields are pricing in ${yWord} inflation, in line with that`);
+      else sentences.push(`Yields are pricing in ${yWord} inflation`);
+    }
   }
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
@@ -7108,10 +7148,11 @@ function summarizeLabour(sym,rub){
   const claims=findIndByBase(rub,'Unemployment Claims');
   const jolts=findIndByBase(rub,'JOLTS Job Openings'),wages=findIndByBase(rub,'Avg Hourly Earnings');
   const uRS=sumRawState(sym,unemp);
+  const uAnchor=anchorClause(uRS);
   const jobsCls=classifyPair(fcState(sumRawState(sym,nfp)),fcState(sumRawState(sym,adp)));
   const sentences=[];
-  if(uRS&&jobsCls)sentences.push(`The unemployment rate is at ${uRS.actual}, with ${JOBS_WORDS[jobsCls]}`);
-  else if(uRS)sentences.push(`The unemployment rate is at ${uRS.actual}`);
+  if(uAnchor&&jobsCls)sentences.push(`The unemployment rate ${uAnchor.phrase}, with ${JOBS_WORDS[jobsCls]}`);
+  else if(uAnchor)sentences.push(`The unemployment rate ${uAnchor.phrase}`);
   else if(jobsCls)sentences.push(`Job creation came in ${HOTCOLD_WORDS[jobsCls]}`);
   // Claims sind gegenlaeufig (weniger Claims = mehr Jobs) - fcState ist
   // bereits lowerBetter-bereinigt, alignCls vergleicht daher direkt die
@@ -7126,7 +7167,7 @@ function summarizeLabour(sym,rub){
   const otherCls=classifyPair(fcState(sumRawState(sym,jolts)),fcState(sumRawState(sym,wages)));
   if(otherCls&&jobsCls){
     const aligned=alignCls(otherCls,jobsCls);
-    if(aligned)sentences.push(`JOLTS openings and wage growth are ${SUPPORT_WORDS[aligned]}`);
+    if(aligned)sentences.push(`JOLTS openings and wage growth are ${supportPhrase(aligned,'labour market picture')}`);
   }
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
@@ -7136,19 +7177,27 @@ function summarizeGrowth(sym,rub){
   const retail=findIndByBase(rub,'Retail Sales');
   const cc=findIndByBase(rub,'Consumer Confidence');
   const gRS=sumRawState(sym,gdp);
+  const gAnchor=anchorClause(gRS);
   const gCls=classifySingle(fcState(gRS));
   const sentences=[];
-  if(gRS&&gCls)sentences.push(`GDP growth is at ${gRS.actual}, ${gCls==='pos'?'stronger than expected':gCls==='neg'?'weaker than expected':'roughly in line with expectations'}`);
-  else if(gRS)sentences.push(`GDP growth is at ${gRS.actual}`);
+  if(gAnchor&&gCls){
+    const verdict=gCls==='pos'?'stronger than expected':gCls==='neg'?'weaker than expected':'roughly in line with expectations';
+    // "though" nur bei echtem Widerspruch zwischen Vorwert-Trend (gAnchor.dir)
+    // und Forecast-Verdikt (z.B. Wachstum liess nach, schlug aber trotzdem
+    // die Prognose) - stimmen beide Richtungen ueberein, reicht "coming in".
+    const vDir=gCls==='pos'?1:gCls==='neg'?-1:0;
+    const contrast=gAnchor.dir&&vDir&&gAnchor.dir!==vDir;
+    sentences.push(`GDP growth ${gAnchor.phrase}, ${contrast?'though that came in':'coming in'} ${verdict}`);
+  }else if(gAnchor)sentences.push(`GDP growth ${gAnchor.phrase}`);
   const pmiCls=classifyPair(fcState(sumRawState(sym,pmiM)),fcState(sumRawState(sym,pmiS)));
   if(pmiCls){
     const aligned=gCls?alignCls(pmiCls,gCls):null;
-    sentences.push(aligned?`PMIs are ${SUPPORT_WORDS[aligned]}`:`PMIs came in ${HOTCOLD_WORDS[pmiCls]}`);
+    sentences.push(aligned?`PMIs are ${supportPhrase(aligned,'growth picture')}`:`PMIs came in ${HOTCOLD_WORDS[pmiCls]}`);
   }
   const retailCls=classifySingle(fcState(sumRawState(sym,retail)));
   if(retailCls){
     const aligned=gCls?alignCls(retailCls,gCls):null;
-    sentences.push(aligned?`Retail sales are ${SUPPORT_WORDS[aligned]}`:`Retail sales came in ${HOTCOLD_WORDS[retailCls]}`);
+    sentences.push(aligned?`Retail sales are ${supportPhrase(aligned,'growth picture')}`:`Retail sales came in ${HOTCOLD_WORDS[retailCls]}`);
   }
   const ccTrend=trendState(sumRawState(sym,cc));
   if(ccTrend!=null)sentences.push(`Consumer confidence has ${ccTrend>0?'also improved':ccTrend<0?'weakened':'held steady'}`);
@@ -7211,7 +7260,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=2;
+const SUMMARY_ENGINE_VERSION=3;
 function rubSummarySig(rub){
   return JSON.stringify([SUMMARY_ENGINE_VERSION,(rub.indicators||[]).map(i=>{
     const r=i.research||{};

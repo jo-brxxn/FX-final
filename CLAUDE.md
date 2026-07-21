@@ -3294,3 +3294,54 @@ zurueckgebaut. `glow-*`-Klassen (`.ab`/`.rub-card`/`.pair-card`/
 Stand von vor dem 2026-07-20-Farbaudit-Rueckbau. Per Playwright verifiziert
 (`getComputedStyle().backgroundImage` liefert `none`), voller
 Regressionstest fehlerfrei.
+
+### Formulierungs-Feinschliff mit Vorab-Beispielen abgestimmt (Nutzer-Wunsch 2026-07-21, nach der neuen "erst OK einholen"-Regel)
+
+Erste Anfrage nach der neu eingefuehrten Arbeitsweise-Regel ("vor Code-
+Aenderungen erst das OK des Nutzers einholen", siehe Abschnitt oben) - drei
+Formulierungs-Wuensche zur Inflation-/Growth-/Labour-Zusammenfassung wurden
+per Beispielsaetzen im Chat abgestimmt, BEVOR Code angefasst wurde:
+
+1. **"Yields are pricing in cooling/strengthening inflation"** ersetzt den
+   bisherigen `SUPPORT_WORDS`-Ansatz fuer die Yields-Zeile der Inflation-
+   Karte - beschreibt jetzt direkt, welche Inflation die Yields SELBST
+   einpreisen (`inflDirWord()`, aus der eigenen Trendrichtung der Yields
+   `yieldsCls`), statt sie nur gegen die CPI-Richtung zu "spiegeln". Ein
+   `even though`-Kontrast erscheint NUR bei echtem Widerspruch zur CPI/PPI/
+   PCE-Richtung ("Yields, however, are pricing in strengthening inflation,
+   even though the broader picture is cooling.") - und nennt dabei bewusst
+   NICHT nochmal "CPI"/"PPI" (Nutzer-Korrektur: "sonst ist das doppelt"),
+   sondern nur "the broader picture". Stimmen beide Richtungen ueberein:
+   "..., in line with that." (kein `even though`, waere sonst kein echter
+   Kontrast). Kein Referenzpunkt vorhanden (CPI/PPI/PCE alle neutral):
+   nur die eigene Yields-Richtung ohne Vergleich.
+2. **Eroeffnungs-Anker bekommt ein Trend-Verb statt "is at"** (Nutzer-Fund:
+   "wenn du GDP oder CPI am Anfang erwaehnst, sagst du nicht wie der
+   aktuell aussieht"): neue Funktion `anchorClause(rs)` vergleicht den
+   aktuellen Wert mit dem VORWERT (nicht Forecast) und liefert
+   "climbed to"/"eased to"/"held at" statt des neutralen "is at" - gilt fuer
+   Headline CPI (Inflation), Unemployment Rate (Labour Market) und GDP
+   Growth (Economic Growth). Bei GDP zusaetzlich `though`-Logik: nur wenn
+   sich Vorwert-Trend (`climbed`/`eased`) UND Forecast-Verdikt (`stronger`/
+   `weaker than expected`) WIDERSPRECHEN (z. B. Wachstum liess nach, schlug
+   aber trotzdem die Prognose), wird "though that came in X" statt "coming
+   in X" verwendet - stimmen beide Richtungen ueberein, waere "though"
+   sprachlich falsch (kein Widerspruch).
+3. **"that trend" ersetzt durch konkreten Themen-Bezug** (Nutzer-Fund:
+   "sonst muss man immer wissen was davor stand"): neue Funktion
+   `supportPhrase(cls,topic)` ersetzt die alte `SUPPORT_WORDS`-Konstante -
+   PMIs/Retail Sales (Economic Growth) beziehen sich jetzt auf "that growth
+   picture", JOLTS+Wages (Labour Market) auf "that labour market picture" -
+   jeder Satz bleibt dadurch fuer sich allein verstaendlich, ohne den
+   Kartenanfang im Kopf behalten zu muessen.
+- `SUMMARY_ENGINE_VERSION` (siehe Merksatz-Eintrag oben) auf `3` erhoeht,
+  da sich die Formulierungs-LOGIK geaendert hat - Selbstheilung greift
+  dadurch automatisch bei allen Bestandsnutzern, kein erneuter Foto-
+  Bugreport wie beim letzten Mal zu erwarten.
+- Per Playwright verifiziert: alle drei Aenderungen liefern exakt die im
+  Chat abgestimmten Beispielsaetze (GOLD/BTC Inflation mit `even though`-
+  Kontrast, EUR Inflation ohne Kontrast "in line with that", EUR/GOLD
+  Growth mit `climbed to`/`eased to` + korrekter though/coming-in-Wahl,
+  Labour Market mit "that labour market picture"); voller Scan ueber alle
+  108 Karten-Kombinationen ohne leere/fehlerhafte Texte; voller
+  14-Tab-Regressionstest fehlerfrei.
