@@ -3598,3 +3598,67 @@ eigene Risk-Environment-Lage hat.
   Anlegen einer solchen Konstante IMMER pruefen, ob auch wirklich JEDE
   Stelle, die die zugehoerige Datenstruktur iteriert (hier: UI-Rendering
   UND Berechnungslogik), sie auch tatsaechlich anwendet.
+
+### Auto-Zusammenfassung: COT-Text widersprach dem Bias-Badge + Unemployment-Rate ohne Forecast-Verdikt (Nutzer-Bugreport 2026-07-21, per Screenshot)
+
+Nutzer schickte zwei Screenshots der Live-Seite: GBPs COT-Data-Karte zeigte
+Badge "▲ BULLISH +0.5", der Zusammenfassungstext darunter aber "Institutions
+are currently leaning more on the **bearish** side, at 70.5%..." - ein
+direkter Widerspruch. Frage: "Siehst du das gar nicht? Wie können so Fehler
+passieren?" Zusaetzlich: "Unemployment held at… keine Wort dazu das es
+besser als expected war?"
+
+**COT-Widerspruch - Ursache:** die Score-Berechnung selbst war korrekt
+(kein Rechenfehler): Netto-Positionierung 70.5% short (≥60%-Schwelle)
+zieht -0.5, die Wochenveraenderung war aber stark positiv (+4.3%, ≥3pp-
+Schwelle) und zieht +1 (volles statt halbes Gewicht) - macht in Summe +0.5,
+Badge korrekt "Bullish". `summarizeCot()` beschrieb aber nur das nackte
+Niveau ("leaning more on the bearish side") und haengte die WoW-Aenderung
+nur als Nebensatz an, ohne zu erklaeren, dass GENAU die gerade den
+Ausschlag gibt - fuer den Leser ein scheinbarer Widerspruch zum Badge.
+
+- **Fix:** `summarizeCot()` komplett umgebaut. Niveau-Satz bleibt
+  ("Positioning is still net short at 70.5%"), WoW-Aenderung wird nur dann
+  mit "but ... which is currently the stronger signal" als Kontrast
+  gegenuebergestellt, wenn sie dem Niveau tatsaechlich WIDERSPRICHT
+  (`levelSign!==wowSign`) - stimmen beide ueberein oder ist das Niveau
+  selbst nicht dominant (Split), waere "but" grammatisch falsch, dann
+  simple additive Formulierung ("with the weekly change positive at
+  +4.3%"). "Strongly positive/negative" nur wenn die WoW-Aenderung
+  tatsaechlich das volle Gewicht bekommt (`!cotWowIsSmall(ind)`, ≥3pp),
+  keine erratene Verstaerkung.
+- **Neue Funktion `magnitudeBiasWord(sc)`:** liest denselben `rubScore(rub)`-
+  Wert, der auch das Badge setzt (Dual-Source-Lehre - kein zweiter,
+  unabhaengiger Bias-Pfad) und haengt ein Fazit an ("on balance, that makes
+  the picture X"), X abgestuft nach |Score|: 0,5 → "slightly bullish/
+  bearish" (Nutzer-Wunsch: "Schreib lieber slightly bullish"), 1,0 → nur
+  "bullish/bearish", 1,5 → "strongly bullish/bearish" - dasselbe Vokabular
+  wie die bestehende 5-stufige Risk-Correlation-Skala. Bei neutralem Score
+  kein Fazit-Satz.
+- **Unemployment-Rate-Fix:** `summarizeLabour()`s Eroeffnungssatz nutzte
+  `anchorClause()` (nur Trend ggue. Vorwert: "held at"/"fell to"/"rose to"),
+  aber NIE das Forecast-Verdikt - anders als Inflation (CPI) und Growth
+  (GDP), die im Eroeffnungssatz beides nennen. Fix: `fcState(uRS)`
+  (bereits lowerBetter-bereinigt) ergaenzt "coming in better than
+  expected"/"coming in worse than expected"/"in line with expectations"
+  direkt nach dem Trend-Verb - "The unemployment rate held at 4.9%, coming
+  in better than expected, with more jobs than expected added recently."
+- `SUMMARY_ENGINE_VERSION` auf `9` erhoeht.
+- Per Playwright mit dem EXAKTEN Screenshot-Szenario verifiziert (GBP COT:
+  70.5% short + WoW +4.3%) - Ergebnis: "Positioning is still net short at
+  70.5%, but this week's shift was strongly positive at +4.3%, which is
+  currently the stronger signal — on balance, that makes the picture
+  slightly bullish." (Badge-konsistent, keine Widerspruch mehr). GBP
+  Labour Market (4.9% actual vs. 5% forecast vs. 4.9% previous) liefert
+  "The unemployment rate held at 4.9%, coming in better than expected,
+  ...". Voller Grammatik-Scan ueber alle 108 Karten-Kombinationen + 14-Tab-
+  Regressionstest + Selbstheilungs-Test weiterhin fehlerfrei.
+- **Merksatz:** wenn eine Zusammenfassung EINEN Teilaspekt eines Scores
+  beschreibt (hier: nur das Netto-Niveau), aber der Score aus MEHREREN,
+  unterschiedlich gewichteten Signalen besteht (hier: Niveau ±0,5 vs. WoW
+  bis ±1), kann der beschriebene Teilaspekt dem Gesamt-Badge widersprechen,
+  sobald das staerker gewichtete Signal die andere Richtung zieht - bei
+  jeder neuen Kartenzusammenfassung pruefen, ob ALLE score-tragenden
+  Signale im Text erscheinen und das Text-Fazit immer aus derselben Quelle
+  (`rub.bias`/`rubScore()`) wie das Badge kommt, nicht aus einer eigenen
+  Teil-Interpretation.

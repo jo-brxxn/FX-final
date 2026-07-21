@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2e2b;color:#8fd9c9;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PINE-DERIVE-RULE-FIX-198</span><span id="verBannerText"> (Bugfix: die Non-FX-Asset-Settings (Zahnrad) liessen faelschlich auch "COT Data"/"Risk Environment" als same/inverse-Ableitungsregel waehlen, obwohl beide asset-eigene Daten sind (z.B. GOLDs eigener COT-Report) - dadurch konnte z.B. GOLDs COT-Bias vom invertierten USD-COT-Bias ueberschrieben werden. Jetzt auf die 4 echten Makro-Karten (Inflation/Interest Rates/Labour Market/Economic Growth) beschraenkt, bestehende deriveRules-Eintraege fuer COT Data/Risk Environment werden per Migration bereinigt (cleanDeriveRules). Zusaetzlich spiegelt die "Link with other assets"-Sync-Gruppe (z.B. Krypto) COT Data/Risk Environment jetzt NICHT mehr zwischen den Assets - jedes behaelt seine eigenen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fd9c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fd9c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a1a;color:#f0a8a8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CRIMSON-COT-BADGE-FIX-199</span><span id="verBannerText"> (Zwei Bugfixes, per Nutzer-Screenshot gefunden: 1) COT-Data-Zusammenfassung widersprach dem Bias-Badge ("leaning more on the bearish side" bei Badge "Bullish") - die WoW-Aenderung kann beim Score bis zu doppeltes Gewicht gegenueber dem reinen Niveau haben, der Text nannte das aber nie. Neu: Satz nennt Niveau + WoW-Aenderung + ein badge-konsistentes Fazit ("on balance, that makes the picture slightly/bullish/strongly bullish", Woertchen je nach |Score| 0,5/1/1,5), "but ... the stronger signal" nur bei echtem Widerspruch zwischen Niveau und WoW. 2) Labour-Market-Eroeffnungssatz nannte fuer die Unemployment Rate nur den Trend ggue. Vorwert ("held at"), nie das Forecast-Verdikt - jetzt zusaetzlich "coming in better/worse than expected"/"in line with expectations". SUMMARY_ENGINE_VERSION auf 9.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7285,11 +7285,20 @@ function summarizeLabour(sym,rub){
   const jolts=findIndByBase(rub,'JOLTS Job Openings'),wages=findIndByBase(rub,'Avg Hourly Earnings');
   const uRS=sumRawState(sym,unemp);
   const uAnchor=anchorClause(uRS,ANCHOR_VERBS_LABOUR);
+  const uState=fcState(uRS);
   const jobsCls=classifyPair(fcState(sumRawState(sym,nfp)),fcState(sumRawState(sym,adp)));
   const sentences=[];
-  if(uAnchor&&jobsCls)sentences.push(`The unemployment rate ${uAnchor.phrase}, with ${JOBS_WORDS[jobsCls]}`);
-  else if(uAnchor)sentences.push(`The unemployment rate ${uAnchor.phrase}`);
-  else if(jobsCls)sentences.push(cameInPhrase('Job creation','was',jobsCls));
+  if(uAnchor){
+    // Forecast-Verdikt fehlte bisher komplett (Nutzer-Bugreport 2026-07-21:
+    // "Unemployment held at... keine Wort dazu das es besser als expected
+    // war?") - uAnchor.phrase nennt nur den Trend ggue. dem Vorwert, nicht
+    // ob der Wert die Prognose schlug. uState ist bereits lowerBetter-
+    // bereinigt (LOWER_IS_BETTER_RE matcht "unemployment").
+    let clause=`The unemployment rate ${uAnchor.phrase}`;
+    if(uState!=null)clause+=`, ${uState>0?'coming in better than expected':uState<0?'coming in worse than expected':'in line with expectations'}`;
+    if(jobsCls)clause+=`, with ${JOBS_WORDS[jobsCls]}`;
+    sentences.push(clause);
+  }else if(jobsCls)sentences.push(cameInPhrase('Job creation','was',jobsCls));
   // Claims sind gegenlaeufig (weniger Claims = mehr Jobs) - fcState ist
   // bereits lowerBetter-bereinigt, alignCls vergleicht daher direkt die
   // beiden bereits gleichgerichteten +1/-1-Werte.
@@ -7377,24 +7386,62 @@ const COT_CROWDED_PCT_SUM=80;
 // (>=80%) bleibt als zusaetzlicher Parenthese-Zusatz erhalten, da er eine
 // staerkere Aussage (Squeeze-Risiko) trifft als die blosse Schlagseite.
 const COT_LEAN_PCT_SUM=60;
+// Badge-konsistentes Verdikt-Wort (Nutzer-Bugreport 2026-07-21: Badge zeigte
+// "Bullish", Text sagte "leaning more on the bearish side" - Widerspruch,
+// weil der alte Text nur das Netto-Niveau beschrieb, obwohl die WoW-
+// Aenderung beim Score bis zu doppeltes Gewicht hat und den Ausschlag geben
+// kann). Liest denselben `rubScore(rub)`-Wert, der auch das Badge setzt
+// (Dual-Source-Lehre) - |Score| 0,5="slightly", 1="", 1,5="strongly",
+// gleiches Vokabular wie die bestehende Risk-Correlation-5-Stufen-Skala.
+function magnitudeBiasWord(sc){
+  const mag=Math.abs(sc);
+  if(!mag)return null;
+  const word=sc>0?'bullish':'bearish';
+  if(mag>=1.5)return`strongly ${word}`;
+  if(mag>=1)return word;
+  return`slightly ${word}`;
+}
 function summarizeCot(sym,rub){
   const bullRS=sumRawState(sym,findIndByBase(rub,'Net Bullish Positioning'));
   const bearRS=sumRawState(sym,findIndByBase(rub,'Net Bearish Positioning'));
   if(!bullRS&&!bearRS)return noSignalFallback(sym,rub);
-  let sentence;
+  let sentence,levelSign=0;
   if(bullRS&&bearRS&&bullRS.aNum!=null&&bullRS.aNum>=COT_LEAN_PCT_SUM){
-    sentence=`Institutions are currently leaning more on the bullish side, at ${bullRS.actual}`;
+    sentence=`Positioning is currently net long at ${bullRS.actual}`;
     if(bullRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded)';
+    levelSign=1;
   }else if(bullRS&&bearRS&&bearRS.aNum!=null&&bearRS.aNum>=COT_LEAN_PCT_SUM){
-    sentence=`Institutions are currently leaning more on the bearish side, at ${bearRS.actual}`;
+    sentence=`Positioning is still net short at ${bearRS.actual}`;
     if(bearRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded)';
+    levelSign=-1;
   }else if(bullRS&&bearRS){
     sentence=`Positioning is currently split ${bullRS.actual} long / ${bearRS.actual} short`;
   }else{
     sentence=bullRS?`Net long positioning is at ${bullRS.actual}`:`Net short positioning is at ${bearRS.actual}`;
   }
-  const wowRS=sumRawState(sym,findIndByBase(rub,'WoW Change in Net Position (%)'));
-  if(wowRS&&wowRS.aNum!=null)sentence+=`, with the weekly change ${wowRS.aNum>0?`positive at ${wowRS.actual}`:wowRS.aNum<0?`negative at ${wowRS.actual}`:'flat'}`;
+  // WoW nur dann als "but ... the stronger signal" gegen das Niveau
+  // stellen, wenn sie ihm tatsaechlich WIDERSPRICHT (levelSign vs. wowSign
+  // entgegengesetzt) - stimmen beide ueberein oder ist das Niveau selbst
+  // nicht dominant (Split), ist "but" grammatisch falsch (kein Kontrast).
+  const wowInd=findIndByBase(rub,'WoW Change in Net Position (%)');
+  const wowRS=sumRawState(sym,wowInd);
+  let wowSign=0;
+  if(wowRS&&wowRS.aNum!=null){
+    wowSign=wowRS.aNum>0?1:wowRS.aNum<0?-1:0;
+    if(!wowSign){
+      sentence+=', with the weekly change flat';
+    }else{
+      const strong=!cotWowIsSmall(wowInd);
+      const word=`${strong?'strongly ':''}${wowSign>0?'positive':'negative'}`;
+      const contrast=levelSign&&levelSign!==wowSign;
+      sentence+=contrast?`, but this week's shift was ${word} at ${wowRS.actual}`:`, with the weekly change ${word} at ${wowRS.actual}`;
+    }
+  }
+  const scWord=magnitudeBiasWord(rubScore(rub));
+  if(scWord){
+    const contrast=levelSign&&wowSign&&levelSign!==wowSign;
+    sentence+=contrast?`, which is currently the stronger signal — on balance, that makes the picture ${scWord}`:`. On balance, that makes the picture ${scWord}`;
+  }
   return sentence+'.';
 }
 function summarizeRiskEnv(sym,rub){
@@ -7428,7 +7475,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=8;
+const SUMMARY_ENGINE_VERSION=9;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
