@@ -3345,3 +3345,30 @@ per Beispielsaetzen im Chat abgestimmt, BEVOR Code angefasst wurde:
   Labour Market mit "that labour market picture"); voller Scan ueber alle
   108 Karten-Kombinationen ohne leere/fehlerhafte Texte; voller
   14-Tab-Regressionstest fehlerfrei.
+
+### COT/Risk-Environment-Formulierung nachgeschaerft (Nutzer-Wunsch 2026-07-21, direkt im Anschluss)
+
+Wieder per Beispielsaetzen abgestimmt vor der Umsetzung:
+
+- **COT Data ab 60% Net-Positioning auf einer Seite**: neue Konstante
+  `COT_LEAN_PCT_SUM=60` - `summarizeCot()` formuliert dann "Institutions
+  are currently leaning more on the bullish/bearish side, at X%" statt nur
+  den nackten Long/Short-Split zu nennen (die Gegenseite laesst sich
+  ableiten, muss nicht explizit genannt werden - Nutzer-Vorgabe woertlich).
+  Der bestehende `COT_CROWDED_PCT_SUM=80`-Hinweis bleibt als zusaetzliche
+  Parenthese "(crowded)" erhalten, wenn er zutrifft - eine staerkere
+  Aussage (Squeeze-Risiko) als die blosse Schlagseite. Unter 60% auf beiden
+  Seiten bleibt der bisherige "Positioning is currently split X% long / Y%
+  short"-Satz unveraendert. Der Weekly-Change-Halbsatz nennt jetzt
+  zusaetzlich die Prozentzahl ("with the weekly change positive at
+  +0.4%"/"negative at -0.7%" statt nur "positive"/"negative").
+- **Risk Environment**: `summarizeRiskEnv()` nutzte "currently" zweimal im
+  selben Satz ("Risk sentiment is currently X, currently bullish for Y") -
+  das zweite `currently` im `effect`-Teil entfernt.
+- `SUMMARY_ENGINE_VERSION` auf `4` erhoeht.
+- Per Playwright verifiziert: GOLD/BTC COT (84.8% long) liefert "Institutions
+  are currently leaning more on the bullish side, at 84.8% (crowded), with
+  the weekly change negative at -0.7%.", EUR COT (48.7%/51.3%, unter 60%)
+  bleibt beim Split-Satz; Risk Environment zeigt "currently" nur noch
+  einmal pro Satz auf allen 3 Regler-Stufen; voller 14-Tab-Regressionstest
+  und Selbstheilungs-Test weiterhin fehlerfrei.

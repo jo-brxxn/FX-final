@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#12332e;color:#8fe3d1;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: MINT-SUMMARY-WORDING-193</span><span id="verBannerText"> (Drei Formulierungs-Feinschliffe an der Auto-Zusammenfassung, vom Nutzer per Beispielsaetzen abgestimmt bevor der Code angefasst wurde: 1) Eroeffnungs-Anker (Headline CPI/Unemployment Rate/GDP) nennt jetzt per Verb, ob der Wert seit dem Vorwert gestiegen/gefallen/gleich geblieben ist ("eased to"/"climbed to"/"held at" statt neutralem "is at"). 2) Yields-Satz in der Inflation-Karte beschreibt jetzt direkt, welche Inflation die Yields selbst einpreisen ("pricing in strengthening/cooling inflation"), mit "even though"-Kontrast nur bei echtem Widerspruch zur uebrigen Karte - ohne CPI/PPI dabei nochmal namentlich zu wiederholen. 3) "supporting/not supporting that trend" bei PMIs/Retail Sales/JOLTS+Wages ersetzt durch einen konkreten Themen-Bezug ("that growth picture"/"that labour market picture"), damit jeder Satz auch ohne den Kartenanfang im Kopf verstaendlich bleibt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fe3d1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fe3d1;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#332312;color:#e3c68f;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-COT-RISKENV-WORDING-194</span><span id="verBannerText"> (Zwei weitere abgestimmte Formulierungs-Aenderungen: 1) COT Data sagt jetzt ab 60% Net-Positioning auf einer Seite "Institutions are currently leaning more on the bullish/bearish side, at X%" statt nur den Split zu nennen (die andere Seite laesst sich ableiten) - der bestehende "crowded"-Zusatz ab 80% bleibt als Parenthese erhalten, der Weekly-Change-Halbsatz nennt jetzt zusaetzlich die Prozentzahl ("positive at +0.4%" statt nur "positive"). 2) Risk Environment nutzte "currently" zweimal im selben Satz ("is currently X, currently bullish for Y") - das zweite entfernt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7213,26 +7213,36 @@ function summarizeInterestRates(sym,rub){
 // dort) - hier als eigene Konstante, weil die COT-Tab-Variable lokal in
 // renderCot() liegt.
 const COT_CROWDED_PCT_SUM=80;
+// Ab dieser Schwelle (Nutzer-Wunsch 2026-07-21) formuliert der Satz die
+// Positionierung als klare Schlagseite ("institutions are leaning...")
+// statt nur den nackten Split zu nennen - der COT_CROWDED_PCT_SUM-Hinweis
+// (>=80%) bleibt als zusaetzlicher Parenthese-Zusatz erhalten, da er eine
+// staerkere Aussage (Squeeze-Risiko) trifft als die blosse Schlagseite.
+const COT_LEAN_PCT_SUM=60;
 function summarizeCot(sym,rub){
   const bullRS=sumRawState(sym,findIndByBase(rub,'Net Bullish Positioning'));
   const bearRS=sumRawState(sym,findIndByBase(rub,'Net Bearish Positioning'));
   if(!bullRS&&!bearRS)return noSignalFallback(sym,rub);
   let sentence;
-  if(bullRS&&bearRS){
+  if(bullRS&&bearRS&&bullRS.aNum!=null&&bullRS.aNum>=COT_LEAN_PCT_SUM){
+    sentence=`Institutions are currently leaning more on the bullish side, at ${bullRS.actual}`;
+    if(bullRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded)';
+  }else if(bullRS&&bearRS&&bearRS.aNum!=null&&bearRS.aNum>=COT_LEAN_PCT_SUM){
+    sentence=`Institutions are currently leaning more on the bearish side, at ${bearRS.actual}`;
+    if(bearRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded)';
+  }else if(bullRS&&bearRS){
     sentence=`Positioning is currently split ${bullRS.actual} long / ${bearRS.actual} short`;
-    if(bullRS.aNum!=null&&bullRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded long)';
-    else if(bearRS.aNum!=null&&bearRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded short)';
   }else{
     sentence=bullRS?`Net long positioning is at ${bullRS.actual}`:`Net short positioning is at ${bearRS.actual}`;
   }
   const wowRS=sumRawState(sym,findIndByBase(rub,'WoW Change in Net Position (%)'));
-  if(wowRS&&wowRS.aNum!=null)sentence+=`, with the weekly change ${wowRS.aNum>0?'positive':wowRS.aNum<0?'negative':'flat'}`;
+  if(wowRS&&wowRS.aNum!=null)sentence+=`, with the weekly change ${wowRS.aNum>0?`positive at ${wowRS.actual}`:wowRS.aNum<0?`negative at ${wowRS.actual}`:'flat'}`;
   return sentence+'.';
 }
 function summarizeRiskEnv(sym,rub){
   const levelWord=riskEnvLevel>=2?'a full risk-off environment':riskEnvLevel>=1?'a half risk-off environment':'a calm, low-risk environment';
   const dir=riskEnvDirOf(sym.id);
-  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.id}`:dir==='bullish'?`currently bullish for ${sym.id}`:`currently bearish for ${sym.id}`;
+  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.id}`:dir==='bullish'?`bullish for ${sym.id}`:`bearish for ${sym.id}`;
   return`Risk sentiment is currently ${levelWord}, ${effect}.`;
 }
 const RUB_SUMMARIZERS={
@@ -7260,7 +7270,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=3;
+const SUMMARY_ENGINE_VERSION=4;
 function rubSummarySig(rub){
   return JSON.stringify([SUMMARY_ENGINE_VERSION,(rub.indicators||[]).map(i=>{
     const r=i.research||{};
