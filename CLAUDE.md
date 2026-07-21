@@ -2939,3 +2939,53 @@ ohne Gruppierung, C: Hybrid) - Nutzer waehlte **C**, umgesetzt:
   verifiziert (kein `**` mehr irgendwo, manuelle Ueberschreibung bleibt bis
   zur naechsten echten Datenaenderung erhalten, No-Signal-Fallback weiterhin
   widerspruchsfrei), voller 14-Tab-Regressionstest fehlerfrei.
+
+### Auto-Zusammenfassung: Selbstheilung fuer alte "**"-Texte, Hinweistext entfernt, auf Ansatz "A" gewechselt (Nutzer-Feedback 2026-07-21, direkt im Anschluss)
+
+Drei weitere Nachbesserungen, alle noch am selben Tag wie die vorigen zwei:
+
+**1. "**" war IMMER NOCH sichtbar** ("in den texten stehen überall um die
+werte rum ** mach das weg") - der vorherige Commit hatte die Engine
+korrigiert, aber NICHT die bereits gespeicherten/synchronisierten
+`rub.summary`-Texte selbst geheilt. `syncRubSummaries()` regeneriert nur,
+wenn sich `rubSummarySig(rub)` seit dem letzten Lauf geaendert hat - stand
+ein alter, noch mit `**...**` aus V183 generierter Text bereits im
+localStorage/Cloud-Sync UND hatten sich die zugrunde liegenden
+Indikator-Werte seither nicht geaendert, passte die Signatur weiterhin und
+der Text wurde nie angefasst. Fix: zusaetzlicher Check
+`rub.summary.indexOf('**')!==-1` erzwingt eine Regeneration unabhaengig von
+der Signatur, sobald ein liegengebliebener `**`-Marker gefunden wird -
+echte manuelle Ueberschreibungen ohne `**` bleiben davon unberuehrt.
+Selbstheilend beim naechsten `recomputeAuto()`-Lauf (Boot oder jede
+Datenaenderung), keine Nutzer-Aktion noetig.
+
+**2. Hinweistext entfernt** ("bei den karten bei summary steht die ganze
+zeit neben summary auto generated... mach das auch weg") - der kleine graue
+Text "Auto-generated – edit to override, resets when the data changes"
+neben dem "▸ SUMMARY"-Label in `renderRub()` ersatzlos gestrichen.
+
+**3. Formulierungs-Ansatz von "C" auf "A" gewechselt** ("änder das ganze
+nochmal zu option a") - Unterschied zu C: Treiber-Familien (echte
+Forecast-Ueberraschung) bekommen jetzt den VOLLEN Vergleich inkl. Prognose
+("CPI (3.5% vs 3.8% fc., 2.6% vs 2.8% fc.)" bei mehreren Mitgliedern einer
+Familie), waehrend Nicht-Treiber NUR NOCH BESCHREIBEND ohne Zahlen
+eingeordnet werden ("the PCE index held in line", "the 2Y yield ticked
+higher", "CB Tone tilted bullish") statt wie bei C auch dort noch
+Klammer-Werte zu zeigen. Neue Helfer `famDriverPhrase()`/
+`famContextPhrase()` ersetzen das gemeinsame `famLabel()` von C;
+`sumIndInfo()` traegt dafuer zusaetzlich `fcValue` (den rohen
+Forecast-String) pro Indikator. Die "mainly nur bei echter Minderheit"-
+Sicherung aus C bleibt unveraendert bestehen (siehe voriger Eintrag).
+Beispiel (GOLD, live verifiziert): *"The inflation picture for GOLD is
+currently cooling, coming in below expectations — driven mainly by CPI
+(3.5% vs 3.8% fc., 2.6% vs 2.8% fc.) and PPI (5.5% vs 6.2% fc., 4.7% vs
+5.2% fc.), while the PCE index held in line, the 2Y yield ticked higher,
+and the 10Y yield ticked higher."*
+
+Per Playwright verifiziert: ein synthetisch injizierter Alt-Text mit `**`
+(gleiche Signatur wie die aktuellen Daten, simuliert exakt den gemeldeten
+Bug) wird beim naechsten `recomputeAuto()` korrekt geheilt; ein echter
+manueller Text ohne `**` bleibt weiterhin unangetastet; das
+"Auto-generated"-Textchen ist aus dem DOM verschwunden; alle Standard-
+Kartentypen (USD/EUR/GOLD/BTC) liefern den neuen Ansatz-A-Stil; voller
+14-Tab-Regressionstest weiterhin fehlerfrei.

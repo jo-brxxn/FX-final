@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2e1c;color:#9fe8b8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-SUMMARY-NARRATIVE-185</span><span id="verBannerText"> (Nutzer-Feedback: die Auto-Zusammenfassung reihte Indikator-Werte nur aneinander statt eine echte Aussage zu treffen. Umgebaut auf Formulierungs-Ansatz "C": erst eine Themen-Aussage (Richtung + Erwartungsvergleich, z.B. "inflation is currently cooling, coming in below expectations"), dann kompakt WELCHE Indikator-Familien das treiben (Headline/Core, NFP/ADP usw. zu einer Familie gruppiert statt einzeln genannt, Werte knapp in Klammern) - "driven mainly by X" nur wenn echte Forecast-Ueberraschungen tatsaechlich eine Minderheit sind, sonst eine schlichte Liste ohne falsche Gewichtung)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fe8b8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fe8b8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3a1f0a;color:#f3c98a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SUMMARY-A-SELFHEAL-186</span><span id="verBannerText"> (Drei Nachbesserungen zur Auto-Zusammenfassung: 1) bereits gespeicherte Texte mit alten **-Markern heilten sich nie von selbst, weil sich an den Indikator-Werten seither nichts geaendert hatte und die Signatur daher weiter passte - syncRubSummaries() erkennt liegengebliebene ** jetzt zusaetzlich und regeneriert dann unabhaengig von der Signatur. 2) das kleine "Auto-generated..."-Hinweistextchen neben SUMMARY entfernt. 3) auf Formulierungs-Ansatz "A" umgestellt: Treiber-Familien (echte Forecast-Ueberraschung) bekommen den vollen Vergleich ("CPI (3.5% vs 3.8% fc.)"), der Rest wird nur noch beschreibend ohne Zahlen eingeordnet ("PCE held in line", "2Y yield ticked higher"))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3c98a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3c98a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5801,7 +5801,6 @@ function renderRub(rub,ri,total){
       <div class="rub-summary">
         <div class="rub-summary-lbl">
           <span style="color:${bco}">▸ SUMMARY</span>
-          <span style="font-size:10px;color:var(--t3)">Auto-generated – edit to override, resets when the data changes</span>
         </div>
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
@@ -6729,18 +6728,21 @@ function recomputeRiskCorr(){
 // irgendwann ohne mich betrieben wird. Generisch je Indikator (nicht
 // rubrik-namensgetrieben), deckt daher automatisch auch Custom-Karten ab.
 //
-// Formulierungs-Ansatz "C" (Nutzer-Wahl 2026-07-21 nach 3 vorgeschlagenen
-// Varianten): statt Rohdaten einfach aneinanderzureihen ("CPI missed at
-// X, PPI missed at Y, ...") formuliert summarizeRub() eine THEMEN-Aussage
+// Formulierungs-Ansatz "A" (Nutzer-Wahl 2026-07-21, nach kurzem Test von
+// Ansatz "C" doch auf die vollere Variante umgestellt): statt Rohdaten
+// einfach aneinanderzureihen formuliert summarizeRub() eine THEMEN-Aussage
 // (Richtung + Erwartungsvergleich, z.B. "inflation is currently cooling,
-// coming in below expectations") und haengt dann kompakt an, WELCHE
-// Indikator-FAMILIEN das treiben (indFamily() gruppiert Headline/Core,
-// NFP/ADP usw. zusammen - "es muss nicht stehen welcher Indikator von der
-// Gruppe es ist"), mit Werten aber knapp in Klammern statt vollen Saetzen.
-// "driven mainly by X, alongside Y" nur wenn die echten Forecast-
-// Ueberraschungen (beat/miss) tatsaechlich eine MINDERHEIT der Familien
-// sind - sind es (fast) alle, waere "mainly" irrefuehrend, dann eine
-// schlichte Liste ohne Gewichtung (weiterhin jede Familie kurz erwaehnt).
+// coming in below expectations") und nennt dann die tatsaechlichen TREIBER
+// (Familien mit einer echten Forecast-Ueberraschung) MIT vollem Forecast-
+// Vergleich ("CPI (3.5% vs 3.8% fc.)"), waehrend der Rest nur beschreibend
+// OHNE Zahlen eingeordnet wird ("PCE held in line", "2Y yield ticked
+// higher") - Werte bleiben dadurch den wirklich relevanten Ausreissern
+// vorbehalten. indFamily() gruppiert Headline/Core, NFP/ADP usw. zusammen
+// ("es muss nicht stehen welcher Indikator von der Gruppe es ist").
+// "driven mainly by X, while Y" nur wenn die Treiber tatsaechlich eine
+// MINDERHEIT der Familien sind - sind es (fast) alle, waere "mainly"
+// irrefuehrend, dann eine schlichte Liste ohne Gewichtung (weiterhin jede
+// Familie kurz erwaehnt, Treiber weiterhin mit Forecast-Vergleich).
 //
 // Bleibt weiterhin manuell ueberschreibbar (Nutzer-Wunsch), aber nur bis zur
 // naechsten ECHTEN Aenderung: rub._summarySig speichert einen Fingerprint
@@ -6818,7 +6820,7 @@ function sumIndInfo(sym,ind){
     // Rein manuelle/qualitative Indikatoren ohne Recherche-Wert (z.B. CB
     // Tone ohne Feed-Abdeckung, Geopolitics) - nur ueber ihr Bias erwaehnen.
     if(ind.bias&&ind.bias!=='neu'){
-      return{family,verdict:'bias',dir:(ind.bias==='bull'||ind.bias==='sbull')?'up':'down',value:null};
+      return{family,verdict:'bias',dir:(ind.bias==='bull'||ind.bias==='sbull')?'up':'down',value:null,fcValue:null};
     }
     return null;
   }
@@ -6827,17 +6829,33 @@ function sumIndInfo(sym,ind){
   const revNote=src.revisedFrom?` (rev. from ${src.revisedFrom})`:'';
   const value=`${src.actual}${revNote}`;
   if(f!=null&&a!=null){
-    if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return{family,verdict:'inline',dir:'flat',value};
+    if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return{family,verdict:'inline',dir:'flat',value,fcValue:src.forecast};
     const good=lowerBetter?a<f:a>f;
-    return{family,verdict:good?'beat':'miss',dir:good?'up':'down',value};
+    return{family,verdict:good?'beat':'miss',dir:good?'up':'down',value,fcValue:src.forecast};
   }
-  if(p!=null&&a!=null&&a!==p)return{family,verdict:'trend',dir:a>p?'up':'down',value};
-  return{family,verdict:'flat',dir:'flat',value};
+  if(p!=null&&a!=null&&a!==p)return{family,verdict:'trend',dir:a>p?'up':'down',value,fcValue:null};
+  return{family,verdict:'flat',dir:'flat',value,fcValue:null};
 }
 function joinFrags(frags){
   if(frags.length<=1)return frags.join('');
   if(frags.length===2)return frags[0]+' and '+frags[1];
   return frags.slice(0,-1).join(', ')+', and '+frags[frags.length-1];
+}
+// Voll ausformulierter Treiber-Eintrag inkl. Forecast-Vergleich, z.B.
+// "CPI (3.5% vs 3.8% fc.)" bzw. bei mehreren Familienmitgliedern
+// "CPI (3.5% vs 3.8% fc., 2.6% vs 2.8% fc.)".
+function famDriverPhrase(fam,members){
+  const parts=members.map(m=>m.fcValue!=null?`${m.value} vs ${m.fcValue} fc.`:m.value).filter(Boolean);
+  return parts.length?`${fam} (${parts.join(', ')})`:fam;
+}
+// Kontext-Eintrag OHNE Zahlen, rein beschreibend (Option A: Werte bleiben
+// den echten Treibern vorbehalten, der Rest wird nur kurz eingeordnet).
+function famContextPhrase(fam,members){
+  if(members.every(m=>m.verdict==='bias'))return`${fam} tilted ${members[0].dir==='up'?'bullish':'bearish'}`;
+  if(members.every(m=>m.verdict==='inline'))return`${fam} held in line`;
+  const trendM=members.find(m=>m.verdict==='trend');
+  if(trendM)return`${fam} ticked ${trendM.dir==='up'?'higher':'lower'}`;
+  return`${fam} held steady`;
 }
 function summarizeRub(sym,rub){
   const infos=(rub.indicators||[]).map(ind=>sumIndInfo(sym,ind)).filter(Boolean);
@@ -6858,9 +6876,10 @@ function summarizeRub(sym,rub){
   const fcTotal=beats+misses+inlines;
   let expClause='';
   if(fcTotal>0){
+    const acrossBoard=fcTotal>1&&(beats===fcTotal||misses===fcTotal)?' across the board':'';
     if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', mixed against expectations';
-    else if(beats>misses)expClause=', coming in above expectations';
-    else if(misses>beats)expClause=', coming in below expectations';
+    else if(beats>misses)expClause=`, coming in above expectations${acrossBoard}`;
+    else if(misses>beats)expClause=`, coming in below expectations${acrossBoard}`;
     else expClause=', broadly in line with expectations';
   }
   // Richtung: primaer aus dem tatsaechlichen Beat/Miss-Muster der Karte (das
@@ -6879,17 +6898,12 @@ function summarizeRub(sym,rub){
   }
   const trendWord=rubTrendWord(rub,dir);
   // Nach Familie gruppieren; Eintraege mit einer echten Forecast-Ueberraschung
-  // (beat/miss) werden als "Treiber" hervorgehoben, der Rest als Kontext
-  // knapp mit angehaengt (Nutzer-Wunsch: pro Indikator kurz erwaehnen, aber
-  // nicht jede Variante einzeln ausformulieren).
+  // (beat/miss) werden als "Treiber" mit vollem Forecast-Vergleich genannt,
+  // der Rest nur beschreibend/ohne Zahlen als Kontext (Nutzer-Wunsch: pro
+  // Indikator[-Familie] kurz erwaehnt, aber nicht jede Variante einzeln mit
+  // Werten ausformuliert).
   const famOrder=[],famMap={};
   infos.forEach(i=>{if(!famMap[i.family]){famMap[i.family]=[];famOrder.push(i.family);}famMap[i.family].push(i);});
-  const famLabel=fam=>{
-    const members=famMap[fam];
-    if(members.every(m=>m.verdict==='bias'))return`${fam} tilted ${members[0].dir==='up'?'bullish':'bearish'}`;
-    const vals=members.map(m=>m.value).filter(Boolean);
-    return vals.length?`${fam} (${vals.join('/')})`:fam;
-  };
   const drivers=[],context=[];
   famOrder.forEach(fam=>{
     const members=famMap[fam];
@@ -6901,11 +6915,13 @@ function summarizeRub(sym,rub){
   // eine MINDERHEIT der Familien sind (z.B. 2 von 5 bei der Inflation-Karte).
   // Haben fast alle Familien eine echte Forecast-Ueberraschung (haeufig bei
   // Labour/Growth an einem vollen Release-Tag), waere "mainly" irrefuehrend -
-  // dann eine schlichte, aber weiterhin jeden Indikator kurz nennende Liste.
+  // dann eine schlichte Liste (weiterhin Treiber mit Forecast-Vergleich,
+  // Kontext beschreibend), ohne falsche Gewichtung.
   if(drivers.length&&context.length&&drivers.length<=Math.ceil(famOrder.length/2)){
-    out+=`, driven mainly by ${joinFrags(drivers.map(famLabel))}, alongside ${joinFrags(context.map(famLabel))}`;
+    out+=` — driven mainly by ${joinFrags(drivers.map(f=>famDriverPhrase(f,famMap[f])))}, while ${joinFrags(context.map(f=>famContextPhrase(f,famMap[f])))}`;
   }else{
-    out+=`, with ${joinFrags(famOrder.map(famLabel))}`;
+    const all=famOrder.map(f=>drivers.includes(f)?famDriverPhrase(f,famMap[f]):famContextPhrase(f,famMap[f]));
+    out+=`, with ${joinFrags(all)}`;
   }
   return out+'.';
 }
@@ -6921,7 +6937,13 @@ function syncRubSummaries(){
   syms.forEach(sym=>{
     (sym.rubrics||[]).forEach(rub=>{
       const sig=rubSummarySig(rub);
-      if(rub._summarySig!==sig){
+      // Selbstheilung: ein bereits generierter/synchronisierter Text aus
+      // einer frueheren Engine-Version (z.B. mit **fett**-Markern aus V183)
+      // haette ohne diesen Zusatz-Check NIE mehr geheilt, weil sich an den
+      // zugrunde liegenden Indikator-Werten seither nichts geaendert hat und
+      // die Signatur daher weiterhin passt.
+      const stale=rub.summary&&rub.summary.indexOf('**')!==-1;
+      if(rub._summarySig!==sig||stale){
         rub.summary=summarizeRub(sym,rub);
         rub._summarySig=sig;
       }
