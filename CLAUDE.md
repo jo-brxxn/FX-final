@@ -3372,3 +3372,53 @@ Wieder per Beispielsaetzen abgestimmt vor der Umsetzung:
   bleibt beim Split-Satz; Risk Environment zeigt "currently" nur noch
   einmal pro Satz auf allen 3 Regler-Stufen; voller 14-Tab-Regressionstest
   und Selbstheilungs-Test weiterhin fehlerfrei.
+
+### Auto-Zusammenfassung: Core CPI namentlich statt Kollektiv "CPIs" + "roughly in line" gekuerzt (Nutzer-Wunsch 2026-07-21, direkt im Anschluss)
+
+Zwei weitere, per Beispielsaetzen abgestimmte Feinschliffe:
+
+- **CPI/Core-Pluralisierungs-Verwirrung behoben** (Nutzer-Korrektur: "es sind
+  zwei nicht mehr... da muss einfach gesagt werden ob Core auch so ist oder
+  nicht" - mein erster Loesungsvorschlag "both CPIs" wurde explizit
+  abgelehnt): `summarizeInflation()`s Eroeffnungssatz nennt Core CPI jetzt
+  mit einem EIGENEN Verdikt statt der Kollektiv-Formulierung "CPIs coming in
+  X" - "Headline CPI cooled to 3.5%, coming in softer than expected, with
+  core CPI matching that." wenn beide dieselbe Richtung haben, sonst "...,
+  though core CPI came in hotter/softer than expected/was in line." `cpiCls`
+  (die bisherige `classifyPair`-Klassifikation) bleibt als Referenzrichtung
+  fuer die spaetere Yields-Klausel im selben Satzblock erhalten - nur die
+  Eroeffnungsformulierung selbst wurde umgebaut. `hAnchor` nutzt jetzt
+  explizit `ANCHOR_VERBS_INFLATION` (war vorher versehentlich noch der
+  Default-Verb-Satz).
+- **"roughly in line with expectations" ueberall auf "in line with
+  expectations" gekuerzt** (Nutzer-Wunsch: "sag mir nicht roughly in line
+  sondern nur in line") - betrifft `HOTCOLD_WORDS.neutral` und das GDP-
+  Verdikt in `summarizeGrowth()`. **Dabei reproduzierte sich das doppelte
+  "in", wegen dem "roughly" urspruenglich eingefuehrt wurde** ("PPIs came in
+  in line with expectations") - selbst per Playwright-Regex-Scan gefunden,
+  dem Nutzer mit konkretem Vorschlag vorgelegt (per `AskUserQuestion`) und
+  bestaetigt, BEVOR es implementiert wurde. Fix: neue Helper-Funktion
+  `cameInPhrase(subject,verb,cls)` - beim neutralen Fall wird der Satzbau
+  auf "{subject} {verb} in line with expectations" umgestellt (kein "came
+  in" davor), alle anderen Faelle (hotter/softer/mixed/partly-*) bleiben
+  bei "{subject} came in {HOTCOLD_WORDS[cls]}" unveraendert. Betroffene
+  Stellen: PPI-/PCE-Klausel und CPI-Fallback (Inflation), Job-creation-
+  Fallback (Labour Market), PMI-/Retail-Sales-Fallback (Economic Growth).
+  Der GDP-Satz selbst (`summarizeGrowth()`, eigene inline Verdikt-Logik,
+  kein `HOTCOLD_WORDS`/`cameInPhrase`) hatte dieselbe Kollision separat
+  ("coming in in line with expectations") - dort das "coming in"/"though
+  that came in"-Praefix beim neutralen Fall (`gCls==='neutral'`) komplett
+  weggelassen ("GDP growth climbed to 0.6%, in line with expectations.").
+- `SUMMARY_ENGINE_VERSION` auf `5` erhoeht.
+- Per Playwright verifiziert: kompletter Scan ueber alle 108 Karten-
+  Zusammenfassungen liefert 0 Grammatik-Auffaelligkeiten (vorher 11 "in
+  in"-Treffer), Labour Market zeigt weiterhin "fell to"/"rose to" (Nutzer-
+  Wahl vom vorherigen Round), Stale-Text-Selbstheilung + Duplikations-Check
+  + Glow-Check weiterhin fehlerfrei, voller 14-Tab-Regressionstest sauber.
+- **Merksatz:** eine woertlich eindeutige Nutzer-Vorgabe ("nur in line,
+  nicht roughly") kann trotzdem an anderen Stellen einen bereits behobenen
+  Bug reproduzieren, wenn der urspruengliche Fix (hier: "roughly" als
+  Kollisionsvermeidung) nicht mehr im Kopf ist - vor dem Umsetzen IMMER
+  einen vollen Playwright-Scan fahren und bei einem gefundenen Nebeneffekt
+  dem Nutzer einen konkreten Loesungsvorschlag vorlegen, statt ihn still
+  mitzuloesen (auch wenn die urspruengliche Anweisung selbst eindeutig war).

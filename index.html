@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#332312;color:#e3c68f;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-COT-RISKENV-WORDING-194</span><span id="verBannerText"> (Zwei weitere abgestimmte Formulierungs-Aenderungen: 1) COT Data sagt jetzt ab 60% Net-Positioning auf einer Seite "Institutions are currently leaning more on the bullish/bearish side, at X%" statt nur den Split zu nennen (die andere Seite laesst sich ableiten) - der bestehende "crowded"-Zusatz ab 80% bleibt als Parenthese erhalten, der Weekly-Change-Halbsatz nennt jetzt zusaetzlich die Prozentzahl ("positive at +0.4%" statt nur "positive"). 2) Risk Environment nutzte "currently" zweimal im selben Satz ("is currently X, currently bullish for Y") - das zweite entfernt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#123330;color:#8fe3d0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-CPI-CORE-WORDING-195</span><span id="verBannerText"> (Inflation-Summary nennt jetzt Core CPI mit eigenem Verdikt statt der Kollektiv-Formulierung "CPIs" ("Headline CPI cooled to 3.5%, coming in softer than expected, with core CPI matching that." bzw. "...though core CPI came in hotter than expected."). "roughly in line with expectations" ueberall zu "in line with expectations" gekuerzt - dabei ein dadurch entstandenes doppeltes "in" ("came in in line") an mehreren Stellen (PPI/PCE/CPI-Fallback/Job creation/PMIs/Retail Sales/GDP) auf "were/was in line with expectations" umgestellt. SUMMARY_ENGINE_VERSION auf 5 erhoeht, damit sich bestehende Zusammenfassungen selbst heilen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7066,7 +7066,14 @@ function alignCls(cls,refCls){
   const partly=cls.indexOf('partly')===0;
   return sign===refSign?(partly?'partly-pos':'pos'):(partly?'partly-neg':'neg');
 }
-const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'roughly in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
+const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
+// "X came in in line with expectations" verdoppelt "in" - beim neutralen Fall
+// stattdessen "X were/was in line with expectations" (Nutzer-Wunsch 2026-07-21:
+// "in line" statt "roughly in line", aber ohne die alte in-in-Kollision).
+function cameInPhrase(subject,verb,cls){
+  if(cls==='neutral')return`${subject} ${verb} in line with expectations`;
+  return`${subject} came in ${HOTCOLD_WORDS[cls]}`;
+}
 // Rein partizipial (kein finites Verb) - wird nach "with " eingefuegt
 // ("with fewer jobs than expected added recently"), nicht als eigener Satz.
 const JOBS_WORDS={pos:'more jobs than expected added recently','partly-pos':'partly more jobs than expected added recently',neutral:'jobs added broadly in line with expectations',neg:'fewer jobs than expected added recently','partly-neg':'partly fewer jobs than expected added recently',mixed:'a mixed picture on job creation'};
@@ -7093,11 +7100,18 @@ function inflDirWord(cls){
 // dieser aktuell aussieht ... mit einem Verb direkt dazufuegen") - vergleicht
 // den aktuellen Wert mit dem VORWERT (nicht Forecast) und liefert
 // {phrase,dir}, dir=1/-1/0/null fuer spaetere Kontrast-Logik (z.B. GDP).
-function anchorClause(rs){
+// Verb-Set ist pro Kartentyp waehlbar (Nutzer-Wunsch 2026-07-21: kein
+// "eased" bei Inflation/Labour Market - dort "cooled"/"fell" statt eines
+// generischen Wortes fuer alle Karten).
+const ANCHOR_VERBS_DEFAULT={up:'climbed to',down:'eased to',flat:'held at'};
+const ANCHOR_VERBS_INFLATION={up:'climbed to',down:'cooled to',flat:'held at'};
+const ANCHOR_VERBS_LABOUR={up:'rose to',down:'fell to',flat:'held at'};
+function anchorClause(rs,verbs){
+  verbs=verbs||ANCHOR_VERBS_DEFAULT;
   if(!rs)return null;
   if(rs.pNum==null)return{phrase:`is at ${rs.actual}`,dir:null};
-  if(rs.aNum===rs.pNum)return{phrase:`held at ${rs.actual}`,dir:0};
-  return{phrase:`${rs.aNum>rs.pNum?'climbed to':'eased to'} ${rs.actual}`,dir:rs.aNum>rs.pNum?1:-1};
+  if(rs.aNum===rs.pNum)return{phrase:`${verbs.flat} ${rs.actual}`,dir:0};
+  return{phrase:`${rs.aNum>rs.pNum?verbs.up:verbs.down} ${rs.actual}`,dir:rs.aNum>rs.pNum?1:-1};
 }
 function noSignalFallback(sym,rub){
   const topic=(rub.name||'this card').toLowerCase();
@@ -7112,16 +7126,25 @@ function summarizeInflation(sym,rub){
   const pceH=findIndByBase(rub,'PCE'),pceC=findIndByBase(rub,'Core PCE');
   const y2=findIndByBase(rub,'2Y Bond Yield'),y10=findIndByBase(rub,'10Y Bond Yield');
   const hRS=sumRawState(sym,headline);
-  const hAnchor=anchorClause(hRS);
-  const cpiCls=classifyPair(fcState(hRS),fcState(sumRawState(sym,core)));
+  const hAnchor=anchorClause(hRS,ANCHOR_VERBS_INFLATION);
+  const hState=fcState(hRS);
+  const cState=fcState(sumRawState(sym,core));
+  // Core wird namentlich mit eigenem Verdikt genannt statt als Kollektiv
+  // "CPIs" (Nutzer-Korrektur 2026-07-21: "es sind zwei nicht mehr... da muss
+  // einfach gesagt werden ob Core auch so ist oder nicht").
+  const cpiCls=classifyPair(hState,cState);
   const sentences=[];
-  if(hAnchor&&cpiCls)sentences.push(`Headline CPI ${hAnchor.phrase}, with CPIs coming in ${HOTCOLD_WORDS[cpiCls]}`);
-  else if(hAnchor)sentences.push(`Headline CPI ${hAnchor.phrase}`);
-  else if(cpiCls)sentences.push(`CPIs came in ${HOTCOLD_WORDS[cpiCls]}`);
+  if(hAnchor&&hState!=null){
+    const hWord=hState>0?'coming in hotter than expected':hState<0?'coming in softer than expected':'in line with expectations';
+    let clause=`Headline CPI ${hAnchor.phrase}, ${hWord}`;
+    if(cState!=null)clause+=cState===hState?', with core CPI matching that':`, though core CPI ${cState>0?'came in hotter than expected':cState<0?'came in softer than expected':'was in line'}`;
+    sentences.push(clause);
+  }else if(hAnchor)sentences.push(`Headline CPI ${hAnchor.phrase}`);
+  else if(cpiCls)sentences.push(cameInPhrase('CPI','was',cpiCls));
   const ppiCls=classifyPair(fcState(sumRawState(sym,ppiH)),fcState(sumRawState(sym,ppiC)));
-  if(ppiCls)sentences.push(`PPIs came in ${HOTCOLD_WORDS[ppiCls]}`);
+  if(ppiCls)sentences.push(cameInPhrase('PPIs','were',ppiCls));
   const pceCls=classifyPair(fcState(sumRawState(sym,pceH)),fcState(sumRawState(sym,pceC)));
-  if(pceCls)sentences.push(`PCEs came in ${HOTCOLD_WORDS[pceCls]}`);
+  if(pceCls)sentences.push(cameInPhrase('PCEs','were',pceCls));
   // Yields haben keinen Forecast - statt sie gegen CPI/PPI/PCE zu "spiegeln"
   // (frueherer Ansatz), sagen wir jetzt direkt, welche Inflation die Yields
   // SELBST einpreisen, und stellen das nur bei einem echten Widerspruch zur
@@ -7148,12 +7171,12 @@ function summarizeLabour(sym,rub){
   const claims=findIndByBase(rub,'Unemployment Claims');
   const jolts=findIndByBase(rub,'JOLTS Job Openings'),wages=findIndByBase(rub,'Avg Hourly Earnings');
   const uRS=sumRawState(sym,unemp);
-  const uAnchor=anchorClause(uRS);
+  const uAnchor=anchorClause(uRS,ANCHOR_VERBS_LABOUR);
   const jobsCls=classifyPair(fcState(sumRawState(sym,nfp)),fcState(sumRawState(sym,adp)));
   const sentences=[];
   if(uAnchor&&jobsCls)sentences.push(`The unemployment rate ${uAnchor.phrase}, with ${JOBS_WORDS[jobsCls]}`);
   else if(uAnchor)sentences.push(`The unemployment rate ${uAnchor.phrase}`);
-  else if(jobsCls)sentences.push(`Job creation came in ${HOTCOLD_WORDS[jobsCls]}`);
+  else if(jobsCls)sentences.push(cameInPhrase('Job creation','was',jobsCls));
   // Claims sind gegenlaeufig (weniger Claims = mehr Jobs) - fcState ist
   // bereits lowerBetter-bereinigt, alignCls vergleicht daher direkt die
   // beiden bereits gleichgerichteten +1/-1-Werte.
@@ -7181,23 +7204,24 @@ function summarizeGrowth(sym,rub){
   const gCls=classifySingle(fcState(gRS));
   const sentences=[];
   if(gAnchor&&gCls){
-    const verdict=gCls==='pos'?'stronger than expected':gCls==='neg'?'weaker than expected':'roughly in line with expectations';
+    const verdict=gCls==='pos'?'stronger than expected':gCls==='neg'?'weaker than expected':'in line with expectations';
     // "though" nur bei echtem Widerspruch zwischen Vorwert-Trend (gAnchor.dir)
     // und Forecast-Verdikt (z.B. Wachstum liess nach, schlug aber trotzdem
     // die Prognose) - stimmen beide Richtungen ueberein, reicht "coming in".
     const vDir=gCls==='pos'?1:gCls==='neg'?-1:0;
     const contrast=gAnchor.dir&&vDir&&gAnchor.dir!==vDir;
-    sentences.push(`GDP growth ${gAnchor.phrase}, ${contrast?'though that came in':'coming in'} ${verdict}`);
+    const prefix=gCls==='neutral'?'':(contrast?'though that came in ':'coming in ');
+    sentences.push(`GDP growth ${gAnchor.phrase}, ${prefix}${verdict}`);
   }else if(gAnchor)sentences.push(`GDP growth ${gAnchor.phrase}`);
   const pmiCls=classifyPair(fcState(sumRawState(sym,pmiM)),fcState(sumRawState(sym,pmiS)));
   if(pmiCls){
     const aligned=gCls?alignCls(pmiCls,gCls):null;
-    sentences.push(aligned?`PMIs are ${supportPhrase(aligned,'growth picture')}`:`PMIs came in ${HOTCOLD_WORDS[pmiCls]}`);
+    sentences.push(aligned?`PMIs are ${supportPhrase(aligned,'growth picture')}`:cameInPhrase('PMIs','were',pmiCls));
   }
   const retailCls=classifySingle(fcState(sumRawState(sym,retail)));
   if(retailCls){
     const aligned=gCls?alignCls(retailCls,gCls):null;
-    sentences.push(aligned?`Retail sales are ${supportPhrase(aligned,'growth picture')}`:`Retail sales came in ${HOTCOLD_WORDS[retailCls]}`);
+    sentences.push(aligned?`Retail sales are ${supportPhrase(aligned,'growth picture')}`:cameInPhrase('Retail sales','were',retailCls));
   }
   const ccTrend=trendState(sumRawState(sym,cc));
   if(ccTrend!=null)sentences.push(`Consumer confidence has ${ccTrend>0?'also improved':ccTrend<0?'weakened':'held steady'}`);
@@ -7270,7 +7294,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=4;
+const SUMMARY_ENGINE_VERSION=5;
 function rubSummarySig(rub){
   return JSON.stringify([SUMMARY_ENGINE_VERSION,(rub.indicators||[]).map(i=>{
     const r=i.research||{};
