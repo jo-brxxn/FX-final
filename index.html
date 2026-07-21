@@ -394,9 +394,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
-.rub-now-txt,.rub-now-txt:focus{color:var(--red);font-weight:600}
-.rub-now-txt::placeholder{color:rgba(var(--red-rgb),.5)}
-.rub-summary-sep{border-top:1px solid var(--bd);margin:6px 0}
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--bd2);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:3px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
@@ -406,7 +403,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 @media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
 .ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
-.ov-now{color:var(--red);font-weight:600;margin-top:5px;padding-top:5px;border-top:1px solid var(--bd)}
 .ov-sum-line{color:var(--t1)}
 .ov-empty{color:var(--t3);font-style:italic}
 .ov-field .ov-bias{font-size:11px;font-weight:800;padding:1px 7px;letter-spacing:0}
@@ -1254,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#16324a;color:#a5d8f3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-REVISIONS-V2-182</span><span id="verBannerText"> (Nutzer hatte recht - "NFP bei USD sollte auch revised Werte haben": TradingView traegt die Revision nur ~3 Tage im previous-Feld (USD NFP: revidiertes previous 129K stand nur 02.-04.07. im Feed, danach wieder der unrevidierte Juni-Actual 172K). Backfill v2 vergleicht daher gegen das previous aus dem RELEASE-FENSTER (fruehe Zyklus-Snapshots der Git-Historie, >=2 stabil, Einheiten-Guard gegen Format-Mixe) - 18 weitere echte Revisionen ueber 8 Waehrungen gefunden und die von TV zurueckgesetzten previous-Werte auf den revidierten Stand restauriert (insgesamt jetzt 20 aktive). Zusaetzlich haelt der Workflow-Carry-over revidierte previous-Werte jetzt fest, wenn TV sie nach Tagen wieder auf das Original zurueckdreht - sonst waeren auch kuenftige Revisionen nach ~3 Tagen von selbst verschwunden)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#2c1f4a;color:#d9c7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-AUTOSUMMARY-183</span><span id="verBannerText"> (Nutzer-Wunsch: die manuelle "SUMMARY"-Textbox je Karte plus das separate "What matters right now"-Feld ersetzt durch EINE automatisch generierte, natuerlichsprachige Zusammenfassung - reine Template-Engine ohne KI-Aufruf (summarizeRub/sumFrag/sumIndSource in index.html), damit es auch standalone ohne mich weiterlaeuft. Jeder Indikator der Karte wird kurz erwaehnt (Beat/Miss/Trend inkl. Revisionshinweis) und zu einem Satz verbunden, wichtige Fakten **fett** markiert (mdBold() wandelt das beim Anzeigen in &lt;b&gt; um, Rohtext mit den ** bleibt beim Bearbeiten in der Textbox sichtbar). Bleibt manuell ueberschreibbar, aber nur bis zur naechsten echten Datenaenderung der Karte (rub._summarySig-Fingerprint, exakt das bestehende rub._biasScore-Pin-Muster) - dann verschwindet die eigene Fassung und der frische Auto-Text erscheint wieder, wie vom Nutzer explizit gewuenscht)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9c7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d9c7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5746,9 +5742,8 @@ function renderOverviewCard(rubs){
   const fields=top.map((rub,ri)=>{
     const bco=bCol(rub.bias);
     const sc=rubScore(rub);
-    const nowLine=rub.now&&rub.now.trim()?`<div class="ov-now">${escH(rub.now)}</div>`:'';
-    const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
-    const txt=(sumLine||nowLine)?(sumLine+nowLine):'<span class="ov-empty">No summary yet – add one in the card below.</span>';
+    const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${mdBold(rub.summary)}</div>`:'';
+    const txt=sumLine||'<span class="ov-empty">No summary yet.</span>';
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
@@ -5806,11 +5801,9 @@ function renderRub(rub,ri,total){
       <div class="rub-summary">
         <div class="rub-summary-lbl">
           <span style="color:${bco}">▸ SUMMARY</span>
-          <span style="font-size:10px;color:var(--t3)">Overall take on ${escH(rub.name)}</span>
+          <span style="font-size:10px;color:var(--t3)">Auto-generated – edit to override, resets when the data changes</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="getRub(${ri}).summary=this.value;syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
-        <div class="rub-summary-sep"></div>
-        <textarea class="rub-summary-txt rub-now-txt" placeholder="⚡ What matters right now / current situation..." oninput="ar(this);getRub(${ri}).now=this.value;saveSoon()" onchange="getRub(${ri}).now=this.value;save()">${escH(rub.now||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${renderInds(rub,ri)}
@@ -6725,7 +6718,125 @@ function recomputeRiskCorr(){
     if(ind)ind.bias=riskCorrBiasFor(sym.id);
   });
 }
-function recomputeAuto(){invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+// ── AUTOMATISCH GENERIERTE KARTEN-ZUSAMMENFASSUNG (Nutzer-Wunsch 2026-07-21)
+// Ersetzt das bisherige rein manuelle SUMMARY-Feld: baut aus den
+// tatsaechlichen Indikator-Werten (Bias/Actual/Forecast/Previous/Revision)
+// einen kurzen, natuerlichsprachigen Absatz - JEDER Indikator der Karte wird
+// kurz erwaehnt und zu Saetzen verbunden, wichtige Fakten (Bias-Wort, Werte)
+// als **fett** markiert (per mdBold() beim Anzeigen in <b> umgewandelt).
+// Reine Template-Engine, KEIN KI-Aufruf - muss auch laufen, wenn die Seite
+// irgendwann ohne mich betrieben wird. Generisch je Indikator (nicht
+// rubrik-namensgetrieben), deckt daher automatisch auch Custom-Karten ab.
+//
+// Bleibt weiterhin manuell ueberschreibbar (Nutzer-Wunsch), aber nur bis zur
+// naechsten ECHTEN Aenderung: rub._summarySig speichert einen Fingerprint
+// der Indikator-Werte, zu dem der aktuelle rub.summary-Text passt - exakt
+// dasselbe "Pin haelt nur bis zur naechsten Score-Aenderung"-Muster wie beim
+// bestehenden Rubrik-Bias-Pin (rub._biasScore, siehe recomputeRubricAutoBias
+// oben). Ein manueller Edit setzt die Signatur selbst auf den aktuellen
+// Stand (macht den Text dadurch "gueltig", bis sich wieder etwas aendert).
+const SUM_PHRASE={
+  'CPI (Headline)':'headline CPI','Core CPI':'core CPI','PPI':'PPI','Core PPI':'core PPI',
+  'PCE':'the PCE index','Core PCE':'core PCE','Services Inflation':'services inflation',
+  'Central Bank Rate':'the policy rate','CB Tone':'the central bank tone','Next CB Move':'the next-move outlook',
+  'NFP / Employment Change':'NFP','Unemployment Rate':'unemployment','Unemployment Claims':'jobless claims',
+  'ADP Employment':'ADP employment','JOLTS Job Openings':'JOLTS openings','Avg Hourly Earnings':'wage growth',
+  'GDP Growth QoQ':'GDP growth','Manufacturing PMI':'the manufacturing PMI','Services PMI':'the services PMI',
+  'Retail Sales':'retail sales','Consumer Confidence':'consumer confidence',
+  '2Y Bond Yield':'the 2Y yield','10Y Bond Yield':'the 10Y yield','2Y/10Y Spread':'the yield curve',
+  'Net Bullish Positioning':'net bullish positioning','Net Bearish Positioning':'net bearish positioning',
+  'WoW Change in Net Position (%)':'the weekly positioning shift','Risk Correlation':'risk correlation',
+  'Geopolitics':'the geopolitical backdrop',
+};
+function sumPhrase(ind){
+  const base=stripPeriodSuffix(ind.name).base;
+  return SUM_PHRASE[base]||(ind.displayName||ind.name).toLowerCase();
+}
+// Liefert {actual,forecast,previous,revisedFrom} fuer JEDE Quellenart eines
+// Indikators (Feed/Kalender/Bond/COT/Sentiment) - dieselbe Drei-Wege-
+// Exklusivitaet wie symScoreDrivingEventsByDate() (Feed zuerst, dann
+// Kalender, dann Bond), damit die Zusammenfassung nie einen anderen Wert
+// zeigt als die Karte selbst (Dual-Source-Lehre, siehe CLAUDE.md).
+function sumIndSource(sym,ind){
+  const r=ind.research;
+  if(r&&r.feed)return{actual:r.actual,forecast:r.forecast,previous:r.previous,revisedFrom:r.revisedFrom};
+  const ev=findIndEvent(sym.id,ind.name);
+  if(ev)return{actual:ev.actual,forecast:ev.forecast,previous:ev.previous,revisedFrom:null};
+  if(r&&(r.bond||r.cot||r.sent))return{actual:r.actual,forecast:null,previous:r.previous,revisedFrom:null};
+  if(r&&r.actual!=null)return{actual:r.actual,forecast:r.forecast,previous:r.previous,revisedFrom:r.revisedFrom};
+  return null;
+}
+// Ein kurzes Fragment pro Indikator ("NFP **missed** at **10K** (fc. 40K)").
+function sumFrag(sym,ind){
+  const base=stripPeriodSuffix(ind.name).base;
+  if(SCORE_ZERO.has(base))return null;
+  const disp=sumPhrase(ind);
+  const src=sumIndSource(sym,ind);
+  if(!src||src.actual==null||src.actual===''){
+    // Rein manuelle/qualitative Indikatoren ohne Recherche-Wert (z.B. CB
+    // Tone ohne Feed-Abdeckung, Geopolitics) - nur ueber ihr Bias erwaehnen.
+    if(ind.bias&&ind.bias!=='neu'){
+      const w=(ind.bias==='bull'||ind.bias==='sbull')?'bullish':'bearish';
+      return`${disp} tilted **${w}**`;
+    }
+    return null;
+  }
+  const lowerBetter=LOWER_IS_BETTER_RE.test(base);
+  const a=parseNumLike(src.actual),f=src.forecast!=null&&src.forecast!==''?parseNumLike(src.forecast):null,p=src.previous!=null&&src.previous!==''?parseNumLike(src.previous):null;
+  const revNote=src.revisedFrom?` (rev. from ${src.revisedFrom})`:'';
+  if(f!=null&&a!=null){
+    if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return`${disp} in line at **${src.actual}**${revNote}`;
+    const good=lowerBetter?a<f:a>f;
+    return`${disp} **${good?'beat':'missed'}** at **${src.actual}** (fc. ${src.forecast})${revNote}`;
+  }
+  if(p!=null&&a!=null&&a!==p){
+    return`${disp} **${a>p?'up':'down'}** to **${src.actual}**${revNote}`;
+  }
+  return`${disp} at **${src.actual}**${revNote}`;
+}
+function joinFrags(frags){
+  if(frags.length<=1)return frags.join('');
+  if(frags.length===2)return frags[0]+' and '+frags[1];
+  return frags.slice(0,-1).join(', ')+', and '+frags[frags.length-1];
+}
+function summarizeRub(sym,rub){
+  const frags=(rub.indicators||[]).map(ind=>sumFrag(sym,ind)).filter(Boolean);
+  const topic=(rub.name||'this card').toLowerCase();
+  const biasWord=rub.bias==='bull'?'bullish':rub.bias==='bear'?'bearish':'neutral';
+  // Kein Fragment (alle Indikatoren neutral/ohne Wert): den Bias trotzdem nur
+  // nennen, wenn er selbst neutral ist - sonst wuerde ein manuell gepinnter
+  // Bias ("bullish") dem "kein Signal"-Satz widersprechen.
+  if(!frags.length){
+    return rub.bias==='neu'
+      ?`The ${topic} picture for ${sym.id} is currently **neutral**, with no indicator currently sending a clear signal.`
+      :`The ${topic} picture for ${sym.id} is currently marked **${biasWord}**, though no individual indicator is currently sending a clear signal.`;
+  }
+  return`The ${topic} picture for ${sym.id} is currently **${biasWord}**, with ${joinFrags(frags)}.`;
+}
+// Fingerprint aller Werte, die summarizeRub() beeinflussen - aendert er
+// sich, ist ein manueller/alter Text nicht mehr aktuell und wird ersetzt.
+function rubSummarySig(rub){
+  return JSON.stringify((rub.indicators||[]).map(i=>{
+    const r=i.research||{};
+    return[i.name,i.bias,r.actual,r.forecast,r.previous,r.revisedFrom];
+  }));
+}
+function syncRubSummaries(){
+  syms.forEach(sym=>{
+    (sym.rubrics||[]).forEach(rub=>{
+      const sig=rubSummarySig(rub);
+      if(rub._summarySig!==sig){
+        rub.summary=summarizeRub(sym,rub);
+        rub._summarySig=sig;
+      }
+    });
+  });
+}
+// **fett**-Markup aus summarizeRub() in <b> umwandeln, NACH dem Escapen
+// (sicher: die per ** markierten Abschnitte sind zu diesem Zeitpunkt schon
+// escaped, ** selbst ist kein HTML-Sonderzeichen).
+function mdBold(s){return escH(s||'').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
+function recomputeAuto(){invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).

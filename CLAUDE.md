@@ -2795,3 +2795,84 @@ die Revision laengst wieder weggewischt.
   ist FLUECHTIG - wer Revisions-Informationen daraus braucht, muss sie im
   Release-Fenster einfangen und selbst persistieren; die Git-Historie der
   Daten-JSONs ist dafuer nachtraeglich die einzige Quelle.
+
+### Karten-SUMMARY automatisch generiert statt manuell, "What matters right now"-Feld entfernt (Nutzer-Wunsch 2026-07-21)
+
+Nutzer: "bei den karten bei den assets da gibt es ja die zusammenfassungen da
+will ich jetzt zwei Änderungen. Einmal will ich diese Zusammenfassung mit
+what matters today komplett weg haben und ich will das die zusammenfassung
+sich automatisch ausfüllt und updated. [...] Es soll aber alles ohne Ki
+funktionieren also auch wenn die webseite irgendwann ohne dich läuft und
+sich bei den indikatoren was ändert muss es in der zusammenfassung geändert
+werden." Auf Nachfrage per AskUserQuestion abgelehnt ("STOP ... wait for the
+user to tell you how to proceed") - der Nutzer beantwortete direkt: "ich
+will das es komplett automatisch erstellt wird [...] aber ich kann es
+trotzdem wenn ich will überschreiben selber. Sobald ein indikator allerdings
+geupdated wird ist meine überschreibung weg und der automatische text steht
+da wieder." Spaeter ergaenzt: "du kannst auch im text wichtige sachen
+markieren und am besten relativ kurz [...] aber jeder indikator kurz aber
+halt probieren zu verbinden."
+
+- **Jedes Rubrik-Objekt hatte bisher ZWEI unabhaengige manuelle Textfelder**
+  (`rub.summary`/"SUMMARY" und `rub.now`/"⚡ What matters right now") - beide
+  in `renderRub()` als Textareas, beide in der Overview-Kachel
+  (`renderOverviewCard()`) als Vorschau gezeigt. `rub.now` (samt CSS
+  `.rub-now-txt`/`.rub-summary-sep`/`.ov-now`) komplett entfernt, `rub.summary`
+  bleibt als einziges Feld - aber jetzt primaer automatisch befuellt.
+- **Reine Template-Engine, kein KI-Aufruf** (`summarizeRub()`/`sumFrag()`/
+  `sumIndSource()`/`joinFrags()`, direkt vor `recomputeAuto()`): baut aus den
+  tatsaechlichen Indikator-Werten einen kurzen, verbundenen Satz. Pro
+  Indikator EIN kurzes Fragment ("headline CPI **missed** at **3.5%** (fc.
+  3.8%)", "the 2Y yield **up** to **4.21%**", bei Revisionen zusaetzlich
+  "(rev. from X)") - `sumPhrase()`/`SUM_PHRASE` uebersetzt den internen
+  Indikator-Namen in eine lesbare Kurzform ("NFP" statt "NFP / Employment
+  Change"). Rein qualitative Indikatoren ohne Recherche-Wert (CB Tone,
+  Geopolitics) werden nur erwaehnt, wenn ihr Bias nicht neutral ist ("X
+  tilted **bullish**"). Alle Fragmente werden zu EINEM Satz verbunden
+  (`joinFrags()`, Oxford-Komma-Stil) und mit dem Karten-Bias-Wort eingeleitet
+  ("The inflation picture for EUR is currently **bullish**, with ...").
+  **`SCORE_ZERO`-Indikatoren** (aktuell nur "2Y/10Y Spread") werden wie im
+  Score selbst uebersprungen.
+- **Dieselbe Drei-Wege-Quellen-Exklusivitaet wie `symScoreDrivingEventsByDate()`**
+  (`sumIndSource()`: Feed `ind.research.feed===true` zuerst mit voller
+  Exklusivitaet, dann FF-Kalender `findIndEvent()`, dann Bond/COT/Sentiment)
+  - bewusst repliziert statt neu erfunden, nach der in dieser Session
+  mehrfach gelernten Dual-Source-Lehre (EUR PPI, GBP Claimant Count Change,
+  siehe Eintraege oben): eine vierte unabhaengige Implementierung dieser
+  Prioritaetsregel haette wieder eine Quelle zeigen koennen, die von der
+  Karte selbst abweicht.
+- **Manuelles Ueberschreiben bleibt moeglich, haelt aber nur bis zur naechsten
+  echten Datenaenderung** - exakt das bereits bestehende Pin-Muster von
+  `rub._biasScore` in `recomputeRubricAutoBias()` uebernommen, nur mit einem
+  Fingerprint statt einer einzelnen Zahl (`rubSummarySig(rub)`: JSON aus
+  Name/Bias/Actual/Forecast/Previous/RevisedFrom jedes Indikators).
+  `syncRubSummaries()` (neu in `recomputeAuto()` eingehaengt) regeneriert
+  `rub.summary` nur, wenn sich die Signatur seit dem letzten Lauf geaendert
+  hat - ein manueller Edit setzt `rub._summarySig` im selben Atemzug auf den
+  aktuellen Stand (im `onchange`-Handler der Textarea), macht den eigenen
+  Text dadurch "gueltig", bis sich wirklich etwas an den Daten aendert.
+- **Wichtige Fakten fett markiert**: `summarizeRub()` produziert `**...**`-
+  Markdown im Rohtext (bleibt beim Bearbeiten in der Textarea sichtbar, wie
+  bei jedem anderen Freitext-Feld dieser App), neue Funktion `mdBold(s)`
+  (`escH(s)` dann `**(.+?)**` → `<b>$1</b>`) wandelt es NUR beim Anzeigen um
+  - in der Overview-Kachel verwendet (`mdBold(rub.summary)` statt
+  `escH(rub.summary)`).
+- **Widerspruchs-Guard**: hat KEIN Indikator ein Fragment geliefert (alle
+  neutral/ohne Wert), aber die Karte traegt trotzdem einen manuell gepinnten
+  Bias ungleich neutral (`rub._biasScore`-Pin), wuerde "currently bullish,
+  with no indicator sending a clear signal" sich selbst widersprechen -
+  `summarizeRub()` formuliert diesen Fall daher um ("is currently marked
+  **bullish**, though no individual indicator is currently sending a clear
+  signal") statt den Bias unkommentiert wegzulassen oder den Widerspruch
+  stehen zu lassen.
+- Per Playwright verifiziert (USD/EUR/GOLD/BTC, alle Standard-Rubriken +
+  eine frisch angelegte leere Custom-Rubrik): jede Karte bekommt einen
+  sinnvollen, jeden Indikator erwaehnenden Satz, Overview-Kachel zeigt
+  korrektes `<b>`-HTML, Textarea zeigt weiterhin die rohen `**`-Marker,
+  manuelle Ueberschreibung bleibt nach `recomputeAuto()` ohne Datenaenderung
+  exakt erhalten, wird aber nach einer echten Aenderung (Bias-Flip + neuer
+  `research.actual`-Wert) korrekt durch frischen Auto-Text ersetzt, leere
+  Custom-Rubrik zeigt den widerspruchsfreien Fallback-Satz. Voller
+  14-Tab-Regressionstest weiterhin fehlerfrei (nur netzwerkbedingte
+  `ERR_TUNNEL_CONNECTION_FAILED`-Ressourcenfehler in der Sandbox, keine
+  JS-Fehler).
