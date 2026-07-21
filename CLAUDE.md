@@ -2876,3 +2876,66 @@ halt probieren zu verbinden."
   14-Tab-Regressionstest weiterhin fehlerfrei (nur netzwerkbedingte
   `ERR_TUNNEL_CONNECTION_FAILED`-Ressourcenfehler in der Sandbox, keine
   JS-Fehler).
+
+### Auto-Zusammenfassung: Bold-Markup entfernt + Wortwahl auf Themen-Aussage umgebaut (Nutzer-Feedback 2026-07-21, direkt im Anschluss)
+
+Zwei Nachbesserungen zur eben gebauten Auto-Zusammenfassung:
+
+**1. "**" blieb sichtbar.** Die `**fett**`-Marker aus dem vorherigen Commit
+wurden nur in der schreibgeschuetzten Overview-Kachel (`mdBold()`) in `<b>`
+umgewandelt - die editierbare SUMMARY-Textarea kann kein HTML rendern, dort
+blieben die rohen `**`-Zeichen als Stoerung sichtbar, und genau dort liest
+der Nutzer die Zusammenfassung hauptsaechlich. Fix: Bold-Markup komplett
+entfernt (`sumFrag`/`summarizeRub` erzeugen jetzt reinen Klartext), `mdBold()`
+als toter Code geloescht, Overview-Kachel nutzt wieder schlichtes `escH()`.
+
+**2. Wortwahl war reine Daten-Aneinanderreihung.** Nutzer: "du reihst
+einfach nur die daten aneinander. Ich will eher das da steht das sich zb
+die inflation aktuell stärker wird und dabei über expectations oder in line
+kommt. Und dann steht da irgendwie vor allem wird es durch CPIs und PPIs
+gestützt [...] es muss nicht stehen welcher indikator von der gruppe es ist
+[...] aber es muss trotzdem pro indikator kurz erwähnt werden wie hoch die
+werte sind aber weniger." Drei Formulierungs-Ansaetze vorgeschlagen (A:
+volle Themen-Synthese mit Indikator-Familien, B: einfache Zwei-Satz-Struktur
+ohne Gruppierung, C: Hybrid) - Nutzer waehlte **C**, umgesetzt:
+
+- **`indFamily(ind)`** (neue Lookup-Tabelle `IND_FAMILY`) gruppiert
+  verwandte Indikatoren unter einem gemeinsamen Namen (Headline+Core CPI →
+  "CPI", NFP+ADP → "employment", Net Bullish+Net Bearish → "net
+  positioning", usw.) - deckt genau den Nutzer-Wunsch "keine Unterscheidung
+  Core/Headline noetig".
+- **`RUB_TREND_WORDS`** liefert ein themenspezifisches Richtungsverb statt
+  eines generischen "bullish/bearish": Inflation → "strengthening/cooling",
+  Labour Market → "improving/weakening", Economic Growth →
+  "accelerating/slowing", COT Data → "turning more bullish/bearish",
+  Interest Rates → "turning more hawkish/dovish", Custom-Karten fallen auf
+  einen generischen Default zurueck.
+- **Richtung wird primaer aus dem tatsaechlichen Beat/Miss-Muster der Karte
+  abgeleitet, NICHT aus `rub.bias`** - `rub.bias` kippt erst ab einer festen
+  Score-Schwelle (`RUB_AUTO_BIAS_THRESHOLD`) und kann dadurch hinter den
+  Rohdaten zurueckbleiben (beobachtet: USD Inflation mit 4 Misses/0 Beats
+  zeigte `rub.bias==='neu'`, waere mit dem alten Ansatz faelschlich als
+  "neutral" beschrieben worden statt als "cooling"). `rub.bias` bleibt nur
+  Fallback fuer Karten ohne jeden Forecast-Vergleich (COT Data, Risk
+  Environment, Interest Rates).
+- **Erwartungs-Verdikt** (", coming in above/below expectations" bzw.
+  ", mixed against expectations" bzw. ", broadly in line with
+  expectations") aus dem Beat/Miss/Inline-Verhaeltnis aller Familien mit
+  echtem Forecast.
+- **"driven mainly by X, alongside Y" nur wenn die Forecast-Ueberraschungen
+  tatsaechlich eine MINDERHEIT der Familien sind** (`drivers.length<=
+  Math.ceil(famOrder.length/2)`) - bei einem vollen Release-Tag (z.B.
+  Labour Market mit 4 von 5 Familien mit Beat/Miss) waere "mainly"
+  irrefuehrend; dann eine schlichte Liste ohne Gewichtung, die aber
+  weiterhin jede Familie kurz nennt (Nutzer-Vorgabe "pro Indikator[-Familie]
+  kurz erwaehnt" bleibt so in JEDEM Fall erfuellt).
+- Beispiel-Ergebnis (USD, live verifiziert): *"The inflation picture for USD
+  is currently cooling, coming in below expectations, driven mainly by CPI
+  (3.5%/2.6%) and PPI (5.5%/4.7%), alongside the PCE index (4.1%/3.4%), the
+  2Y yield (4.21%), and the 10Y yield (4.6%)."* - liest sich sehr nah am
+  Nutzer-Beispiel ("inflation aktuell staerker/schwaecher, driven mainly by
+  CPIs und PPIs").
+- Per Playwright ueber USD/EUR/GOLD/BTC und alle Standard-Kartentypen
+  verifiziert (kein `**` mehr irgendwo, manuelle Ueberschreibung bleibt bis
+  zur naechsten echten Datenaenderung erhalten, No-Signal-Fallback weiterhin
+  widerspruchsfrei), voller 14-Tab-Regressionstest fehlerfrei.
