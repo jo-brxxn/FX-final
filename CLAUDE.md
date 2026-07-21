@@ -3662,3 +3662,75 @@ Ausschlag gibt - fuer den Leser ein scheinbarer Widerspruch zum Badge.
   Signale im Text erscheinen und das Text-Fazit immer aus derselben Quelle
   (`rub.bias`/`rubScore()`) wie das Badge kommt, nicht aus einer eigenen
   Teil-Interpretation.
+
+### Vollstaendiger Audit aller 6 Kartentypen auf Badge-Text-Widersprueche: "Geopolitics" bei Non-FX entfernt (Nutzer-Wunsch 2026-07-21, direkt im Anschluss an den COT-Fix)
+
+Nutzer: "Prüf nochmal alle anderen Karten auf ähnliche Widersprüche." Gezielt
+mit Testszenarien geprueft, die genau diese Bug-Klasse provozieren (ein
+score-tragendes Signal wird im Text ignoriert): erzwungene Gegensignale bei
+allen 6 Standard-Kartentypen, inkl. Non-FX same/inverse-Faelle.
+
+**Ergebnis: ein weiterer echter Fall in "Risk Environment" gefunden.** Die
+Karte hat zwei Score-Treiber - "Risk Correlation" (automatisch aus dem
+Risk-Sentiment-Regler + Safe-Haven/Risk-Asset-Einstellung) und
+"Geopolitics" (manuell, wie ein normaler Indikator). `summarizeRiskEnv()`
+las aber NUR Risk Correlation (`riskEnvLevel`/`riskEnvDirOf`), Geopolitics
+komplett ignoriert. Zwei per Playwright bestaetigte Widersprueche: (1)
+Regler auf "None" + Geopolitics manuell bullish gesetzt -> Badge "Bullish"
+(Score allein aus Geopolitics), Text sagte trotzdem "having no clear
+impact". (2) GOLD, Regler auf "Full" (waere pro Safe-Haven-Einstellung
+bullish) + Geopolitics manuell stark bearish (hebt sich auf) -> Badge
+korrekt "Neutral", Text behauptete trotzdem "bullish for GOLD".
+Inflation/Labour Market/Economic Growth/Interest Rates/COT Data (frisch
+gefixt) zeigten in allen erzwungenen Szenarien (inkl. Non-FX same/inverse-
+Regeln wie GOLD Inflation='inverse'/SP500 Labour Market='same') KEINE
+weiteren Widersprueche - dort ist der Schlusssatz bereits durchgehend
+Dual-Source-sicher (`biasSignOf(rub)`/`assetVerdictClause()`).
+
+**Nutzer-Entscheidung zum Fix (nach Vorschlag einer komplexeren Kontrast-
+Formulierung explizit abgelehnt):** "Lass den Indikator bei fx und entfern
+ihn bei Non fx. Sag einfach das political uncertainty bullish oder bearish
+für die Währung ist bei der Zusammenfassung. Ganz simpel." - strukturelle
+Loesung statt Text-Reparatur:
+
+- **"Geopolitics" existiert nur noch bei FX-Waehrungen.** Bei Non-FX-Assets
+  (Gold/Silber/Oel/BTC/Indizes/...) war ohnehin unklar, WESSEN Politik
+  gemeint sein soll - der Indikator wird dort komplett entfernt, "Risk
+  Environment" hat bei Non-FX nur noch "Risk Correlation". Neue Konstante
+  `RISK_ENV_INDS_NONFX=['Risk Correlation']` neben dem bestehenden
+  `RISK_ENV_INDS=['Risk Correlation','Geopolitics']` (FX). `mkMacroRub()`
+  (neue Assets) und `migrateRiskEnvRub(rubrics,sym)` (bestehende Assets -
+  jetzt mit `sym`-Parameter fuer den FX/Non-FX-Unterschied, beide
+  Aufrufstellen `migrateRubInds()`/`applySnap()` angepasst) waehlen je nach
+  `isNonFx(sym.id)` das richtige Set. Bestehende Werte fuer Indikatoren, die
+  in BEIDEN Sets vorkommen ("Risk Correlation"), bleiben beim Migrieren
+  erhalten statt neu erzeugt zu werden.
+- **Bei FX bekommt Geopolitics einen eigenen, simplen Zusatzsatz** statt in
+  die Risk-Correlation-Zeile verwoben zu werden: "Political uncertainty is
+  currently bullish/bearish for USD." - nur wenn `geo.bias` tatsaechlich
+  nicht neutral ist, sonst bleibt der Satz komplett weg (Standardfall,
+  Geopolitics wird von den meisten Nutzern nie angefasst, bleibt exakt wie
+  zuvor). Loest den Widerspruch strukturell: beide Saetze sind rein additiv
+  und beschreiben je NUR ihr eigenes Signal, keiner behauptet ein
+  Gesamt-Fazit fuer die ganze Karte - kann sich dadurch nicht gegenseitig
+  widersprechen.
+- Per Playwright verifiziert: GOLD/BTC/SP500/SILVER/OIL/NAS haben nach
+  Migration nur noch "Risk Correlation" (keine der beiden Bug-Szenarien
+  mehr moeglich, da der zweite Treiber schlicht nicht mehr existiert);
+  USD/EUR behalten beide Indikatoren; der urspruengliche Bug-Fall 2 (GOLD +
+  Geopolitics) reproduziert sich nicht mehr; Fall 1 (USD, Geopolitics
+  manuell) liefert jetzt den additiven Satz, keinen Widerspruch mehr;
+  Standardfall (Geopolitics neutral) liefert wortgleich den alten Text -
+  keine Regression. Migrations-Test mit einem simulierten Alt-Zustand
+  (GOLD traegt noch einen stale "Geopolitics"-Eintrag mit gesetztem Bias)
+  durch `applySnap()` geschickt - wird korrekt entfernt, USDs Geopolitics-
+  Bias bleibt dabei erhalten. `SUMMARY_ENGINE_VERSION` auf `10`. Voller
+  14-Tab-Regressionstest + Grammatik-Scan weiterhin fehlerfrei.
+- **Merksatz:** bei einer gemeldeten Text-Badge-Diskrepanz nicht nur DIE
+  eine gemeldete Karte fixen, sondern (wie hier auf Nutzer-Wunsch
+  systematisch gemacht) JEDEN anderen Kartentyp mit demselben
+  Struktur-Muster (mehrere unabhaengig score-tragende Indikatoren, von
+  denen der Text nur einen wiedergibt) gezielt mit erzwungenen
+  Gegensignal-Szenarien durchtesten - das reine Lesen des Codes haette den
+  Risk-Environment-Fall vermutlich uebersehen, erst der gezielte Test mit
+  einem isolierten, starken Gegensignal deckte ihn auf.

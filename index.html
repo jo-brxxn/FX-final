@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a1a;color:#f0a8a8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: CRIMSON-COT-BADGE-FIX-199</span><span id="verBannerText"> (Zwei Bugfixes, per Nutzer-Screenshot gefunden: 1) COT-Data-Zusammenfassung widersprach dem Bias-Badge ("leaning more on the bearish side" bei Badge "Bullish") - die WoW-Aenderung kann beim Score bis zu doppeltes Gewicht gegenueber dem reinen Niveau haben, der Text nannte das aber nie. Neu: Satz nennt Niveau + WoW-Aenderung + ein badge-konsistentes Fazit ("on balance, that makes the picture slightly/bullish/strongly bullish", Woertchen je nach |Score| 0,5/1/1,5), "but ... the stronger signal" nur bei echtem Widerspruch zwischen Niveau und WoW. 2) Labour-Market-Eroeffnungssatz nannte fuer die Unemployment Rate nur den Trend ggue. Vorwert ("held at"), nie das Forecast-Verdikt - jetzt zusaetzlich "coming in better/worse than expected"/"in line with expectations". SUMMARY_ENGINE_VERSION auf 9.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1a2e3d;color:#a8d4f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: STEEL-GEOPOLITICS-FX-ONLY-200</span><span id="verBannerText"> (Vollstaendiger Audit aller 6 Kartentypen auf Badge-Text-Widersprueche (Nutzer-Wunsch): einen weiteren echten Fall in "Risk Environment" gefunden - die Karte hatte zwei Score-Treiber (Risk Correlation automatisch, Geopolitics manuell), der Zusammenfassungstext las aber nur Risk Correlation, Geopolitics konnte das Badge unbemerkt drehen. Fix: "Geopolitics" gibt es jetzt nur noch bei FX-Waehrungen (bei Non-FX unklar, wessen Politik gemeint waere - Migration entfernt bestehende Geopolitics-Eintraege bei Non-FX-Assets), und bei FX bekommt es einen eigenen simplen Zusatzsatz ("Political uncertainty is currently bullish/bearish for USD.") statt in die Risk-Correlation-Zeile verwoben zu werden. Inflation/Labour Market/Economic Growth/Interest Rates/COT Data liefen im Audit sauber (keine weiteren Widersprueche gefunden). SUMMARY_ENGINE_VERSION auf 10.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -4345,13 +4345,28 @@ function stripGeopoliticsRub(rubrics){
 // werden hier komplett auf die neuen 2 zurueckgesetzt - eine Zuordnung der
 // alten Stichpunkte ist inhaltlich nicht sinnvoll moeglich.
 const RISK_ENV_INDS=['Risk Correlation','Geopolitics'];
-function migrateRiskEnvRub(rubrics){
+// "Geopolitics" nur fuer FX-Waehrungen (Nutzer-Wunsch 2026-07-21: politische
+// Unsicherheit eines Landes ist fuer dessen eigene Waehrung sinnvoll
+// zuordenbar - bei Non-FX-Assets (Gold/BTC/Indizes) war unklar, WESSEN
+// Politik gemeint sein soll, und der Indikator konnte den Karten-Bias
+// stumm gegen die reine Risk-Correlation-Lesart verschieben, siehe
+// Bugreport-Eintrag unten). Non-FX behaelt nur "Risk Correlation".
+const RISK_ENV_INDS_NONFX=['Risk Correlation'];
+function migrateRiskEnvRub(rubrics,sym){
   if(!Array.isArray(rubrics))return;
   const r=rubrics.find(x=>x.name===MACRO_NAME||x.name===MACRO_NAME_LEGACY||x.name===MACRO_NAME_LEGACY2);
   if(!r)return;
+  const wantInds=(sym&&isNonFx(sym.id))?RISK_ENV_INDS_NONFX:RISK_ENV_INDS;
   const names=(r.indicators||[]).map(i=>i.name);
-  const isMigrated=names.length===RISK_ENV_INDS.length&&RISK_ENV_INDS.every(n=>names.includes(n));
-  if(!isMigrated)r.indicators=RISK_ENV_INDS.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));
+  const isMigrated=names.length===wantInds.length&&wantInds.every(n=>names.includes(n));
+  if(!isMigrated){
+    // Bestehende Werte (Bias/Notizen) fuer Indikatoren, die in BEIDEN Sets
+    // vorkommen (aktuell nur "Risk Correlation"), bleiben erhalten statt neu
+    // erzeugt zu werden - nur "Geopolitics" wird fuer Non-FX entfernt bzw.
+    // fuer FX bei Bedarf neu angelegt.
+    const old=r.indicators||[];
+    r.indicators=wantInds.map(n=>old.find(i=>i.name===n)||{id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]});
+  }
 }
 // Die drei Rendite-/Spread-Indikatoren ziehen aus der Interest-Rates- in
 // die Inflation-Karte um, jeweils ans ENDE (Nutzer-Wunsch 2026-07-20, fuer
@@ -4390,7 +4405,7 @@ function cleanDeriveRules(sym){
 }
 function migrateRubInds(rubrics,sym){
   stripGeopoliticsRub(rubrics);
-  migrateRiskEnvRub(rubrics);
+  migrateRiskEnvRub(rubrics,sym);
   moveYieldIndsToInflation(rubrics);
   cleanDeriveRules(sym);
   rubrics.forEach(rub=>{
@@ -4805,11 +4820,10 @@ function mkMacroRub(id,name){
   };
   const infoFn=MACRO_RUB_INFO[cls]||MACRO_RUB_INFO.fx;
   const corrInfo=`${m.ron.info} ${m.roff.info} Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card): None/Half/Full = how risky the current environment is. Configure whether ${name} is Bullish (credited when risky, safe haven), Bearish (penalized when risky, risk asset) or Neutral there via the ⚙️ gear icon - not editable here.`;
-  return{id:uid(),name:MACRO_NAME,bias:'neu',imp:false,summary:'',info:infoFn(name),
-    indicators:[
-      {id:uid(),name:'Risk Correlation',bias:'neu',imp:false,date:'',interval:'',points:[],info:corrInfo},
-      {id:uid(),name:'Geopolitics',bias:'neu',imp:false,date:'',interval:'',points:[]},
-    ]};
+  const inds=[{id:uid(),name:'Risk Correlation',bias:'neu',imp:false,date:'',interval:'',points:[],info:corrInfo}];
+  // "Geopolitics" nur fuer FX-Waehrungen (siehe RISK_ENV_INDS_NONFX-Kommentar).
+  if(!isNonFx(id))inds.push({id:uid(),name:'Geopolitics',bias:'neu',imp:false,date:'',interval:'',points:[]});
+  return{id:uid(),name:MACRO_NAME,bias:'neu',imp:false,summary:'',info:infoFn(name),indicators:inds};
 }
 function addMacroRub(sym){
   if(!sym.rubrics)sym.rubrics=[];
@@ -4907,7 +4921,7 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -7448,7 +7462,16 @@ function summarizeRiskEnv(sym,rub){
   const levelWord=riskEnvLevel>=2?'a full risk-off environment':riskEnvLevel>=1?'a half risk-off environment':'a calm, low-risk environment';
   const dir=riskEnvDirOf(sym.id);
   const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.id}`:dir==='bullish'?`bullish for ${sym.id}`:`bearish for ${sym.id}`;
-  return`Risk sentiment is currently ${levelWord}, ${effect}.`;
+  let sentence=`Risk sentiment is currently ${levelWord}, ${effect}.`;
+  // "Geopolitics" gibt es nur noch bei FX-Waehrungen (Nutzer-Wunsch 2026-07-21:
+  // "Sag einfach das political uncertainty bullish oder bearish für die
+  // Währung ist... Ganz simpel") - ein eigener, simpler Satz statt es in die
+  // Risk-Correlation-Zeile zu verweben (vermeidet den zuvor gemeldeten
+  // Badge-Text-Widerspruch strukturell, da beide Saetze rein additiv jeweils
+  // ihr EIGENES Signal beschreiben, keiner behauptet ein Gesamt-Fazit).
+  const geo=findIndByBase(rub,'Geopolitics');
+  if(geo&&(geo.bias==='bull'||geo.bias==='bear'))sentence+=` Political uncertainty is currently ${geo.bias==='bull'?'bullish':'bearish'} for ${sym.id}.`;
+  return sentence;
 }
 const RUB_SUMMARIZERS={
   'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
@@ -7475,7 +7498,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=9;
+const SUMMARY_ENGINE_VERSION=10;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
