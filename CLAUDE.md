@@ -2690,3 +2690,58 @@ soll." Umgesetzt mit Score-Wirkung ±0,5 (halbes Basisgewicht, additiv).
   die grosse Mehrheit ab (siehe Feed-Abdeckungsluecken-Notizen oben).
   History-Karte (🕰️) zeigt Revisionen nicht separat - der Score-Effekt
   ist im Score-Modal sichtbar; bei Bedarf nachruesten.
+
+### Revisions-Backfill fuer die aktuellen Release-Zyklen aus der Git-Historie (Nutzer-Wunsch 2026-07-21, direkt nach dem Revisions-Feature)
+
+Nutzer: "Kannst du das nicht schon fuer alle Indikatoren jetzt schon machen
+weil du hast doch die Daten - sonst muss ich warten bis jeder Indikator
+einen neuen Wert hat." Berechtigt - und loesbar OHNE Schaetzung, aber nur
+ueber einen Umweg:
+
+- **Warum die offensichtlichen Quellen NICHT gehen:** TradingView liefert
+  rueckwirkend nur noch die REVIDIERTEN Werte (historyFull-Merge: "neuere
+  Werte gewinnen"), und `ind.valHist` wird bei jedem Lauf per
+  `adoptFeedHistory()` von genau dieser Feed-Historie ueberschrieben - der
+  "damals gemeldete" Wert ist in den Live-Daten also nirgends mehr
+  vorhanden. Revidiert-vs-revidiert zu vergleichen ergaebe immer "keine
+  Revision".
+- **Die echte Quelle: die Git-Historie von ind_data.json.** Stuendliche
+  Commits = reale Snapshots der Werte, wie sie zum jeweiligen Zeitpunkt
+  gemeldet waren (gleiche Datenklasse wie der OCC-Put/Call-Backfill - echte
+  historische Werte, kein Interpolieren). Shallow-Clone vorher per `git
+  fetch --unshallow` vertieft (108 ind_data-Commits bis zum Feed-Start
+  2026-06-13).
+- **Skript** (`backfill_revisions.js`, Scratchpad, einmalig): je Indikator
+  den juengsten Snapshot suchen, in dem noch das VOR-Release aktuell war,
+  dessen `actual` (wie damals gemeldet) numerisch gegen das heutige
+  `previous` vergleichen. Zwei Guards: (1) Konsistenz-Anker - das
+  Snapshot-Datum MUSS dem direkten Vor-Release-Datum laut aktueller
+  historyFull entsprechen (verhindert falsches Pairing, wenn der Feed einen
+  Release verpasst hat - hat bei NZD Consumer Confidence korrekt
+  uebersprungen); (2) Vorlaeufer vor Feed-Start ohne Snapshot werden ehrlich
+  uebersprungen (betraf 8 Quartals-/Luecken-Indikatoren bei AUD/CAD/NZD/GBP).
+- **Ergebnis: genau 2 aktive echte Revisionen** (beide GBP, Release
+  2026-07-21, das heute Morgen VOR dem Feature-Deploy erfasst wurde und der
+  Live-Erkennung daher knapp entging): Claimant Count Change 31.2K->1.3K
+  (massive Abwaertsrevision, bei lower-is-better bullish +0,5) und
+  Employment Change 100K->99K (bearish -0,5). Ueber ~10 Snapshots
+  spot-gecheckt: der Vor-Zyklus meldete durchgehend stabil 31.2K/100K -
+  kein Flackern, echtes Restatement. Alle uebrigen Indikatoren: previous
+  stimmt exakt mit dem damals gemeldeten Actual ueberein (keine Revision).
+- **Delivery:** revisedFrom direkt in ind_data.json committet (bewusste,
+  dokumentierte Ausnahme von "Daten-JSONs nicht manuell editieren" - wie
+  beim OCC-Backfill ein Einmal-Backfill echter historischer Werte). Die
+  Persistenz-Stufe des Workflows ("(3) Revisions-Erkennung", Carry-over bei
+  `pv.date===v.date`) traegt die Eintraege ab dem naechsten Lauf von selbst
+  weiter, bis das jeweils naechste Release sie ablost.
+- Per Playwright mit den ECHTEN backgefuellten Daten verifiziert: beide
+  Revisionen laufen durch die komplette Kette (revisedFrom -> revBias ->
+  indScoreParts rev ±0,5 -> Kartenanzeige "(rev. from 31.2K)" gruen/rot).
+- **Merksatz:** wenn "urspruenglich gemeldete" Werte gebraucht werden, die
+  die Live-Quellen rueckwirkend ueberschreiben, ist die Git-Historie der
+  stuendlich committeten Daten-JSONs die einzige verlaessliche Quelle im
+  Projekt - Snapshots dort sind echte Aufzeichnungen, kein Cache.
+  (Push-Race-Randnotiz vom selben Tag: zwei parallele Workflow-Laeufe
+  koennen sich beim Push die Klinke geben; der Verlierer-Lauf schlaegt mit
+  Rebase-Konflikt in den Daten-JSONs fehl, der naechste Stundenlauf heilt
+  das von selbst - kein Handlungsbedarf, solange es vereinzelt bleibt.)
