@@ -112,26 +112,23 @@ gerade dran gearbeitet wird):
   Merksatz weiter unten (Data-Dropdown/Header) — dieselbe Problemklasse
   (etwas rutscht hinter/unter/über etwas anderes), hier aber Labels/Tooltips
   statt Dropdown-Stacking-Context.
-- **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird über
+- **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird NUR über
   einen linken Rand-Streifen gezeigt (`.rub-card` 4px, `.ind-card`/
   `.pair-card`/`.sym-row` 3px) auf neutralem 1px-Rahmen, `glow-*`-Klassen
-  setzen `border-left-color` **+ einen STATISCHEN Hintergrund-Gradient**
-  (`background-image:linear-gradient(rgba(...,X),rgba(...,X))`) — bewusst
-  kein Transition/keine Animation auf `background`, damit es nicht pulsiert
-  (Nutzer-Wunsch 2026-07-21: "wirklich ganz leicht und gleichmäßig und
-  nicht dynamisch"). Opazitaet zunaechst sehr schwach (`.ind-card` `.02`,
-  stark bullish/bearish `.035`), dann auf Nutzer-Wunsch "stärker" nochmal
-  erhoeht auf `.05`/`.08` (`.ab` `.06`+Box-Shadow `.13`, `.dw-chip` `.13`,
-  `.sym-row`/`.rub-card`/`.pair-card` `.05`–`.07`) — bei weiteren
-  "staerker/schwaecher"-Wuenschen einfach die Opazitaetswerte in diesen
-  `glow-*`-Regeln (CSS-Kopf, ~Z. 184-207) proportional skalieren, NICHT
-  Transition/Animation hinzufuegen. Gilt fuer JEDE Stelle mit
-  `glow-*`-Klassen (`.ab`/`.rub-card`/`.pair-card`/`.ind-card`/`.ri`/
-  `.sym-row`/`.dw-chip`) — `.ind-card`/`.ri` hatten den Hintergrund-Anteil
-  zwischenzeitlich verloren (nur Rand-Streifen, siehe Farbaudit Runde 1
-  2026-07-19), wurde ergaenzt, damit alle Glow-Traeger wieder einheitlich
-  sind. Bei neuen bias-gefaerbten UI-Bausteinen dieses Muster
-  wiederverwenden statt die ganze Flaeche einzufaerben.
+  setzen ausschliesslich `border-left-color`, keinerlei Hintergrund-Tint.
+  **Kurze Episode 2026-07-20/21:** ein Hintergrund-Glow wurde probeweise
+  ergaenzt (`.ind-card`/`.ri` hatten ihn durchs Farbaudit Runde 1 verloren,
+  Nutzer wollte ihn zurueck — "ganz leicht und gleichmässig, nicht
+  dynamisch"), dann auf Wunsch verstaerkt ("stärker"), dann nach einem
+  Foto-Bugreport ("das schlecht geschrieben") komplett wieder entfernt
+  ("mach den glow wieder aus") — Endstand ist wieder der urspruengliche
+  reine Rand-Streifen, wie oben beschrieben. Bei einem kuenftigen erneuten
+  "Glow zurück"-Wunsch: `background-image:linear-gradient(rgba(...,X),
+  rgba(...,X))` auf den `glow-*`-Regeln (CSS-Kopf, ~Z. 184-207) ergaenzen,
+  bewusst OHNE Transition/Animation (sonst pulsiert es) — aber vorher beim
+  Nutzer nachfragen, ob wirklich alle Traeger (`.ab`/`.rub-card`/
+  `.pair-card`/`.ind-card`/`.ri`/`.sym-row`/`.dw-chip`) gemeint sind oder
+  nur ein Teil, da das in dieser Session mehrfach hin und her ging.
 
 ## ⚠️ META-GRUNDSATZ: jede dauerhafte Nutzer-Vorgabe gehört ins CLAUDE.md
 
@@ -3223,3 +3220,66 @@ Waehrung ist.
   change negative."* (GOLD COT Data) · *"Risk sentiment is currently a half
   risk-off environment, currently bullish for USD."* (Risk-Regler auf
   "Half").
+
+### Bestandsnutzer sahen nach dem Summarizer-Umbau weiterhin die ALTE Formulierung (Bugreport per Foto, 2026-07-21)
+
+Nutzer schickte ein Foto der Live-Seite: die Karten zeigten noch den alten
+generischen Text ("driven mainly by CPI (3.5% vs 3.8% fc., ...), while the
+PCE index held in line, the 2Y yield ticked higher...") statt der neu
+gebauten, fest verdrahteten Formulierung ("Headline CPI is at 3.5%, with
+CPIs coming in softer than expected. ..."), obwohl das Banner bereits
+V191 zeigte (der Umbau war also technisch live) - dazu die Vorgabe "guck
+nochmal meine Nachricht durch, bei Fragen frag".
+
+- **Ursache: DRITTE Auspraegung derselben Selbstheilungs-Luecke** (nach
+  liegengebliebenen `**`-Markern und `rev. from`-Vermerken, siehe die
+  beiden Eintraege oben). `rubSummarySig()` haengt AUSSCHLIESSLICH von den
+  Indikator-WERTEN ab (Name/Bias/Actual/Forecast/Previous/RevisedFrom) -
+  nicht davon, WELCHE Version von `summarizeRub()` den Text erzeugt hat.
+  Der komplette Umbau von der generischen Familien-Engine auf die 6 fest
+  verdrahteten Karten-Summarizer aenderte an den zugrunde liegenden
+  Indikator-Werten nichts - die Signatur blieb also identisch, und
+  `syncRubSummaries()` hielt den laengst veralteten Text faelschlich fuer
+  weiterhin gueltig. Anders als bei `**`/`rev. from` gab es diesmal auch
+  KEINEN erkennbaren Text-Marker, an dem ein Ad-hoc-Substring-Check haette
+  ansetzen koennen (die alte generische Formulierung sieht oberflaechlich
+  wie normaler Fliesstext aus).
+- **Fix, diesmal strukturell statt Ad-hoc:** neue Konstante
+  `SUMMARY_ENGINE_VERSION` (aktuell `2`) fliesst als erstes Element in
+  `rubSummarySig()` mit ein. **Ab jetzt bei JEDER Aenderung an der
+  Formulierungs-Logik** (egal ob `summarizeGeneric()` oder einer der
+  fest verdrahteten Karten-Summarizer, auch reine Wortwahl-Fixes) diese
+  Zahl hochzaehlen, statt einen neuen `rub.summary.indexOf(...)`-Check zu
+  bauen - das war der wiederholte Fehler in den beiden vorherigen Runden.
+  Ein hochgezaehlter Wert regeneriert ALLE Zusammenfassungen beim naechsten
+  `recomputeAuto()`-Lauf, auch echte manuelle Ueberschreibungen ohne
+  erkennbaren Marker (bewusster Trade-off: nach einem echten Formulierungs-
+  Wechsel gilt der alte Text ohnehin nicht mehr als "bewusst vom Nutzer so
+  gewaehlt", da er sich auf die ALTE Engine bezog).
+- Per Playwright verifiziert: ein synthetisch injizierter Alt-Text mit der
+  ALTEN Signatur-Berechnung (ohne Versions-Wrapper, exakt wie vor diesem
+  Fix) wird beim naechsten `recomputeAuto()` korrekt durch die neue
+  Formulierung ersetzt; kompletter Scan ueber alle Symbole/Rubriken auf
+  Reste alter Phrasen ("driven mainly by"/"held in line"/"ticked higher/
+  lower") liefert 0 Treffer; voller 14-Tab-Regressionstest weiterhin
+  fehlerfrei.
+- **Merksatz (jetzt zum dritten Mal gelernt, diesmal strukturell statt mit
+  einem weiteren Einzelfall-Patch geloest):** `rubSummarySig()` darf sich
+  NIE nur auf die Rohdaten verlassen, wenn sich die daraus abgeleitete
+  TEXT-FORM aendern kann - eine Versionsnummer, die bei jeder Logik-
+  Aenderung manuell hochgezaehlt wird, ist die einzige zuverlaessige
+  Absicherung. Kuenftige Aenderungen an `summarizeRub()`/
+  `summarizeGeneric()`/den 6 Karten-Summarizern IMMER mit einem
+  `SUMMARY_ENGINE_VERSION`-Bump kombinieren, nicht vergessen.
+
+### Hintergrund-Glow komplett wieder entfernt (Nutzer-Wunsch 2026-07-21, direkt im Anschluss)
+
+Im selben Bugreport-Foto: "mach den glow wieder aus" - das erst kurz zuvor
+ergaenzte und dann verstaerkte statische Hintergrundleuchten (siehe
+CLAUDE.md-Grundsatz "Score-/Asset-Karten" oben) wurde komplett
+zurueckgebaut. `glow-*`-Klassen (`.ab`/`.rub-card`/`.pair-card`/
+`.ind-card`/`.ri`/`.sym-row`/`.dw-chip`) setzen wieder ausschliesslich
+`border-left-color`, kein `background-image`/`box-shadow` mehr - exakt der
+Stand von vor dem 2026-07-20-Farbaudit-Rueckbau. Per Playwright verifiziert
+(`getComputedStyle().backgroundImage` liefert `none`), voller
+Regressionstest fehlerfrei.
