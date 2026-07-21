@@ -1288,6 +1288,18 @@ jobs:
                   if(a!=null&&b!=null&&a!==b){v.revisedFrom=pv.actual;revN++;}
                 }else if(pv.date===v.date&&pv.revisedFrom!=null){
                   v.revisedFrom=pv.revisedFrom;
+                  // TV setzt das previous-Feld einige Tage nach dem Release
+                  // wieder auf den UNrevidierten Originalwert zurueck
+                  // (beobachtet bei USD NFP Juli 2026: revidiertes previous
+                  // 129K stand nur vom 02.-04.07. im Feed, danach wieder
+                  // 172K = der alte Juni-Actual; TVs history-Reihe fuehrt
+                  // ebenfalls durchgehend den Originalwert). Springt das
+                  // frische previous exakt auf revisedFrom zurueck, den
+                  // REVIDIERTEN Stand aus dem Vor-Lauf behalten - sonst
+                  // loescht sich jede Revision nach wenigen Tagen von
+                  // selbst. Ein DRITTER Wert (echte Zweitrevision) wird
+                  // dagegen normal uebernommen.
+                  if(v.previous!=null&&pv.previous!=null&&numOf(v.previous)===numOf(pv.revisedFrom)&&numOf(pv.previous)!==numOf(pv.revisedFrom))v.previous=pv.previous;
                 }
               });
             });

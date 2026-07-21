@@ -2759,3 +2759,39 @@ Utility-Klassen, sondern pro Kontext gescoped (`.ind-data-act.act-good`,
 `.ind-data-val.act-good`) - beim Wiederverwenden an einer NEUEN Stelle
 immer pruefen, ob fuer deren Element-Klasse eine Scope-Regel existiert,
 sonst bleibt die Faerbung still aus.
+
+### Revisions-Backfill v2: TVs previous-Feld traegt Revisionen nur ~3 Tage (Nutzer-Fund 2026-07-21, "NFP bei USD sollte auch revised Werte haben")
+
+Der Nutzer hatte recht - der erste Backfill uebersah fast alles. Ursache
+(per Snapshot-Analyse des USD-NFP-Juli-Zyklus gefunden): **TradingViews
+previous-Feld zeigt den revidierten Wert NUR im Release-Fenster** (~3 Tage,
+z.B. USD NFP: previous 129K vom 02.-04.07., ab 05.07. wieder der
+unrevidierte Juni-Actual 172K; TVs history-Reihe fuehrt durchgehend das
+Original). Der v1-Backfill verglich gegen das AKTUELLE previous - da war
+die Revision laengst wieder weggewischt.
+
+- **Backfill v2** (`backfill_revisions_v2.js`, Scratchpad): vergleicht
+  gegen die previous-Werte aus dem RELEASE-FENSTER (Zyklus-Snapshots der
+  ersten 5 Tage). Guards: >=2 Snapshots stabil (kein Ein-Snapshot-Glitch),
+  genau EIN distinkter abweichender Wert (sonst noisy -> skip, traf USD
+  JOLTS), Einheiten-Guard %/K-M-B/blank (fing AUD Consumer Confidence ab:
+  Index-Level "80.6" vs. m/m-Aenderung "-2.9%" - Format-Mix, keine
+  Revision). Ergebnis: 18 weitere echte Revisionen ueber 8 Waehrungen
+  (u.a. USD NFP 172K->129K, USD GDP 1.6%->0.5%, AUD Employment
+  -18.6K->-40.7K, GBP GDP 0.6%->0.1%), insgesamt jetzt 20 aktive. Wo TV
+  das previous zurueckgesetzt hatte, wurde es auf den revidierten
+  Release-Fenster-Wert restauriert (TVs EIGENER damaliger Wert, keine
+  Schaetzung).
+- **Workflow-Carry-over-Guard** (Stufe "(3) Revisions-Erkennung"): haelt
+  das revidierte previous jetzt fest, wenn TVs frisches previous exakt auf
+  revisedFrom zurueckspringt (`numOf(v.previous)===numOf(pv.revisedFrom)`
+  -> `v.previous=pv.previous`). Ein DRITTER Wert (echte Zweitrevision)
+  wird weiterhin normal uebernommen. Ohne diesen Guard waere JEDE kuenftige
+  Revision nach ~3 Tagen von selbst verschwunden (und der Client haette
+  revBias still neutralisiert, da np===revisedFrom).
+- Per Playwright mit den echten Daten verifiziert: alle 20 Revisionen
+  laufen durch die Kette (revBias-Richtungen korrekt inkl. lower-is-better,
+  Core-Paare mit ±0,25, Faerbung rot/blau). **Merksatz:** TVs previous-Feld
+  ist FLUECHTIG - wer Revisions-Informationen daraus braucht, muss sie im
+  Release-Fenster einfangen und selbst persistieren; die Git-Historie der
+  Daten-JSONs ist dafuer nachtraeglich die einzige Quelle.
