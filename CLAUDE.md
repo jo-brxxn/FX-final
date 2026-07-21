@@ -115,8 +115,18 @@ gerade dran gearbeitet wird):
 - **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird über
   einen linken Rand-Streifen gezeigt (`.rub-card` 4px, `.ind-card`/
   `.pair-card`/`.sym-row` 3px) auf neutralem 1px-Rahmen, `glow-*`-Klassen
-  setzen nur `border-left-color` (+ schwacher Gradient), nicht die ganze
-  Karte einfärben.
+  setzen `border-left-color` **+ einen schwachen, STATISCHEN
+  Hintergrund-Gradient** (`background-image:linear-gradient(rgba(...,.02),
+  rgba(...,.02))`, bei stark bullish/bearish `.035`) — bewusst kein
+  Transition/keine Animation auf `background`, damit es nicht pulsiert
+  (Nutzer-Wunsch 2026-07-21: "wirklich ganz leicht und gleichmäßig und
+  nicht dynamisch"). Gilt fuer JEDE Stelle mit `glow-*`-Klassen
+  (`.ab`/`.rub-card`/`.pair-card`/`.ind-card`/`.ri`/`.sym-row`/`.dw-chip`)
+  — `.ind-card`/`.ri` hatten den Hintergrund-Anteil zwischenzeitlich
+  verloren (nur Rand-Streifen, siehe Farbaudit Runde 1 2026-07-19), wurde
+  ergaenzt, damit alle Glow-Traeger wieder einheitlich sind. Bei neuen
+  bias-gefaerbten UI-Bausteinen dieses Muster wiederverwenden statt die
+  ganze Flaeche einzufaerben.
 
 ## ⚠️ META-GRUNDSATZ: jede dauerhafte Nutzer-Vorgabe gehört ins CLAUDE.md
 
