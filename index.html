@@ -181,30 +181,30 @@ svg.ic{vertical-align:-2px;flex:none}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS GLOW (static, non-animated highlight) ── */
-.ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.025),rgba(var(--green-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.07)}
-.ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.025),rgba(var(--red-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.07)}
-.ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.025),rgba(var(--amber-rgb),.025));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.07)}
+.ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9);background-image:linear-gradient(rgba(var(--green-rgb),.06),rgba(var(--green-rgb),.06));box-shadow:inset 0 0 8px 2px rgba(var(--green-rgb),.13)}
+.ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9);background-image:linear-gradient(rgba(var(--red-rgb),.06),rgba(var(--red-rgb),.06));box-shadow:inset 0 0 8px 2px rgba(var(--red-rgb),.13)}
+.ab.glow-neu,.ab.on.glow-neu{border-left-color:rgba(var(--amber-rgb),.9);background-image:linear-gradient(rgba(var(--amber-rgb),.06),rgba(var(--amber-rgb),.06));box-shadow:inset 0 0 8px 2px rgba(var(--amber-rgb),.13)}
 /* Bias-Faerbung der Karten (Redesign 2026-07-11, Nutzer-Wunsch "zu viele
    Farben"): statt VOLLFARBIGER Rahmen um jede Rubrik-/Indikator-Karte gibt es
    nur noch einen schmalen farbigen Kantenstreifen links - die Farbe bleibt
    als Signal erhalten (plus Badge im Header), aber die Seite wirkt ruhig.
    Die "wichtig markiert"-Regeln (.imp/.row-marked weiter unten) duerfen
    weiterhin voll faerben - das ist dann eine bewusste Hervorhebung. */
-.rub-card.glow-bull,.pair-card.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.02),rgba(var(--green-rgb),.02))}
-.rub-card.glow-bear,.pair-card.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.02),rgba(var(--red-rgb),.02))}
-.rub-card.glow-neu,.pair-card.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.02),rgba(var(--amber-rgb),.02))}
-.ind-card.glow-bull,.ri.glow-bull{border-left-color:rgba(var(--green-rgb),.75);background-image:linear-gradient(rgba(var(--green-rgb),.02),rgba(var(--green-rgb),.02))}
-.ind-card.glow-bear,.ri.glow-bear{border-left-color:rgba(var(--red-rgb),.75);background-image:linear-gradient(rgba(var(--red-rgb),.02),rgba(var(--red-rgb),.02))}
-.ind-card.glow-neu,.ri.glow-neu{border-left-color:rgba(var(--amber-rgb),.75);background-image:linear-gradient(rgba(var(--amber-rgb),.02),rgba(var(--amber-rgb),.02))}
-.ind-card.glow-sbull,.ri.glow-sbull{border-left-color:var(--green);border-left-width:5px;background-image:linear-gradient(rgba(var(--green-rgb),.035),rgba(var(--green-rgb),.035))}
-.ind-card.glow-sbear,.ri.glow-sbear{border-left-color:var(--red);border-left-width:5px;background-image:linear-gradient(rgba(var(--red-rgb),.035),rgba(var(--red-rgb),.035))}
+.rub-card.glow-bull,.pair-card.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.05),rgba(var(--green-rgb),.05))}
+.rub-card.glow-bear,.pair-card.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.05),rgba(var(--red-rgb),.05))}
+.rub-card.glow-neu,.pair-card.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.05),rgba(var(--amber-rgb),.05))}
+.ind-card.glow-bull,.ri.glow-bull{border-left-color:rgba(var(--green-rgb),.75);background-image:linear-gradient(rgba(var(--green-rgb),.05),rgba(var(--green-rgb),.05))}
+.ind-card.glow-bear,.ri.glow-bear{border-left-color:rgba(var(--red-rgb),.75);background-image:linear-gradient(rgba(var(--red-rgb),.05),rgba(var(--red-rgb),.05))}
+.ind-card.glow-neu,.ri.glow-neu{border-left-color:rgba(var(--amber-rgb),.75);background-image:linear-gradient(rgba(var(--amber-rgb),.05),rgba(var(--amber-rgb),.05))}
+.ind-card.glow-sbull,.ri.glow-sbull{border-left-color:var(--green);border-left-width:5px;background-image:linear-gradient(rgba(var(--green-rgb),.08),rgba(var(--green-rgb),.08))}
+.ind-card.glow-sbear,.ri.glow-sbear{border-left-color:var(--red);border-left-width:5px;background-image:linear-gradient(rgba(var(--red-rgb),.08),rgba(var(--red-rgb),.08))}
 .sym-row.glow-bull,.sym-row.glow-bear,.sym-row.glow-neu{border:1px solid var(--bd);border-left-width:3px}
-.sym-row.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.035),rgba(var(--green-rgb),.035))}
-.sym-row.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.035),rgba(var(--red-rgb),.035))}
-.sym-row.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.035),rgba(var(--amber-rgb),.035))}
-.dw-chip.glow-bull{border-color:rgba(var(--green-rgb),.5);background-image:linear-gradient(rgba(var(--green-rgb),.07),rgba(var(--green-rgb),.07))}
-.dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
-.dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
+.sym-row.glow-bull{border-left-color:rgba(var(--green-rgb),.85);background-image:linear-gradient(rgba(var(--green-rgb),.07),rgba(var(--green-rgb),.07))}
+.sym-row.glow-bear{border-left-color:rgba(var(--red-rgb),.85);background-image:linear-gradient(rgba(var(--red-rgb),.07),rgba(var(--red-rgb),.07))}
+.sym-row.glow-neu{border-left-color:rgba(var(--amber-rgb),.85);background-image:linear-gradient(rgba(var(--amber-rgb),.07),rgba(var(--amber-rgb),.07))}
+.dw-chip.glow-bull{border-color:rgba(var(--green-rgb),.6);background-image:linear-gradient(rgba(var(--green-rgb),.13),rgba(var(--green-rgb),.13))}
+.dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.6);background-image:linear-gradient(rgba(var(--red-rgb),.13),rgba(var(--red-rgb),.13))}
+.dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.6);background-image:linear-gradient(rgba(var(--amber-rgb),.13),rgba(var(--amber-rgb),.13))}
 /* ── EVENT FLAGS / MARKED PAIRS / EVENT BANNER ── */
 .evt-flag-abs{position:absolute;top:1px;left:3px;display:flex;gap:2px;line-height:1}
 .evt-flag-abs .evt-flag{font-size:14px}
@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#2a1a3a;color:#c9a8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-SUMMARY-BESPOKE-190</span><span id="verBannerText"> (Nutzer-Wunsch: die 6 Standard-Karten bekommen jetzt jeweils eine fest verdrahtete, sehr detailliert vorgegebene Zusammenfassungs-Formulierung statt der generischen Familien-Engine. Inflation: Headline-CPI-Wert + CPI/PPI/PCE je "hotter/partly hotter/in line/partly softer/softer", Yields "supporting/partly/partly not/not supporting the trend". Labour Market: Unemployment-Rate-Wert + NFP+ADP "mehr/partly mehr/in line/partly weniger/weniger Jobs", Jobless Claims als Bestaetigung (gegenlaeufig invertiert), JOLTS+Wages kurz dazu. Economic Growth: GDP-Wert+Verdikt im selben Satz, PMIs/Retail Sales relativ dazu, Consumer Confidence kurz. Interest Rates: nur EIN Satz (Rate + Vergleich zum Vorwert). COT Data: Long/Short-Split + Crowded-Hinweis (≥80%) + Wochenaenderung. Risk Environment: aktuelles Risiko-Level + ob das gut/schlecht fuer das Asset ist. Custom-Karten laufen weiterhin ueber die alte generische Engine)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#c9a8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#c9a8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1a2e42;color:#9fd3f5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-GLOW-STRONGER-191</span><span id="verBannerText"> (Nutzer-Wunsch: das statische Bias-Hintergrundleuchten (V189) war zu schwach, soll jetzt "stärker" sein - ueberall wo `glow-*`-Klassen einen Hintergrund-Tint setzen (`.ab`/`.rub-card`/`.pair-card`/`.ind-card`/`.ri`/`.sym-row`/`.dw-chip`) die Opazitaet etwa verdoppelt bis verdreifacht (z.B. `.ind-card` 0.02→0.05, stark bullish/bearish 0.035→0.08, `.dw-chip` 0.07→0.13) - weiterhin rein statisch, keine Animation/kein Pulsieren, die `.imp`/`.row-marked`-Hervorhebungen (bereits kraeftig) bleiben unveraendert)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}

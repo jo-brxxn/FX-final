@@ -115,18 +115,23 @@ gerade dran gearbeitet wird):
 - **Score-/Asset-Karten**: kalmes Design statt Farbflut — Bias wird über
   einen linken Rand-Streifen gezeigt (`.rub-card` 4px, `.ind-card`/
   `.pair-card`/`.sym-row` 3px) auf neutralem 1px-Rahmen, `glow-*`-Klassen
-  setzen `border-left-color` **+ einen schwachen, STATISCHEN
-  Hintergrund-Gradient** (`background-image:linear-gradient(rgba(...,.02),
-  rgba(...,.02))`, bei stark bullish/bearish `.035`) — bewusst kein
-  Transition/keine Animation auf `background`, damit es nicht pulsiert
+  setzen `border-left-color` **+ einen STATISCHEN Hintergrund-Gradient**
+  (`background-image:linear-gradient(rgba(...,X),rgba(...,X))`) — bewusst
+  kein Transition/keine Animation auf `background`, damit es nicht pulsiert
   (Nutzer-Wunsch 2026-07-21: "wirklich ganz leicht und gleichmäßig und
-  nicht dynamisch"). Gilt fuer JEDE Stelle mit `glow-*`-Klassen
-  (`.ab`/`.rub-card`/`.pair-card`/`.ind-card`/`.ri`/`.sym-row`/`.dw-chip`)
-  — `.ind-card`/`.ri` hatten den Hintergrund-Anteil zwischenzeitlich
-  verloren (nur Rand-Streifen, siehe Farbaudit Runde 1 2026-07-19), wurde
-  ergaenzt, damit alle Glow-Traeger wieder einheitlich sind. Bei neuen
-  bias-gefaerbten UI-Bausteinen dieses Muster wiederverwenden statt die
-  ganze Flaeche einzufaerben.
+  nicht dynamisch"). Opazitaet zunaechst sehr schwach (`.ind-card` `.02`,
+  stark bullish/bearish `.035`), dann auf Nutzer-Wunsch "stärker" nochmal
+  erhoeht auf `.05`/`.08` (`.ab` `.06`+Box-Shadow `.13`, `.dw-chip` `.13`,
+  `.sym-row`/`.rub-card`/`.pair-card` `.05`–`.07`) — bei weiteren
+  "staerker/schwaecher"-Wuenschen einfach die Opazitaetswerte in diesen
+  `glow-*`-Regeln (CSS-Kopf, ~Z. 184-207) proportional skalieren, NICHT
+  Transition/Animation hinzufuegen. Gilt fuer JEDE Stelle mit
+  `glow-*`-Klassen (`.ab`/`.rub-card`/`.pair-card`/`.ind-card`/`.ri`/
+  `.sym-row`/`.dw-chip`) — `.ind-card`/`.ri` hatten den Hintergrund-Anteil
+  zwischenzeitlich verloren (nur Rand-Streifen, siehe Farbaudit Runde 1
+  2026-07-19), wurde ergaenzt, damit alle Glow-Traeger wieder einheitlich
+  sind. Bei neuen bias-gefaerbten UI-Bausteinen dieses Muster
+  wiederverwenden statt die ganze Flaeche einzufaerben.
 
 ## ⚠️ META-GRUNDSATZ: jede dauerhafte Nutzer-Vorgabe gehört ins CLAUDE.md
 
