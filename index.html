@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#2a1b3d;color:#d4b8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-ASSET-BEZUG-196</span><span id="verBannerText"> (Inflation/Labour Market/Economic Growth bekommen einen Asset-Bezug-Schlusssatz: bei klarem Karten-Bias "On balance, that makes the inflation data bullish/bearish for USD", bei Neutral eine Aufschluesselung ("the softer CPI leans bearish, while the hotter PPI and firmer yields lean bullish"). FX nutzt rub.bias direkt. Non-FX-Assets (GOLD/SP500/NAS) nutzen die BEREITS BESTEHENDE karten-eigene same/inverse-Regel (Zahnrad, deriveMacroBiasAll) statt einer neuen Uebersetzung - Assets ohne hinterlegte Regel (z.B. BTC) bekommen bewusst keinen Asset-Bezug-Satz. rubSummarySig() beruecksichtigt jetzt effDeriveRules(sym)[rub.name], damit ein Aendern der Regel den Text neu generiert. SUMMARY_ENGINE_VERSION auf 7.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#33231a;color:#f0b88f;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUST-GDP-DROPPED-197</span><span id="verBannerText"> (Economic-Growth-Summary nutzt fuer den GDP-Anker jetzt "dropped to" statt "eased to" beim Sinken - eigenes ANCHOR_VERBS_GROWTH-Set, analog zu ANCHOR_VERBS_INFLATION/ANCHOR_VERBS_LABOUR. SUMMARY_ENGINE_VERSION auf 8.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0b88f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0b88f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7163,6 +7163,7 @@ function inflDirWord(cls){
 const ANCHOR_VERBS_DEFAULT={up:'climbed to',down:'eased to',flat:'held at'};
 const ANCHOR_VERBS_INFLATION={up:'climbed to',down:'cooled to',flat:'held at'};
 const ANCHOR_VERBS_LABOUR={up:'rose to',down:'fell to',flat:'held at'};
+const ANCHOR_VERBS_GROWTH={up:'climbed to',down:'dropped to',flat:'held at'};
 function anchorClause(rs,verbs){
   verbs=verbs||ANCHOR_VERBS_DEFAULT;
   if(!rs)return null;
@@ -7278,7 +7279,7 @@ function summarizeGrowth(sym,rub){
   const retail=findIndByBase(rub,'Retail Sales');
   const cc=findIndByBase(rub,'Consumer Confidence');
   const gRS=sumRawState(sym,gdp);
-  const gAnchor=anchorClause(gRS);
+  const gAnchor=anchorClause(gRS,ANCHOR_VERBS_GROWTH);
   const gCls=classifySingle(fcState(gRS));
   const sentences=[];
   if(gAnchor&&gCls){
@@ -7382,7 +7383,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=7;
+const SUMMARY_ENGINE_VERSION=8;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer

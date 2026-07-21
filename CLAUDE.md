@@ -3506,3 +3506,18 @@ hatten den Asset-Bezug schon).
   ein bestehender Einstellungs-Mechanismus existiert (hier: `deriveRules`/
   `MACRO_DERIVE_RULES`), statt eine zweite, konkurrierende Quelle
   einzufuehren.
+
+### Economic-Growth-Anker: "eased to" auf "dropped to" umgestellt (Nutzer-Wunsch 2026-07-21, direkt im Anschluss)
+
+Letzter offener Punkt aus der Eroeffnungs-Anker-Wortwahl-Runde (Inflation
+bekam "cooled", Labour Market "fell"/"rose", GDP war noch offen): neues
+`ANCHOR_VERBS_GROWTH={up:'climbed to',down:'dropped to',flat:'held at'}`,
+in `summarizeGrowth()`s `anchorClause(gRS,ANCHOR_VERBS_GROWTH)` verdrahtet
+(vorher ohne Verb-Set-Parameter, damit auf `ANCHOR_VERBS_DEFAULT`/"eased to"
+zurueckgefallen). `ANCHOR_VERBS_DEFAULT` selbst bleibt bestehen (aktuell
+keine andere Aufrufstelle mehr, aber als generischer Fallback fuer
+`anchorClause()` ohne explizites Set weiterhin sinnvoll). `SUMMARY_ENGINE_
+VERSION` auf `8`. Per Playwright mit einem erzwungenen GDP-Ruecksetzer
+verifiziert: "GDP growth dropped to 1.0%, coming in weaker than expected."
+- kein "eased to" mehr im DOM, voller Tab-Regressionstest weiterhin
+fehlerfrei.
