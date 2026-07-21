@@ -28,7 +28,7 @@
    [
     [
      "2026-07-29",
-     4
+     6
     ],
     [
      "2026-09-16",
@@ -36,11 +36,11 @@
     ],
     [
      "2026-10-28",
-     6
+     7
     ],
     [
      "2026-12-09",
-     9
+     10
     ]
    ]
   ]
@@ -52,29 +52,29 @@
    "date": "2026-07-29",
    "label": "Jul 28-29, 2026",
    "rateBefore": 3.63,
-   "rateAfter": 3.67,
-   "deltaBp": 4
+   "rateAfter": 3.69,
+   "deltaBp": 6
   },
   {
    "date": "2026-09-16",
    "label": "Sep 15-16, 2026",
-   "rateBefore": 3.67,
-   "rateAfter": 3.81,
+   "rateBefore": 3.69,
+   "rateAfter": 3.83,
    "deltaBp": 15
   },
   {
    "date": "2026-10-28",
    "label": "Oct 27-28, 2026",
-   "rateBefore": 3.81,
-   "rateAfter": 3.87,
-   "deltaBp": 6
+   "rateBefore": 3.83,
+   "rateAfter": 3.91,
+   "deltaBp": 7
   },
   {
    "date": "2026-12-09",
    "label": "Dec 8-9, 2026",
-   "rateBefore": 3.87,
-   "rateAfter": 3.97,
-   "deltaBp": 9
+   "rateBefore": 3.91,
+   "rateAfter": 4,
+   "deltaBp": 10
   }
  ],
  "pastMeeting": null
