@@ -2745,3 +2745,17 @@ ueber einen Umweg:
   koennen sich beim Push die Klinke geben; der Verlierer-Lauf schlaegt mit
   Rebase-Konflikt in den Daten-JSONs fehl, der naechste Stundenlauf heilt
   das von selbst - kein Handlungsbedarf, solange es vereinzelt bleibt.)
+
+### Revisions-Vermerk war nicht eingefaerbt (Bugreport 2026-07-21, direkt nach dem Launch)
+
+Der "(rev. from X)"-Vermerk am Previous nutzte die Klassen act-good/act-bad,
+die in der CSS aber nur fuer `.ind-data-act` (den Actual-Wert) gescoped
+waren - auf dem `.ind-data-val`-Span des Previous blieben sie wirkungslos,
+die Revision erschien farblos. Fix: zwei neue Regeln
+`.ind-data-val.act-good/.act-bad` (Farben identisch zu den Bias-Farben
+BC.bull/BC.bear). **Merksatz:** die act-Farbklassen sind KEINE globalen
+Utility-Klassen, sondern pro Kontext gescoped (`.ind-data-act.act-good`,
+`.cmp-a.act-good`, `.cal-val.act-good`, `.histp-val .act-good`, jetzt auch
+`.ind-data-val.act-good`) - beim Wiederverwenden an einer NEUEN Stelle
+immer pruefen, ob fuer deren Element-Klasse eine Scope-Regel existiert,
+sonst bleibt die Faerbung still aus.
