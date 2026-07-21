@@ -2464,3 +2464,41 @@ Magnitude, nur mit gedrehtem Vorzeichen. Das war kein Zufall.
   Sitzung selbst, wenn ihr eigenes "Danach"-Fenster im Monat kurz ist (Rafter,
   hier gefixt). Bei kuenftigen Aenderungen an dieser Formel immer beide
   Richtungen pruefen, nicht nur eine.
+
+### Rate Probabilities: History wurde gesammelt, aber nie angezeigt (Bugreport 2026-07-21)
+
+Nutzer, nach Bestaetigung dass der Vorzeichen-Fix live ist: "Gibt trotzdem
+keine Historie" - `rate_probabilities.json.history` sammelt seit 2026-07-20
+zuverlaessig einen echten Snapshot pro Tag (verifiziert: am 2026-07-21 bereits
+2 Eintraege), aber die App hatte dafuer nie eine Ansicht gebaut - das Feld
+wurde nur ins `RATE_PROB_DATA`-Objekt geladen, aber in keiner Render-Funktion
+je gelesen (`grep` auf `RATE_PROB_DATA.history` fand ausser dem Fetch keine
+Fundstelle).
+
+- **Fix:** neue Karte "Forecast history for [Meeting]" unter dem Haupt-Chart
+  (`rateProbMeetingHistChart()`, `#rateProbHistCard`) - zeigt, wie sich die
+  LOKALE Zwei-Stufen-Aufteilung (`probsFromDelta`) fuer GENAU DAS gerade per
+  Pille ausgewaehlte Meeting Tag fuer Tag entwickelt hat (bewusst nicht die
+  kumulierte Verteilung ueber mehrere Sitzungen wie im Haupt-Chart - hier soll
+  die Entwicklung EINER Sitzung isoliert sichtbar sein, unabhaengig davon ob
+  sich fruehere Sitzungen zwischenzeitlich aufgeloest haben). Mehrlinien-
+  Rendering (>1%-Schwelle, Label-Kollisionsvermeidung, kombiniertes
+  Pro-Tag-Tooltip das alle sichtbaren Level auflistet) folgt exakt demselben
+  Muster wie der Haupt-Chart (`rateProbTimelineChart`)/`scoreTrendChart` -
+  CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine muessen einheitlich sein".
+  Zeitraum-Filter nutzt den bereits bestehenden `TIME_RANGES`/
+  `timeRangeBarHtml()`-Helper (kein neuer eigener Filter gebaut).
+- **Eigenstaendiges Update statt volles Rebuild:** `updateRateProbHistCard()`
+  wird sowohl beim initialen Render als auch bei JEDEM Pillen-Klick
+  (`scrollRateProbTo()`) aufgerufen und ersetzt NUR den Inhalt von
+  `#rateProbHistCard` - der Haupt-Chart-DOM-Knoten (samt Slide-Animation)
+  wird dabei nicht angefasst, exakt das bereits etablierte Prinzip aus der
+  urspruenglichen Feature-Umsetzung ("die Grafik bewegt sich, wird nicht neu
+  gerendert").
+- Zeigt "Not enough history yet" solange <2 Tage vorliegen (aktuell der Fall
+  auf main, erst 2 Tage seit Feature-Start) - per Playwright mit
+  synthetisch injizierter 14-Tage-Historie verifiziert: Mehrlinien-Rendering,
+  Label-Kollisionsfreiheit, kombiniertes Tooltip pro Tag, Pillen-Wechsel
+  aktualisiert die Karte korrekt auf das neu gewaehlte Meeting, alle 8
+  Zeitraum-Filter-Buttons klickbar ohne Fehler. Voller Tab-Regressionstest
+  weiterhin fehlerfrei.
