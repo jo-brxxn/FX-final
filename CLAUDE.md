@@ -3521,3 +3521,80 @@ VERSION` auf `8`. Per Playwright mit einem erzwungenen GDP-Ruecksetzer
 verifiziert: "GDP growth dropped to 1.0%, coming in weaker than expected."
 - kein "eased to" mehr im DOM, voller Tab-Regressionstest weiterhin
 fehlerfrei.
+
+### Bugfix: Non-FX-Settings liessen COT Data/Risk Environment faelschlich als same/inverse-Regel zu (Nutzer-Bugreport 2026-07-21)
+
+Nutzer: "Ich will das man nicht mehr die Kategorie cot oder Risk environment
+da listet und bullish bearish stellen kann weil das ist komplett
+unabhängig... bei Gold ist cot aktuell bearish obwohl es bullish sein
+müsste." Zusaetzlich: die "Link with other assets"-Sync-Gruppe (z.B.
+Krypto) soll COT Data/Risk Environment ebenfalls NICHT zwischen Assets
+gleichschalten, da jedes Asset (z.B. BTC/ETH) einen eigenen COT-Report/
+eigene Risk-Environment-Lage hat.
+
+- **Ursache:** `MACRO_DERIVE_RUBS=['Inflation','Interest Rates','Labour
+  Market','Economic Growth']` (~Zeile 4591) war als Whitelist GEDACHT, wurde
+  aber nirgends tatsaechlich benutzt - weder die Settings-Anzeige
+  (`renderAssetCfgBody()`) noch die Berechnung (`deriveMacroBiasAll()`)
+  filterten danach, beide iterierten blind ueber ALLE Rubriken des Assets.
+  Dadurch tauchten "COT Data"/"Risk Environment" im Zahnrad-Menue mit
+  Bullish/Bearish/Off-Buttons auf, und ein (vermutlich versehentlicher)
+  Klick darauf liess `deriveMacroBiasAll()` GOLDs eigenen, aus GOLDs echtem
+  COT-Report berechneten Bias mit dem invertierten USD-COT-Bias
+  ueberschreiben - obwohl GOLDs COT-Positionierung mit USDs COT-
+  Positionierung nichts zu tun hat.
+- **Fix 1 (Settings-UI):** `renderAssetCfgBody()` filtert die Rubrik-Liste
+  jetzt auf `MACRO_DERIVE_RUBS` - COT Data/Risk Environment erscheinen nicht
+  mehr im Zahnrad-Menue.
+- **Fix 2 (Berechnung + Bereinigung):** `deriveMacroBiasAll()` ueberspringt
+  jetzt jede Rubrik, die nicht in `MACRO_DERIVE_RUBS` steht (Verteidigung in
+  der Tiefe, falls doch nochmal ein stray-Eintrag auftaucht). Neue Funktion
+  `cleanDeriveRules(sym)` entfernt bestehende `sym.deriveRules`-Keys, die
+  nicht zu den 4 echten Makro-Karten gehoeren - eingehaengt an beiden
+  Stellen, die laut der "WICHTIGSTE REGEL" oben dafuer noetig sind:
+  `migrateRubInds()` (normaler Boot-Pfad, `addMacroRub()`->`loadState()`)
+  UND `applySnap()` (Cloud-Pull/Undo/Redo/Import/Backup-Restore). Danach
+  faellt der Bias automatisch auf den echten, aus den eigenen Daten
+  berechneten Wert zurueck - keine manuelle Korrektur noetig.
+- **Fix 3 (Sync-Gruppe):** `syncAssetGroup()` (die "Link with other
+  assets"-Funktion) kopierte beim `rubrics`-Feld bisher das komplette Array
+  1:1 zwischen Assets derselben Gruppe. Neue Konstante
+  `SYNC_EXCLUDE_RUBS=['COT Data','Risk Environment']` (bewusst mit
+  hartkodiertem String statt `MACRO_NAME` - `MACRO_NAME` wird als `const`
+  erst viel spaeter im Script deklariert, TDZ-Falle, siehe Merksatz unten)
+  - beim Kopieren werden diese beiden Karten aus dem Quell-Array entfernt
+  und stattdessen die EIGENEN (Ziel-Asset) COT Data/Risk Environment-Karten
+  wieder eingefuegt (Reihenfolge: COT Data vor Risk Environment, passend
+  zur etablierten `mkRubOrder()`/`ensureRiskEnvLast()`-Konvention). Alle
+  anderen Rubriken (Inflation/Interest Rates/Labour Market/Economic Growth/
+  Custom) bleiben wie gehabt 1:1 gespiegelt.
+- **TDZ-Bug waehrend der Umsetzung gefunden + gefixt:** der erste Versuch
+  von `SYNC_EXCLUDE_RUBS` nutzte `MACRO_NAME` (die Konstante fuer "Risk
+  Environment") - `SYNC_EXCLUDE_RUBS` steht aber ganz frueh im Script (bei
+  `symSyncGroup()`, ~Zeile 2737), `MACRO_NAME` wird erst bei ~Zeile 4574
+  deklariert. Ein `const`-Array-Literal wertet seine Elemente SOFORT aus
+  (anders als eine Referenz INNERHALB einer Funktion, die erst beim Aufruf
+  ausgewertet wird) - `ReferenceError: Cannot access 'MACRO_NAME' before
+  initialization` beim Laden der Seite (per Playwright-Pageerror-Check
+  gefunden, nicht erraten). Fix: `'Risk Environment'` hartkodiert statt
+  `MACRO_NAME` referenziert - exakt derselbe Stolperstein, der schon einmal
+  bei `SENT_MAP`/`COT_NET_HALF` dokumentiert ist (siehe PMI-Eintrag oben:
+  "SENT_MAP/SENT_HALF/SENT_SOURCE stehen bewusst FRUEH... weil die Rubrik-
+  Migration migrateRubInds sie beim Boot schon braucht (sonst TDZ)").
+- Per Playwright verifiziert: (1) simulierter Bug-Zustand (GOLD COT-Bias
+  'bull', `deriveRules['COT Data']='inverse'`) - nach `cleanDeriveRules()`+
+  Recompute bleibt GOLDs COT-Bias korrekt bei 'bull', der Key ist aus
+  `deriveRules` entfernt; (2) `applySnap()`-Rundreise mit vergifteten
+  `deriveRules`-Eintraegen (COT Data + Risk Environment) - beide werden
+  entfernt; (3) Settings-UI (GOLD) enthaelt "COT Data"/"Risk Environment"
+  nicht mehr, "Inflation" weiterhin; (4) Sync-Gruppe (SP500+NAS, Gruppe
+  'usidx'): nach `syncAssetGroup('SP500')` behaelt NAS seinen EIGENEN COT-
+  Bias ('bear', nicht von SP500s 'bull' ueberschrieben) und seine eigene
+  Risk-Environment-Summary, waehrend die Inflation-Summary korrekt von
+  SP500 uebernommen wird - Rubrik-Reihenfolge bleibt korrekt. Voller
+  14-Tab-Regressionstest + Auto-Summary-Grammatik-Scan weiterhin fehlerfrei.
+- **Merksatz:** eine als Whitelist GEDACHTE Konstante (`MACRO_DERIVE_RUBS`)
+  ist wertlos, wenn sie nirgends tatsaechlich referenziert wird - beim
+  Anlegen einer solchen Konstante IMMER pruefen, ob auch wirklich JEDE
+  Stelle, die die zugehoerige Datenstruktur iteriert (hier: UI-Rendering
+  UND Berechnungslogik), sie auch tatsaechlich anwendet.

@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#33231a;color:#f0b88f;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUST-GDP-DROPPED-197</span><span id="verBannerText"> (Economic-Growth-Summary nutzt fuer den GDP-Anker jetzt "dropped to" statt "eased to" beim Sinken - eigenes ANCHOR_VERBS_GROWTH-Set, analog zu ANCHOR_VERBS_INFLATION/ANCHOR_VERBS_LABOUR. SUMMARY_ENGINE_VERSION auf 8.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0b88f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0b88f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f2e2b;color:#8fd9c9;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PINE-DERIVE-RULE-FIX-198</span><span id="verBannerText"> (Bugfix: die Non-FX-Asset-Settings (Zahnrad) liessen faelschlich auch "COT Data"/"Risk Environment" als same/inverse-Ableitungsregel waehlen, obwohl beide asset-eigene Daten sind (z.B. GOLDs eigener COT-Report) - dadurch konnte z.B. GOLDs COT-Bias vom invertierten USD-COT-Bias ueberschrieben werden. Jetzt auf die 4 echten Makro-Karten (Inflation/Interest Rates/Labour Market/Economic Growth) beschraenkt, bestehende deriveRules-Eintraege fuer COT Data/Risk Environment werden per Migration bereinigt (cleanDeriveRules). Zusaetzlich spiegelt die "Link with other assets"-Sync-Gruppe (z.B. Krypto) COT Data/Risk Environment jetzt NICHT mehr zwischen den Assets - jedes behaelt seine eigenen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fd9c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fd9c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2742,6 +2742,18 @@ function symSyncGroup(id){
   if(id==='SP500'||id==='NAS')return'usidx';
   return null;
 }
+// COT Data/Risk Environment sind asset-eigene Daten (jeweils eigener COT-
+// Report/eigene Risk-Correlation-Einstellung) - selbst innerhalb einer
+// Sync-Gruppe (z.B. BTC+ETH) duerfen die NICHT gespiegelt werden (Nutzer-
+// Bugreport 2026-07-21: "da will ich das beim Score alles gleich ist...
+// also cot und risk Environment zaehlen da nicht mit rein weil das ja
+// unterschiedlich ist"). Alle anderen Karten (Inflation/Interest Rates/
+// Labour Market/Economic Growth/Custom) bleiben wie gehabt 1:1 gespiegelt.
+// 'Risk Environment' statt MACRO_NAME hartkodiert: MACRO_NAME wird als
+// const erst viel spaeter im Script deklariert (TDZ - dieser Abschnitt hier
+// laeuft beim Skript-Parsen weit davor), derselbe Stolperstein wie beim
+// dokumentierten SENT_MAP-Fall weiter unten im File.
+const SYNC_EXCLUDE_RUBS=['COT Data','Risk Environment'];
 function syncAssetGroup(srcId){
   const g=symSyncGroup(srcId);if(!g)return false;
   const src=syms.find(s=>s.id===srcId);if(!src)return false;
@@ -2749,7 +2761,18 @@ function syncAssetGroup(srcId){
   syms.forEach(t=>{
     if(t.id===srcId||symSyncGroup(t.id)!==g)return;
     ASSET_SYNC_FIELDS.forEach(f=>{
-      const v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
+      let v=src[f]===undefined?undefined:JSON.parse(JSON.stringify(src[f]));
+      if(f==='rubrics'&&Array.isArray(v)){
+        // Ziel behaelt seine EIGENEN COT Data/Risk Environment-Karten (nicht
+        // die des Sync-Quell-Assets) - Einfuegereihenfolge folgt der
+        // etablierten Konvention (COT Data vor Risk Environment, Risk
+        // Environment immer zuletzt, siehe mkRubOrder()/ensureRiskEnvLast()).
+        v=v.filter(r=>!SYNC_EXCLUDE_RUBS.includes(r.name));
+        SYNC_EXCLUDE_RUBS.forEach(name=>{
+          const own=(t.rubrics||[]).find(r=>r.name===name);
+          if(own)v.push(own);
+        });
+      }
       if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
     });
   });
@@ -4354,10 +4377,22 @@ function moveYieldIndsToInflation(rubrics){
     infl.indicators.push(ind);
   });
 }
+// Einmalige Bereinigung: das Zahnrad-Menue liess frueher faelschlich auch
+// COT Data/Risk Environment als same/inverse-Regel waehlbar (Nutzer-
+// Bugreport 2026-07-21: GOLDs COT-Bias wurde dadurch vom invertierten
+// USD-COT-Bias ueberschrieben, obwohl COT-Positionierung asset-eigen ist -
+// same fuer Risk Environment). Entfernt jeden deriveRules-Key, der nicht zu
+// den 4 echten Makro-Karten gehoert - danach faellt der Bias wieder auf den
+// echten, aus den eigenen Daten berechneten Wert zurueck.
+function cleanDeriveRules(sym){
+  if(!sym||!sym.deriveRules)return;
+  Object.keys(sym.deriveRules).forEach(k=>{if(!MACRO_DERIVE_RUBS.includes(k))delete sym.deriveRules[k];});
+}
 function migrateRubInds(rubrics,sym){
   stripGeopoliticsRub(rubrics);
   migrateRiskEnvRub(rubrics);
   moveYieldIndsToInflation(rubrics);
+  cleanDeriveRules(sym);
   rubrics.forEach(rub=>{
     if(!rub.indicators)return;
     const rm=RUB_IND_REMOVE[rub.name];
@@ -4608,6 +4643,13 @@ function deriveMacroBiasAll(){
     const srcSym=syms.find(s=>s.id===ccy);if(!srcSym||!srcSym.rubrics)return;
     const rules=effDeriveRules(sym);
     sym.rubrics.forEach(r=>{
+      // NUR die 4 echten Makro-Karten duerfen von der Waehrung abgeleitet
+      // werden (Nutzer-Bugreport 2026-07-21: COT Data/Risk Environment sind
+      // asset-eigene Daten, komplett unabhaengig von der verknuepften
+      // Waehrung - eine same/inverse-Regel darauf ueberschreibt faelschlich
+      // den echten, aus den eigenen Daten berechneten Bias, z.B. GOLDs
+      // eigener COT-Report durch den invertierten USD-COT-Bias).
+      if(!MACRO_DERIVE_RUBS.includes(r.name))return;
       const rule=rules[r.name];
       if(rule!=='same'&&rule!=='inverse')return;
       const src=srcSym.rubrics.find(x=>x.name===r.name);if(!src)return;
@@ -4865,7 +4907,7 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);moveYieldIndsToInflation(sy.rubrics);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -6507,7 +6549,10 @@ function renderAssetCfgBody(){
       <div class="acfg-hint">For each category, decide whether strong data is treated as bullish or bearish – or exclude the category, in which case its bias stays manual. The score is calculated from this automatically.</div>`;
     const srcSym=syms.find(s=>s.id===lc);
     const arrow=b=>b==='bull'?'▲':b==='bear'?'▼':'◆';
-    (c.rubrics||[]).forEach(r=>{
+    // NUR die 4 echten Makro-Karten sind hier sinnvoll waehlbar (Nutzer-
+    // Bugreport 2026-07-21) - COT Data/Risk Environment sind asset-eigene
+    // Daten und tauchten hier faelschlich als konfigurierbar auf.
+    (c.rubrics||[]).filter(r=>MACRO_DERIVE_RUBS.includes(r.name)).forEach(r=>{
       const rule=rules[r.name]||'off';
       // Live-Vorschau: was ergibt die Regel GERADE (Quell-Bias -> Ergebnis)?
       // Macht sofort sichtbar, dass z.B. bei neutraler Quelle Bullish und
