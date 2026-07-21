@@ -158,6 +158,17 @@ Delegation willen:
 
 ## Arbeits-Workflow (vom Nutzer durchgehend eingefordert)
 
+- **⚠️ Vor Code-Änderungen erst das OK des Nutzers einholen (Nutzer-Wunsch
+  2026-07-21):** bei einer neuen Anfrage NICHT sofort in `index.html`/den
+  Workflow-Dateien loseditieren. Stattdessen zuerst den geplanten Ansatz
+  MIT KONKRETEN BEISPIELEN vorstellen (z. B. Beispiel-Sätze bei Text-/
+  Formulierungs-Änderungen, Vorher/Nachher-Werte bei Logik-Änderungen,
+  Mockup-Beschreibung bei UI-Änderungen) und auf die Bestätigung des
+  Nutzers warten, bevor der Code tatsächlich angefasst wird. Gilt für
+  inhaltliche/funktionale Änderungen — offensichtliche, eindeutig
+  beschriebene Bugfixes ohne Interpretationsspielraum sind hiervon nicht
+  automatisch ausgenommen, im Zweifel lieber einmal zu viel nachfragen als
+  ungefragt loslegen.
 - **VERSION-CHECK-Banner**: oben in `index.html` gibt es ein Banner
   `VERSION-CHECK: <FARBE> (<Beschreibung>)`. Bei **jeder** Änderung Farbe +
   Beschreibung ändern — auch bei reinen Workflow-(YAML-)Änderungen.
