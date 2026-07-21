@@ -3120,3 +3120,101 @@ waren neu):
   das alte Muster, das entfernt wurde - die Signatur allein (basiert auf
   Rohdaten, nicht auf Text-Format) erkennt reine Formatierungs-/Wortwahl-
   Aenderungen nie von selbst.
+
+### Auto-Zusammenfassung: fest verdrahtete Formulierung pro Kartentyp (Nutzer-Wunsch 2026-07-21, sehr detailliert)
+
+Nutzer gab eine praezise Vorgabe fuer jede der 6 Standard-Karten (woertlich
+zusammengefasst): **Inflation** - am Anfang den Headline-CPI-y/y-Wert nennen,
+dann ob CPI (Headline+Core zusammen) "hotter/partly hotter/in line/partly
+softer/softer" kam ("partly" GENAU dann, wenn ein Mitglied nicht dem Forecast
+entsprach, das andere aber in line war - explizit "auch fuer die anderen
+Indikator-Paare" gemerkt), dasselbe fuer PPI und PCE, dann ob Yields diesen
+Trend "supporten/partly supporten/partly nicht supporten/gar nicht (und in
+die andere Richtung trenden)". **Labour Market** - genauso, aber mit dem
+Unemployment-Rate-Wert am Anfang statt CPI, NFP+ADP zusammen ob "mehr/partly
+mehr/in line/partly weniger/weniger" Jobs, dann ob Jobless Claims das
+BESTAETIGT (explizit als gegenlaeufig markiert: Claims messen Verluste, NFP/
+ADP Zuwaechse), dann kurz ob JOLTS/Wages dazu passen. **Economic Growth** -
+GDP-Wert UND "stronger/weaker than expected" IM SELBEN SATZ, dann PMIs
+(Manufacturing+Services) relativ dazu supportend/nicht, dasselbe fuer Retail
+Sales, dann kurz ob Consumer Confidence sich auch gebessert hat. **Interest
+Rates** - NUR EIN SATZ: aktueller Satz + hoeher/niedriger/gleich wie vorher.
+**COT Data** - Long/Short-Verteilung, "crowded" nur wenn zutreffend (sonst
+weglassen), dann WoW-Aenderung positiv/negativ. **Risk Environment** - simpel
+ob aktuell risk-on/halb/risk-off, und ob das gut oder schlecht fuer die
+Waehrung ist.
+
+- **Zwei-Schichten-Architektur**: `summarizeRub()` ist jetzt nur noch ein
+  Dispatcher (`RUB_SUMMARIZERS`-Lookup nach `rub.name`), der fuer die 6
+  Standard-Karten auf eigene, HANDGESCHRIEBENE Funktionen
+  (`summarizeInflation`/`summarizeLabour`/`summarizeGrowth`/
+  `summarizeInterestRates`/`summarizeCot`/`summarizeRiskEnv`) verzweigt und
+  fuer alles andere (Custom-Rubriken) auf die bisherige generische
+  Familien-Engine zurueckfaellt (umbenannt zu `summarizeGeneric()`,
+  Formulierungs-Logik unveraendert).
+- **Gemeinsame Klassifikations-Bausteine** (neu, wiederverwendet von allen 6
+  Karten): `sumRawState()` liefert Roh-Actual/Forecast/Previous +
+  lowerBetter-Flag; `fcState()`/`trendState()` liefern je ±1/0/null (Forecast-
+  bzw. Vorwert-Vergleich, bereits lowerBetter-bereinigt); `classifySingle()`
+  liefert `pos`/`neutral`/`neg`; `classifyPair(a,b)` liefert die 6-stufige
+  Skala `pos`/`partly-pos`/`neutral`/`partly-neg`/`neg`/`mixed` - "partly"
+  EXAKT nach Nutzer-Definition (ein Mitglied weicht ab, das andere ist in
+  line), "mixed" nur im vom Nutzer nicht abgedeckten Fall echt gegenlaeufiger
+  Signale (ein Mitglied beat, das andere miss). `alignCls(cls,refCls)`
+  spiegelt eine Klassifikation gegen eine Referenzrichtung (z.B. Yields
+  gegen den CPI-Trend, PMIs gegen den GDP-Trend) und liefert dieselbe
+  4-Wege-"supporting"-Skala aus der Nutzer-Vorgabe. Drei Wortlisten
+  (`HOTCOLD_WORDS`/`JOBS_WORDS`/`SUPPORT_WORDS`) uebersetzen die Klassen in
+  Text - bewusst als generische Bausteine gebaut, nicht 6× dieselbe Logik
+  dupliziert.
+- **Gegenlaeufigkeit bei Jobless Claims**: da `fcState()` bereits
+  lowerBetter-bereinigt ist (weniger Claims als erwartet = +1, genau wie ein
+  NFP-Beat = +1), reicht ein direkter `alignCls(claimsCls, jobsCls)`-Aufruf
+  ohne manuelle Vorzeichen-Umkehr - die Inversion steckt schon in `fcState()`
+  selbst (dieselbe `LOWER_IS_BETTER_RE`, die auch den Score-treibenden
+  Feed-Pfad bereinigt).
+- **Grammatik-Fallen gefunden + gefixt waehrend der Umsetzung** (Playwright-
+  Vollscan ueber alle 108 Karten-Zusammenfassungen des Test-Datensatzes nach
+  `with [\w ]*(were|was)`/doppeltem Leerzeichen/" in in "-Mustern):
+  `JOBS_WORDS` waren urspruenglich volle Saetze mit finitem Verb ("more jobs
+  than expected **were** added recently") - nach "with " vorangestellt ergab
+  das "with more jobs than expected were added recently" (kaputt, "with"
+  verlangt eine Nominalphrase/Partizip, kein finites Verb). Auf reine
+  Partizipial-Form umgestellt ("more jobs than expected **added** recently").
+  `HOTCOLD_WORDS.neutral` war "in line with expectations" - nach "coming in "
+  ergab das "coming in **in** line with expectations" (doppeltes "in") →
+  "roughly in line with expectations". `HOTCOLD_WORDS.mixed` war "a mixed
+  signal" - nach "coming in " ergab das "coming in a mixed signal" (fehlende
+  Praeposition) → einfach "mixed" (funktioniert als Adjektiv nach "coming
+  in"/"came in" ueberall gleichermassen).
+- **COT "crowded"-Schwelle** (`COT_CROWDED_PCT_SUM=80`) dupliziert bewusst
+  den bestehenden `COT_CROWDED_PCT`-Wert aus dem COT-Tab (dort lokal in
+  `renderCot()` deklariert, daher nicht direkt importierbar) - beide muessen
+  synchron bleiben, falls die Schwelle sich mal aendert.
+- **Risk Environment** nutzt direkt `riskEnvLevel` (0/1/2) fuer die
+  Umgebungs-Beschreibung und `riskEnvDirOf(sym.id)` fuer "gut/schlecht" -
+  dieselben bestehenden globalen Variablen/Helfer, die auch
+  `riskCorrBiasFor()` (den echten Karten-Bias der Risk-Correlation-
+  Indikator) speisen, keine zweite unabhaengige Implementierung (Dual-
+  Source-Lehre).
+- Per Playwright ueber ALLE 12 gelisteten Assets × alle Rubriken (108
+  Kombinationen im Standard-Testdatensatz) verifiziert: 0 leere Summaries,
+  0 verbleibende `**`/`rev. from`-Reste, 0 Grammatik-Auffaelligkeiten;
+  Risk Environment liefert korrekt unterschiedliche Saetze fuer alle 3
+  Regler-Stufen; Custom-Rubriken laufen nachweislich weiterhin ueber
+  `summarizeGeneric()` (nicht ueber die neuen fest verdrahteten Funktionen);
+  COT-Crowded-Fall (85 % long) wird korrekt erkannt und erwaehnt; manuelle
+  Ueberschreibung + Selbstheilung weiterhin funktionsfaehig; voller
+  14-Tab-Regressionstest fehlerfrei.
+- Beispiele (live verifiziert): *"With headline CPI at 2.8%, ... CPIs came
+  in roughly in line with expectations. PPIs came in hotter than expected.
+  Yields are trending higher."* (EUR Inflation) · *"The unemployment rate is
+  at 4.2%, with fewer jobs than expected added recently. Jobless claims do
+  not confirm that, though, pointing the other way. JOLTS openings and wage
+  growth are partly not supporting that trend."* (USD/GOLD/BTC Labour
+  Market, mirrored macro data) · *"The policy rate is at 2.4%, up from the
+  previous level of 2.15%."* (EUR Interest Rates) · *"Positioning is
+  currently split 84.8% long / 15.2% short (crowded long), with the weekly
+  change negative."* (GOLD COT Data) · *"Risk sentiment is currently a half
+  risk-off environment, currently bullish for USD."* (Risk-Regler auf
+  "Half").

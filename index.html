@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1a3a2e;color:#a0e8c9;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-INDCARD-GLOW-189</span><span id="verBannerText"> (Nutzer-Wunsch: Indikatoren/Indikator-Karten (`.ind-card`) sollen wieder ein leichtes, STATISCHES Hintergrundleuchten in Bias-Farbe bekommen ("wirklich ganz leicht und gleichmäßig, nicht dynamisch") - vorher trugen sie nur den farbigen linken Rand-Streifen ohne Hintergrundton (Farbaudit Runde 1, 2026-07-19). `.ind-card.glow-*`/`.ri.glow-*` bekommen jetzt denselben schwachen `linear-gradient`-Hintergrund (0.02 Opazität, bei stark bullish/bearish 0.035) wie die bereits vorhandenen `.rub-card`/`.sym-row`/`.ab`-Glows - rein statisch (kein zusätzlicher Transition/Animations-Trigger auf background), also kein Pulsieren)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a0e8c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a0e8c9;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#2a1a3a;color:#c9a8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PURPLE-SUMMARY-BESPOKE-190</span><span id="verBannerText"> (Nutzer-Wunsch: die 6 Standard-Karten bekommen jetzt jeweils eine fest verdrahtete, sehr detailliert vorgegebene Zusammenfassungs-Formulierung statt der generischen Familien-Engine. Inflation: Headline-CPI-Wert + CPI/PPI/PCE je "hotter/partly hotter/in line/partly softer/softer", Yields "supporting/partly/partly not/not supporting the trend". Labour Market: Unemployment-Rate-Wert + NFP+ADP "mehr/partly mehr/in line/partly weniger/weniger Jobs", Jobless Claims als Bestaetigung (gegenlaeufig invertiert), JOLTS+Wages kurz dazu. Economic Growth: GDP-Wert+Verdikt im selben Satz, PMIs/Retail Sales relativ dazu, Consumer Confidence kurz. Interest Rates: nur EIN Satz (Rate + Vergleich zum Vorwert). COT Data: Long/Short-Split + Crowded-Hinweis (≥80%) + Wochenaenderung. Risk Environment: aktuelles Risiko-Level + ob das gut/schlecht fuer das Asset ist. Custom-Karten laufen weiterhin ueber die alte generische Engine)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#c9a8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#c9a8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6728,12 +6728,17 @@ function recomputeRiskCorr(){
 // nichts zu revised werten gesagt werden") - die Zusammenfassung nennt immer
 // nur den aktuellen Wert.
 // Reine Template-Engine, KEIN KI-Aufruf - muss auch laufen, wenn die Seite
-// irgendwann ohne mich betrieben wird. Generisch je Indikator (nicht
-// rubrik-namensgetrieben), deckt daher automatisch auch Custom-Karten ab.
+// irgendwann ohne mich betrieben wird.
 //
-// Formulierungs-Ansatz "A" (Nutzer-Wahl 2026-07-21, nach kurzem Test von
-// Ansatz "C" doch auf die vollere Variante umgestellt), mit "mehr Trend +
-// generelle Lage" (Nutzer-Wunsch 2026-07-21, mit Beispielsatz): startet mit
+// **Zwei-Schichten-Architektur seit 2026-07-21 (sehr detaillierte
+// Nutzer-Vorgabe je Kartentyp):** fuer die 6 Standard-Karten (Inflation/
+// Interest Rates/Labour Market/Economic Growth/COT Data/Risk Environment)
+// gibt es JEWEILS eine fest verdrahtete, handgeschriebene Formulierung
+// (`summarizeInflation()` usw., siehe Abschnitt "FEST VERDRAHTETE
+// ZUSAMMENFASSUNGEN" weiter unten, nach `summarizeGeneric()`) - dort auch
+// die volle Herleitung der Satzstruktur. Fuer JEDE andere (Custom-)Rubrik
+// greift weiterhin die hier folgende generische, rein indikator-basierte
+// Engine (`summarizeGeneric()`, Formulierungs-Ansatz "A"): startet mit
 // einer Eroeffnungs-Klausel des Karten-"Level"-Ankers ("With unemployment at
 // 4.2%, ..."), dann eine THEMEN-Aussage (Richtung + Erwartungsvergleich,
 // z.B. "the labour market picture is currently improving, coming in above
@@ -6741,14 +6746,11 @@ function recomputeRiskCorr(){
 // echten Forecast-Ueberraschung) MIT vollem Forecast-Vergleich ("CPI (3.5%
 // vs 3.8% fc.)"), waehrend der Rest nur relativ zum Gesamttrend eingeordnet
 // wird ("the 2Y yield supporting/not supporting the trend", "PCE coming in
-// mixed" - Nutzer-Wunsch: "keine Woerter da zu viel verlieren"). indFamily()
-// gruppiert Headline/Core, NFP/ADP usw. zusammen ("es muss nicht stehen
-// welcher Indikator von der Gruppe es ist"). "driven mainly by X, with Y"
-// nur wenn die Treiber tatsaechlich eine MINDERHEIT der Familien sind - sind
-// es (fast) alle, waere "mainly" irrefuehrend, dann eine schlichte Liste.
-// Bei einer einzelnen, bereits im Anker gezeigten Familie ohne Ereignis
-// (z.B. Interest Rates mit nur der Policy Rate) wird die Wiederholung
-// unterdrueckt.
+// mixed"). indFamily() gruppiert Headline/Core, NFP/ADP usw. zusammen.
+// "driven mainly by X, with Y" nur wenn die Treiber tatsaechlich eine
+// MINDERHEIT der Familien sind - sind es (fast) alle, waere "mainly"
+// irrefuehrend, dann eine schlichte Liste. Bei einer einzelnen, bereits im
+// Anker gezeigten Familie ohne Ereignis wird die Wiederholung unterdrueckt.
 //
 // "above/below expectations" ist fuer eine WAEHRUNGSKARTE eine konsistente
 // Aussage, fuer Non-FX-Assets (Gold/Oel/BTC/Aktienindizes) aber ambivalent
@@ -6758,7 +6760,9 @@ function recomputeRiskCorr(){
 // bullish/bearish/mixed/balanced um, sobald die Karte NICHT zu einer der 8
 // FX-Majors gehoert (Non-FX-Assets zeigen dieselben US-Makrodaten wie USD,
 // siehe `macroSyncRub`, aber die Bedeutung fuer den Asset-Preis ist nicht
-// dieselbe wie fuer die Waehrung selbst).
+// dieselbe wie fuer die Waehrung selbst). Gilt bislang nur fuer
+// `summarizeGeneric()` - die fest verdrahteten Karten unten haben je eigene,
+// spezifischere Regeln (siehe dort).
 //
 // Bleibt weiterhin manuell ueberschreibbar (Nutzer-Wunsch), aber nur bis zur
 // naechsten ECHTEN Aenderung: rub._summarySig speichert einen Fingerprint
@@ -6885,7 +6889,9 @@ const RUB_ANCHOR_IND={
   'Inflation':'CPI (Headline)','Interest Rates':'Central Bank Rate',
   'Labour Market':'Unemployment Rate','Economic Growth':'GDP Growth QoQ',
 };
-function summarizeRub(sym,rub){
+// Generischer Fallback fuer Custom-Rubriken (keine der 6 fest verdrahteten
+// Standard-Karten unten) - die urspruengliche, indikator-generische Engine.
+function summarizeGeneric(sym,rub){
   const infos=(rub.indicators||[]).map(ind=>sumIndInfo(sym,ind)).filter(Boolean);
   const topic=(rub.name||'this card').toLowerCase();
   const biasWord=rub.bias==='bull'?'bullish':rub.bias==='bear'?'bearish':'neutral';
@@ -6984,6 +6990,206 @@ function summarizeRub(sym,rub){
     out+=`, with ${joinFrags(all)}`;
   }
   return out+'.';
+}
+
+// ── FEST VERDRAHTETE ZUSAMMENFASSUNGEN PRO STANDARD-KARTE (Nutzer-Wunsch
+// 2026-07-21, sehr detaillierte Vorgabe je Kartentyp - siehe Session-Notiz
+// "Auto-Zusammenfassung: fest verdrahtete Formulierung pro Kartentyp" in
+// CLAUDE.md). Ersetzt `summarizeGeneric()` NUR fuer die 6 Standard-Karten
+// (Inflation/Interest Rates/Labour Market/Economic Growth/COT Data/Risk
+// Environment) - Custom-Karten laufen weiter ueber `summarizeGeneric()`.
+function findIndByBase(rub,base){return(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);}
+// Rohzustand eines Indikators (Werte + numerische Parses), Basis fuer alle
+// Klassifikatoren unten. null wenn kein Wert vorliegt.
+function sumRawState(sym,ind){
+  if(!ind)return null;
+  const base=stripPeriodSuffix(ind.name).base;
+  const src=sumIndSource(sym,ind);
+  if(!src||src.actual==null||src.actual==='')return null;
+  const lowerBetter=LOWER_IS_BETTER_RE.test(base);
+  const aNum=parseNumLike(src.actual);
+  const fNum=src.forecast!=null&&src.forecast!==''?parseNumLike(src.forecast):null;
+  const pNum=src.previous!=null&&src.previous!==''?parseNumLike(src.previous):null;
+  return{actual:src.actual,forecast:src.forecast,previous:src.previous,aNum,fNum,pNum,lowerBetter};
+}
+// +1 (beat/hot), 0 (in line), -1 (miss/soft), null (kein Forecast-Vergleich
+// moeglich) - bereits lowerBetter-bereinigt (fuer Claims heisst +1 "weniger
+// Claims als erwartet", nicht "hoehere Zahl").
+function fcState(rs){
+  if(!rs||rs.aNum==null||rs.fNum==null)return null;
+  if(Math.abs(rs.fNum)>1e-9&&Math.abs((rs.aNum-rs.fNum)/rs.fNum)<0.01)return 0;
+  return(rs.lowerBetter?rs.aNum<rs.fNum:rs.aNum>rs.fNum)?1:-1;
+}
+// +1/0/-1 wie fcState, aber gegen den VORHERIGEN Wert statt gegen den
+// Forecast (fuer Indikatoren ohne Forecast, z.B. Bond Yields).
+function trendState(rs){
+  if(!rs||rs.aNum==null||rs.pNum==null)return null;
+  if(rs.aNum===rs.pNum)return 0;
+  return(rs.lowerBetter?rs.aNum<rs.pNum:rs.aNum>rs.pNum)?1:-1;
+}
+// Klassifiziert einen einzelnen Zustand in eine der 3 Kernstufen.
+function classifySingle(state){return state==null?null:state>0?'pos':state<0?'neg':'neutral';}
+// Klassifiziert ein PAAR (z.B. Headline+Core CPI, NFP+ADP, Manufacturing+
+// Services PMI) in 6 Stufen - "partly" GENAU dann, wenn ein Mitglied nicht
+// dem Forecast entsprach, das andere aber in line war (Nutzer-Vorgabe
+// woertlich: "partly ist immer nur wenn einer nicht gleich fc war aber der
+// andere in line"). Fehlt ein Mitglied komplett, faellt es auf die
+// Einzel-Klassifikation des verbleibenden zurueck. "mixed" nur im (vom
+// Nutzer nicht explizit abgedeckten) Fall echt gegenlaeufiger Signale.
+function classifyPair(stateA,stateB){
+  const states=[stateA,stateB].filter(s=>s!=null);
+  if(!states.length)return null;
+  if(states.length===1)return classifySingle(states[0]);
+  const[a,b]=states;
+  if(a>0&&b>0)return'pos';
+  if(a<0&&b<0)return'neg';
+  if(a===0&&b===0)return'neutral';
+  if((a>0&&b===0)||(a===0&&b>0))return'partly-pos';
+  if((a<0&&b===0)||(a===0&&b<0))return'partly-neg';
+  return'mixed';
+}
+function dirSign(cls){return cls==='pos'||cls==='partly-pos'?1:cls==='neg'||cls==='partly-neg'?-1:0;}
+// Spiegelt eine Klassifikation (z.B. der Yields) gegen eine Referenzrichtung
+// (z.B. der CPI-Trend) - liefert die 4-stufige "supporting the trend"-Skala
+// aus der Nutzer-Vorgabe ("supporting oder partly unterstuetzen oder partly
+// nicht unterstuetzen oder gar nicht und in andere Richtung trenden").
+function alignCls(cls,refCls){
+  if(cls==null)return null;
+  if(cls==='mixed')return'mixed';
+  if(cls==='neutral')return'neutral';
+  const refSign=dirSign(refCls);
+  if(!refSign)return null;
+  const sign=dirSign(cls);
+  const partly=cls.indexOf('partly')===0;
+  return sign===refSign?(partly?'partly-pos':'pos'):(partly?'partly-neg':'neg');
+}
+const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'roughly in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
+// Rein partizipial (kein finites Verb) - wird nach "with " eingefuegt
+// ("with fewer jobs than expected added recently"), nicht als eigener Satz.
+const JOBS_WORDS={pos:'more jobs than expected added recently','partly-pos':'partly more jobs than expected added recently',neutral:'jobs added broadly in line with expectations',neg:'fewer jobs than expected added recently','partly-neg':'partly fewer jobs than expected added recently',mixed:'a mixed picture on job creation'};
+const SUPPORT_WORDS={pos:'supporting that trend','partly-pos':'partly supporting that trend',neutral:'not showing a clear signal either way','partly-neg':'partly not supporting that trend',neg:'not supporting that trend, trending the other way',mixed:'sending mixed signals'};
+function noSignalFallback(sym,rub){
+  const topic=(rub.name||'this card').toLowerCase();
+  const biasWord=rub.bias==='bull'?'bullish':rub.bias==='bear'?'bearish':'neutral';
+  return rub.bias==='neu'
+    ?`The ${topic} picture for ${sym.id} is currently neutral, with no indicator currently sending a clear signal.`
+    :`The ${topic} picture for ${sym.id} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
+}
+function summarizeInflation(sym,rub){
+  const headline=findIndByBase(rub,'CPI (Headline)'),core=findIndByBase(rub,'Core CPI');
+  const ppiH=findIndByBase(rub,'PPI'),ppiC=findIndByBase(rub,'Core PPI');
+  const pceH=findIndByBase(rub,'PCE'),pceC=findIndByBase(rub,'Core PCE');
+  const y2=findIndByBase(rub,'2Y Bond Yield'),y10=findIndByBase(rub,'10Y Bond Yield');
+  const hRS=sumRawState(sym,headline);
+  const cpiCls=classifyPair(fcState(hRS),fcState(sumRawState(sym,core)));
+  const sentences=[];
+  if(hRS&&cpiCls)sentences.push(`Headline CPI is at ${hRS.actual}, with CPIs coming in ${HOTCOLD_WORDS[cpiCls]}`);
+  else if(hRS)sentences.push(`Headline CPI is at ${hRS.actual}`);
+  else if(cpiCls)sentences.push(`CPIs came in ${HOTCOLD_WORDS[cpiCls]}`);
+  const ppiCls=classifyPair(fcState(sumRawState(sym,ppiH)),fcState(sumRawState(sym,ppiC)));
+  if(ppiCls)sentences.push(`PPIs came in ${HOTCOLD_WORDS[ppiCls]}`);
+  const pceCls=classifyPair(fcState(sumRawState(sym,pceH)),fcState(sumRawState(sym,pceC)));
+  if(pceCls)sentences.push(`PCEs came in ${HOTCOLD_WORDS[pceCls]}`);
+  const yieldsCls=classifyPair(trendState(sumRawState(sym,y2)),trendState(sumRawState(sym,y10)));
+  if(yieldsCls){
+    const refCls=cpiCls||ppiCls||pceCls;
+    const aligned=refCls?alignCls(yieldsCls,refCls):null;
+    if(aligned)sentences.push(`Yields are ${SUPPORT_WORDS[aligned]}`);
+    else sentences.push(`Yields are ${yieldsCls==='pos'?'trending higher':yieldsCls==='neg'?'trending lower':'little changed'}`);
+  }
+  return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
+}
+function summarizeLabour(sym,rub){
+  const unemp=findIndByBase(rub,'Unemployment Rate');
+  const nfp=findIndByBase(rub,'NFP / Employment Change'),adp=findIndByBase(rub,'ADP Employment');
+  const claims=findIndByBase(rub,'Unemployment Claims');
+  const jolts=findIndByBase(rub,'JOLTS Job Openings'),wages=findIndByBase(rub,'Avg Hourly Earnings');
+  const uRS=sumRawState(sym,unemp);
+  const jobsCls=classifyPair(fcState(sumRawState(sym,nfp)),fcState(sumRawState(sym,adp)));
+  const sentences=[];
+  if(uRS&&jobsCls)sentences.push(`The unemployment rate is at ${uRS.actual}, with ${JOBS_WORDS[jobsCls]}`);
+  else if(uRS)sentences.push(`The unemployment rate is at ${uRS.actual}`);
+  else if(jobsCls)sentences.push(`Job creation came in ${HOTCOLD_WORDS[jobsCls]}`);
+  // Claims sind gegenlaeufig (weniger Claims = mehr Jobs) - fcState ist
+  // bereits lowerBetter-bereinigt, alignCls vergleicht daher direkt die
+  // beiden bereits gleichgerichteten +1/-1-Werte.
+  const claimsCls=classifySingle(fcState(sumRawState(sym,claims)));
+  if(claimsCls&&jobsCls){
+    const aligned=alignCls(claimsCls,jobsCls);
+    if(aligned==='pos')sentences.push('That is confirmed by jobless claims');
+    else if(aligned==='neg')sentences.push('Jobless claims do not confirm that, though, pointing the other way');
+    else if(aligned==='neutral')sentences.push('Jobless claims are little changed');
+  }
+  const otherCls=classifyPair(fcState(sumRawState(sym,jolts)),fcState(sumRawState(sym,wages)));
+  if(otherCls&&jobsCls){
+    const aligned=alignCls(otherCls,jobsCls);
+    if(aligned)sentences.push(`JOLTS openings and wage growth are ${SUPPORT_WORDS[aligned]}`);
+  }
+  return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
+}
+function summarizeGrowth(sym,rub){
+  const gdp=findIndByBase(rub,'GDP Growth QoQ');
+  const pmiM=findIndByBase(rub,'Manufacturing PMI'),pmiS=findIndByBase(rub,'Services PMI');
+  const retail=findIndByBase(rub,'Retail Sales');
+  const cc=findIndByBase(rub,'Consumer Confidence');
+  const gRS=sumRawState(sym,gdp);
+  const gCls=classifySingle(fcState(gRS));
+  const sentences=[];
+  if(gRS&&gCls)sentences.push(`GDP growth is at ${gRS.actual}, ${gCls==='pos'?'stronger than expected':gCls==='neg'?'weaker than expected':'roughly in line with expectations'}`);
+  else if(gRS)sentences.push(`GDP growth is at ${gRS.actual}`);
+  const pmiCls=classifyPair(fcState(sumRawState(sym,pmiM)),fcState(sumRawState(sym,pmiS)));
+  if(pmiCls){
+    const aligned=gCls?alignCls(pmiCls,gCls):null;
+    sentences.push(aligned?`PMIs are ${SUPPORT_WORDS[aligned]}`:`PMIs came in ${HOTCOLD_WORDS[pmiCls]}`);
+  }
+  const retailCls=classifySingle(fcState(sumRawState(sym,retail)));
+  if(retailCls){
+    const aligned=gCls?alignCls(retailCls,gCls):null;
+    sentences.push(aligned?`Retail sales are ${SUPPORT_WORDS[aligned]}`:`Retail sales came in ${HOTCOLD_WORDS[retailCls]}`);
+  }
+  const ccTrend=trendState(sumRawState(sym,cc));
+  if(ccTrend!=null)sentences.push(`Consumer confidence has ${ccTrend>0?'also improved':ccTrend<0?'weakened':'held steady'}`);
+  return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
+}
+function summarizeInterestRates(sym,rub){
+  const rs=sumRawState(sym,findIndByBase(rub,'Central Bank Rate'));
+  if(!rs)return noSignalFallback(sym,rub);
+  if(rs.pNum==null||rs.aNum===rs.pNum)return`The policy rate is at ${rs.actual}, unchanged from the previous level.`;
+  return`The policy rate is at ${rs.actual}, ${rs.aNum>rs.pNum?'up from':'down from'} the previous level of ${rs.previous}.`;
+}
+// Dieselbe Schwelle wie das ⚠ CROWDED-Badge im COT-Tab (siehe COT_CROWDED_PCT
+// dort) - hier als eigene Konstante, weil die COT-Tab-Variable lokal in
+// renderCot() liegt.
+const COT_CROWDED_PCT_SUM=80;
+function summarizeCot(sym,rub){
+  const bullRS=sumRawState(sym,findIndByBase(rub,'Net Bullish Positioning'));
+  const bearRS=sumRawState(sym,findIndByBase(rub,'Net Bearish Positioning'));
+  if(!bullRS&&!bearRS)return noSignalFallback(sym,rub);
+  let sentence;
+  if(bullRS&&bearRS){
+    sentence=`Positioning is currently split ${bullRS.actual} long / ${bearRS.actual} short`;
+    if(bullRS.aNum!=null&&bullRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded long)';
+    else if(bearRS.aNum!=null&&bearRS.aNum>=COT_CROWDED_PCT_SUM)sentence+=' (crowded short)';
+  }else{
+    sentence=bullRS?`Net long positioning is at ${bullRS.actual}`:`Net short positioning is at ${bearRS.actual}`;
+  }
+  const wowRS=sumRawState(sym,findIndByBase(rub,'WoW Change in Net Position (%)'));
+  if(wowRS&&wowRS.aNum!=null)sentence+=`, with the weekly change ${wowRS.aNum>0?'positive':wowRS.aNum<0?'negative':'flat'}`;
+  return sentence+'.';
+}
+function summarizeRiskEnv(sym,rub){
+  const levelWord=riskEnvLevel>=2?'a full risk-off environment':riskEnvLevel>=1?'a half risk-off environment':'a calm, low-risk environment';
+  const dir=riskEnvDirOf(sym.id);
+  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.id}`:dir==='bullish'?`currently bullish for ${sym.id}`:`currently bearish for ${sym.id}`;
+  return`Risk sentiment is currently ${levelWord}, ${effect}.`;
+}
+const RUB_SUMMARIZERS={
+  'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
+  'Interest Rates':summarizeInterestRates,'COT Data':summarizeCot,'Risk Environment':summarizeRiskEnv,
+};
+function summarizeRub(sym,rub){
+  const fn=RUB_SUMMARIZERS[rub.name];
+  return fn?fn(sym,rub):summarizeGeneric(sym,rub);
 }
 // Fingerprint aller Werte, die summarizeRub() beeinflussen - aendert er
 // sich, ist ein manueller/alter Text nicht mehr aktuell und wird ersetzt.
