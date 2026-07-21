@@ -3422,3 +3422,87 @@ Zwei weitere, per Beispielsaetzen abgestimmte Feinschliffe:
   einen vollen Playwright-Scan fahren und bei einem gefundenen Nebeneffekt
   dem Nutzer einen konkreten Loesungsvorschlag vorlegen, statt ihn still
   mitzuloesen (auch wenn die urspruengliche Anweisung selbst eindeutig war).
+
+### Auto-Zusammenfassung: Asset-Bezug-Schlusssatz fuer Inflation/Labour Market/Economic Growth (Nutzer-Wunsch 2026-07-21, Design von einem delegierten Agenten geloest)
+
+Nutzer bestaetigte den vom Agenten vorgeschlagenen Design-B-Ansatz ("Und die
+Lösung für den asset Bezug ist gut"): ein Schlusssatz, der sich IMMER aus dem
+echten Karten-Bias ableitet (`rub.bias`, derselbe Wert wie das Badge) - bei
+eindeutigem Bullish/Bearish ein klares Fazit, bei Neutral eine Aufschluesselung
+statt "neutral" stehen zu lassen. Umgesetzt fuer `summarizeInflation`/
+`summarizeLabour`/`summarizeGrowth` (Interest Rates/COT/Risk Environment
+hatten den Asset-Bezug schon).
+
+- **Klar (Bull/Bear):** "On balance, that makes the inflation data bullish/
+  bearish for USD." (`assetVerdictClause()`, ~Zeile 7095).
+- **Neutral (Aufschluesselung):** jeder Treiber mit einer eigenen, von neutral
+  abweichenden Richtung wird benannt und nach Richtung gruppiert: "On balance
+  the read is mixed for USD — the softer CPI and the softer PPI lean
+  bearish, while firmer yields lean bullish." Treiber je Karte: Inflation
+  (CPI/PPI/PCE/Yields), Labour Market (Unemployment Rate/Job creation/
+  Jobless Claims/JOLTS+Wages), Economic Growth (GDP/PMIs/Retail Sales/
+  Consumer Confidence). Grammatik: mehrere mit "and" verbundene Subjekte
+  sind immer plural ("lean"), ein einzelnes Item richtet sich nach seiner
+  eigenen grammatischen Zahl (`plural:true`-Flag pro Treiber - "yields"/
+  "claims"/"PMIs"/"retail sales"/"JOLTS and wage data" sind Plural-Nomen
+  auch allein: "firmer yields lean bullish", nicht "leans").
+- **Non-FX-Assets: KEINE eigene Uebersetzung, sondern die BEREITS
+  BESTEHENDE karten-eigene same/inverse-Regel** (`effDeriveRules(sym)
+  [rub.name]`, treibt `deriveMacroBiasAll()` schon seit laengerem -
+  GOLD/SP500/NAS haben dort bereits fuer Inflation/Interest Rates/Labour
+  Market/Economic Growth einzeln hinterlegt, ob heisse USD-Daten "same"
+  oder "inverse" fuer das Asset wirken). **Wichtiger Fehlversuch dabei**:
+  ein erster Anlauf nutzte stattdessen das Risk-Environment-Zahnrad
+  (`riskEnvDirOf`, Safe-Haven/Risk-Asset-Einstellung) fuer eine eigene
+  Uebersetzung - der Nutzer korrigierte das explizit: "Also das steht nur
+  als safe Heaven da aus anderen Gründen... bei non fx ist alles über die
+  settings geregelt was wie ist also einfach das nehmen anstatt zu
+  probieren Gruppen zu erstellen". Fix: komplett auf `effDeriveRules`
+  umgestellt, `riskEnvDirOf` hier nicht mehr verwendet.
+- **Kritischer Doppel-Invertierungs-Bug waehrend der Umsetzung gefunden +
+  gefixt:** `rub.bias` ist fuer GOLD/SP500/NAS durch `deriveMacroBiasAll()`
+  BEREITS same/inverse-transformiert (z.B. GOLD Inflation='inverse': USD
+  bull -> GOLD bear automatisch). Der klare Bull/Bear-Zweig darf `rub.bias`
+  daher NICHT nochmal durch `macroSignAdjust()` schicken (sonst doppelte
+  Invertierung, Testfall zeigte faelschlich "bullish for GOLD" obwohl
+  `rub.bias==='bear'`) - Fix: der Bull/Bear-Zweig nutzt `assetBiasWord(sign)`
+  direkt ohne weitere Uebersetzung. Die Neutral-Aufschluesselung braucht
+  dagegen weiterhin `macroSignAdjust()`, weil die einzelnen Treiber-Signs
+  (`cpiCls`/`ppiCls`/...) aus den ROHEN, nicht-transformierten
+  Forschungswerten des jeweiligen Assets berechnet werden (diese Rohdaten
+  sind fuer alle verknuepften Assets identisch gespiegelt, nur `rub.bias`
+  selbst durchlaeuft die same/inverse-Transformation). Per Playwright
+  verifiziert: GOLD/SP500 (Inflation='inverse') zeigen nach erzwungenem
+  USD-Bull-Bias korrekt "bearish for GOLD/SP500"; GOLD Economic
+  Growth='same' zeigt korrekt "bullish for GOLD" bei USD-Bull.
+- Assets OHNE hinterlegte Regel (z.B. BTC/SILVER/OIL im Auslieferzustand,
+  kein Default in `MACRO_DERIVE_RULES` und keine eigene
+  `sym.deriveRules`-Anpassung) bekommen bewusst KEINEN Asset-Bezug-Satz in
+  der Neutral-Aufschluesselung (`macroSignAdjust` liefert 0, keine Treiber)
+  - der klare Bull/Bear-Fall nutzt aber weiterhin direkt `rub.bias` (das ist
+  fuer diese Assets ihr eigener, unabhaengig berechneter Kartenwert, braucht
+  also gar keine Regel).
+- **`rubSummarySig()` beruecksichtigt jetzt `effDeriveRules(sym)[rub.name]`**
+  (dieselbe Bug-Klasse wie schon zweimal zuvor in dieser Session: die
+  Signatur muss JEDEN Text-beeinflussenden Input abdecken, sonst regeneriert
+  sich der Text nicht, wenn der Nutzer nur die same/inverse-Einstellung
+  aendert, ohne dass sich Indikator-Daten aendern) - `rubSummarySig(sym,rub)`
+  nimmt dafuer jetzt `sym` als ersten Parameter entgegen (beide Aufrufstellen
+  angepasst: `syncRubSummaries()` und der manuelle Textarea-Edit-Handler).
+- `SUMMARY_ENGINE_VERSION` auf `7` erhoeht (Logik-Wechsel von riskEnvDirOf
+  auf effDeriveRules zaehlt als Wording-Logik-Aenderung).
+- Per Playwright verifiziert: FX (USD) direkt korrekt, GOLD/SP500 (inverse)
+  korrekt gedreht, GOLD Growth (same) korrekt gleich, BTC (keine Regel) ohne
+  Asset-Bezug-Satz im Neutral-Fall, Regel-Aenderung zur Laufzeit
+  (`sym.deriveRules`) regeneriert den Text sofort, kein Grammatik-Fehler
+  ueber alle 108 Karten-Kombinationen, voller 14-Tab-Regressionstest
+  fehlerfrei.
+- **Merksatz:** bei einem Design, das einen bereits existierenden Bias-Wert
+  (`rub.bias`) fuer eine Anzeige wiederverwendet, IMMER pruefen, ob dieser
+  Wert bereits an ANDERER Stelle durch dieselbe Transformation gelaufen ist,
+  die man selbst nochmal anwenden will - sonst doppelte Transformation. Und:
+  bevor eine eigene Uebersetzungslogik fuer "was ist gut/schlecht fuer
+  dieses Asset" gebaut wird, immer zuerst pruefen, ob dafuer nicht schon
+  ein bestehender Einstellungs-Mechanismus existiert (hier: `deriveRules`/
+  `MACRO_DERIVE_RULES`), statt eine zweite, konkurrierende Quelle
+  einzufuehren.

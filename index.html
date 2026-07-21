@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#123330;color:#8fe3d0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-CPI-CORE-WORDING-195</span><span id="verBannerText"> (Inflation-Summary nennt jetzt Core CPI mit eigenem Verdikt statt der Kollektiv-Formulierung "CPIs" ("Headline CPI cooled to 3.5%, coming in softer than expected, with core CPI matching that." bzw. "...though core CPI came in hotter than expected."). "roughly in line with expectations" ueberall zu "in line with expectations" gekuerzt - dabei ein dadurch entstandenes doppeltes "in" ("came in in line") an mehreren Stellen (PPI/PCE/CPI-Fallback/Job creation/PMIs/Retail Sales/GDP) auf "were/was in line with expectations" umgestellt. SUMMARY_ENGINE_VERSION auf 5 erhoeht, damit sich bestehende Zusammenfassungen selbst heilen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#e3c68f;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#2a1b3d;color:#d4b8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: VIOLET-ASSET-BEZUG-196</span><span id="verBannerText"> (Inflation/Labour Market/Economic Growth bekommen einen Asset-Bezug-Schlusssatz: bei klarem Karten-Bias "On balance, that makes the inflation data bullish/bearish for USD", bei Neutral eine Aufschluesselung ("the softer CPI leans bearish, while the hotter PPI and firmer yields lean bullish"). FX nutzt rub.bias direkt. Non-FX-Assets (GOLD/SP500/NAS) nutzen die BEREITS BESTEHENDE karten-eigene same/inverse-Regel (Zahnrad, deriveMacroBiasAll) statt einer neuen Uebersetzung - Assets ohne hinterlegte Regel (z.B. BTC) bekommen bewusst keinen Asset-Bezug-Satz. rubSummarySig() beruecksichtigt jetzt effDeriveRules(sym)[rub.name], damit ein Aendern der Regel den Text neu generiert. SUMMARY_ENGINE_VERSION auf 7.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5805,7 +5805,7 @@ function renderRub(rub,ri,total){
         <div class="rub-summary-lbl">
           <span style="color:${bco}">▸ SUMMARY</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(getSym(),r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${renderInds(rub,ri)}
@@ -7066,6 +7066,63 @@ function alignCls(cls,refCls){
   const partly=cls.indexOf('partly')===0;
   return sign===refSign?(partly?'partly-pos':'pos'):(partly?'partly-neg':'neg');
 }
+// Asset-Bezug fuer Inflation/Labour Market/Economic Growth (Nutzer-Wunsch
+// 2026-07-21, Design von einem delegierten Agenten geloest, dann per
+// Nutzer-Korrektur auf die BEREITS BESTEHENDE Karten-Regel umgestellt): der
+// Schlusssatz leitet sich IMMER vom echten Karten-Bias ab (`rub.bias`,
+// derselbe Wert wie das Badge - Dual-Source-Lehre: kein zweiter,
+// unabhaengiger Bias-Pfad). FX-Waehrungen: heisse/kuehle Daten sind
+// unmittelbar bullish/bearish fuer die eigene Waehrung. Non-FX-Assets: NICHT
+// ueber das Risk-Environment-Zahnrad (das steht nur aus Safe-Haven/Risk-
+// Asset-Gruenden so, laut Nutzer "aus anderen Gruenden") - sondern ueber die
+// SCHON BESTEHENDE karten-eigene same/inverse-Regel (`effDeriveRules(sym)
+// [rub.name]`, Zahnrad direkt an der Karte, treibt `deriveMacroBiasAll()`
+// bereits seit langem). Nutzer-Vorgabe woertlich: "bei non fx ist alles ueber
+// die settings geregelt was wie ist, also einfach das nehmen anstatt zu
+// probieren Gruppen zu erstellen" - deshalb HIER keine eigene Uebersetzung
+// mehr, `macroSignAdjust()` wendet stattdessen exakt dieselbe Regel an, die
+// `deriveMacroBiasAll()` auch auf `rub.bias`/`ind.bias` anwendet. Fehlt eine
+// Regel (Assets ohne Default in MACRO_DERIVE_RULES und ohne eigene
+// sym.deriveRules, z.B. BTC/SILVER/OIL im Auslieferzustand), gibt es dafuer
+// noch keine Settings-Antwort -> kein Asset-Bezug-Satz.
+function macroSignAdjust(sym,rub,rawSign){
+  if(!rawSign)return 0;
+  if(FX.includes(sym.id))return rawSign;
+  const rule=effDeriveRules(sym)[rub.name];
+  if(rule==='inverse')return-rawSign;
+  if(rule==='same')return rawSign;
+  return 0;
+}
+function assetBiasWord(sign){return sign>0?'bullish':sign<0?'bearish':null;}
+function biasSignOf(rub){return rub.bias==='bull'||rub.bias==='sbull'?1:rub.bias==='bear'||rub.bias==='sbear'?-1:0;}
+// Bei eindeutigem Karten-Bias ein klares Fazit; bei Neutral wird die
+// Aufteilung benannt statt "neutral" stehen zu lassen (Design B: "the
+// softer CPI leans bearish, while the hotter PPI and firmer yields lean
+// bullish."). `drivers`=[{label,sign}] - `sign` ist hier bereits die per
+// `macroSignAdjust()` asset-angepasste Richtung (Aufrufer wenden das VOR dem
+// Push an), `assetBiasWord()` labelt nur noch, uebersetzt nichts mehr selbst.
+function assetVerdictClause(sym,rub,topic,drivers){
+  const sign=biasSignOf(rub);
+  if(sign){
+    // KEIN macroSignAdjust hier: rub.bias ist fuer GOLD/SP500/NAS bereits
+    // durch das bestehende deriveMacroBiasAll() (selbe same/inverse-Regel)
+    // asset-angepasst - ein zweites Anwenden wuerde doppelt invertieren.
+    const word=assetBiasWord(sign);
+    return word?`On balance, that makes the ${topic} data ${word} for ${sym.id}`:'';
+  }
+  const neg=drivers.filter(d=>d.sign<0),pos=drivers.filter(d=>d.sign>0);
+  if(!neg.length&&!pos.length)return'';
+  const negWord=assetBiasWord(-1),posWord=assetBiasWord(1);
+  const list=arr=>arr.length>1?arr.slice(0,-1).join(', ')+' and '+arr[arr.length-1]:arr[0];
+  // Mehrere mit "and" verbundene Subjekte sind IMMER plural ("lean"); ein
+  // einzelnes Item richtet sich nach dessen eigener grammatischer Zahl (z.B.
+  // "yields"/"claims"/"PMIs"/"retail sales" sind Plural-Nomen auch allein).
+  const isPlural=arr=>arr.length>1||!!arr[0].plural;
+  const clauses=[];
+  if(neg.length)clauses.push(`${list(neg.map(d=>d.label))} lean${isPlural(neg)?'':'s'} ${negWord}`);
+  if(pos.length)clauses.push(`${list(pos.map(d=>d.label))} lean${isPlural(pos)?'':'s'} ${posWord}`);
+  return`On balance the read is mixed for ${sym.id} — ${clauses.join(', while ')}`;
+}
 const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
 // "X came in in line with expectations" verdoppelt "in" - beim neutralen Fall
 // stattdessen "X were/was in line with expectations" (Nutzer-Wunsch 2026-07-21:
@@ -7163,6 +7220,16 @@ function summarizeInflation(sym,rub){
       else sentences.push(`Yields are pricing in ${yWord} inflation`);
     }
   }
+  // Asset-Bezug-Schlusssatz (Nutzer-Wunsch 2026-07-21) - Label folgt der
+  // ROHEN Datenrichtung, die Gruppierung (sign) der per macroSignAdjust()
+  // asset-angepassten Richtung - siehe assetVerdictClause().
+  const drivers=[];
+  [[cpiCls,'CPI'],[ppiCls,'PPI'],[pceCls,'PCE']].forEach(([cls,name])=>{
+    const raw=dirSign(cls);if(raw)drivers.push({sign:macroSignAdjust(sym,rub,raw),label:raw>0?`the hotter ${name}`:`the softer ${name}`});
+  });
+  const yRaw=dirSign(yieldsCls);if(yRaw)drivers.push({sign:macroSignAdjust(sym,rub,yRaw),label:yRaw>0?'firmer yields':'softer yields',plural:true});
+  const verdict=assetVerdictClause(sym,rub,'inflation',drivers);
+  if(verdict)sentences.push(verdict);
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
 function summarizeLabour(sym,rub){
@@ -7192,6 +7259,17 @@ function summarizeLabour(sym,rub){
     const aligned=alignCls(otherCls,jobsCls);
     if(aligned)sentences.push(`JOLTS openings and wage growth are ${supportPhrase(aligned,'labour market picture')}`);
   }
+  // Asset-Bezug-Schlusssatz (Nutzer-Wunsch 2026-07-21) - Label folgt der
+  // ROHEN Richtung, sign der per macroSignAdjust() asset-angepassten - siehe
+  // assetVerdictClause(). uTrend ist bereits lowerBetter-bereinigt
+  // (trendState): >0 heisst die Rate FIEL (gut), <0 heisst sie STIEG (schlecht).
+  const drivers=[];
+  const uTrend=trendState(uRS);if(uTrend)drivers.push({sign:macroSignAdjust(sym,rub,uTrend),label:uTrend>0?'the falling unemployment rate':'the rising unemployment rate'});
+  const jRaw=dirSign(jobsCls);if(jRaw)drivers.push({sign:macroSignAdjust(sym,rub,jRaw),label:jRaw>0?'the strong job creation':'the weak job creation'});
+  const cRaw=dirSign(claimsCls);if(cRaw)drivers.push({sign:macroSignAdjust(sym,rub,cRaw),label:cRaw>0?'the better-than-expected jobless claims':'the worse-than-expected jobless claims',plural:true});
+  const oRaw=dirSign(otherCls);if(oRaw)drivers.push({sign:macroSignAdjust(sym,rub,oRaw),label:oRaw>0?'firmer JOLTS and wage data':'softer JOLTS and wage data',plural:true});
+  const verdict=assetVerdictClause(sym,rub,'labour market',drivers);
+  if(verdict)sentences.push(verdict);
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
 function summarizeGrowth(sym,rub){
@@ -7225,6 +7303,16 @@ function summarizeGrowth(sym,rub){
   }
   const ccTrend=trendState(sumRawState(sym,cc));
   if(ccTrend!=null)sentences.push(`Consumer confidence has ${ccTrend>0?'also improved':ccTrend<0?'weakened':'held steady'}`);
+  // Asset-Bezug-Schlusssatz (Nutzer-Wunsch 2026-07-21) - Label folgt der
+  // ROHEN Richtung, sign der per macroSignAdjust() asset-angepassten - siehe
+  // assetVerdictClause().
+  const drivers=[];
+  const gRaw=dirSign(gCls);if(gRaw)drivers.push({sign:macroSignAdjust(sym,rub,gRaw),label:gRaw>0?'the stronger-than-expected GDP print':'the weaker-than-expected GDP print'});
+  const pRaw=dirSign(pmiCls);if(pRaw)drivers.push({sign:macroSignAdjust(sym,rub,pRaw),label:pRaw>0?'stronger PMIs':'weaker PMIs',plural:true});
+  const rRaw=dirSign(retailCls);if(rRaw)drivers.push({sign:macroSignAdjust(sym,rub,rRaw),label:rRaw>0?'stronger retail sales':'weaker retail sales',plural:true});
+  if(ccTrend)drivers.push({sign:macroSignAdjust(sym,rub,ccTrend),label:ccTrend>0?'improving consumer confidence':'weakening consumer confidence'});
+  const verdict=assetVerdictClause(sym,rub,'growth',drivers);
+  if(verdict)sentences.push(verdict);
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
 function summarizeInterestRates(sym,rub){
@@ -7294,9 +7382,16 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=5;
-function rubSummarySig(rub){
-  return JSON.stringify([SUMMARY_ENGINE_VERSION,(rub.indicators||[]).map(i=>{
+const SUMMARY_ENGINE_VERSION=7;
+// Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
+// haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
+// (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
+// rub.bias/ind.bias selbst nutzt) - ohne das in der Signatur, wuerde ein
+// Aendern dieser Einstellung den Text nie neu generieren (dieselbe
+// Bug-Klasse wie bei SUMMARY_ENGINE_VERSION: die Signatur muss JEDEN Input
+// abdecken, der den erzeugten Text beeinflussen kann).
+function rubSummarySig(sym,rub){
+  return JSON.stringify([SUMMARY_ENGINE_VERSION,effDeriveRules(sym)[rub.name]||null,(rub.indicators||[]).map(i=>{
     const r=i.research||{};
     return[i.name,i.bias,r.actual,r.forecast,r.previous,r.revisedFrom];
   })]);
@@ -7304,7 +7399,7 @@ function rubSummarySig(rub){
 function syncRubSummaries(){
   syms.forEach(sym=>{
     (sym.rubrics||[]).forEach(rub=>{
-      const sig=rubSummarySig(rub);
+      const sig=rubSummarySig(sym,rub);
       // Selbstheilung: ein bereits generierter/synchronisierter Text aus
       // einer frueheren Engine-Version (z.B. mit **fett**-Markern aus V183
       // oder "(rev. from X)"-Vermerken aus einer Version vor dem
