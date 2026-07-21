@@ -2502,3 +2502,59 @@ Fundstelle).
   aktualisiert die Karte korrekt auf das neu gewaehlte Meeting, alle 8
   Zeitraum-Filter-Buttons klickbar ohne Fehler. Voller Tab-Regressionstest
   weiterhin fehlerfrei.
+
+### Rate Probabilities: History wieder umgebaut - jetzt nahtlos in den Haupt-Chart integriert statt separate Karte (Nutzer-Korrektur 2026-07-21)
+
+Nutzer, direkt nach dem Bau der separaten "Forecast history"-Karte: "Die
+Historie soll auch oben mit in die Grafik rein" - die getrennte Karte
+unterhalb des Meeting-Charts war nicht das gewuenschte Ergebnis, die
+Historie sollte stattdessen Teil DESSELBEN Charts sein, direkt links an
+"Today" angehaengt.
+
+- **Design:** `rateProbBuildPts(D)` (neuer zentraler Helfer, ersetzt das
+  alte `rateProbTodayIdx()`) haengt links an "Today" die taegliche Historie
+  des NAECHSTEN Meetings an. Mathematisch saubere Anschlussstelle: `dist[1]`
+  (kumulierte Verteilung nach dem ersten Meeting, ausgehend von der
+  trivialen `dist[0]={0:100}`) ist IDENTISCH zu diesem Meetings eigener
+  Zwei-Stufen-Aufteilung (`probsFromDelta(deltaBp)`) - die Historie
+  schliesst dadurch nahtlos an "Today" an, keine Bruchstelle/kein
+  Farbsprung im Uebergang. Ein bereits realisiertes vergangenes Meeting
+  (Haekchen-Marker) bleibt technisch getrennt (andere Referenz: sein
+  Basispunkt-Wert bezieht sich auf den Zins VOR jenem Termin) und sitzt
+  hinter der gestrichelten Trennlinie, VOR der Historie.
+- **Pillen bleiben auf Today/Meetings beschraenkt** (keine eigene Pille pro
+  Historientag - waeren potenziell hunderte) - die Historie ist trotzdem
+  sichtbar, weil `scrollRateProbTo()` den fokussierten Punkt im Viewport
+  ZENTRIERT statt linksbuendig anzuzeigen; die links angehaengten
+  Historientage liegen dadurch beim Fokus auf "Today" automatisch mit im
+  Blickfeld. Pillen tragen jetzt `data-idx` (echter Index im `pts`-Array,
+  das jetzt Luecken zu den Pillen hat) statt sich auf die DOM-Reihenfolge
+  zu verlassen.
+- **Zeitraum-Filter** (Max/3Y/2Y/1Y/6M/3M/1M/Custom, wiederverwendet
+  `TIME_RANGES`) sitzt jetzt direkt unter den Pillen und steuert, wie viel
+  Historie angehaengt wird - Default bewusst **1M statt des sonst
+  app-weiten MAX-Defaults** (dokumentierter Grundsatz "maximale Historie
+  ueberall"): dieser Chart hat anders als andere MAX-Default-Charts KEINEN
+  Weg, gezielt zu weit zurueckliegenden Tagen zu navigieren (kein natives
+  Wegwischen erlaubt, keine Pille pro Tag) - ein kleiner Default haelt die
+  angehaengte Historie standardmaessig komplett im sichtbaren, per
+  "Today"-Pille zentrierten Ausschnitt statt unerreichbar ausserhalb.
+- **Bug gefunden + gefixt waehrend der Umsetzung:** `rateProbHistRange`
+  wurde faelschlich auf den STRING `'1M'` initialisiert statt auf die
+  numerische `1`, die `TIME_RANGES`/`filterDatesByRange()` tatsaechlich
+  erwarten (`TIME_RANGES=[...,[1,'1M'],...]` - `1` ist der Wert, `'1M'` nur
+  das Label) - `cutoff.setMonth(cutoff.getMonth()-'1M')` ergab `NaN`,
+  `cutoff` wurde ein Invalid Date, `.toISOString()` warf `RangeError:
+  Invalid time value` und der gesamte Rate-Probabilities-Tab blieb auf
+  "Loading..." haengen. Per Playwright-Konsolen-Stacktrace gefunden (die
+  Fehlermeldung zeigte exakt `filterDatesByRange` → `rateProbBuildPts` →
+  `renderRateProb`), sofort auf die numerische `1` korrigiert.
+- Per Playwright verifiziert: initiales Laden (2 Tage echte lokale
+  Historie) fehlerfrei, alle 8 Zeitraum-Filter-Buttons (inkl. Custom mit
+  Datums-Eingabefeldern) klickbar ohne Fehler, mit synthetisch injizierter
+  25-Tage-Historie zeigt der Chart eine durchgehende Linie von der
+  Historie durch "Today" bis zu den Meetings (Pfad-/Punktanzahl konsistent,
+  Tooltip am linkesten Historienpunkt zeigt korrekte Werte), Pillen-Klicks
+  (inkl. letzter Meeting-Pille) verschieben weiterhin korrekt und markieren
+  die richtige Pille aktiv. Voller Tab-Regressionstest weiterhin
+  fehlerfrei.

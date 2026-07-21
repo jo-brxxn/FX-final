@@ -1248,7 +1248,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-HISTCHART-175</span><span id="verBannerText"> (Nutzer-Bugreport: "gibt trotzdem keine Historie" - rate_probabilities.json.history sammelt seit 2026-07-20 taeglich einen echten Snapshot, wurde aber nirgends angezeigt, nur gesammelt. Neue Karte "Forecast history" unter dem Meeting-Chart zeigt jetzt, wie sich die Wahrscheinlichkeit fuer das gerade ausgewaehlte Meeting Tag fuer Tag entwickelt hat - Mehrlinien-Chart wie beim Haupt-Chart (>1%-Schwelle, kombiniertes Tooltip, Label-Kollisionsvermeidung), plus der bestehende Max/3Y/2Y/1Y/6M/3M/1M/Custom-Zeitraum-Filter. Wechselt automatisch beim Pillen-Klick)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-MERGEDHIST-176</span><span id="verBannerText"> (Nutzer-Korrektur: "Die Historie soll auch oben mit in die Grafik rein" - die separate "Forecast history"-Karte unter dem Meeting-Chart wurde entfernt, die taegliche Historie fuer das naechste Meeting haengt jetzt NAHTLOS links an "Today" im Haupt-Chart an (dist[1] entspricht mathematisch exakt der eigenen Zwei-Stufen-Aufteilung des Meetings, keine Bruchstelle im Uebergang). Zeitraum-Filter (Max/3Y/.../1M/Custom) sitzt jetzt direkt unter den Pillen und steuert, wie viel Historie angehaengt wird. Pillen bleiben auf Today/Meetings beschraenkt, keine Pille pro Historientag)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -10962,7 +10962,7 @@ SENT_INFO.rateprob=['Rate Probabilities (Fed hike/hold/cut odds)',
    <p><b>"Today" isn't the current rate</b> (that's already shown above the chart) - it's today's market-implied odds for what the <b>next</b> meeting decides, exactly what CME's own tool shows when you open a specific meeting date. That's why "Today" already shows multiple lines, and why the line is flat between "Today" and the first meeting: nothing resolves until the meeting actually happens.</p>
    <p><b>Once a meeting has passed</b>, it stays visible for a while with a ✓ checkmark and its outcome (e.g. "✓ Hold" or "✓ +25bp"), separated from the forecast by a dashed divider. That outcome is never guessed - it's read directly off the real daily EFFR history this app has been recording (the rate just before vs. just after the meeting), so it only appears once enough days of real data exist on both sides of the meeting date.</p>
    <p><b>Limits vs. the official tool:</b> the split at each individual meeting only resolves the two nearest standard 25bp steps from the futures curve (linear interpolation) — CME's paid version additionally uses options-implied volatility for a smoother distribution. Combining meetings assumes each meeting's split shape doesn't change materially across the small rate differences between branches - a reasonable approximation, not measured separately per branch (that would need options data this app doesn't have a free source for).</p>
-   <p><b>History:</b> builds one snapshot per day going forward (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources (CME's own API is paid, and free scraping sources for the historical multi-contract futures curve were unavailable). The "Forecast history" chart below the pills shows how the odds for whichever meeting is currently selected have moved day by day since this feature launched. Display-only, does not affect any score.</p>`];
+   <p><b>History:</b> builds one snapshot per day going forward (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources (CME's own API is paid, and free scraping sources for the historical multi-contract futures curve were unavailable). Trailing days are appended directly to the left of "Today" in the chart above (use the range buttons below the pills to control how far back), showing how the odds for the next meeting evolved day by day - the line flows seamlessly from history through "Today" since both describe the same thing. Display-only, does not affect any score.</p>`];
 // Fixe Punktabstaende (Trends-Stil: index-basiert, nicht kalendertag-
 // proportional) - macht die Klick-Navigation ueber die Meeting-Pillen
 // vorhersagbar (jeder Schritt bewegt exakt eine Slot-Breite).
@@ -11004,8 +11004,69 @@ function rateProbLineColor(bp){
   if(bp>0)return bp<=25?BC.bull:'#2f9ecf';
   return bp>=-25?BC.bear:'#c23a46';
 }
-function rateProbTimelineChart(pts,distTimeline,todayIdx){
-  todayIdx=todayIdx||0;
+// Zeitraum-Filter fuer die links an "Today" angehaengte Historie (Nutzer-
+// Wunsch 2026-07-21: "Die Historie soll auch oben mit in die Grafik rein" -
+// ersetzt die vorherige separate "Forecast history"-Karte unter dem Chart).
+// Default bewusst '1M' statt des sonst app-weit ueblichen 'MAX' (siehe z.B.
+// Trends-Tab) - dieser Chart hat NUR Pillen fuer Today/Meetings, keine
+// eigene Pille pro Historientag, also auch kein Weg, weit zurueckliegende
+// Tage gezielt anzusteuern (kein natives Wegwischen erlaubt). Ein kleinerer
+// Default haelt die angehaengte Historie standardmaessig komplett im
+// sichtbaren Ausschnitt statt unerreichbar ausserhalb.
+let rateProbHistRange=1,rateProbHistCustomFrom=null,rateProbHistCustomTo=null;
+function setRateProbHistRange(v){rateProbHistRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderRateProb();}
+function setRateProbHistRangeCustom(from,to){if(from!==null)rateProbHistCustomFrom=from||null;if(to!==null)rateProbHistCustomTo=to||null;renderRateProb();}
+// Baut pts/distTimeline/todayIdx/pastCount EINMAL an einer Stelle - sowohl
+// renderRateProb() als auch scrollRateProbTo() (fuer die Bounds-Klemmung)
+// brauchen dieselbe Struktur, damit sie nie auseinanderlaufen.
+function rateProbBuildPts(D){
+  const withData=(D.meetings||[]).filter(m=>m.deltaBp!=null);
+  const pts=[];
+  // Zuletzt vergangener Termin bleibt kurz sichtbar, MIT dem tatsaechlichen
+  // Ergebnis (Nutzer-Wunsch 2026-07-20) - rein aus der taeglichen EFFR-
+  // Historie abgeleitet (D.pastMeeting, siehe Workflow), niemals geschaetzt.
+  if(D.pastMeeting&&D.pastMeeting.realizedBucket!=null)pts.push({label:D.pastMeeting.label,date:D.pastMeeting.date,realizedBucket:D.pastMeeting.realizedBucket});
+  const pastCount=pts.length;
+  // Historie des NAECHSTEN Meetings, links an "Today" angehaengt. dist[1]
+  // (kumulierte Verteilung NACH dem ersten Meeting, ausgehend von der
+  // trivialen dist[0]={0:100}) ist mathematisch IDENTISCH zu diesem
+  // Meetings EIGENER Zwei-Stufen-Aufteilung (probsFromDelta(deltaBp)) - die
+  // History-Punkte schliessen dadurch NAHTLOS an "Today" an, keine
+  // Bruchstelle im Uebergang.
+  let histPts=[];
+  if(withData.length){
+    const nextDate=withData[0].date;
+    const raw=(D.history||[]).map(h=>{
+      if(h[0]>=D.asOf)return null; // "heute" deckt der Today-Punkt selbst ab
+      const m=(h[2]||[]).find(e=>e[0]===nextDate);
+      return m?[h[0],m[1]]:null;
+    }).filter(Boolean);
+    const kept=new Set(filterDatesByRange(raw.map(h=>h[0]),rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo));
+    histPts=raw.filter(([d])=>kept.has(d));
+  }
+  histPts.forEach(([d,bp])=>{
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
+    pts.push({label:lbl,date:d,histBp:bp});
+  });
+  const todayIdx=pts.length;
+  pts.push({label:'Today',date:D.asOf});
+  withData.forEach(m=>pts.push({label:m.label,date:m.date}));
+  // "Today" zeigt NICHT trivial "100% Hold" (blosser Fakt: der aktuelle
+  // Zins ist sicher bekannt), sondern dieselbe Verteilung wie das naechste
+  // Meeting - die heute vom Markt eingepreiste Wahrscheinlichkeit fuer den
+  // naechsten Fed-Entscheid (Nutzer-Korrektur 2026-07-20). Ergibt eine
+  // nahtlose Linie von der Historie durch Today bis zum ersten Meeting.
+  const rawDist=rateProbDistTimeline(withData); // [dist0(trivial),dist1,dist2,...]
+  const distTimeline=pts.map((p,i)=>{
+    if(i<pastCount)return{};
+    if(i<todayIdx)return Object.fromEntries(probsFromDelta(p.histBp));
+    const k=i-todayIdx; // 0=Today,1=Meeting1,...
+    return rawDist[k===0?Math.min(1,rawDist.length-1):k]||{};
+  });
+  return{pts,distTimeline,todayIdx,pastCount,withData};
+}
+function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
+  todayIdx=todayIdx||0;pastCount=pastCount||0;
   // padT braucht genug Kopffreiheit fuer den Hover-Tooltip (chv-tip rendert
   // per transform:translate(-50%,calc(-100% - 10px)) OBERHALB seines Ankers,
   // ~45-55px) - die .rateprob-chart-viewport hat overflow:hidden (fuer die
@@ -11021,10 +11082,14 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx){
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
   const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===todayIdx?800:600};fill:${i===todayIdx?'var(--t0)':i<todayIdx?'var(--t3)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
   // Gestrichelte Trenn-Linie zwischen einem bereits VERGANGENEN Meeting
-  // (realisiertes Ergebnis, kein Prozent-Wert) und "Today"/den kuenftigen
-  // Wahrscheinlichkeits-Linien - macht den Bruch zwischen "feststehende
-  // Vergangenheit" und "Prognose" sichtbar (Nutzer-Wunsch 2026-07-20).
-  const divider=todayIdx>0?`<line x1="${(xOf(todayIdx)-RATEPROB_SLOT/2).toFixed(1)}" y1="${(padT-16).toFixed(1)}" x2="${(xOf(todayIdx)-RATEPROB_SLOT/2).toFixed(1)}" y2="${(H-padB+6).toFixed(1)}" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="3,4"/>`:'';
+  // (realisiertes Ergebnis, kein Prozent-Wert) und der historisch-bis-
+  // zukuenftigen Wahrscheinlichkeits-Linie - macht den Bruch zwischen
+  // "feststehende Vergangenheit" und "Prognose" sichtbar (Nutzer-Wunsch
+  // 2026-07-20). Sitzt bei pastCount, NICHT bei todayIdx - die links an
+  // Today angehaengte Historie ist Teil DERSELBEN nahtlosen Prognose-Linie,
+  // keine eigene Bruchstelle (Nutzer-Wunsch 2026-07-21: "Historie soll auch
+  // oben mit in die Grafik rein").
+  const divider=pastCount>0?`<line x1="${(xOf(pastCount)-RATEPROB_SLOT/2).toFixed(1)}" y1="${(padT-16).toFixed(1)}" x2="${(xOf(pastCount)-RATEPROB_SLOT/2).toFixed(1)}" y2="${(H-padB+6).toFixed(1)}" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="3,4"/>`:'';
   // Realisierte(s) vergangene(s) Meeting(s): fixer Marker (kein Punkt auf der
   // Prozent-Achse, da der Basispunkt-Wert relativ zum Zins VOR JENEM Termin
   // ist, nicht relativ zu heute - andere Referenz als die Wahrscheinlichkeits-
@@ -11032,7 +11097,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx){
   // NY-Fed-EFFR-Historie abgeleitet (D.pastMeeting, siehe Workflow), niemals
   // geschaetzt.
   let pastMarkup='';
-  for(let i=0;i<todayIdx;i++){
+  for(let i=0;i<pastCount;i++){
     const p=pts[i];
     if(p.realizedBucket==null)continue;
     const col=rateProbLineColor(p.realizedBucket);
@@ -11076,7 +11141,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx){
   // sitzt auf der ersten Linie mit Wert an diesem Index, das Tooltip-Fenster
   // listet aber jede Linie mit ihrer eigenen Farbe/ihrem Wert.
   const hpts=pts.map((p,i)=>{
-    if(i<todayIdx){
+    if(i<pastCount){
       if(p.realizedBucket==null)return{fx:xOf(i)/W,fy:yOf(100)/H,col:'#888',tip:`<div class="chv-tip-d">${escH(p.label)}</div><span style="color:var(--t3)">outcome pending</span>`};
       const col=rateProbLineColor(p.realizedBucket);
       const lbl=p.realizedBucket===0?'Hold':(p.realizedBucket>0?'+':'')+p.realizedBucket+'bp';
@@ -11130,130 +11195,18 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx){
 // oben: "Charts duerfen nicht horizontal wegwischbar sein") - der Track
 // sitzt in einem overflow:hidden-Viewport, ausschliesslich per Pillen-Klick
 // gesteuert.
-// Ein bereits realisiertes vergangenes Meeting (aus der echten EFFR-
-// Historie abgeleitet, siehe Workflow) schiebt "Today" um einen Slot nach
-// rechts - dieselbe Berechnung wird beim Rendern UND beim Pillen-Klick
-// gebraucht, daher als gemeinsamer Helfer statt zweimal dupliziert.
-function rateProbTodayIdx(D){return(D&&D.pastMeeting&&D.pastMeeting.realizedBucket!=null)?1:0;}
 function scrollRateProbTo(idx,animate){
   if(animate===undefined)animate=true;
   const D=RATE_PROB_DATA;if(!D)return;
-  const maxIdx=rateProbTodayIdx(D)+(D.meetings||[]).filter(m=>m.deltaBp!=null).length;
-  rateProbFocus=Math.max(0,Math.min(idx,maxIdx));
-  document.querySelectorAll('.rateprob-pill').forEach((b,i)=>b.classList.toggle('on',i===rateProbFocus));
+  const{pts}=rateProbBuildPts(D);
+  rateProbFocus=Math.max(0,Math.min(idx,pts.length-1));
+  document.querySelectorAll('.rateprob-pill').forEach(b=>b.classList.toggle('on',+b.dataset.idx===rateProbFocus));
   const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
-  if(track&&viewport){
-    const vw=viewport.clientWidth||300;
-    const targetX=Math.max(0,rateProbFocus*RATEPROB_SLOT-vw/2+RATEPROB_PADL);
-    track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
-    track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
-  }
-  updateRateProbHistCard();
-}
-// Verlauf, wie sich die vom Markt eingepreiste Wahrscheinlichkeit fuer EIN
-// bestimmtes Meeting Tag fuer Tag veraendert hat (Nutzer-Bugreport 2026-07-21,
-// "gibt trotzdem keine Historie": RATE_PROB_DATA.history sammelt seit
-// 2026-07-20 taeglich einen echten Snapshot (siehe Workflow), wurde aber nie
-// angezeigt - nur gesammelt). Nutzt die LOKALE Zwei-Stufen-Aufteilung des
-// jeweiligen Tages (probsFromDelta auf den an jenem Tag gespeicherten
-// deltaBp fuer GENAU DIESES Meeting) statt der kumulierten Verteilung -
-// zeigt isoliert, wie sich die Prognose fuer dieses eine Meeting entwickelt
-// hat, unabhaengig davon, ob sich fruehere Sitzungen zwischenzeitlich
-// aufgeloest haben. Zeitraum-Filter wiederverwendet TIME_RANGES/
-// timeRangeBarHtml() (CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine
-// muessen einheitlich sein").
-let rateProbHistRange='MAX',rateProbHistCustomFrom=null,rateProbHistCustomTo=null;
-function setRateProbHistRange(v){rateProbHistRange=(v==='MAX'||v==='CUSTOM')?v:+v;updateRateProbHistCard();}
-function setRateProbHistRangeCustom(from,to){if(from!==null)rateProbHistCustomFrom=from||null;if(to!==null)rateProbHistCustomTo=to||null;updateRateProbHistCard();}
-function rateProbMeetingHistChart(meetingDate,meetingLabel){
-  const raw=(RATE_PROB_DATA.history||[]).map(h=>{
-    const m=(h[2]||[]).find(e=>e[0]===meetingDate);
-    return m?[h[0],m[1]]:null;
-  }).filter(Boolean);
-  const kept=new Set(filterDatesByRange(raw.map(h=>h[0]),rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo));
-  const pts=raw.filter(([d])=>kept.has(d));
-  const rangeBar=timeRangeBarHtml(rateProbHistRange,'setRateProbHistRange')+timeRangeCustomHtml(rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo,'setRateProbHistRange');
-  const head=`<div class="cot-card-title">Forecast history for ${escH(meetingLabel)}${rangeBar}</div>`;
-  if(pts.length<2)return`<div class="cot-card" style="margin-top:12px">${head}<div class="cot-empty">Not enough history yet (builds up one real point per day since this feature launched on 2026-07-20 - no backfill).</div></div>`;
-  const distByDay=pts.map(([d,bp])=>[d,Object.fromEntries(probsFromDelta(bp))]);
-  const levels=new Set();
-  distByDay.forEach(([,dist])=>Object.entries(dist).forEach(([l,p])=>{if(p>1)levels.add(Number(l));}));
-  const sortedLevels=[...levels].sort((a,b)=>a-b);
-  const n=distByDay.length;
-  const leftPad=36,rightPad=54,topPad=18,chartH=180,bottomPad=24,PD=Math.max(30,Math.min(56,480/Math.max(1,n-1)));
-  const w=leftPad+Math.max(1,n-1)*PD+rightPad,h=topPad+chartH+bottomPad;
-  const xOf=i=>leftPad+i*PD;
-  const yOf=pct=>topPad+(1-pct/100)*chartH;
-  let svg=`<svg class="tr-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-  [0,50,100].forEach(t=>{
-    svg+=`<line x1="${leftPad}" y1="${yOf(t).toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(leftPad-7).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`;
-  });
-  const lblItems=[];
-  sortedLevels.forEach(lvl=>{
-    const col=rateProbLineColor(lvl);
-    const lbl=lvl===0?'Hold':(lvl>0?'+':'')+lvl+'bp';
-    const segPts=[];
-    distByDay.forEach(([,dist],i)=>{const p=dist[lvl];if(p!=null&&p>1)segPts.push([i,p]);});
-    if(segPts.length===1){
-      const[i,p]=segPts[0];
-      svg+=`<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(p).toFixed(1)}" r="3" fill="${col}"/>`;
-    }else if(segPts.length>1){
-      const d=segPts.map(([i,p],k)=>(k?' L ':'M ')+xOf(i).toFixed(1)+' '+yOf(p).toFixed(1)).join('');
-      svg+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-      segPts.forEach(([i,p])=>{svg+=`<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(p).toFixed(1)}" r="2.6" fill="${col}"/>`;});
-    }
-    if(segPts.length){
-      const[li,lp]=segPts[segPts.length-1];
-      lblItems.push({x:xOf(li)+8,y:yOf(lp)+3,col,lbl});
-    }
-  });
-  // Kollisions-Vermeidung fuer die Endpunkt-Labels - selbes Muster wie
-  // rateProbTimelineChart (Grundsatz "Elemente duerfen niemals ueberlappen").
-  lblItems.sort((a,b)=>a.y-b.y);
-  const MIN_GAP=13;
-  for(let k=1;k<lblItems.length;k++){if(lblItems[k].y-lblItems[k-1].y<MIN_GAP)lblItems[k].y=lblItems[k-1].y+MIN_GAP;}
-  lblItems.forEach(it=>{svg+=`<text x="${it.x.toFixed(1)}" y="${it.y.toFixed(1)}" style="font-size:10px;font-weight:700;fill:${it.col}">${escH(it.lbl)}</text>`;});
-  distByDay.forEach(([d],i)=>{
-    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
-  });
-  const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+'</svg>';
-  // Hover: ein Punkt pro Tag, listet alle sichtbaren Level zusammen (selbes
-  // Muster wie scoreTrendChart/rateProbTimelineChart).
-  const hpts=distByDay.map(([d,dist],i)=>{
-    let dotY=null,dotCol='#fff';
-    const rows=sortedLevels.map(lvl=>{
-      const p=dist[lvl];if(p==null||p<=1)return'';
-      const col=rateProbLineColor(lvl);
-      if(dotY==null){dotY=yOf(p);dotCol=col;}
-      const lbl=lvl===0?'Hold':(lvl>0?'+':'')+lvl+'bp';
-      return`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">${escH(lbl)}</span><b>${p.toFixed(1)}%</b></div>`;
-    }).filter(Boolean).join('');
-    let dlbl;try{dlbl=new Date(d+'T00:00:00').toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});}catch(e){dlbl=d;}
-    return{fx:xOf(i)/w,fy:(dotY!=null?dotY:yOf(0))/h,col:dotCol,tip:`<div class="chv-tip-d">${escH(dlbl)}</div>${rows||'<span style="color:var(--t3)">no data</span>'}`};
-  });
-  return`<div class="cot-card" style="margin-top:12px">${head}${chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`)}</div>`;
-}
-// "Today" und alle Meeting-Pillen zeigen die Historie des ihnen
-// entsprechenden Meetings (Today = das naechste Meeting, s. die
-// "Today zeigt naechste Meeting-Odds"-Korrektur oben); ein bereits
-// realisiertes vergangenes Meeting hat keine sinnvolle "Forecast-Historie"
-// mehr (das Ergebnis steht ja schon fest) und zeigt daher keinen Verlauf.
-// Eigenstaendiges Update (nicht Teil des vollen renderRateProb()-Rebuilds),
-// damit ein Pillen-Klick den Verlaufs-Chart aktualisiert OHNE den
-// Haupt-Chart-DOM-Knoten (samt Slide-Animation) neu zu bauen.
-function updateRateProbHistCard(){
-  const D=RATE_PROB_DATA;const el=document.getElementById('rateProbHistCard');
-  if(!D||!el)return;
-  const withData=(D.meetings||[]).filter(m=>m.deltaBp!=null);
-  const todayIdx=rateProbTodayIdx(D);
-  if(rateProbFocus>=todayIdx&&withData.length){
-    const mi=rateProbFocus<=todayIdx?0:Math.min(rateProbFocus-todayIdx-1,withData.length-1);
-    el.innerHTML=rateProbMeetingHistChart(withData[mi].date,withData[mi].label);
-  }else{
-    el.innerHTML='';
-  }
-  attachChartHovers(el);
+  if(!track||!viewport)return;
+  const vw=viewport.clientWidth||300;
+  const targetX=Math.max(0,rateProbFocus*RATEPROB_SLOT-vw/2+RATEPROB_PADL);
+  track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
+  track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
 }
 function renderRateProb(){
   const el=document.getElementById('rateBody');if(!el)return;
@@ -11267,51 +11220,33 @@ function renderRateProb(){
     el.innerHTML=`<div class="cot-empty">No futures contract data for the upcoming meetings yet.</div>`;
     return;
   }
-  // Zuletzt vergangener Termin bleibt kurz sichtbar, MIT dem tatsaechlichen
-  // Ergebnis (Nutzer-Wunsch 2026-07-20: "wenn das Meeting kommt und die Rate
-  // rauskommt soll das gekennzeichnet sein... auch gezeigt werden welche
-  // Rate jetzt wirklich rauskam") - rein aus der taeglichen EFFR-Historie
-  // abgeleitet (D.pastMeeting, siehe Workflow), NIEMALS geschaetzt. Nur
-  // vorhanden, sobald genug echte Historie ueber den Termin hinaus existiert.
-  const pts=[];
-  if(D.pastMeeting&&D.pastMeeting.realizedBucket!=null)pts.push({label:D.pastMeeting.label,date:D.pastMeeting.date,realizedBucket:D.pastMeeting.realizedBucket});
-  const todayIdx=rateProbTodayIdx(D);
-  pts.push({label:'Today',date:D.asOf});
-  withData.forEach(m=>pts.push({label:m.label,date:m.date}));
-  if(rateProbFocus>=pts.length)rateProbFocus=todayIdx;
-  // "Today" zeigt jetzt NICHT mehr trivial "100% Hold" (das war blosser
-  // Fakt: der aktuelle Zins ist per Definition sicher bekannt), sondern
-  // dieselbe Verteilung wie das naechste Meeting - das IST die heute vom
-  // Markt eingepreiste Wahrscheinlichkeit fuer den naechsten Fed-Entscheid
-  // (Nutzer-Korrektur 2026-07-20: "today ist einfach nicht welche Rate
-  // aktuell ist sondern was die Wahrscheinlichkeit heute... ist fuer welche
-  // Rate beim naechsten Meeting"). Ergibt eine flache Linie zwischen Today
-  // und dem ersten Meeting, bis die Sitzung tatsaechlich stattfindet. Ein
-  // bereits realisiertes vergangenes Meeting (falls vorhanden) bekommt
-  // keinen Prozent-Wert (eigene Marker-Logik in rateProbTimelineChart,
-  // andere Referenz: sein Basispunkt-Wert bezieht sich auf den Zins VOR
-  // JENEM Termin, nicht auf heute).
-  const rawDist=rateProbDistTimeline(withData); // [dist0(trivial),dist1,dist2,...]
-  const distTimeline=pts.map((p,i)=>{
-    if(i<todayIdx)return{};
-    const k=i-todayIdx; // 0=Today,1=Meeting1,...
-    return rawDist[k===0?Math.min(1,rawDist.length-1):k]||{};
-  });
+  const{pts,distTimeline,todayIdx,pastCount}=rateProbBuildPts(D);
+  // Pillen nur fuer Today/Meetings (+ ein evtl. realisiertes vergangenes
+  // Meeting) - NICHT eine Pille pro Historientag (waeren potenziell
+  // hunderte). Die Historie ist trotzdem sichtbar: "Today" zentriert den
+  // sichtbaren Ausschnitt, die links angehaengten Historientage liegen
+  // dadurch automatisch mit im Blickfeld (Nutzer-Wunsch 2026-07-21: "Die
+  // Historie soll auch oben mit in die Grafik rein").
+  const pillIdxs=[];
+  for(let i=0;i<pastCount;i++)pillIdxs.push(i);
+  for(let i=todayIdx;i<pts.length;i++)pillIdxs.push(i);
+  if(!pillIdxs.includes(rateProbFocus))rateProbFocus=todayIdx;
   const days=daysUntil(withData[0].date);
-  const pills=pts.map((p,i)=>{
-    const isPast=i<todayIdx;
+  const pills=pillIdxs.map(i=>{
+    const p=pts[i],isPast=i<pastCount;
     const short=i===todayIdx?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
-    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
+    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}" data-idx="${i}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
   }).join('');
+  const rangeBar=timeRangeBarHtml(rateProbHistRange,'setRateProbHistRange')+timeRangeCustomHtml(rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo,'setRateProbHistRange');
   const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
   el.innerHTML=`<div class="cot-card">
       <div class="cot-card-title">Current Effective Fed Funds Rate${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: NY Fed (EFFR) · ${escH(upd)}</span></div>
       <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
       <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next FOMC meeting (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(RATE_WATCH.USD)}" target="_blank" rel="noopener" title="CME FedWatch Tool">📈 CME FedWatch Tool ↗</a></div>
       <div class="rateprob-pillbar">${pills}</div>
-      ${rateProbTimelineChart(pts,distTimeline,todayIdx)}
-    </div>
-    <div id="rateProbHistCard"></div>`;
+      <div style="padding:0 14px 4px">${rangeBar}</div>
+      ${rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount)}
+    </div>`;
   attachChartHovers(el);
   scrollRateProbTo(rateProbFocus,false);
 }
