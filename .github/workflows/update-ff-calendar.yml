@@ -434,6 +434,10 @@ jobs:
                 }
                 console.log("Investing.com: "+rows+" event row(s) scanned, "+n+" actual(s) loaded ("+out.filter(o=>o.source==="investingcom"&&o.mfg).length+" Manufacturing-PMI entries)");
                 console.log("Investing.com PMI entries: "+JSON.stringify(out.filter(o=>o.source==="investingcom"&&o.mfg)));
+                // TEMP-DEBUG (NZD-Live-Quellen-Suche): alle rohen NZD-Event-
+                // Titel von Investing.com dumpen - wird nach Auswertung
+                // wieder entfernt.
+                console.log("[TEMP-DEBUG] Investing.com NZD entries: "+JSON.stringify(out.filter(o=>o.source==="investingcom"&&o.country==="NZD")));
               }
             }catch(e){console.log("Investing.com unavailable: "+e.message);}
             fs.writeFileSync("alt_actuals.json",JSON.stringify(out));
@@ -1024,6 +1028,16 @@ jobs:
             // vom 2000er-Limit der 95-Tage-Abfrage betroffen.
             const evts=[...(recent||[]),...(wide||[]),...histEvts];
             console.log("ind_data: "+(wide?wide.length:0)+" TV events in 95d window, "+(recent?recent.length:0)+" in 45d window, hist windows: "+histN.join("/"));
+            // TEMP-DEBUG (NZD-Live-Quellen-Suche, siehe CLAUDE.md-Session):
+            // alle rohen NZD-Event-Titel dumpen, um zu sehen, wie TradingView
+            // BusinessNZ PMI/PSI und Retail Sales fuer NZD tatsaechlich
+            // betitelt (falls ueberhaupt vorhanden) - wird nach Auswertung
+            // wieder entfernt.
+            {
+              const nzdTitles=new Set();
+              evts.forEach(ev=>{if(ev.country==="NZ")nzdTitles.add(norm(ev.title||ev.indicator||""));});
+              console.log("[TEMP-DEBUG] NZD event titles seen ("+nzdTitles.size+" distinct): "+JSON.stringify([...nzdTitles]));
+            }
             // Pro (ccy|ind) ALLE Events mit Actual sammeln (nicht nur das
             // spaeteste) - das vorletzte Event liefert den verlaesslichsten
             // "Previous"-Wert (s.u.).
