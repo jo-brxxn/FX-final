@@ -2989,3 +2989,78 @@ manueller Text ohne `**` bleibt weiterhin unangetastet; das
 "Auto-generated"-Textchen ist aus dem DOM verschwunden; alle Standard-
 Kartentypen (USD/EUR/GOLD/BTC) liefern den neuen Ansatz-A-Stil; voller
 14-Tab-Regressionstest weiterhin fehlerfrei.
+
+### Auto-Zusammenfassung: keine Revisionen mehr, Trend/Lage-Eroeffnung, Non-FX-Framing (Nutzer-Wunsch 2026-07-21, direkt im Anschluss)
+
+Nutzer: "in der zusammenfassung soll nichts zu revised werten gesagt werden
+und es soll mehr trends erkannt werden und die generelle lage. Zb: With the
+unemployment rate at 4% the us labour market is stable and is on the of
+improvement with adp and nfp beating expectations recently. Avg. hourly
+earnings are supporting that trend... ca so halt und bei den non fx assets
+muss man dann halt bullish oder bearish sagen weil below oder above
+expectations halt einfach manchmal gut und manchmal schlecht ist." Direkt im
+Anschluss ergaenzt (Kontext-Indikatoren wie Bond Yields): "einfach supporting
+oder not supporting the trend or coming in mixed [...] keine woerter da zu
+viel zu verlieren."
+
+- **Keine Revisions-Erwaehnung mehr**: `sumIndInfo()` baut `value` jetzt nur
+  noch aus `src.actual` - der bisherige `revNote`-Zusatz ("(rev. from X)")
+  ist komplett raus. Der Revisions-Effekt bleibt im Score selbst weiterhin
+  sichtbar (Karte + Score-Modal, siehe Revisions-Feature oben), nur die
+  Auto-Zusammenfassung erwaehnt ihn nicht mehr.
+- **Eroeffnungs-Klausel mit "Level"-Anker** (`RUB_ANCHOR_IND`: Inflation→CPI
+  (Headline), Interest Rates→Central Bank Rate, Labour Market→Unemployment
+  Rate, Economic Growth→GDP Growth QoQ; COT Data/Risk Environment/Custom
+  ohne Anker): "With unemployment at 4.2%, the labour market picture for
+  USD is currently ..." - liefert die vom Nutzer gewuenschte "generelle
+  Lage" am Satzanfang statt direkt mit Beat/Miss zu starten. Traegt die
+  Karte NUR EINEN Indikator und der ist bereits der Anker ohne echtes
+  Ereignis (z.B. Interest Rates mit nur der Policy Rate), wird die
+  redundante Wiederholung am Satzende unterdrueckt (`skipTail`).
+- **Kontext-Indikatoren ohne Forecast (Bond Yields etc.) relativ zum
+  Gesamttrend statt einzeln beschrieben** (`famContextPhrase()`, exakt nach
+  Nutzer-Vorgabe umgesetzt): hat der Indikator eine eigene Bewegungsrichtung
+  (`verdict==='trend'`) UND die Karte selbst einen klaren Trend (`dir`
+  up/down), wird nur noch verglichen: "{Familie} supporting the trend" bzw.
+  "not supporting the trend". Ohne klaren Kartentrend oder ohne eigene
+  Richtung (Inline-Werte, reine Level-Werte): "{Familie} coming in mixed" -
+  eine einzige, knappe Kategorie fuer alle unklaren Faelle statt mehrerer
+  eigener Formulierungen ("held in line"/"ticked higher"/"ticked lower"
+  aus der Vorversion entfernt).
+- **Non-FX-Assets bekommen bullish/bearish statt above/below expectations**
+  (`isFxAsset=FX.includes(sym.id)`): das Gesamt-Verdikt (`expClause`) nutzt
+  fuer die 8 FX-Majors weiterhin "coming in above/below expectations", fuer
+  alle anderen Assets (Gold/Silber/Oel/BTC/SP500/NAS - dieselben US-
+  Makrodaten wie USD via `macroSyncRub`, aber nicht dieselbe Bedeutung fuer
+  den Asset-Preis) stattdessen "turning bullish"/"turning bearish"/"showing
+  a mixed signal"/"broadly balanced". Der zugrunde liegende Beat/Miss-
+  Mechanismus bleibt identisch (kein Asset-spezifisches Vorzeichen-Flippen -
+  das waere eine echte oekonomische Interpretation, die frei nicht
+  zuverlaessig herleitbar ist); nur die WORTWAHL fuer die Ambiguitaet passt
+  sich an, exakt wie vom Nutzer verlangt.
+- **Grammatik-Fix waehrend der Umsetzung**: der Verbinder zwischen Treiber-
+  und Kontext-Liste war zunaechst "..., while {Kontext-Liste}" - "while"
+  verlangt aber pro Element ein eigenes finites Verb ("while X is Y"),
+  waehrend `famContextPhrase()` bewusst verblose Partizipial-Phrasen liefert
+  (fuer "with" korrekt, "die Nutzer-Kontext-Vorgabe kurz halten"). Verbinder
+  auf "with" umgestellt (`— driven mainly by X, with Y`) - grammatisch
+  korrekt und stilistisch konsistent mit der Eroeffnungs-Klausel ("With X
+  at Y, ...").
+- Beispiel (USD Labour Market, live verifiziert): *"With unemployment at
+  4.2%, the labour market picture for USD is currently mixed, mixed against
+  expectations, with employment (57K vs 110K fc., 98K vs 113K fc.),
+  unemployment (4.2% vs 4.3% fc.), JOLTS openings (7.594M vs 7.3M fc.), wage
+  growth coming in mixed, and jobless claims (208K vs 217K fc.)."* Beispiel
+  Non-FX (GOLD Inflation): *"With headline CPI at 3.5%, the inflation
+  picture for GOLD is currently cooling, turning bearish — driven mainly by
+  CPI (3.5% vs 3.8% fc., 2.6% vs 2.8% fc.) and PPI (5.5% vs 6.2% fc., 4.7%
+  vs 5.2% fc.), with the PCE index coming in mixed, the 2Y yield not
+  supporting the trend, and the 10Y yield not supporting the trend."*
+- Per Playwright verifiziert: kein `revisedFrom`/"rev. from" mehr in irgendeiner
+  Zusammenfassung trotz aktiver Revisionen im Test-Datensatz, Eroeffnungs-
+  Anker erscheint korrekt bei allen vier Anker-Kartentypen, Interest-Rates-
+  Redundanz unterdrueckt, GOLD/BTC (Non-FX) zeigen bullish/bearish statt
+  above/below expectations, EUR/USD (FX) unveraendert bei above/below
+  expectations, manuelle Ueberschreibung bleibt weiterhin bis zur naechsten
+  echten Datenaenderung erhalten, `**`-Selbstheilung funktioniert weiterhin,
+  voller 14-Tab-Regressionstest fehlerfrei.

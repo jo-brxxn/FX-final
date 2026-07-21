@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3a1f0a;color:#f3c98a;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-SUMMARY-A-SELFHEAL-186</span><span id="verBannerText"> (Drei Nachbesserungen zur Auto-Zusammenfassung: 1) bereits gespeicherte Texte mit alten **-Markern heilten sich nie von selbst, weil sich an den Indikator-Werten seither nichts geaendert hatte und die Signatur daher weiter passte - syncRubSummaries() erkennt liegengebliebene ** jetzt zusaetzlich und regeneriert dann unabhaengig von der Signatur. 2) das kleine "Auto-generated..."-Hinweistextchen neben SUMMARY entfernt. 3) auf Formulierungs-Ansatz "A" umgestellt: Treiber-Familien (echte Forecast-Ueberraschung) bekommen den vollen Vergleich ("CPI (3.5% vs 3.8% fc.)"), der Rest wird nur noch beschreibend ohne Zahlen eingeordnet ("PCE held in line", "2Y yield ticked higher"))</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3c98a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f3c98a;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1a2e42;color:#9fd3f5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SKY-SUMMARY-TREND-187</span><span id="verBannerText"> (Auto-Zusammenfassung weiter verfeinert: 1) keine Erwaehnung revidierter Previous-Werte mehr, nur noch der aktuelle Wert. 2) neue Eroeffnungs-Klausel mit dem "Level"-Anker der Karte fuer die generelle Lage, z.B. "With unemployment at 4.2%, the labour market picture is currently improving...". 3) Kontext-Indikatoren ohne Forecast (z.B. Bond Yields) werden jetzt relativ zum Gesamttrend eingeordnet ("supporting"/"not supporting the trend"/"coming in mixed") statt einzeln beschrieben. 4) Non-FX-Assets (Gold/Oel/BTC/Indizes) nutzen jetzt bullish/bearish statt above/below expectations, da dieselbe Ueberraschung fuer sie mal gut, mal schlecht ist)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6719,30 +6719,46 @@ function recomputeRiskCorr(){
 }
 // ── AUTOMATISCH GENERIERTE KARTEN-ZUSAMMENFASSUNG (Nutzer-Wunsch 2026-07-21)
 // Ersetzt das bisherige rein manuelle SUMMARY-Feld: baut aus den
-// tatsaechlichen Indikator-Werten (Bias/Actual/Forecast/Previous/Revision)
-// einen kurzen, natuerlichsprachigen Absatz. Bewusst KEIN Markdown-Bold-
-// Markup im Text (frueherer Versuch, per Nutzer-Feedback 2026-07-21
-// zurueckgebaut - die Textarea kann **-Marker nicht als <b> rendern, sie
-// blieben dort als stoerende Rohzeichen sichtbar) - reiner Klartext.
+// tatsaechlichen Indikator-Werten (Bias/Actual/Forecast/Previous) einen
+// kurzen, natuerlichsprachigen Absatz. Bewusst KEIN Markdown-Bold-Markup im
+// Text (frueherer Versuch, per Nutzer-Feedback 2026-07-21 zurueckgebaut -
+// die Textarea kann **-Marker nicht als <b> rendern, sie blieben dort als
+// stoerende Rohzeichen sichtbar) - reiner Klartext. Ebenfalls bewusst KEIN
+// Hinweis auf revidierte Previous-Werte (Nutzer-Wunsch 2026-07-21: "es soll
+// nichts zu revised werten gesagt werden") - die Zusammenfassung nennt immer
+// nur den aktuellen Wert.
 // Reine Template-Engine, KEIN KI-Aufruf - muss auch laufen, wenn die Seite
 // irgendwann ohne mich betrieben wird. Generisch je Indikator (nicht
 // rubrik-namensgetrieben), deckt daher automatisch auch Custom-Karten ab.
 //
 // Formulierungs-Ansatz "A" (Nutzer-Wahl 2026-07-21, nach kurzem Test von
-// Ansatz "C" doch auf die vollere Variante umgestellt): statt Rohdaten
-// einfach aneinanderzureihen formuliert summarizeRub() eine THEMEN-Aussage
-// (Richtung + Erwartungsvergleich, z.B. "inflation is currently cooling,
-// coming in below expectations") und nennt dann die tatsaechlichen TREIBER
-// (Familien mit einer echten Forecast-Ueberraschung) MIT vollem Forecast-
-// Vergleich ("CPI (3.5% vs 3.8% fc.)"), waehrend der Rest nur beschreibend
-// OHNE Zahlen eingeordnet wird ("PCE held in line", "2Y yield ticked
-// higher") - Werte bleiben dadurch den wirklich relevanten Ausreissern
-// vorbehalten. indFamily() gruppiert Headline/Core, NFP/ADP usw. zusammen
-// ("es muss nicht stehen welcher Indikator von der Gruppe es ist").
-// "driven mainly by X, while Y" nur wenn die Treiber tatsaechlich eine
-// MINDERHEIT der Familien sind - sind es (fast) alle, waere "mainly"
-// irrefuehrend, dann eine schlichte Liste ohne Gewichtung (weiterhin jede
-// Familie kurz erwaehnt, Treiber weiterhin mit Forecast-Vergleich).
+// Ansatz "C" doch auf die vollere Variante umgestellt), mit "mehr Trend +
+// generelle Lage" (Nutzer-Wunsch 2026-07-21, mit Beispielsatz): startet mit
+// einer Eroeffnungs-Klausel des Karten-"Level"-Ankers ("With unemployment at
+// 4.2%, ..."), dann eine THEMEN-Aussage (Richtung + Erwartungsvergleich,
+// z.B. "the labour market picture is currently improving, coming in above
+// expectations") und nennt die tatsaechlichen TREIBER (Familien mit einer
+// echten Forecast-Ueberraschung) MIT vollem Forecast-Vergleich ("CPI (3.5%
+// vs 3.8% fc.)"), waehrend der Rest nur relativ zum Gesamttrend eingeordnet
+// wird ("the 2Y yield supporting/not supporting the trend", "PCE coming in
+// mixed" - Nutzer-Wunsch: "keine Woerter da zu viel verlieren"). indFamily()
+// gruppiert Headline/Core, NFP/ADP usw. zusammen ("es muss nicht stehen
+// welcher Indikator von der Gruppe es ist"). "driven mainly by X, with Y"
+// nur wenn die Treiber tatsaechlich eine MINDERHEIT der Familien sind - sind
+// es (fast) alle, waere "mainly" irrefuehrend, dann eine schlichte Liste.
+// Bei einer einzelnen, bereits im Anker gezeigten Familie ohne Ereignis
+// (z.B. Interest Rates mit nur der Policy Rate) wird die Wiederholung
+// unterdrueckt.
+//
+// "above/below expectations" ist fuer eine WAEHRUNGSKARTE eine konsistente
+// Aussage, fuer Non-FX-Assets (Gold/Oel/BTC/Aktienindizes) aber ambivalent
+// (Nutzer-Wunsch 2026-07-21: "bei non fx assets muss man bullish oder
+// bearish sagen weil above/below expectations manchmal gut und manchmal
+// schlecht ist") - `isFxAsset=FX.includes(sym.id)` schaltet auf
+// bullish/bearish/mixed/balanced um, sobald die Karte NICHT zu einer der 8
+// FX-Majors gehoert (Non-FX-Assets zeigen dieselben US-Makrodaten wie USD,
+// siehe `macroSyncRub`, aber die Bedeutung fuer den Asset-Preis ist nicht
+// dieselbe wie fuer die Waehrung selbst).
 //
 // Bleibt weiterhin manuell ueberschreibbar (Nutzer-Wunsch), aber nur bis zur
 // naechsten ECHTEN Aenderung: rub._summarySig speichert einen Fingerprint
@@ -6811,6 +6827,8 @@ function sumIndSource(sym,ind){
 }
 // Strukturierte Info pro Indikator (statt eines fertigen Satzfragments) -
 // summarizeRub() gruppiert das nach Familie und leitet Richtung/Verdikt ab.
+// Bewusst OHNE Revisions-Hinweis (Nutzer-Wunsch 2026-07-21: "es soll nichts
+// zu revised werten gesagt werden") - `value` ist immer der aktuelle Wert.
 function sumIndInfo(sym,ind){
   const base=stripPeriodSuffix(ind.name).base;
   if(SCORE_ZERO.has(base))return null;
@@ -6826,8 +6844,7 @@ function sumIndInfo(sym,ind){
   }
   const lowerBetter=LOWER_IS_BETTER_RE.test(base);
   const a=parseNumLike(src.actual),f=src.forecast!=null&&src.forecast!==''?parseNumLike(src.forecast):null,p=src.previous!=null&&src.previous!==''?parseNumLike(src.previous):null;
-  const revNote=src.revisedFrom?` (rev. from ${src.revisedFrom})`:'';
-  const value=`${src.actual}${revNote}`;
+  const value=`${src.actual}`;
   if(f!=null&&a!=null){
     if(Math.abs(f)>1e-9&&Math.abs((a-f)/f)<0.01)return{family,verdict:'inline',dir:'flat',value,fcValue:src.forecast};
     const good=lowerBetter?a<f:a>f;
@@ -6848,15 +6865,26 @@ function famDriverPhrase(fam,members){
   const parts=members.map(m=>m.fcValue!=null?`${m.value} vs ${m.fcValue} fc.`:m.value).filter(Boolean);
   return parts.length?`${fam} (${parts.join(', ')})`:fam;
 }
-// Kontext-Eintrag OHNE Zahlen, rein beschreibend (Option A: Werte bleiben
-// den echten Treibern vorbehalten, der Rest wird nur kurz eingeordnet).
-function famContextPhrase(fam,members){
+// Kontext-Eintrag OHNE Zahlen, rein beschreibend relativ zum Gesamttrend der
+// Karte (Nutzer-Wunsch 2026-07-21: "bei yields sagt man einfach supporting
+// oder not supporting the trend or coming in mixed, keine Woerter da zu viel
+// verlieren") - hat ein Kontext-Indikator (z.B. Bond Yields ohne Forecast)
+// eine eigene Bewegungsrichtung, wird sie nur noch gegen die Kartenrichtung
+// gespiegelt statt selbst beschrieben.
+function famContextPhrase(fam,members,overallDir){
   if(members.every(m=>m.verdict==='bias'))return`${fam} tilted ${members[0].dir==='up'?'bullish':'bearish'}`;
-  if(members.every(m=>m.verdict==='inline'))return`${fam} held in line`;
   const trendM=members.find(m=>m.verdict==='trend');
-  if(trendM)return`${fam} ticked ${trendM.dir==='up'?'higher':'lower'}`;
-  return`${fam} held steady`;
+  if(trendM&&(overallDir==='up'||overallDir==='down'))return`${fam} ${trendM.dir===overallDir?'supporting':'not supporting'} the trend`;
+  return`${fam} coming in mixed`;
 }
+// Fuer die Eroeffnungs-Klausel "With X at Y, ..." - EIN reprаesentativer
+// "Level"-Indikator je Kartentyp (Nutzer-Wunsch: "die generelle Lage" statt
+// nur Beat/Miss-Aufzaehlung). Karten ohne sinnvollen Anker (COT/Risk
+// Environment/Custom) bleiben ohne Eroeffnungs-Klausel.
+const RUB_ANCHOR_IND={
+  'Inflation':'CPI (Headline)','Interest Rates':'Central Bank Rate',
+  'Labour Market':'Unemployment Rate','Economic Growth':'GDP Growth QoQ',
+};
 function summarizeRub(sym,rub){
   const infos=(rub.indicators||[]).map(ind=>sumIndInfo(sym,ind)).filter(Boolean);
   const topic=(rub.name||'this card').toLowerCase();
@@ -6874,13 +6902,25 @@ function summarizeRub(sym,rub){
   const misses=infos.filter(i=>i.verdict==='miss').length;
   const inlines=infos.filter(i=>i.verdict==='inline').length;
   const fcTotal=beats+misses+inlines;
+  // "Above/below expectations" ist fuer eine Waehrungskarte eine sinnvolle,
+  // konsistente Aussage - fuer Non-FX-Assets (Gold/Oel/BTC/Aktienindizes)
+  // ist dieselbe Ueberraschung aber mal gut, mal schlecht (Nutzer-Wunsch
+  // 2026-07-21: "bei non fx assets muss man bullish oder bearish sagen").
+  const isFxAsset=FX.includes(sym.id);
   let expClause='';
   if(fcTotal>0){
-    const acrossBoard=fcTotal>1&&(beats===fcTotal||misses===fcTotal)?' across the board':'';
-    if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', mixed against expectations';
-    else if(beats>misses)expClause=`, coming in above expectations${acrossBoard}`;
-    else if(misses>beats)expClause=`, coming in below expectations${acrossBoard}`;
-    else expClause=', broadly in line with expectations';
+    if(isFxAsset){
+      const acrossBoard=fcTotal>1&&(beats===fcTotal||misses===fcTotal)?' across the board':'';
+      if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', mixed against expectations';
+      else if(beats>misses)expClause=`, coming in above expectations${acrossBoard}`;
+      else if(misses>beats)expClause=`, coming in below expectations${acrossBoard}`;
+      else expClause=', broadly in line with expectations';
+    }else{
+      if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', showing a mixed signal';
+      else if(beats>misses)expClause=', turning bullish';
+      else if(misses>beats)expClause=', turning bearish';
+      else expClause=', broadly balanced';
+    }
   }
   // Richtung: primaer aus dem tatsaechlichen Beat/Miss-Muster der Karte (das
   // spiegelt die Rohdaten direkter als rub.bias, das erst ab einer festen
@@ -6897,6 +6937,17 @@ function summarizeRub(sym,rub){
     dir=(rub.bias==='bull'||rub.bias==='sbull')?'up':(rub.bias==='bear'||rub.bias==='sbear')?'down':'flat';
   }
   const trendWord=rubTrendWord(rub,dir);
+  // Eroeffnungs-Klausel mit dem "Level"-Anker-Indikator der Karte, damit die
+  // Zusammenfassung mit der generellen Lage beginnt statt direkt mit
+  // Beat/Miss-Aufzaehlung (Nutzer-Beispiel: "With the unemployment rate at
+  // 4% the US labour market is stable...").
+  let anchorClause='',anchorFamily=null;
+  const anchorBase=RUB_ANCHOR_IND[rub.name];
+  if(anchorBase){
+    const aInd=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===anchorBase);
+    const aInfo=aInd&&sumIndInfo(sym,aInd);
+    if(aInfo&&aInfo.value){anchorClause=`With ${sumPhrase(aInd)} at ${aInfo.value}, `;anchorFamily=indFamily(aInd);}
+  }
   // Nach Familie gruppieren; Eintraege mit einer echten Forecast-Ueberraschung
   // (beat/miss) werden als "Treiber" mit vollem Forecast-Vergleich genannt,
   // der Rest nur beschreibend/ohne Zahlen als Kontext (Nutzer-Wunsch: pro
@@ -6910,17 +6961,24 @@ function summarizeRub(sym,rub){
     if(members.some(m=>m.verdict==='beat'||m.verdict==='miss'))drivers.push(fam);
     else context.push(fam);
   });
-  let out=`The ${topic} picture for ${sym.id} is currently ${trendWord}${expClause}`;
+  const subj=anchorClause?`the ${topic} picture`:`The ${topic} picture`;
+  let out=`${anchorClause}${subj} for ${sym.id} is currently ${trendWord}${expClause}`;
   // "driven mainly by" liest sich nur sinnvoll, wenn die Treiber wirklich
   // eine MINDERHEIT der Familien sind (z.B. 2 von 5 bei der Inflation-Karte).
   // Haben fast alle Familien eine echte Forecast-Ueberraschung (haeufig bei
   // Labour/Growth an einem vollen Release-Tag), waere "mainly" irrefuehrend -
   // dann eine schlichte Liste (weiterhin Treiber mit Forecast-Vergleich,
   // Kontext beschreibend), ohne falsche Gewichtung.
-  if(drivers.length&&context.length&&drivers.length<=Math.ceil(famOrder.length/2)){
-    out+=` — driven mainly by ${joinFrags(drivers.map(f=>famDriverPhrase(f,famMap[f])))}, while ${joinFrags(context.map(f=>famContextPhrase(f,famMap[f])))}`;
+  // Card mit nur EINEM Indikator, der bereits im Eroeffnungs-Anker steht und
+  // nichts Ereignisreiches beitraegt (z.B. Interest Rates mit nur der Policy
+  // Rate) - keine redundante Wiederholung desselben Werts anhaengen.
+  const skipTail=famOrder.length===1&&famOrder[0]===anchorFamily&&!drivers.length;
+  if(skipTail){
+    // nichts anzuhaengen - der Anker hat schon alles gesagt
+  }else if(drivers.length&&context.length&&drivers.length<=Math.ceil(famOrder.length/2)){
+    out+=` — driven mainly by ${joinFrags(drivers.map(f=>famDriverPhrase(f,famMap[f])))}, with ${joinFrags(context.map(f=>famContextPhrase(f,famMap[f],dir)))}`;
   }else{
-    const all=famOrder.map(f=>drivers.includes(f)?famDriverPhrase(f,famMap[f]):famContextPhrase(f,famMap[f]));
+    const all=famOrder.map(f=>drivers.includes(f)?famDriverPhrase(f,famMap[f]):famContextPhrase(f,famMap[f],dir));
     out+=`, with ${joinFrags(all)}`;
   }
   return out+'.';
