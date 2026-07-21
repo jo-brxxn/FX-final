@@ -1250,7 +1250,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1a2e42;color:#9fd3f5;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SKY-SUMMARY-TREND-187</span><span id="verBannerText"> (Auto-Zusammenfassung weiter verfeinert: 1) keine Erwaehnung revidierter Previous-Werte mehr, nur noch der aktuelle Wert. 2) neue Eroeffnungs-Klausel mit dem "Level"-Anker der Karte fuer die generelle Lage, z.B. "With unemployment at 4.2%, the labour market picture is currently improving...". 3) Kontext-Indikatoren ohne Forecast (z.B. Bond Yields) werden jetzt relativ zum Gesamttrend eingeordnet ("supporting"/"not supporting the trend"/"coming in mixed") statt einzeln beschrieben. 4) Non-FX-Assets (Gold/Oel/BTC/Indizes) nutzen jetzt bullish/bearish statt above/below expectations, da dieselbe Ueberraschung fuer sie mal gut, mal schlecht ist)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#9fd3f5;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3a1226;color:#f0a8cc;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ROSE-SUMMARY-DEDUP-SELFHEAL-188</span><span id="verBannerText"> (Zwei Bugs im vorigen Commit gefixt: 1) "is currently mixed, mixed against expectations" - unnoetige Wort-Dopplung, da Richtungswort UND Erwartungs-Verdikt unabhaengig voneinander auf "mixed" kommen konnten. Jetzt wird das Erwartungs-Verdikt bei dir==='mixed' komplett weggelassen, das Richtungswort sagt es schon. 2) bereits gespeicherte Texte mit alten "(rev. from X)"-Vermerken heilten sich nie, weil sich an den Werten seither nichts geaendert hatte und die Signatur weiter passte - Selbstheilungs-Check in syncRubSummaries() um "rev. from" erweitert (dasselbe Prinzip wie der **-Selbstheilungs-Fix zuvor). Kompletter Scan ueber alle Assets bestaetigt: 0 verbleibende ** oder rev.-from-Reste)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8cc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8cc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6902,26 +6902,7 @@ function summarizeRub(sym,rub){
   const misses=infos.filter(i=>i.verdict==='miss').length;
   const inlines=infos.filter(i=>i.verdict==='inline').length;
   const fcTotal=beats+misses+inlines;
-  // "Above/below expectations" ist fuer eine Waehrungskarte eine sinnvolle,
-  // konsistente Aussage - fuer Non-FX-Assets (Gold/Oel/BTC/Aktienindizes)
-  // ist dieselbe Ueberraschung aber mal gut, mal schlecht (Nutzer-Wunsch
-  // 2026-07-21: "bei non fx assets muss man bullish oder bearish sagen").
   const isFxAsset=FX.includes(sym.id);
-  let expClause='';
-  if(fcTotal>0){
-    if(isFxAsset){
-      const acrossBoard=fcTotal>1&&(beats===fcTotal||misses===fcTotal)?' across the board':'';
-      if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', mixed against expectations';
-      else if(beats>misses)expClause=`, coming in above expectations${acrossBoard}`;
-      else if(misses>beats)expClause=`, coming in below expectations${acrossBoard}`;
-      else expClause=', broadly in line with expectations';
-    }else{
-      if(beats>0&&misses>0&&Math.abs(beats-misses)<=1)expClause=', showing a mixed signal';
-      else if(beats>misses)expClause=', turning bullish';
-      else if(misses>beats)expClause=', turning bearish';
-      else expClause=', broadly balanced';
-    }
-  }
   // Richtung: primaer aus dem tatsaechlichen Beat/Miss-Muster der Karte (das
   // spiegelt die Rohdaten direkter als rub.bias, das erst ab einer festen
   // Schwelle kippt und daher hinterherhaengen kann) - nur wenn keine
@@ -6937,6 +6918,27 @@ function summarizeRub(sym,rub){
     dir=(rub.bias==='bull'||rub.bias==='sbull')?'up':(rub.bias==='bear'||rub.bias==='sbear')?'down':'flat';
   }
   const trendWord=rubTrendWord(rub,dir);
+  // "Above/below expectations" ist fuer eine Waehrungskarte eine sinnvolle,
+  // konsistente Aussage - fuer Non-FX-Assets (Gold/Oel/BTC/Aktienindizes)
+  // ist dieselbe Ueberraschung aber mal gut, mal schlecht (Nutzer-Wunsch
+  // 2026-07-21: "bei non fx assets muss man bullish oder bearish sagen").
+  // Bei dir==='mixed' sagt trendWord (RUB_TREND_WORDS.mixed) bereits
+  // "mixed" - kein zusaetzliches Verdikt anhaengen, sonst doppelt sich das
+  // Wort ("is currently mixed, mixed against expectations" - Nutzer-Fund
+  // 2026-07-21, unnoetige Dopplung).
+  let expClause='';
+  if(fcTotal>0&&dir!=='mixed'){
+    const acrossBoard=fcTotal>1&&(beats===fcTotal||misses===fcTotal)?' across the board':'';
+    if(isFxAsset){
+      if(dir==='up')expClause=`, coming in above expectations${acrossBoard}`;
+      else if(dir==='down')expClause=`, coming in below expectations${acrossBoard}`;
+      else expClause=', broadly in line with expectations';
+    }else{
+      if(dir==='up')expClause=', turning bullish';
+      else if(dir==='down')expClause=', turning bearish';
+      else expClause=', broadly balanced';
+    }
+  }
   // Eroeffnungs-Klausel mit dem "Level"-Anker-Indikator der Karte, damit die
   // Zusammenfassung mit der generellen Lage beginnt statt direkt mit
   // Beat/Miss-Aufzaehlung (Nutzer-Beispiel: "With the unemployment rate at
@@ -6996,11 +6998,12 @@ function syncRubSummaries(){
     (sym.rubrics||[]).forEach(rub=>{
       const sig=rubSummarySig(rub);
       // Selbstheilung: ein bereits generierter/synchronisierter Text aus
-      // einer frueheren Engine-Version (z.B. mit **fett**-Markern aus V183)
-      // haette ohne diesen Zusatz-Check NIE mehr geheilt, weil sich an den
-      // zugrunde liegenden Indikator-Werten seither nichts geaendert hat und
-      // die Signatur daher weiterhin passt.
-      const stale=rub.summary&&rub.summary.indexOf('**')!==-1;
+      // einer frueheren Engine-Version (z.B. mit **fett**-Markern aus V183
+      // oder "(rev. from X)"-Vermerken aus einer Version vor dem
+      // Revisions-Entfernen 2026-07-21) haette ohne diesen Zusatz-Check NIE
+      // mehr geheilt, weil sich an den zugrunde liegenden Indikator-Werten
+      // seither nichts geaendert hat und die Signatur daher weiterhin passt.
+      const stale=rub.summary&&(rub.summary.indexOf('**')!==-1||rub.summary.indexOf('rev. from')!==-1);
       if(rub._summarySig!==sig||stale){
         rub.summary=summarizeRub(sym,rub);
         rub._summarySig=sig;

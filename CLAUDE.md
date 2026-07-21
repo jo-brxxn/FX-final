@@ -3064,3 +3064,49 @@ viel zu verlieren."
   expectations, manuelle Ueberschreibung bleibt weiterhin bis zur naechsten
   echten Datenaenderung erhalten, `**`-Selbstheilung funktioniert weiterhin,
   voller 14-Tab-Regressionstest fehlerfrei.
+
+### Auto-Zusammenfassung: "mixed, mixed"-Dopplung + Revisions-Reste nicht selbstheilend (Bugreport 2026-07-21, direkt im Anschluss)
+
+Nutzer: "ok also da steht teilweise ... is currently mixed, mixed agains
+expectations. das ist eine unnötige dopplung. Außerdem haben die revised
+werte dort nichts verloren. Ich glaube du hast ein paar meiner nachrichten
+übersehen check das nochmal ob du alles berücksichtigt hast" - zwei
+konkrete Bugs im direkt vorangegangenen Commit, kein Feature-Wunsch mehr
+uebersehen (nochmal gegen alle vorherigen Nachrichten dieser Session
+geprueft - `RUB_ANCHOR_IND`/Non-FX-Framing/Kontext-"supporting"-Phrasen/
+kein Revisions-Erwaehnen sind alle korrekt umgesetzt, nur diese zwei Bugs
+waren neu):
+
+- **"mixed, mixed against expectations"-Dopplung**: `dir` (Richtungswort,
+  aus `RUB_TREND_WORDS`) UND `expClause` (Erwartungs-Verdikt) wurden
+  unabhaengig voneinander aus denselben Beat/Miss-Zahlen berechnet - beide
+  konnten unabhaengig auf "mixed" kommen ("is currently mixed" + ", mixed
+  against expectations"). Fix: `dir` wird jetzt VOR `expClause` berechnet,
+  `expClause` wird bei `dir==='mixed'` komplett weggelassen (das
+  Richtungswort sagt "mixed" bereits) - der Rest der `expClause`-Logik
+  (above/below/in line bzw. bullish/bearish/balanced) leitet sich jetzt
+  direkt aus `dir` ab statt die Beat/Miss-Vergleiche ein zweites Mal separat
+  auszuwerten (weniger Redundanz, kann nicht mehr auseinanderlaufen).
+- **Revidierte Werte waren technisch schon aus der Generierungs-Logik raus
+  (`sumIndInfo()` baut `value` seit dem vorigen Commit nur noch aus
+  `src.actual`), aber bereits gespeicherte/synchronisierte Texte aus VOR
+  diesem Commit heilten sich nie** - exakt dieselbe Bug-Klasse wie beim
+  `**`-Selbstheilungs-Fix zuvor: `syncRubSummaries()`s Signatur-Vergleich
+  sieht keine Aenderung, wenn sich an den zugrunde liegenden Werten seither
+  nichts geaendert hat, also blieb ein alter "(rev. from X)"-Vermerk stehen.
+  Fix: derselbe Selbstheilungs-Check um `rub.summary.indexOf('rev. from')`
+  erweitert (neben `**`) - erzwingt eine Regeneration unabhaengig von der
+  Signatur, sobald ein liegengebliebener Revisions-Vermerk gefunden wird.
+- Per Playwright verifiziert: kein `/mixed,\s*mixed/i`-Treffer mehr in
+  irgendeiner Zusammenfassung ueber USD/EUR/GOLD/BTC; ein synthetisch
+  injizierter Alt-Text mit "(rev. from X)" (gleiche Signatur wie aktuelle
+  Daten) heilt beim naechsten `recomputeAuto()`; kompletter Scan ueber
+  **alle** Symbole/Rubriken (nicht nur die vier Stichproben) bestaetigt
+  0 verbleibende `**`- oder `rev. from`-Reste; voller 14-Tab-
+  Regressionstest weiterhin fehlerfrei.
+- **Merksatz (Ergaenzung zum bereits bestehenden `**`-Merksatz):** JEDE
+  Aenderung an der TEXT-FORM von `summarizeRub()` (nicht nur am Bias/Wert
+  selbst) braucht einen Selbstheilungs-Check in `syncRubSummaries()` fuer
+  das alte Muster, das entfernt wurde - die Signatur allein (basiert auf
+  Rohdaten, nicht auf Text-Format) erkennt reine Formatierungs-/Wortwahl-
+  Aenderungen nie von selbst.
