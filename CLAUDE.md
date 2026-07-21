@@ -2607,3 +2607,31 @@ History (🕰️) fuer denselben Tag/Release mit rotem ▼ (-1).
   namensbasierte Klassifikationsregel (Regex, Lookup-Tabelle) eingespeist
   werden - eine Regex-Erweiterung auf den gemeinsamen Wortstamm ist meist
   robuster als das Umsortieren, welches Namensfeld wo verwendet wird.
+
+### "Risk Environment"-Kartenbias brauchte eine eigene, niedrigere Schwelle (Nutzer-Wunsch 2026-07-21)
+
+Nutzer: "Der Kartenbias von Risk Correlation soll schon bei -1 oder 1
+bearish bzw. Bullish werden" - das Karten-Badge der "Risk Environment"-
+Karte (2 Indikatoren: Risk Correlation + Geopolitics) blieb praktisch
+immer "Neutral", selbst wenn der Risk-Sentiment-Regler auf "Full" stand
+und "Risk Correlation" eindeutig bullish/bearish war.
+
+- **Ursache:** `recomputeRubricAutoBias()` nutzte fuer ALLE Karten dieselbe
+  App-weite Schwelle (Kartensumme ±2 -> bull/bear). "Risk Correlation" ist
+  aber HALBGEWICHT (`indIsHalfWeight`, w=0,5) und meist der EINZIGE aktive
+  Treiber der Karte (Geopolitics bleibt fast immer manuell neutral) - selbst
+  bei staerkster Reglerstufe ("Full", sbull/sbear) traegt Risk Correlation
+  nur `biasScore(±2)×0,5=±1` zur Kartensumme bei. Die ±2-Schwelle konnte
+  dadurch strukturell NIE ausloesen.
+- **Fix:** neue `RUB_AUTO_BIAS_THRESHOLD`-Lookup-Tabelle (Default weiterhin
+  2, `'Risk Environment'` -> 1) in `recomputeRubricAutoBias()` - exakt
+  dasselbe Prinzip wie der bereits bestehende Sonderfall fuer "COT Data"
+  (das hat sogar eine eigene, komplett separate Bias-Logik, weil es nur
+  einen einzigen score-treibenden Indikator hat und die normale Schwelle
+  dort ebenfalls nie ausloesen wuerde).
+- Per Playwright verifiziert (`setRiskEnvLevel(0/1/2)` durchgeklickt fuer
+  USD, `riskEnvDirOf('USD')==='bullish'`): Regler auf "None" -> Score 0,
+  Badge neutral (unveraendert). "Half" -> Score 0,5, Badge bleibt neutral
+  (0,5 < 1, korrekt - der Nutzer sagte explizit "-1 oder 1", nicht 0,5).
+  "Full" -> Score 1, Badge jetzt korrekt bullish (vorher faelschlich
+  weiterhin neutral). Voller Tab-Regressionstest weiterhin fehlerfrei.

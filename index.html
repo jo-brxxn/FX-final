@@ -1248,7 +1248,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3a1f1f;color:#f0b8b8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RED-CLAIMANTFIX-177</span><span id="verBannerText"> (Nutzer-Bugreport per Screenshot: GBP "Claimant Count Change" zeigte im Score-Modal korrekt bullish (+1), aber fuer denselben Tag/Release in der Asset-History rot/bearish (-1). Ursache: LOWER_IS_BETTER_RE matchte nur "claims", nicht "claimant" - der interne kanonische Indikator-Name ("Unemployment Claims") matchte zwar, aber GBPs waehrungsspezifischer Anzeigename ("Claimant Count Change"), den die History-Karte fuer die Bias-Klassifikation nutzt, nicht. Fix: Regex auf den Wortstamm "claim" verkuerzt (Praefix-Match deckt beide Varianten ab) - alle IND_DISPLAY_NAMES auf Regex-Konsistenz zwischen kanonischem und Anzeigenamen durchgescannt, keine weiteren Treffer)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RISKENVTHRESH-178</span><span id="verBannerText"> (Nutzer-Wunsch: das Kartenbias von "Risk Environment" soll schon bei Score ±1 bullish/bearish werden, nicht erst bei der App-weiten ±2-Schwelle. Ursache: "Risk Correlation" ist Halbgewicht (max. ±1 Beitrag selbst beim Regler auf "Full") und meist der einzige aktive Treiber der Karte (Geopolitics bleibt oft neutral) - die ±2-Schwelle konnte dadurch praktisch nie ausloesen. Neue, rubrik-spezifische Schwelle (±1) fuer "Risk Environment", analog zum bereits bestehenden Sonderfall bei COT Data)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6646,13 +6646,24 @@ function rubAutoBiasNeeded(sym,rub){
   }
   return true;
 }
+// "Risk Environment" bekommt wie COT Data eine eigene, niedrigere Schwelle
+// (Nutzer-Wunsch 2026-07-21: "Der Kartenbias von Risk Correlation soll
+// schon bei -1 oder 1 bearish bzw. bullish werden") - die normale +/-2-
+// Schwelle passt hier nicht: "Risk Correlation" ist HALBGEWICHT (w=0.5,
+// siehe indIsHalfWeight) und meist der einzige score-treibende Indikator
+// der Karte (Geopolitics bleibt oft manuell neutral). Selbst beim Regler
+// auf "Full" (staerkste Stufe, sbull/sbear) traegt Risk Correlation nur
+// +/-1 zur Karten-Summe bei - die +/-2-Schwelle koennte dadurch nie
+// ausloesen, das Karten-Badge blieb faelschlich immer "Neutral".
+const RUB_AUTO_BIAS_THRESHOLD={[MACRO_NAME]:1};
 function recomputeRubricAutoBias(){
   syms.forEach(sym=>{
     (sym.rubrics||[]).forEach(rub=>{
       if(!rub.indicators||!rubAutoBiasNeeded(sym,rub))return;
       const sc=rubScore(rub);
       if(rub._biasScore!==sc){
-        rub.bias=sc<=-2?'bear':sc>=2?'bull':'neu';
+        const t=RUB_AUTO_BIAS_THRESHOLD[rub.name]||2;
+        rub.bias=sc<=-t?'bear':sc>=t?'bull':'neu';
         rub._biasScore=sc;
       }
     });
