@@ -1248,7 +1248,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1f3a2e;color:#a7f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RISKENVTHRESH-178</span><span id="verBannerText"> (Nutzer-Wunsch: das Kartenbias von "Risk Environment" soll schon bei Score ±1 bullish/bearish werden, nicht erst bei der App-weiten ±2-Schwelle. Ursache: "Risk Correlation" ist Halbgewicht (max. ±1 Beitrag selbst beim Regler auf "Full") und meist der einzige aktive Treiber der Karte (Geopolitics bleibt oft neutral) - die ±2-Schwelle konnte dadurch praktisch nie ausloesen. Neue, rubrik-spezifische Schwelle (±1) fuer "Risk Environment", analog zum bereits bestehenden Sonderfall bei COT Data)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#16324a;color:#a5d8f3;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-REVISIONS-179</span><span id="verBannerText"> (Neues Feature, Nutzer-Wunsch: REVIDIERTE Previous-Werte. Der stuendliche Workflow erkennt jetzt beim Erscheinen eines neuen Release, ob dessen "previous" vom urspruenglich gemeldeten Actual des Vor-Release abweicht (Vergleich ueber den prevOut-Vorlauf, keine Schaetzung) und markiert das als revisedFrom in ind_data.json. Die Indikator-Karte zeigt das Previous dann als "144K (rev. from 147K)" und faerbt es nach Revisions-Richtung (LOWER_IS_BETTER-Logik wie ueberall). Score-Wirkung: halbes Basisgewicht additiv (±0,5 voll, ±0,25 Core-Paar) - Revision ist echte, aber schwaechere Info als der Headline-Beat/Miss; gilt nur bis zum naechsten Release. Im Score-Modal als eigene "prev revised"-Zeile offengelegt)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a5f3fc;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2147,10 +2147,22 @@ const NO_TREND_RUBS=new Set(['Interest Rates']);
 // damit die Aufschluesselung im Score-Modal nie von der echten Rechnung
 // abweichen kann. Rueckgabe: {w, impAdd, base, trend, total, zero, noTrend}.
 function indScoreParts(ind,rub){
-  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,impAdd:0,base:0,trend:0,total:0,zero:true,noTrend:false};
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,impAdd:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false};
   const w=indBaseWeight(ind,rub);
   const impAdd=ind.imp?0.5:0;
   const base=biasScore(ind.bias)*(w+impAdd);
+  // Revisions-Anteil (Nutzer-Wunsch 2026-07-21): wurde das Previous dieses
+  // Release gegenueber dem urspruenglich gemeldeten Vor-Actual revidiert
+  // (ind.revBias, gesetzt in applyIndDataFeed aus dem Workflow-Feld
+  // revisedFrom), zaehlt die Revisions-RICHTUNG mit dem HALBEN Basisgewicht
+  // additiv dazu: volles Gewicht ±0,5, Core-Paar/Halbgewicht ±0,25.
+  // Begruendung halbes Gewicht: eine Revision ist echte, aber schwaechere
+  // Information als der Headline-Beat/Miss (rueckwaertsgerichtet, teils
+  // eingepreist) - konsistent zur bestehenden Halbgewicht-Systematik
+  // (Step-Signal ohne Forecast 0,5, kleine COT-WoW-Bewegung 0,5). Gilt nur
+  // fuer den aktuellen Release-Zyklus (verschwindet mit dem naechsten
+  // Release automatisch, da der Feed revisedFrom dann nicht mehr traegt).
+  const rev=ind.revBias?biasScore(ind.revBias)*0.5*w:0;
   // Bond-Renditen bleiben ohne Trend-Anteil, auch nachdem sie (Nutzer-Wunsch
   // 2026-07-20) aus der Interest-Rates- in die Inflation-Karte umgezogen
   // sind - die Nutzer-Entscheidung "kein Trend-Bonus fuer Renditen" bezog
@@ -2158,7 +2170,7 @@ function indScoreParts(ind,rub){
   // gerade angezeigt werden. Deshalb zusaetzlich zur Rubrik-Pruefung direkt
   // ueber BOND_HALF_PT geprueft (indikator-spezifisch, kartenunabhaengig).
   const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name))||BOND_HALF_PT.has(ind.name);
-  if(noTrend)return{w,impAdd,base,trend:0,total:base,zero:false,noTrend:true};
+  if(noTrend)return{w,impAdd,base,trend:0,rev:0,total:base,zero:false,noTrend:true};
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
   //   (optionale) bestaetigte Trend kommt separat ueber ind.trendBias dazu.
@@ -2174,7 +2186,7 @@ function indScoreParts(ind,rub){
   const trendAdj=ind.stepDriven
     ?(ind.trendDriven?biasScore(ind.bias)*mag:0)
     :biasScore(ind.trendBias||'neu')*mag;
-  return{w,impAdd,base,trend:trendAdj,total:base+trendAdj,zero:false,noTrend:false};
+  return{w,impAdd,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false};
 }
 function indScore(ind,rub){return indScoreParts(ind,rub).total;}
 // ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
@@ -2189,6 +2201,7 @@ function scoreInfoIndRow(ind,rub){
     bits.push(bl+(p.base?` × ${p.w+p.impAdd}`:'')+(p.impAdd?' (incl. ★ +0.5)':''));
     if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
     else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
+    if(p.rev)bits.push(`prev revised${ind.research&&ind.research.revisedFrom?' from '+ind.research.revisedFrom:''} ${fmtScNum(p.rev)}`);
     if(p.noTrend)bits.push('card excluded from trend adjustments');
     if(cotWowIsSmall(ind))bits.push('small WoW shift (<3 pp), half weight');
     if(ind.research&&ind.research.sent)bits.push('contrarian sentiment, half weight, only counts at extremes');
@@ -3777,6 +3790,9 @@ function resetNonFxIndBias(sym){
     rub.indicators.forEach(ind=>{
       if(ind.autoEvId!==undefined)delete ind.autoEvId;
       if(derived&&ind.bias!=='neu')ind.bias='neu';
+      // Revisions-Bias zaehlt nur auf FX-Waehrungen (applyIndDataFeed setzt
+      // ihn dort); auf Non-FX-Spiegelkarten darf er nie in den Score laufen.
+      if(ind.revBias)ind.revBias=null;
     });
   });
 }
@@ -5919,11 +5935,19 @@ function renderInd(ind,ri,ii,total){
     const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
     const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">As of:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
+    // Revidiertes Previous (Nutzer-Wunsch 2026-07-21): zeigt zusaetzlich den
+    // urspruenglich gemeldeten Wert und faerbt das Previous nach der
+    // Revisions-Richtung (ind.revBias: Aufwaertsrevision bei NFP=gut/gruen,
+    // bei Claims=schlecht/rot - dieselbe LOWER_IS_BETTER-Logik wie ueberall).
+    const revCls=ind.revBias==='bull'?' act-good':ind.revBias==='bear'?' act-bad':'';
+    const prevHtml=r.revisedFrom
+      ?`<span class="ind-data-val${revCls}" title="Revised: first reported as ${escH(r.revisedFrom)}, now restated as ${escH(P.val??'–')}${ind.revBias?` - counts ${ind.revBias==='bull'?'positive':'negative'} at half weight (see score modal)`:''}">${escH(P.val??'–')} <span style="font-size:10px;opacity:.8">(rev. from ${escH(r.revisedFrom)})</span></span>`
+      :`<span class="ind-data-val">${escH(P.val??'–')}</span>`;
     dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="onIndDetailsToggle(this,'${ind.id}')">
       <summary class="ind-data-sum" title="Last known value${dt?' · '+dt:''}">
         <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
         ${(r.bond||r.cot||r.sent)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
-        ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(P.val??'–')}</span>`}
+        ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span>${prevHtml}`}
       </summary>
       <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
       ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
@@ -7587,10 +7611,36 @@ function applyIndDataFeed(){
           const healedBias=researchBias(base,na,nf,np);
           if(ind.bias!==healedBias){ind.bias=healedBias;changed=true;}
         }
+        // Revision uebernehmen (Nutzer-Wunsch 2026-07-21): der Workflow
+        // markiert per f.revisedFrom, wenn das previous dieses Release vom
+        // urspruenglich gemeldeten Actual des Vor-Release abweicht. Daraus
+        // wird ind.revBias abgeleitet (Richtung ueber LOWER_IS_BETTER_RE auf
+        // den KANONISCHEN Namen - Claimant-Lehre, siehe CLAUDE.md 2026-07-21:
+        // nie den Anzeigenamen fuer Klassifikations-Regex verwenden), der in
+        // indScoreParts() mit halbem Basisgewicht additiv in den Score
+        // einfliesst. Wie die Bias-Selbstheilung oben VOR dem "nichts
+        // geaendert"-Fruehausstieg und bei jedem Lauf neu berechnet -
+        // idempotent + selbstheilend, und die Revision verschwindet
+        // automatisch, sobald der Feed sie beim naechsten Release nicht mehr
+        // mitliefert. Nur fuer FX (wie die Bias-Heilung): Non-FX-Spiegelkarten
+        // scoren nicht ueber ihre eigenen Indikator-Biases.
+        const nrev=(f.revisedFrom!=null&&f.revisedFrom!=='')?String(f.revisedFrom):null;
+        let nRevBias=null;
+        if(fx&&nrev!=null&&np!=null){
+          const rvNew=parseNumLike(np),rvOld=parseNumLike(nrev);
+          if(rvNew!=null&&rvOld!=null&&rvNew!==rvOld){
+            const lower=LOWER_IS_BETTER_RE.test(base);
+            nRevBias=(lower?rvNew<rvOld:rvNew>rvOld)?'bull':'bear';
+          }
+        }
+        if((ind.revBias||null)!==nRevBias){ind.revBias=nRevBias;changed=true;}
+        if((r.revisedFrom||null)!==nrev){r.revisedFrom=nrev;changed=true;}
         if(r.feed&&r.actual===na&&r.forecast===nf&&r.previous===np&&r.date===f.date&&r.source===src)return;
         // Previous = einfach der zuletzt gemeldete Actual-Wert der Vorperiode -
         // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
-        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event};
+        // (Ausnahme seit 2026-07-21: eine vom Workflow erkannte REVISION des
+        // Previous wird angezeigt + gefaerbt, siehe revisedFrom/revBias oben.)
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event,revisedFrom:nrev};
         // Sekundär-Link (z.B. CPI m/m im ausgeklappten CPI-y/y-Indikator) aus den
         // Recherchedaten erhalten, da der Feed nur den Hauptwert (y/y) liefert.
         if(r.secondarySource){ind.research.secondarySource=r.secondarySource;ind.research.secondaryLabel=r.secondaryLabel;}

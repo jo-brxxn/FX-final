@@ -1260,6 +1260,39 @@ jobs:
               (out.JPY=out.JPY||{})["Services Inflation"]=prevOut.JPY["Services Inflation"];
             }
 
+            // (3) Revisions-Erkennung (Nutzer-Wunsch 2026-07-21): kommt ein
+            //     NEUES Release (Datum wechselt ggue. dem letzten Lauf) und
+            //     weicht dessen "previous" numerisch vom Actual des
+            //     VORHERIGEN Release ab (wie er damals gemeldet wurde, via
+            //     prevOut), wurde der alte Wert revidiert -> revisedFrom
+            //     traegt den urspruenglich gemeldeten Wert. Innerhalb
+            //     desselben Release wird revisedFrom aus dem Vor-Lauf
+            //     weitergetragen (Persistenz wie beim Forecast oben), beim
+            //     NAECHSTEN Release ohne neue Abweichung faellt es weg.
+            //     Server-seitig statt im Client, damit ALLE Geraete dieselbe
+            //     Revision sehen - ein Geraet, das zwischen zwei Releases nie
+            //     offen war, koennte den Vergleich lokal nicht anstellen
+            //     (sein gespeicherter Stand ist dann 2+ Releases alt und
+            //     wuerde faelschlich eine "Revision" melden).
+            let revN=0;
+            Object.keys(out).forEach(ccy=>{
+              const grp=out[ccy];
+              if(!grp||typeof grp!=="object")return;
+              Object.keys(grp).forEach(indName=>{
+                const v=grp[indName];
+                if(!v||typeof v!=="object")return;
+                const pv=prevOut[ccy]&&prevOut[ccy][indName];
+                if(!pv)return;
+                if(pv.date&&v.date&&pv.date!==v.date&&pv.actual!=null&&v.previous!=null){
+                  const a=numOf(pv.actual),b=numOf(v.previous);
+                  if(a!=null&&b!=null&&a!==b){v.revisedFrom=pv.actual;revN++;}
+                }else if(pv.date===v.date&&pv.revisedFrom!=null){
+                  v.revisedFrom=pv.revisedFrom;
+                }
+              });
+            });
+            if(revN)console.log("ind_data revisions detected this run: "+revN);
+
             fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
             // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
             const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];

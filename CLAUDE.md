@@ -2635,3 +2635,58 @@ und "Risk Correlation" eindeutig bullish/bearish war.
   (0,5 < 1, korrekt - der Nutzer sagte explizit "-1 oder 1", nicht 0,5).
   "Full" -> Score 1, Badge jetzt korrekt bullish (vorher faelschlich
   weiterhin neutral). Voller Tab-Regressionstest weiterhin fehlerfrei.
+
+### Revidierte Previous-Werte: Erkennung + Anzeige + Score-Wirkung (Nutzer-Wunsch 2026-07-21)
+
+Nutzer: "oft werden ja previous Werte sobald ein neuer Indikator rauskommt
+geaendert also revised... Der Wert soll dann auch entsprechend eingefaerbt
+werden... gib begruendete Vorschlaege dazu wie viel das am Score ausmachen
+soll." Umgesetzt mit Score-Wirkung ±0,5 (halbes Basisgewicht, additiv).
+
+- **Erkennung SERVER-seitig** (Workflow, Stufe "(3) Revisions-Erkennung"
+  direkt vor dem ind_data.json-Write): kommt ein NEUES Release (Datum
+  wechselt ggue. prevOut) und weicht dessen `previous` numerisch vom
+  urspruenglich gemeldeten Actual des Vor-Release ab (prevOut traegt genau
+  diesen Stand), wird `revisedFrom` (der urspruengliche Wert) am Indikator-
+  Eintrag gesetzt. Innerhalb desselben Release wird revisedFrom aus dem
+  Vor-Lauf weitergetragen (Persistenz wie beim Forecast-Kleben), beim
+  naechsten Release faellt es automatisch weg. BEWUSST nicht client-seitig:
+  ein Geraet, das zwischen zwei Releases nie offen war, haette einen 2+
+  Releases alten Vergleichsstand und wuerde faelschlich Revisionen melden -
+  server-seitig sehen alle Geraete dieselbe Wahrheit. (Hinweis: der aeltere
+  Kommentar "Revisions-Erkennung" bei den Alternativquellen ~Z.342 betrifft
+  etwas ANDERES - dort werden nur Kalender-Events mit frischeren
+  previous-Werten angereichert, keine Revisions-Markierung.)
+- **Client** (`applyIndDataFeed()`): uebernimmt `f.revisedFrom` nach
+  `ind.research.revisedFrom` und leitet `ind.revBias` ab (Richtung ueber
+  `LOWER_IS_BETTER_RE` auf den KANONISCHEN Namen - Claimant-Lehre vom
+  selben Tag beachtet). Wie die Bias-Selbstheilung VOR dem "nichts
+  geaendert"-Fruehausstieg, idempotent, selbstloeschend. Nur fuer FX
+  (Non-FX-Spiegelkarten scoren nicht ueber Indikator-Biases;
+  `resetNonFxIndBias()` raeumt revBias dort zusaetzlich ab).
+- **Score** (`indScoreParts()`): `rev = biasScore(revBias) × 0,5 × w` -
+  volles Gewicht ±0,5, Core-Paar/Halbgewicht ±0,25. Begruendung: Revision
+  ist echte, aber SCHWAECHERE Information als der Headline-Beat/Miss
+  (rueckwaertsgerichtet, teils eingepreist) - exakt die bestehende
+  Halbgewicht-Systematik (Step-Signal 0,5, kleine COT-WoW 0,5). Additiv wie
+  der Trend-Bonus, nie ein Ersatz. Neues `rev`-Feld in den Parts, Modal
+  zeigt eigene Zeile "prev revised from X ±0,5" (Grundsatz: Modal darf nie
+  von der echten Rechnung abweichen).
+- **Anzeige** (`renderInd`, research-Zweig): Previous wird zu
+  "144K (rev. from 147K)", gefaerbt via act-good/act-bad nach
+  Revisions-Richtung, mit Erklaer-Tooltip.
+- Per Playwright verifiziert (Feed-Injektion `revisedFrom` auf NFP +
+  Unemployment Claims): beide Richtungen korrekt (NFP hoeher-besser,
+  Claims niedriger-besser), Score-Parts exakt (+0,5 auf total),
+  idempotent (2. Lauf changed:false), Revision verschwindet bei
+  Feed-Wegfall, Karte + Score-Modal zeigen die Revision, voller
+  Tab-Regressionstest fehlerfrei. Workflow-Logik per Node-Skript mit
+  simuliertem prevOut/out lokal getestet (Revision erkannt / gleicher
+  Release unangetastet / Persistenz-Carry). Erster ECHTER Live-Fund
+  entsteht erst beim naechsten tatsaechlich revidierten Release -
+  bei Problemen Job-Log nach "ind_data revisions detected" greppen.
+- **Nicht abgedeckt (bewusst):** Indikatoren OHNE Feed-Abdeckung (reiner
+  FF-Kalender-Pfad) bekommen keine Revisions-Erkennung - der Feed deckt
+  die grosse Mehrheit ab (siehe Feed-Abdeckungsluecken-Notizen oben).
+  History-Karte (🕰️) zeigt Revisionen nicht separat - der Score-Effekt
+  ist im Score-Modal sichtbar; bei Bedarf nachruesten.
