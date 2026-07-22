@@ -11539,9 +11539,20 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
+let sentimentRange='1M',sentimentCustomFrom='',sentimentCustomTo='';
+let pcRange='1M',pcCustomFrom='',pcCustomTo='';
+let pcMaType='none'; // 'none','5d','10d','20d','50d'
+let fearGreedRange='1M',fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
+function setSentimentRange(r){sentimentRange=r;sentimentCustomFrom='';sentimentCustomTo='';renderSentiment();}
+function setPcRange(r){pcRange=r;pcCustomFrom='';pcCustomTo='';renderSentiment();}
+function setFearGreedRange(r){fearGreedRange=r;fearGreedCustomFrom='';fearGreedCustomTo='';renderSentiment();}
+function setPcMaType(t){pcMaType=t;renderSentiment();}
+function setSentimentCustomRange(from,to){sentimentCustomFrom=from;sentimentCustomTo=to;renderSentiment();}
+function setPcCustomRange(from,to){pcCustomFrom=from;pcCustomTo=to;renderSentiment();}
+function setFearGreedCustomRange(from,to){fearGreedCustomFrom=from;fearGreedCustomTo=to;renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
 // Retail-Sentiment filtert nach Broker-PAAR (z.B. EURUSD), nicht nach
@@ -11580,7 +11591,15 @@ function renderSentiment(){
   const filt=(D&&sentSub==='retail')?sentFilterBar()
     :(D&&(sentSub==='putcall'||sentSub==='netflow')&&D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D)
     :'';
-  el.innerHTML=nav+filt+body;
+  // Time range filter for charts with series data
+  const tRange=sentSub==='retail'?''
+    :sentSub==='putcall'?timeRangeBarHtml(pcRange,setPcRange,pcCustomFrom,pcCustomTo,setPcCustomRange)
+    :sentSub==='netflow'?timeRangeBarHtml(pcRange,setPcRange,pcCustomFrom,pcCustomTo,setPcCustomRange)
+    :sentSub==='feargreed'?timeRangeBarHtml(fearGreedRange,setFearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,setFearGreedCustomRange)
+    :'';
+  // Moving average type selector for Put-Call chart
+  const maBar=sentSub==='putcall'?`<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:var(--t2);font-weight:600">Smoothing:</span>${['none','5d','10d','20d','50d'].map(t=>`<button class="btn st${pcMaType===t?' on':''}" onclick="setPcMaType('${t}')" style="font-size:12px;padding:6px 10px;border-radius:4px">${t}</button>`).join('')}</div>`:'';
+  el.innerHTML=nav+filt+tRange+maBar+body;
   attachChartHovers(el);
 }
 // ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
@@ -11630,7 +11649,9 @@ function renderPutCallChart(D){
   const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
-  const series=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
+  const series=rawSeries.filter(e=>filteredDates.has(e[0]));
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
@@ -11641,9 +11662,20 @@ function renderPutCallChart(D){
   const yMax=Math.max(1.6,...vals,HI+0.1),yMin=0;
   const xOf=i=>padL+(series.length>1?i/(series.length-1):0)*(W-padL-padR);
   const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
+
+  // Compute moving average if selected
+  let displayVals=vals;
+  let displaySeries=series;
+  if(pcMaType!=='none'){
+    const nDays=parseInt(pcMaType);
+    const ma=(arr,i,n)=>{const a=arr.slice(Math.max(0,i-n+1),i+1);return a.reduce((x,y)=>x+y,0)/a.length;};
+    displayVals=vals.map((v,i)=>ma(vals,i,nDays));
+    // displaySeries remains the same for hover points (dates don't change)
+  }
+
   // Stufenlinie (Werte gelten bis zum naechsten Datum)
   let step='';
-  series.forEach((e,i)=>{const x=xOf(i),y=yOf(+e[1]);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(+series[i-1][1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
+  displayVals.forEach((v,i)=>{const x=xOf(i),y=yOf(v);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(displayVals[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
   const gy=[0,0.4,0.7,1.0,1.4].filter(t=>t<=yMax).map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
   // Datums-Achse: erstes, mittleres, letztes
   let xlab='';
@@ -11652,7 +11684,7 @@ function renderPutCallChart(D){
   if(series.length===1){
     // Erst ein Report-Tag: noch kein Linien-Chart moeglich, aber der
     // aktuelle Wert selbst ist schon da - den zeigen statt nur "warten".
-    const v=vals[0];
+    const v=displayVals[0];
     chart=`<div style="text-align:center;padding:10px 6px 4px">
         <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${v>=HI?BC.bull:v<=LO?BC.bear:'var(--t1)'}">${v.toFixed(2)}</div>
         <div style="font-size:13px;color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
@@ -11674,8 +11706,9 @@ function renderPutCallChart(D){
         <path d="${step}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
         ${xlab}
       </svg>`;
-    const hpts=series.map((e,i)=>{const v=+e[1];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b> · ${zone}`};});
-    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${vals[vals.length-1]>=HI?BC.bull:vals[vals.length-1]<=LO?BC.bear:'var(--t1)'}">${vals[vals.length-1].toFixed(2)}</b> — ${vals[vals.length-1]>=HI?'high put volume → contrarian bullish':vals[vals.length-1]<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+    const hpts=series.map((e,i)=>{const v=displayVals[i];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b>${pcMaType!=='none'?` <span style="color:var(--t3);font-size:11px">(${pcMaType} MA)</span>`:''} · ${zone}`};});
+    const latestVal=displayVals[displayVals.length-1];
+    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b>${pcMaType!=='none'?` <span style="color:var(--t3);font-size:11px">(${pcMaType} MA)</span>`:''} — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
   }
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${chart}</div></div>`;
 }
@@ -11692,7 +11725,9 @@ function renderNetFlowChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const hdr=`<div class="cot-card-title">Net Options Flow (5d MA − 20d MA)${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Derived from put/call · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
-  const s=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
+  const s=rawSeries.filter(e=>filteredDates.has(e[0]));
   // Taeglicher "Fluss": 1 - Put/Call (>0 = mehr Calls = bullish). Dann
   // gleitender 5- vs 20-Tage-Schnitt.
   const flow=s.map(e=>({d:e[0],v:1-(+e[1])}));
@@ -11725,20 +11760,29 @@ function renderFearGreedCards(D){
   const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   let html=`<div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
   const cf=D.cryptoFng,cfEv=sentEval('cryptoFng',cf);
+  const cfFiltered=cf&&cf.series?filterDatesByRange(cf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
+  const cfFilteredSet=new Set(cfFiltered);
+  const cfFilteredSeries=cf&&cf.series?cf.series.filter(e=>cfFilteredSet.has(e[0])):null;
   html+=card('🪙 Crypto Fear &amp; Greed','feargreed',cf?escH(cf.label||''):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(cfEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">Applies to: BTC${syms.find(s=>s.id==='ETH')?', ETH':''}. Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" style="color:var(--blue)">alternative.me ↗</a></div></div>
-    </div><div style="margin-top:8px">${sentSpark(cf&&cf.series,0,100,25,75)}</div>`);
+    </div><div style="margin-top:8px">${sentSpark(cfFilteredSeries,0,100,25,75)}</div>`);
   const vx=D.vix,vxEv=sentEval('vix',vx);
+  const vxFiltered=vx&&vx.series?filterDatesByRange(vx.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
+  const vxFilteredSet=new Set(vxFiltered);
+  const vxFilteredSeries=vx&&vx.series?vx.series.filter(e=>vxFilteredSet.has(e[0])):null;
   html+=card('🌪️ VIX (Volatility)','feargreed',vx?('now '+(+vx.value).toFixed(1)):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). S&amp;P 500, Nasdaq. Source: <a href="https://www.tradingview.com/symbols/CBOE-VIX/" target="_blank" rel="noopener" style="color:var(--blue)">TradingView ↗</a></div></div>
-    </div><div style="margin-top:8px">${sentSpark(vx&&vx.series,8,45,13,28)}</div>`);
+    </div><div style="margin-top:8px">${sentSpark(vxFilteredSeries,8,45,13,28)}</div>`);
   const sf=D.stockFng;
+  const sfFiltered=sf&&sf.series?filterDatesByRange(sf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
+  const sfFilteredSet=new Set(sfFiltered);
+  const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
   html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
-    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sf.series,0,100,25,75)}</div>`
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
     :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score.</div>`);
   html+=`</div>`;
   return html;
