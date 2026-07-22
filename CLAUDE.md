@@ -3806,3 +3806,33 @@ laengst aktualisiert sein. Find das Problem."
   Rest-Bug. Sollte TradingView/Investing.com kuenftig doch einen Forecast
   fuer eine dieser drei Reihen fuehren, greift die bestehende
   Investing.com-Enrichment-Logik automatisch (kein weiterer Code noetig).
+
+### Trend/Step-Chip am Indikator: Bias-Farben statt immer Blau (Nutzer-Wunsch 2026-07-22)
+
+Nutzer: "Ich will das dieser Kasten wo drinne steht Trend oder auch Stepp
+oder auch beides wenn es negativen Score impact hat auch in der bias Farbe
+bearish ist." Der `.trend-chip` (📈 "Trend +1"/"Step +0.5 · 1/2"/etc., neben
+jedem Indikator mit Trend-Daten) war bisher IMMER blau (`var(--blue)`),
+unabhaengig von der Richtung - nur der neutrale Zustand (`.neu`) war grau.
+Nach Rueckfrage (nur negativ rot, oder auch positiv auf die Bias-Farbe
+umstellen) entschied der Nutzer: **beide Richtungen** auf die App-weiten
+Bias-Farben umstellen (gruen=bullish/rot=bearish, wie ueberall sonst, z.B.
+`.ibo.bb`/`.ibo.br`), nicht nur die negative Seite isoliert reparieren.
+
+- Neue CSS-Klassen `.trend-chip.bull`(`var(--green)`)/`.trend-chip.bear`
+  (`var(--red)`), analog zum bestehenden `.trend-chip.neu`-Muster.
+- In der Chip-Render-Funktion (`renderDetail()`, Trend-Chip-IIFE) wird `cls`
+  jetzt in JEDEM der vier Zweige gesetzt: `ind.stepDriven` (deckt sowohl den
+  reinen Step-Fall als auch den bestaetigten Trend-Fall ab, da beide
+  `ind.bias`='bull'/'bear' nutzen) → `bull`/`bear` nach `ind.bias`;
+  `ind.trendBias==='bull'`/`'bear'` (Bond-Yields-Pfad ohne stepDriven) →
+  ebenso; neutraler Fall unveraendert `neu`.
+- **Hinweis, kein Bug:** `--green` ist in dieser App als Hex-Wert tatsaechlich
+  ein helles Cyan-Blau (`#4fc3f7`), nicht "klassisch gruen" - das ist aber
+  die durchgehend etablierte Bull-Farbe der ganzen App (identisch zu
+  `.ibo.bb`), keine Abweichung vom Muster.
+- Per Playwright verifiziert: erzwungene Zustaende (stepDriven bull/bear
+  ohne Trend, stepDriven bull/bear MIT bestaetigtem Trend, neutral) liefern
+  exakt die erwarteten Klassen + `getComputedStyle().color`-Werte
+  (`rgb(79,195,247)` fuer bull, `rgb(239,83,80)` fuer bear, unveraendertes
+  Grau fuer neutral), keine Page-Errors.

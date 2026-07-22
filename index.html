@@ -465,6 +465,11 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
 .trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4;cursor:pointer}
 .trend-chip.neu{color:var(--t3);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.16)}
+/* Bias-Farben statt Blau (Nutzer-Wunsch 2026-07-22): der Chip zeigt einen
+   echten Score-Effekt (+/-), soll also wie jedes andere Bias-Element in der
+   App gruen/rot statt einer dritten, bedeutungslosen Farbe tragen. */
+.trend-chip.bull{color:var(--green);background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
+.trend-chip.bear{color:var(--red);background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.35)}
 .istar2{background:none;border:none;cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
 .istar2.on{opacity:1;color:var(--star)}@media (hover:hover){.ind-card:hover .istar2{opacity:.35}}.ind-card .istar2.on{opacity:1;color:var(--star)}
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.ind-card:hover .idel2{opacity:.4}}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
@@ -1253,7 +1258,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#2e1a3d;color:#d4b8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMETHYST-NZD-LIVE-SOURCE-201</span><span id="verBannerText"> (NZD Manufacturing PMI/Services PMI/Retail Sales zeigten dauerhaft eingefrorene alte Werte (Mai) - Ursache: es gab fuer diese drei Indikatoren NIE einen Live-Pfad, nur eine einmalige statische Erstbefuellung ohne Forecast, die daher auch nie den Trend-Fallback bekam. Fix im Workflow: neue RULES-Eintraege matchen TradingViews tatsaechliche NZD-Titel ("Business NZ PMI"/"Services NZ PSI"/"Electronic Retail Card Spending MoM") - liefert jetzt echte, taeglich aktualisierte Live-Daten (verifiziert: Manufacturing PMI 59.7 vs. vorher 49.9, Services PMI 50.6 vs. 47.5, Retail Sales -1.4% vs. 1.7%). Scoring lief dadurch automatisch korrekt mit (applyIndDataFeed() ruft den bestehenden Step+Trend-Mechanismus fuer Indikatoren ohne Forecast unconditional auf). Text-Seite (index.html): summarizeGrowth() beschrieb PMIs/Retail Sales bisher nur ueber einen Forecast-Vergleich und blieb bei fehlendem Forecast stumm - neuer Trend-Fallback (trendState() gegen Previous, gleiche classifyPair/classifySingle-Skala, neues TREND_WORDS-Vokabular "trending higher/lower/partly/mixed" statt "hotter/softer than expected"). SUMMARY_ENGINE_VERSION auf 11.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1a3d2e;color:#a8f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: JADE-TREND-CHIP-BIAS-202</span><span id="verBannerText"> (Trend/Step-Chip am Indikator (📈 "Trend +1"/"Step +0.5"/etc.) war bisher IMMER blau, egal ob + oder − (Nutzer-Wunsch): faerbt sich jetzt in derselben Bias-Farbe wie ueberall sonst in der App - positiv (bull) in Gruen, negativ (bear) in Rot, neutral bleibt grau. Betrifft sowohl den reinen Step-Fall ("Step +0.5 · 1/2") als auch den bestaetigten Trend-Fall ("Trend +1"/"Trend +1.5") gleichermassen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8f0c8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8f0c8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -6056,9 +6061,10 @@ function renderInd(ind,ri,ii,total){
           // dort irrefuehrend "Trend +0.5", obwohl kein bestaetigter Trend
           // vorlag (z.B. JPY CPI y/y mit 1.5 -> 1.4 -> 1.5).
           const sign=ind.bias==='bull'?'+':'−';
+          cls=ind.bias==='bull'?' bull':' bear';
           lbl=ind.trendDriven?'Trend '+sign+fmtMag(0.5+mag):'Step '+sign+'0.5 · 1/2';
-        }else if(ind.trendBias==='bull')lbl='Trend +'+magS;
-        else if(ind.trendBias==='bear')lbl='Trend −'+magS;
+        }else if(ind.trendBias==='bull'){cls=' bull';lbl='Trend +'+magS;}
+        else if(ind.trendBias==='bear'){cls=' bear';lbl='Trend −'+magS;}
         else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
         return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
       })()}
