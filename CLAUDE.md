@@ -4083,3 +4083,17 @@ die Perioden-Badge (`.ibadge`) aus, das Release-Datum (`.dbadge`) und die
   mit Perioden-Badge, `CB Tone`/`Next CB Move` mit "+ Date"-Platzhalter):
   Stufe 0 alle drei sichtbar, Stufe 1+2 alle drei `display:none`. Voller
   14-Tab-Regressionstest weiterhin fehlerfrei.
+
+### Auto-Lock-Kettensymbol: Emoji durch SVG-Icon ersetzt (Nutzer-Wunsch 2026-07-22, per Screenshot)
+
+Nutzer schickte einen Screenshot der "Risk Environment"-Karte: das
+Kettensymbol (🔗) neben "Risk Correlation" war noch ein Emoji, nicht Teil
+des app-weiten SVG-Icon-Sets (`ICONS`/`icn()`, siehe Pro-UI-Update-Eintrag
+weiter oben - "Bei neuen Buttons IMMER `icn()` verwenden, keine neuen
+Emojis einführen"). Neues `link`-Icon (Standard-Kettenglied-Pfad) zu
+`ICONS` ergaenzt, an beiden bestehenden Stellen eingesetzt: Rubrik-Karten-
+Header (`renderRub`, gespiegelte Non-FX-Karten) und Indikator-Zeile
+(`renderInd`, "Risk Correlation" + gespiegelte Indikatoren). `.auto-lock-ic`
+CSS unveraendert (Opacity/Groesse gelten weiterhin, SVG erbt die Farbe ueber
+`stroke="currentColor"`). Per Playwright verifiziert: kein 🔗 mehr im DOM,
+SVG rendert korrekt, voller 14-Tab-Regressionstest fehlerfrei.
