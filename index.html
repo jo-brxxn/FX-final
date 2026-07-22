@@ -637,6 +637,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* COT single Filter button + grouped pop-up list */
 .cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
 .cot-filterbar select{font-size:14px;padding:8px 15px}
+.sent-toolbar>.cot-filterbar{margin-bottom:0}
 /* ── NEW COT DATA BANNER ──
    Nutzer-Wunsch 2026-07-19 (Farbaudit): vorher ein voll ausgemalter
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
@@ -1257,7 +1258,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ORANGE-PUTCALL-MA-FIX-209</span><span id="verBannerText"> (Bugfix: sentimentRange/pcRange/fearGreedRange als numerische 1 statt String '1M' initialisiert — verhindert RangeError in filterDatesByRange der Sentiment-Charts.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-SENT-FILTER-FIX-210</span><span id="verBannerText"> (Sentiment-Tab: Zeitraum-Filter-Buttons funktionieren jetzt; setPcRange/setFearGreedRange mit korrekter Typ-Koercion + CUSTOM-Schutz; MA-Selector + Asset-Filter + Range-Bar in kompakter Toolbar-Zeile direkt über dem Chart.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11547,8 +11548,10 @@ function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
 function setSentimentRange(r){sentimentRange=r;sentimentCustomFrom='';sentimentCustomTo='';renderSentiment();}
-function setPcRange(r){pcRange=r;pcCustomFrom='';pcCustomTo='';renderSentiment();}
-function setFearGreedRange(r){fearGreedRange=r;fearGreedCustomFrom='';fearGreedCustomTo='';renderSentiment();}
+function setPcRange(r){pcRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){pcCustomFrom='';pcCustomTo='';}renderSentiment();}
+function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){fearGreedCustomFrom='';fearGreedCustomTo='';}renderSentiment();}
+function setPcCustomRange(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
+function setFearGreedCustomRange(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
 function setPcMaType(t){pcMaType=t;renderSentiment();}
 function setSentimentCustomRange(from,to){sentimentCustomFrom=from;sentimentCustomTo=to;renderSentiment();}
 function setPcCustomRange(from,to){pcCustomFrom=from;pcCustomTo=to;renderSentiment();}
@@ -11580,26 +11583,23 @@ function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
   const D=SENTIMENT_DATA;
   const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Net Options Flow'],['feargreed','😱 Fear & Greed']];
-  const nav=`<div class="stabs" style="margin-bottom:12px;flex-wrap:wrap">${tabs.map(([k,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${escH(l)}</button>`).join('')}</div>`;
+  const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${escH(l)}</button>`).join('')}</div>`;
   let body;
   if(!D)body=`<div class="cot-empty">Loading sentiment data… (written hourly by the GitHub workflow into sentiment_data.json).</div>`;
   else if(sentSub==='putcall')body=renderPutCallChart(D);
   else if(sentSub==='netflow')body=renderNetFlowChart(D);
   else if(sentSub==='feargreed')body=renderFearGreedCards(D);
   else body=renderRetailBars(D);
-  // Symbol-/Asset-Filter nur dort zeigen, wo per-Symbol-Daten existieren.
   const filt=(D&&sentSub==='retail')?sentFilterBar()
     :(D&&(sentSub==='putcall'||sentSub==='netflow')&&D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D)
     :'';
-  // Time range filter for charts with series data
   const tRange=sentSub==='retail'?''
-    :sentSub==='putcall'?timeRangeBarHtml(pcRange,setPcRange,pcCustomFrom,pcCustomTo,setPcCustomRange)
-    :sentSub==='netflow'?timeRangeBarHtml(pcRange,setPcRange,pcCustomFrom,pcCustomTo,setPcCustomRange)
-    :sentSub==='feargreed'?timeRangeBarHtml(fearGreedRange,setFearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,setFearGreedCustomRange)
+    :(sentSub==='putcall'||sentSub==='netflow')?(timeRangeBarHtml(pcRange,'setPcRange')+timeRangeCustomHtml(pcRange,pcCustomFrom,pcCustomTo,'setPcRange'))
+    :sentSub==='feargreed'?(timeRangeBarHtml(fearGreedRange,'setFearGreedRange')+timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange'))
     :'';
-  // Moving average type selector for Put-Call chart
-  const maBar=sentSub==='putcall'?`<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:var(--t2);font-weight:600">Smoothing:</span>${['none','5d','10d','20d','50d'].map(t=>`<button class="btn st${pcMaType===t?' on':''}" onclick="setPcMaType('${t}')" style="font-size:12px;padding:6px 10px;border-radius:4px">${t}</button>`).join('')}</div>`:'';
-  el.innerHTML=nav+filt+tRange+maBar+body;
+  const maSel=sentSub==='putcall'?`<div style="display:flex;gap:4px;align-items:center"><span style="font-size:11px;color:var(--t2);font-weight:600">MA:</span>${['none','5d','10d','20d','50d'].map(t=>`<button class="btn st${pcMaType===t?' on':''}" onclick="setPcMaType('${t}')" style="font-size:11px;padding:4px 7px;border-radius:4px">${t}</button>`).join('')}</div>`:'';
+  const toolbar=(filt||tRange||maSel)?`<div class="sent-toolbar" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center">${filt}${tRange}${maSel}</div>`:'';
+  el.innerHTML=nav+toolbar+body;
   attachChartHovers(el);
 }
 // ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
