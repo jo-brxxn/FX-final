@@ -4061,3 +4061,25 @@ aus, obwohl ein Wert da war.
   2Y/10Y-Renditen + Spread bleiben unsichtbar/platzhalter, GOLD COT-Data-
   Karte (Net Bullish/Bearish/WoW Change) bleibt ebenfalls unsichtbar. Voller
   14-Tab-Regressionstest weiterhin fehlerfrei.
+
+### Kompakt-Regler mittlere Stufe blendete Datum/"+Date" noch nicht aus (Nutzer-Korrektur 2026-07-22, direkt im Anschluss)
+
+Nutzer: "Wenn der Regler in der mittleren Position ist will ich gar keine
+Datums oder zeitperioden sehen auch nicht die wo nix eingetragen ist." Der
+`ind.noDate`-Fix von eben (siehe voriger Eintrag) loeste nur das Problem
+"Prompt bleibt fuer immer sichtbar" - die Kompakt-Stufen-CSS selbst blendete
+an der MITTLEREN Stufe (`body.compact-view`, ohne `compact-view2`) bisher nur
+die Perioden-Badge (`.ibadge`) aus, das Release-Datum (`.dbadge`) und die
+"+ Date"-Aufforderung (`.add-date-btn`) erst an der LETZTEN Stufe
+(`compact-view2`).
+
+- **Fix:** `.dbadge`/`.add-date-btn` von der `compact-view2`-Regel in die
+  `compact-view`-Regel verschoben (≈ Zeile 297) - alle drei Datums-/
+  Perioden-Elemente (Badge, Datum, "+ Date"-Platzhalter) verschwinden jetzt
+  gemeinsam schon an der mittleren Stufe, unabhaengig davon, ob dort etwas
+  eingetragen ist. `compact-view2` blendet weiterhin zusaetzlich i-Info-
+  Knopf und Trend-Chip aus (nur diese zwei sind jetzt noch dort).
+- Per Playwright ueber alle 3 Reglerstufen verifiziert (`Fed Funds Rate`
+  mit Perioden-Badge, `CB Tone`/`Next CB Move` mit "+ Date"-Platzhalter):
+  Stufe 0 alle drei sichtbar, Stufe 1+2 alle drei `display:none`. Voller
+  14-Tab-Regressionstest weiterhin fehlerfrei.
