@@ -2318,22 +2318,45 @@ jobs:
           first=1
           for ASSET in "${!PROXY[@]}"; do
             SYM="${PROXY[$ASSET]}"
-            curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?crumb=${CRUMB}" -o "yopt_${SYM}.json" || true
-            LINE=$(node -e '
+            # (a) Basis-Fetch: liefert die Liste ALLER Verfallstermine
+            # (expirationDates) + die naechste Kette. Yahoo gibt pro Antwort
+            # nur EINEN Verfall zurueck (options[0]) - fuer das Gesamtvolumen
+            # ueber alle Verfaelle muss jeder Termin einzeln per ?date= geholt
+            # werden (Nutzer-Wunsch 2026-07-22: nicht nur Frontmonat).
+            curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?crumb=${CRUMB}" -o "yopt_base.json" || true
+            EXPS=$(node -e '
               try{
-                const j=JSON.parse(require("fs").readFileSync("yopt_'"$SYM"'.json","utf8"));
+                const j=JSON.parse(require("fs").readFileSync("yopt_base.json","utf8"));
                 const r=j&&j.optionChain&&j.optionChain.result&&j.optionChain.result[0];
-                const opt=r&&r.options&&r.options[0];
-                const calls=(opt&&opt.calls)||[],puts=(opt&&opt.puts)||[];
-                const cv=calls.reduce((s,c)=>s+(Number(c.volume)||0),0);
-                const pv=puts.reduce((s,c)=>s+(Number(c.volume)||0),0);
-                if(cv>0&&pv>0)console.log(JSON.stringify({asset:"'"$ASSET"'",proxy:"'"$SYM"'",callVol:cv,putVol:pv}));
+                const e=(r&&r.expirationDates)||[];
+                console.log(e.filter(x=>Number(x)>0).join(" "));
               }catch(e){}
             ' 2>/dev/null)
-            rm -f "yopt_${SYM}.json"
-            if [ -n "$LINE" ]; then
+            rm -f "yopt_base.json"
+            CV=0; PV=0; NEXP=0
+            for EXP in $EXPS; do
+              # (b) jeden Verfall einzeln holen, Volumina aufsummieren
+              curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?date=${EXP}&crumb=${CRUMB}" -o "yopt_exp.json" || true
+              VALS=$(node -e '
+                try{
+                  const j=JSON.parse(require("fs").readFileSync("yopt_exp.json","utf8"));
+                  const r=j&&j.optionChain&&j.optionChain.result&&j.optionChain.result[0];
+                  const opt=r&&r.options&&r.options[0];
+                  const calls=(opt&&opt.calls)||[],puts=(opt&&opt.puts)||[];
+                  const cv=calls.reduce((s,c)=>s+(Number(c.volume)||0),0);
+                  const pv=puts.reduce((s,c)=>s+(Number(c.volume)||0),0);
+                  console.log(cv+" "+pv);
+                }catch(e){console.log("0 0");}
+              ' 2>/dev/null)
+              rm -f "yopt_exp.json"
+              [ -z "$VALS" ] && VALS="0 0"
+              CV=$((CV + ${VALS%% *})); PV=$((PV + ${VALS##* })); NEXP=$((NEXP+1))
+              sleep 0.25   # Yahoo nicht ueberrennen (jetzt ~alle Verfaelle)
+            done
+            echo "[debug] $ASSET <- $SYM: $NEXP expiries summed, callVol=$CV putVol=$PV"
+            if [ "$CV" -gt 0 ] && [ "$PV" -gt 0 ]; then
               [ "$first" -eq 0 ] && echo "," >> yopt_all.json
-              echo "\"$ASSET\": $LINE" >> yopt_all.json
+              echo "\"$ASSET\": {\"asset\":\"$ASSET\",\"proxy\":\"$SYM\",\"callVol\":$CV,\"putVol\":$PV,\"nExp\":$NEXP}" >> yopt_all.json
               first=0
             fi
           done
@@ -2369,9 +2392,10 @@ jobs:
       # 5 req/min, siehe CLAUDE.md). Fuellt NUR Luecken auf (Datumsangaben,
       # die die Yahoo-Serie oben noch nicht hat) - der taegliche Yahoo-Wert
       # bleibt die autoritative Quelle fuer HEUTE. Kein expiration-Parameter
-      # -> naechster Monats-Verfall relativ zum jeweiligen Datum, dieselbe
-      # "naechster Expiry"-Grobigkeit wie Yahoos Default-Verhalten oben, damit
-      # Backfill und taegliche Fortschreibung methodisch konsistent bleiben.
+      # -> die volle Kette ueber ALLE Verfaelle des jeweiligen Datums (die
+      # Summierung unten iteriert d.side komplett), methodisch konsistent mit
+      # dem Yahoo-Schritt oben, der seit 2026-07-22 ebenfalls ueber alle
+      # Verfaelle summiert (nicht mehr nur den Frontmonat).
       # 100/10.000/100.000 Credits/Tag je nach Plan (Free Forever/Starter-
       # /Trader-Trial) reichen fuer den kompletten 1-Jahres-Backfill locker
       # (13 Assets x ~250 Handelstage = ~3250 Requests = ~3250 Credits) -
