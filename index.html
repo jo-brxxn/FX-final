@@ -59,6 +59,18 @@ svg.ic{vertical-align:-2px;flex:none}
 .hdr-menu button{display:flex;align-items:center;gap:9px;background:transparent;border:none;color:var(--t1);padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;text-align:left;width:100%;font-family:inherit}
 @media (hover:hover){.hdr-menu button:hover{background:var(--bg4)}}
 .hdr-menu button:active{background:var(--bg4)}
+/* Bias-Picker-Popover (Long-Press-Ersatz fuer die ▲/◆/▼-Buttons, Nutzer-
+   Wunsch 2026-07-22) - erscheint am Druckpunkt statt zentriert, gleiches
+   position:fixed+body-append-Muster wie .hdr-menu. */
+.bias-picker{position:fixed;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:6px;box-shadow:0 10px 26px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px;min-width:150px}
+.bias-picker-lbl{font-size:10.5px;font-weight:700;color:var(--t3);padding:2px 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bias-picker-opts{display:flex;flex-direction:column;gap:2px}
+.bias-picker-opt{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--bd2);color:var(--t1);padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:700;text-align:left;width:100%;font-family:inherit}
+@media (hover:hover){.bias-picker-opt:hover{background:var(--bg4)}}
+.bias-picker-opt:active{background:var(--bg4)}
+.bias-picker-opt.cur.bb{border-color:var(--green);background:rgba(var(--green-rgb),.12);color:var(--green)}
+.bias-picker-opt.cur.br{border-color:var(--red);background:rgba(var(--red-rgb),.12);color:var(--red)}
+.bias-picker-opt.cur.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 /* Micro-interactions: Buttons federn beim Druecken leicht ein, wichtige
    Karten heben sich beim Hover minimal an - macht die Oberflaeche insgesamt
@@ -321,8 +333,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
    Zeilen dadurch nicht mehr hoeher werden als Zeilen ohne Warnung
    (Nutzer-Wunsch 2026-07-17). */
 .cot-crowded{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;font-size:9px;font-weight:800;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:50%;margin-left:4px;vertical-align:middle}
-/* Auto-abgeleitete Bias-Buttons (Non-FX, Regel same/inverse): gesperrt + Kettensymbol */
-.auto-lock button{opacity:.35;cursor:not-allowed}
+/* Auto-abgeleitete/gesperrte Bias (Non-FX Regel same/inverse, Risk Correlation): Kettensymbol statt Buttons */
 .auto-lock-ic{font-size:10px;margin-left:2px;opacity:.7}
 /* Spiegel-Vorschau im Asset-Einstellungs-Modal */
 .acfg-mirror{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
@@ -352,11 +363,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:21px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
-.rb-g{display:flex;gap:2px;flex-shrink:0;margin-top:1px}
-.rb{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s;line-height:1.4}
-.rb.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
-.rb.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
-.rb.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}@media (hover:hover){.ri:hover .mv{opacity:.4}}@media (hover:hover){.mv:hover{opacity:1!important;color:var(--blue)}}.mv:disabled{opacity:.05!important;cursor:default}
 .istar{background:none;border:none;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
 .istar.on{opacity:1;color:var(--star)}@media (hover:hover){.ri:hover .istar{opacity:.4}}.ri .istar.on{opacity:1;color:var(--star)}
@@ -375,11 +381,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
-.rbg{display:flex;gap:2px;flex-shrink:0}
-.rbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s}
-.rbo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
-.rbo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
-.rbo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
 .rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}@media (hover:hover){.rmv:hover{opacity:1;color:var(--blue)}}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
 .rstar.on{opacity:1;color:var(--star)}@media (hover:hover){.rub-card:hover .rstar{opacity:.4}}.rub-card .rstar.on{opacity:1;color:var(--star)}
@@ -455,13 +456,6 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}}
 .ibadge span{font-size:10px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
 .add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}@media (hover:hover){.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}}
-.ibg{display:flex;gap:2px;flex-shrink:0}
-.ibo{padding:2px 4px;border-radius:3px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:9px;font-weight:700;transition:all .1s}
-.ibo.bb{border-color:var(--green);background:rgba(var(--green-rgb),.08);color:var(--green)}
-.ibo.br{border-color:var(--red);background:rgba(var(--red-rgb),.08);color:var(--red)}
-.ibo.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.08);color:var(--amber)}
-.ibo.bb2{border-color:var(--green);background:var(--green);color:#04202b;font-weight:900}
-.ibo.br2{border-color:var(--red);background:var(--red);color:#2b0705;font-weight:900}
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
 .trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4;cursor:pointer}
 .trend-chip.neu{color:var(--t3);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.16)}
@@ -1258,7 +1252,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1a3d2e;color:#a8f0c8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: JADE-TREND-CHIP-BIAS-202</span><span id="verBannerText"> (Trend/Step-Chip am Indikator (📈 "Trend +1"/"Step +0.5"/etc.) war bisher IMMER blau, egal ob + oder − (Nutzer-Wunsch): faerbt sich jetzt in derselben Bias-Farbe wie ueberall sonst in der App - positiv (bull) in Gruen, negativ (bear) in Rot, neutral bleibt grau. Betrifft sowohl den reinen Step-Fall ("Step +0.5 · 1/2") als auch den bestaetigten Trend-Fall ("Trend +1"/"Trend +1.5") gleichermassen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8f0c8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8f0c8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUBY-BIAS-LONGPRESS-203</span><span id="verBannerText"> (Nutzer-Experiment: die ▲/◆/▼-Bias-Buttons an jeder Rubrik-Karte/jedem Indikator/Notes-Eintrag entfernt - Ersatz ist ein Long-Press (Touch+Maus, ~450ms) auf die Karte/den Indikator, der ein kleines Popover mit Bullish/Neutral/Bearish am Druckpunkt oeffnet (openBiasPicker). Gesperrte Faelle (gespiegelt/automatisch) zeigen weiterhin dieselbe Erklaerung wie zuvor per alert(). Zusaetzlich: eine manuelle Bias-Wahl an einem Indikator verfaellt jetzt einheitlich erst, wenn der jeweilige Automatik-Pfad WIRKLICH einen neuen Wert liefert (Actual/Forecast/Previous/Datum aendern sich), nicht mehr bei jedem stuendlichen Poll ohne echte Datenaenderung - neuer ind._manualPin-Mechanismus (indBiasInputSig/indBiasPinned), verdrahtet in allen 5 Automatik-Pfaden (Feed mit/ohne Forecast, Kalender, Bond, COT, Sentiment). Karten-Bias (rub._biasScore) hatte dieses Verhalten bereits, unveraendert. Per Playwright mit echten Daten verifiziert: Pin bleibt bei unveraenderten Werten stehen, verfaellt korrekt bei echter Aenderung, ueber alle 5 Pfade.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2829,6 +2823,27 @@ function saveIndLink(){
   save();closeM('mIndLink');renderDetail();
 }
 function resetIndLink(){if(_ilEditKey)delete indLinkCustom[_ilEditKey];save();closeM('mIndLink');renderDetail();}
+// Gleiches Lang-Drücken-Muster (Nutzer-Wunsch 2026-07-22: die ▲/◆/▼-Bias-
+// Buttons an jeder Karte/jedem Indikator/Notes-Eintrag entfernt, Ersatz ist
+// ein Long-Press auf die Karte/den Indikator, der ein kleines Auswahl-Fenster
+// (Bullish/Neutral/Bearish) am Druckpunkt öffnet, siehe openBiasPicker weiter
+// unten bei setRubBias/setIndBias). Startet NICHT, wenn der Druck auf einem
+// Button/Link beginnt (eigene, sofortige Einzel-Aktion: Stern, Loeschen,
+// Auf/Ab, Zinserwartungs-Link, ...) - deren Verhalten bleibt unangetastet.
+// Das Namens-Eingabefeld ist BEWUSST NICHT ausgeschlossen: die Kartenkoepfe
+// haben sonst praktisch keine freie Flaeche mehr (das Feld fuellt fast die
+// ganze Zeile) - ein kurzer Klick zum Umbenennen bleibt trotzdem unbeeinflusst,
+// da der Timer beim Loslassen vor Ablauf der 450ms abgebrochen wird (siehe
+// biasPressEnd).
+let _biasPressTimer=null;
+function biasPressStart(ev,kind,ri,ii){
+  if(ev.target.closest('button,a,[role="button"],details,summary'))return;
+  clearTimeout(_biasPressTimer);
+  const pt=ev.touches?ev.touches[0]:ev;
+  const x=pt.clientX,y=pt.clientY;
+  _biasPressTimer=setTimeout(()=>openBiasPicker(kind,ri,ii,x,y),450);
+}
+function biasPressEnd(){clearTimeout(_biasPressTimer);}
 // Event-/News-Quellen-IDs für ein Symbol: das Symbol selbst plus - bei
 // Nicht-FX-Assets - die verbundene Währung (sym.linkCcy, Standard USD).
 // "Keine Verbindung" (linkCcy=null) -> nur das Symbol selbst.
@@ -3563,12 +3578,37 @@ function openTrendInfo(ri,ii){
 //   der (bestaetigte) Trend wirkt als separater Bonus ueber ind.trendBias
 //   (indScore) - der 1-Schritt-Vergleich gilt hier NICHT, da mit Forecast
 //   das Beat/Miss selbst schon das "sofort verfuegbare" Signal ist.
-function applyTrendModel(ind,noForecast,allowBiasReplace){
+// Manuelle Bias-Wahl (Long-Press-Picker, setIndBias) soll erst verfallen,
+// wenn der jeweilige Automatik-Pfad WIRKLICH einen neuen Wert liefert - nicht
+// bei jedem Poll/Recompute, auch wenn sich am Actual/Forecast/Previous nichts
+// geaendert hat (Nutzer-Wunsch 2026-07-22). ind._manualPin merkt sich dafuer
+// den Input-Stand, gegen den die manuelle Wahl getroffen wurde; JEDER
+// automatische Bias-Pfad prueft das VOR einem Schreibzugriff auf ind.bias
+// (bzw. stepDriven/trendDriven) und laesst die Werte in Ruhe, solange sich
+// der Stand nicht geaendert hat - aendert er sich wirklich, greift die
+// Automatik normal UND der Pin faellt automatisch weg. Analog zum bereits
+// bestehenden rub._biasScore-Pin fuer Karten (recomputeRubricAutoBias) bzw.
+// ind.autoEvId fuer den Kalenderpfad - hier als gemeinsame Signatur, da
+// ind.bias von FUENF verschiedenen Automatik-Quellen gesetzt werden kann
+// (Feed mit/ohne Forecast, Kalender, Bond, COT, Sentiment) und alle denselben
+// Landeplatz (ind.research.{actual,forecast,previous,date}) teilen.
+function indBiasInputSig(actual,forecast,previous,date){return JSON.stringify([actual??null,forecast??null,previous??null,date??null]);}
+function indBiasPinned(ind,sig){
+  if(!ind._manualPin)return false;
+  if(ind._manualPin===sig)return true;
+  ind._manualPin=null;
+  return false;
+}
+function applyTrendModel(ind,noForecast,allowBiasReplace,sig){
   let changed=false;
   const trend=indTrendBias(ind,ind.name);
   if(noForecast){
     if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
-    if(allowBiasReplace||ind.bias==='neu'||ind.stepDriven){
+    if(sig&&indBiasPinned(ind,sig)){
+      // Manueller Override aktiv, Rohdaten seither unveraendert - Automatik
+      // laesst Bias/Step/Trend-Flags komplett unangetastet (siehe
+      // indBiasInputSig/indBiasPinned oben).
+    }else if(allowBiasReplace||ind.bias==='neu'||ind.stepDriven){
       const step=indStepBias(ind,ind.name);
       // trend ist per Konstruktion nie ungleich step, sobald beide gesetzt
       // sind (2 Schritte in Folge implizieren den letzten Schritt) - step
@@ -3751,15 +3791,16 @@ function syncIndicatorBiases(){
         // (manuelle Klicks sollen bis zum naechsten ECHTEN Release stehen
         // bleiben) - Trend-Anteile berechnet applyTrendModel darunter IMMER.
         const newRelease=ev.id!==ind.autoEvId;
+        const evSig=indBiasInputSig(ev.actual,ev.forecast,ev.previous,ev.date);
         if(newRelease){
           ind.autoEvId=ev.id;
           changed=true;
-          if(!noForecast){
+          if(!noForecast&&!indBiasPinned(ind,evSig)){
             const nb=indBiasFromEvent(ev);
             if(ind.bias!==nb)ind.bias=nb;
           }
         }
-        if(applyTrendModel(ind,noForecast,newRelease))changed=true;
+        if(applyTrendModel(ind,noForecast,newRelease,evSig))changed=true;
       });
     });
   });
@@ -5847,14 +5888,13 @@ function renderRub(rub,ri,total){
   const collapsed=rub.collapsed?' collapsed':'';
   const imp=rub.imp?' imp':'';
   return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
-    <div class="rub-hdr">
+    <div class="rub-hdr" onpointerdown="biasPressStart(event,'rub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
-      ${(()=>{const lock=rubAutoDerived(getSym(),rub);const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
-      return`<div class="rbg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}${lock?'<span class="auto-lock-ic">🔗</span>':''}</div>`;})()}
+      ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">🔗</span>`:''}
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
       <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -6016,21 +6056,11 @@ function renderInd(ind,ri,ii,total){
     </details>`;
   }
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
-    <div class="ind-hdr">
+    <div class="ind-hdr" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       ${datePart}
-      ${(()=>{
-        // "Risk Correlation": 5-stufiges, GESPERRTES Bias (statt der
-        // normalen 3 Knoepfe) - wird nur ueber den Risk-Sentiment-Regler im
-        // Dashboard gesetzt (recomputeRiskCorr), siehe setIndBias-Sperre.
-        if(ind.name==='Risk Correlation'){
-          const tt=' title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, ⚙️ to configure)"';
-          return`<div class="ibg auto-lock"${tt}>${['sbull','bull','neu','bear','sbear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" disabled>${b==='sbull'?'▲▲':b==='bull'?'▲':b==='bear'?'▼':b==='sbear'?'▼▼':'◆'}</button>`).join('')}</div>`;
-        }
-        const lock=rubAutoDerived(getSym(),getRub(ri));const tt=lock?` title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings"`:'';
-        return`<div class="ibg${lock?' auto-lock':''}"${tt}>${['bull','neu','bear'].map(b=>`<button class="ibo${ind.bias===b?' '+bClass(b):''}" ${lock?'disabled':''} onclick="setIndBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>`;
-      })()}
+      ${ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, ⚙️ to configure)">🔗</span>`:rubAutoDerived(getSym(),getRub(ri))?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">🔗</span>`:''}
       ${(()=>{
         // Trend-Chip: erscheint an JEDEM Indikator mit Trend-Daten. Aktiv:
         // "Trend +1/-1" (bzw. ±0.5 bei Halbgewicht mit Forecast). Ohne
@@ -6131,9 +6161,8 @@ function renderNotesSubTab(c){
 
 function renderNoteRub(rub,ri,total){
   return`<div class="rub-card${rub.imp?' imp':''}">
-    <div class="rub-hdr">
+    <div class="rub-hdr" onpointerdown="biasPressStart(event,'noteRub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
-      <div class="rbg">${['bull','neu','bear'].map(b=>`<button class="rbo${rub.bias===b?' '+bClass(b):''}" onclick="setNoteRubBias(${ri},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
       <button class="rstar${rub.imp?' on':''}" onclick="togNoteRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvNoteRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
       <button class="rmv" onclick="mvNoteRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -6141,10 +6170,9 @@ function renderNoteRub(rub,ri,total){
     </div>
     <div class="rub-body">
       ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':bRC(item.bias||'neu')}">
+        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
           <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
-          <div class="rb-g">${['bull','neu','bear'].map(b=>`<button class="rb${(item.bias||'neu')===b?' '+bClass(b):''}" onclick="setNoteRubItemBias(${ri},${ii},'${b}')">${b==='bull'?'▲':b==='bear'?'▼':'◆'}</button>`).join('')}</div>
           <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
           <button class="mv" onclick="mvNoteRubItem(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
           <button class="mv" onclick="mvNoteRubItem(${ri},${ii},1)" ${ii===(rub.items.length-1)?'disabled':''}>▼</button>
@@ -6245,6 +6273,63 @@ function rubAutoDerived(sym,rub){
   return rule==='same'||rule==='inverse';
 }
 function setRubBias(ri,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This card\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+// ── BIAS-PICKER (ersetzt die ▲/◆/▼-Buttons, Nutzer-Wunsch 2026-07-22) ──
+// Long-Press auf eine Rubrik-Karte, einen Indikator, eine Notes-Kategorie
+// oder einen Notes-Eintrag öffnet dieses kleine Popover statt der vorher
+// permanent sichtbaren drei Buttons. Gesperrte Fälle (automatisch gespiegelt/
+// berechnet) zeigen weiterhin dieselbe Erklärung wie zuvor per alert(), statt
+// die Auswahl anzubieten - exakt dieselben Sperr-Texte wie bisher in
+// setRubBias/setIndBias, hier dupliziert, damit sie schon VOR dem Öffnen des
+// Popovers greifen (kein Auswahl-Fenster, das man dann doch nicht nutzen kann).
+let _biasPickerApply=null;
+function openBiasPicker(kind,ri,ii,x,y){
+  closeBiasPicker();
+  const c=getSym();if(!c)return;
+  let obj,lockMsg=null,label;
+  if(kind==='rub'){
+    obj=getRub(ri);if(!obj)return;
+    if(rubAutoDerived(c,obj))lockMsg='This card\'s bias is mirrored automatically from '+macroCcyFor(c.id)+'. Change or disable the rule via the asset settings (gear button).';
+    label=obj.name;
+    _biasPickerApply=b=>setRubBias(ri,b);
+  }else if(kind==='ind'){
+    obj=getInd(ri,ii);if(!obj)return;
+    const r0=getRub(ri);
+    if(r0&&rubAutoDerived(c,r0))lockMsg='This indicator\'s bias is mirrored automatically from '+macroCcyFor(c.id)+'. Change or disable the rule via the asset settings (gear button).';
+    else if(obj.name==='Risk Correlation')lockMsg='This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.';
+    label=obj.displayName||obj.name;
+    _biasPickerApply=b=>setIndBias(ri,ii,b);
+  }else if(kind==='noteRub'){
+    obj=getNoteRub(ri);if(!obj)return;
+    label=obj.name;
+    _biasPickerApply=b=>setNoteRubBias(ri,b);
+  }else if(kind==='noteItem'){
+    obj=getNoteRub(ri);if(!obj||!obj.items||!obj.items[ii])return;
+    obj=obj.items[ii];obj.bias=obj.bias||'neu';
+    label=obj.text||'Note';
+    _biasPickerApply=b=>setNoteRubItemBias(ri,ii,b);
+  }else return;
+  if(lockMsg){alert(lockMsg);return;}
+  const cur=obj.bias||'neu';
+  const opt=(b,ic,txt)=>`<button class="bias-picker-opt${cur===b?' cur '+bClass(b):''}" onclick="biasPickerChoose('${b}')">${ic} ${txt}</button>`;
+  const m=document.createElement('div');
+  m.className='bias-picker';m.id='biasPicker';
+  m.innerHTML=`<div class="bias-picker-lbl">${escH(String(label).slice(0,60))}</div>
+    <div class="bias-picker-opts">${opt('bull','▲','Bullish')}${opt('neu','◆','Neutral')}${opt('bear','▼','Bearish')}</div>`;
+  document.body.appendChild(m);
+  const mw=m.offsetWidth,mh=m.offsetHeight;
+  m.style.position='fixed';
+  m.style.left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8))+'px';
+  m.style.top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8))+'px';
+  m.style.zIndex='100001';
+  setTimeout(()=>document.addEventListener('pointerdown',biasPickerOutside,true),0);
+}
+function biasPickerChoose(b){const fn=_biasPickerApply;closeBiasPicker();if(fn)fn(b);}
+function closeBiasPicker(){
+  const m=document.getElementById('biasPicker');if(m)m.remove();
+  document.removeEventListener('pointerdown',biasPickerOutside,true);
+  _biasPickerApply=null;
+}
+function biasPickerOutside(e){const m=document.getElementById('biasPicker');if(m&&!m.contains(e.target))closeBiasPicker();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 // ── Risk-Sentiment-Regler (Dashboard, Nutzer-Wunsch 2026-07-13) ──
@@ -6380,7 +6465,15 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}const _indChk=getInd(ri,ii);if(_indChk&&_indChk.name==='Risk Correlation'){alert('This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _old=ind.bias,_before=indScore(ind,_r0);ind.bias=b;const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}const _indChk=getInd(ri,ii);if(_indChk&&_indChk.name==='Risk Correlation'){alert('This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _old=ind.bias,_before=indScore(ind,_r0);ind.bias=b;
+  // Manuelle Wahl pinnt gegen den GERADE AKTUELLEN Automatik-Input-Stand
+  // (Actual/Forecast/Previous/Datum) - siehe indBiasInputSig/indBiasPinned bei
+  // applyTrendModel. Bleibt der Stand unveraendert, lassen alle Automatik-
+  // Pfade (Feed-Selbstheilung, Trend-Modell, Bond/COT/Sentiment-Feed) die Wahl
+  // in Ruhe; sobald sich Actual/Forecast/Previous wirklich aendern (neuer
+  // Wert), verfaellt die manuelle Wahl von selbst (Nutzer-Wunsch 2026-07-22).
+  const _r=ind.research||{};ind._manualPin=indBiasInputSig(_r.actual,_r.forecast,_r.previous,_r.date);
+  const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togIndImp(ri,ii){const _indChk0=getInd(ri,ii);if(_indChk0&&_indChk0.name==='Risk Correlation'){alert('The "important" flag is disabled for this auto-computed indicator (it would break the fixed +/-1 / +/-0.5 scoring).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _r=getRub(ri),_c=getSym(),_before=indScore(ind,_r);ind.imp=!ind.imp;const _after=indScore(ind,_r);if(_c&&Math.abs(_after-_before)>1e-9)logScoreChange(_c.id,{kind:'imp',ind:ind.displayName||ind.name,rub:_r.name,from:ind.imp?'☆':'★',to:ind.imp?'★ important':'☆ normal',delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
@@ -8424,7 +8517,7 @@ function applyIndDataFeed(){
         if(fx){
           if(adoptFeedHistory(ind,f))changed=true;
           if(trackIndValues(ind,macroCcyFor(c.id),f.date,na,np))changed=true;
-          if(applyTrendModel(ind,nf==null,false))changed=true;
+          if(applyTrendModel(ind,nf==null,false,indBiasInputSig(na,nf,np,f.date)))changed=true;
         }
         // Verlaufschart-Historie unabhaengig von fx/non-fx (non-FX-Assets
         // zeigen dieselbe gespiegelte Makro-Karte wie ihre verbundene
@@ -8442,7 +8535,7 @@ function applyIndDataFeed(){
         // AKTUELLEN Feed-Werten neu berechnet, UNABHAENGIG davon, ob sich
         // sonst etwas geaendert hat - idempotent (stimmt er schon, passiert
         // nichts) und selbstheilend (stimmt er nicht, wird er repariert).
-        if(fx&&nf!=null){
+        if(fx&&nf!=null&&!indBiasPinned(ind,indBiasInputSig(na,nf,np,f.date))){
           const healedBias=researchBias(base,na,nf,np);
           if(ind.bias!==healedBias){ind.bias=healedBias;changed=true;}
         }
@@ -8574,7 +8667,7 @@ function applyBondDataFeed(){
           ind.research={actual:aStr,forecast:null,previous:pStr,date:aDate,prevDate:pDate,source:src,bond:true,bondColor:bondColor};
           changed=true;
         }
-        if(fx&&ind.bias!==bias){ind.bias=bias;changed=true;}
+        if(fx&&!indBiasPinned(ind,indBiasInputSig(aStr,null,pStr,aDate))&&ind.bias!==bias){ind.bias=bias;changed=true;}
         if(fx&&ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
         // Vergleichswerte fuers Trend-Detail-Modal persistieren (auch offline
         // abrufbar): [Datum vor 25T, Wert vor 25T, aktuelles Datum, Wert].
@@ -10993,7 +11086,7 @@ function applyCotDataFeed(){
       ind.research={actual,forecast:null,previous,date,source:COT_SOURCE_URL,cot:true,cotColor:cotColor2};
       changed=true;
     }
-    if(ind.bias!==bias){ind.bias=bias;changed=true;}
+    if(!indBiasPinned(ind,indBiasInputSig(actual,null,previous,date))&&ind.bias!==bias){ind.bias=bias;changed=true;}
     if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
     if(ind.cotTrendPts){delete ind.cotTrendPts;changed=true;}
   };
@@ -11082,7 +11175,7 @@ function applySentimentFeed(){
       ind.research={actual,forecast:null,previous:null,date,source:SENT_SOURCE[feedKey]||'',sent:true,sentKey:feedKey,cotColor:col};
       changed=true;
     }
-    if(ind.bias!==bias){ind.bias=bias;changed=true;}
+    if(!indBiasPinned(ind,indBiasInputSig(actual,null,null,date))&&ind.bias!==bias){ind.bias=bias;changed=true;}
     // Sentiment nimmt bewusst nicht am Trend-Modell teil (wie COT).
     if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
     if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}

@@ -3836,3 +3836,98 @@ Bias-Farben umstellen (gruen=bullish/rot=bearish, wie ueberall sonst, z.B.
   exakt die erwarteten Klassen + `getComputedStyle().color`-Werte
   (`rgb(79,195,247)` fuer bull, `rgb(239,83,80)` fuer bear, unveraendertes
   Grau fuer neutral), keine Page-Errors.
+
+### Bias-Buttons durch Long-Press-Popover ersetzt + einheitliche Verfalls-Logik fuer manuelle Bias-Wahl (Nutzer-Experiment 2026-07-22)
+
+Nutzer: "Entfern mal bei jeder Karte und jedem Indikator und generell wo das
+überall Verwender wird diese drei Vierecke mit denen man das bias einstellen
+kann. Ich will dafür als Ersatz das wenn man länger auf eine Karte oder einen
+Indikator drauf drückt das sich dann ein Fenster mit genau den Feldern öffnet
+wo man einstellen kann ob es bullish bearish oder neutral ist. Diese
+Änderungen verfallen sobald der Indikator wieder automatisch einen neuen Wert
+bekommt." Vor dem Codieren zwei offene Design-Fragen per `AskUserQuestion`
+geklärt (Popover am Druckpunkt vs. zentrales Modal -> Popover; bestehende
+Verfalls-Logik pro Indikator-Typ unangetastet lassen vs. vereinheitlichen ->
+vereinheitlichen), wie von der "erst OK einholen"-Regel verlangt.
+
+**Vier Fundstellen des ▲/◆/▼-Musters** (`grep 'onclick="set.*Bias'`): Rubrik-
+Karten-Header (`.rbg`/`.rbo`, `setRubBias`), Indikator-Zeile (`.ibg`/`.ibo`,
+`setIndBias`), Notes-Tab-Kategorie (`.rbg`/`.rbo`, `setNoteRubBias`), Notes-
+Tab-Eintrag (`.rb-g`/`.rb`, `setNoteRubItemBias`) - alle vier ersetzt, alte
+CSS-Klassen als jetzt toter Code entfernt (`.rbg`/`.rbo`/`.ibg`/`.ibo`/
+`.rb-g`/`.rb`/`.auto-lock button`).
+
+- **Long-Press-Infrastruktur** (`biasPressStart`/`biasPressEnd`, ≈ Zeile
+  2826, nach dem etablierten `rwPressStart`/`ilPressStart`-Muster fuer den
+  Zinserwartungs-Link bzw. Quellen-Link): `onpointerdown`/`onpointerup`/
+  `onpointerleave`/`onpointercancel`/`oncontextmenu="return false"` auf dem
+  jeweiligen Header-Container (`.rub-hdr`/`.ind-hdr`) bzw. der Notes-Zeile
+  (`.ri`), 450ms Timer oeffnet `openBiasPicker(kind,ri,ii,x,y)`. Bricht ab,
+  wenn der Druck auf einem Button/Link beginnt (eigene Einzel-Aktion:
+  Stern, Loeschen, Auf/Ab, ...) - **bewusst NICHT** auf dem Namens-
+  Eingabefeld: die Kartenkoepfe haben sonst praktisch keine freie Flaeche
+  (das Feld fuellt fast die ganze Zeile, empirisch per Playwright bestaetigt
+  - `document.elementFromPoint()` auf einen freien Fleck im Header fand
+  buchstaeblich keinen einzigen Pixel). Ein kurzer Klick zum Umbenennen
+  bleibt trotzdem unbeeinflusst, da der Timer beim Loslassen vor Ablauf der
+  450ms abgebrochen wird.
+- **Popover** (`openBiasPicker`/`biasPickerChoose`/`closeBiasPicker`, ≈ nach
+  `setRubBias`): `document.body.appendChild`+`position:fixed`-Muster wie
+  `toggleDataMenu`/`openStackMenu` (kein Zentral-Modal), erscheint am
+  Druckpunkt, zeigt den aktuellen Bias hervorgehoben, schliesst bei Klick
+  auf eine Option oder ausserhalb. Gesperrte Faelle (per Zahnrad gespiegelte
+  Karte/Indikator, "Risk Correlation") zeigen weiterhin dieselbe `alert()`-
+  Erklaerung wie zuvor, GEPRUEFT VOR dem Oeffnen des Popovers (kein Fenster,
+  das man dann doch nicht nutzen kann). Lock-Icon (🔗) bleibt separat sichtbar
+  (aus der entfernten Button-Gruppe herausgeloest) - zeigt weiterhin auf
+  einen Blick, dass eine Karte/ein Indikator automatisch gesteuert ist, ohne
+  erst einen Long-Press zu brauchen.
+- **Verfalls-Logik vereinheitlicht** (Nutzer-Wunsch: "verfallen sobald...
+  einen neuen Wert bekommt"): Kartenebene (`rub.bias`) hatte dieses Verhalten
+  BEREITS ueber das bestehende `rub._biasScore`-Pin-Muster
+  (`recomputeRubricAutoBias()`, siehe Merksatz-Kommentar dort) - unveraendert
+  gelassen. Indikator-Ebene (`ind.bias`) hatte es NICHT konsistent: der
+  Feed-Pfad MIT Forecast (`applyIndDataFeed()`s Bias-Selbstheilung)
+  ueberschrieb jede manuelle Wahl bei JEDEM stuendlichen Poll, auch OHNE
+  Datenaenderung; der Feed-Pfad OHNE Forecast (`applyTrendModel()`) haette
+  eine manuelle Wahl auf einem zuvor `stepDriven`-aktiven Indikator beim
+  naechsten Poll ebenfalls sofort verworfen (stepDriven blieb `true` stehen);
+  Bond/COT/Sentiment-Feed hatten ueberhaupt keinen Schutz. Neue gemeinsame
+  Signatur-Funktionen `indBiasInputSig(actual,forecast,previous,date)`/
+  `indBiasPinned(ind,sig)` (≈ Zeile 3595, direkt vor `applyTrendModel`):
+  `setIndBias()` pinnt bei jeder manuellen Wahl den aktuellen
+  `ind.research`-Stand; JEDER der fuenf Automatik-Pfade prueft das VOR einem
+  Schreibzugriff auf `ind.bias` (bzw. bei `applyTrendModel`s noForecast-Zweig
+  zusaetzlich `stepDriven`/`trendDriven`, komplett eingefroren solange
+  gepinnt) - alle fuenf teilen sich denselben Landeplatz
+  `ind.research.{actual,forecast,previous,date}`, daher genuegt EINE
+  gemeinsame Signatur statt fuenf eigener Implementierungen. `applyTrendModel`
+  bekommt dafuer einen neuen optionalen 4. Parameter `sig`; der Kalenderpfad
+  (`syncIndicatorBiases()`) hatte fuer die direkte Beat/Miss-Zuweisung zwar
+  bereits einen eigenen, aehnlichen Schutz (`ind.autoEvId`/`newRelease`) -
+  der wird durch die neue Signatur ERGAENZT (robuster, da `ev.id` laut
+  bestehendem Code-Kommentar "bei jedem FF-Reload wechselt", waehrend
+  Actual/Forecast/Previous/Datum stabil bleiben) statt ersetzt.
+- Per Playwright mit den ECHTEN lokalen Feed-Daten (ind_data.json,
+  bond_data.json, cot_data.json, sentiment_data.json) verifiziert, ueber
+  alle fuenf Pfade: manuelle Wahl bleibt bei einem erneuten Lauf mit
+  UNVERAENDERTEN Rohdaten stehen; sobald die Rohdaten sich wirklich aendern
+  (Actual/Bond-Yield/Long-Short-Split/Sentiment-Wert bewusst verschoben),
+  berechnet der jeweilige Automatik-Pfad wieder normal und die manuelle Wahl
+  verfaellt selbststaendig. **Zwei Playwright-Fallstricke dabei gefunden
+  (Test-Artefakte, kein App-Bug):** (1) `getRub`/`getInd` haengen vom GLOBAL
+  gewaehlten Symbol ab (`selId`) - ein Test, der Indizes eines ANDEREN
+  Symbols berechnet ohne vorher `selSym()` aufzurufen, trifft im Zweifel
+  eine falsche/leere Stelle und `setIndBias` bricht daher still ab. (2) bei
+  Bond/COT muss die MUTATION exakt den Wert treffen, den die Auto-Funktion
+  tatsaechlich liest (`bondPick(series,yesterday)` sucht nach Datum, nicht
+  einfach `series[series.length-1]`; `cotMetrics()` liest `s.long`/`s.short`
+  direkt vom Symbol-Objekt, nicht aus dem `history`-Array) - sonst hat die
+  Mutation schlicht keinen Effekt und der Test liefert ein falsch-negatives
+  Ergebnis. Voller 14-Tab-Regressionstest + Undo/Redo mit einer Bias-Wahl
+  weiterhin fehlerfrei.
+- **Bewusst NICHT geaendert:** die Risk-Correlation-5-Stufen-Sperre (weiterhin
+  komplett automatisch, keine manuelle Wahl moeglich, wie zuvor), das COT-
+  Data/Risk-Environment-Ausschluss beim Karten-Zahnrad (unabhaengiges
+  Feature vom 2026-07-21), die generelle Score-Formel selbst (nur WANN ein
+  manueller Override respektiert wird, nicht WIE der Score berechnet wird).
