@@ -1253,7 +1253,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1a2e3d;color:#a8d4f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: STEEL-GEOPOLITICS-FX-ONLY-200</span><span id="verBannerText"> (Vollstaendiger Audit aller 6 Kartentypen auf Badge-Text-Widersprueche (Nutzer-Wunsch): einen weiteren echten Fall in "Risk Environment" gefunden - die Karte hatte zwei Score-Treiber (Risk Correlation automatisch, Geopolitics manuell), der Zusammenfassungstext las aber nur Risk Correlation, Geopolitics konnte das Badge unbemerkt drehen. Fix: "Geopolitics" gibt es jetzt nur noch bei FX-Waehrungen (bei Non-FX unklar, wessen Politik gemeint waere - Migration entfernt bestehende Geopolitics-Eintraege bei Non-FX-Assets), und bei FX bekommt es einen eigenen simplen Zusatzsatz ("Political uncertainty is currently bullish/bearish for USD.") statt in die Risk-Correlation-Zeile verwoben zu werden. Inflation/Labour Market/Economic Growth/Interest Rates/COT Data liefen im Audit sauber (keine weiteren Widersprueche gefunden). SUMMARY_ENGINE_VERSION auf 10.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#2e1a3d;color:#d4b8f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMETHYST-NZD-LIVE-SOURCE-201</span><span id="verBannerText"> (NZD Manufacturing PMI/Services PMI/Retail Sales zeigten dauerhaft eingefrorene alte Werte (Mai) - Ursache: es gab fuer diese drei Indikatoren NIE einen Live-Pfad, nur eine einmalige statische Erstbefuellung ohne Forecast, die daher auch nie den Trend-Fallback bekam. Fix im Workflow: neue RULES-Eintraege matchen TradingViews tatsaechliche NZD-Titel ("Business NZ PMI"/"Services NZ PSI"/"Electronic Retail Card Spending MoM") - liefert jetzt echte, taeglich aktualisierte Live-Daten (verifiziert: Manufacturing PMI 59.7 vs. vorher 49.9, Services PMI 50.6 vs. 47.5, Retail Sales -1.4% vs. 1.7%). Scoring lief dadurch automatisch korrekt mit (applyIndDataFeed() ruft den bestehenden Step+Trend-Mechanismus fuer Indikatoren ohne Forecast unconditional auf). Text-Seite (index.html): summarizeGrowth() beschrieb PMIs/Retail Sales bisher nur ueber einen Forecast-Vergleich und blieb bei fehlendem Forecast stumm - neuer Trend-Fallback (trendState() gegen Previous, gleiche classifyPair/classifySingle-Skala, neues TREND_WORDS-Vokabular "trending higher/lower/partly/mixed" statt "hotter/softer than expected"). SUMMARY_ENGINE_VERSION auf 11.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#d4b8f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -7183,6 +7183,12 @@ function assetVerdictClause(sym,rub,topic,drivers){
   return`On balance the read is mixed for ${sym.id} — ${clauses.join(', while ')}`;
 }
 const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
+// Trend-basierter Fallback fuer PMIs/Retail Sales OHNE Forecast (Nutzer-
+// Wunsch 2026-07-22, NZD-Bugreport: Business NZ PMI/Services NZ PSI/
+// Electronic Retail Card Spending fuehren auf TradingView keinen Forecast) -
+// "trending higher/lower" statt HOTCOLD_WORDS' "hotter/softer than expected",
+// da es hier gar keinen Forecast gibt, gegen den etwas "than expected" waere.
+const TREND_WORDS={pos:'trending higher','partly-pos':'partly trending higher',neutral:'holding roughly steady','partly-neg':'partly trending lower',neg:'trending lower',mixed:'trending in mixed directions'};
 // "X came in in line with expectations" verdoppelt "in" - beim neutralen Fall
 // stattdessen "X were/was in line with expectations" (Nutzer-Wunsch 2026-07-21:
 // "in line" statt "roughly in line", aber ohne die alte in-in-Kollision).
@@ -7360,15 +7366,27 @@ function summarizeGrowth(sym,rub){
     const prefix=gCls==='neutral'?'':(contrast?'though that came in ':'coming in ');
     sentences.push(`GDP growth ${gAnchor.phrase}, ${prefix}${verdict}`);
   }else if(gAnchor)sentences.push(`GDP growth ${gAnchor.phrase}`);
-  const pmiCls=classifyPair(fcState(sumRawState(sym,pmiM)),fcState(sumRawState(sym,pmiS)));
+  // Trend-Fallback (Nutzer-Wunsch 2026-07-22, NZD-Bugreport): manche
+  // Waehrungen fuehren PMIs/Retail Sales OHNE Forecast (z.B. NZDs Business NZ
+  // PMI/Services NZ PSI/Electronic Retail Card Spending) - vorher blieb der
+  // Satz dafuer komplett stumm, weil pmiCls/retailCls ausschliesslich aus
+  // fcState() kamen. fcState() (Forecast-Vergleich) hat weiterhin Vorrang,
+  // wenn vorhanden; fehlt er, wird stattdessen trendState() (Vergleich gegen
+  // Previous) klassifiziert - dieselbe classifyPair/classifySingle-Skala,
+  // nur eine andere Vergleichsbasis.
+  const pmiFc=classifyPair(fcState(sumRawState(sym,pmiM)),fcState(sumRawState(sym,pmiS)));
+  const pmiTrend=classifyPair(trendState(sumRawState(sym,pmiM)),trendState(sumRawState(sym,pmiS)));
+  const pmiCls=pmiFc||pmiTrend;
   if(pmiCls){
     const aligned=gCls?alignCls(pmiCls,gCls):null;
-    sentences.push(aligned?`PMIs are ${supportPhrase(aligned,'growth picture')}`:cameInPhrase('PMIs','were',pmiCls));
+    sentences.push(aligned?`PMIs are ${supportPhrase(aligned,'growth picture')}`:pmiFc?cameInPhrase('PMIs','were',pmiCls):`PMIs are ${TREND_WORDS[pmiCls]}`);
   }
-  const retailCls=classifySingle(fcState(sumRawState(sym,retail)));
+  const retailFc=classifySingle(fcState(sumRawState(sym,retail)));
+  const retailTrend=classifySingle(trendState(sumRawState(sym,retail)));
+  const retailCls=retailFc||retailTrend;
   if(retailCls){
     const aligned=gCls?alignCls(retailCls,gCls):null;
-    sentences.push(aligned?`Retail sales are ${supportPhrase(aligned,'growth picture')}`:cameInPhrase('Retail sales','were',retailCls));
+    sentences.push(aligned?`Retail sales are ${supportPhrase(aligned,'growth picture')}`:retailFc?cameInPhrase('Retail sales','were',retailCls):`Retail sales are ${TREND_WORDS[retailCls]}`);
   }
   const ccTrend=trendState(sumRawState(sym,cc));
   if(ccTrend!=null)sentences.push(`Consumer confidence has ${ccTrend>0?'also improved':ccTrend<0?'weakened':'held steady'}`);
@@ -7498,7 +7516,7 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=10;
+const SUMMARY_ENGINE_VERSION=11;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer

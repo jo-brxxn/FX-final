@@ -3734,3 +3734,75 @@ Loesung statt Text-Reparatur:
   Gegensignal-Szenarien durchtesten - das reine Lesen des Codes haette den
   Risk-Environment-Fall vermutlich uebersehen, erst der gezielte Test mit
   einem isolierten, starken Gegensignal deckte ihn auf.
+
+### NZD Manufacturing PMI/Services PMI/Retail Sales: kompletter Live-Pfad hatte gefehlt (Bugreport 2026-07-22)
+
+Nutzer-Screenshot der NZD-"Economic Growth"-Karte: Zusammenfassung erwaehnte
+PMIs/Retail Sales gar nicht. Zusaetzlich per eigener Beobachtung: "guck ma
+bei nzd retail Sales da kommt monatlich ein neuer Wert aber der Wert der da
+steht ist aus dem mai und bei services pmi das gleiche. Das sollte ja schon
+laengst aktualisiert sein. Find das Problem."
+
+- **Ursache:** fuer diese drei Indikatoren gab es bei NZD noch NIE einen
+  Live-Pfad - nur die einmalige statische Erstbefuellung
+  (`IND_RESEARCH_DATA`/`applyIndResearch()`), die naturgemaess einfriert.
+  `researchBias()` (nur dieser eine Pfad) hat KEINEN Trend-Fallback bei
+  fehlendem Forecast. Weder FF-Kalender (fuehrt keine NZD-PMI/Retail-Events)
+  noch der TradingView-Feed (`RULES` im Workflow kannten NZDs eigene
+  Reihentitel nicht) noch Investing.com (kann nur FORECASTS an bereits
+  bestehende Eintraege anreichern, keine neuen erzeugen) griffen.
+- **Fix (Workflow, `update-ff-calendar.yml`, RULES-Array):** per
+  workflow_dispatch-Diagnose (Titel-Dump aller NZD-Kalenderevents von
+  TradingView) die tatsaechlichen Reihentitel gefunden - BusinessNZ fuehrt
+  eigene, anders betitelte Reihen statt der generischen S&P-Global-Namen:
+  `"business nz pmi"` (Manufacturing PMI), `"services nz psi"` (Services
+  PMI), `"electronic retail card spending mom"` (Retail Sales m/m, TV fuehrt
+  keine eigene "Retail Sales m/m"-Reihe fuer NZD). Drei neue NZD-spezifische
+  RULES-Eintraege ergaenzt (currency-gated `c==="NZD"`). Per zweitem
+  workflow_dispatch-Lauf verifiziert: echte Live-Werte kommen jetzt an
+  (Manufacturing PMI 59.7 vs. vorher eingefroren 49.9, Services PMI 50.6 vs.
+  47.5, Retail Sales -1,4% vs. 1,7%) - alle drei ohne Forecast (`forecast:
+  null`), aber mit echtem `previous`.
+- **Scoring lief automatisch korrekt mit, KEINE Code-Aenderung noetig:**
+  `applyIndDataFeed()` ruft fuer FX-Indikatoren unconditional
+  `applyTrendModel(ind,nf==null,false)` auf - bei fehlendem Forecast greift
+  exakt derselbe Step+Trend-Mechanismus wie bei jedem anderen Indikator ohne
+  Forecast (±0,5 Basis gegen Previous + additiver ±1-Bonus bei bestaetigtem
+  2-Schritt-Trend, NIE Ersatz). Per Playwright mit den echten Live-Daten
+  bestaetigt: alle drei NZD-Indikatoren zeigen jetzt `stepDriven:true` mit
+  korrekter Bias-Richtung (Manufacturing/Services PMI bull, Retail Sales
+  bear).
+- **Text-Seite (`index.html`, `summarizeGrowth()`):** PMI-/Retail-Sales-
+  Klausel nutzte bisher ausschliesslich `fcState()` (Forecast-Vergleich) -
+  ohne Forecast blieb `pmiCls`/`retailCls` `null`, der Satz komplett stumm.
+  Neuer Trend-Fallback: `classifyPair(trendState(...),trendState(...))` bzw.
+  `classifySingle(trendState(...))` als Ersatz, wenn die Forecast-Variante
+  `null` liefert - dieselbe `classifyPair`/`alignCls`-Skala wie ueberall
+  sonst (Nutzer-Vorgabe: "ob nur Party oder mixed (also einer hoch einer
+  runter)" ist exakt die bestehende partly/mixed-Klassifikation). Neues
+  `TREND_WORDS`-Vokabular ("trending higher/lower/partly.../mixed
+  directions") statt `HOTCOLD_WORDS` ("hotter/softer than expected") - es
+  gibt hier ja keinen Forecast, gegen den etwas "than expected" waere. Greift
+  nur, wenn kein GDP-Bezug (`alignCls` gegen `gCls`) moeglich ist - hat GDP
+  selbst eine Forecast-Richtung, bleibt die bereits bestehende
+  "supporting/not supporting that growth picture"-Formulierung unveraendert
+  fuehrend (unabhaengig davon, ob die PMI/Retail-Klassifikation selbst aus
+  Forecast oder Trend stammt) - kein neuer Sonderfall, nur eine zusaetzliche
+  Eingabequelle fuer dieselbe bestehende Logik. `SUMMARY_ENGINE_VERSION` auf
+  11 erhoeht (Wording-Logik-Aenderung, Selbstheilungs-Pflicht siehe Merksatz
+  oben).
+- Per Playwright mit den echten NZD-Live-Daten verifiziert: Standardfall
+  (GDP hat eine Forecast-Richtung) nutzt weiterhin die aligned-Formulierung;
+  mit entferntem GDP-Forecast (kein Alignment-Ziel) greift der reine
+  Trend-Pfad korrekt ("PMIs are trending higher."); erzwungenes
+  Gegensignal (eine PMI rauf, eine runter) liefert korrekt "trending in
+  mixed directions"; beide runter liefert korrekt "trending lower."; USD
+  (hat Forecasts) zeigt unveraendert die alte fc-basierte Formulierung -
+  keine Regression. Voller JS-Syntax-Check sauber, keine Page-Errors.
+- **Noch offen (bewusst nicht in diesem Fix):** die drei NZD-Indikatoren
+  liefern weiterhin keinen Forecast (TradingView fuehrt fuer diese Reihen
+  keinen) - das ist der vom Nutzer selbst sanktionierte Fallback-Fall
+  ("entweder... wie mit fc verglichen oder halt mit precious"), kein
+  Rest-Bug. Sollte TradingView/Investing.com kuenftig doch einen Forecast
+  fuer eine dieser drei Reihen fuehren, greift die bestehende
+  Investing.com-Enrichment-Logik automatisch (kein weiterer Code noetig).
