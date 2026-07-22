@@ -1049,6 +1049,9 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 .date-modal h3{font-size:14px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
+.dm-fieldset.disabled{opacity:.35;pointer-events:none}
+.dm-nodate{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);margin:2px 0 14px;cursor:pointer}
+.dm-nodate input{flex-shrink:0}
 .dm-inp::placeholder{color:var(--t3)}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:21px}}
 /* ── LOCK SCREEN ── */
@@ -1252,7 +1255,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#1a2e3d;color:#a8d4f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAPPHIRE-COLUMN-ALIGN-204</span><span id="verBannerText"> (Nutzer-Wunsch: die rechte Icon-Reihe an jeder Indikator-Zeile und jedem Karten-Header soll wie eine Tabellenspalte aussehen statt wie bisher unterschiedlich weit versetzt zu sein. Neue Reihenfolge Indikator-Zeile: [Zeitintervall-Badge] [Trend/Step-Chip] [i] [★] [▲] [▼] [✕] (vorher: i vor den beiden Badges). Neue Reihenfolge Karten-Header: [Score-Badge] [i] [★] [▲] [▼] [✕]. Trend/Step-Chip, Zeitintervall-Badge und Score-Badge bekommen eine feste Mindestbreite + rechtsbuendigen Text (min-width+text-align:right bzw. justify-content:flex-end), damit ihre Box immer an derselben Stelle beginnt, egal ob "Trend 0/2" oder "Step +0.5 · 1/2", "daily" oder "quarterly" drinsteht. Fehlt der Trend-Chip komplett (Bond-Renditen etc.), wird ein unsichtbarer Platzhalter derselben Breite gerendert, damit die Spalte nicht wandert. Bewusste Ausnahme: "every 6-8 weeks" (Fed Funds Rate) ist breiter als die Spalte und ragt heraus. Per Playwright verifiziert: alle Indikator-Zeilen einer Karte und alle Karten-Header einer Spalte haben exakt identische Link-Koordinaten fuer Chip/Badge/i.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d2e1a;color:#f0d4a8;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-NODATE-TRENDCOVERAGE-205</span><span id="verBannerText"> (Zwei Bugreports: (1) die "+ Date"-Einladung stand bei Indikatoren, die grundsaetzlich kein Release-Datum haben (CB Tone, Geopolitics, ...), dauerhaft da - neue Checkbox "This indicator has no release date" im Datums-Modal (ind.noDate) blendet sie fest aus, unabhaengig von der Kompakt-Stufe. (2) der Trend/Step-Chip fehlte bei vielen Indikatoren komplett (z.B. CHF), die zwar einen Actual-Wert zeigen, aber nie durch trackIndValues()/den Trend-Engine-Lauf liefen (keine eigene Live-Feed-Abdeckung, nur einmalige Recherche-Erstbefuellung) - Chip erscheint jetzt bei JEDEM Indikator mit Wert (faellt auf "Trend 0/2" zurueck), ausser bei Bonds, "2Y/10Y Spread" (SCORE_ZERO) und COT-/Sentiment-gespeisten Indikatoren (haben bewusst kein Trend-Modell).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0d4a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0d4a8;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1660,10 +1663,13 @@ function introLogin(){
 <div class="ov" id="mDate" style="display:none">
   <div class="date-modal">
     <h3>📅 Release Date & Interval</h3>
+    <div class="dm-fieldset" id="dmFields">
     <label class="dm-lbl">NEXT RELEASE DATE</label>
     <input type="date" class="dm-inp" id="dmDate">
     <label class="dm-lbl">RELEASE INTERVAL</label>
     <input class="dm-inp" id="dmIntv" placeholder="e.g. Monthly, Weekly, Quarterly">
+    </div>
+    <label class="dm-nodate"><input type="checkbox" id="dmNoDate" onchange="toggleDmNoDate()"> This indicator has no release date (don't ask again)</label>
     <div style="display:flex;gap:7px;justify-content:space-between">
       <button class="btn r" onclick="clearDateM()">🗑 Clear</button>
       <div style="display:flex;gap:7px"><button class="btn" onclick="closeM('mDate')">Cancel</button><button class="btn g" onclick="saveDateM()">Save</button></div>
@@ -5918,23 +5924,40 @@ function renderRub(rub,ri,total){
   </div>`;}
 
 // ── DATE MODAL STATE ──
+// ind.noDate (Nutzer-Wunsch 2026-07-22): manche Indikatoren (CB Tone,
+// Geopolitics, sonstige rein qualitative Werte) haben grundsaetzlich KEIN
+// Release-Datum/-Intervall - die "+ Date"-Einladung war fuer die daher
+// dauerhaft sinnlos ("es gibt dazu keins"). Checkbox merkt sich das PRO
+// Indikator, dauerhaft (Teil von snap()/Cloud-Sync wie jedes andere
+// Indikator-Feld, da Indikatoren als Ganzes serialisiert werden - keine
+// eigene Sync-Anbindung noetig). Ist sie gesetzt, zeigt die Zeile in der
+// Spalte keine "+ Date"-Aufforderung mehr (renderInd), bleibt aber als
+// leerer, klickbarer Slot bestehen, um jederzeit wieder aenderbar zu sein.
 let _dmRi=-1,_dmIi=-1;
 function openDateM(ri,ii){
   _dmRi=ri;_dmIi=ii;
   const ind=getInd(ri,ii);if(!ind)return;
   document.getElementById('dmDate').value=ind.date||'';
   document.getElementById('dmIntv').value=ind.interval||'';
+  document.getElementById('dmNoDate').checked=!!ind.noDate;
+  toggleDmNoDate();
   openM('mDate');
+}
+function toggleDmNoDate(){
+  const on=document.getElementById('dmNoDate').checked;
+  document.getElementById('dmFields').classList.toggle('disabled',on);
 }
 function saveDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
-  ind.date=document.getElementById('dmDate').value;
-  ind.interval=document.getElementById('dmIntv').value.trim();
+  const noDate=document.getElementById('dmNoDate').checked;
+  ind.noDate=noDate;
+  if(noDate){ind.date='';ind.interval='';}
+  else{ind.date=document.getElementById('dmDate').value;ind.interval=document.getElementById('dmIntv').value.trim();}
   syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
 function clearDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
-  ind.date='';ind.interval='';
+  ind.date='';ind.interval='';ind.noDate=false;
   syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
 
@@ -5982,7 +6005,14 @@ function renderInd(ind,ri,ii,total){
   let datePart='';
   if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
   if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">${icn('refresh',11)} <span>${escH(ind.interval)}</span></button>`;}
-  if(!ind.date&&!ind.interval){datePart=`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
+  // ind.noDate (Nutzer-Wunsch 2026-07-22): Indikator hat grundsaetzlich kein
+  // Release-Datum (CB Tone, Geopolitics, ...) - die "+ Date"-Einladung
+  // bewusst NICHT zeigen, egal welche Kompakt-Stufe aktiv ist (die alten
+  // compact-view/-view2-CSS-Regeln haetten sie bei Stufe 1 weiter angezeigt).
+  // Bleibt trotzdem als leerer, klickbarer Slot bestehen (gleiche Spalten-
+  // breite wie die anderen Badges), damit man die Markierung jederzeit ueber
+  // denselben Klick wieder aufheben kann.
+  if(!ind.date&&!ind.interval){datePart=ind.noDate?`<button class="add-date-btn" onclick="openDateM(${ri},${ii})" title="No release date for this indicator - tap to change"></button>`:`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
   // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben seit dem
   // Dual-Source-Fix (siehe CLAUDE.md "EUR-Score flippte...") volle
   // Exklusivitaet gegenueber dem Kalender-Pfad fuer Bias/Werte-Historie/
@@ -6076,15 +6106,36 @@ function renderInd(ind,ri,ii,total){
     // relevant). Klick/Long-Press oeffnet das Detail-Modal mit den
     // letzten Actual/Previous-Werten hinter dem Check.
     const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);
+    // SCORE_ZERO ("2Y/10Y Spread"): traegt NIE etwas zum Score bei, egal was
+    // Bias/Trend sagen (indScoreParts) - ein Trend-Chip waere dort schlicht
+    // falsch (er wuerde einen Score-Effekt suggerieren, den es nicht gibt).
+    const isScoreZero=SCORE_ZERO.has(stripPeriodSuffix(ind.name).base);
     const rub2=getRub(ri);
     const placeholder='<span class="trend-chip" style="visibility:hidden"></span>';
     // Kein Trend fuer Bond-Renditen (Nutzer-Entscheid 2026-07-05): weder
     // Chip noch Score-Bonus (siehe NO_TREND_RUBS/indScoreParts) - gilt
     // indikator-spezifisch (isBond) weiterhin, auch nachdem die Renditen
     // aus Interest Rates in die Inflation-Karte umgezogen sind (Nutzer-
-    // Wunsch 2026-07-20), nicht nur rubrik-weit.
-    if((rub2&&NO_TREND_RUBS.has(rub2.name))||isBond)return placeholder;
-    const hasData=(ind.valHist&&ind.valHist.length)||(isBond&&ind.trendCmp)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
+    // Wunsch 2026-07-20), nicht nur rubrik-weit. COT/Sentiment-gespeiste
+    // Indikatoren sind aus denselben Gruenden ausgeschlossen (siehe
+    // applyCotDataFeed/applySentimentFeed: "bekommt bewusst KEINEN Trend-
+    // Bonus" - WoW-Aenderung bzw. reine Extremwert-Logik ist dort schon das
+    // eigene Momentum-Signal) - sonst wuerde die untenstehende "Chip bei
+    // jedem Wert"-Regel dort einen permanent bei "Trend 0/2" eingefrorenen,
+    // bedeutungslosen Chip zeigen (valHist wird fuer diese Pfade nie
+    // befuellt).
+    if((rub2&&NO_TREND_RUBS.has(rub2.name))||isBond||isScoreZero||(ind.research&&(ind.research.cot||ind.research.sent)))return placeholder;
+    // Chip soll bei JEDEM Indikator MIT WERT erscheinen (Nutzer-Wunsch
+    // 2026-07-22: bei CHF und anderen Assets fehlte er komplett bei vielen
+    // Indikatoren, die zwar einen Actual-Wert zeigen, aber noch nie durch
+    // trackIndValues()/den Trend-Engine-Lauf liefen - z.B. Indikatoren ohne
+    // eigene Live-Feed-Abdeckung, die nur auf der einmaligen Recherche-
+    // Erstbefuellung (IND_RESEARCH_DATA) stehen). Faellt mangels valHist auf
+    // den neutralen "Trend 0/2"-Fortschritt zurueck (indTrendProgress liefert
+    // dafuer sicher 0, kein Crash) - Ausnahme bleiben Bonds (oben bereits
+    // ausgeschlossen).
+    const hasValue=ind.research&&ind.research.actual!=null&&ind.research.actual!=='';
+    const hasData=hasValue||(ind.valHist&&ind.valHist.length)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
     if(!hasData)return placeholder;
     const mag=indTrendAdjMag(ind,rub2);
     const magS=mag===1?'1':'0.5';

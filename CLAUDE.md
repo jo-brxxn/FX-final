@@ -3987,3 +3987,77 @@ Stelle beginnen (wie eine Tabellenspalte).
   Indikator-Zeile innerhalb einer Karte (auch ueber unterschiedliche Badge-
   Texte hinweg) und fuer JEDEN Karten-Header innerhalb derselben Masonry-
   Spalte; voller 14-Tab-Regressionstest + Undo/Redo weiterhin fehlerfrei.
+
+### "Kein Datum vorhanden" markierbar + Trend-Chip fehlte bei vielen Indikatoren (Bugreports 2026-07-22, direkt nach der Spalten-Ausrichtung)
+
+Zwei Bugreports im Anschluss an die Icon-Spalten-Ausrichtung (siehe voriger
+Eintrag) - die neue, prominentere Spalten-Optik machte beide Luecken erst
+richtig sichtbar:
+
+**(1) "+ Date"-Einladung liess sich nicht dauerhaft abstellen.** Nutzer:
+"bei chf... [nein, das war der zweite Bugreport - hier das erste:] obwohl
+ich in der zweiten Stufe des Reglers bin wird das Datum bei den Indikatoren
+angezeigt, wo keins eingetragen ist. Da ist aber keins eingetragen, weil es
+dazu keins gibt." Gemeint ist die Kompakt-Stufe (`compactView`/
+`compactLevel`): Stufe 1 (`body.compact-view`) blendet nur `.ibadge`
+(Zeitintervall) aus, nicht aber `.dbadge`/`.add-date-btn` (erst Stufe 2,
+`compact-view2`, tut das) - fuer rein qualitative Indikatoren ohne jedes
+Datum-Konzept (CB Tone, Next CB Move, Geopolitics, individuelle Custom-
+Indikatoren) blieb die "+ Date"-Aufforderung dadurch bei Stufe 1 dauerhaft
+sichtbar, obwohl es dafuer schlicht nie ein Datum geben wird.
+- **Fix:** neue Checkbox "This indicator has no release date (don't ask
+  again)" im bestehenden Datums-Modal (`mDate`/`openDateM`/`saveDateM`) -
+  setzt `ind.noDate=true` (persistiert automatisch mit, da Indikatoren als
+  ganzes Objekt Teil von `snap()` sind - keine eigene 4-Punkte-Sync-
+  Anbindung noetig, anders als globale State-Felder wie `tabStacks`).
+  `renderInd()`s `datePart`-Zweig zeigt bei `ind.noDate` einen LEEREN, aber
+  weiterhin klickbaren `.add-date-btn` (kein Text/Icon) statt der "+ Date"-
+  Aufforderung - bewusst NICHT komplett unsichtbar (`visibility:hidden`),
+  damit der Slot als Escape-Hatch reichbar bleibt (erneuter Klick oeffnet
+  das Modal wieder, Checkbox laesst sich jederzeit zurueck-haken). Greift
+  unabhaengig von der Kompakt-Stufe (die CSS-Regeln `compact-view`/
+  `compact-view2` bleiben unveraendert, das ist jetzt eine reine Content-
+  Entscheidung, kein CSS-Sichtbarkeits-Hack).
+- Per Playwright verifiziert: Checkbox setzen + Speichern -> leerer Slot,
+  `ind.noDate===true`; Modal erneut oeffnen -> Checkbox weiterhin gehakt;
+  Haken entfernen + Speichern -> "+ Date"-Button + Text kommen zurueck.
+
+**(2) Trend-Chip fehlte komplett bei vielen Indikatoren.** Nutzer: "bei chf
+gibt es sehr viele Indikatoren wo es gar nicht den Trend gibt und auch bei
+anderen Assets ist das der Fall. Ich will das das aber bei jedem Indikator
+mit Wert der Fall ist, ausser bei Bonds halt, ist ja klar." Ursache: die
+`hasData`-Bedingung fuer den Chip (siehe voriger Eintrag) verlangte
+`valHist`/`stepDriven`/`trendBias` - Felder, die AUSSCHLIESSLICH von
+`trackIndValues()`/dem Trend-Engine-Lauf befuellt werden, welcher wiederum
+nur bei Indikatoren mit eigener Live-Feed- oder Kalender-Abdeckung laeuft.
+Indikatoren, die NUR auf der einmaligen Recherche-Erstbefuellung
+(`IND_RESEARCH_DATA`/`applyIndResearch()`) stehen (bekannte "Feed-
+Abdeckungsluecke", bei CHF/CAD/AUD/NZD an mehreren Stellen oben
+dokumentiert), haben zwar einen echten, angezeigten Actual-Wert, aber NIE
+diese Felder - der Chip blieb dadurch dauerhaft (unsichtbarer Platzhalter)
+aus, obwohl ein Wert da war.
+- **Fix:** `hasData` bekommt einen zusaetzlichen `hasValue`-Zweig
+  (`ind.research&&ind.research.actual!=null&&ind.research.actual!==''`) -
+  reicht ein Wert allein schon, faellt der Chip mangels `valHist` auf den
+  neutralen "Trend 0/2"-Fortschritt zurueck (`indTrendProgress` liefert bei
+  leerem/zu kurzem `valHist` sicher `0`, kein Crash).
+- **Ausnahmen ausgeweitet, nicht nur Bonds:** beim Testen mit CHF zeigte
+  sich, dass die neue Regel auch bei "2Y/10Y Spread" (`SCORE_ZERO` - traegt
+  NIE etwas zum Score bei, unabhaengig von Bias/Trend) und bei COT-/
+  Sentiment-gespeisten Indikatoren (haben laut bestehender Dokumentation
+  "bewusst KEINEN Trend-Bonus", ihre WoW-Aenderung bzw. Extremwert-Logik
+  IST bereits das eigene Momentum-Signal) einen permanent bei "Trend 0/2"
+  eingefrorenen, bedeutungslosen Chip gezeigt haette (`valHist` wird fuer
+  diese Pfade nie befuellt, der Fortschritt haette sich also nie bewegt).
+  Beide zusaetzlich zur bestehenden Bond-/`NO_TREND_RUBS`-Ausnahme
+  ausgeschlossen (`SCORE_ZERO.has(...)` bzw. `ind.research.cot||ind.research.sent`)
+  - der Nutzer hatte nur Bonds explizit genannt, aber diese beiden Faelle
+  folgen aus genau derselben, bereits vorher getroffenen Design-
+  Entscheidung ("kein Trend-Modell fuer diese Quelle"), nicht aus einer
+  eigenen neuen Abwaegung.
+- Per Playwright verifiziert (CHF, alle Karten ausser Interest Rates - das
+  bleibt komplett ausgeschlossen via `NO_TREND_RUBS`): jeder Indikator mit
+  echtem Actual-Wert zeigt jetzt einen Chip (0/2, 1/2 oder konfirmiert),
+  2Y/10Y-Renditen + Spread bleiben unsichtbar/platzhalter, GOLD COT-Data-
+  Karte (Net Bullish/Bearish/WoW Change) bleibt ebenfalls unsichtbar. Voller
+  14-Tab-Regressionstest weiterhin fehlerfrei.
