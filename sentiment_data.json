@@ -430,15 +430,11 @@
    ]
   ]
  },
- "updated": "2026-07-22T01:30:38.956Z",
+ "updated": "2026-07-22T04:58:50.077Z",
  "stockFng": {
   "value": 41,
   "label": "fear",
   "series": [
-   [
-    "2026-01-27",
-    65
-   ],
    [
     "2026-01-28",
     66
@@ -912,7 +908,11 @@
     41
    ],
    [
-    "2026-07-21",
+    "2026-07-22",
+    41
+   ],
+   [
+    "2026-07-22",
     41
    ]
   ]
@@ -930,8 +930,8 @@
   },
   {
    "sym": "USDJPY",
-   "long": 17,
-   "short": 83
+   "long": 16,
+   "short": 84
   },
   {
    "sym": "GBPJPY",
@@ -950,8 +950,8 @@
   },
   {
    "sym": "EURJPY",
-   "long": 20,
-   "short": 80
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "AUDCAD",
@@ -960,8 +960,8 @@
   },
   {
    "sym": "AUDJPY",
-   "long": 14,
-   "short": 86
+   "long": 13,
+   "short": 87
   },
   {
    "sym": "AUDNZD",
@@ -985,8 +985,8 @@
   },
   {
    "sym": "EURCHF",
-   "long": 26,
-   "short": 74
+   "long": 27,
+   "short": 73
   },
   {
    "sym": "EURGBP",
@@ -1005,8 +1005,8 @@
   },
   {
    "sym": "GBPCHF",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "NZDCAD",
@@ -1015,8 +1015,8 @@
   },
   {
    "sym": "NZDJPY",
-   "long": 15,
-   "short": 85
+   "long": 16,
+   "short": 84
   },
   {
    "sym": "NZDUSD",
@@ -1060,8 +1060,8 @@
   },
   {
    "sym": "XAUUSD",
-   "long": 49,
-   "short": 51
+   "long": 47,
+   "short": 53
   },
   {
    "sym": "XAGUSD",
@@ -1070,8 +1070,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 44,
-   "short": 56
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "US500",
