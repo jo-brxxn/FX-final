@@ -1257,7 +1257,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: PINK-PUTCALL-MA-208</span><span id="verBannerText"> (Phase 2: Gleitende Durchschnitte fuer Put-Call-Ratio-Charts: MA-Typ-Buttons (none/5d/10d/20d/50d), SMA-Berechnung, Zeit-Filter fuer Put-Call/Net-Flow/Fear-and-Greed-Charts.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: ORANGE-PUTCALL-MA-FIX-209</span><span id="verBannerText"> (Bugfix: sentimentRange/pcRange/fearGreedRange als numerische 1 statt String '1M' initialisiert — verhindert RangeError in filterDatesByRange der Sentiment-Charts.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11539,10 +11539,10 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
-let sentimentRange='1M',sentimentCustomFrom='',sentimentCustomTo='';
-let pcRange='1M',pcCustomFrom='',pcCustomTo='';
+let sentimentRange=1,sentimentCustomFrom='',sentimentCustomTo='';
+let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let pcMaType='none'; // 'none','5d','10d','20d','50d'
-let fearGreedRange='1M',fearGreedCustomFrom='',fearGreedCustomTo='';
+let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
