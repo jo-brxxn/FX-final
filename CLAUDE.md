@@ -3931,3 +3931,59 @@ CSS-Klassen als jetzt toter Code entfernt (`.rbg`/`.rbo`/`.ibg`/`.ibo`/
   Data/Risk-Environment-Ausschluss beim Karten-Zahnrad (unabhaengiges
   Feature vom 2026-07-21), die generelle Score-Formel selbst (nur WANN ein
   manueller Override respektiert wird, nicht WIE der Score berechnet wird).
+
+### Indikator-Zeile + Karten-Header: rechte Icon-Reihe wie eine Tabellenspalte ausgerichtet (Nutzer-Wunsch 2026-07-22)
+
+Nutzer per Screenshot: die rechte Icon-Reihe an Indikator-Zeilen (i, Zeit-
+intervall-Badge, Trend/Step-Chip, Stern, Auf/Ab, Löschen) stand unordentlich
+da - unterschiedlich lange Badge-Texte ("Trend 0/2" vs. "Step +0.5 · 1/2",
+"daily" vs. "quarterly") liessen die Icons in jeder Zeile unterschiedlich
+weit versetzt erscheinen, ganz anders als z.B. die Set-ups-Tabelle. Vorgabe:
+"i" direkt links vom Stern, Trend/Step-Chip direkt links vom "i", Zeit-
+intervall-Badge direkt links vom Chip - UND die beiden variablen Badges
+sollen trotz unterschiedlicher Textlaenge alle untereinander an derselben
+Stelle beginnen (wie eine Tabellenspalte).
+
+- **Neue Reihenfolge Indikator-Zeile** (`renderInd`, ≈ Zeile 6058): `[Zeit-
+  intervall-Badge] [Trend/Step-Chip] [i] [★] [▲] [▼] [✕]` (vorher: i vor
+  beiden Badges). Der Lock-Hinweis (🔗, gespiegelte/Risk-Correlation-
+  Indikatoren) bleibt bewusst GANZ LINKS (direkt nach dem Namensfeld), damit
+  er die beiden ausgerichteten Spalten nicht stoert - er ist selten/bedingt
+  und braucht keine eigene Spaltenausrichtung.
+- **Neue Reihenfolge Karten-Header** (`renderRub`, ≈ Zeile 5888): `[Score-
+  Badge] [i] [★] [▲] [▼] [✕]` (vorher: i vor dem Score-Badge) - dieselbe
+  Logik auf Kartenebene.
+- **Feste Spaltenbreite**: `.trend-chip` (min-width 92px, gemessen aus dem
+  laengsten Label "📈 Step +0.5 · 1/2"), `.ibadge`/`.add-date-btn`
+  (min-width 100px, gemessen aus "🔄 quarterly"), `.rub-score` (min-width
+  44px) - jeweils rechtsbuendiger Text (`text-align:right` bzw. bei `.ibadge`
+  als Flexbox `justify-content:flex-end`, da Icon+Text zwei Kindelemente
+  sind). Da `*{box-sizing:border-box}` global gilt, entspricht `min-width`
+  direkt der gemessenen Border-Box-Breite - kein Nachrechnen von
+  Padding/Border noetig. Folgt demselben, bereits bestehenden Muster wie
+  `.row-score{width:26px;text-align:right}` (Matrix-Tab), nur mit
+  `min-width` statt festem `width` (echte historische Extremwerte duerfen
+  die Spalte sprengen statt abgeschnitten zu werden).
+- **Unsichtbarer Platzhalter, wenn der Trend-Chip fehlt** (Bond-Renditen
+  ohne Trend, `NO_TREND_RUBS`-Karten, Indikatoren ohne Trend-Daten): die
+  IIFE gibt jetzt `<span class="trend-chip" style="visibility:hidden">
+  </span>` statt eines leeren Strings zurueck - `visibility:hidden` (statt
+  `display:none`) behaelt den Platz im Flex-Layout, wodurch die Spalte in
+  DIESER Zeile nicht nach rechts wandert. Per Playwright verifiziert: "2Y
+  Bond Yield"/"10Y Bond Yield"/"2Y/10Y Spread" (kein Trend) haben exakt
+  dieselbe `i`-Icon-Position wie "CPI (Headline) y/y" (mit Trend) in
+  derselben Inflation-Karte.
+- **Bewusste Ausnahme**: das Zeitintervall des Leitzins-Indikators ("every
+  6-8 weeks", deutlich laenger als "daily"/"weekly"/"monthly"/"quarterly")
+  wuerde die Spalte auf ueber 150px aufblasen, wenn sie mit einbezogen
+  wuerde - bleibt bewusst aussen vor (`min-width` statt festem `width`
+  erlaubt genau das: die Box waechst fuer diesen einen Ausreisser natuerlich
+  ueber die Spaltenbreite hinaus, ohne den Text abzuschneiden oder die
+  anderen Zeilen zu beeinflussen).
+- Vor dem Umsetzen einen konkreten Plan (Reihenfolge + Ausrichtungsmechanik +
+  Ausreisser-Fall) vorgestellt und Bestaetigung abgewartet (CLAUDE.md-Regel
+  "erst OK einholen"). Per Playwright verifiziert: `getBoundingClientRect()`
+  von Chip/Badge/i liefert exakt dieselben X-Koordinaten fuer JEDE
+  Indikator-Zeile innerhalb einer Karte (auch ueber unterschiedliche Badge-
+  Texte hinweg) und fuer JEDEN Karten-Header innerhalb derselben Masonry-
+  Spalte; voller 14-Tab-Regressionstest + Undo/Redo weiterhin fehlerfrei.

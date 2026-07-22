@@ -184,7 +184,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .dp{padding:14px}
 .atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
-.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3}
+.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
@@ -453,11 +453,11 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
 /* date badge */
 .dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}}
 .dbadge span{font-size:10px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ibadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}}
+.ibadge{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s;min-width:100px}@media (hover:hover){.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}}
 .ibadge span{font-size:10px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}@media (hover:hover){.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}}
+.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:100px;text-align:right}@media (hover:hover){.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}}
 .imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
-.trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4;cursor:pointer}
+.trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4;cursor:pointer;min-width:92px;text-align:right}
 .trend-chip.neu{color:var(--t3);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.16)}
 /* Bias-Farben statt Blau (Nutzer-Wunsch 2026-07-22): der Chip zeigt einen
    echten Score-Effekt (+/-), soll also wie jedes andere Bias-Element in der
@@ -1252,7 +1252,7 @@ body.compact-view2 .ind-card .dbadge,body.compact-view2 .ind-card .add-date-btn,
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: RUBY-BIAS-LONGPRESS-203</span><span id="verBannerText"> (Nutzer-Experiment: die ▲/◆/▼-Bias-Buttons an jeder Rubrik-Karte/jedem Indikator/Notes-Eintrag entfernt - Ersatz ist ein Long-Press (Touch+Maus, ~450ms) auf die Karte/den Indikator, der ein kleines Popover mit Bullish/Neutral/Bearish am Druckpunkt oeffnet (openBiasPicker). Gesperrte Faelle (gespiegelt/automatisch) zeigen weiterhin dieselbe Erklaerung wie zuvor per alert(). Zusaetzlich: eine manuelle Bias-Wahl an einem Indikator verfaellt jetzt einheitlich erst, wenn der jeweilige Automatik-Pfad WIRKLICH einen neuen Wert liefert (Actual/Forecast/Previous/Datum aendern sich), nicht mehr bei jedem stuendlichen Poll ohne echte Datenaenderung - neuer ind._manualPin-Mechanismus (indBiasInputSig/indBiasPinned), verdrahtet in allen 5 Automatik-Pfaden (Feed mit/ohne Forecast, Kalender, Bond, COT, Sentiment). Karten-Bias (rub._biasScore) hatte dieses Verhalten bereits, unveraendert. Per Playwright mit echten Daten verifiziert: Pin bleibt bei unveraenderten Werten stehen, verfaellt korrekt bei echter Aenderung, ueber alle 5 Pfade.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#1a2e3d;color:#a8d4f0;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: SAPPHIRE-COLUMN-ALIGN-204</span><span id="verBannerText"> (Nutzer-Wunsch: die rechte Icon-Reihe an jeder Indikator-Zeile und jedem Karten-Header soll wie eine Tabellenspalte aussehen statt wie bisher unterschiedlich weit versetzt zu sein. Neue Reihenfolge Indikator-Zeile: [Zeitintervall-Badge] [Trend/Step-Chip] [i] [★] [▲] [▼] [✕] (vorher: i vor den beiden Badges). Neue Reihenfolge Karten-Header: [Score-Badge] [i] [★] [▲] [▼] [✕]. Trend/Step-Chip, Zeitintervall-Badge und Score-Badge bekommen eine feste Mindestbreite + rechtsbuendigen Text (min-width+text-align:right bzw. justify-content:flex-end), damit ihre Box immer an derselben Stelle beginnt, egal ob "Trend 0/2" oder "Step +0.5 · 1/2", "daily" oder "quarterly" drinsteht. Fehlt der Trend-Chip komplett (Bond-Renditen etc.), wird ein unsichtbarer Platzhalter derselben Breite gerendert, damit die Spalte nicht wandert. Bewusste Ausnahme: "every 6-8 weeks" (Fed Funds Rate) ist breiter als die Spalte und ragt heraus. Per Playwright verifiziert: alle Indikator-Zeilen einer Karte und alle Karten-Header einer Spalte haben exakt identische Link-Koordinaten fuer Chip/Badge/i.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#a8d4f0;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5892,9 +5892,9 @@ function renderRub(rub,ri,total){
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
-      <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
       ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">🔗</span>`:''}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
+      <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
       <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
       <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -6055,49 +6055,62 @@ function renderInd(ind,ri,ii,total){
       ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
     </details>`;
   }
+  // Reihenfolge/Ausrichtung des rechten Icon-Clusters (Nutzer-Wunsch
+  // 2026-07-22): [Zeitintervall-Badge] [Trend/Step-Chip] [i] [★] [▲] [▼] [✕] -
+  // beide variablen-Text-Badges bekommen eine feste Mindestbreite +
+  // rechtsbuendigen Text (.trend-chip/.ibadge/.add-date-btn CSS), damit ihre
+  // Box IMMER an derselben Stelle beginnt, egal ob "Trend 0/2" oder "Step
+  // +0.5 · 1/2"/"daily" oder "quarterly" drinsteht - wie eine Tabellenspalte.
+  // Fehlt der Trend-Chip komplett (Bond-Renditen, NO_TREND_RUBS, keine Daten),
+  // wird ein UNSICHTBARER Platzhalter derselben Breite gerendert, damit die
+  // Spalte nicht wandert. Ausnahme: das Zeitintervall "every 6-8 weeks"
+  // (Central Bank Rate) ist bewusst breiter als die Spalte und ragt heraus -
+  // alle anderen Intervalle (daily/weekly/monthly/quarterly) passen hinein.
+  const trendChipHtml=(()=>{
+    // Trend-Chip: erscheint an JEDEM Indikator mit Trend-Daten. Aktiv:
+    // "Trend +1/-1" (bzw. ±0.5 bei Halbgewicht mit Forecast). Ohne
+    // Forecast additiv: stepDriven allein zeigt die Basis (±0.5),
+    // zusaetzlich bestaetigter trendDriven-Bonus zeigt die Summe
+    // (±1,5 normal/±1 Core-Paar). Neutral: Fortschritt "0/2"/"1/2"
+    // Richtung 2-Schritt-Kriterium (gedaempfter Stil, nur mit Forecast
+    // relevant). Klick/Long-Press oeffnet das Detail-Modal mit den
+    // letzten Actual/Previous-Werten hinter dem Check.
+    const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);
+    const rub2=getRub(ri);
+    const placeholder='<span class="trend-chip" style="visibility:hidden"></span>';
+    // Kein Trend fuer Bond-Renditen (Nutzer-Entscheid 2026-07-05): weder
+    // Chip noch Score-Bonus (siehe NO_TREND_RUBS/indScoreParts) - gilt
+    // indikator-spezifisch (isBond) weiterhin, auch nachdem die Renditen
+    // aus Interest Rates in die Inflation-Karte umgezogen sind (Nutzer-
+    // Wunsch 2026-07-20), nicht nur rubrik-weit.
+    if((rub2&&NO_TREND_RUBS.has(rub2.name))||isBond)return placeholder;
+    const hasData=(ind.valHist&&ind.valHist.length)||(isBond&&ind.trendCmp)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
+    if(!hasData)return placeholder;
+    const mag=indTrendAdjMag(ind,rub2);
+    const magS=mag===1?'1':'0.5';
+    const fmtMag=v=>v===1.5?'1.5':v===1?'1':'0.5';
+    let lbl,cls='';
+    if(ind.stepDriven){
+      // "Trend" steht nur am Chip, wenn das 2-Schritt-Kriterium wirklich
+      // erfuellt ist (trendDriven). Das blosse 1-Schritt-Basissignal
+      // heisst "Step" und traegt den Fortschritt (1/2) - vorher stand
+      // dort irrefuehrend "Trend +0.5", obwohl kein bestaetigter Trend
+      // vorlag (z.B. JPY CPI y/y mit 1.5 -> 1.4 -> 1.5).
+      const sign=ind.bias==='bull'?'+':'−';
+      cls=ind.bias==='bull'?' bull':' bear';
+      lbl=ind.trendDriven?'Trend '+sign+fmtMag(0.5+mag):'Step '+sign+'0.5 · 1/2';
+    }else if(ind.trendBias==='bull'){cls=' bull';lbl='Trend +'+magS;}
+    else if(ind.trendBias==='bear'){cls=' bear';lbl='Trend −'+magS;}
+    else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
+    return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
+  })();
   return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
     <div class="ind-hdr" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
-      <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
-      ${datePart}
       ${ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, ⚙️ to configure)">🔗</span>`:rubAutoDerived(getSym(),getRub(ri))?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">🔗</span>`:''}
-      ${(()=>{
-        // Trend-Chip: erscheint an JEDEM Indikator mit Trend-Daten. Aktiv:
-        // "Trend +1/-1" (bzw. ±0.5 bei Halbgewicht mit Forecast). Ohne
-        // Forecast additiv: stepDriven allein zeigt die Basis (±0.5),
-        // zusaetzlich bestaetigter trendDriven-Bonus zeigt die Summe
-        // (±1,5 normal/±1 Core-Paar). Neutral: Fortschritt "0/2"/"1/2"
-        // Richtung 2-Schritt-Kriterium (gedaempfter Stil, nur mit Forecast
-        // relevant). Klick/Long-Press oeffnet das Detail-Modal mit den
-        // letzten Actual/Previous-Werten hinter dem Check.
-        const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);
-        const rub2=getRub(ri);
-        // Kein Trend fuer Bond-Renditen (Nutzer-Entscheid 2026-07-05): weder
-        // Chip noch Score-Bonus (siehe NO_TREND_RUBS/indScoreParts) - gilt
-        // indikator-spezifisch (isBond) weiterhin, auch nachdem die Renditen
-        // aus Interest Rates in die Inflation-Karte umgezogen sind (Nutzer-
-        // Wunsch 2026-07-20), nicht nur rubrik-weit.
-        if((rub2&&NO_TREND_RUBS.has(rub2.name))||isBond)return'';
-        const hasData=(ind.valHist&&ind.valHist.length)||(isBond&&ind.trendCmp)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
-        if(!hasData)return'';
-        const mag=indTrendAdjMag(ind,rub2);
-        const magS=mag===1?'1':'0.5';
-        const fmtMag=v=>v===1.5?'1.5':v===1?'1':'0.5';
-        let lbl,cls='';
-        if(ind.stepDriven){
-          // "Trend" steht nur am Chip, wenn das 2-Schritt-Kriterium wirklich
-          // erfuellt ist (trendDriven). Das blosse 1-Schritt-Basissignal
-          // heisst "Step" und traegt den Fortschritt (1/2) - vorher stand
-          // dort irrefuehrend "Trend +0.5", obwohl kein bestaetigter Trend
-          // vorlag (z.B. JPY CPI y/y mit 1.5 -> 1.4 -> 1.5).
-          const sign=ind.bias==='bull'?'+':'−';
-          cls=ind.bias==='bull'?' bull':' bear';
-          lbl=ind.trendDriven?'Trend '+sign+fmtMag(0.5+mag):'Step '+sign+'0.5 · 1/2';
-        }else if(ind.trendBias==='bull'){cls=' bull';lbl='Trend +'+magS;}
-        else if(ind.trendBias==='bear'){cls=' bear';lbl='Trend −'+magS;}
-        else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
-        return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
-      })()}
+      ${datePart}
+      ${trendChipHtml}
+      <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
       <button class="istar2${ind.imp?' on':''}" ${ind.name==='Risk Correlation'?'disabled title="Disabled for this auto-computed indicator"':''} onclick="togIndImp(${ri},${ii})">⭐</button>
       <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
       <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
