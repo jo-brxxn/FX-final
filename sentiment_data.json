@@ -366,7 +366,7 @@
   ]
  },
  "vix": {
-  "value": 17.02,
+  "value": 16.83,
   "series": [
    [
     "2026-07-08",
@@ -426,11 +426,11 @@
    ],
    [
     "2026-07-22",
-    17.02
+    16.83
    ]
   ]
  },
- "updated": "2026-07-22T18:30:42.972Z",
+ "updated": "2026-07-22T20:06:52.474Z",
  "stockFng": {
   "value": 43,
   "label": "fear",
@@ -925,13 +925,13 @@
   },
   {
    "sym": "GBPUSD",
-   "long": 49,
-   "short": 51
+   "long": 50,
+   "short": 50
   },
   {
    "sym": "USDJPY",
-   "long": 16,
-   "short": 84
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "GBPJPY",
@@ -955,8 +955,8 @@
   },
   {
    "sym": "AUDCAD",
-   "long": 29,
-   "short": 71
+   "long": 30,
+   "short": 70
   },
   {
    "sym": "AUDJPY",
@@ -965,8 +965,8 @@
   },
   {
    "sym": "AUDNZD",
-   "long": 25,
-   "short": 75
+   "long": 24,
+   "short": 76
   },
   {
    "sym": "AUDUSD",
@@ -975,8 +975,8 @@
   },
   {
    "sym": "CADJPY",
-   "long": 20,
-   "short": 80
+   "long": 21,
+   "short": 79
   },
   {
    "sym": "EURCAD",
@@ -985,8 +985,8 @@
   },
   {
    "sym": "EURCHF",
-   "long": 20,
-   "short": 80
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "EURGBP",
@@ -1005,8 +1005,8 @@
   },
   {
    "sym": "GBPCHF",
-   "long": 16,
-   "short": 84
+   "long": 15,
+   "short": 85
   },
   {
    "sym": "NZDCAD",
@@ -1020,23 +1020,23 @@
   },
   {
    "sym": "NZDUSD",
-   "long": 40,
-   "short": 60
+   "long": 41,
+   "short": 59
   },
   {
    "sym": "USDCHF",
-   "long": 37,
-   "short": 63
+   "long": 36,
+   "short": 64
   },
   {
    "sym": "CHFJPY",
-   "long": 21,
-   "short": 79
+   "long": 22,
+   "short": 78
   },
   {
    "sym": "AUDCHF",
-   "long": 7,
-   "short": 93
+   "long": 6,
+   "short": 94
   },
   {
    "sym": "GBPNZD",
@@ -1050,8 +1050,8 @@
   },
   {
    "sym": "CADCHF",
-   "long": 64,
-   "short": 36
+   "long": 62,
+   "short": 38
   },
   {
    "sym": "GBPAUD",
@@ -1060,8 +1060,8 @@
   },
   {
    "sym": "XAUUSD",
-   "long": 46,
-   "short": 54
+   "long": 48,
+   "short": 52
   },
   {
    "sym": "XAGUSD",
