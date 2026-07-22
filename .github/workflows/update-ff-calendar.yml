@@ -2291,6 +2291,23 @@ jobs:
       - name: Fetch per-asset put/call via ETF option chains -> sentiment_data.json
         continue-on-error: true
         run: |
+          # EOD-Gate: Yahoos volume-Feld ist untertags nur ein kumulativer
+          # Intraday-Zwischenstand - erst nach US-Boersenschluss (16:00 ET =
+          # 20:00/21:00 UTC je nach DST) settelt das finale Tagesvolumen. Der
+          # Gesamt-Workflow laeuft stuendlich (fuer Kalender/Indikatoren), aber
+          # DIESER Schritt darf nur nach Schluss schreiben, damit genau EIN
+          # sauberer EOD-Punkt pro Handelstag entsteht (Nutzer-Wunsch
+          # 2026-07-22), statt bei jedem Stundenlauf einen Intraday-Teilwert.
+          DOW=$(date -u +%u)   # 1=Mo .. 7=So
+          if [ "$DOW" -ge 6 ]; then
+            echo "[debug] per-asset put/call: weekend (DOW $DOW) - US markets closed, skipping (no new EOD volume)"
+            exit 0
+          fi
+          HOUR=$(date -u +%H)
+          if [ "$HOUR" -lt 21 ]; then
+            echo "[debug] per-asset put/call: UTC hour $HOUR < 21 - before US EOD volume settles, skipping to keep one clean EOD point/day"
+            exit 0
+          fi
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
           curl -sL --max-time 15 -A "$UA" -c ycookies.txt "https://fc.yahoo.com" -o /dev/null || true
           CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ycookies.txt -c ycookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
