@@ -158,21 +158,25 @@ svg.ic{vertical-align:-2px;flex:none}
    KEINE harte Kante (faedet selbst auf transparent aus) und braucht kein
    teures Blur-Filter-Neuzeichnen mehr, nur noch die guenstige opacity. */
 .dash-aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.aurora-blob{position:absolute;border-radius:50%;opacity:.4}
-.aurora-a{background:radial-gradient(circle,var(--aurora-a,#4fc3f7) 0%,transparent 70%);width:56vw;height:56vw;top:-18%;left:-12%;animation:auroraDrift1 42s ease-in-out infinite}
-.aurora-b{background:radial-gradient(circle,var(--aurora-b,#4fc3f7) 0%,transparent 70%);width:50vw;height:50vw;bottom:-22%;right:-14%;animation:auroraDrift2 50s ease-in-out infinite}
-/* Dritter Blob bewusst in einem zweiten, etwas dunkleren Blauton statt dem
-   frueheren Amber - zusammen mit den anderen beiden Blobs ergab Amber einen
-   braunen statt einen kuehlen "Aurora"-Farbverlauf. */
-.aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%;animation:auroraDrift3 58s ease-in-out infinite}
-@keyframes auroraDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6%,8%) scale(1.12)}}
-@keyframes auroraDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-6%) scale(1.06)}}
-@keyframes auroraDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-6%,7%) scale(.92)}}
+/* Aurora bewusst STATISCH (Nutzer-Wunsch 2026-07-23): keine Drift-Animation
+   mehr. Deckkraft ueber --aurora-op (Helligkeits-Regler im Designer). */
+.aurora-blob{position:absolute;border-radius:50%;opacity:var(--aurora-op,.4)}
+.aurora-a{background:radial-gradient(circle,var(--aurora-a,#4fc3f7) 0%,transparent 70%);width:56vw;height:56vw;top:-18%;left:-12%}
+.aurora-b{background:radial-gradient(circle,var(--aurora-b,#4fc3f7) 0%,transparent 70%);width:50vw;height:50vw;bottom:-22%;right:-14%}
+/* Dritter Blob nur noch leicht dunkler als die Hauptfarbe (weniger Abweichung,
+   Nutzer-Wunsch 2026-07-23 - frueher deutlich dunkler). */
+.aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%}
 /* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
 .hue-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
 .hue-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+/* Vertikaler Helligkeits-/Saettigungs-Regler (oben = hell/kraeftig) */
+.light-slider{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:14px;height:172px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(0deg,#161d29,#e8f0ff)}
+.light-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.light-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.design-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;padding:0;transition:transform .1s}
+.design-preset:hover{transform:scale(1.12)}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
 .ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
@@ -1264,7 +1268,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-SENTUI-216</span><span id="verBannerText"> (Sentiment-Umbau: MA-Filter (Put/Call) entfernt; Asset-Filter jetzt oben rechts in der Titelzeile, Zeitraum-Filter in der Grafik. Charts mit beidseitiger Y-Achse, mehr X-Labels mit Jahr (2026→26). Y-Achse erweitert sich adaptiv oben+unten (~15% ueber Hoch-/Tiefstwert, min. 15% Abstand zu den HI/LO-Schwellen). Custom-Datumsfilter-Bug (setPcRangeCustom) mitgefixt. Kollisionsfrei per Playwright verifiziert.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-217</span><span id="verBannerText"> (Designer: 8 klassische Farb-Presets ueber dem Regler; neuer vertikaler Helligkeits-/Saettigungs-Regler rechts (oben=hell&kraeftig, unten=dunkel) — geraeteuebergreifend gesynct wie designHue. Aurora jetzt STATISCH (keine Drift-Animation), dritter Blob nur noch ~8% dunkler statt ~20% (ruhigerer Verlauf um die gewaehlte Farbe).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1613,11 +1617,21 @@ function introLogin(){
 <div class="ov" id="mDesigner" style="display:none">
   <div class="modal" style="max-width:430px">
     <h3>🎨 Designer</h3>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.5">Slide through the colour spectrum – the app background previews the colour live. <b>Apply</b> keeps it (synced to your other devices), <b>Auto</b> returns to the risk-sentiment colouring that shifts with the market mood.</div>
-    <input type="range" class="hue-slider" id="designHueSlider" min="0" max="360" step="1" value="210" oninput="previewDesignHue(this.value)">
-    <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
-      <div id="designHueSwatch" style="width:36px;height:36px;border-radius:9px;border:1px solid var(--bd2);flex-shrink:0"></div>
-      <div id="designHueLbl" style="font-size:12px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Hue 210°</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.5">Pick a classic colour or slide through the spectrum – the background previews live. The slider on the right sets how <b>bright &amp; vivid</b> the colour is. <b>Apply</b> keeps it (synced to your other devices), <b>Auto</b> returns to the risk-sentiment colouring.</div>
+    <div style="display:flex;gap:16px;align-items:stretch">
+      <div style="flex:1;min-width:0">
+        <div id="designPresets" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px"></div>
+        <input type="range" class="hue-slider" id="designHueSlider" min="0" max="360" step="1" value="210" oninput="previewDesignHue(this.value)">
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
+          <div id="designHueSwatch" style="width:36px;height:36px;border-radius:9px;border:1px solid var(--bd2);flex-shrink:0"></div>
+          <div id="designHueLbl" style="font-size:12px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Hue 210°</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0">
+        <span style="font-size:13px" title="Brighter / more vivid">☀️</span>
+        <input type="range" class="light-slider" id="designLightSlider" min="0" max="100" step="1" value="50" oninput="previewDesignLight(this.value)" title="Brightness / vividness">
+        <span style="font-size:13px" title="Darker / muted">🌙</span>
+      </div>
     </div>
     <div class="m-btns"><button class="btn" onclick="resetDesignHue()">Auto (sentiment)</button><button class="btn" onclick="closeM('mDesigner')">Cancel</button><button class="btn g" onclick="applyDesignerHue()">Apply</button></div>
   </div>
@@ -5244,7 +5258,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.greenDismissed=greenDismissed;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.greenDismissed=greenDismissed;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -5252,7 +5266,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(typeof _imp.designLight==='number'){designLight=Math.max(0,Math.min(100,_imp.designLight));try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5464,7 +5478,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5550,6 +5564,7 @@ async function cloudPull(manual){
       // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
       // vom anderen Geraet ankommt.
       if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
+      if(!prefPending&&typeof cd.designLight==='number'){designLight=Math.max(0,Math.min(100,cd.designLight));try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}updateAuroraColors();}
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
       // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
       // Tagen, an denen es offen war), ein Overwrite wuerde die jeweils
@@ -9010,9 +9025,13 @@ function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
   // Vom Nutzer im Designer (🎨 im Header) gewaehlter Farbton hat Vorrang
   // vor der Risk-Sentiment-Faerbung; designHue=null bedeutet Auto.
-  if(designHue!=null){applyDesignHue(designHue);return;}
+  if(designHue!=null){applyDesignHue(designHue,designLight);return;}
   document.body.style.background='';
   host.style.removeProperty('--aurora-c');
+  // Helligkeits-Regler zieht auch im Auto-Modus die Blob-Deckkraft mit
+  // (heller/kraeftiger, wenn hochgeschoben) - die Sentiment-Farbe selbst
+  // bleibt unangetastet.
+  host.style.setProperty('--aurora-op',designAuroraOpacity(designLight));
   // Vergleichs-Score statt roh, damit die Aurora-Faerbung mit dem Risk-
   // Sentiment-Widget uebereinstimmt (dasselbe net>0.8/<-0.8-Kriterium).
   const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
@@ -9024,21 +9043,38 @@ function updateAuroraColors(){
 }
 // ── Designer: Hintergrund-Farbwahl ueber das Farbspektrum ──
 // designHue: null = Auto (Aurora folgt dem Risk-Sentiment), Zahl 0-360 =
-// vom Nutzer gewaehlter Farbton. Faerbt die drei Aurora-Blobs UND den
-// Seiten-Hintergrund (sehr dunkle Variante desselben Tons). Liegt wie
-// greenDismissed/tabStacks ausserhalb von snap()/Undo und ist deshalb an
-// allen vier Sync-Stellen angebunden (cloudPush/cloudPull/exportData/
-// importData, siehe CLAUDE.md-Kernregel).
+// vom Nutzer gewaehlter Farbton. designLight (0-100): wie hell/kraeftig die
+// Farbe ist (Saettigung+Helligkeit+Hintergrund+Deckkraft). Beide liegen wie
+// greenDismissed/tabStacks ausserhalb von snap()/Undo und sind an allen vier
+// Sync-Stellen angebunden (cloudPush/cloudPull/exportData/importData).
 let designHue=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_hue')||'null');return typeof v==='number'?v:null;}catch(e){return null;}})();
-function applyDesignHue(h){
+let designLight=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_light')||'50');return typeof v==='number'?Math.max(0,Math.min(100,v)):50;}catch(e){return 50;}})();
+// Mappt den Helligkeits-Regler (0-100, Standard 50 ~ bisheriger Look) auf die
+// HSL-Werte: hoeher = kraeftiger + heller + etwas hellerer Hintergrund. Der
+// dritte Blob ist nur noch ~8% dunkler als die Hauptfarbe (weniger Abweichung).
+function designColors(h,light){
+  const t=Math.max(0,Math.min(100,+light||0))/100;
+  const sat=Math.round(54+t*36);   // 54..90 (t=.5 -> 72, wie bisher)
+  const lig=Math.round(44+t*36);   // 44..80 (t=.5 -> 62)
+  const cLig=Math.max(0,lig-8);    // dritter Blob nur leicht dunkler
+  const bgSat=Math.round(26+t*14); // 26..40
+  const bgLig=Math.round(5+t*12);  // 5..17
+  return {a:'hsl('+h+','+sat+'%,'+lig+'%)',c:'hsl('+h+','+sat+'%,'+cLig+'%)',bg:'hsl('+h+','+bgSat+'%,'+bgLig+'%)'};
+}
+function designAuroraOpacity(light){const t=Math.max(0,Math.min(100,+light||0))/100;return (0.28+t*0.24).toFixed(2);} // 0.28..0.52 (t=.5 -> .40)
+function applyDesignHue(h,light){
   const host=document.getElementById('dashAurora');if(!host)return;
-  host.style.setProperty('--aurora-a','hsl('+h+',72%,62%)');
-  host.style.setProperty('--aurora-b','hsl('+h+',72%,62%)');
-  host.style.setProperty('--aurora-c','hsl('+h+',60%,42%)');
-  document.body.style.background='hsl('+h+',30%,8%)';
+  if(light==null)light=designLight;
+  const c=designColors(h,light);
+  host.style.setProperty('--aurora-a',c.a);
+  host.style.setProperty('--aurora-b',c.a);
+  host.style.setProperty('--aurora-c',c.c);
+  host.style.setProperty('--aurora-op',designAuroraOpacity(light));
+  document.body.style.background=c.bg;
 }
 function saveDesignHue(){
   try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}
+  try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}
   // fxpro_updated bumpen + Auto-Push, damit die Wahl als neue Version in
   // die Cloud geht und auf den anderen Geraeten ankommt.
   localStorage.setItem('fxpro_updated',new Date().toISOString());
@@ -9046,9 +9082,25 @@ function saveDesignHue(){
   markPrefEdit();
   cloudAutoSync();
 }
+// Klassische Farb-Presets (Name -> Hue) fuer die Schnellauswahl oben im Modal.
+const DESIGN_PRESETS=[['Blue',210],['Teal',180],['Green',140],['Purple',270],['Pink',320],['Red',0],['Orange',25],['Gold',45]];
+function renderDesignPresets(){
+  const el=document.getElementById('designPresets');if(!el)return;
+  const cur=designHue!=null?Math.round(designHue):-1;
+  el.innerHTML=DESIGN_PRESETS.map(([name,h])=>`<button class="design-preset" title="${name}" onclick="pickDesignPreset(${h})" style="background:hsl(${h},70%,55%);border:2px solid ${cur===h?'#fff':'var(--bd2)'}"></button>`).join('');
+}
+function pickDesignPreset(h){
+  const sl=document.getElementById('designHueSlider');if(sl)sl.value=h;
+  previewDesignHue(h);
+  const cur=DESIGN_PRESETS.map(p=>p[1]);
+  const el=document.getElementById('designPresets');
+  if(el)[...el.children].forEach((b,i)=>b.style.borderColor=(cur[i]===h?'#fff':'var(--bd2)'));
+}
 function openDesignerM(){
   const h=designHue!=null?designHue:210;
   const sl=document.getElementById('designHueSlider');if(sl)sl.value=h;
+  const ls=document.getElementById('designLightSlider');if(ls)ls.value=designLight;
+  renderDesignPresets();
   previewDesignHue(h);
   openM('mDesigner');
 }
@@ -9057,25 +9109,41 @@ function openDesignerM(){
 // rendert; ohne Buendelung stapeln sich Style-Updates schneller als das
 // Bild aktualisiert werden kann. Nur der JEWEILS LETZTE Wert pro Frame zaehlt.
 let _previewHueRAF=null;
+function currentDesignLight(){const ls=document.getElementById('designLightSlider');return ls?+ls.value:designLight;}
 function previewDesignHue(v){
   v=+v;
   if(_previewHueRAF)cancelAnimationFrame(_previewHueRAF);
   _previewHueRAF=requestAnimationFrame(()=>{
     _previewHueRAF=null;
-    applyDesignHue(v);
-    const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background='hsl('+v+',72%,55%)';
+    const light=currentDesignLight();
+    applyDesignHue(v,light);
+    const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background=designColors(v,light).a;
     const lb=document.getElementById('designHueLbl');if(lb)lb.textContent='Hue '+v+'°';
+  });
+}
+let _previewLightRAF=null;
+function previewDesignLight(v){
+  v=+v;
+  if(_previewLightRAF)cancelAnimationFrame(_previewLightRAF);
+  _previewLightRAF=requestAnimationFrame(()=>{
+    _previewLightRAF=null;
+    const sl=document.getElementById('designHueSlider');
+    const h=sl?+sl.value:(designHue!=null?designHue:210);
+    applyDesignHue(h,v);
+    const sw=document.getElementById('designHueSwatch');if(sw)sw.style.background=designColors(h,v).a;
   });
 }
 function applyDesignerHue(){
   const sl=document.getElementById('designHueSlider');if(!sl)return;
   designHue=+sl.value;
+  designLight=currentDesignLight();
   saveDesignHue();
   updateAuroraColors();
   closeM('mDesigner');
 }
 function resetDesignHue(){
   designHue=null;
+  designLight=currentDesignLight(); // Helligkeit bleibt auch im Auto-Modus erhalten
   saveDesignHue();
   updateAuroraColors();
   closeM('mDesigner');
