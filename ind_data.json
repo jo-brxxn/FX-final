@@ -970,6 +970,50 @@
    ],
    "revisedFrom": "40.3K"
   },
+  "Services PMI": {
+   "actual": "53",
+   "forecast": null,
+   "previous": "50.5",
+   "date": "2026-07-23",
+   "event": "S&P Global Services PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-23",
+     "53"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-23",
+     "53",
+     null
+    ]
+   ]
+  },
+  "Manufacturing PMI": {
+   "actual": "51.7",
+   "forecast": null,
+   "previous": "51.5",
+   "date": "2026-07-23",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-23",
+     "51.7"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-23",
+     "51.7",
+     null
+    ]
+   ]
+  },
   "PPI": {
    "actual": "3%",
    "forecast": null,
@@ -1701,17 +1745,13 @@
    "source": "tv"
   },
   "CPI (Headline)": {
-   "actual": "1.5%",
+   "actual": "1.7%",
    "forecast": null,
-   "previous": "1.4%",
-   "date": "2026-06-18",
+   "previous": "1.5%",
+   "date": "2026-07-23",
    "event": "Inflation Rate YoY",
    "period": "y/y",
    "history": [
-    [
-     "2026-03-23",
-     "1.3%"
-    ],
     [
      "2026-04-23",
      "1.5%"
@@ -1723,8 +1763,13 @@
     [
      "2026-06-18",
      "1.5%"
+    ],
+    [
+     "2026-07-23",
+     "1.7%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-17",
@@ -1900,22 +1945,22 @@
      "2026-06-18",
      "1.5%",
      null
+    ],
+    [
+     "2026-07-23",
+     "1.7%",
+     null
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "CPI": {
-   "actual": "0.4%",
+   "actual": "0.3%",
    "forecast": null,
-   "previous": "0.1%",
-   "date": "2026-06-18",
+   "previous": "0.4%",
+   "date": "2026-07-23",
    "event": "Inflation Rate MoM",
    "period": "m/m",
    "history": [
-    [
-     "2026-03-23",
-     "-0.2%"
-    ],
     [
      "2026-04-23",
      "0.4%"
@@ -1927,6 +1972,10 @@
     [
      "2026-06-18",
      "0.4%"
+    ],
+    [
+     "2026-07-23",
+     "0.3%"
     ]
    ],
    "historyFull": [
@@ -2104,22 +2153,23 @@
      "2026-06-18",
      "0.4%",
      null
+    ],
+    [
+     "2026-07-23",
+     "0.3%",
+     null
     ]
    ],
    "source": "tv"
   },
   "Core CPI": {
-   "actual": "1.4%",
-   "forecast": "1.4%",
+   "actual": "1.6%",
+   "forecast": "1.6%",
    "previous": "1.4%",
-   "date": "2026-06-18",
+   "date": "2026-07-23",
    "event": "Core Inflation Rate YoY",
    "period": "y/y",
    "history": [
-    [
-     "2026-03-23",
-     "1.6%"
-    ],
     [
      "2026-04-23",
      "1.8%"
@@ -2131,8 +2181,13 @@
     [
      "2026-06-18",
      "1.4%"
+    ],
+    [
+     "2026-07-23",
+     "1.6%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-17",
@@ -2308,9 +2363,13 @@
      "2026-06-18",
      "1.4%",
      "1.4%"
+    ],
+    [
+     "2026-07-23",
+     "1.6%",
+     "1.6%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Retail Sales": {
    "actual": "1.9%",
@@ -15791,17 +15850,13 @@
    "source": "tv"
   },
   "Consumer Confidence": {
-   "actual": "-23",
-   "forecast": "-24",
+   "actual": "-17",
+   "forecast": "-21",
    "previous": "-23",
-   "date": "2026-06-18",
-   "event": "Gfk Consumer Confidence",
+   "date": "2026-07-23",
+   "event": "GfK Consumer Confidence",
    "period": null,
    "history": [
-    [
-     "2026-03-27",
-     "-21"
-    ],
     [
      "2026-04-23",
      "-25"
@@ -15813,8 +15868,13 @@
     [
      "2026-06-18",
      "-23"
+    ],
+    [
+     "2026-07-23",
+     "-17"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-24",
@@ -15990,9 +16050,13 @@
      "2026-06-18",
      "-23",
      "-24"
+    ],
+    [
+     "2026-07-23",
+     "-17",
+     "-21"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Retail Sales": {
    "actual": "1.2%",
