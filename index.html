@@ -1269,7 +1269,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-219</span><span id="verBannerText"> (Designer: Helligkeitsregler nutzt jetzt OKLCH statt HSL — dadurch bleibt der WAHRGENOMMENE Farbton wirklich konstant (HSL kippte Blau/Violett beim Abdunkeln ins Indigo). Neu: eigene Farben speicherbar (⚡ Save) als eigene Reihe unter den Presets, jede mit Blitz-Symbol, Klick wendet an, langer Druck loescht; geraeteuebergreifend gesynct.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-SAMESOURCE-220</span><span id="verBannerText"> (Gleichquellen-Regel Feed-Pfad: Actual/Forecast/Previous eines Indikators kommen jetzt aus EINER Quelle (oder bleiben leer → Step/Previous). Kein quellenuebergreifendes Leihen mehr — weder der Investing.com-Forecast im Workflow noch der Seed-Forecast im Client. Neues source-Feld (tv/ff/investing). Kalender-Pfad (Feed-lose Indikatoren) folgt nach Verifikation.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -8599,12 +8599,14 @@ function applyIndDataFeed(){
         // den kuratierten Research-Forecast als Fallback uebernehmen - aber nur,
         // wenn er denselben Release meint (Datum max. ~4 Tage auseinander), damit
         // kein veralteter Forecast neben einem neueren Actual steht.
-        if(nf==null){
-          const re=indResearchEntry(macroCcyFor(c.id),base);
-          if(re&&re.forecast!=null&&re.releaseDate&&f.date&&Math.abs((new Date(f.date)-new Date(re.releaseDate))/86400000)<=4)nf=re.forecast;
-        }
-        // Kuratierte investing.com-Quelle bevorzugen; nur wenn keine vorhanden
-        // ist, die bisherige bzw. den TradingView-Fallback verwenden.
+        // Gleichquellen-Regel (Nutzer-Wunsch 2026-07-23): KEIN Forecast mehr
+        // aus den kuratierten Seed-Daten leihen, wenn der Feed selbst keinen
+        // liefert - sonst stuenden Actual (Feed) und Forecast (Seed) aus
+        // verschiedenen Quellen nebeneinander. Fehlt der Forecast, bleibt er
+        // leer und der Score laeuft ueber den Step/Previous-Vergleich.
+        // (Das serverseitige ind_data.json borgt ebenfalls nicht mehr.)
+        // src = reiner Anzeige-Link ("Quelle ansehen"), NICHT die Datenherkunft;
+        // die echte Datenherkunft steht in f.source (tv/ff/investing).
         const src=indResearchSource(macroCcyFor(c.id),base)||r.source||'https://www.tradingview.com/economic-calendar/';
         // Trend-System speist sich AUCH aus diesem Feed (deckt weit mehr
         // Indikatoren ab als der Kalender-Sync): Werte-Historie fortschreiben
@@ -8665,7 +8667,7 @@ function applyIndDataFeed(){
         // keine Faerbung, kein Vergleich mit irgendeinem anderen Wert.
         // (Ausnahme seit 2026-07-21: eine vom Workflow erkannte REVISION des
         // Previous wird angezeigt + gefaerbt, siehe revisedFrom/revBias oben.)
-        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,feed:true,event:f.event,revisedFrom:nrev};
+        ind.research={actual:na,forecast:nf,previous:np,date:f.date,source:src,dataSource:f.source||null,feed:true,event:f.event,revisedFrom:nrev};
         // Sekundär-Link (z.B. CPI m/m im ausgeklappten CPI-y/y-Indikator) aus den
         // Recherchedaten erhalten, da der Feed nur den Hauptwert (y/y) liefert.
         if(r.secondarySource){ind.research.secondarySource=r.secondarySource;ind.research.secondaryLabel=r.secondaryLabel;}

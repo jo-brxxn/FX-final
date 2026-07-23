@@ -1173,11 +1173,14 @@ jobs:
                     if(dt<bestDt){bestDt=dt;best=ev;}
                   });
                   if(!best||bestDt>4*86400e3)return;
-                  let changed=false;
-                  if(best.actual&&v.actual!==best.actual){v.actual=best.actual;changed=true;}
-                  if(best.forecast&&v.forecast!==best.forecast){v.forecast=best.forecast;changed=true;}
-                  if(best.previous&&v.previous!==best.previous){v.previous=best.previous;changed=true;}
-                  if(changed)ffOverlaid++;
+                  // Gleichquellen-Regel (Nutzer-Wunsch 2026-07-23): Actual,
+                  // Forecast UND Previous muessen aus DERSELBEN Quelle stammen
+                  // (oder leer bleiben) - NIE einzelne Felder mischen. Hat
+                  // TradingView bereits einen Actual, bleibt das komplette
+                  // TV-Trio. Nur wenn TV keinen Actual hat, wird das GANZE
+                  // Trio von ForexFactory uebernommen.
+                  if(v.actual!=null&&v.actual!==""){v.source=v.source||"tv";return;}
+                  if(best.actual){v.actual=best.actual;v.forecast=best.forecast||null;v.previous=best.previous||null;v.source="ff";ffOverlaid++;}
                 });
               });
             }
@@ -1233,28 +1236,23 @@ jobs:
             }catch(e){}
             const numOf=s=>{if(s==null)return null;const m=String(s).replace(/,/g,"").match(/-?\d+(?:\.\d+)?/);return m?parseFloat(m[0]):null;};
             const dayDiff=(a,b)=>Math.abs(new Date(String(a).slice(0,10))-new Date(String(b).slice(0,10)))/86400e3;
-            // (1) Forecast-Luecken schliessen + Persistenz aus dem Vor-Lauf.
-            let invFc=0,keptFc=0;
+            // (1) Gleichquellen-Regel (Nutzer-Wunsch 2026-07-23): der Forecast
+            // wird NICHT mehr quellenuebergreifend von Investing.com geliehen
+            // (das mischte Actual=TV mit Forecast=Investing). Fehlt der eigene
+            // Forecast der Trio-Quelle, bleibt er LEER -> Score ueber Step/
+            // Previous. Nur der EIGENE Forecast (derselben Quelle) wird am
+            // selben Release aus dem Vor-Lauf weitergetragen, weil TradingView
+            // den Forecast wie das previous nach ein paar Tagen wieder
+            // ausblendet. (invEvts wird weiter fuer den CSPI-Eintrag unten
+            // gebraucht.)
+            let keptFc=0;
             Object.keys(out).forEach(ccy=>{
               Object.keys(out[ccy]).forEach(indName=>{
                 const v=out[ccy][indName];
+                if(!v.source)v.source="tv"; // Basis-Trio kommt aus TradingView
                 if(v.forecast!=null&&v.forecast!=="")return;
-                // Frischer Investing.com-Match (nur im Abruffenster moeglich).
-                const evKey=canonKey(v.event||"");
-                const hit=evKey?invEvts.find(a=>{
-                  if(a.mfg)return false; // PMI laeuft ueber den Kalender-Pfad
-                  if(a.country!==ccy||!a.forecast)return false;
-                  if(!v.date||!a.dateUtc||dayDiff(v.date,a.dateUtc)>3)return false;
-                  if(canonKey(a.name)!==evKey)return false;
-                  const na=numOf(a.actual),nv=numOf(v.actual);
-                  if(na!=null&&nv!=null&&na!==nv)return false;
-                  return true;
-                }):null;
-                if(hit){v.forecast=hit.forecast;invFc++;return;}
-                // Persistenz: derselbe Release (gleiches Datum + Actual) hatte
-                // im letzten Lauf schon einen Forecast -> behalten.
                 const pv=prevOut[ccy]&&prevOut[ccy][indName];
-                if(pv&&pv.forecast!=null&&pv.forecast!==""&&pv.date===v.date&&numOf(pv.actual)===numOf(v.actual)){
+                if(pv&&pv.forecast!=null&&pv.forecast!==""&&pv.source!=="investing"&&pv.date===v.date&&numOf(pv.actual)===numOf(v.actual)){
                   v.forecast=pv.forecast;keptFc++;
                 }
               });
@@ -1268,7 +1266,7 @@ jobs:
               hist.push([date,cspi.actual]);
               (out.JPY=out.JPY||{})["Services Inflation"]={
                 actual:cspi.actual,forecast:cspi.forecast||null,previous:cspi.previous||null,
-                date:date,event:cspi.name,period:null,history:hist.slice(-4)
+                date:date,event:cspi.name,period:null,history:hist.slice(-4),source:"investing"
               };
               console.log("ind_data <- Investing.com: JPY Services Inflation (CSPI) "+cspi.actual+" ("+date+")");
             }else if(prevOut.JPY&&prevOut.JPY["Services Inflation"]){
@@ -1328,8 +1326,12 @@ jobs:
             ALLCCY.forEach(c=>RULES.forEach(r=>{ if(!out[c]||!out[c][r.ind])missing.push(c+" "+r.ind); }));
             console.log("ind_data.json: "+Object.values(out).reduce((n,o)=>n+Object.keys(o).length,0)+" indicator values written");
             console.log("ind_data MISSING ("+missing.length+"): "+missing.join(", "));
-            console.log("ind_data <- FF calendar overlay: "+ffOverlaid+" indicator value(s) taken from Forex-Factory");
-            console.log("ind_data <- Investing.com forecasts: "+invFc+" filled fresh, "+keptFc+" kept from previous run");
+            console.log("ind_data <- FF calendar overlay: "+ffOverlaid+" full trio(s) taken from Forex-Factory (TV had no actual)");
+            console.log("ind_data <- own forecast kept from previous run: "+keptFc);
+            // Gleichquellen-Verifikation: Zaehlung je Quelle (source-Feld).
+            const srcCount={};
+            Object.keys(out).forEach(ccy=>Object.keys(out[ccy]).forEach(n=>{const s=(out[ccy][n]&&out[ccy][n].source)||"?";srcCount[s]=(srcCount[s]||0)+1;}));
+            console.log("ind_data source distribution: "+JSON.stringify(srcCount));
             const noFc=[];
             Object.keys(out).forEach(ccy=>Object.keys(out[ccy]).forEach(n=>{const v=out[ccy][n];if(v.actual!=null&&(v.forecast==null||v.forecast===""))noFc.push(ccy+" "+n+" ("+(v.event||"?")+", "+v.date+")");}));
             console.log("ind_data STILL WITHOUT FORECAST ("+noFc.length+"): "+noFc.join(" | "));
