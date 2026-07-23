@@ -1268,7 +1268,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-217</span><span id="verBannerText"> (Designer: 8 klassische Farb-Presets ueber dem Regler; neuer vertikaler Helligkeits-/Saettigungs-Regler rechts (oben=hell&kraeftig, unten=dunkel) — geraeteuebergreifend gesynct wie designHue. Aurora jetzt STATISCH (keine Drift-Animation), dritter Blob nur noch ~8% dunkler statt ~20% (ruhigerer Verlauf um die gewaehlte Farbe).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-218</span><span id="verBannerText"> (Designer-Helligkeitsregler aendert jetzt NUR die Helligkeit (Lightness 38–70%), Saettigung fest bei 70% — die Farbe bleibt dieselbe statt von kraeftig-dunkel nach blass-hell zu kippen. Sonst wie 217: 8 Farb-Presets, statische Aurora, dritter Blob nur ~8% dunkler.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -9049,17 +9049,17 @@ function updateAuroraColors(){
 // Sync-Stellen angebunden (cloudPush/cloudPull/exportData/importData).
 let designHue=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_hue')||'null');return typeof v==='number'?v:null;}catch(e){return null;}})();
 let designLight=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_light')||'50');return typeof v==='number'?Math.max(0,Math.min(100,v)):50;}catch(e){return 50;}})();
-// Mappt den Helligkeits-Regler (0-100, Standard 50 ~ bisheriger Look) auf die
-// HSL-Werte: hoeher = kraeftiger + heller + etwas hellerer Hintergrund. Der
-// dritte Blob ist nur noch ~8% dunkler als die Hauptfarbe (weniger Abweichung).
+// Mappt den Helligkeits-Regler (0-100) auf die HSL-Werte. WICHTIG (Nutzer-
+// Wunsch 2026-07-23): der Regler aendert NUR die Helligkeit (Lightness), die
+// Saettigung (Farbcharakter) bleibt FEST bei 70% - dadurch bleibt es dieselbe
+// Farbe, nur heller/dunkler, statt von kraeftig-dunkel nach blass-hell zu
+// kippen. Der dritte Blob ist nur ~8% dunkler (ruhigerer Verlauf).
 function designColors(h,light){
   const t=Math.max(0,Math.min(100,+light||0))/100;
-  const sat=Math.round(54+t*36);   // 54..90 (t=.5 -> 72, wie bisher)
-  const lig=Math.round(44+t*36);   // 44..80 (t=.5 -> 62)
+  const lig=Math.round(38+t*32);   // 38..70 nur Helligkeit (Saettigung fest)
   const cLig=Math.max(0,lig-8);    // dritter Blob nur leicht dunkler
-  const bgSat=Math.round(26+t*14); // 26..40
-  const bgLig=Math.round(5+t*12);  // 5..17
-  return {a:'hsl('+h+','+sat+'%,'+lig+'%)',c:'hsl('+h+','+sat+'%,'+cLig+'%)',bg:'hsl('+h+','+bgSat+'%,'+bgLig+'%)'};
+  const bgLig=Math.round(5+t*12);  // 5..17 Hintergrund ebenfalls nur heller/dunkler
+  return {a:'hsl('+h+',70%,'+lig+'%)',c:'hsl('+h+',70%,'+cLig+'%)',bg:'hsl('+h+',30%,'+bgLig+'%)'};
 }
 function designAuroraOpacity(light){const t=Math.max(0,Math.min(100,+light||0))/100;return (0.28+t*0.24).toFixed(2);} // 0.28..0.52 (t=.5 -> .40)
 function applyDesignHue(h,light){
