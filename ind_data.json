@@ -206,7 +206,8 @@
      "83.9",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Central Bank Rate": {
    "actual": "4.35%",
@@ -359,7 +360,8 @@
      "4.35%",
      "4.35%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI": {
    "actual": "-0.7%",
@@ -427,7 +429,8 @@
      "-0.7%",
      "-0.3%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "4%",
@@ -545,7 +548,8 @@
      "4%",
      "4.4%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Unemployment Rate": {
    "actual": "4.4%",
@@ -572,6 +576,7 @@
      "4.4%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-17",
@@ -780,6 +785,7 @@
      "76.3K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-17",
@@ -1050,7 +1056,8 @@
      "3%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "0.3%",
@@ -1138,7 +1145,8 @@
      "0.3%",
      "0.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "1.2%",
@@ -1328,7 +1336,8 @@
      "1.2%",
      "0.4%"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "JPY": {
@@ -1539,6 +1548,7 @@
      "6.8%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "6.3%"
   },
   "Central Bank Rate": {
@@ -1687,7 +1697,8 @@
      "1%",
      "1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "1.5%",
@@ -1890,7 +1901,8 @@
      "1.5%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI": {
    "actual": "0.4%",
@@ -2093,7 +2105,8 @@
      "0.4%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core CPI": {
    "actual": "1.4%",
@@ -2296,7 +2309,8 @@
      "1.4%",
      "1.4%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "1.9%",
@@ -2505,6 +2519,7 @@
      null
     ]
    ],
+   "source": "tv",
    "revisedFrom": "1.3%"
   },
   "Unemployment Rate": {
@@ -2713,7 +2728,8 @@
      "2.5%",
      "2.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Consumer Confidence": {
    "actual": "33.8",
@@ -2921,7 +2937,8 @@
      "33.8",
      "34"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "0.5%",
@@ -3069,7 +3086,8 @@
      "0.5%",
      "0.3%"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "USD": {
@@ -3274,7 +3292,8 @@
      "-0.4%",
      "-0.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core CPI": {
    "actual": "2.6%",
@@ -3477,7 +3496,8 @@
      "2.6%",
      "2.8%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "3.5%",
@@ -3680,7 +3700,8 @@
      "3.5%",
      "3.8%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Unemployment Claims": {
    "actual": "187K",
@@ -3707,6 +3728,7 @@
      "187K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-07-27",
@@ -4667,7 +4689,8 @@
      "5.5%",
      "6.2%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core PPI": {
    "actual": "4.7%",
@@ -4870,7 +4893,8 @@
      "4.7%",
      "5.2%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "0.2%",
@@ -5079,6 +5103,7 @@
      "0.2%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "0.9%"
   },
   "Central Bank Rate": {
@@ -5227,7 +5252,8 @@
      "3.75%",
      "3.75%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "2.1%",
@@ -5436,6 +5462,7 @@
      "1.6%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "1.6%"
   },
   "PCE": {
@@ -5639,7 +5666,8 @@
      "4.1%",
      "4.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core PCE": {
    "actual": "3.4%",
@@ -5842,7 +5870,8 @@
      "3.4%",
      "3.4%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "JOLTS Job Openings": {
    "actual": "7.594M",
@@ -6045,7 +6074,8 @@
      "7.594M",
      "7.3M"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Consumer Confidence": {
    "actual": "91.2",
@@ -6254,6 +6284,7 @@
      "94.7"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "93.1"
   },
   "ADP Employment": {
@@ -6462,7 +6493,8 @@
      "98K",
      "113K"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Manufacturing PMI": {
    "actual": "53.3",
@@ -6670,7 +6702,8 @@
      "53.3",
      "54"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "NFP / Employment Change": {
    "actual": "57K",
@@ -6884,6 +6917,7 @@
      "110K"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "172K"
   },
   "Unemployment Rate": {
@@ -7087,7 +7121,8 @@
      "4.2%",
      "4.3%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Avg Hourly Earnings": {
    "actual": "3.5%",
@@ -7290,7 +7325,8 @@
      "3.5%",
      "3.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Services PMI": {
    "actual": "54",
@@ -7498,7 +7534,8 @@
      "54",
      "54"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "CAD": {
@@ -7648,7 +7685,8 @@
      "2.25%",
      "2.25%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "PPI": {
    "actual": "13.6%",
@@ -7851,7 +7889,8 @@
      "13.6%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "1%",
@@ -7878,6 +7917,7 @@
      "1%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-23",
@@ -8268,7 +8308,8 @@
      "2.8%",
      "2.9%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core CPI": {
    "actual": "2.1%",
@@ -8476,12 +8517,13 @@
      "2.1%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI": {
    "actual": "-0.4%",
    "forecast": "-0.2%",
-   "previous": "1.0%",
+   "previous": "1%",
    "date": "2026-07-20",
    "event": "Inflation Rate MoM",
    "period": "m/m",
@@ -8503,6 +8545,7 @@
      "-0.4%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-15",
@@ -8892,7 +8935,8 @@
      "6.5%",
      "6.6%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "NFP / Employment Change": {
    "actual": "18.2K",
@@ -9101,6 +9145,7 @@
      "10K"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "88K"
   },
   "GDP Growth QoQ": {
@@ -9189,7 +9234,8 @@
      "0%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "EUR": {
@@ -9218,6 +9264,7 @@
      "2.4%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-07-27",
@@ -9732,7 +9779,8 @@
      "-0.1%",
      "-0.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "2.8%",
@@ -10121,6 +10169,7 @@
      "2.8%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "2.8%"
   },
   "Core CPI": {
@@ -10510,6 +10559,7 @@
      "2.4%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "2.4%"
   },
   "PPI": {
@@ -10718,7 +10768,8 @@
      "5.9%",
      "5.7%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Consumer Confidence": {
    "actual": "-15.9",
@@ -10745,6 +10796,7 @@
      "-15.9"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-07-28",
@@ -11316,6 +11368,7 @@
      "0.3%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "-0.4%"
   },
   "Unemployment Rate": {
@@ -11525,6 +11578,7 @@
      "6.3%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "6.3%"
   },
   "NFP / Employment Change": {
@@ -11673,7 +11727,8 @@
      "0.5%",
      "0.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "-0.2%",
@@ -11881,7 +11936,8 @@
      "-0.2%",
      "0.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "NZD": {
@@ -11976,7 +12032,8 @@
      "59.7",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Services PMI": {
    "actual": "50.6",
@@ -12069,7 +12126,8 @@
      "50.6",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "-1.4%",
@@ -12162,7 +12220,8 @@
      "-1.4%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Consumer Confidence": {
    "actual": "80.4",
@@ -12250,7 +12309,8 @@
      "80.4",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "0.8%",
@@ -12339,6 +12399,7 @@
      "0.9%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "0.2%"
   },
   "Central Bank Rate": {
@@ -12472,7 +12533,8 @@
      "2.5%",
      "2.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "4.1%",
@@ -12560,7 +12622,8 @@
      "4.1%",
      "4%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "NFP / Employment Change": {
    "actual": "0.2%",
@@ -12648,7 +12711,8 @@
      "0.2%",
      "0.3%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Unemployment Rate": {
    "actual": "5.3%",
@@ -12736,7 +12800,8 @@
      "5.3%",
      "5.4%"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "CHF": {
@@ -12926,7 +12991,8 @@
      "-36",
      "-35"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Central Bank Rate": {
    "actual": "0%",
@@ -13014,7 +13080,8 @@
      "0%",
      "0%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "3.5%",
@@ -13223,6 +13290,7 @@
      "0.8%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "1.6%"
   },
   "Manufacturing PMI": {
@@ -13431,7 +13499,8 @@
      "54.3",
      "56.5"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI (Headline)": {
    "actual": "0.5%",
@@ -13639,7 +13708,8 @@
      "0.5%",
      "0.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI": {
    "actual": "0%",
@@ -13847,7 +13917,8 @@
      "0%",
      "0.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Unemployment Rate": {
    "actual": "2.9%",
@@ -14056,6 +14127,7 @@
      "3.1%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "3%"
   },
   "GDP Growth QoQ": {
@@ -14169,7 +14241,8 @@
      "0.4%",
      "0.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   }
  },
  "GBP": {
@@ -14344,7 +14417,8 @@
      "3.5%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "CPI": {
    "actual": "0.1%",
@@ -14371,6 +14445,7 @@
      "0.1%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-16",
@@ -14579,6 +14654,7 @@
      "2.6%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-16",
@@ -14787,6 +14863,7 @@
      "2.6%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-16",
@@ -14995,6 +15072,7 @@
      "6.7K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-15",
@@ -15169,6 +15247,7 @@
      "4.9%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-15",
@@ -15559,6 +15638,7 @@
      "85K"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "100K"
   },
   "Central Bank Rate": {
@@ -15707,7 +15787,8 @@
      "3.75%",
      "3.75%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Consumer Confidence": {
    "actual": "-23",
@@ -15910,7 +15991,8 @@
      "-23",
      "-24"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "1.2%",
@@ -16113,7 +16195,8 @@
      "1.2%",
      "0.5%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "GDP Growth QoQ": {
    "actual": "0.6%",
@@ -16262,6 +16345,7 @@
      "0.6%"
     ]
    ],
+   "source": "tv",
    "revisedFrom": "0.6%"
   }
  },
