@@ -638,6 +638,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
 .cot-filterbar select{font-size:14px;padding:8px 15px}
 .sent-toolbar>.cot-filterbar{margin-bottom:0}
+/* Asset-Filter oben rechts in der Karten-Titelzeile (Sentiment) */
+.cot-card-title .cot-filterbar{margin:0}
+.cot-card-title .cot-filterbar select{font-size:12.5px;padding:5px 10px}
+/* Zeitraum-Leiste kompakt IN der Grafik (direkt ueber der Plot-Flaeche) */
+.pc-inchart-range{margin:0 0 8px}
+.pc-inchart-range .ind-hist-range-bar,.pc-inchart-range .time-range-custom{margin:0}
 /* ── NEW COT DATA BANNER ──
    Nutzer-Wunsch 2026-07-19 (Farbaudit): vorher ein voll ausgemalter
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
@@ -1258,7 +1264,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PCRCAT-215</span><span id="verBannerText"> (Put/Call: (1) Volume-Cutoff im Workflow — Tage mit <500 Kontrakten (Calls+Puts) bekommen KEINEN neuen Punkt (Forward-Fill), verhindert Extrem-Spikes bei illiquiden FX-Proxys. (2) Kategorie-spezifische Thresholds/Achse: Index-ETF+marktweit 1.8/0.8, Achse 0–2.5; Rohstoffe/FX/Einzelwerte 3.0/0.3, Achse 0–8 (je mit 1.1×-Headroom).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: TEAL-SENTUI-216</span><span id="verBannerText"> (Sentiment-Umbau: MA-Filter (Put/Call) entfernt; Asset-Filter jetzt oben rechts in der Titelzeile, Zeitraum-Filter in der Grafik. Charts mit beidseitiger Y-Achse, mehr X-Labels mit Jahr (2026→26). Y-Achse erweitert sich adaptiv oben+unten (~15% ueber Hoch-/Tiefstwert, min. 15% Abstand zu den HI/LO-Schwellen). Custom-Datumsfilter-Bug (setPcRangeCustom) mitgefixt. Kollisionsfrei per Playwright verifiziert.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11542,7 +11548,6 @@ const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:
 let sentSub='retail',sentSym='',pcAsset='';
 let sentimentRange=1,sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
-let pcMaType='none'; // 'none','5d','10d','20d','50d'
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
@@ -11550,12 +11555,12 @@ function setPcAsset(v){pcAsset=v||'';renderSentiment();}
 function setSentimentRange(r){sentimentRange=r;sentimentCustomFrom='';sentimentCustomTo='';renderSentiment();}
 function setPcRange(r){pcRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){pcCustomFrom='';pcCustomTo='';}renderSentiment();}
 function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){fearGreedCustomFrom='';fearGreedCustomTo='';}renderSentiment();}
-function setPcCustomRange(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
-function setFearGreedCustomRange(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
-function setPcMaType(t){pcMaType=t;renderSentiment();}
-function setSentimentCustomRange(from,to){sentimentCustomFrom=from;sentimentCustomTo=to;renderSentiment();}
-function setPcCustomRange(from,to){pcCustomFrom=from;pcCustomTo=to;renderSentiment();}
-function setFearGreedCustomRange(from,to){fearGreedCustomFrom=from;fearGreedCustomTo=to;renderSentiment();}
+// Namen folgen der timeRangeCustomHtml-Konvention "<setFnName>Custom"
+// (setFnName='setPcRange' -> setPcRangeCustom), damit der Custom-Datumsfilter
+// tatsaechlich greift (vorher fehlbenannt als setPcCustomRange -> tote Calls).
+function setPcRangeCustom(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
+function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
+function setSentimentRangeCustom(from,to){sentimentCustomFrom=from||'';sentimentCustomTo=to||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
 // Retail-Sentiment filtert nach Broker-PAAR (z.B. EURUSD), nicht nach
@@ -11590,24 +11595,36 @@ function renderSentiment(){
   else if(sentSub==='netflow')body=renderNetFlowChart(D);
   else if(sentSub==='feargreed')body=renderFearGreedCards(D);
   else body=renderRetailBars(D);
-  const filt=(D&&sentSub==='retail')?sentFilterBar()
-    :(D&&(sentSub==='putcall'||sentSub==='netflow')&&D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D)
-    :'';
-  const tRange=sentSub==='retail'?''
-    :(sentSub==='putcall'||sentSub==='netflow')?(timeRangeBarHtml(pcRange,'setPcRange')+timeRangeCustomHtml(pcRange,pcCustomFrom,pcCustomTo,'setPcRange'))
-    :sentSub==='feargreed'?(timeRangeBarHtml(fearGreedRange,'setFearGreedRange')+timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange'))
-    :'';
-  const maSel=sentSub==='putcall'?`<div style="display:flex;gap:4px;align-items:center"><span style="font-size:11px;color:var(--t2);font-weight:600">MA:</span>${['none','5d','10d','20d','50d'].map(t=>`<button class="btn st${pcMaType===t?' on':''}" onclick="setPcMaType('${t}')" style="font-size:11px;padding:4px 7px;border-radius:4px">${t}</button>`).join('')}</div>`:'';
-  const toolbar=(filt||tRange||maSel)?`<div class="sent-toolbar" style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center">${filt}${tRange}${maSel}</div>`:'';
-  el.innerHTML=nav+toolbar+body;
+  // Filter (Asset -> Titelzeile) und Zeitraum (-> in die Grafik) werden jetzt
+  // von den einzelnen Renderern selbst platziert, keine separate Toolbar mehr.
+  el.innerHTML=nav+body;
   attachChartHovers(el);
+}
+// Gemeinsame Zeitraum-Leiste, die IN den Chart-Bereich gehoert (kompakt, direkt
+// ueber der Plot-Flaeche). Nutzt denselben timeRangeBarHtml-Helfer wie ueberall.
+function pcRangeBarInChart(){
+  return`<div class="pc-inchart-range">${timeRangeBarHtml(pcRange,'setPcRange')}${timeRangeCustomHtml(pcRange,pcCustomFrom,pcCustomTo,'setPcRange')}</div>`;
+}
+// "2026-07-16" -> "16 Jul 26" (X-Achsen-Label mit zweistelligem Jahr).
+function pcXLabel(iso){
+  const p=String(iso).split('-');if(p.length<3)return escH(String(iso));
+  const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+p[1]||1)-1]||'';
+  return `${+p[2]} ${mon} ${p[0].slice(2)}`;
+}
+// Gleichmaessig verteilte X-Achsen-Indizes (bis zu cnt Stueck) fuer n Punkte.
+function pcXTickIdx(n,cnt){
+  if(n<=1)return[0];
+  const c=Math.max(2,Math.min(cnt,n));
+  const out=[];for(let k=0;k<c;k++)out.push(Math.round(k*(n-1)/(c-1)));
+  return[...new Set(out)];
 }
 // ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
 function renderRetailBars(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
   const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)&&(!sentSym||r.sym===sentSym)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}</span></div>`;
+  const filt=sentFilterBar();
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}</small></div>`;
   if(!list.length){
     return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:12.5px;line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
@@ -11664,46 +11681,39 @@ function renderPutCallChart(D){
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
+  const filt=(D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D):'';
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
   const HI=th.HI,LO=th.LO;
-  const W=760,H=360,padL=42,padR=64,padT=24,padB=44;
+  const W=760,H=360,padL=44,padR=54,padT=24,padB=46;
   const vals=series.map(e=>+e[1]);
-  // Achse: kategorie-feste Basis (Index-ETF 2.5, sonst 8) mit 10% Kopf-
-  // Freiraum, falls ein Spike die Basis doch ueberschreitet (dann waechst
-  // die Achse mit statt zu kappen). Referenzlinien sitzen dadurch
-  // proportional am richtigen Platz.
-  const maxVal=vals.length?Math.max(...vals):0;
-  const yMax=Math.max(th.base,maxVal*1.1),yMin=0;
+  // Achse erweitert sich adaptiv nach oben UND unten: ~15% ueber dem hoechsten
+  // bzw. unter dem tiefsten Wert, ABER mindestens so, dass zu den Extrem-
+  // Schwellen (HI/LO) je >15% Abstand bleibt (Nutzer-Wunsch 2026-07-22). yMin
+  // nie unter 0 (Ratio ist nicht-negativ). Schwellen sind dadurch immer im Bild.
+  const maxV=vals.length?Math.max(...vals):HI;
+  const minV=vals.length?Math.min(...vals):LO;
+  const yMax=Math.max(maxV,HI)*1.15;
+  const yMin=Math.max(0,Math.min(minV,LO)*0.85);
   const xOf=i=>padL+(series.length>1?i/(series.length-1):0)*(W-padL-padR);
   const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
-
-  // Compute moving average if selected
-  let displayVals=vals;
-  let displaySeries=series;
-  if(pcMaType!=='none'){
-    const nDays=parseInt(pcMaType);
-    const ma=(arr,i,n)=>{const a=arr.slice(Math.max(0,i-n+1),i+1);return a.reduce((x,y)=>x+y,0)/a.length;};
-    displayVals=vals.map((v,i)=>ma(vals,i,nDays));
-    // displaySeries remains the same for hover points (dates don't change)
-  }
-
   // Stufenlinie (Werte gelten bis zum naechsten Datum)
   let step='';
-  displayVals.forEach((v,i)=>{const x=xOf(i),y=yOf(v);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(displayVals[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
-  // Gridline-Schritt an die Achsen-Groesse anpassen (kleine Achse 0-2.5 ->
-  // 0.5er-Schritte; grosse Achse 0-8 -> 2er-Schritte).
-  const gStep=yMax<=3?0.5:yMax<=6?1:2;
-  const gyVals=[];for(let t=0;t<=yMax+1e-6;t+=gStep)gyVals.push(t);
-  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
-  // Datums-Achse: erstes, mittleres, letztes
+  vals.forEach((v,i)=>{const x=xOf(i),y=yOf(v);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(vals[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
+  // Gridlines mit Labels LINKS und RECHTS (beidseitige Y-Achse). Schritt an
+  // die (jetzt variable) Achsenspanne angepasst, an runden Zahlen ausgerichtet.
+  const span=yMax-yMin;
+  const gStep=span<=1?0.2:span<=2.5?0.5:span<=6?1:2;
+  const gyVals=[];for(let t=Math.ceil(yMin/gStep)*gStep;t<=yMax+1e-6;t+=gStep)gyVals.push(+t.toFixed(4));
+  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
+  // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr
+  // ("16 Jul 26"); Rand-Labels linksbuendig/rechtsbuendig, damit sie nicht
+  // in die Y-Achsen-Beschriftung laufen.
   let xlab='';
-  if(series.length){const idxs=[0,Math.floor((series.length-1)/2),series.length-1];[...new Set(idxs)].forEach(i=>{const d=String(series[i][0]).slice(5);xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(d)}</text>`;});}
+  if(series.length){const idxs=pcXTickIdx(series.length,7);idxs.forEach(i=>{const anch=i===0?'start':i===series.length-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});}
   let chart;
   if(series.length===1){
-    // Erst ein Report-Tag: noch kein Linien-Chart moeglich, aber der
-    // aktuelle Wert selbst ist schon da - den zeigen statt nur "warten".
-    const v=displayVals[0];
+    const v=vals[0];
     chart=`<div style="text-align:center;padding:10px 6px 4px">
         <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${v>=HI?BC.bull:v<=LO?BC.bear:'var(--t1)'}">${v.toFixed(2)}</div>
         <div style="font-size:13px;color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
@@ -11719,22 +11729,21 @@ function renderPutCallChart(D){
         <line x1="${padL}" y1="${yOf(HI).toFixed(1)}" x2="${W-padR}" y2="${yOf(HI).toFixed(1)}" stroke="${BC.bull}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <line x1="${padL}" y1="${yOf(LO).toFixed(1)}" x2="${W-padR}" y2="${yOf(LO).toFixed(1)}" stroke="${BC.bear}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <text x="${padL+6}" y="${(yOf(HI)-5).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${BC.bull}">High Put Volume</text>
-        <text x="${padL+6}" y="${(yOf(LO)+13).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${BC.bear}">High Call Volume</text>
+        <text x="${padL+6}" y="${(yOf(LO)-5).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${BC.bear}">High Call Volume</text>
         <text x="${W-padR-4}" y="${padT+13}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bull}">CONTRARIAN BULLISH ▲</text>
         <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>
         <path d="${step}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
         ${xlab}
       </svg>`;
-    const hpts=series.map((e,i)=>{const v=displayVals[i];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b>${pcMaType!=='none'?` <span style="color:var(--t3);font-size:11px">(${pcMaType} MA)</span>`:''} · ${zone}`};});
-    const latestVal=displayVals[displayVals.length-1];
-    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b>${pcMaType!=='none'?` <span style="color:var(--t3);font-size:11px">(${pcMaType} MA)</span>`:''} — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+    const hpts=series.map((e,i)=>{const v=vals[i];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b> · ${zone}`};});
+    const latestVal=vals[vals.length-1];
+    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b> — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
   }
-  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${chart}</div></div>`;
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
-// ── Net Options Flow: Balken = 5-Tage- minus 20-Tage-Schnitt des
-// Options-Flusses (aus der Put/Call-Reihe abgeleitet). >0 = kurzfristig
-// mehr Calls als im 20-Tage-Mittel = bullisher Fluss (cyan), <0 = mehr
-// Puts = bearisher Fluss (rot). ──
+// ── Net Options Flow: Balken = (Call−Put)/(Call+Put), aus der Put/Call-Reihe
+// abgeleitet, 5-Tage-geglaettet. >0 = call-lastiger Fluss (cyan, bullish),
+// <0 = put-lastiger Fluss (rot, bearish). ──
 function renderNetFlowChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
@@ -11743,7 +11752,8 @@ function renderNetFlowChart(D){
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
-  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">(Call−Put)/(Call+Put) · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
+  const filt=(D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D):'';
+  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">(Call−Put)/(Call+Put) · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const s=rawSeries.filter(e=>filteredDates.has(e[0]));
@@ -11759,15 +11769,17 @@ function renderNetFlowChart(D){
   if(net.length<2){
     return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:12.5px;line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
-  const W=760,H=360,padL=44,padR=20,padT=22,padB=48;
-  const vals=net.map(e=>e[1]),maxA=Math.max(0.05,...vals.map(Math.abs));
+  const W=760,H=360,padL=48,padR=48,padT=22,padB=48;
+  const vals=net.map(e=>e[1]),maxA=Math.max(0.05,...vals.map(Math.abs))*1.15; // 15% Kopf-/Fussraum
   const n=net.length,bw=Math.max(2,(W-padL-padR)/n*0.72);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const yOf=v=>padT+(1-(v+maxA)/(2*maxA))*(H-padT-padB);
   const y0=yOf(0);
   const bars=net.map((e,i)=>{const y=yOf(e[1]),up=e[1]>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.abs(y-y0).toFixed(1)}" fill="${up?BC.bull:BC.bear}" opacity="0.9"/>`;}).join('');
-  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
-  let xlab='';const idxs=[...new Set([0,Math.floor((n-1)/2),n-1])];idxs.forEach(i=>{xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(String(net[i][0]).slice(5))}</text>`;});
+  // Gridlines mit Labels LINKS und RECHTS (beidseitige Y-Achse).
+  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
+  // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr.
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(net[i][0]))}</text>`;});
   const last=vals[vals.length-1];
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bull}">Bullish options flow</text>
@@ -11776,12 +11788,13 @@ function renderNetFlowChart(D){
   </svg>`;
   const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> · ${up?'bullish flow':'bearish flow'}`};});
   const chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
-  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${chart}</div></div>`;
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
 function renderFearGreedCards(D){
   const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
-  let html=`<div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange')}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange')}</div>`;
+  let html=rangeBar+`<div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
   const cf=D.cryptoFng,cfEv=sentEval('cryptoFng',cf);
   const cfFiltered=cf&&cf.series?filterDatesByRange(cf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
   const cfFilteredSet=new Set(cfFiltered);
