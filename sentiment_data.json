@@ -1,12 +1,8 @@
 {
  "cryptoFng": {
-  "value": 33,
+  "value": 31,
   "label": "Fear",
   "series": [
-   [
-    "2026-04-24",
-    39
-   ],
    [
     "2026-04-25",
     31
@@ -362,6 +358,10 @@
    [
     "2026-07-22",
     33
+   ],
+   [
+    "2026-07-23",
+    31
    ]
   ]
  },
@@ -427,10 +427,14 @@
    [
     "2026-07-22",
     16.64
+   ],
+   [
+    "2026-07-23",
+    16.64
    ]
   ]
  },
- "updated": "2026-07-22T23:55:09.598Z",
+ "updated": "2026-07-23T01:49:26.247Z",
  "stockFng": {
   "value": 43,
   "label": "fear",
@@ -925,13 +929,13 @@
   },
   {
    "sym": "GBPUSD",
-   "long": 49,
-   "short": 51
+   "long": 50,
+   "short": 50
   },
   {
    "sym": "USDJPY",
-   "long": 16,
-   "short": 84
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "GBPJPY",
@@ -945,13 +949,13 @@
   },
   {
    "sym": "EURAUD",
-   "long": 67,
-   "short": 33
+   "long": 70,
+   "short": 30
   },
   {
    "sym": "EURJPY",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "AUDCAD",
@@ -975,8 +979,8 @@
   },
   {
    "sym": "CADJPY",
-   "long": 20,
-   "short": 80
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "EURCAD",
@@ -985,8 +989,8 @@
   },
   {
    "sym": "EURCHF",
-   "long": 18,
-   "short": 82
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "EURGBP",
@@ -1010,8 +1014,8 @@
   },
   {
    "sym": "NZDCAD",
-   "long": 21,
-   "short": 79
+   "long": 22,
+   "short": 78
   },
   {
    "sym": "NZDJPY",
@@ -1020,8 +1024,8 @@
   },
   {
    "sym": "NZDUSD",
-   "long": 41,
-   "short": 59
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "USDCHF",
@@ -1050,8 +1054,8 @@
   },
   {
    "sym": "CADCHF",
-   "long": 62,
-   "short": 38
+   "long": 61,
+   "short": 39
   },
   {
    "sym": "GBPAUD",
@@ -1060,18 +1064,18 @@
   },
   {
    "sym": "XAUUSD",
-   "long": 51,
-   "short": 49
+   "long": 52,
+   "short": 48
   },
   {
    "sym": "XAGUSD",
-   "long": 56,
-   "short": 44
+   "long": 57,
+   "short": 43
   },
   {
    "sym": "BTCUSD",
-   "long": 50,
-   "short": 50
+   "long": 51,
+   "short": 49
   },
   {
    "sym": "US500",
@@ -1091,7 +1095,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.87,
+  "value": 0.79,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1285,6 +1289,10 @@
    [
     "2026-07-21",
     0.87
+   ],
+   [
+    "2026-07-22",
+    0.79
    ]
   ]
  },
