@@ -156,6 +156,27 @@ Delegation willen:
   als Standard, Opus nur wenn wirklich komplexes Urteilsvermögen gebraucht
   wird.
 
+## ⚠️ KOMMUNIKATIONS-GRUNDSATZ: nie schätzen → Dashboard-Meldung (Nutzer-Wunsch 2026-07-23)
+
+**Wenn ein echter Wert nicht aus einer Live-Quelle beschafft werden kann, NIEMALS
+schätzen/raten/hart eintragen — stattdessen eine Meldung auf dem Dashboard erzeugen.**
+Die Dashboard-Meldung ist der Kanal, über den die App (und ich) dem Nutzer mitteilt,
+dass etwas Aufmerksamkeit braucht (fehlende Daten, Quelle nicht erreichbar, Entscheidung
+nötig). Steht auch in der `README.md`. Gilt generell, nicht nur für den Indikator-Feed.
+
+**Indikator-Datenquellen-Policy (nur Makro-Indikatoren wie CPI/GDP/PPI/PMI/NFP/Retail
+Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
+- Primärquelle **Investing.com** (Actual+Forecast+Previous aus einer Quelle).
+- Fallback NUR bei Block (nach mehreren Versuchen), **pro Indikator** die Alternativquelle
+  mit vollständigen Werten (FF/TE/FXStreet/TradingView).
+- Fallback-Werte werden im UI hervorgehoben + ein Dashboard-Popup listet die betroffenen
+  Indikatoren. Ein eigener `*/10`-Min-Workflow versucht Investing.com erneut, aber NUR
+  solange ein Fallback aktiv ist (sonst sofortiger No-Op); bei Erfolg wird der Wert
+  zurückgeschrieben und Highlight/Popup lösen sich selbst.
+- Zwei getrennte Meldungen: *temporär geblockt* (selbstlösend) vs. *Investing.com führt
+  den Indikator nie* (eigene Dauer-Meldung, Nutzer kümmert sich selbst darum).
+- Status/Umsetzung: siehe Session-Eintrag unten.
+
 ## Arbeits-Workflow (vom Nutzer durchgehend eingefordert)
 
 - **⚠️ Vor Code-Änderungen erst das OK des Nutzers einholen (Nutzer-Wunsch
