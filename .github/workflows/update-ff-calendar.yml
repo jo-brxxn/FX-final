@@ -610,7 +610,7 @@ jobs:
             // die bereits von der FF-Webseite gesetzt wurden, bleiben
             // unangetastet (FF-Webseite hat Vorrang vor TradingView).
             const TV_TOL=2*60*60*1000;
-            let tvPrev=0,tvFc=0,tvAct=0;
+            let tvAct=0;
             combined.forEach(ev=>{
               const t=new Date(ev.date).getTime();
               if(isNaN(t))return;
@@ -640,24 +640,29 @@ jobs:
               }
               ).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(!hits.length)return;
-              // Pro Feld den zeitlich naechsten Treffer nehmen, der das Feld
-              // ueberhaupt fuehrt - der insgesamt naechste (oft TradingView)
-              // hat z.B. haeufig keinen Forecast, waehrend der Investing.com-
-              // Treffer direkt daneben einen liefert.
-              const hPrev=hits.find(x=>x.previous),hFc=hits.find(x=>x.forecast),hAct=hits.find(x=>x.actual);
-              if(!ev._ffPrev&&hPrev&&hPrev.previous!==ev.previous){ev.previous=hPrev.previous;tvPrev++;}
-              if(!ev._ffFc&&hFc&&hFc.forecast!==ev.forecast){ev.forecast=hFc.forecast;tvFc++;}
-              // Actual nur fuellen, nicht ueberschreiben: vermeidet, dass ein
-              // korrekter FF-Actual durch eine abweichend formatierte TV-Zahl
-              // ersetzt wird (und faelschlich als Revision gefaerbt wird).
-              if(!ev._ffAct&&hAct&&!ev.actual){ev.actual=hAct.actual;tvAct++;}
+              // Gleichquellen-Regel (Nutzer-Wunsch 2026-07-23): ein Kalender-
+              // Event fuehrt Actual/Forecast/Previous IMMER aus DERSELBEN
+              // Quelle - nie feldweise gemischt. Hat ForexFactory selbst schon
+              // einen Actual (Basis oder FF-Website-Overlay), bleibt das
+              // FF-Trio komplett unangetastet. Nur wenn FF KEINEN Actual hat,
+              // wird das GANZE Trio vom zeitlich naechsten Alt-Treffer MIT
+              // Actual uebernommen (Actual+Forecast+Previous aus einer Quelle);
+              // von der FF-Website gesetzte Felder (_ff*) behalten dabei
+              // Vorrang, da FF-Website = dieselbe Quelle wie das FF-Event.
+              if(ev.actual&&ev.actual!=="")return;
+              const h=hits.find(x=>x.actual);
+              if(h){
+                ev.actual=h.actual;tvAct++;
+                if(!ev._ffFc)ev.forecast=h.forecast||"";
+                if(!ev._ffPrev)ev.previous=h.previous||"";
+              }
             });
             // Temporaere FF-Vorrang-Markierungen wieder entfernen, bevor in
             // die Datei geschrieben wird.
             combined.forEach(ev=>{delete ev._ffAct;delete ev._ffPrev;delete ev._ffFc;});
-            if(tvPrev||tvFc||tvAct){
+            if(tvAct){
               fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
-              console.log("TradingView/TE overlay: "+tvAct+" actual, "+tvPrev+" previous, "+tvFc+" forecast updated");
+              console.log("Alt-source overlay: "+tvAct+" event(s) got a full same-source trio (FF had no actual)");
             }
 
             let fxEvents;
@@ -841,20 +846,18 @@ jobs:
             const out=[];
             groups.forEach(list=>{
               if(list.length===1){out.push(list[0]);return;}
-              // FF-natives Event (kein src-Tag) zuerst, sonst das mit den
-              // meisten gefuellten Feldern.
+              // Gleichquellen-Regel (Nutzer-Wunsch 2026-07-23): Duplikate NICHT
+              // feldweise zusammenmischen (koennten aus verschiedenen Quellen
+              // stammen) - stattdessen das EINE vollstaendigste Event behalten,
+              // sein Actual/Forecast/Previous-Trio bleibt aus seiner Quelle.
+              // Bei Gleichstand FF-nativ (kein src-Tag) bevorzugen.
               list.sort((a,b)=>{
-                const as=a.src?1:0,bs=b.src?1:0;
-                if(as!==bs)return as-bs;
                 const af=["actual","forecast","previous"].filter(k=>a[k]).length;
                 const bf=["actual","forecast","previous"].filter(k=>b[k]).length;
-                return bf-af;
+                if(bf!==af)return bf-af;
+                return (a.src?1:0)-(b.src?1:0);
               });
-              const base=list[0];
-              for(let i=1;i<list.length;i++){
-                ["actual","forecast","previous"].forEach(k=>{if(!base[k]&&list[i][k])base[k]=list[i][k];});
-              }
-              out.push(base);
+              out.push(list[0]);
               removed+=list.length-1;
             });
             if(removed){
