@@ -1258,7 +1258,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PCRSCALE-214</span><span id="verBannerText"> (Put/Call-Chart wie die Vorlage: feste Skala 0–8, Gridlines 0/2/4/6/8. Referenzlinien neu — obere gestrichelte Linie bei 3.0 (High Put Volume), untere bei 0.2 (High Call Volume, nah an 0). Die 1.0/0.7-Hauptschwellen entfernt; Spikes sitzen proportional zur Achse.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PCRCAT-215</span><span id="verBannerText"> (Put/Call: (1) Volume-Cutoff im Workflow — Tage mit <500 Kontrakten (Calls+Puts) bekommen KEINEN neuen Punkt (Forward-Fill), verhindert Extrem-Spikes bei illiquiden FX-Proxys. (2) Kategorie-spezifische Thresholds/Achse: Index-ETF+marktweit 1.8/0.8, Achse 0–2.5; Rohstoffe/FX/Einzelwerte 3.0/0.3, Achse 0–8 (je mit 1.1×-Headroom).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11644,6 +11644,15 @@ function pcThinNote(perAsset){
   if(tot>=PC_THIN_VOL)return'';
   return`<span style="display:block;color:var(--amber);font-size:11.5px;margin-top:4px">⚠ Low options volume today (${tot} contracts total) — this reading can be noisy, treat as a rough signal only.</span>`;
 }
+// PCR-Schwellen + Achsen-Basis je Asset-Kategorie (Nutzer-Wunsch 2026-07-22):
+// Index-ETFs (SPY/QQQ) und die marktweite OCC-Zahl handeln eng um 1.0 herum
+// -> engere Zonen (1.8/0.8) + kleinere Achse (0-2.5). Rohstoffe, FX-Proxys
+// und Einzelwerte koennen weit streuen (Ratios bis ~5) -> weitere Zonen
+// (3.0/0.3) + groessere Achse (0-8). id: unsere Asset-ID, '' = marktweit.
+function pcThresholds(id){
+  const idxLike = id==='SP500' || id==='NAS' || id===''; // Index-ETF + marktweit
+  return idxLike ? {HI:1.8,LO:0.8,base:2.5} : {HI:3.0,LO:0.3,base:8.0};
+}
 function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
@@ -11656,13 +11665,16 @@ function renderPutCallChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)}</span><small style="width:100%">${scopeNote}</small></div>`;
-  const HI=3.0,LO=0.2; // Schwellen: >=3.0 High Put (bullish), <=0.2 High Call (bearish)
+  const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
+  const HI=th.HI,LO=th.LO;
   const W=760,H=360,padL=42,padR=64,padT=24,padB=44;
   const vals=series.map(e=>+e[1]);
-  // Feste Skala 0-8 (Nutzer-Wunsch 2026-07-22, wie die Vorlage): dadurch
-  // sitzen die Referenzlinien bei 3.0 und ~0 proportional am richtigen Platz
-  // und ein Spike bei ~5-7 hat die korrekte Relation zur Achse.
-  const yMax=8,yMin=0;
+  // Achse: kategorie-feste Basis (Index-ETF 2.5, sonst 8) mit 10% Kopf-
+  // Freiraum, falls ein Spike die Basis doch ueberschreitet (dann waechst
+  // die Achse mit statt zu kappen). Referenzlinien sitzen dadurch
+  // proportional am richtigen Platz.
+  const maxVal=vals.length?Math.max(...vals):0;
+  const yMax=Math.max(th.base,maxVal*1.1),yMin=0;
   const xOf=i=>padL+(series.length>1?i/(series.length-1):0)*(W-padL-padR);
   const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
 
@@ -11679,7 +11691,11 @@ function renderPutCallChart(D){
   // Stufenlinie (Werte gelten bis zum naechsten Datum)
   let step='';
   displayVals.forEach((v,i)=>{const x=xOf(i),y=yOf(v);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(displayVals[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
-  const gy=[0,2,4,6,8].filter(t=>t<=yMax).map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
+  // Gridline-Schritt an die Achsen-Groesse anpassen (kleine Achse 0-2.5 ->
+  // 0.5er-Schritte; grosse Achse 0-8 -> 2er-Schritte).
+  const gStep=yMax<=3?0.5:yMax<=6?1:2;
+  const gyVals=[];for(let t=0;t<=yMax+1e-6;t+=gStep)gyVals.push(t);
+  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
   // Datums-Achse: erstes, mittleres, letztes
   let xlab='';
   if(series.length){const idxs=[0,Math.floor((series.length-1)/2),series.length-1];[...new Set(idxs)].forEach(i=>{const d=String(series[i][0]).slice(5);xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(d)}</text>`;});}

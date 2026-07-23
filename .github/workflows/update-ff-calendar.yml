@@ -2373,15 +2373,25 @@ jobs:
             const today=new Date().toISOString().slice(0,10);
             const out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));
             const byAsset=out.putCallByAsset||{};
-            let n=0;
+            const VOL_CUTOFF=500; // Mindestvolumen (Calls+Puts) fuer einen neuen Punkt
+            let n=0,skipped=0;
             Object.keys(raw).forEach(asset=>{
               const e=raw[asset];
+              const total=(Number(e.callVol)||0)+(Number(e.putVol)||0);
+              // Illiquider Tag -> keine neue PCR berechnen (Forward-Fill: den
+              // letzten gueltigen Tag stehen lassen), damit duenne FX-Proxys
+              // (UUP/FXB/FXE...) keine kuenstlichen Extrem-Spikes erzeugen.
+              if(total<VOL_CUTOFF){
+                console.log("[debug] "+asset+" total volume "+total+" < "+VOL_CUTOFF+" - skipping (forward-fill last valid day)");
+                skipped++;return;
+              }
               const ratio=Math.round(e.putVol/e.callVol*100)/100;
               let s=(byAsset[asset]&&Array.isArray(byAsset[asset].series)?byAsset[asset].series:[]).filter(x=>x&&x[0]!==today);
               s.push([today,ratio]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
               byAsset[asset]={value:ratio,proxy:e.proxy,callVol:e.callVol,putVol:e.putVol,series:s.slice(-400)};
               n++;
             });
+            if(skipped)console.log("[debug] put/call cutoff: "+skipped+" asset(s) below "+VOL_CUTOFF+" contracts skipped");
             out.putCallByAsset=byAsset;
             fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
             console.log("sentiment_data.json: putCallByAsset "+n+"/"+Object.keys(raw).length+" assets updated ("+Object.keys(byAsset).sort().join(",")+")");
@@ -2447,7 +2457,10 @@ jobs:
                       const v=Number(d.volume&&d.volume[i])||0;
                       if(d.side[i]==="call")cv+=v;else if(d.side[i]==="put")pv+=v;
                     }
-                    if(cv>0&&pv>0)console.log(Math.round(pv/cv*100)/100);
+                    // Volume-Cutoff wie beim taeglichen Yahoo-Schritt: unter
+                    // 500 Kontrakten (Calls+Puts) keinen Punkt nachtragen
+                    // (illiquide Tage erzeugen sonst Extrem-Spikes).
+                    if(cv>0&&pv>0&&(cv+pv)>=500)console.log(Math.round(pv/cv*100)/100);
                   }catch(e){}
                 ')
                 rm -f md_resp.json
