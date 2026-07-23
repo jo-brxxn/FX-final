@@ -1258,7 +1258,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-ALLEXPIRIES-212</span><span id="verBannerText"> (Put/Call-Yahoo-Fetch summiert jetzt das Volumen ueber ALLE Verfallstermine (expirationDates einzeln per ?date= geholt), nicht mehr nur den Frontmonat; Marketdata-Backfill iterierte ohnehin schon die komplette Kette — konsistent. Weiterhin: EOD-Gate (UTC≥21, keine Wochenenden) + Net Options Flow = (Call−Put)/(Call+Put), [−1,+1]-normiert, 5-Tage-geglaettet.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: AMBER-PCYAXIS-213</span><span id="verBannerText"> (Put/Call-Chart: yMax jetzt Math.max(1.6, maxWert×1.1, 1.1) — ein Spike (duenne FX-Proxys erreichen Ratios bis ~4-5) laeuft spitz mit 10% Kopf-Freiraum aus statt oben am Rand flachgedrueckt zu kleben; Marktweit-Ansicht + Kontrarian-Zonen bleiben durch den Floor 1.6 lesbar.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -11659,7 +11659,12 @@ function renderPutCallChart(D){
   const HI=1.0,LO=0.7; // Schwellen: >=1.0 High Put (bullish), <=0.7 High Call (bearish)
   const W=760,H=360,padL=42,padR=64,padT=24,padB=44;
   const vals=series.map(e=>+e[1]);
-  const yMax=Math.max(1.6,...vals,HI+0.1),yMin=0;
+  // yMax dynamisch mit 10% Kopf-Freiraum, damit ein Spike (dünne FX-Proxys
+  // koennen Ratios bis ~4-5 zeigen) nicht am oberen Rand klebt/flachgedrueckt
+  // wird, sondern spitz auslaeuft. Floor 1.6 haelt die Marktweit-Ansicht
+  // (~1.0) und die Kontrarian-Zonen (0.7/1.0) lesbar.
+  const maxVal=vals.length?Math.max(...vals):0;
+  const yMax=Math.max(1.6,maxVal*1.1,HI+0.1),yMin=0;
   const xOf=i=>padL+(series.length>1?i/(series.length-1):0)*(W-padL-padR);
   const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
 
