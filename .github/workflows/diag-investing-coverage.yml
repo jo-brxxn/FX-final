@@ -30,7 +30,7 @@ jobs:
               --data-urlencode "country[]=43" --data-urlencode "country[]=12" \
               --data-urlencode "dateFrom=$INV_FROM" \
               --data-urlencode "dateTo=$INV_TO" --data-urlencode "timeZone=8" \
-              --data-urlencode "timeFilter=timeRemain" --data-urlencode "currentTab=custom" \
+              --data-urlencode "timeFilter=timeOnly" --data-urlencode "currentTab=custom" \
               --data-urlencode "submitFilters=1" --data-urlencode "limit_from=0" \
               "https://www.investing.com/economic-calendar/Service/getCalendarFilteredData" -o invcal.json || true
             SIZE=$(wc -c <invcal.json 2>/dev/null | tr -d ' ')
