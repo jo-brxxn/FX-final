@@ -175,8 +175,9 @@ svg.ic{vertical-align:-2px;flex:none}
 .light-slider{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:14px;height:172px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(0deg,#161d29,#e8f0ff)}
 .light-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
 .light-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
-.design-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;padding:0;transition:transform .1s}
+.design-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;padding:0;transition:transform .1s;position:relative}
 .design-preset:hover{transform:scale(1.12)}
+.design-saved .saved-bolt{position:absolute;top:-5px;right:-5px;font-size:11px;line-height:1;pointer-events:none;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9))}
 .ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
 .ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
 .ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
@@ -1268,7 +1269,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-218</span><span id="verBannerText"> (Designer-Helligkeitsregler aendert jetzt NUR die Helligkeit (Lightness 38–70%), Saettigung fest bei 70% — die Farbe bleibt dieselbe statt von kraeftig-dunkel nach blass-hell zu kippen. Sonst wie 217: 8 Farb-Presets, statische Aurora, dritter Blob nur ~8% dunkler.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: LILAC-DESIGNER-219</span><span id="verBannerText"> (Designer: Helligkeitsregler nutzt jetzt OKLCH statt HSL — dadurch bleibt der WAHRGENOMMENE Farbton wirklich konstant (HSL kippte Blau/Violett beim Abdunkeln ins Indigo). Neu: eigene Farben speicherbar (⚡ Save) als eigene Reihe unter den Presets, jede mit Blitz-Symbol, Klick wendet an, langer Druck loescht; geraeteuebergreifend gesynct.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1620,11 +1621,14 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t3);margin-bottom:12px;line-height:1.5">Pick a classic colour or slide through the spectrum – the background previews live. The slider on the right sets how <b>bright &amp; vivid</b> the colour is. <b>Apply</b> keeps it (synced to your other devices), <b>Auto</b> returns to the risk-sentiment colouring.</div>
     <div style="display:flex;gap:16px;align-items:stretch">
       <div style="flex:1;min-width:0">
-        <div id="designPresets" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px"></div>
+        <div id="designPresets" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px"></div>
+        <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⚡ Saved</div>
+        <div id="designSaved" style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;align-items:center"></div>
         <input type="range" class="hue-slider" id="designHueSlider" min="0" max="360" step="1" value="210" oninput="previewDesignHue(this.value)">
         <div style="display:flex;align-items:center;gap:10px;margin-top:12px">
           <div id="designHueSwatch" style="width:36px;height:36px;border-radius:9px;border:1px solid var(--bd2);flex-shrink:0"></div>
           <div id="designHueLbl" style="font-size:12px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Hue 210°</div>
+          <button class="btn" onclick="saveCurrentDesignColor()" title="Save this colour" style="margin-left:auto;font-size:12px;padding:6px 12px">⚡ Save</button>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:7px;flex-shrink:0">
@@ -5258,7 +5262,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.greenDismissed=greenDismissed;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.greenDismissed=greenDismissed;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.designSaved=designSaved;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -5266,7 +5270,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(typeof _imp.designLight==='number'){designLight=Math.max(0,Math.min(100,_imp.designLight));try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}updateAuroraColors();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.greenDismissed){greenDismissed=_imp.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.designHue!==undefined){designHue=(typeof _imp.designHue==='number')?_imp.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}if(typeof _imp.designLight==='number'){designLight=Math.max(0,Math.min(100,_imp.designLight));try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}updateAuroraColors();}if(Array.isArray(_imp.designSaved)){designSaved=_imp.designSaved.filter(x=>x&&typeof x.h==='number'&&typeof x.light==='number').slice(0,24);try{localStorage.setItem('fxpro_design_saved',JSON.stringify(designSaved));}catch(e){}}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();updGreenBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5478,7 +5482,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+    const data=JSON.parse(snap());data.greenDismissed=greenDismissed;data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.designHue=designHue;data.designLight=designLight;data.designSaved=designSaved;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5565,6 +5569,7 @@ async function cloudPull(manual){
       // vom anderen Geraet ankommt.
       if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
       if(!prefPending&&typeof cd.designLight==='number'){designLight=Math.max(0,Math.min(100,cd.designLight));try{localStorage.setItem('fxpro_design_light',JSON.stringify(designLight));}catch(e){}updateAuroraColors();}
+      if(!prefPending&&Array.isArray(cd.designSaved)){designSaved=cd.designSaved.filter(x=>x&&typeof x.h==='number'&&typeof x.light==='number').slice(0,24);try{localStorage.setItem('fxpro_design_saved',JSON.stringify(designSaved));}catch(e){}}
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
       // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
       // Tagen, an denen es offen war), ein Overwrite wuerde die jeweils
@@ -9049,17 +9054,28 @@ function updateAuroraColors(){
 // Sync-Stellen angebunden (cloudPush/cloudPull/exportData/importData).
 let designHue=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_hue')||'null');return typeof v==='number'?v:null;}catch(e){return null;}})();
 let designLight=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_light')||'50');return typeof v==='number'?Math.max(0,Math.min(100,v)):50;}catch(e){return 50;}})();
-// Mappt den Helligkeits-Regler (0-100) auf die HSL-Werte. WICHTIG (Nutzer-
-// Wunsch 2026-07-23): der Regler aendert NUR die Helligkeit (Lightness), die
-// Saettigung (Farbcharakter) bleibt FEST bei 70% - dadurch bleibt es dieselbe
-// Farbe, nur heller/dunkler, statt von kraeftig-dunkel nach blass-hell zu
-// kippen. Der dritte Blob ist nur ~8% dunkler (ruhigerer Verlauf).
+// Vom Nutzer gespeicherte eigene Farben (⚡): [{h,light},...] - eigene Reihe
+// unter den 8 klassischen Presets, geraeteuebergreifend gesynct wie designHue.
+let designSaved=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_design_saved')||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.h==='number'&&typeof x.light==='number').slice(0,24):[];}catch(e){return [];}})();
+// Mappt den Helligkeits-Regler (0-100) auf die Farbe. WICHTIG (Nutzer-Wunsch
+// 2026-07-23): der Regler aendert NUR die Helligkeit, die Farbe selbst bleibt.
+// HSL taugt dafuer NICHT - es ist nicht wahrnehmungs-gleichmaessig, dunkle
+// Blau-/Violett-Toene kippen ins Indigo, helle ins Lavendel, obwohl Hue+
+// Saettigung numerisch gleich sind. OKLCH ist genau dafuer gebaut: nur die
+// Lightness variiert, Chroma+Hue (der WAHRGENOMMENE Farbton) bleiben konstant.
+// HSL-Fallback fuer Browser ohne relative-color-syntax.
+const OKLCH_OK=(()=>{try{return !!(window.CSS&&CSS.supports&&CSS.supports('color','oklch(from red l c h)'));}catch(e){return false;}})();
 function designColors(h,light){
   const t=Math.max(0,Math.min(100,+light||0))/100;
-  const lig=Math.round(38+t*32);   // 38..70 nur Helligkeit (Saettigung fest)
-  const cLig=Math.max(0,lig-8);    // dritter Blob nur leicht dunkler
-  const bgLig=Math.round(5+t*12);  // 5..17 Hintergrund ebenfalls nur heller/dunkler
-  return {a:'hsl('+h+',70%,'+lig+'%)',c:'hsl('+h+',70%,'+cLig+'%)',bg:'hsl('+h+',30%,'+bgLig+'%)'};
+  if(OKLCH_OK){
+    const base='hsl('+h+' 70% 55%)';         // Referenzfarbe -> Chroma+Hue
+    const L=(0.42+t*0.36).toFixed(3);        // 0.42..0.78 wahrnehm. Helligkeit
+    const cL=(0.42+t*0.36-0.05).toFixed(3);  // dritter Blob minimal dunkler
+    const bgL=(0.12+t*0.10).toFixed(3);      // Hintergrund 0.12..0.22
+    return {a:'oklch(from '+base+' '+L+' c h)',c:'oklch(from '+base+' '+cL+' c h)',bg:'oklch(from '+base+' '+bgL+' calc(c*0.55) h)'};
+  }
+  const lig=Math.round(38+t*32);   // Fallback: HSL, nur Lightness
+  return {a:'hsl('+h+',70%,'+lig+'%)',c:'hsl('+h+',70%,'+(lig-8)+'%)',bg:'hsl('+h+',30%,'+Math.round(5+t*12)+'%)'};
 }
 function designAuroraOpacity(light){const t=Math.max(0,Math.min(100,+light||0))/100;return (0.28+t*0.24).toFixed(2);} // 0.28..0.52 (t=.5 -> .40)
 function applyDesignHue(h,light){
@@ -9096,11 +9112,51 @@ function pickDesignPreset(h){
   const el=document.getElementById('designPresets');
   if(el)[...el.children].forEach((b,i)=>b.style.borderColor=(cur[i]===h?'#fff':'var(--bd2)'));
 }
+// ── Eigene Farben speichern (⚡) ──
+function persistDesignSaved(){
+  try{localStorage.setItem('fxpro_design_saved',JSON.stringify(designSaved));}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+}
+function renderDesignSaved(){
+  const el=document.getElementById('designSaved');if(!el)return;
+  if(!designSaved.length){el.innerHTML='<span style="font-size:11px;color:var(--t3)">No saved colours yet — pick one and tap ⚡ Save.</span>';return;}
+  el.innerHTML=designSaved.map((s,i)=>`<button class="design-preset design-saved" title="Saved colour – tap to apply, long-press to delete" onclick="pickSavedDesign(${i})" oncontextmenu="return false" onpointerdown="savedPressStart(event,${i})" onpointerup="savedPressEnd()" onpointerleave="savedPressEnd()" onpointercancel="savedPressEnd()" style="background:${designColors(s.h,s.light).a};border:2px solid var(--bd2)"><span class="saved-bolt">⚡</span></button>`).join('');
+}
+function saveCurrentDesignColor(){
+  const sl=document.getElementById('designHueSlider');const ls=document.getElementById('designLightSlider');
+  const h=Math.round(sl?+sl.value:(designHue!=null?designHue:210));
+  const light=Math.round(ls?+ls.value:designLight);
+  if(designSaved.some(x=>Math.round(x.h)===h&&Math.round(x.light)===light))return; // schon vorhanden
+  designSaved.push({h:h,light:light});
+  if(designSaved.length>24)designSaved=designSaved.slice(-24);
+  persistDesignSaved();
+  renderDesignSaved();
+}
+function pickSavedDesign(i){
+  if(_savedLongFired){_savedLongFired=false;return;} // war ein Lang-Druck (Loeschen)
+  const s=designSaved[i];if(!s)return;
+  const sl=document.getElementById('designHueSlider');if(sl)sl.value=s.h;
+  const ls=document.getElementById('designLightSlider');if(ls)ls.value=s.light;
+  previewDesignHue(s.h); // nutzt den gerade gesetzten Helligkeits-Slider
+  renderDesignPresets();
+}
+function removeDesignSaved(i){designSaved.splice(i,1);persistDesignSaved();renderDesignSaved();}
+let _savedPressTimer=null,_savedLongFired=false;
+function savedPressStart(e,i){
+  if(e&&e.button&&e.button!==0)return;
+  _savedLongFired=false;
+  _savedPressTimer=setTimeout(()=>{_savedPressTimer=null;_savedLongFired=true;removeDesignSaved(i);},550);
+}
+function savedPressEnd(){if(_savedPressTimer){clearTimeout(_savedPressTimer);_savedPressTimer=null;}}
 function openDesignerM(){
   const h=designHue!=null?designHue:210;
   const sl=document.getElementById('designHueSlider');if(sl)sl.value=h;
   const ls=document.getElementById('designLightSlider');if(ls)ls.value=designLight;
   renderDesignPresets();
+  renderDesignSaved();
   previewDesignHue(h);
   openM('mDesigner');
 }
