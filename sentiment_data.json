@@ -438,7 +438,7 @@
    ]
   ]
  },
- "updated": "2026-07-24T21:56:00.099Z",
+ "updated": "2026-07-24T22:53:34.356Z",
  "stockFng": {
   "value": 39,
   "label": "fear",
@@ -1308,8 +1308,8 @@
   "SILVER": {
    "value": 0.72,
    "proxy": "SLV",
-   "callVol": 181370,
-   "putVol": 129849,
+   "callVol": 181359,
+   "putVol": 129805,
    "series": [
     [
      "2025-07-14",
@@ -2372,8 +2372,8 @@
   "SP500": {
    "value": 1.25,
    "proxy": "SPY",
-   "callVol": 6038617,
-   "putVol": 7549833,
+   "callVol": 6038564,
+   "putVol": 7549824,
    "series": [
     [
      "2025-07-14",
@@ -4052,7 +4052,7 @@
   "JPY": {
    "value": 0.16,
    "proxy": "FXY",
-   "callVol": 5016,
+   "callVol": 5007,
    "putVol": 787,
    "series": [
     [
@@ -5058,10 +5058,10 @@
    ]
   },
   "GOLD": {
-   "value": 0.93,
+   "value": 0.92,
    "proxy": "GLD",
-   "callVol": 118141,
-   "putVol": 109282,
+   "callVol": 118147,
+   "putVol": 109075,
    "series": [
     [
      "2025-07-14",
@@ -6117,7 +6117,7 @@
     ],
     [
      "2026-07-24",
-     0.93
+     0.92
     ]
    ]
   },
@@ -6616,8 +6616,8 @@
   "BTC": {
    "value": 0.65,
    "proxy": "IBIT",
-   "callVol": 368180,
-   "putVol": 237638,
+   "callVol": 368121,
+   "putVol": 237636,
    "series": [
     [
      "2025-07-14",
@@ -7662,10 +7662,10 @@
    ]
   },
   "NAS": {
-   "value": 1.18,
+   "value": 1.17,
    "proxy": "QQQ",
-   "callVol": 4129547,
-   "putVol": 4854055,
+   "callVol": 4128237,
+   "putVol": 4849724,
    "series": [
     [
      "2025-07-14",
@@ -8705,7 +8705,7 @@
     ],
     [
      "2026-07-24",
-     1.18
+     1.17
     ]
    ]
   },
@@ -9644,8 +9644,8 @@
   "OIL": {
    "value": 0.52,
    "proxy": "USO",
-   "callVol": 214139,
-   "putVol": 111005,
+   "callVol": 214114,
+   "putVol": 110972,
    "series": [
     [
      "2025-07-14",
@@ -10709,7 +10709,7 @@
    "value": 2.31,
    "proxy": "UUP",
    "callVol": 1321,
-   "putVol": 3058,
+   "putVol": 3054,
    "series": [
     [
      "2025-07-14",
