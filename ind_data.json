@@ -10444,46 +10444,46 @@
    "source": "tv"
   },
   "Manufacturing PMI": {
-   "actual": "52.2",
-   "forecast": "50.5",
-   "previous": "50.3",
+   "actual": "52",
+   "forecast": "51.5",
+   "previous": "51.4",
    "date": "2026-07-24",
    "event": "S&P Global Manufacturing PMI Flash",
    "period": null,
    "history": [
     [
      "2026-07-24",
-     "52.2"
+     "52"
     ]
    ],
    "source": "tv",
    "historyFull": [
     [
      "2026-07-24",
-     "52.2",
-     "50.5"
+     "52",
+     "51.5"
     ]
    ]
   },
   "Services PMI": {
-   "actual": "49.6",
-   "forecast": "49",
-   "previous": "48.6",
+   "actual": "51.6",
+   "forecast": "49.8",
+   "previous": "49.4",
    "date": "2026-07-24",
    "event": "S&P Global Services PMI Flash",
    "period": null,
    "history": [
     [
      "2026-07-24",
-     "49.6"
+     "51.6"
     ]
    ],
    "source": "tv",
    "historyFull": [
     [
      "2026-07-24",
-     "49.6",
-     "49"
+     "51.6",
+     "49.8"
     ]
    ]
   },
@@ -16499,6 +16499,50 @@
    ],
    "source": "tv",
    "revisedFrom": "0.6%"
+  },
+  "Manufacturing PMI": {
+   "actual": "52.8",
+   "forecast": "52",
+   "previous": "52.5",
+   "date": "2026-07-24",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-24",
+     "52.8"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-24",
+     "52.8",
+     "52"
+    ]
+   ]
+  },
+  "Services PMI": {
+   "actual": "51.8",
+   "forecast": "49.4",
+   "previous": "48.8",
+   "date": "2026-07-24",
+   "event": "S&P Global Services PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-24",
+     "51.8"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-24",
+     "51.8",
+     "49.4"
+    ]
+   ]
   }
  },
  "_histChunksFetched": 18

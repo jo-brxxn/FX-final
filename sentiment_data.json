@@ -366,7 +366,7 @@
   ]
  },
  "vix": {
-  "value": 18.85,
+  "value": 18.65,
   "series": [
    [
     "2026-07-08",
@@ -434,11 +434,11 @@
    ],
    [
     "2026-07-24",
-    18.85
+    18.65
    ]
   ]
  },
- "updated": "2026-07-24T07:33:42.974Z",
+ "updated": "2026-07-24T10:07:46.749Z",
  "stockFng": {
   "value": 39,
   "label": "fear",
@@ -928,13 +928,13 @@
  "retail": [
   {
    "sym": "EURUSD",
-   "long": 67,
-   "short": 33
+   "long": 65,
+   "short": 35
   },
   {
    "sym": "GBPUSD",
-   "long": 53,
-   "short": 47
+   "long": 54,
+   "short": 46
   },
   {
    "sym": "USDJPY",
@@ -953,23 +953,23 @@
   },
   {
    "sym": "EURAUD",
-   "long": 77,
-   "short": 23
+   "long": 79,
+   "short": 21
   },
   {
    "sym": "EURJPY",
-   "long": 18,
-   "short": 82
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "AUDCAD",
-   "long": 45,
-   "short": 55
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "AUDJPY",
-   "long": 18,
-   "short": 82
+   "long": 16,
+   "short": 84
   },
   {
    "sym": "AUDNZD",
@@ -978,18 +978,18 @@
   },
   {
    "sym": "AUDUSD",
-   "long": 41,
-   "short": 59
+   "long": 38,
+   "short": 62
   },
   {
    "sym": "CADJPY",
-   "long": 11,
-   "short": 89
+   "long": 12,
+   "short": 88
   },
   {
    "sym": "EURCAD",
-   "long": 82,
-   "short": 18
+   "long": 81,
+   "short": 19
   },
   {
    "sym": "EURCHF",
@@ -998,8 +998,8 @@
   },
   {
    "sym": "EURGBP",
-   "long": 64,
-   "short": 36
+   "long": 62,
+   "short": 38
   },
   {
    "sym": "EURNZD",
@@ -1008,23 +1008,23 @@
   },
   {
    "sym": "GBPCAD",
-   "long": 53,
-   "short": 47
+   "long": 51,
+   "short": 49
   },
   {
    "sym": "GBPCHF",
-   "long": 14,
-   "short": 86
+   "long": 13,
+   "short": 87
   },
   {
    "sym": "NZDCAD",
-   "long": 81,
-   "short": 19
+   "long": 80,
+   "short": 20
   },
   {
    "sym": "NZDJPY",
-   "long": 33,
-   "short": 67
+   "long": 34,
+   "short": 66
   },
   {
    "sym": "NZDUSD",
@@ -1053,8 +1053,8 @@
   },
   {
    "sym": "NZDCHF",
-   "long": 16,
-   "short": 84
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "CADCHF",
@@ -1068,18 +1068,18 @@
   },
   {
    "sym": "XAUUSD",
-   "long": 69,
-   "short": 31
+   "long": 66,
+   "short": 34
   },
   {
    "sym": "XAGUSD",
-   "long": 58,
-   "short": 42
+   "long": 57,
+   "short": 43
   },
   {
    "sym": "BTCUSD",
-   "long": 44,
-   "short": 56
+   "long": 49,
+   "short": 51
   },
   {
    "sym": "US500",
