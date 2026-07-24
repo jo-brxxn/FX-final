@@ -5210,17 +5210,13 @@
    "source": "tv"
   },
   "Manufacturing PMI": {
-   "actual": "53.3",
-   "forecast": "54",
-   "previous": "54",
-   "date": "2026-07-01",
-   "event": "ISM Manufacturing PMI",
+   "actual": "53.8",
+   "forecast": "54.3",
+   "previous": "53.3",
+   "date": "2026-07-24",
+   "event": "S&P Global Manufacturing PMI Flash",
    "period": null,
    "history": [
-    [
-     "2026-04-01",
-     "52.7"
-    ],
     [
      "2026-05-01",
      "52.7"
@@ -5232,8 +5228,13 @@
     [
      "2026-07-01",
      "53.3"
+    ],
+    [
+     "2026-07-24",
+     "53.8"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-01",
@@ -5414,9 +5415,13 @@
      "2026-07-01",
      "53.3",
      "54"
+    ],
+    [
+     "2026-07-24",
+     "53.8",
+     "54.3"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "NFP / Employment Change": {
    "actual": "57K",
@@ -6042,17 +6047,13 @@
    "source": "tv"
   },
   "Services PMI": {
-   "actual": "54",
-   "forecast": "54",
-   "previous": "54.5",
-   "date": "2026-07-06",
-   "event": "ISM Services PMI",
+   "actual": "53.6",
+   "forecast": "51.5",
+   "previous": "54",
+   "date": "2026-07-24",
+   "event": "S&P Global Services PMI Flash",
    "period": null,
    "history": [
-    [
-     "2026-04-06",
-     "54"
-    ],
     [
      "2026-05-05",
      "53.6"
@@ -6064,8 +6065,13 @@
     [
      "2026-07-06",
      "54"
+    ],
+    [
+     "2026-07-24",
+     "53.6"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-03",
@@ -6246,9 +6252,13 @@
      "2026-07-06",
      "54",
      "54"
+    ],
+    [
+     "2026-07-24",
+     "53.6",
+     "51.5"
     ]
-   ],
-   "source": "tv"
+   ]
   }
  },
  "CAD": {
@@ -6402,17 +6412,13 @@
    "source": "tv"
   },
   "PPI": {
-   "actual": "13.6%",
+   "actual": "12.4%",
    "forecast": null,
-   "previous": "11.4%",
-   "date": "2026-06-18",
+   "previous": "13.6%",
+   "date": "2026-07-24",
    "event": "PPI YoY",
    "period": "y/y",
    "history": [
-    [
-     "2026-03-20",
-     "5.4%"
-    ],
     [
      "2026-04-23",
      "7.8%"
@@ -6424,6 +6430,10 @@
     [
      "2026-06-18",
      "13.6%"
+    ],
+    [
+     "2026-07-24",
+     "12.4%"
     ]
    ],
    "historyFull": [
@@ -6600,6 +6610,11 @@
     [
      "2026-06-18",
      "13.6%",
+     null
+    ],
+    [
+     "2026-07-24",
+     "12.4%",
      null
     ]
    ],
