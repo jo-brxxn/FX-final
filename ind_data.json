@@ -10443,6 +10443,50 @@
    ],
    "source": "tv"
   },
+  "Manufacturing PMI": {
+   "actual": "52.2",
+   "forecast": "50.5",
+   "previous": "50.3",
+   "date": "2026-07-24",
+   "event": "S&P Global Manufacturing PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-24",
+     "52.2"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-24",
+     "52.2",
+     "50.5"
+    ]
+   ]
+  },
+  "Services PMI": {
+   "actual": "49.6",
+   "forecast": "49",
+   "previous": "48.6",
+   "date": "2026-07-24",
+   "event": "S&P Global Services PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-07-24",
+     "49.6"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-07-24",
+     "49.6",
+     "49"
+    ]
+   ]
+  },
   "GDP Growth QoQ": {
    "actual": "-0.2%",
    "forecast": "0.1%",
@@ -14543,7 +14587,6 @@
      "0.1%"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2023-08-16",
@@ -14725,7 +14768,8 @@
      "0.1%",
      "0.1%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core CPI": {
    "actual": "2.6%",
@@ -16098,17 +16142,13 @@
    ]
   },
   "Retail Sales": {
-   "actual": "1.2%",
-   "forecast": "0.5%",
-   "previous": "-1.3%",
-   "date": "2026-06-19",
+   "actual": "1%",
+   "forecast": "-0.3%",
+   "previous": "1.2%",
+   "date": "2026-07-24",
    "event": "Retail Sales MoM",
    "period": "m/m",
    "history": [
-    [
-     "2026-03-27",
-     "-0.4%"
-    ],
     [
      "2026-04-24",
      "0.7%"
@@ -16120,8 +16160,13 @@
     [
      "2026-06-19",
      "1.2%"
+    ],
+    [
+     "2026-07-24",
+     "1%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-18",
@@ -16297,9 +16342,13 @@
      "2026-06-19",
      "1.2%",
      "0.5%"
+    ],
+    [
+     "2026-07-24",
+     "1%",
+     "-0.3%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "GDP Growth QoQ": {
    "actual": "0.6%",

@@ -366,7 +366,7 @@
   ]
  },
  "vix": {
-  "value": 18.7,
+  "value": 18.85,
   "series": [
    [
     "2026-07-08",
@@ -434,13 +434,13 @@
    ],
    [
     "2026-07-24",
-    18.7
+    18.85
    ]
   ]
  },
- "updated": "2026-07-24T05:00:50.703Z",
+ "updated": "2026-07-24T07:33:42.974Z",
  "stockFng": {
-  "value": 40,
+  "value": 39,
   "label": "fear",
   "series": [
    [
@@ -913,15 +913,15 @@
    ],
    [
     "2026-07-23",
-    40
+    39
    ],
    [
     "2026-07-24",
-    40
+    39
    ],
    [
     "2026-07-24",
-    40
+    39
    ]
   ]
  },
@@ -943,8 +943,8 @@
   },
   {
    "sym": "GBPJPY",
-   "long": 36,
-   "short": 64
+   "long": 35,
+   "short": 65
   },
   {
    "sym": "USDCAD",
@@ -953,8 +953,8 @@
   },
   {
    "sym": "EURAUD",
-   "long": 75,
-   "short": 25
+   "long": 77,
+   "short": 23
   },
   {
    "sym": "EURJPY",
@@ -968,8 +968,8 @@
   },
   {
    "sym": "AUDJPY",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "AUDNZD",
@@ -998,8 +998,8 @@
   },
   {
    "sym": "EURGBP",
-   "long": 65,
-   "short": 35
+   "long": 64,
+   "short": 36
   },
   {
    "sym": "EURNZD",
@@ -1048,8 +1048,8 @@
   },
   {
    "sym": "GBPNZD",
-   "long": 45,
-   "short": 55
+   "long": 46,
+   "short": 54
   },
   {
    "sym": "NZDCHF",
@@ -1073,13 +1073,13 @@
   },
   {
    "sym": "XAGUSD",
-   "long": 59,
-   "short": 41
+   "long": 58,
+   "short": 42
   },
   {
    "sym": "BTCUSD",
-   "long": 46,
-   "short": 54
+   "long": 44,
+   "short": 56
   },
   {
    "sym": "US500",
