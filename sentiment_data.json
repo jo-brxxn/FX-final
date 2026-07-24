@@ -1,12 +1,8 @@
 {
  "cryptoFng": {
-  "value": 31,
+  "value": 28,
   "label": "Fear",
   "series": [
-   [
-    "2026-04-25",
-    31
-   ],
    [
     "2026-04-26",
     33
@@ -362,6 +358,10 @@
    [
     "2026-07-23",
     31
+   ],
+   [
+    "2026-07-24",
+    28
    ]
   ]
  },
@@ -431,10 +431,14 @@
    [
     "2026-07-23",
     18.7
+   ],
+   [
+    "2026-07-24",
+    18.7
    ]
   ]
  },
- "updated": "2026-07-23T23:52:00.758Z",
+ "updated": "2026-07-24T01:45:12.016Z",
  "stockFng": {
   "value": 40,
   "label": "fear",
@@ -934,8 +938,8 @@
   },
   {
    "sym": "USDJPY",
-   "long": 25,
-   "short": 75
+   "long": 23,
+   "short": 77
   },
   {
    "sym": "GBPJPY",
@@ -944,8 +948,8 @@
   },
   {
    "sym": "USDCAD",
-   "long": 31,
-   "short": 69
+   "long": 32,
+   "short": 68
   },
   {
    "sym": "EURAUD",
@@ -954,8 +958,8 @@
   },
   {
    "sym": "EURJPY",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "AUDCAD",
@@ -964,8 +968,8 @@
   },
   {
    "sym": "AUDJPY",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "AUDNZD",
@@ -979,8 +983,8 @@
   },
   {
    "sym": "CADJPY",
-   "long": 9,
-   "short": 91
+   "long": 10,
+   "short": 90
   },
   {
    "sym": "EURCAD",
@@ -1019,13 +1023,13 @@
   },
   {
    "sym": "NZDJPY",
-   "long": 32,
-   "short": 68
+   "long": 33,
+   "short": 67
   },
   {
    "sym": "NZDUSD",
-   "long": 70,
-   "short": 30
+   "long": 71,
+   "short": 29
   },
   {
    "sym": "USDCHF",
@@ -1074,8 +1078,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 49,
-   "short": 51
+   "long": 48,
+   "short": 52
   },
   {
    "sym": "US500",
@@ -1095,7 +1099,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.79,
+  "value": 0.87,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1293,6 +1297,10 @@
    [
     "2026-07-22",
     0.79
+   ],
+   [
+    "2026-07-23",
+    0.87
    ]
   ]
  },
