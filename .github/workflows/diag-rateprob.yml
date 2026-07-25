@@ -13,10 +13,31 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe futures tickers + reference-rate sources
+      - name: Discover 1-month contract tickers via TradingView symbol-search
         run: |
           set +e
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "############ 0) TRADINGVIEW SYMBOL-SEARCH (Kontrakt-Entdeckung) ############"
+          # Die Symbol-Suche listet ALLE Kontrakte zu einem Begriff inkl. exaktem
+          # Ticker (prefix:root) + Beschreibung - damit finden wir 1-Monats-
+          # Varianten von SONIA/ESTR/CORRA, statt Kuerzel zu raten.
+          ssearch(){
+            echo "===== symbol_search '$1' ====="
+            curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Referer: https://www.tradingview.com/" \
+              -w "[debug] http=%{http_code} size=%{size_download}\n" \
+              "https://symbol-search.tradingview.com/symbol_search/?text=$(printf %s "$1" | sed 's/ /%20/g')&hl=1&lang=en&type=futures" -o ss.json
+            node -e '
+              const fs=require("fs");let a;try{a=JSON.parse(fs.readFileSync("ss.json","utf8"));}catch(e){console.log("(unparseable)");process.exit(0);}
+              if(!Array.isArray(a)){console.log("(not array)");process.exit(0);}
+              a.slice(0,25).forEach(x=>{const sym=(x.exchange||x.prefix||"")+":"+(x.symbol||"").replace(/<[^>]+>/g,"");console.log("  "+sym+"  |  "+((x.description||"").replace(/<[^>]+>/g,""))+"  |  "+(x.type||"")+"/"+(x.subtype||""));});
+            '
+            echo
+          }
+          ssearch "SONIA"
+          ssearch "CORRA"
+          ssearch "ESTR"
+          ssearch "STR"
+          ssearch "interbank cash rate"
           echo "############ 1) TRADINGVIEW FUTURES-TICKER-PROBE ############"
           node -e '
             const fs=require("fs");
@@ -59,7 +80,7 @@ jobs:
             let d;try{d=JSON.parse(fs.readFileSync("probe_tv.json","utf8"));}catch(e){console.log("unparseable response");process.exit(0);}
             const rows=(d&&d.data)||[];
             if(!rows.length){console.log("NONE - data[] empty (all candidate tickers unknown to TradingView)");process.exit(0);}
-            rows.forEach(r=>{if(r.d&&r.d[0]!=null)console.log("  OK  "+r.s+"  close="+r.d[0]);});
+            rows.forEach(r=>{console.log((r.d&&r.d[0]!=null?"  OK  ":" NULL ")+r.s+"  close="+(r.d?r.d[0]:"?"));});
           '
           echo
           echo "############ 2) REFERENZ-ZINS-QUELLEN-PROBE ############"
