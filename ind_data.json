@@ -8644,50 +8644,6 @@
    ],
    "source": "tv"
   },
-  "Manufacturing PMI": {
-   "actual": "52",
-   "forecast": "51.5",
-   "previous": "51.4",
-   "date": "2026-07-24",
-   "event": "S&P Global Manufacturing PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "52"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "52",
-     "51.5"
-    ]
-   ]
-  },
-  "Services PMI": {
-   "actual": "51.6",
-   "forecast": "49.8",
-   "previous": "49.4",
-   "date": "2026-07-24",
-   "event": "S&P Global Services PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "51.6"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "51.6",
-     "49.8"
-    ]
-   ]
-  },
   "GDP Growth QoQ": {
    "actual": "-0.2%",
    "forecast": "0.1%",
@@ -16416,50 +16372,6 @@
    ],
    "source": "tv",
    "revisedFrom": "0.6%"
-  },
-  "Manufacturing PMI": {
-   "actual": "52.8",
-   "forecast": "52",
-   "previous": "52.5",
-   "date": "2026-07-24",
-   "event": "S&P Global Manufacturing PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "52.8"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "52.8",
-     "52"
-    ]
-   ]
-  },
-  "Services PMI": {
-   "actual": "51.8",
-   "forecast": "49.4",
-   "previous": "48.8",
-   "date": "2026-07-24",
-   "event": "S&P Global Services PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "51.8"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "51.8",
-     "49.4"
-    ]
-   ]
   }
  },
  "_histChunksFetched": 18
