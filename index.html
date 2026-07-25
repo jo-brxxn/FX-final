@@ -1277,7 +1277,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-AUDFIX-225</span><span id="verBannerText"> (AUD-Referenzzins-Parser gefixt: RBA-CSV nutzt DD/MM/YYYY, new Date() interpretierte das faelschlich als US-Format MM/DD/YYYY und verwarf praktisch jede Zeile - explizites Regex behebt das, per Live-Workflow-Lauf bestaetigt (4.35%). Erster Multi-Waehrungs-Live-Lauf: USD/EUR/GBP/CAD liefen sofort korrekt, nur AUD war betroffen. Alle 5 Zentralbanken (USD/AUD praezise, EUR/GBP/CAD als markierte 3M-Naeherung) jetzt live bestaetigt.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-AXISGAP-226</span><span id="verBannerText"> (Rate-Probabilities-Chart: sichtbarer 16px-Abstand zwischen der fixen Y-Achse und dem aeltesten/am-weitesten-links-stehenden Historienpunkt ergaenzt - vorher landete dieser Punkt exakt auf der Kante der Achse und war dahinter verdeckt.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -12273,6 +12273,15 @@ SENT_INFO.rateprob=['Rate Probabilities (central bank hike/hold/cut odds)',
 // proportional) - macht die Klick-Navigation ueber die Meeting-Pillen
 // vorhersagbar (jeder Schritt bewegt exakt eine Slot-Breite).
 const RATEPROB_SLOT=170,RATEPROB_PADL=44,RATEPROB_PADR=54,RATEPROB_MIN_SLOT=34;
+// Zusaetzlicher fixer Abstand zwischen dem rechten Rand der fixen Y-Achse
+// (deckt genau RATEPROB_PADL px vom linken Rand ab, siehe yAxisFixed) und dem
+// ERSTEN Datenpunkt (xOf(0)=RATEPROB_PADL) - ohne diesen Abstand landet der
+// aelteste/am-weitesten-links-stehende Historienpunkt GENAU auf der Kante der
+// Achse (Nutzer-Bugreport 2026-07-25: "Der Wert aus der Vergangenheit der am
+// weitesten links steht soll immer noch rechts von der y-Skala und der
+// Schrift davon stehen" - die Achse ist ein deckendes position:absolute-
+// Overlay ueber dem Chart, ohne Gap verschwindet der Punkt optisch dahinter).
+const RATEPROB_AXIS_GAP=16;
 // Aktuelle (adaptive) Slotbreite: je mehr Punkte (groesserer Zeitraum-Filter,
 // mehr angehaengte Historie), desto schmaler - damit die KOMPLETTE gewaehlte
 // Spanne ins sichtbare Fenster passt statt ausserhalb zu liegen (Nutzer-Wunsch
@@ -12389,8 +12398,8 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   // Slide-Navigation), ein zu kleines padT schnitt den Tooltip am Top-Rand
   // ab (Nutzer-Bugreport 2026-07-20, "Hold: 100.0%" bei Today unsichtbar).
   const H=266,padT=56,padB=36;
-  const W=RATEPROB_PADL+RATEPROB_PADR+rateProbSlot*Math.max(1,pts.length-1);
-  const xOf=i=>RATEPROB_PADL+i*rateProbSlot;
+  const W=RATEPROB_PADL+RATEPROB_AXIS_GAP+RATEPROB_PADR+rateProbSlot*Math.max(1,pts.length-1);
+  const xOf=i=>RATEPROB_PADL+RATEPROB_AXIS_GAP+i*rateProbSlot;
   const yOf=pct=>padT+(1-pct/100)*(H-padT-padB);
   const levels=new Set();
   distTimeline.forEach(d=>Object.entries(d).forEach(([l,p])=>{if(p>1)levels.add(Number(l));}));
@@ -12550,7 +12559,7 @@ function scrollRateProbTo(idx,animate){
   const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
   if(!track||!viewport)return;
   const vw=viewport.clientWidth||300;
-  const targetX=Math.max(0,rateProbFocus*rateProbSlot-vw/2+RATEPROB_PADL);
+  const targetX=Math.max(0,rateProbFocus*rateProbSlot-vw/2+RATEPROB_PADL+RATEPROB_AXIS_GAP);
   track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
   track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
 }
@@ -12580,7 +12589,7 @@ function renderRateProb(){
   // #rateBody passen (abzgl. Viewport-Padding 2x14 + Achsen-Raender). Bei wenig
   // Punkten deckelt Math.min auf die urspruenglichen 170px (Optik wie bisher),
   // bei vielen Punkten drueckt es bis RATEPROB_MIN_SLOT zusammen.
-  const availW=(el.clientWidth||900)-28-RATEPROB_PADL-RATEPROB_PADR;
+  const availW=(el.clientWidth||900)-28-RATEPROB_PADL-RATEPROB_AXIS_GAP-RATEPROB_PADR;
   rateProbSlot=Math.max(RATEPROB_MIN_SLOT,Math.min(RATEPROB_SLOT,availW/Math.max(1,pts.length-1)));
   // Pillen nur fuer Today/Meetings (+ ein evtl. realisiertes vergangenes
   // Meeting) - NICHT eine Pille pro Historientag (waeren potenziell
