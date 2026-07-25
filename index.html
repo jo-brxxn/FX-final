@@ -595,6 +595,8 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .rateprob-pill.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
 .rateprob-pill.realized{color:var(--t3);background:var(--bg2)}
 .rateprob-pill.realized.on{border-color:var(--blue);color:var(--blue)}
+.rateprob-pill.future{color:var(--red)}
+.rateprob-pill.future.on{border-color:var(--red);background:rgba(var(--red-rgb),.14);color:var(--red)}
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
@@ -1269,7 +1271,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-SAMESOURCE-221</span><span id="verBannerText"> (Gleichquellen-Regel jetzt in BEIDEN Pfaden: Feed (ind_data) UND Kalender (ff_calendar). Jedes Kalender-Event fuehrt Actual/Forecast/Previous aus EINER Quelle — hat ForexFactory den Actual, bleibt das FF-Trio; sonst wird das ganze Trio vom naechsten Alt-Treffer uebernommen (nie feldweise gemischt). Dedup mischt keine Felder mehr ueber Duplikate. Wirkt auf grossen/Mini-/Dashboard-Kalender + Feed-loses Scoring.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-DESIGN-222</span><span id="verBannerText"> (Rate-Probabilities-Chart: adaptive Punktabstaende (groesserer Zeitraum -> enger, damit alles ins Fenster passt, Zeitraum-Filter wirkt jetzt sichtbar), senkrechte Heute-Markierung, kommende Meeting-Daten rot (X-Achse + Pillen), Meeting-Labels gekuerzt + Historie-Labels bei schmalem Slot ausgeduennt. Multi-Waehrung (EUR/GBP/AUD/CAD) folgt als naechstes.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -12240,7 +12242,17 @@ SENT_INFO.rateprob=['Rate Probabilities (Fed hike/hold/cut odds)',
 // Fixe Punktabstaende (Trends-Stil: index-basiert, nicht kalendertag-
 // proportional) - macht die Klick-Navigation ueber die Meeting-Pillen
 // vorhersagbar (jeder Schritt bewegt exakt eine Slot-Breite).
-const RATEPROB_SLOT=170,RATEPROB_PADL=44,RATEPROB_PADR=54;
+const RATEPROB_SLOT=170,RATEPROB_PADL=44,RATEPROB_PADR=54,RATEPROB_MIN_SLOT=34;
+// Aktuelle (adaptive) Slotbreite: je mehr Punkte (groesserer Zeitraum-Filter,
+// mehr angehaengte Historie), desto schmaler - damit die KOMPLETTE gewaehlte
+// Spanne ins sichtbare Fenster passt statt ausserhalb zu liegen (Nutzer-Wunsch
+// 2026-07-25: "mach die Abstaende enger desto groesser das Zeitintervall ist
+// damit man es komplett sieht"). renderRateProb() setzt den Wert vor dem Bauen
+// des Charts aus der echten Breite von #rateBody; rateProbTimelineChart() und
+// scrollRateProbTo() lesen ihn (statt der festen RATEPROB_SLOT-Konstante),
+// damit beide nie auseinanderlaufen. Bei WENIG Punkten bleibt es bei 170 (Optik
+// wie bisher), sonst wird bis RATEPROB_MIN_SLOT heruntergedrueckt.
+let rateProbSlot=RATEPROB_SLOT;
 // Verkettet die Zwei-Ausgaenge-Verteilung JEDER Sitzung (probsFromDelta,
 // bereits vorhanden) zu einer KUMULATIVEN Verteilung ueber alle Sitzungen
 // hinweg (Nutzer-Wunsch 2026-07-20: "ich will doch mehrere Linien die die
@@ -12347,14 +12359,31 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   // Slide-Navigation), ein zu kleines padT schnitt den Tooltip am Top-Rand
   // ab (Nutzer-Bugreport 2026-07-20, "Hold: 100.0%" bei Today unsichtbar).
   const H=266,padT=56,padB=36;
-  const W=RATEPROB_PADL+RATEPROB_PADR+RATEPROB_SLOT*Math.max(1,pts.length-1);
-  const xOf=i=>RATEPROB_PADL+i*RATEPROB_SLOT;
+  const W=RATEPROB_PADL+RATEPROB_PADR+rateProbSlot*Math.max(1,pts.length-1);
+  const xOf=i=>RATEPROB_PADL+i*rateProbSlot;
   const yOf=pct=>padT+(1-pct/100)*(H-padT-padB);
   const levels=new Set();
   distTimeline.forEach(d=>Object.entries(d).forEach(([l,p])=>{if(p>1)levels.add(Number(l));}));
   const sortedLevels=[...levels].sort((a,b)=>a-b);
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
-  const xlab=pts.map((p,i)=>`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${i===todayIdx?800:600};fill:${i===todayIdx?'var(--t0)':i<todayIdx?'var(--t3)':'var(--t2)'}">${escH(p.label)}</text>`).join('');
+  // X-Achsen-Labels: Today fett/weiss, kommende Zentralbank-Meetings ROT
+  // (Nutzer-Wunsch 2026-07-25, damit man die Termine klar von Historie/Today
+  // unterscheidet), Historie/vergangenes Meeting gedaempft. Meetings/vergangene
+  // Termine bekommen ein KURZES Datum ("29 Jul") statt des langen Voll-Labels,
+  // damit sie auch bei zusammengedrueckter Slotbreite nicht ueberlappen; die
+  // Historie-Labels werden bei schmalem Slot zusaetzlich ausgeduennt.
+  const histStep=rateProbSlot<40?3:(rateProbSlot<58?2:1);
+  const xlab=pts.map((p,i)=>{
+    let txt,col,weight;
+    if(i===todayIdx){txt='Today';col='var(--t0)';weight=800;}
+    else if(i>todayIdx){const{day,mo}=fmtDate(p.date);txt=day+' '+mo;col='var(--red)';weight=700;}
+    else if(i<pastCount){const{day,mo}=fmtDate(p.date);txt='✓ '+day+' '+mo;col='var(--t3)';weight=600;}
+    else{const histPos=todayIdx-1-i;if(histPos%histStep!==0)return'';txt=p.label;col='var(--t3)';weight=600;}
+    return`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${weight};fill:${col}">${escH(txt)}</text>`;
+  }).join('');
+  // Senkrechte Markierung am HEUTIGEN Punkt - macht auf einen Blick sichtbar,
+  // wo im Chart man steht (Grenze Historie->Prognose), Nutzer-Wunsch 2026-07-25.
+  const todayMarker=`<line x1="${xOf(todayIdx).toFixed(1)}" y1="${(padT-14).toFixed(1)}" x2="${xOf(todayIdx).toFixed(1)}" y2="${(H-padB+4).toFixed(1)}" stroke="var(--t2)" stroke-width="1.2" stroke-dasharray="4,4" opacity="0.55"/>`;
   // Gestrichelte Trenn-Linie zwischen einem bereits VERGANGENEN Meeting
   // (realisiertes Ergebnis, kein Prozent-Wert) und der historisch-bis-
   // zukuenftigen Wahrscheinlichkeits-Linie - macht den Bruch zwischen
@@ -12453,6 +12482,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   const svg=`<svg id="rateProbSvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">
       ${gy}
       ${divider}
+      ${todayMarker}
       ${paths}
       ${dots}
       ${pastMarkup}
@@ -12478,7 +12508,7 @@ function scrollRateProbTo(idx,animate){
   const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
   if(!track||!viewport)return;
   const vw=viewport.clientWidth||300;
-  const targetX=Math.max(0,rateProbFocus*RATEPROB_SLOT-vw/2+RATEPROB_PADL);
+  const targetX=Math.max(0,rateProbFocus*rateProbSlot-vw/2+RATEPROB_PADL);
   track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
   track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
 }
@@ -12495,6 +12525,12 @@ function renderRateProb(){
     return;
   }
   const{pts,distTimeline,todayIdx,pastCount}=rateProbBuildPts(D);
+  // Adaptive Slotbreite: die komplette Punktreihe soll in die echte Breite von
+  // #rateBody passen (abzgl. Viewport-Padding 2x14 + Achsen-Raender). Bei wenig
+  // Punkten deckelt Math.min auf die urspruenglichen 170px (Optik wie bisher),
+  // bei vielen Punkten drueckt es bis RATEPROB_MIN_SLOT zusammen.
+  const availW=(el.clientWidth||900)-28-RATEPROB_PADL-RATEPROB_PADR;
+  rateProbSlot=Math.max(RATEPROB_MIN_SLOT,Math.min(RATEPROB_SLOT,availW/Math.max(1,pts.length-1)));
   // Pillen nur fuer Today/Meetings (+ ein evtl. realisiertes vergangenes
   // Meeting) - NICHT eine Pille pro Historientag (waeren potenziell
   // hunderte). Die Historie ist trotzdem sichtbar: "Today" zentriert den
@@ -12507,9 +12543,9 @@ function renderRateProb(){
   if(!pillIdxs.includes(rateProbFocus))rateProbFocus=todayIdx;
   const days=daysUntil(withData[0].date);
   const pills=pillIdxs.map(i=>{
-    const p=pts[i],isPast=i<pastCount;
+    const p=pts[i],isPast=i<pastCount,isFuture=i>todayIdx;
     const short=i===todayIdx?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
-    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}" data-idx="${i}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
+    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}${isFuture?' future':''}" data-idx="${i}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
   }).join('');
   const rangeBar=timeRangeBarHtml(rateProbHistRange,'setRateProbHistRange')+timeRangeCustomHtml(rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo,'setRateProbHistRange');
   const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
