@@ -442,7 +442,7 @@
    ]
   ]
  },
- "updated": "2026-07-25T04:56:49.953Z",
+ "updated": "2026-07-25T07:11:10.163Z",
  "stockFng": {
   "value": 39,
   "label": "fear",
@@ -1103,7 +1103,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.87,
+  "value": 0.88,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1305,6 +1305,10 @@
    [
     "2026-07-23",
     0.87
+   ],
+   [
+    "2026-07-24",
+    0.88
    ]
   ]
  },
