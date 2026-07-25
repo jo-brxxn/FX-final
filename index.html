@@ -27,8 +27,8 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
   --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;--bg6:#313c52;
   --bd:#212a39;--bd2:#303c52;
   --t0:#eef3fa;--t1:#dfe7f1;--t2:#c9d6e6;--t3:#b8c6d9;
-  --green:#4fc3f7;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
-  --green-rgb:79,195,247;--red-rgb:239,83,80;--amber-rgb:244,173,92;
+  --green:#5fa8ed;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
+  --green-rgb:95,168,237;--red-rgb:239,83,80;--amber-rgb:244,173,92;
   --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
   /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): global etwas
      eckiger statt vieler unterschiedlicher, tendenziell zu runder Radien
@@ -568,10 +568,10 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#4fc3f7;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#5fa8ed;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#ef6b78;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#2f9ecf,#4fc3f7);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#2f6fcf,#5fa8ed);min-width:0;transition:width .3s}
 .cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
@@ -628,7 +628,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:14px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#4fc3f7;font-weight:700}
+.cot-tbl td.cot-c-long{color:#5fa8ed;font-weight:700}
 .cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
 .cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
 @media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
@@ -642,7 +642,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cot-note{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-refresh:hover{border-color:#4fc3f7;color:var(--t0)}}
+@media (hover:hover){.cot-refresh:hover{border-color:#5fa8ed;color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
 .cot-refresh-ic{display:inline-block;font-size:15px;line-height:1}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
@@ -722,7 +722,8 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 /* ── DASHBOARD ── */
-.dw{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px}
+.dw{background:rgba(17,22,31,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .15s}
+@media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 .dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
 .dw-t{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
@@ -744,6 +745,32 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.daily-bias-wrap{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.daily-bias-lbl{font-size:15px;font-weight:800;letter-spacing:.5px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.daily-bias-txt{font-size:13px;color:var(--t2);line-height:1.55}
+.mw-hdr-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 10px 6px;font-size:10px;letter-spacing:1px;color:var(--t3);font-weight:700;text-transform:uppercase}
+.mw-hdr-row span:not(:first-child){text-align:right}
+.mw-list{display:flex;flex-direction:column;gap:2px}
+.mw-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;padding:9px 10px;border-radius:var(--rs);transition:background .12s}
+@media (hover:hover){.mw-row[style*="cursor:pointer"]:hover{background:var(--bg3)}}
+.mw-sym{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-price{font-size:13px;font-weight:600;color:var(--t1);text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-chg{font-size:12.5px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-empty{font-size:12px;color:var(--t3);grid-column:2/-1;text-align:right}
+.mw-cfg-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.mw-cfg-opt{font-size:11px;padding:5px 9px}
+.mw-cfg-opt.on{border-color:var(--blue);background:rgba(95,168,237,.14);color:var(--t0)}
+.live-data-wrap{display:flex;flex-direction:column;gap:12px}
+.live-data-top{display:flex;align-items:center;gap:8px}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:livePulse 2s infinite}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(95,168,237,.5)}70%{box-shadow:0 0 0 8px rgba(95,168,237,0)}100%{box-shadow:0 0 0 0 rgba(95,168,237,0)}}
+.live-data-lbl{font-size:13px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}
+.live-clock{font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-left:auto}
+.live-data-sub{font-size:11.5px;color:var(--t3);margin-top:-6px}
+.live-src-list{display:flex;flex-direction:column}
+.live-src-row{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)}
+.live-src-row span:first-child{color:var(--t2);font-weight:600}
+.live-src-row span:last-child{color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
 /* Grab-Cursor nur auf der Kugel selbst (die Kreis-Elemente decken exakt die
    Kugelflaeche ab), nicht auf der gesamten Widget-Breite - passend zur
@@ -1156,18 +1183,22 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   .masonry .rub-card.collapsed{align-self:start}
   /* FX-Bias/Assets + Watchlist teilen sich die volle Breite (je 50%), damit das
      Dashboard das Geraet ausfuellt; breite Karten (Set-ups/Pairs-Editor) spannen
-     die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+     die ganze Zeile. Hero-Reihe (Daily Bias/Globus/Currency Strength/Risk
+     Sentiment, Nutzer-Wunsch 2026-07-25): 4-Spalten-Basis statt 2, Globus und
+     die uebrigen "normalen" Widgets spannen 2 Spalten (= 50%, wie bisher),
+     Currency Strength/Risk Sentiment je 1 Spalte (= 25%) direkt daneben. */
+  #dashWidgets{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
-  #dashWidgets .dw{margin-bottom:0;min-width:0}
-  #dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-mini_calendar{grid-column:1/-1}
+  #dashWidgets .dw{margin-bottom:0;min-width:0;grid-column:span 2}
+  #dashWidgets .dw.dw-ccy_ranking,#dashWidgets .dw.dw-risk_sentiment{grid-column:span 1}
+  #dashWidgets .dw.dw-daily_bias,#dashWidgets .dw.dw-setups,#dashWidgets .dw.dw-mini_calendar,#dashWidgets .dw.dw-market_watch{grid-column:1/-1}
   @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:18px}
+.dw{padding:22px}
   .dw-t{font-size:20px}
   .dw-sub{font-size:14px}
   .sym-row{padding:8px 11px}
@@ -1277,7 +1308,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROBLINK-227</span><span id="verBannerText"> (RATE_WATCH-Links aktualisiert: USD bleibt CME FedWatch Tool, alle anderen Waehrungen (EUR/GBP/CHF/JPY/CAD/AUD/NZD) zeigen jetzt https://rateprobability.com statt einzelner investing.com-Kalenderseiten - wirkt auf die Interest-Rates-Karte UND den Rate-Probabilities-Tab, beide lesen aus derselben Quelle.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-REDESIGN-228</span><span id="verBannerText"> (Dashboard-Redesign: bullish ist app-weit jetzt Blau statt Cyan-Gruen (BC.bull/--green auf #5fa8ed, Neutral bleibt Orange, Bearish bleibt Rot) - neue Hero-Reihe Daily Bias/Globus/Currency Strength/Risk Sentiment, neues konfigurierbares Market-Watch-Widget (FX-Paare/Gold/DXY/BTC/US10Y, Zahnrad zum Anpassen), Economic-Calendar-Widget standardmaessig High-Impact-only fuer neue Nutzer, neues Live-Data-Widget mit echten Zeitstempeln statt erfundener Latenz. Alle Dashboard-Karten jetzt mit Glass-Optik/duennerem Rand/mehr Weissraum. Aurora-Hintergrund unveraendert.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1943,11 +1974,20 @@ function introLogin(){
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mRiskEnvCfg')">Done</button></div>
   </div>
 </div>
+<!-- MODAL: Market-Watch-Symbolauswahl (Nutzer-Wunsch 2026-07-25) -->
+<div class="ov" id="mMwCfg" style="display:none">
+  <div class="modal">
+    <h3>⚙️ Market Watch symbols</h3>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose which symbols appear in the Market Watch widget. Prices &amp; changes come from the same live feed as everywhere else in the app.</div>
+    <div id="mwCfgBody"></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mMwCfg')">Done</button></div>
+  </div>
+</div>
 
 <script>
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
-const BC={bull:'#4fc3f7',bear:'#ef6b78',neu:'#f4ad5c'};
+const BC={bull:'#5fa8ed',bear:'#ef6b78',neu:'#f4ad5c'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 const SK='fxpro_v1';
@@ -2049,7 +2089,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // recomputeRiskCorr) - hier ueberall defensiv mitbehandelt, da bClass/
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#4fc3f720':(b==='bear'||b==='sbear')?'#ef6b7820':'#f4ad5c20';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#5fa8ed20':(b==='bear'||b==='sbear')?'#ef6b7820':'#f4ad5c20';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
@@ -2996,7 +3036,11 @@ const CAL_PAST_DAYS=10;
 // den Score bewegt haben - danach werden sie automatisch ausgeräumt.
 const INBOX_NOTIF_DAYS=5;
 // Kalender-Filter "nur High-Impact" (persistiert eigenständig im localStorage).
-let calHighOnly=localStorage.getItem('fxpro_cal_highonly')==='1';
+// Default fuer echte Erstnutzer (kein gespeicherter Wert vorhanden) ist jetzt
+// AN (Nutzer-Wunsch 2026-07-25: kompakter Dashboard-Kalender soll standardmaessig
+// nur High-Impact zeigen) - wer den Wert schon einmal selbst gesetzt hat
+// (gespeichertes '0' oder '1'), bleibt davon unberuehrt.
+let calHighOnly=localStorage.getItem('fxpro_cal_highonly')===null?true:localStorage.getItem('fxpro_cal_highonly')==='1';
 // Kalender-Filter "nach Währung" ('ALL' = alle). Gilt nur für den grossen
 // Kalender, nicht für die symbol-eigenen Mini-Kalender (die sind ohnehin schon
 // auf ihre Währung gefiltert). Persistiert eigenständig im localStorage.
@@ -4959,15 +5003,18 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'globe',title:'FX World Globe',order:0},
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
-  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:2},
-  {id:uid(),type:'score_changes',title:"Today's Movers",order:3},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:4},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:5},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:6},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:7},
-  {id:uid(),type:'mini_calendar',title:'Mini Calendar',order:8},
+  {id:uid(),type:'daily_bias',title:'Daily Bias',order:0},
+  {id:uid(),type:'globe',title:'FX World Globe',order:1},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:2},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:3},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:4},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:5},
+  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:6},
+  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:7},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:8},
+  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:9},
+  {id:uid(),type:'market_watch',title:'Market Watch',order:10},
+  {id:uid(),type:'live_data',title:'Live Data',order:11},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -5086,13 +5133,18 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // Vorschlag) - der Nutzer wollte ihn nach dem Sehen aber wieder an seiner
 // urspruenglichen Stelle ganz oben haben. Bestandsnutzer bekommen das
 // wieder ueber denselben Versions-Mechanismus.
-const DASH_V=6;
+// DASH_V 7 (Nutzer-Wunsch 2026-07-25, Dashboard-Redesign): neues
+// daily_bias-Widget ganz oben, Risk Sentiment ruecken direkt neben Globus/
+// Currency Strength in eine gemeinsame Hero-Reihe (siehe #dashWidgets-CSS,
+// .dw-daily_bias/.dw-globe/.dw-ccy_ranking/.dw-risk_sentiment), neues
+// konfigurierbares market_watch-Widget + live_data-Statuskarte ans Ende.
+const DASH_V=7;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if((dashV||0)>=DASH_V)return;
-  [['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Mini Calendar']]
+  [['daily_bias','Daily Bias'],['globe','FX World Globe'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Economic Calendar'],['market_watch','Market Watch'],['live_data','Live Data']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,movers_fx:2,score_changes:3,fx_bias:4,risk_sentiment:5,asset_heatmap:6,watchlist:7,mini_calendar:8,pairs_editor:9};
+  const rank={daily_bias:0,globe:1,ccy_ranking:2,risk_sentiment:3,movers_fx:4,score_changes:5,fx_bias:6,asset_heatmap:7,watchlist:8,mini_calendar:9,market_watch:10,live_data:11,pairs_editor:12};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -8917,6 +8969,60 @@ function fmtPriceTick(v){
   if(a>=10)return v.toFixed(2);
   return v.toFixed(4);
 }
+// Rendite-Aenderung fuer die Market-Watch-Dashboard-Karte (Nutzer-Wunsch
+// 2026-07-25) - dieselbe Quelle/Rechnung wie applyBondDataFeed() (bondPick,
+// Vergleich zum letzten verfuegbaren Vortageswert), nur als reine Anzeige
+// ohne Bias-/Score-Nebenwirkung. change ist in Prozentpunkten (pp), nicht
+// Prozent-vom-Kurs - bei Renditen ist das die uebliche Angabe.
+function bondYieldChangeInfo(ccy,indName){
+  const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy];
+  const series=bd&&bd[indName]&&bd[indName].series;
+  if(!Array.isArray(series)||!series.length)return null;
+  const aEntry=series[series.length-1];
+  const aVal=Number(aEntry&&aEntry[1]);
+  if(!isFinite(aVal))return null;
+  const pEntry=bondPick(series.slice(0,-1),isoMinusDays(aEntry[0],1));
+  if(!pEntry)return{price:aVal,date:aEntry[0],changePct:null,bias:'neu'};
+  const pVal=Number(pEntry[1]);
+  if(!isFinite(pVal))return{price:aVal,date:aEntry[0],changePct:null,bias:'neu'};
+  const changePct=aVal-pVal;
+  const bias=changePct>0.001?'bull':changePct<-0.001?'bear':'neu';
+  return{price:aVal,date:aEntry[0],changePct,bias};
+}
+// Market-Watch-Widget: konfigurierbare Symbolliste (Nutzer-Wunsch 2026-07-25,
+// gleiche Preisquelle wie Set-ups/Watchlist - siehe tickerInfoForItem oben).
+// Jeder Eintrag ist "kind:id" ('pair:EUR/USD','asset:GOLD','asset:USD' fuer
+// DXY, 'bond:US10Y').
+const MW_DEFAULT_SYMS=['pair:EUR/USD','pair:GBP/USD','pair:USD/JPY','asset:USD','asset:GOLD','asset:BTC','bond:US10Y'];
+function parseMwSym(s){const i=s.indexOf(':');return{kind:s.slice(0,i),id:s.slice(i+1)};}
+function mwAllOptions(){
+  const pairs=canonicalFxPairs().map(([b,q])=>({key:'pair:'+b+'/'+q,label:b+'/'+q,grp:'FX Pairs'}));
+  const others=[
+    {key:'asset:USD',label:'DXY (Dollar Index)',grp:'Other Assets'},
+    {key:'bond:US10Y',label:'US 10Y Yield',grp:'Other Assets'},
+    ...syms.filter(s=>isNonFx(s.id)).map(s=>({key:'asset:'+s.id,label:s.name||s.id,grp:'Other Assets'})),
+  ];
+  return[...pairs,...others];
+}
+let _mwEditWidgetId=null;
+function openMwCfgM(widgetId){_mwEditWidgetId=widgetId;renderMwCfgBody();openM('mMwCfg');}
+function renderMwCfgBody(){
+  const w=widgets.find(x=>x.id===_mwEditWidgetId);const body=document.getElementById('mwCfgBody');
+  if(!w||!body)return;
+  const sel=new Set(w.symbols&&w.symbols.length?w.symbols:MW_DEFAULT_SYMS);
+  const opts=mwAllOptions();
+  const groups=[...new Set(opts.map(o=>o.grp))];
+  body.innerHTML=groups.map(g=>`
+    <div class="dw-notes-sub" style="margin-top:10px">${escH(g)}</div>
+    <div class="mw-cfg-grid">${opts.filter(o=>o.grp===g).map(o=>`<button class="btn mw-cfg-opt${sel.has(o.key)?' on':''}" onclick="toggleMwSym('${o.key}')">${sel.has(o.key)?'✓ ':''}${escH(o.label)}</button>`).join('')}</div>`).join('');
+}
+function toggleMwSym(key){
+  const w=widgets.find(x=>x.id===_mwEditWidgetId);if(!w)return;
+  let list=w.symbols&&w.symbols.length?[...w.symbols]:[...MW_DEFAULT_SYMS];
+  list=list.includes(key)?list.filter(k=>k!==key):[...list,key];
+  w.symbols=list;
+  renderMwCfgBody();save();renderDash();
+}
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
 // Bestätigung, dass die Abfrage nicht nur stündlich passiert.
@@ -8968,13 +9074,16 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
+  {type:'daily_bias',label:'Daily Bias',sub:'One-line market read from FX bias counts, risk sentiment & today’s events'},
   {type:'globe',label:'FX World Globe',sub:'Rotating globe — currencies coloured by bias score'},
   {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
   {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 4 gainers + top 4 losers vs. yesterday, in separate groups'},
   {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
-  {type:'mini_calendar',label:'Mini Calendar',sub:'Same events & controls as the main calendar'},
+  {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
+  {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
+  {type:'live_data',label:'Live Data',sub:'Auto-refresh status — when prices, calendar, COT & sentiment last updated'},
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
@@ -9054,9 +9163,7 @@ function updateAuroraColors(){
   host.style.setProperty('--aurora-op',designAuroraOpacity(designLight));
   // Vergleichs-Score statt roh, damit die Aurora-Faerbung mit dem Risk-
   // Sentiment-Widget uebereinstimmt (dasselbe net>0.8/<-0.8-Kriterium).
-  const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
-  const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
-  const net=avg(RISK_ON_IDS)-avg(RISK_OFF_IDS);
+  const{net}=riskOnOffState();
   const col=net>0.8?BC.bull:net<-0.8?BC.bear:AURORA_NEU;
   host.style.setProperty('--aurora-a',col);
   host.style.setProperty('--aurora-b',col);
@@ -9219,6 +9326,22 @@ function resetDesignHue(){
   updateAuroraColors();
   closeM('mDesigner');
 }
+// Sekuendlich tickende Uhr im Live-Data-Dashboard-Widget - aktualisiert NUR
+// den Text-Knoten (kein renderDash()-Aufruf, keine Re-Render-Kosten). Prueft
+// bei jedem Tick, ob das Element noch existiert (Widget entfernt/Tab
+// gewechselt) und raeumt den Interval dann selbst auf, statt einen
+// verwaisten Timer weiterlaufen zu lassen.
+let _liveClockInt=null;
+function startLiveClock(){
+  const tick=()=>{
+    const e=document.getElementById('liveClockTxt');
+    if(!e){if(_liveClockInt){clearInterval(_liveClockInt);_liveClockInt=null;}return;}
+    e.textContent=new Date().toLocaleTimeString([],{hour12:false});
+  };
+  tick();
+  if(_liveClockInt)clearInterval(_liveClockInt);
+  _liveClockInt=setInterval(tick,1000);
+}
 function renderDash(){
   renderCotNotify();
   renderRiskEnvRemind();
@@ -9243,7 +9366,34 @@ function renderDash(){
   const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
-    if(w.type==='globe'){
+    if(w.type==='daily_bias'){
+      // Reiner Template-Text aus bereits live berechneten Werten (keine
+      // Schaetzung/KI) - dieselbe Bull/Bear-Zaehlung wie updateStat() im
+      // Header, dieselbe Risk-On/Off-Klassifikation wie das Risk-Sentiment-
+      // Widget/die Aurora-Faerbung (riskOnOffState). Bei Gleichstand
+      // zwischen der staerksten Kategorie und einer anderen gewinnt
+      // "Neutral" (kein erfundener Ausschlag in eine Richtung).
+      const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
+      const bear=syms.filter(s=>FX.includes(s.id)&&s.bias==='bear').length;
+      const neu=FX.length-bull-bear;
+      const cats=[['bull',bull],['bear',bear],['neu',neu]];
+      const topV=Math.max(...cats.map(c=>c[1]));
+      const winners=cats.filter(c=>c[1]===topV);
+      const cat=winners.length===1?winners[0][0]:'neu';
+      const lbl=cat==='bull'?'BULLISH':cat==='bear'?'BEARISH':'NEUTRAL';
+      const col=cat==='bull'?BC.bull:cat==='bear'?BC.bear:BC.neu;
+      const sym=cat==='bull'?'▲':cat==='bear'?'▼':'◆';
+      const risk=riskOnOffState();
+      const riskTxt=risk.lbl==='RISK-ON'?'risk-on':risk.lbl==='RISK-OFF'?'risk-off':'balanced';
+      const td=todayStr();
+      const hiToday=(calEvts||[]).filter(ev=>ev.date===td&&evtImpact(ev)==='high').length;
+      const txt=`${bull} of ${FX.length} FX majors bullish, ${bear} bearish, ${neu} neutral. Risk sentiment is ${riskTxt}. `+
+        (hiToday>0?`${hiToday} high-impact event${hiToday>1?'s':''} today — stay alert.`:'No high-impact events today.');
+      content=`<div class="daily-bias-wrap">
+        <div class="daily-bias-lbl" style="color:${col}">${sym} ${lbl}</div>
+        <div class="daily-bias-txt">${txt}</div>
+      </div>`;
+    }else if(w.type==='globe'){
       // Marker, Terminator & Nachtlichter werden live per startGlobes() gezeichnet; hier nur Host + Legende.
       // Die Sessions-Leiste aktualisiert sich unabhaengig davon per startSessionBar() alle 30 Minuten.
       content=`<div class="globe-host"></div>
@@ -9318,11 +9468,10 @@ function renderDash(){
       // Vergleichs-Score (symScoreCmp) statt roh (Nutzer-Bugreport 2026-07-13):
       // sonst passt die "Risk assets X / Safe havens Y"-Summenzeile nicht zu
       // den einzelnen Asset-Zeilen darunter, die schon symScoreCmp zeigen.
+      // Geteilte Berechnung mit updateAuroraColors()/dem Daily-Bias-Widget
+      // (riskOnOffState) - ein einziges net>0.8/<-0.8-Kriterium ueberall.
       const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
-      const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
-      const on=avg(ON_IDS),off=avg(OFF_IDS);
-      const net=on-off,pct=Math.max(2,Math.min(98,50+net*8));
-      const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
+      const{on,off,net,pct,lbl,col}=riskOnOffState();
       const mx=Math.max(1,...[...ON_IDS,...OFF_IDS].map(id=>Math.abs(sc(id)||0)));
       const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
         <span class="risk-asset-name">${escH(s.name||id)}</span>
@@ -9422,6 +9571,58 @@ function renderDash(){
       let mc=[...calEvts].sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
       if(calHighOnly)mc=mc.filter(ev=>evtImpact(ev)==='high');
       content=calToolbarHtml()+(mc.length===0?`<div class="dw-empty">${calHighOnly?'No high-impact events.':'No events. Add in the Calendar tab.'}</div>`:`<div class="cal-scroll">${calTableHtml(mc,{collapsePast:true,allDates:calWindowDatesFor(mc),showNowLine:true,idPrefix:'dashcal-'})}</div>`);
+    }else if(w.type==='market_watch'){
+      // Preise/Aenderung aus derselben Quelle wie Set-ups/Watchlist
+      // (tickerInfoForItem/assetTickerInfo/pairTickerInfo, price_data.json) -
+      // keine neuen Daten, nur eine andere, konfigurierbare Zusammenstellung
+      // (Nutzer-Wunsch 2026-07-25: Zahnrad zum Hinzufuegen/Entfernen).
+      const list=(w.symbols&&w.symbols.length)?w.symbols:MW_DEFAULT_SYMS;
+      const rows=list.map(key=>{
+        const p=parseMwSym(key);
+        let info=null,label=key,clickable=null;
+        if(p.kind==='pair'){info=pairTickerInfo(...p.id.split('/'));label=p.id;}
+        else if(p.kind==='bond'){info=bondYieldChangeInfo('USD','10Y Bond Yield');label='US10Y';}
+        else{info=assetTickerInfo(p.id);label=p.id==='USD'?'DXY':((syms.find(x=>x.id===p.id)||{}).name||p.id);clickable=p.id;}
+        if(!info)return`<div class="mw-row"><span class="mw-sym">${escH(label)}</span><span class="mw-empty">No data yet</span><span></span></div>`;
+        const col=BC[info.bias];
+        const priceTxt=p.kind==='bond'?fmtYield(info.price):fmtPriceTick(info.price);
+        const chgTxt=info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(p.kind==='bond'?3:2)+(p.kind==='bond'?'pp':'%');
+        const arrow=info.bias==='bull'?'▲':info.bias==='bear'?'▼':'◆';
+        return`<div class="mw-row"${clickable?` onclick="gotoSym('${clickable}')" style="cursor:pointer"`:''}>
+          <span class="mw-sym">${escH(label)}</span>
+          <span class="mw-price">${priceTxt}</span>
+          <span class="mw-chg" style="color:${col}">${arrow} ${chgTxt}</span>
+        </div>`;
+      }).join('');
+      content=`<div class="mw-hdr-row"><span>SYMBOL</span><span>PRICE</span><span>CHANGE</span></div><div class="mw-list">${rows}</div>`;
+    }else if(w.type==='live_data'){
+      // Nur echte, bereits vorhandene Zeitstempel (Nutzer-Wunsch 2026-07-25:
+      // kein erfundenes "Real-Time"/Latenz-Versprechen - der Client fetcht nie
+      // direkt gegen Forex Factory/CFTC/FRED/TradingView, sondern nur die
+      // eigenen JSON-Dateien, die der stuendliche GitHub-Action-Workflow
+      // schreibt). priceDataLastFetch/fxpro_ff_last sind Client-Fetch-
+      // Zeitpunkte, COT_DATA.updated/SENTIMENT_DATA.updated sind die echten
+      // Generierungs-Zeitstempel aus den JSON-Dateien selbst.
+      const pTxt=priceDataLastFetch?new Date(priceDataLastFetch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'–';
+      const ffLast=localStorage.getItem('fxpro_ff_last');
+      const cTxt=ffLast?new Date(ffLast).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'–';
+      const cotTxt=(COT_DATA&&COT_DATA.updated)?new Date(COT_DATA.updated).toLocaleString([],{weekday:'short',hour:'2-digit',minute:'2-digit'}):'–';
+      const sentTxt=(SENTIMENT_DATA&&SENTIMENT_DATA.updated)?new Date(SENTIMENT_DATA.updated).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'–';
+      content=`<div class="live-data-wrap">
+        <div class="live-data-top">
+          <span class="live-dot"></span>
+          <span class="live-data-lbl">LIVE</span>
+          <span class="live-clock" id="liveClockTxt">--:--:--</span>
+        </div>
+        <div class="live-data-sub">Auto-refresh · background updates, no manual reload needed</div>
+        <div class="live-src-list">
+          <div class="live-src-row"><span>Prices</span><span>${pTxt}</span></div>
+          <div class="live-src-row"><span>Calendar</span><span>${cTxt}</span></div>
+          <div class="live-src-row"><span>COT Data</span><span>${cotTxt}</span></div>
+          <div class="live-src-row"><span>Sentiment</span><span>${sentTxt}</span></div>
+        </div>
+      </div>`;
+      requestAnimationFrame(startLiveClock);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
@@ -9431,6 +9632,7 @@ function renderDash(){
           ${wt?`<div class="dw-sub">${escH(wt.sub)}</div>`:''}
         </div>
         <div class="dw-btns">
+          ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',13)}</button>`:''}
           <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''}>▲</button>
           <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''}>▼</button>
           <button class="btn dw-nav" onclick="renameWidget('${w.id}')">✎</button>
@@ -10233,6 +10435,18 @@ function recordScoreHist(){
 // der Risk-Sentiment-Karte, aus scoreHist abgeleitet - waechst von selbst um
 // einen Punkt, sobald recordScoreHist() einen neuen Tag erfasst hat.
 const RISK_ON_IDS=['AUD','NZD','SP500','NAS','BTC','DAX'],RISK_OFF_IDS=['JPY','CHF','GOLD'];
+// Geteilte Risk-On/Off-Berechnung (Nutzer-Wunsch 2026-07-25: Dual-Source
+// vermeiden, dieselbe net>0.8/<-0.8-Schwelle ueberall) - genutzt vom
+// risk_sentiment-Dashboard-Widget, updateAuroraColors() und dem
+// daily_bias-Widget.
+function riskOnOffState(){
+  const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
+  const avg=ids=>{const v=ids.map(sc).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;};
+  const on=avg(RISK_ON_IDS),off=avg(RISK_OFF_IDS);
+  const net=on-off,pct=Math.max(2,Math.min(98,50+net*8));
+  const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
+  return{on,off,net,pct,lbl,col};
+}
 const RISK_HIST_DAYS=60;
 function riskNetHistory(){
   const lookup=id=>{const m={};(scoreHist[id]||[]).forEach(e=>m[e[0]]=e[1]);return m;};
@@ -11091,7 +11305,7 @@ function cotMetrics(s){
   const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'#4fc3f7':v<0?'#ef6b78':'var(--t3)';}
+function cotColor(v){return v>0?'#5fa8ed':v<0?'#ef6b78':'var(--t3)';}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -11423,7 +11637,7 @@ function sentGauge(val,lo,hi,unit){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:230px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#4fc3f7')}${arc(P*0.75,P*0.55,'#6ea8d8')}${arc(P*0.55,P*0.45,'#f4ad5c')}${arc(P*0.45,P*0.25,'#e08a6a')}${arc(P*0.25,0,'#ef5350')}
+    ${arc(P,P*0.75,'#5fa8ed')}${arc(P*0.75,P*0.55,'#6ea8d8')}${arc(P*0.55,P*0.45,'#f4ad5c')}${arc(P*0.45,P*0.25,'#e08a6a')}${arc(P*0.25,0,'#ef5350')}
     <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
     <text x="${cx}" y="${cy-20}" text-anchor="middle" style="font:800 26px system-ui;fill:var(--t0)">${val}${unit||''}</text>
@@ -11473,8 +11687,8 @@ function sentSpark(series,lo,hi,loTh,hiTh){
   const path=pts.map((e,i)=>`${i?'L':'M'}${xOf(i).toFixed(1)} ${yOf(+e[1]).toFixed(1)}`).join(' ');
   const last=pts[pts.length-1];
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:100px">
-    ${loTh!=null?band(lo,loTh,'rgba(79,195,247,.10)'):''}${hiTh!=null?band(hiTh,hi,'rgba(239,83,80,.10)'):''}
-    ${loTh!=null?`<line x1="0" y1="${yOf(loTh).toFixed(1)}" x2="${W}" y2="${yOf(loTh).toFixed(1)}" stroke="rgba(79,195,247,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
+    ${loTh!=null?band(lo,loTh,'rgba(95,168,237,.10)'):''}${hiTh!=null?band(hiTh,hi,'rgba(239,83,80,.10)'):''}
+    ${loTh!=null?`<line x1="0" y1="${yOf(loTh).toFixed(1)}" x2="${W}" y2="${yOf(loTh).toFixed(1)}" stroke="rgba(95,168,237,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
     ${hiTh!=null?`<line x1="0" y1="${yOf(hiTh).toFixed(1)}" x2="${W}" y2="${yOf(hiTh).toFixed(1)}" stroke="rgba(239,83,80,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
     <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>
     <circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(+last[1]).toFixed(1)}" r="3.2" fill="var(--blue)"/>
@@ -11650,25 +11864,25 @@ function sentReadBadge(ev){
 // ── Info-Texte fuer die "i"-Buttons (ausfuehrlich, einfach verstaendlich) ──
 const SENT_INFO={
   retail:['Retail Sentiment (Crowd Positioning)',
-    `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, cyan bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
+    `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
      <ul><li><b style="color:${'#ef6b78'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
-     <li><b style="color:${'#4fc3f7'}">Cyan tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#5fa8ed'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
      <li><b style="color:${'#f4ad5c'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
-     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#4fc3f7'}">bullish</b>.</li>
+     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#5fa8ed'}">bullish</b>.</li>
      <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#ef6b78'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
-     <p><b>How to read the chart:</b> the stepped line is the daily ratio. The cyan-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
+     <p><b>How to read the chart:</b> the stepped line is the daily ratio. The blue-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Net Options Flow (Call−Put)/(Call+Put)',
     `<p><b>What it is:</b> the net balance between call and put volume on a given day, computed directly from the raw end-of-day option volumes as <b>(total call volume − total put volume) ÷ (total call volume + total put volume)</b>. This is cleanly scaled between <b>−1.0</b> (only puts traded) and <b>+1.0</b> (only calls traded); <b>0</b> means calls and puts balanced.</p>
      <p><b>How to read it here:</b> each bar is one day (lightly smoothed with a 5-day average to cut single-day noise).</p>
-     <ul><li><b style="color:${'#4fc3f7'}">Cyan bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
+     <ul><li><b style="color:${'#5fa8ed'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
      <li><b style="color:${'#ef6b78'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
      <p>It is a direct, normalized read of who is leaning where in the options market, so it builds up one point per trading day as the underlying put/call series fills in.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (starts fresh per asset).</p>`],
@@ -11862,7 +12076,7 @@ function renderPutCallChart(D){
     chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
   }else{
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(79,195,247,.08)"/>
+        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(95,168,237,.08)"/>
         <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${(H-padB-yOf(LO)).toFixed(1)}" fill="rgba(239,83,80,.08)"/>
         ${gy}
         <line x1="${padL}" y1="${yOf(HI).toFixed(1)}" x2="${W-padR}" y2="${yOf(HI).toFixed(1)}" stroke="${BC.bull}" stroke-width="1.2" stroke-dasharray="5,4"/>
@@ -11881,7 +12095,7 @@ function renderPutCallChart(D){
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Net Options Flow: Balken = (Call−Put)/(Call+Put), aus der Put/Call-Reihe
-// abgeleitet, 5-Tage-geglaettet. >0 = call-lastiger Fluss (cyan, bullish),
+// abgeleitet, 5-Tage-geglaettet. >0 = call-lastiger Fluss (blau, bullish),
 // <0 = put-lastiger Fluss (rot, bearish). ──
 function renderNetFlowChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
@@ -12210,7 +12424,7 @@ function renderSeasonality(){
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
-   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#4fc3f7">Cyan up-bars</b> = the month was positive on average; <b style="color:#ef6b78">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#5fa8ed">Blue up-bars</b> = the month was positive on average; <b style="color:#ef6b78">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20) ═══════════════════
