@@ -18,7 +18,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:#060b12;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
@@ -727,42 +727,55 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 /* ── DASHBOARD ── */
-/* Flache Vollfarbe statt Glassmorphism (Referenz-Foto, Nutzer-Korrektur
-   2026-07-25: "die karten sind vom Design schlecht... hintergrundfarbe aber
-   leicht dunkler als der Hintergrund") - #0a0e14 ist dunkler als --bg0
-   (#0d1117), kein backdrop-filter mehr (auch guenstiger, siehe die bereits
-   dokumentierte Blur-Perf-Lehre bei der Aurora weiter oben). */
-.dw{background:#0a0e14;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px;transition:border-color .15s}
+/* Karten wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25 "1 zu 1"): dunkler
+   als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
+   Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
+   minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
+.dw{background:rgba(8,13,21,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #18202c;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 .dash-majors{display:none}
-.dash-majors-lbl{font-size:9px;letter-spacing:1.5px;color:var(--t3);font-weight:700;padding:0 4px 5px;text-transform:uppercase}
-/* Flache Zeilen statt eigener Mini-Karten pro Symbol (Referenz-Foto,
-   Nutzer-Korrektur 2026-07-25: "die Leiste... deutlich schmaler...
-   kompakter weniger Abstände") - kein Kasten/Radius/Margin mehr pro Zeile,
-   nur ein duenner Trenner + der bestehende Bias-Randstreifen (.ab.glow-*). */
-.dash-majors .ab-wrap{background:transparent;border:none;border-radius:0;margin-bottom:0;border-bottom:1px solid rgba(255,255,255,.05)}
-.dash-majors .ab-wrap:last-of-type{border-bottom:none}
-.dash-majors .ab{border-radius:0;padding:5px 4px 5px 7px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
-.dash-majors .ab .an{order:1;flex:1 1 auto}
-.dash-majors .ab .av{order:2;margin:0}
-.dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:10px;margin:1px 0}
-.dash-majors .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0}
-.dash-majors .ab .an,.dash-majors .ab .av{font-size:10px}
-.dash-majors .ab .sb-score{font-size:9.5px}
-.dash-majors-viewall{font-size:11px;color:var(--blue);text-align:center;padding:8px 4px 2px;cursor:pointer;font-weight:600}
-@media (hover:hover){.dash-majors-viewall:hover{text-decoration:underline}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.dash-majors-lbl{font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
+/* Eigene Mini-Karte pro Symbol wie im Referenz-Foto (Nutzer-Wunsch
+   2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
+   voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
+   der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
+.dash-majors .ab-wrap{background:#0a0f18;border:1px solid #18202c;border-radius:8px;margin-bottom:6px;overflow:hidden}
+.dash-majors .ab{border-radius:0;border-left-width:3px;padding:7px 8px 6px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
+.dash-majors .ab .an{order:1;flex:1 1 auto;font-size:12px}
+.dash-majors .ab .av{order:2;margin:0;font-size:11px}
+.dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
+.dash-majors .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:11.5px}
+.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0a0f18;border:1px solid #18202c;border-radius:8px}
+.dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
+@media (hover:hover){.dash-majors-viewall:hover{border-color:#26324a;color:var(--t0)}}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+/* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
+   in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
+   Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
+.dw-hdlink{font-size:11.5px;font-weight:600;color:var(--blue);cursor:pointer;margin-left:auto;white-space:nowrap}
+@media (hover:hover){.dw-hdlink:hover{text-decoration:underline}}
 /* Minimaler Kartenkopf wie im Referenz-Foto (Nutzer-Korrektur 2026-07-25:
    "Keine Ueberschrift einfach so") - kleiner Kleinbuchstaben-Titel + kleines
    rundes i-Info-Icon INLINE direkt daneben (reuse .rinfo, CLAUDE.md-Grundsatz
    "wiederkehrende UI-Bausteine muessen einheitlich sein"), statt eines
    eigenstaendigen Titel-Blocks mit Untertitelzeile. */
-.dw-t{display:flex;align-items:center;gap:5px;min-width:0}
-.dw-t-txt{font-size:10.5px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dw-t .rinfo{width:12px;height:12px;font-size:10px;opacity:.5;flex-shrink:0}
+.dw-t{display:flex;align-items:center;gap:6px;min-width:0}
+.dw-t-txt{font-size:11px;font-weight:700;color:#7f90a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw-t .rinfo{width:13px;height:13px;font-size:10px;opacity:.55;flex-shrink:0}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:.32;transition:opacity .15s}
-@media (hover:hover){.dw:hover .dw-btns{opacity:1}}
+/* Auf Geraeten MIT Maus liegen die Steuerbuttons absolut ueber dem rechten
+   Kopfzeilen-Rand und erscheinen erst beim Hovern (Referenz-Foto, Nutzer-
+   Wunsch 2026-07-25 "1 zu 1": dort hat kein Kartenkopf sichtbare Buttons).
+   Wichtig ist das absolute Positionieren, nicht nur opacity:0 - sonst
+   belegen sie weiter Platz und schneiden lange Titel wie "CURRENCY
+   STRENGTH" ab. Auf Touch bleiben sie sichtbar/inline, da es dort kein
+   Hover gibt und man sie sonst nie erreichen koennte. */
+@media (hover:hover){
+  .dw-hdr{position:relative}
+  .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
+  .dw:hover .dw-btns{opacity:1;pointer-events:auto}
+}
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
@@ -789,10 +802,21 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Wunsch 2026-07-25) - Text-Spalte (.db-col-txt, flex:1 1 0) bekommt den
    Rest. JS-Groessenkappung in startGlobes() dazu von 200 auf 260 angehoben. */
 .db-split .globe-host{flex:0 0 66.6%;width:66.6%;min-height:0;padding:0;position:relative}
+/* Nebel-Hintergrund hinter dem Globus (Referenz-Foto, Nutzer-Wunsch
+   2026-07-25 "1 zu 1"): weiche violett/blau/magenta Radialverlaeufe, die
+   ueber den Kartenrand hinauslaufen und von .dw-globe{overflow:hidden}
+   sauber abgeschnitten werden. Reine Deko, kein Blur-Filter (siehe die
+   dokumentierte Blur-Perf-Lehre bei der Aurora). */
+.db-split .globe-host::before{content:'';position:absolute;inset:-55% -25%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 42% 40% at 32% 42%,rgba(124,58,237,.30),transparent 68%),
+             radial-gradient(ellipse 40% 38% at 70% 62%,rgba(37,99,235,.26),transparent 68%),
+             radial-gradient(ellipse 30% 30% at 56% 24%,rgba(190,50,150,.16),transparent 70%)}
+.db-split .globe-host>svg{position:relative;z-index:1}
+#dashWidgets .dw.dw-globe{overflow:hidden}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
 @media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
-.daily-bias-lbl{font-size:19px;font-weight:800;letter-spacing:.3px;margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.daily-bias-txt{font-size:11.5px;color:var(--t2);line-height:1.5}
+.daily-bias-lbl{font-size:26px;font-weight:800;letter-spacing:.3px;margin-bottom:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.65}
 .db-col-txt .globe-legend{justify-content:flex-start;margin-top:12px}
 .mw-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
@@ -805,13 +829,17 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    zwischen den Kacheln, unabhaengig von unterschiedlich langen Symbolnamen.
    Karte wird dadurch nur noch eine Zeile hoch. */
 .mw-strip{display:flex;gap:8px;flex-wrap:wrap}
-.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;background:var(--bg2);border:1px solid var(--bd);border-radius:9px;padding:7px 12px;white-space:nowrap;transition:background .12s}
+.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;background:#05080d;border:1px solid #141c27;border-radius:10px;padding:9px 15px;white-space:nowrap;transition:border-color .12s}
+@media (hover:hover){.mw-tile:hover{border-color:#26324a}}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-tile-sym{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-price{font-size:12.5px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-chg{font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-footer{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.06);font-size:10.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
-@media (hover:hover){.mw-footer:hover{text-decoration:underline}}
+.mw-tile-sym{font-size:13px;font-weight:800;color:#fff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-price{font-size:13px;font-weight:500;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-chg{font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Fusszeilen-Link wie im Referenz-Foto: Text links, Chevron rechts in
+   einem eigenen kleinen Kasten. */
+.mw-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:1px solid #161e29;font-size:12px;color:var(--blue);font-weight:600;cursor:pointer}
+.mw-footer::after{content:'›';display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #1f2937;border-radius:6px;font-size:15px;line-height:1;color:var(--t3);flex-shrink:0}
+@media (hover:hover){.mw-footer:hover::after{border-color:#2f3d57;color:var(--t1)}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
 .hie-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
@@ -908,9 +936,9 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .risk-sub{text-align:center;font-size:10px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc b{color:var(--t2)}
-.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .risk-assets-hd{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-asset-row{display:grid;grid-template-columns:1fr 40px 32px;align-items:center;gap:6px;cursor:pointer;padding:0 3px;border-radius:5px}
+.risk-asset-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;cursor:pointer;padding:1px 2px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
 .risk-asset-name{font-size:10px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
@@ -1257,21 +1285,21 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
   #dashWidgets .dw{margin-bottom:0;min-width:0;grid-column:span 6}
-  #dashWidgets .dw.dw-globe{grid-column:span 5}
+  #dashWidgets .dw.dw-globe{grid-column:span 6}
   #dashWidgets .dw.dw-ccy_ranking{grid-column:span 3}
-  #dashWidgets .dw.dw-risk_sentiment{grid-column:span 4}
+  #dashWidgets .dw.dw-risk_sentiment{grid-column:span 3}
   #dashWidgets .dw.dw-mini_calendar,#dashWidgets .dw.dw-notification,#dashWidgets .dw.dw-key_insights{grid-column:span 4}
   #dashWidgets .dw.dw-market_watch,#dashWidgets .dw.dw-setups{grid-column:1/-1}
   @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:10px 12px}
+.dw{padding:18px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -1302,12 +1330,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
    die Sidebar ist dort nur etwas schmaler. */
 @media(min-width:1100px){
-  .dash-layout{display:flex;gap:10px;align-items:flex-start}
-  .dash-majors{display:flex;flex-direction:column;gap:0;width:104px;flex-shrink:0}
+  .dash-layout{display:flex;gap:18px;align-items:flex-start}
+  .dash-majors{display:flex;flex-direction:column;gap:0;width:132px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
 @media(min-width:1400px){
-  .dash-majors{width:122px}
+  .dash-majors{width:150px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -1382,8 +1410,14 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    (Nutzer-Entscheid 2026-07-25) - nur Name/Nummer aendern sich weiterhin bei
    jeder Aenderung (siehe updVerBanner() unten), das ist der verbleibende
    "neue Version da"-Hinweis. */
-.hdr{position:relative}
-.hdr-livebanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Mittig zwischen Logo und Button-Leiste, aber als echtes Flex-Kind (nicht
+   absolut positioniert): ein absolut zentrierter Banner liegt ausserhalb
+   des Flex-Flusses und schob sich auf schmaleren Screens ueber den
+   Alarm-Zaehler bzw. die Undo/Redo-Pfeile (per Playwright bei 1366px
+   gesehen). So kann er nie etwas verdecken - er bekommt einfach den Platz,
+   der zwischen beiden Bloecken uebrig ist. */
+.hdr-livebanner{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hlb-name{overflow:hidden;text-overflow:ellipsis}
 .hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
 @keyframes hlbBlink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -1391,7 +1425,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .hlb-clock{font-size:11px;font-weight:700;color:var(--t1)}
 .hlb-sep{color:var(--t3);opacity:.5}
 .hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
-@media(max-width:759px){.hdr-livebanner{position:static;transform:none;order:3;width:100%;justify-content:center;margin-top:3px}}
+@media(max-width:759px){.hdr-livebanner{order:3;flex:0 0 100%;width:100%;margin-top:3px}}
 </style>
 </head>
 <body>
@@ -1516,12 +1550,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-234 — Banner jetzt im Header (kein Hide/Collapse mehr, Farbe fix), Market-Watch-Kacheln einzeilig mit gleichen Abstaenden, Karten flach+dunkler statt Blur, Globus 2/3 Kartenbreite mit Dot-Textur + rotem 5s-Scan, Logo FX blau abgesetzt">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-235 — Dashboard 1:1 nach Referenz-Foto: dunklerer Hintergrund (#060b12), MAJORS-Rail wieder als Mini-Karten mit Sparkline, Kartenkoepfe ohne sichtbare Steuerbuttons (nur bei Hover), Nebel hinter dem Globus, Hero 6/3/3 statt 5/3/4, Fusszeilen-Links mit Chevron-Kasten, Dashboard-Ueberschrift entfernt">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-234</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-235</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -1714,12 +1748,12 @@ function introLogin(){
   <div class="aurora-blob aurora-c"></div>
 </div>
 <div class="pc" id="pgDash">
-  <!-- Kompakte Kopfzeile (Nutzer-Wunsch 2026-07-25: Dashboard soll ohne
-       Scrollen auf einen Bildschirm passen) - "Live overview" als Zusatz
-       neben statt unter dem Titel, spart eine Zeile. -->
-  <div style="margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-    <div style="display:flex;align-items:baseline;gap:9px;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Live overview</div></div>
-    <button class="btn g" onclick="addWidget()">＋ Widget</button>
+  <!-- Keine eigene "Dashboard / Live overview"-Ueberschrift mehr (Referenz-
+       Foto, Nutzer-Wunsch 2026-07-25: "Mach unnoetige Ueberschriften weg") -
+       der Tab selbst sagt schon, wo man ist. Nur der Widget-Knopf bleibt,
+       schmal und rechtsbuendig, damit man weiterhin Karten hinzufuegen kann. -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout">
     <aside class="dash-majors" id="dashMajors"></aside>
@@ -9476,7 +9510,7 @@ function dashMajorsHtml(){
       <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
     </button></div>`;
   }).join('');
-  return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')">View all pairs ›</div>`;
+  return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
 }
 function renderDash(){
   updateAuroraColors();
@@ -9531,11 +9565,6 @@ function renderDash(){
         <div class="db-col-txt">
           <div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
           <div class="daily-bias-txt">${db.txt}</div>
-          <div class="globe-legend">
-            <span><i style="background:${BC.bull}"></i>Bullish</span>
-            <span><i style="background:${BC.neu}"></i>Neutral</span>
-            <span><i style="background:${BC.bear}"></i>Bearish</span>
-          </div>
         </div>
         <div class="globe-host"></div>
       </div>`;
@@ -9609,9 +9638,12 @@ function renderDash(){
       const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
       const{on,off,net,pct,lbl,col}=riskOnOffState();
       const mx=Math.max(1,...[...ON_IDS,...OFF_IDS].map(id=>Math.abs(sc(id)||0)));
+      // Nur Name + Wert (Referenz-Foto, Nutzer-Wunsch 2026-07-25 "1 zu 1"):
+      // der fruehere Mini-Balken war rein dekorativ (der Zahlenwert steht
+      // ohnehin daneben) und presste den Namen so weit zusammen, dass
+      // "S&P 500" in der schmaleren 3-Spalten-Karte abgeschnitten wurde.
       const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
         <span class="risk-asset-name">${escH(s.name||id)}</span>
-        <div class="risk-asset-track"><div class="risk-asset-bar" style="width:${Math.round(Math.abs(v)/mx*100)}%;background:${BC[s.bias]}"></div></div>
         <span class="risk-asset-sc" style="color:${BC[s.bias]}">${v>0?'+':''}${Math.round(v*10)/10}</span>
       </div>`;};
       // Regler fuer den Nutzer-eigenen Risk-Environment-Read (Nutzer-Wunsch
@@ -9715,7 +9747,7 @@ function renderDash(){
         <span class="hie-time">${escH(ev.time||'—')}</span>
       </div>`).join('');
       content=(mc.length===0?`<div class="dw-empty">No upcoming high-impact events.</div>`:`<div class="hie-list">${rows}</div>`)+
-        `<div class="mw-footer" onclick="showTab('cal')">Go to Calendar ›</div>`;
+        `<div class="mw-footer" onclick="showTab('cal')"><span>Go to Calendar</span></div>`;
     }else if(w.type==='market_watch'){
       // Preise/Aenderung aus derselben Quelle wie Set-ups/Watchlist
       // (tickerInfoForItem/assetTickerInfo/pairTickerInfo, price_data.json) -
@@ -9747,12 +9779,13 @@ function renderDash(){
         </div>`;
       }).join('')||`<div class="dw-empty" style="padding:14px 4px">No ${tab.toLowerCase()} symbols selected - use ${icn('gear',11)} to add some.</div>`;
       content=`${tabsHtml}<div class="mw-strip">${tiles}</div>
-        <div class="mw-footer" onclick="showTab('pairs')">Go to Market Overview ›</div>`;
+        <div class="mw-footer" onclick="showTab('pairs')"><span>Go to Market Overview</span></div>`;
     }else if(w.type==='key_insights'){
       // Platzhalter (Nutzer-Wunsch 2026-07-25): Datenquelle noch offen (Konto
       // fuer eine echte News-API vs. Template aus App-eigenen Signalen wie
       // bei Daily Bias) - bewusst KEIN erfundener Inhalt, bis das geklaert ist.
-      content=`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">Key Insights — placeholder. Real source (news API account vs. template-based like Daily Bias) still to be decided.</div>`;
+      content=`<div class="dw-empty" style="padding:2px 0;line-height:1.7">Key Insights — placeholder. Real source (news API account vs. template-based like Daily Bias) still to be decided.</div>
+        <div class="mw-footer" onclick="showTab('trends')"><span>Go to Insights</span></div>`;
     }else if(w.type==='notification'){
       // Sammelt die frueher als eigene schwebende Banner ueber dem Grid
       // gezeigten Popups (COT/Risk-Env-Erinnerung, Nutzer-Wunsch 2026-07-25:
@@ -9801,6 +9834,7 @@ function renderDash(){
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
+        ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         <div class="dw-btns">
           ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
           <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>

@@ -4128,3 +4128,53 @@ Header (`renderRub`, gespiegelte Non-FX-Karten) und Indikator-Zeile
 CSS unveraendert (Opacity/Groesse gelten weiterhin, SVG erbt die Farbe ueber
 `stroke="currentColor"`). Per Playwright verifiziert: kein 🔗 mehr im DOM,
 SVG rendert korrekt, voller 14-Tab-Regressionstest fehlerfrei.
+
+### Dashboard 1:1 nach Referenz-Foto umgebaut (Nutzer-Wunsch 2026-07-25)
+
+Nutzer schickte ein Mockup-Foto und verlangte "die Webseite 1 zu 1 ohne
+Ausnahme so designen wie auf dem Bild", mittlere Reihe nach einem zweiten
+Foto (waagerechte Ticker-Pillen), explizit mit der Freigabe "veraender dafuer
+die hintergrundfarbe und entfern Funktionen und mach einfach alles was
+noetig ist. Prinzipien ignorieren". Umgesetzt (VERSION-CHECK-235):
+
+- **Hintergrund** `body` von `#0d1117` auf `#060b12` (deutlich dunkler).
+  `--bg0` selbst UNVERAENDERT gelassen - die Variable wird an vielen
+  Stellen als Kontrastfarbe genutzt (z.B. der Kontrast-Halo unter den
+  Trends-Linien), ein Aendern haette dort unbeabsichtigt mitgewirkt.
+- **Karten** (`.dw`): `rgba(8,13,21,.86)` + leichter Blur, 1px `#18202c`,
+  Radius 10px, Padding 18px, Grid-Gap 14px. Hero-Reihe jetzt **6/3/3**
+  statt 5/3/4 (im Foto ist Daily Bias etwa halb so breit wie die Zeile).
+- **Kartenkoepfe**: die Steuerbuttons (hoch/runter/umbenennen/loeschen)
+  liegen auf Geraeten MIT Maus jetzt `position:absolute` am rechten
+  Kopfrand und erscheinen erst beim Hovern. **Wichtig ist das absolute
+  Positionieren, nicht nur `opacity:0`** - vorher belegten sie weiter Platz
+  und schnitten laengere Titel ab (per Playwright reproduziert: "CURRENCY
+  STREN..."). Auf Touch bleiben sie sichtbar/inline, sonst waeren sie dort
+  gar nicht erreichbar.
+- **MAJORS-Rail** wieder als Mini-Karten pro Symbol (Name + Bias-Pfeil in
+  der Kopfzeile, Sparkline auf voller Breite, Score rechts unten) statt der
+  zwischenzeitlich flachen Zeilen - so zeigt es das Foto. Breite 132px
+  (ab 1400px 150px). "View all pairs" ist jetzt eine eigene Karte mit
+  Chevron rechts.
+- **Globus** bekommt einen Nebel-Hintergrund (violett/blau/magenta
+  Radialverlaeufe als `::before` auf `.globe-host`, `.dw-globe` traegt
+  `overflow:hidden`). Bewusst OHNE `filter:blur()` - siehe die bereits
+  dokumentierte Blur-Perf-Lehre bei der Aurora.
+- **Fusszeilen-Links** (`.mw-footer`) wie im Foto: Text links, Chevron
+  rechts in einem eigenen kleinen Kasten (`::after`). Key Insights hat
+  jetzt auch einen ("Go to Insights").
+- **Kopfzeilen-Link** `.dw-hdlink` ("View Calendar") in der Kalender-Karte.
+- **Entfernt**: die eigene "Dashboard / Live overview"-Ueberschrift ueber
+  dem Grid (der Tab sagt schon, wo man ist) und die Bullish/Neutral/Bearish-
+  Legende in der Daily-Bias-Karte. Der "+ Widget"-Knopf bleibt (schmal,
+  rechtsbuendig) - ohne ihn koennte man keine Karten mehr hinzufuegen.
+- **Risk-Sentiment-Asset-Zeilen** ohne Mini-Balken (nur Name + Wert): der
+  Balken war rein dekorativ und presste den Namen in der jetzt schmaleren
+  3-Spalten-Karte so zusammen, dass "S&P 500" abgeschnitten wurde.
+- **LIVE-Banner** ist jetzt ein echtes Flex-Kind (`flex:1 1 auto`) statt
+  absolut zentriert. Absolut positioniert lag es ausserhalb des Flex-
+  Flusses und schob sich bei 1366px ueber den Alarm-Zaehler (per Playwright
+  gesehen). **Merksatz:** zentrierte Header-Elemente in dieser App immer
+  als Flex-Kind loesen, nicht per `position:absolute;left:50%` - der Header
+  hat links und rechts unterschiedlich breite Bloecke, die je nach
+  Fensterbreite wandern.
