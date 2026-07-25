@@ -2844,241 +2844,393 @@ jobs:
             main().catch(e=>{console.log("[debug] score_hist: error "+e.message);});
           '
 
-      # ── FED-ZINS-WAHRSCHEINLICHKEITEN (rate_probabilities.json) ────────
+      # ── ZINS-WAHRSCHEINLICHKEITEN, 5 ZENTRALBANKEN (rate_probabilities.json) ─
       # Nutzer-Wunsch 2026-07-20: CME-FedWatch-aehnliche Anzeige ("Rate
       # Probabilities", Insights-Tab), aber das offizielle CME-Tool/API ist
       # kostenpflichtig (~25 $+/Monat) - nach dem Grundsatz oben ("ein
       # kostenloses Konto ist kein Abbruchgrund, eine BEZAHLTE Stufe schon")
       # daher eine freie Eigenberechnung nach CMEs eigener, oeffentlich
-      # dokumentierter Methodik: 30-Day Fed Funds Futures (Ticker ZQ, CBOT)
-      # geben je Kalendermonat den durchschnittlichen Tages-Zinssatz an
-      # (100-Future-Preis). Faellt eine FOMC-Sitzung MITTEN in einen Monat,
-      # lässt sich daraus tageszahl-gewichtet der Zins NACH der Sitzung
-      # herausrechnen (R_avg = Anteil_vorher*R_vorher + Anteil_nachher*
-      # R_nachher, nach R_nachher aufgeloest) - Kette wird Sitzung fuer
-      # Sitzung fortgesetzt (R_nachher einer Sitzung wird zu R_vorher der
-      # naechsten). Als Startwert (R_vorher der ersten anstehenden Sitzung)
-      # dient der aktuelle Effective Federal Funds Rate (EFFR) von FRED
-      # (frei, kein Key, taeglich - derselbe Referenzzins, gegen den ZQ
-      # selbst abrechnet). Vereinfachung ggue. dem bezahlten CME-Tool: nur
-      # 2 Nachbar-Stufen (naechst-tiefere/-hoehere 25bp-Stufe) interpoliert,
-      # keine optionen-implizite Verteilung ueber mehr als 2 Ausgaenge - das
-      # ist mit oeffentlich freien Futures-Daten allein nicht replizierbar
-      # (im Client dokumentiert). Historie: taeglich EIN Snapshot ergaenzt
-      # (wie bond_data/price_data/score_hist) - ein rueckwirkender 1-Jahres-
-      # Backfill war NICHT moeglich (CME-API bezahlt, Investing.com-
-      # Einzelkontrakt-Seiten blockten jeden Zugriffsversuch per Cloudflare,
-      # abgelaufene Alt-Kontrakte liefern bei TradingView keine verlaesslichen
-      # historischen Settlement-Preise) - waechst deshalb wie mehrere andere
-      # Feeds in dieser App ab jetzt einen Punkt pro Tag (siehe CLAUDE.md).
-      - name: Fetch Fed rate probabilities (FRED + CME-style ZQ futures) -> rate_probabilities.json
+      # dokumentierter Methodik. Erweitert 2026-07-25 (Nutzer-Wunsch: "auch
+      # fuer die anderen Waehrungen") auf 5 Zentralbanken/Waehrungen, nach
+      # einer mehrstufigen Live-Recherche (workflow_dispatch-Probe-Laeufe,
+      # siehe Session-Notiz), welche Futures/Referenzzins-Quellen frei
+      # verfuegbar sind:
+      #
+      # PRAEZISE Methode (USD/AUD) - identisch zur urspruenglichen ZQ-Logik:
+      #   30-Day Fed Funds Futures (CBOT:ZQ) bzw. ASX 30-Day Interbank Cash
+      #   Rate Futures (ASX24:IB) geben je KALENDERMONAT den durchschnittlichen
+      #   Tages-Zinssatz an (100-Future-Preis) - ein direktes strukturelles
+      #   Aequivalent. Faellt eine Sitzung MITTEN in einen Monat, laesst sich
+      #   daraus tageszahl-gewichtet der Zins NACH der Sitzung herausrechnen
+      #   (Kette Sitzung-zu-Sitzung, "sauberer Nachbarmonat ohne Sitzung"-Fix
+      #   fuer die Verstaerkungs-Faelle - siehe Kommentare in preciseMethod()).
+      #
+      # APPROXIMATIVE Methode (EUR/GBP/CAD) - NEU, bewusst gekennzeichnet:
+      #   Fuer diese 3 Waehrungen fuehrt TradingView frei NUR 3-MONATS-Futures
+      #   (ICEEUR:I Euribor / ICEEUR:SO3 SONIA / TMX:CRA CORRA), keine
+      #   1-Monats-Kontrakte (mehrfach per Live-Probe bestaetigt - 1M-Ticker
+      #   existieren laut TradingView-Symbolsuche, liefern aber keine Preise).
+      #   Ein 3-Monats-Future kann NICHT sauber einem einzelnen Meeting
+      #   zugeordnet werden, wenn mehrere Sitzungen ins selbe Quartal fallen
+      #   (bei EZB/BoE/BoC der Regelfall) - eine exakte Meeting-fuer-Meeting-
+      #   Aufloesung wie bei USD/AUD ist mit frei verfuegbaren Futures-Daten
+      #   allein NICHT moeglich (braeuchte optionen-implizite/OIS-Daten wie
+      #   das bezahlte CME-Tool bzw. rateprobability.com). Stattdessen: die
+      #   Kontrakt-Kurve wird als glatte, linear interpolierte FORWARD-KURVE
+      #   gelesen (Ankerpunkte: heutiger Referenzzins + je ein Punkt pro
+      #   Kontraktmonat in der Mitte des Monats) und pro Sitzung am Mittelpunkt
+      #   ihrer "Kontrollperiode" (bis zur naechsten Sitzung) abgetastet - das
+      #   ist eine ehrliche, aus echten Marktpreisen abgeleitete Naeherung
+      #   (keine erfundene Zahl), aber strukturell ungenauer als USD/AUD. Der
+      #   Client kennzeichnet das per method:"approx"-Feld sichtbar.
+      #
+      # Referenzzinsen (alle frei, taeglich, kein API-Key):
+      #   USD: NY Fed Markets Data API (EFFR) - primaere Quelle, FRED spiegelt
+      #        nur (FRED blockte GitHub-Runner-IPs wiederholt, siehe unten).
+      #   AUD: RBA Statistical Table F1.1 CSV (Cash Rate Target).
+      #   EUR: ECB Data Portal SDMX csvdata (EST = Euro Short-Term Rate).
+      #   GBP: Bank of England IADB CSV (Serie IUDSOIA = SONIA).
+      #   CAD: Bank of Canada Valet API (Serie AVG.INTWO = CORRA).
+      #
+      # Historie: taeglich EIN Snapshot PRO WAEHRUNG ergaenzt (wie bond_data/
+      # price_data/score_hist) - ein rueckwirkender Backfill war fuer KEINE
+      # der 5 Waehrungen moeglich (bezahlte APIs/geblockte Einzelkontrakt-
+      # Seiten/keine verlaesslichen historischen Settlement-Preise bei
+      # TradingView) - waechst deshalb ab jetzt echt einen Punkt pro Tag.
+      - name: Fetch rate probabilities (Fed/RBA/ECB/BoE/BoC) -> rate_probabilities.json
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          # workflow_dispatch-Testlauf 2026-07-20 zeigte 0 Bytes ohne HTTP-Status
-          # (curl legt bei komplettem Verbindungsfehler die -o-Datei gar nicht erst
-          # an) - jetzt mit sichtbarem HTTP-Code/Groesse + einem Retry nach 5s,
-          # gleiches iteratives Debug-Muster wie bei den anderen Feeds hier.
-          # 2. Testlauf zeigte "exit 92" (CURLE_HTTP2_STREAM_ERROR) - FRED/deren
-          # CDN vertraegt curls HTTP/2-Aushandlung offenbar nicht sauber,
-          # --http1.1 erzwingt das altbewaehrte Protokoll.
-          # 3. Testlauf zeigte "exit 28" (CURLE_OPERATION_TIMEDOUT) - ohne
-          # Datumsbereich liefert fredgraph.csv die komplette Historie seit
-          # Serienbeginn, vermutet als Ursache; cosd auf 120 Tage eingegrenzt.
-          # 4. Testlauf (mit cosd UND --http1.1 UND 45s Timeout) zeigte
-          # IMMER NOCH "exit 28", beide Versuche haengen exakt bis zum
-          # --max-time fest (0 Bytes, http=000, keine Server-Antwort ueberhaupt)
-          # - kein Konfigurationsproblem mehr, sondern ein harter Netzwerk-
-          # Stillstand spezifisch gegen fred.stlouisfed.org von GitHub-Actions-
-          # IP-Bereichen aus (die ZQ-Futures-Kurve von TradingView kam bei
-          # ALLEN 4 Laeufen sofort und fehlerfrei an - kein generelles
-          # Netzwerkproblem des Runners). Deshalb komplett auf die NY Fed
-          # Markets Data API umgestellt (markets.newyorkfed.org) - das ist die
-          # PRIMAERE Quelle, die FRED selbst nur spiegelt, oeffentlich, ohne
-          # API-Key, aber ein anderer Host/CDN als FRED und daher potenziell
-          # nicht vom selben Block betroffen.
-          NYFED_URL="https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json"
-          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR curl: http=%{http_code} size=%{size_download}\n" "$NYFED_URL" -o rate_fred.json || echo "[debug] NY Fed EFFR curl: command failed (exit $?)"
-          if [ ! -s rate_fred.json ]; then
-            echo "[debug] NY Fed EFFR curl: empty/missing, retrying once after 5s"
-            sleep 5
-            curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR curl retry: http=%{http_code} size=%{size_download}\n" "$NYFED_URL" -o rate_fred.json || echo "[debug] NY Fed EFFR curl retry: command failed (exit $?)"
-          fi
-          echo "[debug] rate_fred.json: $([ -f rate_fred.json ] && wc -c < rate_fred.json || echo 0) bytes"
-          echo "=== NY Fed EFFR response (first 300 chars) ==="
-          head -c 300 rate_fred.json 2>/dev/null || echo "(missing)"
-          echo
+          # USD EFFR: NY Fed Markets Data API (siehe aeltere Kommentar-Historie
+          # im Git-Log dieser Datei fuer die vier Iterationsrunden, die zu
+          # dieser Quelle fuehrten - FRED blockte GitHub-Runner-IPs dauerhaft).
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR curl: http=%{http_code} size=%{size_download}\n" "https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json" -o rate_usd_ref.json || echo "[debug] NY Fed EFFR curl: command failed (exit $?)"
+          if [ ! -s rate_usd_ref.json ]; then sleep 5; curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] NY Fed EFFR retry: http=%{http_code} size=%{size_download}\n" "https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json" -o rate_usd_ref.json || true; fi
+          # AUD Cash Rate Target: RBA Statistical Table F1.1 (Money Market).
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] RBA F1.1 curl: http=%{http_code} size=%{size_download}\n" "https://www.rba.gov.au/statistics/tables/csv/f1.1-data.csv" -o rate_aud_ref.csv || echo "[debug] RBA F1.1 curl: command failed (exit $?)"
+          # EUR Euro Short-Term Rate: ECB Data Portal SDMX csvdata.
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] ECB ESTR curl: http=%{http_code} size=%{size_download}\n" "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=csvdata" -o rate_eur_ref.csv || echo "[debug] ECB ESTR curl: command failed (exit $?)"
+          # GBP SONIA: Bank of England Interactive Database (Serie IUDSOIA).
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoE SONIA curl: http=%{http_code} size=%{size_download}\n" "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jun/2026&Dateto=now&SeriesCodes=IUDSOIA&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N" -o rate_gbp_ref.csv || echo "[debug] BoE SONIA curl: command failed (exit $?)"
+          # CAD CORRA: Bank of Canada Valet API (Serie AVG.INTWO).
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoC CORRA curl: http=%{http_code} size=%{size_download}\n" "https://www.bankofcanada.ca/valet/observations/AVG.INTWO/json?recent=5" -o rate_cad_ref.json || echo "[debug] BoC CORRA curl: command failed (exit $?)"
+          echo "=== ref-rate responses (first 200 chars each) ==="
+          for f in rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json; do echo "--- $f ---"; head -c 200 "$f" 2>/dev/null || echo "(missing)"; echo; done
+
+          # Futures-Kurven: EIN gemeinsamer TradingView-Scanner-Call fuer alle
+          # 5 Wurzeln (CBOT:ZQ/ASX24:IB praezise 1-Monats-Ketten 14 Monate
+          # voraus, TMX:CRA/ICEEUR:SO3/ICEEUR:I approximative 3-Monats-Ketten
+          # 8 Monate voraus - reicht fuer die naechsten ~2 Kontraktzyklen).
           node -e '
             const fs=require("fs");
-            const today=new Date();
             const CODE=["","F","G","H","J","K","M","N","Q","U","V","X","Z"];
+            const today=new Date();
             const tickers=[];
-            for(let i=0;i<14;i++){
-              const d=new Date(today.getFullYear(),today.getMonth()+i,1);
-              tickers.push("CBOT:ZQ"+CODE[d.getMonth()+1]+d.getFullYear());
-            }
+            const push=(root,n)=>{for(let i=0;i<n;i++){const d=new Date(today.getFullYear(),today.getMonth()+i,1);tickers.push(root+CODE[d.getMonth()+1]+d.getFullYear());}};
+            push("CBOT:ZQ",14);
+            push("ASX24:IB",10);
+            push("TMX:CRA",8);
+            push("ICEEUR:SO3",8);
+            push("ICEEUR:I",8);
             fs.writeFileSync("rate_tv_tickers.json",JSON.stringify(tickers));
           '
           TICKERS=$(node -e 'console.log(JSON.stringify(JSON.parse(require("fs").readFileSync("rate_tv_tickers.json","utf8"))))')
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
             --data "{\"symbols\":{\"tickers\":${TICKERS},\"query\":{\"types\":[]}},\"columns\":[\"close\"]}" \
+            -w "[debug] scanner curl: http=%{http_code} size=%{size_download}\n" \
             "https://scanner.tradingview.com/global/scan" -o rate_tv.json || true
-          echo "=== TradingView ZQ scanner response (first 500 chars) ==="
+          echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 rate_tv.json 2>/dev/null || echo "(missing)"
           echo
+
           node -e '
             const fs=require("fs");
             const today=new Date().toISOString().slice(0,10);
             const round2=v=>Math.round(v*100)/100;
+            const CODE=["F","G","H","J","K","M","N","Q","U","V","X","Z"];
 
-            // 1) Aktueller Referenzzins (EFFR, NY Fed Markets Data API, taeglich -
-            //    primaere Quelle, die FRED selbst nur spiegelt).
-            let Rcurrent=null;
-            try{
-              const d=JSON.parse(fs.readFileSync("rate_fred.json","utf8"));
-              const r=d&&Array.isArray(d.refRates)&&d.refRates[0];
-              const v=r&&Number(r.percentRate);
-              if(isFinite(v))Rcurrent=v;
-            }catch(e){}
-            if(Rcurrent==null){console.log("rate_probabilities: EFFR unreadable from NY Fed, skipping (keeping existing file)");process.exit(0);}
-
-            // 2) ZQ-Futures-Kurve (ein Kontrakt je Kalendermonat, 14 Monate voraus).
-            let tvResp;
-            try{tvResp=JSON.parse(fs.readFileSync("rate_tv.json","utf8"));}catch(e){console.log("rate_probabilities: TradingView response unreadable, skipping");process.exit(0);}
-            const rows=tvResp&&Array.isArray(tvResp.data)?tvResp.data:null;
-            if(!rows||!rows.length){console.log("rate_probabilities: no ZQ contract data from TradingView (ticker format likely wrong - check ZQ scanner response above), skipping");process.exit(0);}
-            const monthlyRate={};let okN=0;const miss=[];
-            rows.forEach(r=>{
-              const m=/^CBOT:ZQ([A-Z])(\d{4})$/.exec(r.s);
-              const v=r.d&&r.d[0];
-              if(!m||v==null||!isFinite(Number(v))){miss.push(r.s);return;}
-              const CODE=["F","G","H","J","K","M","N","Q","U","V","X","Z"];
-              const mo=CODE.indexOf(m[1])+1;if(mo<1)return;
-              monthlyRate[m[2]+"-"+String(mo).padStart(2,"0")]=100-Number(v);
-              okN++;
-            });
-            if(!okN){console.log("rate_probabilities: 0 usable ZQ contracts (all missed: "+miss.join(", ")+"), skipping");process.exit(0);}
-
-            // 3) FOMC-Sitzungstermine (offiziell bestaetigt via federalreserve.gov,
-            //    Entscheidungstag = 2. Tag der Sitzung). 2027-Termine noch nicht
-            //    veroeffentlicht - sobald verfuegbar hier ergaenzen.
-            const MEETINGS=[
-              ["2025-01-29","Jan 28-29, 2025"],["2025-03-19","Mar 18-19, 2025"],
-              ["2025-05-07","May 6-7, 2025"],["2025-06-18","Jun 17-18, 2025"],
-              ["2025-07-30","Jul 29-30, 2025"],["2025-09-17","Sep 16-17, 2025"],
-              ["2025-10-29","Oct 28-29, 2025"],["2025-12-10","Dec 9-10, 2025"],
-              ["2026-01-28","Jan 27-28, 2026"],["2026-03-18","Mar 17-18, 2026"],
-              ["2026-04-29","Apr 28-29, 2026"],["2026-06-17","Jun 16-17, 2026"],
-              ["2026-07-29","Jul 28-29, 2026"],["2026-09-16","Sep 15-16, 2026"],
-              ["2026-10-28","Oct 27-28, 2026"],["2026-12-09","Dec 8-9, 2026"]
-            ];
-
-            // 4) Sitzung fuer Sitzung verketten: R_nachher einer Sitzung wird
-            //    zu R_vorher der naechsten (tageszahl-gewichtete CME-Formel).
-            //    Erster Live-Testlauf zeigte unplausible Spruenge (z.B. Okt
-            //    -81bp direkt gefolgt von Dez +122bp), obwohl die zugrunde
-            //    liegende Monats-Kurve selbst glatt und leicht steigend war -
-            //    Ursache: Sitzungen kurz vor Monatsende (z.B. 29. von 31 Tagen)
-            //    haben ein winziges "after"-Fenster (hier: 2 Tage), das jede
-            //    kleine Ungenauigkeit im Kontraktpreis stark verstaerkt, und
-            //    dieser verstaerkte Fehler pflanzt sich durch die Kette fort.
-            //    Fix: wo ein Kalendermonat OHNE Sitzung zwischen zwei
-            //    Sitzungen liegt (z.B. August zwischen Jul- und Sep-Meeting),
-            //    ist dessen Monats-Durchschnitt ein sauberer DIREKTER Messwert
-            //    fuer den zu dem Zeitpunkt geltenden Zins (kein Meeting =
-            //    keine Rechnung noetig) - wird bevorzugt genutzt statt der
-            //    verketteten (fehleranfaelligen) Herleitung aus der vorherigen
-            //    Sitzung, wann immer ein solcher sauberer Monat existiert.
-            //
-            //    Nutzer-Bugreport 2026-07-20 (Vergleich mit dem echten CME-
-            //    FedWatch-Tool): fuer Jul 29, 2026 zeigte CME 83,4% Hold/16,6%
-            //    Hike/0% Ease, mein Wert war deltaBp=-4 (also Cut-lastig) -
-            //    fast exakt dieselbe Magnitude wie CMEs implizites +4bp, nur
-            //    mit gedrehtem Vorzeichen. Ursache: derselbe Verstaerkungs-
-            //    Effekt wie oben, aber diesmal INNERHALB des Juli-Meetings
-            //    selbst (29 von 31 Tagen VOR der Sitzung -> nur 2 Tage
-            //    DANACH im eigenen Monat -> Verstaerkungsfaktor 31/2=15,5x),
-            //    nicht in der Verkettung zum naechsten Meeting - der obige
-            //    Fix deckte nur die Verkettung ab, nicht diesen Fall. Analoger
-            //    Fix: existiert der Monat DIREKT NACH diesem Meeting und
-            //    enthaelt SELBST kein Meeting (hier: August), ist dessen
-            //    Monats-Durchschnitt ein sauberer DIREKTER Messwert fuer
-            //    R_nachher (der Zins aendert sich zwischen der Sitzung und dem
-            //    naechsten Meeting nicht mehr) - wird bevorzugt genutzt statt
-            //    der verstaerkungsanfaelligen tageszahl-gewichteten Herleitung
-            //    aus dem eigenen (u.U. sehr kurzen) "Danach"-Fenster.
-            let Rprev=Rcurrent;
-            const meetings=[];
-            const filtered=MEETINGS.filter(([d])=>d>=today);
-            filtered.forEach(([date,label],idx)=>{
-              const [y,mo,day]=date.split("-").map(Number);
-              const monthKey=y+"-"+String(mo).padStart(2,"0");
-              const contractRate=monthlyRate[monthKey];
-              if(contractRate==null){meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:null,deltaBp:null});return;}
-              // Sauberen Vormonat suchen: den Monat direkt vor diesem Meeting,
-              // falls er selbst KEIN Meeting enthaelt und Kursdaten vorliegen.
-              const prevMonthDate=new Date(y,mo-2,1);
-              const prevMonthKey=prevMonthDate.getFullYear()+"-"+String(prevMonthDate.getMonth()+1).padStart(2,"0");
-              const prevMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===prevMonthKey);
-              if(!prevMeetingInThatMonth&&monthlyRate[prevMonthKey]!=null)Rprev=monthlyRate[prevMonthKey];
-              const daysInMonth=new Date(y,mo,0).getDate();
-              const before=day,after=daysInMonth-before;
-              // Sauberen Folgemonat suchen: existiert er (kein eigenes
-              // Meeting, Kursdaten vorhanden), liefert er R_nachher direkt
-              // und unverstaerkt - immer genauer als die tageszahl-gewichtete
-              // Herleitung aus dem eigenen (oft kurzen) "Danach"-Fenster.
-              const nextMonthDate=new Date(y,mo,1);
-              const nextMonthKey=nextMonthDate.getFullYear()+"-"+String(nextMonthDate.getMonth()+1).padStart(2,"0");
-              const nextMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===nextMonthKey);
-              const cleanNext=(!nextMeetingInThatMonth&&monthlyRate[nextMonthKey]!=null)?monthlyRate[nextMonthKey]:null;
-              const Rafter=cleanNext!=null?cleanNext:(after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after);
-              const deltaBp=Math.round((Rafter-Rprev)*100);
-              meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:round2(Rafter),deltaBp});
-              Rprev=Rafter;
-            });
-
-            // 5) Datei schreiben + taeglichen Historien-Punkt ergaenzen (ein
-            //    Eintrag pro Kalendertag, wie bond_data/price_data/score_hist).
-            let out={history:[]};
-            try{const d=JSON.parse(fs.readFileSync("rate_probabilities.json","utf8"));if(d&&typeof d==="object")out=d;}catch(e){}
-            out.asOf=today;
-            out.currentRate=round2(Rcurrent);
-            out.meetings=meetings;
-            out.history=Array.isArray(out.history)?out.history.filter(e=>e&&e[0]!==today):[];
-            out.history.push([today,round2(Rcurrent),meetings.filter(m=>m.deltaBp!=null).map(m=>[m.date,m.deltaBp])]);
-            out.history.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-            if(out.history.length>400)out.history.splice(0,out.history.length-400);
-
-            // 6) Zuletzt VERGANGENER Termin (Nutzer-Wunsch 2026-07-20: "wenn
-            //    das Meeting kommt und die Rate rauskommt soll das
-            //    gekennzeichnet sein... welche Rate wirklich rauskam") - das
-            //    Ergebnis wird NICHT geschaetzt, sondern ausschliesslich aus
-            //    der taeglich akkumulierten EFFR-Historie (out.history, echte
-            //    NY-Fed-Werte) abgeleitet: EFFR am letzten Tag VOR dem Termin
-            //    vs. am ersten Tag NACH dem Termin. Da diese Historie erst ab
-            //    2026-07-20 zu laufen beginnt (kein Backfill, siehe Grundsatz
-            //    oben), liefert das fuer den naechsten anstehenden Termin
-            //    (aktuell 2026-07-29) erst ab Ende Juli/Anfang August ein
-            //    Ergebnis - bis dahin bleibt pastMeeting bewusst null statt
-            //    eine Vermutung zu zeigen.
-            const pastCandidates=MEETINGS.filter(([d])=>d<today).slice(-1);
-            let pastMeeting=null;
-            if(pastCandidates.length){
-              const[pd,plabel]=pastCandidates[0];
-              const before=out.history.filter(h=>h[0]<pd).slice(-1)[0];
-              const after=out.history.filter(h=>h[0]>pd).slice(0,1)[0];
-              if(before&&after){
-                const deltaBp=Math.round((after[1]-before[1])*100);
-                const bucket=Math.round(deltaBp/25)*25;
-                pastMeeting={date:pd,label:plabel,realizedDeltaBp:deltaBp,realizedBucket:bucket,rateBefore:before[1],rateAfter:after[1]};
-              }
+            // ── Referenzzinsen parsen (je Waehrung eigenes Format) ──────────
+            function parseUsdRef(){
+              try{const d=JSON.parse(fs.readFileSync("rate_usd_ref.json","utf8"));const r=d&&Array.isArray(d.refRates)&&d.refRates[0];const v=r&&Number(r.percentRate);return isFinite(v)?v:null;}catch(e){return null;}
             }
-            out.pastMeeting=pastMeeting;
+            function parseAudRef(){
+              // RBA-CSV: mehrere Header-Zeilen, dann Datenzeilen "3-Jul-2026,3.60,...".
+              // Letzte Zeile nehmen, bei der Spalte 1 ein gueltiges Datum UND
+              // Spalte 2 (Cash Rate Target) eine Zahl ist.
+              try{
+                const lines=fs.readFileSync("rate_aud_ref.csv","utf8").split(/\r?\n/);
+                let last=null;
+                lines.forEach(line=>{
+                  const cols=line.split(",");
+                  if(cols.length<2)return;
+                  const dt=new Date(cols[0].trim());
+                  const v=Number(cols[1].trim());
+                  if(!isNaN(dt.getTime())&&isFinite(v)&&cols[1].trim()!=="")last=v;
+                });
+                return last;
+              }catch(e){return null;}
+            }
+            function parseEurRef(){
+              // ECB SDMX csvdata: Header-Zeile + eine Datenzeile, OBS_VALUE-Spalte.
+              try{
+                const lines=fs.readFileSync("rate_eur_ref.csv","utf8").split(/\r?\n/).filter(l=>l.trim());
+                if(lines.length<2)return null;
+                const hdr=lines[0].split(",");
+                const idx=hdr.indexOf("OBS_VALUE");
+                if(idx<0)return null;
+                const v=Number(lines[lines.length-1].split(",")[idx]);
+                return isFinite(v)?v:null;
+              }catch(e){return null;}
+            }
+            function parseGbpRef(){
+              // BoE-CSV: "DATE,IUDSOIA\n01 Jun 2026,3.7291\n...", letzte Zeile.
+              try{
+                const lines=fs.readFileSync("rate_gbp_ref.csv","utf8").split(/\r?\n/).filter(l=>l.trim());
+                if(lines.length<2)return null;
+                const v=Number(lines[lines.length-1].split(",")[1]);
+                return isFinite(v)?v:null;
+              }catch(e){return null;}
+            }
+            function parseCadRef(){
+              try{
+                const d=JSON.parse(fs.readFileSync("rate_cad_ref.json","utf8"));
+                const obs=d&&Array.isArray(d.observations)?d.observations:[];
+                for(let i=obs.length-1;i>=0;i--){
+                  const v=obs[i]&&obs[i]["AVG.INTWO"]&&Number(obs[i]["AVG.INTWO"].v);
+                  if(isFinite(v))return v;
+                }
+                return null;
+              }catch(e){return null;}
+            }
 
-            fs.writeFileSync("rate_probabilities.json",JSON.stringify(out,null,1));
-            console.log("rate_probabilities.json: EFFR="+Rcurrent+"%, "+okN+" ZQ contracts read"+(miss.length?" [no data: "+miss.join(", ")+"]":"")+", "+meetings.length+" upcoming meetings, history="+out.history.length+" days"+(pastMeeting?", pastMeeting="+pastMeeting.label+" realized "+pastMeeting.realizedDeltaBp+"bp":", pastMeeting=none yet"));
+            // ── Futures-Kurve parsen: Ticker-Root -> {monthKey:"YYYY-MM"->rate} ──
+            let tvResp;try{tvResp=JSON.parse(fs.readFileSync("rate_tv.json","utf8"));}catch(e){tvResp=null;}
+            const tvRows=(tvResp&&Array.isArray(tvResp.data))?tvResp.data:[];
+            function curveFor(rootEsc){
+              const re=new RegExp("^"+rootEsc+"([A-Z])(\\d{4})$");
+              const out={};let n=0;
+              tvRows.forEach(r=>{
+                const m=re.exec(r.s);
+                const v=r.d&&r.d[0];
+                if(!m||v==null||!isFinite(Number(v)))return;
+                const mo=CODE.indexOf(m[1])+1;if(mo<1)return;
+                out[m[2]+"-"+String(mo).padStart(2,"0")]=100-Number(v);
+                n++;
+              });
+              return{rates:out,n};
+            }
+            const zqCurve=curveFor("CBOT\\:ZQ");
+            const ibCurve=curveFor("ASX24\\:IB");
+            const craCurve=curveFor("TMX\\:CRA");
+            const so3Curve=curveFor("ICEEUR\\:SO3");
+            const ieCurve=curveFor("ICEEUR\\:I");
+
+            // ── PRAEZISE Methode (USD/AUD): identisch zur urspruenglichen
+            //    ZQ-Verkettungslogik, nur parametrisiert (siehe Blockkommentar
+            //    oben im YAML fuer die Herleitung/Bugfix-Historie).
+            function preciseMethod(Rcurrent,monthlyRate,MEETINGS){
+              let Rprev=Rcurrent;
+              const meetings=[];
+              MEETINGS.filter(([d])=>d>=today).forEach(([date,label])=>{
+                const [y,mo,day]=date.split("-").map(Number);
+                const monthKey=y+"-"+String(mo).padStart(2,"0");
+                const contractRate=monthlyRate[monthKey];
+                if(contractRate==null){meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:null,deltaBp:null});return;}
+                const prevMonthDate=new Date(y,mo-2,1);
+                const prevMonthKey=prevMonthDate.getFullYear()+"-"+String(prevMonthDate.getMonth()+1).padStart(2,"0");
+                const prevMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===prevMonthKey);
+                if(!prevMeetingInThatMonth&&monthlyRate[prevMonthKey]!=null)Rprev=monthlyRate[prevMonthKey];
+                const daysInMonth=new Date(y,mo,0).getDate();
+                const before=day,after=daysInMonth-before;
+                const nextMonthDate=new Date(y,mo,1);
+                const nextMonthKey=nextMonthDate.getFullYear()+"-"+String(nextMonthDate.getMonth()+1).padStart(2,"0");
+                const nextMeetingInThatMonth=MEETINGS.some(([d2])=>d2.slice(0,7)===nextMonthKey);
+                const cleanNext=(!nextMeetingInThatMonth&&monthlyRate[nextMonthKey]!=null)?monthlyRate[nextMonthKey]:null;
+                const Rafter=cleanNext!=null?cleanNext:(after<=0?contractRate:(contractRate*daysInMonth-before*Rprev)/after);
+                const deltaBp=Math.round((Rafter-Rprev)*100);
+                meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:round2(Rafter),deltaBp});
+                Rprev=Rafter;
+              });
+              return meetings;
+            }
+
+            // ── APPROXIMATIVE Methode (EUR/GBP/CAD): 3-Monats-Kontrakte als
+            //    glatte, linear interpolierte Forward-Kurve gelesen (Ankerpunkte:
+            //    je ein Punkt am 15. jedes Kontraktmonats). Pro Sitzung wird die
+            //    Kurve am MITTELPUNKT ihrer "Kontrollperiode" (bis zur naechsten
+            //    Sitzung, letzte +45 Tage) abgetastet - liefert die vom Markt
+            //    ueber diesen Zeitraum im Schnitt erwartete Zins-Stufe. Kein
+            //    Raten: jede Zahl stammt direkt aus echten, gerade abgerufenen
+            //    Kontraktpreisen, aber die Meeting-Zuordnung ist eine
+            //    dokumentierte Naeherung (siehe method:"approx" im Output +
+            //    Info-Text im Client).
+            //
+            //    crossBenchmark-Parameter (Live-Test-Fund 2026-07-25): GBP/CAD
+            //    nutzen SONIA-3M/CORRA-3M-Futures, die WOERTLICH denselben
+            //    Referenzzins (SONIA/CORRA) verketten wie der Spot-Wert - dort
+            //    ist der heutige Spot-Referenzzins ein GUELTIGER Kurven-Ankerpunkt.
+            //    EUR nutzt dagegen Euribor-3M-Futures (kein €STR-Future frei
+            //    verfuegbar) - Euribor ist ein ANDERER Zins als €STR (unbesicherter
+            //    Termingeldsatz mit Kredit-/Liquiditaetsspread, historisch grob
+            //    +10-40bp ueber €STR, aber nicht exakt bekannt/live abrufbar).
+            //    Wuerde man €STR direkt als ersten Kurvenpunkt einsetzen, entstuende
+            //    ein kuenstlicher Sprung beim ersten Meeting (Spread verwechselt mit
+            //    einer erwarteten Zinsaenderung) - im Test mit echten Kontraktdaten
+            //    reproduziert (+43bp Phantom-Sprung). Fix: bei crossBenchmark=true
+            //    wird der "heute"-Ankerpunkt stattdessen RUECKWAERTS aus den beiden
+            //    naechsten Kurvenpunkten EXTRAPOLIERT (bleibt innerhalb derselben
+            //    Euribor-Serie, keine Quellen-Vermischung) - der Spot-€STR-Wert wird
+            //    weiterhin fuer die "Current rate"-Anzeige verwendet, nur nicht als
+            //    Kettenstart der Meeting-Deltas.
+            function approxMethod(Rcurrent,monthlyRate,MEETINGS,crossBenchmark){
+              const curvePts=Object.keys(monthlyRate).sort().map(k=>{
+                const[y,m]=k.split("-").map(Number);
+                return{t:new Date(y,m-1,15).getTime(),r:monthlyRate[k]};
+              });
+              const todayMs=new Date(today+"T00:00:00").getTime();
+              let Rtoday=Rcurrent;
+              if(crossBenchmark&&curvePts.length>=2&&curvePts[0].t>todayMs){
+                const slope=(curvePts[1].r-curvePts[0].r)/(curvePts[1].t-curvePts[0].t);
+                Rtoday=curvePts[0].r+slope*(todayMs-curvePts[0].t);
+              }
+              const anchors=[{t:todayMs,r:Rtoday},...curvePts].sort((a,b)=>a.t-b.t);
+              function curveAt(t){
+                if(anchors.length===0)return null;
+                if(t<=anchors[0].t)return anchors[0].r;
+                if(t>=anchors[anchors.length-1].t)return anchors[anchors.length-1].r;
+                for(let i=0;i<anchors.length-1;i++){
+                  if(t>=anchors[i].t&&t<=anchors[i+1].t){
+                    const frac=(t-anchors[i].t)/(anchors[i+1].t-anchors[i].t);
+                    return anchors[i].r+frac*(anchors[i+1].r-anchors[i].r);
+                  }
+                }
+                return anchors[anchors.length-1].r;
+              }
+              const upcoming=MEETINGS.filter(([d])=>d>=today);
+              let Rprev=Rtoday;
+              const meetings=[];
+              upcoming.forEach(([date,label],idx)=>{
+                const periodEndMs=idx+1<upcoming.length?new Date(upcoming[idx+1][0]+"T00:00:00").getTime():new Date(date+"T00:00:00").getTime()+45*86400000;
+                const midMs=(new Date(date+"T00:00:00").getTime()+periodEndMs)/2;
+                const Rafter=curveAt(midMs);
+                if(Rafter==null){meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:null,deltaBp:null,approx:true});return;}
+                const deltaBp=Math.round((Rafter-Rprev)*100);
+                meetings.push({date,label,rateBefore:round2(Rprev),rateAfter:round2(Rafter),deltaBp,approx:true});
+                Rprev=Rafter;
+              });
+              return meetings;
+            }
+
+            // ── Offizielle Sitzungstermine je Zentralbank (Entscheidungstag,
+            //    aus federalreserve.gov/rba.gov.au/ecb.europa.eu/bankofengland.co.uk/
+            //    bankofcanada.ca recherchiert). 2027-Termine folgen, sobald
+            //    veroeffentlicht - dann hier ergaenzen (wie bisher bei FOMC).
+            const MEETINGS_BY_CCY={
+              USD:[
+                ["2025-01-29","Jan 28-29, 2025"],["2025-03-19","Mar 18-19, 2025"],
+                ["2025-05-07","May 6-7, 2025"],["2025-06-18","Jun 17-18, 2025"],
+                ["2025-07-30","Jul 29-30, 2025"],["2025-09-17","Sep 16-17, 2025"],
+                ["2025-10-29","Oct 28-29, 2025"],["2025-12-10","Dec 9-10, 2025"],
+                ["2026-01-28","Jan 27-28, 2026"],["2026-03-18","Mar 17-18, 2026"],
+                ["2026-04-29","Apr 28-29, 2026"],["2026-06-17","Jun 16-17, 2026"],
+                ["2026-07-29","Jul 28-29, 2026"],["2026-09-16","Sep 15-16, 2026"],
+                ["2026-10-28","Oct 27-28, 2026"],["2026-12-09","Dec 8-9, 2026"]
+              ],
+              AUD:[
+                ["2026-02-03","Feb 2-3, 2026"],["2026-03-17","Mar 16-17, 2026"],
+                ["2026-05-05","May 4-5, 2026"],["2026-06-16","Jun 15-16, 2026"],
+                ["2026-08-11","Aug 10-11, 2026"],["2026-09-29","Sep 28-29, 2026"],
+                ["2026-11-03","Nov 2-3, 2026"],["2026-12-08","Dec 7-8, 2026"]
+              ],
+              EUR:[
+                ["2026-01-25","Jan 25, 2026"],["2026-03-19","Mar 19, 2026"],
+                ["2026-04-30","Apr 30, 2026"],["2026-06-11","Jun 11, 2026"],
+                ["2026-07-23","Jul 23, 2026"],["2026-09-10","Sep 10, 2026"],
+                ["2026-10-29","Oct 29, 2026"],["2026-12-17","Dec 17, 2026"]
+              ],
+              GBP:[
+                ["2026-02-05","Feb 5, 2026"],["2026-03-19","Mar 19, 2026"],
+                ["2026-04-30","Apr 30, 2026"],["2026-06-18","Jun 18, 2026"],
+                ["2026-07-30","Jul 30, 2026"],["2026-09-17","Sep 17, 2026"],
+                ["2026-11-05","Nov 5, 2026"],["2026-12-17","Dec 17, 2026"]
+              ],
+              // BoC: nur Termine ab Juli 2026 recherchiert/bestaetigt (fruehere
+              // 2026-Termine liegen ohnehin in der Vergangenheit und werden nie
+              // angezeigt - Jul 15 dient als letztes VERGANGENES Meeting fuer
+              // die pastMeeting-Kennzeichnung, siehe unten).
+              CAD:[
+                ["2026-07-15","Jul 15, 2026"],["2026-09-02","Sep 2, 2026"],
+                ["2026-10-28","Oct 28, 2026"],["2026-12-09","Dec 9, 2026"]
+              ]
+            };
+
+            // method-Funktionen einheitlich als (Rcurrent,rates,meetings)=>meetings[]
+            // gewrappt, damit der Aufruf unten fuer alle 5 Waehrungen gleich bleibt
+            // (crossBenchmark ist nur fuer EUR true, siehe approxMethod-Kommentar).
+            const CCY_CFG={
+              USD:{ref:parseUsdRef,curve:zqCurve,isPrecise:true,method:preciseMethod,refSource:"NY Fed (EFFR)"},
+              AUD:{ref:parseAudRef,curve:ibCurve,isPrecise:true,method:preciseMethod,refSource:"RBA (Cash Rate Target)"},
+              EUR:{ref:parseEurRef,curve:ieCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"ECB (€STR) + Euribor 3M curve"},
+              GBP:{ref:parseGbpRef,curve:so3Curve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoE (SONIA) + SONIA 3M curve"},
+              CAD:{ref:parseCadRef,curve:craCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoC (CORRA) + CORRA 3M curve"}
+            };
+
+            // ── Bestehende Datei laden (Multi-Waehrungs-Struktur; migriert
+            //    automatisch aus dem alten Flat-USD-Format falls noch vorhanden).
+            let full={};
+            try{
+              const d=JSON.parse(fs.readFileSync("rate_probabilities.json","utf8"));
+              if(d&&typeof d==="object"){
+                if(d.USD||d.AUD||d.EUR||d.GBP||d.CAD)full=d;
+                else if(d.currentRate!=null)full={USD:d}; // Alt-Format-Migration
+              }
+            }catch(e){}
+
+            const summary=[];
+            Object.keys(CCY_CFG).forEach(ccy=>{
+              const cfg=CCY_CFG[ccy];
+              const Rcurrent=cfg.ref();
+              if(Rcurrent==null){summary.push(ccy+": ref-rate unreadable, skipped (kept existing)");return;}
+              if(cfg.curve.n===0){summary.push(ccy+": 0 futures contracts, skipped (kept existing)");return;}
+              const meetings=cfg.method(Rcurrent,cfg.curve.rates,MEETINGS_BY_CCY[ccy]);
+
+              let out=full[ccy]&&typeof full[ccy]==="object"?full[ccy]:{history:[]};
+              out.asOf=today;
+              out.currentRate=round2(Rcurrent);
+              out.meetings=meetings;
+              out.method=cfg.isPrecise?"precise":"approx";
+              out.refSource=cfg.refSource;
+              out.history=Array.isArray(out.history)?out.history.filter(e=>e&&e[0]!==today):[];
+              out.history.push([today,round2(Rcurrent),meetings.filter(m=>m.deltaBp!=null).map(m=>[m.date,m.deltaBp])]);
+              out.history.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              if(out.history.length>400)out.history.splice(0,out.history.length-400);
+
+              // Zuletzt VERGANGENER Termin (echtes Ergebnis, ausschliesslich aus
+              // der taeglich akkumulierten Referenzzins-Historie abgeleitet -
+              // siehe Blockkommentar oben im YAML, identisches Prinzip fuer
+              // alle 5 Waehrungen).
+              const pastCandidates=MEETINGS_BY_CCY[ccy].filter(([d])=>d<today).slice(-1);
+              let pastMeeting=null;
+              if(pastCandidates.length){
+                const[pd,plabel]=pastCandidates[0];
+                const before=out.history.filter(h=>h[0]<pd).slice(-1)[0];
+                const after=out.history.filter(h=>h[0]>pd).slice(0,1)[0];
+                if(before&&after){
+                  const deltaBp=Math.round((after[1]-before[1])*100);
+                  const bucket=Math.round(deltaBp/25)*25;
+                  pastMeeting={date:pd,label:plabel,realizedDeltaBp:deltaBp,realizedBucket:bucket,rateBefore:before[1],rateAfter:after[1]};
+                }
+              }
+              out.pastMeeting=pastMeeting;
+
+              full[ccy]=out;
+              summary.push(ccy+": ref="+Rcurrent+"%, "+cfg.curve.n+" contracts, "+meetings.length+" upcoming, method="+out.method+", history="+out.history.length+"d"+(pastMeeting?", past="+pastMeeting.realizedDeltaBp+"bp":""));
+            });
+
+            fs.writeFileSync("rate_probabilities.json",JSON.stringify(full,null,1));
+            console.log("rate_probabilities.json:\n  "+summary.join("\n  "));
           '
-          rm -f rate_fred.json rate_tv.json rate_tv_tickers.json
+          rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_tv.json rate_tv_tickers.json
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt

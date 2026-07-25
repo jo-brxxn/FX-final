@@ -599,6 +599,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .rateprob-pill.future.on{border-color:var(--red);background:rgba(var(--red-rgb),.14);color:var(--red)}
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
+.rateprob-ccybar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.rateprob-ccy-btn{flex:none;display:flex;align-items:center;gap:4px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);font-size:12.5px;font-weight:700;cursor:pointer;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,monospace}
+@media (hover:hover){.rateprob-ccy-btn:hover{border-color:rgba(var(--blue-rgb),.4);color:var(--t0)}}
+.rateprob-ccy-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
+.rateprob-approx-tag{font-size:10px;font-weight:800;color:var(--amber);opacity:.85}
+.rateprob-approx-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;border:1px solid rgba(var(--amber-rgb),.4);background:rgba(var(--amber-rgb),.12);color:var(--amber);font-size:10px;font-weight:700;margin-left:8px;cursor:help}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
@@ -1271,7 +1277,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-YAXIS-223</span><span id="verBannerText"> (Rate-Probabilities-Chart: feste Prozent-Y-Achse links (bleibt beim Verschieben immer sichtbar, Pinned-Axis). Zuvor: adaptive Punktabstaende, senkrechte Heute-Markierung, kommende Meeting-Daten rot (X-Achse + Pillen). Multi-Waehrung (AUD sauber + EUR/GBP/CAD als markierte 3M-Naeherung) folgt als naechstes.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-MULTICCY-224</span><span id="verBannerText"> (Rate Probabilities jetzt fuer 5 Zentralbanken: USD/AUD praezise (1-Monats-Futures, wie bisher), EUR/GBP/CAD als klar markierte 3-Monats-Naeherung (≈-Badge am Waehrungs-Button + im Titel + Info-Text) - freie 1-Monats-Kontrakte existieren fuer diese 3 nachweislich nicht. Waehrungs-Umschalter oben im Tab, Workflow liefert jetzt eine Pro-Waehrung-Struktur in rate_probabilities.json (migriert automatisch vom alten Flat-USD-Format).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -12216,11 +12222,33 @@ SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
 // Cut=BC.bear (dovish), Hold=BC.neu - deckt sich mit "CB Tone"/"Next CB
 // Move" (bullish=hawkish/hike, bearish=dovish/cut).
 let RATE_PROB_DATA=null,rateProbFocus=0;
+// Reine Chart-Auswahl-States wie dataAsset/seasAsset - bleiben bewusst lokal,
+// kein snap()/Cloud-Sync-Feld noetig (siehe CLAUDE.md-Muster).
+let rateProbCcy='USD';
 function fetchRateProbData(){
   return fetch('rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object')RATE_PROB_DATA=d;}).catch(()=>{});
 }
 function autoFetchRateProb(){fetchRateProbData().then(()=>{if(curPage==='rate')renderRateProb();});}
+// rate_probabilities.json ist seit 2026-07-25 pro Waehrung strukturiert
+// ({USD:{...},AUD:{...},...}) statt der urspruenglichen Flat-USD-Form. Dieser
+// Getter kapselt beide Formen (Alt-Format-Fallback nur, falls der Workflow
+// zwischen Client-Deploy und erstem neuen Lauf kurzzeitig noch die alte Datei
+// liefert - kein dauerhafter Zustand).
+function rateProbCcyData(){
+  const D=RATE_PROB_DATA;if(!D)return null;
+  if(D[rateProbCcy]&&typeof D[rateProbCcy]==='object')return D[rateProbCcy];
+  if(rateProbCcy==='USD'&&D.currentRate!=null)return D;
+  return null;
+}
+const RATEPROB_CCYS=['USD','AUD','EUR','GBP','CAD'];
+const RATEPROB_CCY_REFLABEL={USD:'Effective Fed Funds Rate',AUD:'Cash Rate Target',EUR:'€STR',GBP:'SONIA',CAD:'CORRA'};
+const RATEPROB_CCY_MEETLABEL={USD:'FOMC meeting',AUD:'RBA meeting',EUR:'ECB meeting',GBP:'BoE MPC meeting',CAD:'BoC meeting'};
+function setRateProbCcy(ccy){
+  if(!RATEPROB_CCYS.includes(ccy))return;
+  rateProbCcy=ccy;rateProbFocus=0;
+  renderRateProb();
+}
 // Reine Funktion von deltaBp (Basispunkte Aenderung ggue. dem Zins VOR der
 // Sitzung) -> die zwei benachbarten 25bp-Stufen + ihr jeweiliger Anteil,
 // linear interpoliert. Muss exakt der Node-Version im Workflow entsprechen
@@ -12232,13 +12260,15 @@ function probsFromDelta(bp){
   const frac=(bp-lower)/STEP;
   return[[lower,Math.round((1-frac)*1000)/10],[upper,Math.round(frac*1000)/10]];
 }
-SENT_INFO.rateprob=['Rate Probabilities (Fed hike/hold/cut odds)',
-  `<p><b>What it is:</b> the market-implied probability of each possible Fed Funds rate outcome across upcoming FOMC meetings, derived the same way the official (paid) CME FedWatch tool does: 30-Day Fed Funds futures (ticker ZQ) price in the average overnight rate for each calendar month, so a meeting mid-month lets you back out the rate the market expects <b>after</b> the decision, weighted by how many days of that month fall before vs. after it.</p>
+SENT_INFO.rateprob=['Rate Probabilities (central bank hike/hold/cut odds)',
+  `<p><b>What it is:</b> the market-implied probability of each possible policy-rate outcome across upcoming central bank meetings, derived the same way the official (paid) CME FedWatch tool does for the Fed. Use the currency buttons above the chart to switch between the 5 covered central banks.</p>
+   <p><b>USD/AUD (precise method):</b> 30-Day Fed Funds futures (ticker ZQ) resp. ASX 30-Day Interbank Cash Rate futures price in the average overnight rate for each calendar month, so a meeting mid-month lets you back out the rate the market expects <b>after</b> the decision, weighted by how many days of that month fall before vs. after it.</p>
+   <p><b>EUR/GBP/CAD (approximate method, clearly marked):</b> TradingView only carries free <b>3-month</b> rate futures for these three (Euribor / SONIA / CORRA), not 1-month contracts like USD/AUD - a live check confirmed this repeatedly. A 3-month contract can't be cleanly split between meetings when more than one falls in the same quarter (the normal case for the ECB/BoE/BoC), so this app instead reads the contract curve as a smooth, linearly interpolated forward curve and samples it at the midpoint of each meeting's "control period" until the next meeting. Every number still comes from a real, just-fetched market price - nothing is invented - but the per-meeting split is a documented approximation, not the precise resolution USD/AUD get. These three are marked with an "≈ approx" badge next to the currency button and in the currency's own data.</p>
    <p><b>How to read the chart:</b> each line tracks one possible outcome level (e.g. "Hold", "+25bp", "-25bp" relative to today's rate) across the sequence of meetings. A line only appears where that outcome's probability is above 1% - as meetings compound, outlier outcomes (two hikes, a hike then a cut, ...) can cross that threshold and a new line appears, exactly like extra bars showing up on CME's own chart for meetings further out. Hover/tap a point for the exact percentage - the tooltip lists every outcome visible at that meeting, not just the closest one. Use the pills above to jump the chart to a specific meeting instead of scrolling.</p>
    <p><b>"Today" isn't the current rate</b> (that's already shown above the chart) - it's today's market-implied odds for what the <b>next</b> meeting decides, exactly what CME's own tool shows when you open a specific meeting date. That's why "Today" already shows multiple lines, and why the line is flat between "Today" and the first meeting: nothing resolves until the meeting actually happens.</p>
-   <p><b>Once a meeting has passed</b>, it stays visible for a while with a ✓ checkmark and its outcome (e.g. "✓ Hold" or "✓ +25bp"), separated from the forecast by a dashed divider. That outcome is never guessed - it's read directly off the real daily EFFR history this app has been recording (the rate just before vs. just after the meeting), so it only appears once enough days of real data exist on both sides of the meeting date.</p>
+   <p><b>Once a meeting has passed</b>, it stays visible for a while with a ✓ checkmark and its outcome (e.g. "✓ Hold" or "✓ +25bp"), separated from the forecast by a dashed divider. That outcome is never guessed - it's read directly off the real daily reference-rate history this app has been recording (the rate just before vs. just after the meeting), so it only appears once enough days of real data exist on both sides of the meeting date.</p>
    <p><b>Limits vs. the official tool:</b> the split at each individual meeting only resolves the two nearest standard 25bp steps from the futures curve (linear interpolation) — CME's paid version additionally uses options-implied volatility for a smoother distribution. Combining meetings assumes each meeting's split shape doesn't change materially across the small rate differences between branches - a reasonable approximation, not measured separately per branch (that would need options data this app doesn't have a free source for).</p>
-   <p><b>History:</b> builds one snapshot per day going forward (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources (CME's own API is paid, and free scraping sources for the historical multi-contract futures curve were unavailable). Trailing days are appended directly to the left of "Today" in the chart above (use the range buttons below the pills to control how far back), showing how the odds for the next meeting evolved day by day - the line flows seamlessly from history through "Today" since both describe the same thing. Display-only, does not affect any score.</p>`];
+   <p><b>History:</b> builds one snapshot per day going forward, per currency (same as several other feeds in this app, e.g. Put/Call by asset) — a full paid-tool-parity backfill of the last year wasn't possible from free sources for any of the 5 currencies (paid APIs, blocked scraping sources, or no reliable historical settlement prices). Trailing days are appended directly to the left of "Today" in the chart above (use the range buttons below the pills to control how far back), showing how the odds for the next meeting evolved day by day - the line flows seamlessly from history through "Today" since both describe the same thing. Display-only, does not affect any score.</p>`];
 // Fixe Punktabstaende (Trends-Stil: index-basiert, nicht kalendertag-
 // proportional) - macht die Klick-Navigation ueber die Meeting-Pillen
 // vorhersagbar (jeder Schritt bewegt exakt eine Slot-Breite).
@@ -12513,7 +12543,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
 // gesteuert.
 function scrollRateProbTo(idx,animate){
   if(animate===undefined)animate=true;
-  const D=RATE_PROB_DATA;if(!D)return;
+  const D=rateProbCcyData();if(!D)return;
   const{pts}=rateProbBuildPts(D);
   rateProbFocus=Math.max(0,Math.min(idx,pts.length-1));
   document.querySelectorAll('.rateprob-pill').forEach(b=>b.classList.toggle('on',+b.dataset.idx===rateProbFocus));
@@ -12526,14 +12556,23 @@ function scrollRateProbTo(idx,animate){
 }
 function renderRateProb(){
   const el=document.getElementById('rateBody');if(!el)return;
-  const D=RATE_PROB_DATA;
+  // Waehrungs-Umschalter (Nutzer-Wunsch 2026-07-25: "auch fuer die anderen
+  // Waehrungen") - steht IMMER oben, unabhaengig davon ob fuer die aktuell
+  // gewaehlte Waehrung schon Daten da sind, damit man auch aus einem
+  // Leer-/Ladezustand heraus die Waehrung wechseln kann.
+  const ccyBar=`<div class="rateprob-ccybar">${RATEPROB_CCYS.map(c=>{
+    const cd=RATE_PROB_DATA&&(RATE_PROB_DATA[c]||(c==='USD'&&RATE_PROB_DATA.currentRate!=null?RATE_PROB_DATA:null));
+    const isApprox=cd&&cd.method==='approx';
+    return`<button class="rateprob-ccy-btn${c===rateProbCcy?' on':''}" onclick="setRateProbCcy('${c}')">${c}${isApprox?'<span class="rateprob-approx-tag" title="Approximate: only 3-month futures are freely available for this currency, see the info button for details">≈</span>':''}</button>`;
+  }).join('')}</div>`;
+  const D=rateProbCcyData();
   if(!D||!Array.isArray(D.meetings)||!D.meetings.length){
-    el.innerHTML=`<div class="cot-empty">Loading Fed rate probabilities… (computed hourly by the GitHub workflow from 30-Day Fed Funds futures into rate_probabilities.json — if this stays empty, the first run simply hasn't happened yet).</div>`;
+    el.innerHTML=ccyBar+`<div class="cot-empty">Loading ${escH(rateProbCcy)} rate probabilities… (computed hourly by the GitHub workflow into rate_probabilities.json — if this stays empty, the first run for this currency simply hasn't happened yet).</div>`;
     return;
   }
   const withData=D.meetings.filter(m=>m.deltaBp!=null);
   if(!withData.length){
-    el.innerHTML=`<div class="cot-empty">No futures contract data for the upcoming meetings yet.</div>`;
+    el.innerHTML=ccyBar+`<div class="cot-empty">No futures contract data for the upcoming ${escH(rateProbCcy)} meetings yet.</div>`;
     return;
   }
   const{pts,distTimeline,todayIdx,pastCount}=rateProbBuildPts(D);
@@ -12561,10 +12600,18 @@ function renderRateProb(){
   }).join('');
   const rangeBar=timeRangeBarHtml(rateProbHistRange,'setRateProbHistRange')+timeRangeCustomHtml(rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo,'setRateProbHistRange');
   const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
-  el.innerHTML=`<div class="cot-card">
-      <div class="cot-card-title">Current Effective Fed Funds Rate${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: NY Fed (EFFR) · ${escH(upd)}</span></div>
+  const refLabel=RATEPROB_CCY_REFLABEL[rateProbCcy]||'Reference Rate';
+  const meetLabel=RATEPROB_CCY_MEETLABEL[rateProbCcy]||'meeting';
+  const linkUrl=rateWatchUrl(rateProbCcy);
+  const linkTxt=rateProbCcy==='USD'?'📈 CME FedWatch Tool ↗':'📈 Official rate calendar ↗';
+  // approx-Badge direkt am Titel (Nutzer-Wunsch "klar markiert") - zusaetzlich
+  // zum ≈-Tag am Waehrungs-Button oben, damit die Einschraenkung auch sichtbar
+  // ist, wenn man bereits auf dieser Waehrung steht und den Button nicht sieht.
+  const approxBadge=D.method==='approx'?`<span class="rateprob-approx-badge" title="Approximate: derived from 3-month futures (no 1-month contracts freely available for this currency) - see the info button for details">≈ approx</span>`:'';
+  el.innerHTML=ccyBar+`<div class="cot-card">
+      <div class="cot-card-title">Current ${escH(rateProbCcy)} ${escH(refLabel)}${approxBadge}${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: ${escH(D.refSource||'')} · ${escH(upd)}</span></div>
       <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
-      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next FOMC meeting (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(RATE_WATCH.USD)}" target="_blank" rel="noopener" title="CME FedWatch Tool">📈 CME FedWatch Tool ↗</a></div>
+      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next ${escH(meetLabel)} (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(linkUrl)}" target="_blank" rel="noopener" title="Official source">${linkTxt}</a></div>
       <div class="rateprob-pillbar">${pills}</div>
       <div style="padding:0 14px 4px">${rangeBar}</div>
       ${rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount)}
