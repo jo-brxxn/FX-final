@@ -1277,7 +1277,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-AXISGAP-226</span><span id="verBannerText"> (Rate-Probabilities-Chart: sichtbarer 16px-Abstand zwischen der fixen Y-Achse und dem aeltesten/am-weitesten-links-stehenden Historienpunkt ergaenzt - vorher landete dieser Punkt exakt auf der Kante der Achse und war dahinter verdeckt.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROBLINK-227</span><span id="verBannerText"> (RATE_WATCH-Links aktualisiert: USD bleibt CME FedWatch Tool, alle anderen Waehrungen (EUR/GBP/CHF/JPY/CAD/AUD/NZD) zeigen jetzt https://rateprobability.com statt einzelner investing.com-Kalenderseiten - wirkt auf die Interest-Rates-Karte UND den Rate-Probabilities-Tab, beide lesen aus derselben Quelle.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -2824,17 +2824,22 @@ function syncAssetGroup(srcId){
 }
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
 // Markt-Zinserwartungen pro Währung (Icon-Link in der Interest-Rates-Karte).
-// USD = CME FedWatch Tool; übrige = investing.com-Zinsentscheid-Seite der
-// jeweiligen Notenbank. NONFX (Krypto/Metalle/Indizes) hängen am USD -> FedWatch.
+// NONFX (Krypto/Metalle/Indizes) hängen am USD -> FedWatch.
+// Nutzer-Wunsch 2026-07-25: USD bleibt beim CME FedWatch Tool (das eigentliche
+// Vorbild-Tool), alle anderen Waehrungen zeigen rateprobability.com (deckt
+// Fed/ECB/BoJ/BoE/BoC/RBA/RBNZ/SNB ab) - ersetzt die vorherigen einzelnen
+// investing.com-Kalenderseiten pro Waehrung. Gilt sowohl fuer die Interest-
+// Rates-Karte (renderRub, 📈-Link) als auch den Rate-Probabilities-Tab -
+// beide lesen ueber rateWatchUrl() aus derselben Quelle.
 const RATE_WATCH={
   USD:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',
-  EUR:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655',
-  GBP:'https://www.investing.com/economic-calendar/interest-rate-decision-170',
-  CHF:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169',
-  JPY:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165',
-  CAD:'https://www.investing.com/economic-calendar/interest-rate-decision-166',
-  AUD:'https://www.investing.com/economic-calendar/interest-rate-decision-171',
-  NZD:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167',
+  EUR:'https://rateprobability.com',
+  GBP:'https://rateprobability.com',
+  CHF:'https://rateprobability.com',
+  JPY:'https://rateprobability.com',
+  CAD:'https://rateprobability.com',
+  AUD:'https://rateprobability.com',
+  NZD:'https://rateprobability.com',
 };
 function rateWatchUrl(id){return(rateWatchCustom&&rateWatchCustom[id])||RATE_WATCH[macroCcyFor(id)]||RATE_WATCH.USD;}
 // Langes Drücken (≈500ms, funktioniert per Touch auf Handy/iPad und per Maus
@@ -12612,7 +12617,7 @@ function renderRateProb(){
   const refLabel=RATEPROB_CCY_REFLABEL[rateProbCcy]||'Reference Rate';
   const meetLabel=RATEPROB_CCY_MEETLABEL[rateProbCcy]||'meeting';
   const linkUrl=rateWatchUrl(rateProbCcy);
-  const linkTxt=rateProbCcy==='USD'?'📈 CME FedWatch Tool ↗':'📈 Official rate calendar ↗';
+  const linkTxt=rateProbCcy==='USD'?'📈 CME FedWatch Tool ↗':'📈 rateprobability.com ↗';
   // approx-Badge direkt am Titel (Nutzer-Wunsch "klar markiert") - zusaetzlich
   // zum ≈-Tag am Waehrungs-Button oben, damit die Einschraenkung auch sichtbar
   // ist, wenn man bereits auf dieser Waehrung steht und den Button nicht sieht.
