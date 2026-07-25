@@ -2954,18 +2954,29 @@ jobs:
               try{const d=JSON.parse(fs.readFileSync("rate_usd_ref.json","utf8"));const r=d&&Array.isArray(d.refRates)&&d.refRates[0];const v=r&&Number(r.percentRate);return isFinite(v)?v:null;}catch(e){return null;}
             }
             function parseAudRef(){
-              // RBA-CSV: mehrere Header-Zeilen, dann Datenzeilen "3-Jul-2026,3.60,...".
-              // Letzte Zeile nehmen, bei der Spalte 1 ein gueltiges Datum UND
-              // Spalte 2 (Cash Rate Target) eine Zahl ist.
+              // RBA F1.1-CSV (Live-Probe 2026-07-25 bestaetigt das echte Format,
+              // erster Anlauf scheiterte daran): ~9998 Zeilen zurueck bis 1969,
+              // MONATLICHE Datenzeilen im Format "DD/MM/YYYY,<Cash Rate Target>,
+              // ...". new Date("DD/MM/YYYY") ist eine FALLE - JS interpretiert
+              // Schraegstrich-Daten als US-Format MM/DD/YYYY, Tage >12 (die
+              // meisten) werden dadurch als ungueltiger Monat verworfen (bei
+              // Tagen <=12 waere es sogar STILL falsch geparst, nicht nur
+              // verworfen) - deshalb explizites DD/MM/YYYY-Regex statt new Date().
+              // Spalte 2 (Index 1) ist "Cash Rate Target". Letzte Zeile mit
+              // gueltigem Datum+Wert gewinnt (monatliche Reihe, der Zielsatz
+              // aendert sich zwischen den ~8 RBA-Sitzungen/Jahr nicht, daher ist
+              // der juengste Monatswert praktisch immer der aktuell gueltige -
+              // ausser genau zwischen einer Sitzung und der naechsten Monats-
+              // Veroeffentlichung, was strukturell nicht vermeidbar ist).
               try{
                 const lines=fs.readFileSync("rate_aud_ref.csv","utf8").split(/\r?\n/);
+                const re=/^(\d{2})\/(\d{2})\/(\d{4}),([^,]*)/;
                 let last=null;
                 lines.forEach(line=>{
-                  const cols=line.split(",");
-                  if(cols.length<2)return;
-                  const dt=new Date(cols[0].trim());
-                  const v=Number(cols[1].trim());
-                  if(!isNaN(dt.getTime())&&isFinite(v)&&cols[1].trim()!=="")last=v;
+                  const m=re.exec(line);
+                  if(!m)return;
+                  const v=Number(m[4]);
+                  if(isFinite(v)&&m[4].trim()!=="")last=v;
                 });
                 return last;
               }catch(e){return null;}
