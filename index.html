@@ -1271,7 +1271,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-DESIGN-222</span><span id="verBannerText"> (Rate-Probabilities-Chart: adaptive Punktabstaende (groesserer Zeitraum -> enger, damit alles ins Fenster passt, Zeitraum-Filter wirkt jetzt sichtbar), senkrechte Heute-Markierung, kommende Meeting-Daten rot (X-Achse + Pillen), Meeting-Labels gekuerzt + Historie-Labels bei schmalem Slot ausgeduennt. Multi-Waehrung (EUR/GBP/AUD/CAD) folgt als naechstes.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-YAXIS-223</span><span id="verBannerText"> (Rate-Probabilities-Chart: feste Prozent-Y-Achse links (bleibt beim Verschieben immer sichtbar, Pinned-Axis). Zuvor: adaptive Punktabstaende, senkrechte Heute-Markierung, kommende Meeting-Daten rot (X-Achse + Pillen). Multi-Waehrung (AUD sauber + EUR/GBP/CAD als markierte 3M-Naeherung) folgt als naechstes.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -12365,7 +12365,12 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   const levels=new Set();
   distTimeline.forEach(d=>Object.entries(d).forEach(([l,p])=>{if(p>1)levels.add(Number(l));}));
   const sortedLevels=[...levels].sort((a,b)=>a-b);
-  const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
+  // Gridlines bleiben im scrollenden SVG (horizontale Linien sehen bei jedem
+  // Slide gleich aus). Die Prozent-LABELS wandern in eine FESTE Y-Achse links
+  // (rateProbYAxis), die beim Verschieben stehen bleibt (Nutzer-Wunsch
+  // 2026-07-25: "die y-Achse mit den Prozenten muss immer zu sehen sein").
+  const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/>`).join('');
+  const yAxisLabels=[0,50,100].map(t=>`<text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
   // X-Achsen-Labels: Today fett/weiss, kommende Zentralbank-Meetings ROT
   // (Nutzer-Wunsch 2026-07-25, damit man die Termine klar von Historie/Today
   // unterscheidet), Historie/vergangenes Meeting gedaempft. Meetings/vergangene
@@ -12489,7 +12494,14 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
       ${xlab}
       ${labels}
     </svg>`;
-  return`<div class="rateprob-chart-viewport" id="rateProbViewport"><div class="rateprob-chart-track" id="rateProbTrack">${chartHoverWrap(svg,hpts,`width:${W}px;max-width:none`)}</div></div>`;
+  // Feste Y-Achse: eigenes, NICHT-scrollendes SVG (gleiches Koordinatensystem
+  // RATEPROB_PADL x H, kein Scaling) ueber dem linken Rand des Viewports. Ein
+  // deckender Streifen verdeckt die unter ihm durchscrollenden Datenpunkte, so
+  // dass die Prozent-Beschriftung immer lesbar bleibt (klassische Pinned-Axis).
+  // top:4/left:14 = Innen-Padding des .rateprob-chart-viewport, damit y=0 des
+  // Overlays exakt auf y=0 des Haupt-SVG liegt.
+  const yAxisFixed=`<svg class="rateprob-yaxis-fixed" width="${RATEPROB_PADL}" height="${H}" viewBox="0 0 ${RATEPROB_PADL} ${H}" style="position:absolute;top:4px;left:14px;pointer-events:none;overflow:visible"><rect x="0" y="0" width="${RATEPROB_PADL}" height="${H}" fill="var(--bg1)"/><line x1="${RATEPROB_PADL-0.5}" y1="${padT-6}" x2="${RATEPROB_PADL-0.5}" y2="${H-padB+6}" stroke="var(--bd)" stroke-width="0.6"/>${yAxisLabels}</svg>`;
+  return`<div class="rateprob-chart-outer" style="position:relative">${yAxisFixed}<div class="rateprob-chart-viewport" id="rateProbViewport"><div class="rateprob-chart-track" id="rateProbTrack">${chartHoverWrap(svg,hpts,`width:${W}px;max-width:none`)}</div></div></div>`;
 }
 // Meeting-Pillen (CME-FedWatch-Optik) navigieren OHNE die Karte neu zu
 // rendern - die Linie bleibt derselbe DOM-Knoten, nur eine CSS-Transform-
