@@ -2042,11 +2042,6 @@
    ],
    "historyFull": [
     [
-     "2023-07-26",
-     "5.5%",
-     "5.5%"
-    ],
-    [
      "2023-09-20",
      "5.5%",
      "5.5%"
@@ -12823,50 +12818,6 @@
    "source": "tv",
    "revisedFrom": "6.3%"
   },
-  "Services PMI": {
-   "actual": "51.9",
-   "forecast": null,
-   "previous": "52.2",
-   "date": "2026-07-24",
-   "event": "S&P Global Services PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "51.9"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "51.9",
-     null
-    ]
-   ]
-  },
-  "Manufacturing PMI": {
-   "actual": "54.7",
-   "forecast": "54.5",
-   "previous": "54.8",
-   "date": "2026-07-24",
-   "event": "S&P Global Manufacturing PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-07-24",
-     "54.7"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-07-24",
-     "54.7",
-     "54.5"
-    ]
-   ]
-  },
   "GDP Growth QoQ": {
    "actual": "0.5%",
    "forecast": "0.3%",
@@ -13267,11 +13218,6 @@
     ]
    ],
    "historyFull": [
-    [
-     "2023-07-26",
-     "6%",
-     "6.2%"
-    ],
     [
      "2023-10-25",
      "5.4%",
