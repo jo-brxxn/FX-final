@@ -1,0 +1,78 @@
+# TEMPORAERER Diagnose-Workflow (Nutzer-Wunsch 2026-07-25: Rate Probabilities
+# fuer weitere Waehrungen EUR/GBP/AUD/CAD). Zweck: von einer echten GitHub-
+# Actions-IP aus herausfinden, (a) welche 1-Monats-Overnight-Futures (ZQ-
+# Aequivalente) TradingView mit welchem exakten Ticker-Format fuehrt und
+# (b) welche freien Quellen den aktuellen Overnight-Referenzzins liefern.
+# Diese Sandbox kann TradingView/RBA/BoC/BoE/ECB NICHT erreichen (Org-Policy),
+# daher nur ueber den Runner testbar. Wird nach Auswertung wieder geloescht
+# (Muster wie diag-investing-coverage.yml).
+name: diag-rateprob
+on:
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe futures tickers + reference-rate sources
+        run: |
+          set +e
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "############ 1) TRADINGVIEW FUTURES-TICKER-PROBE ############"
+          node -e '
+            const fs=require("fs");
+            const CODE=["F","G","H","J","K","M","N","Q","U","V","X","Z"];
+            const today=new Date();
+            // Kandidaten-Roots je Waehrung (mehrere Praefixe/Roots, da unsicher).
+            const roots=[
+              // AUD: ASX 30-Day Interbank Cash Rate (direktes ZQ-Aequivalent)
+              "ASX:IB","ASX24:IB",
+              // CAD: 1-Monats-CORRA (COA), 3-Monats zur Referenz (CRA)
+              "TMX:COA","TMX:CRA",
+              // GBP: 1-Monats-SONIA-Kandidaten + 3M (SO3) zur Referenz
+              "ICEEUR:SOA","ICEEUR:SO1","ICEEUR:SON","ICEEUR:SO","ICEEUR:SO3",
+              // EUR: 1-Monats-/3-Monats-ESTR-Kandidaten + Euribor
+              "ICEEUR:ESR","ICEEUR:EST","ICEEUR:E1M","ICEEUR:ES","EUREX:FEO1","EUREX:FES1","ICEEUR:I"
+            ];
+            const tickers=[];
+            roots.forEach(r=>{
+              for(let i=0;i<5;i++){
+                const d=new Date(today.getFullYear(),today.getMonth()+i,1);
+                tickers.push(r+CODE[d.getMonth()]+d.getFullYear());
+              }
+            });
+            // Zusaetzlich die kontinuierlichen 1!-Symbole, um wenigstens den
+            // Exchange-Praefix/Root zu bestaetigen, falls das datierte Format abweicht.
+            ["ASX:IB1!","ASX24:IB1!","TMX:COA1!","TMX:CRA1!","ICEEUR:SO31!","ICEEUR:SOA1!"].forEach(t=>tickers.push(t));
+            fs.writeFileSync("probe_tickers.json",JSON.stringify(tickers));
+            console.log("probing "+tickers.length+" candidate tickers");
+          '
+          TICKERS=$(cat probe_tickers.json)
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data "{\"symbols\":{\"tickers\":${TICKERS},\"query\":{\"types\":[]}},\"columns\":[\"close\"]}" \
+            -w "[debug] scanner curl: http=%{http_code} size=%{size_download}\n" \
+            "https://scanner.tradingview.com/global/scan" -o probe_tv.json
+          echo "=== scanner response (first 400 chars) ==="
+          head -c 400 probe_tv.json; echo
+          echo "=== TICKERS THAT RETURNED A PRICE ==="
+          node -e '
+            const fs=require("fs");
+            let d;try{d=JSON.parse(fs.readFileSync("probe_tv.json","utf8"));}catch(e){console.log("unparseable response");process.exit(0);}
+            const rows=(d&&d.data)||[];
+            if(!rows.length){console.log("NONE - data[] empty (all candidate tickers unknown to TradingView)");process.exit(0);}
+            rows.forEach(r=>{if(r.d&&r.d[0]!=null)console.log("  OK  "+r.s+"  close="+r.d[0]);});
+          '
+          echo
+          echo "############ 2) REFERENZ-ZINS-QUELLEN-PROBE ############"
+          probe(){ echo "--- $1 ---"; curl -sL --http1.1 --connect-timeout 15 --max-time 40 -A "$UA" -w "http=%{http_code} size=%{size_download}\n" "$2" -o probe_ref.out; echo "first 200 chars:"; head -c 200 probe_ref.out; echo; echo; }
+          # AUD - RBA (Cash Rate Target / money market rates)
+          probe "RBA f1.1 (money market)" "https://www.rba.gov.au/statistics/tables/csv/f1.1-data.csv"
+          probe "RBA a2 (cash rate)" "https://www.rba.gov.au/statistics/tables/csv/a2-data.csv"
+          # CAD - Bank of Canada Valet (CORRA)
+          probe "BoC Valet CORRA" "https://www.bankofcanada.ca/valet/observations/CORRA/json?recent=5"
+          probe "BoC Valet AVG.INTWO" "https://www.bankofcanada.ca/valet/observations/AVG.INTWO/json?recent=5"
+          # GBP - Bank of England (SONIA series IUDSOIA)
+          probe "BoE SONIA IUDSOIA" "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jun/2026&Dateto=now&SeriesCodes=IUDSOIA&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N"
+          # EUR - ECB Data Portal (EUR STR)
+          probe "ECB estr csvdata" "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=csvdata"
+          probe "ECB estr jsondata" "https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata"
+          echo "############ DONE ############"
