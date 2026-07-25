@@ -663,7 +663,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
-.cot-notify-card{display:flex;align-items:center;gap:9px;padding:11px 14px;margin-bottom:12px;border-radius:12px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+.cot-notify-card{display:flex;align-items:center;gap:9px;padding:7px 12px;margin-bottom:8px;border-radius:10px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:16px}
 .cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px;color:#5b9bd8}
 .cot-notify-sub{font-size:11px;opacity:.75;margin-left:2px;color:var(--t2)}
@@ -730,10 +730,11 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dash-majors .ab{border-radius:10px;padding:9px 6px}
 .dash-majors-viewall{font-size:12px;color:var(--blue);text-align:center;padding:10px 4px 2px;cursor:pointer;font-weight:600}
 @media (hover:hover){.dash-majors-viewall:hover{text-decoration:underline}}
-.dw-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:9px}
-.dw-t{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dw-t{font-size:12px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.dw-btns{display:flex;gap:4px;flex-shrink:0}
+.dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:.32;transition:opacity .15s}
+@media (hover:hover){.dw:hover .dw-btns{opacity:1}}
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
@@ -743,7 +744,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
-.dw-nav{padding:2px 5px;font-size:10px}
+.dw-nav{padding:1px 4px;font-size:9px;line-height:1.4}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}@media (hover:hover){.dw-mark:hover{opacity:.8}}
@@ -751,25 +752,33 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-.daily-bias-wrap{margin-bottom:8px;max-width:460px}
-.daily-bias-lbl{font-size:20px;font-weight:800;letter-spacing:.3px;margin-bottom:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.5}
-.mw-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
+.db-split{display:flex;gap:12px;align-items:center}
+.db-col-txt{flex:1 1 0;min-width:0}
+/* Feste Breite, damit startGlobes() eine verlaessliche clientWidth misst
+   (ein flex-Item ohne Inhalt meldet sonst 0 und faellt auf die volle
+   Kartenbreite zurueck). */
+.db-split .globe-host{flex:0 0 200px;width:200px;min-height:0;padding:0}
+@media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
+@media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
+.daily-bias-lbl{font-size:22px;font-weight:800;letter-spacing:.3px;margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.55}
+.db-col-txt .globe-legend{justify-content:flex-start;margin-top:12px}
+.mw-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
-.mw-strip{display:flex;gap:10px;flex-wrap:wrap}
-.mw-tile{flex:1 1 130px;min-width:110px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px;transition:background .12s}
+.mw-strip{display:flex;gap:8px;flex-wrap:wrap}
+.mw-tile{flex:1 1 120px;min-width:100px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 11px;transition:background .12s}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-tile-sym{font-size:11.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-price{font-size:17px;font-weight:800;color:var(--t0);margin-top:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-chg{font-size:12px;font-weight:700;margin-top:4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-footer{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);font-size:12.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
+.mw-tile-sym{font-size:10.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-price{font-size:15px;font-weight:800;color:var(--t0);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-chg{font-size:11px;font-weight:700;margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-footer{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);font-size:11.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
 @media (hover:hover){.mw-footer:hover{text-decoration:underline}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
-.hie-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
+.hie-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
-.hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:8px}
+.hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:29px;height:29px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:7px}
 .hie-day{font-size:13px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hie-wd{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .hie-ccy{font-size:12px;font-weight:800;color:var(--t1);width:34px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -824,13 +833,16 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
 .rank-sc{font-size:13px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Risk Sentiment Gauge */
-.risk-gauge{padding:8px 4px 2px}
-/* Risk-Environment-Regler (Nutzer-Wunsch 2026-07-13) */
-.risk-env-set{padding:7px 9px;background:var(--bg2);border-radius:var(--rs);margin-bottom:6px}
-.risk-env-set-hdr{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--t2)}
-.risk-env-gear{background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--t2);cursor:pointer;font-size:12px;padding:2px 6px;line-height:1.4}
-.risk-env-slider{display:flex;gap:4px;margin-top:7px}
-.risk-env-pos{flex:1;padding:6px 4px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:11px;font-weight:700;transition:all .12s}
+.risk-gauge{padding:2px 4px 0}
+/* Risk-Environment-Regler (Nutzer-Wunsch 2026-07-13). Kompakt in EINER
+   Zeile (Label + Stufen + Zahnrad nebeneinander) statt gestapelt - der
+   gestapelte Block kostete 70px, die das 3-Reihen-Dashboard nicht hat
+   (Nutzer-Wunsch 2026-07-25). Funktion unveraendert. */
+.risk-env-set{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--bg2);border-radius:var(--rs);margin-bottom:4px}
+.risk-env-set-hdr{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--t3);flex-shrink:0}
+.risk-env-gear{background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--t2);cursor:pointer;font-size:12px;padding:1px 5px;line-height:1.3;flex-shrink:0}
+.risk-env-slider{display:flex;gap:4px;margin-top:0;flex:1;min-width:0}
+.risk-env-pos{flex:1;padding:4px 3px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
 .risk-env-pos.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
 .risk-env-set-note{font-size:10px;color:var(--t3);margin-top:6px;line-height:1.4}
 .risk-env-cfg-grp+.risk-env-cfg-grp{margin-top:10px}
@@ -854,19 +866,19 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .risk-env-list-add{display:flex;gap:6px;margin-top:8px}
 .risk-env-list-add input{flex:1;background:var(--bg1);border:1px solid var(--bd2);border-radius:6px;color:var(--t1);font-size:12px;padding:6px 8px}
 .risk-env-list-add .btn{flex-shrink:0;font-size:11.5px;white-space:nowrap}
-.risk-gauge-arc{margin-top:6px}
-.risk-lbl{text-align:center;font-size:21px;font-weight:800;margin-top:2px;letter-spacing:1.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-sub{text-align:center;font-size:11px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-gauge-arc{margin-top:2px}
+.risk-lbl{text-align:center;font-size:18px;font-weight:800;margin-top:0;letter-spacing:1.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-sub{text-align:center;font-size:10.5px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc b{color:var(--t2)}
-.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
-.risk-assets-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-asset-row{display:grid;grid-template-columns:1fr 44px 34px;align-items:center;gap:6px;cursor:pointer;padding:2px 3px;border-radius:5px}
+.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.risk-assets-hd{font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-row{display:grid;grid-template-columns:1fr 40px 32px;align-items:center;gap:6px;cursor:pointer;padding:0 3px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
-.risk-asset-name{font-size:11.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-name{font-size:10.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.55;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
-.risk-asset-sc{font-size:11px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-sc{font-size:10.5px;font-weight:700;text-align:right;line-height:1.55;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
 .risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-hist-empty{font-size:11.5px;color:var(--t3);padding:8px 2px;line-height:1.5}
@@ -1149,6 +1161,10 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   .ab .an,.ab .av{font-size:13px}
   .add-sym{font-size:19px}
   .dp,.pc{padding:20px 28px}
+  /* Dashboard-Seite etwas flacher gepolstert als die uebrigen Seiten, damit
+     die 3 Karten-Reihen ohne Scrollen aufs Bild passen (Nutzer-Wunsch
+     2026-07-25) - horizontal bleibt es identisch. */
+  #pgDash{padding-top:12px;padding-bottom:12px}
   .atitle{font-size:30px}
   .afull{font-size:13px}
   .bo{font-size:13px;padding:6px 13px}
@@ -1157,7 +1173,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
   .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
   .dw{padding:16px}
-  .dw-t{font-size:19px}
+  .dw-t{font-size:12.5px}
   .dw-sub{font-size:13px}
   .sym-row{padding:7px 10px}
   .sym-name{font-size:16px}
@@ -1204,7 +1220,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1218,8 +1234,8 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:13px}
-  .dw-t{font-size:17px}
+.dw{padding:11px 13px}
+  .dw-t{font-size:12.5px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -1243,16 +1259,19 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   .evt-toggle{font-size:15px;padding:10px 14px}
   .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 40px 1fr 54px 54px 54px;gap:8px;padding:8px 12px}
 }
-/* ── DASHBOARD MAJORS-SIDEBAR: nur ab hier genug Platz (Referenz-Foto,
-   Nutzer-Wunsch 2026-07-25) - bei 1100-1400px (z.B. iPad-Landschaft) wuerde
-   die Sidebar die drei Hero-Karten daneben zu eng quetschen (Buttons/Text
-   liefen ineinander, per Playwright bei 1180px bestaetigt) - dort bleibt
-   #dashWidgets daher einfach volle Breite ohne Sidebar (Majors-Info steckt
-   ohnehin schon in der Currency-Strength-Karte). */
-@media(min-width:1400px){
+/* ── DASHBOARD MAJORS-SIDEBAR (Referenz-Foto, Nutzer-Wunsch 2026-07-25) ──
+   Erscheint ab derselben Breite wie das 12-Spalten-Grid (1100px). Ein
+   frueherer Versuch beschraenkte sie auf >=1400px, weil die Kartenkoepfe
+   damals (grosser Titel + Untertitelzeile + 5 volle Buttons) daneben
+   zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
+   die Sidebar ist dort nur etwas schmaler. */
+@media(min-width:1100px){
   .dash-layout{display:flex;gap:14px;align-items:flex-start}
-  .dash-majors{display:flex;flex-direction:column;gap:1px;width:172px;flex-shrink:0}
+  .dash-majors{display:flex;flex-direction:column;gap:1px;width:132px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
+}
+@media(min-width:1400px){
+  .dash-majors{width:160px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -1339,7 +1358,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-3ROWS-230</span><span id="verBannerText"> (Dashboard auf 3 Reihen ohne Scrollen kompaktiert: Movers/FX-Bias/Heatmap/Watchlist/Live-Data raus aus der Standardansicht (ueber + Widget weiter verfuegbar), Market Watch jetzt volle Breite in Reihe 2 mit Kacheln nebeneinander, neues Notifications-Platzhalter-Widget in Reihe 3. Globus/Gauge verkleinert, Session-Leiste entfernt, Abstaende ueberall gestrafft.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-FOTOLAYOUT-231</span><span id="verBannerText"> (Kartenaufbau ans Referenz-Foto angeglichen: Daily Bias jetzt ZWEISPALTIG (Text links, Globus gross rechts daneben statt darunter - war der groesste Hoehenfresser), Kartenkoepfe nur noch kleiner Grossbuchstaben-Titel ohne Untertitelzeile mit gedaempften Steuerbuttons, Risk-Environment-Regler in eine Zeile zusammengezogen, MAJORS-Sidebar schon ab 1100px statt erst ab 1400px. Dashboard-Gesamthoehe dadurch von 2020px auf 845px - passt auf 1080p/1512er-Screens ohne Scrollen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1675,8 +1694,11 @@ function introLogin(){
   <div class="aurora-blob aurora-c"></div>
 </div>
 <div class="pc" id="pgDash">
-  <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live overview</div></div>
+  <!-- Kompakte Kopfzeile (Nutzer-Wunsch 2026-07-25: Dashboard soll ohne
+       Scrollen auf einen Bildschirm passen) - "Live overview" als Zusatz
+       neben statt unter dem Titel, spart eine Zeile. -->
+  <div style="margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <div style="display:flex;align-items:baseline;gap:9px;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Live overview</div></div>
     <button class="btn g" onclick="addWidget()">＋ Widget</button>
   </div>
   <div id="cotNotifyCard"></div>
@@ -9471,16 +9493,23 @@ function renderDash(){
       // aufs Referenz-Foto passen, das zeigt hier ebenfalls nur Globus+
       // Legende) - sessionBarHtml() bleibt im Code, falls sie an anderer
       // Stelle spaeter wieder gebraucht wird.
-      content=`<div class="daily-bias-wrap">
-        <div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
-        <div class="daily-bias-txt">${db.txt}</div>
-      </div>
-      <div class="globe-host"></div>
-        <div class="globe-legend">
-          <span><i style="background:${BC.bull}"></i>Bullish</span>
-          <span><i style="background:${BC.neu}"></i>Neutral</span>
-          <span><i style="background:${BC.bear}"></i>Bearish</span>
-        </div>`;
+      // Zweispaltig wie im Referenz-Foto: Textblock links, Globus gross
+      // rechts daneben (vorher untereinander gestapelt - das war der
+      // groesste Hoehenfresser der ganzen Seite, siehe Nutzer-Bugreport
+      // "passt natuerlich nicht"). Auf schmalen Screens (<700px) faellt die
+      // Spalte per CSS wieder untereinander.
+      content=`<div class="db-split">
+        <div class="db-col-txt">
+          <div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
+          <div class="daily-bias-txt">${db.txt}</div>
+          <div class="globe-legend">
+            <span><i style="background:${BC.bull}"></i>Bullish</span>
+            <span><i style="background:${BC.neu}"></i>Neutral</span>
+            <span><i style="background:${BC.bear}"></i>Bearish</span>
+          </div>
+        </div>
+        <div class="globe-host"></div>
+      </div>`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -9563,14 +9592,14 @@ function renderDash(){
       // JEDEM Asset mit einer Risk-Environment-Karte (siehe recomputeRiskCorr).
       const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
       const envSetUI=`<div class="risk-env-set">
-        <div class="risk-env-set-hdr"><span>🎚️ Your Risk Environment read</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',13)}</button></div>
+        <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
         <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
       </div>`;
       content=`<div class="risk-gauge">
         ${envSetUI}
-        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',115)}</div>
+        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100)}</div>
         <div class="risk-lbl" style="color:${col}">${lbl}</div>
-        <div class="risk-sub">Risk assets ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Safe havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
+        <div class="risk-sub" title="Net = risk assets − safe havens; >+0.8 RISK-ON, <−0.8 RISK-OFF">Risk ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
         <div class="risk-assets-grid">
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
@@ -9729,18 +9758,22 @@ function renderDash(){
       requestAnimationFrame(startLiveClock);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
+    // Kartenkopf wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): nur ein
+    // kleiner Grossbuchstaben-Titel, KEINE Untertitelzeile (die steht jetzt
+    // als title-Tooltip am Titel) und dezente, gedaempfte Steuerbuttons -
+    // die alte Variante (grosser Titel + Untertitel + 5 volle Buttons) kostete
+    // pro Karte ~40px Hoehe, wodurch die 3 Reihen nie auf einen Bildschirm
+    // passten. Buttons bleiben bewusst sichtbar (nur blasser) statt
+    // hover-only: auf Touch gaebe es sonst keinen Weg, sie zu erreichen.
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
-        <div>
-          <div class="dw-t">${escH(w.title||w.type)}</div>
-          ${wt?`<div class="dw-sub">${escH(wt.sub)}</div>`:''}
-        </div>
+        <div class="dw-t"${wt?` title="${escH(wt.sub)}"`:''}>${escH(w.title||w.type)}</div>
         <div class="dw-btns">
-          ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',13)}</button>`:''}
-          <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''}>▲</button>
-          <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''}>▼</button>
-          <button class="btn dw-nav" onclick="renameWidget('${w.id}')">✎</button>
-          <button class="btn r dw-nav" onclick="delWidget('${w.id}')">×</button>
+          ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
+          <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
+          <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''} title="Move down">▼</button>
+          <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
+          <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
         </div>
       </div>
       ${content}
@@ -10221,10 +10254,12 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    // Kappung auf 150px (Nutzer-Wunsch 2026-07-25: Dashboard soll komplett
-    // ohne Scrollen auf eine Bildschirmseite passen) - vorher bis zu 360px,
-    // war mit Abstand der groesste Platzverbrauch der Hero-Karte.
-    const size=Math.max(130,Math.min(w||150,150));
+    // Kappung auf 200px (Nutzer-Wunsch 2026-07-25: Dashboard soll komplett
+    // ohne Scrollen auf eine Bildschirmseite passen) - vorher bis zu 360px.
+    // Seit dem zweispaltigen db-split-Layout steht der Globus NEBEN dem Text
+    // statt darunter, kostet also keine zusaetzliche Kartenhoehe mehr und
+    // darf wieder groesser sein als die zwischenzeitlichen 150px.
+    const size=Math.max(140,Math.min(w||200,200));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     return globeCollectRefs(h,size);
   }).filter(Boolean);
