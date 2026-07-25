@@ -751,28 +751,25 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-.daily-bias-wrap{margin-bottom:18px;max-width:460px}
-.daily-bias-lbl{font-size:24px;font-weight:800;letter-spacing:.3px;margin-bottom:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.daily-bias-txt{font-size:13px;color:var(--t2);line-height:1.6}
+.daily-bias-wrap{margin-bottom:8px;max-width:460px}
+.daily-bias-lbl{font-size:20px;font-weight:800;letter-spacing:.3px;margin-bottom:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.5}
 .mw-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
-.mw-hdr-row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:8px;padding:0 10px 6px;font-size:10px;letter-spacing:1px;color:var(--t3);font-weight:700;text-transform:uppercase}
-.mw-hdr-row span:not(:first-child){text-align:right}
-.mw-list{display:flex;flex-direction:column;gap:2px}
-.mw-row{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:9px 10px;border-radius:var(--rs);transition:background .12s}
-@media (hover:hover){.mw-row[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-sym{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-price{font-size:13px;font-weight:600;color:var(--t1);text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-chg{font-size:12.5px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-empty{font-size:12px;color:var(--t3);text-align:right}
+.mw-strip{display:flex;gap:10px;flex-wrap:wrap}
+.mw-tile{flex:1 1 130px;min-width:110px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px;transition:background .12s}
+@media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
+.mw-tile-sym{font-size:11.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-price{font-size:17px;font-weight:800;color:var(--t0);margin-top:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-chg{font-size:12px;font-weight:700;margin-top:4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-footer{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.06);font-size:12.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
 @media (hover:hover){.mw-footer:hover{text-decoration:underline}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
-.hie-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
+.hie-row{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
-.hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:8px}
+.hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:8px}
 .hie-day{font-size:13px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hie-wd{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .hie-ccy{font-size:12px;font-weight:800;color:var(--t1);width:34px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -800,7 +797,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    dem Host: ausserhalb der Kugel darf der Finger die SEITE hoch/runter
    scrollen (frueher blockierte touch-action:none die ganze Widget-Flaeche);
    nur auf den Kugel-Kreisen selbst uebernimmt der Drag die Rotation. */
-.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:4px 0 8px;min-height:190px;touch-action:pan-y;user-select:none}
+.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:2px 0 4px;min-height:120px;touch-action:pan-y;user-select:none}
 .globe-host svg circle{cursor:grab;touch-action:none}
 .globe-host.grabbing,.globe-host.grabbing svg circle{cursor:grabbing}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -829,7 +826,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* Risk Sentiment Gauge */
 .risk-gauge{padding:8px 4px 2px}
 /* Risk-Environment-Regler (Nutzer-Wunsch 2026-07-13) */
-.risk-env-set{padding:8px 9px;background:var(--bg2);border-radius:var(--rs);margin-bottom:12px}
+.risk-env-set{padding:7px 9px;background:var(--bg2);border-radius:var(--rs);margin-bottom:6px}
 .risk-env-set-hdr{display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;color:var(--t2)}
 .risk-env-gear{background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--t2);cursor:pointer;font-size:12px;padding:2px 6px;line-height:1.4}
 .risk-env-slider{display:flex;gap:4px;margin-top:7px}
@@ -862,7 +859,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .risk-sub{text-align:center;font-size:11px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc b{color:var(--t2)}
-.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
 .risk-assets-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-row{display:grid;grid-template-columns:1fr 44px 34px;align-items:center;gap:6px;cursor:pointer;padding:2px 3px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
@@ -1207,7 +1204,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1215,15 +1212,15 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   #dashWidgets .dw.dw-globe{grid-column:span 5}
   #dashWidgets .dw.dw-ccy_ranking{grid-column:span 3}
   #dashWidgets .dw.dw-risk_sentiment{grid-column:span 4}
-  #dashWidgets .dw.dw-mini_calendar,#dashWidgets .dw.dw-market_watch,#dashWidgets .dw.dw-key_insights{grid-column:span 4}
-  #dashWidgets .dw.dw-setups{grid-column:1/-1}
+  #dashWidgets .dw.dw-mini_calendar,#dashWidgets .dw.dw-notification,#dashWidgets .dw.dw-key_insights{grid-column:span 4}
+  #dashWidgets .dw.dw-market_watch,#dashWidgets .dw.dw-setups{grid-column:1/-1}
   @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:22px}
-  .dw-t{font-size:20px}
-  .dw-sub{font-size:14px}
+.dw{padding:13px}
+  .dw-t{font-size:17px}
+  .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
   .bbadge{font-size:14px;padding:4px 9px;width:74px}
@@ -1253,7 +1250,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    #dashWidgets daher einfach volle Breite ohne Sidebar (Majors-Info steckt
    ohnehin schon in der Currency-Strength-Karte). */
 @media(min-width:1400px){
-  .dash-layout{display:flex;gap:20px;align-items:flex-start}
+  .dash-layout{display:flex;gap:14px;align-items:flex-start}
   .dash-majors{display:flex;flex-direction:column;gap:1px;width:172px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
@@ -1342,7 +1339,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-PHOTOMATCH-229</span><span id="verBannerText"> (Dashboard 1:1 ans Referenz-Foto angeglichen: neue MAJORS-Sidebar links (ab 1400px), Daily Bias+Globus in einer Karte verschmolzen, Risk Sentiment als Halbkreis-Gauge (echte Regler-Funktion bleibt), Market Watch mit FX/Indices/Commodities/Bonds-Tabs + Change/Daily%-Spalten getrennt, High Impact Events kompakt mit Datums-Badges, neues Key-Insights-Widget (Platzhalter, echte Quelle noch offen). 12-Spalten-Grid statt 4, damit Kartengroessen wie im Foto variieren.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-3ROWS-230</span><span id="verBannerText"> (Dashboard auf 3 Reihen ohne Scrollen kompaktiert: Movers/FX-Bias/Heatmap/Watchlist/Live-Data raus aus der Standardansicht (ueber + Widget weiter verfuegbar), Market Watch jetzt volle Breite in Reihe 2 mit Kacheln nebeneinander, neues Notifications-Platzhalter-Widget in Reihe 3. Globus/Gauge verkleinert, Session-Leiste entfernt, Abstaende ueberall gestrafft.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -5043,15 +5040,10 @@ function mkWidgets(){return[
   {id:uid(),type:'globe',title:'Daily Bias',order:0},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:2},
-  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:3},
-  {id:uid(),type:'score_changes',title:"Today's Movers",order:4},
-  {id:uid(),type:'fx_bias',title:'FX Bias & Other Assets',order:5},
-  {id:uid(),type:'asset_heatmap',title:'Asset Heatmap',order:6},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',content:'',order:7},
-  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
-  {id:uid(),type:'market_watch',title:'Market Watch',order:9},
-  {id:uid(),type:'key_insights',title:'Key Insights',order:10},
-  {id:uid(),type:'live_data',title:'Live Data',order:11},
+  {id:uid(),type:'market_watch',title:'Market Watch',order:3},
+  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:4},
+  {id:uid(),type:'notification',title:'Notifications',order:5},
+  {id:uid(),type:'key_insights',title:'Key Insights',order:6},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -5180,18 +5172,27 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // siehe dailyBiasInfo()/der globe-Zweig in renderDash()) - alte
 // daily_bias-Eintraege werden hier ausgefiltert statt migriert. Neues
 // key_insights-Widget ergaenzt.
-const DASH_V=8;
+// DASH_V 9 (Nutzer-Wunsch 2026-07-25, selber Tag - Dashboard soll komplett
+// ohne Scrollen auf eine Bildschirmseite passen, exakt 3 Reihen wie das
+// Referenz-Foto): movers_fx/score_changes/fx_bias/asset_heatmap/watchlist/
+// live_data fliegen aus der Standardansicht (bleiben als Typ in W_TYPES,
+// ueber "+ Widget" weiter manuell hinzufuegbar). Market Watch rueckt in die
+// mittlere Reihe (volle Breite, Symbole nebeneinander statt Liste - siehe
+// mwLayoutHtml()). Neues notification-Platzhalter-Widget an Market Watchs
+// alter Stelle in der unteren Reihe.
+const DASH_V=9;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>w.type!=='daily_bias');return;}
-  widgets=widgets.filter(w=>w.type!=='daily_bias');
+  const DASH_V9_DROP=new Set(['daily_bias','movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data']);
+  if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));return;}
+  widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));
   // Globus-Karte zeigt jetzt Daily Bias + Globus zusammen - unveraenderten
   // Standardtitel mitziehen, eigene Umbenennungen des Nutzers bleiben unangetastet.
   const gw=widgets.find(w=>w.type==='globe');
   if(gw&&gw.title==='FX World Globe')gw.title='Daily Bias';
-  [['globe','Daily Bias'],['ccy_ranking','Currency Strength'],['movers_fx','Biggest Movers FX'],['score_changes',"Today's Movers"],['risk_sentiment','Risk Sentiment'],['asset_heatmap','Asset Heatmap'],['mini_calendar','Economic Calendar'],['market_watch','Market Watch'],['key_insights','Key Insights'],['live_data','Live Data']]
+  [['globe','Daily Bias'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,risk_sentiment:2,movers_fx:3,score_changes:4,fx_bias:5,asset_heatmap:6,watchlist:7,mini_calendar:8,market_watch:9,key_insights:10,live_data:11,pairs_editor:12};
+  const rank={globe:0,ccy_ranking:1,risk_sentiment:2,market_watch:3,mini_calendar:4,notification:5,key_insights:6,watchlist:7,movers_fx:8,score_changes:9,fx_bias:10,asset_heatmap:11,live_data:12,pairs_editor:13};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -9141,13 +9142,14 @@ function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 const W_TYPES=[
   {type:'globe',label:'FX World Globe',sub:'Rotating globe with Daily Bias — currencies coloured by bias score'},
   {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
+  {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
+  {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
+  {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
+  {type:'notification',label:'Notifications',sub:'Placeholder — content still to be decided'},
+  {type:'key_insights',label:'Key Insights',sub:'Short auto-generated market notes'},
   {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 4 gainers + top 4 losers vs. yesterday, in separate groups'},
   {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
-  {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
-  {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
-  {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
-  {type:'key_insights',label:'Key Insights',sub:'Short auto-generated market notes'},
   {type:'live_data',label:'Live Data',sub:'Auto-refresh status — when prices, calendar, COT & sentiment last updated'},
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
@@ -9464,6 +9466,11 @@ function renderDash(){
       // Daily-Bias-Kopf oben in derselben Karte (Nutzer-Wunsch 2026-07-25:
       // im Referenz-Foto ist das EIN Panel, nicht zwei getrennte Karten).
       const db=dailyBiasInfo();
+      // Session-Zeitleiste (Sydney/Tokyo/London/New York) bewusst raus aus
+      // dieser Karte (Nutzer-Wunsch 2026-07-25: Dashboard soll ohne Scrollen
+      // aufs Referenz-Foto passen, das zeigt hier ebenfalls nur Globus+
+      // Legende) - sessionBarHtml() bleibt im Code, falls sie an anderer
+      // Stelle spaeter wieder gebraucht wird.
       content=`<div class="daily-bias-wrap">
         <div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
         <div class="daily-bias-txt">${db.txt}</div>
@@ -9473,8 +9480,7 @@ function renderDash(){
           <span><i style="background:${BC.bull}"></i>Bullish</span>
           <span><i style="background:${BC.neu}"></i>Neutral</span>
           <span><i style="background:${BC.bear}"></i>Bearish</span>
-        </div>
-        ${sessionBarHtml()}`;
+        </div>`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -9559,22 +9565,16 @@ function renderDash(){
       const envSetUI=`<div class="risk-env-set">
         <div class="risk-env-set-hdr"><span>🎚️ Your Risk Environment read</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',13)}</button></div>
         <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
-        <div class="risk-env-set-note">Drives the "Risk Correlation" indicator on the Risk Environment card of every asset (⚙️ = set which assets react how).</div>
       </div>`;
       content=`<div class="risk-gauge">
         ${envSetUI}
-        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100')}</div>
+        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',115)}</div>
         <div class="risk-lbl" style="color:${col}">${lbl}</div>
         <div class="risk-sub">Risk assets ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Safe havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
         <div class="risk-assets-grid">
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
           <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
         </div>
-        <div class="risk-hist-wrap">
-          <div class="risk-hist-hd">📈 History</div>
-          ${riskHistChart(col,_riskHistChartH)}
-        </div>
-        <div class="risk-calc">🧮 <b>Risk assets</b> = avg. score of AUD, NZD, S&amp;P 500, Nasdaq, BTC, DAX &nbsp;·&nbsp; <b>Safe havens</b> = avg. score of JPY, CHF, Gold. <b>Net</b> = Risk assets − Safe havens sets the pointer (&gt;+0.8 RISK-ON, &lt;−0.8 RISK-OFF, else NEUTRAL).</div>
       </div>`;
     }else if(w.type==='movers_fx'){
       // Preisbasierte Bewegung (nicht Score!): die groessten FX-Gewinner UND
@@ -9646,7 +9646,7 @@ function renderDash(){
       // Datenquelle (calEvts/evtImpact/isEvtPast) wie ueberall sonst.
       const mc=[...calEvts].filter(ev=>evtImpact(ev)==='high'&&!isEvtPast(ev))
         .sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date))
-        .slice(0,8);
+        .slice(0,3);
       const dayName=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('en',{weekday:'short'});}catch(e){return'';}};
       const dayNum=d=>{try{return new Date(d+'T00:00:00').getDate();}catch(e){return'';}};
       const rows=mc.map(ev=>`<div class="hie-row" onclick="showTab('cal')">
@@ -9663,38 +9663,42 @@ function renderDash(){
       // (tickerInfoForItem/assetTickerInfo/pairTickerInfo, price_data.json) -
       // keine neuen Daten, nur eine andere, konfigurierbare Zusammenstellung
       // (Nutzer-Wunsch 2026-07-25: Zahnrad zum Hinzufuegen/Entfernen, Tabs
-      // wie im Referenz-Foto FX/Indices/Commodities/Bonds).
+      // wie im Referenz-Foto FX/Indices/Commodities/Bonds). Jetzt volle
+      // Kartenbreite in der mittleren Dashboard-Reihe (statt Macro Overview)
+      // - Symbole stehen deshalb als Kacheln nebeneinander statt als Liste.
       const full=(w.symbols&&w.symbols.length)?w.symbols:MW_DEFAULT_SYMS;
       const tab=w.mwTab&&MW_TABS.includes(w.mwTab)?w.mwTab:'FX';
       const list=full.filter(k=>mwCatOf(k)===tab);
       const tabsHtml=`<div class="mw-tabs">${MW_TABS.map(t=>`<button class="mw-tab${t===tab?' on':''}" onclick="setMwTab('${w.id}','${t}')">${t}</button>`).join('')}</div>`;
-      const rows=list.map(key=>{
+      const tiles=list.map(key=>{
         const p=parseMwSym(key);
         let info=null,label=key,clickable=null;
         if(p.kind==='pair'){info=pairTickerInfo(...p.id.split('/'));label=p.id;}
         else if(p.kind==='bond'){info=bondYieldChangeInfo('USD','10Y Bond Yield');label='US10Y';}
         else{info=assetTickerInfo(p.id);label=p.id==='USD'?'DXY':((syms.find(x=>x.id===p.id)||{}).name||p.id);clickable=p.id;}
-        if(!info)return`<div class="mw-row"><span class="mw-sym">${escH(label)}</span><span class="mw-empty" style="grid-column:2/-1">No data yet</span></div>`;
+        if(!info)return`<div class="mw-tile"><div class="mw-tile-sym">${escH(label)}</div><div class="dw-empty" style="margin-top:6px">No data yet</div></div>`;
         const col=BC[info.bias];
         const priceTxt=p.kind==='bond'?fmtYield(info.price):fmtPriceTick(info.price);
-        const absTxt=p.kind==='bond'?(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(3)+'pp')
-          :(info.changeAbs==null?'–':(info.changeAbs>0?'+':'')+fmtPriceTick(info.changeAbs));
-        const pctTxt=p.kind==='bond'?'–':(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(2)+'%');
+        const pctTxt=p.kind==='bond'?(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(3)+'pp')
+          :(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(2)+'%');
         const arrow=info.bias==='bull'?'▲':info.bias==='bear'?'▼':'◆';
-        return`<div class="mw-row"${clickable?` onclick="gotoSym('${clickable}')" style="cursor:pointer"`:''}>
-          <span class="mw-sym">${escH(label)}</span>
-          <span class="mw-price">${priceTxt}</span>
-          <span class="mw-chg" style="color:${col}">${absTxt}</span>
-          <span class="mw-chg" style="color:${col}">${arrow} ${pctTxt}</span>
+        return`<div class="mw-tile"${clickable?` onclick="gotoSym('${clickable}')" style="cursor:pointer"`:''}>
+          <div class="mw-tile-sym">${escH(label)}</div>
+          <div class="mw-tile-price">${priceTxt}</div>
+          <div class="mw-tile-chg" style="color:${col}">${arrow} ${pctTxt}</div>
         </div>`;
       }).join('')||`<div class="dw-empty" style="padding:14px 4px">No ${tab.toLowerCase()} symbols selected - use ${icn('gear',11)} to add some.</div>`;
-      content=`${tabsHtml}<div class="mw-hdr-row"><span>SYMBOL</span><span>PRICE</span><span>CHANGE</span><span>DAILY %</span></div><div class="mw-list">${rows}</div>
+      content=`${tabsHtml}<div class="mw-strip">${tiles}</div>
         <div class="mw-footer" onclick="showTab('pairs')">Go to Market Overview ›</div>`;
     }else if(w.type==='key_insights'){
       // Platzhalter (Nutzer-Wunsch 2026-07-25): Datenquelle noch offen (Konto
       // fuer eine echte News-API vs. Template aus App-eigenen Signalen wie
       // bei Daily Bias) - bewusst KEIN erfundener Inhalt, bis das geklaert ist.
       content=`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">Key Insights — placeholder. Real source (news API account vs. template-based like Daily Bias) still to be decided.</div>`;
+    }else if(w.type==='notification'){
+      // Platzhalter (Nutzer-Wunsch 2026-07-25): Inhalt wird spaeter geklaert -
+      // nimmt Market Watchs alte Stelle in der unteren Reihe ein.
+      content=`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">Notifications — placeholder. Content still to be decided.</div>`;
     }else if(w.type==='live_data'){
       // Nur echte, bereits vorhandene Zeitstempel (Nutzer-Wunsch 2026-07-25:
       // kein erfundenes "Real-Time"/Latenz-Versprechen - der Client fetcht nie
@@ -10217,7 +10221,10 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    const size=Math.max(170,Math.min(w||240,360));
+    // Kappung auf 150px (Nutzer-Wunsch 2026-07-25: Dashboard soll komplett
+    // ohne Scrollen auf eine Bildschirmseite passen) - vorher bis zu 360px,
+    // war mit Abstand der groesste Platzverbrauch der Hero-Karte.
+    const size=Math.max(130,Math.min(w||150,150));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     return globeCollectRefs(h,size);
   }).filter(Boolean);
@@ -11749,7 +11756,7 @@ function applySentimentFeed(){
 // ── Insights → Sentiment-Tab: Contrarian-Stimmungs-Diagramme ──────────────
 // Halbkreis-Tacho (0–100) fuer die Fear&Greed-Indizes: linke Haelfte = Angst
 // (kontraindikativ bullish, blau), rechte = Gier (bearish, rot). Nadel = Wert.
-function sentGauge(val,lo,hi,unit){
+function sentGauge(val,lo,hi,unit,maxW){
   // val skaliert auf 0..1 zwischen lo..hi; Standard 0..100.
   const t=Math.max(0,Math.min(1,(val-lo)/((hi-lo)||1)));
   const W=200,H=118,cx=W/2,cy=104,R=88;
@@ -11761,7 +11768,7 @@ function sentGauge(val,lo,hi,unit){
   };
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
-  return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:230px;display:block;margin:0 auto">
+  return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
     ${arc(P,P*0.75,'#5fa8ed')}${arc(P*0.75,P*0.55,'#6ea8d8')}${arc(P*0.55,P*0.45,'#f4ad5c')}${arc(P*0.45,P*0.25,'#e08a6a')}${arc(P*0.25,0,'#ef5350')}
     <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
