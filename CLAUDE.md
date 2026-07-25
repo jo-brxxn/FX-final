@@ -190,9 +190,18 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   beschriebene Bugfixes ohne Interpretationsspielraum sind hiervon nicht
   automatisch ausgenommen, im Zweifel lieber einmal zu viel nachfragen als
   ungefragt loslegen.
-- **VERSION-CHECK-Banner**: oben in `index.html` gibt es ein Banner
-  `VERSION-CHECK: <FARBE> (<Beschreibung>)`. Bei **jeder** Änderung Farbe +
-  Beschreibung ändern — auch bei reinen Workflow-(YAML-)Änderungen.
+- **VERSION-CHECK/LIVE-Banner (Stand 2026-07-25, Nutzer-Korrektur):** steht
+  jetzt NICHT mehr in einer eigenen Zeile über dem Header, sondern zentriert
+  IN derselben Zeile wie das Logo (`.hdr-livebanner`, `id="verBanner"`,
+  ~Zeile 1519) — kein Hide-/Collapse-Button mehr, immer sichtbar/schmal.
+  Inhalt: blinkender roter Punkt im roten Kreis, „LIVE" in Rot, tickende
+  Uhrzeit (`startHdrLiveClock()`), dann Name/Nummer (`#hlbName`, Text +
+  `title`-Tooltip). Bei **jeder** Änderung weiterhin Name+Nummer hochzählen
+  (z. B. `VERSION-CHECK-234`) und den `title`-Tooltip mit einer Kurz-
+  beschreibung aktualisieren — das ist weiterhin der Hinweis „neue Version
+  da". **Die Farbe ändert sich ab jetzt NICHT mehr pro Deploy** (Nutzer-
+  Entscheid 2026-07-25: „er bleibt ab sofort immer in der gleichen Farbe") —
+  rot (Dot+LIVE-Text) ist fest, nicht mehr Teil des Änderungssignals.
 - **JS-Syntax-Check vor jedem Push** von `index.html`: `<script>`-Blöcke
   extrahieren, zusammenfügen, `node --check` laufen lassen. Für die Workflow-YAML
   zusätzlich `python3 -c "import yaml; yaml.safe_load(...)"` und das eingebettete
@@ -743,9 +752,10 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
 - **Header konsolidiert:** Export/Import/Backups stecken in EINEM
   "Data"-Dropdown (`toggleDataMenu`/`#dataMenu`); Profil-Kreis zeigt
   Initialen des Sync-Namens (`updProfile`), ohne Sync ein Personen-SVG.
-  Mobil (<760px): kompakter Header (kleiner Avatar ohne Namen) und
-  VERSION-CHECK-Banner default EINGEKLAPPT (nur solange der Nutzer den
-  Zustand nie selbst umgeschaltet hat — localStorage-Wert hat Vorrang).
+  Mobil (<760px): kompakter Header (kleiner Avatar ohne Namen). Der hier
+  beschriebene Ein-/Ausklapp-Mechanismus des Banners ist seit 2026-07-25
+  komplett entfernt (siehe "VERSION-CHECK/LIVE-Banner" oben) — Banner ist
+  jetzt fest im Header, kein eigener Mobil-Sonderzustand mehr.
 - **Globale Suche:** Lupe im Header oder Taste "/" → `openSearchM()`;
   findet Assets, Indikatoren, Kalender-Events, Tabs (`searchEntries`),
   Pfeiltasten+Enter. Neue durchsuchbare Dinge dort ergänzen.

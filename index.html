@@ -37,7 +37,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0d1117;color:#dfe7f1;hei
 }
 /* ── LAYOUT ── */
 .hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.logo{font-size:20px;font-weight:900;letter-spacing:.3px;color:var(--t0)}
+/* Logo wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): "FX" kraeftig/gross
+   in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
+   einheitlich eingefaerbten Wortmarke. */
+.logo{font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+.logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
+.logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
@@ -722,7 +727,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 /* ── DASHBOARD ── */
-.dw{background:rgba(17,22,31,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .15s}
+/* Flache Vollfarbe statt Glassmorphism (Referenz-Foto, Nutzer-Korrektur
+   2026-07-25: "die karten sind vom Design schlecht... hintergrundfarbe aber
+   leicht dunkler als der Hintergrund") - #0a0e14 ist dunkler als --bg0
+   (#0d1117), kein backdrop-filter mehr (auch guenstiger, siehe die bereits
+   dokumentierte Blur-Perf-Lehre bei der Aurora weiter oben). */
+.dw{background:#0a0e14;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 .dash-majors{display:none}
 .dash-majors-lbl{font-size:9px;letter-spacing:1.5px;color:var(--t3);font-weight:700;padding:0 4px 5px;text-transform:uppercase}
@@ -775,7 +785,10 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* Feste Breite, damit startGlobes() eine verlaessliche clientWidth misst
    (ein flex-Item ohne Inhalt meldet sonst 0 und faellt auf die volle
    Kartenbreite zurueck). */
-.db-split .globe-host{flex:0 0 200px;width:200px;min-height:0;padding:0}
+/* Globus 2/3 der Kartenbreite statt fixer 200px (Referenz-Foto, Nutzer-
+   Wunsch 2026-07-25) - Text-Spalte (.db-col-txt, flex:1 1 0) bekommt den
+   Rest. JS-Groessenkappung in startGlobes() dazu von 200 auf 260 angehoben. */
+.db-split .globe-host{flex:0 0 66.6%;width:66.6%;min-height:0;padding:0;position:relative}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
 @media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
 .daily-bias-lbl{font-size:19px;font-weight:800;letter-spacing:.3px;margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -785,12 +798,18 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
+/* Kacheln nebeneinander in EINER Zeile statt gestapelt (Referenz-Foto
+   IMG_1196, Nutzer-Wunsch 2026-07-25): Inhalt pro Kachel jetzt inline
+   (Symbol Preis Aenderung), Kachel selbst nur so breit wie ihr Inhalt
+   (flex:0 0 auto) - "gap" sorgt dadurch fuer IMMER GLEICHE Abstaende
+   zwischen den Kacheln, unabhaengig von unterschiedlich langen Symbolnamen.
+   Karte wird dadurch nur noch eine Zeile hoch. */
 .mw-strip{display:flex;gap:8px;flex-wrap:wrap}
-.mw-tile{flex:1 1 120px;min-width:100px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 11px;transition:background .12s}
+.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:7px;background:var(--bg2);border:1px solid var(--bd);border-radius:9px;padding:7px 12px;white-space:nowrap;transition:background .12s}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-tile-sym{font-size:9.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-price{font-size:13px;font-weight:800;color:var(--t0);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-chg{font-size:10px;font-weight:700;margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-sym{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-price{font-size:12.5px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-chg{font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-footer{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.06);font-size:10.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
 @media (hover:hover){.mw-footer:hover{text-decoration:underline}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
@@ -1355,51 +1374,28 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* ── SKELETON-SHIMMER (Platzhalter beim ersten Laden) ── */
 .skel{display:inline-block;height:11px;border-radius:4px;vertical-align:middle;background:linear-gradient(90deg,rgba(128,151,176,.10) 25%,rgba(128,151,176,.30) 50%,rgba(128,151,176,.10) 75%);background-size:200% 100%;animation:skelShimmer 1.2s ease-in-out infinite}
 @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-/* VERSION-CHECK-Banner: eingeklappt bleibt nur das Label ("VERSION-CHECK:
-   <FARBE>-<NAME>") sichtbar, der lange Beschreibungstext wird ausgeblendet -
-   die Leiste schrumpft auf eine schmale Zeile. */
-#verBanner .ver-label{white-space:nowrap}
-#verBanner.ver-collapsed{padding-top:3px;padding-bottom:3px}
-#verBanner.ver-collapsed #verBannerText{display:none}
+/* LIVE-Banner im Header (Referenz-Foto, Nutzer-Wunsch 2026-07-25): ersetzt
+   den frueheren eigenstaendigen VERSION-CHECK-Banner (eigene Zeile, Farbe
+   pro Deploy geaendert, Ausklapp-/Entfernen-Buttons). Steht jetzt IN der
+   Header-Zeile, zentriert ueber Logo und Nav-Buttons (siehe .hdr{position:
+   relative}), immer schmal, keine Buttons mehr. Farbe bleibt ab jetzt fix
+   (Nutzer-Entscheid 2026-07-25) - nur Name/Nummer aendern sich weiterhin bei
+   jeder Aenderung (siehe updVerBanner() unten), das ist der verbleibende
+   "neue Version da"-Hinweis. */
+.hdr{position:relative}
+.hdr-livebanner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
+@keyframes hlbBlink{0%,100%{opacity:1}50%{opacity:.2}}
+.hlb-lbl{font-size:11px;font-weight:800;letter-spacing:1.3px;color:var(--red)}
+.hlb-clock{font-size:11px;font-weight:700;color:var(--t1)}
+.hlb-sep{color:var(--t3);opacity:.5}
+.hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
+@media(max-width:759px){.hdr-livebanner{position:static;transform:none;order:3;width:100%;justify-content:center;margin-top:3px}}
 </style>
 </head>
 <body>
 
-<!-- VERSION-CHECK-Banner: pro Sitzung wegklickbar (×), zusaetzlich dauerhaft
-     einklappbar (▾/▸, Zustand in localStorage) - bleibt aber Teil des
-     Deploy-Workflows (Farbe + Beschreibung werden weiterhin bei JEDER
-     Aenderung aktualisiert). WICHTIG: "Farbe aendern" heisst nicht nur den
-     Farbnamen im Label-Text austauschen, sondern das background/color hier
-     im style tatsaechlich auf einen ANDEREN Ton umstellen (an allen 3
-     Stellen: Haupt-div + beide Buttons) - genau daran erkennt man auf einen
-     Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
-     Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
-     (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-FOTOLAYOUT-232</span><span id="verBannerText"> (Naeher an die Referenz-Foto-Dichte: COT-/Risk-Env-Popups stecken jetzt IN der Notifications-Karte statt als eigene schwebende Banner ueberm Grid; MAJORS-Sidebar flach statt Mini-Karten pro Zeile (kein Box-Rand/Radius mehr, nur duenner Trenner + Bias-Randstreifen), 132-160px auf 104-122px verschmaelert; Kartenkoepfe haben jetzt ein kleines rundes i-Info-Icon direkt neben dem Titel statt eines reinen title-Tooltips; diverse Dashboard-Schriftgroessen (Titel, Daily-Bias-Label, Ranking, Risk-Sentiment, Market-Watch-Kacheln, Kalender-Zeilen) nochmal verkleinert.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
-<script>
-function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
-function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
-function toggleVerBannerVisible(){const b=document.getElementById('verBanner');const hidden=!b||b.style.display==='none';hidden?showVerBanner():hideVerBanner();}
-function updVerBannerToggleBtn(){
-  const btn=document.getElementById('verBannerToggleBtn');if(!btn)return;
-  const b=document.getElementById('verBanner');
-  btn.textContent=(!b||b.style.display==='none')?'Show banner':'Hide banner';
-}
-function toggleVerBannerCollapse(){
-  const b=document.getElementById('verBanner');if(!b)return;
-  const collapsed=b.classList.toggle('ver-collapsed');
-  const btn=document.getElementById('verBannerCollapseBtn');if(btn)btn.textContent=collapsed?'▸':'▾';
-  try{localStorage.setItem('fxpro_verbanner_collapsed',collapsed?'1':'0')}catch(e){}
-}
-try{
-  if(sessionStorage.getItem('fxpro_verbanner_hidden')==='1'){const b=document.getElementById('verBanner');if(b)b.style.display='none';}
-  // Auf schmalen Screens (Handy) ist der ausgeklappte Banner-Text zu hoch
-  // (frass fast den halben Bildschirm) - dort default EINGEKLAPPT, solange
-  // der Nutzer den Zustand nicht selbst umgestellt hat (dann gilt seine Wahl).
-  const _vbc=localStorage.getItem('fxpro_verbanner_collapsed');
-  if(_vbc==='1'||(_vbc===null&&window.innerWidth<760)){const b=document.getElementById('verBanner');if(b)b.classList.add('ver-collapsed');const btn=document.getElementById('verBannerCollapseBtn');if(btn)btn.textContent='▸';}
-}catch(e){}
-</script>
 
 <!-- INTRO-ANIMATION -->
 <div id="introOv">
@@ -1515,10 +1511,17 @@ function introLogin(){
 
 <div class="hdr">
   <div>
-    <div class="logo">FX Analyst Pro</div>
+    <div class="logo"><span class="logo-fx">FX</span><span class="logo-rest">Analyst Pro</span></div>
     <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
+  </div>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-234 — Banner jetzt im Header (kein Hide/Collapse mehr, Farbe fix), Market-Watch-Kacheln einzeilig mit gleichen Abstaenden, Karten flach+dunkler statt Blur, Globus 2/3 Kartenbreite mit Dot-Textur + rotem 5s-Scan, Logo FX blau abgesetzt">
+    <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hlb-lbl">LIVE</span>
+    <span class="hlb-clock" id="hlbClock">--:--:--</span>
+    <span class="hlb-sep">·</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-234</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -1961,10 +1964,6 @@ function introLogin(){
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
     <h3>☁ Cloud Synchronization</h3>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Version banner (update notes at the top)</span>
-      <button class="btn" id="verBannerToggleBtn" onclick="toggleVerBannerVisible()">Hide banner</button>
-    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
       <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
@@ -5434,7 +5433,6 @@ function cloudHeaders(cfg){
   return{'apikey':cfg.key,'Content-Type':'application/json'};
 }
 function openCloudM(fromIntro){
-  try{updVerBannerToggleBtn()}catch(e){}
   try{updPinToggleBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
@@ -9453,6 +9451,17 @@ function startLiveClock(){
   if(_liveClockInt)clearInterval(_liveClockInt);
   _liveClockInt=setInterval(tick,1000);
 }
+// Tickende Uhr im Header-LIVE-Banner (Referenz-Foto, Nutzer-Wunsch
+// 2026-07-25) - laeuft IMMER (nicht nur auf dem Dashboard-Tab, anders als
+// startLiveClock() oben), da der Banner jetzt Teil der Header-Zeile auf
+// jeder Seite ist. Einmalig beim Boot gestartet, kein Cleanup noetig (das
+// Element existiert dauerhaft im DOM).
+function startHdrLiveClock(){
+  const e=document.getElementById('hlbClock');if(!e)return;
+  const tick=()=>{e.textContent=new Date().toLocaleTimeString([],{hour12:false});};
+  tick();
+  setInterval(tick,1000);
+}
 // Persistente MAJORS-Sidebar links vom Dashboard-Grid (Referenz-Foto,
 // Nutzer-Wunsch 2026-07-25) - dieselben Bausteine wie die normale FX/Non-FX-
 // Sidebar (.ab/.an/.av/miniSparklineSvg/glowClass, CLAUDE.md-Grundsatz
@@ -9725,16 +9734,16 @@ function renderDash(){
         if(p.kind==='pair'){info=pairTickerInfo(...p.id.split('/'));label=p.id;}
         else if(p.kind==='bond'){info=bondYieldChangeInfo('USD','10Y Bond Yield');label='US10Y';}
         else{info=assetTickerInfo(p.id);label=p.id==='USD'?'DXY':((syms.find(x=>x.id===p.id)||{}).name||p.id);clickable=p.id;}
-        if(!info)return`<div class="mw-tile"><div class="mw-tile-sym">${escH(label)}</div><div class="dw-empty" style="margin-top:6px">No data yet</div></div>`;
+        if(!info)return`<div class="mw-tile"><span class="mw-tile-sym">${escH(label)}</span><span class="dw-empty">No data</span></div>`;
         const col=BC[info.bias];
         const priceTxt=p.kind==='bond'?fmtYield(info.price):fmtPriceTick(info.price);
         const pctTxt=p.kind==='bond'?(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(3)+'pp')
           :(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(2)+'%');
         const arrow=info.bias==='bull'?'▲':info.bias==='bear'?'▼':'◆';
         return`<div class="mw-tile"${clickable?` onclick="gotoSym('${clickable}')" style="cursor:pointer"`:''}>
-          <div class="mw-tile-sym">${escH(label)}</div>
-          <div class="mw-tile-price">${priceTxt}</div>
-          <div class="mw-tile-chg" style="color:${col}">${arrow} ${pctTxt}</div>
+          <span class="mw-tile-sym">${escH(label)}</span>
+          <span class="mw-tile-price">${priceTxt}</span>
+          <span class="mw-tile-chg" style="color:${col}">${arrow}${pctTxt}</span>
         </div>`;
       }).join('')||`<div class="dw-empty" style="padding:14px 4px">No ${tab.toLowerCase()} symbols selected - use ${icn('gear',11)} to add some.</div>`;
       content=`${tabsHtml}<div class="mw-strip">${tiles}</div>
@@ -10071,13 +10080,32 @@ function globeSkeleton(size,uid){
   const R=size/2-16,cx=size/2,cy=size/2;
   const gid='gGrad'+uid,nid='gNight'+uid,dgid='gDay'+uid,tgid='gTerm'+uid,lmgid='gLimbGrad'+uid,lmid='gLimbMask'+uid;
   const grid=(GLOBE_MERIDIANS.length+GLOBE_PARALLELS.length);
-  let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="var(--bd2)" stroke-width="0.6" opacity="0.45"/>';
-  // Fuellung + Umrandung jedes Land-Polygons in EINEM <path> (fill+stroke werden vom
-  // Browser immer zusammen in einem Schritt gemalt) - Umrandung bewusst nur leicht
-  // heller als die Fuellung, damit sie nicht staerker wirkt als die Flaeche selbst
-  // (sonst sieht es aus, als wuerde zuerst nur die Kontur und danach die Flaeche erscheinen).
-  let land='';GLOBE_LAND.forEach((poly,i)=>{const light=42+(i%4)*5;land+=`<path fill="hsl(208,22%,${light}%)" stroke="hsl(206,30%,${light+8}%)" stroke-width="0.5" stroke-opacity="0.35" opacity="0.85"/>`;});
+  // Gitterlinien hell/weiss statt dunkelblau (Referenz-Foto, Nutzer-Wunsch
+  // 2026-07-25: "Linien... von weiss zu kurzzeitig rot" - brauchte einen
+  // hellen Ausgangston, damit der Rot-Scan-Sweep unten ueberhaupt als
+  // Farbwechsel wahrnehmbar ist).
+  let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="rgba(225,235,250,.55)" stroke-width="0.6"/>';
+  // Kontinente als Raster kleiner Quadrate statt Vollflaechen-Polygone
+  // (Referenz-Foto, Nutzer-Wunsch 2026-07-25: "mit so vielem kleinen
+  // Vierecken... ausgestattet") - EIN gemeinsames Pattern (kein Umbau der
+  // Projektions-/Rotationslogik noetig, die Land-<path>s bleiben technisch
+  // unveraendert, nur ihr fill wechselt von hsl(...) auf das Pattern).
+  const dotpid='gLandDots'+uid;
+  let land='';GLOBE_LAND.forEach((poly,i)=>{land+=`<path fill="url(#${dotpid})" stroke="rgba(225,235,250,.2)" stroke-width="0.4" opacity="0.92"/>`;});
   let markers='';Object.keys(GLOBE_GEO).forEach(id=>{markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;});
+  // Roter Scan-Sweep alle 5s (Referenz-Foto, Nutzer-Wunsch 2026-07-25): ein
+  // per SMIL <animate> von links nach rechts wanderndes Rechteck, per
+  // Limb-Maske auf den Kugelkreis geclippt und per mix-blend-mode:screen
+  // ueber Gitter/Land geblendet - faerbt darunterliegende Linien/Quadrate
+  // beim Durchlaufen kurz rot, ohne dass jede Linie einzeln pro Frame neu
+  // eingefaerbt werden muesste. Steht 4s lang unsichtbar ausserhalb des
+  // Kreises (keyTimes 0.22-1), dann ein neuer Durchlauf.
+  const scanGid='gScan'+uid,scanX0=cx-R*1.6,scanX1=cx+R*1.6-R*0.55;
+  const scanBar=`<linearGradient id="${scanGid}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff2d2d" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ff3b3b" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ff2d2d" stop-opacity="0"/>
+    </linearGradient>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
       <radialGradient id="${gid}" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/></radialGradient>
@@ -10086,6 +10114,10 @@ function globeSkeleton(size,uid){
       <radialGradient class="gl-termgrad" id="${tgid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="55%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="68%" stop-color="#ff8a3d" stop-opacity="0.16"/><stop offset="82%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="100%" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
       <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="62%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
       <mask id="${lmid}" maskContentUnits="userSpaceOnUse"><circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${lmgid})"/></mask>
+      <pattern id="${dotpid}" width="4" height="4" patternUnits="userSpaceOnUse">
+        <rect x="0.5" y="0.5" width="2.4" height="2.4" fill="rgba(210,226,245,.8)"/>
+      </pattern>
+      ${scanBar}
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})" stroke="var(--bd2)" stroke-width="1"/>
     <g data-layer="land" mask="url(#${lmid})">${land}</g>
@@ -10093,6 +10125,9 @@ function globeSkeleton(size,uid){
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${dgid})"/>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${tgid})"/>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${nid})"/>
+    <rect x="${scanX0}" y="${cy-R}" width="${R*0.55}" height="${R*2}" fill="url(#${scanGid})" mask="url(#${lmid})" style="mix-blend-mode:screen" pointer-events="none">
+      <animate attributeName="x" values="${scanX0};${scanX0};${scanX1};${scanX1}" keyTimes="0;0.02;0.22;1" dur="5s" repeatCount="indefinite"/>
+    </rect>
     <g data-layer="markers">${markers}</g>
   </svg>`;
 }
@@ -10278,12 +10313,12 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    // Kappung auf 200px (Nutzer-Wunsch 2026-07-25: Dashboard soll komplett
-    // ohne Scrollen auf eine Bildschirmseite passen) - vorher bis zu 360px.
-    // Seit dem zweispaltigen db-split-Layout steht der Globus NEBEN dem Text
-    // statt darunter, kostet also keine zusaetzliche Kartenhoehe mehr und
-    // darf wieder groesser sein als die zwischenzeitlichen 150px.
-    const size=Math.max(140,Math.min(w||200,200));
+    // Kappung auf 260px (Referenz-Foto, Nutzer-Wunsch 2026-07-25: Globus
+    // soll 2/3 der Kartenbreite einnehmen - .globe-host ist jetzt flex:0 0
+    // 66.6% statt fixer 200px, w kommt also entsprechend groesser rein).
+    // Obergrenze verhindert trotzdem ein ausuferndes Quadrat auf sehr breiten
+    // Karten, wo die Text-Spalte sonst viel zu schmal wuerde.
+    const size=Math.max(140,Math.min(w||220,260));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     return globeCollectRefs(h,size);
   }).filter(Boolean);
@@ -13569,7 +13604,7 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();updInboxBadge();updProfile();
+renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();
 maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
