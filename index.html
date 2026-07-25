@@ -36,17 +36,27 @@ body{font-family:Arial,Helvetica,sans-serif;background:#060b12;color:#dfe7f1;hei
   --r:8px;--rs:6px;--rss:4px;
 }
 /* ── LAYOUT ── */
-.hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+/* Header als 3-Spalten/2-Zeilen-Grid statt Flex (Referenz-Foto, Nutzer-
+   Korrektur 2026-07-25 "der Banner ist ueber den Buttons"): der linke Block
+   (Logo/FX-Summe/Saved) spannt beide Zeilen, der LIVE-Banner sitzt in
+   Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
+   im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
+   laeufig in derselben Zeile. */
+.hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
+/* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
+   Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
+   Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
+.hdr-sub{grid-column:1/3;grid-row:2;min-width:0}
 /* Logo wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): "FX" kraeftig/gross
    in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
    einheitlich eingefaerbten Wortmarke. */
-.logo{font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+.logo{grid-column:1;grid-row:1;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
 .logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
-.hdr-r{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
 .profile-circle{width:52px;height:52px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
@@ -1430,7 +1440,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Alarm-Zaehler bzw. die Undo/Redo-Pfeile (per Playwright bei 1366px
    gesehen). So kann er nie etwas verdecken - er bekommt einfach den Platz,
    der zwischen beiden Bloecken uebrig ist. */
-.hdr-livebanner{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hdr-livebanner{grid-column:2/-1;grid-row:1;justify-self:center;min-width:0;max-width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hlb-name{overflow:hidden;text-overflow:ellipsis}
 .hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
@@ -1439,7 +1449,21 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .hlb-clock{font-size:11px;font-weight:700;color:var(--t1)}
 .hlb-sep{color:var(--t3);opacity:.5}
 .hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
-@media(max-width:759px){.hdr-livebanner{order:3;flex:0 0 100%;width:100%;margin-top:3px}}
+/* Schmale Screens: Buttons neben den Logo-Block (Zeile 1), Banner darunter
+   ueber die volle Breite - sonst waere die Button-Leiste dort zu eng. */
+/* Unter 1080px: EINE Spalte, alles untereinander (Logo, Statuszeile,
+   Buttons, Banner). Das Foto-Grid (Banner in Zeile 1, Buttons rechts in
+   Zeile 2) braucht Platz fuer Logo-Spalte UND die volle Button-Spalte
+   nebeneinander - darunter quetscht es den Logo-/Statustext mehrzeilig
+   zusammen (per Playwright bei 820px und 390px gesehen). Grenze bewusst
+   1080px, damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt. */
+@media(max-width:1079px){
+  .hdr{grid-template-columns:minmax(0,1fr)}
+  .logo{grid-column:1;grid-row:1;justify-self:start}
+  .hdr-sub{grid-column:1;grid-row:2}
+  .hdr-r{grid-column:1;grid-row:3;justify-self:start;margin-top:4px}
+  .hdr-livebanner{grid-column:1;grid-row:4;margin-top:4px;justify-self:center}
+}
 </style>
 </head>
 <body>
@@ -1558,18 +1582,18 @@ function introLogin(){
 <script>if(localStorage.getItem('fxpro_pin_enabled')==='0'||sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
 
 <div class="hdr">
-  <div>
-    <div class="logo"><span class="logo-fx">FX</span><span class="logo-rest">Analyst Pro</span></div>
+  <div class="logo"><span class="logo-fx">FX</span><span class="logo-rest">Analyst Pro</span></div>
+  <div class="hdr-sub">
     <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-236 — Market Watch ist keine Karte mehr, sondern eine schmale Ticker-Leiste (kein Rahmen/Kopfzeile/Fusszeile, Steuerbuttons neben den Tabs) - spart 111px; dadurch passt das Dashboard jetzt auch bei 1180px und 1366px ohne Scrollen">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-237 — Header wie im Foto als Grid: LIVE-Banner in Zeile 1 auf Logo-Hoehe, Button-Leiste in Zeile 2 darunter (vorher lagen beide in derselben Zeile). Unter 1080px einspaltig gestapelt">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-236</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-237</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">

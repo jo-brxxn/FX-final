@@ -4197,3 +4197,21 @@ Dashboard jetzt auch bei 1180px und 1366px vollstaendig ohne Scrollen
 (vorher nur ab 1512px). `.daily-bias-lbl` zusaetzlich auf
 `clamp(18px,1.75vw,26px)` + `white-space:nowrap`, weil "◆ NEUTRAL" bei
 ~1180px sonst hinter dem Rautensymbol umbrach.
+
+**Nachtrag 2 (selber Tag): Header-Aufbau als Grid, Banner UEBER den
+Buttons.** Nutzer per Foto-Vergleich: "der Banner ist ueber den Buttons".
+`.hdr` war ein Flexbox - damit lagen Banner und Button-Leiste zwangslaeufig
+in derselben Zeile. Jetzt ein 3-Spalten/2-Zeilen-Grid:
+`.logo` (Sp.1/Z.1) · `.hdr-livebanner` (Sp.2/-1, Z.1, zentriert) ·
+`.hdr-sub` = FX-Summe+Saved (Sp.1-2, Z.2) · `.hdr-r` = Buttons (Sp.3, Z.2).
+**Der Trick ist, das Logo selbst als Grid-Item zu setzen** (nicht in einem
+Wrapper-Div): dadurch bestimmt es die Hoehe von Zeile 1, und der darin
+zentrierte Banner sitzt exakt auf Logo-Hoehe - mit einem Wrapper, der beide
+Zeilen spannt, schwebte der Banner zu weit oben. Der Banner spannt bewusst
+`grid-column:2/-1`: Spalte 3 ist in Zeile 1 leer, so bekommt er die volle
+Restbreite statt nur der schmalen Mittelspalte.
+**Unter 1080px einspaltig** (Logo/Status/Buttons/Banner untereinander):
+darueber braucht das Grid Platz fuer Logo-Spalte UND volle Button-Spalte
+nebeneinander, darunter quetscht es sonst den Logo-/Statustext mehrzeilig
+zusammen (per Playwright bei 820px und 390px reproduziert). Grenze bewusst
+1080px, damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt.
