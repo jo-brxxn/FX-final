@@ -663,11 +663,11 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
-.cot-notify-card{display:flex;align-items:center;gap:9px;padding:7px 12px;margin-bottom:8px;border-radius:10px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:4px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
-.cot-notify-ic{font-size:16px}
-.cot-notify-txt{font-weight:800;font-size:13px;letter-spacing:.3px;color:#5b9bd8}
-.cot-notify-sub{font-size:11px;opacity:.75;margin-left:2px;color:var(--t2)}
-.cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;opacity:.85}
+.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:8px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+.cot-notify-ic{font-size:14px}
+.cot-notify-txt{font-weight:800;font-size:11.5px;letter-spacing:.2px;color:#5b9bd8}
+.cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
+.cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
 /* Sonntags-Erinnerung Risk Environment: gleicher Aufbau wie die COT-
    Benachrichtigung, eigener Farbton (lila statt blau) zur Unterscheidung.
@@ -725,13 +725,31 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw{background:rgba(17,22,31,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 .dash-majors{display:none}
-.dash-majors-lbl{font-size:10px;letter-spacing:1.5px;color:var(--t3);font-weight:700;padding:2px 6px 8px;text-transform:uppercase}
-.dash-majors .ab-wrap{background:rgba(17,22,31,.72);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:6px;overflow:hidden}
-.dash-majors .ab{border-radius:10px;padding:9px 6px}
-.dash-majors-viewall{font-size:12px;color:var(--blue);text-align:center;padding:10px 4px 2px;cursor:pointer;font-weight:600}
+.dash-majors-lbl{font-size:9px;letter-spacing:1.5px;color:var(--t3);font-weight:700;padding:0 4px 5px;text-transform:uppercase}
+/* Flache Zeilen statt eigener Mini-Karten pro Symbol (Referenz-Foto,
+   Nutzer-Korrektur 2026-07-25: "die Leiste... deutlich schmaler...
+   kompakter weniger Abstände") - kein Kasten/Radius/Margin mehr pro Zeile,
+   nur ein duenner Trenner + der bestehende Bias-Randstreifen (.ab.glow-*). */
+.dash-majors .ab-wrap{background:transparent;border:none;border-radius:0;margin-bottom:0;border-bottom:1px solid rgba(255,255,255,.05)}
+.dash-majors .ab-wrap:last-of-type{border-bottom:none}
+.dash-majors .ab{border-radius:0;padding:5px 4px 5px 7px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
+.dash-majors .ab .an{order:1;flex:1 1 auto}
+.dash-majors .ab .av{order:2;margin:0}
+.dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:10px;margin:1px 0}
+.dash-majors .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0}
+.dash-majors .ab .an,.dash-majors .ab .av{font-size:10px}
+.dash-majors .ab .sb-score{font-size:9.5px}
+.dash-majors-viewall{font-size:11px;color:var(--blue);text-align:center;padding:8px 4px 2px;cursor:pointer;font-weight:600}
 @media (hover:hover){.dash-majors-viewall:hover{text-decoration:underline}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.dw-t{font-size:12px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+/* Minimaler Kartenkopf wie im Referenz-Foto (Nutzer-Korrektur 2026-07-25:
+   "Keine Ueberschrift einfach so") - kleiner Kleinbuchstaben-Titel + kleines
+   rundes i-Info-Icon INLINE direkt daneben (reuse .rinfo, CLAUDE.md-Grundsatz
+   "wiederkehrende UI-Bausteine muessen einheitlich sein"), statt eines
+   eigenstaendigen Titel-Blocks mit Untertitelzeile. */
+.dw-t{display:flex;align-items:center;gap:5px;min-width:0}
+.dw-t-txt{font-size:10.5px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dw-t .rinfo{width:12px;height:12px;font-size:10px;opacity:.5;flex-shrink:0}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:.32;transition:opacity .15s}
 @media (hover:hover){.dw:hover .dw-btns{opacity:1}}
@@ -741,7 +759,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
 .row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
-.dw-empty{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-empty{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .dw-nav{padding:1px 4px;font-size:9px;line-height:1.4}
@@ -760,31 +778,31 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .db-split .globe-host{flex:0 0 200px;width:200px;min-height:0;padding:0}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
 @media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
-.daily-bias-lbl{font-size:22px;font-weight:800;letter-spacing:.3px;margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.55}
+.daily-bias-lbl{font-size:19px;font-weight:800;letter-spacing:.3px;margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.daily-bias-txt{font-size:11.5px;color:var(--t2);line-height:1.5}
 .db-col-txt .globe-legend{justify-content:flex-start;margin-top:12px}
 .mw-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
-.mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;transition:all .12s}
+.mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
 .mw-strip{display:flex;gap:8px;flex-wrap:wrap}
 .mw-tile{flex:1 1 120px;min-width:100px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:8px 11px;transition:background .12s}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-tile-sym{font-size:10.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-price{font-size:15px;font-weight:800;color:var(--t0);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-chg{font-size:11px;font-weight:700;margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-footer{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.06);font-size:11.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
+.mw-tile-sym{font-size:9.5px;font-weight:700;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-price{font-size:13px;font-weight:800;color:var(--t0);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-tile-chg{font-size:10px;font-weight:700;margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mw-footer{margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.06);font-size:10.5px;color:var(--blue);font-weight:600;cursor:pointer;text-align:right}
 @media (hover:hover){.mw-footer:hover{text-decoration:underline}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
 .hie-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
 .hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:29px;height:29px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:7px}
-.hie-day{font-size:13px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.hie-wd{font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.hie-ccy{font-size:12px;font-weight:800;color:var(--t1);width:34px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.hie-name{flex:1;min-width:0;font-size:13px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hie-imp{font-size:9.5px;font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
-.hie-time{font-size:12px;color:var(--t3);width:44px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-wd{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hie-imp{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
+.hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-cfg-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .mw-cfg-opt{font-size:11px;padding:5px 9px}
 .mw-cfg-opt.on{border-color:var(--blue);background:rgba(95,168,237,.14);color:var(--t0)}
@@ -827,11 +845,11 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* Currency Strength Ranking */
 .rank-list{display:flex;flex-direction:column;gap:5px}
 .rank-row{display:grid;grid-template-columns:20px 44px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
-.rank-pos{font-size:11px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.rank-name{font-size:14px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-pos{font-size:10px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-name{font-size:12.5px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
 .rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
-.rank-sc{font-size:13px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-sc{font-size:12px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Risk Sentiment Gauge */
 .risk-gauge{padding:2px 4px 0}
 /* Risk-Environment-Regler (Nutzer-Wunsch 2026-07-13). Kompakt in EINER
@@ -867,18 +885,18 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .risk-env-list-add input{flex:1;background:var(--bg1);border:1px solid var(--bd2);border-radius:6px;color:var(--t1);font-size:12px;padding:6px 8px}
 .risk-env-list-add .btn{flex-shrink:0;font-size:11.5px;white-space:nowrap}
 .risk-gauge-arc{margin-top:2px}
-.risk-lbl{text-align:center;font-size:18px;font-weight:800;margin-top:0;letter-spacing:1.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-sub{text-align:center;font-size:10.5px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-lbl{text-align:center;font-size:15px;font-weight:800;margin-top:0;letter-spacing:1.2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-sub{text-align:center;font-size:10px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc b{color:var(--t2)}
 .risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
-.risk-assets-hd{font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-assets-hd{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-row{display:grid;grid-template-columns:1fr 40px 32px;align-items:center;gap:6px;cursor:pointer;padding:0 3px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
-.risk-asset-name{font-size:10.5px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.55;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-name{font-size:10px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
-.risk-asset-sc{font-size:10.5px;font-weight:700;text-align:right;line-height:1.55;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-sc{font-size:10px;font-weight:700;text-align:right;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
 .risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-hist-empty{font-size:11.5px;color:var(--t3);padding:8px 2px;line-height:1.5}
@@ -1234,8 +1252,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:11px 13px}
-  .dw-t{font-size:12.5px}
+.dw{padding:10px 12px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -1266,12 +1283,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
    die Sidebar ist dort nur etwas schmaler. */
 @media(min-width:1100px){
-  .dash-layout{display:flex;gap:14px;align-items:flex-start}
-  .dash-majors{display:flex;flex-direction:column;gap:1px;width:132px;flex-shrink:0}
+  .dash-layout{display:flex;gap:10px;align-items:flex-start}
+  .dash-majors{display:flex;flex-direction:column;gap:0;width:104px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
 @media(min-width:1400px){
-  .dash-majors{width:160px}
+  .dash-majors{width:122px}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -1358,7 +1375,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-FOTOLAYOUT-231</span><span id="verBannerText"> (Kartenaufbau ans Referenz-Foto angeglichen: Daily Bias jetzt ZWEISPALTIG (Text links, Globus gross rechts daneben statt darunter - war der groesste Hoehenfresser), Kartenkoepfe nur noch kleiner Grossbuchstaben-Titel ohne Untertitelzeile mit gedaempften Steuerbuttons, Risk-Environment-Regler in eine Zeile zusammengezogen, MAJORS-Sidebar schon ab 1100px statt erst ab 1400px. Dashboard-Gesamthoehe dadurch von 2020px auf 845px - passt auf 1080p/1512er-Screens ohne Scrollen.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#0f2438;color:#8fc7ff;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: BLUE-DASHBOARD-FOTOLAYOUT-232</span><span id="verBannerText"> (Naeher an die Referenz-Foto-Dichte: COT-/Risk-Env-Popups stecken jetzt IN der Notifications-Karte statt als eigene schwebende Banner ueberm Grid; MAJORS-Sidebar flach statt Mini-Karten pro Zeile (kein Box-Rand/Radius mehr, nur duenner Trenner + Bias-Randstreifen), 132-160px auf 104-122px verschmaelert; Kartenkoepfe haben jetzt ein kleines rundes i-Info-Icon direkt neben dem Titel statt eines reinen title-Tooltips; diverse Dashboard-Schriftgroessen (Titel, Daily-Bias-Label, Ranking, Risk-Sentiment, Market-Watch-Kacheln, Kalender-Zeilen) nochmal verkleinert.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#8fc7ff;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -1701,8 +1718,6 @@ function introLogin(){
     <div style="display:flex;align-items:baseline;gap:9px;min-width:0"><div style="font-size:15px;font-weight:700;color:var(--t0)">Dashboard</div><div style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Live overview</div></div>
     <button class="btn g" onclick="addWidget()">＋ Widget</button>
   </div>
-  <div id="cotNotifyCard"></div>
-  <div id="riskEnvRemindCard"></div>
   <div class="dash-layout">
     <aside class="dash-majors" id="dashMajors"></aside>
     <div id="dashWidgets"></div>
@@ -9177,15 +9192,22 @@ const W_TYPES=[
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
 ];
-function renderCotNotify(){
-  const el=document.getElementById('cotNotifyCard');if(!el)return;
-  if(!cotWarningActive()){el.innerHTML='';return;}
-  el.innerHTML=`<div class="cot-notify-card" onclick="showTab('cot')">
+// Baut nur noch die HTML-STRINGS (Nutzer-Wunsch 2026-07-25: "Pop ups wie zB
+// cot in die notifications rein" - kein eigener schwebender Banner mehr
+// oberhalb des Grids, stattdessen Inhalt der 'notification'-Widget-Karte in
+// renderDash()). renderCotNotify()/renderRiskEnvRemind() bleiben als duenne
+// Kompat-Wrapper fuer die bestehenden Aufrufstellen (Boot, cloudPull,
+// Dismiss-Klick) erhalten - stossen einfach ein renderDash() an, exakt wie
+// jede andere State-Aenderung, die die Notifications-Karte betrifft.
+function cotNotifyHtml(){
+  if(!cotWarningActive())return'';
+  return`<div class="cot-notify-card" onclick="showTab('cot')">
     <span class="cot-notify-ic">📊</span>
     <span class="cot-notify-txt">NEW COT DATA!</span>
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
   </div>`;
 }
+function renderCotNotify(){if(document.getElementById('dashWidgets'))renderDash();}
 // ── Sonntags-Erinnerung "Risk Environment pruefen" (Nutzer-Wunsch
 // 2026-07-13): erscheint unter dem COT-Hinweis im GLEICHEN Stil
 // (.cot-notify-card), aber anders als dieser wegklickbar - dann bis zum
@@ -9223,16 +9245,16 @@ function goToRiskEnvWidget(){
     if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
   },60);
 }
-function renderRiskEnvRemind(){
-  const el=document.getElementById('riskEnvRemindCard');if(!el)return;
-  if(!riskEnvRemindActive()){el.innerHTML='';return;}
-  el.innerHTML=`<div class="cot-notify-card risk-env-notify-card" onclick="goToRiskEnvWidget()">
+function riskEnvRemindHtml(){
+  if(!riskEnvRemindActive())return'';
+  return`<div class="cot-notify-card risk-env-notify-card" onclick="goToRiskEnvWidget()">
     <span class="cot-notify-ic">🎚️</span>
     <span class="cot-notify-txt">CHECK YOUR RISK ENVIRONMENT</span>
     <span class="cot-notify-sub">Weekly reminder — tap to review the dial</span>
     <button class="cot-notify-x" onclick="dismissRiskEnvRemind(event)" title="Dismiss until next Sunday">×</button>
   </div>`;
 }
+function renderRiskEnvRemind(){if(document.getElementById('dashWidgets'))renderDash();}
 // Faerbt den Aurora-Hintergrund nach dem aktuellen Risk-Sentiment (dieselbe
 // Risk-on/Risk-off-Rechnung wie im risk_sentiment-Widget): deutlich Risk-on
 // -> bullish Blauton, deutlich Risk-off -> bearish Rotton, dazwischen der
@@ -9448,8 +9470,6 @@ function dashMajorsHtml(){
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')">View all pairs ›</div>`;
 }
 function renderDash(){
-  renderCotNotify();
-  renderRiskEnvRemind();
   updateAuroraColors();
   const majorsEl=document.getElementById('dashMajors');if(majorsEl)majorsEl.innerHTML=dashMajorsHtml();
   const el=document.getElementById('dashWidgets');if(!el)return;
@@ -9725,9 +9745,12 @@ function renderDash(){
       // bei Daily Bias) - bewusst KEIN erfundener Inhalt, bis das geklaert ist.
       content=`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">Key Insights — placeholder. Real source (news API account vs. template-based like Daily Bias) still to be decided.</div>`;
     }else if(w.type==='notification'){
-      // Platzhalter (Nutzer-Wunsch 2026-07-25): Inhalt wird spaeter geklaert -
-      // nimmt Market Watchs alte Stelle in der unteren Reihe ein.
-      content=`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">Notifications — placeholder. Content still to be decided.</div>`;
+      // Sammelt die frueher als eigene schwebende Banner ueber dem Grid
+      // gezeigten Popups (COT/Risk-Env-Erinnerung, Nutzer-Wunsch 2026-07-25:
+      // "mach die Pop ups wie zB cot in die notifications rein") - restliche
+      // Inhalte (echte Push-Benachrichtigungen etc.) noch offen.
+      const popups=cotNotifyHtml()+riskEnvRemindHtml();
+      content=popups||`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">No new notifications right now.</div>`;
     }else if(w.type==='live_data'){
       // Nur echte, bereits vorhandene Zeitstempel (Nutzer-Wunsch 2026-07-25:
       // kein erfundenes "Real-Time"/Latenz-Versprechen - der Client fetcht nie
@@ -9758,16 +9781,17 @@ function renderDash(){
       requestAnimationFrame(startLiveClock);
     }
     const wt=W_TYPES.find(t=>t.type===w.type);
-    // Kartenkopf wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): nur ein
-    // kleiner Grossbuchstaben-Titel, KEINE Untertitelzeile (die steht jetzt
-    // als title-Tooltip am Titel) und dezente, gedaempfte Steuerbuttons -
-    // die alte Variante (grosser Titel + Untertitel + 5 volle Buttons) kostete
-    // pro Karte ~40px Hoehe, wodurch die 3 Reihen nie auf einen Bildschirm
-    // passten. Buttons bleiben bewusst sichtbar (nur blasser) statt
-    // hover-only: auf Touch gaebe es sonst keinen Weg, sie zu erreichen.
+    // Kartenkopf wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25, nachgeschaerft
+    // 2026-07-25 "Keine Ueberschrift einfach so"): nur ein kleiner
+    // Kleinbuchstaben-Titel + ein kleines rundes i-Icon direkt daneben
+    // (reuse .rinfo statt eigenem Chrome-Block), das den Erklaertext per
+    // alert() zeigt - fuehlt sich dadurch wie Teil des Karteninhalts an statt
+    // wie eine eigene Toolbar-Leiste. Steuerbuttons bleiben bewusst sichtbar
+    // (nur blasser) statt hover-only: auf Touch gaebe es sonst keinen Weg,
+    // sie zu erreichen.
     return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
       <div class="dw-hdr">
-        <div class="dw-t"${wt?` title="${escH(wt.sub)}"`:''}>${escH(w.title||w.type)}</div>
+        <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         <div class="dw-btns">
           ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
           <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
