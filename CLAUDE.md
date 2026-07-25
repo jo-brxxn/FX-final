@@ -4178,3 +4178,22 @@ noetig ist. Prinzipien ignorieren". Umgesetzt (VERSION-CHECK-235):
   als Flex-Kind loesen, nicht per `position:absolute;left:50%` - der Header
   hat links und rechts unterschiedlich breite Bloecke, die je nach
   Fensterbreite wandern.
+
+**Nachtrag (selber Tag): Market Watch ist keine Karte mehr.** Nutzer:
+"Market Watch geht schmaler, da brauch man keine ganze Karte mit
+Ueberschriften und so". Die mittlere Reihe ist jetzt eine reine
+Ticker-Leiste: `.dw.dw-market_watch` hat `background:transparent;
+border:none;padding:0`, bekommt in `renderDash()` gar keine `.dw-hdr`
+(neue Variable `hdrHtml`, leer fuer diesen Typ) und keine `.mw-footer`
+mehr. Die Steuerbuttons (inkl. Zahnrad) wandern in eine neue `.mw-bar`
+rechts neben die Kategorie-Tabs; dafuer wurde `btnsHtml` VOR den grossen
+if/else-Block gezogen, damit beide Stellen dieselbe Quelle nutzen.
+**Wichtig dabei:** die Hover-Regel fuer die Steuerbuttons musste von
+`.dw-btns` auf `.dw-hdr .dw-btns` verengt werden - sonst haette die
+absolute Positionierung auch die Buttons in der `.mw-bar` erwischt (die
+haben keinen positionierten Vorfahren und waeren an den Kartenrand
+gesprungen). Ergebnis: Kartenhoehe 185px -> 74px; damit passt das
+Dashboard jetzt auch bei 1180px und 1366px vollstaendig ohne Scrollen
+(vorher nur ab 1512px). `.daily-bias-lbl` zusaetzlich auf
+`clamp(18px,1.75vw,26px)` + `white-space:nowrap`, weil "◆ NEUTRAL" bei
+~1180px sonst hinter dem Rautensymbol umbrach.

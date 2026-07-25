@@ -773,8 +773,8 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Hover gibt und man sie sonst nie erreichen koennte. */
 @media (hover:hover){
   .dw-hdr{position:relative}
-  .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
-  .dw:hover .dw-btns{opacity:1;pointer-events:auto}
+  .dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
+  .dw:hover .dw-hdr .dw-btns{opacity:1;pointer-events:auto}
 }
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
@@ -815,10 +815,24 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 #dashWidgets .dw.dw-globe{overflow:hidden}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
 @media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
-.daily-bias-lbl{font-size:26px;font-weight:800;letter-spacing:.3px;margin-bottom:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* clamp + nowrap: bei ~1180px wird die Textspalte der Daily-Bias-Karte so
+   schmal, dass "◆ NEUTRAL" sonst hinter das Rautensymbol umbricht. */
+.daily-bias-lbl{font-size:clamp(18px,1.75vw,26px);font-weight:800;letter-spacing:.3px;margin-bottom:14px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.65}
 .db-col-txt .globe-legend{justify-content:flex-start;margin-top:12px}
-.mw-tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+/* Market Watch ist KEINE Karte, sondern eine schmale Ticker-Leiste
+   (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler, da brauch man
+   keine ganze Karte mit Ueberschriften und so") - kein Rahmen, kein
+   Kartenhintergrund, kein Padding, keine Kopfzeile, keine Fusszeile.
+   Die Pillen selbst tragen die Optik. */
+.dw.dw-market_watch{background:transparent;border:none;border-radius:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+@media (hover:hover){.dw.dw-market_watch:hover{border-color:transparent}}
+.mw-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+/* Steuerbuttons hier inline (nicht absolut wie in .dw-hdr), rechts neben
+   den Tabs - auf Maus-Geraeten erst beim Hovern sichtbar. */
+.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0}
+@media (hover:hover){.mw-bar .dw-btns{opacity:0;pointer-events:none}.dw-market_watch:hover .mw-bar .dw-btns{opacity:1;pointer-events:auto}}
+.mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
@@ -1550,12 +1564,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-235 — Dashboard 1:1 nach Referenz-Foto: dunklerer Hintergrund (#060b12), MAJORS-Rail wieder als Mini-Karten mit Sparkline, Kartenkoepfe ohne sichtbare Steuerbuttons (nur bei Hover), Nebel hinter dem Globus, Hero 6/3/3 statt 5/3/4, Fusszeilen-Links mit Chevron-Kasten, Dashboard-Ueberschrift entfernt">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-236 — Market Watch ist keine Karte mehr, sondern eine schmale Ticker-Leiste (kein Rahmen/Kopfzeile/Fusszeile, Steuerbuttons neben den Tabs) - spart 111px; dadurch passt das Dashboard jetzt auch bei 1180px und 1366px ohne Scrollen">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-235</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-236</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -9537,6 +9551,17 @@ function renderDash(){
   const sorted=[...widgets].filter(w=>w.type!=='daily_bias').sort((a,b)=>(a.order||0)-(b.order||0));
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
+    // Steuerbuttons einmal bauen: die Market-Watch-Karte hat keine eigene
+    // Kopfzeile mehr (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler,
+    // da brauch man keine ganze Karte mit Ueberschriften und so") und setzt
+    // sie stattdessen rechts neben die Kategorie-Tabs.
+    const btnsHtml=`<div class="dw-btns">
+      ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
+      <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
+      <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''} title="Move down">▼</button>
+      <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
+      <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
+    </div>`;
     if(w.type==='daily_bias'){
       // Retiriert (Nutzer-Wunsch 2026-07-25): Daily Bias ist jetzt Teil der
       // Globus-Karte (eine Karte, wie im Referenz-Foto), kein eigenes Grid-
@@ -9778,8 +9803,11 @@ function renderDash(){
           <span class="mw-tile-chg" style="color:${col}">${arrow}${pctTxt}</span>
         </div>`;
       }).join('')||`<div class="dw-empty" style="padding:14px 4px">No ${tab.toLowerCase()} symbols selected - use ${icn('gear',11)} to add some.</div>`;
-      content=`${tabsHtml}<div class="mw-strip">${tiles}</div>
-        <div class="mw-footer" onclick="showTab('pairs')"><span>Go to Market Overview</span></div>`;
+      // Kartenlose Ticker-Leiste: Tabs links, Steuerbuttons rechts, darunter
+      // die Pillen - kein Kartenrahmen, keine Ueberschrift, keine Fusszeile
+      // (Nutzer-Wunsch 2026-07-25). Spart gegenueber der frueheren Vollkarte
+      // rund 110px Hoehe in der mittleren Reihe.
+      content=`<div class="mw-bar">${tabsHtml}${btnsHtml}</div><div class="mw-strip">${tiles}</div>`;
     }else if(w.type==='key_insights'){
       // Platzhalter (Nutzer-Wunsch 2026-07-25): Datenquelle noch offen (Konto
       // fuer eine echte News-API vs. Template aus App-eigenen Signalen wie
@@ -9831,18 +9859,15 @@ function renderDash(){
     // wie eine eigene Toolbar-Leiste. Steuerbuttons bleiben bewusst sichtbar
     // (nur blasser) statt hover-only: auf Touch gaebe es sonst keinen Weg,
     // sie zu erreichen.
-    return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
-      <div class="dw-hdr">
+    // Market Watch ist eine reine Ticker-Leiste ohne Kartenkopf - ihre
+    // Steuerbuttons stecken oben in der mw-bar neben den Kategorie-Tabs.
+    const hdrHtml=w.type==='market_watch'?'':`<div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
-        <div class="dw-btns">
-          ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
-          <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
-          <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''} title="Move down">▼</button>
-          <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
-          <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
-        </div>
-      </div>
+        ${btnsHtml}
+      </div>`;
+    return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
+      ${hdrHtml}
       ${content}
     </div>`;}).join('');
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
