@@ -1277,7 +1277,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
      Blick (auch bei einem evtl. gecachten alten Stand), dass eine neue
      Version da ist. Ausblenden geht auch ueber das Cloud-Sync-Panel
      (👤-Button), siehe toggleVerBannerVisible(). -->
-<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROBLINK-227</span><span id="verBannerText"> (RATE_WATCH-Links aktualisiert: USD bleibt CME FedWatch Tool, alle anderen Waehrungen (EUR/GBP/CHF/JPY/CAD/AUD/NZD) zeigen jetzt https://rateprobability.com statt einzelner investing.com-Kalenderseiten - wirkt auf die Interest-Rates-Karte UND den Rate-Probabilities-Tab, beide lesen aus derselben Quelle.)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
+<div id="verBanner" style="flex:none;position:relative;background:#3d1a2e;color:#f0a8d4;font:600 13px/1.4 system-ui,sans-serif;text-align:center;padding:5px 58px;transition:padding .15s"><span class="ver-label">VERSION-CHECK: GREEN-RATEPROB-SAFESCROLL-228</span><span id="verBannerText"> (Rate-Probabilities-Chart: der 16px-Abstand zum aeltesten Punkt galt bisher nur bei Scroll-Position 0 - sobald die "Heute"-Zentrierung weiter nach links schob (z.B. USD mit mehreren Historientagen), rutschte der Punkt zurueck hinter die fixe Achse. Neue rateProbSafeTargetX()-Klammer verhindert das jetzt bei jeder Pillen-Navigation und jeder Fensterbreite, iterativ geprueft (mehrere Punkte koennen bei sehr schmalen Viewports gleichzeitig betroffen sein).)</span><button onclick="toggleVerBannerCollapse()" id="verBannerCollapseBtn" title="Collapse/expand" style="position:absolute;right:32px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1">▾</button><button onclick="hideVerBanner()" title="Hide for this session" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.25);border:none;color:#f0a8d4;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1">×</button></div>
 <script>
 function hideVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='none';try{sessionStorage.setItem('fxpro_verbanner_hidden','1')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
 function showVerBanner(){const b=document.getElementById('verBanner');if(b)b.style.display='';try{sessionStorage.removeItem('fxpro_verbanner_hidden')}catch(e){}try{updVerBannerToggleBtn()}catch(e){}}
@@ -12555,6 +12555,39 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
 // oben: "Charts duerfen nicht horizontal wegwischbar sein") - der Track
 // sitzt in einem overflow:hidden-Viewport, ausschliesslich per Pillen-Klick
 // gesteuert.
+// Der RATEPROB_AXIS_GAP-Fix (16px vor Punkt 0) reicht NUR bei Scroll-Position
+// 0 - sobald die "Heute"-Zentrierung den Track weiter nach links schiebt (bei
+// mehr als ein paar Historientagen der Normalfall, z.B. USD mit 6 Tagen
+// Historie), rutscht der aelteste sichtbare Punkt zurueck in die von der
+// fixen Achse verdeckte Zone (Nutzer-Bugreport 2026-07-25: "Bei USD... geht
+// es auch nach links ueber den Rand hinaus"). Diese Funktion prueft fuer die
+// geplante Scroll-Weite JEDEN Punkt (nicht nur den ersten Treffer - bei sehr
+// schmalen Viewports schrumpft rateProbSlot bis auf RATEPROB_MIN_SLOT=34,
+// das ist SCHMALER als die verdeckte Zone RATEPROB_PADL=44, dann koennen
+// mehrere Punkte gleichzeitig betroffen sein, nicht mehr nur einer) und zieht
+// die Scroll-Weite auf den kleinsten noetigen sicheren Wert zurueck (mit 6px
+// zusaetzlicher Marge, da ein Punkt exakt auf der Kante wegen seines eigenen
+// Radius sonst immer noch leicht ueberlappen wuerde) - der/die betroffenen
+// Punkte werden dadurch wieder VOLLSTAENDIG sichtbar statt halb hinter der
+// Achse zu verschwinden.
+function rateProbSafeTargetX(tx,ptsLen){
+  let safe=Math.max(0,tx);
+  // Reduziert `safe` in mehreren Durchlaeufen: eine Reduktion wegen eines
+  // SPAETEREN Punkts (groesseres i) kann den Wert versehentlich in die
+  // Gefahren-Zone eines FRUEHEREN Punkts (kleineres i) zurueckziehen - genau
+  // das passierte bei sehr schmalen Viewports (rateProbSlot < RATEPROB_PADL,
+  // die Zonen ueberlappen dann). Ein einzelner Durchlauf reicht daher nicht;
+  // erneut ab i=0 pruefen, bis ein kompletter Durchlauf nichts mehr aendert.
+  let changed=true,guard=0;
+  while(changed&&guard++<ptsLen+2){
+    changed=false;
+    for(let i=0;i<ptsLen;i++){
+      const lo=RATEPROB_AXIS_GAP+i*rateProbSlot,hi=RATEPROB_PADL+RATEPROB_AXIS_GAP+i*rateProbSlot;
+      if(safe>lo&&safe<hi){safe=Math.max(0,lo-6);changed=true;}
+    }
+  }
+  return safe;
+}
 function scrollRateProbTo(idx,animate){
   if(animate===undefined)animate=true;
   const D=rateProbCcyData();if(!D)return;
@@ -12564,7 +12597,8 @@ function scrollRateProbTo(idx,animate){
   const track=document.getElementById('rateProbTrack'),viewport=document.getElementById('rateProbViewport');
   if(!track||!viewport)return;
   const vw=viewport.clientWidth||300;
-  const targetX=Math.max(0,rateProbFocus*rateProbSlot-vw/2+RATEPROB_PADL+RATEPROB_AXIS_GAP);
+  let targetX=Math.max(0,rateProbFocus*rateProbSlot-vw/2+RATEPROB_PADL+RATEPROB_AXIS_GAP);
+  targetX=rateProbSafeTargetX(targetX,pts.length);
   track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
   track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
 }
