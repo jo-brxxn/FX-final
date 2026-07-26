@@ -12813,6 +12813,14 @@ function rateProbCcyData(){
   return null;
 }
 const RATEPROB_CCYS=['USD','AUD','EUR','GBP','CAD','CHF','JPY','NZD'];
+// JPY/NZD haben zwar einen Referenzzins (ueber ind_data.json), aber KEINE
+// frei verfuegbare Terminkurve (OSE:TOA3M/ASX24:BB liefern per Live-Test
+// 2026-07-26 bestaetigt 0 Kontrakte ueber den TradingView-Scanner, siehe
+// update-ff-calendar.yml-Kommentar) - werden daher nie einen Eintrag in
+// rate_probabilities.json bekommen. Ohne diese Markierung wuerde
+// renderRateProb() dauerhaft "Loading..." zeigen, als waere der erste
+// Lauf nur noch nicht durch - stattdessen eine klare Dauer-Meldung.
+const RATEPROB_NO_CURVE=new Set(['JPY','NZD']);
 const RATEPROB_CCY_REFLABEL={USD:'Effective Fed Funds Rate',AUD:'Cash Rate Target',EUR:'€STR',GBP:'SONIA',CAD:'CORRA',CHF:'SARON',JPY:'TONA',NZD:'Official Cash Rate'};
 const RATEPROB_CCY_MEETLABEL={USD:'FOMC meeting',AUD:'RBA meeting',EUR:'ECB meeting',GBP:'BoE MPC meeting',CAD:'BoC meeting',CHF:'SNB meeting',JPY:'BoJ meeting',NZD:'RBNZ meeting'};
 function setRateProbCcy(ccy){
@@ -13180,6 +13188,10 @@ function renderRateProb(){
     return`<button class="rateprob-ccy-btn${c===rateProbCcy?' on':''}" onclick="setRateProbCcy('${c}')">${c}${isApprox?'<span class="rateprob-approx-tag" title="Approximate: only 3-month futures are freely available for this currency, see the info button for details">≈</span>':''}</button>`;
   }).join('')}</div>`;
   const D=rateProbCcyData();
+  if(RATEPROB_NO_CURVE.has(rateProbCcy)&&(!D||!Array.isArray(D.meetings)||!D.meetings.length)){
+    el.innerHTML=ccyBar+`<div class="cot-empty">No free forward-looking futures curve is available for ${escH(rateProbCcy)} (checked 2026-07-26) - only the current reference rate exists, which isn't enough to build a meeting-by-meeting probability distribution. This isn't a temporary loading state.</div>`;
+    return;
+  }
   if(!D||!Array.isArray(D.meetings)||!D.meetings.length){
     el.innerHTML=ccyBar+`<div class="cot-empty">Loading ${escH(rateProbCcy)} rate probabilities… (computed hourly by the GitHub workflow into rate_probabilities.json — if this stays empty, the first run for this currency simply hasn't happened yet).</div>`;
     return;
