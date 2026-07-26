@@ -2994,9 +2994,9 @@ jobs:
             push("TMX:CRA",8);
             push("ICEEUR:SO3",8);
             push("ICEEUR:I",8);
-            push("EUREX:FSR3",8);
-            push("OSE:TOA3M",8);
-            push("ASX24:BB",8);
+            push("EUREX:FSR3",14);
+            push("OSE:TOA3M",14);
+            push("ASX24:BB",14);
             push("ICEEUR:EMP",12);
             push("ICEEUR:EON",8);
             push("ICEEUR:SOA",8);
@@ -3011,6 +3011,14 @@ jobs:
           echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 rate_tv.json 2>/dev/null || echo "(missing)"
           echo
+          # Diagnose (Nutzer-Wunsch 2026-07-26, 3. Iteration): JPY/NZD lieferten
+          # trotz jetzt korrektem Referenzzins (ind_data.json) 0 Kontrakte fuer
+          # OSE:TOA3M/ASX24:BB - unklar, ob die Wurzel falsch ist oder nur die
+          # angefragten Monate keine gelisteten Kontrakte treffen. Listet ALLE
+          # zurueckgelieferten Ticker-Symbole (nicht nur die ersten 500 Zeichen),
+          # damit der naechste Job-Log das zweifelsfrei zeigt statt zu raten.
+          echo "=== TradingView scanner: all returned symbols ==="
+          node -e 'try{const d=JSON.parse(require("fs").readFileSync("rate_tv.json","utf8"));(d.data||[]).forEach(r=>console.log(r.s+" = "+(r.d&&r.d[0])));}catch(e){console.log("parse failed: "+e.message);}'
 
           node -e '
             const fs=require("fs");
