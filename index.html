@@ -470,6 +470,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
 .tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .tr-leg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+.tr-leg-dash{width:14px;height:0;border-top:2px dashed var(--t0);display:inline-block;flex:none;opacity:.85}
 .tr-scroll{overflow-x:auto;overflow-y:hidden}
 .tr-svg{display:block}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
@@ -11197,18 +11198,12 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   });
   const col=colorOverride||'#888';
   const useBiasColor=!!colorOverride&&!!biasMap;
-  // Preis als Kerzen OHNE Docht: braucht nur Open+Close, keine High/Low -
-  // genau das liefert price_data.json (ein Tagesschlusskurs), also keine
-  // erfundenen Daten (Nutzer-Wunsch 2026-07-19). Body = Vortagesschluss bis
-  // heutiger Schluss, gruen=gestiegen/rot=gefallen (dieselbe Farbkonvention
-  // wie das Carry-Differential in openCarryDetail). VOR der Score-Linie
-  // gezeichnet, damit die Linie immer sichtbar oben drueber liegt. Breite
-  // + Deckkraft nach zwei Nutzer-Korrekturen 2026-07-19 justiert: erst
-  // "weniger stark" + luecken los (volle Breite, 0.42) auf Wunsch, dann
-  // "wieder kraeftiger und schmaler" zurueckkorrigiert (0.68, ~60% Breite
-  // mit sichtbarer Luecke - klassischerer Kerzen-Look).
-  const CANDLE_W=PD*0.6;
-  const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
+  // Preis als gestrichelte Linie (Nutzer-Wunsch 2026-07-26, ersetzt die
+  // vorherigen Kerzen-ohne-Docht) - dieselbe Konvention app-weit ueberall,
+  // wo eine Preis-Historie ueber einen anderen Wert gelegt wird (siehe auch
+  // retailNetChart). VOR der Score-Linie gezeichnet, damit die Score-Linie
+  // immer sichtbar oben drueber liegt.
+  const PRICE_LINE_COL='var(--t0)';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
     if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
@@ -11218,13 +11213,10 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
       const y=yOfPrice(t);
       svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
-    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
-    for(let k=1;k<pricePts.length;k++){
-      const prev=pricePts[k-1],cur=pricePts[k];
-      const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
-      const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
-      const bh=Math.max(yBot-yTop,1.5);
-      svg+=`<rect x="${(cur.x-CANDLE_W/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${CANDLE_W.toFixed(1)}" height="${bh.toFixed(1)}" fill="${bcol}" opacity="0.68"/>`;
+    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
+    if(pricePts.length>1){
+      const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      svg+=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
@@ -11247,20 +11239,17 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   // des jeweiligen Tages, der Punkt sitzt auf der Score-Linie.
   const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
   const hpts=[];
-  let prevPv=null;
   dates.forEach((d,i)=>{
     const sv=scoreMap[d];const pv=priceMap[d];
-    if(sv==null||!isFinite(sv)){if(pv!=null&&isFinite(pv))prevPv=pv;return;}
+    if(sv==null||!isFinite(sv))return;
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
-    const pvCol=pv==null||prevPv==null?'var(--t3)':pv>prevPv?PRICE_UP:pv<prevPv?PRICE_DOWN:PRICE_FLAT;
-    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${pvCol}">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
-    if(pv!=null&&isFinite(pv))prevPv=pv;
+    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--t0)">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,biasMap){
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
-  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:linear-gradient(90deg,var(--green) 50%,var(--red) 50%)"></span>Price (candle)</span>`:''}</div>`;
+  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>`;
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
     ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
@@ -12353,7 +12342,7 @@ function renderRetailBars(D){
 // darunter der Long/Short-Verlauf als 100%-Stacked-Bar (Nutzer-Wunsch
 // 2026-07-26, angelehnt an das mitgeschickte Referenzfoto, aber im
 // bestehenden App-Chart-Stil statt 1:1 kopiert - Zeitraum-Filter, Hover/Tap-
-// Tooltip-Fenster und Preis-Kerzen-ohne-Docht-Konvention wie im Trends-Tab
+// Tooltip-Fenster und gestrichelte Preis-Linien-Konvention wie im Trends-Tab
 // "Score vs Price"). retailHistory wird stuendlich vom Workflow fortgeschrieben
 // (ein echter Punkt/Tag, kein Backfill/Schaetzen moeglich - Myfxbook liefert
 // nur den aktuellen Snapshot); der vorhandene Bestand kam per Git-Historie-
@@ -12379,7 +12368,7 @@ function renderRetailHistory(D,sym,hdr){
     ${rangeBar}
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 4px">
       <span style="font-size:12px;color:var(--t3)">Net Retail Positioning (Long% − Short%)${hasPrice?' vs. price':''}</span>
-      <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>Net long</span><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bear}"></span>Net short</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:linear-gradient(90deg,var(--green) 50%,var(--red) 50%)"></span>Price (candle)</span>`:''}</div>
+      <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>Net long</span><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bear}"></span>Net short</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>
     </div>
     ${netChart}
     <div style="text-align:center;font-size:12.5px;color:var(--t2);margin:6px 0 16px">Latest: <b style="color:${lastNet>=0?BC.bull:BC.bear}">${lastNet>0?'+':''}${lastNet.toFixed(0)}%</b> net ${lastNet>=0?'long':'short'} (${last[1].toFixed(0)}% long / ${last[2].toFixed(0)}% short) — ${fmtDayHdr(last[0])}</div>
@@ -12388,9 +12377,11 @@ function renderRetailHistory(D,sym,hdr){
     ${hasPrice?'':'<div style="padding:6px 0 0;color:var(--t3);font-size:11.5px">No price history yet for this market &ndash; it grows once price_data.json has a matching date.</div>'}
   </div></div>`;
 }
-// Net-Positioning-Balken (Long%-Short%, symmetrisch um 0) + Preis als Kerze-
-// ohne-Docht auf der rechten Achse - selbe Bausteine wie renderNetFlowChart
-// (Balken) und scoreVsPriceChart (Preis-Kerzen), hier kombiniert.
+// Net-Positioning-Balken (Long%-Short%, symmetrisch um 0) + Preis als
+// gestrichelte Linie auf der rechten Achse (Nutzer-Wunsch 2026-07-26, ersetzt
+// die vorherigen Kerzen-ohne-Docht - dieselbe Linien-Konvention wie
+// scoreVsPriceChart) - selbe Balken-Bausteine wie renderNetFlowChart, hier
+// mit dem Preis-Overlay kombiniert.
 function retailNetChart(series,priceSeries){
   const n=series.length;
   const net=series.map(e=>e[1]-e[2]);
@@ -12403,8 +12394,7 @@ function retailNetChart(series,priceSeries){
   const priceMap={};(priceSeries||[]).forEach(e=>{if(e&&e[1]!=null&&isFinite(e[1]))priceMap[e[0]]=e[1];});
   const priceVals=series.map(e=>priceMap[e[0]]).filter(v=>v!=null);
   let svgPrice='';
-  const CANDLE_W=(W-padL-padR)/n*0.6;
-  const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
+  const PRICE_LINE_COL='var(--t0)';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
     if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
@@ -12414,12 +12404,10 @@ function retailNetChart(series,priceSeries){
       const y=yOfPrice(t);
       svgPrice+=`<text x="${(W-padR+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
-    const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
-    for(let k=1;k<pricePts.length;k++){
-      const prev=pricePts[k-1],cur=pricePts[k];
-      const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
-      const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
-      svgPrice+=`<rect x="${(cur.x-CANDLE_W/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${CANDLE_W.toFixed(1)}" height="${Math.max(yBot-yTop,1.5).toFixed(1)}" fill="${bcol}" opacity="0.68"/>`;
+    const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
+    if(pricePts.length>1){
+      const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      svgPrice+=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
   const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');

@@ -206,8 +206,20 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   extrahieren, zusammenfügen, `node --check` laufen lassen. Für die Workflow-YAML
   zusätzlich `python3 -c "import yaml; yaml.safe_load(...)"` und das eingebettete
   Node-Skript via `node --check` prüfen.
-- **Auf BEIDE Branches pushen**: zuerst `git fetch origin main` + `git merge
-  origin/main`, dann Push auf `claude/chat-history-context-2uz60v` UND `main`.
+- **⚠️ IMMER auch auf `main` pushen (Nutzer-Wunsch 2026-07-26, nach einem
+  Vorfall):** `main` ist der Branch, den GitHub Pages live auf
+  jo-brxxn.github.io deployed. Der Session-Dev-Branch (Name wechselt je
+  Task/Session, z. B. `claude/new-session-...`) ist NICHT das, was der
+  Nutzer auf der echten Webseite sieht. Vorfall 2026-07-26: eine ganze
+  Feature-Session (Retail-Sentiment-Historie) wurde nur auf den Dev-Branch
+  gepusht — Nutzer meldete "Ich seh nix auf der Webseite", weil `main`
+  unveraendert blieb. Ab sofort bei JEDEM Push (nicht nur am Ende einer
+  Session): zuerst `git fetch origin main` + `git merge origin/main` (oder
+  Fast-Forward pruefen) in den Dev-Branch, dann sowohl auf den Dev-Branch ALS
+  AUCH auf `main` pushen (`git push origin <dev-branch>` UND
+  `git push origin <dev-branch>:main` bzw. `git push origin main` nach
+  einem lokalen Merge/Checkout) — nicht erst fragen, ob das gewuenscht ist,
+  das ist ab jetzt Standard-Verhalten fuer dieses Projekt.
 - **Browser-Verifikation** für UI-Änderungen: lokaler `http.server` +
   Playwright (`/opt/node22/lib/node_modules/playwright`, Chromium). Vor dem
   Rendern `#introOv` und `#lockScreen` entfernen (Intro/PIN-Sperre).
@@ -931,6 +943,10 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   gibt nur noch die Linien-SVG-Strings zurück, keine Dreiecke mehr; bei
   Bedarf müsste diese Funktionalität komplett neu gebaut werden, nicht nur
   wieder freigeschaltet werden.
+  **⚠️ Update 2026-07-26: die Kerzen-ohne-Docht-Konvention selbst wurde
+  wieder abgeschafft** — Preis-Historie wird app-weit jetzt als gestrichelte
+  Linie gezeichnet, nicht mehr als Kerzen. Siehe den Session-Eintrag
+  "Preis-Historie: Kerzen durch gestrichelte Linie ersetzt" weiter unten.
 
 ### Header-Dropdown "Data" verschwand teilweise hinter der Tab-Leiste auf Mobil (Bugreport 2026-07-19, per Foto)
 
@@ -4464,3 +4480,67 @@ komplett erhalten, nur nie erreichter/nie aufgerufener Code entfernt):
   werden muessen; bei ~200 Kandidaten war das Regressionsrisiko fuer den
   verbleibenden Nutzen zu hoch. Bei Bedarf gezielt nachholen, nicht blind
   per Bulk-Diff entfernen.
+
+### Retail Sentiment: Historie vs. Preis pro Einzelasset (Nutzer-Wunsch 2026-07-26)
+
+Waehlt man im Retail-Sentiment-Filter (Insights → Sentiment) statt
+"All symbols" ein einzelnes Symbol, zeigt die Karte (`renderRetailBars`,
+verzweigt in `renderRetailHistory`) jetzt dessen Historie statt des reinen
+Snapshots: Net Positioning (Long%−Short%) als Balken mit Preis-Ueberlagerung
+(`retailNetChart`), darunter der Long/Short-Verlauf als 100%-Stacked-Bar
+(`retailStackChart`) - mit dem app-weiten `TIME_RANGES`-Zeitraum-Filter
+(State `sentimentRange`/`sentimentCustomFrom`/`sentimentCustomTo` - vorher
+tote, nie verdrahtete Variablen, jetzt fuer genau diesen Zweck reaktiviert)
+und Hover/Touch-Tooltips wie bei jedem anderen Chart. "All symbols" bleibt
+unveraendert der bisherige Snapshot.
+
+- Broker-Symbol → unsere Asset-ID fuer den Preisvergleich: `sentSymPriceSeries()`
+  (nutzt `resolvePairPriceSeries`/`priceSeriesFor`, Non-FX-Mapping in
+  `SENT_NONFX_PRICE_ID`), `sentSymLabel()` fuer die lesbare Anzeige
+  ("EURUSD"→"EUR/USD", "XAUUSD"→"Gold" via `COT_NAME`).
+- Der Workflow (`update-ff-calendar.yml`, Schritt "Fetch market sentiment")
+  schreibt seither taeglich einen echten Punkt pro Symbol in
+  `sentiment_data.json.retailHistory` (Cap ~1100 Tage wie `scoreHist`) - kein
+  Backfill moeglich, Myfxbook liefert nur den aktuellen Snapshot.
+- **Der vorhandene Bestand (17 Tage, 10.–26.07.2026) wurde aus der
+  GIT-HISTORIE der bereits committeten `sentiment_data.json`-Staende
+  rekonstruiert** (jeder stuendliche Commit ist ein echter Snapshot von
+  damals) - exakt dasselbe Prinzip wie der Revisions-Backfill weiter oben:
+  bei "es gab doch schon Werte, wo sind die hin" IMMER zuerst pruefen, ob
+  die Git-Historie der Daten-JSONs echte vergangene Stände enthaelt, bevor
+  man sagt "geht nicht/nie aufgezeichnet". Sandbox-Repo war dafuer shallow
+  geklont - `git fetch --unshallow` noetig, um die vollen ~260 Commits der
+  Datei zu sehen.
+
+### Preis-Historie: Kerzen durch gestrichelte Linie ersetzt (Nutzer-Wunsch 2026-07-26)
+
+Nutzer schickte ein Referenzfoto (Historical-Retail-Sentiment-Beispiel) und
+wollte dieselbe Optik uebernehmen: **ueberall, wo eine Preis-Historie ueber
+einem anderen Wert liegt, jetzt eine gestrichelte weisse/helle Linie statt
+der bisherigen Kerzen-ohne-Docht** (siehe der jetzt veraltete Eintrag
+"Kerzen-Kontrast + Dreiecke ganz entfernt" weiter oben) - plus eine kleine
+Legende dazu, wie im Foto.
+
+- Betraf genau zwei Stellen (per `grep CANDLE_W/PRICE_UP` gefunden - das ist
+  die vollstaendige Liste, keine weiteren Preis-Overlays im Projekt):
+  `scoreVsPriceChart()` (Trends-Tab "Score vs Price") und `retailNetChart()`
+  (die brandneue Retail-Sentiment-Historie, s.o.).
+  Beide Kerzen-Zeichenschleifen wurden durch eine simple `<polyline>` mit
+  `stroke-dasharray="6,4"` in `var(--t0)` (helle Textfarbe, theme-aware)
+  ersetzt - Achsen-Skalierung (rechte Preis-Achse, Tick-Labels) unveraendert,
+  nur die Zeichnung selbst.
+- **Neue gemeinsame Legende-CSS-Klasse `.tr-leg-dash`** (neben dem
+  bestehenden `.tr-leg-dot` fuer runde Farbpunkte, ~Zeile 472): kurzer
+  gestrichelter Strich (`border-top:2px dashed var(--t0)`), nutzt dieselbe
+  `.tr-legend`/`.tr-leg-item`-Struktur wie ueberall. Ersetzt "Price (candle)"
+  durch schlicht "Price" in beiden Legenden (`scoreVsPriceCard`,
+  `renderRetailHistory`).
+- Tooltip-Faerbung nach Kursrichtung (gruen/rot je nach rauf/runter) wurde
+  dabei ENTFERNT, nicht nur die Kerzen selbst - die Linie ist jetzt ein
+  einzelner neutraler Ton, der Tooltip zeigt "Price" entsprechend auch
+  neutral statt richtungsgefaerbt (konsistent mit der neuen Linien-Optik).
+- **Merksatz fuer kuenftige neue Preis-Overlay-Charts:** IMMER diese
+  gestrichelte-Linie-Konvention (`stroke="var(--t0)" stroke-dasharray="6,4"`)
+  + `.tr-leg-dash`-Legende verwenden, keine Kerzen mehr neu einfuehren -
+  CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine muessen einheitlich sein"
+  gilt hier genauso.
