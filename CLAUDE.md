@@ -4341,3 +4341,126 @@ auch anpassen lässt." Umgesetzt (VERSION-CHECK-240):
   Dashboard passt weiterhin ohne Scrollen, Kontrast/Lesbarkeit in Matrix/
   COT/FX-Detail/Dashboard geprueft (Screenshots), Bearbeitungsmodus (siehe
   Eintrag oben) funktioniert unveraendert mit der neuen Palette.
+
+### Sicherheits-Audit: Webseite ist jetzt oeffentlich (Nutzer-Auftrag 2026-07-26, VERSION-CHECK-241)
+
+Nutzer-Auftrag (hoechste Prioritaet, wortgleich): "die Webseite ist jetzt
+oeffentlich finde alle sicherheitsluecken und stelle sicher das kein api
+key oder andere wichtige Daten auslesbar sind" + `/debug` (Bugs + ungenutzte
+Code-Bloecke finden und entfernen) + Code schlanker machen ohne Funktionen
+zu verlieren.
+
+**Keine API-Keys/Secrets gefunden** (Ziel bereits erreicht, nicht neu
+geschaffen): komplette `index.html`, alle committeten `*.json`-Datendateien
+und alle 4 Workflow-YAMLs durchsucht (String-Muster fuer AWS-Keys, private
+Key-Header, JWTs, hartcodierte Secret-Zuweisungen) - nichts gefunden.
+Workflows nutzen durchgehend `${{ secrets.X }}` -> Env-Var, kein
+`curl -v`/`set -x`, bestehende Debug-Ausgaben vermeiden bewusst das
+Ausgeben des eigentlichen Secret-Werts (eigene Kommentare bestaetigen das
+explizit, z.B. beim Myfxbook-Login). Zusaetzlich die **volle Git-Historie**
+(`git fetch --unshallow`, vorher shallow) nach demselben Muster durchsucht -
+auch dort kein jemals committeter und wieder entfernter Key. Supabase-URL/
+Anon-Key/Sync-ID sind ohnehin nutzerseitig eingegeben und bleiben rein
+lokal (localStorage) - kein serverseitiges Secret in diesem Projekt.
+
+**Echte Befunde: XSS/Code-Injection ueber Freitext-Felder, die ungefiltert
+in `onclick="fn('${x}')"`-Handlern landen.** Kernerkenntnis (Schritt-fuer-
+Schritt am Payload durchgespielt): weder `escH()` allein noch `escJs()`
+allein reicht fuer dieses Muster. `escH()` allein wird wirkungslos, weil
+der Browser den Attributwert per HTML-Decode aufloest, BEVOR das Ergebnis
+als JS geparst wird - escH()s `'`->`&#39;`-Kodierung wird dadurch vor dem
+JS-Parse wieder rueckgaengig gemacht. `escJs()` allein schuetzt zwar die
+JS-String-Ebene, aber nicht die HTML-Attribut-Ebene (kein `"`-Escaping).
+**Fix-Muster: ERST `escJs()`, DANN `escH()`** (neuer Helper `escJH()`,
+bei `escJs()` in `index.html` definiert) - schuetzt beide Ebenen, rundet
+beim Decode/Parse korrekt wieder zum Original-Wert ab (Funktionalitaet
+bleibt erhalten, nicht nur "irgendwie escaped").
+
+Konkrete Fixes:
+- **`eval()` entfernt** (`searchGo()`/`searchEntries()`, globale Suche):
+  baute bisher Code-STRINGS (`gotoSym('${s.id}')`) fuer spaeteres `eval()`.
+  Umgebaut auf strukturierte Daten (`{fn:'sym',id}`/`{fn:'cal'}`/
+  `{fn:'tab',tab,mode}`) + `switch`-artiges Dispatch in `searchGo()` - immun
+  gegen String-Injection per Konstruktion, da Werte als echte JS-Werte statt
+  als zu re-parsender Quelltext uebergeben werden.
+- **Paar-Namen** (`pairs[].name`, Set-ups-Tab/Watchlist/Compare-verwandte
+  Stellen): `openScoreInfoPair('${p.name}')`/`${it.name}` an 3 Stellen war
+  komplett ungeschuetzt, UND `confirmAddPair()`s Freitext-Feld (`mPairCustom`)
+  hatte anders als das Ticker-Feld GAR KEIN Zeichen-Gate. Fix: `escJH()` an
+  allen 3 Ausgabestellen + neues Zeichen-Gate (`^[A-Z0-9 ./_-]{1,20}$`,
+  analog zum bestehenden Ticker-Gate in `confirmAddSym()`) in `confirmAddPair()`.
+- **Compare-Tab** (`toggleCmpRow('${enc}')`, `enc=encodeURIComponent(...)`
+  aus einem Indikator-Basisnamen): `encodeURIComponent()` laesst `'` UNVERAENDERT
+  (nicht Teil seines Escape-Sets) - ein per "+ Add Indicator" frei benennbarer
+  Indikator mit `'` im Namen konnte dadurch trotz URI-Encoding aus dem
+  Attribut ausbrechen. Per Playwright mit echtem Payload
+  (`Evil'); alert('XSS'); //`) verifiziert: VOR dem Fix haette das den Alert
+  ausgeloest, NACH dem Fix (`escJH(enc)`) weder Alert noch Funktionsverlust
+  (`toggleCmpRow` dekodiert weiterhin korrekt, Zeile oeffnet/schliesst wie
+  erwartet - Playwright-bestaetigt).
+- **Symbol-/Kategorie-/Widget-/Rubrik-/Indikator-IDs**: `confirmAddSym()`
+  hat schon lange ein Zeichen-Gate (`^[A-Z0-9._-]{1,15}$`) MIT einem
+  Kommentar, der die Sync-Umgehung bereits benennt ("XSS, auch via Sync") -
+  aber `applySnap()` (der EINE Trichter fuer Cloud-Sync/Import/Undo, siehe
+  Grundsatz oben) hat diese Regel nie durchgesetzt. Fix: neue
+  `sanitizeSnapIds()` direkt am Anfang von `applySnap()` - verwirft
+  Symbole/`customIds`-Eintraege mit einer ID ausserhalb des Formats, und
+  (fuer alle `uid()`-basierten IDs: Paare/Widgets/Kategorien/Rubriken/
+  Indikatoren) alles ausserhalb von `^[a-z0-9]{1,24}$/i`. Schliesst die
+  ganze Klasse an EINER Stelle, statt Dutzende einzelne
+  `onclick="fn('${x.id}')"`-Stellen im Code einzeln zu haerten - legitime,
+  von der App selbst erzeugte Exporte/Sync-Staende sind davon nie betroffen
+  (ihre IDs erfuellen das Format immer schon).
+- Bei der Sichtung mehrerer aehnlicher `onclick="fn('${x}')"`-Stellen
+  (`cat.l`, `side`, `b`, `date`, `key`/`k`, `c`, `o.key`) bestaetigt: alle
+  ungefaehrlich, weil der jeweilige Wert aus einer FESTEN, kleinen Menge
+  (Enum-String, `FX`-Array, `RATEPROB_CCYS`, ISO-Kalenderdatum) stammt, nie
+  aus Freitext.
+- Per Playwright verifiziert (echte Payloads, kein Raten): eval()-Ersatz
+  navigiert korrekt (Asset-, Tab-, Kalender-Sprung), Paar-Namen-Gate lehnt
+  unsichere Zeichen mit Alert ab, Compare-Tab-Injection-Payload loest keinen
+  Alert mehr aus UND die Zeile toggelt weiterhin korrekt, `escJH()` liefert
+  korrekt doppelt-geschuetzten Output, voller 15-Tab-Regressionstest ohne
+  JS-Fehler (nur sandboxbedingte `ERR_TUNNEL_CONNECTION_FAILED` bei externen
+  Datenfeeds, kein App-Fehler).
+
+**`/debug`: tote Code-Bloecke gefunden + entfernt** (Funktion bleibt
+komplett erhalten, nur nie erreichter/nie aufgerufener Code entfernt):
+- **`riskHistChart()`/`riskNetHistory()`**: eine komplett fertige, aber nie
+  aufgerufene Risk-on/Risk-off-Verlaufsgrafik (SVG+Hover-Tooltip) fuer die
+  Risk-Sentiment-Dashboard-Karte - inkl. eigener CSS-Klassen
+  (`.risk-hist-wrap`/`.risk-hist-hd`/`.risk-hist-empty`/`.risk-hist-scroll`)
+  und einem AKTIV LAUFENDEN Hoehen-Sync-Mechanismus (`syncRiskHistHeight()`,
+  `_riskHistChartH`, ein `resize`-Listener), der bei jedem Dashboard-Render
+  UND jedem Fenster-Resize versuchte, eine Karte zu vergroessern, die
+  nirgends gerendert wurde - reiner Render-Overhead ohne jeden sichtbaren
+  Effekt. Alles zusammen entfernt (Funktionen, State-Variable, Listener,
+  CSS-Klassen); die referenzierten `RISK_ON_IDS`/`RISK_OFF_IDS`-Konstanten
+  bleiben, da sie vom AKTIVEN Risk-Sentiment-Gauge weiterhin gebraucht
+  werden. Stale Kommentar-Referenz in `renderDash()` (erklaerte einen
+  Scroll-Fix ueber `syncRiskHistHeight()`) entsprechend angepasst.
+- **`autoFetchIndData()`/`autoFetchBondData()`**: leere Wrapper-Reste aus
+  der Zeit VOR `bootFetchScoreFeeds()` (siehe Eintrag "KRITISCHER
+  Regressions-Bug..." oben - das buendelt seit 2026-07-20 alle vier Boot-
+  Feeds per `Promise.all`, ruft `fetchIndData()`/`fetchBondData()` seither
+  DIREKT inline auf). Die beiden Wrapper wurden beim Umbau nie geloescht,
+  hatten seither aber keinen einzigen Aufrufer mehr.
+- **`setSentimentRange()`/`setSentimentRangeCustom()`** + State-Variablen
+  `sentimentRange`/`sentimentCustomFrom`/`sentimentCustomTo`: Reste eines
+  offenbar nie fertiggestellten Zeitraum-Filters fuer die Retail-Sentiment-
+  Unterseite - anders als die strukturell identischen `pcRange`/
+  `fearGreedRange` (Put/Call, Fear&Greed) nie an `timeRangeBarHtml()`/
+  `timeRangeCustomHtml()` angeschlossen und nirgends gelesen.
+- Alle Entfernungen per Playwright verifiziert: `node --check` sauber,
+  voller 15-Tab-Regressionstest ohne JS-Fehler, Risk-Sentiment-Karte
+  rendert weiterhin normal (nur der nie sichtbare Verlaufschart-Anhang ist
+  weg), Fenster-Resize loest keinen Fehler mehr aus,
+  `typeof riskHistChart/syncRiskHistHeight` jetzt korrekt `undefined`.
+- **Bewusst NICHT weiterverfolgt**: eine automatisierte CSS-Klassen-Leichen-
+  Suche (Substring-Haeufigkeit ueber die ganze Datei) lieferte zu viele
+  falsch-positive Treffer (Klassennamen, die per Template-String
+  zusammengesetzt werden, z.B. `dw-${type}`, zaehlen dabei faelschlich als
+  "unbenutzt") - ein serioeser Abgleich haette pro Fund einzeln verifiziert
+  werden muessen; bei ~200 Kandidaten war das Regressionsrisiko fuer den
+  verbleibenden Nutzen zu hoch. Bei Bedarf gezielt nachholen, nicht blind
+  per Bulk-Diff entfernen.

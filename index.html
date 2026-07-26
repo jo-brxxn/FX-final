@@ -1011,10 +1011,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
 .risk-asset-sc{font-size:10px;font-weight:700;text-align:right;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
-.risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-hist-empty{font-size:11.5px;color:var(--t3);padding:8px 2px;line-height:1.5}
-.risk-hist-scroll{overflow-x:auto;overflow-y:hidden}
 /* Asset Heatmap */
 .heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
 .heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
@@ -1631,12 +1627,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-240 — Navy-Blue-Design (Referenzfoto) jetzt auf der GANZEN Webseite: gesaettigte Navy-Palette ueber die zentralen CSS-Variablen (kaskadiert automatisch durch alle Tabs), Overview-Karte hat jetzt Rubrik-Icon-Runde wie im Foto, Designer-Farbregler weiterhin voll funktionsfaehig">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-241 — Sicherheits-Audit (Webseite ist jetzt oeffentlich): eval() entfernt (Suche nutzt jetzt strukturierte Daten statt Code-Strings), Symbol-/Paar-/Kategorie-IDs werden beim Cloud-Sync/Import auf ein sicheres Zeichenformat geprueft, unsichere onclick-Interpolationen bei Paar-Namen/Compare-Tab gehaertet, Paarname-Eingabe bekommt dasselbe Zeichen-Gate wie Ticker, mehrere tote Code-Bloecke entfernt (verwaiste Risk-Sentiment-Verlaufsgrafik, doppelte autoFetch-Wrapper, unbenutzter Sentiment-Zeitraum-Filter)">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-240</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-241</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -5250,7 +5246,45 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+// Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
+// (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
+// CLAUDE.md-Grundsatz der EINE gemeinsame Trichter. Symbol-IDs werden an
+// Dutzenden Stellen ungefiltert in inline-onclick-Handler interpoliert
+// (gotoSym('${s.id}') etc.) - confirmAddSym() erzwingt dafuer schon lange
+// einen engen Zeichensatz, aber NUR beim manuellen Anlegen ueber die UI
+// (der Kommentar dort sagt es sogar woertlich: "XSS, auch via Sync" - dieser
+// Fall war bereits erkannt, aber nie am Sync/Import-Einganstor geschlossen).
+// Fix: dieselbe Regel hier zentral erzwingen statt jede einzelne
+// Interpolationsstelle im Code zu haerten - Symbole mit einer ID ausserhalb
+// des Sicherheits-Zeichensatzes werden beim Einlesen verworfen (kann bei
+// legitimen, von der App selbst erzeugten Exporten/Sync-Standen nie
+// vorkommen, betrifft ausschliesslich manipulierte Import-/Sync-Daten -
+// Sicherheits-Fix 2026-07-26).
+const SAFE_ID_RE=/^[A-Z0-9._-]{1,15}$/;
+// Alles, was intern per uid() erzeugt wird (Paare/Widgets/Kategorien/Rubriken/
+// Indikatoren), folgt IMMER dem Muster [0-9a-z]{7} (siehe uid()). Dieselbe
+// Sync/Import-Umgehung wie bei Symbol-IDs gilt hier genauso - eine
+// manipulierte id in einem dieser Felder landet ebenso ungefiltert in
+// onclick="fn('${x.id}')"-Handlern (delPair/togPairMark/toggleMwSym/...).
+const SAFE_UID_RE=/^[a-z0-9]{1,24}$/i;
+function sanitizeSnapIds(d){
+  if(Array.isArray(d.syms)){
+    d.syms=d.syms.filter(sy=>sy&&typeof sy.id==='string'&&SAFE_ID_RE.test(sy.id));
+    d.syms.forEach(sy=>{
+      if(Array.isArray(sy.rubrics)){
+        sy.rubrics=sy.rubrics.filter(r=>r&&typeof r.id==='string'&&SAFE_UID_RE.test(r.id));
+        sy.rubrics.forEach(r=>{if(Array.isArray(r.indicators))r.indicators=r.indicators.filter(ind=>ind&&typeof ind.id==='string'&&SAFE_UID_RE.test(ind.id));});
+      }
+    });
+  }
+  if(Array.isArray(d.customIds))d.customIds=d.customIds.filter(c=>c&&typeof c.id==='string'&&SAFE_ID_RE.test(c.id));
+  if(Array.isArray(d.pairs))d.pairs=d.pairs.filter(p=>p&&typeof p.id==='string'&&SAFE_UID_RE.test(p.id));
+  if(Array.isArray(d.widgets))d.widgets=d.widgets.filter(w=>w&&typeof w.id==='string'&&SAFE_UID_RE.test(w.id));
+  if(Array.isArray(d.pairCats)){d.pairCats=d.pairCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.pairCats.length)d.pairCats=mkPairCats();}
+  if(Array.isArray(d.noteCats)){d.noteCats=d.noteCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.noteCats.length)d.noteCats=mkNCs();}
+  return d;
+}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -5643,11 +5677,19 @@ function searchEntries(q){
   q=(q||'').trim().toLowerCase();
   const out=[];
   if(!q)return out;
+  // "go" ist ein reines Daten-Objekt (kein Code-String) - searchGo() dispatcht
+  // direkt per switch statt eval() aufzurufen (Sicherheits-Fix 2026-07-25:
+  // s.id kann ueber Cloud-Sync/Import von einem anderen Geraet kommen und
+  // war damit ein potenzieller String-Injection-Weg in eval(), selbst wenn
+  // die Ticker-Eingabe im UI schon einen enger Zeichensatz erzwingt - Import
+  // laeuft an dieser Pruefung vorbei. Als echtes Funktionsargument statt
+  // interpolierter String kann "id" diese Klasse von Bug strukturell nicht
+  // mehr ausloesen, unabhaengig vom Inhalt).
   const push=(grp,label,sub,id,go)=>out.push({grp,label,sub,id,go});
   // Assets (ID + Name)
   (syms||[]).forEach(s=>{
     if(s.id.toLowerCase().includes(q)||String(s.name||'').toLowerCase().includes(q))
-      push('Assets',s.name||s.id,`score ${(symScoreCmp(s)>0?'+':'')+symScoreCmp(s)}`,s.id,`gotoSym('${s.id}')`);
+      push('Assets',s.name||s.id,`score ${(symScoreCmp(s)>0?'+':'')+symScoreCmp(s)}`,s.id,{fn:'sym',id:s.id});
   });
   // Indikatoren (einmal pro Basisname, springt zum ersten Asset das ihn trackt)
   const seenInd=new Set();
@@ -5656,7 +5698,7 @@ function searchEntries(q){
     if(!nm.toLowerCase().includes(q))return;
     const key=nm+'|'+s.id;
     if(seenInd.has(nm))return;seenInd.add(nm);
-    push('Indicators',nm,`${r.name} · e.g. ${s.id}`,s.id,`gotoSym('${s.id}')`);
+    push('Indicators',nm,`${r.name} · e.g. ${s.id}`,s.id,{fn:'sym',id:s.id});
   })));
   // Kalender-Events (kommende + letzte Tage aus calEvts)
   const seenEv=new Set();
@@ -5664,12 +5706,12 @@ function searchEntries(q){
     if(!ev.name||!ev.name.toLowerCase().includes(q))return;
     const key=ev.name+'|'+ev.date;
     if(seenEv.has(key)||seenEv.size>200)return;seenEv.add(key);
-    push('Calendar events',ev.name,`${(ev.currencies||'').split(/[,/&\s]+/)[0]||''} · ${fmtDayHdr(ev.date)}`,'',`showTab('cal')`);
+    push('Calendar events',ev.name,`${(ev.currencies||'').split(/[,/&\s]+/)[0]||''} · ${fmtDayHdr(ev.date)}`,'',{fn:'cal'});
   });
   // Tabs
   Object.entries(TABS).forEach(([tid,t])=>{
     if(t.label.toLowerCase().includes(q))
-      push('Tabs',t.label,'',',',`showTab('${t.tab}',null,${t.mode?`'${t.mode}'`:'undefined'})`);
+      push('Tabs',t.label,'',',',{fn:'tab',tab:t.tab,mode:t.mode});
   });
   // Gruppen-Reihenfolge stabil, max 8 je Gruppe
   const order=['Assets','Indicators','Calendar events','Tabs'];
@@ -5693,9 +5735,14 @@ function renderSearch(){
   el.innerHTML=html;
 }
 function searchGo(idx){
-  const e=(window._searchEntries||[])[idx];if(!e)return;
+  const e=(window._searchEntries||[])[idx];if(!e||!e.go)return;
   closeM('mSearch');
-  try{eval(e.go);}catch(err){}
+  const g=e.go;
+  try{
+    if(g.fn==='sym')gotoSym(g.id);
+    else if(g.fn==='cal')showTab('cal');
+    else if(g.fn==='tab')showTab(g.tab,null,g.mode);
+  }catch(err){}
 }
 function searchKey(ev){
   const n=(window._searchEntries||[]).length;
@@ -7009,6 +7056,20 @@ function confirmAddSym(){
 // ausgeschlossen (manuell) bleibt.
 const FX_LINK_CCYS=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+// Fuer freien Nutzertext, der in ein onclick="fn('${x}')"-Muster eingebettet
+// wird (JS-String-Literal INNERHALB eines HTML-Attributs): escJs() ALLEIN
+// reicht nicht, weil der Browser den Attributwert per HTML-Decode auflöst,
+// BEVOR das Ergebnis als JS geparst wird - ein '"'  in x würde escJs() zwar
+// unangetastet lassen, aber es bricht aus dem umgebenden onclick="..."-
+// Attribut selbst aus. escH() ALLEIN reicht ebenfalls nicht, weil escH()s
+// eigene "'"->"&#39;"-Kodierung durch denselben HTML-Decode-Schritt wieder
+// rueckgaengig gemacht wird, bevor der JS-Parser drankommt - ein "'" in x
+// kann dadurch trotzdem das JS-String-Literal vorzeitig schliessen. Fix:
+// ERST escJs() (schuetzt die JS-String-Ebene), DANN escH() (schuetzt die
+// HTML-Attribut-Ebene UND kodiert das "'" erneut, das escJs() selbst
+// einfuehrt - das rundet nach dem Decode korrekt zu "\'" ab, ein gueltiges
+// JS-Escape). Sicherheits-Fix 2026-07-26.
+function escJH(s){return escH(escJs(s));}
 function openAssetCfg(){const c=getSym();if(!c||!isNonFx(c.id))return;renderAssetCfgBody();openM('mAssetCfg');}
 function renderAssetCfgBody(){
   const c=getSym();if(!c)return;
@@ -8072,6 +8133,11 @@ function confirmAddPair(){
   const fromList=document.getElementById('mPairSel').value;
   const name=custom||fromList;
   if(!name){alert('Please select or enter a pair name.');return;}
+  // Sicherheits-Gate wie bei confirmAddSym(): der Paarname landet ungefiltert
+  // in inline-onclick-Handlern (openScoreInfoPair('NAME') etc.) - ein enger
+  // Zeichensatz verhindert, dass ein praeparierter Name dort ausbricht (XSS,
+  // auch via Sync). Slash/Punkt/Leerzeichen bleiben erlaubt (z.B. "USD/TRY").
+  if(custom&&!/^[A-Z0-9 ./_-]{1,20}$/.test(custom)){alert('Pair name may only contain letters, digits, spaces and . / _ - (max 20 characters).');return;}
   const catId=document.getElementById('mPairCat').value||pairCats[0]?.id;
   // Nur blocken, wenn das Paar bereits IN DIESER Kategorie ist - dasselbe Paar
   // darf z.B. in Set-ups und zusätzlich in der Watchlist stehen.
@@ -8215,7 +8281,7 @@ function renderPairs(){
     <div class="sym-name dw-pname">${escH(it.name)}</div>
     ${chip}
     ${rd}
-    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${it.name}')`)}
+    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${escJH(it.name)}')`)}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
   </div>`;};
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
@@ -8956,9 +9022,6 @@ function applyIndDataFeed(){
   if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
   return changed;
 }
-function autoFetchIndData(){
-  fetchIndData().then(()=>{if(applyIndDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
-}
 
 // ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
 // bond_data.json wird stuendlich per GitHub Action aus Stooq (taegliche
@@ -9054,9 +9117,6 @@ function applyBondDataFeed(){
   });
   if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
   return changed;
-}
-function autoFetchBondData(){
-  fetchBondData().then(()=>{if(applyBondDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
 }
 // ── ASSET-PREISE (price_data.json) ────────────────────────────────
 // Fuer den "Score vs Price"-Chart im Trends-Tab: pro Waehrung/Asset eine
@@ -9646,10 +9706,8 @@ function renderDash(){
   // ein fokussiertes/gerade angetipptes Element synchron aus dem DOM entfernt
   // wird (genau das macht innerHTML= mit dem eben geklickten Regler-Button) -
   // davor blur() vermeidet diesen Trigger. Betrifft besonders den Risk-
-  // Sentiment-Regler, weil dessen Karte danach per syncRiskHistHeight() unten
-  // sogar einen ZWEITEN, verzoegerten renderDash()-Aufruf ausloesen kann
-  // (Hoehenabgleich mit der Nachbarkarte) - deshalb die Sicherung HIER drin,
-  // nicht nur beim Aufrufer, damit auch dieser zweite Aufruf abgedeckt ist.
+  // Sentiment-Regler - deshalb die Sicherung HIER drin, nicht nur beim
+  // Aufrufer, damit auch ein spaeterer zweiter renderDash()-Aufruf abgedeckt ist.
   const _dashScroll=document.getElementById('pgDash');
   const _scrollY=_dashScroll?_dashScroll.scrollTop:0;
   if(document.activeElement&&el.contains(document.activeElement))document.activeElement.blur();
@@ -9703,7 +9761,7 @@ function renderDash(){
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
-          <div class="sym-name">${s.name}</div>
+          <div class="sym-name">${escH(s.name)}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           ${(isNonFx(s.id)&&tickerChipHtml(assetTickerInfo(s.id)))||'<span></span>'}
           ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
@@ -9722,7 +9780,7 @@ function renderDash(){
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
         ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-        ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
+        ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
@@ -9740,7 +9798,7 @@ function renderDash(){
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
           ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-          ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
+          ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
           <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
@@ -9982,37 +10040,7 @@ function renderDash(){
   startGlobes();
   startSessionBar();
   attachChartHovers(el);
-  requestAnimationFrame(syncRiskHistHeight);
 }
-// Die Risk-Sentiment-Karte steht im Dashboard-Grid (align-items:stretch) neben
-// der FX-Bias-Karte; die Kartenbox selbst wird dadurch schon automatisch auf
-// die Hoehe der Nachbarkarte gestreckt, aber der Inhalt (Gauge + Verlauf) ist
-// meist kuerzer, sodass darunter Leerraum entsteht. Statt Leerraum zu lassen,
-// wird die Verlaufsgrafik selbst um genau die uebrige Hoehe vergroessert
-// (eigene SVG-Geometrie neu berechnet, NICHT per CSS gestreckt - so bleiben
-// Schrift & Punkte unverzerrt). Selbststabilisierend: nach der Vergroesserung
-// ist kaum noch Luft uebrig, ein zweiter Aufruf veraendert dann nichts mehr.
-let _riskHistChartH=120;
-function syncRiskHistHeight(){
-  const card=document.querySelector('.dw-risk_sentiment');
-  const calc=card&&card.querySelector('.risk-calc');
-  if(!card||!calc)return;
-  // card.scrollHeight ist hier NICHT brauchbar: die Karte wird per CSS-Grid
-  // (align-items:stretch) schon auf die Hoehe der Nachbarkarte gestreckt, und
-  // diese gestreckte Box-Hoehe zaehlt selbst zur scrollHeight, auch wenn der
-  // Inhalt viel kuerzer ist und darunter sichtbarer Leerraum bleibt. Deshalb
-  // wird stattdessen der tatsaechliche Inhalts-Endpunkt (Unterkante des
-  // letzten Elements .risk-calc) mit der Innenkante der Kartenunterkante
-  // (Kartenunterkante minus padding-bottom) verglichen.
-  const padBottom=parseFloat(getComputedStyle(card).paddingBottom)||0;
-  const extra=(card.getBoundingClientRect().bottom-padBottom)-calc.getBoundingClientRect().bottom;
-  if(extra<16)return;
-  const target=Math.max(120,Math.min(420,Math.round(_riskHistChartH+extra-10)));
-  if(Math.abs(target-_riskHistChartH)<8)return;
-  _riskHistChartH=target;
-  renderDash();
-}
-window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>setTimeout(syncRiskHistHeight,160));});
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
 function scrollCalsToNow(){
@@ -10637,7 +10665,7 @@ function renderCompare(){
         const badge=d.badge?`<div class="cmp-unit" title="Unit/frequency may differ from other currencies - direct numeric comparison isn't 1:1">${escH(d.badge)}</div>`:'';
         return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}${badge}</td>`;
       }).join('');
-      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${enc}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
+      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${escJH(enc)}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
       if(!open)return mainRow;
       // Ausgeklappte Link-Zeile: pro Spalte der/die passende(n) investing.com-Link(s).
       const linkCells=cols.map(id=>{
@@ -10746,7 +10774,7 @@ function recordScoreHist(){
     // Aenderung eines ANDEREN Tabs. Ohne dieses Nachziehen loeste
     // recordScoreHist() beim Boot (laeuft VOR jeder Live-Feed-Korrektur,
     // siehe INIT) genau diesen Schutz aus, sobald kurz danach der erste
-    // korrigierende save() (aus bootFetchScoreFeeds/autoFetchIndData/...)
+    // korrigierende save() (aus bootFetchScoreFeeds/...)
     // lief - der verwarf dann seine eigene frisch korrigierte
     // In-Memory-Aenderung und laden STATTDESSEN den (noch unkorrigierten)
     // localStorage-Stand zurueck (adoptExternalState()) - Bugreport
@@ -10798,60 +10826,6 @@ function dailyBiasInfo(){
   const txt=`${bull} of ${FX.length} FX majors bullish, ${bear} bearish, ${neu} neutral. Risk sentiment is ${riskTxt}. `+
     (hiToday>0?`${hiToday} high-impact event${hiToday>1?'s':''} today — stay alert.`:'No high-impact events today.');
   return{lbl,col,sym,txt};
-}
-const RISK_HIST_DAYS=60;
-function riskNetHistory(){
-  const lookup=id=>{const m={};(scoreHist[id]||[]).forEach(e=>m[e[0]]=e[1]);return m;};
-  const onM=RISK_ON_IDS.map(lookup),offM=RISK_OFF_IDS.map(lookup);
-  const dset=new Set();
-  [...onM,...offM].forEach(m=>Object.keys(m).forEach(d=>dset.add(d)));
-  const dates=[...dset].sort().slice(-RISK_HIST_DAYS);
-  return dates.map(d=>{
-    const onV=onM.map(m=>m[d]).filter(v=>v!=null),offV=offM.map(m=>m[d]).filter(v=>v!=null);
-    const on=onV.length?onV.reduce((a,b)=>a+b,0)/onV.length:0;
-    const off=offV.length?offV.reduce((a,b)=>a+b,0)/offV.length:0;
-    return[d,on-off];
-  });
-}
-function riskHistChart(col,chartH){
-  const pts=riskNetHistory();
-  if(!pts.length)return`<div class="risk-hist-empty">Noch keine Verlaufsdaten &ndash; die Linie waechst ab jetzt mit jedem neuen Tag.</div>`;
-  let maxAbs=4;pts.forEach(p=>{if(Math.abs(p[1])>maxAbs)maxAbs=Math.abs(p[1]);});
-  const scale=Math.ceil(maxAbs),n=pts.length;
-  chartH=chartH||120;
-  const leftPad=64,rightPad=16,topPad=14,bottomPad=22,PD=34;
-  const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
-  const yMid=topPad+chartH/2;
-  const xOf=i=>leftPad+i*PD+PD/2;
-  const yOf=v=>yMid-(Math.max(-scale,Math.min(scale,v))/scale)*(chartH/2);
-  let svg=`<svg class="tr-svg risk-hist-svg" width="${w.toFixed(0)}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
-  svg+=`<line x1="${leftPad}" y1="${yMid.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="var(--t3)" stroke-width="1" opacity="0.55"/>`;
-  svg+=`<text x="${leftPad-8}" y="${(topPad+9).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bull}">Risk-on</text>`;
-  svg+=`<text x="${leftPad-8}" y="${(yMid+4).toFixed(1)}" text-anchor="end" style="font-size:10.5px;fill:var(--t3)">0</text>`;
-  svg+=`<text x="${leftPad-8}" y="${(topPad+chartH-2).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bear}">Risk-off</text>`;
-  const linePts=pts.map((p,i)=>[xOf(i),yOf(p[1])]);
-  if(linePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${linePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-  pts.forEach((p,i)=>{
-    const pc=p[1]>0.8?BC.bull:p[1]<-0.8?BC.bear:BC.neu;
-    svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+i*16,1100)}ms" cx="${linePts[i][0].toFixed(1)}" cy="${linePts[i][1].toFixed(1)}" r="2.6" fill="${pc}"/>`;
-  });
-  const labelEvery=n>20?Math.ceil(n/14):1;
-  pts.forEach((p,i)=>{
-    if(i%labelEvery!==0&&i!==n-1)return;
-    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=p[0];}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+16).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
-  });
-  // Fit-to-width (kein horizontales Wischen/Verschieben) + Hover-Tooltip:
-  // die SVG skaliert auf die Kartenbreite, natuerliche Breite als max-width,
-  // damit wenige Punkte nicht ueberdehnt werden.
-  const fitSvg=svg.replace('<svg class="tr-svg risk-hist-svg"','<svg class="tr-svg risk-hist-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
-  const hpts=pts.map((p,i)=>{
-    const val=p[1];const pc=val>0.8?BC.bull:val<-0.8?BC.bear:BC.neu;
-    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=p[0];}
-    const zone=val>0.8?'Risk-on':val<-0.8?'Risk-off':'Neutral';
-    return{fx:xOf(i)/w,fy:yOf(val)/h,col:pc,tip:`<div class="chv-tip-d">${escH(lbl)}</div><b style="color:${pc}">${val>0?'+':''}${val.toFixed(2)}</b> · ${zone}`};
-  });
-  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
@@ -12251,13 +12225,11 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
-let sentimentRange=1,sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
-function setSentimentRange(r){sentimentRange=r;sentimentCustomFrom='';sentimentCustomTo='';renderSentiment();}
 function setPcRange(r){pcRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){pcCustomFrom='';pcCustomTo='';}renderSentiment();}
 function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){fearGreedCustomFrom='';fearGreedCustomTo='';}renderSentiment();}
 // Namen folgen der timeRangeCustomHtml-Konvention "<setFnName>Custom"
@@ -12265,7 +12237,6 @@ function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r
 // tatsaechlich greift (vorher fehlbenannt als setPcCustomRange -> tote Calls).
 function setPcRangeCustom(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
 function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
-function setSentimentRangeCustom(from,to){sentimentCustomFrom=from||'';sentimentCustomTo=to||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
 // Retail-Sentiment filtert nach Broker-PAAR (z.B. EURUSD), nicht nach
