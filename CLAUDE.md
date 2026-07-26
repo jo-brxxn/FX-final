@@ -202,6 +202,13 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   da". **Die Farbe ändert sich ab jetzt NICHT mehr pro Deploy** (Nutzer-
   Entscheid 2026-07-25: „er bleibt ab sofort immer in der gleichen Farbe") —
   rot (Dot+LIVE-Text) ist fest, nicht mehr Teil des Änderungssignals.
+  **⚠️ Ergänzung 2026-07-27 (Nutzer-Wunsch, nachdem zwei Aenderungen in
+  Folge den Bump vergessen hatten):** der Bump ist NICHT optional und gilt
+  fuer JEDE Code-Aenderung, auch kleine/reine Bugfixes ohne UI-Sichtbarkeit
+  - keine Ausnahmen. Zusaetzlich MUSS die eigene Chat-Antwort nach jeder
+  Aenderung als LETZTEN Satz explizit nennen, wie der neue Banner-Name/die
+  neue Nummer lautet (z. B. „Aktuelle Version ist jetzt VERSION-CHECK-243.")
+  - nicht nur im Code bumpen, sondern dem Nutzer auch im Chat mitteilen.
 - **JS-Syntax-Check vor jedem Push** von `index.html`: `<script>`-Blöcke
   extrahieren, zusammenfügen, `node --check` laufen lassen. Für die Workflow-YAML
   zusätzlich `python3 -c "import yaml; yaml.safe_load(...)"` und das eingebettete

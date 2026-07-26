@@ -1628,12 +1628,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-242 — Retail Sentiment: waehlt man im Filter ein einzelnes Symbol statt 'All symbols', zeigt die Karte jetzt dessen Historie (Net Positioning vs. Preis + Long/Short-Split) statt des Snapshots, mit Zeitraum-Filter und Hover/Tap-Tooltips wie ueberall sonst; der Workflow schreibt dafuer ab jetzt taeglich einen echten Verlaufspunkt pro Symbol in sentiment_data.json, die vorhandenen 17 Tage Historie wurden aus der Git-Historie der Datei rekonstruiert">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-243 — Preis-Ueberlagerungen (Trends 'Score vs Price', Retail-Sentiment-Historie) zeichnen den Preis jetzt als gestrichelte helle Linie statt Kerzen, inkl. kleiner Legende, und die Linie liegt immer als oberste Ebene ueber Balken/Score-Linie; ausserdem pusht jede Aenderung ab jetzt auch auf main, nicht nur auf den Session-Dev-Branch">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-242</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-243</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
