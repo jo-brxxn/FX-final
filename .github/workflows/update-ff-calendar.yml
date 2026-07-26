@@ -2977,12 +2977,22 @@ jobs:
           # Futures-Kurven: EIN gemeinsamer TradingView-Scanner-Call fuer alle
           # Wurzeln (CBOT:ZQ/ASX24:IB praezise 1-Monats-Ketten 14 Monate
           # voraus; TMX:CRA/ICEEUR:SO3/ICEEUR:I bisherige approximative
-          # 3-Monats-Ketten; EUREX:FSR3/OSE:TOA3M/ASX24:BB neue 3-Monats-Ketten
-          # fuer CHF/JPY/NZD; ICEEUR:EMP/ICEEUR:EON/ICEEUR:SOA/TMX:COA sind
-          # EXPERIMENTELLE 1-Monats-/sitzungsdatierte Kandidaten fuer den
-          # EUR/GBP/CAD-Praezisions-Upgrade-Versuch - liefern sie 0 Kontrakte,
-          # bleibt automatisch die bisherige approx-Konfiguration aktiv, siehe
-          # CCY_CFG weiter unten).
+          # 3-Monats-Ketten; EUREX:FSR3 neue 3-Monats-Kette fuer CHF).
+          # OSE:TOA3M (JPY/TONA) und ASX24:BB (NZD/NZ-Bank-Bill) sind PER
+          # workflow_dispatch-Testlauf 2026-07-26 BESTAETIGT ohne jede Daten
+          # ueber diesen Scanner-Endpunkt (0 von 42 zurueckgelieferten
+          # Symbolen, obwohl beide Ticker auf TradingViews Chart-Seiten
+          # selbst existieren - OSE/ASX24-NZ-Produkte scheinen ueber
+          # /global/scan schlicht nicht indexiert zu sein, anders als
+          # ASX24:IB, das ueber denselben Endpunkt einwandfrei funktioniert).
+          # Bleiben als dokumentierter Versuch stehen (kein Schaden, liefern
+          # zuverlaessig 0 Kontrakte -> CHF/JPY/NZD-Skip-Pfad in CCY_CFG) -
+          # nicht erneut blind testen, sondern zuerst eine andere Quelle fuer
+          # eine JPY/NZD-Forward-Kurve recherchieren, falls das je wieder
+          # versucht wird. ICEEUR:EMP/ICEEUR:EON/ICEEUR:SOA/TMX:COA sind
+          # ebenfalls BESTAETIGT ohne Daten (EUR/GBP/CAD-Praezisions-Upgrade-
+          # Versuch, 2026-07-26) - bleibt automatisch bei der bisherigen
+          # approx-Konfiguration, siehe CCY_CFG weiter unten.
           node -e '
             const fs=require("fs");
             const CODE=["","F","G","H","J","K","M","N","Q","U","V","X","Z"];
