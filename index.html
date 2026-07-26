@@ -754,7 +754,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
    Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
-.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
+.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:14px;margin-bottom:8px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -767,7 +767,11 @@ body.dash-edit-mode .dash-edit-bar{display:flex}
    erscheinen erst beim genauen Hinsehen). */
 body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
 .dash-majors{display:none}
-.dash-majors-lbl{font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
+/* "MAJORS"-Label nur im Bearbeitungsmodus (Nutzer-Wunsch 2026-07-27, per
+   Foto markiert) - dieselbe body.dash-edit-mode-Konvention wie .dw-btns/
+   .dash-edit-bar, kein zweiter Mechanismus. */
+.dash-majors-lbl{display:none;font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
+body.dash-edit-mode .dash-majors-lbl{display:block}
 /* Eigene Mini-Karte pro Symbol wie im Referenz-Foto (Nutzer-Wunsch
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
@@ -781,7 +785,7 @@ body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
 .dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0c1c34;border:1px solid #1e3355;border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#3a5a8a;color:var(--t0)}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
    Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
@@ -882,22 +886,34 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Die Pillen selbst tragen die Optik. */
 .dw.dw-market_watch{background:transparent;border:none;border-radius:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
 @media (hover:hover){.dw.dw-market_watch:hover{border-color:transparent}}
-.mw-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+/* .mw-bar enthaelt nur noch Bearbeitungsmodus-Inhalte (Kategorie-Umschalter +
+   Zahnrad/Steuerbuttons) - ausserhalb des Modus bliebe sonst eine leere,
+   unsichtbare Zeile stehen. Ganze Zeile daher wie .dash-edit-bar erst ab
+   body.dash-edit-mode sichtbar. */
+.mw-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+body.dash-edit-mode .mw-bar{display:flex}
 /* Steuerbuttons hier inline (nicht absolut wie in .dw-hdr), rechts neben
-   den Tabs - auf Maus-Geraeten erst beim Hovern sichtbar. */
-.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0}
+   den Tabs. */
+.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0;opacity:1;pointer-events:auto}
+/* FX/Indices/Commodities/Bonds-Umschalter - sitzt in .mw-bar, die als Ganzes
+   schon auf den Bearbeitungsmodus gated ist (Nutzer-Wunsch 2026-07-27, per
+   Foto markiert). Die gerade gewaehlte Kategorie selbst bleibt ausserhalb
+   des Modus unveraendert in der Ticker-Leiste sichtbar. */
 .mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
-/* Kacheln nebeneinander in EINER Zeile statt gestapelt (Referenz-Foto
-   IMG_1196, Nutzer-Wunsch 2026-07-25): Inhalt pro Kachel jetzt inline
-   (Symbol Preis Aenderung), Kachel selbst nur so breit wie ihr Inhalt
-   (flex:0 0 auto) - "gap" sorgt dadurch fuer IMMER GLEICHE Abstaende
-   zwischen den Kacheln, unabhaengig von unterschiedlich langen Symbolnamen.
-   Karte wird dadurch nur noch eine Zeile hoch. */
-.mw-strip{display:flex;gap:8px;flex-wrap:wrap}
-.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:9px 15px;white-space:nowrap;transition:border-color .12s}
+/* Exakt 4 Kacheln pro Reihe (Nutzer-Wunsch 2026-07-27, per Foto markiert),
+   nicht "so viele wie reinpassen" wie beim vorherigen flex-wrap - echtes
+   Grid mit 4 gleich breiten Spalten. Passt sich per Breakpoint dynamisch an
+   kleinere Bildschirme an (2 bzw. 1 Spalte), behaelt dabei aber durch die
+   Spaltenreduktion selbst immer genug Breite pro Kachel fuer lesbaren Text
+   (kein beliebiges Zusammenschrumpfen einer 4-Spalten-Reihe auf Handy-
+   Breite - das wuerde Symbol/Preis/Aenderung abschneiden). */
+.mw-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media(max-width:1000px){.mw-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.mw-strip{grid-template-columns:repeat(1,minmax(0,1fr))}}
+.mw-tile{min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:6px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:8px 12px;white-space:nowrap;transition:border-color .12s}
 @media (hover:hover){.mw-tile:hover{border-color:#3a5a8a}}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
 .mw-tile-sym{font-size:13px;font-weight:800;color:#fff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1349,7 +1365,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1363,7 +1379,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:18px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -1394,7 +1409,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
    die Sidebar ist dort nur etwas schmaler. */
 @media(min-width:1100px){
-  .dash-layout{display:flex;gap:18px;align-items:flex-start}
+  .dash-layout{display:flex;gap:12px;align-items:flex-start}
   .dash-majors{display:flex;flex-direction:column;gap:0;width:132px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
@@ -1628,12 +1643,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-243 — Preis-Ueberlagerungen (Trends 'Score vs Price', Retail-Sentiment-Historie) zeichnen den Preis jetzt als gestrichelte helle Linie statt Kerzen, inkl. kleiner Legende, und die Linie liegt immer als oberste Ebene ueber Balken/Score-Linie; ausserdem pusht jede Aenderung ab jetzt auch auf main, nicht nur auf den Session-Dev-Branch">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-244 — Dashboard: MAJORS-Label + FX/Indices/Commodities/Bonds-Umschalter jetzt nur im Bearbeitungsmodus sichtbar, Asset-Ticker-Zeile fest auf 4 Kacheln/Reihe (responsiv bis 1 Spalte auf Handy), engere Abstaende im ganzen Dashboard-Grid. Ausserdem echter Bugfix: mehreren Aenderungen (Tab-Stapel-Umsortierung, PIN-Umschalter, Notizen-Bias/Wichtig/Reihenfolge) fehlte pushU()/markPrefEdit(), wodurch ein zeitgleicher Cloud-Sync sie binnen Sekunden ueberschreiben konnte - jetzt an allen Stellen ergaenzt (inkl. fehlender prefPending-Absicherung in cloudPull() fuer greenDismissed/tabStacks/pinEnabled/riskEnvRemindDismissed)">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-243</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-244</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -5865,9 +5880,14 @@ async function cloudPull(manual){
       const prefPending=!manual&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
-      if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
-      if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
-      if(cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
+      // prefPending muss VOR diesen beiden Zeilen ausgewertet sein (ist es,
+      // siehe oben) - greenDismissed/tabStacks fehlte der Schutz bisher
+      // (Nutzer-Bugreport 2026-07-27), obwohl ihre Save-Funktionen
+      // markPrefEdit() (jetzt bei saveTabStacks() ergaenzt) bereits setzen -
+      // ohne den Guard HIER wurden sie trotzdem unconditional ueberschrieben.
+      if(!prefPending&&cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
+      if(!prefPending&&Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
+      if(!prefPending&&cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
       // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
       // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
       // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
@@ -5881,7 +5901,11 @@ async function cloudPull(manual){
       }else if(cd.compactView!==undefined&&(cd.compactView?1:0)!==(compactView>=1?1:0)){
         compactView=cd.compactView?1:0;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();
       }
-      if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
+      // pinEnabled fehlte hier bisher der prefPending-Schutz (Nutzer-Bugreport
+      // 2026-07-27) - anders als compactLevel/designHue direkt daneben wurde
+      // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
+      // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
+      if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
       // vom anderen Geraet ankommt.
       if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
@@ -6988,15 +7012,25 @@ function setNoteTableField(side,group,i,field,val){const c=getSym();if(!c)return
 function mvNoteTableItem(side,group,i,d){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(!a)return;const j=i+d;if(j<0||j>=a.length)return;pushU();flipNotes(()=>{const t=a[i];a[i]=a[j];a[j]=t;save();renderDetail();});}
 function moveNoteTableGroup(side,group,i){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);const from=nt[side][group];if(!from||!from[i])return;pushU();flipNotes(()=>{const it=from.splice(i,1)[0];nt[side][group==='cur'?'gen':'cur'].push(it);save();renderDetail();});}
 function addNoteRub(){pushU();const c=getSym();if(!c)return;if(!c.noteRubs)c.noteRubs=[];c.noteRubs.push({id:uid(),name:'New Category',bias:'neu',imp:false,items:[]});save();renderDetail();}
-function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;r.bias=b;save();renderDetail();}
-function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;r.imp=!r.imp;save();renderDetail();}
+// pushU() fehlte hier bisher (Nutzer-Bugreport 2026-07-27: "UI-Aenderungen
+// werden nach wenigen Sekunden ueberschrieben") - ohne den Undo-/Pending-
+// Marker sah der Multi-Tab-/Cloud-Schutz (save()-Guard, cloudPush()s
+// optimistische Versionspruefung) diese Aenderungen NICHT als "der Nutzer
+// hat hier gerade selbst editiert" an. Ein zeitgleicher Cloud-Pull (anderes
+// Geraet/Tab pusht dazwischen) konnte die Bias-/Wichtig-/Reihenfolge-
+// Aenderung dadurch binnen weniger Sekunden mit dem aelteren Stand
+// ueberschreiben - exakt dieselbe Bug-Klasse wie beim designHue/compactLevel-
+// Fix, hier aber bei den Notes-Rubrik-Geschwisterfunktionen uebersehen
+// (addNoteRub/delNoteRub hatten pushU() bereits, die uebrigen sechs nicht).
+function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;pushU();r.bias=b;save();renderDetail();}
+function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;pushU();r.imp=!r.imp;save();renderDetail();}
 function delNoteRub(ri){pushU();const c=getSym();if(c&&c.noteRubs)c.noteRubs.splice(ri,1);save();renderDetail();}
-function mvNoteRub(ri,d){const c=getSym();if(c&&c.noteRubs)mvArr(c.noteRubs,ri,d);save();renderDetail();}
+function mvNoteRub(ri,d){const c=getSym();if(!c||!c.noteRubs)return;pushU();mvArr(c.noteRubs,ri,d);save();renderDetail();}
 function addNoteRubItem(ri){const inp=document.getElementById('nr-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;pushU();const r=getNoteRub(ri);if(!r)return;if(!r.items)r.items=[];r.items.push({id:uid(),text:v,bias:'neu',imp:false});inp.value='';save();renderDetail();}
 function delNoteRubItem(ri,ii){pushU();const r=getNoteRub(ri);if(r&&r.items)r.items.splice(ii,1);save();renderDetail();}
-function setNoteRubItemBias(ri,ii,b){const r=getNoteRub(ri);if(!r||!r.items)return;r.items[ii].bias=b;save();renderDetail();}
-function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;r.items[ii].imp=!r.items[ii].imp;save();renderDetail();}
-function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(r&&r.items)mvArr(r.items,ii,d);save();renderDetail();}
+function setNoteRubItemBias(ri,ii,b){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].bias=b;save();renderDetail();}
+function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].imp=!r.items[ii].imp;save();renderDetail();}
+function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();mvArr(r.items,ii,d);save();renderDetail();}
 
 // ══ ADD SYMBOL ════════════════════════════════════════════════════
 // Übernimmt die Karten-/Indikator-Struktur vom US-Dollar (gleiche Rubriken
@@ -13391,8 +13425,13 @@ function loadTabStacks(){
 function saveTabStacks(){
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
   // Aenderung als neue Version markieren und (falls Cloud-Sync eingerichtet ist)
-  // pushen, damit die Stapel ueber mehrere Geraete synchron sind.
+  // pushen, damit die Stapel ueber mehrere Geraete synchron sind. markPrefEdit()
+  // fehlte hier bisher (Nutzer-Bugreport 2026-07-27, gleiche Bug-Klasse wie
+  // designHue/compactLevel) - ohne das Flag stufte cloudPush()s optimistische
+  // Versionspruefung eine frische Stapel-Umsortierung als reinen Auto-Refresh
+  // ein und ein zeitgleicher Pull zog den aelteren Cloud-Stand drueber.
   try{localStorage.setItem('fxpro_updated',new Date().toISOString());_lsUpdatedSeen=localStorage.getItem('fxpro_updated');}catch(e){}
+  markPrefEdit();
   cloudAutoSync();
 }
 function stackOf(tabId){return tabStacks.find(s=>s.members.includes(tabId));}
@@ -13691,6 +13730,7 @@ function togglePinEnabled(){
   try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
   cloudAutoSync();
   updPinToggleBtn();
   // Beim Deaktivieren sofort entsperren (kein Reload noetig, kein

@@ -4551,3 +4551,92 @@ Legende dazu, wie im Foto.
   + `.tr-leg-dash`-Legende verwenden, keine Kerzen mehr neu einfuehren -
   CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine muessen einheitlich sein"
   gilt hier genauso.
+
+### Dashboard-Feinschliff nach Foto: Bearbeitungsmodus-Gating, 4er-Ticker-Grid, engere Abstaende + echter Persistenz-Bug gefunden (Nutzer-Wunsch 2026-07-27)
+
+Nutzer schickte ein Foto der Live-Seite mit zwei blau eingekreisten Elementen
+("MAJORS"-Label ueber der Majors-Sidebar, FX/Indices/Commodities/Bonds-
+Umschalter ueber der Market-Watch-Ticker-Zeile) plus vier Anforderungen.
+
+**1. Beide markierten Elemente nur noch im Bearbeitungsmodus sichtbar** -
+dieselbe `body.dash-edit-mode`-Konvention wie die bestehenden `.dw-btns`
+(5s-Long-Press, siehe Eintrag "Bearbeitungsmodus statt Hover" oben), kein
+zweiter Mechanismus. `.dash-majors-lbl` (das "MAJORS"-Label) und `.mw-bar`
+(die ganze Zeile mit Kategorie-Tabs + Zahnrad-Button - nicht nur `.mw-tabs`
+selbst, sonst bliebe eine leere unsichtbare Zeile stehen) sind jetzt
+`display:none` per Default, `body.dash-edit-mode` schaltet sie auf
+`block`/`flex`. Die gerade AKTIVE Kategorie (z.B. "FX") bleibt ausserhalb
+des Modus unveraendert in der Ticker-Zeile sichtbar - nur der Umschalter
+selbst versteckt sich.
+
+**2. Exakt 4 Assets pro Reihe** in der Market-Watch-Ticker-Zeile
+(`.mw-strip`): von `display:flex;flex-wrap:wrap` (so viele Kacheln wie
+reinpassen, `flex:0 0 auto`) auf ein echtes `display:grid;grid-template-
+columns:repeat(4,minmax(0,1fr))` umgestellt - `.mw-tile` fuellt jetzt die
+volle Spaltenbreite (`justify-content:space-between` statt `flex:0 0 auto`).
+**3. Responsiv mit Mindestgroesse**: zwei Breakpoints reduzieren die
+Spaltenzahl VOR dem Punkt, an dem 4 Spalten unlesbar eng wuerden -
+`repeat(2,...)` unter 1000px, `repeat(1,...)` unter 520px (per Playwright an
+9 Viewport-Breiten von 390-1920px verifiziert: nie Text-Ueberlauf, exakt 4
+Spalten von 1100-1920px).
+**4. Globale Abstaende verringert** - bewusst auf das Dashboard-Grid
+gescoped (nicht die ganze 14k-Zeilen-App durchgefegt, zu hohes Regressions-
+risiko fuer den Nutzen): `#dashWidgets`-Grid-Gap 14→10px, `.dash-layout`-Gap
+(Majors-Sidebar zum Grid) 18→12px, `.dw`-Kartenpadding 18→14px (inkl. einer
+zuvor uebersehenen `@media(min-width:1100px)`-Override-Zeile, die die
+Reduktion sonst auf genau der Bildschirmbreite des Referenzfotos wieder
+rueckgaengig gemacht haette), `.dw`-Kartenabstand 10→8px, `.dw-hdr`-Marge
+16→12px, `.mw-tile`-Innenpadding 9px 15px→8px 12px. Falls "global" tatsaech-
+lich app-weit gemeint war (z.B. auch `.masonry` auf den Asset-Detailseiten),
+bei Bedarf gezielt nachziehen statt anzunehmen.
+
+**5. Persistenz-Bug gefunden und gefixt** ("UI-Aenderungen wie Farbwechsel
+werden nach wenigen Sekunden ueberschrieben, muessen beim ERSTEN Versuch
+dauerhaft bleiben") - der Designer-Farbregler selbst (`applyDesignerHue()`/
+`saveDesignHue()`) war beim Nachpruefen bereits korrekt ueber `markPrefEdit()`
+abgesichert (per Playwright mit echtem Draw-durch-alle-Trigger-Test
+verifiziert: Boot-Feeds, `renderDash()`, `flushAndSave()`, 1,5s-Cloud-Debounce
+- Farbe blieb in JEDEM Fall stehen). Der eigentliche Bug lag an sechs
+ANDEREN Stellen, die demselben "ausserhalb von snap()/Undo, aber trotzdem
+geraeteuebergreifend synchron" -Muster (siehe "WICHTIGSTE REGEL" ganz oben)
+folgen SOLLTEN, es aber nicht taten:
+- **`saveTabStacks()`** und **`togglePinEnabled()`**: bumpten `fxpro_updated`
+  und stiessen `cloudAutoSync()` an, riefen aber `markPrefEdit()` NICHT auf -
+  ohne das Flag stufte `cloudPush()`s optimistische Versionspruefung die
+  Aenderung als reinen Auto-Refresh ein und ein zeitgleicher Pull (anderes
+  Geraet/Tab pusht dazwischen) zog den aelteren Cloud-Stand drueber. Beide
+  jetzt mit `markPrefEdit()` ergaenzt.
+- **`cloudPull()` selbst fehlte an VIER Stellen der `!prefPending`-Schutz**,
+  der bei `compactLevel`/`designHue`/`designSaved`/den Set-ups-/Kalender-
+  Filtern bereits existierte: `greenDismissed`, `tabStacks`, `pinEnabled`,
+  `riskEnvRemindDismissed` wurden dort IMMER unconditional aus dem Cloud-
+  Stand uebernommen - selbst mit korrekt gesetztem `markPrefEdit()`-Flag in
+  der jeweiligen Save-Funktion haette das die lokale Aenderung also trotzdem
+  ueberschrieben, weil der Schutz an der falschen Stelle (nur Save-Funktion,
+  nicht Pull-Funktion) gefehlt hat. Alle vier jetzt mit `!prefPending&&`
+  guarded, exakt wie die bereits geschuetzten Felder direkt daneben.
+- **Notes-Tab-Rubrik-Funktionen** (`setNoteRubBias`/`togNoteRubImp`/
+  `mvNoteRub`/`setNoteRubItemBias`/`togNoteRubItem`/`mvNoteRubItem`) - diese
+  gehoeren zum snap()-Kernbaum (ueber `noteCats`/Symbol-Objekte), brauchen
+  also `pushU()` (nicht `markPrefEdit()`) als Schutzmarker. Sechs von neun
+  Geschwisterfunktionen in dieser Familie hatten es (add/delete-Funktionen),
+  sechs andere (Bias setzen, Wichtig-Toggle, Reihenfolge aendern) fehlte es
+  komplett - reiner Kopier-/Wartungs-Fehler, als die Long-Press-Bias-Picker
+  fuer Notes ergaenzt wurden (siehe "Bias-Buttons durch Long-Press-Popover
+  ersetzt" oben), nicht konsistent auf ALLE Geschwisterfunktionen uebertragen.
+  Alle sechs jetzt mit `pushU()` ergaenzt.
+- Per Playwright mit einem echten simulierten Multi-Geraete-Wettlauf
+  verifiziert (gemockter `fetch` liefert bei `cloudPull()` bewusst einen
+  ALTEN Cloud-Stand zurueck, waehrend eine lokale Aenderung noch auf ihren
+  eigenen 1,5s-Auto-Push wartet): Tab-Stapel-Aenderung UND PIN-Toggle
+  ueberleben den simulierten Pull jetzt korrekt (vorher waeren beide durch
+  den fehlenden Schutz zurueckgesetzt worden); `setNoteRubBias()` bumpt jetzt
+  nachweislich `_lastUserEditTs` und den Undo-Stack.
+- **Merksatz:** bei einer neuen "ausserhalb von snap()" laufenden Praeferenz
+  IMMER alle VIER Ecken pruefen, nicht nur zwei - (1) Save-Funktion bumpt
+  `fxpro_updated`+`_lsUpdatedSeen`+`markPrefEdit()`+`cloudAutoSync()` UND (2)
+  `cloudPull()` selbst hat fuer GENAU dieses Feld einen `!prefPending`-Guard,
+  sonst nuetzt (1) allein nichts. Bei einer Kernbaum-Aenderung (Teil von
+  `snap()`) ist `pushU()` der richtige Marker statt `markPrefEdit()` - bei
+  einer Familie von Geschwisterfunktionen (wie hier die Notes-Rubriken)
+  IMMER alle pruefen, nicht nur die zuerst gefundene.
