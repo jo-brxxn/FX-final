@@ -139,15 +139,15 @@
     [
      [
       "2026-07-29",
-      8
+      9
      ],
      [
       "2026-09-16",
-      16
+      15
      ],
      [
       "2026-10-28",
-      6
+      7
      ],
      [
       "2026-12-09",
@@ -163,27 +163,27 @@
     "date": "2026-07-29",
     "label": "Jul 28-29, 2026",
     "rateBefore": 3.63,
-    "rateAfter": 3.71,
-    "deltaBp": 8
+    "rateAfter": 3.72,
+    "deltaBp": 9
    },
    {
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
-    "rateBefore": 3.71,
-    "rateAfter": 3.87,
-    "deltaBp": 16
+    "rateBefore": 3.72,
+    "rateAfter": 3.86,
+    "deltaBp": 15
    },
    {
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
-    "rateBefore": 3.87,
-    "rateAfter": 3.94,
-    "deltaBp": 6
+    "rateBefore": 3.86,
+    "rateAfter": 3.93,
+    "deltaBp": 7
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.94,
+    "rateBefore": 3.93,
     "rateAfter": 4.03,
     "deltaBp": 10
    }
@@ -502,6 +502,21 @@
   ],
   "method": "precise",
   "refSource": "RBA (Cash Rate Target)",
+  "pastMeeting": null
+ },
+ "CHF": {
+  "history": [
+   [
+    "2026-07-26",
+    -0.04,
+    []
+   ]
+  ],
+  "asOf": "2026-07-26",
+  "currentRate": -0.04,
+  "meetings": [],
+  "method": "approx",
+  "refSource": "SNB (SARON) + SARON 3M futures",
   "pastMeeting": null
  }
 }
