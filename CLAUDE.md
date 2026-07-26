@@ -4640,3 +4640,70 @@ folgen SOLLTEN, es aber nicht taten:
   `snap()`) ist `pushU()` der richtige Marker statt `markPrefEdit()` - bei
   einer Familie von Geschwisterfunktionen (wie hier die Notes-Rubriken)
   IMMER alle pruefen, nicht nur die zuerst gefundene.
+
+### Persistenz-Bug Runde 2: vollstaendiger Codebase-Scan statt Einzelfall-Fixes (Nutzer-Bugreport 2026-07-27, direkt im Anschluss)
+
+Nutzer meldete: der Bug besteht weiterhin - konkret im "Bearbeitungsmenue"
+(Market-Watch-Zahnrad, seit der letzten Session nur noch im Bearbeitungs-
+modus erreichbar) ein FX-Paar abgewaehlt, nach ein paar Sekunden war es
+wieder da. Der Runde-1-Fix (siehe Eintrag oben) hatte gezielt Kandidaten
+geprueft, aber **nicht wirklich JEDEN `save()`-Aufruf im ganzen File**, wie
+der eigene Merksatz dort eigentlich schon forderte.
+
+**Diesmal ein programmatischer Scan statt Einzelfall-Suche**: Skript
+extrahiert JEDE `function name(...){...}` per Klammer-Tiefen-Zaehlung
+(auch mehrzeilig, der vorherige Scan hatte nur einzeilige Funktionen erwischt)
+und listet alle, die `save();` enthalten, aber nirgends im Funktionskoerper
+`pushU()`/`markPrefEdit()`/`markUserEditTs()`. Ergebnis: 10 weitere echte
+Treffer (zusaetzlich zu den bereits im Runde-1-Eintrag gefixten):
+
+- **`toggleMwSym()`** - genau der gemeldete Fall (Market-Watch "Choose
+  symbols"-Menue, FX-Paar an/abwaehlen). **`setMwTab()`** direkt daneben
+  (Kategorie-Umschalter) hatte denselben Fehler.
+- **`moveSbSym()`/`moveSbCat()`** - Sidebar-Umsortierung (Long-Press-Sortierung
+  von Symbolen/Kategorien).
+- **`mvRub()`** - Rubrik-Karten-Umsortierung auf der Asset-Detailseite
+  (`addRub()`/`delRub()` direkt daneben hatten `pushU()` bereits - dieselbe
+  "add/delete korrekt, move/toggle vergessen"-Musterluecke wie bei den
+  Notes-Rubriken in Runde 1).
+- **`saveDateM()`/`clearDateM()`** - Indikator-Release-Datum speichern/leeren.
+- **`saveRateWatch()`/`saveIndLink()`** - eigene URL fuer Zinserwartungs-/
+  Quellen-Link speichern (die zugehoerigen `resetRateWatch()`/`resetIndLink()`
+  waren in Runde 1 schon gefixt worden, die SAVE-Variante daneben aber
+  uebersehen).
+- **`saveInfoM()`** - eigener Info-Text an einer Rubrik/einem Indikator.
+- **`doUndo()`/`doRedo()`** - hier bewusst NICHT `pushU()` (wuerde
+  uStack/rStack korrumpieren), sondern ein neuer, leichtgewichtiger Helfer
+  `markUserEditTs()` (nur `_lastUserEditTs`/`_userEditedSinceSync`/
+  `fxpro_user_pending`, ohne Stack-Mutation).
+
+**Bewusst NICHT angefasst** (verifiziert als korrekt OHNE Schutz, kein
+Uebersehen): `togRubCollapse()`/`goToRubCard()`/`gotoIndicatorByNotif()`
+(reines Auf-/Zuklappen einer Karte, auch als Navigations-Nebeneffekt - haette
+`pushU()` dafuer, wuerde JEDES Aufklappen einer Karte einen Undo-Schritt
+erzeugen und den 60-Eintrag-Stack mit trivialen Klicks fluten),
+`assetCfgApply()` (reiner Helfer, alle drei Aufrufer haben `pushU()` bereits
+VOR dem Aufruf), `renderEvtAlertList()`/`updInboxBadge()`/`renderInbox()`
+(raeumen nur abgelaufene Eintraege auto auf), `checkPriceAlerts()`/
+`autoFetchCot()`/`autoFetchSentiment()`/`bootFetchScoreFeeds()`/
+`cotManualRefresh()`/`flushAndSave()` (Live-Feed-getriebene bzw. der
+Hintergrund-Save selbst - duerfen NICHT `pushU()` aufrufen, das wuerde jeden
+automatischen Refresh als eigenen Undo-Schritt/Nutzer-Edit tarnen).
+
+Per Playwright mit demselben simulierten Multi-Geraete-Wettlauf wie in
+Runde 1 verifiziert, diesmal am EXAKTEN gemeldeten Ablauf (Market-Watch-
+Menue oeffnen, EUR/USD abwaehlen, `cloudPull()` mit einem gemockten,
+aelteren Cloud-Stand dazwischenschieben): das Paar bleibt jetzt entfernt.
+
+**Merksatz (verschaerft gegenueber Runde 1):** bei diesem Bug-Muster reicht
+"ein paar naheliegende Kandidaten pruefen" nicht - es gibt inzwischen (Stand
+2026-07-27) ueber 20 Funktionen quer durchs ganze File, die demselben Fehler
+unterlagen, weil neue Editier-Funktionen offenbar oft nach dem Vorbild einer
+NICHT-schuetzenden Nachbarfunktion kopiert wurden statt nach dem Vorbild der
+Save-Funktion. Bei JEDEM kuenftigen Verdacht auf dieses Bug-Muster (nicht nur
+bei einem Bugreport, auch praeventiv nach dem Hinzufuegen neuer Editier-
+Funktionen) den programmatischen Scan erneut fahren (Skript-Idee: Klammer-
+balancierte Extraktion jeder `function`, Filter auf `save()` ohne
+`pushU`/`markPrefEdit`/`markUserEditTs` im Koerper) - NICHT wieder nur
+einzelne Verdachtsfaelle von Hand durchsuchen, das uebersieht nachweislich
+einen Grossteil.
