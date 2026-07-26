@@ -4215,3 +4215,44 @@ darueber braucht das Grid Platz fuer Logo-Spalte UND volle Button-Spalte
 nebeneinander, darunter quetscht es sonst den Logo-/Statustext mehrzeilig
 zusammen (per Playwright bei 820px und 390px reproduziert). Grenze bewusst
 1080px, damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt.
+
+### Globus neu aufgebaut + Polarlichter dahinter (Nutzer-Wunsch 2026-07-25)
+
+Nutzer: "mach die Weltkugel das Meer einfach komplett gleichmäßig in einem
+dunklen Blau. Dann mach die Erdflächen also die Länder in einem helleren
+Blau und mach darauf ganz viele ganz ganz kleine leere Vierecke also nur
+die Umrandung. Und dann will ich das sich das dreht und alle 5 Sekunden
+jedes Viereck untereinander kurz stark hellblau wird also auch richtig
+aufleuchtet und dann wieder ausgangszustand. Und das von links nach rechts
+wie ein Schauer." Danach: "Ne im Hintergrund so Polarlichter."
+
+- **Meer** ist jetzt EIN `<circle fill="#0b2445">` - die frueheren
+  Tag-/Nacht-/Terminator-Radialverlaeufe UND die Meridian-/Breitenkreis-
+  Gitterlinien sind ersatzlos raus, beide widersprachen "komplett
+  gleichmaessig". Damit sind auch `globeSunInfo()`/`globeSunInfoCached()`
+  und `GLOBE_MERIDIANS`/`GLOBE_PARALLELS` toter Code geworden und wurden
+  entfernt (der Sonnenstand wurde nirgends sonst gebraucht - vor einem
+  Wiedereinbau pruefen, ob er woanders erwartet wird).
+- **Land** = helleres Blau (`#2d6ea8`) plus ein `<pattern>` aus winzigen
+  LEEREN Quadraten (4,2px Raster, `fill:none;stroke:...`).
+- **Schauer alle 5s:** die Land-Geometrie liegt nur EINMAL als
+  `<g id="gLandShape…">` in `<defs>` und wird per `<use>` mehrfach mit
+  unterschiedlichem `fill` gezeichnet - Grundfarbe, ruhige Vierecke,
+  leuchtende Vierecke. Die leuchtende Ebene haengt in einer Maske mit einem
+  per SMIL wandernden Rechteck (weicher Verlauf schwarz→weiss→schwarz), so
+  leuchten die Vierecke spaltenweise von links nach rechts auf.
+  `mix-blend-mode:screen` + doppelter `<use>` machen daraus ein echtes
+  Aufleuchten statt eines blassen Schleiers.
+  **Wichtig fuer die Performance:** die `<path>`-Elemente in `<defs>` tragen
+  KEIN eigenes fill/stroke (sie erben es vom jeweiligen `<use>`), und
+  `globeUpdateOne()` aktualisiert weiterhin nur diesen EINEN Satz Pfade -
+  die `<use>`-Klone folgen automatisch. Das Aufleuchten selbst kostet gar
+  keine JS-Arbeit (reines SMIL). Bei kuenftigen Aenderungen NICHT auf drei
+  getrennte Pfad-Saetze umbauen, das wuerde die Frame-Arbeit verdreifachen.
+- **Polarlichter** ersetzen den violett/blau/magenta-Nebel hinter dem
+  Globus (`.db-split .globe-host::before/::after`): senkrechte Licht-
+  "Vorhaenge" aus `repeating-linear-gradient` in Tuerkisgruen/Violett, per
+  `mask-image` weich ausgeblendet, zwei Ebenen mit unterschiedlichem Tempo
+  (34s/47s, `alternate`) fuer langsames Wabern. Bewusst per `transform`
+  statt `filter:blur()` animiert - siehe die dokumentierte Blur-Perf-Lehre
+  bei der Aurora. `prefers-reduced-motion` schaltet die Bewegung ab.

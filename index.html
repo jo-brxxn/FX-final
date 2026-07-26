@@ -812,15 +812,37 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Wunsch 2026-07-25) - Text-Spalte (.db-col-txt, flex:1 1 0) bekommt den
    Rest. JS-Groessenkappung in startGlobes() dazu von 200 auf 260 angehoben. */
 .db-split .globe-host{flex:0 0 66.6%;width:66.6%;min-height:0;padding:0;position:relative}
-/* Nebel-Hintergrund hinter dem Globus (Referenz-Foto, Nutzer-Wunsch
-   2026-07-25 "1 zu 1"): weiche violett/blau/magenta Radialverlaeufe, die
-   ueber den Kartenrand hinauslaufen und von .dw-globe{overflow:hidden}
-   sauber abgeschnitten werden. Reine Deko, kein Blur-Filter (siehe die
-   dokumentierte Blur-Perf-Lehre bei der Aurora). */
-.db-split .globe-host::before{content:'';position:absolute;inset:-55% -25%;z-index:0;pointer-events:none;
-  background:radial-gradient(ellipse 42% 40% at 32% 42%,rgba(124,58,237,.30),transparent 68%),
-             radial-gradient(ellipse 40% 38% at 70% 62%,rgba(37,99,235,.26),transparent 68%),
-             radial-gradient(ellipse 30% 30% at 56% 24%,rgba(190,50,150,.16),transparent 70%)}
+/* Polarlichter hinter dem Globus (Nutzer-Wunsch 2026-07-25) statt des
+   frueheren violett/blau/magenta Nebels. Nachgebaut nach dem typischen
+   Aurora-Borealis-Aufbau: senkrechte, unterschiedlich breite Licht-
+   "Vorhaenge", unten tuerkisgruen (Sauerstoff in niedriger Hoehe), nach
+   oben in Violett/Magenta auslaufend, mit weichen Raendern. Zwei Ebenen
+   (::before/::after) mit leicht unterschiedlichem Tempo und Versatz
+   erzeugen das langsame Wabern, ohne dass sich ein Muster erkennbar
+   wiederholt. Bewusst per repeating-linear-gradient + transform statt
+   filter:blur() - siehe die dokumentierte Blur-Perf-Lehre bei der Aurora. */
+.db-split .globe-host::before,.db-split .globe-host::after{content:'';position:absolute;inset:-60% -30%;z-index:0;pointer-events:none;will-change:transform}
+.db-split .globe-host::before{
+  background:
+    repeating-linear-gradient(97deg,
+      transparent 0 22px, rgba(64,235,185,.34) 26px, rgba(64,235,185,.10) 38px, transparent 46px 92px),
+    repeating-linear-gradient(84deg,
+      transparent 0 54px, rgba(135,100,255,.26) 60px, transparent 74px 150px);
+  -webkit-mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
+  mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
+  animation:auroraCurtain1 34s ease-in-out infinite alternate}
+.db-split .globe-host::after{
+  background:
+    repeating-linear-gradient(102deg,
+      transparent 0 40px, rgba(46,210,255,.26) 46px, transparent 58px 128px),
+    radial-gradient(ellipse 48% 30% at 44% 72%,rgba(56,240,175,.32),transparent 72%),
+    radial-gradient(ellipse 40% 34% at 62% 26%,rgba(195,85,235,.26),transparent 74%);
+  -webkit-mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
+  mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
+  animation:auroraCurtain2 47s ease-in-out infinite alternate}
+@keyframes auroraCurtain1{0%{transform:translate3d(-3%,1%,0) skewX(-4deg) scaleY(1)}100%{transform:translate3d(4%,-2%,0) skewX(5deg) scaleY(1.12)}}
+@keyframes auroraCurtain2{0%{transform:translate3d(3%,-1%,0) skewX(6deg) scaleY(1.08)}100%{transform:translate3d(-4%,2%,0) skewX(-3deg) scaleY(.96)}}
+@media(prefers-reduced-motion:reduce){.db-split .globe-host::before,.db-split .globe-host::after{animation:none}}
 .db-split .globe-host>svg{position:relative;z-index:1}
 #dashWidgets .dw.dw-globe{overflow:hidden}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
@@ -1588,12 +1610,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-237 — Header wie im Foto als Grid: LIVE-Banner in Zeile 1 auf Logo-Hoehe, Button-Leiste in Zeile 2 darunter (vorher lagen beide in derselben Zeile). Unter 1080px einspaltig gestapelt">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-238 — Globus neu: gleichmaessig dunkelblaues Meer (keine Tag/Nacht-Verlaeufe, keine Gitterlinien), Laender heller blau mit einem Raster winziger LEERER Vierecke, und alle 5s laeuft ein Schauer von links nach rechts, bei dem die Vierecke spaltenweise hell aufleuchten. Dahinter Polarlichter statt des violetten Nebels">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-237</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-238</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -10109,25 +10131,9 @@ function startSessionBar(){
     document.querySelectorAll('.sess-bar').forEach(el=>{el.outerHTML=sessionBarHtml();});
   },30*60*1000);
 }
-// Sonnenstand (deklination + Sub-Sonnen-Laengengrad) rein aus aktueller UTC-Zeit/Datum -
-// keine externen Daten noetig, treibt Tag/Nacht-Schattierung und Nachtlichter.
-function globeSunInfo(){
-  const now=new Date();
-  const start=new Date(Date.UTC(now.getUTCFullYear(),0,0));
-  const dayOfYear=Math.floor((now-start)/864e5);
-  const declDeg=-23.44*Math.cos(2*Math.PI/365*(dayOfYear+10));
-  const utcH=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
-  let lonS=(12-utcH)*15;while(lonS>180)lonS-=360;while(lonS<-180)lonS+=360;
-  return{decl:declDeg*Math.PI/180,lonS};
-}
-// Sonnenstand nur einmal pro Stunde neu berechnen (statt bei jedem Redraw) -
-// Tag/Nacht-Schattierung & Stadtlichter aendern sich dadurch nur stuendlich.
-let _globeSunCache=null,_globeSunCacheHr=-1;
-function globeSunInfoCached(){
-  const hr=Math.floor(Date.now()/3600000);
-  if(hr!==_globeSunCacheHr){_globeSunCacheHr=hr;_globeSunCache=globeSunInfo();}
-  return _globeSunCache;
-}
+// (globeSunInfo/globeSunInfoCached entfernt 2026-07-25: das Meer ist jetzt
+// eine gleichmaessige Flaeche ohne Tag/Nacht-Schattierung, siehe
+// globeSkeleton unten - der Sonnenstand wurde nirgends sonst gebraucht.)
 // Beim ersten Laden der Seite und bei jedem Wechsel zur Dashboard-Kategorie soll
 // zuerst Amerika zu sehen sein (danach dreht sich der Globus wie gewohnt weiter).
 const GLOBE_HOME_LON=-90;
@@ -10157,60 +10163,57 @@ function globePathD(pts,lon0,R,cx,cy){
 // (zunaechst leer), spaeter werden nur noch ihre Attribute aktualisiert. Dadurch wird
 // NICHT bei jedem Frame neues SVG geparst/gerendert - die Kugel wird einmal aufgebaut
 // und dreht sich danach nur, indem die vorhandenen Elemente neu positioniert werden.
-const GLOBE_MERIDIANS=[];for(let lon=-180;lon<180;lon+=30)GLOBE_MERIDIANS.push(lon);
-const GLOBE_PARALLELS=[];for(let lat=-60;lat<=60;lat+=30)GLOBE_PARALLELS.push(lat);
+// (GLOBE_MERIDIANS/GLOBE_PARALLELS entfernt 2026-07-25: Gitterlinien wuerden
+// dem Wunsch nach einem "komplett gleichmaessigen" Meer widersprechen.)
+// Aufbau (Nutzer-Wunsch 2026-07-25): Meer = EINE gleichmaessige dunkelblaue
+// Flaeche (keine Tag-/Nacht-/Terminator-Verlaeufe und keine Gitterlinien mehr,
+// die machten es ungleichmaessig), Land = helleres Blau mit einem feinen
+// Raster LEERER Vierecke (nur Umrandung), und alle 5s laeuft ein Schauer von
+// links nach rechts, bei dem die Vierecke spaltenweise hell aufleuchten.
+//
+// Trick fuer den Schauer: die Land-Geometrie existiert nur EINMAL (als
+// <g> in <defs>) und wird per <use> dreimal mit unterschiedlichem fill
+// gezeichnet - Grundfarbe, ruhige Viereck-Umrandungen, leuchtende
+// Umrandungen. Nur der letzte <use> haengt in einer Masken-Ebene, die ein
+// wanderndes Rechteck freigibt. Dadurch muss pro Frame weiterhin nur EIN
+// Satz Pfade neu positioniert werden (die <use>-Klone folgen automatisch),
+// und das Aufleuchten selbst kostet gar keine JS-Arbeit (reines SMIL).
 function globeSkeleton(size,uid){
   const R=size/2-16,cx=size/2,cy=size/2;
-  const gid='gGrad'+uid,nid='gNight'+uid,dgid='gDay'+uid,tgid='gTerm'+uid,lmgid='gLimbGrad'+uid,lmid='gLimbMask'+uid;
-  const grid=(GLOBE_MERIDIANS.length+GLOBE_PARALLELS.length);
-  // Gitterlinien hell/weiss statt dunkelblau (Referenz-Foto, Nutzer-Wunsch
-  // 2026-07-25: "Linien... von weiss zu kurzzeitig rot" - brauchte einen
-  // hellen Ausgangston, damit der Rot-Scan-Sweep unten ueberhaupt als
-  // Farbwechsel wahrnehmbar ist).
-  let gridP='';for(let i=0;i<grid;i++)gridP+='<path fill="none" stroke="rgba(225,235,250,.55)" stroke-width="0.6"/>';
-  // Kontinente als Raster kleiner Quadrate statt Vollflaechen-Polygone
-  // (Referenz-Foto, Nutzer-Wunsch 2026-07-25: "mit so vielem kleinen
-  // Vierecken... ausgestattet") - EIN gemeinsames Pattern (kein Umbau der
-  // Projektions-/Rotationslogik noetig, die Land-<path>s bleiben technisch
-  // unveraendert, nur ihr fill wechselt von hsl(...) auf das Pattern).
-  const dotpid='gLandDots'+uid;
-  let land='';GLOBE_LAND.forEach((poly,i)=>{land+=`<path fill="url(#${dotpid})" stroke="rgba(225,235,250,.2)" stroke-width="0.4" opacity="0.92"/>`;});
+  const lmgid='gLimbGrad'+uid,lmid='gLimbMask'+uid,shpid='gLandShape'+uid;
+  const sqid='gSq'+uid,sqgid='gSqGlow'+uid,swgid='gSweepGrad'+uid,swid='gSweepMask'+uid;
+  // Pfade OHNE eigenes fill/stroke - sie erben beides vom jeweiligen <use>.
+  let land='';GLOBE_LAND.forEach(()=>{land+='<path/>';});
   let markers='';Object.keys(GLOBE_GEO).forEach(id=>{markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;});
-  // Roter Scan-Sweep alle 5s (Referenz-Foto, Nutzer-Wunsch 2026-07-25): ein
-  // per SMIL <animate> von links nach rechts wanderndes Rechteck, per
-  // Limb-Maske auf den Kugelkreis geclippt und per mix-blend-mode:screen
-  // ueber Gitter/Land geblendet - faerbt darunterliegende Linien/Quadrate
-  // beim Durchlaufen kurz rot, ohne dass jede Linie einzeln pro Frame neu
-  // eingefaerbt werden muesste. Steht 4s lang unsichtbar ausserhalb des
-  // Kreises (keyTimes 0.22-1), dann ein neuer Durchlauf.
-  const scanGid='gScan'+uid,scanX0=cx-R*1.6,scanX1=cx+R*1.6-R*0.55;
-  const scanBar=`<linearGradient id="${scanGid}" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#ff2d2d" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#ff3b3b" stop-opacity="0.95"/>
-      <stop offset="100%" stop-color="#ff2d2d" stop-opacity="0"/>
-    </linearGradient>`;
+  const SQ=4.2,SI=0.55,SW=SQ-2*SI; // Rasterweite / Innenabstand / Kantenlaenge
+  const swW=R*0.34,swX0=cx-R-swW,swX1=cx+R;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
-      <radialGradient id="${gid}" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#1c3e63"/><stop offset="58%" stop-color="#0e2238"/><stop offset="100%" stop-color="#06111d"/></radialGradient>
-      <radialGradient class="gl-nightgrad" id="${nid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#00040a" stop-opacity="0.92"/><stop offset="38%" stop-color="#00040a" stop-opacity="0.72"/><stop offset="68%" stop-color="#00040a" stop-opacity="0.3"/><stop offset="100%" stop-color="#00040a" stop-opacity="0"/></radialGradient>
-      <radialGradient class="gl-daygrad" id="${dgid}" cx="50%" cy="50%" r="80%"><stop offset="0%" stop-color="#fff3c4" stop-opacity="0.16"/><stop offset="45%" stop-color="#ffe085" stop-opacity="0.08"/><stop offset="100%" stop-color="#ffe085" stop-opacity="0"/></radialGradient>
-      <radialGradient class="gl-termgrad" id="${tgid}" cx="50%" cy="50%" r="92%"><stop offset="0%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="55%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="68%" stop-color="#ff8a3d" stop-opacity="0.16"/><stop offset="82%" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="100%" stop-color="#ff8a3d" stop-opacity="0"/></radialGradient>
-      <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="62%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
+      <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="70%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
       <mask id="${lmid}" maskContentUnits="userSpaceOnUse"><circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${lmgid})"/></mask>
-      <pattern id="${dotpid}" width="4" height="4" patternUnits="userSpaceOnUse">
-        <rect x="0.5" y="0.5" width="2.4" height="2.4" fill="rgba(210,226,245,.8)"/>
+      <g id="${shpid}" data-layer="landshape">${land}</g>
+      <pattern id="${sqid}" width="${SQ}" height="${SQ}" patternUnits="userSpaceOnUse">
+        <rect x="${SI}" y="${SI}" width="${SW}" height="${SW}" fill="none" stroke="rgba(126,196,255,.5)" stroke-width="0.4"/>
       </pattern>
-      ${scanBar}
+      <pattern id="${sqgid}" width="${SQ}" height="${SQ}" patternUnits="userSpaceOnUse">
+        <rect x="${SI}" y="${SI}" width="${SW}" height="${SW}" fill="none" stroke="#dff4ff" stroke-width="1.15"/>
+      </pattern>
+      <linearGradient id="${swgid}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#000"/><stop offset="40%" stop-color="#fff"/>
+        <stop offset="60%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/>
+      </linearGradient>
+      <mask id="${swid}" maskContentUnits="userSpaceOnUse">
+        <rect x="${swX0}" y="0" width="${swW}" height="${size}" fill="url(#${swgid})">
+          <animate attributeName="x" values="${swX0};${swX0};${swX1};${swX1}" keyTimes="0;0.03;0.32;1" dur="5s" repeatCount="indefinite"/>
+        </rect>
+      </mask>
     </defs>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${gid})" stroke="var(--bd2)" stroke-width="1"/>
-    <g data-layer="land" mask="url(#${lmid})">${land}</g>
-    <g data-layer="grid" mask="url(#${lmid})">${gridP}</g>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${dgid})"/>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${tgid})"/>
-    <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${nid})"/>
-    <rect x="${scanX0}" y="${cy-R}" width="${R*0.55}" height="${R*2}" fill="url(#${scanGid})" mask="url(#${lmid})" style="mix-blend-mode:screen" pointer-events="none">
-      <animate attributeName="x" values="${scanX0};${scanX0};${scanX1};${scanX1}" keyTimes="0;0.02;0.22;1" dur="5s" repeatCount="indefinite"/>
-    </rect>
+    <circle cx="${cx}" cy="${cy}" r="${R}" fill="#0b2445" stroke="#1b4372" stroke-width="1"/>
+    <g mask="url(#${lmid})">
+      <use href="#${shpid}" fill="#2d6ea8"/>
+      <use href="#${shpid}" fill="url(#${sqid})"/>
+      <g mask="url(#${swid})" style="mix-blend-mode:screen"><use href="#${shpid}" fill="url(#${sqgid})"/><use href="#${shpid}" fill="url(#${sqgid})" opacity="0.6"/></g>
+    </g>
     <g data-layer="markers">${markers}</g>
   </svg>`;
 }
@@ -10220,40 +10223,19 @@ function globeCollectRefs(host,size){
   [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{markers[g.dataset.id]={g,circle:g.querySelector('circle'),text:g.querySelector('text')};});
   return{
     host,R:size/2-16,cx:size/2,cy:size/2,
-    gridPaths:[...svg.querySelector('[data-layer="grid"]').children],
-    landPaths:[...svg.querySelector('[data-layer="land"]').children],
-    nightGrad:svg.querySelector('.gl-nightgrad'),
-    dayGrad:svg.querySelector('.gl-daygrad'),
-    termGrad:svg.querySelector('.gl-termgrad'),
+    landPaths:[...svg.querySelector('[data-layer="landshape"]').children],
     markers
   };
 }
 // Pro Frame nur Attribute der bestehenden Elemente updaten (kein innerHTML/Reparse).
 function globeUpdateOne(st){
   const{R,cx,cy}=st,lon0=_globeLon;
-  const{decl,lonS}=globeSunInfoCached();
-  // Grid (Meridiane + Breitenkreise)
-  let gi=0;
-  GLOBE_MERIDIANS.forEach(lon=>{const pts=[];for(let lat=-90;lat<=90;lat+=6)pts.push([lat,lon]);st.gridPaths[gi++].setAttribute('d',globePathD(pts,lon0,R,cx,cy));});
-  GLOBE_PARALLELS.forEach(lat=>{const pts=[];for(let lon=-180;lon<=180;lon+=6)pts.push([lat,lon]);st.gridPaths[gi++].setAttribute('d',globePathD(pts,lon0,R,cx,cy));});
-  // Land
+  // Nur noch die Land-Geometrie: das Meer ist eine gleichmaessige Flaeche
+  // ohne Sonnenstands-Verlaeufe, und Gitterlinien gibt es nicht mehr
+  // (Nutzer-Wunsch 2026-07-25). Die drei <use>-Ebenen (Grundfarbe, ruhige
+  // und leuchtende Vierecke) referenzieren genau diese Pfade und folgen
+  // dadurch automatisch mit.
   GLOBE_LAND.forEach((poly,i)=>{st.landPaths[i].setAttribute('d',globePathD(poly,lon0,R,cx,cy));});
-  // Nacht-Gradient-Mittelpunkt (wandert mit Uhrzeit UND Rotation)
-  if(st.nightGrad){
-    const f=-decl,l=(lonS+180-lon0)*Math.PI/180;
-    const nx=R*Math.cos(f)*Math.sin(l),ny=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
-    st.nightGrad.setAttribute('cx',(50+(nx/R)*46).toFixed(1)+'%');
-    st.nightGrad.setAttribute('cy',(50+(ny/R)*46).toFixed(1)+'%');
-  }
-  // Sonnenstrahlen: Tag-Glanz (leichtes Gelb) + Terminator-Ring (Orange) folgen dem
-  // Sonnenhochstand (Gegenpunkt des Nacht-Zentrums), beide nutzen denselben Mittelpunkt.
-  if(st.dayGrad||st.termGrad){
-    const f=decl,l=(lonS-lon0)*Math.PI/180;
-    const sx=R*Math.cos(f)*Math.sin(l),sy=-R*(Math.cos(GLOBE_LAT0)*Math.sin(f)-Math.sin(GLOBE_LAT0)*Math.cos(f)*Math.cos(l));
-    const scx=(50+(sx/R)*46).toFixed(1)+'%',scy=(50+(sy/R)*46).toFixed(1)+'%';
-    if(st.dayGrad){st.dayGrad.setAttribute('cx',scx);st.dayGrad.setAttribute('cy',scy);}
-    if(st.termGrad){st.termGrad.setAttribute('cx',scx);st.termGrad.setAttribute('cy',scy);}
-  }
   // Marker (Waehrungspunkt + Label)
   const visMarkers=[];
   Object.keys(GLOBE_GEO).forEach(id=>{
