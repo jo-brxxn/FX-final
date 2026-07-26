@@ -4299,3 +4299,45 @@ Zahnrad bei Market Watch, "+ Widget") sind betroffen.
   des Drueckens bricht den Timer sauber ab ohne den Modus zu toggeln. Voller
   15-Tab-Regressionstest weiterhin fehlerfrei, Dashboard passt weiterhin
   ohne Scrollen.
+
+### Navy-Blue-Design app-weit uebernommen (Nutzer-Wunsch 2026-07-25)
+
+Nutzer schickte ein Foto der FX-Detailseite (IMG_1190) und verlangte:
+"finde eine Beschreibung für das Design und füge... das Design auf der
+ganzen Webseite ein. Ich will das es am Ende genau wie auf dem Bild
+aussieht und über den Regler wenn man auf Design drückt oben rechts sich
+auch anpassen lässt." Umgesetzt (VERSION-CHECK-240):
+
+- **Zentrale Palette umgestellt** statt jede Stelle einzeln: `--bg0`
+  bis `--bg6`/`--bd`/`--bd2` im `:root` (≈ Zeile 26) von einer kaum
+  gesaettigten Dunkelgrau-Skala auf eine gesaettigte Navy-Skala (Hue
+  ~215-220°) gedreht, `body{background}` ebenso. Da praktisch jede
+  Komponente im Projekt (alle Tabs, Modals, das Dashboard) ueber diese
+  Variablen faerbt, kaskadierte der neue Ton automatisch durch die GANZE
+  App, ohne jede Stelle einzeln anfassen zu muessen - genau das macht
+  "auf der ganzen Webseite" ueberhaupt handhabbar. Kontraststufen
+  zueinander (bg0→bg6, --t0..--t3 gegen --bg2) bewusst 1:1 beibehalten,
+  nur der Hue gedreht - dadurch keine neuen Lesbarkeits-Regressionen.
+- **Hartcodierte Dunkel-Hex-Literale nachgezogen**: einige waehrend der
+  vorherigen Dashboard-Redesign-Runden entstandene Stellen setzen Farben
+  direkt als Hex statt ueber die Variablen (`.dw`-Kartenhintergrund,
+  `.dash-majors`-Karten, `.mw-tile`, `.mw-footer`-Chevron-Kasten,
+  Intro-Screen/-Shards, Slider-Thumb-Rahmen, `theme-color`-Meta) - alle
+  auf navy-getoente Aequivalente umgestellt, sonst haetten sie als
+  einzige Stellen weiterhin neutral-dunkel gewirkt.
+- **Designer-Farbregler (🎨, oben rechts) bleibt voll kompatibel**:
+  `applyDesignHue()`/`designColors()` ueberschreiben `body.style.background`
+  weiterhin per Inline-Style unabhaengig von der CSS-Variable - die neue
+  Navy-Palette ist nur der AUTO-Default (wenn `designHue===null`,
+  Auto-Risk-Sentiment-Faerbung). Per Playwright verifiziert: Regler
+  aendert den Hintergrund weiterhin live, "Auto/Reset" faellt korrekt auf
+  den neuen Navy-Ton zurueck.
+- **Overview-Karte** (FX/Non-FX-Detailseite, `renderOverviewCard()`)
+  bekommt jetzt ein rundes Icon vor jedem Rubrik-Namen wie im Foto -
+  wiederverwendet `CMP_RUB_ICON` (existierte schon fuer den Compare-Tab)
+  statt eine zweite Rubrik→Icon-Zuordnung zu pflegen. Custom-Rubriken ohne
+  Eintrag bleiben ohne Icon-Rund (kein erfundenes Symbol).
+- Per Playwright ueber alle 15 Tabs + Mobile verifiziert: keine JS-Fehler,
+  Dashboard passt weiterhin ohne Scrollen, Kontrast/Lesbarkeit in Matrix/
+  COT/FX-Detail/Dashboard geprueft (Screenshots), Bearbeitungsmodus (siehe
+  Eintrag oben) funktioniert unveraendert mit der neuen Palette.

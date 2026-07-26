@@ -11,21 +11,32 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#0d1117">
+<meta name="theme-color" content="#070f1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:#060b12;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:#070f1e;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2a3445;border-radius:4px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2f4a75;border-radius:4px}
 :root{
-  --bg0:#0d1117;--bg1:#11161f;--bg2:#161c28;--bg3:#1c232f;--bg4:#232b3a;--bg5:#2a3344;--bg6:#313c52;
-  --bd:#212a39;--bd2:#303c52;
+  /* Navy-Blue-Palette (Referenzfoto IMG_1190, Nutzer-Wunsch 2026-07-25:
+     "auf der ganzen Webseite... genau wie auf dem Bild") - ersetzt die
+     vorherige, kaum gesaettigte Dunkelgrau-Palette. Da praktisch jede
+     Komponente im Projekt ueber diese Variablen faerbt, kaskadiert der neue
+     Ton automatisch durch alle Tabs/Modals, ohne jede Stelle einzeln
+     anfassen zu muessen. Kontrastverhaeltnisse (--bg-Stufen zueinander,
+     --t0..--t3 zu --bg2) bewusst beibehalten, nur der Hue Richtung 215-220°
+     Navy gedreht und die Saettigung angehoben. Der Designer-Farbregler
+     (🎨, oben rechts) ueberschreibt body.style.background weiterhin per
+     Inline-Style (siehe applyDesignHue/designColors) - unveraendert
+     kompatibel, der neue Wert hier ist nur der Auto-Default. */
+  --bg0:#0a1626;--bg1:#0e1d33;--bg2:#132542;--bg3:#182d4e;--bg4:#1f375d;--bg5:#274372;--bg6:#305089;
+  --bd:#1e3355;--bd2:#2f4d78;
   --t0:#eef3fa;--t1:#dfe7f1;--t2:#c9d6e6;--t3:#b8c6d9;
   --green:#5fa8ed;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:95,168,237;--red-rgb:239,83,80;--amber-rgb:244,173,92;
@@ -184,12 +195,12 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Designer (🎨 im Header): Regler laeuft durch das volle Farbspektrum,
    Apply setzt designHue (synct geraeteuebergreifend, s. CLAUDE.md-Regel). */
 .hue-slider{-webkit-appearance:none;appearance:none;width:100%;height:14px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(90deg,hsl(0,80%,55%),hsl(60,80%,55%),hsl(120,80%,55%),hsl(180,80%,55%),hsl(240,80%,55%),hsl(300,80%,55%),hsl(360,80%,55%))}
-.hue-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
-.hue-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.hue-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0a1626;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.hue-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0a1626;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
 /* Vertikaler Helligkeits-/Saettigungs-Regler (oben = hell/kraeftig) */
 .light-slider{-webkit-appearance:none;appearance:none;writing-mode:vertical-lr;direction:rtl;width:14px;height:172px;border-radius:8px;outline:none;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:linear-gradient(0deg,#161d29,#e8f0ff)}
-.light-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
-.light-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0d1117;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.light-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0a1626;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
+.light-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid #0a1626;box-shadow:0 1px 5px rgba(0,0,0,.5);cursor:pointer}
 .design-preset{width:30px;height:30px;border-radius:50%;cursor:pointer;padding:0;transition:transform .1s;position:relative}
 .design-preset:hover{transform:scale(1.12)}
 .design-saved .saved-bolt{position:absolute;top:-5px;right:-5px;font-size:11px;line-height:1;pointer-events:none;filter:drop-shadow(0 0 1.5px rgba(0,0,0,.9))}
@@ -428,6 +439,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
 .ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
+.ov-icon{width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
 .ov-sum-line{color:var(--t1)}
 .ov-empty{color:var(--t3);font-style:italic}
@@ -741,7 +753,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
    Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
-.dw{background:rgba(8,13,21,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #18202c;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
+.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -759,15 +771,15 @@ body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
    der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
-.dash-majors .ab-wrap{background:#0a0f18;border:1px solid #18202c;border-radius:8px;margin-bottom:6px;overflow:hidden}
+.dash-majors .ab-wrap{background:#0c1c34;border:1px solid #1e3355;border-radius:8px;margin-bottom:6px;overflow:hidden}
 .dash-majors .ab{border-radius:0;border-left-width:3px;padding:7px 8px 6px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
 .dash-majors .ab .an{order:1;flex:1 1 auto;font-size:12px}
 .dash-majors .ab .av{order:2;margin:0;font-size:11px}
 .dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
 .dash-majors .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:11.5px}
-.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0a0f18;border:1px solid #18202c;border-radius:8px}
+.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0c1c34;border:1px solid #1e3355;border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
-@media (hover:hover){.dash-majors-viewall:hover{border-color:#26324a;color:var(--t0)}}
+@media (hover:hover){.dash-majors-viewall:hover{border-color:#3a5a8a;color:var(--t0)}}
 .dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
@@ -884,17 +896,17 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    zwischen den Kacheln, unabhaengig von unterschiedlich langen Symbolnamen.
    Karte wird dadurch nur noch eine Zeile hoch. */
 .mw-strip{display:flex;gap:8px;flex-wrap:wrap}
-.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;background:#05080d;border:1px solid #141c27;border-radius:10px;padding:9px 15px;white-space:nowrap;transition:border-color .12s}
-@media (hover:hover){.mw-tile:hover{border-color:#26324a}}
+.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:9px 15px;white-space:nowrap;transition:border-color .12s}
+@media (hover:hover){.mw-tile:hover{border-color:#3a5a8a}}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
 .mw-tile-sym{font-size:13px;font-weight:800;color:#fff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-tile-price{font-size:13px;font-weight:500;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-tile-chg{font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Fusszeilen-Link wie im Referenz-Foto: Text links, Chevron rechts in
    einem eigenen kleinen Kasten. */
-.mw-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:1px solid #161e29;font-size:12px;color:var(--blue);font-weight:600;cursor:pointer}
-.mw-footer::after{content:'›';display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #1f2937;border-radius:6px;font-size:15px;line-height:1;color:var(--t3);flex-shrink:0}
-@media (hover:hover){.mw-footer:hover::after{border-color:#2f3d57;color:var(--t1)}}
+.mw-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:1px solid #1c3050;font-size:12px;color:var(--blue);font-weight:600;cursor:pointer}
+.mw-footer::after{content:'›';display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #24406b;border-radius:6px;font-size:15px;line-height:1;color:var(--t3);flex-shrink:0}
+@media (hover:hover){.mw-footer:hover::after{border-color:#3a5a8a;color:var(--t1)}}
 .hie-list{display:flex;flex-direction:column;gap:4px}
 .hie-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
@@ -1397,9 +1409,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   .dp{max-width:none}
 }
 /* ── INTRO-ANIMATION (Start/Reload) ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#0d1117;cursor:pointer}
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070f1e;cursor:pointer}
 #introShards{position:absolute;inset:0;z-index:1}
-.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1a2538 0%,#0d1117 58%,#070a0f 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
+.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1c3050 0%,#0a1626 58%,#050b16 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
@@ -1619,12 +1631,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-239 — Bearbeitungsmodus: Auf/Ab/Umbenennen/Loeschen-Buttons sind jetzt IMMER unsichtbar und erscheinen nur nach 5s-Long-Press irgendwo auf dem Dashboard (body.dash-edit-mode). Ebenso der "+ Widget"-Button, jetzt in einer Hinweisleiste "Editing - press &amp; hold to exit"">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-240 — Navy-Blue-Design (Referenzfoto) jetzt auf der GANZEN Webseite: gesaettigte Navy-Palette ueber die zentralen CSS-Variablen (kaskadiert automatisch durch alle Tabs), Overview-Karte hat jetzt Rubrik-Icon-Runde wie im Foto, Designer-Farbregler weiterhin voll funktionsfaehig">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-239</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-240</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -6145,8 +6157,14 @@ function renderOverviewCard(rubs){
     const sc=rubScore(rub);
     const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
     const txt=sumLine||'<span class="ov-empty">No summary yet.</span>';
+    // Icon-Rund vor dem Namen wie im Referenzfoto (Nutzer-Wunsch 2026-07-25)
+    // - wiederverwendet CMP_RUB_ICON (existierte schon fuer den Compare-Tab)
+    // statt eine zweite Rubrik->Icon-Zuordnung zu pflegen. Custom-Rubriken
+    // ohne Eintrag bleiben ohne Icon-Rund, kein erfundenes Symbol.
+    const ovIc=CMP_RUB_ICON[rub.name];
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
+        ${ovIc?`<span class="ov-icon">${ovIc}</span>`:''}
         <span class="ov-name">${escH(rub.name)}</span>
         <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
         <span class="rub-score" style="color:${bco};border-color:${bco}" title="Score of the ${escH(rub.name)} card below">${sc>0?'+':''}${sc}</span>
