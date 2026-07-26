@@ -446,7 +446,7 @@
    ]
   ]
  },
- "updated": "2026-07-26T22:29:38.392Z",
+ "updated": "2026-07-26T22:41:08.982Z",
  "stockFng": {
   "value": 39,
   "label": "fear",
@@ -1086,8 +1086,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 51,
-   "short": 49
+   "long": 50,
+   "short": 50
   },
   {
    "sym": "US500",
@@ -1318,10 +1318,10 @@
  },
  "putCallByAsset": {
   "SILVER": {
-   "value": 0.74,
+   "value": 0.75,
    "proxy": "SLV",
-   "callVol": 133893,
-   "putVol": 98793,
+   "callVol": 115677,
+   "putVol": 86839,
    "series": [
     [
      "2025-07-14",
@@ -2385,15 +2385,15 @@
     ],
     [
      "2026-07-26",
-     0.74
+     0.75
     ]
    ]
   },
   "SP500": {
    "value": 1.31,
    "proxy": "SPY",
-   "callVol": 1766594,
-   "putVol": 2312288,
+   "callVol": 1766647,
+   "putVol": 2312297,
    "series": [
     [
      "2025-07-14",
@@ -4080,7 +4080,7 @@
   "JPY": {
    "value": 0.16,
    "proxy": "FXY",
-   "callVol": 5007,
+   "callVol": 5016,
    "putVol": 787,
    "series": [
     [
@@ -5096,8 +5096,8 @@
   "GOLD": {
    "value": 0.98,
    "proxy": "GLD",
-   "callVol": 96497,
-   "putVol": 94710,
+   "callVol": 96491,
+   "putVol": 94901,
    "series": [
     [
      "2025-07-14",
@@ -6660,8 +6660,8 @@
   "BTC": {
    "value": 0.57,
    "proxy": "IBIT",
-   "callVol": 276706,
-   "putVol": 158850,
+   "callVol": 276765,
+   "putVol": 158852,
    "series": [
     [
      "2025-07-14",
@@ -7716,8 +7716,8 @@
   "NAS": {
    "value": 1.31,
    "proxy": "QQQ",
-   "callVol": 1053587,
-   "putVol": 1378123,
+   "callVol": 1054845,
+   "putVol": 1382454,
    "series": [
     [
      "2025-07-14",
@@ -9712,8 +9712,8 @@
   "OIL": {
    "value": 0.58,
    "proxy": "USO",
-   "callVol": 150802,
-   "putVol": 87019,
+   "callVol": 150827,
+   "putVol": 87052,
    "series": [
     [
      "2025-07-14",
@@ -10785,7 +10785,7 @@
    "value": 2.31,
    "proxy": "UUP",
    "callVol": 1321,
-   "putVol": 3054,
+   "putVol": 3058,
    "series": [
     [
      "2025-07-14",
