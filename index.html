@@ -743,6 +743,16 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
 .dw{background:rgba(8,13,21,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #18202c;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
+/* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
+   solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
+   KEINEN Platz ein (display:none, nicht nur opacity:0). */
+.dash-edit-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:8px 12px;background:rgba(95,168,237,.08);border:1px solid rgba(95,168,237,.3);border-radius:8px}
+body.dash-edit-mode .dash-edit-bar{display:flex}
+.dash-edit-lbl{font-size:11.5px;font-weight:600;color:var(--blue)}
+/* Karten bekommen im Bearbeitungsmodus einen sichtbaren Rand, damit klar
+   ist, dass gerade etwas anders ist als sonst (die Steuerbuttons selbst
+   erscheinen erst beim genauen Hinsehen). */
+body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
 .dash-majors{display:none}
 .dash-majors-lbl{font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
 /* Eigene Mini-Karte pro Symbol wie im Referenz-Foto (Nutzer-Wunsch
@@ -773,18 +783,18 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .dw-t-txt{font-size:11px;font-weight:700;color:#7f90a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dw-t .rinfo{width:13px;height:13px;font-size:10px;opacity:.55;flex-shrink:0}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:.32;transition:opacity .15s}
-/* Auf Geraeten MIT Maus liegen die Steuerbuttons absolut ueber dem rechten
-   Kopfzeilen-Rand und erscheinen erst beim Hovern (Referenz-Foto, Nutzer-
-   Wunsch 2026-07-25 "1 zu 1": dort hat kein Kartenkopf sichtbare Buttons).
-   Wichtig ist das absolute Positionieren, nicht nur opacity:0 - sonst
-   belegen sie weiter Platz und schneiden lange Titel wie "CURRENCY
-   STRENGTH" ab. Auf Touch bleiben sie sichtbar/inline, da es dort kein
-   Hover gibt und man sie sonst nie erreichen koennte. */
+/* Bearbeitungsmodus statt Hover (Nutzer-Wunsch 2026-07-25: "komm weg von
+   diesem Karten Design wo oben rechts immer die hoch runter Pfeile und das
+   x steht" - die Steuerbuttons (Auf/Ab/Umbenennen/Loeschen) sind jetzt
+   IMMER unsichtbar und erscheinen nur, solange body.dash-edit-mode gesetzt
+   ist (5s-Long-Press irgendwo auf dem Dashboard, siehe dashEditPressStart()
+   unten). Einheitlich fuer Maus UND Touch - kein Hover-Sonderfall mehr
+   noetig, dadurch faellt auch die alte @media(hover:hover)-Verzweigung weg. */
+.dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:0;pointer-events:none;transition:opacity .15s}
+body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 @media (hover:hover){
   .dw-hdr{position:relative}
-  .dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);opacity:0;pointer-events:none;background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
-  .dw:hover .dw-hdr .dw-btns{opacity:1;pointer-events:auto}
+  .dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
 }
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
@@ -863,7 +873,6 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* Steuerbuttons hier inline (nicht absolut wie in .dw-hdr), rechts neben
    den Tabs - auf Maus-Geraeten erst beim Hovern sichtbar. */
 .mw-bar .dw-btns{position:static;transform:none;background:none;padding:0}
-@media (hover:hover){.mw-bar .dw-btns{opacity:0;pointer-events:none}.dw-market_watch:hover .mw-bar .dw-btns{opacity:1;pointer-events:auto}}
 .mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
@@ -1610,12 +1619,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-238 — Globus neu: gleichmaessig dunkelblaues Meer (keine Tag/Nacht-Verlaeufe, keine Gitterlinien), Laender heller blau mit einem Raster winziger LEERER Vierecke, und alle 5s laeuft ein Schauer von links nach rechts, bei dem die Vierecke spaltenweise hell aufleuchten. Dahinter Polarlichter statt des violetten Nebels">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-239 — Bearbeitungsmodus: Auf/Ab/Umbenennen/Loeschen-Buttons sind jetzt IMMER unsichtbar und erscheinen nur nach 5s-Long-Press irgendwo auf dem Dashboard (body.dash-edit-mode). Ebenso der "+ Widget"-Button, jetzt in einer Hinweisleiste "Editing - press &amp; hold to exit"">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-238</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-239</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -1807,12 +1816,18 @@ function introLogin(){
   <div class="aurora-blob aurora-b"></div>
   <div class="aurora-blob aurora-c"></div>
 </div>
-<div class="pc" id="pgDash">
-  <!-- Keine eigene "Dashboard / Live overview"-Ueberschrift mehr (Referenz-
-       Foto, Nutzer-Wunsch 2026-07-25: "Mach unnoetige Ueberschriften weg") -
-       der Tab selbst sagt schon, wo man ist. Nur der Widget-Knopf bleibt,
-       schmal und rechtsbuendig, damit man weiterhin Karten hinzufuegen kann. -->
-  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+<div class="pc" id="pgDash" onpointerdown="dashEditPressStart(event)" onpointermove="dashEditPressMove(event)" onpointerup="dashEditPressEnd()" onpointercancel="dashEditPressEnd()" onpointerleave="dashEditPressEnd()">
+  <!-- Keine eigene "Dashboard / Live overview"-Ueberschrift (Referenz-Foto,
+       Nutzer-Wunsch 2026-07-25: "Mach unnoetige Ueberschriften weg") - der
+       Tab selbst sagt schon, wo man ist. Die Verwaltungsleiste (Widget
+       hinzufuegen + Hinweistext) ist Teil des Bearbeitungsmodus und nur
+       sichtbar, solange body.dash-edit-mode gesetzt ist - siehe
+       dashEditPressStart() weiter unten (Nutzer-Wunsch 2026-07-25: "komm
+       weg von diesem Karten Design... ich will einen Bearbeitungsmodus der
+       aktiviert wird wenn man laenger 5 Sekunden auf den Bildschirm
+       drueckt"). -->
+  <div class="dash-edit-bar">
+    <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout">
@@ -9572,6 +9587,34 @@ function dashMajorsHtml(){
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
 }
+// Bearbeitungsmodus per 5s-Long-Press (Nutzer-Wunsch 2026-07-25): "komm weg
+// von diesem Karten Design wo oben rechts immer die hoch runter Pfeile und
+// das x steht... ich will einen Bearbeitungsmodus der aktiviert wird wenn
+// man laenger 5 Sekunden auf den Bildschirm drueckt. Dann duerfen diese
+// Funktionen erscheinen sonst nicht." Rein CSS-getrieben ueber
+// body.dash-edit-mode (siehe .dw-btns/.dash-edit-bar) - kein renderDash()
+// beim Umschalten noetig, dadurch kein Scroll-Sprung/Flackern. Einheitliche
+// Geste fuer Maus UND Touch (Pointer Events), bricht ab, wenn sich der
+// Zeiger mehr als 14px bewegt (Scroll/Drag) oder losgelassen wird - dieselbe
+// Bewegungs-Toleranz wie die bestehenden Long-Press-Muster im Projekt
+// (rwPressStart/ilPressStart/biasPressStart).
+let dashEditMode=false,_dashEditTimer=null,_dashEditStart=null;
+function dashEditPressStart(ev){
+  if(ev.button!==undefined&&ev.button!==0)return;
+  if(_dashEditTimer)clearTimeout(_dashEditTimer);
+  _dashEditStart={x:ev.clientX,y:ev.clientY};
+  _dashEditTimer=setTimeout(()=>{_dashEditTimer=null;toggleDashEditMode();},5000);
+}
+function dashEditPressMove(ev){
+  if(!_dashEditTimer||!_dashEditStart)return;
+  if(Math.abs(ev.clientX-_dashEditStart.x)>14||Math.abs(ev.clientY-_dashEditStart.y)>14){clearTimeout(_dashEditTimer);_dashEditTimer=null;}
+}
+function dashEditPressEnd(){if(_dashEditTimer){clearTimeout(_dashEditTimer);_dashEditTimer=null;}}
+function toggleDashEditMode(){
+  dashEditMode=!dashEditMode;
+  document.body.classList.toggle('dash-edit-mode',dashEditMode);
+  if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
+}
 function renderDash(){
   updateAuroraColors();
   const majorsEl=document.getElementById('dashMajors');if(majorsEl)majorsEl.innerHTML=dashMajorsHtml();
@@ -13360,6 +13403,10 @@ function showTab(tab,btn,fxMode){
   curPage=tab;
   activeTabId=tabIdFor(tab,tab==='cur'?curFxMode:fxMode);
   renderTabBar();
+  // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
+  // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
+  // aktiv zu lassen (die Steuerbuttons existieren ohnehin nur dort).
+  if(tab!=='dash'&&dashEditMode){dashEditMode=false;document.body.classList.remove('dash-edit-mode');}
   if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();

@@ -4256,3 +4256,46 @@ wie ein Schauer." Danach: "Ne im Hintergrund so Polarlichter."
   (34s/47s, `alternate`) fuer langsames Wabern. Bewusst per `transform`
   statt `filter:blur()` animiert - siehe die dokumentierte Blur-Perf-Lehre
   bei der Aurora. `prefers-reduced-motion` schaltet die Bewegung ab.
+
+### Bearbeitungsmodus statt Hover: Steuerbuttons nur nach 5s-Long-Press (Nutzer-Wunsch 2026-07-25)
+
+Nutzer: "komm weg von diesem Karten Design wo oben rechts immer die hoch
+runter Pfeile und das x steht und immer eine Überschrift usw nötig ist.
+Ich will das es einen bearbeitungsmodus gibt der aktiviert wird wenn man
+länger 5 Sekunden auf den Bildschirm drückt. Dann dürfen diese Funktionen
+erscheinen sonst nicht." Titel/i-Icon bleiben (decken sich mit dem
+Referenzfoto), nur die Verwaltungs-Buttons (Auf/Ab/Umbenennen/Loeschen,
+Zahnrad bei Market Watch, "+ Widget") sind betroffen.
+
+- **`dashEditMode`** (globale Variable) + `body.dash-edit-mode`-Klasse
+  steuert alles rein ueber CSS: `.dw-btns{opacity:0;pointer-events:none}`,
+  erst `body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}`. Der
+  alte `@media(hover:hover)`-Sonderfall (Buttons nur bei Hover, siehe
+  Eintrag "Dashboard 1:1 nach Referenz-Foto" oben) ist damit ueberfluessig
+  geworden und wurde entfernt - eine Geste fuer Maus UND Touch statt zwei
+  verschiedener Mechanismen.
+- **`dashEditPressStart/-Move/-End()`** (≈ Zeile 9590, direkt vor
+  `renderDash()`) haengen an `#pgDash` per Pointer Events (nicht
+  Touch-Events - funktioniert dadurch fuer Maus-Long-Click UND
+  Touch-Long-Press identisch). 5000ms Timer, bricht ab bei >14px Bewegung
+  (gleiche Toleranz wie die bestehenden Long-Press-Muster
+  `rwPressStart`/`ilPressStart`/`biasPressStart`) oder beim Loslassen.
+  `toggleDashEditMode()` schaltet nur die Body-Klasse um (KEIN
+  `renderDash()`-Aufruf) - dadurch kein Scroll-Sprung/Flackern beim
+  Ein-/Ausschalten.
+- **`.dash-edit-bar`** ("✎ Editing — press & hold to exit" + der "+
+  Widget"-Button) ersetzt die frueher immer sichtbare Zeile ueberm Grid -
+  `display:none` ausserhalb, `body.dash-edit-mode .dash-edit-bar{display:
+  flex}`. Karten bekommen im Modus zusaetzlich einen leicht blauen Rand
+  (`body.dash-edit-mode #dashWidgets .dw{border-color:...}`) als Hinweis,
+  dass gerade ein anderer Zustand aktiv ist.
+- Bearbeitungsmodus ist bewusst NICHT persistiert (kein `snap()`/
+  localStorage) - rein temporaerer UI-Zustand fuer die aktuelle Sitzung.
+  `showTab()` schaltet ihn automatisch aus, sobald der Nutzer den
+  Dashboard-Tab verlaesst (die Buttons existieren ohnehin nur dort).
+- Per Playwright verifiziert (Maus-Long-Press UND simulierter Touch-Long-
+  Press): Buttons/Bar bleiben bei kurzen Klicks unsichtbar, erscheinen nach
+  5s, ein zweiter 5s-Press schaltet wieder aus, eine Bewegung >14px waehrend
+  des Drueckens bricht den Timer sauber ab ohne den Modus zu toggeln. Voller
+  15-Tab-Regressionstest weiterhin fehlerfrei, Dashboard passt weiterhin
+  ohne Scrollen.
