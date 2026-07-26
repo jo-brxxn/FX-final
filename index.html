@@ -470,6 +470,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
 .tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .tr-leg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+.tr-leg-dash{width:14px;height:0;border-top:2px dashed var(--t0);display:inline-block;flex:none;opacity:.85}
 .tr-scroll{overflow-x:auto;overflow-y:hidden}
 .tr-svg{display:block}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
@@ -753,7 +754,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
    Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
-.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:18px;margin-bottom:10px;transition:border-color .15s}
+.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:14px;margin-bottom:8px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -766,7 +767,11 @@ body.dash-edit-mode .dash-edit-bar{display:flex}
    erscheinen erst beim genauen Hinsehen). */
 body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
 .dash-majors{display:none}
-.dash-majors-lbl{font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
+/* "MAJORS"-Label nur im Bearbeitungsmodus (Nutzer-Wunsch 2026-07-27, per
+   Foto markiert) - dieselbe body.dash-edit-mode-Konvention wie .dw-btns/
+   .dash-edit-bar, kein zweiter Mechanismus. */
+.dash-majors-lbl{display:none;font-size:10px;letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
+body.dash-edit-mode .dash-majors-lbl{display:block}
 /* Eigene Mini-Karte pro Symbol wie im Referenz-Foto (Nutzer-Wunsch
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
@@ -780,7 +785,7 @@ body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
 .dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0c1c34;border:1px solid #1e3355;border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#3a5a8a;color:var(--t0)}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
    Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
@@ -881,22 +886,34 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Die Pillen selbst tragen die Optik. */
 .dw.dw-market_watch{background:transparent;border:none;border-radius:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
 @media (hover:hover){.dw.dw-market_watch:hover{border-color:transparent}}
-.mw-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+/* .mw-bar enthaelt nur noch Bearbeitungsmodus-Inhalte (Kategorie-Umschalter +
+   Zahnrad/Steuerbuttons) - ausserhalb des Modus bliebe sonst eine leere,
+   unsichtbare Zeile stehen. Ganze Zeile daher wie .dash-edit-bar erst ab
+   body.dash-edit-mode sichtbar. */
+.mw-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+body.dash-edit-mode .mw-bar{display:flex}
 /* Steuerbuttons hier inline (nicht absolut wie in .dw-hdr), rechts neben
-   den Tabs - auf Maus-Geraeten erst beim Hovern sichtbar. */
-.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0}
+   den Tabs. */
+.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0;opacity:1;pointer-events:auto}
+/* FX/Indices/Commodities/Bonds-Umschalter - sitzt in .mw-bar, die als Ganzes
+   schon auf den Bearbeitungsmodus gated ist (Nutzer-Wunsch 2026-07-27, per
+   Foto markiert). Die gerade gewaehlte Kategorie selbst bleibt ausserhalb
+   des Modus unveraendert in der Ticker-Leiste sichtbar. */
 .mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
 .mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
-/* Kacheln nebeneinander in EINER Zeile statt gestapelt (Referenz-Foto
-   IMG_1196, Nutzer-Wunsch 2026-07-25): Inhalt pro Kachel jetzt inline
-   (Symbol Preis Aenderung), Kachel selbst nur so breit wie ihr Inhalt
-   (flex:0 0 auto) - "gap" sorgt dadurch fuer IMMER GLEICHE Abstaende
-   zwischen den Kacheln, unabhaengig von unterschiedlich langen Symbolnamen.
-   Karte wird dadurch nur noch eine Zeile hoch. */
-.mw-strip{display:flex;gap:8px;flex-wrap:wrap}
-.mw-tile{flex:0 0 auto;display:flex;align-items:baseline;gap:8px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:9px 15px;white-space:nowrap;transition:border-color .12s}
+/* Exakt 4 Kacheln pro Reihe (Nutzer-Wunsch 2026-07-27, per Foto markiert),
+   nicht "so viele wie reinpassen" wie beim vorherigen flex-wrap - echtes
+   Grid mit 4 gleich breiten Spalten. Passt sich per Breakpoint dynamisch an
+   kleinere Bildschirme an (2 bzw. 1 Spalte), behaelt dabei aber durch die
+   Spaltenreduktion selbst immer genug Breite pro Kachel fuer lesbaren Text
+   (kein beliebiges Zusammenschrumpfen einer 4-Spalten-Reihe auf Handy-
+   Breite - das wuerde Symbol/Preis/Aenderung abschneiden). */
+.mw-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media(max-width:1000px){.mw-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.mw-strip{grid-template-columns:repeat(1,minmax(0,1fr))}}
+.mw-tile{min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:6px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:8px 12px;white-space:nowrap;transition:border-color .12s}
 @media (hover:hover){.mw-tile:hover{border-color:#3a5a8a}}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
 .mw-tile-sym{font-size:13px;font-weight:800;color:#fff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1011,10 +1028,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
 .risk-asset-sc{font-size:10px;font-weight:700;text-align:right;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-hist-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)}
-.risk-hist-hd{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-hist-empty{font-size:11.5px;color:var(--t3);padding:8px 2px;line-height:1.5}
-.risk-hist-scroll{overflow-x:auto;overflow-y:hidden}
 /* Asset Heatmap */
 .heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
 .heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
@@ -1352,7 +1365,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1366,7 +1379,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
-.dw{padding:18px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -1397,7 +1409,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
    die Sidebar ist dort nur etwas schmaler. */
 @media(min-width:1100px){
-  .dash-layout{display:flex;gap:18px;align-items:flex-start}
+  .dash-layout{display:flex;gap:12px;align-items:flex-start}
   .dash-majors{display:flex;flex-direction:column;gap:0;width:132px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
@@ -1631,12 +1643,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-240 — Navy-Blue-Design (Referenzfoto) jetzt auf der GANZEN Webseite: gesaettigte Navy-Palette ueber die zentralen CSS-Variablen (kaskadiert automatisch durch alle Tabs), Overview-Karte hat jetzt Rubrik-Icon-Runde wie im Foto, Designer-Farbregler weiterhin voll funktionsfaehig">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-245 — Persistenz-Bug (Runde 2, Nutzer-Bugreport 'FX-Paar im Bearbeitungsmenue entfernt, kommt nach ein paar Sekunden zurueck'): kompletter Codebase-Scan aller save()-Aufrufe fand 10 weitere Stellen ohne pushU()/markPrefEdit() - u.a. toggleMwSym() (genau der gemeldete Fall: Market-Watch-Symbolauswahl), setMwTab(), Sidebar-Umsortierung (moveSbSym/moveSbCat), Karten-Umsortierung (mvRub), Indikator-Datum speichern (saveDateM/clearDateM), Zinserwartungs-/Quellen-Link speichern (saveRateWatch/saveIndLink), Info-Text speichern (saveInfoM), Undo/Redo. Mit simuliertem Multi-Geraete-Wettlauf verifiziert: die gemeldete Szenario (Paar entfernen + zeitgleicher Cloud-Pull) uebersteht die Aenderung jetzt korrekt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-240</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-245</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -3084,10 +3096,11 @@ function openRateWatchEdit(id){_rwEditId=id;const inp=document.getElementById('m
 function saveRateWatch(){
   if(!_rwEditId)return;
   const v=document.getElementById('mRateWatchInp').value.trim();
+  pushU();
   if(v)rateWatchCustom[_rwEditId]=v;else delete rateWatchCustom[_rwEditId];
   save();closeM('mRateWatch');renderDetail();
 }
-function resetRateWatch(){if(_rwEditId)delete rateWatchCustom[_rwEditId];save();closeM('mRateWatch');renderDetail();}
+function resetRateWatch(){if(_rwEditId)pushU();if(_rwEditId)delete rateWatchCustom[_rwEditId];save();closeM('mRateWatch');renderDetail();}
 // Gleiches Lang-Drücken-Muster wie beim Zinserwartungs-Icon, jetzt fürs
 // Quellen-Link jedes Indikators im ausgeklappten Zustand: kurzer Klick öffnet
 // den Link, langes Drücken (≈500ms) öffnet ein Feld zum Bearbeiten.
@@ -3100,10 +3113,11 @@ function openIndLinkEdit(key,fallback){_ilEditKey=key;const inp=document.getElem
 function saveIndLink(){
   if(!_ilEditKey)return;
   const v=document.getElementById('mIndLinkInp').value.trim();
+  pushU();
   if(v)indLinkCustom[_ilEditKey]=v;else delete indLinkCustom[_ilEditKey];
   save();closeM('mIndLink');renderDetail();
 }
-function resetIndLink(){if(_ilEditKey)delete indLinkCustom[_ilEditKey];save();closeM('mIndLink');renderDetail();}
+function resetIndLink(){if(_ilEditKey)pushU();if(_ilEditKey)delete indLinkCustom[_ilEditKey];save();closeM('mIndLink');renderDetail();}
 // Gleiches Lang-Drücken-Muster (Nutzer-Wunsch 2026-07-22: die ▲/◆/▼-Bias-
 // Buttons an jeder Karte/jedem Indikator/Notes-Eintrag entfernt, Ersatz ist
 // ein Long-Press auf die Karte/den Indikator, der ein kleines Auswahl-Fenster
@@ -5250,9 +5264,54 @@ function logScoreChange(symId,e){
 }
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
-function applySnap(s){const d=JSON.parse(s);syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
-function doUndo(){if(!uStack.length)return;rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
-function doRedo(){if(!rStack.length)return;uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
+// Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
+// (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
+// CLAUDE.md-Grundsatz der EINE gemeinsame Trichter. Symbol-IDs werden an
+// Dutzenden Stellen ungefiltert in inline-onclick-Handler interpoliert
+// (gotoSym('${s.id}') etc.) - confirmAddSym() erzwingt dafuer schon lange
+// einen engen Zeichensatz, aber NUR beim manuellen Anlegen ueber die UI
+// (der Kommentar dort sagt es sogar woertlich: "XSS, auch via Sync" - dieser
+// Fall war bereits erkannt, aber nie am Sync/Import-Einganstor geschlossen).
+// Fix: dieselbe Regel hier zentral erzwingen statt jede einzelne
+// Interpolationsstelle im Code zu haerten - Symbole mit einer ID ausserhalb
+// des Sicherheits-Zeichensatzes werden beim Einlesen verworfen (kann bei
+// legitimen, von der App selbst erzeugten Exporten/Sync-Standen nie
+// vorkommen, betrifft ausschliesslich manipulierte Import-/Sync-Daten -
+// Sicherheits-Fix 2026-07-26).
+const SAFE_ID_RE=/^[A-Z0-9._-]{1,15}$/;
+// Alles, was intern per uid() erzeugt wird (Paare/Widgets/Kategorien/Rubriken/
+// Indikatoren), folgt IMMER dem Muster [0-9a-z]{7} (siehe uid()). Dieselbe
+// Sync/Import-Umgehung wie bei Symbol-IDs gilt hier genauso - eine
+// manipulierte id in einem dieser Felder landet ebenso ungefiltert in
+// onclick="fn('${x.id}')"-Handlern (delPair/togPairMark/toggleMwSym/...).
+const SAFE_UID_RE=/^[a-z0-9]{1,24}$/i;
+function sanitizeSnapIds(d){
+  if(Array.isArray(d.syms)){
+    d.syms=d.syms.filter(sy=>sy&&typeof sy.id==='string'&&SAFE_ID_RE.test(sy.id));
+    d.syms.forEach(sy=>{
+      if(Array.isArray(sy.rubrics)){
+        sy.rubrics=sy.rubrics.filter(r=>r&&typeof r.id==='string'&&SAFE_UID_RE.test(r.id));
+        sy.rubrics.forEach(r=>{if(Array.isArray(r.indicators))r.indicators=r.indicators.filter(ind=>ind&&typeof ind.id==='string'&&SAFE_UID_RE.test(ind.id));});
+      }
+    });
+  }
+  if(Array.isArray(d.customIds))d.customIds=d.customIds.filter(c=>c&&typeof c.id==='string'&&SAFE_ID_RE.test(c.id));
+  if(Array.isArray(d.pairs))d.pairs=d.pairs.filter(p=>p&&typeof p.id==='string'&&SAFE_UID_RE.test(p.id));
+  if(Array.isArray(d.widgets))d.widgets=d.widgets.filter(w=>w&&typeof w.id==='string'&&SAFE_UID_RE.test(w.id));
+  if(Array.isArray(d.pairCats)){d.pairCats=d.pairCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.pairCats.length)d.pairCats=mkPairCats();}
+  if(Array.isArray(d.noteCats)){d.noteCats=d.noteCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.noteCats.length)d.noteCats=mkNCs();}
+  return d;
+}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+// Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
+// Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
+// Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
+// save()s Multi-Tab-Schutz noch cloudPush()s optimistische Versionspruefung
+// einen Undo/Redo-Klick als eigene Nutzeraktion (Nutzer-Bugreport 2026-07-27,
+// gleiche Bug-Klasse wie toggleMwSym/die Notes-Funktionen).
+function markUserEditTs(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
+function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
+function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ LOKALE BACKUPS ══════════════════════════════════════════════════
@@ -5643,11 +5702,19 @@ function searchEntries(q){
   q=(q||'').trim().toLowerCase();
   const out=[];
   if(!q)return out;
+  // "go" ist ein reines Daten-Objekt (kein Code-String) - searchGo() dispatcht
+  // direkt per switch statt eval() aufzurufen (Sicherheits-Fix 2026-07-25:
+  // s.id kann ueber Cloud-Sync/Import von einem anderen Geraet kommen und
+  // war damit ein potenzieller String-Injection-Weg in eval(), selbst wenn
+  // die Ticker-Eingabe im UI schon einen enger Zeichensatz erzwingt - Import
+  // laeuft an dieser Pruefung vorbei. Als echtes Funktionsargument statt
+  // interpolierter String kann "id" diese Klasse von Bug strukturell nicht
+  // mehr ausloesen, unabhaengig vom Inhalt).
   const push=(grp,label,sub,id,go)=>out.push({grp,label,sub,id,go});
   // Assets (ID + Name)
   (syms||[]).forEach(s=>{
     if(s.id.toLowerCase().includes(q)||String(s.name||'').toLowerCase().includes(q))
-      push('Assets',s.name||s.id,`score ${(symScoreCmp(s)>0?'+':'')+symScoreCmp(s)}`,s.id,`gotoSym('${s.id}')`);
+      push('Assets',s.name||s.id,`score ${(symScoreCmp(s)>0?'+':'')+symScoreCmp(s)}`,s.id,{fn:'sym',id:s.id});
   });
   // Indikatoren (einmal pro Basisname, springt zum ersten Asset das ihn trackt)
   const seenInd=new Set();
@@ -5656,7 +5723,7 @@ function searchEntries(q){
     if(!nm.toLowerCase().includes(q))return;
     const key=nm+'|'+s.id;
     if(seenInd.has(nm))return;seenInd.add(nm);
-    push('Indicators',nm,`${r.name} · e.g. ${s.id}`,s.id,`gotoSym('${s.id}')`);
+    push('Indicators',nm,`${r.name} · e.g. ${s.id}`,s.id,{fn:'sym',id:s.id});
   })));
   // Kalender-Events (kommende + letzte Tage aus calEvts)
   const seenEv=new Set();
@@ -5664,12 +5731,12 @@ function searchEntries(q){
     if(!ev.name||!ev.name.toLowerCase().includes(q))return;
     const key=ev.name+'|'+ev.date;
     if(seenEv.has(key)||seenEv.size>200)return;seenEv.add(key);
-    push('Calendar events',ev.name,`${(ev.currencies||'').split(/[,/&\s]+/)[0]||''} · ${fmtDayHdr(ev.date)}`,'',`showTab('cal')`);
+    push('Calendar events',ev.name,`${(ev.currencies||'').split(/[,/&\s]+/)[0]||''} · ${fmtDayHdr(ev.date)}`,'',{fn:'cal'});
   });
   // Tabs
   Object.entries(TABS).forEach(([tid,t])=>{
     if(t.label.toLowerCase().includes(q))
-      push('Tabs',t.label,'',',',`showTab('${t.tab}',null,${t.mode?`'${t.mode}'`:'undefined'})`);
+      push('Tabs',t.label,'',',',{fn:'tab',tab:t.tab,mode:t.mode});
   });
   // Gruppen-Reihenfolge stabil, max 8 je Gruppe
   const order=['Assets','Indicators','Calendar events','Tabs'];
@@ -5693,9 +5760,14 @@ function renderSearch(){
   el.innerHTML=html;
 }
 function searchGo(idx){
-  const e=(window._searchEntries||[])[idx];if(!e)return;
+  const e=(window._searchEntries||[])[idx];if(!e||!e.go)return;
   closeM('mSearch');
-  try{eval(e.go);}catch(err){}
+  const g=e.go;
+  try{
+    if(g.fn==='sym')gotoSym(g.id);
+    else if(g.fn==='cal')showTab('cal');
+    else if(g.fn==='tab')showTab(g.tab,null,g.mode);
+  }catch(err){}
 }
 function searchKey(ev){
   const n=(window._searchEntries||[]).length;
@@ -5817,9 +5889,14 @@ async function cloudPull(manual){
       const prefPending=!manual&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
-      if(cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
-      if(Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
-      if(cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
+      // prefPending muss VOR diesen beiden Zeilen ausgewertet sein (ist es,
+      // siehe oben) - greenDismissed/tabStacks fehlte der Schutz bisher
+      // (Nutzer-Bugreport 2026-07-27), obwohl ihre Save-Funktionen
+      // markPrefEdit() (jetzt bei saveTabStacks() ergaenzt) bereits setzen -
+      // ohne den Guard HIER wurden sie trotzdem unconditional ueberschrieben.
+      if(!prefPending&&cd.greenDismissed){greenDismissed=cd.greenDismissed;try{localStorage.setItem('fxpro_green_dismissed',JSON.stringify(greenDismissed));}catch(e){}}
+      if(!prefPending&&Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
+      if(!prefPending&&cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
       // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
       // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
       // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
@@ -5833,7 +5910,11 @@ async function cloudPull(manual){
       }else if(cd.compactView!==undefined&&(cd.compactView?1:0)!==(compactView>=1?1:0)){
         compactView=cd.compactView?1:0;localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();
       }
-      if(cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
+      // pinEnabled fehlte hier bisher der prefPending-Schutz (Nutzer-Bugreport
+      // 2026-07-27) - anders als compactLevel/designHue direkt daneben wurde
+      // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
+      // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
+      if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       // designHue: !==undefined-Check, damit auch "zurueck auf Auto" (null)
       // vom anderen Geraet ankommt.
       if(!prefPending&&cd.designHue!==undefined){designHue=(typeof cd.designHue==='number')?cd.designHue:null;try{localStorage.setItem('fxpro_design_hue',JSON.stringify(designHue));}catch(e){}updateAuroraColors();}
@@ -5954,6 +6035,7 @@ function moveSbSym(catL,id,d){
   const cat=computeSbCats().find(c=>c.l===catL);if(!cat)return;
   const ids=getSbIds(cat);
   const i=ids.indexOf(id);if(i<0)return;
+  pushU();
   mvArr(ids,i,d);
   sbOrder[catL]=ids;
   save();renderSidebar();
@@ -5965,6 +6047,7 @@ function moveSbCat(catL,d){
   const visible=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
   const i=visible.findIndex(c=>c.l===catL);if(i<0)return;
   const n=i+d;if(n<0||n>=visible.length)return;
+  pushU();
   [visible[i],visible[n]]=[visible[n],visible[i]];
   // Sichtbare Reihenfolge mit den (unsichtbaren) FX-Kategorien zusammenführen
   // und als vollständige catOrder persistieren.
@@ -6257,6 +6340,7 @@ function toggleDmNoDate(){
 }
 function saveDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
+  pushU();
   const noDate=document.getElementById('dmNoDate').checked;
   ind.noDate=noDate;
   if(noDate){ind.date='';ind.interval='';}
@@ -6265,6 +6349,7 @@ function saveDateM(){
 }
 function clearDateM(){
   const ind=getInd(_dmRi,_dmIi);if(!ind)return;
+  pushU();
   ind.date='';ind.interval='';ind.noDate=false;
   syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
 }
@@ -6796,6 +6881,7 @@ function renderRiskEnvCfgM(){
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
   const c=getSym();if(!c||!c.rubrics)return;
+  pushU();
   mvArr(c.rubrics,ri,d);
   rubOrder=c.rubrics.map(r=>r.name);
   applyRubOrder();
@@ -6834,6 +6920,7 @@ function openInfoM(ri,ii){
 function saveInfoM(){
   const obj=_infoIi>=0?getInd(_infoRi,_infoIi):getRub(_infoRi);
   if(!obj)return;
+  pushU();
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
@@ -6889,7 +6976,7 @@ function syncMacroIndAddRemove(ri,action,name){
   });
 }
 function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function mvInd(ri,ii,d){const r=getRub(ri);if(r&&r.indicators)mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
+function mvInd(ri,ii,d){const r=getRub(ri);if(!r||!r.indicators)return;pushU();mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
@@ -6899,7 +6986,7 @@ function addPt(ri,ii){
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
   ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();}
 function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);syncMacroRub(ri);save();renderDetail();}
-function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(ind&&ind.points)mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
+function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(!ind||!ind.points)return;pushU();mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
@@ -6940,15 +7027,25 @@ function setNoteTableField(side,group,i,field,val){const c=getSym();if(!c)return
 function mvNoteTableItem(side,group,i,d){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(!a)return;const j=i+d;if(j<0||j>=a.length)return;pushU();flipNotes(()=>{const t=a[i];a[i]=a[j];a[j]=t;save();renderDetail();});}
 function moveNoteTableGroup(side,group,i){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);const from=nt[side][group];if(!from||!from[i])return;pushU();flipNotes(()=>{const it=from.splice(i,1)[0];nt[side][group==='cur'?'gen':'cur'].push(it);save();renderDetail();});}
 function addNoteRub(){pushU();const c=getSym();if(!c)return;if(!c.noteRubs)c.noteRubs=[];c.noteRubs.push({id:uid(),name:'New Category',bias:'neu',imp:false,items:[]});save();renderDetail();}
-function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;r.bias=b;save();renderDetail();}
-function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;r.imp=!r.imp;save();renderDetail();}
+// pushU() fehlte hier bisher (Nutzer-Bugreport 2026-07-27: "UI-Aenderungen
+// werden nach wenigen Sekunden ueberschrieben") - ohne den Undo-/Pending-
+// Marker sah der Multi-Tab-/Cloud-Schutz (save()-Guard, cloudPush()s
+// optimistische Versionspruefung) diese Aenderungen NICHT als "der Nutzer
+// hat hier gerade selbst editiert" an. Ein zeitgleicher Cloud-Pull (anderes
+// Geraet/Tab pusht dazwischen) konnte die Bias-/Wichtig-/Reihenfolge-
+// Aenderung dadurch binnen weniger Sekunden mit dem aelteren Stand
+// ueberschreiben - exakt dieselbe Bug-Klasse wie beim designHue/compactLevel-
+// Fix, hier aber bei den Notes-Rubrik-Geschwisterfunktionen uebersehen
+// (addNoteRub/delNoteRub hatten pushU() bereits, die uebrigen sechs nicht).
+function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;pushU();r.bias=b;save();renderDetail();}
+function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;pushU();r.imp=!r.imp;save();renderDetail();}
 function delNoteRub(ri){pushU();const c=getSym();if(c&&c.noteRubs)c.noteRubs.splice(ri,1);save();renderDetail();}
-function mvNoteRub(ri,d){const c=getSym();if(c&&c.noteRubs)mvArr(c.noteRubs,ri,d);save();renderDetail();}
+function mvNoteRub(ri,d){const c=getSym();if(!c||!c.noteRubs)return;pushU();mvArr(c.noteRubs,ri,d);save();renderDetail();}
 function addNoteRubItem(ri){const inp=document.getElementById('nr-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;pushU();const r=getNoteRub(ri);if(!r)return;if(!r.items)r.items=[];r.items.push({id:uid(),text:v,bias:'neu',imp:false});inp.value='';save();renderDetail();}
 function delNoteRubItem(ri,ii){pushU();const r=getNoteRub(ri);if(r&&r.items)r.items.splice(ii,1);save();renderDetail();}
-function setNoteRubItemBias(ri,ii,b){const r=getNoteRub(ri);if(!r||!r.items)return;r.items[ii].bias=b;save();renderDetail();}
-function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;r.items[ii].imp=!r.items[ii].imp;save();renderDetail();}
-function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(r&&r.items)mvArr(r.items,ii,d);save();renderDetail();}
+function setNoteRubItemBias(ri,ii,b){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].bias=b;save();renderDetail();}
+function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].imp=!r.items[ii].imp;save();renderDetail();}
+function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();mvArr(r.items,ii,d);save();renderDetail();}
 
 // ══ ADD SYMBOL ════════════════════════════════════════════════════
 // Übernimmt die Karten-/Indikator-Struktur vom US-Dollar (gleiche Rubriken
@@ -7009,6 +7106,20 @@ function confirmAddSym(){
 // ausgeschlossen (manuell) bleibt.
 const FX_LINK_CCYS=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+// Fuer freien Nutzertext, der in ein onclick="fn('${x}')"-Muster eingebettet
+// wird (JS-String-Literal INNERHALB eines HTML-Attributs): escJs() ALLEIN
+// reicht nicht, weil der Browser den Attributwert per HTML-Decode auflöst,
+// BEVOR das Ergebnis als JS geparst wird - ein '"'  in x würde escJs() zwar
+// unangetastet lassen, aber es bricht aus dem umgebenden onclick="..."-
+// Attribut selbst aus. escH() ALLEIN reicht ebenfalls nicht, weil escH()s
+// eigene "'"->"&#39;"-Kodierung durch denselben HTML-Decode-Schritt wieder
+// rueckgaengig gemacht wird, bevor der JS-Parser drankommt - ein "'" in x
+// kann dadurch trotzdem das JS-String-Literal vorzeitig schliessen. Fix:
+// ERST escJs() (schuetzt die JS-String-Ebene), DANN escH() (schuetzt die
+// HTML-Attribut-Ebene UND kodiert das "'" erneut, das escJs() selbst
+// einfuehrt - das rundet nach dem Decode korrekt zu "\'" ab, ein gueltiges
+// JS-Escape). Sicherheits-Fix 2026-07-26.
+function escJH(s){return escH(escJs(s));}
 function openAssetCfg(){const c=getSym();if(!c||!isNonFx(c.id))return;renderAssetCfgBody();openM('mAssetCfg');}
 function renderAssetCfgBody(){
   const c=getSym();if(!c)return;
@@ -8072,6 +8183,11 @@ function confirmAddPair(){
   const fromList=document.getElementById('mPairSel').value;
   const name=custom||fromList;
   if(!name){alert('Please select or enter a pair name.');return;}
+  // Sicherheits-Gate wie bei confirmAddSym(): der Paarname landet ungefiltert
+  // in inline-onclick-Handlern (openScoreInfoPair('NAME') etc.) - ein enger
+  // Zeichensatz verhindert, dass ein praeparierter Name dort ausbricht (XSS,
+  // auch via Sync). Slash/Punkt/Leerzeichen bleiben erlaubt (z.B. "USD/TRY").
+  if(custom&&!/^[A-Z0-9 ./_-]{1,20}$/.test(custom)){alert('Pair name may only contain letters, digits, spaces and . / _ - (max 20 characters).');return;}
   const catId=document.getElementById('mPairCat').value||pairCats[0]?.id;
   // Nur blocken, wenn das Paar bereits IN DIESER Kategorie ist - dasselbe Paar
   // darf z.B. in Set-ups und zusätzlich in der Watchlist stehen.
@@ -8215,7 +8331,7 @@ function renderPairs(){
     <div class="sym-name dw-pname">${escH(it.name)}</div>
     ${chip}
     ${rd}
-    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${it.name}')`)}
+    ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${escJH(it.name)}')`)}
     <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
   </div>`;};
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
@@ -8956,9 +9072,6 @@ function applyIndDataFeed(){
   if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
   return changed;
 }
-function autoFetchIndData(){
-  fetchIndData().then(()=>{if(applyIndDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
-}
 
 // ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
 // bond_data.json wird stuendlich per GitHub Action aus Stooq (taegliche
@@ -9054,9 +9167,6 @@ function applyBondDataFeed(){
   });
   if(changed)syms.forEach(c=>{if(isNonFx(c.id))resetNonFxIndBias(c);});
   return changed;
-}
-function autoFetchBondData(){
-  fetchBondData().then(()=>{if(applyBondDataFeed()){recomputeAuto();save();renderSidebar();rerender();}});
 }
 // ── ASSET-PREISE (price_data.json) ────────────────────────────────
 // Fuer den "Score vs Price"-Chart im Trends-Tab: pro Waehrung/Asset eine
@@ -9240,16 +9350,25 @@ function renderMwCfgBody(){
     <div class="dw-notes-sub" style="margin-top:10px">${escH(g)}</div>
     <div class="mw-cfg-grid">${opts.filter(o=>o.grp===g).map(o=>`<button class="btn mw-cfg-opt${sel.has(o.key)?' on':''}" onclick="toggleMwSym('${o.key}')">${sel.has(o.key)?'✓ ':''}${escH(o.label)}</button>`).join('')}</div>`).join('');
 }
+// pushU() fehlte hier bisher (Nutzer-Bugreport 2026-07-27: im Bearbeitungs-
+// menue ein FX-Paar abwaehlen, nach ein paar Sekunden ist es wieder da) -
+// widgets (inkl. w.symbols) ist Teil des snap()-Kernbaums, ohne pushU()
+// erkannte weder save()s Multi-Tab-Schutz noch cloudPush()s optimistische
+// Versionspruefung diese Aenderung als "der Nutzer hat hier gerade selbst
+// editiert" - ein zeitgleicher Cloud-Pull (auch vom selben Geraet, z.B. der
+// naechste automatische Refresh) konnte die Auswahl binnen Sekunden wieder
+// auf den alten Stand zuruecksetzen. Gleiche Bug-Klasse wie die Notes-Rubrik-
+// Funktionen weiter oben in dieser Datei (siehe CLAUDE.md-Merksatz dazu).
 function toggleMwSym(key){
   const w=widgets.find(x=>x.id===_mwEditWidgetId);if(!w)return;
   let list=w.symbols&&w.symbols.length?[...w.symbols]:[...MW_DEFAULT_SYMS];
   list=list.includes(key)?list.filter(k=>k!==key):[...list,key];
-  w.symbols=list;
+  pushU();w.symbols=list;
   renderMwCfgBody();save();renderDash();
 }
 function setMwTab(widgetId,tab){
   const w=widgets.find(x=>x.id===widgetId);if(!w)return;
-  w.mwTab=tab;save();renderDash();
+  pushU();w.mwTab=tab;save();renderDash();
 }
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
@@ -9294,11 +9413,11 @@ function renderNCs(){
   document.querySelectorAll('.rtxt').forEach(ar);}
 function addNC(){pushU();noteCats.push({id:uid(),name:'New Category',items:[]});save();renderNCs();}
 function delNC(i){pushU();noteCats.splice(i,1);save();renderNCs();}
-function mvNC(i,d){mvArr(noteCats,i,d);save();renderNCs();}
+function mvNC(i,d){pushU();mvArr(noteCats,i,d);save();renderNCs();}
 function addNCI(ci){const inp=document.getElementById('ni-'+ci);const v=inp.value.trim();if(!v)return;pushU();noteCats[ci].items.push({id:uid(),text:v,imp:false});inp.value='';save();renderNCs();}
 function delNCI(ci,ii){pushU();noteCats[ci].items.splice(ii,1);save();renderNCs();}
-function togNCI(ci,ii){noteCats[ci].items[ii].imp=!noteCats[ci].items[ii].imp;save();renderNCs();}
-function mvNCI(ci,ii,d){mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
+function togNCI(ci,ii){pushU();noteCats[ci].items[ii].imp=!noteCats[ci].items[ii].imp;save();renderNCs();}
+function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
@@ -9646,10 +9765,8 @@ function renderDash(){
   // ein fokussiertes/gerade angetipptes Element synchron aus dem DOM entfernt
   // wird (genau das macht innerHTML= mit dem eben geklickten Regler-Button) -
   // davor blur() vermeidet diesen Trigger. Betrifft besonders den Risk-
-  // Sentiment-Regler, weil dessen Karte danach per syncRiskHistHeight() unten
-  // sogar einen ZWEITEN, verzoegerten renderDash()-Aufruf ausloesen kann
-  // (Hoehenabgleich mit der Nachbarkarte) - deshalb die Sicherung HIER drin,
-  // nicht nur beim Aufrufer, damit auch dieser zweite Aufruf abgedeckt ist.
+  // Sentiment-Regler - deshalb die Sicherung HIER drin, nicht nur beim
+  // Aufrufer, damit auch ein spaeterer zweiter renderDash()-Aufruf abgedeckt ist.
   const _dashScroll=document.getElementById('pgDash');
   const _scrollY=_dashScroll?_dashScroll.scrollTop:0;
   if(document.activeElement&&el.contains(document.activeElement))document.activeElement.blur();
@@ -9703,7 +9820,7 @@ function renderDash(){
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
-          <div class="sym-name">${s.name}</div>
+          <div class="sym-name">${escH(s.name)}</div>
           <span class="evt-flag-slot">${evtFlagHtml(s.id)}</span>
           ${(isNonFx(s.id)&&tickerChipHtml(assetTickerInfo(s.id)))||'<span></span>'}
           ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
@@ -9722,7 +9839,7 @@ function renderDash(){
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
         <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
         ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-        ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
+        ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
@@ -9740,7 +9857,7 @@ function renderDash(){
         return`<div class="sym-row ${glowClass(p.bias)}" style="flex-wrap:wrap;gap:5px">
           <div class="sym-name dw-pname">${escH(p.name)}</div>
           ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
-          ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${p.name}')`)}
+          ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
           <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
           <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
@@ -9982,37 +10099,7 @@ function renderDash(){
   startGlobes();
   startSessionBar();
   attachChartHovers(el);
-  requestAnimationFrame(syncRiskHistHeight);
 }
-// Die Risk-Sentiment-Karte steht im Dashboard-Grid (align-items:stretch) neben
-// der FX-Bias-Karte; die Kartenbox selbst wird dadurch schon automatisch auf
-// die Hoehe der Nachbarkarte gestreckt, aber der Inhalt (Gauge + Verlauf) ist
-// meist kuerzer, sodass darunter Leerraum entsteht. Statt Leerraum zu lassen,
-// wird die Verlaufsgrafik selbst um genau die uebrige Hoehe vergroessert
-// (eigene SVG-Geometrie neu berechnet, NICHT per CSS gestreckt - so bleiben
-// Schrift & Punkte unverzerrt). Selbststabilisierend: nach der Vergroesserung
-// ist kaum noch Luft uebrig, ein zweiter Aufruf veraendert dann nichts mehr.
-let _riskHistChartH=120;
-function syncRiskHistHeight(){
-  const card=document.querySelector('.dw-risk_sentiment');
-  const calc=card&&card.querySelector('.risk-calc');
-  if(!card||!calc)return;
-  // card.scrollHeight ist hier NICHT brauchbar: die Karte wird per CSS-Grid
-  // (align-items:stretch) schon auf die Hoehe der Nachbarkarte gestreckt, und
-  // diese gestreckte Box-Hoehe zaehlt selbst zur scrollHeight, auch wenn der
-  // Inhalt viel kuerzer ist und darunter sichtbarer Leerraum bleibt. Deshalb
-  // wird stattdessen der tatsaechliche Inhalts-Endpunkt (Unterkante des
-  // letzten Elements .risk-calc) mit der Innenkante der Kartenunterkante
-  // (Kartenunterkante minus padding-bottom) verglichen.
-  const padBottom=parseFloat(getComputedStyle(card).paddingBottom)||0;
-  const extra=(card.getBoundingClientRect().bottom-padBottom)-calc.getBoundingClientRect().bottom;
-  if(extra<16)return;
-  const target=Math.max(120,Math.min(420,Math.round(_riskHistChartH+extra-10)));
-  if(Math.abs(target-_riskHistChartH)<8)return;
-  _riskHistChartH=target;
-  renderDash();
-}
-window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(()=>setTimeout(syncRiskHistHeight,160));});
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
 function scrollCalsToNow(){
@@ -10637,7 +10724,7 @@ function renderCompare(){
         const badge=d.badge?`<div class="cmp-unit" title="Unit/frequency may differ from other currencies - direct numeric comparison isn't 1:1">${escH(d.badge)}</div>`:'';
         return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}${badge}</td>`;
       }).join('');
-      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${enc}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
+      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${escJH(enc)}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
       if(!open)return mainRow;
       // Ausgeklappte Link-Zeile: pro Spalte der/die passende(n) investing.com-Link(s).
       const linkCells=cols.map(id=>{
@@ -10746,7 +10833,7 @@ function recordScoreHist(){
     // Aenderung eines ANDEREN Tabs. Ohne dieses Nachziehen loeste
     // recordScoreHist() beim Boot (laeuft VOR jeder Live-Feed-Korrektur,
     // siehe INIT) genau diesen Schutz aus, sobald kurz danach der erste
-    // korrigierende save() (aus bootFetchScoreFeeds/autoFetchIndData/...)
+    // korrigierende save() (aus bootFetchScoreFeeds/...)
     // lief - der verwarf dann seine eigene frisch korrigierte
     // In-Memory-Aenderung und laden STATTDESSEN den (noch unkorrigierten)
     // localStorage-Stand zurueck (adoptExternalState()) - Bugreport
@@ -10798,60 +10885,6 @@ function dailyBiasInfo(){
   const txt=`${bull} of ${FX.length} FX majors bullish, ${bear} bearish, ${neu} neutral. Risk sentiment is ${riskTxt}. `+
     (hiToday>0?`${hiToday} high-impact event${hiToday>1?'s':''} today — stay alert.`:'No high-impact events today.');
   return{lbl,col,sym,txt};
-}
-const RISK_HIST_DAYS=60;
-function riskNetHistory(){
-  const lookup=id=>{const m={};(scoreHist[id]||[]).forEach(e=>m[e[0]]=e[1]);return m;};
-  const onM=RISK_ON_IDS.map(lookup),offM=RISK_OFF_IDS.map(lookup);
-  const dset=new Set();
-  [...onM,...offM].forEach(m=>Object.keys(m).forEach(d=>dset.add(d)));
-  const dates=[...dset].sort().slice(-RISK_HIST_DAYS);
-  return dates.map(d=>{
-    const onV=onM.map(m=>m[d]).filter(v=>v!=null),offV=offM.map(m=>m[d]).filter(v=>v!=null);
-    const on=onV.length?onV.reduce((a,b)=>a+b,0)/onV.length:0;
-    const off=offV.length?offV.reduce((a,b)=>a+b,0)/offV.length:0;
-    return[d,on-off];
-  });
-}
-function riskHistChart(col,chartH){
-  const pts=riskNetHistory();
-  if(!pts.length)return`<div class="risk-hist-empty">Noch keine Verlaufsdaten &ndash; die Linie waechst ab jetzt mit jedem neuen Tag.</div>`;
-  let maxAbs=4;pts.forEach(p=>{if(Math.abs(p[1])>maxAbs)maxAbs=Math.abs(p[1]);});
-  const scale=Math.ceil(maxAbs),n=pts.length;
-  chartH=chartH||120;
-  const leftPad=64,rightPad=16,topPad=14,bottomPad=22,PD=34;
-  const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
-  const yMid=topPad+chartH/2;
-  const xOf=i=>leftPad+i*PD+PD/2;
-  const yOf=v=>yMid-(Math.max(-scale,Math.min(scale,v))/scale)*(chartH/2);
-  let svg=`<svg class="tr-svg risk-hist-svg" width="${w.toFixed(0)}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
-  svg+=`<line x1="${leftPad}" y1="${yMid.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="var(--t3)" stroke-width="1" opacity="0.55"/>`;
-  svg+=`<text x="${leftPad-8}" y="${(topPad+9).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bull}">Risk-on</text>`;
-  svg+=`<text x="${leftPad-8}" y="${(yMid+4).toFixed(1)}" text-anchor="end" style="font-size:10.5px;fill:var(--t3)">0</text>`;
-  svg+=`<text x="${leftPad-8}" y="${(topPad+chartH-2).toFixed(1)}" text-anchor="end" style="font-size:10.5px;font-weight:700;fill:${BC.bear}">Risk-off</text>`;
-  const linePts=pts.map((p,i)=>[xOf(i),yOf(p[1])]);
-  if(linePts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${linePts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-  pts.forEach((p,i)=>{
-    const pc=p[1]>0.8?BC.bull:p[1]<-0.8?BC.bear:BC.neu;
-    svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+i*16,1100)}ms" cx="${linePts[i][0].toFixed(1)}" cy="${linePts[i][1].toFixed(1)}" r="2.6" fill="${pc}"/>`;
-  });
-  const labelEvery=n>20?Math.ceil(n/14):1;
-  pts.forEach((p,i)=>{
-    if(i%labelEvery!==0&&i!==n-1)return;
-    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=p[0];}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+16).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
-  });
-  // Fit-to-width (kein horizontales Wischen/Verschieben) + Hover-Tooltip:
-  // die SVG skaliert auf die Kartenbreite, natuerliche Breite als max-width,
-  // damit wenige Punkte nicht ueberdehnt werden.
-  const fitSvg=svg.replace('<svg class="tr-svg risk-hist-svg"','<svg class="tr-svg risk-hist-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
-  const hpts=pts.map((p,i)=>{
-    const val=p[1];const pc=val>0.8?BC.bull:val<-0.8?BC.bear:BC.neu;
-    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=p[0];}
-    const zone=val>0.8?'Risk-on':val<-0.8?'Risk-off':'Neutral';
-    return{fx:xOf(i)/w,fy:yOf(val)/h,col:pc,tip:`<div class="chv-tip-d">${escH(lbl)}</div><b style="color:${pc}">${val>0?'+':''}${val.toFixed(2)}</b> · ${zone}`};
-  });
-  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
@@ -11223,18 +11256,15 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   });
   const col=colorOverride||'#888';
   const useBiasColor=!!colorOverride&&!!biasMap;
-  // Preis als Kerzen OHNE Docht: braucht nur Open+Close, keine High/Low -
-  // genau das liefert price_data.json (ein Tagesschlusskurs), also keine
-  // erfundenen Daten (Nutzer-Wunsch 2026-07-19). Body = Vortagesschluss bis
-  // heutiger Schluss, gruen=gestiegen/rot=gefallen (dieselbe Farbkonvention
-  // wie das Carry-Differential in openCarryDetail). VOR der Score-Linie
-  // gezeichnet, damit die Linie immer sichtbar oben drueber liegt. Breite
-  // + Deckkraft nach zwei Nutzer-Korrekturen 2026-07-19 justiert: erst
-  // "weniger stark" + luecken los (volle Breite, 0.42) auf Wunsch, dann
-  // "wieder kraeftiger und schmaler" zurueckkorrigiert (0.68, ~60% Breite
-  // mit sichtbarer Luecke - klassischerer Kerzen-Look).
-  const CANDLE_W=PD*0.6;
-  const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
+  // Preis als gestrichelte Linie (Nutzer-Wunsch 2026-07-26, ersetzt die
+  // vorherigen Kerzen-ohne-Docht) - dieselbe Konvention app-weit ueberall,
+  // wo eine Preis-Historie ueber einen anderen Wert gelegt wird (siehe auch
+  // retailNetChart). Die Achsen-Labels werden schon hier gezeichnet, die
+  // Linie selbst aber erst GANZ AM ENDE angehaengt (Nutzer-Wunsch 2026-07-27:
+  // "soll immer ganz oben liegen") - SVG-Zeichenreihenfolge = Stapel-
+  // reihenfolge, spaeter gezeichnete Elemente liegen ueber frueheren.
+  const PRICE_LINE_COL='var(--t0)';
+  let priceLineSvg='';
   if(priceVals.length>=1){
     let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
     if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
@@ -11244,13 +11274,10 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
       const y=yOfPrice(t);
       svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
-    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
-    for(let k=1;k<pricePts.length;k++){
-      const prev=pricePts[k-1],cur=pricePts[k];
-      const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
-      const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
-      const bh=Math.max(yBot-yTop,1.5);
-      svg+=`<rect x="${(cur.x-CANDLE_W/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${CANDLE_W.toFixed(1)}" height="${bh.toFixed(1)}" fill="${bcol}" opacity="0.68"/>`;
+    const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
+    if(pricePts.length>1){
+      const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
@@ -11269,24 +11296,22 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
   });
+  svg+=priceLineSvg;
   // Fit-to-width + Hover: das Fenster zeigt Score und (falls vorhanden) Kurs
   // des jeweiligen Tages, der Punkt sitzt auf der Score-Linie.
   const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
   const hpts=[];
-  let prevPv=null;
   dates.forEach((d,i)=>{
     const sv=scoreMap[d];const pv=priceMap[d];
-    if(sv==null||!isFinite(sv)){if(pv!=null&&isFinite(pv))prevPv=pv;return;}
+    if(sv==null||!isFinite(sv))return;
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
-    const pvCol=pv==null||prevPv==null?'var(--t3)':pv>prevPv?PRICE_UP:pv<prevPv?PRICE_DOWN:PRICE_FLAT;
-    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${pvCol}">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
-    if(pv!=null&&isFinite(pv))prevPv=pv;
+    hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--t0)">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
 function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,biasMap){
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
-  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:linear-gradient(90deg,var(--green) 50%,var(--red) 50%)"></span>Price (candle)</span>`:''}</div>`;
+  const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>`;
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
     ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
@@ -12222,7 +12247,8 @@ const SENT_INFO={
      <ul><li><b style="color:${'#ef6b78'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
      <li><b style="color:${'#5fa8ed'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
      <li><b style="color:${'#f4ad5c'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
-     <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>`],
+     <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
+     <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
@@ -12251,13 +12277,16 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
-let sentimentRange=1,sentimentCustomFrom='',sentimentCustomTo='';
+// Zeitraum-Filter fuer die Retail-Sentiment-Historie (erscheint, sobald im
+// Retail-Sentiment-Filter ein einzelnes Symbol statt "All symbols" gewaehlt
+// ist) - Default 'MAX' wie ueberall sonst (Nutzer-Wunsch "maximale Historie").
+let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
-function setSentimentRange(r){sentimentRange=r;sentimentCustomFrom='';sentimentCustomTo='';renderSentiment();}
+function setSentimentRange(r){sentimentRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){sentimentCustomFrom='';sentimentCustomTo='';}renderSentiment();}
 function setPcRange(r){pcRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){pcCustomFrom='';pcCustomTo='';}renderSentiment();}
 function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){fearGreedCustomFrom='';fearGreedCustomTo='';}renderSentiment();}
 // Namen folgen der timeRangeCustomHtml-Konvention "<setFnName>Custom"
@@ -12265,7 +12294,6 @@ function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r
 // tatsaechlich greift (vorher fehlbenannt als setPcCustomRange -> tote Calls).
 function setPcRangeCustom(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
 function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
-function setSentimentRangeCustom(from,to){sentimentCustomFrom=from||'';sentimentCustomTo=to||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
 // Maerkte (per-Symbol) + die App-Symbole. '' = alle anzeigen.
 // Retail-Sentiment filtert nach Broker-PAAR (z.B. EURUSD), nicht nach
@@ -12273,6 +12301,23 @@ function setSentimentRangeCustom(from,to){sentimentCustomFrom=from||'';sentiment
 // zweigeteilte Gruppierung (FX Pairs / Other Assets), aber dieselbe Optik
 // wie der gemeinsame assetFilterSelect-Helper (gleiche .cot-filterbar-CSS).
 const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOIL']);
+// Broker-Symbol -> unsere Asset-ID, fuer den Preis-Vergleich in der Retail-
+// Sentiment-Historie (priceSeriesFor/resolvePairPriceSeries erwarten unsere
+// IDs, nicht den Myfxbook-Symbolnamen).
+const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL'};
+function sentSymPriceSeries(sym){
+  const id=SENT_NONFX_PRICE_ID[sym];
+  if(id)return priceSeriesFor(id);
+  if(sym&&sym.length===6)return resolvePairPriceSeries(sym.slice(0,3),sym.slice(3));
+  return null;
+}
+// Lesbarer Name eines Broker-Symbols ("EURUSD"->"EUR/USD", "XAUUSD"->"Gold").
+function sentSymLabel(sym){
+  const id=SENT_NONFX_PRICE_ID[sym];
+  if(id)return COT_NAME[id]||sym;
+  if(sym&&sym.length===6)return sym.slice(0,3)+'/'+sym.slice(3);
+  return sym||'';
+}
 function sentFilterBar(){
   const set=new Set();
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
@@ -12323,13 +12368,17 @@ function pcXTickIdx(n,cnt){
   const out=[];for(let k=0;k<c;k++)out.push(Math.round(k*(n-1)/(c-1)));
   return[...new Set(out)];
 }
-// ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
+// ── Retail Sentiment: divergierende Long/Short-Balken je Markt (Snapshot,
+// "All symbols") ODER Historie vs. Preis (sobald ein einzelnes Symbol im
+// Filter gewaehlt ist - Nutzer-Wunsch 2026-07-26, siehe renderRetailHistory).
 function renderRetailBars(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
-  const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)&&(!sentSym||r.sym===sentSym)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   const filt=sentFilterBar();
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}</small></div>`;
+  const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
+  if(sentSym)return renderRetailHistory(D,sentSym,hdr);
+  const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
     return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:12.5px;line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
@@ -12350,6 +12399,109 @@ function renderRetailBars(D){
   }).join('');
   const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${legend}${rows}</div></div>`;
+}
+// ── Retail Sentiment History: Net Positioning (Long%-Short%) vs. Preis +
+// darunter der Long/Short-Verlauf als 100%-Stacked-Bar (Nutzer-Wunsch
+// 2026-07-26, angelehnt an das mitgeschickte Referenzfoto, aber im
+// bestehenden App-Chart-Stil statt 1:1 kopiert - Zeitraum-Filter, Hover/Tap-
+// Tooltip-Fenster und gestrichelte Preis-Linien-Konvention wie im Trends-Tab
+// "Score vs Price"). retailHistory wird stuendlich vom Workflow fortgeschrieben
+// (ein echter Punkt/Tag, kein Backfill/Schaetzen moeglich - Myfxbook liefert
+// nur den aktuellen Snapshot); der vorhandene Bestand kam per Git-Historie-
+// Rekonstruktion der bereits committeten sentiment_data.json-Staende zustande.
+function renderRetailHistory(D,sym,hdr){
+  const raw=((D.retailHistory&&D.retailHistory[sym])||[]).filter(e=>e&&isFinite(+e[1])).map(e=>[e[0],+e[1],isFinite(+e[2])?+e[2]:100-(+e[1])]);
+  raw.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(sentimentRange,'setSentimentRange')}${timeRangeCustomHtml(sentimentRange,sentimentCustomFrom,sentimentCustomTo,'setSentimentRange')}</div>`;
+  if(raw.length<2){
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">Not enough retail-positioning history for ${escH(sentSymLabel(sym))} yet — this builds up one real point per day as the hourly job runs (no backfill possible beyond what was already recorded). Tap the <b>i</b> to learn what this shows.</div></div></div>`;
+  }
+  const keepDates=new Set(filterDatesByRange(raw.map(e=>e[0]),sentimentRange,sentimentCustomFrom,sentimentCustomTo));
+  const series=raw.filter(e=>keepDates.has(e[0]));
+  if(series.length<2){
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">No data in this range — pick a wider range above.</div></div></div>`;
+  }
+  const priceSeries=sentSymPriceSeries(sym);
+  const last=series[series.length-1],lastNet=last[1]-last[2];
+  const netChart=retailNetChart(series,priceSeries);
+  const stackChart=retailStackChart(series);
+  const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">
+    ${rangeBar}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 4px">
+      <span style="font-size:12px;color:var(--t3)">Net Retail Positioning (Long% − Short%)${hasPrice?' vs. price':''}</span>
+      <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>Net long</span><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bear}"></span>Net short</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>
+    </div>
+    ${netChart}
+    <div style="text-align:center;font-size:12.5px;color:var(--t2);margin:6px 0 16px">Latest: <b style="color:${lastNet>=0?BC.bull:BC.bear}">${lastNet>0?'+':''}${lastNet.toFixed(0)}%</b> net ${lastNet>=0?'long':'short'} (${last[1].toFixed(0)}% long / ${last[2].toFixed(0)}% short) — ${fmtDayHdr(last[0])}</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:4px">Long % / Short % split</div>
+    ${stackChart}
+    ${hasPrice?'':'<div style="padding:6px 0 0;color:var(--t3);font-size:11.5px">No price history yet for this market &ndash; it grows once price_data.json has a matching date.</div>'}
+  </div></div>`;
+}
+// Net-Positioning-Balken (Long%-Short%, symmetrisch um 0) + Preis als
+// gestrichelte Linie auf der rechten Achse (Nutzer-Wunsch 2026-07-26, ersetzt
+// die vorherigen Kerzen-ohne-Docht - dieselbe Linien-Konvention wie
+// scoreVsPriceChart) - selbe Balken-Bausteine wie renderNetFlowChart, hier
+// mit dem Preis-Overlay kombiniert.
+function retailNetChart(series,priceSeries){
+  const n=series.length;
+  const net=series.map(e=>e[1]-e[2]);
+  const W=760,H=360,padL=48,padR=56,padT=22,padB=44;
+  const maxA=Math.max(10,...net.map(Math.abs))*1.15;
+  const bw=Math.max(2,(W-padL-padR)/n*0.72);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  const yOf=v=>padT+(1-(v+maxA)/(2*maxA))*(H-padT-padB);
+  const y0=yOf(0);
+  const priceMap={};(priceSeries||[]).forEach(e=>{if(e&&e[1]!=null&&isFinite(e[1]))priceMap[e[0]]=e[1];});
+  const priceVals=series.map(e=>priceMap[e[0]]).filter(v=>v!=null);
+  let svgPriceLabels='',priceLineSvg='';
+  const PRICE_LINE_COL='var(--t0)';
+  if(priceVals.length>=1){
+    let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
+    if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
+    const pad=(pMax-pMin)*0.08;pMin-=pad;pMax+=pad;
+    const yOfPrice=v=>padT+(1-(v-pMin)/(pMax-pMin))*(H-padT-padB);
+    [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
+      const y=yOfPrice(t);
+      svgPriceLabels+=`<text x="${(W-padR+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
+    });
+    const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
+    if(pricePts.length>1){
+      const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+    }
+  }
+  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
+  const bars=net.map((v,i)=>{const y=yOf(v),up=v>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y-y0),1).toFixed(1)}" fill="${up?BC.bull:BC.bear}"/>`;}).join('');
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  // Preis-Linie GANZ AM ENDE angehaengt (Nutzer-Wunsch 2026-07-27: "soll
+  // immer ganz oben liegen") - liegt dadurch ueber den Balken.
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${svgPriceLabels}${gy}${bars}${xlab}${priceLineSvg}</svg>`;
+  const hpts=net.map((v,i)=>{
+    const up=v>=0,pv=priceMap[series[i][0]];
+    return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(series[i][0]))}</div><b>${(v>0?'+':'')+v.toFixed(0)}%</b> net ${up?'long':'short'} (${series[i][1].toFixed(0)}% / ${series[i][2].toFixed(0)}%)${pv!=null?`<div style="margin-top:2px">Price: <b>${fmtPriceTick(pv)}</b></div>`:''}`};
+  });
+  return chartHoverWrap(svg,hpts);
+}
+// 100%-Stacked Long/Short-Balken pro Tag (gleiche Blau/Rot-Konvention wie die
+// Snapshot-Balken oben - kein neuer Farb-Code eingefuehrt).
+function retailStackChart(series){
+  const n=series.length;
+  const W=760,H=190,padL=36,padR=16,padT=14,padB=30;
+  const bw=Math.max(2,(W-padL-padR)/n*0.72);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  const yOf=v=>padT+(1-v/100)*(H-padT-padB);
+  const gy=[0,20,40,60,80,100].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.5"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${t}%</text>`).join('');
+  const bars=series.map((e,i)=>{
+    const L=e[1],x=xOf(i)-bw/2;
+    const yLong=yOf(L),yZero=yOf(0),yTop=yOf(100);
+    return`<rect x="${x.toFixed(1)}" y="${yLong.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yZero-yLong,0).toFixed(1)}" fill="${BC.bull}"/><rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yLong-yTop,0).toFixed(1)}" fill="${BC.bear}"/>`;
+  }).join('');
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${gy}${bars}${xlab}</svg>`;
+  const hpts=series.map((e,i)=>({fx:xOf(i)/W,fy:yOf(e[1])/H,col:BC.bull,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${e[1].toFixed(0)}%</b> long / <b>${e[2].toFixed(0)}%</b> short`}));
+  return chartHoverWrap(svg,hpts);
 }
 // ── Put-Call Ratio: Stufenlinien-Chart mit Schwellen + Contrarian-Zonen ──
 // Dünnes Options-Volumen (v.a. die FX-Waehrungs-ETFs FXA/FXB/FXC/FXF/FXY/UUP
@@ -13309,8 +13461,13 @@ function loadTabStacks(){
 function saveTabStacks(){
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
   // Aenderung als neue Version markieren und (falls Cloud-Sync eingerichtet ist)
-  // pushen, damit die Stapel ueber mehrere Geraete synchron sind.
+  // pushen, damit die Stapel ueber mehrere Geraete synchron sind. markPrefEdit()
+  // fehlte hier bisher (Nutzer-Bugreport 2026-07-27, gleiche Bug-Klasse wie
+  // designHue/compactLevel) - ohne das Flag stufte cloudPush()s optimistische
+  // Versionspruefung eine frische Stapel-Umsortierung als reinen Auto-Refresh
+  // ein und ein zeitgleicher Pull zog den aelteren Cloud-Stand drueber.
   try{localStorage.setItem('fxpro_updated',new Date().toISOString());_lsUpdatedSeen=localStorage.getItem('fxpro_updated');}catch(e){}
+  markPrefEdit();
   cloudAutoSync();
 }
 function stackOf(tabId){return tabStacks.find(s=>s.members.includes(tabId));}
@@ -13609,6 +13766,7 @@ function togglePinEnabled(){
   try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
   cloudAutoSync();
   updPinToggleBtn();
   // Beim Deaktivieren sofort entsperren (kein Reload noetig, kein

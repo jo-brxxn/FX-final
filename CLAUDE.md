@@ -202,12 +202,31 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   da". **Die Farbe ändert sich ab jetzt NICHT mehr pro Deploy** (Nutzer-
   Entscheid 2026-07-25: „er bleibt ab sofort immer in der gleichen Farbe") —
   rot (Dot+LIVE-Text) ist fest, nicht mehr Teil des Änderungssignals.
+  **⚠️ Ergänzung 2026-07-27 (Nutzer-Wunsch, nachdem zwei Aenderungen in
+  Folge den Bump vergessen hatten):** der Bump ist NICHT optional und gilt
+  fuer JEDE Code-Aenderung, auch kleine/reine Bugfixes ohne UI-Sichtbarkeit
+  - keine Ausnahmen. Zusaetzlich MUSS die eigene Chat-Antwort nach jeder
+  Aenderung als LETZTEN Satz explizit nennen, wie der neue Banner-Name/die
+  neue Nummer lautet (z. B. „Aktuelle Version ist jetzt VERSION-CHECK-243.")
+  - nicht nur im Code bumpen, sondern dem Nutzer auch im Chat mitteilen.
 - **JS-Syntax-Check vor jedem Push** von `index.html`: `<script>`-Blöcke
   extrahieren, zusammenfügen, `node --check` laufen lassen. Für die Workflow-YAML
   zusätzlich `python3 -c "import yaml; yaml.safe_load(...)"` und das eingebettete
   Node-Skript via `node --check` prüfen.
-- **Auf BEIDE Branches pushen**: zuerst `git fetch origin main` + `git merge
-  origin/main`, dann Push auf `claude/chat-history-context-2uz60v` UND `main`.
+- **⚠️ IMMER auch auf `main` pushen (Nutzer-Wunsch 2026-07-26, nach einem
+  Vorfall):** `main` ist der Branch, den GitHub Pages live auf
+  jo-brxxn.github.io deployed. Der Session-Dev-Branch (Name wechselt je
+  Task/Session, z. B. `claude/new-session-...`) ist NICHT das, was der
+  Nutzer auf der echten Webseite sieht. Vorfall 2026-07-26: eine ganze
+  Feature-Session (Retail-Sentiment-Historie) wurde nur auf den Dev-Branch
+  gepusht — Nutzer meldete "Ich seh nix auf der Webseite", weil `main`
+  unveraendert blieb. Ab sofort bei JEDEM Push (nicht nur am Ende einer
+  Session): zuerst `git fetch origin main` + `git merge origin/main` (oder
+  Fast-Forward pruefen) in den Dev-Branch, dann sowohl auf den Dev-Branch ALS
+  AUCH auf `main` pushen (`git push origin <dev-branch>` UND
+  `git push origin <dev-branch>:main` bzw. `git push origin main` nach
+  einem lokalen Merge/Checkout) — nicht erst fragen, ob das gewuenscht ist,
+  das ist ab jetzt Standard-Verhalten fuer dieses Projekt.
 - **Browser-Verifikation** für UI-Änderungen: lokaler `http.server` +
   Playwright (`/opt/node22/lib/node_modules/playwright`, Chromium). Vor dem
   Rendern `#introOv` und `#lockScreen` entfernen (Intro/PIN-Sperre).
@@ -931,6 +950,10 @@ Nach dem Komplett-Audit umgesetzt (VERSION-CHECKs 131/132):
   gibt nur noch die Linien-SVG-Strings zurück, keine Dreiecke mehr; bei
   Bedarf müsste diese Funktionalität komplett neu gebaut werden, nicht nur
   wieder freigeschaltet werden.
+  **⚠️ Update 2026-07-26: die Kerzen-ohne-Docht-Konvention selbst wurde
+  wieder abgeschafft** — Preis-Historie wird app-weit jetzt als gestrichelte
+  Linie gezeichnet, nicht mehr als Kerzen. Siehe den Session-Eintrag
+  "Preis-Historie: Kerzen durch gestrichelte Linie ersetzt" weiter unten.
 
 ### Header-Dropdown "Data" verschwand teilweise hinter der Tab-Leiste auf Mobil (Bugreport 2026-07-19, per Foto)
 
@@ -4341,3 +4364,346 @@ auch anpassen lässt." Umgesetzt (VERSION-CHECK-240):
   Dashboard passt weiterhin ohne Scrollen, Kontrast/Lesbarkeit in Matrix/
   COT/FX-Detail/Dashboard geprueft (Screenshots), Bearbeitungsmodus (siehe
   Eintrag oben) funktioniert unveraendert mit der neuen Palette.
+
+### Sicherheits-Audit: Webseite ist jetzt oeffentlich (Nutzer-Auftrag 2026-07-26, VERSION-CHECK-241)
+
+Nutzer-Auftrag (hoechste Prioritaet, wortgleich): "die Webseite ist jetzt
+oeffentlich finde alle sicherheitsluecken und stelle sicher das kein api
+key oder andere wichtige Daten auslesbar sind" + `/debug` (Bugs + ungenutzte
+Code-Bloecke finden und entfernen) + Code schlanker machen ohne Funktionen
+zu verlieren.
+
+**Keine API-Keys/Secrets gefunden** (Ziel bereits erreicht, nicht neu
+geschaffen): komplette `index.html`, alle committeten `*.json`-Datendateien
+und alle 4 Workflow-YAMLs durchsucht (String-Muster fuer AWS-Keys, private
+Key-Header, JWTs, hartcodierte Secret-Zuweisungen) - nichts gefunden.
+Workflows nutzen durchgehend `${{ secrets.X }}` -> Env-Var, kein
+`curl -v`/`set -x`, bestehende Debug-Ausgaben vermeiden bewusst das
+Ausgeben des eigentlichen Secret-Werts (eigene Kommentare bestaetigen das
+explizit, z.B. beim Myfxbook-Login). Zusaetzlich die **volle Git-Historie**
+(`git fetch --unshallow`, vorher shallow) nach demselben Muster durchsucht -
+auch dort kein jemals committeter und wieder entfernter Key. Supabase-URL/
+Anon-Key/Sync-ID sind ohnehin nutzerseitig eingegeben und bleiben rein
+lokal (localStorage) - kein serverseitiges Secret in diesem Projekt.
+
+**Echte Befunde: XSS/Code-Injection ueber Freitext-Felder, die ungefiltert
+in `onclick="fn('${x}')"`-Handlern landen.** Kernerkenntnis (Schritt-fuer-
+Schritt am Payload durchgespielt): weder `escH()` allein noch `escJs()`
+allein reicht fuer dieses Muster. `escH()` allein wird wirkungslos, weil
+der Browser den Attributwert per HTML-Decode aufloest, BEVOR das Ergebnis
+als JS geparst wird - escH()s `'`->`&#39;`-Kodierung wird dadurch vor dem
+JS-Parse wieder rueckgaengig gemacht. `escJs()` allein schuetzt zwar die
+JS-String-Ebene, aber nicht die HTML-Attribut-Ebene (kein `"`-Escaping).
+**Fix-Muster: ERST `escJs()`, DANN `escH()`** (neuer Helper `escJH()`,
+bei `escJs()` in `index.html` definiert) - schuetzt beide Ebenen, rundet
+beim Decode/Parse korrekt wieder zum Original-Wert ab (Funktionalitaet
+bleibt erhalten, nicht nur "irgendwie escaped").
+
+Konkrete Fixes:
+- **`eval()` entfernt** (`searchGo()`/`searchEntries()`, globale Suche):
+  baute bisher Code-STRINGS (`gotoSym('${s.id}')`) fuer spaeteres `eval()`.
+  Umgebaut auf strukturierte Daten (`{fn:'sym',id}`/`{fn:'cal'}`/
+  `{fn:'tab',tab,mode}`) + `switch`-artiges Dispatch in `searchGo()` - immun
+  gegen String-Injection per Konstruktion, da Werte als echte JS-Werte statt
+  als zu re-parsender Quelltext uebergeben werden.
+- **Paar-Namen** (`pairs[].name`, Set-ups-Tab/Watchlist/Compare-verwandte
+  Stellen): `openScoreInfoPair('${p.name}')`/`${it.name}` an 3 Stellen war
+  komplett ungeschuetzt, UND `confirmAddPair()`s Freitext-Feld (`mPairCustom`)
+  hatte anders als das Ticker-Feld GAR KEIN Zeichen-Gate. Fix: `escJH()` an
+  allen 3 Ausgabestellen + neues Zeichen-Gate (`^[A-Z0-9 ./_-]{1,20}$`,
+  analog zum bestehenden Ticker-Gate in `confirmAddSym()`) in `confirmAddPair()`.
+- **Compare-Tab** (`toggleCmpRow('${enc}')`, `enc=encodeURIComponent(...)`
+  aus einem Indikator-Basisnamen): `encodeURIComponent()` laesst `'` UNVERAENDERT
+  (nicht Teil seines Escape-Sets) - ein per "+ Add Indicator" frei benennbarer
+  Indikator mit `'` im Namen konnte dadurch trotz URI-Encoding aus dem
+  Attribut ausbrechen. Per Playwright mit echtem Payload
+  (`Evil'); alert('XSS'); //`) verifiziert: VOR dem Fix haette das den Alert
+  ausgeloest, NACH dem Fix (`escJH(enc)`) weder Alert noch Funktionsverlust
+  (`toggleCmpRow` dekodiert weiterhin korrekt, Zeile oeffnet/schliesst wie
+  erwartet - Playwright-bestaetigt).
+- **Symbol-/Kategorie-/Widget-/Rubrik-/Indikator-IDs**: `confirmAddSym()`
+  hat schon lange ein Zeichen-Gate (`^[A-Z0-9._-]{1,15}$`) MIT einem
+  Kommentar, der die Sync-Umgehung bereits benennt ("XSS, auch via Sync") -
+  aber `applySnap()` (der EINE Trichter fuer Cloud-Sync/Import/Undo, siehe
+  Grundsatz oben) hat diese Regel nie durchgesetzt. Fix: neue
+  `sanitizeSnapIds()` direkt am Anfang von `applySnap()` - verwirft
+  Symbole/`customIds`-Eintraege mit einer ID ausserhalb des Formats, und
+  (fuer alle `uid()`-basierten IDs: Paare/Widgets/Kategorien/Rubriken/
+  Indikatoren) alles ausserhalb von `^[a-z0-9]{1,24}$/i`. Schliesst die
+  ganze Klasse an EINER Stelle, statt Dutzende einzelne
+  `onclick="fn('${x.id}')"`-Stellen im Code einzeln zu haerten - legitime,
+  von der App selbst erzeugte Exporte/Sync-Staende sind davon nie betroffen
+  (ihre IDs erfuellen das Format immer schon).
+- Bei der Sichtung mehrerer aehnlicher `onclick="fn('${x}')"`-Stellen
+  (`cat.l`, `side`, `b`, `date`, `key`/`k`, `c`, `o.key`) bestaetigt: alle
+  ungefaehrlich, weil der jeweilige Wert aus einer FESTEN, kleinen Menge
+  (Enum-String, `FX`-Array, `RATEPROB_CCYS`, ISO-Kalenderdatum) stammt, nie
+  aus Freitext.
+- Per Playwright verifiziert (echte Payloads, kein Raten): eval()-Ersatz
+  navigiert korrekt (Asset-, Tab-, Kalender-Sprung), Paar-Namen-Gate lehnt
+  unsichere Zeichen mit Alert ab, Compare-Tab-Injection-Payload loest keinen
+  Alert mehr aus UND die Zeile toggelt weiterhin korrekt, `escJH()` liefert
+  korrekt doppelt-geschuetzten Output, voller 15-Tab-Regressionstest ohne
+  JS-Fehler (nur sandboxbedingte `ERR_TUNNEL_CONNECTION_FAILED` bei externen
+  Datenfeeds, kein App-Fehler).
+
+**`/debug`: tote Code-Bloecke gefunden + entfernt** (Funktion bleibt
+komplett erhalten, nur nie erreichter/nie aufgerufener Code entfernt):
+- **`riskHistChart()`/`riskNetHistory()`**: eine komplett fertige, aber nie
+  aufgerufene Risk-on/Risk-off-Verlaufsgrafik (SVG+Hover-Tooltip) fuer die
+  Risk-Sentiment-Dashboard-Karte - inkl. eigener CSS-Klassen
+  (`.risk-hist-wrap`/`.risk-hist-hd`/`.risk-hist-empty`/`.risk-hist-scroll`)
+  und einem AKTIV LAUFENDEN Hoehen-Sync-Mechanismus (`syncRiskHistHeight()`,
+  `_riskHistChartH`, ein `resize`-Listener), der bei jedem Dashboard-Render
+  UND jedem Fenster-Resize versuchte, eine Karte zu vergroessern, die
+  nirgends gerendert wurde - reiner Render-Overhead ohne jeden sichtbaren
+  Effekt. Alles zusammen entfernt (Funktionen, State-Variable, Listener,
+  CSS-Klassen); die referenzierten `RISK_ON_IDS`/`RISK_OFF_IDS`-Konstanten
+  bleiben, da sie vom AKTIVEN Risk-Sentiment-Gauge weiterhin gebraucht
+  werden. Stale Kommentar-Referenz in `renderDash()` (erklaerte einen
+  Scroll-Fix ueber `syncRiskHistHeight()`) entsprechend angepasst.
+- **`autoFetchIndData()`/`autoFetchBondData()`**: leere Wrapper-Reste aus
+  der Zeit VOR `bootFetchScoreFeeds()` (siehe Eintrag "KRITISCHER
+  Regressions-Bug..." oben - das buendelt seit 2026-07-20 alle vier Boot-
+  Feeds per `Promise.all`, ruft `fetchIndData()`/`fetchBondData()` seither
+  DIREKT inline auf). Die beiden Wrapper wurden beim Umbau nie geloescht,
+  hatten seither aber keinen einzigen Aufrufer mehr.
+- **`setSentimentRange()`/`setSentimentRangeCustom()`** + State-Variablen
+  `sentimentRange`/`sentimentCustomFrom`/`sentimentCustomTo`: Reste eines
+  offenbar nie fertiggestellten Zeitraum-Filters fuer die Retail-Sentiment-
+  Unterseite - anders als die strukturell identischen `pcRange`/
+  `fearGreedRange` (Put/Call, Fear&Greed) nie an `timeRangeBarHtml()`/
+  `timeRangeCustomHtml()` angeschlossen und nirgends gelesen.
+- Alle Entfernungen per Playwright verifiziert: `node --check` sauber,
+  voller 15-Tab-Regressionstest ohne JS-Fehler, Risk-Sentiment-Karte
+  rendert weiterhin normal (nur der nie sichtbare Verlaufschart-Anhang ist
+  weg), Fenster-Resize loest keinen Fehler mehr aus,
+  `typeof riskHistChart/syncRiskHistHeight` jetzt korrekt `undefined`.
+- **Bewusst NICHT weiterverfolgt**: eine automatisierte CSS-Klassen-Leichen-
+  Suche (Substring-Haeufigkeit ueber die ganze Datei) lieferte zu viele
+  falsch-positive Treffer (Klassennamen, die per Template-String
+  zusammengesetzt werden, z.B. `dw-${type}`, zaehlen dabei faelschlich als
+  "unbenutzt") - ein serioeser Abgleich haette pro Fund einzeln verifiziert
+  werden muessen; bei ~200 Kandidaten war das Regressionsrisiko fuer den
+  verbleibenden Nutzen zu hoch. Bei Bedarf gezielt nachholen, nicht blind
+  per Bulk-Diff entfernen.
+
+### Retail Sentiment: Historie vs. Preis pro Einzelasset (Nutzer-Wunsch 2026-07-26)
+
+Waehlt man im Retail-Sentiment-Filter (Insights → Sentiment) statt
+"All symbols" ein einzelnes Symbol, zeigt die Karte (`renderRetailBars`,
+verzweigt in `renderRetailHistory`) jetzt dessen Historie statt des reinen
+Snapshots: Net Positioning (Long%−Short%) als Balken mit Preis-Ueberlagerung
+(`retailNetChart`), darunter der Long/Short-Verlauf als 100%-Stacked-Bar
+(`retailStackChart`) - mit dem app-weiten `TIME_RANGES`-Zeitraum-Filter
+(State `sentimentRange`/`sentimentCustomFrom`/`sentimentCustomTo` - vorher
+tote, nie verdrahtete Variablen, jetzt fuer genau diesen Zweck reaktiviert)
+und Hover/Touch-Tooltips wie bei jedem anderen Chart. "All symbols" bleibt
+unveraendert der bisherige Snapshot.
+
+- Broker-Symbol → unsere Asset-ID fuer den Preisvergleich: `sentSymPriceSeries()`
+  (nutzt `resolvePairPriceSeries`/`priceSeriesFor`, Non-FX-Mapping in
+  `SENT_NONFX_PRICE_ID`), `sentSymLabel()` fuer die lesbare Anzeige
+  ("EURUSD"→"EUR/USD", "XAUUSD"→"Gold" via `COT_NAME`).
+- Der Workflow (`update-ff-calendar.yml`, Schritt "Fetch market sentiment")
+  schreibt seither taeglich einen echten Punkt pro Symbol in
+  `sentiment_data.json.retailHistory` (Cap ~1100 Tage wie `scoreHist`) - kein
+  Backfill moeglich, Myfxbook liefert nur den aktuellen Snapshot.
+- **Der vorhandene Bestand (17 Tage, 10.–26.07.2026) wurde aus der
+  GIT-HISTORIE der bereits committeten `sentiment_data.json`-Staende
+  rekonstruiert** (jeder stuendliche Commit ist ein echter Snapshot von
+  damals) - exakt dasselbe Prinzip wie der Revisions-Backfill weiter oben:
+  bei "es gab doch schon Werte, wo sind die hin" IMMER zuerst pruefen, ob
+  die Git-Historie der Daten-JSONs echte vergangene Stände enthaelt, bevor
+  man sagt "geht nicht/nie aufgezeichnet". Sandbox-Repo war dafuer shallow
+  geklont - `git fetch --unshallow` noetig, um die vollen ~260 Commits der
+  Datei zu sehen.
+
+### Preis-Historie: Kerzen durch gestrichelte Linie ersetzt (Nutzer-Wunsch 2026-07-26)
+
+Nutzer schickte ein Referenzfoto (Historical-Retail-Sentiment-Beispiel) und
+wollte dieselbe Optik uebernehmen: **ueberall, wo eine Preis-Historie ueber
+einem anderen Wert liegt, jetzt eine gestrichelte weisse/helle Linie statt
+der bisherigen Kerzen-ohne-Docht** (siehe der jetzt veraltete Eintrag
+"Kerzen-Kontrast + Dreiecke ganz entfernt" weiter oben) - plus eine kleine
+Legende dazu, wie im Foto.
+
+- Betraf genau zwei Stellen (per `grep CANDLE_W/PRICE_UP` gefunden - das ist
+  die vollstaendige Liste, keine weiteren Preis-Overlays im Projekt):
+  `scoreVsPriceChart()` (Trends-Tab "Score vs Price") und `retailNetChart()`
+  (die brandneue Retail-Sentiment-Historie, s.o.).
+  Beide Kerzen-Zeichenschleifen wurden durch eine simple `<polyline>` mit
+  `stroke-dasharray="6,4"` in `var(--t0)` (helle Textfarbe, theme-aware)
+  ersetzt - Achsen-Skalierung (rechte Preis-Achse, Tick-Labels) unveraendert,
+  nur die Zeichnung selbst.
+- **Neue gemeinsame Legende-CSS-Klasse `.tr-leg-dash`** (neben dem
+  bestehenden `.tr-leg-dot` fuer runde Farbpunkte, ~Zeile 472): kurzer
+  gestrichelter Strich (`border-top:2px dashed var(--t0)`), nutzt dieselbe
+  `.tr-legend`/`.tr-leg-item`-Struktur wie ueberall. Ersetzt "Price (candle)"
+  durch schlicht "Price" in beiden Legenden (`scoreVsPriceCard`,
+  `renderRetailHistory`).
+- Tooltip-Faerbung nach Kursrichtung (gruen/rot je nach rauf/runter) wurde
+  dabei ENTFERNT, nicht nur die Kerzen selbst - die Linie ist jetzt ein
+  einzelner neutraler Ton, der Tooltip zeigt "Price" entsprechend auch
+  neutral statt richtungsgefaerbt (konsistent mit der neuen Linien-Optik).
+- **Merksatz fuer kuenftige neue Preis-Overlay-Charts:** IMMER diese
+  gestrichelte-Linie-Konvention (`stroke="var(--t0)" stroke-dasharray="6,4"`)
+  + `.tr-leg-dash`-Legende verwenden, keine Kerzen mehr neu einfuehren -
+  CLAUDE.md-Grundsatz "wiederkehrende UI-Bausteine muessen einheitlich sein"
+  gilt hier genauso.
+
+### Dashboard-Feinschliff nach Foto: Bearbeitungsmodus-Gating, 4er-Ticker-Grid, engere Abstaende + echter Persistenz-Bug gefunden (Nutzer-Wunsch 2026-07-27)
+
+Nutzer schickte ein Foto der Live-Seite mit zwei blau eingekreisten Elementen
+("MAJORS"-Label ueber der Majors-Sidebar, FX/Indices/Commodities/Bonds-
+Umschalter ueber der Market-Watch-Ticker-Zeile) plus vier Anforderungen.
+
+**1. Beide markierten Elemente nur noch im Bearbeitungsmodus sichtbar** -
+dieselbe `body.dash-edit-mode`-Konvention wie die bestehenden `.dw-btns`
+(5s-Long-Press, siehe Eintrag "Bearbeitungsmodus statt Hover" oben), kein
+zweiter Mechanismus. `.dash-majors-lbl` (das "MAJORS"-Label) und `.mw-bar`
+(die ganze Zeile mit Kategorie-Tabs + Zahnrad-Button - nicht nur `.mw-tabs`
+selbst, sonst bliebe eine leere unsichtbare Zeile stehen) sind jetzt
+`display:none` per Default, `body.dash-edit-mode` schaltet sie auf
+`block`/`flex`. Die gerade AKTIVE Kategorie (z.B. "FX") bleibt ausserhalb
+des Modus unveraendert in der Ticker-Zeile sichtbar - nur der Umschalter
+selbst versteckt sich.
+
+**2. Exakt 4 Assets pro Reihe** in der Market-Watch-Ticker-Zeile
+(`.mw-strip`): von `display:flex;flex-wrap:wrap` (so viele Kacheln wie
+reinpassen, `flex:0 0 auto`) auf ein echtes `display:grid;grid-template-
+columns:repeat(4,minmax(0,1fr))` umgestellt - `.mw-tile` fuellt jetzt die
+volle Spaltenbreite (`justify-content:space-between` statt `flex:0 0 auto`).
+**3. Responsiv mit Mindestgroesse**: zwei Breakpoints reduzieren die
+Spaltenzahl VOR dem Punkt, an dem 4 Spalten unlesbar eng wuerden -
+`repeat(2,...)` unter 1000px, `repeat(1,...)` unter 520px (per Playwright an
+9 Viewport-Breiten von 390-1920px verifiziert: nie Text-Ueberlauf, exakt 4
+Spalten von 1100-1920px).
+**4. Globale Abstaende verringert** - bewusst auf das Dashboard-Grid
+gescoped (nicht die ganze 14k-Zeilen-App durchgefegt, zu hohes Regressions-
+risiko fuer den Nutzen): `#dashWidgets`-Grid-Gap 14→10px, `.dash-layout`-Gap
+(Majors-Sidebar zum Grid) 18→12px, `.dw`-Kartenpadding 18→14px (inkl. einer
+zuvor uebersehenen `@media(min-width:1100px)`-Override-Zeile, die die
+Reduktion sonst auf genau der Bildschirmbreite des Referenzfotos wieder
+rueckgaengig gemacht haette), `.dw`-Kartenabstand 10→8px, `.dw-hdr`-Marge
+16→12px, `.mw-tile`-Innenpadding 9px 15px→8px 12px. Falls "global" tatsaech-
+lich app-weit gemeint war (z.B. auch `.masonry` auf den Asset-Detailseiten),
+bei Bedarf gezielt nachziehen statt anzunehmen.
+
+**5. Persistenz-Bug gefunden und gefixt** ("UI-Aenderungen wie Farbwechsel
+werden nach wenigen Sekunden ueberschrieben, muessen beim ERSTEN Versuch
+dauerhaft bleiben") - der Designer-Farbregler selbst (`applyDesignerHue()`/
+`saveDesignHue()`) war beim Nachpruefen bereits korrekt ueber `markPrefEdit()`
+abgesichert (per Playwright mit echtem Draw-durch-alle-Trigger-Test
+verifiziert: Boot-Feeds, `renderDash()`, `flushAndSave()`, 1,5s-Cloud-Debounce
+- Farbe blieb in JEDEM Fall stehen). Der eigentliche Bug lag an sechs
+ANDEREN Stellen, die demselben "ausserhalb von snap()/Undo, aber trotzdem
+geraeteuebergreifend synchron" -Muster (siehe "WICHTIGSTE REGEL" ganz oben)
+folgen SOLLTEN, es aber nicht taten:
+- **`saveTabStacks()`** und **`togglePinEnabled()`**: bumpten `fxpro_updated`
+  und stiessen `cloudAutoSync()` an, riefen aber `markPrefEdit()` NICHT auf -
+  ohne das Flag stufte `cloudPush()`s optimistische Versionspruefung die
+  Aenderung als reinen Auto-Refresh ein und ein zeitgleicher Pull (anderes
+  Geraet/Tab pusht dazwischen) zog den aelteren Cloud-Stand drueber. Beide
+  jetzt mit `markPrefEdit()` ergaenzt.
+- **`cloudPull()` selbst fehlte an VIER Stellen der `!prefPending`-Schutz**,
+  der bei `compactLevel`/`designHue`/`designSaved`/den Set-ups-/Kalender-
+  Filtern bereits existierte: `greenDismissed`, `tabStacks`, `pinEnabled`,
+  `riskEnvRemindDismissed` wurden dort IMMER unconditional aus dem Cloud-
+  Stand uebernommen - selbst mit korrekt gesetztem `markPrefEdit()`-Flag in
+  der jeweiligen Save-Funktion haette das die lokale Aenderung also trotzdem
+  ueberschrieben, weil der Schutz an der falschen Stelle (nur Save-Funktion,
+  nicht Pull-Funktion) gefehlt hat. Alle vier jetzt mit `!prefPending&&`
+  guarded, exakt wie die bereits geschuetzten Felder direkt daneben.
+- **Notes-Tab-Rubrik-Funktionen** (`setNoteRubBias`/`togNoteRubImp`/
+  `mvNoteRub`/`setNoteRubItemBias`/`togNoteRubItem`/`mvNoteRubItem`) - diese
+  gehoeren zum snap()-Kernbaum (ueber `noteCats`/Symbol-Objekte), brauchen
+  also `pushU()` (nicht `markPrefEdit()`) als Schutzmarker. Sechs von neun
+  Geschwisterfunktionen in dieser Familie hatten es (add/delete-Funktionen),
+  sechs andere (Bias setzen, Wichtig-Toggle, Reihenfolge aendern) fehlte es
+  komplett - reiner Kopier-/Wartungs-Fehler, als die Long-Press-Bias-Picker
+  fuer Notes ergaenzt wurden (siehe "Bias-Buttons durch Long-Press-Popover
+  ersetzt" oben), nicht konsistent auf ALLE Geschwisterfunktionen uebertragen.
+  Alle sechs jetzt mit `pushU()` ergaenzt.
+- Per Playwright mit einem echten simulierten Multi-Geraete-Wettlauf
+  verifiziert (gemockter `fetch` liefert bei `cloudPull()` bewusst einen
+  ALTEN Cloud-Stand zurueck, waehrend eine lokale Aenderung noch auf ihren
+  eigenen 1,5s-Auto-Push wartet): Tab-Stapel-Aenderung UND PIN-Toggle
+  ueberleben den simulierten Pull jetzt korrekt (vorher waeren beide durch
+  den fehlenden Schutz zurueckgesetzt worden); `setNoteRubBias()` bumpt jetzt
+  nachweislich `_lastUserEditTs` und den Undo-Stack.
+- **Merksatz:** bei einer neuen "ausserhalb von snap()" laufenden Praeferenz
+  IMMER alle VIER Ecken pruefen, nicht nur zwei - (1) Save-Funktion bumpt
+  `fxpro_updated`+`_lsUpdatedSeen`+`markPrefEdit()`+`cloudAutoSync()` UND (2)
+  `cloudPull()` selbst hat fuer GENAU dieses Feld einen `!prefPending`-Guard,
+  sonst nuetzt (1) allein nichts. Bei einer Kernbaum-Aenderung (Teil von
+  `snap()`) ist `pushU()` der richtige Marker statt `markPrefEdit()` - bei
+  einer Familie von Geschwisterfunktionen (wie hier die Notes-Rubriken)
+  IMMER alle pruefen, nicht nur die zuerst gefundene.
+
+### Persistenz-Bug Runde 2: vollstaendiger Codebase-Scan statt Einzelfall-Fixes (Nutzer-Bugreport 2026-07-27, direkt im Anschluss)
+
+Nutzer meldete: der Bug besteht weiterhin - konkret im "Bearbeitungsmenue"
+(Market-Watch-Zahnrad, seit der letzten Session nur noch im Bearbeitungs-
+modus erreichbar) ein FX-Paar abgewaehlt, nach ein paar Sekunden war es
+wieder da. Der Runde-1-Fix (siehe Eintrag oben) hatte gezielt Kandidaten
+geprueft, aber **nicht wirklich JEDEN `save()`-Aufruf im ganzen File**, wie
+der eigene Merksatz dort eigentlich schon forderte.
+
+**Diesmal ein programmatischer Scan statt Einzelfall-Suche**: Skript
+extrahiert JEDE `function name(...){...}` per Klammer-Tiefen-Zaehlung
+(auch mehrzeilig, der vorherige Scan hatte nur einzeilige Funktionen erwischt)
+und listet alle, die `save();` enthalten, aber nirgends im Funktionskoerper
+`pushU()`/`markPrefEdit()`/`markUserEditTs()`. Ergebnis: 10 weitere echte
+Treffer (zusaetzlich zu den bereits im Runde-1-Eintrag gefixten):
+
+- **`toggleMwSym()`** - genau der gemeldete Fall (Market-Watch "Choose
+  symbols"-Menue, FX-Paar an/abwaehlen). **`setMwTab()`** direkt daneben
+  (Kategorie-Umschalter) hatte denselben Fehler.
+- **`moveSbSym()`/`moveSbCat()`** - Sidebar-Umsortierung (Long-Press-Sortierung
+  von Symbolen/Kategorien).
+- **`mvRub()`** - Rubrik-Karten-Umsortierung auf der Asset-Detailseite
+  (`addRub()`/`delRub()` direkt daneben hatten `pushU()` bereits - dieselbe
+  "add/delete korrekt, move/toggle vergessen"-Musterluecke wie bei den
+  Notes-Rubriken in Runde 1).
+- **`saveDateM()`/`clearDateM()`** - Indikator-Release-Datum speichern/leeren.
+- **`saveRateWatch()`/`saveIndLink()`** - eigene URL fuer Zinserwartungs-/
+  Quellen-Link speichern (die zugehoerigen `resetRateWatch()`/`resetIndLink()`
+  waren in Runde 1 schon gefixt worden, die SAVE-Variante daneben aber
+  uebersehen).
+- **`saveInfoM()`** - eigener Info-Text an einer Rubrik/einem Indikator.
+- **`doUndo()`/`doRedo()`** - hier bewusst NICHT `pushU()` (wuerde
+  uStack/rStack korrumpieren), sondern ein neuer, leichtgewichtiger Helfer
+  `markUserEditTs()` (nur `_lastUserEditTs`/`_userEditedSinceSync`/
+  `fxpro_user_pending`, ohne Stack-Mutation).
+
+**Bewusst NICHT angefasst** (verifiziert als korrekt OHNE Schutz, kein
+Uebersehen): `togRubCollapse()`/`goToRubCard()`/`gotoIndicatorByNotif()`
+(reines Auf-/Zuklappen einer Karte, auch als Navigations-Nebeneffekt - haette
+`pushU()` dafuer, wuerde JEDES Aufklappen einer Karte einen Undo-Schritt
+erzeugen und den 60-Eintrag-Stack mit trivialen Klicks fluten),
+`assetCfgApply()` (reiner Helfer, alle drei Aufrufer haben `pushU()` bereits
+VOR dem Aufruf), `renderEvtAlertList()`/`updInboxBadge()`/`renderInbox()`
+(raeumen nur abgelaufene Eintraege auto auf), `checkPriceAlerts()`/
+`autoFetchCot()`/`autoFetchSentiment()`/`bootFetchScoreFeeds()`/
+`cotManualRefresh()`/`flushAndSave()` (Live-Feed-getriebene bzw. der
+Hintergrund-Save selbst - duerfen NICHT `pushU()` aufrufen, das wuerde jeden
+automatischen Refresh als eigenen Undo-Schritt/Nutzer-Edit tarnen).
+
+Per Playwright mit demselben simulierten Multi-Geraete-Wettlauf wie in
+Runde 1 verifiziert, diesmal am EXAKTEN gemeldeten Ablauf (Market-Watch-
+Menue oeffnen, EUR/USD abwaehlen, `cloudPull()` mit einem gemockten,
+aelteren Cloud-Stand dazwischenschieben): das Paar bleibt jetzt entfernt.
+
+**Merksatz (verschaerft gegenueber Runde 1):** bei diesem Bug-Muster reicht
+"ein paar naheliegende Kandidaten pruefen" nicht - es gibt inzwischen (Stand
+2026-07-27) ueber 20 Funktionen quer durchs ganze File, die demselben Fehler
+unterlagen, weil neue Editier-Funktionen offenbar oft nach dem Vorbild einer
+NICHT-schuetzenden Nachbarfunktion kopiert wurden statt nach dem Vorbild der
+Save-Funktion. Bei JEDEM kuenftigen Verdacht auf dieses Bug-Muster (nicht nur
+bei einem Bugreport, auch praeventiv nach dem Hinzufuegen neuer Editier-
+Funktionen) den programmatischen Scan erneut fahren (Skript-Idee: Klammer-
+balancierte Extraktion jeder `function`, Filter auf `save()` ohne
+`pushU`/`markPrefEdit`/`markUserEditTs` im Koerper) - NICHT wieder nur
+einzelne Verdachtsfaelle von Hand durchsuchen, das uebersieht nachweislich
+einen Grossteil.
