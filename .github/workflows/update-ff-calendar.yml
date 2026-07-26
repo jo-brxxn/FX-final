@@ -2910,18 +2910,18 @@ jobs:
       #   EUR: ECB Data Portal SDMX csvdata (EST = Euro Short-Term Rate).
       #   GBP: Bank of England IADB CSV (Serie IUDSOIA = SONIA).
       #   CAD: Bank of Canada Valet API (Serie AVG.INTWO = CORRA).
-      #   CHF: SNB Data Portal Cube "snbgwdzid" (Dimension SARON) - Format
-      #        noch NICHT per Live-Lauf verifiziert (Sandbox-Netzwerk-
-      #        Restriktion), siehe parseChfRef()-Kommentar; naechster
-      #        workflow_dispatch-Job-Log bestaetigt/korrigiert das.
-      #   JPY: BoJ "Call Money Market Data" (Uncollateralized O/N Call Rate =
-      #        TONA) - Parser noch als Platzhalter (parseJpyRef() liefert
-      #        bewusst null), da die Seitenstruktur noch nicht per Live-Dump
-      #        gesichtet wurde; erster Lauf liefert den Rohdump im Job-Log
-      #        (rate_jpy_ref.html-Head), danach Parser ergaenzen.
-      #   NZD: RBNZ "Wholesale interest rates (B2)" (Official Cash Rate) -
-      #        wie JPY zunaechst Platzhalter (parseNzdRef() liefert null),
-      #        Parser folgt nach Sichtung des echten Seiteninhalts.
+      #   CHF: SNB Data Portal Cube "snbgwdzid" (Dimension SARON) - Format per
+      #        workflow_dispatch-Testlauf 2026-07-26 verifiziert (semikolon-
+      #        getrenntes, in Anfuehrungszeichen gequotetes CSV).
+      #   JPY/NZD: KEIN eigener Fetch auf boj.or.jp/rbnz.govt.nz - der
+      #        Testlauf 2026-07-26 zeigte, dass BoJs Seite ohne bekannte
+      #        Tabellenstruktur nicht blind parsebar ist und RBNZs Seite die
+      #        GitHub-Runner-IP per Cloudflare mit HTTP 403 blockt (dieselbe
+      #        Blockade wie beim dokumentierten NZD-Bond-Yield-Backfill).
+      #        Stattdessen wird der "Central Bank Rate"-Wert aus dem im
+      #        selben Lauf bereits aktualisierten ind_data.json wiederverwendet
+      #        (BoJ-Leitzins bzw. RBNZ OCR, ueber den bestehenden TradingView-
+      #        Kalender-Feed) - siehe parseCbRateFromIndData().
       #
       # Historie: taeglich EIN Snapshot PRO WAEHRUNG ergaenzt (wie bond_data/
       # price_data/score_hist) - ein rueckwirkender Backfill war fuer KEINE
@@ -2949,24 +2949,30 @@ jobs:
           curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoC CORRA curl: http=%{http_code} size=%{size_download}\n" "https://www.bankofcanada.ca/valet/observations/AVG.INTWO/json?recent=5" -o rate_cad_ref.json || echo "[debug] BoC CORRA curl: command failed (exit $?)"
           # CHF SARON: SNB Data Portal Cube "snbgwdzid" (Interest rates and
           # threshold factor), Dimension SARON, letzte ~10 Tage (neuester Wert
-          # gewinnt). Erste Live-Runde - Cube-/Dimensionsname per Recherche
-          # gefunden, noch nicht per curl aus dieser Sandbox verifizierbar
-          # (Netzwerk-Restriktion, siehe CLAUDE.md) - Format wird ueber den
-          # Job-Log dieses Laufs bestaetigt/angepasst.
+          # gewinnt). Live-verifiziert 2026-07-26 (workflow_dispatch-Testlauf):
+          # liefert echtes semikolon-getrenntes CSV mit Anfuehrungszeichen um
+          # jedes Feld ("Date";"D0";"Value") - siehe parseChfRef().
           FROM_D=$(date -u -d '10 days ago' +%Y-%m-%d 2>/dev/null || date -u -v-10d +%Y-%m-%d)
           TO_D=$(date -u +%Y-%m-%d)
           curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] SNB SARON curl: http=%{http_code} size=%{size_download}\n" "https://data.snb.ch/api/cube/snbgwdzid/data/csv/en?dimSel=D0(SARON)&fromDate=${FROM_D}&toDate=${TO_D}" -o rate_chf_ref.csv || echo "[debug] SNB SARON curl: command failed (exit $?)"
-          # JPY TONA: BoJ "Call Money Market Data" (Uncollateralized O/N Call
-          # Rate), taeglich aktualisiert. Erster Anlauf holt die HTML-Seite als
-          # Rohdump (wie beim PMI/Investing.com-Integrationsmuster dieses
-          # Projekts) - der Parser wird nach dem ersten Job-Log-Blick auf die
-          # tatsaechliche Struktur (Tabelle vs. eingebettetes JSON) angepasst.
-          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoJ TONA curl: http=%{http_code} size=%{size_download}\n" "https://www.boj.or.jp/en/statistics/market/short/mutan/index.htm" -o rate_jpy_ref.html || echo "[debug] BoJ TONA curl: command failed (exit $?)"
-          # NZD OCR: RBNZ "Wholesale interest rates (B2)" Seite - wie bei JPY
-          # zunaechst als Rohdump, Parser folgt nach dem ersten Job-Log.
-          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] RBNZ OCR curl: http=%{http_code} size=%{size_download}\n" "https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates" -o rate_nzd_ref.html || echo "[debug] RBNZ OCR curl: command failed (exit $?)"
+          # JPY/NZD Referenzzins: KEIN eigener Fetch auf boj.or.jp/rbnz.govt.nz -
+          # der erste Live-Testlauf (2026-07-26) zeigte, dass (a) BoJs Seite
+          # zwar antwortet, aber ohne bekannte Tabellenstruktur nicht blind
+          # parsebar ist, und (b) RBNZs Statistik-Seite die GitHub-Runner-IP
+          # per Cloudflare mit HTTP 403 blockt (dieselbe Blockade, die dieses
+          # Projekt fuer RBNZ-Dateien beim NZD-Bond-Yield-Backfill bereits
+          # dokumentiert hat, siehe CLAUDE.md). Stattdessen: der weiter oben in
+          # diesem selben Workflow-Lauf bereits erzeugte ind_data.json-Eintrag
+          # "Central Bank Rate" (BoJ-Leitzins bzw. RBNZ OCR, ueber den
+          # bestehenden, zuverlaessigen TradingView-Kalender-Feed) wird
+          # wiederverwendet (siehe parseJpyRef()/parseNzdRef() - lesen direkt
+          # die lokale Datei, kein zusaetzlicher Netzwerk-Request noetig). Fuer
+          # JPY/NZD ist der Leitzins strukturell fast identisch zum jeweiligen
+          # Futures-Referenzzins (TONA folgt dem BoJ-Call-Rate-Ziel sehr eng,
+          # NZ-OCR ist ohnehin schon der crossBenchmark-Ankerpunkt) - kein
+          # Genauigkeitsverlust ggue. einem direkten SARON/TONA-Fetch.
           echo "=== ref-rate responses (first 200 chars each) ==="
-          for f in rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_jpy_ref.html rate_nzd_ref.html; do echo "--- $f ---"; head -c 200 "$f" 2>/dev/null || echo "(missing)"; echo; done
+          for f in rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv; do echo "--- $f ---"; head -c 200 "$f" 2>/dev/null || echo "(missing)"; echo; done
 
           # Futures-Kurven: EIN gemeinsamer TradingView-Scanner-Call fuer alle
           # Wurzeln (CBOT:ZQ/ASX24:IB praezise 1-Monats-Ketten 14 Monate
@@ -3077,41 +3083,43 @@ jobs:
               }catch(e){return null;}
             }
             function parseChfRef(){
-              // SNB-Cube-CSV (Cube "snbgwdzid", Dimension SARON): Format noch
-              // nicht per Live-Lauf bestaetigt (Sandbox-Netzwerk-Restriktion,
-              // siehe CLAUDE.md) - nimmt defensiv die letzte Zeile mit einer
-              // Datums-aehnlichen ersten Spalte und einer numerischen letzten
-              // Spalte (gaengiges SNB-Cube-Format: "Date;D0;Value" oder
-              // "Date,Value"). Passt sich beim naechsten Job-Log-Blick an, falls
-              // das Format abweicht.
+              // SNB-Cube-CSV (Cube "snbgwdzid", Dimension SARON) - Live-Format
+              // 2026-07-26 bestaetigt: Semikolon-getrennt, JEDES Feld in
+              // Anfuehrungszeichen, z.B. Zeile 4 = "Date";"D0";"Value", danach
+              // Datenzeilen wie "2026-07-16";"SARON";"-0.04". Anfuehrungszeichen
+              // muessen vor dem Number()-Parse entfernt werden (sonst NaN durch
+              // die eingeschlossenen "-Zeichen).
               try{
                 const raw=fs.readFileSync("rate_chf_ref.csv","utf8");
-                const sep=raw.includes(";")&&!raw.includes(",")?";":",";
                 const lines=raw.split(/\r?\n/).filter(l=>l.trim());
                 for(let i=lines.length-1;i>=0;i--){
-                  const cols=lines[i].split(sep);
+                  const cols=lines[i].split(";").map(c=>c.trim().replace(/^"|"$/g,""));
                   if(cols.length<2)continue;
-                  const v=Number(cols[cols.length-1].trim());
+                  const v=Number(cols[cols.length-1]);
                   if(isFinite(v)&&/\d{4}/.test(cols[0]))return v;
                 }
                 return null;
               }catch(e){return null;}
             }
-            function parseJpyRef(){
-              // BoJ "Call Money Market Data"-Seite wurde als Rohdump geholt
-              // (rate_jpy_ref.html) - Struktur noch nicht bekannt (Tabelle vs.
-              // eingebettetes JSON), Parser wird nach dem ersten Job-Log-Blick
-              // auf den tatsaechlichen Seiteninhalt ergaenzt. Bis dahin liefert
-              // dieser Wert bewusst null (Waehrung wird sauber uebersprungen,
-              // "kept existing" - siehe Skip-Logik unten), statt zu raten.
-              return null;
+            // JPY/NZD: kein eigener Netzwerk-Request auf boj.or.jp/rbnz.govt.nz
+            // (siehe Kommentar bei den curl-Fetches oben) - liest stattdessen
+            // den bereits im selben Workflow-Lauf aktualisierten "Central Bank
+            // Rate"-Eintrag aus ind_data.json (derselbe TradingView-Kalender-
+            // Feed, der auch die Indikator-Karte in der App speist). Match ueber
+            // den KANONISCHEN Indikator-Namen "Central Bank Rate" (nicht den
+            // waehrungsspezifischen Anzeigenamen), exakt wie IND_DATA_FEED das
+            // in index.html selbst erwartet.
+            function parseCbRateFromIndData(ccy){
+              try{
+                const d=JSON.parse(fs.readFileSync("ind_data.json","utf8"));
+                const actual=d&&d[ccy]&&d[ccy]["Central Bank Rate"]&&d[ccy]["Central Bank Rate"].actual;
+                if(actual==null)return null;
+                const m=String(actual).match(/-?\d+(\.\d+)?/);
+                return m?Number(m[0]):null;
+              }catch(e){return null;}
             }
-            function parseNzdRef(){
-              // RBNZ "Wholesale interest rates (B2)"-Seite wurde als Rohdump
-              // geholt (rate_nzd_ref.html) - analog zu parseJpyRef: Parser folgt
-              // nach Sichtung des echten Seiteninhalts im Job-Log.
-              return null;
-            }
+            function parseJpyRef(){return parseCbRateFromIndData("JPY");}
+            function parseNzdRef(){return parseCbRateFromIndData("NZD");}
 
             // ── Futures-Kurve parsen: Ticker-Root -> {monthKey:"YYYY-MM"->rate} ──
             let tvResp;try{tvResp=JSON.parse(fs.readFileSync("rate_tv.json","utf8"));}catch(e){tvResp=null;}
@@ -3348,12 +3356,12 @@ jobs:
               // 1-Monats-/sitzungsdatiertes Pendant existiert), daher strukturell
               // kein precise moeglich (siehe Plan-Notiz/CLAUDE.md).
               CHF:{ref:parseChfRef,curve:fsr3Curve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"SNB (SARON) + SARON 3M futures"},
-              JPY:{ref:parseJpyRef,curve:toa3mCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoJ (TONA) + TONA 3M futures"},
+              JPY:{ref:parseJpyRef,curve:toa3mCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoJ (policy rate, via ind_data.json) + TONA 3M futures"},
               // NZD: einziges frei verfuegbare Kontrakt ist der 90-Tage-NZ-Bank-
               // Bill-Future (BKBM-Satz) - das ist NICHT der OCR-Referenzzins
               // selbst (Bank-Bill traegt einen Kreditspread ueber dem OCR, exakt
               // wie Euribor vs. €STR) - deshalb crossBenchmark:true wie bei EUR.
-              NZD:{ref:parseNzdRef,curve:bbCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"RBNZ (OCR) + NZ 90-Day Bank Bill 3M curve"}
+              NZD:{ref:parseNzdRef,curve:bbCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"RBNZ (OCR, via ind_data.json) + NZ 90-Day Bank Bill 3M curve"}
             };
 
             // ── Bestehende Datei laden (Multi-Waehrungs-Struktur; migriert
@@ -3411,7 +3419,7 @@ jobs:
             fs.writeFileSync("rate_probabilities.json",JSON.stringify(full,null,1));
             console.log("rate_probabilities.json:\n  "+summary.join("\n  "));
           '
-          rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_jpy_ref.html rate_nzd_ref.html rate_tv.json rate_tv_tickers.json
+          rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_tv.json rate_tv_tickers.json
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
