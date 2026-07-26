@@ -12196,7 +12196,8 @@ const SENT_INFO={
      <ul><li><b style="color:${'#ef6b78'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
      <li><b style="color:${'#5fa8ed'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
      <li><b style="color:${'#f4ad5c'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
-     <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>`],
+     <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
+     <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
@@ -12225,11 +12226,16 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
+// Zeitraum-Filter fuer die Retail-Sentiment-Historie (erscheint, sobald im
+// Retail-Sentiment-Filter ein einzelnes Symbol statt "All symbols" gewaehlt
+// ist) - Default 'MAX' wie ueberall sonst (Nutzer-Wunsch "maximale Historie").
+let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
+function setSentimentRange(r){sentimentRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){sentimentCustomFrom='';sentimentCustomTo='';}renderSentiment();}
 function setPcRange(r){pcRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){pcCustomFrom='';pcCustomTo='';}renderSentiment();}
 function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){fearGreedCustomFrom='';fearGreedCustomTo='';}renderSentiment();}
 // Namen folgen der timeRangeCustomHtml-Konvention "<setFnName>Custom"
@@ -12244,6 +12250,23 @@ function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreed
 // zweigeteilte Gruppierung (FX Pairs / Other Assets), aber dieselbe Optik
 // wie der gemeinsame assetFilterSelect-Helper (gleiche .cot-filterbar-CSS).
 const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOIL']);
+// Broker-Symbol -> unsere Asset-ID, fuer den Preis-Vergleich in der Retail-
+// Sentiment-Historie (priceSeriesFor/resolvePairPriceSeries erwarten unsere
+// IDs, nicht den Myfxbook-Symbolnamen).
+const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL'};
+function sentSymPriceSeries(sym){
+  const id=SENT_NONFX_PRICE_ID[sym];
+  if(id)return priceSeriesFor(id);
+  if(sym&&sym.length===6)return resolvePairPriceSeries(sym.slice(0,3),sym.slice(3));
+  return null;
+}
+// Lesbarer Name eines Broker-Symbols ("EURUSD"->"EUR/USD", "XAUUSD"->"Gold").
+function sentSymLabel(sym){
+  const id=SENT_NONFX_PRICE_ID[sym];
+  if(id)return COT_NAME[id]||sym;
+  if(sym&&sym.length===6)return sym.slice(0,3)+'/'+sym.slice(3);
+  return sym||'';
+}
 function sentFilterBar(){
   const set=new Set();
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
@@ -12294,13 +12317,17 @@ function pcXTickIdx(n,cnt){
   const out=[];for(let k=0;k<c;k++)out.push(Math.round(k*(n-1)/(c-1)));
   return[...new Set(out)];
 }
-// ── Retail Sentiment: divergierende Long/Short-Balken je Markt ──
+// ── Retail Sentiment: divergierende Long/Short-Balken je Markt (Snapshot,
+// "All symbols") ODER Historie vs. Preis (sobald ein einzelnes Symbol im
+// Filter gewaehlt ist - Nutzer-Wunsch 2026-07-26, siehe renderRetailHistory).
 function renderRetailBars(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
-  const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)&&(!sentSym||r.sym===sentSym)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   const filt=sentFilterBar();
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}</small></div>`;
+  const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
+  if(sentSym)return renderRetailHistory(D,sentSym,hdr);
+  const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
     return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:12.5px;line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
@@ -12321,6 +12348,108 @@ function renderRetailBars(D){
   }).join('');
   const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${legend}${rows}</div></div>`;
+}
+// ── Retail Sentiment History: Net Positioning (Long%-Short%) vs. Preis +
+// darunter der Long/Short-Verlauf als 100%-Stacked-Bar (Nutzer-Wunsch
+// 2026-07-26, angelehnt an das mitgeschickte Referenzfoto, aber im
+// bestehenden App-Chart-Stil statt 1:1 kopiert - Zeitraum-Filter, Hover/Tap-
+// Tooltip-Fenster und Preis-Kerzen-ohne-Docht-Konvention wie im Trends-Tab
+// "Score vs Price"). retailHistory wird stuendlich vom Workflow fortgeschrieben
+// (ein echter Punkt/Tag, kein Backfill/Schaetzen moeglich - Myfxbook liefert
+// nur den aktuellen Snapshot); der vorhandene Bestand kam per Git-Historie-
+// Rekonstruktion der bereits committeten sentiment_data.json-Staende zustande.
+function renderRetailHistory(D,sym,hdr){
+  const raw=((D.retailHistory&&D.retailHistory[sym])||[]).filter(e=>e&&isFinite(+e[1])).map(e=>[e[0],+e[1],isFinite(+e[2])?+e[2]:100-(+e[1])]);
+  raw.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(sentimentRange,'setSentimentRange')}${timeRangeCustomHtml(sentimentRange,sentimentCustomFrom,sentimentCustomTo,'setSentimentRange')}</div>`;
+  if(raw.length<2){
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">Not enough retail-positioning history for ${escH(sentSymLabel(sym))} yet — this builds up one real point per day as the hourly job runs (no backfill possible beyond what was already recorded). Tap the <b>i</b> to learn what this shows.</div></div></div>`;
+  }
+  const keepDates=new Set(filterDatesByRange(raw.map(e=>e[0]),sentimentRange,sentimentCustomFrom,sentimentCustomTo));
+  const series=raw.filter(e=>keepDates.has(e[0]));
+  if(series.length<2){
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">No data in this range — pick a wider range above.</div></div></div>`;
+  }
+  const priceSeries=sentSymPriceSeries(sym);
+  const last=series[series.length-1],lastNet=last[1]-last[2];
+  const netChart=retailNetChart(series,priceSeries);
+  const stackChart=retailStackChart(series);
+  const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">
+    ${rangeBar}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 4px">
+      <span style="font-size:12px;color:var(--t3)">Net Retail Positioning (Long% − Short%)${hasPrice?' vs. price':''}</span>
+      <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>Net long</span><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bear}"></span>Net short</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:linear-gradient(90deg,var(--green) 50%,var(--red) 50%)"></span>Price (candle)</span>`:''}</div>
+    </div>
+    ${netChart}
+    <div style="text-align:center;font-size:12.5px;color:var(--t2);margin:6px 0 16px">Latest: <b style="color:${lastNet>=0?BC.bull:BC.bear}">${lastNet>0?'+':''}${lastNet.toFixed(0)}%</b> net ${lastNet>=0?'long':'short'} (${last[1].toFixed(0)}% long / ${last[2].toFixed(0)}% short) — ${fmtDayHdr(last[0])}</div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:4px">Long % / Short % split</div>
+    ${stackChart}
+    ${hasPrice?'':'<div style="padding:6px 0 0;color:var(--t3);font-size:11.5px">No price history yet for this market &ndash; it grows once price_data.json has a matching date.</div>'}
+  </div></div>`;
+}
+// Net-Positioning-Balken (Long%-Short%, symmetrisch um 0) + Preis als Kerze-
+// ohne-Docht auf der rechten Achse - selbe Bausteine wie renderNetFlowChart
+// (Balken) und scoreVsPriceChart (Preis-Kerzen), hier kombiniert.
+function retailNetChart(series,priceSeries){
+  const n=series.length;
+  const net=series.map(e=>e[1]-e[2]);
+  const W=760,H=360,padL=48,padR=56,padT=22,padB=44;
+  const maxA=Math.max(10,...net.map(Math.abs))*1.15;
+  const bw=Math.max(2,(W-padL-padR)/n*0.72);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  const yOf=v=>padT+(1-(v+maxA)/(2*maxA))*(H-padT-padB);
+  const y0=yOf(0);
+  const priceMap={};(priceSeries||[]).forEach(e=>{if(e&&e[1]!=null&&isFinite(e[1]))priceMap[e[0]]=e[1];});
+  const priceVals=series.map(e=>priceMap[e[0]]).filter(v=>v!=null);
+  let svgPrice='';
+  const CANDLE_W=(W-padL-padR)/n*0.6;
+  const PRICE_UP='var(--green)',PRICE_DOWN='var(--red)',PRICE_FLAT='var(--t3)';
+  if(priceVals.length>=1){
+    let pMin=Math.min(...priceVals),pMax=Math.max(...priceVals);
+    if(pMin===pMax){pMin-=Math.abs(pMin)*0.02||1;pMax+=Math.abs(pMax)*0.02||1;}
+    const pad=(pMax-pMin)*0.08;pMin-=pad;pMax+=pad;
+    const yOfPrice=v=>padT+(1-(v-pMin)/(pMax-pMin))*(H-padT-padB);
+    [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
+      const y=yOfPrice(t);
+      svgPrice+=`<text x="${(W-padR+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
+    });
+    const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),v});});
+    for(let k=1;k<pricePts.length;k++){
+      const prev=pricePts[k-1],cur=pricePts[k];
+      const bcol=cur.v>prev.v?PRICE_UP:cur.v<prev.v?PRICE_DOWN:PRICE_FLAT;
+      const yTop=yOfPrice(Math.max(prev.v,cur.v)),yBot=yOfPrice(Math.min(prev.v,cur.v));
+      svgPrice+=`<rect x="${(cur.x-CANDLE_W/2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${CANDLE_W.toFixed(1)}" height="${Math.max(yBot-yTop,1.5).toFixed(1)}" fill="${bcol}" opacity="0.68"/>`;
+    }
+  }
+  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
+  const bars=net.map((v,i)=>{const y=yOf(v),up=v>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y-y0),1).toFixed(1)}" fill="${up?BC.bull:BC.bear}"/>`;}).join('');
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${svgPrice}${gy}${bars}${xlab}</svg>`;
+  const hpts=net.map((v,i)=>{
+    const up=v>=0,pv=priceMap[series[i][0]];
+    return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(series[i][0]))}</div><b>${(v>0?'+':'')+v.toFixed(0)}%</b> net ${up?'long':'short'} (${series[i][1].toFixed(0)}% / ${series[i][2].toFixed(0)}%)${pv!=null?`<div style="margin-top:2px">Price: <b>${fmtPriceTick(pv)}</b></div>`:''}`};
+  });
+  return chartHoverWrap(svg,hpts);
+}
+// 100%-Stacked Long/Short-Balken pro Tag (gleiche Blau/Rot-Konvention wie die
+// Snapshot-Balken oben - kein neuer Farb-Code eingefuehrt).
+function retailStackChart(series){
+  const n=series.length;
+  const W=760,H=190,padL=36,padR=16,padT=14,padB=30;
+  const bw=Math.max(2,(W-padL-padR)/n*0.72);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  const yOf=v=>padT+(1-v/100)*(H-padT-padB);
+  const gy=[0,20,40,60,80,100].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.5"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${t}%</text>`).join('');
+  const bars=series.map((e,i)=>{
+    const L=e[1],x=xOf(i)-bw/2;
+    const yLong=yOf(L),yZero=yOf(0),yTop=yOf(100);
+    return`<rect x="${x.toFixed(1)}" y="${yLong.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yZero-yLong,0).toFixed(1)}" fill="${BC.bull}"/><rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yLong-yTop,0).toFixed(1)}" fill="${BC.bear}"/>`;
+  }).join('');
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${gy}${bars}${xlab}</svg>`;
+  const hpts=series.map((e,i)=>({fx:xOf(i)/W,fy:yOf(e[1])/H,col:BC.bull,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${e[1].toFixed(0)}%</b> long / <b>${e[2].toFixed(0)}%</b> short`}));
+  return chartHoverWrap(svg,hpts);
 }
 // ── Put-Call Ratio: Stufenlinien-Chart mit Schwellen + Contrarian-Zonen ──
 // Dünnes Options-Volumen (v.a. die FX-Waehrungs-ETFs FXA/FXB/FXC/FXF/FXY/UUP

@@ -2275,6 +2275,28 @@ jobs:
                 else log.push("retail:parsed-"+retail.length+"/"+total);
               }
             }catch(e){log.push("retail:no-file/secrets-unset");}
+            // 4b. Retail-Positionierung: taeglicher Verlauf pro Symbol (Nutzer-
+            // Wunsch 2026-07-26 - Historie vs. Preis). Ein Punkt/Tag (bei
+            // mehrfachen Laeufen am selben Tag wird der heutige Eintrag
+            // ueberschrieben), Cap ~3 Jahre wie scoreHist/chartHist. out.retail
+            // ist per Carry-over auch an Tagen mit fehlgeschlagenem Live-Fetch
+            // gefuellt (der try-Block oben laesst es dann unangetastet) - diese
+            // Stufe haengt daher bewusst NICHT vom Erfolg des Fetches selbst ab.
+            // Kein Backfill hier moeglich (Myfxbook liefert nur den aktuellen
+            // Snapshot, keine historische Abfrage) - waechst ab jetzt organisch;
+            // der einmalige Bestand aus der Git-Historie der Datei wurde separat
+            // rekonstruiert (echte vergangene Snapshots, kein Schaetzen).
+            if(out.retail&&out.retail.length){
+              const rh=out.retailHistory&&typeof out.retailHistory==="object"?out.retailHistory:{};
+              out.retail.forEach(r=>{
+                if(!r||!r.sym||!isFinite(+r.long))return;
+                let s=Array.isArray(rh[r.sym])?rh[r.sym].filter(e=>e&&e[0]!==today):[];
+                s.push([today,+r.long,isFinite(+r.short)?+r.short:100-(+r.long)]);
+                s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+                rh[r.sym]=s.slice(-1100);
+              });
+              out.retailHistory=rh;
+            }
             out.updated=new Date().toISOString();
             fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
             console.log("sentiment_data.json: "+log.join(" | "));
