@@ -2844,19 +2844,22 @@ jobs:
             main().catch(e=>{console.log("[debug] score_hist: error "+e.message);});
           '
 
-      # ── ZINS-WAHRSCHEINLICHKEITEN, 5 ZENTRALBANKEN (rate_probabilities.json) ─
+      # ── ZINS-WAHRSCHEINLICHKEITEN, 8 ZENTRALBANKEN (rate_probabilities.json) ─
       # Nutzer-Wunsch 2026-07-20: CME-FedWatch-aehnliche Anzeige ("Rate
       # Probabilities", Insights-Tab), aber das offizielle CME-Tool/API ist
       # kostenpflichtig (~25 $+/Monat) - nach dem Grundsatz oben ("ein
       # kostenloses Konto ist kein Abbruchgrund, eine BEZAHLTE Stufe schon")
       # daher eine freie Eigenberechnung nach CMEs eigener, oeffentlich
       # dokumentierter Methodik. Erweitert 2026-07-25 (Nutzer-Wunsch: "auch
-      # fuer die anderen Waehrungen") auf 5 Zentralbanken/Waehrungen, nach
-      # einer mehrstufigen Live-Recherche (workflow_dispatch-Probe-Laeufe,
-      # siehe Session-Notiz), welche Futures/Referenzzins-Quellen frei
-      # verfuegbar sind:
+      # fuer die anderen Waehrungen") auf 5, dann 2026-07-26 (Nutzer-Wunsch:
+      # "fehlende Waehrungen ergaenzen, so praezise wie moeglich wie USD")
+      # auf alle 8 FX-Major-Zentralbanken, nach einer mehrstufigen
+      # Live-Recherche (workflow_dispatch-Probe-Laeufe + WebSearch, siehe
+      # Session-Notizen), welche Futures/Referenzzins-Quellen frei verfuegbar
+      # sind:
       #
-      # PRAEZISE Methode (USD/AUD) - identisch zur urspruenglichen ZQ-Logik:
+      # PRAEZISE Methode (USD/AUD, ggf. EUR/GBP/CAD falls der 2026-07-26
+      # Upgrade-Versuch anschlaegt) - identisch zur urspruenglichen ZQ-Logik:
       #   30-Day Fed Funds Futures (CBOT:ZQ) bzw. ASX 30-Day Interbank Cash
       #   Rate Futures (ASX24:IB) geben je KALENDERMONAT den durchschnittlichen
       #   Tages-Zinssatz an (100-Future-Preis) - ein direktes strukturelles
@@ -2864,25 +2867,41 @@ jobs:
       #   daraus tageszahl-gewichtet der Zins NACH der Sitzung herausrechnen
       #   (Kette Sitzung-zu-Sitzung, "sauberer Nachbarmonat ohne Sitzung"-Fix
       #   fuer die Verstaerkungs-Faelle - siehe Kommentare in preciseMethod()).
+      #   2026-07-26: fuer EUR/GBP/CAD wird zusaetzlich versucht, auf diese
+      #   Methode zu wechseln (ICEEUR:EMP "ECB Dated €STR" sitzungsdatiert /
+      #   ICEEUR:EON "One-Month €STR" / ICEEUR:SOA "One-Month SONIA" /
+      #   TMX:COA "One-Month CORRA" - alle strukturell wie ZQ/IB, siehe
+      #   eurCfg/gbpCfg/cadCfg weiter unten). Liefert TradingView dafuer 0
+      #   Kontrakte (wie beim ERSTEN Versuch 2026-07-25 mit 1-Monats-Tickern
+      #   fuer genau diese 3 Waehrungen), bleibt automatisch die bisherige
+      #   approx-Konfiguration aktiv - kein manueller Eingriff noetig.
       #
-      # APPROXIMATIVE Methode (EUR/GBP/CAD) - NEU, bewusst gekennzeichnet:
-      #   Fuer diese 3 Waehrungen fuehrt TradingView frei NUR 3-MONATS-Futures
-      #   (ICEEUR:I Euribor / ICEEUR:SO3 SONIA / TMX:CRA CORRA), keine
-      #   1-Monats-Kontrakte (mehrfach per Live-Probe bestaetigt - 1M-Ticker
-      #   existieren laut TradingView-Symbolsuche, liefern aber keine Preise).
-      #   Ein 3-Monats-Future kann NICHT sauber einem einzelnen Meeting
-      #   zugeordnet werden, wenn mehrere Sitzungen ins selbe Quartal fallen
-      #   (bei EZB/BoE/BoC der Regelfall) - eine exakte Meeting-fuer-Meeting-
-      #   Aufloesung wie bei USD/AUD ist mit frei verfuegbaren Futures-Daten
-      #   allein NICHT moeglich (braeuchte optionen-implizite/OIS-Daten wie
-      #   das bezahlte CME-Tool bzw. rateprobability.com). Stattdessen: die
-      #   Kontrakt-Kurve wird als glatte, linear interpolierte FORWARD-KURVE
-      #   gelesen (Ankerpunkte: heutiger Referenzzins + je ein Punkt pro
-      #   Kontraktmonat in der Mitte des Monats) und pro Sitzung am Mittelpunkt
-      #   ihrer "Kontrollperiode" (bis zur naechsten Sitzung) abgetastet - das
-      #   ist eine ehrliche, aus echten Marktpreisen abgeleitete Naeherung
-      #   (keine erfundene Zahl), aber strukturell ungenauer als USD/AUD. Der
-      #   Client kennzeichnet das per method:"approx"-Feld sichtbar.
+      # APPROXIMATIVE Methode (EUR/GBP/CAD als Fallback, plus CHF/JPY/NZD
+      # strukturell dauerhaft, da fuer diese 3 Waehrungen KEIN 1-Monats-/
+      # sitzungsdatiertes Futures-Kontrakt frei existiert):
+      #   Fuer diese Waehrungen fuehrt TradingView frei NUR 3-MONATS-Futures
+      #   (ICEEUR:I Euribor / ICEEUR:SO3 SONIA / TMX:CRA CORRA / EUREX:FSR3
+      #   SARON / OSE:TOA3M TONA / ASX24:BB NZ-Bank-Bill). Ein 3-Monats-Future
+      #   kann NICHT sauber einem einzelnen Meeting zugeordnet werden, wenn
+      #   mehrere Sitzungen ins selbe Quartal fallen (der Regelfall ausser bei
+      #   USD/AUD) - eine exakte Meeting-fuer-Meeting-Aufloesung wie bei
+      #   USD/AUD ist mit frei verfuegbaren Futures-Daten allein NICHT
+      #   moeglich (braeuchte optionen-implizite/OIS-Daten wie das bezahlte
+      #   CME-Tool bzw. rateprobability.com). Stattdessen: die Kontrakt-Kurve
+      #   wird als glatte, linear interpolierte FORWARD-KURVE gelesen
+      #   (Ankerpunkte: heutiger Referenzzins + je ein Punkt pro Kontraktmonat
+      #   in der Mitte des Monats) und pro Sitzung am Mittelpunkt ihrer
+      #   "Kontrollperiode" (bis zur naechsten Sitzung) abgetastet - das ist
+      #   eine ehrliche, aus echten Marktpreisen abgeleitete Naeherung (keine
+      #   erfundene Zahl), aber strukturell ungenauer als USD/AUD. Der Client
+      #   kennzeichnet das per method:"approx"-Feld sichtbar (≈-Badge).
+      #   Cross-Benchmark-Fix (crossBenchmark:true, siehe approxMethod()):
+      #   noetig, wenn das Futures-Kontrakt einen ANDEREN Zins misst als der
+      #   Referenzzins selbst (EUR: Euribor-Future vs. €STR-Referenz; NZD:
+      #   NZ-Bank-Bill-Future/BKBM vs. OCR-Referenz - beide haben einen
+      #   Kredit-/Liquiditaetsspread zueinander). CHF/JPY brauchen den Fix
+      #   NICHT (SARON-Future misst SARON, TONA-Future misst TONA - derselbe
+      #   Zins wie der jeweilige Referenzzins).
       #
       # Referenzzinsen (alle frei, taeglich, kein API-Key):
       #   USD: NY Fed Markets Data API (EFFR) - primaere Quelle, FRED spiegelt
@@ -2891,13 +2910,27 @@ jobs:
       #   EUR: ECB Data Portal SDMX csvdata (EST = Euro Short-Term Rate).
       #   GBP: Bank of England IADB CSV (Serie IUDSOIA = SONIA).
       #   CAD: Bank of Canada Valet API (Serie AVG.INTWO = CORRA).
+      #   CHF: SNB Data Portal Cube "snbgwdzid" (Dimension SARON) - Format
+      #        noch NICHT per Live-Lauf verifiziert (Sandbox-Netzwerk-
+      #        Restriktion), siehe parseChfRef()-Kommentar; naechster
+      #        workflow_dispatch-Job-Log bestaetigt/korrigiert das.
+      #   JPY: BoJ "Call Money Market Data" (Uncollateralized O/N Call Rate =
+      #        TONA) - Parser noch als Platzhalter (parseJpyRef() liefert
+      #        bewusst null), da die Seitenstruktur noch nicht per Live-Dump
+      #        gesichtet wurde; erster Lauf liefert den Rohdump im Job-Log
+      #        (rate_jpy_ref.html-Head), danach Parser ergaenzen.
+      #   NZD: RBNZ "Wholesale interest rates (B2)" (Official Cash Rate) -
+      #        wie JPY zunaechst Platzhalter (parseNzdRef() liefert null),
+      #        Parser folgt nach Sichtung des echten Seiteninhalts.
       #
       # Historie: taeglich EIN Snapshot PRO WAEHRUNG ergaenzt (wie bond_data/
       # price_data/score_hist) - ein rueckwirkender Backfill war fuer KEINE
-      # der 5 Waehrungen moeglich (bezahlte APIs/geblockte Einzelkontrakt-
+      # der 8 Waehrungen moeglich (bezahlte APIs/geblockte Einzelkontrakt-
       # Seiten/keine verlaesslichen historischen Settlement-Preise bei
       # TradingView) - waechst deshalb ab jetzt echt einen Punkt pro Tag.
-      - name: Fetch rate probabilities (Fed/RBA/ECB/BoE/BoC) -> rate_probabilities.json
+      # CHF/JPY/NZD starten mit 0 Historientagen, sobald ihr Referenzzins-
+      # Parser einmal erfolgreich durchlaeuft.
+      - name: Fetch rate probabilities (Fed/RBA/ECB/BoE/BoC/SNB/BoJ/RBNZ) -> rate_probabilities.json
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -2914,13 +2947,36 @@ jobs:
           curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoE SONIA curl: http=%{http_code} size=%{size_download}\n" "https://www.bankofengland.co.uk/boeapps/database/_iadb-fromshowcolumns.asp?csv.x=yes&Datefrom=01/Jun/2026&Dateto=now&SeriesCodes=IUDSOIA&CSVF=TN&UsingCodes=Y&VPD=Y&VFD=N" -o rate_gbp_ref.csv || echo "[debug] BoE SONIA curl: command failed (exit $?)"
           # CAD CORRA: Bank of Canada Valet API (Serie AVG.INTWO).
           curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoC CORRA curl: http=%{http_code} size=%{size_download}\n" "https://www.bankofcanada.ca/valet/observations/AVG.INTWO/json?recent=5" -o rate_cad_ref.json || echo "[debug] BoC CORRA curl: command failed (exit $?)"
+          # CHF SARON: SNB Data Portal Cube "snbgwdzid" (Interest rates and
+          # threshold factor), Dimension SARON, letzte ~10 Tage (neuester Wert
+          # gewinnt). Erste Live-Runde - Cube-/Dimensionsname per Recherche
+          # gefunden, noch nicht per curl aus dieser Sandbox verifizierbar
+          # (Netzwerk-Restriktion, siehe CLAUDE.md) - Format wird ueber den
+          # Job-Log dieses Laufs bestaetigt/angepasst.
+          FROM_D=$(date -u -d '10 days ago' +%Y-%m-%d 2>/dev/null || date -u -v-10d +%Y-%m-%d)
+          TO_D=$(date -u +%Y-%m-%d)
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] SNB SARON curl: http=%{http_code} size=%{size_download}\n" "https://data.snb.ch/api/cube/snbgwdzid/data/csv/en?dimSel=D0(SARON)&fromDate=${FROM_D}&toDate=${TO_D}" -o rate_chf_ref.csv || echo "[debug] SNB SARON curl: command failed (exit $?)"
+          # JPY TONA: BoJ "Call Money Market Data" (Uncollateralized O/N Call
+          # Rate), taeglich aktualisiert. Erster Anlauf holt die HTML-Seite als
+          # Rohdump (wie beim PMI/Investing.com-Integrationsmuster dieses
+          # Projekts) - der Parser wird nach dem ersten Job-Log-Blick auf die
+          # tatsaechliche Struktur (Tabelle vs. eingebettetes JSON) angepasst.
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] BoJ TONA curl: http=%{http_code} size=%{size_download}\n" "https://www.boj.or.jp/en/statistics/market/short/mutan/index.htm" -o rate_jpy_ref.html || echo "[debug] BoJ TONA curl: command failed (exit $?)"
+          # NZD OCR: RBNZ "Wholesale interest rates (B2)" Seite - wie bei JPY
+          # zunaechst als Rohdump, Parser folgt nach dem ersten Job-Log.
+          curl -sL --connect-timeout 15 --max-time 30 -A "$UA" -w "[debug] RBNZ OCR curl: http=%{http_code} size=%{size_download}\n" "https://www.rbnz.govt.nz/statistics/series/exchange-and-interest-rates/wholesale-interest-rates" -o rate_nzd_ref.html || echo "[debug] RBNZ OCR curl: command failed (exit $?)"
           echo "=== ref-rate responses (first 200 chars each) ==="
-          for f in rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json; do echo "--- $f ---"; head -c 200 "$f" 2>/dev/null || echo "(missing)"; echo; done
+          for f in rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_jpy_ref.html rate_nzd_ref.html; do echo "--- $f ---"; head -c 200 "$f" 2>/dev/null || echo "(missing)"; echo; done
 
           # Futures-Kurven: EIN gemeinsamer TradingView-Scanner-Call fuer alle
-          # 5 Wurzeln (CBOT:ZQ/ASX24:IB praezise 1-Monats-Ketten 14 Monate
-          # voraus, TMX:CRA/ICEEUR:SO3/ICEEUR:I approximative 3-Monats-Ketten
-          # 8 Monate voraus - reicht fuer die naechsten ~2 Kontraktzyklen).
+          # Wurzeln (CBOT:ZQ/ASX24:IB praezise 1-Monats-Ketten 14 Monate
+          # voraus; TMX:CRA/ICEEUR:SO3/ICEEUR:I bisherige approximative
+          # 3-Monats-Ketten; EUREX:FSR3/OSE:TOA3M/ASX24:BB neue 3-Monats-Ketten
+          # fuer CHF/JPY/NZD; ICEEUR:EMP/ICEEUR:EON/ICEEUR:SOA/TMX:COA sind
+          # EXPERIMENTELLE 1-Monats-/sitzungsdatierte Kandidaten fuer den
+          # EUR/GBP/CAD-Praezisions-Upgrade-Versuch - liefern sie 0 Kontrakte,
+          # bleibt automatisch die bisherige approx-Konfiguration aktiv, siehe
+          # CCY_CFG weiter unten).
           node -e '
             const fs=require("fs");
             const CODE=["","F","G","H","J","K","M","N","Q","U","V","X","Z"];
@@ -2932,6 +2988,13 @@ jobs:
             push("TMX:CRA",8);
             push("ICEEUR:SO3",8);
             push("ICEEUR:I",8);
+            push("EUREX:FSR3",8);
+            push("OSE:TOA3M",8);
+            push("ASX24:BB",8);
+            push("ICEEUR:EMP",12);
+            push("ICEEUR:EON",8);
+            push("ICEEUR:SOA",8);
+            push("TMX:COA",8);
             fs.writeFileSync("rate_tv_tickers.json",JSON.stringify(tickers));
           '
           TICKERS=$(node -e 'console.log(JSON.stringify(JSON.parse(require("fs").readFileSync("rate_tv_tickers.json","utf8"))))')
@@ -3013,6 +3076,42 @@ jobs:
                 return null;
               }catch(e){return null;}
             }
+            function parseChfRef(){
+              // SNB-Cube-CSV (Cube "snbgwdzid", Dimension SARON): Format noch
+              // nicht per Live-Lauf bestaetigt (Sandbox-Netzwerk-Restriktion,
+              // siehe CLAUDE.md) - nimmt defensiv die letzte Zeile mit einer
+              // Datums-aehnlichen ersten Spalte und einer numerischen letzten
+              // Spalte (gaengiges SNB-Cube-Format: "Date;D0;Value" oder
+              // "Date,Value"). Passt sich beim naechsten Job-Log-Blick an, falls
+              // das Format abweicht.
+              try{
+                const raw=fs.readFileSync("rate_chf_ref.csv","utf8");
+                const sep=raw.includes(";")&&!raw.includes(",")?";":",";
+                const lines=raw.split(/\r?\n/).filter(l=>l.trim());
+                for(let i=lines.length-1;i>=0;i--){
+                  const cols=lines[i].split(sep);
+                  if(cols.length<2)continue;
+                  const v=Number(cols[cols.length-1].trim());
+                  if(isFinite(v)&&/\d{4}/.test(cols[0]))return v;
+                }
+                return null;
+              }catch(e){return null;}
+            }
+            function parseJpyRef(){
+              // BoJ "Call Money Market Data"-Seite wurde als Rohdump geholt
+              // (rate_jpy_ref.html) - Struktur noch nicht bekannt (Tabelle vs.
+              // eingebettetes JSON), Parser wird nach dem ersten Job-Log-Blick
+              // auf den tatsaechlichen Seiteninhalt ergaenzt. Bis dahin liefert
+              // dieser Wert bewusst null (Waehrung wird sauber uebersprungen,
+              // "kept existing" - siehe Skip-Logik unten), statt zu raten.
+              return null;
+            }
+            function parseNzdRef(){
+              // RBNZ "Wholesale interest rates (B2)"-Seite wurde als Rohdump
+              // geholt (rate_nzd_ref.html) - analog zu parseJpyRef: Parser folgt
+              // nach Sichtung des echten Seiteninhalts im Job-Log.
+              return null;
+            }
 
             // ── Futures-Kurve parsen: Ticker-Root -> {monthKey:"YYYY-MM"->rate} ──
             let tvResp;try{tvResp=JSON.parse(fs.readFileSync("rate_tv.json","utf8"));}catch(e){tvResp=null;}
@@ -3035,6 +3134,17 @@ jobs:
             const craCurve=curveFor("TMX\\:CRA");
             const so3Curve=curveFor("ICEEUR\\:SO3");
             const ieCurve=curveFor("ICEEUR\\:I");
+            const fsr3Curve=curveFor("EUREX\\:FSR3");
+            const toa3mCurve=curveFor("OSE\\:TOA3M");
+            const bbCurve=curveFor("ASX24\\:BB");
+            // Experimentelle 1-Monats-/sitzungsdatierte Kandidaten fuer den
+            // EUR/GBP/CAD-Praezisions-Upgrade (siehe CCY_CFG weiter unten -
+            // wird nur genutzt, wenn n>0, sonst faellt die bisherige
+            // approx-Konfiguration automatisch zurueck).
+            const empCurve=curveFor("ICEEUR\\:EMP");
+            const eonCurve=curveFor("ICEEUR\\:EON");
+            const soaCurve=curveFor("ICEEUR\\:SOA");
+            const coaCurve=curveFor("TMX\\:COA");
 
             // ── PRAEZISE Methode (USD/AUD): identisch zur urspruenglichen
             //    ZQ-Verkettungslogik, nur parametrisiert (siehe Blockkommentar
@@ -3172,18 +3282,78 @@ jobs:
               CAD:[
                 ["2026-07-15","Jul 15, 2026"],["2026-09-02","Sep 2, 2026"],
                 ["2026-10-28","Oct 28, 2026"],["2026-12-09","Dec 9, 2026"]
+              ],
+              // SNB: nur quartalsweise (Maerz/Jun/Sep/Dez), Maerz+Jun 2026
+              // bestaetigt (snb.ch Pressemitteilungen). Sep/Dez 2026 sind
+              // beim Anlegen dieser Liste noch NICHT recherchier-bestaetigt
+              // (Cloudflare/403 auf snb.ch, mnimarkets, investing.com aus
+              // dieser Sandbox - der GitHub-Actions-Runner sollte snb.ch
+              // aber direkt erreichen koennen) - TODO: exakte Sep/Dez-Termine
+              // von snb.ch ergaenzen, sobald bestaetigt, sonst bleibt die
+              // "upcoming meetings"-Liste fuer CHF bis dahin leer (kein
+              // erfundenes Datum, siehe CLAUDE.md-Grundsatz).
+              CHF:[
+                ["2026-03-19","Mar 17-18, 2026"],["2026-06-18","Jun 16-17, 2026"]
+              ],
+              // BoJ: vollstaendiger 2026-Kalender (boj.or.jp bestaetigt).
+              JPY:[
+                ["2026-01-23","Jan 22-23, 2026"],["2026-03-19","Mar 18-19, 2026"],
+                ["2026-04-28","Apr 27-28, 2026"],["2026-06-16","Jun 15-16, 2026"],
+                ["2026-07-31","Jul 30-31, 2026"],["2026-09-18","Sep 17-18, 2026"],
+                ["2026-10-30","Oct 29-30, 2026"],["2026-12-18","Dec 17-18, 2026"]
+              ],
+              // RBNZ: 7 Entscheidungen/Jahr, hier nur die ab Jul 2026
+              // bestaetigten (rbnz.govt.nz) - fruehere 2026-Termine (Feb/Apr/Mai)
+              // liegen ohnehin in der Vergangenheit und wuerden nie angezeigt,
+              // exakt das bereits bei BoC etablierte Muster.
+              NZD:[
+                ["2026-07-08","Jul 8, 2026"],["2026-09-02","Sep 2, 2026"],
+                ["2026-10-28","Oct 28, 2026"],["2026-12-09","Dec 9, 2026"]
               ]
             };
 
             // method-Funktionen einheitlich als (Rcurrent,rates,meetings)=>meetings[]
-            // gewrappt, damit der Aufruf unten fuer alle 5 Waehrungen gleich bleibt
-            // (crossBenchmark ist nur fuer EUR true, siehe approxMethod-Kommentar).
+            // gewrappt, damit der Aufruf unten fuer alle Waehrungen gleich bleibt
+            // (crossBenchmark=true nur, wenn Futures-Benchmark != Referenzzins-
+            // Benchmark, siehe approxMethod-Kommentar).
+            //
+            // EUR/GBP/CAD versuchen zuerst ein 1-Monats-/sitzungsdatiertes
+            // Kandidaten-Kontrakt (siehe empCurve/eonCurve/soaCurve/coaCurve
+            // oben) - liefert TradingView dafuer 0 Kontrakte (wie beim letzten
+            // Live-Test dieser 3 Waehrungen), faellt automatisch auf die
+            // bisherige, bewaehrte 3-Monats-Approx-Konfiguration zurueck. Kein
+            // manueller Eingriff noetig, einfach das naechste workflow_dispatch-
+            // Job-Log pruefen (siehe CCY-Zusammenfassungszeile ganz unten).
+            const eurCfg=empCurve.n>0
+              ?{curve:empCurve,isPrecise:true,method:preciseMethod,refSource:"ECB (€STR) + ECB Dated €STR futures"}
+              :eonCurve.n>0
+                ?{curve:eonCurve,isPrecise:true,method:preciseMethod,refSource:"ECB (€STR) + One-Month €STR futures"}
+                :{curve:ieCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"ECB (€STR) + Euribor 3M curve"};
+            const gbpCfg=soaCurve.n>0
+              ?{curve:soaCurve,isPrecise:true,method:preciseMethod,refSource:"BoE (SONIA) + One-Month SONIA futures"}
+              :{curve:so3Curve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoE (SONIA) + SONIA 3M curve"};
+            const cadCfg=coaCurve.n>0
+              ?{curve:coaCurve,isPrecise:true,method:preciseMethod,refSource:"BoC (CORRA) + One-Month CORRA futures"}
+              :{curve:craCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoC (CORRA) + CORRA 3M curve"};
             const CCY_CFG={
               USD:{ref:parseUsdRef,curve:zqCurve,isPrecise:true,method:preciseMethod,refSource:"NY Fed (EFFR)"},
               AUD:{ref:parseAudRef,curve:ibCurve,isPrecise:true,method:preciseMethod,refSource:"RBA (Cash Rate Target)"},
-              EUR:{ref:parseEurRef,curve:ieCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"ECB (€STR) + Euribor 3M curve"},
-              GBP:{ref:parseGbpRef,curve:so3Curve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoE (SONIA) + SONIA 3M curve"},
-              CAD:{ref:parseCadRef,curve:craCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoC (CORRA) + CORRA 3M curve"}
+              EUR:{ref:parseEurRef,...eurCfg},
+              GBP:{ref:parseGbpRef,...gbpCfg},
+              CAD:{ref:parseCadRef,...cadCfg},
+              // CHF/JPY: Futures-Benchmark = Referenzzins-Benchmark (SARON-Future
+              // misst SARON, TONA-Future misst TONA) - kein Cross-Benchmark-Spread
+              // wie bei EURs Euribor-vs-€STR-Fall, daher crossBenchmark:false trotz
+              // approx-Methode. Nur 3-Monats-Kontrakte frei verfuegbar (kein
+              // 1-Monats-/sitzungsdatiertes Pendant existiert), daher strukturell
+              // kein precise moeglich (siehe Plan-Notiz/CLAUDE.md).
+              CHF:{ref:parseChfRef,curve:fsr3Curve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"SNB (SARON) + SARON 3M futures"},
+              JPY:{ref:parseJpyRef,curve:toa3mCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,false),refSource:"BoJ (TONA) + TONA 3M futures"},
+              // NZD: einziges frei verfuegbare Kontrakt ist der 90-Tage-NZ-Bank-
+              // Bill-Future (BKBM-Satz) - das ist NICHT der OCR-Referenzzins
+              // selbst (Bank-Bill traegt einen Kreditspread ueber dem OCR, exakt
+              // wie Euribor vs. €STR) - deshalb crossBenchmark:true wie bei EUR.
+              NZD:{ref:parseNzdRef,curve:bbCurve,isPrecise:false,method:(r,c,m)=>approxMethod(r,c,m,true),refSource:"RBNZ (OCR) + NZ 90-Day Bank Bill 3M curve"}
             };
 
             // ── Bestehende Datei laden (Multi-Waehrungs-Struktur; migriert
@@ -3241,7 +3411,7 @@ jobs:
             fs.writeFileSync("rate_probabilities.json",JSON.stringify(full,null,1));
             console.log("rate_probabilities.json:\n  "+summary.join("\n  "));
           '
-          rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_tv.json rate_tv_tickers.json
+          rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_jpy_ref.html rate_nzd_ref.html rate_tv.json rate_tv_tickers.json
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt

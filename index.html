@@ -12812,9 +12812,9 @@ function rateProbCcyData(){
   if(rateProbCcy==='USD'&&D.currentRate!=null)return D;
   return null;
 }
-const RATEPROB_CCYS=['USD','AUD','EUR','GBP','CAD'];
-const RATEPROB_CCY_REFLABEL={USD:'Effective Fed Funds Rate',AUD:'Cash Rate Target',EUR:'€STR',GBP:'SONIA',CAD:'CORRA'};
-const RATEPROB_CCY_MEETLABEL={USD:'FOMC meeting',AUD:'RBA meeting',EUR:'ECB meeting',GBP:'BoE MPC meeting',CAD:'BoC meeting'};
+const RATEPROB_CCYS=['USD','AUD','EUR','GBP','CAD','CHF','JPY','NZD'];
+const RATEPROB_CCY_REFLABEL={USD:'Effective Fed Funds Rate',AUD:'Cash Rate Target',EUR:'€STR',GBP:'SONIA',CAD:'CORRA',CHF:'SARON',JPY:'TONA',NZD:'Official Cash Rate'};
+const RATEPROB_CCY_MEETLABEL={USD:'FOMC meeting',AUD:'RBA meeting',EUR:'ECB meeting',GBP:'BoE MPC meeting',CAD:'BoC meeting',CHF:'SNB meeting',JPY:'BoJ meeting',NZD:'RBNZ meeting'};
 function setRateProbCcy(ccy){
   if(!RATEPROB_CCYS.includes(ccy))return;
   rateProbCcy=ccy;rateProbFocus=0;
