@@ -3331,17 +3331,19 @@ jobs:
                 ["2026-07-15","Jul 15, 2026"],["2026-09-02","Sep 2, 2026"],
                 ["2026-10-28","Oct 28, 2026"],["2026-12-09","Dec 9, 2026"]
               ],
-              // SNB: nur quartalsweise (Maerz/Jun/Sep/Dez), Maerz+Jun 2026
-              // bestaetigt (snb.ch Pressemitteilungen). Sep/Dez 2026 sind
-              // beim Anlegen dieser Liste noch NICHT recherchier-bestaetigt
-              // (Cloudflare/403 auf snb.ch, mnimarkets, investing.com aus
-              // dieser Sandbox - der GitHub-Actions-Runner sollte snb.ch
-              // aber direkt erreichen koennen) - TODO: exakte Sep/Dez-Termine
-              // von snb.ch ergaenzen, sobald bestaetigt, sonst bleibt die
-              // "upcoming meetings"-Liste fuer CHF bis dahin leer (kein
-              // erfundenes Datum, siehe CLAUDE.md-Grundsatz).
+              // SNB: nur quartalsweise (Maerz/Jun/Sep/Dez). Maerz+Jun 2026
+              // per snb.ch-Pressemitteilung bestaetigt. Sep/Dez 2026 (24.
+              // September/10. Dezember) per Recherche gefunden (neho.ch,
+              // 2026-07-27) und gegen das bekannte SNB-Muster verifiziert
+              // (Entscheide fallen immer auf einen Donnerstag 09:30 - beide
+              // Daten sind rechnerisch bestaetigt Donnerstage) - snb.ch
+              // selbst blieb per direktem Fetch/WebFetch aus dieser Sandbox
+              // durchgehend 403/blockiert, daher keine Primaerquelle direkt
+              // einsehbar, aber die Donnerstag-Probe deckt sich mit allen
+              // bisher bestaetigten SNB-Terminen in dieser Datei.
               CHF:[
-                ["2026-03-19","Mar 17-18, 2026"],["2026-06-18","Jun 16-17, 2026"]
+                ["2026-03-19","Mar 17-18, 2026"],["2026-06-18","Jun 16-17, 2026"],
+                ["2026-09-24","Sep 24, 2026"],["2026-12-10","Dec 10, 2026"]
               ],
               // BoJ: vollstaendiger 2026-Kalender (boj.or.jp bestaetigt).
               JPY:[
