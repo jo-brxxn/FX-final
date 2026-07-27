@@ -53,7 +53,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#070f1e;color:#dfe7f1;hei
    Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
    im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
    laeufig in derselben Zeile. */
-.hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:10px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
+.hdr{background:rgba(35,43,58,.58);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:7px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
 /* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
    Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
    Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
@@ -68,14 +68,22 @@ body{font-family:Arial,Helvetica,sans-serif;background:#070f1e;color:#dfe7f1;hei
 .saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
 .hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-.profile-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:52px;height:52px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+/* Avatar verkleinert + Name entfernt (Nutzer-Wunsch 2026-07-27, per Foto:
+   "mach den Kreis mit dem Benutzer Namen kleiner das das in die Zeile
+   passt und lass unter dem Kreis den Namen weg") - sitzt jetzt in derselben
+   Zeile/Hoehe wie die Buttons (.hdr-r ist bereits align-items:center),
+   statt als eigener, hoeherer Zwei-Zeilen-Block darunter. Gilt jetzt
+   durchgehend (nicht mehr nur unter der 760px-Mobil-Grenze) - die vorherige
+   @media(max-width:760px)-Sonderregel fuer Kreis/Name ist dadurch
+   ueberfluessig geworden und entfernt. */
+.profile-btn{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
-.profile-name{font-size:13px;font-weight:700;color:var(--t1);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.profile-name{display:none}
 /* Initialen im Profil-Kreis (statt generischem Personen-Icon), sobald ein
    Sync-Name bekannt ist - siehe updProfile(). */
-.profile-circle.ini{font-size:17px;font-weight:800;letter-spacing:.5px;color:#fff}
-.profile-circle svg{width:22px;height:22px}
+.profile-circle.ini{font-size:13px;font-weight:800;letter-spacing:.5px;color:#fff}
+.profile-circle svg{width:16px;height:16px}
 /* Einheitliches Inline-SVG-Icon-Set (statt Emojis): erbt currentColor,
    sitzt optisch auf der Textlinie der Buttons. */
 svg.ic{vertical-align:-2px;flex:none}
@@ -113,7 +121,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
 .tabbar{background:rgba(17,22,31,.60);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
-.tp{padding:9px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
 .tp.tp-stack{font-weight:700}
@@ -335,14 +343,10 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}
-/* Mobiler Header kompakter (Nutzer-Wunsch 2026-07-16): kleinerer Avatar
-   ohne Namenszeile, engere Abstaende - der Header fraß vorher fast den
-   halben Bildschirm (Banner + Logo + Buttons + grosser Avatar-Block). */
+/* Mobiler Header kompakter (Nutzer-Wunsch 2026-07-16) - Avatar/Name sind
+   jetzt app-weit klein/namenlos (siehe .profile-circle/.profile-name oben),
+   hier bleibt nur noch der engere Innenabstand als Mobil-Sonderfall. */
 .hdr{padding:7px 10px;gap:5px}
-.profile-circle{width:36px;height:36px;font-size:19px}
-.profile-circle.ini{font-size:13px}
-.profile-circle svg{width:17px;height:17px}
-.profile-name{display:none}
 .profile-btn{margin-left:2px}}
 /* Today's-Movers-Dashboard-Karte */
 .mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
@@ -761,7 +765,7 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
    Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
-.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:14px;margin-bottom:8px;transition:border-color .15s}
+.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -783,8 +787,8 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
    der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
-.dash-majors .ab-wrap{background:#0c1c34;border:1px solid #1e3355;border-radius:8px;margin-bottom:6px;overflow:hidden}
-.dash-majors .ab{border-radius:0;border-left-width:3px;padding:7px 8px 6px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
+.dash-majors .ab-wrap{background:#0c1c34;border:1px solid #1e3355;border-radius:8px;margin-bottom:4px;overflow:hidden}
+.dash-majors .ab{border-radius:0;border-left-width:3px;padding:6px 7px 5px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
 .dash-majors .ab .an{order:1;flex:1 1 auto;font-size:12px}
 .dash-majors .ab .av{order:2;margin:0;font-size:11px}
 .dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
@@ -792,7 +796,7 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
 .dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0c1c34;border:1px solid #1e3355;border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#3a5a8a;color:var(--t0)}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
    Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
@@ -816,10 +820,17 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    noetig, dadurch faellt auch die alte @media(hover:hover)-Verzweigung weg. */
 .dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:0;pointer-events:none;transition:opacity .15s}
 body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
-@media (hover:hover){
-  .dw-hdr{position:relative}
-  .dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
-}
+/* Immer absolut positioniert (Bugfix 2026-07-27): vorher nur unter
+   @media(hover:hover) - auf Touch-Geraeten blieb .dw-btns dadurch
+   position:static und nahm trotz opacity:0 weiter Platz in der
+   .dw-hdr-Flexzeile ein (justify-content:space-between), was den Titel
+   (.dw-t-txt) unnoetig in die Ellipsis-Kuerzung zwang ("CURREN...",
+   "RISK SE...", "MINI C..." trotz sichtbarem Platz - Nutzer-Bugreport per
+   Foto). Der eigene Code-Kommentar hier sagte schon vorher, die
+   hover:hover-Verzweigung sollte mit dem Bearbeitungsmodus wegfallen -
+   war nur nie tatsaechlich entfernt worden. */
+.dw-hdr{position:relative}
+.dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(8,13,21,.96);padding:2px 0 2px 10px;border-radius:6px}
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
@@ -981,12 +992,20 @@ body.dash-edit-mode .mw-bar{display:flex}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
 /* Currency Strength Ranking */
 .rank-list{display:flex;flex-direction:column;gap:5px}
-.rank-row{display:grid;grid-template-columns:20px 44px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
+.rank-row{display:grid;grid-template-columns:20px 52px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
 .rank-pos{font-size:10px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.rank-name{font-size:12.5px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* white-space/overflow: seit die Karte frei waehlbare Assets zeigt (nicht
+   mehr nur 3-stellige FX-Kuerzel), koennen Namen wie "GER100"/"SP500"
+   laenger sein - sollen abgeschnitten statt umzubrechen und die Zeilenhoehe
+   zu sprengen. */
+.rank-name{font-size:12.5px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
 .rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
 .rank-sc{font-size:12px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Gestrichelte Trennlinie am Vorzeichenwechsel positiv->negativ (Nutzer-
+   Wunsch 2026-07-27) - eigene Zeile in der Grid-Liste, kein Rahmen an der
+   Karte selbst. */
+.rank-sep{border-top:1px dashed var(--bd2);margin:4px 2px}
 /* Risk Sentiment Gauge */
 .risk-gauge{padding:2px 4px 0}
 /* Risk-Environment-Regler (Nutzer-Wunsch 2026-07-13). Kompakt in EINER
@@ -1306,16 +1325,16 @@ body.dash-edit-mode .mw-bar{display:flex}
   .logo-s,.saved{font-size:13px}
   .btn{font-size:13px;padding:6px 12px}
   .tabbar{padding:0 22px}
-  .tp{font-size:14px;padding:11px 18px}
+  .tp{font-size:14px;padding:8px 16px}
   .sb{width:90px}
   .sb-lbl{font-size:10px}
   .ab .an,.ab .av{font-size:13px}
   .add-sym{font-size:19px}
-  .dp,.pc{padding:20px 28px}
-  /* Dashboard-Seite etwas flacher gepolstert als die uebrigen Seiten, damit
-     die 3 Karten-Reihen ohne Scrollen aufs Bild passen (Nutzer-Wunsch
-     2026-07-25) - horizontal bleibt es identisch. */
-  #pgDash{padding-top:12px;padding-bottom:12px}
+  .dp,.pc{padding:16px 22px}
+  /* Dashboard-Seite noch flacher gepolstert als die uebrigen Seiten (Nutzer-
+     Wunsch 2026-07-25/07-27: mehr Platz fuer die Karten selbst, weniger fuer
+     Rand/Abstand) - horizontal bleibt es identisch. */
+  #pgDash{padding-top:8px;padding-bottom:8px}
   .atitle{font-size:30px}
   .afull{font-size:13px}
   .bo{font-size:13px;padding:6px 13px}
@@ -1371,7 +1390,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
      in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
      bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:10px;align-items:stretch}
+  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:stretch}
   /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1415,8 +1434,15 @@ body.dash-edit-mode .mw-bar{display:flex}
    zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
    die Sidebar ist dort nur etwas schmaler. */
 @media(min-width:1100px){
-  .dash-layout{display:flex;gap:12px;align-items:flex-start}
-  .dash-majors{display:flex;flex-direction:column;gap:0;width:132px;flex-shrink:0}
+  /* align-items:stretch (Nutzer-Wunsch 2026-07-27 "Elemente sollen sich
+     maximal gross machen, gleichmaessig erweitern"): die Sidebar bekommt
+     dieselbe Hoehe wie das Karten-Grid daneben statt an ihrer eigenen,
+     kuerzeren Inhaltshoehe stehenzubleiben. justify-content:space-between
+     auf .dash-majors verteilt die dadurch gewonnene Resthoehe gleichmaessig
+     als Abstand zwischen den Majors-Karten, statt sie als Luecke unten
+     liegen zu lassen. */
+  .dash-layout{display:flex;gap:10px;align-items:stretch}
+  .dash-majors{display:flex;flex-direction:column;gap:0;justify-content:space-between;width:132px;flex-shrink:0}
   #dashWidgets{flex:1;min-width:0}
 }
 @media(min-width:1400px){
@@ -1654,12 +1680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-250 — Polarlichter hinter dem Dashboard-Globus umgefaerbt (Nutzer-Wunsch nach Referenz-Foto 'professioneller, weniger verspielt'): Struktur/Animation unveraendert, nur die vier unzusammenhaengenden Neon-Toene (Tuerkis/Violett/Cyan/Magenta) sind jetzt ein ruhiges Blau/Indigo-Duoton aus den bereits bestehenden App-Farbtoken. Keine Widgets/Daten veraendert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-251 — Dashboard-Feinschliff nach Foto-Bugreport: Kartentitel wurden faelschlich per Ellipsis gekuerzt (CURREN../RISK SE../MINI C..) - Ursache war eine veraltete @media(hover:hover)-Regel, die .dw-btns auf Touch-Geraeten trotz opacity:0 weiter im Flex-Layout Platz einnehmen liess, jetzt gefixt. Profil-Kreis verkleinert + Name darunter entfernt, Header/Tabbar/Dashboard-Karten insgesamt weniger hoch gepolstert, Majors-Sidebar dichter, Globus-Groessenkappung 260->340px (naeher am Kartenrand). 'Currency Strength' ist jetzt eine frei konfigurierbare 'Asset Strength'-Karte (Zahnrad-Icon im Bearbeitungsmodus, bis zu 9 Assets, automatisch nach Score sortiert, gestrichelte Trennlinie am Uebergang positiv/negativ).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-250</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-251</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2195,6 +2221,15 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose which symbols appear in the Market Watch widget. Prices &amp; changes come from the same live feed as everywhere else in the app.</div>
     <div id="mwCfgBody"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mMwCfg')">Done</button></div>
+  </div>
+</div>
+<!-- MODAL: Asset-Strength-Karte, Asset-Auswahl (Nutzer-Wunsch 2026-07-27) -->
+<div class="ov" id="mCcyCfg" style="display:none">
+  <div class="modal">
+    <h3>⚙️ Asset Strength assets</h3>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose up to 9 assets to rank by score, strongest to weakest.</div>
+    <div id="ccyCfgBody"></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mCcyCfg')">Done</button></div>
   </div>
 </div>
 
@@ -9471,6 +9506,36 @@ function setMwTab(widgetId,tab){
   const w=widgets.find(x=>x.id===widgetId);if(!w)return;
   pushU();w.mwTab=tab;save();renderDash();
 }
+// ── Asset-Strength-Karte (frueher fest auf die 8 FX-Majors beschraenkt,
+// Nutzer-Wunsch 2026-07-27: "soll jetzt eine Asset Karte werden") - frei
+// waehlbare Assets statt hartcodiert FX, max. 9, Konfig ueber ein Zahnrad
+// wie bei Market Watch (dasselbe Toggle-Grid-Muster, SB_CATS-gruppiert).
+// w.ccyAssets leer/fehlend -> Fallback auf die 8 FX-Majors (unveraendertes
+// Verhalten fuer alle bestehenden Dashboards ohne eigene Konfiguration).
+const CCY_MAX_ASSETS=9;
+function ccyAllOptions(){
+  return SB_CATS.map(c=>({l:c.l,opts:c.ids.filter(id=>syms.some(s=>s.id===id)).map(id=>({key:id,label:(syms.find(s=>s.id===id)||{}).name||id}))})).filter(g=>g.opts.length);
+}
+let _ccyEditWidgetId=null;
+function openCcyCfgM(widgetId){_ccyEditWidgetId=widgetId;renderCcyCfgBody();openM('mCcyCfg');}
+function renderCcyCfgBody(){
+  const w=widgets.find(x=>x.id===_ccyEditWidgetId);const body=document.getElementById('ccyCfgBody');
+  if(!w||!body)return;
+  const sel=new Set(w.ccyAssets&&w.ccyAssets.length?w.ccyAssets:FX);
+  const groups=ccyAllOptions();
+  const cnt=sel.size;
+  body.innerHTML=`<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px">${cnt}/${CCY_MAX_ASSETS} selected</div>`+groups.map(g=>`
+    <div class="dw-notes-sub" style="margin-top:10px">${escH(g.l)}</div>
+    <div class="mw-cfg-grid">${g.opts.map(o=>`<button class="btn mw-cfg-opt${sel.has(o.key)?' on':''}" onclick="toggleCcyAsset('${o.key}')" ${(!sel.has(o.key)&&cnt>=CCY_MAX_ASSETS)?'disabled title="Maximum 9 assets - remove one first"':''}>${sel.has(o.key)?'✓ ':''}${escH(o.label)}</button>`).join('')}</div>`).join('');
+}
+function toggleCcyAsset(id){
+  const w=widgets.find(x=>x.id===_ccyEditWidgetId);if(!w)return;
+  let list=w.ccyAssets&&w.ccyAssets.length?[...w.ccyAssets]:[...FX];
+  if(list.includes(id))list=list.filter(k=>k!==id);
+  else{if(list.length>=CCY_MAX_ASSETS)return;list=[...list,id];}
+  pushU();w.ccyAssets=list;
+  renderCcyCfgBody();save();renderDash();
+}
 // Zeigt sichtbar an, wann zuletzt versucht wurde, Actual-Werte von Forex
 // Factory zu laden (bei jedem Seitenaufruf + jedem Refresh-Klick) - als
 // Bestätigung, dass die Abfrage nicht nur stündlich passiert.
@@ -9523,7 +9588,7 @@ function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs(
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'globe',label:'FX World Globe',sub:'Rotating globe with Daily Bias — currencies coloured by bias score'},
-  {type:'ccy_ranking',label:'Currency Strength',sub:'Majors ranked strongest → weakest by score'},
+  {type:'ccy_ranking',label:'Asset Strength',sub:'Configurable assets (up to 9) ranked strongest → weakest by score'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
   {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
@@ -9888,6 +9953,7 @@ function renderDash(){
     // sie stattdessen rechts neben die Kategorie-Tabs.
     const btnsHtml=`<div class="dw-btns">
       ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
+      ${w.type==='ccy_ranking'?`<button class="btn dw-nav" onclick="openCcyCfgM('${w.id}')" title="Choose assets (max 9)">${icn('gear',12)}</button>`:''}
       <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
       <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''} title="Move down">▼</button>
       <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
@@ -9975,12 +10041,21 @@ function renderDash(){
     }else if(w.type==='quick_notes'){
       content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }else if(w.type==='ccy_ranking'){
+      // Frei waehlbare Assets statt fest FX-Majors (Nutzer-Wunsch 2026-07-27,
+      // Konfig ueber das Zahnrad/openCcyCfgM) - max. CCY_MAX_ASSETS, per
+      // Fallback weiterhin die 8 FX-Majors fuer Dashboards ohne eigene Wahl.
       // Ranking auf der fairen Vergleichsbasis (symScoreCmp): Waehrungen
       // mit mehr getrackten Indikatoren (USD) dominieren sonst strukturell.
-      const ranked=syms.filter(s=>FX.includes(s.id)).map(s=>({s,sc:symScoreCmp(s)})).sort((a,b)=>b.sc-a.sc);
+      const wantIds=(w.ccyAssets&&w.ccyAssets.length?w.ccyAssets:FX).slice(0,CCY_MAX_ASSETS);
+      const ranked=wantIds.map(id=>syms.find(s=>s.id===id)).filter(Boolean).map(s=>({s,sc:symScoreCmp(s)})).sort((a,b)=>b.sc-a.sc);
       const mx=Math.max(1,...ranked.map(r=>Math.abs(r.sc)));
-      content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" data-flip="${r.s.id}" onclick="gotoSym('${r.s.id}')">
-        <span class="rank-pos">${i+1}</span><span class="rank-name">${r.s.id}</span>
+      // Gestrichelte Trennlinie am Uebergang positiv->negativ (Nutzer-Wunsch):
+      // nur EINMAL, an der Stelle wo der sortierte Score erstmals <0 wird -
+      // 0 zaehlt bewusst noch als nicht-negativ (kein Strich vor einem
+      // neutralen 0-Score).
+      const negIdx=ranked.findIndex(r=>r.sc<0);
+      content=`<div class="rank-list">`+ranked.map((r,i)=>(negIdx>0&&i===negIdx?`<div class="rank-sep"></div>`:'')+`<div class="rank-row" data-flip="${r.s.id}" onclick="gotoSym('${r.s.id}')">
+        <span class="rank-pos">${i+1}</span><span class="rank-name">${escH(r.s.id)}</span>
         <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
         <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${BC[r.s.bias]}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
@@ -10635,12 +10710,12 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    // Kappung auf 260px (Referenz-Foto, Nutzer-Wunsch 2026-07-25: Globus
-    // soll 2/3 der Kartenbreite einnehmen - .globe-host ist jetzt flex:0 0
-    // 66.6% statt fixer 200px, w kommt also entsprechend groesser rein).
-    // Obergrenze verhindert trotzdem ein ausuferndes Quadrat auf sehr breiten
-    // Karten, wo die Text-Spalte sonst viel zu schmal wuerde.
-    const size=Math.max(140,Math.min(w||220,260));
+    // Kappung auf 340px (Nutzer-Wunsch 2026-07-27: Globus so gross wie
+    // moeglich, nah an den Kartenrand heran - vorher 260px, was auf breiten
+    // Dashboard-Karten kleiner blieb als die volle 66.6%-Spaltenbreite
+    // (.globe-host) sie eigentlich zuliesse. Obergrenze bleibt bestehen,
+    // damit die Text-Spalte auf sehr breiten Karten nicht auf 0 schrumpft.
+    const size=Math.max(140,Math.min(w||220,340));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     return globeCollectRefs(h,size);
   }).filter(Boolean);
