@@ -709,6 +709,13 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
+/* Ueberbrueckt das schlagartige Aufklappen von <details class="ind-data">:
+   Chart+Quelle faden/gleiten beim OEFFNEN kurz ein statt einfach dazustehen.
+   Nur die Aufloesung des Inhalts wird animiert, nicht die native Hoehe des
+   <details> selbst (crossbrowser unzuverlaessig) - siehe onIndDetailsToggle(). */
+@keyframes indDataReveal{0%{opacity:0;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
+.ind-data-body.ind-data-reveal{animation:indDataReveal .18s ease-out both}
+@media(prefers-reduced-motion:reduce){.ind-data-body.ind-data-reveal{animation:none}}
 /* subpoints */
 .sp{display:flex;align-items:center;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}@media (hover:hover){.sp:hover{background:#2c3a52}}
 .sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:19px}
@@ -1478,6 +1485,11 @@ body.dash-edit-mode .mw-bar{display:flex}
 /* ── MODAL-ÜBERGANG (Ein-/Ausblenden) ── */
 @keyframes ovFadeIn{0%{opacity:0}100%{opacity:1}}
 @keyframes modalPopIn{0%{opacity:0;transform:scale(.94) translateY(6px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+/* Popover-Eintritt (Bias-Picker, Tab-Stack-Menue): waechst vom Trigger-Punkt
+   aus (transform-origin per JS gesetzt), nicht vom Zentrum wie ein Modal. */
+@keyframes popoverIn{0%{opacity:0;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+.bias-picker,.tab-menu{animation:popoverIn .16s cubic-bezier(.2,.8,.3,1) both}
+@media(prefers-reduced-motion:reduce){.bias-picker,.tab-menu{animation:none}}
 /* ── SKELETON-SHIMMER (Platzhalter beim ersten Laden) ── */
 .skel{display:inline-block;height:11px;border-radius:4px;vertical-align:middle;background:linear-gradient(90deg,rgba(128,151,176,.10) 25%,rgba(128,151,176,.30) 50%,rgba(128,151,176,.10) 75%);background-size:200% 100%;animation:skelShimmer 1.2s ease-in-out infinite}
 @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -1643,12 +1655,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-248 — Score-History (🕰️) zeigte nicht alle score-treibenden Faktoren: COT Data (Net Positioning/WoW) und Risk Environment (Risk Correlation) wurden komplett uebersprungen, bei JEDEM Asset - Ursache eines Bugreports, wo EURs Score an einem Tag sprang, aber 'No score-driving events' stand. Non-FX-Assets (Gold/Silber/Oel/BTC/Indizes) zeigten bisher UEBERHAUPT KEINE Events (isNonFx-Sperre) - jetzt bekommen sie COT/Risk-Environment direkt UND die gespiegelten Makro-Karten (Inflation/Interest Rates/Labour Market/Growth) ueber die verknuepfte Waehrung. Zusaetzlich: Aendern der Risk-Environment-Richtung/eines gespeicherten Szenarios landet jetzt auch im Score-Log (vorher nur der Regler selbst).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-249 — Vier gezielte Animationen ergaenzt (Skill-Audit /find-animation-opportunities): Bias-Picker/Tab-Stack-Menue wachsen jetzt vom Druckpunkt aus statt schlagartig zu erscheinen; die Risk-Sentiment-Nadel (Dashboard + Sentiment-Tab) dreht sich beim Wertwechsel statt zu springen; das Aufklappen der Indikator-Verlaufshistorie (Details) blendet Inhalt sanft ein; die Currency-Strength-Rangliste gleitet bei Neusortierung an ihre neue Position (FLIP) statt zu springen. Rein visuell, keine Score-/Datenlogik veraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-248</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-249</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2633,6 +2645,20 @@ function flipNotes(mutate){
     if(!dx&&!dy)return;
     el.style.transition='none';el.style.transform=`translate(${dx}px,${dy}px)`;
     requestAnimationFrame(()=>{el.style.transition='transform .32s cubic-bezier(.2,.7,.3,1)';el.style.transform='';setTimeout(()=>{el.style.transition='';},340);});
+  });
+}
+// FLIP fuer die Currency-Strength-Rangliste (.rank-row[data-flip], Dashboard):
+// gleitet neu einsortierte Waehrungen sichtbar an ihre neue Rangposition,
+// statt sie beim naechsten renderDash()-Rebuild kommentarlos springen zu
+// lassen. `before` kommt aus der Vormessung direkt vor dem el.innerHTML=
+// weiter oben in renderDash() - gleiches Zwei-Schritt-Prinzip wie flipNotes().
+function flipRankRows(root,before){
+  root.querySelectorAll('.rank-row[data-flip]').forEach(el=>{
+    const b=before[el.getAttribute('data-flip')];if(!b)return;
+    const a=el.getBoundingClientRect(),dy=b.top-a.top;
+    if(!dy)return;
+    el.style.transition='none';el.style.transform=`translateY(${dy}px)`;
+    requestAnimationFrame(()=>{el.style.transition='transform .28s cubic-bezier(.2,.7,.3,1)';el.style.transform='';setTimeout(()=>{el.style.transition='';},300);});
   });
 }
 // Carry-Komponente des Paar-Scores: gestaffelter Bonus/Malus aus der
@@ -6494,8 +6520,10 @@ function renderInd(ind,ri,ii,total){
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
         <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
       </summary>
-      <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
-      ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
+      <div class="ind-data-body">
+        <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
+        ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
+      </div>
     </details>`;
   }else if(ind.research){
     const r=ind.research;
@@ -6530,8 +6558,10 @@ function renderInd(ind,ri,ii,total){
         ${(r.bond||r.cot||r.sent)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
         ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span>${prevHtml}`}
       </summary>
-      <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
-      ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
+      <div class="ind-data-body">
+        <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
+        ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
+      </div>
     </details>`;
   }
   // Reihenfolge/Ausrichtung des rechten Icon-Clusters (Nutzer-Wunsch
@@ -6831,9 +6861,13 @@ function openBiasPicker(kind,ri,ii,x,y){
   document.body.appendChild(m);
   const mw=m.offsetWidth,mh=m.offsetHeight;
   m.style.position='fixed';
-  m.style.left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8))+'px';
-  m.style.top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8))+'px';
+  const left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8)),top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8));
+  m.style.left=left+'px';
+  m.style.top=top+'px';
   m.style.zIndex='100001';
+  // Waechst vom Druckpunkt aus (Popover erscheint darueber, daher unten am
+  // Trigger-x verankert) statt vom Kartenzentrum wie ein Modal.
+  m.style.transformOrigin=Math.max(0,Math.min(x-left,mw))+'px '+mh+'px';
   setTimeout(()=>document.addEventListener('pointerdown',biasPickerOutside,true),0);
 }
 function biasPickerChoose(b){const fn=_biasPickerApply;closeBiasPicker();if(fn)fn(b);}
@@ -9841,6 +9875,12 @@ function renderDash(){
   // daily_bias ist jetzt Teil der Globus-Karte (siehe dailyBiasInfo()) -
   // ein eigenstaendiges Grid-Item wuerde eine leere Karte hinterlassen.
   const sorted=[...widgets].filter(w=>w.type!=='daily_bias').sort((a,b)=>(a.order||0)-(b.order||0));
+  // FLIP-Vormessung fuer die Currency-Strength-Rangliste (.rank-row[data-flip]):
+  // el.innerHTML unten ersetzt alle Zeilen komplett, ein neu einsortiertes
+  // Symbol wuerde sonst kommentarlos an seine neue Position springen statt
+  // sichtbar dorthin zu gleiten (siehe flipRankRows()).
+  const _rankFlipBefore={};
+  el.querySelectorAll('.rank-row[data-flip]').forEach(r=>{_rankFlipBefore[r.getAttribute('data-flip')]=r.getBoundingClientRect();});
   el.innerHTML=sorted.map((w,wi)=>{
     let content='';
     // Steuerbuttons einmal bauen: die Market-Watch-Karte hat keine eigene
@@ -9940,7 +9980,7 @@ function renderDash(){
       // mit mehr getrackten Indikatoren (USD) dominieren sonst strukturell.
       const ranked=syms.filter(s=>FX.includes(s.id)).map(s=>({s,sc:symScoreCmp(s)})).sort((a,b)=>b.sc-a.sc);
       const mx=Math.max(1,...ranked.map(r=>Math.abs(r.sc)));
-      content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" onclick="gotoSym('${r.s.id}')">
+      content=`<div class="rank-list">`+ranked.map((r,i)=>`<div class="rank-row" data-flip="${r.s.id}" onclick="gotoSym('${r.s.id}')">
         <span class="rank-pos">${i+1}</span><span class="rank-name">${r.s.id}</span>
         <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
         <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${BC[r.s.bias]}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
@@ -9975,7 +10015,7 @@ function renderDash(){
       </div>`;
       content=`<div class="risk-gauge">
         ${envSetUI}
-        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100)}</div>
+        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100,'dashRisk')}</div>
         <div class="risk-lbl" style="color:${col}">${lbl}</div>
         <div class="risk-sub" title="Net = risk assets − safe havens; >+0.8 RISK-ON, <−0.8 RISK-OFF">Risk ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
         <div class="risk-assets-grid">
@@ -10167,6 +10207,8 @@ function renderDash(){
   startGlobes();
   startSessionBar();
   attachChartHovers(el);
+  gaugeNeedleAnim(el);
+  flipRankRows(el,_rankFlipBefore);
 }
 // Scrollt jeden scrollbaren Kalender-Container so, dass die rote Jetzt-Linie
 // (aktuelle Uhrzeit) mittig sichtbar ist.
@@ -12069,12 +12111,17 @@ function applySentimentFeed(){
 // ── Insights → Sentiment-Tab: Contrarian-Stimmungs-Diagramme ──────────────
 // Halbkreis-Tacho (0–100) fuer die Fear&Greed-Indizes: linke Haelfte = Angst
 // (kontraindikativ bullish, blau), rechte = Gier (bearish, rot). Nadel = Wert.
-function sentGauge(val,lo,hi,unit,maxW){
+function sentGauge(val,lo,hi,unit,maxW,key){
   // val skaliert auf 0..1 zwischen lo..hi; Standard 0..100.
   const t=Math.max(0,Math.min(1,(val-lo)/((hi-lo)||1)));
   const W=200,H=118,cx=W/2,cy=104,R=88;
   const ang=Math.PI*(1-t); // 0 -> links (180°), 1 -> rechts (0°)
-  const nx=cx+R*Math.cos(ang),ny=cy-R*Math.sin(ang);
+  // Nadel wird fest nach rechts (Basis-Winkel 0) gezeichnet und per SVG-
+  // rotate() auf den Zielwinkel gedreht (rotDeg=-ang in Grad) - dadurch
+  // bleibt dieselbe Geometrie ueber Re-Renders hinweg animierbar
+  // (gaugeNeedleAnim() dreht bei einer Wertaenderung vom alten auf den
+  // neuen Winkel, statt die Nadel stumm neu zu positionieren).
+  const rotDeg=(-(ang*180/Math.PI)).toFixed(2);
   const arc=(a0,a1,col)=>{
     const x0=cx+R*Math.cos(a0),y0=cy-R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy-R*Math.sin(a1);
     return`<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R} ${R} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${col}" stroke-width="13" stroke-linecap="butt"/>`;
@@ -12083,10 +12130,35 @@ function sentGauge(val,lo,hi,unit,maxW){
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
     ${arc(P,P*0.75,'#5fa8ed')}${arc(P*0.75,P*0.55,'#6ea8d8')}${arc(P*0.55,P*0.45,'#f4ad5c')}${arc(P*0.45,P*0.25,'#e08a6a')}${arc(P*0.25,0,'#ef5350')}
-    <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
-    <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
+    <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
+      <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
+    </g>
     <text x="${cx}" y="${cy-20}" text-anchor="middle" style="font:800 26px system-ui;fill:var(--t0)">${val}${unit||''}</text>
   </svg>`;
+}
+// Dreht eine sentGauge()-Nadel beim Neu-Rendern sichtbar vom alten auf den
+// neuen Wert, statt stumm zu springen (State indication, occasional -
+// aktualisiert sich beim Feed-Refresh, nicht nutzergetrieben-haeufig).
+// Da render*()-Funktionen die Karte per innerHTML= komplett neu aufbauen,
+// existiert kein Alt-Element, dessen CSS-transition interpolieren koennte -
+// deshalb dasselbe Zwei-Schritt-Prinzip wie flipNotes(): Winkel zuerst
+// uebergangslos auf den ALTEN Wert zuruecksetzen, dann im naechsten Frame
+// mit transition auf den echten (bereits im Markup stehenden) Zielwinkel
+// gehen. Ohne bekannten Vorwert (erster Render) bleibt es beim sofortigen
+// Zielwinkel - kein Animieren beim ersten Erscheinen.
+const _gaugeAnimPrev={};
+function gaugeNeedleAnim(root){
+  (root||document).querySelectorAll('[data-gauge-key]').forEach(g=>{
+    const key=g.getAttribute('data-gauge-key'),nv=parseFloat(g.getAttribute('data-gauge-ang'));
+    const pv=_gaugeAnimPrev[key];_gaugeAnimPrev[key]=nv;
+    if(pv===undefined||pv===nv||isNaN(pv)||isNaN(nv))return;
+    g.style.transition='none';g.style.transform=`rotate(${pv}deg)`;
+    requestAnimationFrame(()=>{
+      g.style.transition='transform .26s cubic-bezier(.2,.8,.3,1)';
+      g.style.transform=`rotate(${nv}deg)`;
+    });
+  });
 }
 // Kleines Liniendiagramm einer [[Datum,Wert],…]-Reihe mit optionalen
 // Schwellen-Baendern (contrarian: unter loTh = bullish-Zone, ueber hiTh =
@@ -12191,6 +12263,8 @@ function findIndById(id){
 function onIndDetailsToggle(el,indId){
   indDetailsOpen[indId]=el.open;
   if(!el.open)return;
+  const body=el.querySelector('.ind-data-body');
+  if(body){body.classList.remove('ind-data-reveal');void body.offsetWidth;body.classList.add('ind-data-reveal');}
   const holder=el.querySelector('.ind-hist-holder');
   if(!holder||holder.dataset.filled)return;
   const ind=findIndById(indId);if(!ind)return;
@@ -12417,6 +12491,7 @@ function renderSentiment(){
   // von den einzelnen Renderern selbst platziert, keine separate Toolbar mehr.
   el.innerHTML=nav+body;
   attachChartHovers(el);
+  gaugeNeedleAnim(el);
 }
 // Gemeinsame Zeitraum-Leiste, die IN den Chart-Bereich gehoert (kompakt, direkt
 // ueber der Plot-Flaeche). Nutzt denselben timeRangeBarHtml-Helfer wie ueberall.
@@ -12726,7 +12801,7 @@ function renderFearGreedCards(D){
   const cfFilteredSeries=cf&&cf.series?cf.series.filter(e=>cfFilteredSet.has(e[0])):null;
   html+=card('🪙 Crypto Fear &amp; Greed','feargreed',cf?escH(cf.label||''):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
+      <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,'','','sentCryptoFG'):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(cfEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">Applies to: BTC${syms.find(s=>s.id==='ETH')?', ETH':''}. Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" style="color:var(--blue)">alternative.me ↗</a></div></div>
     </div><div style="margin-top:8px">${sentSpark(cfFilteredSeries,0,100,25,75)}</div>`);
   const vx=D.vix,vxEv=sentEval('vix',vx);
@@ -12735,7 +12810,7 @@ function renderFearGreedCards(D){
   const vxFilteredSeries=vx&&vx.series?vx.series.filter(e=>vxFilteredSet.has(e[0])):null;
   html+=card('🌪️ VIX (Volatility)','feargreed',vx?('now '+(+vx.value).toFixed(1)):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,''):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
+      <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,'','','sentVix'):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). S&amp;P 500, Nasdaq. Source: <a href="https://www.tradingview.com/symbols/CBOE-VIX/" target="_blank" rel="noopener" style="color:var(--blue)">TradingView ↗</a></div></div>
     </div><div style="margin-top:8px">${sentSpark(vxFilteredSeries,8,45,13,28)}</div>`);
   const sf=D.stockFng;
@@ -12743,7 +12818,7 @@ function renderFearGreedCards(D){
   const sfFilteredSet=new Set(sfFiltered);
   const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
   html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
-    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
     :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score.</div>`);
   html+=`</div>`;
   return html;
@@ -13594,6 +13669,9 @@ function openStackMenu(id,btn){
   const mw=Math.max(185,m.offsetWidth);
   m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
   m.style.top=(r.bottom+4)+'px';
+  // Waechst von der oberen linken Ecke aus - dort, wo es an den Stack-Button
+  // andockt, statt vom Kartenzentrum wie ein Modal.
+  m.style.transformOrigin='0 0';
   m.querySelectorAll('.tab-menu-item').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();const mid=b.getAttribute('data-mid');closeTabMenu();selectTab(mid);};});
   setTimeout(()=>document.addEventListener('pointerdown',tabMenuOutside,true),0);
 }
