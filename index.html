@@ -914,8 +914,18 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
    einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
 .scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#7ee0ff;box-shadow:0 0 10px 3px rgba(126,224,255,.6),0 0 22px 8px rgba(126,224,255,.22);opacity:.7}
-@keyframes scanHit{0%{box-shadow:0 0 0 0 rgba(126,224,255,.85) inset,0 0 0 0 rgba(126,224,255,.85)}100%{box-shadow:0 0 0 0 rgba(126,224,255,0) inset,0 0 0 16px rgba(126,224,255,0)}}
-.scan-hit{animation:scanHit .6s ease-out}
+/* Der 0→16px AUSSEN wachsende Ring war bei eng stehenden Karten unsichtbar,
+   weil er in den Bereich der Nachbarkarte hineinwuchs und von deren (spaeter
+   gezeichnetem) Hintergrund verdeckt wurde (Nutzer-Bugreport 2026-07-27).
+   Fix: ein kraeftiger INNEN-Ring (bleibt IMMER innerhalb der eigenen Karte,
+   kann von keiner Nachbarkarte je verdeckt werden) traegt den Effekt jetzt
+   primaer; der kleine Aussen-Ring bleibt als Bonus, wenn Platz ist. */
+@keyframes scanHit{
+  0%{box-shadow:0 0 0 0 rgba(126,224,255,.9) inset,0 0 0 0 rgba(126,224,255,.7)}
+  35%{box-shadow:0 0 0 3px rgba(126,224,255,.65) inset,0 0 0 3px rgba(126,224,255,.5)}
+  100%{box-shadow:0 0 0 3px rgba(126,224,255,0) inset,0 0 0 8px rgba(126,224,255,0)}
+}
+.scan-hit{animation:scanHit .7s ease-out}
 @keyframes scanFlashGlobe{0%{filter:brightness(1)}30%{filter:brightness(1.7)}100%{filter:brightness(1)}}
 .scan-flash-globe{animation:scanFlashGlobe .5s ease-out}
 @media(prefers-reduced-motion:reduce){.scan-flash-globe{animation:none}}
@@ -1478,18 +1488,23 @@ body.dash-edit-mode .mw-bar{display:flex}
      rechts hoch (Majors, Currency Strength, Risk Sentiment, Calendar). Die
      Zonen-Zuordnung passiert in JS ueber ZONE_OF_TYPE/dashZoneOf() -
      renderDash() baut direkt die 5 .dash-zone-*-Container. */
-  /* Keine Luecken zwischen einzelnen Karten (gap:0) - aber KEIN Stretchen
-     mehr (Nutzer-Korrektur 2026-07-27, per Foto: das vorherige Stretchen
-     der letzten Karte auf Spaltenhoehe liess ihren Inhalt in einer viel zu
-     grossen Karte "schweben"). Jede Karte ist jetzt wieder GENAU so hoch
-     wie ihr eigener Inhalt (align-items:start) - Hoehenausgleich zwischen
-     den drei mittleren Spalten passiert stattdessen darueber, dass jede
-     Spalte genug ECHTE Karten enthaelt, um von selbst auf aehnliche Hoehe
-     zu kommen (siehe die neuen Widget-Typen session_clock/vol_leaders/
-     sentiment_snapshot in ZONE_OF_TYPE weiter unten). */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:0;align-items:start}
-  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:0}
-  .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:0}
+  /* Kein Stretchen mehr (Nutzer-Korrektur 2026-07-27, per Foto: das
+     vorherige Stretchen der letzten Karte auf Spaltenhoehe liess ihren
+     Inhalt in einer viel zu grossen Karte "schweben"). Jede Karte ist
+     GENAU so hoch wie ihr eigener Inhalt (align-items:start) - Hoehenaus-
+     gleich zwischen den drei mittleren Spalten passiert stattdessen
+     darueber, dass jede Spalte genug ECHTE Karten enthaelt (siehe die
+     Widget-Typen session_clock/vol_leaders/sentiment_snapshot weiter
+     unten). ⚠ 8px Abstand statt 0 (Nutzer-Korrektur 2026-07-27, Folgebug):
+     bei gap:0 lag die naechste Karte direkt auf dem Rand der vorherigen -
+     jeder nach AUSSEN reichende Effekt (z.B. der Scan-Trefferring in
+     .scan-hit) wurde dadurch vom opaken Hintergrund der Nachbarkarte
+     verdeckt, weil deren Hintergrund im Dokumentfluss SPAETER/OBEN
+     gezeichnet wird. 8px reicht, damit sowas wieder sichtbar ist, ohne die
+     kompakte Optik von "keine grossen Luecken" aufzugeben. */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:8px;align-items:start}
+  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
+  .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1498,9 +1513,9 @@ body.dash-edit-mode .mw-bar{display:flex}
      (sonst quetscht es sich neben Daily Bias zusammen und schneidet Werte
      ab) - immer alleine auf eigener Zeile in der Zone. */
   .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
-  .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:0;min-width:0}
-  .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:0;min-width:0}
-  .dash-zone-center{grid-area:center;display:flex;flex-direction:column;gap:0;min-width:0}
+  .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .dash-zone-center{grid-area:center;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-left>.dw,.dash-zone-right>.dw,.dash-zone-center>.dw{margin-bottom:0}
   @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
@@ -1769,12 +1784,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-255 — Dashboard-Karten nach Nutzer-Foto korrigiert: keine kuenstlich gestreckten Karten mehr, jede Karte ist wieder genau so gross wie ihr Inhalt. Drei neue echte Karten fuellen die dadurch freien Bereiche: Trading Sessions (24h-Sitzungsleiste unterm Globus), Volatility Leaders (20-Tage realisierte Vol-Rangliste) und Market Sentiment (VIX/Crypto Fear&Greed/Put-Call) - inkl. automatischer Migration fuer Bestandsnutzer. Kartenoptik aufgewertet (dezente Lichtkante+Tiefenschatten). Scan-Animation laeuft jetzt gut 3x so lange und die Partikel sind groesser/heller (Kopf+Schweif) - besser sichtbar auf grossen/Windows-Bildschirmen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-256 — Dashboard-Kartenabstand gefixt (Nutzer-Bugreport): bei 0px Abstand wurde der nach aussen wachsende Scan-Trefferring (.scan-hit) von der direkt anliegenden Nachbarkarte verdeckt, weil deren Hintergrund im DOM spaeter/oben gezeichnet wird - unsichtbar. Jetzt wieder 8px Abstand zwischen allen Dashboard-Karten, dazu der Trefferring primaer als INNEN-Ring (kann von keiner Nachbarkarte je verdeckt werden, unabhaengig vom Abstand).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-255</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-256</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
