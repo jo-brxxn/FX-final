@@ -11,33 +11,39 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#070f1e">
+<meta name="theme-color" content="#101215">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:#070f1e;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:#101215;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#2f4a75;border-radius:4px}
 :root{
-  /* Navy-Blue-Palette (Referenzfoto IMG_1190, Nutzer-Wunsch 2026-07-25:
-     "auf der ganzen Webseite... genau wie auf dem Bild") - ersetzt die
-     vorherige, kaum gesaettigte Dunkelgrau-Palette. Da praktisch jede
-     Komponente im Projekt ueber diese Variablen faerbt, kaskadiert der neue
-     Ton automatisch durch alle Tabs/Modals, ohne jede Stelle einzeln
-     anfassen zu muessen. Kontrastverhaeltnisse (--bg-Stufen zueinander,
-     --t0..--t3 zu --bg2) bewusst beibehalten, nur der Hue Richtung 215-220°
-     Navy gedreht und die Saettigung angehoben. Der Designer-Farbregler
-     (🎨, oben rechts) ueberschreibt body.style.background weiterhin per
-     Inline-Style (siehe applyDesignHue/designColors) - unveraendert
-     kompatibel, der neue Wert hier ist nur der Auto-Default. */
-  --bg0:#0a1626;--bg1:#0e1d33;--bg2:#132542;--bg3:#182d4e;--bg4:#1f375d;--bg5:#274372;--bg6:#305089;
-  --bd:#1e3355;--bd2:#2f4d78;
-  --t0:#eef3fa;--t1:#dfe7f1;--t2:#c9d6e6;--t3:#b8c6d9;
+  /* Neutrale Dunkelgrau-Palette (Nutzer-Wunsch 2026-07-27: "nicht mehr
+     ueberall dieses blaue milchige Design... eher dunklere Toene... nicht
+     zu viel Schwarz... eher grau" fuer den Ueberwachungs-Look) - loest die
+     vorherige stark blau-gesaettigte Navy-Palette (25.07.) ab. Da praktisch
+     jede Komponente im Projekt ueber diese Variablen faerbt, kaskadiert der
+     neue Ton automatisch durch alle Tabs/Modals, ohne jede Stelle einzeln
+     anfassen zu muessen. Kontraststufen (--bg0..--bg6 zueinander, --t0..--t3
+     zu --bg2) bewusst beibehalten, nur der Hue fast auf Null gedreht (nur
+     noch ein Hauch Blau, kein "milchiger" Farbstich mehr) und dunkler als
+     reines Schwarz gehalten (--bg0 ist #15171b, nicht #000). Die Bias-
+     Farben (--blue/--green/--red/--amber, identisch zu BC.bull/bear/neu in
+     JS) bleiben BEWUSST unangetastet - das ist Score-Semantik, keine
+     Dekoration, siehe CLAUDE.md-Grundsatz "Bias-Farben nie ohne Absprache
+     aendern". Der Designer-Farbregler (🎨, oben rechts) ueberschreibt
+     body.style.background weiterhin per Inline-Style (siehe applyDesignHue/
+     designColors) - unveraendert kompatibel, der neue Wert hier ist nur
+     der Auto-Default. */
+  --bg0:#15171b;--bg1:#1a1d22;--bg2:#212429;--bg3:#282c32;--bg4:#33373e;--bg5:#3f434b;--bg6:#4c515a;
+  --bd:#2a2d33;--bd2:#3c414a;
+  --t0:#f1f2f4;--t1:#e0e3e6;--t2:#c5c9ce;--t3:#989ea6;
   --green:#5fa8ed;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:95,168,237;--red-rgb:239,83,80;--amber-rgb:244,173,92;
   --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
@@ -761,11 +767,12 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .nc-body{padding:10px 12px}
 /* ── MATRIX ── */
 /* ── DASHBOARD ── */
-/* Karten wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25 "1 zu 1"): dunkler
-   als der Seitenhintergrund (#060b12), sehr dezenter 1px-Rahmen, 10px
+/* Karten dunkler als der Seitenhintergrund, sehr dezenter 1px-Rahmen, 10px
    Radius, grosszuegiges Innen-Padding. Leichter Blur, damit die Aurora
-   minimal durchscheint, ohne dass die Karte "glasig" wirkt. */
-.dw{background:rgba(11,22,41,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #1e3355;border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s}
+   minimal durchscheint, ohne dass die Karte "glasig" wirkt. Farben 2026-07-27
+   auf neutrales Grau umgestellt (Nutzer-Wunsch "nicht mehr das blaue
+   milchige Design"). */
+.dw{background:rgba(24,26,30,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #2e323a;border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s}
 @media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -777,7 +784,11 @@ body.dash-edit-mode .dash-edit-bar{display:flex}
    ist, dass gerade etwas anders ist als sonst (die Steuerbuttons selbst
    erscheinen erst beim genauen Hinsehen). */
 body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
-.dash-majors{display:none}
+/* Majors-Karte ist jetzt das erste Element der 'left'-Zone im Radial-Layout
+   (frueher ein eigenstaendiges <aside>, Nutzer-Wunsch 2026-07-27) - selbe
+   Bausteine (.ab/.an/.av/miniSparklineSvg), nur unter .dash-majors-card statt
+   .dash-majors gescoped. */
+.dash-majors-card{padding-bottom:6px}
 /* "MAJORS"-Label nur im Bearbeitungsmodus (Nutzer-Wunsch 2026-07-27, per
    Foto markiert) - dieselbe body.dash-edit-mode-Konvention wie .dw-btns/
    .dash-edit-bar, kein zweiter Mechanismus. */
@@ -787,16 +798,22 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
    der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
-.dash-majors .ab-wrap{background:#0c1c34;border:1px solid #1e3355;border-radius:8px;margin-bottom:4px;overflow:hidden}
-.dash-majors .ab{border-radius:0;border-left-width:3px;padding:6px 7px 5px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
-.dash-majors .ab .an{order:1;flex:1 1 auto;font-size:12px}
-.dash-majors .ab .av{order:2;margin:0;font-size:11px}
-.dash-majors .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
-.dash-majors .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:11.5px}
-.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#0c1c34;border:1px solid #1e3355;border-radius:8px}
+.dash-majors-card .ab-wrap{background:#1a1d22;border:1px solid #2e323a;border-radius:8px;margin-bottom:4px;overflow:hidden}
+.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:6px 7px 5px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
+.dash-majors-card .ab .an{order:1;flex:1 1 auto;font-size:12px}
+.dash-majors-card .ab .av{order:2;margin:0;font-size:11px}
+.dash-majors-card .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
+.dash-majors-card .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:11.5px}
+.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:#1a1d22;border:1px solid #2e323a;border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
-@media (hover:hover){.dash-majors-viewall:hover{border-color:#3a5a8a;color:var(--t0)}}
-.dw-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+@media (hover:hover){.dash-majors-viewall:hover{border-color:#565c66;color:var(--t0)}}
+/* flex-wrap (Radial-Layout 2026-07-27): die schmalen Seiten-Zonen (240px)
+   haben oft nicht genug Breite fuer Titel + "View Calendar"-Link + Buttons
+   in einer Zeile - der Link faellt jetzt lieber in eine zweite Zeile um,
+   statt den Titel per Ellipsis zu kuerzen (CLAUDE.md-Grundsatz: Titel
+   duerfen nicht trunkiert werden, wenn eigentlich Platz da waere - hier
+   ist "Platz da", nur eben in Zeile 2). */
+.dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:9px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
    Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
@@ -807,8 +824,16 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    rundes i-Info-Icon INLINE direkt daneben (reuse .rinfo, CLAUDE.md-Grundsatz
    "wiederkehrende UI-Bausteine muessen einheitlich sein"), statt eines
    eigenstaendigen Titel-Blocks mit Untertitelzeile. */
-.dw-t{display:flex;align-items:center;gap:6px;min-width:0}
-.dw-t-txt{font-size:11px;font-weight:700;color:#7f90a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* flex:0 0 auto (statt min-width:0) - der Titel behaelt IMMER seine volle
+   natuerliche Breite, notfalls wickelt die Kopfzeile den Link/die Buttons
+   in eine zweite Zeile ab (siehe .dw-hdr flex-wrap oben), statt den Titel
+   selbst per Ellipsis zu kuerzen. */
+.dw-t{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+/* max-width als reine Sicherheitsgrenze fuer ungewoehnlich lange, vom
+   Nutzer selbst umbenannte Titel (✎) - normale (kurze) Titel werden davon
+   nie beruehrt, da .dw-t jetzt flex:0 0 auto ist und seine Geschwister
+   (Link/Buttons) lieber umbricht als den Titel zu kuerzen. */
+.dw-t-txt{font-size:11px;font-weight:700;color:#7f90a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
 .dw-t .rinfo{width:13px;height:13px;font-size:10px;opacity:.55;flex-shrink:0}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 /* Bearbeitungsmodus statt Hover (Nutzer-Wunsch 2026-07-25: "komm weg von
@@ -848,15 +873,14 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
 .dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
-.db-split{display:flex;gap:12px;align-items:center}
-.db-col-txt{flex:1 1 0;min-width:0}
-/* Feste Breite, damit startGlobes() eine verlaessliche clientWidth misst
-   (ein flex-Item ohne Inhalt meldet sonst 0 und faellt auf die volle
-   Kartenbreite zurueck). */
-/* Globus 2/3 der Kartenbreite statt fixer 200px (Referenz-Foto, Nutzer-
-   Wunsch 2026-07-25) - Text-Spalte (.db-col-txt, flex:1 1 0) bekommt den
-   Rest. JS-Groessenkappung in startGlobes() dazu von 200 auf 260 angehoben. */
-.db-split .globe-host{flex:0 0 66.6%;width:66.6%;min-height:0;padding:0;position:relative}
+/* Globus steht jetzt ALLEIN im Zentrum-Bereich des Radial-Layouts (Nutzer-
+   Wunsch 2026-07-27: "pack den Globus in die Mitte also nur den Globus") -
+   .globe-host ist direktes Kind von .dw.dw-globe, kein Split mit einer
+   Text-Spalte mehr noetig (Daily Bias ist wieder eine eigene Karte, siehe
+   .daily-bias-lbl/-txt weiter unten). Volle Kartenbreite statt fixem
+   66.6%-Flex-Anteil - JS-Groessenkappung in startGlobes() dazu deutlich
+   angehoben (Globus ist jetzt der Mittelpunkt der Seite). */
+.dw-globe .globe-host{width:100%;min-height:0;padding:0;position:relative}
 /* Polarlichter hinter dem Globus - Struktur/Animation unveraendert seit
    2026-07-25 (senkrechte Licht-"Vorhaenge", zwei versetzt animierte Ebenen),
    nur die FARBEN 2026-07-27 auf ein ruhiges Blau/Indigo-Duoton umgestellt
@@ -865,8 +889,8 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    ausschliesslich die App-eigenen Token --blue-rgb/--purple-rgb (dieselben
    Farben, die auch anderswo in der App als Akzent dienen) bei niedrigerer
    Deckkraft - liest sich als EIN kohaerenter Farbraum statt Regenbogen. */
-.db-split .globe-host::before,.db-split .globe-host::after{content:'';position:absolute;inset:-60% -30%;z-index:0;pointer-events:none;will-change:transform}
-.db-split .globe-host::before{
+.dw-globe .globe-host::before,.dw-globe .globe-host::after{content:'';position:absolute;inset:-60% -30%;z-index:0;pointer-events:none;will-change:transform}
+.dw-globe .globe-host::before{
   background:
     repeating-linear-gradient(97deg,
       transparent 0 22px, rgba(var(--blue-rgb),.26) 26px, rgba(var(--blue-rgb),.08) 38px, transparent 46px 92px),
@@ -875,7 +899,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   -webkit-mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
   mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
   animation:auroraCurtain1 34s ease-in-out infinite alternate}
-.db-split .globe-host::after{
+.dw-globe .globe-host::after{
   background:
     repeating-linear-gradient(102deg,
       transparent 0 40px, rgba(var(--blue-rgb),.18) 46px, transparent 58px 128px),
@@ -886,11 +910,21 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   animation:auroraCurtain2 47s ease-in-out infinite alternate}
 @keyframes auroraCurtain1{0%{transform:translate3d(-3%,1%,0) skewX(-4deg) scaleY(1)}100%{transform:translate3d(4%,-2%,0) skewX(5deg) scaleY(1.12)}}
 @keyframes auroraCurtain2{0%{transform:translate3d(3%,-1%,0) skewX(6deg) scaleY(1.08)}100%{transform:translate3d(-4%,2%,0) skewX(-3deg) scaleY(.96)}}
-@media(prefers-reduced-motion:reduce){.db-split .globe-host::before,.db-split .globe-host::after{animation:none}}
-.db-split .globe-host>svg{position:relative;z-index:1}
-#dashWidgets .dw.dw-globe{overflow:hidden}
-@media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
-@media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
+@media(prefers-reduced-motion:reduce){.dw-globe .globe-host::before,.dw-globe .globe-host::after{animation:none}}
+.dw-globe .globe-host>svg{position:relative;z-index:1}
+#dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column;align-items:center}
+.scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
+@media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
+.scan-btn:disabled{opacity:.7;cursor:default}
+/* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
+   vom Globus zu jeder Karte - position:fixed + reine transform-Animation
+   (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
+.scan-particle{position:fixed;left:0;top:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#7ee0ff;box-shadow:0 0 10px 3px rgba(126,224,255,.8),0 0 24px 7px rgba(126,224,255,.3);pointer-events:none;z-index:99999;will-change:transform}
+@keyframes scanHit{0%{box-shadow:0 0 0 0 rgba(126,224,255,.85) inset,0 0 0 0 rgba(126,224,255,.85)}100%{box-shadow:0 0 0 0 rgba(126,224,255,0) inset,0 0 0 16px rgba(126,224,255,0)}}
+.scan-hit{animation:scanHit .6s ease-out}
+@keyframes scanFlashGlobe{0%{filter:brightness(1)}30%{filter:brightness(1.7)}100%{filter:brightness(1)}}
+.scan-flash-globe{animation:scanFlashGlobe .5s ease-out}
+@media(prefers-reduced-motion:reduce){.scan-flash-globe{animation:none}}
 /* ── "Global Market Surveillance"-HUD-Umbau (Nutzer-Wunsch 2026-07-27):
    Globus bleibt genau wie er ist (drehbar, echte Bias-Marker) - drumherum
    kommt eine Ueberwachungs-Konsolen-Optik dazu, gebaut nach realen Vorbildern
@@ -932,11 +966,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 @media (hover:hover){.ghi-row:hover{color:var(--t1)}}
 .ghi-t{color:#5fd0ff;opacity:.8}
-/* clamp + nowrap: bei ~1180px wird die Textspalte der Daily-Bias-Karte so
-   schmal, dass "◆ NEUTRAL" sonst hinter das Rautensymbol umbricht. */
-.daily-bias-lbl{font-size:clamp(18px,1.75vw,26px);font-weight:800;letter-spacing:.3px;margin-bottom:14px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Daily Bias ist wieder eine eigene Karte (oben-Zone, Radial-Layout
+   2026-07-27) statt Teil der Globus-Karte - dieselben zwei Klassen wie
+   zuvor, jetzt einfach in ihrer eigenen .dw. */
+.daily-bias-lbl{font-size:clamp(16px,1.6vw,22px);font-weight:800;letter-spacing:.3px;margin-bottom:8px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.65}
-.db-col-txt .globe-legend{justify-content:flex-start;margin-top:12px}
 /* Market Watch ist KEINE Karte, sondern eine schmale Ticker-Leiste
    (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler, da brauch man
    keine ganze Karte mit Ueberschriften und so") - kein Rahmen, kein
@@ -971,8 +1005,8 @@ body.dash-edit-mode .mw-bar{display:flex}
 .mw-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 @media(max-width:1000px){.mw-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.mw-strip{grid-template-columns:repeat(1,minmax(0,1fr))}}
-.mw-tile{min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:6px;background:#0a1526;border:1px solid #1c3050;border-radius:10px;padding:8px 12px;white-space:nowrap;transition:border-color .12s}
-@media (hover:hover){.mw-tile:hover{border-color:#3a5a8a}}
+.mw-tile{min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:6px;background:#181b20;border:1px solid #2c3138;border-radius:10px;padding:8px 12px;white-space:nowrap;transition:border-color .12s}
+@media (hover:hover){.mw-tile:hover{border-color:#565c66}}
 @media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
 .mw-tile-sym{font-size:13px;font-weight:800;color:#fff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-tile-price{font-size:13px;font-weight:500;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1425,23 +1459,29 @@ body.dash-edit-mode .mw-bar{display:flex}
   .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
   .masonry .rub-card{margin-bottom:0}
   .masonry .rub-card.collapsed{align-self:start}
-  /* Referenz-Foto-Layout (Nutzer-Wunsch 2026-07-25): 12-Spalten-Basis, damit
-     Kartengroessen variieren koennen statt alle gleich breit zu sein - Globus
-     (mit Daily Bias) 50%, Currency Strength/Risk Sentiment je 25% in der
-     Hero-Reihe; Economic Calendar/Market Watch/Key Insights je ein Drittel
-     in der unteren Reihe; alles andere (Movers, FX Bias, Watchlist, ...)
-     bleibt bei 50%. Set-ups/Pairs-Editor spannen die ganze Zeile. */
-  #dashWidgets{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:stretch}
-  /* min-width:0: Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
+  /* Radial-Layout (Nutzer-Wunsch 2026-07-27, ersetzt das vorherige
+     12-Spalten-Grid): Globus allein im Zentrum, ringsum Karten in vier
+     Zonen - oben/unten breit (Market Watch, Notifications, ...), links/
+     rechts hoch (Majors, Currency Strength, Risk Sentiment, Calendar). Die
+     Zonen-Zuordnung passiert in JS ueber ZONE_OF_TYPE/dashZoneOf() -
+     renderDash() baut direkt die 5 .dash-zone-*-Container. */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:10px;align-items:start}
+  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:10px}
+  .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:10px}
+  /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
-  #dashWidgets .dw{margin-bottom:0;min-width:0;grid-column:span 6}
-  #dashWidgets .dw.dw-globe{grid-column:span 6}
-  #dashWidgets .dw.dw-ccy_ranking{grid-column:span 3}
-  #dashWidgets .dw.dw-risk_sentiment{grid-column:span 3}
-  #dashWidgets .dw.dw-mini_calendar,#dashWidgets .dw.dw-notification,#dashWidgets .dw.dw-key_insights{grid-column:span 4}
-  #dashWidgets .dw.dw-market_watch,#dashWidgets .dw.dw-setups{grid-column:1/-1}
-  @media(max-width:700px){#dashWidgets{grid-template-columns:1fr}}
+  .dash-zone-top>.dw,.dash-zone-bottom>.dw{flex:1 1 260px;min-width:0;margin-bottom:0}
+  /* Market Watch braucht die volle Zeilenbreite fuer seine 4-Spalten-Ticker
+     (sonst quetscht es sich neben Daily Bias zusammen und schneidet Werte
+     ab) - immer alleine auf eigener Zeile in der Zone. */
+  .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
+  .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .dash-zone-left>.dw,.dash-zone-right>.dw{margin-bottom:0}
+  .dash-zone-center{grid-area:center;display:flex;align-items:center;justify-content:center;min-width:0}
+  .dash-zone-center>.dw{width:100%;margin-bottom:0}
+  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -1468,35 +1508,22 @@ body.dash-edit-mode .mw-bar{display:flex}
   .evt-toggle{font-size:15px;padding:10px 14px}
   .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:48px 40px 1fr 54px 54px 54px;gap:8px;padding:8px 12px}
 }
-/* ── DASHBOARD MAJORS-SIDEBAR (Referenz-Foto, Nutzer-Wunsch 2026-07-25) ──
-   Erscheint ab derselben Breite wie das 12-Spalten-Grid (1100px). Ein
-   frueherer Versuch beschraenkte sie auf >=1400px, weil die Kartenkoepfe
-   damals (grosser Titel + Untertitelzeile + 5 volle Buttons) daneben
-   zusammenbrachen - nach deren Kompaktierung passt es auch bei ~1100px,
-   die Sidebar ist dort nur etwas schmaler. */
-@media(min-width:1100px){
-  /* align-items:stretch (Nutzer-Wunsch 2026-07-27 "Elemente sollen sich
-     maximal gross machen, gleichmaessig erweitern"): die Sidebar bekommt
-     dieselbe Hoehe wie das Karten-Grid daneben statt an ihrer eigenen,
-     kuerzeren Inhaltshoehe stehenzubleiben. justify-content:space-between
-     auf .dash-majors verteilt die dadurch gewonnene Resthoehe gleichmaessig
-     als Abstand zwischen den Majors-Karten, statt sie als Luecke unten
-     liegen zu lassen. */
-  .dash-layout{display:flex;gap:10px;align-items:stretch}
-  .dash-majors{display:flex;flex-direction:column;gap:0;justify-content:space-between;width:132px;flex-shrink:0}
-  #dashWidgets{flex:1;min-width:0}
-}
+/* Radial-Layout-Regeln stehen jetzt direkt bei #dashWidgets.dash-layout
+   (siehe oben, @media(min-width:1100px)) - die fruehere separate
+   Flex-Sidebar (.dash-majors als eigenstaendiges <aside>) gibt es nicht
+   mehr, die Majors-Karte ist das erste Kind von .dash-zone-left. Etwas
+   breitere Seiten-Spalten ab 1400px, mehr Platz fuer den zentralen Globus. */
 @media(min-width:1400px){
-  .dash-majors{width:150px}
+  #dashWidgets.dash-layout{grid-template-columns:minmax(220px,280px) minmax(280px,1fr) minmax(220px,280px)}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
   .dp{max-width:none}
 }
 /* ── INTRO-ANIMATION (Start/Reload) ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070f1e;cursor:pointer}
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#101215;cursor:pointer}
 #introShards{position:absolute;inset:0;z-index:1}
-.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#1c3050 0%,#0a1626 58%,#050b16 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
+.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#2c3138 0%,#181a1e 58%,#0d0e10 100%);box-shadow:inset 0 0 0 1px rgba(95,168,237,.08);will-change:transform,opacity}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
@@ -1721,12 +1748,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-252 — Globus-Karte zu 'Global Market Surveillance'-HUD ausgebaut (Nutzer-Wunsch): Radar-Sweep-Keil, HUD-Eckklammern, pulsierende Ortungsringe an jedem Waehrungs-Marker, blinkende MONITORING-Anzeige - rein dekorativ, gebaut nach realen Radar-/Flottentracker-HUD-Vorbildern. Darunter eine Readout-Leiste + Intel-Feed, beide AUSSCHLIESSLICH aus echten, bereits vorhandenen App-Daten (Scan-Position = echte Rotation, Active Signals/Risk Level/Priority Target = echte Bias-Scores, Intel-Feed = echte scoreLog-Eintraege) - keine erfundenen Werte.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-253 — Komplettes Dashboard-Redesign (Nutzer-Wunsch): radiales Layout statt 12-Spalten-Grid - Globus jetzt allein in der Mitte, ringsum Karten (hohe Spalten links/rechts, breite Reihen oben/unten), alle bestehenden Widget-Inhalte auf die neuen Zonen verteilt. Farbpalette von blau-milchig auf neutrales dunkles Grau umgestellt (Bias-Farben unveraendert). Neuer 'INITIATE SCAN'-Button am Globus: echte Datenaktualisierung (recomputeAuto) plus eine Partikel-Fluganimation vom Globus zu jeder Karte (Web Animations API), respektiert prefers-reduced-motion.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-252</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-253</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -1932,10 +1959,7 @@ function introLogin(){
     <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
-  <div class="dash-layout">
-    <aside class="dash-majors" id="dashMajors"></aside>
-    <div id="dashWidgets"></div>
-  </div>
+  <div class="dash-layout" id="dashWidgets"></div>
 </div>
 
 <!-- MODAL: Designer (Hintergrund-Farbwahl ueber das Farbspektrum) -->
@@ -5365,13 +5389,14 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'globe',title:'Daily Bias',order:0},
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:1},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:2},
-  {id:uid(),type:'market_watch',title:'Market Watch',order:3},
-  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:4},
-  {id:uid(),type:'notification',title:'Notifications',order:5},
-  {id:uid(),type:'key_insights',title:'Key Insights',order:6},
+  {id:uid(),type:'globe',title:'Radar Globe',order:0},
+  {id:uid(),type:'daily_bias',title:'Daily Bias',order:1},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:2},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:3},
+  {id:uid(),type:'market_watch',title:'Market Watch',order:4},
+  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:5},
+  {id:uid(),type:'notification',title:'Notifications',order:6},
+  {id:uid(),type:'key_insights',title:'Key Insights',order:7},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -5553,19 +5578,22 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // mittlere Reihe (volle Breite, Symbole nebeneinander statt Liste - siehe
 // mwLayoutHtml()). Neues notification-Platzhalter-Widget an Market Watchs
 // alter Stelle in der unteren Reihe.
-const DASH_V=9;
+const DASH_V=10;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  const DASH_V9_DROP=new Set(['daily_bias','movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data']);
+  const DASH_V9_DROP=new Set(['movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data']);
   if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));return;}
   widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));
-  // Globus-Karte zeigt jetzt Daily Bias + Globus zusammen - unveraenderten
-  // Standardtitel mitziehen, eigene Umbenennungen des Nutzers bleiben unangetastet.
+  // Radial-Layout (Nutzer-Wunsch 2026-07-27): Globus steht jetzt ALLEIN im
+  // Zentrum ("nur den Globus"), Daily Bias bekommt daher wieder seine
+  // eigene Karte statt Teil der Globus-Karte zu sein (war DASH_V9 so
+  // zusammengelegt worden) - unveraenderte Standardtitel mitziehen, eigene
+  // Umbenennungen des Nutzers bleiben unangetastet.
   const gw=widgets.find(w=>w.type==='globe');
-  if(gw&&gw.title==='FX World Globe')gw.title='Daily Bias';
-  [['globe','Daily Bias'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
+  if(gw&&(gw.title==='FX World Globe'||gw.title==='Daily Bias'))gw.title='Radar Globe';
+  [['globe','Radar Globe'],['daily_bias','Daily Bias'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:1,risk_sentiment:2,market_watch:3,mini_calendar:4,notification:5,key_insights:6,watchlist:7,movers_fx:8,score_changes:9,fx_bias:10,asset_heatmap:11,live_data:12,pairs_editor:13};
+  const rank={globe:0,daily_bias:1,ccy_ranking:2,risk_sentiment:3,market_watch:4,mini_calendar:5,notification:6,key_insights:7,watchlist:8,movers_fx:9,score_changes:10,fx_bias:11,asset_heatmap:12,live_data:13,pairs_editor:14};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -9628,7 +9656,8 @@ function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs(
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
-  {type:'globe',label:'FX World Globe',sub:'Rotating globe with Daily Bias — currencies coloured by bias score'},
+  {type:'globe',label:'Radar Globe',sub:'Rotating surveillance globe — currencies coloured by bias score, source of the scan animation'},
+  {type:'daily_bias',label:'Daily Bias',sub:'Bull/bear/neutral majority read across the FX majors'},
   {type:'ccy_ranking',label:'Asset Strength',sub:'Configurable assets (up to 9) ranked strongest → weakest by score'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
@@ -9959,9 +9988,31 @@ function toggleDashEditMode(){
   document.body.classList.toggle('dash-edit-mode',dashEditMode);
   if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
 }
+// "Global Market Surveillance"-Radial-Layout (Nutzer-Wunsch 2026-07-27):
+// Globus allein im Zentrum, ringsum Karten in vier Zonen (oben/unten breit,
+// links/rechts hoch). Jeder Widget-TYP hat eine feste Standard-Zone -
+// unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
+// von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
+// global) zu verschieben.
+const ZONE_OF_TYPE={globe:'center',daily_bias:'top',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'bottom'};
+function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
+// Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
+// die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
+// sonst nicht an. Ersetzt die alte Variante, die stur im gesamten
+// widgets-Array verschob (ergab in der neuen Zonen-Aufteilung keinen Sinn
+// mehr, da direkte Array-Nachbarn oft in einer ANDEREN Zone liegen).
+function mvWidget(id,d){
+  const w=widgets.find(x=>x.id===id);if(!w)return;
+  const zone=dashZoneOf(w.type);
+  const mates=widgets.filter(x=>dashZoneOf(x.type)===zone).sort((a,b)=>(a.order||0)-(b.order||0));
+  const i=mates.indexOf(w),j=i+d;
+  if(i<0||j<0||j>=mates.length)return;
+  pushU();
+  const tmp=mates[i].order;mates[i].order=mates[j].order;mates[j].order=tmp;
+  save();renderDash();
+}
 function renderDash(){
   updateAuroraColors();
-  const majorsEl=document.getElementById('dashMajors');if(majorsEl)majorsEl.innerHTML=dashMajorsHtml();
   const el=document.getElementById('dashWidgets');if(!el)return;
   // Scroll-Position sichern: el.innerHTML unten ersetzt ALLE Widgets komplett
   // (auch das gerade angeklickte, z.B. der Risk-Environment-Regler). Zwei
@@ -9977,61 +10028,57 @@ function renderDash(){
   const _dashScroll=document.getElementById('pgDash');
   const _scrollY=_dashScroll?_dashScroll.scrollTop:0;
   if(document.activeElement&&el.contains(document.activeElement))document.activeElement.blur();
-  // daily_bias ist jetzt Teil der Globus-Karte (siehe dailyBiasInfo()) -
-  // ein eigenstaendiges Grid-Item wuerde eine leere Karte hinterlassen.
-  const sorted=[...widgets].filter(w=>w.type!=='daily_bias').sort((a,b)=>(a.order||0)-(b.order||0));
+  const sorted=[...widgets].sort((a,b)=>(a.order||0)-(b.order||0));
   // FLIP-Vormessung fuer die Currency-Strength-Rangliste (.rank-row[data-flip]):
   // el.innerHTML unten ersetzt alle Zeilen komplett, ein neu einsortiertes
   // Symbol wuerde sonst kommentarlos an seine neue Position springen statt
   // sichtbar dorthin zu gleiten (siehe flipRankRows()).
   const _rankFlipBefore={};
   el.querySelectorAll('.rank-row[data-flip]').forEach(r=>{_rankFlipBefore[r.getAttribute('data-flip')]=r.getBoundingClientRect();});
-  el.innerHTML=sorted.map((w,wi)=>{
+  // Radial-Layout (Nutzer-Wunsch 2026-07-27): Widgets werden nicht mehr in
+  // EINEN 12-Spalten-Grid gemappt, sondern nach ZONE_OF_TYPE in 5 Zonen
+  // einsortiert (oben/links/zentrum/rechts/unten) - siehe dash-zone-*-CSS
+  // und dashZoneOf() oben. wi/mates.length fuer die Rauf/Runter-Buttons
+  // sind jetzt zonen-relativ (mvWidget() verschiebt ebenfalls nur innerhalb
+  // der eigenen Zone), nicht mehr global.
+  const zoneMates={};
+  ['top','left','center','right','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
+  const zones={top:[],left:[],center:[],right:[],bottom:[]};
+  sorted.forEach((w)=>{
     let content='';
-    // Steuerbuttons einmal bauen: die Market-Watch-Karte hat keine eigene
-    // Kopfzeile mehr (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler,
-    // da brauch man keine ganze Karte mit Ueberschriften und so") und setzt
-    // sie stattdessen rechts neben die Kategorie-Tabs.
-    const btnsHtml=`<div class="dw-btns">
+    const zone=dashZoneOf(w.type);
+    const mates=zoneMates[zone];
+    const wi=mates.indexOf(w);
+    // Globus steht allein im Zentrum (Nutzer-Wunsch "nur den Globus") -
+    // komplett chromelos, keine Steuerbuttons/kein Kartenkopf noetig, da es
+    // ohnehin nur dieses eine Widget in der Zone geben kann.
+    const btnsHtml=w.type==='globe'?'':`<div class="dw-btns">
       ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
       ${w.type==='ccy_ranking'?`<button class="btn dw-nav" onclick="openCcyCfgM('${w.id}')" title="Choose assets (max 9)">${icn('gear',12)}</button>`:''}
       <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
-      <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===sorted.length-1?'disabled':''} title="Move down">▼</button>
+      <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===mates.length-1?'disabled':''} title="Move down">▼</button>
       <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
       <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
     </div>`;
     if(w.type==='daily_bias'){
-      // Retiriert (Nutzer-Wunsch 2026-07-25): Daily Bias ist jetzt Teil der
-      // Globus-Karte (eine Karte, wie im Referenz-Foto), kein eigenes Grid-
-      // Item mehr - siehe dailyBiasInfo() + der globe-Zweig unten. Bereits
-      // migrierte daily_bias-Eintraege werden vor dem Rendern rausgefiltert
-      // (siehe sorted-Filter oben), dieser Zweig laeuft praktisch nie noch,
-      // bleibt aber als Fallback falls doch mal einer durchrutscht.
-      content='';
-    }else if(w.type==='globe'){
-      // Marker, Terminator & Nachtlichter werden live per startGlobes() gezeichnet; hier nur Host + Legende.
-      // Die Sessions-Leiste aktualisiert sich unabhaengig davon per startSessionBar() alle 30 Minuten.
-      // Daily-Bias-Kopf oben in derselben Karte (Nutzer-Wunsch 2026-07-25:
-      // im Referenz-Foto ist das EIN Panel, nicht zwei getrennte Karten).
+      // Wieder eine eigene Karte (Nutzer-Wunsch 2026-07-27, Radial-Layout):
+      // der Globus steht jetzt ALLEIN im Zentrum ("nur den Globus"), Daily
+      // Bias zieht deshalb zurueck in seine eigene Zonen-Karte (oben, siehe
+      // ZONE_OF_TYPE/dashZoneOf) - dieselbe dailyBiasInfo(), keine neue Logik.
       const db=dailyBiasInfo();
-      // Session-Zeitleiste (Sydney/Tokyo/London/New York) bewusst raus aus
-      // dieser Karte (Nutzer-Wunsch 2026-07-25: Dashboard soll ohne Scrollen
-      // aufs Referenz-Foto passen, das zeigt hier ebenfalls nur Globus+
-      // Legende) - sessionBarHtml() bleibt im Code, falls sie an anderer
-      // Stelle spaeter wieder gebraucht wird.
-      // Zweispaltig wie im Referenz-Foto: Textblock links, Globus gross
-      // rechts daneben (vorher untereinander gestapelt - das war der
-      // groesste Hoehenfresser der ganzen Seite, siehe Nutzer-Bugreport
-      // "passt natuerlich nicht"). Auf schmalen Screens (<700px) faellt die
-      // Spalte per CSS wieder untereinander.
-      content=`<div class="db-split">
-        <div class="db-col-txt">
-          <div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
-          <div class="daily-bias-txt">${db.txt}</div>
-        </div>
-        <div class="globe-host"></div>
-      </div>
-      ${globeHudHtml()}`;
+      content=`<div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
+        <div class="daily-bias-txt">${db.txt}</div>`;
+    }else if(w.type==='globe'){
+      // Marker/Radar-HUD werden live per startGlobes() gezeichnet, hier nur
+      // der Host - Globus steht jetzt ALLEIN im Zentrum, kein Text mehr
+      // daneben (Nutzer-Wunsch 2026-07-27: "pack den Globus in die Mitte
+      // also nur den Globus"). globeHudHtml() (Readout+Intel-Feed) bleibt
+      // direkt unter dem Globus, damit es weiterhin wirkt, als kaemen die
+      // Karten-Infos aus dem Radar - siehe auch scanBroadcast() weiter unten
+      // fuer die Partikel-Animation, die diesen Eindruck noch verstaerkt.
+      content=`<div class="globe-host"></div>
+        <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
+        ${globeHudHtml()}`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -10307,17 +10354,29 @@ function renderDash(){
     // wie eine eigene Toolbar-Leiste. Steuerbuttons bleiben bewusst sichtbar
     // (nur blasser) statt hover-only: auf Touch gaebe es sonst keinen Weg,
     // sie zu erreichen.
-    // Market Watch ist eine reine Ticker-Leiste ohne Kartenkopf - ihre
-    // Steuerbuttons stecken oben in der mw-bar neben den Kategorie-Tabs.
-    const hdrHtml=w.type==='market_watch'?'':`<div class="dw-hdr">
+    // Market Watch und der Globus sind reine Chrome-lose Elemente ohne
+    // Kartenkopf (Globus: "nur den Globus", Nutzer-Wunsch 2026-07-27) - ihre
+    // Steuerbuttons stecken oben in der mw-bar bzw. entfallen ganz.
+    const hdrHtml=(w.type==='market_watch'||w.type==='globe')?'':`<div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${btnsHtml}
       </div>`;
-    return`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}">
+    const cardHtml=`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}" data-widget-id="${w.id}">
       ${hdrHtml}
       ${content}
-    </div>`;}).join('');
+    </div>`;
+    zones[zone].push(cardHtml);
+  });
+  // Zonen zusammensetzen - Majors-Sidebar (frueher ein eigenstaendiges
+  // <aside>) ist jetzt schlicht das erste Element der 'left'-Zone.
+  el.innerHTML=`
+    <div class="dash-zone-top">${zones.top.join('')}</div>
+    <div class="dash-zone-left"><div class="dw dash-majors-card">${dashMajorsHtml()}</div>${zones.left.join('')}</div>
+    <div class="dash-zone-center">${zones.center.join('')}</div>
+    <div class="dash-zone-right">${zones.right.join('')}</div>
+    <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
+  `;
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
@@ -10786,12 +10845,12 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    // Kappung auf 340px (Nutzer-Wunsch 2026-07-27: Globus so gross wie
-    // moeglich, nah an den Kartenrand heran - vorher 260px, was auf breiten
-    // Dashboard-Karten kleiner blieb als die volle 66.6%-Spaltenbreite
-    // (.globe-host) sie eigentlich zuliesse. Obergrenze bleibt bestehen,
-    // damit die Text-Spalte auf sehr breiten Karten nicht auf 0 schrumpft.
-    const size=Math.max(140,Math.min(w||220,340));
+    // Kappung auf 480px (Radial-Layout, Nutzer-Wunsch 2026-07-27: Globus
+    // steht jetzt ALLEIN im Zentrum - keine Text-Spalte mehr, die Platz
+    // braucht, also darf er deutlich groesser werden als vorher (260px,
+    // dann 340px). Obergrenze bleibt trotzdem bestehen, damit er auf sehr
+    // breiten Screens nicht unkontrolliert weiterwaechst.
+    const size=Math.max(140,Math.min(w||220,480));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
     // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
@@ -10827,9 +10886,8 @@ function startGlobes(){
   _globeRAF=requestAnimationFrame(frame);
 }
 
-function mvWidget(id,d){
-  const i=widgets.findIndex(w=>w.id===id);if(i<0)return;
-  pushU();mvArr(widgets,i,d);widgets.forEach((w,j)=>w.order=j);save();renderDash();}
+// mvWidget() ist jetzt zonen-bewusst - siehe Definition oben bei
+// dashZoneOf()/ZONE_OF_TYPE (direkt vor renderDash()).
 function delWidget(id){pushU();widgets=widgets.filter(w=>w.id!==id);save();renderDash();}
 
 // rename widget using rename modal
@@ -11184,6 +11242,62 @@ function globeHudHtml(){
   return readout+feedHtml;
 }
 function bMark(b){return b==='bull'?'▲':b==='bear'?'▼':'◆';}
+// "Radar-Scan"-Animation (Nutzer-Wunsch 2026-07-27): Datenpartikel fliegen
+// nacheinander vom Globus zu jeder Karte und "schlagen" dort sichtbar ein.
+// ECHTER Datenabgleich zuerst (recomputeAuto/save/renderDash), die Partikel
+// sind reine Visualisierung DAVON - keine erfundene Aktualisierung, siehe
+// CLAUDE.md-Grundsatz "nie erfundene Werte". prefers-reduced-motion ueber-
+// springt die Flugbahn (springt aber trotzdem an, damit die Karten weiter
+// erkennbar "getroffen" werden, nur ohne Bewegung).
+let _scanBusy=false;
+function startScanBroadcast(){
+  if(_scanBusy)return;
+  _scanBusy=true;
+  // Echter Refresh ZUERST (nicht danach) - renderDash() baut #dashWidgets
+  // komplett neu auf (inkl. Scan-Button/Globus-SVG selbst), jede vorher auf
+  // dem ALTEN Button/Kreis gesetzte Klasse/Property waere sonst sofort
+  // wieder weg. Erst NACH dem Rebuild die frischen Elemente greifen und den
+  // "SCANNING"-Zustand + Radar-Blitz darauf setzen.
+  recomputeAuto();save();renderDash();
+  requestAnimationFrame(()=>{
+    const btn=document.querySelector('.scan-btn');
+    if(btn){btn.disabled=true;btn.innerHTML=`${icn('zap',13)} SCANNING…`;}
+    const circle=document.querySelector('.globe-host svg circle');
+    if(circle){circle.classList.remove('scan-flash-globe');void circle.getBoundingClientRect();circle.classList.add('scan-flash-globe');}
+    const globeHost=document.querySelector('.globe-host');
+    const targets=[...document.querySelectorAll('#dashWidgets .dw')].filter(el=>!el.classList.contains('dw-globe'));
+    if(!globeHost||!targets.length){_scanBusy=false;if(btn){btn.disabled=false;btn.innerHTML=`${icn('zap',13)} INITIATE SCAN`;}return;}
+    const gr=globeHost.getBoundingClientRect();
+    const gx=gr.left+gr.width/2,gy=gr.top+gr.height/2;
+    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const step=reduced?40:130;
+    targets.forEach((card,i)=>{setTimeout(()=>scanFlyParticle(gx,gy,card,reduced),i*step);});
+    setTimeout(()=>{
+      _scanBusy=false;
+      const b=document.querySelector('.scan-btn');
+      if(b){b.disabled=false;b.innerHTML=`${icn('zap',13)} INITIATE SCAN`;}
+    },targets.length*step+(reduced?150:700));
+  });
+}
+function scanFlyParticle(x0,y0,targetEl,reduced){
+  const hit=()=>{
+    targetEl.classList.remove('scan-hit');void targetEl.getBoundingClientRect();targetEl.classList.add('scan-hit');
+    setTimeout(()=>targetEl.classList.remove('scan-hit'),650);
+  };
+  if(reduced){hit();return;}
+  const r=targetEl.getBoundingClientRect();
+  const x1=r.left+r.width/2,y1=r.top+r.height/2;
+  const mx=(x0+x1)/2+(Math.random()-0.5)*90,my=(y0+y1)/2+(Math.random()-0.5)*90;
+  const p=document.createElement('div');
+  p.className='scan-particle';
+  document.body.appendChild(p);
+  const anim=p.animate([
+    {transform:`translate(${x0}px,${y0}px) scale(1)`,opacity:1,offset:0},
+    {transform:`translate(${mx}px,${my}px) scale(1.3)`,opacity:1,offset:.5},
+    {transform:`translate(${x1}px,${y1}px) scale(.4)`,opacity:0,offset:1}
+  ],{duration:620,easing:'cubic-bezier(.3,.6,.4,1)'});
+  anim.onfinish=()=>{p.remove();hit();};
+}
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
 // berücksichtigt bereits "lower is better" (z.B. Arbeitslosenquote), daher
