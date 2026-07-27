@@ -4707,3 +4707,89 @@ balancierte Extraktion jeder `function`, Filter auf `save()` ohne
 `pushU`/`markPrefEdit`/`markUserEditTs` im Koerper) - NICHT wieder nur
 einzelne Verdachtsfaelle von Hand durchsuchen, das uebersieht nachweislich
 einen Grossteil.
+
+### Score-History (🕰️): COT Data/Risk Environment fehlten komplett, Non-FX-Assets hatten NIE Events (Bugreport 2026-07-27, per Screenshot)
+
+Nutzer schickte einen Screenshot der EUR-History: der Score sprang an einem
+Tag (Vortag +6.1, dann +3.5), aber sowohl der Sprung-Tag als auch die beiden
+Tage danach zeigten "No score-driving events". Auftrag: herausfinden, wieso
+nicht ALLE score-treibenden Faktoren erfasst werden, und den Fix fuer JEDES
+Asset umsetzen (nicht nur EUR).
+
+**Nachweis ueber echte Repo-Daten statt Raten:** `score_hist.json` (die
+server-seitige Score-Historie, siehe Eintrag weiter oben) enthaelt fuer EUR
+das Tupel `[datum,total,infl,labour,growth,bias]` - `infl`/`labour` blieben
+ueber den fraglichen Zeitraum konstant bei 3.5/1.5, `growth` sprang 0→2→0,
+UND der "Rest" (`total - infl - labour - growth`, der zwangslaeufig
+Interest Rates + COT Data + Risk Environment umfasst, da nur diese drei
+Teil-Scores im Tupel stehen) verschob sich ebenfalls (-0.5→-0.9→-1.5) -
+zwei score-treibende Aenderungen an genau dem Tag, an dem die History
+"nichts" zeigte.
+
+**Ursache gefunden:** `symScoreDrivingEventsByDate()` (≈ Zeile 3383) filterte
+Rubriken nur gegen `IND_AUTO_RUBS=['Interest Rates','Inflation','Labour
+Market','Economic Growth']` - "COT Data" und "Risk Environment" fielen
+dadurch bei JEDEM Asset immer durch, obwohl beide nachweislich den Score
+bewegen (`applyCotDataFeed()`/`recomputeRiskCorr()`). Zusaetzlich brach die
+Funktion fuer Nicht-FX-Assets ganz am Anfang komplett ab (`if(isNonFx(id))
+return byDate;`) - Gold/Silber/Oel/BTC/Aktienindizes zeigten dadurch
+UEBERHAUPT NIE ein Event in ihrer History, unabhaengig vom Score-Sprung.
+
+**Fix, dreiteilig:**
+1. **COT Data + Risk Environment jetzt eigenstaendig ausgewertet** (nicht
+   ueber `IND_AUTO_RUBS`, sondern ein eigener Zweig fuer `rub.name==='COT
+   Data'||rub.name===MACRO_NAME`) - fuer FX UND Nicht-FX gleichermassen, da
+   das asset-eigene Daten sind (eigener COT-Report, eigene Risk-Correlation-
+   Einstellung), keine von einer Waehrung abgeleiteten. `ind.research.cot`/
+   `ind.research.sent` (haben ein `date`-Feld wie COT-Report-Datum bzw.
+   Sentiment-Update-Datum) liefern die synthetischen Events.
+2. **COT/Sentiment-Bias ist Schwellen-/Vorzeichen-basiert** (z.B. Netto-
+   Positionierung >=60%), nicht "Actual vs Forecast" wie bei echten Kalender-
+   Events - `actualColor()`/`indBiasFromEvent()` haetten die Richtung ueber
+   den bisherigen Zahlenvergleich falsch hergeleitet (bzw. gar nicht, da COT
+   kein echtes Forecast hat). Fix: neuer `ev.bias`-Override in `actualColor()`
+   (`if(ev.bias)return ev.bias==='bull'?'act-good':...`) - die synthetischen
+   COT/Sentiment-Events tragen die bereits vom Feed korrekt berechnete
+   `ind.bias` direkt mit, statt sie zu erraten. Tooltip-Formatierung
+   (`fcLine` in `renderSymHistoryPanel`, `tip` in `renderSymHistory`) um
+   eigene `ev.cot`/`ev.sent`-Zweige ergaenzt (COT: "prev X%" statt "fc X",
+   Sentiment: kein Vergleichswert vorhanden, keine Zeile).
+3. **Nicht-FX-Assets**: `isNonFx(id)`-Fruehausstieg entfernt. Die 4
+   IND_AUTO_RUBS-Karten (Inflation/Interest Rates/Labour Market/Economic
+   Growth) sind bei Nicht-FX rein per same/inverse-Regel von der
+   verknuepften Waehrung gespiegelt (`deriveMacroBiasAll()`), OHNE dass
+   `ind.research` mitkopiert wird - die Treiber-Events werden daher jetzt
+   direkt bei der verknuepften Waehrung abgeholt (`macroCcyFor(id)` +
+   `effDeriveRules(sym)[rub.name]==='same'/'inverse'`-Check, exakt wie
+   `deriveMacroBiasAll()` selbst), nur wenn eine Regel tatsaechlich aktiv
+   ist. COT Data/Risk Environment werden wie bei FX direkt am Asset selbst
+   ausgewertet (s.o.), unabhaengig von einer Waehrungs-Verknuepfung.
+4. **Randfund waehrend der Umsetzung**: `setRiskEnvDir()` (Richtungs-
+   Einstellung im Zahnrad-Menue) und `applyRiskEnvList()` (gespeichertes
+   Szenario anwenden) aenderten `ind.bias` von Risk Correlation genau wie
+   `setRiskEnvLevel()` (der Regler), aber NUR der Regler hatte den
+   `scoreLog`-Nachtrag (siehe Eintrag "Risk-Environment-Kartenbias..." vom
+   2026-07-19/21) - die anderen beiden blieben unsichtbar in der History.
+   Die Log-Logik in einen gemeinsamen Helfer `logRiskCorrChanges()`
+   ausgelagert, von allen drei Stellen aufgerufen.
+- Per Playwright mit den ECHTEN lokalen Feed-Daten verifiziert: ein
+  synthetisches COT-Event auf EUR erscheint korrekt in der Karte (Pfeil,
+  Farbe, "65% prev 60%", +1-Badge - Screenshot bestaetigt); ein USD-CPI-Event
+  spiegelt sich korrekt in GOLDs History (Inflation-Regel "inverse"), OHNE
+  bei EUR (nicht mit USD verknuepft) faelschlich mit aufzutauchen; alle 18
+  Assets rendern `symScoreDrivingEventsByDate()`/`renderSymHistoryPanel()`
+  fehlerfrei, Nicht-FX-Assets (GOLD/SILVER/OIL/SP500/NAS/BTC) zeigen jetzt
+  echte Tage mit Events (vorher immer 0); `setRiskEnvDir()` erzeugt jetzt
+  nachweislich einen `scoreLog`-Eintrag mit korrektem Vorher/Nachher-Bias
+  und Delta. Voller Tab-Regressionstest weiterhin fehlerfrei.
+- **Nicht behebbar (kein Bug, sondern Datenluecke):** die vom Nutzer
+  gezeigten VERGANGENEN Tage (Vortag-Sprung) selbst lassen sich nicht
+  rueckwirkend korrigieren - der genaue Indikator-Zustand des Nutzers zu
+  jenem Zeitpunkt liegt nur in dessen eigenem Cloud-Sync-Stand, nicht in
+  diesem Repo. Der Fix schliesst die Luecke fuer ALLE kuenftigen Aenderungen.
+- **Merksatz:** bei "Score X, aber History zeigt nichts"-Bugreports immer
+  zuerst pruefen, ob `score_hist.json`/`scoreHist` (infl/labour/growth
+  einzeln) ein Sub-Signal isoliert, das NICHT durch die drei bekannten
+  IND_AUTO_RUBS-Karten erklaerbar ist - das ist ein direkter Hinweis auf
+  eine der beiden nicht abgedeckten Rubriken (COT Data/Risk Environment),
+  ohne raten zu muessen, welcher Indikator betroffen war.

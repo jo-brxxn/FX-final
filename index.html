@@ -1643,12 +1643,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-247 — CHF-Rate-Probabilities zeigte 'Loading...' ohne Ende: SNB-Sitzungstermine fuer Sep/Dez 2026 fehlten (nur Maerz/Juni waren bestaetigt), dadurch war die Liste kommender Sitzungen leer. Sep 24 + Dez 10, 2026 recherchiert und gegen das SNB-Donnerstag-Muster verifiziert, jetzt in den Workflow ergaenzt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-248 — Score-History (🕰️) zeigte nicht alle score-treibenden Faktoren: COT Data (Net Positioning/WoW) und Risk Environment (Risk Correlation) wurden komplett uebersprungen, bei JEDEM Asset - Ursache eines Bugreports, wo EURs Score an einem Tag sprang, aber 'No score-driving events' stand. Non-FX-Assets (Gold/Silber/Oel/BTC/Indizes) zeigten bisher UEBERHAUPT KEINE Events (isNonFx-Sperre) - jetzt bekommen sie COT/Risk-Environment direkt UND die gespiegelten Makro-Karten (Inflation/Interest Rates/Labour Market/Growth) ueber die verknuepfte Waehrung. Zusaetzlich: Aendern der Risk-Environment-Richtung/eines gespeicherten Szenarios landet jetzt auch im Score-Log (vorher nur der Regler selbst).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-247</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-248</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2782,6 +2782,11 @@ function parseNumLike(s){
   return v;
 }
 function actualColor(ev){
+  // Explizite Bias-Vorgabe (COT/Sentiment-Synthetic-Events aus
+  // symScoreDrivingEventsByDate: deren Richtung ist Schwellen-/Vorzeichen-
+  // basiert, nicht "Actual vs Forecast" - kann hier nicht numerisch
+  // hergeleitet werden, kommt daher direkt vom bereits berechneten ind.bias).
+  if(ev.bias)return ev.bias==='bull'?'act-good':ev.bias==='bear'?'act-bad':'';
   if(!ev.actual||ev.forecast==null||ev.forecast==='')return'';
   const a=parseNumLike(ev.actual);
   const f=parseNumLike(ev.forecast);
@@ -3373,34 +3378,82 @@ const HIST_DAYS=10;
 // indBiasFromEvent() dieselbe hoeher-ist-besser-Logik anwenden wie bei den
 // echten Karten (bondColor: aVal>pVal -> bullish, exakt das Ergebnis von
 // actualColor bei a>f ohne LOWER_IS_BETTER_RE-Treffer).
-// Nicht-FX-Assets werden nie automatisch aus Kalender-Events bepreist - fuer
-// sie bleibt die Liste konsequent leer statt Kalender-Rauschen zu zeigen.
+// (4) COT Data (applyCotDataFeed) und (5) Markt-Sentiment (applySentimentFeed)
+// sind eine VIERTE/FUENFTE Quelle, die ind.bias ebenfalls automatisch setzen
+// (research.cot / research.sent), aber bislang KOMPLETT ausserhalb dieser
+// Funktion lagen - die Rubrik-Pruefung unten fragte nur IND_AUTO_RUBS
+// (Inflation/Interest Rates/Labour Market/Economic Growth) ab, "COT Data"
+// und "Risk Environment" fielen also fuer JEDES Asset immer durch (Bugreport
+// 2026-07-27, per Screenshot: EURs Score sprang an einem Tag ohne jedes
+// gelistete Event - Ursache war eine COT-Report-Aktualisierung). Deren Bias
+// ist Schwellen-/Vorzeichen-basiert (z.B. Netto-Positionierung >=60%), nicht
+// "Actual vs Forecast" wie bei echten Kalender-Events - kann also nicht ueber
+// actualColor()s Zahlenvergleich hergeleitet werden. Die synthetischen Events
+// tragen deshalb ihre Richtung direkt als ev.bias (siehe actualColor()-
+// Override oben), statt sie ueber ein vorgetaeuschtes forecast/previous-Paar
+// erraten zu lassen.
+// Nicht-FX-Assets wurden bisher komplett uebersprungen ("automatisch nur aus
+// Kalender-Events bepreist, das gibt es fuer Nicht-FX nicht") - stimmt fuer
+// die 4 IND_AUTO_RUBS-Karten (die sind bei Nicht-FX rein per same/inverse-
+// Regel von der verknuepften Waehrung gespiegelt, siehe deriveMacroBiasAll,
+// OHNE das research-Objekt mitzukopieren), aber NICHT fuer COT Data/Risk
+// Environment - das sind eigene, direkt am Nicht-FX-Asset haengende Daten
+// (eigener COT-Report, eigene Risk-Correlation-Einstellung). Jetzt: die 4
+// gespiegelten Karten holen ihre Treiber-Events von der verknuepften
+// Waehrung (nur wenn dort tatsaechlich eine same/inverse-Regel aktiv ist,
+// exakt wie deriveMacroBiasAll()), COT Data/Risk Environment werden immer
+// direkt am Asset selbst ausgewertet - fuer FX UND Nicht-FX gleichermassen.
 function symScoreDrivingEventsByDate(id){
   const byDate={};
-  if(isNonFx(id))return byDate;
   const c=syms.find(s=>s.id===id);
-  ((c&&c.rubrics)||[]).forEach(rub=>{
-    if(!IND_AUTO_RUBS.includes(rub.name)||!rub.indicators)return;
+  if(!c)return byDate;
+  // Pro Indikator die Events aus GENAU der Quelle sammeln, die auch dessen
+  // Live-Bias setzt - lookupId steuert nur den Kalender-Fallback (bei
+  // gespiegelten Nicht-FX-Karten die verknuepfte Waehrung statt des Assets
+  // selbst); null unterdrueckt den Kalender-Fallback komplett (COT Data/Risk
+  // Environment haben keine currency-getaggten Kalender-Events).
+  const pushForInd=(ind,lookupId)=>{
+    const r=ind.research;
+    if(r&&r.feed&&r.date&&r.actual!=null){
+      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
+      (byDate[r.date]=byDate[r.date]||[]).push(synth);
+      return;
+    }
+    const ev=lookupId?findIndEvent(lookupId,ind.name):null;
+    if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
+    if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
+      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true};
+      (byDate[r.date]=byDate[r.date]||[]).push(synth);
+      return;
+    }
+    if(r&&r.cot&&r.date&&r.actual!=null){
+      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:r.previous,bias:ind.bias,cot:true};
+      (byDate[r.date]=byDate[r.date]||[]).push(synth);
+      return;
+    }
+    if(r&&r.sent&&r.date&&r.actual!=null){
+      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:null,bias:ind.bias,sent:true};
+      (byDate[r.date]=byDate[r.date]||[]).push(synth);
+    }
+  };
+  const nonFx=isNonFx(id);
+  (c.rubrics||[]).forEach(rub=>{
+    if(!rub.indicators)return;
+    if(rub.name==='COT Data'||rub.name===MACRO_NAME){
+      rub.indicators.forEach(ind=>pushForInd(ind,null));
+      return;
+    }
+    if(!IND_AUTO_RUBS.includes(rub.name))return;
+    if(!nonFx){rub.indicators.forEach(ind=>pushForInd(ind,id));return;}
+    const ccy=macroCcyFor(id);if(!ccy)return;
+    const rule=effDeriveRules(c)[rub.name];
+    if(rule!=='same'&&rule!=='inverse')return;
+    const srcSym=syms.find(s=>s.id===ccy);
+    const srcRub=srcSym&&(srcSym.rubrics||[]).find(r=>r.name===rub.name);
+    if(!srcRub||!srcRub.indicators)return;
     rub.indicators.forEach(ind=>{
-      const r=ind.research;
-      // Feed-abgedeckte Indikatoren (r.feed===true) haben volle Exklusivitaet
-      // gegenueber dem Kalender-Pfad (siehe Dual-Source-Fix, CLAUDE.md) - das
-      // galt bisher nur fuer Bias/Score, hier lief findIndEvent() weiterhin
-      // ZUERST und zeigte bei einem falsch zugeordneten Kalender-Treffer
-      // dessen (falschen) Wert in der History-Karte statt des echten Feed-
-      // Werts (Bugreport 2026-07-20, EUR PPI). Reihenfolge umgedreht: Feed
-      // zuerst pruefen, Kalender nur fuer NICHT feed-abgedeckte Indikatoren.
-      if(r&&r.feed&&r.date&&r.actual!=null){
-        const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
-        (byDate[r.date]=byDate[r.date]||[]).push(synth);
-        return;
-      }
-      const ev=findIndEvent(id,ind.name);
-      if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
-      if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
-        const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true};
-        (byDate[r.date]=byDate[r.date]||[]).push(synth);
-      }
+      const srcInd=srcRub.indicators.find(i=>i.name===ind.name);
+      if(srcInd)pushForInd(srcInd,ccy);
     });
   });
   return byDate;
@@ -3429,7 +3482,7 @@ function renderSymHistory(id){
     const col=has?(BC[d.bias]||BC.neu):'';
     const wd=new Date(d.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'}).slice(0,2);
     const dn=new Date(d.date+'T00:00:00').getDate();
-    const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 15d ago)`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
+    const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 15d ago)`:(ev.cot||ev.sent)?`${ev.name}: ${ev.actual}`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
     return`<div class="hist-day${has?' hist-has':''}${d.date===today?' hist-today':''}" style="${has?`--hc:${col}`:''}" title="${escH(fmtDayHdr(d.date)+': '+tip)}">
       <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
     </div>`;
@@ -3480,7 +3533,10 @@ function renderSymHistoryPanel(id){
       // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
       // den 15-Tage-Vergleichswert fuer die Bias-Berechnung (s.o.), wird aber
       // NICHT als "fc" beschriftet, um keinen echten Analysten-Forecast vorzutaeuschen.
-      const fcLine=ev.bond?`vs ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'} (15d ago)`:`fc ${(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–'} · prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`;
+      const fcLine=ev.bond?`vs ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'} (15d ago)`
+        :ev.cot?`prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`
+        :ev.sent?''
+        :`fc ${(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–'} · prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`;
       return`<div class="histp-evt">
         <span class="histp-time">${escH(ev.time&&evtTimeValid(ev.time)?ev.time:'—')}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
@@ -6790,18 +6846,22 @@ function biasPickerOutside(e){const m=document.getElementById('biasPicker');if(m
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 // ── Risk-Sentiment-Regler (Dashboard, Nutzer-Wunsch 2026-07-13) ──
-function setRiskEnvLevel(lv){
-  lv=Math.max(0,Math.min(2,+lv||0));
-  if(lv===riskEnvLevel)return;
-  pushU();
-  riskEnvLevel=lv;
-  // "Risk Correlation" wird automatisch ueber recomputeRiskCorr() unten
-  // gesetzt (fuer diesen Indikator ist setIndBias/togIndImp gesperrt, siehe
-  // dort) - dadurch blieb eine Regler-Aenderung bisher KOMPLETT unsichtbar in
-  // der Asset-History (Nutzer-Bugreport 2026-07-19). Hier deshalb denselben
-  // scoreLog-Eintrag wie bei einer manuellen Bias-Aenderung nachtragen, pro
-  // betroffenem Asset (jedes mit einer Risk-Environment-Karte), inkl. des
-  // tatsaechlichen Score-Effekts aus Vorher/Nachher-Vergleich.
+// "Risk Correlation" wird automatisch ueber recomputeRiskCorr() gesetzt (fuer
+// diesen Indikator ist setIndBias/togIndImp gesperrt) - dadurch blieb JEDE
+// automatische Aenderung KOMPLETT unsichtbar in der Asset-History, nicht nur
+// eine Regler-Aenderung (Nutzer-Bugreport 2026-07-19, urspruenglich nur fuer
+// setRiskEnvLevel gefixt) - beim vollstaendigen Audit 2026-07-27 auch bei
+// setRiskEnvDir() (Richtungs-Einstellung im Zahnrad-Menue) und
+// applyRiskEnvList() (gespeichertes Szenario anwenden) gefunden, hatten
+// denselben Effekt auf ind.bias, aber nie den scoreLog-Eintrag bekommen.
+// Gemeinsamer Helfer statt der Kopie in jeder der drei Funktionen: traegt
+// denselben scoreLog-Eintrag wie eine manuelle Bias-Aenderung nach, pro
+// betroffenem Asset (jedes mit einer Risk-Environment-Karte), inkl. des
+// tatsaechlichen Score-Effekts aus Vorher/Nachher-Vergleich. Aufrufer mutiert
+// riskEnvLevel/riskEnvCfg VOR diesem Aufruf - ind.bias traegt zu dem
+// Zeitpunkt noch den ALTEN Wert (wird hier zum ersten Mal seit der Mutation
+// neu berechnet), das liefert den korrekten "from"-Wert fuer den Log.
+function logRiskCorrChanges(){
   (syms||[]).forEach(sym=>{
     const rub=(sym.rubrics||[]).find(r=>r.name===MACRO_NAME);
     const ind=rub&&(rub.indicators||[]).find(i=>i.name==='Risk Correlation');
@@ -6811,11 +6871,18 @@ function setRiskEnvLevel(lv){
     const after=indScore(ind,rub);
     if(oldBias!==ind.bias)logScoreChange(sym.id,{kind:'bias',ind:ind.displayName||ind.name,rub:rub.name,from:oldBias,to:ind.bias,delta:Math.round((after-before)*100)/100});
   });
+}
+function setRiskEnvLevel(lv){
+  lv=Math.max(0,Math.min(2,+lv||0));
+  if(lv===riskEnvLevel)return;
+  pushU();
+  riskEnvLevel=lv;
+  logRiskCorrChanges();
   recomputeAuto();save();renderSidebar();rerender();
 }
 function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';}
 function setRiskEnvDir(id,dir){
-  pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
+  pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;logRiskCorrChanges();recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
 function openRiskEnvCfgM(){renderRiskEnvCfgM();renderRiskEnvLists();openM('mRiskEnvCfg');}
 // ── Gespeicherte Risk-Szenarien (Nutzer-Wunsch 2026-07-13 abends) ──
@@ -6839,6 +6906,7 @@ function applyRiskEnvList(id){
   const l=(riskEnvLists||[]).find(x=>x.id===id);if(!l)return;
   pushU();
   riskEnvCfg={...(l.cfg||{})};
+  logRiskCorrChanges();
   recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
 function renderRiskEnvLists(){
