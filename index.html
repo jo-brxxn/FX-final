@@ -846,31 +846,30 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Wunsch 2026-07-25) - Text-Spalte (.db-col-txt, flex:1 1 0) bekommt den
    Rest. JS-Groessenkappung in startGlobes() dazu von 200 auf 260 angehoben. */
 .db-split .globe-host{flex:0 0 66.6%;width:66.6%;min-height:0;padding:0;position:relative}
-/* Polarlichter hinter dem Globus (Nutzer-Wunsch 2026-07-25) statt des
-   frueheren violett/blau/magenta Nebels. Nachgebaut nach dem typischen
-   Aurora-Borealis-Aufbau: senkrechte, unterschiedlich breite Licht-
-   "Vorhaenge", unten tuerkisgruen (Sauerstoff in niedriger Hoehe), nach
-   oben in Violett/Magenta auslaufend, mit weichen Raendern. Zwei Ebenen
-   (::before/::after) mit leicht unterschiedlichem Tempo und Versatz
-   erzeugen das langsame Wabern, ohne dass sich ein Muster erkennbar
-   wiederholt. Bewusst per repeating-linear-gradient + transform statt
-   filter:blur() - siehe die dokumentierte Blur-Perf-Lehre bei der Aurora. */
+/* Polarlichter hinter dem Globus - Struktur/Animation unveraendert seit
+   2026-07-25 (senkrechte Licht-"Vorhaenge", zwei versetzt animierte Ebenen),
+   nur die FARBEN 2026-07-27 auf ein ruhiges Blau/Indigo-Duoton umgestellt
+   (Nutzer-Wunsch "professioneller, weniger verspielt"): vorher vier
+   unzusammenhaengende Neon-Toene (Tuerkis/Violett/Cyan/Magenta), jetzt
+   ausschliesslich die App-eigenen Token --blue-rgb/--purple-rgb (dieselben
+   Farben, die auch anderswo in der App als Akzent dienen) bei niedrigerer
+   Deckkraft - liest sich als EIN kohaerenter Farbraum statt Regenbogen. */
 .db-split .globe-host::before,.db-split .globe-host::after{content:'';position:absolute;inset:-60% -30%;z-index:0;pointer-events:none;will-change:transform}
 .db-split .globe-host::before{
   background:
     repeating-linear-gradient(97deg,
-      transparent 0 22px, rgba(64,235,185,.34) 26px, rgba(64,235,185,.10) 38px, transparent 46px 92px),
+      transparent 0 22px, rgba(var(--blue-rgb),.26) 26px, rgba(var(--blue-rgb),.08) 38px, transparent 46px 92px),
     repeating-linear-gradient(84deg,
-      transparent 0 54px, rgba(135,100,255,.26) 60px, transparent 74px 150px);
+      transparent 0 54px, rgba(var(--purple-rgb),.18) 60px, transparent 74px 150px);
   -webkit-mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
   mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
   animation:auroraCurtain1 34s ease-in-out infinite alternate}
 .db-split .globe-host::after{
   background:
     repeating-linear-gradient(102deg,
-      transparent 0 40px, rgba(46,210,255,.26) 46px, transparent 58px 128px),
-    radial-gradient(ellipse 48% 30% at 44% 72%,rgba(56,240,175,.32),transparent 72%),
-    radial-gradient(ellipse 40% 34% at 62% 26%,rgba(195,85,235,.26),transparent 74%);
+      transparent 0 40px, rgba(var(--blue-rgb),.18) 46px, transparent 58px 128px),
+    radial-gradient(ellipse 48% 30% at 44% 72%,rgba(var(--blue-rgb),.22),transparent 72%),
+    radial-gradient(ellipse 40% 34% at 62% 26%,rgba(var(--purple-rgb),.20),transparent 74%);
   -webkit-mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
   mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
   animation:auroraCurtain2 47s ease-in-out infinite alternate}
@@ -1655,12 +1654,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-249 — Vier gezielte Animationen ergaenzt (Skill-Audit /find-animation-opportunities): Bias-Picker/Tab-Stack-Menue wachsen jetzt vom Druckpunkt aus statt schlagartig zu erscheinen; die Risk-Sentiment-Nadel (Dashboard + Sentiment-Tab) dreht sich beim Wertwechsel statt zu springen; das Aufklappen der Indikator-Verlaufshistorie (Details) blendet Inhalt sanft ein; die Currency-Strength-Rangliste gleitet bei Neusortierung an ihre neue Position (FLIP) statt zu springen. Rein visuell, keine Score-/Datenlogik veraendert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-250 — Polarlichter hinter dem Dashboard-Globus umgefaerbt (Nutzer-Wunsch nach Referenz-Foto 'professioneller, weniger verspielt'): Struktur/Animation unveraendert, nur die vier unzusammenhaengenden Neon-Toene (Tuerkis/Violett/Cyan/Magenta) sind jetzt ein ruhiges Blau/Indigo-Duoton aus den bereits bestehenden App-Farbtoken. Keine Widgets/Daten veraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-249</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-250</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
