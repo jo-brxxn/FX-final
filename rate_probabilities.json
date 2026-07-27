@@ -161,11 +161,11 @@
     [
      [
       "2026-07-29",
-      8
+      9
      ],
      [
       "2026-09-16",
-      17
+      18
      ],
      [
       "2026-10-28",
@@ -173,7 +173,7 @@
      ],
      [
       "2026-12-09",
-      10
+      9
      ]
     ]
    ]
@@ -185,29 +185,29 @@
     "date": "2026-07-29",
     "label": "Jul 28-29, 2026",
     "rateBefore": 3.63,
-    "rateAfter": 3.71,
-    "deltaBp": 8
+    "rateAfter": 3.72,
+    "deltaBp": 9
    },
    {
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
-    "rateBefore": 3.71,
-    "rateAfter": 3.88,
-    "deltaBp": 17
+    "rateBefore": 3.72,
+    "rateAfter": 3.9,
+    "deltaBp": 18
    },
    {
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
-    "rateBefore": 3.88,
-    "rateAfter": 3.95,
+    "rateBefore": 3.9,
+    "rateAfter": 3.97,
     "deltaBp": 7
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.95,
-    "rateAfter": 4.06,
-    "deltaBp": 10
+    "rateBefore": 3.97,
+    "rateAfter": 4.07,
+    "deltaBp": 9
    }
   ],
   "pastMeeting": null,
@@ -262,7 +262,7 @@
      ],
      [
       "2026-10-29",
-      9
+      10
      ],
      [
       "2026-12-17",
@@ -277,24 +277,24 @@
    {
     "date": "2026-09-10",
     "label": "Sep 10, 2026",
-    "rateBefore": 2.42,
-    "rateAfter": 2.63,
+    "rateBefore": 2.43,
+    "rateAfter": 2.64,
     "deltaBp": 21,
     "approx": true
    },
    {
     "date": "2026-10-29",
     "label": "Oct 29, 2026",
-    "rateBefore": 2.63,
-    "rateAfter": 2.72,
-    "deltaBp": 9,
+    "rateBefore": 2.64,
+    "rateAfter": 2.73,
+    "deltaBp": 10,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 2.72,
-    "rateAfter": 2.8,
+    "rateBefore": 2.73,
+    "rateAfter": 2.81,
     "deltaBp": 8,
     "approx": true
    }
@@ -355,19 +355,19 @@
     [
      [
       "2026-07-30",
-      24
-     ],
-     [
-      "2026-09-17",
       22
      ],
      [
+      "2026-09-17",
+      20
+     ],
+     [
       "2026-11-05",
-      1
+      3
      ],
      [
       "2026-12-17",
-      14
+      11
      ]
     ]
    ]
@@ -379,32 +379,32 @@
     "date": "2026-07-30",
     "label": "Jul 30, 2026",
     "rateBefore": 3.73,
-    "rateAfter": 3.97,
-    "deltaBp": 24,
+    "rateAfter": 3.95,
+    "deltaBp": 22,
     "approx": true
    },
    {
     "date": "2026-09-17",
     "label": "Sep 17, 2026",
-    "rateBefore": 3.97,
-    "rateAfter": 4.19,
-    "deltaBp": 22,
+    "rateBefore": 3.95,
+    "rateAfter": 4.15,
+    "deltaBp": 20,
     "approx": true
    },
    {
     "date": "2026-11-05",
     "label": "Nov 5, 2026",
-    "rateBefore": 4.19,
-    "rateAfter": 4.2,
-    "deltaBp": 1,
+    "rateBefore": 4.15,
+    "rateAfter": 4.18,
+    "deltaBp": 3,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 4.2,
-    "rateAfter": 4.34,
-    "deltaBp": 14,
+    "rateBefore": 4.18,
+    "rateAfter": 4.29,
+    "deltaBp": 11,
     "approx": true
    }
   ],
@@ -456,11 +456,11 @@
     [
      [
       "2026-09-02",
-      7
+      8
      ],
      [
       "2026-10-28",
-      10
+      11
      ],
      [
       "2026-12-09",
@@ -476,23 +476,23 @@
     "date": "2026-09-02",
     "label": "Sep 2, 2026",
     "rateBefore": 2.29,
-    "rateAfter": 2.36,
-    "deltaBp": 7,
+    "rateAfter": 2.37,
+    "deltaBp": 8,
     "approx": true
    },
    {
     "date": "2026-10-28",
     "label": "Oct 28, 2026",
-    "rateBefore": 2.36,
-    "rateAfter": 2.46,
-    "deltaBp": 10,
+    "rateBefore": 2.37,
+    "rateAfter": 2.48,
+    "deltaBp": 11,
     "approx": true
    },
    {
     "date": "2026-12-09",
     "label": "Dec 9, 2026",
-    "rateBefore": 2.46,
-    "rateAfter": 2.52,
+    "rateBefore": 2.48,
+    "rateAfter": 2.54,
     "deltaBp": 6,
     "approx": true
    }
@@ -628,11 +628,11 @@
     [
      [
       "2026-09-24",
-      8
+      4
      ],
      [
       "2026-12-10",
-      9
+      6
      ]
     ]
    ]
@@ -644,16 +644,16 @@
     "date": "2026-09-24",
     "label": "Sep 24, 2026",
     "rateBefore": -0.04,
-    "rateAfter": 0.04,
-    "deltaBp": 8,
+    "rateAfter": 0,
+    "deltaBp": 4,
     "approx": true
    },
    {
     "date": "2026-12-10",
     "label": "Dec 10, 2026",
-    "rateBefore": 0.04,
-    "rateAfter": 0.13,
-    "deltaBp": 9,
+    "rateBefore": 0,
+    "rateAfter": 0.07,
+    "deltaBp": 6,
     "approx": true
    }
   ],
