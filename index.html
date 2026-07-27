@@ -881,38 +881,21 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    66.6%-Flex-Anteil - JS-Groessenkappung in startGlobes() dazu deutlich
    angehoben (Globus ist jetzt der Mittelpunkt der Seite). */
 .dw-globe .globe-host{width:100%;min-height:0;padding:0;position:relative}
-/* Polarlichter hinter dem Globus - Struktur/Animation unveraendert seit
-   2026-07-25 (senkrechte Licht-"Vorhaenge", zwei versetzt animierte Ebenen),
-   nur die FARBEN 2026-07-27 auf ein ruhiges Blau/Indigo-Duoton umgestellt
-   (Nutzer-Wunsch "professioneller, weniger verspielt"): vorher vier
-   unzusammenhaengende Neon-Toene (Tuerkis/Violett/Cyan/Magenta), jetzt
-   ausschliesslich die App-eigenen Token --blue-rgb/--purple-rgb (dieselben
-   Farben, die auch anderswo in der App als Akzent dienen) bei niedrigerer
-   Deckkraft - liest sich als EIN kohaerenter Farbraum statt Regenbogen. */
-.dw-globe .globe-host::before,.dw-globe .globe-host::after{content:'';position:absolute;inset:-60% -30%;z-index:0;pointer-events:none;will-change:transform}
-.dw-globe .globe-host::before{
-  background:
-    repeating-linear-gradient(97deg,
-      transparent 0 22px, rgba(var(--blue-rgb),.26) 26px, rgba(var(--blue-rgb),.08) 38px, transparent 46px 92px),
-    repeating-linear-gradient(84deg,
-      transparent 0 54px, rgba(var(--purple-rgb),.18) 60px, transparent 74px 150px);
-  -webkit-mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
-  mask-image:radial-gradient(ellipse 62% 52% at 50% 46%,#000 12%,transparent 78%);
-  animation:auroraCurtain1 34s ease-in-out infinite alternate}
-.dw-globe .globe-host::after{
-  background:
-    repeating-linear-gradient(102deg,
-      transparent 0 40px, rgba(var(--blue-rgb),.18) 46px, transparent 58px 128px),
-    radial-gradient(ellipse 48% 30% at 44% 72%,rgba(var(--blue-rgb),.22),transparent 72%),
-    radial-gradient(ellipse 40% 34% at 62% 26%,rgba(var(--purple-rgb),.20),transparent 74%);
-  -webkit-mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
-  mask-image:radial-gradient(ellipse 66% 56% at 52% 50%,#000 10%,transparent 80%);
-  animation:auroraCurtain2 47s ease-in-out infinite alternate}
-@keyframes auroraCurtain1{0%{transform:translate3d(-3%,1%,0) skewX(-4deg) scaleY(1)}100%{transform:translate3d(4%,-2%,0) skewX(5deg) scaleY(1.12)}}
-@keyframes auroraCurtain2{0%{transform:translate3d(3%,-1%,0) skewX(6deg) scaleY(1.08)}100%{transform:translate3d(-4%,2%,0) skewX(-3deg) scaleY(.96)}}
-@media(prefers-reduced-motion:reduce){.dw-globe .globe-host::before,.dw-globe .globe-host::after{animation:none}}
+/* Polarlichter-Leuchteffekt hinter dem Globus (senkrechte Licht-"Vorhaenge")
+   auf Nutzer-Wunsch 2026-07-27 komplett entfernt ("entfern diese
+   leuchteffekte im Hintergrund") - .globe-host hat dadurch wieder einen
+   reinen, gleichmaessig dunklen Hintergrund, kein ::before/::after mehr. */
 .dw-globe .globe-host>svg{position:relative;z-index:1}
-#dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column;align-items:center}
+/* justify-content:center: seit align-items:stretch auf .dash-zone-center
+   (Nutzer-Wunsch "keine Luecke", siehe #dashWidgets.dash-layout oben) ist
+   die Globus-Karte genauso hoch wie die laengste Seitenspalte - der Inhalt
+   (Globus+Button+HUD-Readout, jetzt in .dw-body gewrappt) zentriert sich
+   darin vertikal, statt oben anzuhaengen und darunter Leerraum zu lassen.
+   .dw-body selbst braucht width:100% (statt vom aeusseren align-items zu
+   erben), sonst wuerde .globe-host {width:100%} gegen eine geschrumpfte
+   Breite aufloesen und der Globus faelschlich schmal werden. */
+#dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+#dashWidgets .dw.dw-globe>.dw-body{display:flex;flex-direction:column;align-items:center;width:100%}
 .scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
 .scan-btn:disabled{opacity:.7;cursor:default}
@@ -950,6 +933,16 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-hud-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.05;background:repeating-linear-gradient(0deg,#dff4ff 0 1px,transparent 1px 3px);animation:globeScanDrift 7s linear infinite}
 @keyframes globeScanDrift{0%{background-position:0 0}100%{background-position:0 42px}}
 @media(prefers-reduced-motion:reduce){.globe-hud-scan{animation:none}}
+/* Zusaetzliche HUD-Badges (Nutzer-Wunsch 2026-07-27 "noch mehr
+   Ueberwachungsmodus-Objekte"): "TRACKING" oben mittig zwischen den Eck-
+   Klammern, "SIGNAL" unten mittig - beides reine Modus-/Status-Label wie
+   "GLOBAL MARKET SURVEILLANCE" selbst, keine erfundenen Messwerte. */
+.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.globe-hud-badge.top{top:9px}
+.globe-hud-badge.bottom{bottom:9px}
+.globe-hud-badge b{display:inline-block;width:4px;height:4px;border-radius:50%;background:#5fd0ff;box-shadow:0 0 5px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
+.globe-hud-badge.bottom b{animation-delay:.7s}
+@media(prefers-reduced-motion:reduce){.globe-hud-badge b{animation:none}}
 /* Blinkender "MONITORING"-Punkt - gleiche Konvention wie der bestehende
    .live-dot im Header (pulse-badge-artig), eigene Klasse statt Wiederver-
    wendung, da .live-dot fix auf Rot gesetzt ist und hier Blau passender ist. */
@@ -1465,9 +1458,15 @@ body.dash-edit-mode .mw-bar{display:flex}
      rechts hoch (Majors, Currency Strength, Risk Sentiment, Calendar). Die
      Zonen-Zuordnung passiert in JS ueber ZONE_OF_TYPE/dashZoneOf() -
      renderDash() baut direkt die 5 .dash-zone-*-Container. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:10px;align-items:start}
-  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:10px}
-  .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:10px}
+  /* Keine Luecken mehr zwischen den Zonen/Karten rund um den Globus
+     (Nutzer-Wunsch 2026-07-27 "keine Luecke lassen") - gap:0 ueberall statt
+     10px, dazu align-items:stretch statt start: alle drei Spalten der
+     mittleren Reihe (links/Globus/rechts) werden dadurch exakt gleich hoch
+     (die kuerzeste Spalte streckt sich auf die Hoehe der laengsten), statt
+     wie zuvor unten offen zu enden. */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:0;align-items:stretch}
+  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:0}
+  .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:0}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -1476,12 +1475,21 @@ body.dash-edit-mode .mw-bar{display:flex}
      (sonst quetscht es sich neben Daily Bias zusammen und schneidet Werte
      ab) - immer alleine auf eigener Zeile in der Zone. */
   .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
-  .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:10px;min-width:0}
-  .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:0;min-width:0}
+  .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:0;min-width:0}
   .dash-zone-left>.dw,.dash-zone-right>.dw{margin-bottom:0}
-  .dash-zone-center{grid-area:center;display:flex;align-items:center;justify-content:center;min-width:0}
+  /* Letzte Karte je Spalte waechst in den restlichen Platz der (jetzt
+     gleich hohen) Zeile hinein und zentriert ihren Inhalt darin - so bleibt
+     nie mehr dunkler Leerraum unter der letzten Karte stehen, egal wie kurz
+     ihr eigener Inhalt urspruenglich war ("Inhalt der Karten soll voll
+     sein"). Generisch fuer jeden Widget-Typ, keine Sonderfaelle noetig. */
+  .dash-zone-left>.dw:last-child,.dash-zone-right>.dw:last-child{flex:1 1 auto;display:flex;flex-direction:column}
+  .dash-zone-left>.dw:last-child>.dw-body,.dash-zone-right>.dw:last-child>.dw-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .dash-zone-center{grid-area:center;display:flex;align-items:stretch;justify-content:center;min-width:0}
   .dash-zone-center>.dw{width:100%;margin-bottom:0}
-  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
+  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}
+    .dash-zone-left>.dw:last-child,.dash-zone-right>.dw:last-child{flex:none}
+    .dash-zone-left>.dw:last-child>.dw-body,.dash-zone-right>.dw:last-child>.dw-body{flex:none;justify-content:flex-start}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -1748,12 +1756,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-253 — Komplettes Dashboard-Redesign (Nutzer-Wunsch): radiales Layout statt 12-Spalten-Grid - Globus jetzt allein in der Mitte, ringsum Karten (hohe Spalten links/rechts, breite Reihen oben/unten), alle bestehenden Widget-Inhalte auf die neuen Zonen verteilt. Farbpalette von blau-milchig auf neutrales dunkles Grau umgestellt (Bias-Farben unveraendert). Neuer 'INITIATE SCAN'-Button am Globus: echte Datenaktualisierung (recomputeAuto) plus eine Partikel-Fluganimation vom Globus zu jeder Karte (Web Animations API), respektiert prefers-reduced-motion.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-254 — Globus-HUD/Dashboard-Layout nachgeschaerft (Nutzer-Wunsch): Polarlichter-Hintergrundleuchten hinter dem Globus komplett entfernt, der 5s-Schimmer-Sweep ueber die Land-Vierecke ebenfalls entfernt. Dafuer mehr Ueberwachungsmodus-HUD-Objekte: gestrichelter Instrumenten-Bezel mit Gradstrichen+Beschriftung, Fadenkreuz-Reticle, zwei Radar-Entfernungsringe, TRACKING/SIGNAL-Statusbadges. Radial-Layout: keine Luecken mehr zwischen/um die Karten (gap:0, Spalten links/Globus/rechts jetzt exakt gleich hoch), Karteninhalt der jeweils letzten Karte pro Spalte zentriert sich in den freien Platz statt Leerraum am Kartenende zu lassen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-253</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-254</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -10362,9 +10370,15 @@ function renderDash(){
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${btnsHtml}
       </div>`;
+    // .dw-body umschliesst den reinen Inhalt (alles ausser dem Kartenkopf) -
+    // einheitlicher Ankerpunkt fuer JEDEN Widget-Typ, damit die letzte Karte
+    // einer Zone ihren Inhalt in den Restplatz hinein zentrieren kann (siehe
+    // .dash-zone-left/right>.dw:last-child>.dw-body, Nutzer-Wunsch 2026-07-27
+    // "Inhalt der Karten soll voll sein") - ohne dass der Kopf mitzentriert
+    // wird, da er ausserhalb von .dw-body bleibt.
     const cardHtml=`<div class="dw dw-${w.type}${w.type==='fx_bias'?' dw-biasassets':w.type==='watchlist'?' dw-watchlist':w.type==='quick_notes'?' dw-quicknotes':''}" data-widget-id="${w.id}">
       ${hdrHtml}
-      ${content}
+      <div class="dw-body">${content}</div>
     </div>`;
     zones[zone].push(cardHtml);
   });
@@ -10601,20 +10615,23 @@ function globePathD(pts,lon0,R,cx,cy){
 // Aufbau (Nutzer-Wunsch 2026-07-25): Meer = EINE gleichmaessige dunkelblaue
 // Flaeche (keine Tag-/Nacht-/Terminator-Verlaeufe und keine Gitterlinien mehr,
 // die machten es ungleichmaessig), Land = helleres Blau mit einem feinen
-// Raster LEERER Vierecke (nur Umrandung), und alle 5s laeuft ein Schauer von
-// links nach rechts, bei dem die Vierecke spaltenweise hell aufleuchten.
+// Raster LEERER Vierecke (nur Umrandung). Der fruehere 5s-Schauer (wandernder
+// Hell-Balken ueber die Vierecke) ist auf Nutzer-Wunsch 2026-07-27 entfernt
+// ("den Schimmer der alle 5 Sekunden von links nach rechts geht") - die
+// dritte, gemaskte <use>-Ebene mit der Sweep-Animation ist raus, es bleiben
+// nur noch die zwei ruhigen Ebenen (Grundfarbe + Viereck-Umrandung).
 //
-// Trick fuer den Schauer: die Land-Geometrie existiert nur EINMAL (als
-// <g> in <defs>) und wird per <use> dreimal mit unterschiedlichem fill
-// gezeichnet - Grundfarbe, ruhige Viereck-Umrandungen, leuchtende
-// Umrandungen. Nur der letzte <use> haengt in einer Masken-Ebene, die ein
-// wanderndes Rechteck freigibt. Dadurch muss pro Frame weiterhin nur EIN
-// Satz Pfade neu positioniert werden (die <use>-Klone folgen automatisch),
-// und das Aufleuchten selbst kostet gar keine JS-Arbeit (reines SMIL).
+// Stattdessen (gleicher Wunsch, "mehr Ueberwachungsmodus-Objekte"): ein
+// Instrumenten-Bezel ausserhalb des Globus (gestrichelter Ring + Gradstriche
+// alle 30°, betonte Kardinalstriche + Grad-Beschriftung alle 90°), eine
+// Fadenkreuz-Reticle durchs Zentrum (mit Luecke in der Mitte, klassische
+// Ziel-Optik) und zwei duennsen Radar-Entfernungsringe innerhalb der
+// Landflaeche - alles rein dekorative Geometrie nach echten Radar-/Kampfjet-
+// HUD-Vorbildern, keine erfundenen Werte (siehe CLAUDE.md-Grundsatz).
 function globeSkeleton(size,uid){
-  const R=size/2-16,cx=size/2,cy=size/2;
+  const R=size/2-26,cx=size/2,cy=size/2; // 26px Rand statt 16px - Platz fuer den neuen Bezel-Ring/Gradnetz drumherum
   const lmgid='gLimbGrad'+uid,lmid='gLimbMask'+uid,shpid='gLandShape'+uid;
-  const sqid='gSq'+uid,sqgid='gSqGlow'+uid,swgid='gSweepGrad'+uid,swid='gSweepMask'+uid;
+  const sqid='gSq'+uid;
   // Pfade OHNE eigenes fill/stroke - sie erben beides vom jeweiligen <use>.
   let land='';GLOBE_LAND.forEach(()=>{land+='<path/>';});
   // Jeder Marker bekommt jetzt zusaetzlich einen "Ping"-Ring (Reticle/Radar-
@@ -10630,7 +10647,6 @@ function globeSkeleton(size,uid){
     markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle class="globe-ping" r="5" fill="none" stroke-width="1.3" style="animation-delay:${delay}s"></circle><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;
   });
   const SQ=4.2,SI=0.55,SW=SQ-2*SI; // Rasterweite / Innenabstand / Kantenlaenge
-  const swW=R*0.34,swX0=cx-R-swW,swX1=cx+R;
   // Radar-Sweep-Keil (Global-Market-Surveillance-Umbau 2026-07-27): rein
   // dekorativ, dreht sich KONTINUIERLICH und UNABHAENGIG von der eigentlichen
   // Globus-Drehung (_globeLon, die per Drag/Auto-Rotation gesteuert wird) -
@@ -10640,6 +10656,31 @@ function globeSkeleton(size,uid){
   const rsw=Math.PI/180*26,rgid='gRadarSweep'+uid;
   const rx1=(cx+R*Math.cos(-rsw)).toFixed(2),ry1=(cy+R*Math.sin(-rsw)).toFixed(2);
   const rx2=(cx+R*Math.cos(rsw)).toFixed(2),ry2=(cy+R*Math.sin(rsw)).toFixed(2);
+  // Instrumenten-Bezel: gestrichelter Aussenring + 12 Gradstriche (alle 30°,
+  // an den 4 Kardinalpunkten laenger+kraeftiger+mit Grad-Zahl) - reine
+  // Protraktor-/Kompass-Optik, keine echten Messwerte.
+  let bezel=`<circle cx="${cx}" cy="${cy}" r="${(R+5).toFixed(1)}" fill="none" stroke="rgba(126,196,255,.28)" stroke-width="1" stroke-dasharray="1 4"/>`;
+  for(let a=0;a<360;a+=30){
+    const card=a%90===0,rad=a*Math.PI/180;
+    const r0=card?R+2:R+3,r1=card?R+11:R+7.5;
+    const x0=(cx+r0*Math.cos(rad)).toFixed(2),y0=(cy+r0*Math.sin(rad)).toFixed(2);
+    const x1=(cx+r1*Math.cos(rad)).toFixed(2),y1=(cy+r1*Math.sin(rad)).toFixed(2);
+    bezel+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="rgba(126,196,255,${card?.6:.32})" stroke-width="${card?1.3:.8}"/>`;
+    if(card){
+      const lr=R+15,lx=(cx+lr*Math.cos(rad)).toFixed(1),ly=(cy+lr*Math.sin(rad)).toFixed(1);
+      bezel+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="6.5" fill="rgba(126,196,255,.5)" font-family="'SF Mono',Consolas,monospace">${String(a).padStart(3,'0')}</text>`;
+    }
+  }
+  // Fadenkreuz-Reticle mit Luecke in der Mitte (klassische Zieloptik) - vier
+  // kurze Segmente statt zwei durchgehender Linien, damit die Marker/Labels
+  // in der Kartenmitte nicht verdeckt werden.
+  const rIn=R*0.32,rOut=R*0.96;
+  const reticle=[[0,-1],[0,1],[-1,0],[1,0]].map(([dx,dy])=>
+    `<line x1="${(cx+dx*rIn).toFixed(1)}" y1="${(cy+dy*rIn).toFixed(1)}" x2="${(cx+dx*rOut).toFixed(1)}" y2="${(cy+dy*rOut).toFixed(1)}" stroke="rgba(126,196,255,.22)" stroke-width="1"/>`
+  ).join('');
+  // Zwei duenne Radar-Entfernungsringe innerhalb der Landflaeche (rein
+  // dekorativ, klassische Scope-Optik).
+  const rangeRings=[0.42,0.72].map(f=>`<circle cx="${cx}" cy="${cy}" r="${(R*f).toFixed(1)}" fill="none" stroke="rgba(126,196,255,.1)" stroke-width="1" stroke-dasharray="1 3"/>`).join('');
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
       <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="70%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
@@ -10648,18 +10689,6 @@ function globeSkeleton(size,uid){
       <pattern id="${sqid}" width="${SQ}" height="${SQ}" patternUnits="userSpaceOnUse">
         <rect x="${SI}" y="${SI}" width="${SW}" height="${SW}" fill="none" stroke="rgba(126,196,255,.5)" stroke-width="0.4"/>
       </pattern>
-      <pattern id="${sqgid}" width="${SQ}" height="${SQ}" patternUnits="userSpaceOnUse">
-        <rect x="${SI}" y="${SI}" width="${SW}" height="${SW}" fill="none" stroke="#dff4ff" stroke-width="1.15"/>
-      </pattern>
-      <linearGradient id="${swgid}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="#000"/><stop offset="40%" stop-color="#fff"/>
-        <stop offset="60%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/>
-      </linearGradient>
-      <mask id="${swid}" maskContentUnits="userSpaceOnUse">
-        <rect x="${swX0}" y="0" width="${swW}" height="${size}" fill="url(#${swgid})">
-          <animate attributeName="x" values="${swX0};${swX0};${swX1};${swX1}" keyTimes="0;0.03;0.32;1" dur="5s" repeatCount="indefinite"/>
-        </rect>
-      </mask>
       <linearGradient id="${rgid}" x1="${rx1}" y1="${ry1}" x2="${rx2}" y2="${ry2}" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stop-color="#7ee0ff" stop-opacity="0"/>
         <stop offset="100%" stop-color="#7ee0ff" stop-opacity=".4"/>
@@ -10669,14 +10698,16 @@ function globeSkeleton(size,uid){
     <g mask="url(#${lmid})">
       <use href="#${shpid}" fill="#2d6ea8"/>
       <use href="#${shpid}" fill="url(#${sqid})"/>
-      <g mask="url(#${swid})" style="mix-blend-mode:screen"><use href="#${shpid}" fill="url(#${sqgid})"/><use href="#${shpid}" fill="url(#${sqgid})" opacity="0.6"/></g>
+      ${rangeRings}
     </g>
     <g style="mix-blend-mode:screen">
       <path d="M ${cx} ${cy} L ${rx1} ${ry1} A ${R} ${R} 0 0 1 ${rx2} ${ry2} Z" fill="url(#${rgid})">
         <animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="4.5s" repeatCount="indefinite"/>
       </path>
     </g>
+    <g pointer-events="none">${reticle}</g>
     <g data-layer="markers">${markers}</g>
+    <g pointer-events="none">${bezel}</g>
   </svg>`;
 }
 function globeCollectRefs(host,size){
@@ -10684,7 +10715,7 @@ function globeCollectRefs(host,size){
   const markers={};
   [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{const circles=g.querySelectorAll('circle');markers[g.dataset.id]={g,ping:circles[0],circle:circles[1],text:g.querySelector('text')};});
   return{
-    host,R:size/2-16,cx:size/2,cy:size/2,
+    host,R:size/2-26,cx:size/2,cy:size/2,
     landPaths:[...svg.querySelector('[data-layer="landshape"]').children],
     markers
   };
@@ -10788,14 +10819,14 @@ function globeOnPointerDown(ev,host){
   // Hitbox: Drag nur starten, wenn der Zeiger auf der Kugel oder knapp
   // daneben liegt (Radius + 10px) - NICHT auf der gesamten Widget-Breite.
   // Gerenderte Groesse kann durch max-width:100% von der viewBox abweichen,
-  // daher ueber den Skalierungsfaktor zurueckrechnen (R = vb/2 - 16, wie in
+  // daher ueber den Skalierungsfaktor zurueckrechnen (R = vb/2 - 26, wie in
   // globeSkeleton).
   const svg=host.querySelector('svg');
   if(svg){
     const rc=svg.getBoundingClientRect();
     if(rc.width>0){
       const vb=(svg.viewBox&&svg.viewBox.baseVal&&svg.viewBox.baseVal.width)||rc.width;
-      const hitR=(vb/2-16)*(rc.width/vb)+10;
+      const hitR=(vb/2-26)*(rc.width/vb)+10;
       const dx=ev.clientX-(rc.left+rc.width/2),dy=ev.clientY-(rc.top+rc.height/2);
       if(dx*dx+dy*dy>hitR*hitR)return;
     }
@@ -10855,7 +10886,7 @@ function startGlobes(){
     // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
     // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
     // Neuaufbau (Tab-Wechsel, Resize) sofort wieder loeschen.
-    h.insertAdjacentHTML('beforeend','<div class="globe-hud-frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div><div class="globe-hud-scan"></div>');
+    h.insertAdjacentHTML('beforeend','<div class="globe-hud-frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div><div class="globe-hud-scan"></div><div class="globe-hud-badge top"><b></b> TRACKING</div><div class="globe-hud-badge bottom"><b></b> SIGNAL</div>');
     return globeCollectRefs(h,size);
   }).filter(Boolean);
   _globeHosts.forEach(globeUpdateOne); // sofortiger, vollstaendiger erster Aufbau (alle Layer in einem Zug)
