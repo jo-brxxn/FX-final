@@ -772,8 +772,15 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    minimal durchscheint, ohne dass die Karte "glasig" wirkt. Farben 2026-07-27
    auf neutrales Grau umgestellt (Nutzer-Wunsch "nicht mehr das blaue
    milchige Design"). */
-.dw{background:rgba(24,26,30,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #2e323a;border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s}
-@media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.13)}}
+/* Qualitaets-Pass (Nutzer-Wunsch 2026-07-27 "Qualitaet der Karten deutlich
+   erhoehen... Hintergrundbeleuchtung"): duenne helle Innenkante oben (wirkt
+   wie eine sanfte Lichtkante auf einer leicht erhabenen Glasflaeche) +
+   weicher Tiefenschatten darunter - bewusst SEHR subtil (keine Farbe, keine
+   Animation), damit es sich nicht wieder wie das bereits verworfene
+   "Video-Game"-Design anfuehlt (siehe CLAUDE.md-Historie der vorherigen
+   Professionalitaets-Audits), nur spuerbar mehr Tiefe/Politur. */
+.dw{background:rgba(24,26,30,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid #2e323a;border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 22px -16px rgba(0,0,0,.6)}
+@media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 28px -14px rgba(0,0,0,.65)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
    KEINEN Platz ein (display:none, nicht nur opacity:0). */
@@ -886,15 +893,15 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    leuchteffekte im Hintergrund") - .globe-host hat dadurch wieder einen
    reinen, gleichmaessig dunklen Hintergrund, kein ::before/::after mehr. */
 .dw-globe .globe-host>svg{position:relative;z-index:1}
-/* justify-content:center: seit align-items:stretch auf .dash-zone-center
-   (Nutzer-Wunsch "keine Luecke", siehe #dashWidgets.dash-layout oben) ist
-   die Globus-Karte genauso hoch wie die laengste Seitenspalte - der Inhalt
-   (Globus+Button+HUD-Readout, jetzt in .dw-body gewrappt) zentriert sich
-   darin vertikal, statt oben anzuhaengen und darunter Leerraum zu lassen.
-   .dw-body selbst braucht width:100% (statt vom aeusseren align-items zu
-   erben), sonst wuerde .globe-host {width:100%} gegen eine geschrumpfte
-   Breite aufloesen und der Globus faelschlich schmal werden. */
-#dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+/* Karte ist wieder genau so hoch wie ihr Inhalt (Nutzer-Korrektur
+   2026-07-27, kein Stretchen mehr - siehe #dashWidgets.dash-layout oben);
+   align-items:center bleibt, weil die Zentrum-Spalte breiter ist als der
+   auf 480px gedeckelte Globus (siehe startGlobes()) - Button/HUD-Readout
+   sollen darunter horizontal mittig bleiben. .dw-body braucht width:100%
+   (statt vom align-items zu erben), sonst wuerde .globe-host{width:100%}
+   gegen eine geschrumpfte Breite aufloesen und der Globus faelschlich
+   schmal werden. */
+#dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column}
 #dashWidgets .dw.dw-globe>.dw-body{display:flex;flex-direction:column;align-items:center;width:100%}
 .scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
@@ -902,7 +909,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
-.scan-particle{position:fixed;left:0;top:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:#7ee0ff;box-shadow:0 0 10px 3px rgba(126,224,255,.8),0 0 24px 7px rgba(126,224,255,.3);pointer-events:none;z-index:99999;will-change:transform}
+.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#dff7ff;box-shadow:0 0 4px 1px #fff,0 0 16px 5px rgba(126,224,255,.9),0 0 34px 12px rgba(126,224,255,.4);pointer-events:none;z-index:99999;will-change:transform}
+/* Zweiter, kleinerer/schwaecherer Partikel kurz hinter dem Kopf (siehe
+   scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
+   einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
+.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#7ee0ff;box-shadow:0 0 10px 3px rgba(126,224,255,.6),0 0 22px 8px rgba(126,224,255,.22);opacity:.7}
 @keyframes scanHit{0%{box-shadow:0 0 0 0 rgba(126,224,255,.85) inset,0 0 0 0 rgba(126,224,255,.85)}100%{box-shadow:0 0 0 0 rgba(126,224,255,0) inset,0 0 0 16px rgba(126,224,255,0)}}
 .scan-hit{animation:scanHit .6s ease-out}
 @keyframes scanFlashGlobe{0%{filter:brightness(1)}30%{filter:brightness(1.7)}100%{filter:brightness(1)}}
@@ -951,11 +962,20 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Readout-Leiste + Intel-Feed unter dem Globus-Panel - dichtes Terminal-
    Layout (Monospace, klein), damit die Karte trotz neuer Infos nicht viel
    hoeher wird. */
-.globe-hud-title{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.globe-hud-readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:8px}
+/* width:100%+max-width statt frei schrumpfen zu lassen: .dw-body zentriert
+   seine Kinder (align-items:center), ohne eine explizite Breite wuerden
+   Titel/Readout/Intel auf ihre eigene Textbreite schrumpfen und in der
+   (viel breiteren) Zentrum-Spalten-Karte wie ein schmaler Streifen mit
+   Leerraum links/rechts wirken (Nutzer-Foto 2026-07-27). 440px = grob der
+   Globus-Durchmesser bei maximaler Groesse (siehe startGlobes()), dadurch
+   optisch an den Globus angebunden statt beliebig breit. Bei dieser Breite
+   passen 3 Readout-Felder pro Zeile (minmax(120px,1fr)) statt darunter
+   einzeln gestapelt zu werden - deutlich kompakter (iPad-Bildschirmhoehe). */
+.globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:8px}
 .ghr-item{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.3px;text-transform:uppercase}
 .ghr-item b{display:block;font-size:13px;color:var(--t0);font-weight:700;letter-spacing:0;text-transform:none;margin-top:1px}
-.globe-hud-intel{margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
+.globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
 .ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 @media (hover:hover){.ghi-row:hover{color:var(--t1)}}
 .ghi-t{color:#5fd0ff;opacity:.8}
@@ -1458,13 +1478,16 @@ body.dash-edit-mode .mw-bar{display:flex}
      rechts hoch (Majors, Currency Strength, Risk Sentiment, Calendar). Die
      Zonen-Zuordnung passiert in JS ueber ZONE_OF_TYPE/dashZoneOf() -
      renderDash() baut direkt die 5 .dash-zone-*-Container. */
-  /* Keine Luecken mehr zwischen den Zonen/Karten rund um den Globus
-     (Nutzer-Wunsch 2026-07-27 "keine Luecke lassen") - gap:0 ueberall statt
-     10px, dazu align-items:stretch statt start: alle drei Spalten der
-     mittleren Reihe (links/Globus/rechts) werden dadurch exakt gleich hoch
-     (die kuerzeste Spalte streckt sich auf die Hoehe der laengsten), statt
-     wie zuvor unten offen zu enden. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:0;align-items:stretch}
+  /* Keine Luecken zwischen einzelnen Karten (gap:0) - aber KEIN Stretchen
+     mehr (Nutzer-Korrektur 2026-07-27, per Foto: das vorherige Stretchen
+     der letzten Karte auf Spaltenhoehe liess ihren Inhalt in einer viel zu
+     grossen Karte "schweben"). Jede Karte ist jetzt wieder GENAU so hoch
+     wie ihr eigener Inhalt (align-items:start) - Hoehenausgleich zwischen
+     den drei mittleren Spalten passiert stattdessen darueber, dass jede
+     Spalte genug ECHTE Karten enthaelt, um von selbst auf aehnliche Hoehe
+     zu kommen (siehe die neuen Widget-Typen session_clock/vol_leaders/
+     sentiment_snapshot in ZONE_OF_TYPE weiter unten). */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:0;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:0}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:0}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -1477,19 +1500,9 @@ body.dash-edit-mode .mw-bar{display:flex}
   .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
   .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:0;min-width:0}
   .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:0;min-width:0}
-  .dash-zone-left>.dw,.dash-zone-right>.dw{margin-bottom:0}
-  /* Letzte Karte je Spalte waechst in den restlichen Platz der (jetzt
-     gleich hohen) Zeile hinein und zentriert ihren Inhalt darin - so bleibt
-     nie mehr dunkler Leerraum unter der letzten Karte stehen, egal wie kurz
-     ihr eigener Inhalt urspruenglich war ("Inhalt der Karten soll voll
-     sein"). Generisch fuer jeden Widget-Typ, keine Sonderfaelle noetig. */
-  .dash-zone-left>.dw:last-child,.dash-zone-right>.dw:last-child{flex:1 1 auto;display:flex;flex-direction:column}
-  .dash-zone-left>.dw:last-child>.dw-body,.dash-zone-right>.dw:last-child>.dw-body{flex:1;display:flex;flex-direction:column;justify-content:center}
-  .dash-zone-center{grid-area:center;display:flex;align-items:stretch;justify-content:center;min-width:0}
-  .dash-zone-center>.dw{width:100%;margin-bottom:0}
-  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}
-    .dash-zone-left>.dw:last-child,.dash-zone-right>.dw:last-child{flex:none}
-    .dash-zone-left>.dw:last-child>.dw-body,.dash-zone-right>.dw:last-child>.dw-body{flex:none;justify-content:flex-start}}
+  .dash-zone-center{grid-area:center;display:flex;flex-direction:column;gap:0;min-width:0}
+  .dash-zone-left>.dw,.dash-zone-right>.dw,.dash-zone-center>.dw{margin-bottom:0}
+  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -1756,12 +1769,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-254 — Globus-HUD/Dashboard-Layout nachgeschaerft (Nutzer-Wunsch): Polarlichter-Hintergrundleuchten hinter dem Globus komplett entfernt, der 5s-Schimmer-Sweep ueber die Land-Vierecke ebenfalls entfernt. Dafuer mehr Ueberwachungsmodus-HUD-Objekte: gestrichelter Instrumenten-Bezel mit Gradstrichen+Beschriftung, Fadenkreuz-Reticle, zwei Radar-Entfernungsringe, TRACKING/SIGNAL-Statusbadges. Radial-Layout: keine Luecken mehr zwischen/um die Karten (gap:0, Spalten links/Globus/rechts jetzt exakt gleich hoch), Karteninhalt der jeweils letzten Karte pro Spalte zentriert sich in den freien Platz statt Leerraum am Kartenende zu lassen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-255 — Dashboard-Karten nach Nutzer-Foto korrigiert: keine kuenstlich gestreckten Karten mehr, jede Karte ist wieder genau so gross wie ihr Inhalt. Drei neue echte Karten fuellen die dadurch freien Bereiche: Trading Sessions (24h-Sitzungsleiste unterm Globus), Volatility Leaders (20-Tage realisierte Vol-Rangliste) und Market Sentiment (VIX/Crypto Fear&Greed/Put-Call) - inkl. automatischer Migration fuer Bestandsnutzer. Kartenoptik aufgewertet (dezente Lichtkante+Tiefenschatten). Scan-Animation laeuft jetzt gut 3x so lange und die Partikel sind groesser/heller (Kopf+Schweif) - besser sichtbar auf grossen/Windows-Bildschirmen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-254</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-255</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -5399,12 +5412,15 @@ function cleanLegacySeedEvts(){
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'Radar Globe',order:0},
   {id:uid(),type:'daily_bias',title:'Daily Bias',order:1},
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:2},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:3},
-  {id:uid(),type:'market_watch',title:'Market Watch',order:4},
-  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:5},
-  {id:uid(),type:'notification',title:'Notifications',order:6},
-  {id:uid(),type:'key_insights',title:'Key Insights',order:7},
+  {id:uid(),type:'session_clock',title:'Trading Sessions',order:2},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
+  {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:5},
+  {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:6},
+  {id:uid(),type:'market_watch',title:'Market Watch',order:7},
+  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
+  {id:uid(),type:'notification',title:'Notifications',order:9},
+  {id:uid(),type:'key_insights',title:'Key Insights',order:10},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -5586,7 +5602,7 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // mittlere Reihe (volle Breite, Symbole nebeneinander statt Liste - siehe
 // mwLayoutHtml()). Neues notification-Platzhalter-Widget an Market Watchs
 // alter Stelle in der unteren Reihe.
-const DASH_V=10;
+const DASH_V=11;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   const DASH_V9_DROP=new Set(['movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data']);
@@ -5599,9 +5615,14 @@ function migrateDash(){
   // Umbenennungen des Nutzers bleiben unangetastet.
   const gw=widgets.find(w=>w.type==='globe');
   if(gw&&(gw.title==='FX World Globe'||gw.title==='Daily Bias'))gw.title='Radar Globe';
-  [['globe','Radar Globe'],['daily_bias','Daily Bias'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
+  // DASH_V11 (Nutzer-Foto 2026-07-27): Karten sind jetzt wieder genau so
+  // hoch wie ihr Inhalt (kein Stretchen mehr) - drei neue Karten fuellen die
+  // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
+  // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
+  // Platz kuenstlich zu strecken.
+  [['globe','Radar Globe'],['daily_bias','Daily Bias'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,daily_bias:1,ccy_ranking:2,risk_sentiment:3,market_watch:4,mini_calendar:5,notification:6,key_insights:7,watchlist:8,movers_fx:9,score_changes:10,fx_bias:11,asset_heatmap:12,live_data:13,pairs_editor:14};
+  const rank={globe:0,daily_bias:1,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,key_insights:10,watchlist:11,movers_fx:12,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -9666,8 +9687,11 @@ function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs(
 const W_TYPES=[
   {type:'globe',label:'Radar Globe',sub:'Rotating surveillance globe — currencies coloured by bias score, source of the scan animation'},
   {type:'daily_bias',label:'Daily Bias',sub:'Bull/bear/neutral majority read across the FX majors'},
+  {type:'session_clock',label:'Trading Sessions',sub:'Sydney/Tokyo/London/New York on a 24h timeline — highlights which sessions are open right now'},
   {type:'ccy_ranking',label:'Asset Strength',sub:'Configurable assets (up to 9) ranked strongest → weakest by score'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
+  {type:'vol_leaders',label:'Volatility Leaders',sub:'Most volatile tracked assets by 20-day realized volatility (annualized)'},
+  {type:'sentiment_snapshot',label:'Market Sentiment',sub:'VIX, Crypto Fear & Greed and the market-wide Put/Call ratio at a glance'},
   {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
   {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
   {type:'notification',label:'Notifications',sub:'Placeholder — content still to be decided'},
@@ -10002,7 +10026,7 @@ function toggleDashEditMode(){
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-const ZONE_OF_TYPE={globe:'center',daily_bias:'top',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'bottom'};
+const ZONE_OF_TYPE={globe:'center',daily_bias:'top',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'bottom',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10087,6 +10111,54 @@ function renderDash(){
       content=`<div class="globe-host"></div>
         <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
         ${globeHudHtml()}`;
+    }else if(w.type==='session_clock'){
+      // Reaktiviert eine bereits fertig gebaute, aber seit dem Radial-Umbau
+      // nirgends mehr eingehaengte Funktion (sessionBarHtml()/startSessionBar()
+      // liefen schon vorher, nur ohne Host-Element im DOM) - echte Daten
+      // (GLOBE_SESSIONS/sessionActiveNow()), keine neue Logik noetig. Fuellt
+      // die Zentrum-Spalte unter dem Globus sinnvoll statt sie leer zu lassen.
+      content=sessionBarHtml();
+    }else if(w.type==='vol_leaders'){
+      // 20-Tage realisierte Volatilitaet (annualisiert) - dieselbe Formel wie
+      // die Matrix-Tab-Diagonale (renderCorrCard), hier als eigenstaendiges
+      // Ranking statt Teil der Korrelationsmatrix. Rein aus price_data.json
+      // abgeleitet, kein neuer Feed noetig.
+      const volRanked=trendAssets().map(id=>{
+        const m=assetReturnMap(id);if(!m)return null;
+        const vals=Object.keys(m).sort().slice(-20).map(d=>m[d]);
+        if(vals.length<5)return null;
+        const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+        const va=vals.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(vals.length-1);
+        return{id,vol:Math.sqrt(va)*Math.sqrt(252)*100};
+      }).filter(Boolean).sort((a,b)=>b.vol-a.vol).slice(0,6);
+      const volMx=Math.max(1,...volRanked.map(v=>v.vol));
+      content=volRanked.length?`<div class="rank-list">`+volRanked.map((v,i)=>`<div class="rank-row" onclick="gotoSym('${v.id}')">
+        <span class="rank-pos">${i+1}</span><span class="rank-name">${escH(v.id)}</span>
+        <div class="rank-track"><div class="rank-bar" style="width:${Math.round(v.vol/volMx*100)}%;background:var(--blue)"></div></div>
+        <span class="rank-sc" style="color:var(--t1)" title="20-day realized volatility, annualized">${v.vol.toFixed(0)}%</span>
+      </div>`).join('')+`</div>`:`<div class="dw-empty">Not enough price history yet.</div>`;
+    }else if(w.type==='sentiment_snapshot'){
+      // Rohe Sentiment-Kennzahlen (nicht der Risk-on/off-Score der Risk-
+      // Sentiment-Karte - das ist bewusst ein anderer Blick auf dieselben
+      // Rohdaten: hier VIX/Crypto-F&G/Put-Call als eigene Zahlen statt zu
+      // einem Gesamt-Score verrechnet). sentEval() ist dieselbe Klassifika-
+      // tion, die auch der Insights-Sentiment-Tab nutzt.
+      const D=SENTIMENT_DATA;
+      if(!D){content=`<div class="dw-empty">No sentiment data yet.</div>`;}
+      else{
+        const vxEv=sentEval('vix',D.vix);
+        const cfEv=sentEval('cryptoFng',D.cryptoFng);
+        const pcLast=D.putCall&&D.putCall.series&&D.putCall.series.length?D.putCall.series[D.putCall.series.length-1]:null;
+        const pcEv=pcLast&&isFinite(+pcLast[1])?sentEval('putCall',{value:+pcLast[1]}):null;
+        const snapRow=(label,ev,tip)=>`<div class="risk-asset-row" onclick="showTab('sent')" title="${escH(tip)}">
+          <span class="risk-asset-name">${escH(label)}</span>
+          <span class="risk-asset-sc" style="color:${ev?BC[ev.bias]:'var(--t3)'}">${ev?escH(ev.actual):'–'}</span>
+        </div>`;
+        content=snapRow('VIX',vxEv,'CBOE Volatility Index — contrarian: high = fear (bullish), low = complacency (bearish)')+
+          snapRow('Crypto F&G',cfEv,'Crypto Fear & Greed Index — contrarian read, applies to BTC')+
+          snapRow('Put/Call',pcEv,'Market-wide OCC put/call ratio — contrarian: ≥1.0 bullish, ≤0.7 bearish')+
+          `<div class="mw-footer" onclick="showTab('sent')"><span>Go to Sentiment</span></div>`;
+      }
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -11300,16 +11372,24 @@ function startScanBroadcast(){
     if(!globeHost||!targets.length){_scanBusy=false;if(btn){btn.disabled=false;btn.innerHTML=`${icn('zap',13)} INITIATE SCAN`;}return;}
     const gr=globeHost.getBoundingClientRect();
     const gx=gr.left+gr.width/2,gy=gr.top+gr.height/2;
+    // Deutlich langsamer + weiter gestaffelt (Nutzer-Wunsch 2026-07-27: "die
+    // Scan Funktion soll laenger laufen") - macht die einzelnen Partikel auf
+    // grossen Desktop-/Windows-Bildschirmen auch bei langer Flugstrecke
+    // leicht erkennbar statt in <1s ueber den ganzen Schirm zu huschen.
     const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const step=reduced?40:130;
+    const step=reduced?60:240;
     targets.forEach((card,i)=>{setTimeout(()=>scanFlyParticle(gx,gy,card,reduced),i*step);});
     setTimeout(()=>{
       _scanBusy=false;
       const b=document.querySelector('.scan-btn');
       if(b){b.disabled=false;b.innerHTML=`${icn('zap',13)} INITIATE SCAN`;}
-    },targets.length*step+(reduced?150:700));
+    },targets.length*step+(reduced?150:1400));
   });
 }
+// Zwei Partikel pro Zielkarte statt einem (heller Kopf + kleinerer, leicht
+// verzoegerter "Schweif"-Punkt) - macht den Flug auch auf grossen/Windows-
+// Bildschirmen deutlich sichtbarer als ein einzelner 9px-Punkt (Nutzer-
+// Bugreport 2026-07-27: "am pc mit Windows sieht man die Partikel nicht").
 function scanFlyParticle(x0,y0,targetEl,reduced){
   const hit=()=>{
     targetEl.classList.remove('scan-hit');void targetEl.getBoundingClientRect();targetEl.classList.add('scan-hit');
@@ -11318,16 +11398,22 @@ function scanFlyParticle(x0,y0,targetEl,reduced){
   if(reduced){hit();return;}
   const r=targetEl.getBoundingClientRect();
   const x1=r.left+r.width/2,y1=r.top+r.height/2;
-  const mx=(x0+x1)/2+(Math.random()-0.5)*90,my=(y0+y1)/2+(Math.random()-0.5)*90;
-  const p=document.createElement('div');
-  p.className='scan-particle';
-  document.body.appendChild(p);
-  const anim=p.animate([
-    {transform:`translate(${x0}px,${y0}px) scale(1)`,opacity:1,offset:0},
-    {transform:`translate(${mx}px,${my}px) scale(1.3)`,opacity:1,offset:.5},
-    {transform:`translate(${x1}px,${y1}px) scale(.4)`,opacity:0,offset:1}
-  ],{duration:620,easing:'cubic-bezier(.3,.6,.4,1)'});
-  anim.onfinish=()=>{p.remove();hit();};
+  const mx=(x0+x1)/2+(Math.random()-0.5)*110,my=(y0+y1)/2+(Math.random()-0.5)*110;
+  const spawn=(cls,delay,dur,onDone)=>{
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className=cls;
+      document.body.appendChild(p);
+      const anim=p.animate([
+        {transform:`translate(${x0}px,${y0}px) scale(1)`,opacity:1,offset:0},
+        {transform:`translate(${mx}px,${my}px) scale(1.5)`,opacity:1,offset:.5},
+        {transform:`translate(${x1}px,${y1}px) scale(.4)`,opacity:0,offset:1}
+      ],{duration:dur,easing:'cubic-bezier(.3,.6,.4,1)'});
+      anim.onfinish=()=>{p.remove();if(onDone)onDone();};
+    },delay);
+  };
+  spawn('scan-particle scan-particle-trail',0,1100);
+  spawn('scan-particle',110,1100,hit);
 }
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
