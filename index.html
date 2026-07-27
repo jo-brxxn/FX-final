@@ -891,6 +891,47 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 #dashWidgets .dw.dw-globe{overflow:hidden}
 @media(max-width:700px){.db-split .globe-host{flex:0 0 auto;width:auto;min-height:170px}}
 @media(max-width:700px){.db-split{flex-direction:column;align-items:stretch}}
+/* ── "Global Market Surveillance"-HUD-Umbau (Nutzer-Wunsch 2026-07-27):
+   Globus bleibt genau wie er ist (drehbar, echte Bias-Marker) - drumherum
+   kommt eine Ueberwachungs-Konsolen-Optik dazu, gebaut nach realen Vorbildern
+   (Radar-/ADS-B-/Flottentracker-HUDs: Eck-Klammern, Scanline, pulsierende
+   Ortungsringe). Alle TEXTINHALTE darin sind echte, bereits vorhandene
+   App-Daten (Bias-Score, Risk-Sentiment, scoreLog) - nur die Optik ist neu,
+   siehe CLAUDE.md-Grundsatz "nie erfundene Werte". */
+.globe-ping{transform-origin:center;animation:globePing 2.2s ease-out infinite}
+@keyframes globePing{0%{r:5;stroke-opacity:.8}100%{r:15;stroke-opacity:0}}
+@media(prefers-reduced-motion:reduce){.globe-ping{animation:none;stroke-opacity:0}}
+/* Eck-Klammern (Zielerfassungs-/Reticle-Optik) - vier L-foermige Ecken per
+   border auf zwei Seiten, rein dekorativ, kein Einfluss auf Layout/Klicks. */
+.globe-hud-frame{position:absolute;inset:6px;z-index:2;pointer-events:none}
+.globe-hud-frame span{position:absolute;width:16px;height:16px;border-color:rgba(126,196,255,.55)}
+.globe-hud-frame span.tl{top:0;left:0;border-top:2px solid;border-left:2px solid}
+.globe-hud-frame span.tr{top:0;right:0;border-top:2px solid;border-right:2px solid}
+.globe-hud-frame span.bl{bottom:0;left:0;border-bottom:2px solid;border-left:2px solid}
+.globe-hud-frame span.br{bottom:0;right:0;border-bottom:2px solid;border-right:2px solid}
+/* Scanline-Textur (CRT-/Monitor-Feed-Optik) - guenstige transform-Animation
+   (background-position), bewusst KEIN filter:blur (dokumentierte Blur-Perf-
+   Lehre) und sehr niedrige Deckkraft, damit die eigentlichen Marker/Labels
+   nicht darunter leiden. */
+.globe-hud-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.05;background:repeating-linear-gradient(0deg,#dff4ff 0 1px,transparent 1px 3px);animation:globeScanDrift 7s linear infinite}
+@keyframes globeScanDrift{0%{background-position:0 0}100%{background-position:0 42px}}
+@media(prefers-reduced-motion:reduce){.globe-hud-scan{animation:none}}
+/* Blinkender "MONITORING"-Punkt - gleiche Konvention wie der bestehende
+   .live-dot im Header (pulse-badge-artig), eigene Klasse statt Wiederver-
+   wendung, da .live-dot fix auf Rot gesetzt ist und hier Blau passender ist. */
+.hud-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#5fd0ff;box-shadow:0 0 6px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.hud-live-dot{animation:none}}
+/* Readout-Leiste + Intel-Feed unter dem Globus-Panel - dichtes Terminal-
+   Layout (Monospace, klein), damit die Karte trotz neuer Infos nicht viel
+   hoeher wird. */
+.globe-hud-title{margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-hud-readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:8px}
+.ghr-item{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.3px;text-transform:uppercase}
+.ghr-item b{display:block;font-size:13px;color:var(--t0);font-weight:700;letter-spacing:0;text-transform:none;margin-top:1px}
+.globe-hud-intel{margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
+.ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+@media (hover:hover){.ghi-row:hover{color:var(--t1)}}
+.ghi-t{color:#5fd0ff;opacity:.8}
 /* clamp + nowrap: bei ~1180px wird die Textspalte der Daily-Bias-Karte so
    schmal, dass "◆ NEUTRAL" sonst hinter das Rautensymbol umbricht. */
 .daily-bias-lbl{font-size:clamp(18px,1.75vw,26px);font-weight:800;letter-spacing:.3px;margin-bottom:14px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1680,12 +1721,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-251 — Dashboard-Feinschliff nach Foto-Bugreport: Kartentitel wurden faelschlich per Ellipsis gekuerzt (CURREN../RISK SE../MINI C..) - Ursache war eine veraltete @media(hover:hover)-Regel, die .dw-btns auf Touch-Geraeten trotz opacity:0 weiter im Flex-Layout Platz einnehmen liess, jetzt gefixt. Profil-Kreis verkleinert + Name darunter entfernt, Header/Tabbar/Dashboard-Karten insgesamt weniger hoch gepolstert, Majors-Sidebar dichter, Globus-Groessenkappung 260->340px (naeher am Kartenrand). 'Currency Strength' ist jetzt eine frei konfigurierbare 'Asset Strength'-Karte (Zahnrad-Icon im Bearbeitungsmodus, bis zu 9 Assets, automatisch nach Score sortiert, gestrichelte Trennlinie am Uebergang positiv/negativ).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-252 — Globus-Karte zu 'Global Market Surveillance'-HUD ausgebaut (Nutzer-Wunsch): Radar-Sweep-Keil, HUD-Eckklammern, pulsierende Ortungsringe an jedem Waehrungs-Marker, blinkende MONITORING-Anzeige - rein dekorativ, gebaut nach realen Radar-/Flottentracker-HUD-Vorbildern. Darunter eine Readout-Leiste + Intel-Feed, beide AUSSCHLIESSLICH aus echten, bereits vorhandenen App-Daten (Scan-Position = echte Rotation, Active Signals/Risk Level/Priority Target = echte Bias-Scores, Intel-Feed = echte scoreLog-Eintraege) - keine erfundenen Werte.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-251</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-252</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -9989,7 +10030,8 @@ function renderDash(){
           <div class="daily-bias-txt">${db.txt}</div>
         </div>
         <div class="globe-host"></div>
-      </div>`;
+      </div>
+      ${globeHudHtml()}`;
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
       const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
@@ -10516,9 +10558,29 @@ function globeSkeleton(size,uid){
   const sqid='gSq'+uid,sqgid='gSqGlow'+uid,swgid='gSweepGrad'+uid,swid='gSweepMask'+uid;
   // Pfade OHNE eigenes fill/stroke - sie erben beides vom jeweiligen <use>.
   let land='';GLOBE_LAND.forEach(()=>{land+='<path/>';});
-  let markers='';Object.keys(GLOBE_GEO).forEach(id=>{markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;});
+  // Jeder Marker bekommt jetzt zusaetzlich einen "Ping"-Ring (Reticle/Radar-
+  // Ortungspunkt-Optik, "Global Market Surveillance"-Umbau 2026-07-27) - ein
+  // zweiter <circle>, der per CSS-Keyframe kontinuierlich nach aussen
+  // aufweitet und ausblendet (@keyframes globePing). Bewusst PRO Marker mit
+  // eigenem, ueber die Reihenfolge in GLOBE_GEO leicht versetztem delay
+  // (globeCollectRefs/globeUpdateOne setzen Position+Farbe), damit es nicht
+  // wie ein einziges synchrones Blinken wirkt, sondern wie einzelne
+  // Ortungssignale.
+  let markers='';let _mi=0;Object.keys(GLOBE_GEO).forEach(id=>{
+    const delay=(_mi++%4)*0.55;
+    markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle class="globe-ping" r="5" fill="none" stroke-width="1.3" style="animation-delay:${delay}s"></circle><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;
+  });
   const SQ=4.2,SI=0.55,SW=SQ-2*SI; // Rasterweite / Innenabstand / Kantenlaenge
   const swW=R*0.34,swX0=cx-R-swW,swX1=cx+R;
+  // Radar-Sweep-Keil (Global-Market-Surveillance-Umbau 2026-07-27): rein
+  // dekorativ, dreht sich KONTINUIERLICH und UNABHAENGIG von der eigentlichen
+  // Globus-Drehung (_globeLon, die per Drag/Auto-Rotation gesteuert wird) -
+  // klassische Radarschirm-Optik. Keil + Gradient liegen in derselben
+  // rotierenden <g>, der Gradient ist daher im lokalen (nicht rotierten)
+  // Koordinatensystem des Keils definiert und dreht sich mit ihm mit.
+  const rsw=Math.PI/180*26,rgid='gRadarSweep'+uid;
+  const rx1=(cx+R*Math.cos(-rsw)).toFixed(2),ry1=(cy+R*Math.sin(-rsw)).toFixed(2);
+  const rx2=(cx+R*Math.cos(rsw)).toFixed(2),ry2=(cy+R*Math.sin(rsw)).toFixed(2);
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
       <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="70%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
@@ -10539,6 +10601,10 @@ function globeSkeleton(size,uid){
           <animate attributeName="x" values="${swX0};${swX0};${swX1};${swX1}" keyTimes="0;0.03;0.32;1" dur="5s" repeatCount="indefinite"/>
         </rect>
       </mask>
+      <linearGradient id="${rgid}" x1="${rx1}" y1="${ry1}" x2="${rx2}" y2="${ry2}" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#7ee0ff" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#7ee0ff" stop-opacity=".4"/>
+      </linearGradient>
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="#0b2445" stroke="#1b4372" stroke-width="1"/>
     <g mask="url(#${lmid})">
@@ -10546,13 +10612,18 @@ function globeSkeleton(size,uid){
       <use href="#${shpid}" fill="url(#${sqid})"/>
       <g mask="url(#${swid})" style="mix-blend-mode:screen"><use href="#${shpid}" fill="url(#${sqgid})"/><use href="#${shpid}" fill="url(#${sqgid})" opacity="0.6"/></g>
     </g>
+    <g style="mix-blend-mode:screen">
+      <path d="M ${cx} ${cy} L ${rx1} ${ry1} A ${R} ${R} 0 0 1 ${rx2} ${ry2} Z" fill="url(#${rgid})">
+        <animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="4.5s" repeatCount="indefinite"/>
+      </path>
+    </g>
     <g data-layer="markers">${markers}</g>
   </svg>`;
 }
 function globeCollectRefs(host,size){
   const svg=host.querySelector('svg');if(!svg)return null;
   const markers={};
-  [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{markers[g.dataset.id]={g,circle:g.querySelector('circle'),text:g.querySelector('text')};});
+  [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{const circles=g.querySelectorAll('circle');markers[g.dataset.id]={g,ping:circles[0],circle:circles[1],text:g.querySelector('text')};});
   return{
     host,R:size/2-16,cx:size/2,cy:size/2,
     landPaths:[...svg.querySelector('[data-layer="landshape"]').children],
@@ -10578,6 +10649,7 @@ function globeUpdateOne(st){
     m.g.style.display='';
     const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScoreCmp(sym);
     m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
+    if(m.ping){m.ping.setAttribute('cx',x.toFixed(1));m.ping.setAttribute('cy',y.toFixed(1));m.ping.setAttribute('stroke',col);}
     const label=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
     visMarkers.push({id,m,x,y,col,label});
   });
@@ -10626,6 +10698,10 @@ function globeUpdateOne(st){
     v.m.text.setAttribute('x',v.x.toFixed(1));v.m.text.setAttribute('y',(v.y+off).toFixed(1));v.m.text.setAttribute('fill',v.col);
     v.m.text.textContent=v.label;
   });
+  // HUD-Readout "Scan position" folgt der echten Rotation live mit (jeden
+  // Frame, wie die Marker selbst) - kein Extra-Interval noetig.
+  const lonEl=document.getElementById('hudLon');
+  if(lonEl)lonEl.textContent=globeHudLonTxt();
 }
 function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
 function globeMarkerClick(ev,id){
@@ -10717,6 +10793,10 @@ function startGlobes(){
     // damit die Text-Spalte auf sehr breiten Karten nicht auf 0 schrumpft.
     const size=Math.max(140,Math.min(w||220,340));
     h.innerHTML=globeSkeleton(size,_globeUid++);
+    // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
+    // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
+    // Neuaufbau (Tab-Wechsel, Resize) sofort wieder loeschen.
+    h.insertAdjacentHTML('beforeend','<div class="globe-hud-frame"><span class="tl"></span><span class="tr"></span><span class="bl"></span><span class="br"></span></div><div class="globe-hud-scan"></div>');
     return globeCollectRefs(h,size);
   }).filter(Boolean);
   _globeHosts.forEach(globeUpdateOne); // sofortiger, vollstaendiger erster Aufbau (alle Layer in einem Zug)
@@ -11070,6 +11150,40 @@ function dailyBiasInfo(){
     (hiToday>0?`${hiToday} high-impact event${hiToday>1?'s':''} today — stay alert.`:'No high-impact events today.');
   return{lbl,col,sym,txt};
 }
+// "Global Market Surveillance"-HUD unter dem Globus (Nutzer-Wunsch
+// 2026-07-27: "immernoch die sich drehende Kugel und dann so Infos die
+// daraus kommen") - Optik einer Ueberwachungskonsole, aber JEDER Wert kommt
+// aus echten, bereits vorhandenen Daten (Bias/Score/scoreLog) - siehe
+// CLAUDE.md-Grundsatz "nie erfundene Werte". #hudLon wird zusaetzlich JEDEN
+// Frame in globeUpdateOne() live nachgezogen (echte Rotationsposition),
+// hier nur der Startwert.
+function globeHudLonTxt(){
+  const lon=((_globeLon%360)+360)%360,dispLon=lon>180?360-lon:lon,dir=lon>180?'W':'E';
+  return dispLon.toFixed(1)+'°'+dir;
+}
+function globeHudHtml(){
+  const fxSyms=syms.filter(s=>GLOBE_GEO[s.id]);
+  const active=fxSyms.filter(s=>s.bias!=='neu').length;
+  const risk=riskOnOffState();
+  let top=null;
+  fxSyms.forEach(s=>{const sc=symScoreCmp(s);if(!top||Math.abs(sc)>Math.abs(top.sc))top={id:s.id,sc};});
+  const topTxt=top?`${top.id} ${top.sc>0?'+':''}${Math.round(top.sc*10)/10}`:'—';
+  const readout=`<div class="globe-hud-title"><span class="hud-live-dot"></span> GLOBAL MARKET SURVEILLANCE</div>
+  <div class="globe-hud-readout">
+    <div class="ghr-item">Scan position<b id="hudLon">${globeHudLonTxt()}</b></div>
+    <div class="ghr-item">Active signals<b>${active}/${fxSyms.length}</b></div>
+    <div class="ghr-item">Global risk level<b style="color:${risk.col}">${escH(risk.lbl)}</b></div>
+    <div class="ghr-item">Priority target<b>${escH(topTxt)}</b></div>
+  </div>`;
+  const feed=scoreLog.filter(e=>GLOBE_GEO[e.sym]).slice(-4).reverse();
+  const feedHtml=feed.length?`<div class="globe-hud-intel">`+feed.map(e=>{
+    const time=new Date(e.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const chg=e.kind==='bias'?`${escH(e.ind||'')} ${bMark(e.from)}→${bMark(e.to)}`:`${escH(e.ind||e.kind||'')} ${escH(String(e.from))}→${escH(String(e.to))}`;
+    return`<div class="ghi-row" onclick="gotoSym('${e.sym}')" title="Open ${escH(e.sym)}"><span class="ghi-t">[${time}]</span> ${escH(e.sym)} — ${chg}${e.delta?` (${e.delta>0?'+':''}${e.delta})`:''}</div>`;
+  }).join('')+`</div>`:'';
+  return readout+feedHtml;
+}
+function bMark(b){return b==='bull'?'▲':b==='bear'?'▼':'◆';}
 // Überraschungs-/Daten-Momentum-Index: Netto (Beats − Misses) der
 // scoretreibenden Releases der letzten 30 Tage je Währung. actualColor()
 // berücksichtigt bereits "lower is better" (z.B. Arbeitslosenquote), daher
