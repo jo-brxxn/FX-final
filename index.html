@@ -953,6 +953,16 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-ping{transform-origin:center;animation:globePing 2.2s ease-out infinite}
 @keyframes globePing{0%{r:5;stroke-opacity:.8}100%{r:15;stroke-opacity:0}}
 @media(prefers-reduced-motion:reduce){.globe-ping{animation:none;stroke-opacity:0}}
+/* Rote Positionslichter an den Fluegelspitzen des Jets (Nutzer-Wunsch
+   2026-07-28) - echtes Flugzeug-Blinklicht-Verhalten (hartes An/Aus statt
+   weichem Fade, daher steps(1) statt ease). Dauerhafte Ambient-Animation
+   (kein Nutzer-Trigger) - respektiert reduced-motion daher bewusst weiter
+   (anders als der Scan/Flug-Fix weiter oben, der nur zwei DISKRETE, vom
+   Nutzer ausgeloeste Animationen betraf), zeigt dort ein staendig gedimmtes
+   statt blinkendes Licht. */
+.globe-jet-light{animation:globeJetBlink 1.1s steps(1) infinite}
+@keyframes globeJetBlink{0%,44%{opacity:1}45%,100%{opacity:.15}}
+@media(prefers-reduced-motion:reduce){.globe-jet-light{animation:none;opacity:.55}}
 /* Ankunfts-Puls (Nutzer-Wunsch 2026-07-27): einmaliger, kraeftigerer
    Ausschlag am Zielpunkt, sobald das Auto/Schiff ankommt - danach oeffnet
    sich die Waehrung (gotoSym). Eigene Klasse statt .globe-ping-Wiederver-
@@ -1810,12 +1820,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-258 — Globus: dauerhaftes Kampfflugzeug statt Auto/Schiff (dreht sich zum Ziel und fliegt hin, Radar-Sweep folgt seiner Position jeden Frame). Zoom UND Pan (vertikales Ziehen bei aktivem Zoom, Seiten-Scroll auf der Globus-Karte dafuer deaktiviert). Scan- und Flug-Animation liefen auf PCs mit aktivem prefers-reduced-motion ueberhaupt nicht - Gating entfernt, laufen jetzt immer. Daily-Bias-Karte komplett entfernt (inkl. Migration), Priority-Target aus dem HUD entfernt. Trading-Sessions-Karte modernisiert (Pill-Tracks, Glow, getoente Badges, Overlap-Hinweis, Next-Session-Countdown) und ins Zentrum-Spalten-Layout eingepasst, um die Luecke unter ihr zu schliessen (Key Insights zog dafuer in die Zentrum-Spalte).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-259 — Globus-Jet: Grundausrichtung auf rotate(90) umgestellt (Nase zeigt nach rechts/in Flugrichtung statt nach oben, passend zur dauerhaften Globus-Drehung), zwei rote blinkende Positionslichter an den Fluegelspitzen ergaenzt (respektiert reduced-motion, dimmt dann nur statisch statt zu blinken) und zwei Triebwerks-Gondeln mit Abgas-Glow am Heck.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-258</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-259</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -10836,9 +10846,23 @@ function globeSkeleton(size,uid){
   // Silhouette mit Cockpithaube, top-down, reines Strichzeichnungs-Icon
   // passend zum uebrigen HUD-Stil. pointer-events:none, damit es Drag/Klicks
   // auf darunterliegende Marker nicht blockiert.
-  const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy}) rotate(0)" pointer-events="none">
+  // rotate(90) als Grundausrichtung (nicht 0): der Globus dreht sich
+  // dauerhaft, das Flugzeug soll dabei standardmaessig nach rechts (in
+  // "Flugrichtung") zeigen statt mit der Nase nach oben zu stehen (Nutzer-
+  // Wunsch 2026-07-28). Die Silhouette selbst bleibt nasen-nach-oben
+  // gezeichnet (0-Grad-Referenz fuer die Heading-Mathematik in
+  // globeVehicleTravel() aendert sich dadurch nicht) - nur der Start-/
+  // Ruhezustand bekommt einen 90-Grad-Offset (siehe vehicleHeading:90 in
+  // globeCollectRefs() weiter unten, MUSS mit diesem Wert synchron bleiben).
+  const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy}) rotate(90)" pointer-events="none">
     <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
+    <rect x="1.7" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
+    <rect x="-3.8" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
+    <circle cx="2.75" cy="11.6" r="1" fill="#f4ad5c"/>
+    <circle cx="-2.75" cy="11.6" r="1" fill="#f4ad5c"/>
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
+    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#ef5350"/>
+    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#ef5350"/>
   </g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
@@ -10881,11 +10905,14 @@ function globeCollectRefs(host,size){
     markers,vehicle,
     sweepEl:svg.querySelector('.globe-sweep'),
     // Aktuelle Position/Blickrichtung des Jets - startet in der Mitte, Nase
-    // nach oben (0°). globeVehicleTravel() aktualisiert beides waehrend
-    // einer Reise, globeUpdateOne() liest vehiclePos jeden Frame, um den
-    // Radar-Sweep dorthin mitzunehmen ("Radar soll immer mit dem Flugzeug
-    // mitgehen", Nutzer-Wunsch 2026-07-28).
-    vehiclePos:{x:cx,y:cy},vehicleHeading:0
+    // nach rechts (90°, siehe rotate(90)-Grundausrichtung in globeSkeleton()
+    // oben - MUSS synchron bleiben, sonst "springt" das Flugzeug beim ersten
+    // Klick sichtbar in die Ausgangsrotation, bevor es sich zum Ziel dreht).
+    // globeVehicleTravel() aktualisiert beides waehrend einer Reise,
+    // globeUpdateOne() liest vehiclePos jeden Frame, um den Radar-Sweep
+    // dorthin mitzunehmen ("Radar soll immer mit dem Flugzeug mitgehen",
+    // Nutzer-Wunsch 2026-07-28).
+    vehiclePos:{x:cx,y:cy},vehicleHeading:90
   };
 }
 // Pro Frame nur Attribute der bestehenden Elemente updaten (kein innerHTML/Reparse).
