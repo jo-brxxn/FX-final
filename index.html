@@ -940,7 +940,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .scan-hit{animation:scanHit .7s ease-out}
 @keyframes scanFlashGlobe{0%{filter:brightness(1)}30%{filter:brightness(1.7)}100%{filter:brightness(1)}}
 .scan-flash-globe{animation:scanFlashGlobe .5s ease-out}
-@media(prefers-reduced-motion:reduce){.scan-flash-globe{animation:none}}
+/* Bewusst OHNE prefers-reduced-motion-Override (Nutzer-Bugreport 2026-07-28,
+   siehe startScanBroadcast()) - der Scan ist eine kurze, direkt selbst
+   ausgeloeste Aktion, kein ambientes Dauer-Movement. */
 /* ── "Global Market Surveillance"-HUD-Umbau (Nutzer-Wunsch 2026-07-27):
    Globus bleibt genau wie er ist (drehbar, echte Bias-Marker) - drumherum
    kommt eine Ueberwachungs-Konsolen-Optik dazu, gebaut nach realen Vorbildern
@@ -960,7 +962,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    bis das Element kurz danach mit dem Kartenaufbau verschwindet.*/
 @keyframes globeArrivalBurst{0%{r:5;stroke-opacity:.95;stroke-width:2.5}100%{r:22;stroke-opacity:0;stroke-width:.5}}
 .globe-arrival-burst{animation:globeArrivalBurst .45s ease-out forwards}
-@media(prefers-reduced-motion:reduce){.globe-arrival-burst{animation:none;display:none}}
+/* Bewusst OHNE prefers-reduced-motion-Override, siehe globeMarkerClick(). */
 /* Eck-Klammern (Zielerfassungs-/Reticle-Optik) - vier L-foermige Ecken per
    border auf zwei Seiten, rein dekorativ, kein Einfluss auf Layout/Klicks. */
 .globe-hud-frame{position:absolute;inset:6px;z-index:2;pointer-events:none}
@@ -1011,11 +1013,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 @media (hover:hover){.ghi-row:hover{color:var(--t1)}}
 .ghi-t{color:#5fd0ff;opacity:.8}
-/* Daily Bias ist wieder eine eigene Karte (oben-Zone, Radial-Layout
-   2026-07-27) statt Teil der Globus-Karte - dieselben zwei Klassen wie
-   zuvor, jetzt einfach in ihrer eigenen .dw. */
-.daily-bias-lbl{font-size:clamp(16px,1.6vw,22px);font-weight:800;letter-spacing:.3px;margin-bottom:8px;white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.daily-bias-txt{font-size:12.5px;color:var(--t2);line-height:1.65}
 /* Market Watch ist KEINE Karte, sondern eine schmale Ticker-Leiste
    (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler, da brauch man
    keine ganze Karte mit Ueberschriften und so") - kein Rahmen, kein
@@ -1088,25 +1085,32 @@ body.dash-edit-mode .mw-bar{display:flex}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
 /* Grab-Cursor nur auf der Kugel selbst (die Kreis-Elemente decken exakt die
    Kugelflaeche ab), nicht auf der gesamten Widget-Breite - passend zur
-   verkleinerten Drag-Hitbox in globeOnPointerDown. touch-action:pan-y auf
-   dem Host: ausserhalb der Kugel darf der Finger die SEITE hoch/runter
-   scrollen (frueher blockierte touch-action:none die ganze Widget-Flaeche);
-   nur auf den Kugel-Kreisen selbst uebernimmt der Drag die Rotation. */
-.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:2px 0 4px;min-height:120px;touch-action:pan-y;user-select:none}
-.globe-host svg circle{cursor:grab;touch-action:none}
+   verkleinerten Drag-Hitbox in globeOnPointerDown. touch-action:none auf dem
+   ganzen Host (Nutzer-Wunsch 2026-07-28: jetzt kann man am Globus auch
+   HOCH/RUNTER ziehen, um sich beim Reinzoomen vom Zentrum zu entfernen -
+   "Deaktivier das [Seiten-Scrollen] fuer die Globus Karte damit sich das
+   nicht beisst"). Vorher war hier bewusst nur pan-y auf den Kreisen selbst
+   deaktiviert, damit man ausserhalb der Kugel die Seite scrollen konnte -
+   das war aber genau der Konflikt mit dem neuen Pan-Gesture, daher jetzt
+   der ganze Host. */
+.globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:2px 0 4px;min-height:120px;touch-action:none;user-select:none}
+.globe-host svg circle{cursor:grab}
 .globe-host.grabbing,.globe-host.grabbing svg circle{cursor:grabbing}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:6px}
-.globe-sess-badge{padding:2px 7px;border-radius:10px;border:1px solid var(--bd);color:var(--t3);background:var(--bg3);opacity:.55}
-.globe-sess-badge.on{opacity:1;border-color:currentColor}
-.sess-bar{margin-top:10px;padding:0 2px}
-.sess-tracks{position:relative;display:flex;flex-direction:column;gap:3px}
-.sess-track{position:relative;height:7px;border-radius:5px;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--bd)}
-.sess-seg{position:absolute;top:0;bottom:0;border-radius:5px;opacity:.4}
-.sess-seg.on{opacity:.85}
-.sess-now-line{position:absolute;top:0;bottom:0;width:2px;border-radius:1px;background:var(--t0);transform:translateX(-50%);box-shadow:0 0 0 1px rgba(var(--blue-rgb),.35)}
-.sess-hours{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:8px}
+.globe-sess-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid;font-weight:600;letter-spacing:.02em;opacity:.5;transition:opacity .2s ease,box-shadow .2s ease}
+.globe-sess-badge.on{opacity:1;box-shadow:0 0 10px -3px currentColor}
+.sess-bar{margin-top:12px;padding:0 2px}
+.sess-tracks{position:relative;display:flex;flex-direction:column;gap:4px}
+.sess-track{position:relative;height:8px;border-radius:999px;overflow:hidden;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--bd)}
+.sess-seg{position:absolute;top:0;bottom:0;opacity:.38;background-image:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,0) 55%);transition:opacity .2s ease,filter .2s ease}
+.sess-seg.on{opacity:.92;filter:brightness(1.1) saturate(1.15)}
+.sess-now-line{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:1px;background:var(--blue);transform:translateX(-50%);box-shadow:0 0 8px 1px rgba(var(--blue-rgb),.65)}
+.sess-now-line::after{content:'';position:absolute;top:0;left:50%;transform:translate(-50%,-100%);width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px 2px rgba(var(--blue-rgb),.7)}
+.sess-hours{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.sess-overlap{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:rgba(var(--amber-rgb),.1);border:1px solid rgba(var(--amber-rgb),.3);border-radius:999px;padding:5px 10px;margin-top:9px}
+.sess-next{font-size:10.5px;color:var(--t3);text-align:center;margin-top:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
 .globe-tip b{font-size:12.5px}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
@@ -1806,12 +1810,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-257 — Globus: Zoom + Fahrzeug-Symbol + Reise-Navigation (Nutzer-Wunsch). Pinch (2-Finger) oder Mausrad zoomen rein (bis 2.2x, immer zentriert um den Scanner-Ursprung); nach 2s ohne Interaktion faehrt es automatisch sanft wieder auf 1x zurueck. In der Mitte steht je nach Land/Wasser am Scanner-Ursprung (echter Punkt-in-Polygon-Test gegen die Kontinent-Umrisse) ein Auto oder ein Schiff. Klick auf eine Waehrung: das Fahrzeug faehrt/segelt dorthin, pulsiert kurz auf und oeffnet dann die Waehrung - identische Navigation/Uebergang wie ein Tap in der Majors-Liste.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-258 — Globus: dauerhaftes Kampfflugzeug statt Auto/Schiff (dreht sich zum Ziel und fliegt hin, Radar-Sweep folgt seiner Position jeden Frame). Zoom UND Pan (vertikales Ziehen bei aktivem Zoom, Seiten-Scroll auf der Globus-Karte dafuer deaktiviert). Scan- und Flug-Animation liefen auf PCs mit aktivem prefers-reduced-motion ueberhaupt nicht - Gating entfernt, laufen jetzt immer. Daily-Bias-Karte komplett entfernt (inkl. Migration), Priority-Target aus dem HUD entfernt. Trading-Sessions-Karte modernisiert (Pill-Tracks, Glow, getoente Badges, Overlap-Hinweis, Next-Session-Countdown) und ins Zentrum-Spalten-Layout eingepasst, um die Luecke unter ihr zu schliessen (Key Insights zog dafuer in die Zentrum-Spalte).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-257</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-258</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -5448,7 +5452,6 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'Radar Globe',order:0},
-  {id:uid(),type:'daily_bias',title:'Daily Bias',order:1},
   {id:uid(),type:'session_clock',title:'Trading Sessions',order:2},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
@@ -5639,17 +5642,19 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // mittlere Reihe (volle Breite, Symbole nebeneinander statt Liste - siehe
 // mwLayoutHtml()). Neues notification-Platzhalter-Widget an Market Watchs
 // alter Stelle in der unteren Reihe.
-const DASH_V=11;
+// DASH_V 12 (Nutzer-Wunsch 2026-07-28): Daily Bias komplett entfernt (Nutzer-
+// Foto, per Kringel markiert - "soll komplett weg") - kein Ersatz-Widget,
+// die Karte faellt ganz weg. daily_bias kommt daher jetzt in DASH_DROP statt
+// im Auto-Ergaenzen-Array.
+const DASH_V=12;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  const DASH_V9_DROP=new Set(['movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data']);
-  if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));return;}
-  widgets=widgets.filter(w=>!DASH_V9_DROP.has(w.type));
+  const DASH_DROP=new Set(['movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias']);
+  if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_DROP.has(w.type));return;}
+  widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   // Radial-Layout (Nutzer-Wunsch 2026-07-27): Globus steht jetzt ALLEIN im
-  // Zentrum ("nur den Globus"), Daily Bias bekommt daher wieder seine
-  // eigene Karte statt Teil der Globus-Karte zu sein (war DASH_V9 so
-  // zusammengelegt worden) - unveraenderte Standardtitel mitziehen, eigene
-  // Umbenennungen des Nutzers bleiben unangetastet.
+  // Zentrum ("nur den Globus") - unveraenderte Standardtitel mitziehen,
+  // eigene Umbenennungen des Nutzers bleiben unangetastet.
   const gw=widgets.find(w=>w.type==='globe');
   if(gw&&(gw.title==='FX World Globe'||gw.title==='Daily Bias'))gw.title='Radar Globe';
   // DASH_V11 (Nutzer-Foto 2026-07-27): Karten sind jetzt wieder genau so
@@ -5657,9 +5662,9 @@ function migrateDash(){
   // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
   // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
   // Platz kuenstlich zu strecken.
-  [['globe','Radar Globe'],['daily_bias','Daily Bias'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
+  [['globe','Radar Globe'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,daily_bias:1,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,key_insights:10,watchlist:11,movers_fx:12,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+  const rank={globe:0,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,key_insights:10,watchlist:11,movers_fx:12,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -9723,7 +9728,6 @@ function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs(
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'globe',label:'Radar Globe',sub:'Rotating surveillance globe — currencies coloured by bias score, source of the scan animation'},
-  {type:'daily_bias',label:'Daily Bias',sub:'Bull/bear/neutral majority read across the FX majors'},
   {type:'session_clock',label:'Trading Sessions',sub:'Sydney/Tokyo/London/New York on a 24h timeline — highlights which sessions are open right now'},
   {type:'ccy_ranking',label:'Asset Strength',sub:'Configurable assets (up to 9) ranked strongest → weakest by score'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
@@ -10063,7 +10067,7 @@ function toggleDashEditMode(){
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-const ZONE_OF_TYPE={globe:'center',daily_bias:'top',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'bottom',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
+const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'center',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10129,15 +10133,7 @@ function renderDash(){
       <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
       <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
     </div>`;
-    if(w.type==='daily_bias'){
-      // Wieder eine eigene Karte (Nutzer-Wunsch 2026-07-27, Radial-Layout):
-      // der Globus steht jetzt ALLEIN im Zentrum ("nur den Globus"), Daily
-      // Bias zieht deshalb zurueck in seine eigene Zonen-Karte (oben, siehe
-      // ZONE_OF_TYPE/dashZoneOf) - dieselbe dailyBiasInfo(), keine neue Logik.
-      const db=dailyBiasInfo();
-      content=`<div class="daily-bias-lbl" style="color:${db.col}">${db.sym} ${db.lbl}</div>
-        <div class="daily-bias-txt">${db.txt}</div>`;
-    }else if(w.type==='globe'){
+    if(w.type==='globe'){
       // Marker/Radar-HUD werden live per startGlobes() gezeichnet, hier nur
       // der Host - Globus steht jetzt ALLEIN im Zentrum, kein Text mehr
       // daneben (Nutzer-Wunsch 2026-07-27: "pack den Globus in die Mitte
@@ -10526,11 +10522,6 @@ window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(
 // sichtbar ist (sonst stoppt die Animation selbst).
 const GLOBE_GEO={USD:[39,-98],EUR:[50,10],GBP:[54,-2],JPY:[36,138],CHF:[47,8],CAD:[56,-106],AUD:[-25,133],NZD:[-41,174]};
 const GLOBE_LAT0=18*Math.PI/180; // leichte Nordneigung der Blickachse
-const GLOBE_LAT0_DEG=18; // dieselbe Neigung in Grad - der Punkt, der bei jeder
-// Rotation exakt in der Bildschirmmitte steht, hat IMMER diese Breite (siehe
-// globeProject: x=0,y=0 loest sich zu lat=GLOBE_LAT0, lon=lon0 auf) - genutzt
-// von isLandAt(), um zu bestimmen, ob das Scanner-/Fahrzeug-Symbol in der
-// Mitte gerade ueber Land oder Wasser steht (Nutzer-Wunsch 2026-07-27).
 // Stark vereinfachte Kontinent-Umrisse (grobe Polygone, keine exakten Laendergrenzen) -
 // reichen aus, damit die Kugel wie ein Globus statt einer leeren Kugel aussieht.
 // Kontinent-Umrisse als mehrere, jeweils laengengrad-begrenzte Polygone (grob, keine
@@ -10638,25 +10629,6 @@ const GLOBE_LAND=[
   // Madagaskar
   [[-16.88,49.77],[-24.94,47.1],[-25.6,45.41],[-24.99,44.04],[-22.06,43.25],[-20.07,44.37],[-17.41,43.96],[-16.22,44.45],[-15.78,46.31],[-14.59,47.71],[-13.66,47.87],[-13.78,48.29],[-12.04,49.19],[-12.9,49.81],[-15.23,50.48],[-16.0,50.2],[-15.41,49.86],[-15.71,49.67],[-16.88,49.77]],
 ];
-// Land/Wasser-Test fuer einen (lat,lon)-Punkt gegen dieselben GLOBE_LAND-
-// Polygone, die auch gezeichnet werden - Standard-Ray-Casting (Even-Odd-
-// Regel), lat/lon direkt als ebene x/y behandelt. Fuer die vereinfachten,
-// grossflaechigen Kontinent-Umrisse dieser App voellig ausreichend genau
-// (Nutzer-Wunsch 2026-07-27: Schiff/Auto-Symbol in der Bildschirmmitte je
-// nachdem, ob der Scanner-Ursprung gerade ueber Land oder Wasser steht).
-function pointInPoly(lat,lon,poly){
-  let inside=false;
-  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-    const yi=poly[i][0],xi=poly[i][1],yj=poly[j][0],xj=poly[j][1];
-    if(((yi>lat)!==(yj>lat))&&(lon<(xj-xi)*(lat-yi)/(yj-yi)+xi))inside=!inside;
-  }
-  return inside;
-}
-function isLandAt(lat,lon){
-  const l=((lon+180)%360+360)%360-180; // auf [-180,180] normieren wie GLOBE_LAND
-  for(let i=0;i<GLOBE_LAND.length;i++)if(pointInPoly(lat,l,GLOBE_LAND[i]))return true;
-  return false;
-}
 // FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
 const GLOBE_SESSIONS=[
   {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
@@ -10666,6 +10638,22 @@ const GLOBE_SESSIONS=[
 ];
 function sessionActiveNow(s,hr){return s.start<s.end?(hr>=s.start&&hr<s.end):(hr>=s.start||hr<s.end);}
 function activeSessions(){const hr=new Date().getUTCHours()+new Date().getUTCMinutes()/60;return GLOBE_SESSIONS.filter(s=>sessionActiveNow(s,hr));}
+// Naechster Sitzungs-Wechsel (Oeffnen/Schliessen) - reine Ableitung aus den
+// bereits bekannten GLOBE_SESSIONS-Grenzzeiten, kein neuer Feed noetig.
+function sessionNextChangeInfo(){
+  const now=new Date();
+  const hr=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
+  let best=null;
+  GLOBE_SESSIONS.forEach(s=>{
+    [['opens',s.start],['closes',s.end]].forEach(([kind,t])=>{
+      let d=t-hr;if(d<=0)d+=24;
+      if(!best||d<best.d)best={d,kind,s};
+    });
+  });
+  if(!best)return null;
+  const totalMin=Math.round(best.d*60);
+  return{s:best.s,kind:best.kind,h:Math.floor(totalMin/60),m:totalMin%60};
+}
 // 24h-Leiste statt reiner Text-Badges: eine Linie wandert entlang der Stunden und
 // zeigt, wo der Tag gerade steht; Sessions sind als farbige Segmente eingezeichnet
 // (Sessions, die ueber Mitternacht laufen wie Sydney, werden in 2 Segmente gesplittet).
@@ -10691,14 +10679,18 @@ function sessionBarHtml(){
     lanes[li].items.push({s,parts});
   });
   const tracksHtml=lanes.map(L=>{
-    const segHtml=L.items.map(({s,parts})=>parts.map(({a,b})=>`<div class="sess-seg${activeS.includes(s)?' on':''}" style="left:${(a/24*100).toFixed(2)}%;width:${((b-a)/24*100).toFixed(2)}%;background:${s.col}"></div>`).join('')).join('');
+    const segHtml=L.items.map(({s,parts})=>parts.map(({a,b})=>`<div class="sess-seg${activeS.includes(s)?' on':''}" style="left:${(a/24*100).toFixed(2)}%;width:${((b-a)/24*100).toFixed(2)}%;background-color:${s.col}"></div>`).join('')).join('');
     return`<div class="sess-track">${segHtml}</div>`;
   }).join('');
   const hh=String(now.getUTCHours()).padStart(2,'0'),mm=String(now.getUTCMinutes()).padStart(2,'0');
+  const nextC=sessionNextChangeInfo();
+  const nextTxt=nextC?`<div class="sess-next">Next: <b style="color:${nextC.s.col}">${escH(nextC.s.name)}</b> ${nextC.kind} in ${nextC.h>0?nextC.h+'h ':''}${nextC.m}m</div>`:'';
+  const overlapTxt=activeS.length>=2?`<div class="sess-overlap">${icn('flame',12)} Overlap active: ${activeS.map(s=>escH(s.name)).join(' + ')} — peak liquidity window</div>`:'';
   return`<div class="sess-bar">
     <div class="sess-tracks">${tracksHtml}<div class="sess-now-line" style="left:${nowPct}%" title="${hh}:${mm} UTC"></div></div>
     <div class="sess-hours"><span>00</span><span>06</span><span>12</span><span>18</span><span>24 UTC</span></div>
-    <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col}">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>
+    <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col};border-color:${s.col}44;background:${s.col}14">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>
+    ${overlapTxt}${nextTxt}
   </div>`;
 }
 let _sessBarTimer=null;
@@ -10796,15 +10788,19 @@ function globeSkeleton(size,uid){
     markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle class="globe-ping" r="5" fill="none" stroke-width="1.3" style="animation-delay:${delay}s"></circle><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;
   });
   const SQ=4.2,SI=0.55,SW=SQ-2*SI; // Rasterweite / Innenabstand / Kantenlaenge
-  // Radar-Sweep-Keil (Global-Market-Surveillance-Umbau 2026-07-27): rein
-  // dekorativ, dreht sich KONTINUIERLICH und UNABHAENGIG von der eigentlichen
-  // Globus-Drehung (_globeLon, die per Drag/Auto-Rotation gesteuert wird) -
-  // klassische Radarschirm-Optik. Keil + Gradient liegen in derselben
-  // rotierenden <g>, der Gradient ist daher im lokalen (nicht rotierten)
-  // Koordinatensystem des Keils definiert und dreht sich mit ihm mit.
+  // Radar-Sweep-Keil (Global-Market-Surveillance-Umbau 2026-07-27, Nutzer-
+  // Korrektur 2026-07-28 "das Radar soll immer mit dem Flugzeug mitgehen"):
+  // der Keil ist jetzt in LOKALEN Koordinaten (Ursprung 0,0) definiert und
+  // steckt in einer eigenen <g class="globe-sweep">, deren transform-
+  // Attribut JEDEN Frame in globeUpdateOne() neu gesetzt wird - Rotation
+  // weiterhin kontinuierlich/unabhaengig von der Globus-Drehung, aber der
+  // Translate-Anteil folgt der aktuellen Position des Flugzeugs (st.vehiclePos)
+  // statt fix auf der Kartenmitte zu bleiben. Kein SMIL-<animateTransform>
+  // mehr - dasselbe "pro Frame nur Attribute aktualisieren"-Prinzip wie
+  // beim Rest des Globus.
   const rsw=Math.PI/180*26,rgid='gRadarSweep'+uid;
-  const rx1=(cx+R*Math.cos(-rsw)).toFixed(2),ry1=(cy+R*Math.sin(-rsw)).toFixed(2);
-  const rx2=(cx+R*Math.cos(rsw)).toFixed(2),ry2=(cy+R*Math.sin(rsw)).toFixed(2);
+  const rx1=(R*Math.cos(-rsw)).toFixed(2),ry1=(R*Math.sin(-rsw)).toFixed(2);
+  const rx2=(R*Math.cos(rsw)).toFixed(2),ry2=(R*Math.sin(rsw)).toFixed(2);
   // Instrumenten-Bezel: gestrichelter Aussenring + 12 Gradstriche (alle 30°,
   // an den 4 Kardinalpunkten laenger+kraeftiger+mit Grad-Zahl) - reine
   // Protraktor-/Kompass-Optik, keine echten Messwerte.
@@ -10830,26 +10826,19 @@ function globeSkeleton(size,uid){
   // Zwei duenne Radar-Entfernungsringe innerhalb der Landflaeche (rein
   // dekorativ, klassische Scope-Optik).
   const rangeRings=[0.42,0.72].map(f=>`<circle cx="${cx}" cy="${cy}" r="${(R*f).toFixed(1)}" fill="none" stroke="rgba(126,196,255,.1)" stroke-width="1" stroke-dasharray="1 3"/>`).join('');
-  // Fahrzeug-Symbol am Scanner-Ursprung (Nutzer-Wunsch 2026-07-27): steht in
-  // Ruhe immer exakt in der Kartenmitte (wie der Radar-Sweep selbst) - Schiff
-  // oder Auto, je nachdem ob der Punkt in der Bildschirmmitte gerade ueber
-  // Wasser oder Land liegt (globeUpdateVehicle()/isLandAt(), throttled in
-  // globeUpdateOne). Beim Klick auf eine Waehrung faehrt/segelt es dorthin
-  // (globeMarkerClick() setzt das transform-Attribut dieser Gruppe direkt per
-  // rAF-Tween um - siehe globeVehicleTravel()). pointer-events:none, damit es
-  // Drag/Klicks auf darunterliegende Marker nicht blockiert.
-  const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy})" pointer-events="none">
-    <g data-veh="car" style="display:none">
-      <rect x="-9" y="-3" width="18" height="6" rx="2" fill="#04101c" stroke="#dff4ff" stroke-width="1.3"/>
-      <path d="M-5,-3 L-3,-7 L4,-7 L6,-3" fill="#04101c" stroke="#dff4ff" stroke-width="1.3"/>
-      <circle cx="-5" cy="4" r="2.2" fill="#dff4ff"/>
-      <circle cx="5" cy="4" r="2.2" fill="#dff4ff"/>
-    </g>
-    <g data-veh="ship" style="display:none">
-      <path d="M-9,2 L9,2 L6,7 L-6,7 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.3"/>
-      <line x1="0" y1="2" x2="0" y2="-9" stroke="#dff4ff" stroke-width="1.3"/>
-      <path d="M0.5,-8.5 L6,1.5 L0.5,1.5 Z" fill="#dff4ff" opacity=".85"/>
-    </g>
+  // Kampfjet am Scanner-Ursprung (Nutzer-Wunsch 2026-07-28 - ersetzt das
+  // vorherige land/wasser-abhaengige Auto/Schiff durch ein DAUERHAFTES
+  // Symbol): steht in Ruhe immer exakt in der Kartenmitte, Nase nach oben.
+  // Beim Klick auf eine Waehrung dreht es sich in Flugrichtung UND fliegt
+  // dorthin (globeMarkerClick()/globeVehicleTravel() setzen das transform-
+  // Attribut dieser Gruppe direkt per rAF-Tween - Translate+Rotate in einem
+  // Attribut, kein CSS/WAAPI-Transform-Mischbetrieb auf SVG noetig). Delta-
+  // Silhouette mit Cockpithaube, top-down, reines Strichzeichnungs-Icon
+  // passend zum uebrigen HUD-Stil. pointer-events:none, damit es Drag/Klicks
+  // auf darunterliegende Marker nicht blockiert.
+  const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy}) rotate(0)" pointer-events="none">
+    <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
+    <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
   </g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
@@ -10870,10 +10859,8 @@ function globeSkeleton(size,uid){
       <use href="#${shpid}" fill="url(#${sqid})"/>
       ${rangeRings}
     </g>
-    <g style="mix-blend-mode:screen">
-      <path d="M ${cx} ${cy} L ${rx1} ${ry1} A ${R} ${R} 0 0 1 ${rx2} ${ry2} Z" fill="url(#${rgid})">
-        <animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="4.5s" repeatCount="indefinite"/>
-      </path>
+    <g class="globe-sweep" transform="translate(${cx},${cy}) rotate(0)" style="mix-blend-mode:screen">
+      <path d="M 0 0 L ${rx1} ${ry1} A ${R} ${R} 0 0 1 ${rx2} ${ry2} Z" fill="url(#${rgid})"/>
     </g>
     <g pointer-events="none">${reticle}</g>
     ${vehicle}
@@ -10885,12 +10872,20 @@ function globeCollectRefs(host,size){
   const svg=host.querySelector('svg');if(!svg)return null;
   const markers={};
   [...svg.querySelector('[data-layer="markers"]').children].forEach(g=>{const circles=g.querySelectorAll('circle');markers[g.dataset.id]={g,ping:circles[0],circle:circles[1],text:g.querySelector('text')};});
+  const cx=size/2,cy=size/2;
   const vehGroup=svg.querySelector('.globe-vehicle');
-  const vehicle=vehGroup?{groupEl:vehGroup,car:vehGroup.querySelector('[data-veh="car"]'),ship:vehGroup.querySelector('[data-veh="ship"]'),lastCheckLon:null}:null;
+  const vehicle=vehGroup?{groupEl:vehGroup}:null;
   return{
-    host,R:size/2-26,cx:size/2,cy:size/2,
+    host,R:size/2-26,cx,cy,
     landPaths:[...svg.querySelector('[data-layer="landshape"]').children],
-    markers,vehicle
+    markers,vehicle,
+    sweepEl:svg.querySelector('.globe-sweep'),
+    // Aktuelle Position/Blickrichtung des Jets - startet in der Mitte, Nase
+    // nach oben (0°). globeVehicleTravel() aktualisiert beides waehrend
+    // einer Reise, globeUpdateOne() liest vehiclePos jeden Frame, um den
+    // Radar-Sweep dorthin mitzunehmen ("Radar soll immer mit dem Flugzeug
+    // mitgehen", Nutzer-Wunsch 2026-07-28).
+    vehiclePos:{x:cx,y:cy},vehicleHeading:0
   };
 }
 // Pro Frame nur Attribute der bestehenden Elemente updaten (kein innerHTML/Reparse).
@@ -10965,45 +10960,55 @@ function globeUpdateOne(st){
   // Frame, wie die Marker selbst) - kein Extra-Interval noetig.
   const lonEl=document.getElementById('hudLon');
   if(lonEl)lonEl.textContent=globeHudLonTxt();
-  globeUpdateVehicle(st);
+  globeUpdateSweep(st);
 }
-// Schiff/Auto-Symbol in der Mitte: nur bei RUHENDEM Fahrzeug aktualisieren
-// (waehrend einer Reise zu einer Waehrung uebernimmt globeVehicleTravel() die
-// Position komplett) und nur einmal pro vollem Rotationsgrad statt jeden
-// Frame - Land/Wasser-Test ist billig, aber es gibt keinen Grund, ihn 20x/s
-// laufen zu lassen, wenn sich das Ergebnis erst nach echten Gradschritten
-// aendern kann.
-function globeUpdateVehicle(st){
-  if(!st.vehicle||_globeVehicleBusy)return;
-  const lonR=Math.round(((_globeLon%360)+360)%360);
-  if(st.vehicle.lastCheckLon===lonR)return;
-  st.vehicle.lastCheckLon=lonR;
-  const onLand=isLandAt(GLOBE_LAT0_DEG,_globeLon);
-  if(st.vehicle.car)st.vehicle.car.style.display=onLand?'':'none';
-  if(st.vehicle.ship)st.vehicle.ship.style.display=onLand?'none':'';
+// Radar-Sweep folgt IMMER der aktuellen Jet-Position (Nutzer-Wunsch
+// 2026-07-28 "das Radar soll immer mit dem Flugzeug mitgehen") - st.vehiclePos
+// steht in Ruhe auf der Kartenmitte und wird waehrend einer Reise von
+// globeVehicleTravel() direkt aktualisiert; hier wird nur noch translate+
+// rotate auf der Sweep-Gruppe gesetzt. Die Rotationsgeschwindigkeit bleibt
+// exakt wie zuvor (volle Umdrehung alle 4,5s), jetzt per Zeitstempel statt
+// SMIL berechnet.
+function globeUpdateSweep(st){
+  if(!st.sweepEl)return;
+  const angle=(performance.now()%4500)/4500*360;
+  const{x,y}=st.vehiclePos;
+  st.sweepEl.setAttribute('transform','translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+angle.toFixed(1)+')');
 }
 function closeGlobeTip(){document.querySelectorAll('.globe-tip').forEach(t=>t.remove());}
-// Fahrzeug-Reise per manuellem rAF-Tween (setAttribute statt CSS/WAAPI-
-// Transform auf SVG - dasselbe "pro Frame nur Attribute aktualisieren"-
-// Prinzip wie beim Rest des Globus, keine Unklarheit ueber CSS/SVG-
-// Transform-Zusammenspiel). Ease-out, damit es "ankommt" statt abrupt zu
-// stoppen.
-function globeVehicleTravel(groupEl,x0,y0,x1,y1,dur,onDone){
+// Jet-Reise per manuellem rAF-Tween (setAttribute statt CSS/WAAPI-Transform
+// auf SVG - dasselbe "pro Frame nur Attribute aktualisieren"-Prinzip wie
+// beim Rest des Globus). Ease-out, damit es "ankommt" statt abrupt zu
+// stoppen. Dreht sich dabei auf dem kuerzesten Weg in Flugrichtung (Nutzer-
+// Wunsch 2026-07-28 "soll sich auch drehen") und aktualisiert st.vehiclePos
+// JEDEN Frame, damit der Radar-Sweep (globeUpdateSweep) live mitziehen kann.
+function globeVehicleTravel(st,x1,y1,dur,onDone){
+  const groupEl=st.vehicle.groupEl;
+  const x0=st.vehiclePos.x,y0=st.vehiclePos.y,h0=st.vehicleHeading;
+  const h1=Math.atan2(x1-x0,-(y1-y0))*180/Math.PI;
+  const dh=((h1-h0+540)%360)-180; // kuerzester Drehweg, kein Ueberdrehen
   const t0=performance.now();
   function step(now){
     const t=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-t,3);
-    const x=x0+(x1-x0)*e,y=y0+(y1-y0)*e;
-    groupEl.setAttribute('transform','translate('+x.toFixed(1)+','+y.toFixed(1)+')');
-    if(t<1)requestAnimationFrame(step);else if(onDone)onDone();
+    const x=x0+(x1-x0)*e,y=y0+(y1-y0)*e,h=h0+dh*e;
+    st.vehiclePos.x=x;st.vehiclePos.y=y;
+    groupEl.setAttribute('transform','translate('+x.toFixed(1)+','+y.toFixed(1)+') rotate('+h.toFixed(1)+')');
+    if(t<1)requestAnimationFrame(step);
+    else{st.vehicleHeading=((h1%360)+360)%360;if(onDone)onDone();}
   }
   requestAnimationFrame(step);
 }
-// Klick auf eine Waehrung (Nutzer-Wunsch 2026-07-27): das Auto/Schiff faehrt
-// vom Zentrum (Scanner-Ursprung) zur Waehrung, pulsiert dort kurz auf und
-// oeffnet dann die Waehrung - GENAU dieselbe Navigation (gotoSym) wie ein
-// Tap auf die Majors-Liste links, inkl. deren bereits bestehendem
-// .detail-fade-Uebergang (selSym() setzt die Klasse) - kein zweiter,
-// abweichender "Oeffnen"-Mechanismus noetig.
+// Klick auf eine Waehrung (Nutzer-Wunsch 2026-07-27/28): der Jet dreht sich
+// in Flugrichtung und fliegt vom aktuellen Standort zur Waehrung, pulsiert
+// dort kurz auf und oeffnet dann die Waehrung - GENAU dieselbe Navigation
+// (gotoSym) wie ein Tap auf die Majors-Liste links, inkl. deren bereits
+// bestehendem .detail-fade-Uebergang (selSym() setzt die Klasse) - kein
+// zweiter, abweichender "Oeffnen"-Mechanismus noetig. Laeuft bewusst UNAB-
+// HAENGIG von prefers-reduced-motion (Nutzer-Bugreport 2026-07-28: "am PC
+// funktionieren die Animationen... gar nicht" - Windows/Chrome kann diese
+// Systemeinstellung aktiv haben, die den Effekt sonst komplett uebersprungen
+// haette; der Nutzer hat diese konkrete, kurze, direkt selbst ausgeloeste
+// Animation ausdruecklich gewuenscht, das ist keine ambiente Dauerbewegung).
 function globeMarkerClick(ev,id){
   ev.stopPropagation();
   if(_globeVehicleBusy)return;
@@ -11013,14 +11018,10 @@ function globeMarkerClick(ev,id){
   const mk=st&&st.markers[id];
   if(!st||!st.vehicle||!mk){gotoSym(id);return;} // Fallback ohne Reise-Optik, falls Refs fehlen
   closeGlobeTip();
-  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(reduced){gotoSym(id);return;}
   const svg=host.querySelector('svg');
-  const x0=st.cx,y0=st.cy;
   const x1=parseFloat(mk.circle.getAttribute('cx')),y1=parseFloat(mk.circle.getAttribute('cy'));
   _globeVehicleBusy=true;
-  st.vehicle.groupEl.style.display='';
-  globeVehicleTravel(st.vehicle.groupEl,x0,y0,x1,y1,750,()=>{
+  globeVehicleTravel(st,x1,y1,750,()=>{
     if(svg){
       const burst=document.createElementNS('http://www.w3.org/2000/svg','circle');
       burst.setAttribute('cx',x1.toFixed(1));burst.setAttribute('cy',y1.toFixed(1));burst.setAttribute('r','5');
@@ -11066,7 +11067,7 @@ function globeOnPointerDown(ev,host){
   if(_globePointers.size>2)return; // 3.+ Finger ignorieren
   closeGlobeTip();
   _globeMode='drag';
-  _globeDrag={lastX:ev.clientX,lastT:performance.now(),pid:ev.pointerId,host};
+  _globeDrag={lastX:ev.clientX,lastY:ev.clientY,lastT:performance.now(),pid:ev.pointerId,host};
   host.classList.add('grabbing');
 }
 function globeOnPointerMove(ev){
@@ -11081,11 +11082,12 @@ function globeOnPointerMove(ev){
     return;
   }
   if(_globeMode!=='drag'||!_globeDrag||ev.pointerId!==_globeDrag.pid)return;
-  const now=performance.now(),dx=ev.clientX-_globeDrag.lastX,dt=Math.max(1,now-_globeDrag.lastT);
+  const now=performance.now(),dx=ev.clientX-_globeDrag.lastX,dy=ev.clientY-_globeDrag.lastY,dt=Math.max(1,now-_globeDrag.lastT);
   const dDeg=dx*0.4; // Drag-Sensitivitaet: Pixel -> Grad
   _globeLon=(_globeLon-dDeg+360)%360;
   _globeVel=-dDeg/dt; // Schwung fuers Abklingen nach dem Loslassen merken
-  _globeDrag.lastX=ev.clientX;_globeDrag.lastT=now;
+  _globeDrag.lastX=ev.clientX;_globeDrag.lastY=ev.clientY;_globeDrag.lastT=now;
+  if(_globeZoom>1&&dy!==0){globePanBy(0,dy);globeZoomScheduleRevert();} // vertikal wegbewegen vom Zentrum, nur wenn gezoomt (sonst nichts zu sehen)
   _globeHosts.forEach(globeUpdateOne);
 }
 function globeOnPointerUp(ev){
@@ -11108,26 +11110,46 @@ function globeOnPointerUp(ev){
     _globeMode='decel';
   }
 }
-// Zoom (Pinch/Mausrad, Nutzer-Wunsch 2026-07-27): "wenn man zoomt, bleibt es
-// 2 Sekunden so und kommt dann automatisch wieder raus". globeZoomApply()
-// setzt die aktuelle Stufe SOFORT (ohne CSS-Transition, damit Pinch/Scroll
-// 1:1 folgt), globeZoomScheduleRevert() startet/erneuert bei jeder Aenderung
-// einen 2s-Timer, der die Transition wieder aktiviert und sanft auf 1
-// zurueckfaehrt.
-function globeZoomApply(z){
-  _globeZoom=Math.max(1,Math.min(2.2,z));
+// Zoom (Pinch/Mausrad, Nutzer-Wunsch 2026-07-27) + Pan (Nutzer-Wunsch
+// 2026-07-28 "nicht nur vergroessern, auch hoch/runter bewegen koennen"):
+// "wenn man zoomt, bleibt es 2 Sekunden so und kommt dann automatisch wieder
+// raus". globeApplyTransform() setzt Zoom+Pan SOFORT (ohne CSS-Transition,
+// damit Pinch/Scroll/Drag 1:1 folgen), globeZoomScheduleRevert() startet/
+// erneuert bei jeder Aenderung einen 2s-Timer, der die Transition wieder
+// aktiviert und sanft auf Zoom 1 / Pan 0 zurueckfaehrt. translate() steht
+// VOR scale() im transform-String, damit panX/panY reine Bildschirm-Pixel
+// bleiben (nicht durch den Zoomfaktor mit-skaliert werden) - fuehlt sich
+// dadurch bei jeder Zoomstufe gleich schnell an.
+let _globePanX=0,_globePanY=0;
+function globeApplyTransform(){
   document.querySelectorAll('.globe-zoom-wrap').forEach(w=>{
     w.classList.add('no-transition');
-    w.style.transform='scale('+_globeZoom.toFixed(3)+')';
+    w.style.transform='translate('+_globePanX.toFixed(1)+'px,'+_globePanY.toFixed(1)+'px) scale('+_globeZoom.toFixed(3)+')';
   });
+}
+function globeZoomApply(z){
+  _globeZoom=Math.max(1,Math.min(2.2,z));
+  // Pan-Spielraum waechst mit dem Zoom - bei 1x (nicht gezoomt) gibt es
+  // nichts zusaetzliches zu sehen, daher dort 0 (kein Wegdriften ins Leere).
+  const panLimit=140*(_globeZoom-1);
+  _globePanX=Math.max(-panLimit,Math.min(panLimit,_globePanX));
+  _globePanY=Math.max(-panLimit,Math.min(panLimit,_globePanY));
+  globeApplyTransform();
+}
+function globePanBy(dx,dy){
+  if(_globeZoom<=1)return; // ohne Zoom nichts zum Wegbewegen
+  const panLimit=140*(_globeZoom-1);
+  _globePanX=Math.max(-panLimit,Math.min(panLimit,_globePanX+dx));
+  _globePanY=Math.max(-panLimit,Math.min(panLimit,_globePanY+dy));
+  globeApplyTransform();
 }
 function globeZoomScheduleRevert(){
   if(_globeZoomRevertT)clearTimeout(_globeZoomRevertT);
   _globeZoomRevertT=setTimeout(()=>{
-    _globeZoomRevertT=null;_globeZoom=1;
+    _globeZoomRevertT=null;_globeZoom=1;_globePanX=0;_globePanY=0;
     document.querySelectorAll('.globe-zoom-wrap').forEach(w=>{
       w.classList.remove('no-transition');
-      w.style.transform='scale(1)';
+      w.style.transform='translate(0px,0px) scale(1)';
     });
   },2000);
 }
@@ -11499,31 +11521,6 @@ function riskOnOffState(){
   const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
   return{on,off,net,pct,lbl,col};
 }
-// Daily-Bias-Kurzfazit (Nutzer-Wunsch 2026-07-25, jetzt Teil der Globus-
-// Karte statt eigenes Widget) - reines Template aus bereits live berechneten
-// Werten (keine Schaetzung/KI): dieselbe Bull/Bear-Zaehlung wie updateStat()
-// im Header, dieselbe Risk-On/Off-Klassifikation wie riskOnOffState(). Bei
-// Gleichstand zwischen der staerksten Kategorie und einer anderen gewinnt
-// "Neutral" (kein erfundener Ausschlag in eine Richtung).
-function dailyBiasInfo(){
-  const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
-  const bear=syms.filter(s=>FX.includes(s.id)&&s.bias==='bear').length;
-  const neu=FX.length-bull-bear;
-  const cats=[['bull',bull],['bear',bear],['neu',neu]];
-  const topV=Math.max(...cats.map(c=>c[1]));
-  const winners=cats.filter(c=>c[1]===topV);
-  const cat=winners.length===1?winners[0][0]:'neu';
-  const lbl=cat==='bull'?'BULLISH':cat==='bear'?'BEARISH':'NEUTRAL';
-  const col=cat==='bull'?BC.bull:cat==='bear'?BC.bear:BC.neu;
-  const sym=cat==='bull'?'▲':cat==='bear'?'▼':'◆';
-  const risk=riskOnOffState();
-  const riskTxt=risk.lbl==='RISK-ON'?'risk-on':risk.lbl==='RISK-OFF'?'risk-off':'balanced';
-  const td=todayStr();
-  const hiToday=(calEvts||[]).filter(ev=>ev.date===td&&evtImpact(ev)==='high').length;
-  const txt=`${bull} of ${FX.length} FX majors bullish, ${bear} bearish, ${neu} neutral. Risk sentiment is ${riskTxt}. `+
-    (hiToday>0?`${hiToday} high-impact event${hiToday>1?'s':''} today — stay alert.`:'No high-impact events today.');
-  return{lbl,col,sym,txt};
-}
 // "Global Market Surveillance"-HUD unter dem Globus (Nutzer-Wunsch
 // 2026-07-27: "immernoch die sich drehende Kugel und dann so Infos die
 // daraus kommen") - Optik einer Ueberwachungskonsole, aber JEDER Wert kommt
@@ -11539,15 +11536,14 @@ function globeHudHtml(){
   const fxSyms=syms.filter(s=>GLOBE_GEO[s.id]);
   const active=fxSyms.filter(s=>s.bias!=='neu').length;
   const risk=riskOnOffState();
-  let top=null;
-  fxSyms.forEach(s=>{const sc=symScoreCmp(s);if(!top||Math.abs(sc)>Math.abs(top.sc))top={id:s.id,sc};});
-  const topTxt=top?`${top.id} ${top.sc>0?'+':''}${Math.round(top.sc*10)/10}`:'—';
+  // "Priority target" (staerkster Score) auf Nutzer-Wunsch 2026-07-28
+  // entfernt - die drei verbleibenden Felder passen dadurch bequem in eine
+  // Zeile statt in eine zweite umzubrechen.
   const readout=`<div class="globe-hud-title"><span class="hud-live-dot"></span> GLOBAL MARKET SURVEILLANCE</div>
   <div class="globe-hud-readout">
     <div class="ghr-item">Scan position<b id="hudLon">${globeHudLonTxt()}</b></div>
     <div class="ghr-item">Active signals<b>${active}/${fxSyms.length}</b></div>
     <div class="ghr-item">Global risk level<b style="color:${risk.col}">${escH(risk.lbl)}</b></div>
-    <div class="ghr-item">Priority target<b>${escH(topTxt)}</b></div>
   </div>`;
   const feed=scoreLog.filter(e=>GLOBE_GEO[e.sym]).slice(-4).reverse();
   const feedHtml=feed.length?`<div class="globe-hud-intel">`+feed.map(e=>{
@@ -11589,26 +11585,29 @@ function startScanBroadcast(){
     // Scan Funktion soll laenger laufen") - macht die einzelnen Partikel auf
     // grossen Desktop-/Windows-Bildschirmen auch bei langer Flugstrecke
     // leicht erkennbar statt in <1s ueber den ganzen Schirm zu huschen.
-    const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const step=reduced?60:240;
-    targets.forEach((card,i)=>{setTimeout(()=>scanFlyParticle(gx,gy,card,reduced),i*step);});
+    // Bewusst OHNE prefers-reduced-motion-Weiche (Nutzer-Bugreport 2026-07-28:
+    // "am PC funktionieren die Animationen mit dem Scan... gar nicht" - eine
+    // aktive Windows/Chrome-Systemeinstellung haette den Effekt sonst
+    // komplett uebersprungen; der Scan ist eine kurze, direkt selbst
+    // ausgeloeste Aktion, keine ambiente Dauerbewegung).
+    const step=240;
+    targets.forEach((card,i)=>{setTimeout(()=>scanFlyParticle(gx,gy,card),i*step);});
     setTimeout(()=>{
       _scanBusy=false;
       const b=document.querySelector('.scan-btn');
       if(b){b.disabled=false;b.innerHTML=`${icn('zap',13)} INITIATE SCAN`;}
-    },targets.length*step+(reduced?150:1400));
+    },targets.length*step+1400);
   });
 }
 // Zwei Partikel pro Zielkarte statt einem (heller Kopf + kleinerer, leicht
 // verzoegerter "Schweif"-Punkt) - macht den Flug auch auf grossen/Windows-
 // Bildschirmen deutlich sichtbarer als ein einzelner 9px-Punkt (Nutzer-
 // Bugreport 2026-07-27: "am pc mit Windows sieht man die Partikel nicht").
-function scanFlyParticle(x0,y0,targetEl,reduced){
+function scanFlyParticle(x0,y0,targetEl){
   const hit=()=>{
     targetEl.classList.remove('scan-hit');void targetEl.getBoundingClientRect();targetEl.classList.add('scan-hit');
     setTimeout(()=>targetEl.classList.remove('scan-hit'),650);
   };
-  if(reduced){hit();return;}
   const r=targetEl.getBoundingClientRect();
   const x1=r.left+r.width/2,y1=r.top+r.height/2;
   const mx=(x0+x1)/2+(Math.random()-0.5)*110,my=(y0+y1)/2+(Math.random()-0.5)*110;
