@@ -18,7 +18,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:#101215;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:#0a0c0f;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
@@ -41,8 +41,13 @@ body{font-family:Arial,Helvetica,sans-serif;background:#101215;color:#dfe7f1;hei
      body.style.background weiterhin per Inline-Style (siehe applyDesignHue/
      designColors) - unveraendert kompatibel, der neue Wert hier ist nur
      der Auto-Default. */
-  --bg0:#15171b;--bg1:#1a1d22;--bg2:#212429;--bg3:#282c32;--bg4:#33373e;--bg5:#3f434b;--bg6:#4c515a;
-  --bd:#2a2d33;--bd2:#3c414a;
+  /* tech-design-Skill 2026-07-28 (Trading-Terminal-Referenzbild): noch
+     dunkler/neutraler als die vorherige Grau-Palette, kaum mehr Blau-Stich
+     (Referenz-Screenshots lagen per Pixelmessung durchgehend im RGB-Bereich
+     0-25), Rahmen kontrastaermer/duenner. Kontraststufen zueinander bleiben
+     wie gehabt erhalten, nur insgesamt dunkler/entsaettigter. */
+  --bg0:#0d0f13;--bg1:#111318;--bg2:#16181d;--bg3:#1c1f25;--bg4:#282c32;--bg5:#33373e;--bg6:#40444c;
+  --bd:#20232a;--bd2:#2d3138;
   --t0:#f1f2f4;--t1:#e0e3e6;--t2:#c5c9ce;--t3:#989ea6;
   --green:#5fa8ed;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:95,168,237;--red-rgb:239,83,80;--amber-rgb:244,173,92;
@@ -228,12 +233,19 @@ svg.ic{vertical-align:-2px;flex:none}
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px}
 .atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
+/* Landesflagge vor dem Ticker-Titel (tech-design-Skill) - Groesse an die
+   Textgroesse gekoppelt statt fest, damit sie bei den responsiven .atitle-
+   Breakpoints (21px/30px) automatisch mitskaliert. */
+.atitle-flag{display:inline-block;font-size:.72em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
 .rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
 .bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}@media (hover:hover){.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
+/* Overview-Karte (tech-design-Skill): Badge-WORT gedaempft grau, nur Icon+
+   Score tragen die Bias-Farbe - siehe renderOverviewCard(). */
+.ov-bias.bo.on .bo-word{color:var(--t3)}
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -276,16 +288,13 @@ svg.ic{vertical-align:-2px;flex:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
 /* ── MARKIERT (WICHTIG): Bias-Farbe extrem verstaerkt – kein Gold mehr ── */
-.sym-row.row-marked.glow-bull,.pair-card.row-marked.glow-bull,.ind-card.imp.glow-bull,.rub-card.imp.glow-bull,.ri.imp.glow-bull{border-color:var(--green)!important;background:rgba(var(--green-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--green-rgb),.85),inset 0 0 16px 3px rgba(var(--green-rgb),.34)!important}
-.sym-row.row-marked.glow-bear,.pair-card.row-marked.glow-bear,.ind-card.imp.glow-bear,.rub-card.imp.glow-bear,.ri.imp.glow-bear{border-color:var(--red)!important;background:rgba(var(--red-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--red-rgb),.85),inset 0 0 16px 3px rgba(var(--red-rgb),.34)!important}
-.sym-row.row-marked.glow-neu,.pair-card.row-marked.glow-neu,.ind-card.imp.glow-neu,.rub-card.imp.glow-neu,.ri.imp.glow-neu{border-color:var(--amber)!important;background:rgba(var(--amber-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--amber-rgb),.85),inset 0 0 16px 3px rgba(var(--amber-rgb),.34)!important}
-/* Karten-Header (rub-card/ind-card) in Bias-Farbe statt Gold */
+.sym-row.row-marked.glow-bull,.pair-card.row-marked.glow-bull,.rub-card.imp.glow-bull,.ri.imp.glow-bull{border-color:var(--green)!important;background:rgba(var(--green-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--green-rgb),.85),inset 0 0 16px 3px rgba(var(--green-rgb),.34)!important}
+.sym-row.row-marked.glow-bear,.pair-card.row-marked.glow-bear,.rub-card.imp.glow-bear,.ri.imp.glow-bear{border-color:var(--red)!important;background:rgba(var(--red-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--red-rgb),.85),inset 0 0 16px 3px rgba(var(--red-rgb),.34)!important}
+.sym-row.row-marked.glow-neu,.pair-card.row-marked.glow-neu,.rub-card.imp.glow-neu,.ri.imp.glow-neu{border-color:var(--amber)!important;background:rgba(var(--amber-rgb),.18)!important;box-shadow:0 0 0 1px rgba(var(--amber-rgb),.85),inset 0 0 16px 3px rgba(var(--amber-rgb),.34)!important}
+/* Karten-Header (rub-card) in Bias-Farbe statt Gold */
 .rub-card.imp.glow-bull .rub-hdr{background:rgba(var(--green-rgb),.1)!important}
 .rub-card.imp.glow-bear .rub-hdr{background:rgba(var(--red-rgb),.1)!important}
 .rub-card.imp.glow-neu .rub-hdr{background:rgba(var(--amber-rgb),.1)!important}
-.ind-card.imp.glow-bull .ind-hdr{background:rgba(var(--green-rgb),.08)!important}
-.ind-card.imp.glow-bear .ind-hdr{background:rgba(var(--red-rgb),.08)!important}
-.ind-card.imp.glow-neu .ind-hdr{background:rgba(var(--amber-rgb),.08)!important}
 /* Text-Farbe in ri.imp: bei Bias normal; ohne Bias → hellgelb aufleuchten */
 .ri.imp.glow-bull .rtxt,.ri.imp.glow-bear .rtxt,.ri.imp.glow-neu .rtxt{color:inherit!important}
 /* ohne Bias (Notiz-Stichpunkte ohne glow-Klasse) → hellgelb */
@@ -484,8 +493,6 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .tr-scroll{overflow-x:auto;overflow-y:hidden}
 .tr-svg{display:block}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
-.ind-card.imp{border-color:var(--star)}
-.ind-card.imp .ind-hdr{background:#2a230f}
 /* Pärchen-Indikatoren (z.B. CPI + Core CPI): gemeinsame Umrandung, jeweils
    eigene Bias-Farbe oben/unten – Score/Bias bleiben pro Indikator unabhängig. */
 .ind-pair-group{margin-bottom:5px}
@@ -509,9 +516,15 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    App gruen/rot statt einer dritten, bedeutungslosen Farbe tragen. */
 .trend-chip.bull{color:var(--green);background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
 .trend-chip.bear{color:var(--red);background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.35)}
-.istar2{background:none;border:none;cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}
-.istar2.on{opacity:1;color:var(--star)}@media (hover:hover){.ind-card:hover .istar2{opacity:.35}}.ind-card .istar2.on{opacity:1;color:var(--star)}
 .idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.ind-card:hover .idel2{opacity:.4}}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
+/* Bearbeitungsmodus fuer Indikator-Zeilen (tech-design-Skill 2026-07-28,
+   Nutzer-Wunsch): Verschieben/Loeschen nur sichtbar, wenn der Bearbeitungs-
+   modus aktiv ist (5s-Long-Press auf der Indikator-Liste, gleiches Muster
+   wie der bereits bestehende Dashboard-Bearbeitungsmodus) - im Normalzustand
+   liest sich die Karte dadurch aufgeraeumter/tabellenartiger. Der (i)-Info-
+   Button und der Bias-Long-Press bleiben davon unberuehrt, immer verfuegbar. */
+.ind-edit-ctrls{display:none;align-items:center;gap:0}
+body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ind-body{padding:6px 8px}
 .ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
@@ -1865,12 +1878,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-261 — Boost-Nachbesserung: Blur trifft jetzt NUR die Erdoberflaeche (.globe-planet), Flugzeug/Flammen/Radar/Marker bleiben immer scharf sichtbar. Blur erscheint zudem nur noch waehrend der kurzen Halte-Phase auf Spitzentempo - Beschleunigen und Abbremsen sind komplett unblurred/scharf. Spitzengeschwindigkeit deutlich angehoben. Nachbrenner-Flammen (zweischichtig, weiss/gelb-Kern + orange/rot-Aussenflamme) und Fluegel-Luftwirbel (dreiteiliger Wirbelschweif) deutlich laenger, groesser und farbenvoller.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-262 — tech-design-Skill angewendet: globale Farbpalette dunkler/neutraler (Trading-Terminal-Look), Waehrungsflagge im Asset-Seiten-Titel, Overview-Karten-Badges mit gedaempft-grauem Wort statt vollfarbig, Key-Insights-Platzhalter entfernt (ersetzt durch Biggest Movers FX), Indikator-Bearbeitungscontrols (Verschieben/Loeschen) nur noch im Bearbeitungsmodus (5s-Long-Press) sichtbar, ★-Wichtig-Markierung inkl. ihrer +0.5-Score-Wirkung komplett entfernt (Nutzer-Wunsch).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-261</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-262</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -1899,7 +1912,7 @@ function introLogin(){
 <!-- PAGE: CURRENCIES -->
 <div class="body" id="pgCur" style="display:none">
   <div class="sb" id="sidebar"></div>
-  <div class="detail" id="detail"></div>
+  <div class="detail" id="detail" onpointerdown="indEditPressStart(event)" onpointermove="indEditPressMove(event)" onpointerup="indEditPressEnd()" onpointercancel="indEditPressEnd()" onpointerleave="indEditPressEnd()"></div>
 </div>
 <!-- PAGE: COMPARE -->
 <div class="pc" id="pgCmp" style="display:none">
@@ -2354,7 +2367,7 @@ function introLogin(){
   <div class="modal" style="max-width:560px">
     <h3>❓ How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
-    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. A ⭐ star adds +0.5. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release. Every release is also checked for a <b>2-period momentum trend</b> (bullish if the actual improved on both the previous and the release before that, bearish if it worsened both times, otherwise no effect). If a release has <b>no forecast</b> to compare against, there's nothing to wait for: as soon as actual differs from previous (just 1 step, no confirmed trend needed yet), that direction sets the bias immediately, counted at <b>±0.5</b> - exactly like a beat/miss, just at half strength since it's a weaker signal. If the full 2-step trend ALSO confirms (2 consecutive moves the same way), that adds a further <b>±1</b> on top (additive, not a replacement) - so a confirmed trend totals <b>±1.5</b>. If a forecast <b>is</b> available, the normal beat/miss bias (±1) stays in charge, and a confirmed 2-step trend can still add up to <b>±1</b> on top of it the same way (e.g. a beat plus two consecutive improving prints counts more than a beat alone). Half-weight indicators (CPI + Core CPI &amp; co.) get half of the trend BONUS specifically (+0.5 instead of +1) - so with no forecast their confirmed-trend total is ±1 (0.5 base + 0.5 bonus), and with a forecast their bonus is ±0.5; the pair shares the full amount but each side triggers independently. Bond yields have their own trend: if the 2Y/10Y yield is higher than 25 days ago it adds <b>+0.5</b> (lower: −0.5) per maturity, likewise sharing ±1. Every indicator with trend data shows a <b>📈</b> chip - "Trend +1/−1" (or ±0.5/±1.5) when active, or a faded "Trend 0/2"/"1/2" showing how close it is to the 2-step criterion when not. Tap the chip to see the actual values behind the check. Non-FX assets (Gold, Oil, indices, BTC …) get the same trend on indicators mirrored from their linked currency - direction included, flipped when the card's derive rule is "inverse".</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted. Most biases update automatically from calendar releases (beat/miss vs. forecast); manual clicks stick only until the next release. Every release is also checked for a <b>2-period momentum trend</b> (bullish if the actual improved on both the previous and the release before that, bearish if it worsened both times, otherwise no effect). If a release has <b>no forecast</b> to compare against, there's nothing to wait for: as soon as actual differs from previous (just 1 step, no confirmed trend needed yet), that direction sets the bias immediately, counted at <b>±0.5</b> - exactly like a beat/miss, just at half strength since it's a weaker signal. If the full 2-step trend ALSO confirms (2 consecutive moves the same way), that adds a further <b>±1</b> on top (additive, not a replacement) - so a confirmed trend totals <b>±1.5</b>. If a forecast <b>is</b> available, the normal beat/miss bias (±1) stays in charge, and a confirmed 2-step trend can still add up to <b>±1</b> on top of it the same way (e.g. a beat plus two consecutive improving prints counts more than a beat alone). Half-weight indicators (CPI + Core CPI &amp; co.) get half of the trend BONUS specifically (+0.5 instead of +1) - so with no forecast their confirmed-trend total is ±1 (0.5 base + 0.5 bonus), and with a forecast their bonus is ±0.5; the pair shares the full amount but each side triggers independently. Bond yields have their own trend: if the 2Y/10Y yield is higher than 25 days ago it adds <b>+0.5</b> (lower: −0.5) per maturity, likewise sharing ±1. Every indicator with trend data shows a <b>📈</b> chip - "Trend +1/−1" (or ±0.5/±1.5) when active, or a faded "Trend 0/2"/"1/2" showing how close it is to the 2-step criterion when not. Tap the chip to see the actual values behind the check. Non-FX assets (Gold, Oil, indices, BTC …) get the same trend on indicators mirrored from their linked currency - direction included, flipped when the card's derive rule is "inverse".</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
@@ -2421,6 +2434,11 @@ function introLogin(){
 const BC={bull:'#5fa8ed',bear:'#ef6b78',neu:'#f4ad5c'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
+// Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
+// aus dem Referenz-Mockup: abgerundete Emoji-Stil-Flagge vor dem Ticker-
+// Namen, NUR bei echten FX-Waehrungen - Non-FX-Assets wie GOLD/BTC/SP500
+// haben keine Landeszugehoerigkeit, bekommen daher keine Flagge).
+const FX_FLAG={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',CHF:'🇨🇭',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',NZD:'🇳🇿'};
 const SK='fxpro_v1';
 
 // Official FX pairs list (base/quote correct)
@@ -2665,12 +2683,13 @@ const NO_TREND_RUBS=new Set(['Interest Rates']);
 // Zerlegt den Score-Beitrag EINES Indikators in seine Bestandteile - die
 // einzige Quelle der Score-Arithmetik (indScore summiert nur noch total),
 // damit die Aufschluesselung im Score-Modal nie von der echten Rechnung
-// abweichen kann. Rueckgabe: {w, impAdd, base, trend, total, zero, noTrend}.
+// abweichen kann. Rueckgabe: {w, base, trend, total, zero, noTrend}.
+// (Der fruehere ★-Wichtig-Bonus/+0.5 auf das Gewicht wurde 2026-07-28 auf
+// Nutzer-Wunsch komplett entfernt - siehe tech-design-Skill-Session.)
 function indScoreParts(ind,rub){
-  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,impAdd:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false};
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false};
   const w=indBaseWeight(ind,rub);
-  const impAdd=ind.imp?0.5:0;
-  const base=biasScore(ind.bias)*(w+impAdd);
+  const base=biasScore(ind.bias)*w;
   // Revisions-Anteil (Nutzer-Wunsch 2026-07-21): wurde das Previous dieses
   // Release gegenueber dem urspruenglich gemeldeten Vor-Actual revidiert
   // (ind.revBias, gesetzt in applyIndDataFeed aus dem Workflow-Feld
@@ -2690,7 +2709,7 @@ function indScoreParts(ind,rub){
   // gerade angezeigt werden. Deshalb zusaetzlich zur Rubrik-Pruefung direkt
   // ueber BOND_HALF_PT geprueft (indikator-spezifisch, kartenunabhaengig).
   const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name))||BOND_HALF_PT.has(ind.name);
-  if(noTrend)return{w,impAdd,base,trend:0,rev:0,total:base,zero:false,noTrend:true};
+  if(noTrend)return{w,base,trend:0,rev:0,total:base,zero:false,noTrend:true};
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
   //   (optionale) bestaetigte Trend kommt separat ueber ind.trendBias dazu.
@@ -2706,7 +2725,7 @@ function indScoreParts(ind,rub){
   const trendAdj=ind.stepDriven
     ?(ind.trendDriven?biasScore(ind.bias)*mag:0)
     :biasScore(ind.trendBias||'neu')*mag;
-  return{w,impAdd,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false};
+  return{w,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false};
 }
 function indScore(ind,rub){return indScoreParts(ind,rub).total;}
 // ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
@@ -2718,7 +2737,7 @@ function scoreInfoIndRow(ind,rub){
   else{
     const bits=[];
     const bl=ind.bias==='bull'?'Bullish':ind.bias==='bear'?'Bearish':'Neutral';
-    bits.push(bl+(p.base?` × ${p.w+p.impAdd}`:'')+(p.impAdd?' (incl. ★ +0.5)':''));
+    bits.push(bl+(p.base?` × ${p.w}`:''));
     if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
     else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
     if(p.rev)bits.push(`prev revised${ind.research&&ind.research.revisedFrom?' from '+ind.research.revisedFrom:''} ${fmtScNum(p.rev)}`);
@@ -5515,7 +5534,7 @@ function mkWidgets(){return[
   {id:uid(),type:'market_watch',title:'Market Watch',order:7},
   {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
   {id:uid(),type:'notification',title:'Notifications',order:9},
-  {id:uid(),type:'key_insights',title:'Key Insights',order:10},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:10},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -5697,14 +5716,17 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // mittlere Reihe (volle Breite, Symbole nebeneinander statt Liste - siehe
 // mwLayoutHtml()). Neues notification-Platzhalter-Widget an Market Watchs
 // alter Stelle in der unteren Reihe.
-// DASH_V 12 (Nutzer-Wunsch 2026-07-28): Daily Bias komplett entfernt (Nutzer-
-// Foto, per Kringel markiert - "soll komplett weg") - kein Ersatz-Widget,
-// die Karte faellt ganz weg. daily_bias kommt daher jetzt in DASH_DROP statt
-// im Auto-Ergaenzen-Array.
-const DASH_V=12;
+// DASH_V 13 (Nutzer-Wunsch 2026-07-28, tech-design-Skill): Key Insights war
+// nur ein Platzhaltertext ohne echte Datenquelle ("Real source... still to
+// be decided") - widerspricht dem Grundsatz "keine Karten ohne Inhalt".
+// Komplett entfernt (kommt in DASH_DROP), Platz stattdessen mit dem bereits
+// fertig gebauten, aber seit DASH_V9 nicht mehr in der Standardansicht
+// gezeigten "Biggest Movers FX"-Widget (computeFxMovers(), echte Preis-
+// bewegungsdaten) gefuellt.
+const DASH_V=13;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  const DASH_DROP=new Set(['movers_fx','score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias']);
+  const DASH_DROP=new Set(['score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias','key_insights']);
   if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_DROP.has(w.type));return;}
   widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   // Radial-Layout (Nutzer-Wunsch 2026-07-27): Globus steht jetzt ALLEIN im
@@ -5717,9 +5739,9 @@ function migrateDash(){
   // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
   // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
   // Platz kuenstlich zu strecken.
-  [['globe','Radar Globe'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['key_insights','Key Insights']]
+  [['globe','Radar Globe'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,key_insights:10,watchlist:11,movers_fx:12,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+  const rank={globe:0,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,watchlist:11,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -6489,7 +6511,7 @@ function renderDetail(){
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${FX_FLAG[c.id]?`<span class="atitle-flag">${FX_FLAG[c.id]}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -6555,12 +6577,16 @@ function renderOverviewCard(rubs){
     // - wiederverwendet CMP_RUB_ICON (existierte schon fuer den Compare-Tab)
     // statt eine zweite Rubrik->Icon-Zuordnung zu pflegen. Custom-Rubriken
     // ohne Eintrag bleiben ohne Icon-Rund, kein erfundenes Symbol.
-    const ovIc=CMP_RUB_ICON[rub.name];
+    // Kein Rubrik-Icon mehr vor dem Namen (tech-design-Skill 2026-07-28,
+    // abgeleitet aus dem Referenz-Mockup: reiner Grossbuchstaben-Titel statt
+    // Emoji-Kreis-Icon). Badge: Icon+Score bias-gefaerbt, das Wort selbst
+    // gedaempft grau - ebenfalls direkt aus dem Mockup uebernommen (mehrfach
+    // an unabhaengigen Karten verifiziert, siehe Skill-Dokumentation).
+    const[blIc,...blWordParts]=BL[rub.bias].split(' ');
     return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
-        ${ovIc?`<span class="ov-icon">${ovIc}</span>`:''}
         <span class="ov-name">${escH(rub.name)}</span>
-        <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score">${BL[rub.bias]}</span>
+        <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score"><span style="color:${bco}">${blIc}</span> <span class="bo-word">${blWordParts.join(' ')}</span></span>
         <span class="rub-score" style="color:${bco};border-color:${bco}" title="Score of the ${escH(rub.name)} card below">${sc>0?'+':''}${sc}</span>
       </div>
       <div class="ind-body ov-summary">${txt}</div>
@@ -6863,17 +6889,18 @@ function renderInd(ind,ri,ii,total){
     else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
     return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
   })();
-  return`<div class="ind-card${ind.imp?' imp':''} ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
+  return`<div class="ind-card ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
     <div class="ind-hdr" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
       ${ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, ⚙️ to configure)">${icn('link',12)}</span>`:rubAutoDerived(getSym(),getRub(ri))?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
       ${datePart}
       ${trendChipHtml}
       <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
-      <button class="istar2${ind.imp?' on':''}" ${ind.name==='Risk Correlation'?'disabled title="Disabled for this auto-computed indicator"':''} onclick="togIndImp(${ri},${ii})">⭐</button>
-      <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
-      <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
-      <button class="idel2" onclick="delInd(${ri},${ii})">×</button>
+      <span class="ind-edit-ctrls">
+        <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
+        <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
+        <button class="idel2" onclick="delInd(${ri},${ii})">×</button>
+      </span>
     </div>
     ${dataPart}
     <div class="ind-body">
@@ -7264,8 +7291,6 @@ function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAut
   // Wert), verfaellt die manuelle Wahl von selbst (Nutzer-Wunsch 2026-07-22).
   const _r=ind.research||{};ind._manualPin=indBiasInputSig(_r.actual,_r.forecast,_r.previous,_r.date);
   const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function togIndImp(ri,ii){const _indChk0=getInd(ri,ii);if(_indChk0&&_indChk0.name==='Risk Correlation'){alert('The "important" flag is disabled for this auto-computed indicator (it would break the fixed +/-1 / +/-0.5 scoring).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _r=getRub(ri),_c=getSym(),_before=indScore(ind,_r);ind.imp=!ind.imp;const _after=indScore(ind,_r);if(_c&&Math.abs(_after-_before)>1e-9)logScoreChange(_c.id,{kind:'imp',ind:ind.displayName||ind.name,rub:_r.name,from:ind.imp?'☆':'★',to:ind.imp?'★ important':'☆ normal',delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
 //    Rubrik umsortiert werden, wird dieselbe Reihenfolge (per Name
@@ -9583,8 +9608,14 @@ function computeFxMovers(){
     if(!info||info.changePct==null)return null;
     return{base,quote,name:base+'/'+quote,...info};
   }).filter(Boolean);
-  const gainers=all.filter(m=>m.changePct>0).sort((a,b)=>b.changePct-a.changePct).slice(0,4);
-  const losers=all.filter(m=>m.changePct<0).sort((a,b)=>a.changePct-b.changePct).slice(0,4);
+  // Auf Top 2 statt Top 4 gekuerzt (Nutzer-Wunsch 2026-07-28, tech-design-
+  // Skill): dieses Widget fuellt jetzt eine schmale Luecke in der unteren
+  // Zeile neben "Notifications" statt einer eigenen vollen Kartenzeile -
+  // 2+2 echte Eintraege reichen dafuer und passen ohne das iPad-Layout zu
+  // sprengen (kein erfundener Inhalt, nur weniger Zeilen derselben echten
+  // Rangliste).
+  const gainers=all.filter(m=>m.changePct>0).sort((a,b)=>b.changePct-a.changePct).slice(0,2);
+  const losers=all.filter(m=>m.changePct<0).sort((a,b)=>a.changePct-b.changePct).slice(0,2);
   return{gainers,losers};
 }
 // Zeitreihe eines Assets in "eigener Richtung" (invert angewandt) - das ist
@@ -9791,8 +9822,7 @@ const W_TYPES=[
   {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
   {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
   {type:'notification',label:'Notifications',sub:'Placeholder — content still to be decided'},
-  {type:'key_insights',label:'Key Insights',sub:'Short auto-generated market notes'},
-  {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 4 gainers + top 4 losers vs. yesterday, in separate groups'},
+  {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 2 gainers + top 2 losers vs. yesterday, in separate groups'},
   {type:'score_changes',label:"Today's Movers",sub:'Asset scores that changed vs. the previous day'},
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
   {type:'live_data',label:'Live Data',sub:'Auto-refresh status — when prices, calendar, COT & sentiment last updated'},
@@ -10116,13 +10146,35 @@ function toggleDashEditMode(){
   document.body.classList.toggle('dash-edit-mode',dashEditMode);
   if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
 }
+// Gleiches 5s-Long-Press-Muster fuer die Indikator-Tabelle auf FX/Non-FX-
+// Detailseiten (tech-design-Skill 2026-07-28, Nutzer-Wunsch): Verschieben/
+// Loeschen einer Indikator-Zeile ist nur im Bearbeitungsmodus sichtbar,
+// Bias-Long-Press und der (i)-Info-Button bleiben davon unberuehrt.
+let indEditMode=false,_indEditTimer=null,_indEditStart=null;
+function indEditPressStart(ev){
+  if(ev.button!==undefined&&ev.button!==0)return;
+  if(ev.target.closest('button,input,textarea,select,a,.trend-chip'))return;
+  if(_indEditTimer)clearTimeout(_indEditTimer);
+  _indEditStart={x:ev.clientX,y:ev.clientY};
+  _indEditTimer=setTimeout(()=>{_indEditTimer=null;toggleIndEditMode();},5000);
+}
+function indEditPressMove(ev){
+  if(!_indEditTimer||!_indEditStart)return;
+  if(Math.abs(ev.clientX-_indEditStart.x)>14||Math.abs(ev.clientY-_indEditStart.y)>14){clearTimeout(_indEditTimer);_indEditTimer=null;}
+}
+function indEditPressEnd(){if(_indEditTimer){clearTimeout(_indEditTimer);_indEditTimer=null;}}
+function toggleIndEditMode(){
+  indEditMode=!indEditMode;
+  document.body.classList.toggle('ind-edit-mode',indEditMode);
+  if(navigator.vibrate)try{navigator.vibrate(indEditMode?[25,35,25]:20);}catch(e){}
+}
 // "Global Market Surveillance"-Radial-Layout (Nutzer-Wunsch 2026-07-27):
 // Globus allein im Zentrum, ringsum Karten in vier Zonen (oben/unten breit,
 // links/rechts hoch). Jeder Widget-TYP hat eine feste Standard-Zone -
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',key_insights:'center',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
+const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',movers_fx:'bottom',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10474,12 +10526,6 @@ function renderDash(){
       // (Nutzer-Wunsch 2026-07-25). Spart gegenueber der frueheren Vollkarte
       // rund 110px Hoehe in der mittleren Reihe.
       content=`<div class="mw-bar">${tabsHtml}${btnsHtml}</div><div class="mw-strip">${tiles}</div>`;
-    }else if(w.type==='key_insights'){
-      // Platzhalter (Nutzer-Wunsch 2026-07-25): Datenquelle noch offen (Konto
-      // fuer eine echte News-API vs. Template aus App-eigenen Signalen wie
-      // bei Daily Bias) - bewusst KEIN erfundener Inhalt, bis das geklaert ist.
-      content=`<div class="dw-empty" style="padding:2px 0;line-height:1.7">Key Insights — placeholder. Real source (news API account vs. template-based like Daily Bias) still to be decided.</div>
-        <div class="mw-footer" onclick="showTab('trends')"><span>Go to Insights</span></div>`;
     }else if(w.type==='notification'){
       // Sammelt die frueher als eigene schwebende Banner ueber dem Grid
       // gezeigten Popups (COT/Risk-Env-Erinnerung, Nutzer-Wunsch 2026-07-25:
@@ -14552,6 +14598,7 @@ function showTab(tab,btn,fxMode){
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
   // aktiv zu lassen (die Steuerbuttons existieren ohnehin nur dort).
   if(tab!=='dash'&&dashEditMode){dashEditMode=false;document.body.classList.remove('dash-edit-mode');}
+  if(tab!=='cur'&&indEditMode){indEditMode=false;document.body.classList.remove('ind-edit-mode');}
   if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
