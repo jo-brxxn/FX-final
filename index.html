@@ -937,7 +937,33 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Kontext flex:1 statt width:100%, damit der Regler seine eigene, feste
    Breite behaelt und der Globus den Rest bekommt (startGlobes() misst
    ohnehin live clientWidth, passt sich also automatisch an). */
-.globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
+/* Fokus-Waehrungs-Spalte NEBEN dem Globus (tech-design-Skill, Mockup-
+   Anordnung "Globus ~55-60%, Karten daneben") - .globe-focus-split ist der
+   AEUSSERE Rahmen (Globus+Regler-Zeile links, Fokus-Overview rechts),
+   .globe-main-row bleibt darin unveraendert das linke Kind (flex:1 1 400px
+   statt width:100%, da es jetzt nicht mehr allein in der Zeile steht).
+   flex-wrap:wrap faellt auf schmalen Screens automatisch auf Stapel-
+   Darstellung zurueck (Globus oben, Fokus-Karte darunter) statt Elemente zu
+   quetschen. */
+.globe-focus-split{display:flex;align-items:flex-start;gap:16px;width:100%;flex-wrap:wrap}
+.globe-focus-split>.globe-main-row{flex:1 1 380px;width:auto}
+.dash-focus-col{flex:1 1 320px;min-width:260px;display:flex;flex-direction:column;gap:8px}
+.dash-focus-hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dash-focus-flag{font-size:19px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.dash-focus-name{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px}
+.dash-focus-score{font-size:11.5px;font-weight:700;padding:2px 8px;border:1px solid;border-radius:5px}
+.dash-focus-switch{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.dfc-chip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+@media (hover:hover){.dfc-chip:hover{border-color:var(--blue);color:var(--t1)}}
+.dfc-chip.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
+/* Fokus-Detailtabellen unter dem Dashboard-Grid (tech-design-Skill,
+   Mockup zeigt die vollen Rubrik-Karten der fokussierten Waehrung unter
+   Globus+Overview) - wiederverwendet renderRub()/masonryHTML() 1:1, exakt
+   dieselbe editierbare Kartenzeile wie auf der FX/Non-FX-Detailseite (siehe
+   Skill-Abschnitt "Detail-Tabelle vs. editierbare Karten-Zeile" - kein
+   dritter, neuer Nur-Lese-Modus fuer diese eine Stelle erfunden). */
+.dash-focus-tables{margin-top:10px}
+.dash-focus-tables-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t3);text-transform:uppercase}
 .globe-main-row .globe-host{flex:1;min-width:0;width:auto}
 .globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
 .gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1903,12 +1929,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-264 — Dashboard-Fusszeilen-Statusleiste ergaenzt (Market Status/Global Time/Volatility Index/Equity Futures/Bond Yields/DXY/Gold/BTC, alles echte bereits vorhandene Daten), Overview-Kachel-Reihenfolge auf der FX/Non-FX-Detailseite an das Referenz-Mockup angeglichen (Inflation/Labour Market/Economic Growth/Interest Rates/COT Data/Risk Environment), rein visuell ohne die interne Rubrik-Reihenfolge anzufassen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-265 — Dashboard bekommt eine 'Fokus-Waehrung' (Default USD, per Chip-Leiste umschaltbar) neben dem Globus: Uebersichtskacheln + volle editierbare Rubrik-Tabellen dieser Waehrung erscheinen jetzt direkt auf dem Dashboard, exakt wie im Referenz-Mockup. Dabei einen Doppel-ID-Bug zwischen FX-Seite und Dashboard gefunden und gefixt (Add-Indicator-Feld/Kartensprung nutzten sonst das falsche, versteckte Element).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-264</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-265</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2115,6 +2141,7 @@ function introLogin(){
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout" id="dashWidgets"></div>
+  <div class="dash-focus-tables" id="dashFocusTables"></div>
   <div class="dash-footer-bar" id="dashFooterBar"></div>
 </div>
 
@@ -6592,7 +6619,21 @@ function masonryHTML(items,renderFn){
 // Feld mit deren Zusammenfassungstext, automatisch übernommenem Bias und
 // Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
 function ovCols(){return window.innerWidth>=900?3:window.innerWidth>=600?2:1;}
-function renderOverviewCard(rubs){
+// colsOverride (Nutzer-Wunsch 2026-07-28, Dashboard-Fokus-Waehrung): ovCols()
+// selbst richtet sich nach der GESAMTEN Fensterbreite, nicht nach der
+// tatsaechlich verfuegbaren Breite DIESES Aufrufs - auf dem Dashboard steht
+// die Overview-Karte in einer schmaleren Spalte NEBEN dem Globus, wo 3
+// Spalten (Standardwert bei >=900px Fensterbreite) zu breit waeren. Der
+// Aufrufer kennt seinen eigenen Kontext besser als eine globale Fenster-
+// breiten-Heuristik.
+// idPrefix (Nutzer-Wunsch 2026-07-28, Dashboard-Fokus-Waehrung): Tab-Inhalte
+// bleiben beim Wechsel per display:none im DOM erhalten (showTab()), nicht
+// zerstoert/neu erzeugt - rendert diese Karte also z.B. sowohl auf der FX-
+// Detailseite (id-Praefix 'rubCard') ALS AUCH auf dem Dashboard (Praefix
+// 'dashRubCard') fuer dieselbe Rubrik, waeren OHNE unterschiedliche Praefixe
+// zwei Elemente mit identischer id im DOM - document.getElementById()
+// faende dann nur das ERSTE (u.U. das falsche, versteckte) Element.
+function renderOverviewCard(rubs,colsOverride,idPrefix){
   // Frueher auf die ersten 5 Rubriken gedeckelt - das schnitt bei der Standard-
   // Reihenfolge (siehe mkRubOrder) "Macro & Risk Environment" (Position 6) und
   // "COT Data" (Position 7) ab. Grid ist responsiv (wraps ueber --ovcols),
@@ -6631,7 +6672,7 @@ function renderOverviewCard(rubs){
     // gedaempft grau - ebenfalls direkt aus dem Mockup uebernommen (mehrfach
     // an unabhaengigen Karten verifiziert, siehe Skill-Dokumentation).
     const[blIc,...blWordParts]=BL[rub.bias].split(' ');
-    return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
+    return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri},'${idPrefix||'rubCard'}')" title="Jump to the ${escH(rub.name)} card below">
       <div class="ind-hdr">
         <span class="ov-name">${escH(rub.name)}</span>
         <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score"><span style="color:${bco}">${blIc}</span> <span class="bo-word">${blWordParts.join(' ')}</span></span>
@@ -6642,15 +6683,20 @@ function renderOverviewCard(rubs){
   }).join('');
   return`<div class="ov-card">
     <div class="ov-card-title">📋 Overview</div>
-    <div class="ov-grid" style="--ovcols:${ovCols()}">${fields}</div>
+    <div class="ov-grid" style="--ovcols:${colsOverride||ovCols()}">${fields}</div>
   </div>`;
 }
-function goToRubCard(ri){
+function goToRubCard(ri,idPrefix){
+  idPrefix=idPrefix||'rubCard';
   const r=getRub(ri);if(!r)return;
   const needsExpand=!!r.collapsed;
-  if(needsExpand){r.collapsed=false;save();renderDetail();}
+  // idPrefix bestimmt, WELCHE der beiden Ansichten (FX/Non-FX-Detailseite
+  // vs. Dashboard-Fokus-Tabellen) gerade neu gerendert werden muss, damit
+  // das Aufklappen tatsaechlich in der sichtbaren Ansicht ankommt, statt in
+  // der jeweils anderen, per display:none verborgenen.
+  if(needsExpand){r.collapsed=false;save();idPrefix==='dashRubCard'?renderDash():renderDetail();}
   const run=()=>{
-    const el=document.getElementById('rubCard'+ri);
+    const el=document.getElementById(idPrefix+ri);
     if(!el)return;
     el.scrollIntoView({behavior:'smooth',block:'center'});
     el.classList.add('rub-flash');
@@ -6665,11 +6711,11 @@ function renderSpecTab(c){
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
-function renderRub(rub,ri,total){
+function renderRub(rub,ri,total,idPrefix){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
   const imp=rub.imp?' imp':'';
-  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
+  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="${idPrefix||'rubCard'}${ri}">
     <div class="rub-hdr" onpointerdown="biasPressStart(event,'rub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
@@ -7048,6 +7094,13 @@ function updateSidebarSelection(){
   });
 }
 function selSym(id){selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
+// Wechselt die auf dem Dashboard neben dem Globus fokussierte Waehrung
+// (tech-design-Skill, Nutzer-Wunsch 2026-07-28) - nutzt bewusst dasselbe
+// globale `selId` wie selSym()/die FX-Detailseite (EINE fokussierte
+// Waehrung app-weit, kein zweiter, Dashboard-eigener Auswahlzustand), ruft
+// aber renderDash() statt renderDetail() auf, da wir bereits auf dem
+// Dashboard sind und nicht zur FX-Seite wechseln wollen.
+function setDashFocus(id){selId=id;renderDash();}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite und wechselt dabei automatisch auf den passenden FX/Non-FX-Tab.
 function gotoSym(id){
@@ -7381,14 +7434,24 @@ function syncMacroIndAddRemove(ri,action,name){
 }
 function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function mvInd(ri,ii,d){const r=getRub(ri);if(!r||!r.indicators)return;pushU();mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
+// Container-scoped statt document.getElementById() (Nutzer-Wunsch 2026-07-28,
+// Dashboard-Fokus-Waehrung): showTab() versteckt Tabs per display:none statt
+// sie zu entfernen - #detail (FX/Non-FX-Seite) UND #dashFocusTables
+// (Dashboard-Fokus-Tabellen) koennen daher gleichzeitig ein Element mit
+// id="ind-N" enthalten (dieselbe Rubrik-Liste, ueber renderRub()/renderInds()
+// an zwei Stellen gerendert) - ein normales getElementById() faende IMMER
+// nur das ERSTE (u.U. das falsche, versteckte) Element. Scope auf den
+// aktuell sichtbaren Container ein.
 function addInd(ri){
-  const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
+  const scope=document.querySelector(curPage==='dash'?'#dashFocusTables':'#detail');
+  const inp=scope&&scope.querySelector('#ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
   r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function addPt(ri,ii){
-  const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
+  const scope=document.querySelector(curPage==='dash'?'#dashFocusTables':'#detail');
+  const inp=scope&&scope.querySelector(`#pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
-  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();}
+  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();if(curPage==='dash')renderDash();}
 function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);syncMacroRub(ri);save();renderDetail();}
 function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(!ind||!ind.points)return;pushU();mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
 
@@ -10380,7 +10443,26 @@ function renderDash(){
         </div>
         <div class="gt-pct" id="globeThrottlePct">0%</div>
       </div>`;
-      content=`<div class="globe-main-row"><div class="globe-host"></div>${throttle}</div>
+      // Fokus-Waehrung NEBEN dem Globus (Nutzer-Praezisierung 2026-07-28: das
+      // Globus-Mockup zeigt zwar "FX" im Tab aktiv, ist aber trotzdem als
+      // Dashboard-Ziel gemeint - "da steht zwar fx ist ausgewaehlt aber es
+      // ist das Ziel fuer das Dashboard"). Wiederverwendet das bereits
+      // bestehende globale `selId`/`getSym()`-Konzept (Default 'USD', exakt
+      // wie im Mockup) statt eine zweite, Dashboard-eigene Auswahl zu bauen -
+      // FX-Tab und Dashboard zeigen dadurch konsistent dieselbe "gerade
+      // fokussierte" Waehrung. `setDashFocus()` (neu) wechselt sie per Chip-
+      // Leiste, ohne den Tab zu wechseln.
+      const fs=getSym(),fbco=bCol(fs.bias),fsc=symScoreCmp(fs);
+      const focusCol=`<div class="dash-focus-col">
+        <div class="dash-focus-hdr">
+          ${FX_FLAG[fs.id]?`<span class="dash-focus-flag">${FX_FLAG[fs.id]}</span>`:''}
+          <span class="dash-focus-name">${escH(fs.id)}</span>
+          <span class="dash-focus-score" style="color:${fbco};border-color:${fbco}">${fsc>0?'+':''}${fsc.toFixed(1)}</span>
+          <span class="dash-focus-switch">${FX.map(id=>`<button class="dfc-chip${id===fs.id?' on':''}" onclick="setDashFocus('${id}')" title="Focus ${id} on the Dashboard">${id}</button>`).join('')}</span>
+        </div>
+        ${renderOverviewCard(fs.rubrics||[],2,'dashRubCard')}
+      </div>`;
+      content=`<div class="globe-focus-split"><div class="globe-main-row"><div class="globe-host"></div>${throttle}</div>${focusCol}</div>
         <div class="globe-btn-row">
           <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
           <button class="btn scan-btn boost-btn" onclick="startGlobeBoost()" title="Afterburner: brief burst to top speed, then eases back down">${icn('flame',13)} BOOST</button>
@@ -10725,6 +10807,11 @@ function renderDash(){
     <div class="dash-zone-right">${zones.right.join('')}</div>
     <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
   `;
+  const focusEl=document.getElementById('dashFocusTables');
+  if(focusEl){
+    const fs=getSym(),frubs=fs.rubrics||[];
+    focusEl.innerHTML=frubs.length?`<div class="dash-focus-tables-hdr">${escH(fs.id)} — full breakdown</div>${masonryHTML(frubs,(rub,ri)=>renderRub(rub,ri,frubs.length,'dashRubCard'))}`:'';
+  }
   const footerEl=document.getElementById('dashFooterBar');
   if(footerEl)footerEl.innerHTML=dashFooterBarHtml();
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
