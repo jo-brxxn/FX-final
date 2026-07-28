@@ -928,6 +928,32 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    schmal werden. */
 #dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column}
 #dashWidgets .dw.dw-globe>.dw-body{display:flex;flex-direction:column;align-items:center;width:100%}
+/* Schubregler NEBEN dem Globus (Nutzer-Wunsch 2026-07-28: "Bau neben den
+   Globus einen Schubregler der aussieht wie in einem cockpit") - eigene
+   Zeile ueber dem bisherigen .globe-host, damit Globus+Regler nebeneinander
+   stehen, statt den Host selbst zu verschachteln (globeUpdateOne()/
+   startGlobes() greifen weiterhin direkt per closest('.globe-host') zu,
+   bleibt also unveraendert funktionsfaehig). .globe-host bekommt in diesem
+   Kontext flex:1 statt width:100%, damit der Regler seine eigene, feste
+   Breite behaelt und der Globus den Rest bekommt (startGlobes() misst
+   ohnehin live clientWidth, passt sich also automatisch an). */
+.globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
+.globe-main-row .globe-host{flex:1;min-width:0;width:auto}
+.globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
+.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Track im "Cockpit-Metall"-Look: dunkler Schlitz mit leichtem Glanzrand,
+   Kerben als Skala (5 Stufen). Handle ist ein breiterer Griff-Riegel, der
+   ueber den Track hinausragt (klassische Throttle-Optik statt eines duennen
+   Slider-Punkts). */
+.gt-track{position:relative;width:20px;height:132px;border-radius:5px;background:linear-gradient(180deg,#1a2530,#0b1017 60%,#1a2530);border:1px solid rgba(126,196,255,.28);box-shadow:inset 0 0 6px rgba(0,0,0,.6);cursor:pointer}
+.gt-notches{position:absolute;inset:6px 0;display:flex;flex-direction:column-reverse;justify-content:space-between;pointer-events:none}
+.gt-notches span{height:1px;background:rgba(126,196,255,.22);margin:0 4px}
+.gt-fill{position:absolute;left:3px;right:3px;bottom:3px;height:0%;border-radius:3px;background:linear-gradient(180deg,#ff8a3d,#5fd0ff 85%);opacity:.55;transition:height .08s linear}
+.gt-handle{position:absolute;left:-5px;right:-5px;bottom:0%;height:16px;border-radius:4px;background:linear-gradient(180deg,#3c4a58,#151c24);border:1px solid rgba(223,244,255,.55);box-shadow:0 1px 3px rgba(0,0,0,.5);transform:translateY(50%);transition:bottom .08s linear}
+.gt-handle::after{content:'';position:absolute;left:5px;right:5px;top:50%;height:2px;background:rgba(223,244,255,.6);transform:translateY(-50%)}
+.gt-track.gt-dragging .gt-fill,.gt-track.gt-dragging .gt-handle{transition:none}
+.gt-pct{font-size:10.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:30px;text-align:center}
+@media(max-width:520px){.globe-throttle{display:none}}
 .globe-btn-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
 .scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
@@ -996,17 +1022,18 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-jet-flame{opacity:0}
 .jf-r{transform-origin:2.75px 11.7px}
 .jf-l{transform-origin:-2.75px 11.7px}
-.globe-vehicle.boosting .globe-jet-flame{opacity:1;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*.75));animation:jetFlameFlicker .1s steps(2) infinite}
-@keyframes jetFlameFlicker{0%{filter:brightness(1) saturate(1.1) hue-rotate(0deg)}50%{filter:brightness(1.5) saturate(1.35) hue-rotate(6deg)}100%{filter:brightness(.85) saturate(1.1) hue-rotate(-4deg)}}
+.globe-vehicle.boosting .globe-jet-flame{opacity:1;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*.75));animation:jetFlameFlicker .12s steps(2) infinite}
+/* Flacker-Amplitude verstaerkt (Nutzer-Wunsch 2026-07-28, Schubregler-
+   Nachbesserung "Feuer muss auch leicht dynamisch sein") - Helligkeit UND
+   Deckkraft schwanken jetzt zusaetzlich zu Farbton/Saettigung, damit die
+   Flamme bei einem laenger gehaltenen, konstanten Schub-Level (Regler-
+   Betrieb statt nur dem kurzen Boost-Stoss) sichtbar "lebt" statt statisch
+   zu wirken. Bewusst NUR filter/opacity animiert, NICHT transform - die
+   Flammenlaenge selbst haengt bereits ueber die Basis-Regel an --boost-i
+   (scaleY/scaleX per calc()), eine Transform-Keyframe wuerde diesen Wert
+   waehrend der Animation komplett ueberschreiben statt ihn zu ergaenzen. */
+@keyframes jetFlameFlicker{0%{filter:brightness(.9) saturate(1.05) hue-rotate(0deg);opacity:.86}30%{filter:brightness(1.55) saturate(1.4) hue-rotate(7deg);opacity:1}55%{filter:brightness(1.05) saturate(1.15) hue-rotate(-3deg);opacity:.9}80%{filter:brightness(1.4) saturate(1.3) hue-rotate(4deg);opacity:1}100%{filter:brightness(.88) saturate(1.05) hue-rotate(-5deg);opacity:.88}}
 @media(prefers-reduced-motion:reduce){.globe-vehicle.boosting .globe-jet-flame{animation:none;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35))}}
-.globe-jet-vapor{opacity:0;filter:blur(1.3px)}
-.jv-r{transform-origin:11.8px 5.6px}
-.jv-l{transform-origin:-11.8px 5.6px}
-.globe-vehicle.boosting .jv-r{opacity:calc(var(--boost-i,0)*.85);animation:jetVaporDriftR .55s ease-in-out infinite alternate}
-.globe-vehicle.boosting .jv-l{opacity:calc(var(--boost-i,0)*.85);animation:jetVaporDriftL .55s ease-in-out infinite alternate}
-@keyframes jetVaporDriftR{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.75) translate(2.6px,3.6px)}}
-@keyframes jetVaporDriftL{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.75) translate(-2.6px,3.6px)}}
-@media(prefers-reduced-motion:reduce){.globe-vehicle.boosting .jv-r,.globe-vehicle.boosting .jv-l{animation:none;opacity:calc(var(--boost-i,0)*.55)}}
 /* Blur NUR auf der Erdoberflaeche (.globe-planet = Ozean+Landflaeche),
    NICHT auf Flugzeug/Flammen/Sweep/Markern/Bezel (Nutzer-Korrektur
    2026-07-28: "Flugzeug soll immer zu sehen bleiben"). Getrennt von
@@ -1166,19 +1193,6 @@ body.dash-edit-mode .mw-bar{display:flex}
 .globe-host.grabbing,.globe-host.grabbing svg circle{cursor:grabbing}
 .globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.globe-sessions{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:8px}
-.globe-sess-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid;font-weight:600;letter-spacing:.02em;opacity:.5;transition:opacity .2s ease,box-shadow .2s ease}
-.globe-sess-badge.on{opacity:1;box-shadow:0 0 10px -3px currentColor}
-.sess-bar{margin-top:12px;padding:0 2px}
-.sess-tracks{position:relative;display:flex;flex-direction:column;gap:4px}
-.sess-track{position:relative;height:8px;border-radius:999px;overflow:hidden;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--bd)}
-.sess-seg{position:absolute;top:0;bottom:0;opacity:.38;background-image:linear-gradient(180deg,rgba(255,255,255,.24),rgba(255,255,255,0) 55%);transition:opacity .2s ease,filter .2s ease}
-.sess-seg.on{opacity:.92;filter:brightness(1.1) saturate(1.15)}
-.sess-now-line{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:1px;background:var(--blue);transform:translateX(-50%);box-shadow:0 0 8px 1px rgba(var(--blue-rgb),.65)}
-.sess-now-line::after{content:'';position:absolute;top:0;left:50%;transform:translate(-50%,-100%);width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 6px 2px rgba(var(--blue-rgb),.7)}
-.sess-hours{display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.sess-overlap{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:600;color:var(--amber);background:rgba(var(--amber-rgb),.1);border:1px solid rgba(var(--amber-rgb),.3);border-radius:999px;padding:5px 10px;margin-top:9px}
-.sess-next{font-size:10.5px;color:var(--t3);text-align:center;margin-top:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
 .globe-tip b{font-size:12.5px}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
@@ -1588,8 +1602,8 @@ body.dash-edit-mode .mw-bar{display:flex}
      GENAU so hoch wie ihr eigener Inhalt (align-items:start) - Hoehenaus-
      gleich zwischen den drei mittleren Spalten passiert stattdessen
      darueber, dass jede Spalte genug ECHTE Karten enthaelt (siehe die
-     Widget-Typen session_clock/vol_leaders/sentiment_snapshot weiter
-     unten). ⚠ 8px Abstand statt 0 (Nutzer-Korrektur 2026-07-27, Folgebug):
+     Widget-Typen vol_leaders/sentiment_snapshot weiter unten). ⚠ 8px
+     Abstand statt 0 (Nutzer-Korrektur 2026-07-27, Folgebug):
      bei gap:0 lag die naechste Karte direkt auf dem Rand der vorherigen -
      jeder nach AUSSEN reichende Effekt (z.B. der Scan-Trefferring in
      .scan-hit) wurde dadurch vom opaken Hintergrund der Nachbarkarte
@@ -1878,12 +1892,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-262 — tech-design-Skill angewendet: globale Farbpalette dunkler/neutraler (Trading-Terminal-Look), Waehrungsflagge im Asset-Seiten-Titel, Overview-Karten-Badges mit gedaempft-grauem Wort statt vollfarbig, Key-Insights-Platzhalter entfernt (ersetzt durch Biggest Movers FX), Indikator-Bearbeitungscontrols (Verschieben/Loeschen) nur noch im Bearbeitungsmodus (5s-Long-Press) sichtbar, ★-Wichtig-Markierung inkl. ihrer +0.5-Score-Wirkung komplett entfernt (Nutzer-Wunsch).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-263 — Cockpit-Schubregler neben dem Globus (draggable, steuert Rotationstempo + Nachbrenner-Staerke live, bleibt stehen wo losgelassen), Fluegel-Luftwirbel(Wind)-Animation komplett entfernt, Flammen-Flackern verstaerkt (leicht dynamischer), neue Fuel-Anzeige im HUD-Readout (sinkt bei Schub, regeneriert im Leerlauf), Trading-Sessions-Karte komplett vom Dashboard entfernt (Nutzer-Wunsch).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-262</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-263</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -5526,7 +5540,6 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'Radar Globe',order:0},
-  {id:uid(),type:'session_clock',title:'Trading Sessions',order:2},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
   {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:5},
@@ -5723,10 +5736,16 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // fertig gebauten, aber seit DASH_V9 nicht mehr in der Standardansicht
 // gezeigten "Biggest Movers FX"-Widget (computeFxMovers(), echte Preis-
 // bewegungsdaten) gefuellt.
-const DASH_V=13;
+// DASH_V14 (Nutzer-Wunsch 2026-07-28 "lass die trading Sessions Karte weg
+// entfern die komplett"): Trading-Sessions-Widget (session_clock) komplett
+// entfernt, gleiches Muster wie Daily Bias/Key Insights zuvor - kommt in
+// DASH_DROP, dazugehoerige Helper (sessionBarHtml()/startSessionBar()/
+// GLOBE_SESSIONS/sessionActiveNow()/activeSessions()) waren ausschliesslich
+// von diesem Widget genutzt und wurden mitentfernt (kein toter Code).
+const DASH_V=14;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  const DASH_DROP=new Set(['score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias','key_insights']);
+  const DASH_DROP=new Set(['score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias','key_insights','session_clock']);
   if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_DROP.has(w.type));return;}
   widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   // Radial-Layout (Nutzer-Wunsch 2026-07-27): Globus steht jetzt ALLEIN im
@@ -5739,9 +5758,9 @@ function migrateDash(){
   // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
   // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
   // Platz kuenstlich zu strecken.
-  [['globe','Radar Globe'],['session_clock','Trading Sessions'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
+  [['globe','Radar Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,session_clock:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,watchlist:11,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+  const rank={globe:0,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,watchlist:11,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -9814,7 +9833,6 @@ function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs(
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
   {type:'globe',label:'Radar Globe',sub:'Rotating surveillance globe — currencies coloured by bias score, source of the scan animation'},
-  {type:'session_clock',label:'Trading Sessions',sub:'Sydney/Tokyo/London/New York on a 24h timeline — highlights which sessions are open right now'},
   {type:'ccy_ranking',label:'Asset Strength',sub:'Configurable assets (up to 9) ranked strongest → weakest by score'},
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'vol_leaders',label:'Volatility Leaders',sub:'Most volatile tracked assets by 20-day realized volatility (annualized)'},
@@ -10174,7 +10192,7 @@ function toggleIndEditMode(){
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',movers_fx:'bottom',session_clock:'center',vol_leaders:'right',sentiment_snapshot:'right'};
+const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',sentiment_snapshot:'right'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10248,19 +10266,31 @@ function renderDash(){
       // direkt unter dem Globus, damit es weiterhin wirkt, als kaemen die
       // Karten-Infos aus dem Radar - siehe auch scanBroadcast() weiter unten
       // fuer die Partikel-Animation, die diesen Eindruck noch verstaerkt.
-      content=`<div class="globe-host"></div>
+      // Schubregler (Nutzer-Wunsch 2026-07-28 "Bau neben den Globus einen
+      // Schubregler der aussieht wie in einem cockpit... verschiebbar. Desto
+      // hoeher desto schneller dreht sich die Kugel und desto staerker das
+      // Feuer"): eigenstaendiger, kontinuierlicher Regler NEBEN dem Globus
+      // statt nur des bisherigen einmaligen BOOST-Stosses (der bleibt
+      // zusaetzlich bestehen, siehe setGlobeThrust()-Kommentar fuer die
+      // gegenseitige Ausschluss-Regel). Kein <input type=range> (kein
+      // vertikaler Support quer durch alle Browser ohne Hacks) - stattdessen
+      // ein per Pointer-Events gezogener Griff auf einem Track, exakt wie
+      // die uebrigen Long-Press/Drag-Muster dieser App.
+      const throttle=`<div class="globe-throttle" title="Drag to control thrust: rotation speed and afterburner intensity">
+        <div class="gt-label">THRUST</div>
+        <div class="gt-track" id="globeThrottleTrack" onpointerdown="throttlePressStart(event)">
+          <div class="gt-notches"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="gt-fill" id="globeThrottleFill"></div>
+          <div class="gt-handle" id="globeThrottleHandle"></div>
+        </div>
+        <div class="gt-pct" id="globeThrottlePct">0%</div>
+      </div>`;
+      content=`<div class="globe-main-row"><div class="globe-host"></div>${throttle}</div>
         <div class="globe-btn-row">
           <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
           <button class="btn scan-btn boost-btn" onclick="startGlobeBoost()" title="Afterburner: brief burst to top speed, then eases back down">${icn('flame',13)} BOOST</button>
         </div>
         ${globeHudHtml()}`;
-    }else if(w.type==='session_clock'){
-      // Reaktiviert eine bereits fertig gebaute, aber seit dem Radial-Umbau
-      // nirgends mehr eingehaengte Funktion (sessionBarHtml()/startSessionBar()
-      // liefen schon vorher, nur ohne Host-Element im DOM) - echte Daten
-      // (GLOBE_SESSIONS/sessionActiveNow()), keine neue Logik noetig. Fuellt
-      // die Zentrum-Spalte unter dem Globus sinnvoll statt sie leer zu lassen.
-      content=sessionBarHtml();
     }else if(w.type==='vol_leaders'){
       // 20-Tage realisierte Volatilitaet (annualisiert) - dieselbe Formel wie
       // die Matrix-Tab-Diagonale (renderCorrCard), hier als eigenstaendiges
@@ -10603,7 +10633,6 @@ function renderDash(){
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
-  startSessionBar();
   attachChartHovers(el);
   gaugeNeedleAnim(el);
   flipRankRows(el,_rankFlipBefore);
@@ -10733,80 +10762,12 @@ const GLOBE_LAND=[
   // Madagaskar
   [[-16.88,49.77],[-24.94,47.1],[-25.6,45.41],[-24.99,44.04],[-22.06,43.25],[-20.07,44.37],[-17.41,43.96],[-16.22,44.45],[-15.78,46.31],[-14.59,47.71],[-13.66,47.87],[-13.78,48.29],[-12.04,49.19],[-12.9,49.81],[-15.23,50.48],[-16.0,50.2],[-15.41,49.86],[-15.71,49.67],[-16.88,49.77]],
 ];
-// FX-Handelssitzungen (UTC-Stunden) mit den primaer betroffenen Waehrungen.
-const GLOBE_SESSIONS=[
-  {name:'Sydney',start:22,end:7,ccys:['AUD','NZD'],col:'#a78bfa'},
-  {name:'Tokyo',start:0,end:9,ccys:['JPY'],col:'#f59e0b'},
-  {name:'London',start:8,end:17,ccys:['GBP','EUR','CHF'],col:'#34d399'},
-  {name:'New York',start:13,end:22,ccys:['USD','CAD'],col:'#60a5fa'}
-];
-function sessionActiveNow(s,hr){return s.start<s.end?(hr>=s.start&&hr<s.end):(hr>=s.start||hr<s.end);}
-function activeSessions(){const hr=new Date().getUTCHours()+new Date().getUTCMinutes()/60;return GLOBE_SESSIONS.filter(s=>sessionActiveNow(s,hr));}
-// Naechster Sitzungs-Wechsel (Oeffnen/Schliessen) - reine Ableitung aus den
-// bereits bekannten GLOBE_SESSIONS-Grenzzeiten, kein neuer Feed noetig.
-function sessionNextChangeInfo(){
-  const now=new Date();
-  const hr=now.getUTCHours()+now.getUTCMinutes()/60+now.getUTCSeconds()/3600;
-  let best=null;
-  GLOBE_SESSIONS.forEach(s=>{
-    [['opens',s.start],['closes',s.end]].forEach(([kind,t])=>{
-      let d=t-hr;if(d<=0)d+=24;
-      if(!best||d<best.d)best={d,kind,s};
-    });
-  });
-  if(!best)return null;
-  const totalMin=Math.round(best.d*60);
-  return{s:best.s,kind:best.kind,h:Math.floor(totalMin/60),m:totalMin%60};
-}
-// 24h-Leiste statt reiner Text-Badges: eine Linie wandert entlang der Stunden und
-// zeigt, wo der Tag gerade steht; Sessions sind als farbige Segmente eingezeichnet
-// (Sessions, die ueber Mitternacht laufen wie Sydney, werden in 2 Segmente gesplittet).
-// Zeitlich ueberlappende Sessions (z.B. Tokyo/London, London/New York) wuerden sich
-// in einer einzelnen Zeile gegenseitig ueberdecken - daher werden sie per simplem
-// Greedy-Algorithmus auf mehrere gestapelte Zeilen ("Lanes") verteilt: jede Session
-// landet in der ersten Zeile, in der noch keine zeitliche Ueberschneidung besteht.
-function sessionBarHtml(){
-  const now=new Date();
-  const hr=now.getUTCHours()+now.getUTCMinutes()/60;
-  const nowPct=(hr/24*100).toFixed(2);
-  const activeS=activeSessions();
-  const bySession=GLOBE_SESSIONS.map(s=>{
-    const parts=s.start<s.end?[{a:s.start,b:s.end}]:[{a:s.start,b:24},{a:0,b:s.end}];
-    return{s,parts};
-  });
-  const overlaps=(p1,p2)=>p1.some(x=>p2.some(y=>x.a<y.b&&y.a<x.b));
-  const lanes=[];
-  bySession.forEach(({s,parts})=>{
-    let li=lanes.findIndex(L=>!overlaps(L.parts,parts));
-    if(li<0){li=lanes.length;lanes.push({parts:[],items:[]});}
-    lanes[li].parts.push(...parts);
-    lanes[li].items.push({s,parts});
-  });
-  const tracksHtml=lanes.map(L=>{
-    const segHtml=L.items.map(({s,parts})=>parts.map(({a,b})=>`<div class="sess-seg${activeS.includes(s)?' on':''}" style="left:${(a/24*100).toFixed(2)}%;width:${((b-a)/24*100).toFixed(2)}%;background-color:${s.col}"></div>`).join('')).join('');
-    return`<div class="sess-track">${segHtml}</div>`;
-  }).join('');
-  const hh=String(now.getUTCHours()).padStart(2,'0'),mm=String(now.getUTCMinutes()).padStart(2,'0');
-  const nextC=sessionNextChangeInfo();
-  const nextTxt=nextC?`<div class="sess-next">Next: <b style="color:${nextC.s.col}">${escH(nextC.s.name)}</b> ${nextC.kind} in ${nextC.h>0?nextC.h+'h ':''}${nextC.m}m</div>`:'';
-  const overlapTxt=activeS.length>=2?`<div class="sess-overlap">${icn('flame',12)} Overlap active: ${activeS.map(s=>escH(s.name)).join(' + ')} — peak liquidity window</div>`:'';
-  return`<div class="sess-bar">
-    <div class="sess-tracks">${tracksHtml}<div class="sess-now-line" style="left:${nowPct}%" title="${hh}:${mm} UTC"></div></div>
-    <div class="sess-hours"><span>00</span><span>06</span><span>12</span><span>18</span><span>24 UTC</span></div>
-    <div class="globe-sessions">${GLOBE_SESSIONS.map(s=>`<span class="globe-sess-badge${activeS.includes(s)?' on':''}" style="color:${s.col};border-color:${s.col}44;background:${s.col}14">${s.name}${activeS.includes(s)?' ●':''}</span>`).join('')}</div>
-    ${overlapTxt}${nextTxt}
-  </div>`;
-}
-let _sessBarTimer=null;
-function stopSessionBar(){if(_sessBarTimer){clearInterval(_sessBarTimer);_sessBarTimer=null;}}
-function startSessionBar(){
-  stopSessionBar();
-  if(curPage!=='dash'||!document.querySelector('.sess-bar'))return;
-  _sessBarTimer=setInterval(()=>{
-    if(curPage!=='dash'){stopSessionBar();return;}
-    document.querySelectorAll('.sess-bar').forEach(el=>{el.outerHTML=sessionBarHtml();});
-  },30*60*1000);
-}
+// FX-Handelssitzungen (GLOBE_SESSIONS) + die zugehoerigen sessionBarHtml()/
+// startSessionBar()/stopSessionBar()/sessionActiveNow()/activeSessions()/
+// sessionNextChangeInfo()-Helfer waren ausschliesslich vom jetzt komplett
+// entfernten "Trading Sessions"-Dashboard-Widget genutzt (Nutzer-Wunsch
+// 2026-07-28 "lass die trading Sessions Karte weg entfern die komplett",
+// siehe DASH_V14/DASH_DROP oben) und wurden mitentfernt (kein toter Code).
 // (globeSunInfo/globeSunInfoCached entfernt 2026-07-25: das Meer ist jetzt
 // eine gleichmaessige Flaeche ohne Tag/Nacht-Schattierung, siehe
 // globeSkeleton unten - der Sonnenstand wurde nirgends sonst gebraucht.)
@@ -10844,6 +10805,7 @@ const GLOBE_BOOST_PEAK_MS=850,GLOBE_BOOST_HOLD_MS=700,GLOBE_BOOST_DECEL_MS=2800,
 let _globeBoostT0=0;
 function startGlobeBoost(){
   if(_globeMode==='boost')return; // schon aktiv, kein Doppel-Trigger
+  if(_throttleFrac>0.02)return; // Schubregler hat Vorrang, siehe setGlobeThrust()
   _globeMode='boost';_globeBoostT0=performance.now();
   document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting'));
   document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
@@ -10855,6 +10817,73 @@ function endGlobeBoost(){
   document.querySelectorAll('.globe-host').forEach(h=>{h.classList.remove('boosting');h.style.removeProperty('--boost-i');h.style.removeProperty('--boost-blur');});
   const btn=document.querySelector('.boost-btn');
   if(btn){btn.disabled=false;btn.innerHTML=`${icn('flame',13)} BOOST`;}
+}
+// Schubregler (Nutzer-Wunsch 2026-07-28): kontinuierliche, vom Nutzer per
+// Drag gehaltene Alternative zum einmaligen BOOST-Stoss oben - bleibt exakt
+// dort stehen, wo der Nutzer ihn loslaesst (wie ein echter Cockpit-
+// Schubhebel, kein Zurueckfedern auf 0). _throttleFrac (0..1) hat im
+// frame()-Loop weiter unten VORRANG vor 'auto'/'decel'/'boost' - waehrend
+// er >0 ist, treibt er Rotationsgeschwindigkeit UND Flammengroesse (--boost-i)
+// direkt proportional zu seiner Position, keine Rampen-/Timing-Kurve wie
+// beim Boost-Skript. Gegenseitiger gesperrt mit dem BOOST-Button (siehe
+// startGlobeBoost() oben und der Guard in throttlePressStart()), damit sich
+// die zwei Geschwindigkeits-Quellen nicht mitten in ihrer jeweiligen Kurve
+// gegenseitig ueberschreiben.
+let _throttleFrac=0,_throttleDragging=false;
+function throttlePressStart(ev){
+  if(_globeMode==='boost')return; // BOOST-Stoss laeuft gerade, Regler blockiert bis er durch ist
+  const track=ev.currentTarget;if(!track)return;
+  ev.preventDefault();
+  try{track.setPointerCapture(ev.pointerId);}catch(e){}
+  track.classList.add('gt-dragging');
+  _throttleDragging=true;
+  throttleUpdateFromEvent(ev,track);
+  track.onpointermove=e=>{if(_throttleDragging)throttleUpdateFromEvent(e,track);};
+  const end=()=>{_throttleDragging=false;track.classList.remove('gt-dragging');track.onpointermove=null;track.onpointerup=null;track.onpointercancel=null;};
+  track.onpointerup=end;track.onpointercancel=end;
+}
+function throttleUpdateFromEvent(ev,track){
+  const r=track.getBoundingClientRect();
+  let frac=1-(ev.clientY-r.top)/r.height;
+  frac=Math.max(0,Math.min(1,frac));
+  setGlobeThrust(frac);
+}
+function setGlobeThrust(frac){
+  _throttleFrac=frac;
+  const fill=document.getElementById('globeThrottleFill'),handle=document.getElementById('globeThrottleHandle'),pct=document.getElementById('globeThrottlePct');
+  if(fill)fill.style.height=(frac*100).toFixed(1)+'%';
+  if(handle)handle.style.bottom=(frac*100).toFixed(1)+'%';
+  if(pct)pct.textContent=Math.round(frac*100)+'%';
+  const engaged=frac>0.02;
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.toggle('boosting',engaged));
+  document.querySelectorAll('.globe-host').forEach(h=>h.classList.toggle('boosting',engaged));
+  if(!engaged){
+    // Regler auf 0 zurueckgezogen: sanft Richtung Normaltempo abklingen
+    // lassen (wie nach dem BOOST-Stoss), statt die Drehung hart abzuwuergen.
+    _globeMode='decel';
+    document.querySelectorAll('.globe-host').forEach(h=>{h.style.removeProperty('--boost-i');h.style.removeProperty('--boost-blur');});
+  }
+}
+// Fuel-Anzeige (Nutzer-Wunsch 2026-07-28, ersetzt "Liquidity" im HUD-
+// Readout): rein dekorativer Cockpit-Wert fuer den Jet, KEINE Marktdaten -
+// der CLAUDE.md-Grundsatz "nie erfundene Werte" gilt fuer Indikator-/
+// Marktdaten, nicht fuer diese ohnehin komplett fiktive Spiel-Mechanik
+// (Globus-Drehung/Flammen sind ja selbst auch nur Deko). Sinkt waehrend
+// Schub (Regler ODER Boost-Stoss) proportional zur Schubstaerke, regeneriert
+// sich langsam bei Leerlauf - macht den Schubregler dadurch spuerbar
+// bedeutsam statt nur kosmetisch.
+let _globeFuel=100;
+const GLOBE_FUEL_BURN_PCT_S=9,GLOBE_FUEL_REGEN_PCT_S=3;
+function globeFuelTick(dtMs,thrustI){
+  const dtS=dtMs/1000;
+  if(thrustI>0.01)_globeFuel=Math.max(0,_globeFuel-GLOBE_FUEL_BURN_PCT_S*thrustI*dtS);
+  else _globeFuel=Math.min(100,_globeFuel+GLOBE_FUEL_REGEN_PCT_S*dtS);
+  const el=document.getElementById('hudFuel');
+  if(el){
+    const pct=Math.round(_globeFuel);
+    el.textContent=pct+'%';
+    el.style.color=pct>45?BC.bull:pct>18?BC.neu:BC.bear;
+  }
 }
 function stopGlobe(){
   if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}
@@ -10977,17 +11006,20 @@ function globeSkeleton(size,uid){
   // globeVehicleTravel() aendert sich dadurch nicht) - nur der Start-/
   // Ruhezustand bekommt einen 90-Grad-Offset (siehe vehicleHeading:90 in
   // globeCollectRefs() weiter unten, MUSS mit diesem Wert synchron bleiben).
-  // Nachbrenner-Flammen + Fluegel-Luftwirbel (Boost-Button, Nutzer-Wunsch
-  // 2026-07-28): beides liegt in DENSELBEN jet-lokalen Koordinaten wie die
-  // Silhouette selbst - dreht sich also automatisch mit (Ruhelage UND
-  // Reise-Heading), ohne eigene Positions-Mathematik. Per Default per CSS
-  // unsichtbar (opacity:0 auf .globe-jet-flame/.globe-jet-vapor), erst
-  // startGlobeBoost() schaltet die "boosting"-Klasse auf .globe-vehicle
-  // und macht sie inkl. Flacker-/Wachstums-Animation sichtbar.
+  // Nachbrenner-Flammen (Boost-Button/Schubregler, Nutzer-Wunsch 2026-07-28):
+  // liegt in DENSELBEN jet-lokalen Koordinaten wie die Silhouette selbst -
+  // dreht sich also automatisch mit (Ruhelage UND Reise-Heading), ohne
+  // eigene Positions-Mathematik. Per Default per CSS unsichtbar (opacity:0
+  // auf .globe-jet-flame), erst startGlobeBoost()/setGlobeThrust() schalten
+  // die "boosting"-Klasse auf .globe-vehicle und machen sie inkl. Flacker-/
+  // Wachstums-Animation sichtbar.
   // Deutlich laenger/groesser/farbenvoller (Nutzer-Korrektur 2026-07-28):
   // Aussenflamme (breiter Fuss, sehr lang auslaufend) + hellere, kuerzere
   // Kernflamme obendrauf (weiss/gelb statt orange/rot) fuer echte
   // Nachbrenner-Farbtiefe statt eines einzelnen Farbverlaufs.
+  // Fluegel-Luftwirbel (vaporR/vaporL) komplett entfernt (Nutzer-Wunsch
+  // 2026-07-28 "Entfern die Wind Animation komplett", im Zuge des
+  // Schubregler-Umbaus) - nur noch die Flammen bleiben als Schub-Anzeige.
   const flameR=`<g class="globe-jet-flame jf-r">
     <path d="M1.2,11.4 L4.5,11.4 L2.85,42 Z" fill="url(#${fgid})"/>
     <path d="M2.0,11.5 L3.7,11.5 L2.85,28 Z" fill="url(#${fgid}core)"/>
@@ -10995,19 +11027,6 @@ function globeSkeleton(size,uid){
   const flameL=`<g class="globe-jet-flame jf-l">
     <path d="M-4.5,11.4 L-1.2,11.4 L-2.85,42 Z" fill="url(#${fgid})"/>
     <path d="M-3.7,11.5 L-2.0,11.5 L-2.85,28 Z" fill="url(#${fgid}core)"/>
-  </g>`;
-  // Fluegel-Luftwirbel als dreiteiliger Wirbelschweif (klein+hell nah am
-  // Fluegel, groesser+blaeulicher weiter dahinter) statt einer einzelnen
-  // Ellipse - liest sich als echter, farbiger Luftstrom statt einem Fleck.
-  const vaporR=`<g class="globe-jet-vapor jv-r">
-    <ellipse cx="11.8" cy="5.6" rx="3.6" ry="1.9" fill="#ffffff" opacity=".9"/>
-    <ellipse cx="15.2" cy="9.6" rx="5.8" ry="2.8" fill="#bfe9ff" opacity=".55"/>
-    <ellipse cx="19.4" cy="15" rx="7.8" ry="3.6" fill="#5fd0ff" opacity=".32"/>
-  </g>`;
-  const vaporL=`<g class="globe-jet-vapor jv-l">
-    <ellipse cx="-11.8" cy="5.6" rx="3.6" ry="1.9" fill="#ffffff" opacity=".9"/>
-    <ellipse cx="-15.2" cy="9.6" rx="5.8" ry="2.8" fill="#bfe9ff" opacity=".55"/>
-    <ellipse cx="-19.4" cy="15" rx="7.8" ry="3.6" fill="#5fd0ff" opacity=".32"/>
   </g>`;
   const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy}) rotate(90)" pointer-events="none">
     ${flameR}${flameL}
@@ -11019,7 +11038,6 @@ function globeSkeleton(size,uid){
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
     <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#ef5350"/>
     <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#ef5350"/>
-    ${vaporR}${vaporL}
   </g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
@@ -11392,6 +11410,14 @@ function startGlobes(){
     return globeCollectRefs(h,size);
   }).filter(Boolean);
   _globeHosts.forEach(globeUpdateOne); // sofortiger, vollstaendiger erster Aufbau (alle Layer in einem Zug)
+  // Schubregler-Anzeige resyncen (Nutzer-Wunsch 2026-07-28): der Regler-DOM
+  // (.globe-throttle) liegt AUSSERHALB von .globe-host, wird also bei jedem
+  // Dashboard-Re-Render (renderDash() baut das Widget-HTML neu, z.B.
+  // minuetliches Rebuild/Bearbeitungsmodus-Toggle) auf seine statische
+  // 0%-Ausgangslage zurueckgesetzt, obwohl _throttleFrac im Speicher weiter
+  // besteht - hier den echten Wert zurueckspiegeln, sonst zeigt der Griff
+  // faelschlich 0%, waehrend der Globus tatsaechlich noch mit Schub laeuft.
+  setGlobeThrust(_throttleFrac);
   hosts.forEach(h=>{
     h.addEventListener('pointerdown',ev=>globeOnPointerDown(ev,h));
     h.addEventListener('pointermove',globeOnPointerMove);
@@ -11410,7 +11436,21 @@ function startGlobes(){
     const dt=now-_globeLast;
     if(dt>=STEP_MS){
       _globeLast=now;
-      if(_globeMode==='decel'){
+      let thrustI=0; // treibt globeFuelTick() unten, unabhaengig davon welcher Zweig gerade greift
+      if(_throttleFrac>0.002){
+        // Schubregler hat Vorrang (Nutzer-Wunsch 2026-07-28): kontinuierlich,
+        // direkt proportional zur Griff-Position, keine Rampen-/Timing-Kurve
+        // wie beim BOOST-Skript - "desto hoeher desto schneller dreht sich
+        // die Kugel und desto staerker das Feuer". Gleiches Prinzip wie beim
+        // Boost-Stoss (Nutzer-Korrektur 2026-07-28 "Beschleunigung/
+        // Verlangsamung bleibt scharf"): Blur (--boost-blur) erst nahe der
+        // Reglerspitze, nicht schon bei mittlerem Schub.
+        thrustI=_throttleFrac;
+        _globeVel=GLOBE_AUTO_VEL+(GLOBE_BOOST_PEAK_VEL-GLOBE_AUTO_VEL)*thrustI;
+        const BLUR_FROM=0.82,blurI=thrustI>BLUR_FROM?(thrustI-BLUR_FROM)/(1-BLUR_FROM):0;
+        _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
+        _globeHosts.forEach(st=>{st.host.style.setProperty('--boost-i',thrustI.toFixed(3));st.host.style.setProperty('--boost-blur',blurI.toFixed(3));});
+      }else if(_globeMode==='decel'){
         _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/1600); // Schwung klingt Richtung Normaltempo ab - spuerbar lang und sanft statt abrupt
         if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
         _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
@@ -11419,13 +11459,13 @@ function startGlobes(){
         // halten -> sanft (ease-out) auf Normaltempo abbremsen.
         // ZWEI getrennte Intensitaeten (Nutzer-Korrektur 2026-07-28, "in der
         // Beschleunigung und Verlangsamung ist aber alles scharf"):
-        // - thrustI (--boost-i): treibt Flammen-/Vapor-Groesse, laeuft ueber
+        // - thrustI (--boost-i): treibt Flammen-Groesse, laeuft ueber
         //   ALLE drei Phasen (waechst mit echtem Schub, schrumpft mit ihm).
         // - blurI (--boost-blur): NUR waehrend der Halte-Phase ungleich Null
         //   (eigener kurzer Rampe-rein/Plateau/Rampe-raus INNERHALB der
         //   Halte-Phase) - Beschleunigen/Abbremsen bleiben dadurch immer
         //   scharf, nur der kurze Moment auf Spitzentempo wird unkenntlich.
-        const el=now-_globeBoostT0;let thrustI,blurI=0;
+        const el=now-_globeBoostT0;let blurI=0;
         if(el<GLOBE_BOOST_PEAK_MS){
           const t=el/GLOBE_BOOST_PEAK_MS;thrustI=t*t*t;
           _globeVel=GLOBE_AUTO_VEL+(GLOBE_BOOST_PEAK_VEL-GLOBE_AUTO_VEL)*thrustI;
@@ -11444,6 +11484,7 @@ function startGlobes(){
       }else if(_globeMode==='auto'){
         _globeLon=(_globeLon+dt*GLOBE_AUTO_VEL)%360;
       } // 'drag': Position wird direkt per Pointermove gesetzt, hier nichts tun
+      globeFuelTick(dt,thrustI);
       _globeHosts.forEach(globeUpdateOne);
     }
     _globeRAF=requestAnimationFrame(frame);
@@ -11764,13 +11805,20 @@ function globeHudHtml(){
   const active=fxSyms.filter(s=>s.bias!=='neu').length;
   const risk=riskOnOffState();
   // "Priority target" (staerkster Score) auf Nutzer-Wunsch 2026-07-28
-  // entfernt - die drei verbleibenden Felder passen dadurch bequem in eine
-  // Zeile statt in eine zweite umzubrechen.
+  // entfernt. "Fuel" (Nutzer-Wunsch 2026-07-28, Schubregler-Feature) neu
+  // ergaenzt - anders als die drei anderen Felder KEIN echter Marktwert,
+  // sondern ein rein dekorativer Cockpit-Stand fuer den Jet (siehe
+  // globeFuelTick()) - bewusst als einziges Feld ohne Datenanspruch, direkt
+  // an den neuen Schubregler gekoppelt statt erfundene "Liquidity"-Marktdaten
+  // zu zeigen (die es fuer dieses Projekt nicht gibt, siehe CLAUDE.md-
+  // Grundsatz "nie erfundene Werte" - der gilt fuer Markt-/Indikatordaten,
+  // hier stattdessen ehrlich als Spielmechanik gekennzeichnet).
   const readout=`<div class="globe-hud-title"><span class="hud-live-dot"></span> GLOBAL MARKET SURVEILLANCE</div>
   <div class="globe-hud-readout">
     <div class="ghr-item">Scan position<b id="hudLon">${globeHudLonTxt()}</b></div>
     <div class="ghr-item">Active signals<b>${active}/${fxSyms.length}</b></div>
     <div class="ghr-item">Global risk level<b style="color:${risk.col}">${escH(risk.lbl)}</b></div>
+    <div class="ghr-item">Fuel<b id="hudFuel" style="color:${_globeFuel>45?BC.bull:_globeFuel>18?BC.neu:BC.bear}">${Math.round(_globeFuel)}%</b></div>
   </div>`;
   const feed=scoreLog.filter(e=>GLOBE_GEO[e.sym]).slice(-4).reverse();
   const feedHtml=feed.length?`<div class="globe-hud-intel">`+feed.map(e=>{
