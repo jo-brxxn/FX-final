@@ -1626,6 +1626,17 @@ body.dash-edit-mode .mw-bar{display:flex}
   .dash-zone-center{grid-area:center;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-left>.dw,.dash-zone-right>.dw,.dash-zone-center>.dw{margin-bottom:0}
   @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
+  /* Fusszeilen-Statusleiste (tech-design-Skill, Referenz-Mockup zeigt sie
+     unter dem Dashboard-Grid) - eine einzelne flache Zeile OHNE eigenen
+     Kartenrahmen, direkt auf dem Seitenhintergrund, Label:Wert-Paare mit
+     duennen Vertikaltrennern - exakt das bereits im Skill dokumentierte
+     Muster, jetzt umgesetzt statt nur beschrieben. */
+  .dash-footer-bar{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin-top:10px;padding:10px 4px 2px;border-top:1px solid var(--bd);font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+  .dfb-item{display:flex;align-items:center;gap:6px;padding:0 14px;border-left:1px solid var(--bd)}
+  .dfb-item:first-child{border-left:none;padding-left:0}
+  .dfb-lbl{color:var(--t3);letter-spacing:.4px}
+  .dfb-val{color:var(--t0);font-weight:600}
+  @media(max-width:760px){.dash-footer-bar{display:none}}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -1892,12 +1903,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-263 — Cockpit-Schubregler neben dem Globus (draggable, steuert Rotationstempo + Nachbrenner-Staerke live, bleibt stehen wo losgelassen), Fluegel-Luftwirbel(Wind)-Animation komplett entfernt, Flammen-Flackern verstaerkt (leicht dynamischer), neue Fuel-Anzeige im HUD-Readout (sinkt bei Schub, regeneriert im Leerlauf), Trading-Sessions-Karte komplett vom Dashboard entfernt (Nutzer-Wunsch).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-264 — Dashboard-Fusszeilen-Statusleiste ergaenzt (Market Status/Global Time/Volatility Index/Equity Futures/Bond Yields/DXY/Gold/BTC, alles echte bereits vorhandene Daten), Overview-Kachel-Reihenfolge auf der FX/Non-FX-Detailseite an das Referenz-Mockup angeglichen (Inflation/Labour Market/Economic Growth/Interest Rates/COT Data/Risk Environment), rein visuell ohne die interne Rubrik-Reihenfolge anzufassen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-263</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-264</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2104,6 +2115,7 @@ function introLogin(){
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout" id="dashWidgets"></div>
+  <div class="dash-footer-bar" id="dashFooterBar"></div>
 </div>
 
 <!-- MODAL: Designer (Hintergrund-Farbwahl ueber das Farbspektrum) -->
@@ -6587,7 +6599,24 @@ function renderOverviewCard(rubs){
   // daher jetzt ungedeckelt: alle Rubrik-Karten erscheinen im Overview.
   const top=rubs;
   if(!top.length)return'';
-  const fields=top.map((rub,ri)=>{
+  // Anzeige-Reihenfolge im Overview-Grid folgt dem tech-design-Referenz-
+  // Mockup (Inflation, Labour Market, Economic Growth, Interest Rates, COT
+  // Data, Risk Environment) statt der internen Rubrik-Array-Reihenfolge
+  // (Inflation, Interest Rates, Labour Market, Economic Growth, ...) - REIN
+  // VISUELL, nur in dieser einen Karte. Die kanonische Rubrik-Reihenfolge
+  // selbst (mkRubOrder/Score-Modal/Undo/Migration/symScoreDrivingEventsBy...)
+  // bleibt bewusst unveraendert - eine Aenderung DORT haette weit mehr
+  // Seiteneffekte als eine reine Anzeige-Umsortierung hier (Nutzer-Wunsch
+  // 2026-07-28 "bis ins kleinste Detail", aber ohne unnoetiges Risiko).
+  // Custom-Rubriken (nicht in OV_ORDER) behalten ihre relative Reihenfolge
+  // und erscheinen danach (stabiler Sortier-Fallback ueber den Original-
+  // Index).
+  const OV_ORDER=['Inflation','Labour Market','Economic Growth','Interest Rates','COT Data',MACRO_NAME];
+  const ordered=top.map((rub,ri)=>({rub,ri})).sort((a,b)=>{
+    const ai=OV_ORDER.indexOf(a.rub.name),bi=OV_ORDER.indexOf(b.rub.name);
+    return(ai<0?999+a.ri:ai)-(bi<0?999+b.ri:bi);
+  });
+  const fields=ordered.map(({rub,ri})=>{
     const bco=bCol(rub.bias);
     const sc=rubScore(rub);
     const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
@@ -9671,6 +9700,72 @@ function fmtPriceTick(v){
   if(a>=10)return v.toFixed(2);
   return v.toFixed(4);
 }
+// FX-Wochenend-Pause (Standard-Konvention: Freitag 22 Uhr UTC bis Sonntag 22
+// Uhr UTC geschlossen - identisch zur Grenze, die vorher GLOBE_SESSIONS'
+// Sydney-Start(22)/Ende der New-York-Session markierte, bevor die Trading-
+// Sessions-Karte entfernt wurde) - reine Kalenderregel, kein Feed noetig.
+function fxMarketOpenNow(){
+  const d=new Date(),day=d.getUTCDay(),hr=d.getUTCHours();
+  if(day===6)return false;
+  if(day===5&&hr>=22)return false;
+  if(day===0&&hr<22)return false;
+  return true;
+}
+function volLevelWord(v){return v>=25?'HIGH':v>=15?'MODERATE':'LOW';}
+// Fusszeilen-Statusleiste unter dem Dashboard-Grid (tech-design-Skill,
+// Referenz-Mockup "MARKET STATUS / GLOBAL TIME / VOLATILITY INDEX / EQUITY
+// FUTURES / BOND YIELDS (10Y) / DXY / GOLD / BTC/USD") - ALLE acht Werte aus
+// bereits vorhandenen echten Quellen abgeleitet, nichts erfunden (Grundsatz
+// "nie erfundene Werte"): VIX/Preisdaten kommen aus den ohnehin schon
+// geladenen Feeds (SENTIMENT_DATA/PRICE_DATA_FEED), Bond Yield aus USDs
+// eigener "10Y Bond Yield"-Indikatorkarte, Markt-Status ist eine reine
+// Kalenderregel (s.o.). "EQUITY FUTURES" ist mangels echtem Futures-Feed ein
+// Proxy aus der juengsten SP500/NAS-Preisbewegung (nicht identisch mit
+// echten Vorboersen-Futures, aber echte Marktdaten - kein Erfinden).
+function dashFooterBarHtml(){
+  const item=(lbl,valHtml)=>`<div class="dfb-item"><span class="dfb-lbl">${lbl}</span><span class="dfb-val">${valHtml}</span></div>`;
+  const parts=[];
+  const open=fxMarketOpenNow();
+  parts.push(item('MARKET STATUS',`<span style="color:${open?'#22c55e':'var(--red)'}">● ${open?'OPEN':'CLOSED'}</span>`));
+  const now=new Date(),tzH=-now.getTimezoneOffset()/60;
+  parts.push(item('GLOBAL TIME',`${now.toLocaleTimeString([],{hour12:false})} UTC${tzH>=0?'+':''}${tzH}`));
+  const vixEv=SENTIMENT_DATA&&sentEval('vix',SENTIMENT_DATA.vix);
+  if(vixEv)parts.push(item('VOLATILITY INDEX',`${vixEv.actual} ${volLevelWord(+vixEv.actual)}`));
+  const spI=assetTickerInfo('SP500'),nasI=assetTickerInfo('NAS');
+  if(spI&&nasI&&spI.bias!=='neu'&&nasI.bias!=='neu'){
+    const eqWord=spI.bias===nasI.bias?(spI.bias==='bull'?'UP':'DOWN'):'MIXED';
+    parts.push(item('EQUITY FUTURES',eqWord));
+  }
+  const y10=usdIndByName('10Y Bond Yield');
+  if(y10&&y10.research&&y10.research.actual!=null&&y10.research.previous!=null){
+    const a=parseFloat(y10.research.actual),p=parseFloat(y10.research.previous);
+    if(isFinite(a)&&isFinite(p)){
+      const d=a-p,col=d>0?BC.bull:d<0?BC.bear:'var(--t3)';
+      parts.push(item('BOND YIELDS (10Y)',`${a.toFixed(2)}% <span style="color:${col}">${d>=0?'+':''}${d.toFixed(2)}</span>`));
+    }
+  }
+  // Explizite Nachkommastellen statt der Groessenheuristik von fmtPriceTick()
+  // - Gold wird konventionell IMMER mit 2 Nachkommastellen notiert, auch
+  // jenseits von 1000 (die generische Heuristik wuerde dort faelschlich auf
+  // 0 Nachkommastellen springen wie bei BTC/Indizes).
+  [['DXY','USD',2],['GOLD','GOLD',2],['BTC/USD','BTC',0]].forEach(([lbl,id,dp])=>{
+    const info=assetTickerInfo(id);
+    if(!info)return;
+    const col=BC[info.bias];
+    const pctTxt=info.changePct==null?'':` <span style="color:${col}">${info.changePct>0?'+':''}${info.changePct.toFixed(2)}%</span>`;
+    const priceTxt=info.price.toLocaleString('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+    parts.push(item(lbl,`${priceTxt}${pctTxt}`));
+  });
+  return parts.join('');
+}
+// USDs eigene Indikator-Karte per Namen finden, UNABHAENGIG vom aktuell
+// ausgewaehlten Symbol (anders als findIndById(), das an getSym() haengt -
+// die Fusszeile lebt auf dem Dashboard, wo kein Asset "ausgewaehlt" ist).
+function usdIndByName(name){
+  const usd=syms.find(s=>s.id==='USD');if(!usd)return null;
+  for(const r of(usd.rubrics||[]))for(const i of(r.indicators||[]))if(i.name===name)return i;
+  return null;
+}
 // Rendite-Aenderung fuer die Market-Watch-Dashboard-Karte (Nutzer-Wunsch
 // 2026-07-25) - dieselbe Quelle/Rechnung wie applyBondDataFeed() (bondPick,
 // Vergleich zum letzten verfuegbaren Vortageswert), nur als reine Anzeige
@@ -10630,6 +10725,8 @@ function renderDash(){
     <div class="dash-zone-right">${zones.right.join('')}</div>
     <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
   `;
+  const footerEl=document.getElementById('dashFooterBar');
+  if(footerEl)footerEl.innerHTML=dashFooterBarHtml();
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
