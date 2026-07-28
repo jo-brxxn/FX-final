@@ -12134,17 +12134,13 @@
    "source": "tv"
   },
   "Consumer Confidence": {
-   "actual": "91.2",
-   "forecast": "94.7",
-   "previous": "90.6",
-   "date": "2026-06-30",
+   "actual": "90.8",
+   "forecast": "92.3",
+   "previous": "91.2",
+   "date": "2026-07-28",
    "event": "CB Consumer Confidence",
    "period": null,
    "history": [
-    [
-     "2026-03-31",
-     "91.8"
-    ],
     [
      "2026-04-28",
      "92.8"
@@ -12156,8 +12152,13 @@
     [
      "2026-06-30",
      "91.2"
+    ],
+    [
+     "2026-07-28",
+     "90.8"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-29",
@@ -12333,10 +12334,13 @@
      "2026-06-30",
      "91.2",
      "94.7"
+    ],
+    [
+     "2026-07-28",
+     "90.8",
+     "92.3"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "93.1"
+   ]
   },
   "ADP Employment": {
    "actual": "98K",
