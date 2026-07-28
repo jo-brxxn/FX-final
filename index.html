@@ -915,9 +915,15 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    schmal werden. */
 #dashWidgets .dw.dw-globe{overflow:hidden;display:flex;flex-direction:column}
 #dashWidgets .dw.dw-globe>.dw-body{display:flex;flex-direction:column;align-items:center;width:100%}
+.globe-btn-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
 .scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
 .scan-btn:disabled{opacity:.7;cursor:default}
+/* Boost-Button (Nutzer-Wunsch 2026-07-28): eigener Warm-Ton (Feuer) statt
+   des kuehlen Scan-Blaus, damit die beiden Aktionen auf einen Blick
+   unterscheidbar sind. */
+.boost-btn{border-color:rgba(255,138,61,.45);color:#ff9a5c}
+@media (hover:hover){.boost-btn:hover:not(:disabled){background:rgba(255,138,61,.14);border-color:#ff9a5c}}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
@@ -963,6 +969,36 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-jet-light{animation:globeJetBlink 1.1s steps(1) infinite}
 @keyframes globeJetBlink{0%,44%{opacity:1}45%,100%{opacity:.15}}
 @media(prefers-reduced-motion:reduce){.globe-jet-light{animation:none;opacity:.55}}
+/* Boost (Nutzer-Wunsch 2026-07-28): Nachbrenner-Flammen + Fluegel-Luftwirbel,
+   nur waehrend .globe-vehicle.boosting sichtbar. --boost-i (0..1, von
+   startGlobeBoost()/dem frame()-Loop pro Frame gesetzt) treibt Flammenlaenge
+   UND Blur-Staerke direkt aus der tatsaechlichen Rotationsgeschwindigkeit ab
+   - wächst/schrumpft dadurch authentisch mit dem Schub, statt einer fest
+   getimten, vom echten Tempo entkoppelten CSS-Animation zu folgen. Die
+   schnelle steps()-Flacker-Animation daneben simuliert das Flackern echter
+   Nachbrenner-Flammen (kein weiches Fade). */
+.globe-jet-flame{opacity:0}
+.jf-r{transform-origin:2.75px 11.7px}
+.jf-l{transform-origin:-2.75px 11.7px}
+.globe-vehicle.boosting .globe-jet-flame{opacity:1;transform:scaleY(calc(.3 + var(--boost-i,0)*1.6)) scaleX(calc(.65 + var(--boost-i,0)*.6));animation:jetFlameFlicker .1s steps(2) infinite}
+@keyframes jetFlameFlicker{0%{filter:brightness(1) saturate(1)}50%{filter:brightness(1.4) saturate(1.2)}100%{filter:brightness(.85) saturate(1)}}
+@media(prefers-reduced-motion:reduce){.globe-vehicle.boosting .globe-jet-flame{animation:none;transform:scaleY(calc(.3 + var(--boost-i,0)*1.6))}}
+.globe-jet-vapor{opacity:0;filter:blur(1.3px)}
+.jv-r{transform-origin:11.5px 4.3px}
+.jv-l{transform-origin:-11.5px 4.3px}
+.globe-vehicle.boosting .jv-r{opacity:calc(var(--boost-i,0)*.6);animation:jetVaporDriftR .5s ease-in-out infinite alternate}
+.globe-vehicle.boosting .jv-l{opacity:calc(var(--boost-i,0)*.6);animation:jetVaporDriftL .5s ease-in-out infinite alternate}
+@keyframes jetVaporDriftR{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.3) translate(1.3px,2px)}}
+@keyframes jetVaporDriftL{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.3) translate(-1.3px,2px)}}
+@media(prefers-reduced-motion:reduce){.globe-vehicle.boosting .jv-r,.globe-vehicle.boosting .jv-l{animation:none;opacity:calc(var(--boost-i,0)*.4)}}
+/* Geschwindigkeitsgekoppelter Blur waehrend des Boosts ("Geschwindigkeit wo
+   man nichts erkennt", Nutzer-Wunsch) - direkt an --boost-i gebunden statt
+   fest getimt, dadurch synchron zur tatsaechlichen Drehgeschwindigkeit.
+   Kurzzeitig (wenige Sekunden je Ausloesung), daher unproblematisch trotz
+   der an anderer Stelle dokumentierten Blur-Performance-Vorsicht bei
+   dauerhaften/grossflaechigen Effekten. */
+.globe-host.boosting .globe-zoom-wrap{filter:blur(calc(var(--boost-i,0)*5px))}
+@media(prefers-reduced-motion:reduce){.globe-host.boosting .globe-zoom-wrap{filter:none}}
 /* Ankunfts-Puls (Nutzer-Wunsch 2026-07-27): einmaliger, kraeftigerer
    Ausschlag am Zielpunkt, sobald das Auto/Schiff ankommt - danach oeffnet
    sich die Waehrung (gotoSym). Eigene Klasse statt .globe-ping-Wiederver-
@@ -1820,12 +1856,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-259 — Globus-Jet: Grundausrichtung auf rotate(90) umgestellt (Nase zeigt nach rechts/in Flugrichtung statt nach oben, passend zur dauerhaften Globus-Drehung), zwei rote blinkende Positionslichter an den Fluegelspitzen ergaenzt (respektiert reduced-motion, dimmt dann nur statisch statt zu blinken) und zwei Triebwerks-Gondeln mit Abgas-Glow am Heck.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-260 — Neuer BOOST-Button neben INITIATE SCAN am Globus: Globus dreht kurz auf eine Geschwindigkeit hoch, bei der man nichts mehr erkennt (kubische Beschleunigung, kurz halten, sanftes Abbremsen), waehrend der Spitzengeschwindigkeit ein an die tatsaechliche Drehzahl gekoppelter Blur. Waehrenddessen feuern beide Triebwerke sichtbar Flammen (flackernde Nachbrenner-Optik) und an den Fluegelspitzen ist ein Luftwirbel/Vapor-Effekt zu sehen - beides skaliert live mit der Geschwindigkeit statt fest getimt zu sein.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-259</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-260</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -10152,7 +10188,10 @@ function renderDash(){
       // Karten-Infos aus dem Radar - siehe auch scanBroadcast() weiter unten
       // fuer die Partikel-Animation, die diesen Eindruck noch verstaerkt.
       content=`<div class="globe-host"></div>
-        <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
+        <div class="globe-btn-row">
+          <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
+          <button class="btn scan-btn boost-btn" onclick="startGlobeBoost()" title="Afterburner: brief burst to top speed, then eases back down">${icn('flame',13)} BOOST</button>
+        </div>
         ${globeHudHtml()}`;
     }else if(w.type==='session_clock'){
       // Reaktiviert eine bereits fertig gebaute, aber seit dem Radial-Umbau
@@ -10734,6 +10773,34 @@ let _globeZoom=1,_globeZoomRevertT=null,_globePointers=new Map(),_globePinch=nul
 // einer angeklickten Waehrung unterwegs ist, pausiert globeUpdateVehicle()
 // die normale Land/Wasser-Ruheposition-Aktualisierung.
 let _globeVehicleBusy=false;
+// Boost (Nutzer-Wunsch 2026-07-28): einmaliger Beschleunigungs-Stoss - der
+// Globus dreht kurz auf eine Geschwindigkeit hoch, bei der Details nicht
+// mehr zu erkennen sind, danach langsames Abbremsen zurueck auf Normal-
+// tempo. Laeuft als eigener _globeMode-Zustand ('boost') im bestehenden
+// frame()-Loop weiter unten (dieselbe dt/_globeLon-Fortschreibung wie
+// 'decel', nur mit einer eigenen, dreiphasigen Geschwindigkeitskurve statt
+// exponentiellem Abklingen). GLOBE_BOOST_PEAK_VEL=80x Normaltempo - bei
+// ~20 FPS Renderrate (STEP_MS unten) noch als kohaerente schnelle Drehung
+// erkennbar, nicht als zufaelliges Springen; der zusaetzliche, an die
+// tatsaechliche Geschwindigkeit gekoppelte Blur (--boost-i, siehe
+// globeUpdateOne()) sorgt zusaetzlich dafuer, dass waehrend der Spitzen-
+// geschwindigkeit wirklich nichts mehr zu erkennen ist.
+const GLOBE_BOOST_PEAK_MS=850,GLOBE_BOOST_HOLD_MS=450,GLOBE_BOOST_DECEL_MS=2800,GLOBE_BOOST_PEAK_VEL=0.32;
+let _globeBoostT0=0;
+function startGlobeBoost(){
+  if(_globeMode==='boost')return; // schon aktiv, kein Doppel-Trigger
+  _globeMode='boost';_globeBoostT0=performance.now();
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting'));
+  document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
+  const btn=document.querySelector('.boost-btn');
+  if(btn){btn.disabled=true;btn.innerHTML=`${icn('flame',13)} BOOSTING…`;}
+}
+function endGlobeBoost(){
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.remove('boosting'));
+  document.querySelectorAll('.globe-host').forEach(h=>{h.classList.remove('boosting');h.style.removeProperty('--boost-i');});
+  const btn=document.querySelector('.boost-btn');
+  if(btn){btn.disabled=false;btn.innerHTML=`${icn('flame',13)} BOOST`;}
+}
 function stopGlobe(){
   if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}
   _globeHosts=[];_globeMode='auto';_globeVel=GLOBE_AUTO_VEL;_globeDrag=null;
@@ -10783,6 +10850,7 @@ function globeSkeleton(size,uid){
   const R=size/2-26,cx=size/2,cy=size/2; // 26px Rand statt 16px - Platz fuer den neuen Bezel-Ring/Gradnetz drumherum
   const lmgid='gLimbGrad'+uid,lmid='gLimbMask'+uid,shpid='gLandShape'+uid;
   const sqid='gSq'+uid;
+  const fgid='gJetFlame'+uid; // Nachbrenner-Flammen-Verlauf (Boost, Nutzer-Wunsch 2026-07-28)
   // Pfade OHNE eigenes fill/stroke - sie erben beides vom jeweiligen <use>.
   let land='';GLOBE_LAND.forEach(()=>{land+='<path/>';});
   // Jeder Marker bekommt jetzt zusaetzlich einen "Ping"-Ring (Reticle/Radar-
@@ -10854,7 +10922,19 @@ function globeSkeleton(size,uid){
   // globeVehicleTravel() aendert sich dadurch nicht) - nur der Start-/
   // Ruhezustand bekommt einen 90-Grad-Offset (siehe vehicleHeading:90 in
   // globeCollectRefs() weiter unten, MUSS mit diesem Wert synchron bleiben).
+  // Nachbrenner-Flammen + Fluegel-Luftwirbel (Boost-Button, Nutzer-Wunsch
+  // 2026-07-28): beides liegt in DENSELBEN jet-lokalen Koordinaten wie die
+  // Silhouette selbst - dreht sich also automatisch mit (Ruhelage UND
+  // Reise-Heading), ohne eigene Positions-Mathematik. Per Default per CSS
+  // unsichtbar (opacity:0 auf .globe-jet-flame/.globe-jet-vapor), erst
+  // startGlobeBoost() schaltet die "boosting"-Klasse auf .globe-vehicle
+  // und macht sie inkl. Flacker-/Wachstums-Animation sichtbar.
+  const flameR=`<g class="globe-jet-flame jf-r"><path d="M1.45,11.7 L4.05,11.7 L2.75,24 Z" fill="url(#${fgid})"/></g>`;
+  const flameL=`<g class="globe-jet-flame jf-l"><path d="M-4.05,11.7 L-1.45,11.7 L-2.75,24 Z" fill="url(#${fgid})"/></g>`;
+  const vaporR=`<g class="globe-jet-vapor jv-r"><ellipse cx="11.5" cy="4.3" rx="4.2" ry="2.2" fill="#dff4ff"/></g>`;
+  const vaporL=`<g class="globe-jet-vapor jv-l"><ellipse cx="-11.5" cy="4.3" rx="4.2" ry="2.2" fill="#dff4ff"/></g>`;
   const vehicle=`<g class="globe-vehicle" transform="translate(${cx},${cy}) rotate(90)" pointer-events="none">
+    ${flameR}${flameL}
     <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
     <rect x="1.7" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
     <rect x="-3.8" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
@@ -10863,6 +10943,7 @@ function globeSkeleton(size,uid){
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
     <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#ef5350"/>
     <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#ef5350"/>
+    ${vaporR}${vaporL}
   </g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
@@ -10875,6 +10956,12 @@ function globeSkeleton(size,uid){
       <linearGradient id="${rgid}" x1="${rx1}" y1="${ry1}" x2="${rx2}" y2="${ry2}" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stop-color="#7ee0ff" stop-opacity="0"/>
         <stop offset="100%" stop-color="#7ee0ff" stop-opacity=".4"/>
+      </linearGradient>
+      <linearGradient id="${fgid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fffaf0"/>
+        <stop offset="22%" stop-color="#ffd54f"/>
+        <stop offset="55%" stop-color="#ff8a3d"/>
+        <stop offset="100%" stop-color="#ff5252" stop-opacity="0"/>
       </linearGradient>
     </defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="#0b2445" stroke="#1b4372" stroke-width="1"/>
@@ -11241,6 +11328,24 @@ function startGlobes(){
         _globeVel=GLOBE_AUTO_VEL+(_globeVel-GLOBE_AUTO_VEL)*Math.exp(-dt/1600); // Schwung klingt Richtung Normaltempo ab - spuerbar lang und sanft statt abrupt
         if(Math.abs(_globeVel-GLOBE_AUTO_VEL)<0.0006){_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';}
         _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
+      }else if(_globeMode==='boost'){
+        // Dreiphasige Kurve: kubisch beschleunigen -> kurz auf Spitzentempo
+        // halten -> sanft (ease-out) auf Normaltempo abbremsen. _boostI (0..1)
+        // treibt zusaetzlich Blur/Flammen-/Vapor-Intensitaet in globeUpdateOne().
+        const el=now-_globeBoostT0;let boostI;
+        if(el<GLOBE_BOOST_PEAK_MS){
+          const t=el/GLOBE_BOOST_PEAK_MS;boostI=t*t*t;
+          _globeVel=GLOBE_AUTO_VEL+(GLOBE_BOOST_PEAK_VEL-GLOBE_AUTO_VEL)*boostI;
+        }else if(el<GLOBE_BOOST_PEAK_MS+GLOBE_BOOST_HOLD_MS){
+          boostI=1;_globeVel=GLOBE_BOOST_PEAK_VEL;
+        }else if(el<GLOBE_BOOST_PEAK_MS+GLOBE_BOOST_HOLD_MS+GLOBE_BOOST_DECEL_MS){
+          const t=(el-GLOBE_BOOST_PEAK_MS-GLOBE_BOOST_HOLD_MS)/GLOBE_BOOST_DECEL_MS,e=1-Math.pow(1-t,3);
+          boostI=1-e;_globeVel=GLOBE_BOOST_PEAK_VEL+(GLOBE_AUTO_VEL-GLOBE_BOOST_PEAK_VEL)*e;
+        }else{
+          boostI=0;_globeVel=GLOBE_AUTO_VEL;_globeMode='auto';endGlobeBoost();
+        }
+        _globeLon=(_globeLon+dt*_globeVel+360*1000)%360;
+        if(_globeMode==='boost')_globeHosts.forEach(st=>st.host.style.setProperty('--boost-i',boostI.toFixed(3)));
       }else if(_globeMode==='auto'){
         _globeLon=(_globeLon+dt*GLOBE_AUTO_VEL)%360;
       } // 'drag': Position wird direkt per Pointermove gesetzt, hier nichts tun
