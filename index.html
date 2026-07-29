@@ -450,19 +450,33 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
+/* ── RUBRIC FOOTER SCORE (tech-design-Skill 2026-07-28, ersetzt den
+   Score-Badge im Kartenkopf als primaere, immer sichtbare Score-Anzeige -
+   der Kopf-Badge bleibt zusaetzlich im Bearbeitungsmodus erreichbar) ── */
+.rub-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}
+.rub-foot-lbl{font-size:10.5px;font-weight:800;letter-spacing:.8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rub-foot-score{font-size:15px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:6px;padding:2px 10px;cursor:pointer;line-height:1.3}
 /* ── INDICATOR ── */
 .ind-card{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--bd2);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:3px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
-.ov-field{margin:0;cursor:pointer;display:flex;flex-direction:column;transition:border-color .15s,transform .12s}
-@media (hover:hover){.ov-field:hover{border-color:var(--bd2);transform:translateY(-1px)}}
-.ov-name{font-size:17px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1}
-.ov-icon{width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
 .ov-sum-line{color:var(--t1)}
 .ov-empty{color:var(--t3);font-style:italic}
-.ov-field .ov-bias{font-size:11px;font-weight:800;padding:1px 7px;letter-spacing:0}
+/* Overview-Kachel 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28):
+   zentrierter Grossbuchstaben-Titel oben (eigene Zeile), darunter LINKS-
+   buendig die grosse farbige Score-Zahl + gedaempftes Bias-Wort (kein Rahmen/
+   Chip, reiner Text mit kleinem Diamant-Icon davor), darunter der
+   Zusammenfassungssatz - ersetzt die vorherige Ein-Zeilen-Kopfleiste mit
+   umrandeten Badges. */
+.ov-field2{margin:0;cursor:pointer;display:flex;flex-direction:column;gap:9px;padding:14px 12px;transition:border-color .15s,transform .12s}
+@media (hover:hover){.ov-field2:hover{border-color:var(--bd2);transform:translateY(-1px)}}
+.ov2-title{text-align:center;font-size:15px;font-weight:800;color:var(--t0);letter-spacing:1px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-scoreline{display:flex;align-items:baseline;gap:10px}
+.ov2-score{font-size:26px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-badge{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--t3)}
+.ov2-summary{font-size:13px;line-height:1.5;color:var(--t3);white-space:pre-wrap}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
 .carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
@@ -525,6 +539,32 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    Button und der Bias-Long-Press bleiben davon unberuehrt, immer verfuegbar. */
 .ind-edit-ctrls{display:none;align-items:center;gap:0}
 body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
+/* ── INDIKATOR-TABELLE (tech-design-Skill 2026-07-28, ersetzt die Karten-
+   pro-Indikator-Darstellung durch eine flache Report-Tabelle, siehe Skill
+   "Detail-Tabelle vs. editierbare Karten-Zeile", Modus 2) ── */
+.ind-table{width:100%;min-width:540px;border-collapse:collapse;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:4px}
+.ind-table thead th{text-align:right;font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);font-weight:700;padding:0 6px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.ind-table thead th.iht-name{text-align:left}
+.ind-table tbody tr.ind-row{border-left:3px solid var(--bd2);border-bottom:1px solid var(--bd)}
+.ind-table tbody tr.ind-row:last-child{border-bottom:none}
+.ind-table td{padding:7px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
+.ir-name{text-align:left;white-space:normal;display:flex;align-items:center;gap:3px}
+.ir-name-txt{font-weight:700;color:var(--t0);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px}
+.ir-act{font-weight:800;color:var(--t1)}
+.ir-act.act-good{color:var(--green)}
+.ir-act.act-bad{color:var(--red)}
+.ir-prev.act-good{color:var(--green)}
+.ir-prev.act-bad{color:var(--red)}
+.ir-fc,.ir-prev{color:var(--t2)}
+.ir-dash{color:var(--t3)}
+.ir-score{font-weight:800}
+.ir-src{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.ir-src a{color:var(--t3);text-decoration:none;font-size:11px;transition:color .12s}
+@media (hover:hover){.ir-src a:hover{color:var(--blue)}}
+.ind-points-row td{padding:0 6px 8px;text-align:left}
+.ind-points-list{display:flex;flex-direction:column;gap:4px}
+.ind-point-item{display:flex;align-items:flex-start;gap:4px}
+.ind-row.ind-flash>td{animation:indFlash 1.8s ease-out}
 .ind-body{padding:6px 8px}
 .ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
@@ -937,33 +977,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Kontext flex:1 statt width:100%, damit der Regler seine eigene, feste
    Breite behaelt und der Globus den Rest bekommt (startGlobes() misst
    ohnehin live clientWidth, passt sich also automatisch an). */
-/* Fokus-Waehrungs-Spalte NEBEN dem Globus (tech-design-Skill, Mockup-
-   Anordnung "Globus ~55-60%, Karten daneben") - .globe-focus-split ist der
-   AEUSSERE Rahmen (Globus+Regler-Zeile links, Fokus-Overview rechts),
-   .globe-main-row bleibt darin unveraendert das linke Kind (flex:1 1 400px
-   statt width:100%, da es jetzt nicht mehr allein in der Zeile steht).
-   flex-wrap:wrap faellt auf schmalen Screens automatisch auf Stapel-
-   Darstellung zurueck (Globus oben, Fokus-Karte darunter) statt Elemente zu
-   quetschen. */
-.globe-focus-split{display:flex;align-items:flex-start;gap:16px;width:100%;flex-wrap:wrap}
-.globe-focus-split>.globe-main-row{flex:1 1 380px;width:auto}
-.dash-focus-col{flex:1 1 320px;min-width:260px;display:flex;flex-direction:column;gap:8px}
-.dash-focus-hdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.dash-focus-flag{font-size:19px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.dash-focus-name{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px}
-.dash-focus-score{font-size:11.5px;font-weight:700;padding:2px 8px;border:1px solid;border-radius:5px}
-.dash-focus-switch{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
-.dfc-chip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-@media (hover:hover){.dfc-chip:hover{border-color:var(--blue);color:var(--t1)}}
-.dfc-chip.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
-/* Fokus-Detailtabellen unter dem Dashboard-Grid (tech-design-Skill,
-   Mockup zeigt die vollen Rubrik-Karten der fokussierten Waehrung unter
-   Globus+Overview) - wiederverwendet renderRub()/masonryHTML() 1:1, exakt
-   dieselbe editierbare Kartenzeile wie auf der FX/Non-FX-Detailseite (siehe
-   Skill-Abschnitt "Detail-Tabelle vs. editierbare Karten-Zeile" - kein
-   dritter, neuer Nur-Lese-Modus fuer diese eine Stelle erfunden). */
-.dash-focus-tables{margin-top:10px}
-.dash-focus-tables-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t3);text-transform:uppercase}
+.globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
 .globe-main-row .globe-host{flex:1;min-width:0;width:auto}
 .globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
 .gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1127,7 +1141,12 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    passen 3 Readout-Felder pro Zeile (minmax(120px,1fr)) statt darunter
    einzeln gestapelt zu werden - deutlich kompakter (iPad-Bildschirmhoehe). */
 .globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px 14px;margin-top:8px}
+/* repeat(4,1fr) statt auto-fit/minmax (Nutzer-Wunsch 2026-07-28 "unter dem
+   Globus maximal eine Zeile mit Daten"): auto-fit+minmax(120px,...) brach
+   bei der jetzt vierten Spalte (Fuel) innerhalb der 440px-Kartenbreite in
+   eine zweite Zeile um (120px×4 + Gaps > 440px) - feste 4 Spalten schrumpfen
+   stattdessen einfach schmaler, bleiben aber garantiert in einer Zeile. */
+.globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;margin-top:8px}
 .ghr-item{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.3px;text-transform:uppercase}
 .ghr-item b{display:block;font-size:13px;color:var(--t0);font-weight:700;letter-spacing:0;text-transform:none;margin-top:1px}
 .globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
@@ -1929,12 +1948,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-265 — Dashboard bekommt eine 'Fokus-Waehrung' (Default USD, per Chip-Leiste umschaltbar) neben dem Globus: Uebersichtskacheln + volle editierbare Rubrik-Tabellen dieser Waehrung erscheinen jetzt direkt auf dem Dashboard, exakt wie im Referenz-Mockup. Dabei einen Doppel-ID-Bug zwischen FX-Seite und Dashboard gefunden und gefixt (Add-Indicator-Feld/Kartensprung nutzten sonst das falsche, versteckte Element).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-266 — Nutzer-Korrektur: das Dashboard ist eine feste Ausnahme und zeigt NIE waehrungsspezifische Rubrik-Inhalte, daher die 'Fokus-Waehrung' aus VERSION-CHECK-265 komplett zurueckgebaut (nur noch die bestehenden Karten, Schubregler bleibt neben dem Globus, darunter wieder maximal eine HUD-Zeile). Stattdessen FX/Non-FX Detailseiten 1:1 nach Mockup umgebaut: Rubrik-Karten zeigen Indikatoren jetzt als flache Report-Tabelle (Indicator/Actual/Forecast/Previous/Trend-Sparkline/Score/Source) statt einzelner Karten, Kartenkopf reduziert auf Titel+(i) (Verschieben/Loeschen/Stern/Score-Badge nur noch im 5s-Bearbeitungsmodus), neue SCORE-Fusszeile pro Karte, Overview-Kacheln oben unveraendert. Kalender-Tab bewusst nicht angefasst.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-265</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-266</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2141,7 +2160,6 @@ function introLogin(){
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout" id="dashWidgets"></div>
-  <div class="dash-focus-tables" id="dashFocusTables"></div>
   <div class="dash-footer-bar" id="dashFooterBar"></div>
 </div>
 
@@ -6501,6 +6519,25 @@ function miniSparklineSvg(id,col){
   }).join(' ');
   return`<svg class="sb-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/></svg>`;
 }
+// Trend-Sparkline pro Indikator (tech-design-Skill, Nutzer-Wunsch 2026-07-28
+// "Tabellen-Darstellung genau wie auf dem Bild") - ersetzt den bisherigen
+// Text-Chip ("Trend +1"/"Step +0.5 · 1/2") in der TREND-Spalte der neuen
+// Detail-Tabelle. Nutzt ind.valHist (dasselbe max. 4-Punkte-Rohwerte-Array,
+// das auch das Trend-/Step-Modell speist - siehe applyTrendModel()), keine
+// neue Datenquelle noetig. Faellt bei <2 Punkten einfach weg (kein leeres
+// SVG), exakt wie miniSparklineSvg() es fuer die Sidebar schon macht.
+function indSparklineSvg(ind,col){
+  const h=Array.isArray(ind.valHist)?ind.valHist.filter(v=>v!=null&&isFinite(v)):[];
+  if(h.length<2)return'';
+  const min=Math.min(...h),max=Math.max(...h),range=(max-min)||1;
+  const w=36,ht=16,pad=2;
+  const pts=h.map((v,i)=>{
+    const x=pad+(h.length>1?(i/(h.length-1)):0)*(w-2*pad);
+    const y=ht-pad-((v-min)/range)*(ht-2*pad);
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  return`<svg class="ir-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/></svg>`;
+}
 function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
   const allCats=computeSbCats().filter(cat=>curFxMode==='fx'?cat.l==='FX':cat.l!=='FX');
@@ -6619,21 +6656,7 @@ function masonryHTML(items,renderFn){
 // Feld mit deren Zusammenfassungstext, automatisch übernommenem Bias und
 // Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
 function ovCols(){return window.innerWidth>=900?3:window.innerWidth>=600?2:1;}
-// colsOverride (Nutzer-Wunsch 2026-07-28, Dashboard-Fokus-Waehrung): ovCols()
-// selbst richtet sich nach der GESAMTEN Fensterbreite, nicht nach der
-// tatsaechlich verfuegbaren Breite DIESES Aufrufs - auf dem Dashboard steht
-// die Overview-Karte in einer schmaleren Spalte NEBEN dem Globus, wo 3
-// Spalten (Standardwert bei >=900px Fensterbreite) zu breit waeren. Der
-// Aufrufer kennt seinen eigenen Kontext besser als eine globale Fenster-
-// breiten-Heuristik.
-// idPrefix (Nutzer-Wunsch 2026-07-28, Dashboard-Fokus-Waehrung): Tab-Inhalte
-// bleiben beim Wechsel per display:none im DOM erhalten (showTab()), nicht
-// zerstoert/neu erzeugt - rendert diese Karte also z.B. sowohl auf der FX-
-// Detailseite (id-Praefix 'rubCard') ALS AUCH auf dem Dashboard (Praefix
-// 'dashRubCard') fuer dieselbe Rubrik, waeren OHNE unterschiedliche Praefixe
-// zwei Elemente mit identischer id im DOM - document.getElementById()
-// faende dann nur das ERSTE (u.U. das falsche, versteckte) Element.
-function renderOverviewCard(rubs,colsOverride,idPrefix){
+function renderOverviewCard(rubs){
   // Frueher auf die ersten 5 Rubriken gedeckelt - das schnitt bei der Standard-
   // Reihenfolge (siehe mkRubOrder) "Macro & Risk Environment" (Position 6) und
   // "COT Data" (Position 7) ab. Grid ist responsiv (wraps ueber --ovcols),
@@ -6672,31 +6695,32 @@ function renderOverviewCard(rubs,colsOverride,idPrefix){
     // gedaempft grau - ebenfalls direkt aus dem Mockup uebernommen (mehrfach
     // an unabhaengigen Karten verifiziert, siehe Skill-Dokumentation).
     const[blIc,...blWordParts]=BL[rub.bias].split(' ');
-    return`<div class="ind-card ov-field ${glowClass(rub.bias)}" onclick="goToRubCard(${ri},'${idPrefix||'rubCard'}')" title="Jump to the ${escH(rub.name)} card below">
-      <div class="ind-hdr">
-        <span class="ov-name">${escH(rub.name)}</span>
-        <span class="bo on ov-bias" style="--bc:${bco};--bca:${bco}18;cursor:default" title="Bias is taken automatically from this card's score"><span style="color:${bco}">${blIc}</span> <span class="bo-word">${blWordParts.join(' ')}</span></span>
-        <span class="rub-score" style="color:${bco};border-color:${bco}" title="Score of the ${escH(rub.name)} card below">${sc>0?'+':''}${sc}</span>
+    // Kachel-Layout 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28,
+    // zweite Detail-Korrektur): Titel zentriert oben (eigene Zeile, keine
+    // Box/Icon), darunter LINKS die grosse farbige Score-Zahl direkt neben
+    // dem gedaempften Bias-Wort (kein Rahmen/Chip mehr um das Badge - reiner
+    // Text mit kleinem Diamant-Icon davor), darunter der Zusammenfassungs-
+    // satz. Vorher stand alles in EINER Kopf-Zeile mit umrandeten Chips.
+    return`<div class="ov-field2 ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
+      <div class="ov2-title">${escH(rub.name)}</div>
+      <div class="ov2-scoreline">
+        <span class="ov2-score" style="color:${bco}">${sc>0?'+':''}${sc}</span>
+        <span class="ov2-badge" title="Bias is taken automatically from this card's score">${blIc} ${escH(blWordParts.join(' '))}</span>
       </div>
-      <div class="ind-body ov-summary">${txt}</div>
+      <div class="ov2-summary">${txt}</div>
     </div>`;
   }).join('');
   return`<div class="ov-card">
     <div class="ov-card-title">📋 Overview</div>
-    <div class="ov-grid" style="--ovcols:${colsOverride||ovCols()}">${fields}</div>
+    <div class="ov-grid" style="--ovcols:${ovCols()}">${fields}</div>
   </div>`;
 }
-function goToRubCard(ri,idPrefix){
-  idPrefix=idPrefix||'rubCard';
+function goToRubCard(ri){
   const r=getRub(ri);if(!r)return;
   const needsExpand=!!r.collapsed;
-  // idPrefix bestimmt, WELCHE der beiden Ansichten (FX/Non-FX-Detailseite
-  // vs. Dashboard-Fokus-Tabellen) gerade neu gerendert werden muss, damit
-  // das Aufklappen tatsaechlich in der sichtbaren Ansicht ankommt, statt in
-  // der jeweils anderen, per display:none verborgenen.
-  if(needsExpand){r.collapsed=false;save();idPrefix==='dashRubCard'?renderDash():renderDetail();}
+  if(needsExpand){r.collapsed=false;save();renderDetail();}
   const run=()=>{
-    const el=document.getElementById(idPrefix+ri);
+    const el=document.getElementById('rubCard'+ri);
     if(!el)return;
     el.scrollIntoView({behavior:'smooth',block:'center'});
     el.classList.add('rub-flash');
@@ -6711,22 +6735,24 @@ function renderSpecTab(c){
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
-function renderRub(rub,ri,total,idPrefix){
+function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
   const collapsed=rub.collapsed?' collapsed':'';
   const imp=rub.imp?' imp':'';
-  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="${idPrefix||'rubCard'}${ri}">
+  return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
     <div class="rub-hdr" onpointerdown="biasPressStart(event,'rub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-      <button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button>
+      <span class="ind-edit-ctrls"><button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button></span>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
-      ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
-      ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
+      <span class="ind-edit-ctrls">
+        ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
+        ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
+        ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
+        <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
+        <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
+        <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
+        <button class="rdel" onclick="delRub(${ri})">×</button>
+      </span>
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
-      <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
-      <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
-      <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
-      <button class="rdel" onclick="delRub(${ri})">×</button>
     </div>
     <div class="rub-body">
       <!-- SUMMARY AREA -->
@@ -6737,10 +6763,10 @@ function renderRub(rub,ri,total,idPrefix){
         <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(getSym(),r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
-      ${renderInds(rub,ri)}
-      <div class="add-row" style="margin-top:5px">
-        <input class="ai" id="ind-${ri}" placeholder="+ Add indicator (e.g. CPI, NFP, Net Position)..." onkeydown="if(event.key==='Enter'){addInd(${ri});event.preventDefault()}">
-        <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
+      ${renderIndsTable(rub,ri)}
+      <div class="rub-foot">
+        <span class="rub-foot-lbl">${escH(rub.name.toUpperCase())} SCORE</span>
+        <span class="rub-foot-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${(()=>{const sc=rubScore(rub);return(sc>0?'+':'')+sc;})()}</span>
       </div>
     </div>
   </div>`;}
@@ -6801,215 +6827,109 @@ const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Pos
 // .ind-pair-group. Score und Bias jedes Indikators bleiben dabei komplett
 // unangetastet – renderInd() wird unverändert pro Indikator aufgerufen, nur das
 // Wrapping ändert sich.
-function renderInds(rub,ri){
+// Tabellen-Darstellung 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28
+// "änder die Tabellen Darstellung genau wie auf dem Bild") - ersetzt die
+// vorherige Karten-pro-Indikator-Darstellung. Kopfzeile INDICATOR/ACTUAL/
+// FORECAST/PREVIOUS/TREND/SCORE/SOURCE, eine <tr> pro Indikator, TREND als
+// kleine Sparkline statt Text-Chip, SOURCE als reiner Link-Text ohne
+// Dropdown-Pfeil - genau der "reine Lese-Tabelle"-Modus, den der
+// tech-design-Skill von Anfang an als zweiten (bis jetzt nie gebauten) Modus
+// dokumentiert hatte. Editier-Funktionen (Verschieben/Loeschen/Info-Modal/
+// Datenpunkte hinzufuegen) bleiben erhalten, aber hinter dem bestehenden
+// Bearbeitungsmodus (indEditMode, 5s-Long-Press) versteckt - dieselbe
+// Konvention wie die schon vorher Edit-Mode-gated Indikator-Controls.
+function renderIndsTable(rub,ri){
   const inds=rub.indicators||[];
   const total=inds.length;
-  let html='',i=0;
-  while(i<total){
-    const base1=stripPeriodSuffix(inds[i].name).base;
-    const group=IND_PAIR_GROUPS.find(g=>g.includes(base1));
-    // Alle direkt folgenden Indikatoren einsammeln, die zur selben Gruppe gehören.
-    let j=i;
-    if(group)while(j<total&&group.includes(stripPeriodSuffix(inds[j].name).base))j++;
-    if(group&&j-i>=2){
-      let inner='';
-      for(let k=i;k<j;k++)inner+=renderInd(inds[k],ri,k,total);
-      html+=`<div class="ind-pair-group">${inner}</div>`;
-      i=j;
-    }else{
-      html+=renderInd(inds[i],ri,i,total);
-      i+=1;
-    }
-  }
-  return html;
+  const rows=inds.map((ind,ii)=>renderIndRow(ind,ri,ii,rub,total)).join('');
+  return`<div class="tr-scroll"><table class="ind-table">
+    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Trend</th><th>Score</th><th>Source</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="add-row ind-edit-ctrls" style="margin-top:8px">
+    <input class="ai" id="ind-${ri}" placeholder="+ Add indicator (e.g. CPI, NFP, Net Position)..." onkeydown="if(event.key==='Enter'){addInd(${ri});event.preventDefault()}">
+    <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
+  </div>`;
 }
-
-function renderInd(ind,ri,ii,total){
+// Actual/Forecast/Previous/Quelle-Herleitung ist 1:1 aus der vorherigen
+// renderInd() uebernommen (ev-Kalenderpfad vs. ind.research-Feedpfad, inkl.
+// der Dual-Source-Exklusivitaet - siehe CLAUDE.md "EUR-Score flippte..." -
+// und der Revisions-Faerbung) - nur die AUSGABE wechselt von Karte zu
+// Tabellenzelle. Bewusst NICHT mehr Teil dieser Ansicht: die vorher inline
+// aufklappbare Historien-Chart (indHistChart()/<details>) und der
+// Sekundaerquellen-Link (secLink, z.B. der m/m-Link neben y/y) - das Mockup
+// zeigt eine flache Tabelle ohne Aufklapp-Funktion; der (i)-Info-Button
+// (jetzt im Bearbeitungsmodus) fuehrt weiterhin zum Score-Modal.
+function renderIndRow(ind,ri,ii,rub,total){
   const bco=bCol(ind.bias);
-  let datePart='';
-  if(ind.date){const{day,mo}=fmtDate(ind.date);datePart+=`<button class="dbadge" onclick="openDateM(${ri},${ii})">📅 <span>${day} ${mo}</span></button>`;}
-  if(ind.interval){datePart+=`<button class="ibadge" onclick="openDateM(${ri},${ii})">${icn('refresh',11)} <span>${escH(ind.interval)}</span></button>`;}
-  // ind.noDate (Nutzer-Wunsch 2026-07-22): Indikator hat grundsaetzlich kein
-  // Release-Datum (CB Tone, Geopolitics, ...) - die "+ Date"-Einladung
-  // bewusst NICHT zeigen, egal welche Kompakt-Stufe aktiv ist (die alten
-  // compact-view/-view2-CSS-Regeln haetten sie bei Stufe 1 weiter angezeigt).
-  // Bleibt trotzdem als leerer, klickbarer Slot bestehen (gleiche Spalten-
-  // breite wie die anderen Badges), damit man die Markierung jederzeit ueber
-  // denselben Klick wieder aufheben kann.
-  if(!ind.date&&!ind.interval){datePart=ind.noDate?`<button class="add-date-btn" onclick="openDateM(${ri},${ii})" title="No release date for this indicator - tap to change"></button>`:`<button class="add-date-btn" onclick="openDateM(${ri},${ii})">📅 Date</button>`;}
-  // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben seit dem
-  // Dual-Source-Fix (siehe CLAUDE.md "EUR-Score flippte...") volle
-  // Exklusivitaet gegenueber dem Kalender-Pfad fuer Bias/Werte-Historie/
-  // Trend in syncIndicatorBiases() - dieser Render-Pfad hier rief
-  // findIndEvent() aber unabhaengig davon weiter auf und zeigte bei einem
-  // (falsch unter der Waehrung einsortierten) Kalender-Treffer dessen Werte
-  // an, obwohl die Karte eigentlich vom Feed gespeist wird (Bugreport
-  // 2026-07-20: EUR PPI zeigte auf der Karte einen deutschen National-
-  // Release, der Chart darunter zurecht den echten Eurozone-Wert). Gleiche
-  // Exklusivitaetsregel jetzt auch hier.
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
-  let dataPart='';
+  let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',srcHtml='<span class="ir-dash">–</span>';
   if(ev){
     const ac=actualColor(ev);
-    // Quelle: kuratierten investing.com-Link des Indikators bevorzugen (sonst
-    // erschiene hier immer der generische Forex-Factory-Link, obwohl ein
-    // passender investing.com-Link hinterlegt ist).
     const cs=indResearchSource(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base)||(ind.research&&ind.research.source);
     const ilKey1=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb1=cs||'https://www.forexfactory.com/calendar';
     const fin1=(indLinkCustom&&indLinkCustom[ilKey1])||fb1;
-    const srcLink=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
-    // m/m-Link auch im Live-Feed-Zweig zeigen (secondarySource bleibt beim
-    // Overlay erhalten) – sonst erschiene der m/m-Link nur bei Indikatoren
-    // ohne Live-Daten.
-    const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${escH(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
-    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="onIndDetailsToggle(this,'${ind.id}')">
-      <summary class="ind-data-sum" title="${escH(ev.name)} · ${fmtDayHdr(ev.date)}">
-        <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(ev.actual)}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(ev.forecast||'–')}</span>
-        <span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span><span class="ind-data-val">${escH(ev.previous||'–')}</span>
-      </summary>
-      <div class="ind-data-body">
-        <div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>
-        ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
-      </div>
-    </details>`;
+    srcHtml=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))}</a>`;
+    actTxt=ev.actual;actCls=ac||'';fcTxt=ev.forecast||'–';prevTxt=ev.previous||'–';
   }else if(ind.research){
     const r=ind.research;
-    // Bonds: Farbe der Akt-Rendite kommt direkt aus dem Vergleich mit vor 15
-    // Tagen (r.bondColor: gruen wenn actual>previous/bullish, rot wenn
-    // actual<previous/bearish, amber wenn gleich/neutral - dieselben
-    // Bias-Farben wie ueberall sonst, aber unabhaengig von einem evtl.
-    // manuell ueberschriebenen ind.bias).
     const ac=r.bond?r.bondColor:(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
-    const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
-    const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
-    const notes=[note2,A.notes.length&&`Actual: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
     const ilKey2=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb2=r.source||'';
     const fin2=(indLinkCustom&&indLinkCustom[ilKey2])||fb2;
-    const srcLink=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Quelle nicht hinterlegt</span>';
-    const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
-    const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> <span class="ind-data-val">${dt||'–'}</span><span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> <span class="ind-data-val">${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}</span><span class="ind-data-sep">·</span>`:
-      `<span class="ind-data-lbl">As of:</span> <span class="ind-data-val">${dt||'–'}</span>${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
-    // Revidiertes Previous (Nutzer-Wunsch 2026-07-21): zeigt zusaetzlich den
-    // urspruenglich gemeldeten Wert und faerbt das Previous nach der
-    // Revisions-Richtung (ind.revBias: Aufwaertsrevision bei NFP=gut/gruen,
-    // bei Claims=schlecht/rot - dieselbe LOWER_IS_BETTER-Logik wie ueberall).
-    const revCls=ind.revBias==='bull'?' act-good':ind.revBias==='bear'?' act-bad':'';
-    const prevHtml=r.revisedFrom
-      ?`<span class="ind-data-val${revCls}" title="Revised: first reported as ${escH(r.revisedFrom)}, now restated as ${escH(P.val??'–')}${ind.revBias?` - counts ${ind.revBias==='bull'?'positive':'negative'} at half weight (see score modal)`:''}">${escH(P.val??'–')} <span style="font-size:10px;opacity:.8">(rev. from ${escH(r.revisedFrom)})</span></span>`
-      :`<span class="ind-data-val">${escH(P.val??'–')}</span>`;
-    dataPart=`<details class="ind-data"${indDetailsOpen[ind.id]?' open':''} ontoggle="onIndDetailsToggle(this,'${ind.id}')">
-      <summary class="ind-data-sum" title="Last known value${dt?' · '+dt:''}">
-        <span class="ind-data-lbl">Actual</span><span class="ind-data-act${ac?' '+ac:''}">${escH(A.val)}</span>
-        ${(r.bond||r.cot||r.sent)?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Forecast</span><span class="ind-data-val">${escH(F.val??'–')}</span>`}
-        ${r.sent?'':`<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous</span>${prevHtml}`}
-      </summary>
-      <div class="ind-data-body">
-        <div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>
-        ${indDetailsOpen[ind.id]?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}
-      </div>
-    </details>`;
+    srcHtml=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))}</a>`:'<span class="ir-dash">–</span>';
+    actTxt=A.val;actCls=ac||'';
+    fcTxt=(r.bond||r.cot||r.sent)?'–':(F.val??'–');
+    if(r.sent)prevTxt='–';
+    else{
+      prevTxt=P.val??'–';
+      if(r.revisedFrom)prevCls=ind.revBias==='bull'?'act-good':ind.revBias==='bear'?'act-bad':'';
+    }
   }
-  // Reihenfolge/Ausrichtung des rechten Icon-Clusters (Nutzer-Wunsch
-  // 2026-07-22): [Zeitintervall-Badge] [Trend/Step-Chip] [i] [★] [▲] [▼] [✕] -
-  // beide variablen-Text-Badges bekommen eine feste Mindestbreite +
-  // rechtsbuendigen Text (.trend-chip/.ibadge/.add-date-btn CSS), damit ihre
-  // Box IMMER an derselben Stelle beginnt, egal ob "Trend 0/2" oder "Step
-  // +0.5 · 1/2"/"daily" oder "quarterly" drinsteht - wie eine Tabellenspalte.
-  // Fehlt der Trend-Chip komplett (Bond-Renditen, NO_TREND_RUBS, keine Daten),
-  // wird ein UNSICHTBARER Platzhalter derselben Breite gerendert, damit die
-  // Spalte nicht wandert. Ausnahme: das Zeitintervall "every 6-8 weeks"
-  // (Central Bank Rate) ist bewusst breiter als die Spalte und ragt heraus -
-  // alle anderen Intervalle (daily/weekly/monthly/quarterly) passen hinein.
-  const trendChipHtml=(()=>{
-    // Trend-Chip: erscheint an JEDEM Indikator mit Trend-Daten. Aktiv:
-    // "Trend +1/-1" (bzw. ±0.5 bei Halbgewicht mit Forecast). Ohne
-    // Forecast additiv: stepDriven allein zeigt die Basis (±0.5),
-    // zusaetzlich bestaetigter trendDriven-Bonus zeigt die Summe
-    // (±1,5 normal/±1 Core-Paar). Neutral: Fortschritt "0/2"/"1/2"
-    // Richtung 2-Schritt-Kriterium (gedaempfter Stil, nur mit Forecast
-    // relevant). Klick/Long-Press oeffnet das Detail-Modal mit den
-    // letzten Actual/Previous-Werten hinter dem Check.
-    const isBond=BOND_HALF_PT.has(stripPeriodSuffix(ind.name).base);
-    // SCORE_ZERO ("2Y/10Y Spread"): traegt NIE etwas zum Score bei, egal was
-    // Bias/Trend sagen (indScoreParts) - ein Trend-Chip waere dort schlicht
-    // falsch (er wuerde einen Score-Effekt suggerieren, den es nicht gibt).
-    const isScoreZero=SCORE_ZERO.has(stripPeriodSuffix(ind.name).base);
-    const rub2=getRub(ri);
-    const placeholder='<span class="trend-chip" style="visibility:hidden"></span>';
-    // Kein Trend fuer Bond-Renditen (Nutzer-Entscheid 2026-07-05): weder
-    // Chip noch Score-Bonus (siehe NO_TREND_RUBS/indScoreParts) - gilt
-    // indikator-spezifisch (isBond) weiterhin, auch nachdem die Renditen
-    // aus Interest Rates in die Inflation-Karte umgezogen sind (Nutzer-
-    // Wunsch 2026-07-20), nicht nur rubrik-weit. COT/Sentiment-gespeiste
-    // Indikatoren sind aus denselben Gruenden ausgeschlossen (siehe
-    // applyCotDataFeed/applySentimentFeed: "bekommt bewusst KEINEN Trend-
-    // Bonus" - WoW-Aenderung bzw. reine Extremwert-Logik ist dort schon das
-    // eigene Momentum-Signal) - sonst wuerde die untenstehende "Chip bei
-    // jedem Wert"-Regel dort einen permanent bei "Trend 0/2" eingefrorenen,
-    // bedeutungslosen Chip zeigen (valHist wird fuer diese Pfade nie
-    // befuellt).
-    if((rub2&&NO_TREND_RUBS.has(rub2.name))||isBond||isScoreZero||(ind.research&&(ind.research.cot||ind.research.sent)))return placeholder;
-    // Chip soll bei JEDEM Indikator MIT WERT erscheinen (Nutzer-Wunsch
-    // 2026-07-22: bei CHF und anderen Assets fehlte er komplett bei vielen
-    // Indikatoren, die zwar einen Actual-Wert zeigen, aber noch nie durch
-    // trackIndValues()/den Trend-Engine-Lauf liefen - z.B. Indikatoren ohne
-    // eigene Live-Feed-Abdeckung, die nur auf der einmaligen Recherche-
-    // Erstbefuellung (IND_RESEARCH_DATA) stehen). Faellt mangels valHist auf
-    // den neutralen "Trend 0/2"-Fortschritt zurueck (indTrendProgress liefert
-    // dafuer sicher 0, kein Crash) - Ausnahme bleiben Bonds (oben bereits
-    // ausgeschlossen).
-    const hasValue=ind.research&&ind.research.actual!=null&&ind.research.actual!=='';
-    const hasData=hasValue||(ind.valHist&&ind.valHist.length)||ind.stepDriven||(ind.trendBias&&ind.trendBias!=='neu');
-    if(!hasData)return placeholder;
-    const mag=indTrendAdjMag(ind,rub2);
-    const magS=mag===1?'1':'0.5';
-    const fmtMag=v=>v===1.5?'1.5':v===1?'1':'0.5';
-    let lbl,cls='';
-    if(ind.stepDriven){
-      // "Trend" steht nur am Chip, wenn das 2-Schritt-Kriterium wirklich
-      // erfuellt ist (trendDriven). Das blosse 1-Schritt-Basissignal
-      // heisst "Step" und traegt den Fortschritt (1/2) - vorher stand
-      // dort irrefuehrend "Trend +0.5", obwohl kein bestaetigter Trend
-      // vorlag (z.B. JPY CPI y/y mit 1.5 -> 1.4 -> 1.5).
-      const sign=ind.bias==='bull'?'+':'−';
-      cls=ind.bias==='bull'?' bull':' bear';
-      lbl=ind.trendDriven?'Trend '+sign+fmtMag(0.5+mag):'Step '+sign+'0.5 · 1/2';
-    }else if(ind.trendBias==='bull'){cls=' bull';lbl='Trend +'+magS;}
-    else if(ind.trendBias==='bear'){cls=' bear';lbl='Trend −'+magS;}
-    else{cls=' neu';lbl='Trend '+(isBond?'0':indTrendProgress(ind,ind.name)+'/2');}
-    return`<span class="trend-chip${cls}" onclick="openTrendInfo(${ri},${ii})" title="Tap to see the values behind the trend check">📈 ${lbl}</span>`;
-  })();
-  return`<div class="ind-card ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}">
-    <div class="ind-hdr" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-      <input class="ind-inp" value="${escH(ind.displayName||ind.name)}" oninput="getInd(${ri},${ii}).displayName=this.value;saveSoon()" onchange="getInd(${ri},${ii}).displayName=this.value;syncMacroRub(${ri});save()" placeholder="Indicator...">
-      ${ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, ⚙️ to configure)">${icn('link',12)}</span>`:rubAutoDerived(getSym(),getRub(ri))?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
-      ${datePart}
-      ${trendChipHtml}
-      <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
+  const spark=indSparklineSvg(ind,bco);
+  const sc=indScore(ind,rub);
+  const lockIc=ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, gear icon to configure)">${icn('link',11)}</span>`:rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
+  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
+    <td class="ir-name"><span class="ir-name-txt">${escH(ind.displayName||ind.name)}</span>${lockIc}
       <span class="ind-edit-ctrls">
+        <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
         <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
         <button class="idel2" onclick="delInd(${ri},${ii})">×</button>
       </span>
-    </div>
-    ${dataPart}
-    <div class="ind-body">
-      ${(ind.points||[]).map((pt,pi)=>`<div class="sp" style="--spc:${bco}">
-        <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="syncMacroRub(${ri});save()">${escH(pt.text||pt||'')}</textarea>
+    </td>
+    <td class="ir-act${actCls?' '+actCls:''}">${escH(actTxt)}</td>
+    <td class="ir-fc">${escH(fcTxt)}</td>
+    <td class="ir-prev${prevCls?' '+prevCls:''}">${escH(prevTxt)}</td>
+    <td class="ir-trend">${spark||'<span class="ir-dash">–</span>'}</td>
+    <td class="ir-score" style="color:${bco}">${fmtScNum(sc)}</td>
+    <td class="ir-src">${srcHtml}</td>
+  </tr>`;
+  // Datenpunkte (ind.points, freie Stichpunkte je Indikator) bleiben
+  // erhalten (kein Datenverlust bei bereits vorhandenen Punkten), sind aber
+  // NUR sichtbar, wenn welche existieren ODER der Bearbeitungsmodus aktiv
+  // ist - eine leere, standardmaessig unsichtbare Zeile wuerde sonst jeden
+  // Indikator ohne Punkte unnoetig verlaengern (Mockup zeigt diese Zeile
+  // nirgends, da im Testdatensatz offenbar ueberall leer).
+  const hasPoints=ind.points&&ind.points.length;
+  const pointsRow=`<tr class="ind-points-row${hasPoints?'':' ind-edit-ctrls'}"><td colspan="7"><div class="ind-points-list">
+    ${(ind.points||[]).map((pt,pi)=>`<div class="ind-point-item">
+      <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="syncMacroRub(${ri});save()">${escH(pt.text||pt||'')}</textarea>
+      <span class="ind-edit-ctrls">
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},-1)" ${pi===0?'disabled':''}>▲</button>
         <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},1)" ${pi===(ind.points.length-1)?'disabled':''}>▼</button>
         <button class="sp-del" onclick="delPt(${ri},${ii},${pi})">×</button>
-      </div>`).join('')}
-      <div class="add-row" style="margin-top:3px">
-        <input class="ai" id="pt-${ri}-${ii}" placeholder="+ Add data point..." onkeydown="if(event.key==='Enter'){addPt(${ri},${ii});event.preventDefault()}" style="font-size:12px;padding:5px 7px">
-        <button class="add-btn" style="background:${bco}15;border-color:${bco}44;color:${bco};border:1px solid;padding:5px 7px" onclick="addPt(${ri},${ii})">＋</button>
-      </div>
+      </span>
+    </div>`).join('')}
+    <div class="add-row ind-edit-ctrls" style="margin-top:3px">
+      <input class="ai" id="pt-${ri}-${ii}" placeholder="+ Add data point..." onkeydown="if(event.key==='Enter'){addPt(${ri},${ii});event.preventDefault()}" style="font-size:12px;padding:5px 7px">
+      <button class="add-btn" style="background:${bco}15;border-color:${bco}44;color:${bco};border:1px solid;padding:5px 7px" onclick="addPt(${ri},${ii})">＋</button>
     </div>
-  </div>`;}
+  </div></td></tr>`;
+  return mainRow+pointsRow;
+}
 
 // ── NOTES SUB-TAB ──
 function renderNotesSubTab(c){
@@ -7094,13 +7014,6 @@ function updateSidebarSelection(){
   });
 }
 function selSym(id){selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
-// Wechselt die auf dem Dashboard neben dem Globus fokussierte Waehrung
-// (tech-design-Skill, Nutzer-Wunsch 2026-07-28) - nutzt bewusst dasselbe
-// globale `selId` wie selSym()/die FX-Detailseite (EINE fokussierte
-// Waehrung app-weit, kein zweiter, Dashboard-eigener Auswahlzustand), ruft
-// aber renderDash() statt renderDetail() auf, da wir bereits auf dem
-// Dashboard sind und nicht zur FX-Seite wechseln wollen.
-function setDashFocus(id){selId=id;renderDash();}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite und wechselt dabei automatisch auf den passenden FX/Non-FX-Tab.
 function gotoSym(id){
@@ -7434,24 +7347,14 @@ function syncMacroIndAddRemove(ri,action,name){
 }
 function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function mvInd(ri,ii,d){const r=getRub(ri);if(!r||!r.indicators)return;pushU();mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
-// Container-scoped statt document.getElementById() (Nutzer-Wunsch 2026-07-28,
-// Dashboard-Fokus-Waehrung): showTab() versteckt Tabs per display:none statt
-// sie zu entfernen - #detail (FX/Non-FX-Seite) UND #dashFocusTables
-// (Dashboard-Fokus-Tabellen) koennen daher gleichzeitig ein Element mit
-// id="ind-N" enthalten (dieselbe Rubrik-Liste, ueber renderRub()/renderInds()
-// an zwei Stellen gerendert) - ein normales getElementById() faende IMMER
-// nur das ERSTE (u.U. das falsche, versteckte) Element. Scope auf den
-// aktuell sichtbaren Container ein.
 function addInd(ri){
-  const scope=document.querySelector(curPage==='dash'?'#dashFocusTables':'#detail');
-  const inp=scope&&scope.querySelector('#ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
+  const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
   r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function addPt(ri,ii){
-  const scope=document.querySelector(curPage==='dash'?'#dashFocusTables':'#detail');
-  const inp=scope&&scope.querySelector(`#pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
+  const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
-  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();if(curPage==='dash')renderDash();}
+  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();}
 function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);syncMacroRub(ri);save();renderDetail();}
 function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(!ind||!ind.points)return;pushU();mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
 
@@ -9186,7 +9089,7 @@ function gotoIndicatorByNotif(id){
   gotoSym(n.symId);
   setTimeout(()=>{
     const d=document.getElementById('detail');if(!d)return;
-    const card=[...d.querySelectorAll('.ind-card')].find(el=>el.dataset.indbase===n.base);
+    const card=[...d.querySelectorAll('.ind-row')].find(el=>el.dataset.indbase===n.base);
     if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('ind-flash');setTimeout(()=>card.classList.remove('ind-flash'),1800);}
   },150);
 }
@@ -10443,26 +10346,16 @@ function renderDash(){
         </div>
         <div class="gt-pct" id="globeThrottlePct">0%</div>
       </div>`;
-      // Fokus-Waehrung NEBEN dem Globus (Nutzer-Praezisierung 2026-07-28: das
-      // Globus-Mockup zeigt zwar "FX" im Tab aktiv, ist aber trotzdem als
-      // Dashboard-Ziel gemeint - "da steht zwar fx ist ausgewaehlt aber es
-      // ist das Ziel fuer das Dashboard"). Wiederverwendet das bereits
-      // bestehende globale `selId`/`getSym()`-Konzept (Default 'USD', exakt
-      // wie im Mockup) statt eine zweite, Dashboard-eigene Auswahl zu bauen -
-      // FX-Tab und Dashboard zeigen dadurch konsistent dieselbe "gerade
-      // fokussierte" Waehrung. `setDashFocus()` (neu) wechselt sie per Chip-
-      // Leiste, ohne den Tab zu wechseln.
-      const fs=getSym(),fbco=bCol(fs.bias),fsc=symScoreCmp(fs);
-      const focusCol=`<div class="dash-focus-col">
-        <div class="dash-focus-hdr">
-          ${FX_FLAG[fs.id]?`<span class="dash-focus-flag">${FX_FLAG[fs.id]}</span>`:''}
-          <span class="dash-focus-name">${escH(fs.id)}</span>
-          <span class="dash-focus-score" style="color:${fbco};border-color:${fbco}">${fsc>0?'+':''}${fsc.toFixed(1)}</span>
-          <span class="dash-focus-switch">${FX.map(id=>`<button class="dfc-chip${id===fs.id?' on':''}" onclick="setDashFocus('${id}')" title="Focus ${id} on the Dashboard">${id}</button>`).join('')}</span>
-        </div>
-        ${renderOverviewCard(fs.rubrics||[],2,'dashRubCard')}
-      </div>`;
-      content=`<div class="globe-focus-split"><div class="globe-main-row"><div class="globe-host"></div>${throttle}</div>${focusCol}</div>
+      // Dashboard bleibt bewusst eine AUSNAHME (Nutzer-Korrektur 2026-07-28,
+      // nach einem kurzen Zwischenstand mit Fokus-Waehrung+Rubrik-Tabellen
+      // neben/unter dem Globus): "das hatte ich dir gesagt das das am
+      // Dashboard eine Ausnahme ist benutz nur die bestehenden Karten und
+      // ignorier das da Inflation usw fuer eine Waehrung steht" - der
+      // Globus bekommt NUR den Schubregler daneben, darunter maximal EINE
+      // Datenzeile (das bestehende globe-hud-readout, s.u.), keine
+      // waehrungs-spezifischen Rubrik-Inhalte mehr. Siehe Skill-Abschnitt
+      // "Dashboard bleibt Ausnahme" fuer die vollstaendige Begruendung.
+      content=`<div class="globe-main-row"><div class="globe-host"></div>${throttle}</div>
         <div class="globe-btn-row">
           <button class="btn scan-btn" onclick="startScanBroadcast()" title="Re-scan and beam fresh data to every card">${icn('zap',13)} INITIATE SCAN</button>
           <button class="btn scan-btn boost-btn" onclick="startGlobeBoost()" title="Afterburner: brief burst to top speed, then eases back down">${icn('flame',13)} BOOST</button>
@@ -10807,11 +10700,6 @@ function renderDash(){
     <div class="dash-zone-right">${zones.right.join('')}</div>
     <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
   `;
-  const focusEl=document.getElementById('dashFocusTables');
-  if(focusEl){
-    const fs=getSym(),frubs=fs.rubrics||[];
-    focusEl.innerHTML=frubs.length?`<div class="dash-focus-tables-hdr">${escH(fs.id)} — full breakdown</div>${masonryHTML(frubs,(rub,ri)=>renderRub(rub,ri,frubs.length,'dashRubCard'))}`:'';
-  }
   const footerEl=document.getElementById('dashFooterBar');
   if(footerEl)footerEl.innerHTML=dashFooterBarHtml();
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
