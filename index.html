@@ -336,25 +336,10 @@ svg.ic{vertical-align:-2px;flex:none}
 @media (hover:hover){.compact-sw:hover{border-color:rgba(var(--blue-rgb),.5)}}
 .compact-sw .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--t3);transition:transform .18s cubic-bezier(.2,.7,.3,1),background .15s}
 .compact-sw.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue)}
-.compact-sw.on .knob{transform:translateX(9px);background:var(--blue)}
-/* Stufe 2 (max): Knopf ganz rechts + Amber-Ton - blendet zusaetzlich Datum/
-   Perioden-Badges, den i-Knopf und den Trend-Chip der Indikatoren aus. */
-.compact-sw.max{background:rgba(255,171,64,.14);border-color:var(--amber)}
-.compact-sw.max .knob{transform:translateX(18px);background:var(--amber)}
-/* Kompaktansicht aktiv: Stichpunkte (Indikator-Datenpunkte) und
-   Rubrik-Zusammenfassungen ausblenden, Karten ruecken enger zusammen. */
-body.compact-view .ind-body,body.compact-view .rub-summary{display:none}
-/* Kompakt-Stufe 1 (mittig) blendet zusaetzlich JEDE Datums-/Perioden-
-   Anzeige aus (Nutzer-Wunsch 2026-07-15, verschaerft 2026-07-22: nicht nur
-   die Perioden-Badge selbst, sondern auch das Release-Datum und die
-   "+ Date"-Einladung bei Indikatoren ohne eingetragenes Datum - "gar keine
-   Datums- oder Zeitperioden sehen, auch nicht die wo nix eingetragen ist")
-   - eine Stufe frueher als der Rest der Info-/Trend-Badges unten. */
-body.compact-view .ind-card .ibadge,body.compact-view .ind-card .dbadge,body.compact-view .ind-card .add-date-btn{display:none}
-/* Kompakt-Stufe 2 (max): zusaetzlich an den Indikator-Karten den i-Info-
-   Knopf und den Trend-Status-Chip ausblenden - es bleiben nur Name, Werte
-   und Bias. */
-body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{display:none}
+.compact-sw.on .knob{transform:translateX(18px);background:var(--blue)}
+/* Nur noch 2 Stufen (Nutzer-Wunsch 2026-07-29): Stufe 1 zeigt alles inkl. der
+   Rubrik-Zusammenfassungen, Stufe 2 blendet nur die Zusammenfassungen aus. */
+body.compact-view .rub-summary{display:none}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}
@@ -450,14 +435,6 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
-/* ── RUBRIC FOOTER SCORE (tech-design-Skill 2026-07-28, ersetzt den
-   Score-Badge im Kartenkopf als primaere, immer sichtbare Score-Anzeige -
-   der Kopf-Badge bleibt zusaetzlich im Bearbeitungsmodus erreichbar) ── */
-.rub-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd)}
-.rub-foot-lbl{font-size:10.5px;font-weight:800;letter-spacing:.8px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.rub-foot-score{font-size:15px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:6px;padding:2px 10px;cursor:pointer;line-height:1.3}
-/* ── INDICATOR ── */
-.ind-card{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--bd2);border-radius:var(--rs);margin-bottom:5px;transition:border-color .15s}
 .ov-card{background:var(--bg2);border:3px solid var(--bd);border-radius:var(--rs);padding:9px;margin-bottom:9px}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
@@ -472,10 +449,9 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
    umrandeten Badges. */
 .ov-field2{margin:0;cursor:pointer;display:flex;flex-direction:column;gap:9px;padding:14px 12px;transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field2:hover{border-color:var(--bd2);transform:translateY(-1px)}}
-.ov2-title{text-align:center;font-size:15px;font-weight:800;color:var(--t0);letter-spacing:1px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.ov2-scoreline{display:flex;align-items:baseline;gap:10px}
-.ov2-score{font-size:26px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.ov2-badge{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--t3)}
+.ov2-titleline{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ov2-title{font-size:15px;font-weight:800;color:var(--t0);letter-spacing:1px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-score{font-size:20px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 .ov2-summary{font-size:13px;line-height:1.5;color:var(--t3);white-space:pre-wrap}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
@@ -507,30 +483,8 @@ body.compact-view2 .ind-card .rinfo,body.compact-view2 .ind-card .trend-chip{dis
 .tr-scroll{overflow-x:auto;overflow-y:hidden}
 .tr-svg{display:block}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
-/* Pärchen-Indikatoren (z.B. CPI + Core CPI): gemeinsame Umrandung, jeweils
-   eigene Bias-Farbe oben/unten – Score/Bias bleiben pro Indikator unabhängig. */
-.ind-pair-group{margin-bottom:5px}
-.ind-pair-group .ind-card{margin-bottom:0;border-radius:0}
-.ind-pair-group .ind-card:first-child{border-top-left-radius:var(--rs);border-top-right-radius:var(--rs);border-bottom:none}
-.ind-pair-group .ind-card:last-child{border-bottom-left-radius:var(--rs);border-bottom-right-radius:var(--rs);border-top:none}
-.ind-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px;background:var(--bg5);border-radius:var(--rs) var(--rs) 0 0;border-bottom:1px solid var(--bd);flex-wrap:wrap}
-.ind-inp{background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:600;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;flex:1}
-.ind-inp::placeholder{color:var(--t3)}
-/* date badge */
-.dbadge{display:inline-flex;align-items:center;gap:3px;background:var(--bg0);border:1px solid rgba(var(--purple-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s}@media (hover:hover){.dbadge:hover{border-color:rgba(var(--purple-rgb),.4)}}
-.dbadge span{font-size:10px;color:var(--purple);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.ibadge{display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;background:var(--bg0);border:1px solid rgba(var(--blue-rgb),.2);border-radius:4px;padding:2px 5px;flex-shrink:0;cursor:pointer;transition:border-color .12s;min-width:100px}@media (hover:hover){.ibadge:hover{border-color:rgba(var(--blue-rgb),.4)}}
-.ibadge span{font-size:10px;color:var(--blue);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:600}
-.add-date-btn{background:none;border:1px dashed var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;padding:2px 5px;cursor:pointer;flex-shrink:0;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:100px;text-align:right}@media (hover:hover){.add-date-btn:hover{border-color:rgba(var(--purple-rgb),.4);color:var(--purple)}}
-.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1}@media (hover:hover){.ind-card:hover .imv{opacity:.35}}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.05;cursor:default}
-.trend-chip{font-size:9.5px;font-weight:700;color:var(--blue);background:rgba(var(--blue-rgb),.12);border:1px solid rgba(var(--blue-rgb),.35);border-radius:5px;padding:1.5px 5px;flex-shrink:0;white-space:nowrap;line-height:1.4;cursor:pointer;min-width:92px;text-align:right}
-.trend-chip.neu{color:var(--t3);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.16)}
-/* Bias-Farben statt Blau (Nutzer-Wunsch 2026-07-22): der Chip zeigt einen
-   echten Score-Effekt (+/-), soll also wie jedes andere Bias-Element in der
-   App gruen/rot statt einer dritten, bedeutungslosen Farbe tragen. */
-.trend-chip.bull{color:var(--green);background:rgba(var(--green-rgb),.12);border-color:rgba(var(--green-rgb),.35)}
-.trend-chip.bear{color:var(--red);background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.35)}
-.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.12;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.ind-card:hover .idel2{opacity:.4}}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
+.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0 1px;flex-shrink:0;opacity:.35;transition:all .12s;line-height:1}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.1;cursor:default}
+.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;flex-shrink:0;opacity:.35;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
 /* Bearbeitungsmodus fuer Indikator-Zeilen (tech-design-Skill 2026-07-28,
    Nutzer-Wunsch): Verschieben/Loeschen nur sichtbar, wenn der Bearbeitungs-
    modus aktiv ist (5s-Long-Press auf der Indikator-Liste, gleiches Muster
@@ -558,14 +512,15 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ir-fc,.ir-prev{color:var(--t2)}
 .ir-dash{color:var(--t3)}
 .ir-score{font-weight:800}
-.ir-src{max-width:110px;overflow:hidden;text-overflow:ellipsis}
-.ir-src a{color:var(--t3);text-decoration:none;font-size:11px;transition:color .12s}
-@media (hover:hover){.ir-src a:hover{color:var(--blue)}}
-.ind-points-row td{padding:0 6px 8px;text-align:left}
-.ind-points-list{display:flex;flex-direction:column;gap:4px}
-.ind-point-item{display:flex;align-items:flex-start;gap:4px}
+.ind-row{cursor:pointer}
 .ind-row.ind-flash>td{animation:indFlash 1.8s ease-out}
-.ind-body{padding:6px 8px}
+/* Ausklappbare Detail-Zeile pro Indikator (Nutzer-Wunsch 2026-07-29,
+   Rueckkehr zum vorherigen Verhalten "wenn man den Indikator abtippt klappt
+   er sich aus"): zeigt Datum des letzten Updates, Quelle + Revisions-Hinweis
+   und die Historien-Grafik (indHistChart(), lazy befuellt beim ersten
+   Aufklappen ueber toggleIndDetailRow()). */
+.ind-detail-row td{padding:0;background:var(--bg5);border-bottom:1px solid var(--bd)}
+.ind-detail-row .ind-data-body{padding-top:2px}
 .ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
 .ind-data-sum::-webkit-details-marker{display:none}
@@ -772,19 +727,12 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
-/* Ueberbrueckt das schlagartige Aufklappen von <details class="ind-data">:
-   Chart+Quelle faden/gleiten beim OEFFNEN kurz ein statt einfach dazustehen.
-   Nur die Aufloesung des Inhalts wird animiert, nicht die native Hoehe des
-   <details> selbst (crossbrowser unzuverlaessig) - siehe onIndDetailsToggle(). */
+/* Ueberbrueckt das schlagartige Aufklappen der Indikator-Detail-Zeile:
+   Chart+Quelle faden/gleiten beim OEFFNEN kurz ein statt einfach dazustehen -
+   siehe toggleIndDetailRow(). */
 @keyframes indDataReveal{0%{opacity:0;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
 .ind-data-body.ind-data-reveal{animation:indDataReveal .18s ease-out both}
 @media(prefers-reduced-motion:reduce){.ind-data-body.ind-data-reveal{animation:none}}
-/* subpoints */
-.sp{display:flex;align-items:center;gap:5px;margin-bottom:3px;padding:4px 7px;background:var(--bg6);border-radius:var(--rss);border-left:2px solid var(--spc)}@media (hover:hover){.sp:hover{background:#2c3a52}}
-.sp-txt{flex:1;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:19px}
-.sp-txt:focus{color:var(--t0)}
-.sp-mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:0 1px;flex-shrink:0;opacity:.12;transition:all .1s;line-height:1;margin-top:2px}@media (hover:hover){.sp:hover .sp-mv{opacity:.35}}@media (hover:hover){.sp-mv:hover{opacity:1!important;color:var(--blue)}}.sp-mv:disabled{opacity:.04;cursor:default}
-.sp-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .1s;line-height:1;margin-top:1px}@media (hover:hover){.sp:hover .sp-del{opacity:.5}}@media (hover:hover){.sp-del:hover{opacity:1!important}}
 /* ── FULL PAGE ── */
 .pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
@@ -1591,7 +1539,7 @@ body.dash-edit-mode .mw-bar{display:flex}
   .bo{font-size:13px;padding:6px 13px}
   .st{font-size:14px;padding:7px 16px}
   .slbl{font-size:11px}
-  .rtxt,.sp-txt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.ind-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
+  .rtxt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
   .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
   .dw{padding:16px}
   .dw-t{font-size:12.5px}
@@ -1948,12 +1896,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-266 — Nutzer-Korrektur: das Dashboard ist eine feste Ausnahme und zeigt NIE waehrungsspezifische Rubrik-Inhalte, daher die 'Fokus-Waehrung' aus VERSION-CHECK-265 komplett zurueckgebaut (nur noch die bestehenden Karten, Schubregler bleibt neben dem Globus, darunter wieder maximal eine HUD-Zeile). Stattdessen FX/Non-FX Detailseiten 1:1 nach Mockup umgebaut: Rubrik-Karten zeigen Indikatoren jetzt als flache Report-Tabelle (Indicator/Actual/Forecast/Previous/Trend-Sparkline/Score/Source) statt einzelner Karten, Kartenkopf reduziert auf Titel+(i) (Verschieben/Loeschen/Stern/Score-Badge nur noch im 5s-Bearbeitungsmodus), neue SCORE-Fusszeile pro Karte, Overview-Kacheln oben unveraendert. Kalender-Tab bewusst nicht angefasst.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-267 — Kompakt-Regler auf 2 Stufen reduziert (Stufe 1: alles inkl. Rubrik-Zusammenfassungen, Stufe 2: nur die Zusammenfassungen ausgeblendet). Stichpunkte-Funktion (freie Datenpunkte je Indikator) komplett entfernt. Indikator-Tabelle verliert die SOURCE-Spalte - stattdessen klappt ein Klick auf eine Zeile eine Detail-Zeile auf (Datum des letzten Updates, Quelle, Historien-Grafik, plus neu: was der Previous-Wert vor einer Revision war). Karten-Score wandert vom Fusszeilen-Eintrag zurueck in den Kartenkopf, direkt neben das (i)-Icon, immer sichtbar (nicht mehr im Bearbeitungsmodus versteckt). Overview-Kacheln zeigen Titel+Score wieder in einer Zeile, ohne das Bullish/Neutral/Bearish-Wort daneben.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-266</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-267</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -3292,26 +3240,27 @@ function normCompactLevel(v){
   if(v===true)return 1;
   if(v===false)return 0;
   const n=Number(v);
-  return n>=2?2:n>=1?1:0;
+  return n>=1?1:0;
 }
+// Nur noch 2 Stufen (Nutzer-Wunsch 2026-07-29, vorher 3): Stufe 1 zeigt alles
+// inkl. der Rubrik-Zusammenfassungen, Stufe 2 blendet nur die Zusammenfassungen
+// aus (die Stichpunkte-Funktion, die vorher bei Stufe 1 mitausgeblendet wurde,
+// ist komplett entfernt - siehe removeAllPts-Merksatz weiter unten).
 const COMPACT_TITLES=[
-  'Compact view off - tap to hide bullet points, summaries & interval badge (stage 1 of 2)',
-  'Compact stage 1 (bullet points, summaries & interval badge hidden) - tap for stage 2: also hide date, info button & trend chip',
-  'Compact stage 2 (max) - tap to show everything again'
+  'Summaries visible (stage 1 of 2) - tap to hide the rubric summaries',
+  'Summaries hidden (stage 2 of 2) - tap to show them again'
 ];
 function applyCompactView(){
   document.body.classList.toggle('compact-view',compactView>=1);
-  document.body.classList.toggle('compact-view2',compactView>=2);
 }
 function updCompactSw(){
   const b=document.getElementById('compactSw');
   if(!b)return;
   b.classList.toggle('on',compactView===1);
-  b.classList.toggle('max',compactView===2);
   b.title=COMPACT_TITLES[compactView]||COMPACT_TITLES[0];
 }
 function toggleCompactView(){
-  compactView=(compactView+1)%3;
+  compactView=(compactView+1)%2;
   localStorage.setItem('fxpro_compactview',String(compactView));
   localStorage.setItem('fxpro_updated',new Date().toISOString());
   _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
@@ -6625,12 +6574,12 @@ function renderDetail(){
       </div>
       <textarea class="quick-note" rows="1" placeholder="Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
       <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',14)}</button>
-      <button class="compact-sw${compactView===1?' on':compactView===2?' max':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
+      <button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
       ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',14)}</button>`:''}
     </div>
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
-  document.querySelectorAll('.rtxt,.sp-txt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
+  document.querySelectorAll('.rtxt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
   if(qnFocused){
     const qn=detailEl.querySelector('.quick-note');
     if(qn){qn.focus();try{qn.setSelectionRange(qnSelStart,qnSelEnd);}catch(e){}}
@@ -6685,27 +6634,15 @@ function renderOverviewCard(rubs){
     const sc=rubScore(rub);
     const sumLine=rub.summary&&rub.summary.trim()?`<div class="ov-sum-line">${escH(rub.summary)}</div>`:'';
     const txt=sumLine||'<span class="ov-empty">No summary yet.</span>';
-    // Icon-Rund vor dem Namen wie im Referenzfoto (Nutzer-Wunsch 2026-07-25)
-    // - wiederverwendet CMP_RUB_ICON (existierte schon fuer den Compare-Tab)
-    // statt eine zweite Rubrik->Icon-Zuordnung zu pflegen. Custom-Rubriken
-    // ohne Eintrag bleiben ohne Icon-Rund, kein erfundenes Symbol.
-    // Kein Rubrik-Icon mehr vor dem Namen (tech-design-Skill 2026-07-28,
-    // abgeleitet aus dem Referenz-Mockup: reiner Grossbuchstaben-Titel statt
-    // Emoji-Kreis-Icon). Badge: Icon+Score bias-gefaerbt, das Wort selbst
-    // gedaempft grau - ebenfalls direkt aus dem Mockup uebernommen (mehrfach
-    // an unabhaengigen Karten verifiziert, siehe Skill-Dokumentation).
-    const[blIc,...blWordParts]=BL[rub.bias].split(' ');
-    // Kachel-Layout 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28,
-    // zweite Detail-Korrektur): Titel zentriert oben (eigene Zeile, keine
-    // Box/Icon), darunter LINKS die grosse farbige Score-Zahl direkt neben
-    // dem gedaempften Bias-Wort (kein Rahmen/Chip mehr um das Badge - reiner
-    // Text mit kleinem Diamant-Icon davor), darunter der Zusammenfassungs-
-    // satz. Vorher stand alles in EINER Kopf-Zeile mit umrandeten Chips.
+    // Kachel-Layout wieder in EINER Zeile (Nutzer-Wunsch 2026-07-29, "Rueckkehr
+    // zum vorherigen Verhalten"): Titel + Score nebeneinander in derselben
+    // Zeile, KEIN separates Bullish/Neutral/Bearish-Badge-Wort mehr daneben -
+    // der Bias ist bereits ueber die Score-Farbe UND den linken Rand-Streifen
+    // (glowClass) sichtbar, ein zusaetzliches Wort ist redundant.
     return`<div class="ov-field2 ${glowClass(rub.bias)}" onclick="goToRubCard(${ri})" title="Jump to the ${escH(rub.name)} card below">
-      <div class="ov2-title">${escH(rub.name)}</div>
-      <div class="ov2-scoreline">
+      <div class="ov2-titleline">
+        <span class="ov2-title">${escH(rub.name)}</span>
         <span class="ov2-score" style="color:${bco}">${sc>0?'+':''}${sc}</span>
-        <span class="ov2-badge" title="Bias is taken automatically from this card's score">${blIc} ${escH(blWordParts.join(' '))}</span>
       </div>
       <div class="ov2-summary">${txt}</div>
     </div>`;
@@ -6746,12 +6683,12 @@ function renderRub(rub,ri,total){
       <span class="ind-edit-ctrls">
         ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
         ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
-        ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
         <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
         <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
         <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
         <button class="rdel" onclick="delRub(${ri})">×</button>
       </span>
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
     </div>
     <div class="rub-body">
@@ -6764,10 +6701,6 @@ function renderRub(rub,ri,total){
       </div>
       <!-- INDICATORS -->
       ${renderIndsTable(rub,ri)}
-      <div class="rub-foot">
-        <span class="rub-foot-lbl">${escH(rub.name.toUpperCase())} SCORE</span>
-        <span class="rub-foot-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${(()=>{const sc=rubScore(rub);return(sc>0?'+':'')+sc;})()}</span>
-      </div>
     </div>
   </div>`;}
 
@@ -6830,20 +6763,23 @@ const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Pos
 // Tabellen-Darstellung 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28
 // "änder die Tabellen Darstellung genau wie auf dem Bild") - ersetzt die
 // vorherige Karten-pro-Indikator-Darstellung. Kopfzeile INDICATOR/ACTUAL/
-// FORECAST/PREVIOUS/TREND/SCORE/SOURCE, eine <tr> pro Indikator, TREND als
-// kleine Sparkline statt Text-Chip, SOURCE als reiner Link-Text ohne
-// Dropdown-Pfeil - genau der "reine Lese-Tabelle"-Modus, den der
-// tech-design-Skill von Anfang an als zweiten (bis jetzt nie gebauten) Modus
-// dokumentiert hatte. Editier-Funktionen (Verschieben/Loeschen/Info-Modal/
-// Datenpunkte hinzufuegen) bleiben erhalten, aber hinter dem bestehenden
-// Bearbeitungsmodus (indEditMode, 5s-Long-Press) versteckt - dieselbe
-// Konvention wie die schon vorher Edit-Mode-gated Indikator-Controls.
+// FORECAST/PREVIOUS/TREND/SCORE, eine <tr> pro Indikator, TREND als kleine
+// Sparkline statt Text-Chip. Editier-Funktionen (Verschieben/Loeschen/
+// Info-Modal) bleiben erhalten, aber hinter dem bestehenden Bearbeitungsmodus
+// (indEditMode, 5s-Long-Press) versteckt.
+// SOURCE ist KEINE eigene Spalte mehr (Nutzer-Wunsch 2026-07-29) - stattdessen
+// klappt ein Klick auf die Zeile (toggleIndDetailRow(), nicht der Long-Press
+// fuer den Bias-Picker) eine Detail-Zeile auf: Datum des letzten Updates,
+// Quelle + Revisions-Hinweis (was der Previous-Wert VOR der Revision war) und
+// die Historien-Grafik (indHistChart(), lazy befuellt beim ersten Aufklappen -
+// dasselbe Muster wie das fruehere <details class="ind-data"> vor dem
+// Tabellen-Umbau, siehe onIndDetailsToggle()/indDetailsOpen weiter unten).
 function renderIndsTable(rub,ri){
   const inds=rub.indicators||[];
   const total=inds.length;
   const rows=inds.map((ind,ii)=>renderIndRow(ind,ri,ii,rub,total)).join('');
   return`<div class="tr-scroll"><table class="ind-table">
-    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Trend</th><th>Score</th><th>Source</th></tr></thead>
+    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Trend</th><th>Score</th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>
   <div class="add-row ind-edit-ctrls" style="margin-top:8px">
@@ -6854,32 +6790,35 @@ function renderIndsTable(rub,ri){
 // Actual/Forecast/Previous/Quelle-Herleitung ist 1:1 aus der vorherigen
 // renderInd() uebernommen (ev-Kalenderpfad vs. ind.research-Feedpfad, inkl.
 // der Dual-Source-Exklusivitaet - siehe CLAUDE.md "EUR-Score flippte..." -
-// und der Revisions-Faerbung) - nur die AUSGABE wechselt von Karte zu
-// Tabellenzelle. Bewusst NICHT mehr Teil dieser Ansicht: die vorher inline
-// aufklappbare Historien-Chart (indHistChart()/<details>) und der
-// Sekundaerquellen-Link (secLink, z.B. der m/m-Link neben y/y) - das Mockup
-// zeigt eine flache Tabelle ohne Aufklapp-Funktion; der (i)-Info-Button
-// (jetzt im Bearbeitungsmodus) fuehrt weiterhin zum Score-Modal.
+// und der Revisions-Faerbung).
 function renderIndRow(ind,ri,ii,rub,total){
   const bco=bCol(ind.bias);
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
-  let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',srcHtml='<span class="ir-dash">–</span>';
+  let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',detailBody='';
   if(ev){
     const ac=actualColor(ev);
     const cs=indResearchSource(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base)||(ind.research&&ind.research.source);
     const ilKey1=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb1=cs||'https://www.forexfactory.com/calendar';
     const fin1=(indLinkCustom&&indLinkCustom[ilKey1])||fb1;
-    srcHtml=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))}</a>`;
+    const srcLink=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
+    const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${escH(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
     actTxt=ev.actual;actCls=ac||'';fcTxt=ev.forecast||'–';prevTxt=ev.previous||'–';
+    detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>`;
   }else if(ind.research){
     const r=ind.research;
     const ac=r.bond?r.bondColor:(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
+    const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
+    const notes=[note2,A.notes.length&&`Actual: ${A.notes.join(', ')}`,F.notes.length&&`Forecast: ${F.notes.join(', ')}`,P.notes.length&&`Previous: ${P.notes.join(', ')}`].filter(Boolean).join(' · ');
     const ilKey2=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb2=r.source||'';
     const fin2=(indLinkCustom&&indLinkCustom[ilKey2])||fb2;
-    srcHtml=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))}</a>`:'<span class="ir-dash">–</span>';
+    const srcLink=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Source not on file</span>';
+    const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
+    const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> ${dt||'–'}<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> ${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}<span class="ind-data-sep">·</span>`:
+      `<span class="ind-data-lbl">As of:</span> ${dt||'–'}${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
     actTxt=A.val;actCls=ac||'';
     fcTxt=(r.bond||r.cot||r.sent)?'–':(F.val??'–');
     if(r.sent)prevTxt='–';
@@ -6887,17 +6826,23 @@ function renderIndRow(ind,ri,ii,rub,total){
       prevTxt=P.val??'–';
       if(r.revisedFrom)prevCls=ind.revBias==='bull'?'act-good':ind.revBias==='bear'?'act-bad':'';
     }
+    // Revidiertes Previous (Nutzer-Wunsch 2026-07-29): der urspruenglich
+    // gemeldete Wert wird jetzt explizit im ausgeklappten Zustand genannt,
+    // nicht mehr nur als Farbe/Parenthese im Previous der Hauptzeile.
+    const revNote=r.revisedFrom?`<div class="ind-data-src" style="padding-top:0"><span class="ind-data-lbl">Previous revised:</span> originally reported as <b>${escH(r.revisedFrom)}</b>, now restated as <b>${escH(P.val??'–')}</b></div>`:'';
+    detailBody=`<div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>${revNote}`;
   }
   const spark=indSparklineSvg(ind,bco);
   const sc=indScore(ind,rub);
   const lockIc=ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, gear icon to configure)">${icn('link',11)}</span>`:rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
-  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
+  const isOpen=!!indDetailsOpen[ind.id];
+  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
     <td class="ir-name"><span class="ir-name-txt">${escH(ind.displayName||ind.name)}</span>${lockIc}
       <span class="ind-edit-ctrls">
-        <button class="rinfo" onclick="openInfoM(${ri},${ii})" title="Info">i</button>
-        <button class="imv" onclick="mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
-        <button class="imv" onclick="mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
-        <button class="idel2" onclick="delInd(${ri},${ii})">×</button>
+        <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
+        <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
+        <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
+        <button class="idel2" onclick="event.stopPropagation();delInd(${ri},${ii})">×</button>
       </span>
     </td>
     <td class="ir-act${actCls?' '+actCls:''}">${escH(actTxt)}</td>
@@ -6905,30 +6850,37 @@ function renderIndRow(ind,ri,ii,rub,total){
     <td class="ir-prev${prevCls?' '+prevCls:''}">${escH(prevTxt)}</td>
     <td class="ir-trend">${spark||'<span class="ir-dash">–</span>'}</td>
     <td class="ir-score" style="color:${bco}">${fmtScNum(sc)}</td>
-    <td class="ir-src">${srcHtml}</td>
   </tr>`;
-  // Datenpunkte (ind.points, freie Stichpunkte je Indikator) bleiben
-  // erhalten (kein Datenverlust bei bereits vorhandenen Punkten), sind aber
-  // NUR sichtbar, wenn welche existieren ODER der Bearbeitungsmodus aktiv
-  // ist - eine leere, standardmaessig unsichtbare Zeile wuerde sonst jeden
-  // Indikator ohne Punkte unnoetig verlaengern (Mockup zeigt diese Zeile
-  // nirgends, da im Testdatensatz offenbar ueberall leer).
-  const hasPoints=ind.points&&ind.points.length;
-  const pointsRow=`<tr class="ind-points-row${hasPoints?'':' ind-edit-ctrls'}"><td colspan="7"><div class="ind-points-list">
-    ${(ind.points||[]).map((pt,pi)=>`<div class="ind-point-item">
-      <textarea class="sp-txt" rows="1" oninput="ar(this);getInd(${ri},${ii}).points[${pi}].text=this.value;saveSoon()" onblur="syncMacroRub(${ri});save()">${escH(pt.text||pt||'')}</textarea>
-      <span class="ind-edit-ctrls">
-        <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},-1)" ${pi===0?'disabled':''}>▲</button>
-        <button class="sp-mv" onclick="mvPt(${ri},${ii},${pi},1)" ${pi===(ind.points.length-1)?'disabled':''}>▼</button>
-        <button class="sp-del" onclick="delPt(${ri},${ii},${pi})">×</button>
-      </span>
-    </div>`).join('')}
-    <div class="add-row ind-edit-ctrls" style="margin-top:3px">
-      <input class="ai" id="pt-${ri}-${ii}" placeholder="+ Add data point..." onkeydown="if(event.key==='Enter'){addPt(${ri},${ii});event.preventDefault()}" style="font-size:12px;padding:5px 7px">
-      <button class="add-btn" style="background:${bco}15;border-color:${bco}44;color:${bco};border:1px solid;padding:5px 7px" onclick="addPt(${ri},${ii})">＋</button>
-    </div>
-  </div></td></tr>`;
-  return mainRow+pointsRow;
+  if(!detailBody)return mainRow;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  return mainRow+detailRow;
+}
+// Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
+// Quelle, Revisions-Hinweis, Historien-Grafik) - Nutzer-Wunsch 2026-07-29,
+// Rueckkehr zum vorherigen Verhalten. Bricht ab bei Klicks auf Buttons/Links
+// (Edit-Mode-Controls) und waehrend der Bias-Picker gerade offen ist (der
+// oeffnet sich per Long-Press auf derselben Zeile nach 450ms - ein Klick beim
+// Loslassen soll dann nicht zusaetzlich die Detail-Zeile umschalten).
+function toggleIndDetailRow(ev,indId){
+  if(ev.target.closest('button,a,[role="button"]'))return;
+  if(document.getElementById('biasPicker'))return;
+  const tr=document.getElementById('indDetail-'+indId);
+  if(!tr)return;
+  const opening=tr.style.display==='none';
+  indDetailsOpen[indId]=opening;
+  tr.style.display=opening?'table-row':'none';
+  const body=tr.querySelector('.ind-data-body');
+  if(body){
+    body.classList.remove('ind-data-reveal');
+    if(opening){void body.offsetWidth;body.classList.add('ind-data-reveal');}
+  }
+  if(!opening)return;
+  const holder=tr.querySelector('.ind-hist-holder');
+  if(!holder||holder.dataset.filled)return;
+  const ind=findIndById(indId);if(!ind)return;
+  holder.innerHTML=indHistChart(ind);
+  holder.dataset.filled='1';
+  attachChartHovers(holder);
 }
 
 // ── NOTES SUB-TAB ──
@@ -7043,18 +6995,12 @@ function syncMacroRub(ri){
     const sym=syms.find(s=>s.id===id);if(!sym||!sym.rubrics)return;
     const r=sym.rubrics.find(x=>x.name===src.name);if(!r)return;
     r.imp=src.imp;r.summary=src.summary;
-    // Stichpunkte je Indikator (per Name gematcht) ebenfalls übertragen, damit
-    // mit einer Währung verbundene Non-FX-Assets dieselben Argumente zeigen.
-    (src.indicators||[]).forEach(si=>{
-      const ti=(r.indicators||[]).find(i=>i.name===si.name);
-      if(ti)ti.points=JSON.parse(JSON.stringify(si.points||[]));
-    });
   });
 }
 // Holt für ein mit einer Währung verbundenes Non-FX-Asset die Makro-Inhalte
-// (Karten-Summary + imp + Indikator-Stichpunkte) aus der verbundenen Währung.
-// Wird beim (Neu-)Verbinden aufgerufen, damit das Asset sofort dieselben
-// Argumente/Zusammenfassungen übernimmt.
+// (Karten-Summary + imp) aus der verbundenen Währung. Wird beim (Neu-)
+// Verbinden aufgerufen, damit das Asset sofort dieselben Argumente/
+// Zusammenfassungen übernimmt.
 function pullMacroFromCcy(sym){
   if(!sym||!isNonFx(sym.id)||!sym.rubrics)return;
   const ccy=macroCcyFor(sym.id);if(!ccy)return;
@@ -7063,10 +7009,6 @@ function pullMacroFromCcy(sym){
     const sr=src.rubrics.find(r=>r.name===rn),tr=sym.rubrics.find(r=>r.name===rn);
     if(!sr||!tr)return;
     tr.summary=sr.summary;tr.imp=sr.imp;
-    (sr.indicators||[]).forEach(si=>{
-      const ti=(tr.indicators||[]).find(i=>i.name===si.name);
-      if(ti)ti.points=JSON.parse(JSON.stringify(si.points||[]));
-    });
   });
 }
 // Ist die Rubrik dieses Symbols automatisch aus der verknuepften Waehrung
@@ -7350,13 +7292,7 @@ function mvInd(ri,ii,d){const r=getRub(ri);if(!r||!r.indicators)return;pushU();m
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
-  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:'',points:[]});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-function addPt(ri,ii){
-  const inp=document.getElementById(`pt-${ri}-${ii}`);if(!inp)return;const v=inp.value.trim();if(!v)return;
-  pushU();const ind=getInd(ri,ii);if(!ind)return;if(!ind.points)ind.points=[];
-  ind.points.push({id:uid(),text:v});inp.value='';syncMacroRub(ri);save();renderDetail();}
-function delPt(ri,ii,pi){pushU();const ind=getInd(ri,ii);if(ind&&ind.points)ind.points.splice(pi,1);syncMacroRub(ri);save();renderDetail();}
-function mvPt(ri,ii,pi,d){const ind=getInd(ri,ii);if(!ind||!ind.points)return;pushU();mvArr(ind.points,pi,d);syncMacroRub(ri);save();renderDetail();}
+  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:''});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
@@ -13222,33 +13158,21 @@ function setIndHistRangeCustom(from,to){
 // Lazy-Load des Indikator-Historie-Charts (Performance-Fix 2026-07-19):
 // indHistChart() baut ein ~700-Element-SVG und kostet ~1,3 ms je Indikator -
 // bei 24 Indikatoren auf einer Asset-Detailseite war das die HAELFTE der
-// gesamten renderDetail()-Zeit (~30 von ~65 ms), OBWOHL die Charts in einem
-// standardmaessig EINGEKLAPPTEN <details> stecken und der Nutzer sie gar nicht
-// sieht. Deshalb wird der Chart beim Rendern nicht mehr vorab gebaut: ein
-// eingeklapptes <details> bekommt nur einen leeren Platzhalter, der Chart wird
-// erst beim ERSTEN Aufklappen einmalig hineingerendert (und danach nie wieder,
-// Marker data-filled). Ist das <details> beim Rendern schon offen (z.B.
-// Range-Filter-Klick -> setIndHistRange() -> renderDetail()), wird der Chart
-// wie bisher direkt inline gebaut, damit die Range-Buttons unveraendert
-// funktionieren. attachChartHovers() muss nach dem Lazy-Fill separat laufen,
-// weil das globale renderDetail-attachChartHovers zu diesem Zeitpunkt schon
-// durch ist.
+// gesamten renderDetail()-Zeit (~30 von ~65 ms), OBWOHL die Charts standard-
+// maessig eingeklappt sind und der Nutzer sie gar nicht sieht. Deshalb wird
+// der Chart beim Rendern nicht vorab gebaut: eine eingeklappte Indikator-
+// Detail-Zeile (siehe toggleIndDetailRow()) bekommt nur einen leeren
+// Platzhalter, der Chart wird erst beim ERSTEN Aufklappen einmalig
+// hineingerendert (und danach nie wieder, Marker data-filled). Ist die
+// Detail-Zeile beim Rendern schon offen (z.B. Range-Filter-Klick ->
+// setIndHistRange() -> renderDetail()), wird der Chart wie bisher direkt
+// inline gebaut, damit die Range-Buttons unveraendert funktionieren.
+// attachChartHovers() muss nach dem Lazy-Fill separat laufen, weil das
+// globale renderDetail-attachChartHovers zu diesem Zeitpunkt schon durch ist.
 function findIndById(id){
   const c=getSym();if(!c)return null;
   for(const r of(c.rubrics||[]))for(const i of(r.indicators||[]))if(i.id===id)return i;
   return null;
-}
-function onIndDetailsToggle(el,indId){
-  indDetailsOpen[indId]=el.open;
-  if(!el.open)return;
-  const body=el.querySelector('.ind-data-body');
-  if(body){body.classList.remove('ind-data-reveal');void body.offsetWidth;body.classList.add('ind-data-reveal');}
-  const holder=el.querySelector('.ind-hist-holder');
-  if(!holder||holder.dataset.filled)return;
-  const ind=findIndById(indId);if(!ind)return;
-  holder.innerHTML=indHistChart(ind);
-  holder.dataset.filled='1';
-  attachChartHovers(holder);
 }
 function indHistChart(ind){
   const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
