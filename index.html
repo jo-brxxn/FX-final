@@ -338,8 +338,11 @@ svg.ic{vertical-align:-2px;flex:none}
 .compact-sw.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue)}
 .compact-sw.on .knob{transform:translateX(18px);background:var(--blue)}
 /* Nur noch 2 Stufen (Nutzer-Wunsch 2026-07-29): Stufe 1 zeigt alles inkl. der
-   Rubrik-Zusammenfassungen, Stufe 2 blendet nur die Zusammenfassungen aus. */
-body.compact-view .rub-summary{display:none}
+   Rubrik-Zusammenfassungen, Stufe 2 blendet die Zusammenfassungen aus - sowohl
+   in der Rubrik-Karte selbst als auch in der Overview-Kachel oben (Nutzer-
+   Nachschliff 2026-07-29: "auch bei den overview Karten" - vorher nur
+   `.rub-summary` erfasst, `.ov2-summary` blieb sichtbar). */
+body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}
@@ -1007,10 +1010,17 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    scharf). Die schnelle steps()-Flacker-Animation daneben simuliert das
    Flackern echter Nachbrenner-Flammen (kein weiches Fade), mit leichtem
    hue-rotate-Wackeln fuer mehr Farblebendigkeit. */
-.globe-jet-flame{opacity:0}
 .jf-r{transform-origin:2.75px 11.7px}
 .jf-l{transform-origin:-2.75px 11.7px}
-.globe-vehicle.boosting .globe-jet-flame{opacity:1;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*.75));animation:jetFlameFlicker .12s steps(2) infinite}
+/* Flamme ist jetzt IMMER da, auch bei niedrigster Reglerstufe (Nutzer-Wunsch
+   2026-07-29: "bei der niedrigsten Stufe soll diese Flamme da sein") - vorher
+   nur sichtbar, solange .globe-vehicle.boosting aktiv war (Regler>2% oder
+   BOOST-Stoss), sonst opacity:0. --boost-i faellt im Ruhezustand ueber den
+   CSS-Fallback var(--boost-i,0) automatisch auf die kleinste Groesse zurueck
+   (kein JS-Zusatz noetig). Multiplikatoren so gewaehlt, dass BEIDE Achsen bei
+   --boost-i=1 (Boost + Regler ganz oben) mindestens die geforderten 4x der
+   Ruhegroesse erreichen: scaleY 0.32->1.67 (5.2x), scaleX 0.6->2.4 (4.0x). */
+.globe-jet-flame{opacity:1;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*1.8));animation:jetFlameFlicker .12s steps(2) infinite}
 /* Flacker-Amplitude verstaerkt (Nutzer-Wunsch 2026-07-28, Schubregler-
    Nachbesserung "Feuer muss auch leicht dynamisch sein") - Helligkeit UND
    Deckkraft schwanken jetzt zusaetzlich zu Farbton/Saettigung, damit die
@@ -1021,7 +1031,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    (scaleY/scaleX per calc()), eine Transform-Keyframe wuerde diesen Wert
    waehrend der Animation komplett ueberschreiben statt ihn zu ergaenzen. */
 @keyframes jetFlameFlicker{0%{filter:brightness(.9) saturate(1.05) hue-rotate(0deg);opacity:.86}30%{filter:brightness(1.55) saturate(1.4) hue-rotate(7deg);opacity:1}55%{filter:brightness(1.05) saturate(1.15) hue-rotate(-3deg);opacity:.9}80%{filter:brightness(1.4) saturate(1.3) hue-rotate(4deg);opacity:1}100%{filter:brightness(.88) saturate(1.05) hue-rotate(-5deg);opacity:.88}}
-@media(prefers-reduced-motion:reduce){.globe-vehicle.boosting .globe-jet-flame{animation:none;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35))}}
+@media(prefers-reduced-motion:reduce){.globe-jet-flame{animation:none;transform:scaleY(calc(.32 + var(--boost-i,0)*1.35))}}
 /* Blur NUR auf der Erdoberflaeche (.globe-planet = Ozean+Landflaeche),
    NICHT auf Flugzeug/Flammen/Sweep/Markern/Bezel (Nutzer-Korrektur
    2026-07-28: "Flugzeug soll immer zu sehen bleiben"). Getrennt von
@@ -1896,12 +1906,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-267 — Kompakt-Regler auf 2 Stufen reduziert (Stufe 1: alles inkl. Rubrik-Zusammenfassungen, Stufe 2: nur die Zusammenfassungen ausgeblendet). Stichpunkte-Funktion (freie Datenpunkte je Indikator) komplett entfernt. Indikator-Tabelle verliert die SOURCE-Spalte - stattdessen klappt ein Klick auf eine Zeile eine Detail-Zeile auf (Datum des letzten Updates, Quelle, Historien-Grafik, plus neu: was der Previous-Wert vor einer Revision war). Karten-Score wandert vom Fusszeilen-Eintrag zurueck in den Kartenkopf, direkt neben das (i)-Icon, immer sichtbar (nicht mehr im Bearbeitungsmodus versteckt). Overview-Kacheln zeigen Titel+Score wieder in einer Zeile, ohne das Bullish/Neutral/Bearish-Wort daneben.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-268 — Kompakt-Regler blendet auf Stufe 2 jetzt auch die Overview-Kachel-Zusammenfassungen aus (vorher nur die Rubrik-Kartenzusammenfassungen). Globus-Jet-Flamme ist jetzt IMMER sichtbar, auch bei niedrigster Schubregler-Stufe (vorher nur waehrend Boost/aktivem Schub) - waechst bei Boost + Regler ganz oben auf mindestens das 4-Fache der Ruhegroesse (Breite exakt 4x, Laenge 5,2x).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-267</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-268</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -11014,13 +11024,14 @@ function globeSkeleton(size,uid){
   // globeVehicleTravel() aendert sich dadurch nicht) - nur der Start-/
   // Ruhezustand bekommt einen 90-Grad-Offset (siehe vehicleHeading:90 in
   // globeCollectRefs() weiter unten, MUSS mit diesem Wert synchron bleiben).
-  // Nachbrenner-Flammen (Boost-Button/Schubregler, Nutzer-Wunsch 2026-07-28):
-  // liegt in DENSELBEN jet-lokalen Koordinaten wie die Silhouette selbst -
-  // dreht sich also automatisch mit (Ruhelage UND Reise-Heading), ohne
-  // eigene Positions-Mathematik. Per Default per CSS unsichtbar (opacity:0
-  // auf .globe-jet-flame), erst startGlobeBoost()/setGlobeThrust() schalten
-  // die "boosting"-Klasse auf .globe-vehicle und machen sie inkl. Flacker-/
-  // Wachstums-Animation sichtbar.
+  // Nachbrenner-Flammen (Boost-Button/Schubregler, Nutzer-Wunsch 2026-07-28,
+  // 2026-07-29 "immer da sein" korrigiert): liegt in DENSELBEN jet-lokalen
+  // Koordinaten wie die Silhouette selbst - dreht sich also automatisch mit
+  // (Ruhelage UND Reise-Heading), ohne eigene Positions-Mathematik. Immer
+  // sichtbar (.globe-jet-flame selbst traegt opacity:1 + Flacker-Animation),
+  // Groesse haengt direkt an --boost-i (CSS-Fallback 0 im Ruhezustand = kleinste
+  // Flamme) - startGlobeBoost()/setGlobeThrust() treiben --boost-i nur noch
+  // hoch, schalten die Sichtbarkeit nicht mehr separat.
   // Deutlich laenger/groesser/farbenvoller (Nutzer-Korrektur 2026-07-28):
   // Aussenflamme (breiter Fuss, sehr lang auslaufend) + hellere, kuerzere
   // Kernflamme obendrauf (weiss/gelb statt orange/rot) fuer echte
