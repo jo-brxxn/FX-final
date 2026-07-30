@@ -235,7 +235,7 @@
      ],
      [
       "2026-12-09",
-      12
+      11
      ]
     ]
    ]
@@ -254,15 +254,15 @@
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
     "rateBefore": 3.8,
-    "rateAfter": 3.86,
+    "rateAfter": 3.87,
     "deltaBp": 7
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.86,
+    "rateBefore": 3.87,
     "rateAfter": 3.98,
-    "deltaBp": 12
+    "deltaBp": 11
    }
   ],
   "pastMeeting": {
@@ -537,7 +537,7 @@
     [
      [
       "2026-07-30",
-      22
+      23
      ],
      [
       "2026-09-17",
@@ -562,7 +562,7 @@
     "label": "Jul 30, 2026",
     "rateBefore": 3.73,
     "rateAfter": 3.96,
-    "deltaBp": 22,
+    "deltaBp": 23,
     "approx": true
    },
    {
@@ -863,11 +863,11 @@
      ],
      [
       "2026-11-03",
-      8
+      10
      ],
      [
       "2026-12-08",
-      3
+      0
      ]
     ]
    ]
@@ -893,15 +893,15 @@
     "date": "2026-11-03",
     "label": "Nov 2-3, 2026",
     "rateBefore": 4.38,
-    "rateAfter": 4.45,
-    "deltaBp": 8
+    "rateAfter": 4.48,
+    "deltaBp": 10
    },
    {
     "date": "2026-12-08",
     "label": "Dec 7-8, 2026",
-    "rateBefore": 4.45,
+    "rateBefore": 4.48,
     "rateAfter": 4.48,
-    "deltaBp": 3
+    "deltaBp": 0
    }
   ],
   "method": "precise",
