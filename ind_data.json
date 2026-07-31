@@ -2974,17 +2974,13 @@
  },
  "EUR": {
   "CPI": {
-   "actual": "-0.1%",
-   "forecast": "-0.1%",
+   "actual": "0.2%",
+   "forecast": null,
    "previous": "-0.1%",
-   "date": "2026-07-17",
-   "event": "Inflation Rate MoM Final",
+   "date": "2026-07-31",
+   "event": "Inflation Rate MoM Flash",
    "period": "m/m",
    "history": [
-    [
-     "2026-06-02",
-     "0.1%"
-    ],
     [
      "2026-06-17",
      "0.1%"
@@ -2996,8 +2992,13 @@
     [
      "2026-07-17",
      "-0.1%"
+    ],
+    [
+     "2026-07-31",
+     "0.2%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-18",
@@ -3353,22 +3354,22 @@
      "2026-07-17",
      "-0.1%",
      "-0.1%"
+    ],
+    [
+     "2026-07-31",
+     "0.2%",
+     null
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "CPI (Headline)": {
-   "actual": "2.8%",
-   "forecast": "2.8%",
-   "previous": "3.2%",
-   "date": "2026-07-17",
-   "event": "Inflation Rate YoY Final",
+   "actual": "2.9%",
+   "forecast": "2.9%",
+   "previous": "2.8%",
+   "date": "2026-07-31",
+   "event": "Inflation Rate YoY Flash",
    "period": "y/y",
    "history": [
-    [
-     "2026-06-02",
-     "3.2%"
-    ],
     [
      "2026-06-17",
      "3.2%"
@@ -3380,8 +3381,13 @@
     [
      "2026-07-17",
      "2.8%"
+    ],
+    [
+     "2026-07-31",
+     "2.9%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-18",
@@ -3737,23 +3743,22 @@
      "2026-07-17",
      "2.8%",
      "2.8%"
+    ],
+    [
+     "2026-07-31",
+     "2.9%",
+     "2.9%"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "2.8%"
+   ]
   },
   "Core CPI": {
-   "actual": "2.4%",
+   "actual": "2.5%",
    "forecast": "2.4%",
-   "previous": "2.6%",
-   "date": "2026-07-17",
-   "event": "Core Inflation Rate YoY Final",
+   "previous": "2.4%",
+   "date": "2026-07-31",
+   "event": "Core Inflation Rate YoY Flash",
    "period": "y/y",
    "history": [
-    [
-     "2026-06-02",
-     "2.5%"
-    ],
     [
      "2026-06-17",
      "2.6%"
@@ -3765,8 +3770,13 @@
     [
      "2026-07-17",
      "2.4%"
+    ],
+    [
+     "2026-07-31",
+     "2.5%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-18",
@@ -4122,10 +4132,13 @@
      "2026-07-17",
      "2.4%",
      "2.4%"
+    ],
+    [
+     "2026-07-31",
+     "2.5%",
+     "2.4%"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "2.4%"
+   ]
   },
   "PPI": {
    "actual": "5.9%",
