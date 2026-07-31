@@ -238,17 +238,35 @@
       11
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    3.63,
+    [
+     [
+      "2026-09-16",
+      17
+     ],
+     [
+      "2026-10-28",
+      6
+     ],
+     [
+      "2026-12-09",
+      11
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": 3.63,
   "meetings": [
    {
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
-    "rateBefore": 3.64,
+    "rateBefore": 3.63,
     "rateAfter": 3.8,
-    "deltaBp": 16
+    "deltaBp": 17
    },
    {
     "date": "2026-10-28",
@@ -385,33 +403,51 @@
       7
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    2.19,
+    [
+     [
+      "2026-09-10",
+      18
+     ],
+     [
+      "2026-10-29",
+      9
+     ],
+     [
+      "2026-12-17",
+      9
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": 2.19,
   "meetings": [
    {
     "date": "2026-09-10",
     "label": "Sep 10, 2026",
     "rateBefore": 2.44,
-    "rateAfter": 2.63,
-    "deltaBp": 19,
+    "rateAfter": 2.62,
+    "deltaBp": 18,
     "approx": true
    },
    {
     "date": "2026-10-29",
     "label": "Oct 29, 2026",
-    "rateBefore": 2.63,
-    "rateAfter": 2.73,
+    "rateBefore": 2.62,
+    "rateAfter": 2.71,
     "deltaBp": 9,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 2.73,
+    "rateBefore": 2.71,
     "rateAfter": 2.8,
-    "deltaBp": 7,
+    "deltaBp": 9,
     "approx": true
    }
   ],
@@ -552,25 +588,35 @@
       11
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    3.73,
+    [
+     [
+      "2026-09-17",
+      36
+     ],
+     [
+      "2026-11-05",
+      2
+     ],
+     [
+      "2026-12-17",
+      12
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": 3.73,
   "meetings": [
    {
-    "date": "2026-07-30",
-    "label": "Jul 30, 2026",
-    "rateBefore": 3.73,
-    "rateAfter": 3.89,
-    "deltaBp": 16,
-    "approx": true
-   },
-   {
     "date": "2026-09-17",
     "label": "Sep 17, 2026",
-    "rateBefore": 3.89,
+    "rateBefore": 3.73,
     "rateAfter": 4.09,
-    "deltaBp": 19,
+    "deltaBp": 36,
     "approx": true
    },
    {
@@ -578,7 +624,7 @@
     "label": "Nov 5, 2026",
     "rateBefore": 4.09,
     "rateAfter": 4.11,
-    "deltaBp": 3,
+    "deltaBp": 2,
     "approx": true
    },
    {
@@ -586,13 +632,20 @@
     "label": "Dec 17, 2026",
     "rateBefore": 4.11,
     "rateAfter": 4.23,
-    "deltaBp": 11,
+    "deltaBp": 12,
     "approx": true
    }
   ],
   "method": "approx",
   "refSource": "BoE (SONIA) + SONIA 3M curve",
-  "pastMeeting": null
+  "pastMeeting": {
+   "date": "2026-07-30",
+   "label": "Jul 30, 2026",
+   "realizedDeltaBp": 0,
+   "realizedBucket": 0,
+   "rateBefore": 3.73,
+   "rateAfter": 3.73
+  }
  },
  "CAD": {
   "history": [
@@ -703,9 +756,27 @@
       5
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    2.27,
+    [
+     [
+      "2026-09-02",
+      9
+     ],
+     [
+      "2026-10-28",
+      9
+     ],
+     [
+      "2026-12-09",
+      5
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": 2.27,
   "meetings": [
    {
@@ -870,9 +941,31 @@
       3
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    4.35,
+    [
+     [
+      "2026-08-11",
+      0
+     ],
+     [
+      "2026-09-29",
+      3
+     ],
+     [
+      "2026-11-03",
+      9
+     ],
+     [
+      "2026-12-08",
+      3
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": 4.35,
   "meetings": [
    {
@@ -979,9 +1072,23 @@
       5
      ]
     ]
+   ],
+   [
+    "2026-07-31",
+    -0.04,
+    [
+     [
+      "2026-09-24",
+      3
+     ],
+     [
+      "2026-12-10",
+      5
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-07-30",
+  "asOf": "2026-07-31",
   "currentRate": -0.04,
   "meetings": [
    {
