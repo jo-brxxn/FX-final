@@ -31,6 +31,12 @@
       "skillPath": ".claude/skills/design/SKILL.md",
       "computedHash": "4e0412d29df74e6153e4944b367459a28cf52e3e81c7f45c1ecf4c2a8b21907c"
     },
+    "design-principles": {
+      "source": "andykaufseo/claude-design-skill",
+      "sourceType": "github",
+      "skillPath": "skill/skill.md",
+      "computedHash": "57fa00a86a879ceee59ee9949fa222872b8288258a9243cfb471f45346fe7716"
+    },
     "design-system": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
@@ -54,6 +60,12 @@
       "sourceType": "github",
       "skillPath": "skills/improve-animations/SKILL.md",
       "computedHash": "eeb219a407e325b687af88db25771cc3018e3148245604112f5ac6990b6fd79c"
+    },
+    "industrial-brutalist-ui": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/brutalist-skill/SKILL.md",
+      "computedHash": "8fc355c4aadb7d29c53ca28bc41be3cd6eea765d121e3737c4dc2d0f90a8effa"
     },
     "pick-ui-library": {
       "source": "emilkowalski/skills",
