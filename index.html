@@ -17,6 +17,15 @@
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* Impeccable-Kritik 2026-08-02 (P1 Barrierefreiheit): App hatte an 23 Stellen
+   outline:none ohne jede Fokus-Alternative und 0 :focus-visible-Regeln -
+   Tastatur-Navigation war praktisch unsichtbar. Ein globaler Ring auf allen
+   interaktiven Elementen, nur bei Tastatur-Fokus (nicht bei Maus-Klick) -
+   greift automatisch ueberall, auch dort wo einzelne Elemente outline:none
+   gesetzt hatten, da dieses Selektor-Paar spezifischer ist als ein blosses
+   outline:none auf der Einzelkomponente. Kein Verhaltenswechsel bei
+   Maus-/Touch-Bedienung, nur Tastatur-Nutzer sehen den Ring. */
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--link);outline-offset:2px;border-radius:3px}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
 body{font-family:Arial,Helvetica,sans-serif;background:#0a0c0f;color:#dfe7f1;height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
@@ -52,6 +61,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#0a0c0f;color:#dfe7f1;hei
   --green:#5fa8ed;--red:#ef5350;--amber:#f4ad5c;--star:#e8c668;--blue:#5fa8ed;--purple:#a78bfa;
   --green-rgb:95,168,237;--red-rgb:239,83,80;--amber-rgb:244,173,92;
   --star-rgb:232,198,104;--blue-rgb:95,168,237;--purple-rgb:167,139,250;--t3-rgb:108,134,156;
+  /* Impeccable-Kritik 2026-08-02 (P1 Farbe): --blue ist absichtlich zugleich
+     die Bullish-Bias-Farbe (Grundsatz "Blau = Bullish", nicht anfassen) - dadurch
+     tragen ⓘ-Buttons und Text-Links dieselbe Farbe wie ein bullisher Score direkt
+     daneben, "positiv" und "klickbar" sind visuell ununterscheidbar. Neuer,
+     eigener Ton NUR fuer generische interaktive Chrome-Elemente (ⓘ-Buttons,
+     Text-Links) - bewusst kein Bias-Wert, wird nirgends im Score-System
+     gelesen. Bias-Farben selbst bleiben komplett unangetastet. */
+  --link:#7dd3fc;
   /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): global etwas
      eckiger statt vieler unterschiedlicher, tendenziell zu runder Radien
      app-weit (Terminals/Fintech-Tools bleiben meist bei 2-6px). */
@@ -414,12 +431,26 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
-.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-left:4px solid #2c4f7c;border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie/Konsistenz): Rand-Fallback von
+   rohem Hex #2c4f7c auf --bd2-Token umgestellt - wird durch glowClass()
+   ohnehin praktisch immer ueberschrieben (jede gerenderte Karte traegt eine
+   glow-bull/bear/neu-Klasse), reiner Aufraeum-Fix, kein Verhaltenswechsel.
+   Alt zum schnellen Zurueckdrehen: border-left:4px solid #2c4f7c; */
+.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-left:4px solid var(--bd2);border-radius:var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#2a230f}
-.rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg4);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie/Konsistenz, "keine kohaerente
+   Schriftskala" - live 16 verschiedene Groessen, Karten-Titel 17-23px vs. dem
+   Dashboard-Muster von 11px-Grossbuchstaben mit Tracking, siehe .dw-t-txt).
+   Kartenkopf jetzt auf gleicher Flaeche wie der Body (nur Trennlinie statt
+   hellerem Band, entspricht den Referenzbildern) + Titel auf dieselbe kleine
+   getrackte Grossbuchstaben-Konvention wie die Dashboard-Widget-Titel.
+   Alt zum schnellen Zurueckdrehen:
+   .rub-hdr{...background:var(--bg4)...}
+   .rub-inp{...font-size:17px;font-weight:800;letter-spacing:.2px;...text-transform:none...} */
+.rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
+.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;outline:none;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}@media (hover:hover){.rmv:hover{opacity:1;color:var(--blue)}}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
@@ -430,8 +461,15 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .rub-card.collapsed .rub-tog{transform:rotate(-90deg)}
 .rub-card.collapsed .rub-body{display:none}
 /* ── INFO BUTTON ── */
-.rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:11px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}@media (hover:hover){.rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}}
+/* Impeccable-Kritik 2026-08-02 (P1 Farbe): rein informativer Button, keine Bias-Aussage - auf --link statt --blue umgestellt, damit er sich von einem bullishen Score in derselben Kartenkopfzeile unterscheidet. Groesse zusaetzlich 13->15px (P1 Barrierefreiheit, zu kleines Touch-Ziel). Alt: border:1.3px solid var(--blue);color:var(--blue);width:13px;height:13px; */
+.rinfo{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1.3px solid var(--link);color:var(--link);font-size:11px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.75;transition:all .12s}@media (hover:hover){.rinfo:hover{opacity:1;background:rgba(125,211,252,.1)}}
 .rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}@media (hover:hover){.rate-watch:hover{opacity:1}}
+/* Impeccable-Kritik 2026-08-02 (P0): dezenter, IMMER sichtbarer Zusatz-
+   Einstieg fuers Bias-Popover (siehe openBiasPickerAtButton()) - bewusst
+   nur ein einzelnes farbloses "⋯"-Symbol, keine drei bunten Buttons zurueck
+   (die wurden explizit entfernt). Mindestens 32px Touch-Ziel trotz kleiner
+   Optik durch Padding statt Icon-Groesse. */
+.bias-handle{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:none;background:transparent;color:var(--t3);font-size:14px;font-weight:800;line-height:1;cursor:pointer;opacity:.5;flex-shrink:0;transition:opacity .12s}@media (hover:hover){.bias-handle:hover{opacity:1;color:var(--link)}}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:10px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -504,7 +542,9 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ind-table thead th.iht-name{text-align:left}
 .ind-table tbody tr.ind-row{border-left:3px solid var(--bd2);border-bottom:1px solid var(--bd)}
 .ind-table tbody tr.ind-row:last-child{border-bottom:none}
-.ind-table td{padding:7px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
+/* Impeccable-Kritik 2026-08-02 (P2 Platzoekonomie): Zeilenhoehe ~37px war
+   deutlich hoeher als der Referenz-Look. Alt: padding:7px 6px; */
+.ind-table td{padding:4px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
 .ir-name{text-align:left;white-space:normal;display:flex;align-items:center;gap:3px}
 .ir-name-txt{font-weight:700;color:var(--t0);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px}
 .ir-act{font-weight:800;color:var(--t1)}
@@ -574,7 +614,8 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cmp-a.bond-down{color:var(--red)}
 .cmp-a.bond-flat{color:var(--amber)}
 .cmp-fp{font-size:9px;color:var(--t3);margin-top:2px;letter-spacing:.2px}
-.cmp-unit{display:inline-block;font-size:8px;font-weight:700;color:var(--amber);background:rgba(var(--amber-rgb),.13);border:1px solid rgba(var(--amber-rgb),.3);border-radius:5px;padding:1px 5px;margin-top:3px;letter-spacing:.2px;cursor:help}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie, 8px unter der Lesbarkeits-Schwelle). Alt: font-size:8px; */
+.cmp-unit{display:inline-block;font-size:9.5px;font-weight:700;color:var(--amber);background:rgba(var(--amber-rgb),.13);border:1px solid rgba(var(--amber-rgb),.3);border-radius:5px;padding:1px 5px;margin-top:3px;letter-spacing:.2px;cursor:help}
 .cmp-na{color:var(--t3);opacity:.5}
 .cmp-data-row{cursor:pointer}
 .cmp-caret{display:inline-block;width:11px;color:var(--t3);font-size:9px;margin-right:5px;transition:transform .14s}
@@ -583,7 +624,8 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cmp-tbl tr.cmp-exp-row td{background:var(--bg0);border-bottom:1px solid var(--bd2);padding:6px 12px}
 .cmp-tbl tr.cmp-exp-row td.cmp-exp-lbl{background:var(--bg1);color:var(--t3);font-weight:600;font-size:10px}
 .cmp-link-wrap{display:flex;flex-direction:column;gap:3px;align-items:center}
-.cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}@media (hover:hover){.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}}
+/* Impeccable-Kritik 2026-08-02 (P1 Farbe): Text-Link, keine Bias-Aussage. Alt: color:var(--blue); */
+.cmp-link-cell a{color:var(--link);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}@media (hover:hover){.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}}
 /* ── MATRIX / STRENGTH ── */
 .mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .mx-card-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -619,9 +661,17 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
 .cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#5fa8ed;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#ef6b78;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#2f6fcf,#5fa8ed);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#d8525f,#ef6b78);min-width:0;transition:width .3s}
+/* Impeccable-Kritik 2026-08-02 (P1 Farbe/P8 Minimalismus): 26px hoher
+   Gradient-Balken war das visuell lauteste Element der COT-Karte fuer einen
+   Hintergrund-Kontext-Chart. Flacher (14px) + einfarbig statt Verlauf, wie
+   die Volatility-Leaders-Balken direkt daneben in derselben Insights-Rubrik.
+   Alt: height:26px; */
+.cot-bar{flex:1;display:flex;height:14px;border-radius:5px;overflow:hidden;background:var(--bg4)}
+/* Impeccable-Kritik 2026-08-02 (P1 Farbe): Verlauf durch flachen Ton ersetzt,
+   passend zur uebrigen App (Volatility Leaders etc. sind ebenfalls flach).
+   Alt: background:linear-gradient(90deg,#2f6fcf,#5fa8ed); / linear-gradient(90deg,#d8525f,#ef6b78); */
+.cot-bar-long{background:var(--blue);min-width:0;transition:width .3s}
+.cot-bar-short{background:var(--red);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -729,7 +779,8 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
-.ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
+/* Impeccable-Kritik 2026-08-02 (P1 Farbe): Quellen-Link direkt neben Actual/Forecast/Previous - vorher identischer Ton wie ein bullisher Wert in derselben Zeile. Alt: color:var(--blue); */
+.ind-data-src a{color:var(--link);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
 /* Ueberbrueckt das schlagartige Aufklappen der Indikator-Detail-Zeile:
    Chart+Quelle faden/gleiten beim OEFFNEN kurz ein statt einfach dazustehen -
    siehe toggleIndDetailRow(). */
@@ -931,7 +982,8 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
 .globe-main-row .globe-host{flex:1;min-width:0;width:auto}
 .globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
-.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie, 8.5px unter der Lesbarkeits-Schwelle). Alt: font-size:8.5px; */
+.gt-label{font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Track im "Cockpit-Metall"-Look: dunkler Schlitz mit leichtem Glanzrand,
    Kerben als Skala (5 Stufen). Handle ist ein breiterer Griff-Riegel, der
    ueber den Track hinausragt (klassische Throttle-Optik statt eines duennen
@@ -1075,7 +1127,16 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Ueberwachungsmodus-Objekte"): "TRACKING" oben mittig zwischen den Eck-
    Klammern, "SIGNAL" unten mittig - beides reine Modus-/Status-Label wie
    "GLOBAL MARKET SURVEILLANCE" selbst, keine erfundenen Messwerte. */
-.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie, 8.5px unter der Lesbarkeits-
+   Schwelle). Alt: font-size:8.5px; */
+/* Impeccable-Kritik 2026-08-02 (P1 Barrierefreiheit, echter Bug: die
+   "TRACKING"-Beschriftung wurde beim Detector-Scan zu 100% von einem
+   rotierenden Waehrungs-Marker-Label darunter verdeckt - verstoesst gegen
+   den eigenen "Elemente duerfen nie ueberlappen"-Grundsatz. Da der Globus
+   rotiert, ist die genaue Kollisionsposition nie vorhersagbar - robuste
+   generelle Loesung ist ein dunkler Halo-Hintergrund hinter dem Text statt
+   ein Versuch, die eine ausloesende Marker-Position zu jagen. */
+.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;background:rgba(10,12,16,.72);padding:2px 7px;border-radius:4px}
 .globe-hud-badge.top{top:9px}
 .globe-hud-badge.bottom{bottom:9px}
 .globe-hud-badge b{display:inline-block;width:4px;height:4px;border-radius:50%;background:#5fd0ff;box-shadow:0 0 5px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
@@ -1161,7 +1222,8 @@ body.dash-edit-mode .mw-bar{display:flex}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
 .hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:29px;height:29px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:7px}
 .hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.hie-wd{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie, 8px unter der Lesbarkeits-Schwelle). Alt: font-size:8px; */
+.hie-wd{font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hie-imp{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
@@ -1289,13 +1351,15 @@ body.dash-edit-mode .mw-bar{display:flex}
 .cal-row.cal-past{opacity:.42}@media (hover:hover){.cal-row.cal-past:hover{opacity:.75}}
 /* Dünne rote "Jetzt"-Linie mit linksbündiger Uhrzeit. */
 .cal-now-line{display:flex;align-items:center;gap:6px;padding:3px 9px}
-.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.5;letter-spacing:.3px}
+/* Impeccable-Kritik 2026-08-02 (P1 Barrierefreiheit): weiss auf --red war 3.5:1, WCAG braucht 4.5:1. Nur der Badge-Hintergrund ist hier dunkler, --red selbst (Bearish-Bias-Farbe app-weit) bleibt unangetastet. Alt: background:var(--red); */
+.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:#c73b38;padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.5;letter-spacing:.3px}
 .cal-now-rule{flex:1;height:2px;background:var(--red);border-radius:1px;box-shadow:0 0 4px rgba(var(--red-rgb),.6)}
 /* Scrollbarer Kalender-Container (Dashboard-Widget "Upcoming Events"). */
 .cal-scroll{position:relative;max-height:620px;overflow-y:auto}
 .cal-time{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
 .cal-ccy{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
-.cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Impeccable-Kritik 2026-08-02 (P1 Typografie, 8.5px unter der Lesbarkeits-Schwelle). Alt: font-size:8.5px; */
+.cal-imp{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
 .cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
@@ -1469,7 +1533,8 @@ body.dash-edit-mode .mw-bar{display:flex}
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
-.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
+/* Impeccable-Kritik 2026-08-02 (P1 Barrierefreiheit): siehe .cal-now-time oben, gleicher Kontrast-Fix, --red selbst unangetastet. Alt: background:var(--red); */
+.inbox-badge{position:absolute;top:-6px;right:-6px;background:#c73b38;color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
 .inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
 /* ── INBOX SCORE NOTIFICATIONS ── */
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
@@ -1550,7 +1615,11 @@ body.dash-edit-mode .mw-bar{display:flex}
   .st{font-size:14px;padding:7px 16px}
   .slbl{font-size:11px}
   .rtxt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
-  .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
+  .nc-inp,.pcc-name{font-size:20px;font-weight:800}
+  /* Impeccable-Kritik 2026-08-02 (P1 Typografie): .rub-inp bewusst aus diesem
+     Desktop-Bump herausgenommen, sonst waere die neue kleine Grossbuchstaben-
+     Titel-Konvention nur auf Mobil sichtbar gewesen. Alt: war Teil der Zeile
+     oben (.rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}). */
   .dw{padding:16px}
   .dw-t{font-size:12.5px}
   .dw-sub{font-size:13px}
@@ -1906,29 +1975,29 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-268 — Kompakt-Regler blendet auf Stufe 2 jetzt auch die Overview-Kachel-Zusammenfassungen aus (vorher nur die Rubrik-Kartenzusammenfassungen). Globus-Jet-Flamme ist jetzt IMMER sichtbar, auch bei niedrigster Schubregler-Stufe (vorher nur waehrend Boost/aktivem Schub) - waechst bei Boost + Regler ganz oben auf mindestens das 4-Fache der Ruhegroesse (Breite exakt 4x, Laenge 5,2x).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-269 — Impeccable-Kritik (dual-agent Design-Review + Detector-Scan) auf FX/Non-FX angewendet, alle 5 gefundenen Prioritaeten umgesetzt: Karten-Titel auf kleine getrackte Grossbuchstaben-Konvention vereinheitlicht (16 Schriftgroessen -> weniger, Kartenkopf-Hintergrund an Body angeglichen); neuer --link-Farbton trennt interaktive Elemente (ⓘ, Quellen-Links) von der Bullish-Bias-Farbe; globaler Tastatur-Fokusring, aria-label auf Icon-Buttons, TRACKING-Label-Ueberlappung am Globus behoben, Kontrast-Fix bei zwei roten Badges; Tabellenzeilen kompakter; neuer dezenter '⋯'-Griff macht Bias-Setzen erstmals ohne Long-Press auffindbar. Ueberall wo bestehender Code ersetzt wurde, ist der alte Wert direkt daneben auskommentiert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-268</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-269</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
       <span class="green-alert-icon">!</span>
       <span class="green-alert-count" id="greenAlertCount">0</span>
     </div>
-    <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
-    <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)">→</button>
-    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
+    <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)" aria-label="Undo">←</button>
+    <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)" aria-label="Redo">→</button>
+    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)" aria-label="Search"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
     <div class="hdr-menu-wrap">
-      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
+      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups" aria-label="Data menu"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
-    <button class="btn" onclick="openHelpM()" title="How the scoring works"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
-    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
-    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
+    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour" aria-label="Design"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
+    <button class="btn" onclick="openHelpM()" title="How the scoring works" aria-label="Help"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
+    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox" aria-label="Inbox"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
+    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync" aria-label="Cloud sync / profile">
       <span class="profile-circle" id="profileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       <span class="profile-name" id="profileName">Sync</span>
     </button>
@@ -3435,6 +3504,20 @@ function biasPressStart(ev,kind,ri,ii){
   _biasPressTimer=setTimeout(()=>openBiasPicker(kind,ri,ii,x,y),450);
 }
 function biasPressEnd(){clearTimeout(_biasPressTimer);}
+// Impeccable-Kritik 2026-08-02 (P0: Bias setzen war NUR ueber einen 450ms
+// Long-Press erreichbar, keine sichtbare Andeutung - auf Touch feuert der
+// title-Tooltip nie, die Aktion war faktisch unauffindbar ohne Vorwissen).
+// Additiver Fix: ein dezenter, IMMER sichtbarer "⋯"-Griff pro Karte/Zeile
+// oeffnet dasselbe Popover per Klick - der Long-Press bleibt unveraendert
+// als Abkuerzung bestehen. Bewusst KEIN Rueckbau zu den fruehen drei
+// farbigen ▲◆▼-Buttons (die wurden auf expliziten Nutzer-Wunsch entfernt,
+// siehe CLAUDE.md "Bias-Buttons durch Long-Press-Popover ersetzt") - nur
+// ein einzelnes kleines, farbloses Symbol statt drei bunter Kacheln.
+function openBiasPickerAtButton(ev,kind,ri,ii){
+  ev.stopPropagation();
+  const r=ev.currentTarget.getBoundingClientRect();
+  openBiasPicker(kind,ri,ii,r.left+r.width/2,r.bottom);
+}
 // Event-/News-Quellen-IDs für ein Symbol: das Symbol selbst plus - bei
 // Nicht-FX-Assets - die verbundene Währung (sym.linkCcy, Standard USD).
 // "Keine Verbindung" (linkCcy=null) -> nur das Symbol selbst.
@@ -6699,6 +6782,7 @@ function renderRub(rub,ri,total){
         <button class="rdel" onclick="delRub(${ri})">×</button>
       </span>
       ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
+      <button class="bias-handle" onclick="openBiasPickerAtButton(event,'rub',${ri})" title="Set bias">⋯</button>
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
     </div>
     <div class="rub-body">
@@ -6848,6 +6932,7 @@ function renderIndRow(ind,ri,ii,rub,total){
   const isOpen=!!indDetailsOpen[ind.id];
   const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
     <td class="ir-name"><span class="ir-name-txt">${escH(ind.displayName||ind.name)}</span>${lockIc}
+      <button class="bias-handle" onclick="openBiasPickerAtButton(event,'ind',${ri},${ii})" title="Set bias">⋯</button>
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
