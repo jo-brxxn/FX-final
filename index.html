@@ -18,7 +18,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rgba(255,255,255,.5) 0%,transparent 38%),linear-gradient(305deg,rgba(90,80,60,.05) 0%,transparent 45%),linear-gradient(22deg,rgba(90,80,60,.04) 0%,transparent 30%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(101deg,transparent 21.5%,rgba(138,135,126,.12) 22%,rgba(138,135,126,.03) 22.6%,transparent 23.4%),linear-gradient(101deg,transparent 59%,rgba(138,135,126,.08) 59.4%,transparent 60%),linear-gradient(34deg,transparent 42%,rgba(150,146,136,.09) 42.5%,rgba(150,146,136,.02) 43.2%,transparent 44%),linear-gradient(34deg,transparent 76%,rgba(150,146,136,.07) 76.4%,transparent 77.1%),linear-gradient(128deg,rgba(255,255,255,.5) 0%,transparent 38%),linear-gradient(305deg,rgba(90,80,60,.04) 0%,transparent 45%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
@@ -74,7 +74,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rg
    Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
    im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
    laeufig in derselben Zeile. */
-.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:7px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
+.hdr{background:transparent;padding:10px 14px 6px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
 /* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
    Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
    Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
@@ -83,12 +83,18 @@ body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rg
    in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
    einheitlich eingefaerbten Wortmarke. */
 .logo{grid-column:1;grid-row:1;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
-.logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
+.logo-fx{font-weight:900;color:var(--t0);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .saved{font-size:11px;color:var(--success);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
 .hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+/* Referenz-Mockup 2026-08-03: Header-Buttons wirken dort wie ein reiner
+   Icon+Label-Streifen ohne sichtbare Pille (kein Rahmen/Hintergrund im
+   Ruhezustand) - nur .hdr-r-Buttons betroffen, .btn bleibt ueberall sonst
+   im Projekt unveraendert (dort weiterhin sichtbare Pillen-Buttons). */
+.hdr-r .btn{background:transparent;border-color:transparent;color:var(--t2)}
+@media (hover:hover){.hdr-r .btn:hover:not(:disabled){background:var(--bg3);border-color:var(--bd);color:var(--t0)}}
 /* Avatar verkleinert + Name entfernt (Nutzer-Wunsch 2026-07-27, per Foto:
    "mach den Kreis mit dem Benutzer Namen kleiner das das in die Zeile
    passt und lass unter dem Kreis den Namen weg") - sitzt jetzt in derselben
@@ -145,9 +151,9 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.tabbar{background:transparent;border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
+.tp.on{color:var(--t0);font-weight:800;border-bottom-color:var(--t0)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
 .tp.tp-stack{font-weight:700}
 .tp-arrow{font-size:9px;opacity:.75;margin-left:3px}
@@ -2079,12 +2085,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-275 — &quot;Luxury Marble Terminal&quot;-Feinschliff: warme Elfenbein-/Creme-/Greige-Kartentoene statt reinem Weiss, kein Glassmorphism/Transparenz mehr (Header/Tabbar/Sidebar/Modals jetzt blickdicht), grosszuegigere Radien (18-22px Karten, 14-18px Buttons) und Abstaende (24-32px zwischen Karten), weiche breite Schatten statt harter Kontraste, Anthrazit-Typografie-Hierarchie (#1F2328/#3A3F46/#6B7280/#8A8F98), exakte Akzentfarben (Bull-Blau #3B82F6, Bear-Rot #E35D5D, neutrales Gold #D4A857, eigenes Status-Gruen #22C55E fuer Saved/Online getrennt von den Bias-Farben) und filigranere 1.75px-Icon-Linien.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-276 — Header/Tab-Leiste an Nutzer-Referenzbild angeglichen: kein eigenes Panel mehr, Marmor-Hintergrund scheint durchgehend durch (nur noch eine duenne Trennlinie unter der Tab-Leiste). Marmor-Aederung deutlicher sichtbar (duenne graue Vene-Linien statt nur weichem Verlauf). Logo + aktiver Tab jetzt dunkel/Anthrazit mit fetter Unterstreichung statt Blau. Header-Buttons (Search/Data/Design/Help/Inbox) wirken jetzt wie eine reine Icon+Label-Zeile ohne sichtbare Pille, erst beim Hover erscheint ein dezenter Hintergrund.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-275</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-276</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
