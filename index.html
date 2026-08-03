@@ -986,11 +986,14 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
    der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
 .dash-majors-card .ab-wrap{background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;margin-bottom:4px;overflow:hidden}
-.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:6px 7px 5px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:0 4px}
-.dash-majors-card .ab .an{order:1;flex:1 1 auto;font-size:12px}
-.dash-majors-card .ab .av{order:2;margin:0;font-size:11px}
+.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:7px 9px 6px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:2px 6px}
+.dash-majors-card .ab .an{order:1;flex:1 1 auto;font-size:12.5px;font-weight:700}
+/* Referenz-Mockup 2026-08-03 (FX Watchlist): Bias-Pille statt reinem
+   Dreieck-Glyph - wiederverwendet .bbadge (siehe fx_bias-Widget), nur
+   hier als volle Kapsel statt der dortigen festen 54px-Rechteck-Variante. */
+.dash-majors-card .ab .bbadge{order:2;margin:0;border-radius:999px;width:auto;min-height:0;padding:2px 7px;font-size:8.5px;letter-spacing:.2px;white-space:nowrap}
 .dash-majors-card .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
-.dash-majors-card .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:11.5px}
+.dash-majors-card .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:12px;font-weight:800}
 .dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#565c66;color:var(--t0)}}
@@ -1791,7 +1794,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      verdeckt, weil deren Hintergrund im Dokumentfluss SPAETER/OBEN
      gezeichnet wird. 8px reicht, damit sowas wieder sichtbar ist, ohne die
      kompakte Optik von "keine grossen Luecken" aufzugeben. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:28px;align-items:start}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(212px,262px) minmax(280px,1fr) minmax(212px,262px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:28px;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -1850,7 +1853,7 @@ body.dash-edit-mode .mw-bar{display:flex}
    mehr, die Majors-Karte ist das erste Kind von .dash-zone-left. Etwas
    breitere Seiten-Spalten ab 1400px, mehr Platz fuer den zentralen Globus. */
 @media(min-width:1400px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(220px,280px) minmax(280px,1fr) minmax(220px,280px)}
+  #dashWidgets.dash-layout{grid-template-columns:minmax(232px,300px) minmax(280px,1fr) minmax(232px,300px)}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -2084,12 +2087,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-278 — Nutzer-Korrektur: das warme Creme-/Beige-/Gold-Marmor-Design wirkte zu 'besch/braun/gelblich' - komplett auf kuehle, neutrale Grautoene umgestellt (Hintergrund, Karten, Rahmen, Marmor-Aederung). Die bisherige GOLD-Neutralfarbe (Bias 'neutral', Stern/Important) ist jetzt ein kuehles Blaugrau (Slate) statt Gold - bleibt als dritter Ton neben Blau/Rot erkennbar, wirkt aber nicht mehr gelblich. Radien/Schatten etwas straffer gezogen fuer einen technischeren, weniger 'kuscheligen' Terminal-Eindruck.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-279 — Dashboard nach Referenzbild umgebaut (Nutzer-Freigabe: Form/Groesse/Aussehen aller Elemente durften sich aendern): die linke 'Majors'-Leiste zeigt pro Waehrung jetzt Name + volle Bias-Pille (BULLISH/NEUTRAL/BEARISH) in einer Zeile statt nur einem kleinen Dreieck-Glyph, dieselbe Kapsel wie im FX-Watchlist-Referenzbild. Linke/rechte Dashboard-Spalte dafuer etwas breiter (212-300px statt 190-280px), damit die Pille bequem Platz hat.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-278</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-279</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -10816,7 +10819,7 @@ function dashMajorsHtml(){
   const rows=list.map(c=>{
     const sc=symScoreCmp(c);
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><div class="av" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+      <div class="an">${escH(c.name)}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${BL[c.bias]}</span>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
