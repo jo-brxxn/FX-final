@@ -11,61 +11,47 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#f2f0ea">
+<meta name="theme-color" content="#eef0f2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.5) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(214,207,193,.16) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(222,214,198,.14) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(199,193,178,.12) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(138,133,121,.11) 14.1%,rgba(138,133,121,.025) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(150,144,131,.05) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(140,134,121,.09) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(150,144,130,.08) 27.9%,rgba(150,144,130,.02) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(145,139,125,.06) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(135,129,115,.065) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(140,134,119,.055) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(148,142,127,.05) 46.9%,transparent 47.6%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.55) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(199,203,208,.16) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(205,209,214,.14) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(188,192,197,.12) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(120,126,133,.11) 14.1%,rgba(120,126,133,.025) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(134,139,145,.05) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(124,130,137,.09) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(134,139,145,.08) 27.9%,rgba(134,139,145,.02) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(129,134,140,.06) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(118,123,129,.065) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(123,128,134,.055) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(132,137,143,.05) 46.9%,transparent 47.6%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
 :root{
-  /* "Luxury Marble Terminal"-Design (Nutzer-Wunsch 2026-08-03, sehr
-     detaillierte Vorgabe mit exakten Hex-/Px-Werten): institutionelles
-     Analyse-Terminal, aber warm/hell/elegant statt dunkel/technisch-kalt.
-     Reine Design-Token-Ueberarbeitung - Layout, Informationsarchitektur,
-     Funktionen und Position aller Elemente bleiben unangetastet, da
-     praktisch jede Komponente im Projekt ausschliesslich ueber diese
-     Variablen faerbt.
-     Hintergrund = grossflaechige matte Marmor-Flaeche in warmen Weiss-/
-     Elfenbein-/Creme-/Greige-Toenen (--bg0, siehe body{background} fuer die
-     ganz dezente <10%-Maserung). Karten (--bg2/--bg3/--bg4) nutzen bewusst
-     LEICHT UNTERSCHIEDLICHE warme Nuancen (Ivory/Soft Beige/Light Greige)
-     statt eines einzigen Farbtons - erzeugt die vom Nutzer gewuenschte
-     natuerliche Tiefenwirkung rein durch Farbabstufung, OHNE Transparenz/
-     Glassmorphism (backdrop-filter wurde daher app-weit entfernt, siehe
-     .hdr/.tabbar/.sb/.modal/.dw weiter unten - alle Flaechen sind jetzt
-     blickdicht). Radien global auf 18-22px (Karten, --r) bzw. 14-18px
-     (Buttons/Inputs, --rs) angehoben - vorher bewusst eckig/technisch
-     (Audit 2026-07-19), jetzt bewusst weich/hochwertig, Gegenteil der
-     damaligen Entscheidung, aber explizit neuer Nutzer-Wunsch.
-     Bias-/Akzentfarben exakt nach Nutzer-Vorgabe: Bullish-Daten
-     entsaettigtes Blau (#3B82F6, = BC.bull/--blue/--green, beide Variablen
-     zeigen bewusst denselben Hex - historische App-Konvention, siehe
-     CLAUDE.md), neutrale Bewertung warmes Gold (#D4A857, = --amber/--star),
-     bearish gedaempftes Rot (#E35D5D). Separates --success (#22C55E, echtes
-     "ruhiges Gruen" aus der Vorgabe) NUR fuer generische Status-Meldungen
-     OHNE Score-Bedeutung (Saved-Badge, Markt-offen-Punkt) - bewusst NICHT
-     dasselbe wie --blue/--green (Bias-Bull), sonst wuerde ein reiner
-     UI-Status (z.B. "gespeichert") wie ein bullisher Score-Wert aussehen. */
-  --bg0:#f1eee8;--bg1:#f5f2ec;--bg2:#faf8f4;--bg3:#f3efe7;--bg4:#ece6db;--bg5:#e1d9cb;--bg6:#cfc3ae;
-  --bd:#e6dfd1;--bd2:#d8cfbb;
-  --t0:#1f2328;--t1:#3a3f46;--t2:#6b7280;--t3:#8a8f98;
-  --green:#3b82f6;--red:#e35d5d;--amber:#d4a857;--star:#d4a857;--blue:#3b82f6;--purple:#967bae;--success:#22c55e;
-  --green-rgb:59,130,246;--red-rgb:227,93,93;--amber-rgb:212,168,87;
-  --star-rgb:212,168,87;--blue-rgb:59,130,246;--purple-rgb:150,123,174;--success-rgb:34,197,94;--t3-rgb:138,143,152;
-  /* Nutzer-Wunsch 2026-08-03: weiche, grosszuegige Radien statt der
-     vorherigen eckigen Terminal-Optik (Gegenteil des 2026-07-19-Audits,
-     aber explizit neu gewuenscht) - Karten 18-22px, Buttons/Inputs 14-18px. */
-  --r:20px;--rs:16px;--rss:10px;
-  /* Gemeinsamer weicher "Schwebe"-Schatten fuer Karten (6-10% Deckkraft,
-     ~8px Versatz, 30-40px Weichzeichnung) statt harter Kontraste. */
-  --shadow-card:0 8px 32px rgba(31,35,40,.07);
-  --shadow-pop:0 12px 40px rgba(31,35,40,.14);
+  /* "Grey Tech Terminal"-Design (Nutzer-Korrektur 2026-08-03): das vorherige
+     warme Creme-/Beige-/Gold-Marmor-Design wirkte zu "besch/braun/gelblich" -
+     auf Wunsch komplett auf kuehle, neutrale Grautoene umgestellt, damit die
+     App wieder wie ein professionelles Tech-Terminal wirkt statt wie ein
+     warmes Lifestyle-Interface. Reine Token-Ueberarbeitung - Layout/Funktionen
+     unangetastet, da praktisch jede Komponente ausschliesslich ueber diese
+     Variablen faerbt. Radien/Abstaende/Schatten dabei ebenfalls etwas
+     straffer/praeziser gezogen (kleinere Radien, engere Schatten) statt der
+     vorherigen "weich&luxurioes"-Rundungen - passt zum jetzt gewuenschten
+     technischeren, weniger "kuschligen" Eindruck.
+     Bias-/Akzentfarben: Bullish-Blau (#3B82F6, = --blue/--green) und
+     Bearish-Rot (#E35D5D) unveraendert (keine warmen/gelben Toene). Die
+     bisherige GOLD-Neutralfarbe (--amber/--star) war Teil des "gelblichen"
+     Problems - ersetzt durch ein kuehles Blaugrau (Slate), bleibt trotzdem
+     als eigener, von Blau/Rot unterscheidbarer dritter Ton erkennbar.
+     Separates --success (#22C55E) weiterhin NUR fuer generische Status-
+     Meldungen ohne Score-Bedeutung (Saved-Badge, Markt-offen-Punkt). */
+  --bg0:#eef0f2;--bg1:#f4f5f7;--bg2:#ffffff;--bg3:#eef0f2;--bg4:#e1e4e8;--bg5:#d0d4d9;--bg6:#b5bac1;
+  --bd:#dde1e5;--bd2:#c9cfd5;
+  --t0:#1c2024;--t1:#383d43;--t2:#676d76;--t3:#868c94;
+  --green:#3b82f6;--red:#e35d5d;--amber:#64748b;--star:#64748b;--blue:#3b82f6;--purple:#7b7fae;--success:#22c55e;
+  --green-rgb:59,130,246;--red-rgb:227,93,93;--amber-rgb:100,116,139;
+  --star-rgb:100,116,139;--blue-rgb:59,130,246;--purple-rgb:123,127,174;--success-rgb:34,197,94;--t3-rgb:134,140,148;
+  /* Etwas straffere Radien (Terminal-Optik statt "weich&luxurioes"). */
+  --r:12px;--rs:10px;--rss:6px;
+  /* Engerer, gegruendeter Schatten statt des vorherigen weichen "Schwebe"-Looks. */
+  --shadow-card:0 3px 14px rgba(20,23,26,.08);
+  --shadow-pop:0 8px 28px rgba(20,23,26,.16);
 }
 /* ── LAYOUT ── */
 /* Header als 3-Spalten/2-Zeilen-Grid statt Flex (Referenz-Foto, Nutzer-
@@ -431,7 +417,7 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
-.ri{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#fbf3de;border-color:var(--star)!important}
+.ri{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#e9edf1;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:21px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
@@ -454,7 +440,7 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:16px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
-.rub-card.imp .rub-hdr{background:#fbf3de}
+.rub-card.imp .rub-hdr{background:#e9edf1}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): keine dunklere Kopfleisten-Flaeche
    mehr, Header sitzt auf derselben Flaeche wie der Kartenkoerper (nur die
    duenne Trennlinie bleibt). Alt: background:var(--bg4); */
@@ -1871,9 +1857,9 @@ body.dash-edit-mode .mw-bar{display:flex}
   .dp{max-width:none}
 }
 /* ── INTRO-ANIMATION (Start/Reload) ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#f2f0ea;cursor:pointer}
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#eef0f2;cursor:pointer}
 #introShards{position:absolute;inset:0;z-index:1}
-.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#ffffff 0%,#f2f0ea 58%,#e3e0d8 100%);box-shadow:inset 0 0 0 1px rgba(24,104,168,.1);will-change:transform,opacity}
+.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#ffffff 0%,#eef0f2 58%,#dde1e5 100%);box-shadow:inset 0 0 0 1px rgba(var(--blue-rgb),.1);will-change:transform,opacity}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
@@ -2098,12 +2084,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-277 — Feindetail-Abgleich mit dem Nutzer-Referenzbild: Marmor-Hintergrund weiter verfeinert (organische Wolken-Farbvariation + verzweigte Vene-Linien statt weniger gerader Striche). Pillen/Badges (Bias-Pille, Score-Zahl, Research-Tags) jetzt durchgehend als volle Kapsel-Form abgerundet. Notiz-Zeilen im Research-Tab wie im Referenzbild umgebaut (Datums-Block links, Themen-Pille + Stern-Icon + Uhrzeit rechts gestapelt, Umriss-Stern statt Emoji). Overview-Kacheln zeigen jetzt eine einzeilige Kurzfassung der Auto-Zusammenfassung. Data-Quality-HIGH nutzt jetzt das eigene Status-Gruen statt Blau.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-278 — Nutzer-Korrektur: das warme Creme-/Beige-/Gold-Marmor-Design wirkte zu 'besch/braun/gelblich' - komplett auf kuehle, neutrale Grautoene umgestellt (Hintergrund, Karten, Rahmen, Marmor-Aederung). Die bisherige GOLD-Neutralfarbe (Bias 'neutral', Stern/Important) ist jetzt ein kuehles Blaugrau (Slate) statt Gold - bleibt als dritter Ton neben Blau/Rot erkennbar, wirkt aber nicht mehr gelblich. Radien/Schatten etwas straffer gezogen fuer einen technischeren, weniger 'kuscheligen' Terminal-Eindruck.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-277</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-278</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2680,7 +2666,7 @@ function introLogin(){
 <script>
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
-const BC={bull:'#3b82f6',bear:'#e35d5d',neu:'#d4a857'};
+const BC={bull:'#3b82f6',bear:'#e35d5d',neu:'#64748b'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -2791,7 +2777,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // recomputeRiskCorr) - hier ueberall defensiv mitbehandelt, da bClass/
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#3b82f620':(b==='bear'||b==='sbear')?'#e35d5d20':'#d4a85720';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#3b82f620':(b==='bear'||b==='sbear')?'#e35d5d20':'#64748b20';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
@@ -7253,7 +7239,7 @@ function renderNoteRub(rub,ri,total){
     </div>
     <div class="rub-body">
       ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#d4a85740':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
+        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#64748b40':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
           <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
           <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
@@ -11744,8 +11730,8 @@ function globeSkeleton(size,uid){
     <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
     <rect x="1.7" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
     <rect x="-3.8" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
-    <circle cx="2.75" cy="11.6" r="1" fill="#d4a857"/>
-    <circle cx="-2.75" cy="11.6" r="1" fill="#d4a857"/>
+    <circle cx="2.75" cy="11.6" r="1" fill="#64748b"/>
+    <circle cx="-2.75" cy="11.6" r="1" fill="#64748b"/>
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
     <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#e35d5d"/>
     <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#e35d5d"/>
@@ -13746,7 +13732,7 @@ function sentGauge(val,lo,hi,unit,maxW,key){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#3b82f6')}${arc(P*0.75,P*0.55,'#6ea8f0')}${arc(P*0.55,P*0.45,'#d4a857')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#e35d5d')}
+    ${arc(P,P*0.75,'#3b82f6')}${arc(P*0.75,P*0.55,'#6ea8f0')}${arc(P*0.55,P*0.45,'#64748b')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#e35d5d')}
     <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
       <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
@@ -13993,7 +13979,7 @@ const SENT_INFO={
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
      <ul><li><b style="color:${'#e35d5d'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
      <li><b style="color:${'#3b82f6'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#d4a857'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
+     <li><b style="color:${'#64748b'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
      <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
