@@ -155,7 +155,12 @@ svg.ic{vertical-align:-2px;flex:none}
    Touch-Scroll, bis man neu antippt. Halbtransparenz (Aurora schimmert
    durch) bleibt, nur ohne Blur; Momentum-Scroll ist seit iOS 13 ohnehin
    Standard. */
-.sb{width:72px;background:rgba(17,22,31,.55);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0}
+/* Foto-Referenz 2026-08-02: die Watchlist zeigt Name, Sparkline, Score und
+   Bias-Pfeil in EINER Zeile - dafuer reichten die frueheren 72px (gestapelte
+   Darstellung) nicht aus, die Sparkline wurde auf 0 zusammengedrueckt.
+   Alt: width:72px; */
+.sb{width:138px;background:rgba(17,22,31,.55);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0}
+@media(max-width:760px){.sb{width:120px}}
 .sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
@@ -492,7 +497,126 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
    2026-07-29 hatte es entfernt - siehe renderOverviewCard-Kommentar dort,
    dort ausklammert statt geloescht, falls das wieder bevorzugt wird). */
 .ov2-badge{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.ov2-summary{font-size:13px;line-height:1.5;color:var(--t3);white-space:pre-wrap}
+/* Foto-Referenz 2026-08-02: bei 6 Kacheln pro Reihe ist jede nur ~200px
+   breit - Zusammenfassung auf 3 Zeilen begrenzen, damit die Kacheln gleich
+   hoch bleiben und nichts ueber den Rand laeuft (CLAUDE.md-Grundsatz
+   "Karten-Inhalt darf nie ueber den Kartenrand hinausgehen"). Voller Text
+   bleibt als Tooltip erreichbar. Alt: ohne -webkit-line-clamp-Block. */
+.ov2-summary{font-size:12px;line-height:1.45;color:var(--t3);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+/* ── SIDEBAR-ZEILEN EINZEILIG (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ──
+   Vorher dreizeilig gestapelt (Name / Sparkline / Score+Pfeil), im Referenz-
+   bild steht alles in EINER Zeile: Name → Sparkline → Score → Bias-Pfeil.
+   Bewusst auf #sidebar gescoped: die MAJORS-Leiste des Dashboards nutzt
+   dieselben .ab/.an/.av-Bausteine, soll dort aber gestapelt bleiben (so
+   zeigt es das Dashboard-Foto). Zum Zurueckdrehen einfach diesen Block
+   entfernen. */
+#sidebar .ab{display:flex;align-items:center;gap:6px;text-align:left;padding:5px 7px 5px 6px}
+#sidebar .ab .an{flex-shrink:0;min-width:32px}
+#sidebar .ab .sb-spark{flex:1;min-width:0;margin:0}
+#sidebar .ab .sb-score{margin:0 0 0 auto;font-size:11px}
+#sidebar .ab .av{margin:0;font-size:10px;flex-shrink:0}
+/* ── DETAILSEITEN-METAZEILE (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ──
+   Mehrere Werte nebeneinander, je kleines graues Grossbuchstaben-Label ueber
+   dem groesseren hellen Wert, getrennt durch duenne 1px-Vertikallinien -
+   kein Kartenrahmen um die einzelnen Werte (tech-design-Vorgabe). */
+.dmeta{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-left:auto}
+.dmeta-i{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 14px;border-left:1px solid var(--bd)}
+.dmeta-i:first-child{border-left:none}
+.dmeta-l{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.dmeta-v{font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.dmeta-ar{justify-content:flex-start;gap:4px}
+.dmeta-sw{width:34px;height:17px;border-radius:9px;border:1px solid var(--bd2);background:var(--bg2);position:relative;cursor:pointer;padding:0;flex-shrink:0;transition:background .15s,border-color .15s}
+.dmeta-sw .knob{position:absolute;top:1px;left:1px;width:13px;height:13px;border-radius:50%;background:var(--t3);transition:transform .15s,background .15s}
+.dmeta-sw.on{background:rgba(var(--blue-rgb),.22);border-color:var(--blue)}
+.dmeta-sw.on .knob{transform:translateX(17px);background:var(--blue)}
+@media(max-width:900px){.dmeta{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none}.dmeta::-webkit-scrollbar{display:none}.dmeta-i{padding:0 10px}.dmeta-i:first-child{padding-left:0}}
+/* ── GLOBALE STATUS-LEISTE (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ──
+   Flache Zeile ohne eigenen Kartenrahmen direkt auf dem Seitenhintergrund,
+   Label:Wert-Paare mit duennen Vertikaltrennern (tech-design-Vorgabe).
+   Letztes Flex-Kind von <body> -> liegt immer unten, scrollt nie mit. */
+.statusbar{flex-shrink:0;display:flex;align-items:center;gap:0;padding:0 12px;height:30px;background:var(--bg1);border-top:1px solid var(--bd2);overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none}
+.statusbar::-webkit-scrollbar{display:none}
+.sb-item{display:flex;align-items:baseline;gap:6px;padding:0 13px;border-right:1px solid var(--bd);flex-shrink:0;height:16px}
+.sb-item:last-child{border-right:none}
+.sb-item:first-child{padding-left:0}
+.sb-lbl{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.sb-val{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.sb-sub{font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.6px}
+.sb-delta{font-size:10px;font-weight:700}
+/* Vorzeichenbasiert (gruen/rot), NICHT bias-basiert - reine Marktdaten ohne
+   Bullish/Bearish-Konzept, siehe tech-design-Farbregel. */
+.sb-up{color:#3fb950}.sb-dn{color:var(--red)}.sb-flat{color:var(--t3)}
+.sb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sb-open{background:#3fb950;box-shadow:0 0 5px rgba(63,185,80,.7)}
+.sb-closed{background:var(--t3)}
+@media(max-width:760px){.statusbar{height:28px;padding:0 8px}.sb-item{padding:0 9px}.sb-lbl{font-size:8px;letter-spacing:.8px}}
+/* ── RESEARCH LIBRARY (Nutzer-Wunsch 2026-08-02, Foto-Referenz) ──
+   Dreispaltig auf breiten Schirmen (Bibliothek | Notizen | Seitenleiste),
+   klappt auf schmaleren Geraeten gestaffelt auf 2 bzw. 1 Spalte zurueck. */
+.res-wrap{display:grid;grid-template-columns:212px minmax(0,1fr) 260px;gap:12px;align-items:start}
+@media(max-width:1300px){.res-wrap{grid-template-columns:200px minmax(0,1fr)}.res-rail{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+@media(max-width:760px){.res-wrap{grid-template-columns:1fr}.res-rail{grid-template-columns:1fr}}
+.res-lib{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px;position:sticky;top:0}
+@media(max-width:760px){.res-lib{position:static}}
+.res-lib-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
+.res-lib-sec{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 5px;padding-top:8px;border-top:1px solid var(--bd)}
+.res-libitem{display:flex;align-items:center;gap:7px;width:100%;background:transparent;border:none;border-left:2px solid transparent;color:var(--t2);padding:5px 6px;border-radius:var(--rss);cursor:pointer;font-size:12.5px;text-align:left;transition:background .12s,color .12s}
+@media (hover:hover){.res-libitem:hover{background:var(--bg4);color:var(--t0)}}
+.res-libitem.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--blue)}
+.res-libitem.res-fav.on{background:rgba(var(--star-rgb),.12);border-left-color:var(--star);color:var(--star)}
+.res-li-ic{display:inline-flex;align-items:center;flex-shrink:0;opacity:.8;font-size:11px}
+.res-li-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-li-ct{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.res-addfolder{width:100%;margin-top:7px;background:transparent;border:1px dashed var(--bd2);color:var(--t3);padding:5px;border-radius:var(--rss);cursor:pointer;font-size:11.5px;transition:all .12s}
+@media (hover:hover){.res-addfolder:hover{border-color:var(--blue);color:var(--blue)}}
+.res-main{min-width:0;display:flex;flex-direction:column;gap:10px}
+.res-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.res-title-wrap{margin-right:auto}
+.res-title{font-size:19px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-sub{font-size:11px;color:var(--t3);letter-spacing:.4px;margin-top:1px}
+.res-search{flex:1;min-width:180px;max-width:340px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;color:var(--t1);font-size:12.5px;outline:none;transition:border-color .12s}
+.res-search:focus{border-color:var(--blue)}.res-search::placeholder{color:var(--t3)}
+.res-newbtn{flex-shrink:0}
+.res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.res-stat{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 11px}
+.res-stat-v{font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.1}
+.res-stat-l{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:3px}
+.res-list-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden}
+.res-list-hdr{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--bd)}
+.res-list-ti{font-size:12px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-list-ct{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-sort{background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);padding:3px 6px;font-size:11px;outline:none;cursor:pointer}
+.res-list{display:flex;flex-direction:column}
+.res-note{padding:10px 12px;border-bottom:1px solid var(--bd);border-left:2px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
+.res-note:last-child{border-bottom:none}
+@media (hover:hover){.res-note:hover{background:var(--bg4);border-left-color:var(--blue)}}
+.res-note-top{display:flex;align-items:baseline;gap:8px}
+.res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:3px;padding:1px 5px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-note-ti{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-note-dt{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
+.res-note-star{background:none;border:none;cursor:pointer;font-size:11px;opacity:.2;padding:0;line-height:1;flex-shrink:0;transition:opacity .12s}
+.res-note-star.on{opacity:1}
+@media (hover:hover){.res-note-star:hover{opacity:.75}.res-note-star.on:hover{opacity:1}}
+.res-note-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.res-tag{font-size:10.5px;color:var(--t3);background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;transition:all .12s}
+@media (hover:hover){.res-tag:hover{border-color:var(--blue);color:var(--blue)}}
+.res-tag.on{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.1)}
+.res-note-ex{font-size:12px;line-height:1.5;color:var(--t3);margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.res-note-fold{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);margin-top:6px;opacity:.75;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-empty{padding:26px 14px;text-align:center;font-size:12.5px;color:var(--t3)}
+.res-rail{display:flex;flex-direction:column;gap:12px;min-width:0}
+.res-rail-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 11px}
+.res-rail-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
+.res-rail-empty{font-size:11.5px;color:var(--t3);line-height:1.5}
+.res-tagcloud{display:flex;flex-wrap:wrap;gap:5px}
+.res-recent{display:flex;align-items:baseline;gap:8px;width:100%;background:transparent;border:none;color:var(--t2);padding:4px 0;cursor:pointer;text-align:left;font-size:12px;border-bottom:1px solid var(--bd)}
+.res-recent:last-child{border-bottom:none}
+@media (hover:hover){.res-recent:hover{color:var(--blue)}}
+.res-recent-ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-recent-dt{font-size:10px;color:var(--t3);flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-chip{font-size:10.5px;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:3px;padding:2px 7px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-chip.on{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.1)}
+.res-flbl{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
 .carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
@@ -1572,7 +1696,9 @@ body.dash-edit-mode .mw-bar{display:flex}
   .btn{font-size:13px;padding:6px 12px}
   .tabbar{padding:0 22px}
   .tp{font-size:14px;padding:8px 16px}
-  .sb{width:90px}
+  /* Foto-Referenz 2026-08-02: einzeilige Watchlist braucht mehr Breite,
+     sonst wird die Sparkline auf 0 zusammengedrueckt. Alt: width:90px; */
+  .sb{width:158px}
   .sb-lbl{font-size:10px}
   .ab .an,.ab .av{font-size:13px}
   .add-sym{font-size:19px}
@@ -1943,12 +2069,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-272 — Designer-Modal (🎨) bekommt einen Grau-/Schwarz-Regler: Toggle 'Neutral (no colour)' schaltet den Hintergrund auf reines Chroma-0-Grau um, faehrt weiterhin ueber den bestehenden Helligkeits-Regler von nahezu Schwarz bis helleres Grau, geraeteuebergreifend synchronisiert wie der Farbton-Regler.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-273 — Foto-Referenz umgesetzt: Notes-Tab heisst jetzt Research und ist ein Dokumentationswerkzeug (Themen-Ordner + Asset-Achse, Tags, Favoriten, Volltextsuche, verlustfreie Migration der alten Notizen). Neue globale Status-Leiste unten (Marktstatus/Zeit/VIX/10Y/DXY/Gold/BTC aus echten Feeds). Detailseiten-Metazeile (Next Event, Last Update, Data Quality, Source, Auto-Refresh-Schalter). Dichteres Layout: 6 Overview-Kacheln in einer Reihe, einzeilige Watchlist mit Sparkline.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-272</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-273</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2126,13 +2252,28 @@ function introLogin(){
     <button class="btn g" style="width:100%;padding:8px;justify-content:center" onclick="addCalEv()">＋ Add to Calendar</button>
   </div>
 </div>
-<!-- PAGE: NOTES -->
+<!-- PAGE: RESEARCH (frueher "Notes", Nutzer-Wunsch 2026-08-02 - Tab-Schluessel
+     bleibt bewusst 'notes'/'pgNotes', damit bestehende, im localStorage
+     gespeicherte Tab-Stapel (tabStacks) weiter greifen; nur das Label heisst
+     jetzt "Research". Aufbau + Inhalt kommen aus renderResearch(). -->
 <div class="pc" id="pgNotes" style="display:none">
-  <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Notes</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Custom categories · ⭐ = important</div></div>
-    <button class="btn g" onclick="addNC()">＋ Category</button>
+  <div class="res-wrap" id="resWrap"></div>
+</div>
+<!-- MODAL: RESEARCH NOTE -->
+<div class="ov" id="mResNote" style="display:none">
+  <div class="modal" style="max-width:640px">
+    <h3>📓 Research note</h3>
+    <div id="resNMeta" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
+    <input class="finp" id="resNTitle" placeholder="Title — e.g. Core CPI surprised to the downside" style="margin-bottom:8px">
+    <textarea class="nbox" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…" style="margin-bottom:8px;min-height:170px"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="flex:1;min-width:150px"><div class="res-flbl">Topic</div><select class="finp" id="resNFolder"></select></div>
+      <div style="flex:1;min-width:150px"><div class="res-flbl">Asset</div><select class="finp" id="resNAsset"></select></div>
+    </div>
+    <div style="margin-bottom:8px"><div class="res-flbl">Tags (comma separated)</div><input class="finp" id="resNTags" placeholder="inflation, cpi, fed"></div>
+    <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);cursor:pointer"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
+    <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeM('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
   </div>
-  <div id="noteCats"></div>
 </div>
 <!-- PAGE: DASHBOARD -->
 <div class="dash-aurora" id="dashAurora">
@@ -2159,6 +2300,11 @@ function introLogin(){
 </div>
 
 <!-- MODAL: Designer (Hintergrund-Farbwahl ueber das Farbspektrum) -->
+<!-- GLOBALE STATUS-LEISTE (Foto-Referenz, Nutzer-Wunsch 2026-08-02)
+     Letztes Nicht-Modal-Kind von <body>, dadurch app-weit unten fixiert.
+     Inhalt kommt ausschliesslich aus echten Feeds (price_data/bond_data/
+     sentiment_data) - siehe renderStatusBar(). -->
+<div class="statusbar" id="statusBar"></div>
 <div class="ov" id="mDesigner" style="display:none">
   <div class="modal" style="max-width:430px">
     <h3>🎨 Designer</h3>
@@ -5586,6 +5732,59 @@ function mkNCs(){return[
   {id:uid(),name:'Macro Overview',items:[{id:uid(),text:'Global risk sentiment',imp:false},{id:uid(),text:'Fed rate path expectations',imp:false}]},
   {id:uid(),name:'Geopolitics',items:[{id:uid(),text:'Middle East: Hormuz tensions',imp:true}]},
 ];}
+// ══ RESEARCH LIBRARY (Nutzer-Wunsch 2026-08-02) ══════════════════
+// Loest den frueheren "Notes"-Tab ab: statt einer flachen Kategorie->Zeilen-
+// Liste jetzt ein Dokumentationswerkzeug zum Festhalten von Markterfahrungen
+// mit ZWEI unabhaengigen Ordnungsachsen:
+//   TOPICS  - vom Nutzer angelegte Themen-Ordner (note.fid)
+//   ASSETS  - automatisch aus note.asset abgeleitet (kein eigener Ordner
+//             noetig, jede Notiz kann optional einem Asset zugeordnet werden)
+// plus Favoriten-Filter, Freitext-Tags (#inflation ...) und Volltextsuche.
+// Teil von snap() (Undo + Cloud-Sync laufen dadurch automatisch mit, siehe
+// CLAUDE.md "WICHTIGSTE REGEL" - kein eigener 4-Punkte-Sync noetig).
+const RESEARCH_FOLDER_ICONS=['globe','bars','trendUp','zap','flame','note','shuffle','pin'];
+function mkResearchFolders(){return[
+  {id:uid(),name:'Macro',icon:'globe'},
+  {id:uid(),name:'FX',icon:'shuffle'},
+  {id:uid(),name:'Indices',icon:'bars'},
+  {id:uid(),name:'Commodities',icon:'flame'},
+  {id:uid(),name:'Crypto',icon:'zap'},
+  {id:uid(),name:'Central Banks',icon:'pin'},
+  {id:uid(),name:'Politics',icon:'trendUp'},
+  {id:uid(),name:'Journal',icon:'note'},
+];}
+function mkResearch(){return{folders:mkResearchFolders(),notes:[]};}
+// Titel aus einem alten Freitext-Eintrag ableiten: erste Zeile, auf eine
+// lesbare Laenge gekuerzt. Der VOLLE Text bleibt immer im Body erhalten -
+// es geht bei der Migration nichts verloren.
+function researchTitleFrom(text){
+  const first=String(text||'').split(/\r?\n/)[0].trim();
+  if(!first)return 'Untitled note';
+  return first.length>90?first.slice(0,90).trim()+'…':first;
+}
+// Einmalige, verlustfreie Migration der alten noteCats-Struktur. `noteCats`
+// selbst wird dabei BEWUSST nicht angetastet und bleibt weiter Teil von
+// snap() - faellt bei der Migration etwas auf die Nase, sind die
+// Originaldaten noch vollstaendig vorhanden.
+function migrateResearch(r,legacyCats){
+  if(r&&Array.isArray(r.folders)&&Array.isArray(r.notes))return r;
+  const out=mkResearch();
+  if(Array.isArray(legacyCats)&&legacyCats.length){
+    const nowIso=new Date().toISOString();
+    out.folders=legacyCats.map(c=>({id:uid(),name:String(c&&c.name||'Notes'),icon:'note'}));
+    legacyCats.forEach((c,ci)=>{
+      (c&&c.items||[]).forEach(it=>{
+        out.notes.push({id:uid(),fid:out.folders[ci].id,title:researchTitleFrom(it&&it.text),
+          body:String(it&&it.text||''),tags:[],asset:'',fav:!!(it&&it.imp),ts:nowIso,up:nowIso});
+      });
+    });
+    // Standard-Themenordner zusaetzlich anbieten, falls die Altdaten sie
+    // nicht ohnehin schon abdecken (Namensvergleich, klein geschrieben).
+    const have=new Set(out.folders.map(f=>f.name.toLowerCase()));
+    mkResearchFolders().forEach(f=>{if(!have.has(f.name.toLowerCase()))out.folders.push(f);});
+  }
+  return out;
+}
 // Keine fest einprogrammierten Beispiel-Events mehr: der Kalender wird
 // ausschließlich live von Forex Factory befüllt (autoFetchFF beim Laden +
 // Refresh-Button), damit keine redaktionellen Platzhalter wie "95% priced"
@@ -5660,7 +5859,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,calEvts,widgets,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -5698,9 +5897,13 @@ function sanitizeSnapIds(d){
   if(Array.isArray(d.widgets))d.widgets=d.widgets.filter(w=>w&&typeof w.id==='string'&&SAFE_UID_RE.test(w.id));
   if(Array.isArray(d.pairCats)){d.pairCats=d.pairCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.pairCats.length)d.pairCats=mkPairCats();}
   if(Array.isArray(d.noteCats)){d.noteCats=d.noteCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.noteCats.length)d.noteCats=mkNCs();}
+  if(d.research&&typeof d.research==='object'){
+    if(Array.isArray(d.research.folders))d.research.folders=d.research.folders.filter(f=>f&&typeof f.id==='string'&&SAFE_UID_RE.test(f.id));
+    if(Array.isArray(d.research.notes))d.research.notes=d.research.notes.filter(n=>n&&typeof n.id==='string'&&SAFE_UID_RE.test(n.id));
+  }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -5751,7 +5954,7 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[];
+let syms,pairCats,pairs,noteCats,research,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -5863,6 +6066,7 @@ function loadState(){
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
       noteCats=d.noteCats||mkNCs();
+      research=migrateResearch(d.research,noteCats);
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
       // "No Direction"-Widget wurde entfernt (in "Possible Set-ups" zusammengeführt).
@@ -5905,7 +6109,7 @@ function loadState(){
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();calEvts=mkCalEvts();widgets=mkWidgets();customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -6617,6 +6821,7 @@ function renderDetail(){
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${FX_FLAG[c.id]?`<span class="atitle-flag">${FX_FLAG[c.id]}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'} · auto</span></div>
+      ${detailMetaHtml(c,nextLbl)}
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
@@ -6664,7 +6869,10 @@ function masonryHTML(items,renderFn){
 // angezeigt) zu einer einzigen Übersichtskarte zusammen: pro Rubrik ein
 // Feld mit deren Zusammenfassungstext, automatisch übernommenem Bias und
 // Score - optisch im selben Stil wie eine Indikator-Karte gehalten.
-function ovCols(){return window.innerWidth>=900?3:window.innerWidth>=600?2:1;}
+// Foto-Referenz (Nutzer-Wunsch 2026-08-02): die 6 Rubrik-Kacheln stehen auf
+// breiten Schirmen in EINER Reihe statt in zwei Dreier-Reihen - "viel auf
+// wenig Platz". Alt: return window.innerWidth>=900?3:window.innerWidth>=600?2:1;
+function ovCols(){return window.innerWidth>=1450?6:window.innerWidth>=1100?3:window.innerWidth>=600?2:1;}
 function renderOverviewCard(rubs){
   // Frueher auf die ersten 5 Rubriken gedeckelt - das schnitt bei der Standard-
   // Reihenfolge (siehe mkRubOrder) "Macro & Risk Environment" (Position 6) und
@@ -6716,7 +6924,7 @@ function renderOverviewCard(rubs){
         <span class="ov2-score" style="color:${bco}">${sc>0?'+':''}${sc}</span>
         <span class="ov2-badge">${BL[rub.bias]}</span>
       </div>
-      <div class="ov2-summary">${txt}</div>
+      <div class="ov2-summary" title="${escH(rub.summary||'')}">${txt}</div>
     </div>`;
   }).join('');
   // Skill-Kritik 2026-08-02 (Foto-Referenz): keine umschliessende "Overview"-
@@ -9569,7 +9777,7 @@ async function fetchPriceData(){
   }catch(e){}
   priceDataLastFetch=Date.now();
 }
-function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rerender();});}
+function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rerender();renderStatusBar();});}
 // Letzter verfuegbarer Punkt einer Preis-Zeitreihe + %-Veraenderung zum
 // letzten verfuegbaren Punkt DAVOR (nicht zwingend "gestern" im Kalendersinn -
 // an Wochenenden/Feiertagen wird wie beim Bond-Feed der letzte verfuegbare
@@ -9869,40 +10077,225 @@ function updFFLastUpd(){
 }
 
 // ══ NOTE CATS ════════════════════════════════════════════════════
-function renderNCs(){
-  const el=document.getElementById('noteCats');if(!el)return;
-  el.innerHTML=noteCats.map((cat,ci)=>`
-    <div class="nc">
-      <div class="nc-hdr">
-        <input class="nc-inp" value="${escH(cat.name)}" placeholder="Category..." oninput="noteCats[${ci}].name=this.value;saveSoon()" onchange="noteCats[${ci}].name=this.value;save()">
-        <button class="mv" onclick="mvNC(${ci},-1)" ${ci===0?'disabled':''} style="opacity:.3">▲</button>
-        <button class="mv" onclick="mvNC(${ci},1)" ${ci===noteCats.length-1?'disabled':''} style="opacity:.3">▼</button>
-        <button class="nc-del" onclick="delNC(${ci})">×</button>
+// ══ RESEARCH LIBRARY ═════════════════════════════════════════════
+// Ersetzt den frueheren Notes-Tab (renderNCs & Co., Nutzer-Wunsch
+// 2026-08-02). Die alten noteCats-Daten sind einmalig nach `research`
+// migriert (siehe migrateResearch) und bleiben zusaetzlich unveraendert in
+// snap() erhalten - kein Datenverlust.
+// Reine Ansichts-Zustaende (Auswahl/Suche/Sortierung) bleiben BEWUSST lokal
+// und ausserhalb von snap(): das ist kein Inhalt, sondern wo der Nutzer
+// gerade hinschaut - wie dataAsset/seasAsset/rateProbSel bei den anderen Tabs.
+let resSel='all';        // 'all' | 'fav' | 'f:<folderId>' | 'a:<assetId>'
+let resQuery='';
+let resTag='';
+let resSort='new';       // 'new' | 'old' | 'az'
+function resNotes(){return (research&&research.notes)||[];}
+function resFolders(){return (research&&research.folders)||[];}
+function resFolderName(fid){const f=resFolders().find(x=>x.id===fid);return f?f.name:'Unfiled';}
+function resFmtDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso);if(isNaN(d))return '';
+  const MM=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate()+' '+MM[d.getMonth()]+' '+d.getFullYear()+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+// Alle vergebenen Tags mit Haeufigkeit (fuer die Tag-Cloud), haeufigste zuerst.
+function resAllTags(){
+  const m=new Map();
+  resNotes().forEach(n=>(n.tags||[]).forEach(t=>m.set(t,(m.get(t)||0)+1)));
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+}
+// Assets, zu denen es tatsaechlich Notizen gibt (die ASSETS-Achse der
+// Bibliothek wird NICHT gepflegt, sondern aus den Notizen selbst abgeleitet).
+function resAssetCounts(){
+  const m=new Map();
+  resNotes().forEach(n=>{if(n.asset)m.set(n.asset,(m.get(n.asset)||0)+1);});
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+}
+function resFilteredNotes(){
+  const q=resQuery.trim().toLowerCase();
+  let out=resNotes().filter(n=>{
+    if(resSel==='fav'&&!n.fav)return false;
+    if(resSel.startsWith('f:')&&n.fid!==resSel.slice(2))return false;
+    if(resSel.startsWith('a:')&&n.asset!==resSel.slice(2))return false;
+    if(resTag&&!(n.tags||[]).includes(resTag))return false;
+    if(q){
+      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+(n.asset||'')+' '+resFolderName(n.fid)).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  const key=n=>n.up||n.ts||'';
+  if(resSort==='az')out.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+  else if(resSort==='old')out.sort((a,b)=>String(key(a)).localeCompare(String(key(b))));
+  else out.sort((a,b)=>String(key(b)).localeCompare(String(key(a))));
+  return out;
+}
+function renderResearch(){
+  const wrap=document.getElementById('resWrap');if(!wrap)return;
+  const notes=resNotes(),folders=resFolders(),shown=resFilteredNotes();
+  const favN=notes.filter(n=>n.fav).length;
+  const tags=resAllTags(),assets=resAssetCounts();
+  const cnt=fid=>notes.filter(n=>n.fid===fid).length;
+  const selCls=k=>resSel===k?' on':'';
+  // ── Linke Bibliothek ──
+  const lib=`<div class="res-lib-hd">Research Library</div>
+    <button class="res-libitem${selCls('all')}" onclick="resSelect('all')"><span class="res-li-ic">${icn('bars',13)}</span><span class="res-li-nm">All notes</span><span class="res-li-ct">${notes.length}</span></button>
+    <button class="res-libitem res-fav${selCls('fav')}" onclick="resSelect('fav')"><span class="res-li-ic">⭐</span><span class="res-li-nm">Favorites</span><span class="res-li-ct">${favN}</span></button>
+    <div class="res-lib-sec">Topics</div>
+    ${folders.map(f=>`<button class="res-libitem${selCls('f:'+f.id)}" onclick="resSelect('f:${f.id}')" oncontextmenu="return false" onpointerdown="resFolderPressStart(event,'${f.id}')" onpointerup="resFolderPressEnd()" onpointerleave="resFolderPressEnd()" onpointercancel="resFolderPressEnd()" title="${escH(f.name)} — long-press to rename or delete"><span class="res-li-ic">${icn(f.icon&&RESEARCH_FOLDER_ICONS.indexOf(f.icon)>=0?f.icon:'note',13)}</span><span class="res-li-nm">${escH(f.name)}</span><span class="res-li-ct">${cnt(f.id)}</span></button>`).join('')}
+    <button class="res-addfolder" onclick="addResFolder()">＋ Add topic</button>
+    ${assets.length?`<div class="res-lib-sec">Assets</div>
+    ${assets.map(([a,c])=>`<button class="res-libitem${selCls('a:'+a)}" onclick="resSelect('a:${escJH(a)}')"><span class="res-li-ic">${icn('trendUp',13)}</span><span class="res-li-nm">${escH(a)}</span><span class="res-li-ct">${c}</span></button>`).join('')}`:''}`;
+  // ── Kopfbereich + Kennzahlen ──
+  const head=`<div class="res-head">
+      <div class="res-title-wrap">
+        <div class="res-title">Research Terminal</div>
+        <div class="res-sub">Notes · Insights · Market experience</div>
       </div>
-      <div class="nc-body">
-        ${(cat.items||[]).map((item,ii)=>`
-          <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#e8c66840':'#26344a20'}">
-            <div class="rdot" style="background:${item.imp?'var(--star)':'var(--blue)'}"></div>
-            <textarea class="rtxt" rows="1" oninput="ar(this);noteCats[${ci}].items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
-            <button class="istar${item.imp?' on':''}" onclick="togNCI(${ci},${ii})">⭐</button>
-            <button class="mv" onclick="mvNCI(${ci},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
-            <button class="mv" onclick="mvNCI(${ci},${ii},1)" ${ii===(cat.items.length-1)?'disabled':''}>▼</button>
-            <button class="idel" onclick="delNCI(${ci},${ii})">×</button>
-          </div>`).join('')}
-        <div class="add-row" style="margin-top:4px">
-          <input class="ai" id="ni-${ci}" placeholder="+ Add note..." onkeydown="if(event.key==='Enter'){addNCI(${ci});event.preventDefault()}">
-          <button class="add-btn" style="background:#5fa8ed15;border-color:#5fa8ed44;color:var(--blue);border:1px solid" onclick="addNCI(${ci})">＋</button>
-        </div>
+      <input class="res-search" id="resSearchInp" placeholder="Search notes, assets, topics…" value="${escH(resQuery)}" oninput="resSetQuery(this.value)">
+      <button class="btn g res-newbtn" onclick="newResNote()">＋ New note</button>
+    </div>
+    <div class="res-stats">
+      <div class="res-stat"><div class="res-stat-v">${notes.length}</div><div class="res-stat-l">Notes</div></div>
+      <div class="res-stat"><div class="res-stat-v">${folders.length}</div><div class="res-stat-l">Topics</div></div>
+      <div class="res-stat"><div class="res-stat-v">${favN}</div><div class="res-stat-l">Favorites</div></div>
+      <div class="res-stat"><div class="res-stat-v">${tags.length}</div><div class="res-stat-l">Tags</div></div>
+    </div>`;
+  // ── Notizliste ──
+  const scopeLbl=resSel==='all'?'All notes':resSel==='fav'?'Favorites':resSel.startsWith('f:')?resFolderName(resSel.slice(2)):resSel.slice(2);
+  const rows=shown.length?shown.map(n=>`<div class="res-note" onclick="openResNote('${n.id}')">
+      <div class="res-note-top">
+        ${n.asset?`<span class="res-note-as">${escH(n.asset)}</span>`:''}
+        <span class="res-note-ti">${escH(n.title||'Untitled note')}</span>
+        <span class="res-note-dt">${escH(resFmtDate(n.up||n.ts))}</span>
+        <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">⭐</button>
       </div>
-    </div>`).join('');
-  document.querySelectorAll('.rtxt').forEach(ar);}
-function addNC(){pushU();noteCats.push({id:uid(),name:'New Category',items:[]});save();renderNCs();}
-function delNC(i){pushU();noteCats.splice(i,1);save();renderNCs();}
-function mvNC(i,d){pushU();mvArr(noteCats,i,d);save();renderNCs();}
-function addNCI(ci){const inp=document.getElementById('ni-'+ci);const v=inp.value.trim();if(!v)return;pushU();noteCats[ci].items.push({id:uid(),text:v,imp:false});inp.value='';save();renderNCs();}
-function delNCI(ci,ii){pushU();noteCats[ci].items.splice(ii,1);save();renderNCs();}
-function togNCI(ci,ii){pushU();noteCats[ci].items[ii].imp=!noteCats[ci].items[ii].imp;save();renderNCs();}
-function mvNCI(ci,ii,d){pushU();mvArr(noteCats[ci].items,ii,d);save();renderNCs();}
+      ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resSetTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
+      ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,200))}${n.body.length>200?'…':''}</div>`:''}
+      <div class="res-note-fold">${icn('note',10)} ${escH(resFolderName(n.fid))}</div>
+    </div>`).join(''):`<div class="res-empty">${notes.length?'No notes match this filter.':'No notes yet — tap “＋ New note” to capture your first market observation.'}</div>`;
+  const list=`<div class="res-list-card">
+      <div class="res-list-hdr">
+        <span class="res-list-ti">${escH(scopeLbl)}</span>
+        ${resTag?`<button class="res-chip on" onclick="resSetTag('')">#${escH(resTag)} ✕</button>`:''}
+        <span class="res-list-ct">${shown.length}${shown.length!==notes.length?' / '+notes.length:''}</span>
+        <select class="res-sort" onchange="resSort=this.value;renderResearch()">
+          <option value="new"${resSort==='new'?' selected':''}>Newest</option>
+          <option value="old"${resSort==='old'?' selected':''}>Oldest</option>
+          <option value="az"${resSort==='az'?' selected':''}>A–Z</option>
+        </select>
+      </div>
+      <div class="res-list">${rows}</div>
+    </div>`;
+  // ── Rechte Leiste ──
+  const recent=notes.slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||''))).slice(0,6);
+  const rail=`<div class="res-rail-card">
+      <div class="res-rail-hd">Tag cloud</div>
+      ${tags.length?`<div class="res-tagcloud">${tags.slice(0,30).map(([t,c])=>`<span class="res-tag${resTag===t?' on':''}" onclick="resSetTag('${escJH(t)}')" title="${c} note${c===1?'':'s'}">#${escH(t)}</span>`).join('')}</div>`:'<div class="res-rail-empty">Add #tags to a note to build your tag cloud.</div>'}
+    </div>
+    <div class="res-rail-card">
+      <div class="res-rail-hd">Recently updated</div>
+      ${recent.length?recent.map(n=>`<button class="res-recent" onclick="openResNote('${n.id}')"><span class="res-recent-ti">${escH(n.title||'Untitled note')}</span><span class="res-recent-dt">${escH(resFmtDate(n.up||n.ts).split(' · ')[0])}</span></button>`).join(''):'<div class="res-rail-empty">Nothing yet.</div>'}
+    </div>`;
+  wrap.innerHTML=`<aside class="res-lib">${lib}</aside><div class="res-main">${head}${list}</div><aside class="res-rail">${rail}</aside>`;
+}
+function resSelect(k){resSel=k;renderResearch();}
+function resSetTag(t){resTag=t;renderResearch();}
+function resSetQuery(v){
+  resQuery=v;
+  // Nur die Liste neu bauen waere aufwendiger als noetig - aber der Fokus im
+  // Suchfeld muss den Rebuild ueberleben (gleiches Muster wie die Quick-Note-
+  // Fokusrettung in renderDetail, siehe Kommentar dort).
+  const el=document.getElementById('resSearchInp');
+  const pos=el?el.selectionStart:null;
+  renderResearch();
+  const el2=document.getElementById('resSearchInp');
+  if(el2){el2.focus();if(pos!=null){try{el2.setSelectionRange(pos,pos);}catch(e){}}}
+}
+function addResFolder(){
+  const n=prompt('Topic name:');if(n===null)return;
+  const nm=n.trim();if(!nm)return;
+  pushU();research.folders.push({id:uid(),name:nm.slice(0,40),icon:'note'});save();renderResearch();
+}
+// Langdruck auf einen Themen-Ordner: umbenennen oder loeschen (gleiches
+// Muster wie die uebrigen Long-Press-Bedienungen in dieser App).
+let _resFolderPressTimer=null,_resFolderLongFired=false;
+function resFolderPressStart(e,fid){
+  if(e&&e.button&&e.button!==0)return;
+  _resFolderLongFired=false;
+  _resFolderPressTimer=setTimeout(()=>{_resFolderPressTimer=null;_resFolderLongFired=true;editResFolder(fid);},550);
+}
+function resFolderPressEnd(){if(_resFolderPressTimer){clearTimeout(_resFolderPressTimer);_resFolderPressTimer=null;}}
+function editResFolder(fid){
+  const f=resFolders().find(x=>x.id===fid);if(!f)return;
+  const used=resNotes().filter(n=>n.fid===fid).length;
+  const nn=prompt('Rename topic (empty = delete'+(used?' — '+used+' note'+(used===1?'':'s')+' will move to Unfiled':'')+'):',f.name);
+  if(nn===null)return;
+  pushU();
+  if(!nn.trim()){
+    research.folders=research.folders.filter(x=>x.id!==fid);
+    resNotes().forEach(n=>{if(n.fid===fid)n.fid='';});
+    if(resSel==='f:'+fid)resSel='all';
+  }else f.name=nn.trim().slice(0,40);
+  save();renderResearch();
+}
+function togResFav(id){
+  const n=resNotes().find(x=>x.id===id);if(!n)return;
+  pushU();n.fav=!n.fav;n.up=new Date().toISOString();save();renderResearch();
+}
+// ── Notiz-Editor (Modal) ──
+let _resEditId=null;
+function newResNote(){
+  _resEditId=null;
+  const pre=resSel.startsWith('f:')?resSel.slice(2):'';
+  const preA=resSel.startsWith('a:')?resSel.slice(2):'';
+  resFillNoteModal({title:'',body:'',fid:pre,asset:preA,tags:[],fav:false});
+  openM('mResNote');
+  setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
+}
+function openResNote(id){
+  const n=resNotes().find(x=>x.id===id);if(!n)return;
+  _resEditId=id;
+  resFillNoteModal(n);
+  openM('mResNote');
+}
+function resFillNoteModal(n){
+  document.getElementById('resNTitle').value=n.title||'';
+  document.getElementById('resNBody').value=n.body||'';
+  document.getElementById('resNTags').value=(n.tags||[]).join(', ');
+  document.getElementById('resNFav').checked=!!n.fav;
+  const fs=document.getElementById('resNFolder');
+  fs.innerHTML='<option value="">— Unfiled —</option>'+resFolders().map(f=>`<option value="${escH(f.id)}"${n.fid===f.id?' selected':''}>${escH(f.name)}</option>`).join('');
+  const as=document.getElementById('resNAsset');
+  as.innerHTML='<option value="">— No asset —</option>'+(syms||[]).map(s=>`<option value="${escH(s.id)}"${n.asset===s.id?' selected':''}>${escH(s.name)}</option>`).join('');
+  document.getElementById('resNDel').style.display=_resEditId?'':'none';
+  document.getElementById('resNMeta').textContent=_resEditId&&n.ts?('Created '+resFmtDate(n.ts)+(n.up&&n.up!==n.ts?'  ·  updated '+resFmtDate(n.up):'')):'New note';
+}
+function saveResNote(){
+  const title=document.getElementById('resNTitle').value.trim();
+  const body=document.getElementById('resNBody').value;
+  const tags=document.getElementById('resNTags').value.split(',').map(t=>t.trim().replace(/^#/,'')).filter(Boolean).slice(0,12);
+  const fid=document.getElementById('resNFolder').value;
+  const asset=document.getElementById('resNAsset').value;
+  const fav=document.getElementById('resNFav').checked;
+  if(!title&&!body.trim()){alert('Give the note a title or some text first.');return;}
+  const now=new Date().toISOString();
+  pushU();
+  if(_resEditId){
+    const n=resNotes().find(x=>x.id===_resEditId);
+    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fid=fid;n.asset=asset;n.fav=fav;n.up=now;}
+  }else{
+    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,ts:now,up:now});
+  }
+  save();closeM('mResNote');renderResearch();
+}
+function delResNote(){
+  if(!_resEditId)return;
+  if(!confirm('Delete this note?'))return;
+  pushU();
+  research.notes=resNotes().filter(n=>n.id!==_resEditId);
+  save();closeM('mResNote');renderResearch();
+}
 
 // ══ DASHBOARD ════════════════════════════════════════════════════
 const W_TYPES=[
@@ -10251,6 +10644,129 @@ function startHdrLiveClock(){
   const tick=()=>{e.textContent=new Date().toLocaleTimeString([],{hour12:false});};
   tick();
   setInterval(tick,1000);
+}
+// ══ DETAILSEITEN-METAZEILE (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ══
+// NEXT EVENT / LAST UPDATE / DATA QUALITY / SOURCE / AUTO REFRESH in EINER
+// Zeile neben dem Asset-Titel. Alle Werte sind echt berechnet, nichts ist
+// geschaetzt oder fest eingetragen.
+let _lastFeedTs=null;      // Zeitpunkt des letzten erfolgreichen Feed-Laufs
+// Bewusst NUR fuer die laufende Sitzung (kein localStorage, kein Cloud-Sync):
+// das ist ein "Aktualisierung gerade anhalten"-Schalter, kein dauerhafter
+// Zustand - nach einem Neuladen laeuft die Aktualisierung wieder normal.
+let autoRefreshOn=true;
+function toggleAutoRefresh(){autoRefreshOn=!autoRefreshOn;renderDetail();}
+// Feed-Abdeckung eines Symbols: wie viele seiner automatisch bepreisten
+// Indikatoren tatsaechlich vom Live-Feed versorgt werden. Die Schwellen
+// stehen im Tooltip, damit die Einstufung nachvollziehbar bleibt.
+function symDataQuality(c){
+  let tot=0,live=0;
+  (c.rubrics||[]).forEach(r=>{
+    if(!IND_AUTO_RUBS.includes(r.name))return;
+    (r.indicators||[]).forEach(ind=>{
+      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
+      tot++;
+      const rs=ind.research;
+      if(rs&&(rs.feed===true||rs.bond===true||rs.cot===true||rs.sent===true))live++;
+    });
+  });
+  if(!tot)return{lvl:'–',pct:0,live:0,tot:0};
+  const pct=Math.round(live/tot*100);
+  return{lvl:pct>=80?'HIGH':pct>=50?'MEDIUM':'LOW',pct,live,tot};
+}
+// Welche Quellen speisen dieses Symbol? Mehr als eine -> "MULTI".
+function symSourceLabel(c){
+  const set=new Set();
+  (c.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(ind=>{
+    const s=ind.research&&ind.research.source;
+    if(s)set.add(String(s).replace(/^https?:\/\/(www\.)?/,'').split('/')[0]);
+  }));
+  if(!set.size)return{lbl:'–',list:[]};
+  const list=[...set];
+  return{lbl:list.length>1?'MULTI':list[0],list};
+}
+function detailMetaHtml(c,nextLbl){
+  const dq=symDataQuality(c),src=symSourceLabel(c);
+  const dqCol=dq.lvl==='HIGH'?'var(--green)':dq.lvl==='MEDIUM'?'var(--amber)':dq.lvl==='LOW'?'var(--red)':'var(--t3)';
+  const upd=_lastFeedTs?new Date(_lastFeedTs).toLocaleTimeString([],{hour12:false}):'–';
+  const mi=(lbl,val,title)=>`<div class="dmeta-i"${title?` title="${escH(title)}"`:''}><div class="dmeta-l">${lbl}</div><div class="dmeta-v">${val}</div></div>`;
+  return`<div class="dmeta">
+    ${mi('Next event',escH(nextLbl),'Next high-impact calendar event for this asset')}
+    ${mi('Last update',escH(upd),_lastFeedTs?'Last successful live-feed refresh in this session':'No live-feed refresh completed yet in this session')}
+    ${mi('Data quality',`<span style="color:${dqCol}">◆ ${dq.lvl}</span>`,`${dq.live} of ${dq.tot} auto-priced indicators are fed live (${dq.pct}%). HIGH ≥ 80%, MEDIUM ≥ 50%, otherwise LOW.`)}
+    ${mi('Source',escH(src.lbl),src.list.length?src.list.join(' · '):'No live source yet')}
+    <div class="dmeta-i dmeta-ar">
+      <div class="dmeta-l">Auto refresh</div>
+      <button class="dmeta-sw${autoRefreshOn?' on':''}" onclick="toggleAutoRefresh()" title="${autoRefreshOn?'Live feeds refresh automatically — tap to pause for this session':'Automatic refresh paused — tap to resume'}"><span class="knob"></span></button>
+    </div>
+  </div>`;
+}
+// ══ GLOBALE STATUS-LEISTE (unten, app-weit) ══════════════════════
+// Nutzer-Wunsch 2026-08-02 (Foto-Referenz): schmale Terminal-Fusszeile mit
+// Label:Wert-Paaren. JEDER Wert kommt aus einem echten Feed - es wird nichts
+// geschaetzt oder hart eingetragen (CLAUDE.md-Grundsatz). Fehlt ein Feed
+// (noch nicht geladen/nicht erreichbar), zeigt das Feld bewusst "–" statt
+// eines Platzhalterwerts.
+// FX-Kassamarkt-Sitzung: Sonntag 22:00 UTC (Sydney-Eroeffnung) bis Freitag
+// 22:00 UTC (New-York-Schluss) - feste Konvention, keine Schaetzung.
+function fxMarketOpen(now){
+  const d=now.getUTCDay(),h=now.getUTCHours();
+  if(d===6)return false;          // Samstag: zu
+  if(d===0)return h>=22;          // Sonntag: ab 22:00 UTC offen
+  if(d===5)return h<22;           // Freitag: bis 22:00 UTC offen
+  return true;
+}
+// Letzter + vorletzter Wert einer [datum,wert]-Reihe (fuer die Veraenderung).
+function sbLastPrev(series){
+  if(!Array.isArray(series)||series.length<1)return null;
+  const num=v=>{const n=Number(v);return isFinite(n)?n:null;};
+  const last=num(series[series.length-1][1]);
+  const prev=series.length>1?num(series[series.length-2][1]):null;
+  return last==null?null:{last,prev};
+}
+function sbNum(v,dec){return v==null?'–':v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});}
+function sbDeltaHtml(lp,mode,dec){
+  if(!lp||lp.prev==null)return '';
+  const abs=lp.last-lp.prev;
+  const pct=lp.prev!==0?(abs/lp.prev)*100:null;
+  const shown=mode==='pct'?(pct==null?null:pct):abs;
+  if(shown==null)return '';
+  const cls=shown>0?'sb-up':shown<0?'sb-dn':'sb-flat';
+  return `<span class="sb-delta ${cls}">${shown>0?'+':''}${shown.toFixed(dec)}${mode==='pct'?'%':''}</span>`;
+}
+function sbItem(label,valueHtml){return `<div class="sb-item"><span class="sb-lbl">${label}</span><span class="sb-val">${valueHtml}</span></div>`;}
+function renderStatusBar(){
+  const el=document.getElementById('statusBar');if(!el)return;
+  const now=new Date();
+  const open=fxMarketOpen(now);
+  // Zeitzonen-Versatz des Geraets (z. B. UTC+1) - real, nicht angenommen.
+  const offMin=-now.getTimezoneOffset();
+  const offLbl='UTC'+(offMin>=0?'+':'-')+Math.floor(Math.abs(offMin)/60)+(Math.abs(offMin)%60?':'+String(Math.abs(offMin)%60).padStart(2,'0'):'');
+  const pd=PRICE_DATA_FEED||(typeof PRICE_DATA!=='undefined'?PRICE_DATA:null);
+  const ser=id=>{const e=pd&&pd[id];return e&&Array.isArray(e.series)?sbLastPrev(e.series):null;};
+  const dxy=ser('USD'),gold=ser('GOLD'),btc=ser('BTC');
+  // VIX aus dem Sentiment-Feed; Einstufung nach den in der App bereits
+  // etablierten Schwellen (>=28 erhoeht, <=13 niedrig, sonst moderat).
+  const vixV=SENTIMENT_DATA&&SENTIMENT_DATA.vix&&isFinite(Number(SENTIMENT_DATA.vix.value))?Number(SENTIMENT_DATA.vix.value):null;
+  const vixLbl=vixV==null?'':vixV>=28?'ELEVATED':vixV<=13?'LOW':'MODERATE';
+  // 10Y-Rendite aus dem Bond-Feed (USD).
+  const bd=BOND_DATA_FEED||(typeof BOND_DATA!=='undefined'?BOND_DATA:null);
+  const b10=bd&&bd.USD&&bd.USD['10Y Bond Yield']&&Array.isArray(bd.USD['10Y Bond Yield'].series)?sbLastPrev(bd.USD['10Y Bond Yield'].series):null;
+  el.innerHTML=
+    sbItem('Market status',`<span class="sb-dot ${open?'sb-open':'sb-closed'}"></span>${open?'OPEN':'CLOSED'}`)+
+    sbItem('Global time',`<span id="sbClock">${now.toLocaleTimeString([],{hour12:false})}</span> ${offLbl}`)+
+    sbItem('Volatility index',vixV==null?'–':`${sbNum(vixV,2)} <span class="sb-sub">${vixLbl}</span>`)+
+    sbItem('Bond yields (10Y)',b10?`${sbNum(b10.last,2)}% ${sbDeltaHtml(b10,'abs',2)}`:'–')+
+    sbItem('DXY',dxy?`${sbNum(dxy.last,2)} ${sbDeltaHtml(dxy,'abs',2)}`:'–')+
+    sbItem('Gold',gold?`${sbNum(gold.last,2)} ${sbDeltaHtml(gold,'pct',2)}`:'–')+
+    sbItem('BTC/USD',btc?`${sbNum(btc.last,0)} ${sbDeltaHtml(btc,'pct',2)}`:'–');
+}
+// Uhr in der Leiste sekuendlich weiterlaufen lassen, ohne die ganze Leiste
+// neu zu bauen (nur textContent eines Spans - kein Layout-Rebuild).
+function startStatusBarClock(){
+  setInterval(()=>{
+    const c=document.getElementById('sbClock');
+    if(c)c.textContent=new Date().toLocaleTimeString([],{hour12:false});
+  },1000);
 }
 // Persistente MAJORS-Sidebar links vom Dashboard-Grid (Referenz-Foto,
 // Nutzer-Wunsch 2026-07-25) - dieselben Bausteine wie die normale FX/Non-FX-
@@ -14599,7 +15115,9 @@ const TABS={
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   cal:{label:'Calendar',tab:'cal'},
-  notes:{label:'Notes',tab:'notes'},
+  // Label 2026-08-02 von 'Notes' auf 'Research' umbenannt (Nutzer-Wunsch);
+  // der Schluessel 'notes' bleibt bewusst, damit gespeicherte tabStacks halten.
+  notes:{label:'Research',tab:'notes'},
 };
 const TABSTACKS_KEY='fxpro_tabstacks';
 let tabStacks=[];           // [{id,name,members:[tabId,...]}]
@@ -14792,7 +15310,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
   else if(tab==='cal')renderCalendar();
-  else if(tab==='notes')renderNCs();
+  else if(tab==='notes')renderResearch();
 }
 function rerender(){
   if(curPage==='dash')renderDash();
@@ -14808,7 +15326,7 @@ function rerender(){
   else if(curPage==='carry')renderCarry();
   else if(curPage==='pairs')renderPairs();
   else if(curPage==='cal')renderCalendar();
-  else if(curPage==='notes')renderNCs();
+  else if(curPage==='notes')renderResearch();
 }
 // ══ CARRY TRADE SCANNER ═══════════════════════════════════════════
 // Liest die Leitzins-Werte (Central Bank Rate) je Waehrung aus den
@@ -15089,7 +15607,7 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();
+renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();renderStatusBar();startStatusBarClock();
 maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
@@ -15134,7 +15652,9 @@ async function bootFetchScoreFeeds(){
     fetchScoreHistServer().then(()=>{try{return applyScoreHistServerFeed();}catch(e){return false;}})
   ]);
   if(results.some(Boolean)){recomputeAuto();save();renderSidebar();}
+  _lastFeedTs=Date.now();   // speist die "Last update"-Anzeige der Metazeile
   rerender();
+  renderStatusBar();   // VIX/10Y-Rendite stehen erst nach diesen Feeds bereit
 }
 // Server-seitige Score-Historie (score_hist.json, vom stuendlichen GitHub-
 // Workflow "update-ff-calendar.yml" -> Schritt "Fetch score snapshot from
@@ -15221,6 +15741,7 @@ updNetStatus();
 
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
+  if(!autoRefreshOn)return;   // Metazeilen-Schalter "Auto refresh" pausiert die Sitzung
   bootFetchScoreFeeds();
   if(processCalEvts()){
     save();renderSidebar();rerender();updInboxBadge();
@@ -15231,7 +15752,7 @@ setInterval(()=>{
 // Rhythmus als die uebrigen Live-Daten, damit sich die Ticker-Leiste und die
 // Movers-Karte "live" anfuehlen - auch wenn der stuendliche GitHub-Workflow
 // dazwischen oft noch denselben Stand liefert).
-setInterval(autoFetchPriceData,10*60*1000);
+setInterval(()=>{if(autoRefreshOn)autoFetchPriceData();},10*60*1000);
 // Rote Jetzt-Linie + Dimmen vergangener Events aktuell halten: minütlich die
 // sichtbare Kalenderansicht neu rendern (Scroll-Position der Seite bleibt erhalten).
 setInterval(()=>{
