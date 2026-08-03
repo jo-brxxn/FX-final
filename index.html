@@ -1814,7 +1814,14 @@ body.dash-edit-mode .mw-bar{display:flex}
      verdeckt, weil deren Hintergrund im Dokumentfluss SPAETER/OBEN
      gezeichnet wird. 8px reicht, damit sowas wieder sichtbar ist, ohne die
      kompakte Optik von "keine grossen Luecken" aufzugeben. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(200px,250px) minmax(230px,310px) minmax(200px,250px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:9px;align-items:start}
+  /* Bug gefunden 2026-08-03 (Nutzer-Foto, iPad Landscape): die drei Spalten
+     hatten feste minmax-Maxima (insgesamt ≈960px) und nutzten breitere
+     Viewports NIE aus - der Rest blieb dauerhaft leer, egal wie viele
+     Widgets in "right" lagen (die stapelten sich nur weiter nach unten,
+     ausserhalb des ohne Scroll sichtbaren Bereichs). Fix: eine 4. Spalte
+     "right2" fuer genau diesen Freiraum (Watchlist/Motivation ziehen dort
+     hin, siehe ZONE_OF_TYPE). */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(200px,250px) minmax(230px,310px) minmax(200px,250px) minmax(200px,250px);grid-template-areas:"top top top top" "left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -1827,9 +1834,9 @@ body.dash-edit-mode .mw-bar{display:flex}
   .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
   .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .dash-zone-right2{grid-area:right2;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-center{grid-area:center;display:flex;flex-direction:column;gap:8px;min-width:0}
-  .dash-zone-left>.dw,.dash-zone-right>.dw,.dash-zone-center>.dw{margin-bottom:0}
-  @media(max-width:1000px){#dashWidgets.dash-layout{grid-template-columns:1fr;grid-template-areas:"top" "center" "left" "right" "bottom"}}
+  .dash-zone-left>.dw,.dash-zone-right>.dw,.dash-zone-right2>.dw,.dash-zone-center>.dw{margin-bottom:0}
   /* Kalender-Karte: flex-Spalte; cal-scroll fuellt Resthoehe bis max 65vh */
   #dashWidgets .dw.dw-calendar{display:flex;flex-direction:column}
   #dashWidgets .dw.dw-calendar .cal-scroll{flex:1;max-height:65vh;min-height:100px}
@@ -1862,7 +1869,7 @@ body.dash-edit-mode .mw-bar{display:flex}
    mehr, die Majors-Karte ist das erste Kind von .dash-zone-left. Etwas
    breitere Seiten-Spalten ab 1400px, mehr Platz fuer den zentralen Globus. */
 @media(min-width:1400px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(232px,300px) minmax(260px,360px) minmax(232px,300px)}
+  #dashWidgets.dash-layout{grid-template-columns:minmax(232px,300px) minmax(260px,360px) minmax(232px,300px) minmax(232px,300px)}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -2096,12 +2103,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-284 — Dashboard-Luecken geschlossen (Nutzer-Foto mit eingezeichneten Luecken): rechte Spalte bekommt nach Volatility Leaders zwei neue hohe Karten - Watchlist &amp; Quick Notes (bereits vorhandener Widget-Typ, jetzt wieder Teil der Standardansicht) und eine neue, rein dekorative 'Focus / Believe / Do'-Karte (fette blaue Woerter untereinander). Die kleinere Luecke unter dem Globus wird bewusst anders gefuellt: mit 'Today's Movers' (score_changes, ebenfalls bereits vorhandener Typ) statt einer weiteren Karte im rechten-Spalten-Stil. DASH_V15-Migration ergaenzt alle drei Karten automatisch auch bei Bestandsnutzern.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-285 — Bug gefunden (Nutzer-Foto, breiter iPad-Landscape-Screen auf der Live-Seite): die 3 Dashboard-Grid-Spalten hatten feste minmax-Maxima (zusammen nur ≈960-1260px), auf breiteren Bildschirmen blieb der Rest dauerhaft leer, egal wie viele Karten in der rechten Zone lagen. Fix: 4. Grid-Spalte 'right2' bei beiden Breakpoints (1100px/1400px) ergaenzt, Watchlist &amp; Quick Notes und Focus/Believe/Do ziehen jetzt dorthin (ZONE_OF_TYPE) - erscheinen auf breiten Screens direkt neben Risk Sentiment/Volatility Leaders, kein Scrollen noetig. Dabei zusaetzlich einen zweiten, durch den ersten Fix aufgedeckten Bug behoben: zoneMates (Rauf/Runter-Button-Logik) kannte 'right2' nicht und liess renderDash() fuer die beiden Karten mit einem TypeError abstuerzen. Toter, nie erreichbarer CSS-Block (@media max-width:1000px verschachtelt in @media min-width:1100px) entfernt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-284</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-285</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -10600,7 +10607,7 @@ function toggleIndEditMode(){
 // mini_calendar wandern deshalb von "right" (Spalte) nach "bottom" (Reihe) -
 // rechte Spalte bleibt mit nur noch 2 Karten deutlich kompakter, Gesamthoehe
 // des Dashboards sinkt spuerbar, ohne dass ein Widget entfernt wurde.
-const ZONE_OF_TYPE={globe:'center',score_changes:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'right',motivation:'right',sentiment_snapshot:'bottom'};
+const ZONE_OF_TYPE={globe:'center',score_changes:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'right2',motivation:'right2',sentiment_snapshot:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10648,8 +10655,8 @@ function renderDash(){
   // sind jetzt zonen-relativ (mvWidget() verschiebt ebenfalls nur innerhalb
   // der eigenen Zone), nicht mehr global.
   const zoneMates={};
-  ['top','left','center','right','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
-  const zones={top:[],left:[],center:[],right:[],bottom:[]};
+  ['top','left','center','right','right2','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
+  const zones={top:[],left:[],center:[],right:[],right2:[],bottom:[]};
   sorted.forEach((w)=>{
     let content='';
     const zone=dashZoneOf(w.type);
@@ -11075,6 +11082,7 @@ function renderDash(){
     <div class="dash-zone-left"><div class="dw dash-majors-card">${dashMajorsHtml()}</div>${zones.left.join('')}</div>
     <div class="dash-zone-center">${zones.center.join('')}</div>
     <div class="dash-zone-right">${zones.right.join('')}</div>
+    <div class="dash-zone-right2">${zones.right2.join('')}</div>
     <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
   `;
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
