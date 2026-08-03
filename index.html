@@ -18,49 +18,54 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rgba(20,23,26,.025) 0%,transparent 35%),linear-gradient(305deg,rgba(20,23,26,.03) 0%,transparent 42%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rgba(255,255,255,.5) 0%,transparent 38%),linear-gradient(305deg,rgba(90,80,60,.05) 0%,transparent 45%),linear-gradient(22deg,rgba(90,80,60,.04) 0%,transparent 30%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
 :root{
-  /* Helles "Marmor"-Design (Nutzer-Wunsch 2026-08-03): weg vom dunklen
-     Ueberwachungs-Look, hin zu einem hellen, weisstoenigen Hintergrund mit
-     klar abgesetzten helleren/weissen Flaechen fuer Karten/Tabellen/
-     Indikatoren - Formen/Kanten sollen trotz heller Basis gut erkennbar
-     bleiben. Da praktisch jede Komponente im Projekt ueber diese Variablen
-     faerbt, kaskadiert der neue Ton automatisch durch alle Tabs/Modals, ohne
-     jede Stelle einzeln anfassen zu muessen. Kontraststufen (--bg0..--bg6
-     zueinander, --t0..--t3 zu --bg2) bewusst wie zuvor gestaffelt, nur von
-     dunkel-auf-hell auf hell-auf-dunkel gedreht: --bg0 ist die "Marmor"-
-     Basisflaeche (leicht warmes Weiss, kein reines #fff - siehe body-
-     Hintergrund fuer die zusaetzliche, ganz dezente Aederung/Textur),
-     --bg2/--bg3 (Karten/Zeilen) liegen bewusst HELLER/kontrastreicher als
-     --bg0, damit sich Karten/Tabellen/Indikatoren sichtbar vom Marmor-
-     Hintergrund abheben. Die Bias-Farben (--blue/--green/--red/--amber/
-     --star/--purple, identisch zu BC.bull/bear/neu in JS) behalten
-     BEWUSST denselben Farbton wie zuvor (Blau=bull, Rot=bear, Amber=
-     neutral, Gold=Stern/Important, Lila=Sonderfarbe) - nur Helligkeit/
-     Saettigung wurden angepasst, weil die alten, sehr hellen Pastelltoene
-     (fuer Text auf fast-schwarzem Hintergrund gedacht) auf Weiss praktisch
-     unlesbar waeren (Kontrast <2:1). Das ist eine notwendige Anpassung
-     fuer Lesbarkeit, KEINE semantische Aenderung der Score-Farben - siehe
-     CLAUDE.md-Grundsatz "Bias-Farben nie ohne Absprache aendern" (galt
-     bisher fuer den FARBTON, nicht fuer Kontrast-Anpassungen bei einem
-     kompletten Hell/Dunkel-Wechsel). Der Designer-Farbregler (🎨, oben
-     rechts) ueberschreibt body.style.background weiterhin per Inline-Style
-     (siehe applyDesignHue/designColors) - unveraendert kompatibel, der neue
-     Wert hier ist nur der Auto-Default. */
-  --bg0:#f2f0ea;--bg1:#f8f7f3;--bg2:#ffffff;--bg3:#eef0ee;--bg4:#e3e6e4;--bg5:#d3d7d6;--bg6:#bcc1c1;
-  --bd:#dcdfdc;--bd2:#c7cccb;
-  --t0:#14171a;--t1:#2b2f33;--t2:#4c5257;--t3:#767c81;
-  --green:#1868a8;--red:#c0392b;--amber:#a15c00;--star:#8a6d00;--blue:#1868a8;--purple:#6a3fc0;
-  --green-rgb:24,104,168;--red-rgb:192,57,43;--amber-rgb:161,92,0;
-  --star-rgb:138,109,0;--blue-rgb:24,104,168;--purple-rgb:106,63,192;--t3-rgb:118,124,129;
-  /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): global etwas
-     eckiger statt vieler unterschiedlicher, tendenziell zu runder Radien
-     app-weit (Terminals/Fintech-Tools bleiben meist bei 2-6px). */
-  --r:8px;--rs:6px;--rss:4px;
+  /* "Luxury Marble Terminal"-Design (Nutzer-Wunsch 2026-08-03, sehr
+     detaillierte Vorgabe mit exakten Hex-/Px-Werten): institutionelles
+     Analyse-Terminal, aber warm/hell/elegant statt dunkel/technisch-kalt.
+     Reine Design-Token-Ueberarbeitung - Layout, Informationsarchitektur,
+     Funktionen und Position aller Elemente bleiben unangetastet, da
+     praktisch jede Komponente im Projekt ausschliesslich ueber diese
+     Variablen faerbt.
+     Hintergrund = grossflaechige matte Marmor-Flaeche in warmen Weiss-/
+     Elfenbein-/Creme-/Greige-Toenen (--bg0, siehe body{background} fuer die
+     ganz dezente <10%-Maserung). Karten (--bg2/--bg3/--bg4) nutzen bewusst
+     LEICHT UNTERSCHIEDLICHE warme Nuancen (Ivory/Soft Beige/Light Greige)
+     statt eines einzigen Farbtons - erzeugt die vom Nutzer gewuenschte
+     natuerliche Tiefenwirkung rein durch Farbabstufung, OHNE Transparenz/
+     Glassmorphism (backdrop-filter wurde daher app-weit entfernt, siehe
+     .hdr/.tabbar/.sb/.modal/.dw weiter unten - alle Flaechen sind jetzt
+     blickdicht). Radien global auf 18-22px (Karten, --r) bzw. 14-18px
+     (Buttons/Inputs, --rs) angehoben - vorher bewusst eckig/technisch
+     (Audit 2026-07-19), jetzt bewusst weich/hochwertig, Gegenteil der
+     damaligen Entscheidung, aber explizit neuer Nutzer-Wunsch.
+     Bias-/Akzentfarben exakt nach Nutzer-Vorgabe: Bullish-Daten
+     entsaettigtes Blau (#3B82F6, = BC.bull/--blue/--green, beide Variablen
+     zeigen bewusst denselben Hex - historische App-Konvention, siehe
+     CLAUDE.md), neutrale Bewertung warmes Gold (#D4A857, = --amber/--star),
+     bearish gedaempftes Rot (#E35D5D). Separates --success (#22C55E, echtes
+     "ruhiges Gruen" aus der Vorgabe) NUR fuer generische Status-Meldungen
+     OHNE Score-Bedeutung (Saved-Badge, Markt-offen-Punkt) - bewusst NICHT
+     dasselbe wie --blue/--green (Bias-Bull), sonst wuerde ein reiner
+     UI-Status (z.B. "gespeichert") wie ein bullisher Score-Wert aussehen. */
+  --bg0:#f1eee8;--bg1:#f5f2ec;--bg2:#faf8f4;--bg3:#f3efe7;--bg4:#ece6db;--bg5:#e1d9cb;--bg6:#cfc3ae;
+  --bd:#e6dfd1;--bd2:#d8cfbb;
+  --t0:#1f2328;--t1:#3a3f46;--t2:#6b7280;--t3:#8a8f98;
+  --green:#3b82f6;--red:#e35d5d;--amber:#d4a857;--star:#d4a857;--blue:#3b82f6;--purple:#967bae;--success:#22c55e;
+  --green-rgb:59,130,246;--red-rgb:227,93,93;--amber-rgb:212,168,87;
+  --star-rgb:212,168,87;--blue-rgb:59,130,246;--purple-rgb:150,123,174;--success-rgb:34,197,94;--t3-rgb:138,143,152;
+  /* Nutzer-Wunsch 2026-08-03: weiche, grosszuegige Radien statt der
+     vorherigen eckigen Terminal-Optik (Gegenteil des 2026-07-19-Audits,
+     aber explizit neu gewuenscht) - Karten 18-22px, Buttons/Inputs 14-18px. */
+  --r:20px;--rs:16px;--rss:10px;
+  /* Gemeinsamer weicher "Schwebe"-Schatten fuer Karten (6-10% Deckkraft,
+     ~8px Versatz, 30-40px Weichzeichnung) statt harter Kontraste. */
+  --shadow-card:0 8px 32px rgba(31,35,40,.07);
+  --shadow-pop:0 12px 40px rgba(31,35,40,.14);
 }
 /* ── LAYOUT ── */
 /* Header als 3-Spalten/2-Zeilen-Grid statt Flex (Referenz-Foto, Nutzer-
@@ -69,7 +74,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rg
    Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
    im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
    laeufig in derselben Zeile. */
-.hdr{background:rgba(255,255,255,.66);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:7px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
+.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:7px 14px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
 /* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
    Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
    Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
@@ -81,7 +86,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rg
 .logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 .logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
-.saved{font-size:11px;color:var(--green);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.saved{font-size:11px;color:var(--success);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
 .hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 /* Avatar verkleinert + Name entfernt (Nutzer-Wunsch 2026-07-27, per Foto:
@@ -105,14 +110,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(128deg,rg
 svg.ic{vertical-align:-2px;flex:none}
 /* Kleines Dropdown-Menue im Header (Data: Export/Import/Backups) */
 .hdr-menu-wrap{position:relative;display:inline-block}
-.hdr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:5px;z-index:300;min-width:176px;box-shadow:0 10px 26px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:2px}
+.hdr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:5px;z-index:300;min-width:176px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:2px}
 .hdr-menu button{display:flex;align-items:center;gap:9px;background:transparent;border:none;color:var(--t1);padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;text-align:left;width:100%;font-family:inherit}
 @media (hover:hover){.hdr-menu button:hover{background:var(--bg4)}}
 .hdr-menu button:active{background:var(--bg4)}
 /* Bias-Picker-Popover (Long-Press-Ersatz fuer die ▲/◆/▼-Buttons, Nutzer-
    Wunsch 2026-07-22) - erscheint am Druckpunkt statt zentriert, gleiches
    position:fixed+body-append-Muster wie .hdr-menu. */
-.bias-picker{position:fixed;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:6px;box-shadow:0 10px 26px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px;min-width:150px}
+.bias-picker{position:fixed;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:6px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:4px;min-width:150px}
 .bias-picker-lbl{font-size:10.5px;font-weight:700;color:var(--t3);padding:2px 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bias-picker-opts{display:flex;flex-direction:column;gap:2px}
 .bias-picker-opt{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--bd2);color:var(--t1);padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:700;text-align:left;width:100%;font-family:inherit}
@@ -132,15 +137,15 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:transform .12s ease,box-shadow .12s ease,background .15s,border-color .15s,color .15s}
 .btn:active:not(:disabled),.ab:active,.cal-alert-btn:active,.evt-alert-lp:active{transform:scale(.96)}
 @media (hover:hover){
-  .mover-row:hover,.carry-row:hover{transform:translateY(-1.5px);box-shadow:0 4px 14px rgba(0,0,0,.22)}
-  .dw:hover{box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .mover-row:hover,.carry-row:hover{transform:translateY(-1.5px);box-shadow:var(--shadow-card)}
+  .dw:hover{box-shadow:var(--shadow-pop)}
 }
 @media (prefers-reduced-motion:reduce){.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:none}}
 .btn:disabled{opacity:.22;cursor:default}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:rgba(242,240,234,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.tabbar{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 .tp.on{color:var(--green);border-bottom-color:var(--green)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
@@ -148,7 +153,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .tp-arrow{font-size:9px;opacity:.75;margin-left:3px}
 .tp.tp-stack.has-active{color:var(--green)}
 .tp.tp-stack.open{color:var(--blue)}
-.tab-menu{position:fixed;z-index:100001;background:var(--bg3);border:1px solid var(--bd2);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.5);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
+.tab-menu{position:fixed;z-index:100001;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
 .tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 /* ── BODY ── */
@@ -164,7 +169,7 @@ svg.ic{vertical-align:-2px;flex:none}
    Bias-Pfeil in EINER Zeile - dafuer reichten die frueheren 72px (gestapelte
    Darstellung) nicht aus, die Sparkline wurde auf 0 zusammengedrueckt.
    Alt: width:72px; */
-.sb{width:138px;background:rgba(255,255,255,.5);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0}
+.sb{width:138px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0}
 @media(max-width:760px){.sb{width:120px}}
 .sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
@@ -246,7 +251,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px}
-.atitle{font-size:25px;font-weight:800;color:var(--t0);letter-spacing:-1px}
+.atitle{font-size:34px;font-weight:600;color:var(--t0);letter-spacing:-.5px}
 /* Landesflagge vor dem Ticker-Titel (tech-design-Skill) - Groesse an die
    Textgroesse gekoppelt statt fest, damit sie bei den responsiven .atitle-
    Breakpoints (21px/30px) automatisch mitskaliert. */
@@ -303,7 +308,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .evt-flag-abs .evt-flag{font-size:14px}
 .evt-flag{color:var(--red);font-size:15px;font-weight:900;line-height:1;flex-shrink:0}
 .evt-flag.ef-red{color:var(--red)}
-.evt-flag.ef-green{color:#22c55e}
+.evt-flag.ef-green{color:var(--success)}
 .cal-empty-day{padding:7px 9px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
@@ -550,9 +555,9 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .sb-delta{font-size:10px;font-weight:700}
 /* Vorzeichenbasiert (gruen/rot), NICHT bias-basiert - reine Marktdaten ohne
    Bullish/Bearish-Konzept, siehe tech-design-Farbregel. */
-.sb-up{color:#3fb950}.sb-dn{color:var(--red)}.sb-flat{color:var(--t3)}
+.sb-up{color:var(--blue)}.sb-dn{color:var(--red)}.sb-flat{color:var(--t3)}
 .sb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.sb-open{background:#3fb950;box-shadow:0 0 5px rgba(63,185,80,.7)}
+.sb-open{background:var(--success);box-shadow:0 0 5px rgba(var(--success-rgb),.6)}
 .sb-closed{background:var(--t3)}
 @media(max-width:760px){.statusbar{height:28px;padding:0 8px}.sb-item{padding:0 9px}.sb-lbl{font-size:8px;letter-spacing:.8px}}
 /* ── RESEARCH LIBRARY (Nutzer-Wunsch 2026-08-02, Foto-Referenz) ──
@@ -783,11 +788,11 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#1868a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#c0392b;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#3b82f6;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#e35d5d;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#4a90c2,#1868a8);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#d8525f,#c0392b);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#6ea8f0,#3b82f6);min-width:0;transition:width .3s}
+.cot-bar-short{background:linear-gradient(90deg,#d8525f,#e35d5d);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -843,11 +848,11 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:14px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#1868a8;font-weight:700}
+.cot-tbl td.cot-c-long{color:#3b82f6;font-weight:700}
 .cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
 .cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
 @media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
-.cot-tbl td.cot-c-short{color:#c0392b;font-weight:700}
+.cot-tbl td.cot-c-short{color:#e35d5d;font-weight:700}
 /* COT control bar (countdown + refresh) */
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cot-cd-box{display:flex;flex-direction:column;gap:1px}
@@ -857,7 +862,7 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cot-note{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-refresh:hover{border-color:#1868a8;color:var(--t0)}}
+@media (hover:hover){.cot-refresh:hover{border-color:#3b82f6;color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
 .cot-refresh-ic{display:inline-block;font-size:15px;line-height:1}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
@@ -877,8 +882,8 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
-@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(28,100,242,.1)}50%{box-shadow:0 2px 16px rgba(28,100,242,.25)}}
-.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:8px;cursor:pointer;background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid #4c8cd8;color:var(--t0);box-shadow:0 2px 10px rgba(28,100,242,.14);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
+.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.12);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
 .cot-notify-txt{font-weight:800;font-size:11.5px;letter-spacing:.2px;color:#5b9bd8}
 .cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
@@ -889,9 +894,9 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
    Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): kein endloses Pulsen
    mehr auf beiden Benachrichtigungs-Karten - statischer Schatten reicht als
    Hinweis, ohne staendig in Bewegung zu sein. */
-@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(124,58,237,.1)}50%{box-shadow:0 2px 16px rgba(124,58,237,.25)}}
-.risk-env-notify-card{background:var(--bg2);border-left-color:#8b5cf6;box-shadow:0 2px 10px rgba(124,58,237,.14);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
-.risk-env-notify-card .cot-notify-txt{color:#6a3fc0}
+@keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--purple-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--purple-rgb),.18)}}
+.risk-env-notify-card{background:var(--bg2);border-left-color:var(--purple);box-shadow:0 2px 10px rgba(var(--purple-rgb),.12);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
+.risk-env-notify-card .cot-notify-txt{color:var(--purple)}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -949,18 +954,18 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
    Animation), damit es sich nicht wieder wie das bereits verworfene
    "Video-Game"-Design anfuehlt (siehe CLAUDE.md-Historie der vorherigen
    Professionalitaets-Audits), nur spuerbar mehr Tiefe/Politur. */
-.dw{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--bd2);border-radius:10px;padding:11px;margin-bottom:8px;transition:border-color .15s,box-shadow .15s;box-shadow:0 10px 22px -16px rgba(20,23,26,.22)}
-@media (hover:hover){.dw:hover{border-color:rgba(255,255,255,.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 28px -14px rgba(0,0,0,.65)}}
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;margin-bottom:24px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
+@media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
    KEINEN Platz ein (display:none, nicht nur opacity:0). */
-.dash-edit-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:8px 12px;background:rgba(95,168,237,.08);border:1px solid rgba(95,168,237,.3);border-radius:8px}
+.dash-edit-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:8px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);border-radius:8px}
 body.dash-edit-mode .dash-edit-bar{display:flex}
 .dash-edit-lbl{font-size:11.5px;font-weight:600;color:var(--blue)}
 /* Karten bekommen im Bearbeitungsmodus einen sichtbaren Rand, damit klar
    ist, dass gerade etwas anders ist als sonst (die Steuerbuttons selbst
    erscheinen erst beim genauen Hinsehen). */
-body.dash-edit-mode #dashWidgets .dw{border-color:rgba(95,168,237,.35)}
+body.dash-edit-mode #dashWidgets .dw{border-color:rgba(var(--blue-rgb),.35)}
 /* Majors-Karte ist jetzt das erste Element der 'left'-Zone im Radial-Layout
    (frueher ein eigenstaendiges <aside>, Nutzer-Wunsch 2026-07-27) - selbe
    Bausteine (.ab/.an/.av/miniSparklineSvg), nur unter .dash-majors-card statt
@@ -1123,11 +1128,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
-.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#0ea5e9;box-shadow:0 0 4px 1px #0369a1,0 0 16px 5px rgba(14,165,233,.7),0 0 34px 12px rgba(14,165,233,.32);pointer-events:none;z-index:99999;will-change:transform}
+.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#3b82f6;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(59,130,246,.7),0 0 34px 12px rgba(59,130,246,.32);pointer-events:none;z-index:99999;will-change:transform}
 /* Zweiter, kleinerer/schwaecherer Partikel kurz hinter dem Kopf (siehe
    scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
    einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
-.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#38bdf8;box-shadow:0 0 10px 3px rgba(14,165,233,.5),0 0 22px 8px rgba(14,165,233,.2);opacity:.7}
+.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#6ea8f0;box-shadow:0 0 10px 3px rgba(59,130,246,.5),0 0 22px 8px rgba(59,130,246,.2);opacity:.7}
 /* Der 0→16px AUSSEN wachsende Ring war bei eng stehenden Karten unsichtbar,
    weil er in den Bereich der Nachbarkarte hineinwuchs und von deren (spaeter
    gezeichnetem) Hintergrund verdeckt wurde (Nutzer-Bugreport 2026-07-27).
@@ -1135,9 +1140,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    kann von keiner Nachbarkarte je verdeckt werden) traegt den Effekt jetzt
    primaer; der kleine Aussen-Ring bleibt als Bonus, wenn Platz ist. */
 @keyframes scanHit{
-  0%{box-shadow:0 0 0 0 rgba(14,165,233,.9) inset,0 0 0 0 rgba(14,165,233,.7)}
-  35%{box-shadow:0 0 0 3px rgba(14,165,233,.65) inset,0 0 0 3px rgba(14,165,233,.5)}
-  100%{box-shadow:0 0 0 3px rgba(14,165,233,0) inset,0 0 0 8px rgba(14,165,233,0)}
+  0%{box-shadow:0 0 0 0 rgba(59,130,246,.9) inset,0 0 0 0 rgba(59,130,246,.7)}
+  35%{box-shadow:0 0 0 3px rgba(59,130,246,.65) inset,0 0 0 3px rgba(59,130,246,.5)}
+  100%{box-shadow:0 0 0 3px rgba(59,130,246,0) inset,0 0 0 8px rgba(59,130,246,0)}
 }
 .scan-hit{animation:scanHit .7s ease-out}
 @keyframes scanFlashGlobe{0%{filter:brightness(1)}30%{filter:brightness(1.7)}100%{filter:brightness(1)}}
@@ -1300,7 +1305,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 .mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
 @media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
-.mw-tab.on{background:rgba(95,168,237,.14);border-color:var(--blue);color:var(--blue)}
+.mw-tab.on{background:rgba(59,130,246,.14);border-color:var(--blue);color:var(--blue)}
 /* Exakt 4 Kacheln pro Reihe (Nutzer-Wunsch 2026-07-27, per Foto markiert),
    nicht "so viele wie reinpassen" wie beim vorherigen flex-wrap - echtes
    Grid mit 4 gleich breiten Spalten. Passt sich per Breakpoint dynamisch an
@@ -1334,11 +1339,11 @@ body.dash-edit-mode .mw-bar{display:flex}
 .hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mw-cfg-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .mw-cfg-opt{font-size:11px;padding:5px 9px}
-.mw-cfg-opt.on{border-color:var(--blue);background:rgba(95,168,237,.14);color:var(--t0)}
+.mw-cfg-opt.on{border-color:var(--blue);background:rgba(59,130,246,.14);color:var(--t0)}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
 .live-data-top{display:flex;align-items:center;gap:8px}
 .live-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:livePulse 2s infinite}
-@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(95,168,237,.5)}70%{box-shadow:0 0 0 8px rgba(95,168,237,0)}100%{box-shadow:0 0 0 0 rgba(95,168,237,0)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 8px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
 .live-data-lbl{font-size:13px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}
 .live-clock{font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-left:auto}
 .live-data-sub{font-size:11.5px;color:var(--t3);margin-top:-6px}
@@ -1587,8 +1592,8 @@ body.dash-edit-mode .mw-bar{display:flex}
 @media(max-width:560px){.histp-val{display:none}.histp-name{white-space:normal}}
 /* ── GREEN ALERT BADGE (Toolbar) ── */
 .green-alert-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 5px;cursor:default;transition:opacity .2s,transform .2s;line-height:1;gap:1px;min-width:24px}
-.green-alert-icon{color:#22c55e;font-size:18px;font-weight:900;line-height:1;display:block}
-.green-alert-count{color:#22c55e;font-size:10px;font-weight:800;line-height:1;display:block;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-align:center}
+.green-alert-icon{color:var(--success);font-size:18px;font-weight:900;line-height:1;display:block}
+.green-alert-count{color:var(--success);font-size:10px;font-weight:800;line-height:1;display:block;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-align:center}
 .green-alert-wrap.ga-zero{opacity:.22;transform:scale(.72)}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 .green-alert-wrap.ga-many .green-alert-icon{font-size:22px;animation:pulse-badge 1.4s ease-in-out infinite}
@@ -1641,7 +1646,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
 .nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 .nb-day-hdr:first-child{margin-top:0}
-.nb-day-hdr.nb-day-today{background:rgba(239,107,120,.18);color:#c0392b;border-bottom-color:rgba(239,107,120,.4)}
+.nb-day-hdr.nb-day-today{background:rgba(239,107,120,.18);color:#e35d5d;border-bottom-color:rgba(239,107,120,.4)}
 .nb-ccy{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
 .nb-main{flex:1;min-width:0}
 .nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1659,8 +1664,8 @@ body.dash-edit-mode .mw-bar{display:flex}
 .finp:focus{border-color:var(--bd2);color:var(--t0)}.finp::placeholder{color:var(--t3)}
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
 /* ── MODALS ── */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
-.modal{background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:0 8px 40px rgba(20,23,26,.28);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:min(1300px,94vw)}
 #inboxList{max-height:65vh;overflow-y:auto}
@@ -1676,7 +1681,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 .dm-nodate{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);margin:2px 0 14px;cursor:pointer}
 .dm-nodate input{flex-shrink:0}
 .dm-inp::placeholder{color:var(--t3)}
-@media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:21px}}
+@media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:26px}}
 /* ── LOCK SCREEN ── */
 .lock-ov{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
 .lock-box{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px}
@@ -1712,7 +1717,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      Wunsch 2026-07-25/07-27: mehr Platz fuer die Karten selbst, weniger fuer
      Rand/Abstand) - horizontal bleibt es identisch. */
   #pgDash{padding-top:8px;padding-bottom:8px}
-  .atitle{font-size:30px}
+  .atitle{font-size:38px}
   .afull{font-size:13px}
   .bo{font-size:13px;padding:6px 13px}
   .st{font-size:14px;padding:7px 16px}
@@ -1781,7 +1786,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      verdeckt, weil deren Hintergrund im Dokumentfluss SPAETER/OBEN
      gezeichnet wird. 8px reicht, damit sowas wieder sichtbar ist, ohne die
      kompakte Optik von "keine grossen Luecken" aufzugeben. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:8px;align-items:start}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(190px,240px) minmax(280px,1fr) minmax(190px,240px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:28px;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -1850,7 +1855,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 #introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#f2f0ea;cursor:pointer}
 #introShards{position:absolute;inset:0;z-index:1}
 .intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#ffffff 0%,#f2f0ea 58%,#e3e0d8 100%);box-shadow:inset 0 0 0 1px rgba(24,104,168,.1);will-change:transform,opacity}
-.intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(95,168,237,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(95,168,237,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
+.intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 #introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 /* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
    Spiele-Startbildschirm (Gradient-Text + starker Glow + dramatischer
@@ -1869,7 +1874,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 .intro-loader-sq:nth-child(3){animation-delay:.32s}
 .intro-loader-sq:nth-child(4){animation-delay:.48s}
 .intro-loader-sq:nth-child(5){animation-delay:.64s}
-@keyframes introLoaderSweep{0%{width:10px;background:rgba(20,23,26,.16)}10%{width:22px;background:var(--blue,#1868a8)}18%{width:10px;background:rgba(20,23,26,.16)}100%{width:10px;background:rgba(20,23,26,.16)}}
+@keyframes introLoaderSweep{0%{width:10px;background:rgba(20,23,26,.16)}10%{width:22px;background:var(--blue,#3b82f6)}18%{width:10px;background:rgba(20,23,26,.16)}100%{width:10px;background:rgba(20,23,26,.16)}}
 .intro-hint{position:absolute;bottom:5%;left:0;right:0;height:1.4em;pointer-events:none}
 .ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
 .ih-2{animation-delay:3s}
@@ -2074,12 +2079,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-274 — Neues helles &quot;Marmor&quot;-Design: kompletter Wechsel vom dunklen Ueberwachungs-Look zu einem hellen, weisstoenigen Hintergrund. Karten/Tabellen/Indikatoren heben sich als klar hellere/weisse Flaechen vom Marmor-Hintergrund ab, vormals helle/weisse Schrift ist jetzt dunkel. Bias-Farben (Blau/Rot/Amber/Gold/Lila) behalten ihren Farbton, wurden aber fuer Lesbarkeit auf Weiss nachgedunkelt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-275 — &quot;Luxury Marble Terminal&quot;-Feinschliff: warme Elfenbein-/Creme-/Greige-Kartentoene statt reinem Weiss, kein Glassmorphism/Transparenz mehr (Header/Tabbar/Sidebar/Modals jetzt blickdicht), grosszuegigere Radien (18-22px Karten, 14-18px Buttons) und Abstaende (24-32px zwischen Karten), weiche breite Schatten statt harter Kontraste, Anthrazit-Typografie-Hierarchie (#1F2328/#3A3F46/#6B7280/#8A8F98), exakte Akzentfarben (Bull-Blau #3B82F6, Bear-Rot #E35D5D, neutrales Gold #D4A857, eigenes Status-Gruen #22C55E fuer Saved/Online getrennt von den Bias-Farben) und filigranere 1.75px-Icon-Linien.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-274</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-275</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2088,16 +2093,16 @@ function introLogin(){
     </div>
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
     <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)">→</button>
-    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
+    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
     <div class="hdr-menu-wrap">
-      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
+      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
     </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
-    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
-    <button class="btn" onclick="openHelpM()" title="How the scoring works"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
-    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
+    <button class="btn" onclick="openDesignerM()" title="Designer – choose the background colour"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="btn-lbl"> Design</span></button>
+    <button class="btn" onclick="openHelpM()" title="How the scoring works"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
+    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
     <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
-      <span class="profile-circle" id="profileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span class="profile-circle" id="profileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       <span class="profile-name" id="profileName">Sync</span>
     </button>
   </div>
@@ -2132,11 +2137,11 @@ function introLogin(){
     <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
-      <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
+      <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
         <select class="btn" id="trendsPairSel" onchange="setTrendsPair(this.value)" title="Choose pair" style="cursor:pointer"></select>
       </span>
-      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> vs Price</button>
+      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> vs Price</button>
     </div>
   </div>
   <div id="trendsBody"></div>
@@ -2196,7 +2201,7 @@ function introLogin(){
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
-      <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
+      <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
     </div>
   </div>
@@ -2231,9 +2236,9 @@ function introLogin(){
       <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
-      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
-      <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
-      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
+      <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
+      <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
+      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
     </div>
   </div>
   <div id="calEvents"></div>
@@ -2581,7 +2586,7 @@ function introLogin(){
 <div class="ov" id="mSearch" style="display:none" onclick="if(event.target===this)closeM('mSearch')">
   <div class="modal search-modal">
     <div class="search-inp-wrap">
-      <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInp" type="text" placeholder="Search assets, indicators, events, tabs..." autocomplete="off" oninput="renderSearch()" onkeydown="searchKey(event)">
       <button class="search-close" onclick="closeM('mSearch')">×</button>
     </div>
@@ -2656,7 +2661,7 @@ function introLogin(){
 <script>
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
-const BC={bull:'#1868a8',bear:'#c0392b',neu:'#a15c00'};
+const BC={bull:'#3b82f6',bear:'#e35d5d',neu:'#d4a857'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -2750,7 +2755,7 @@ const ICONS={
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
-  return`<svg class="ic" width="${size||15}" height="${size||15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  return`<svg class="ic" width="${size||15}" height="${size||15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 }
 // +2px Puffer auf den gemessenen scrollHeight: ohne ihn sass die Boxhoehe
 // teils exakt auf der Kante der Zeilenhoehe - je nach Browser/Font-Rendering
@@ -2763,7 +2768,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // recomputeRiskCorr) - hier ueberall defensiv mitbehandelt, da bClass/
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#1868a820':(b==='bear'||b==='sbear')?'#c0392b20':'#a15c0020';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#3b82f620':(b==='bear'||b==='sbear')?'#e35d5d20':'#d4a85720';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
@@ -3300,9 +3305,9 @@ function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev)
 // Asset (inkl. verknuepfter Waehrung) gefiltert.
 function calToolbarHtml(){
   const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
-  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> ${calHighOnly?'High-impact only':'All impacts'}</button>`;
-  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>`;
-  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>`;
+  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> ${calHighOnly?'High-impact only':'All impacts'}</button>`;
+  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>`;
+  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>`;
   return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${alertBtn}${refresh}</div>`;
 }
 function calRowHtml(ev,opts){
@@ -6303,9 +6308,9 @@ function toggleDataMenu(ev){
   const r=btn.getBoundingClientRect();
   const m=document.createElement('div');
   m.className='hdr-menu';m.id='dataMenu';
-  m.innerHTML=`<button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
-    <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
-    <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>`;
+  m.innerHTML=`<button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
+    <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
+    <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>`;
   document.body.appendChild(m);
   const mw=Math.max(176,m.offsetWidth);
   m.style.position='fixed';
@@ -7225,7 +7230,7 @@ function renderNoteRub(rub,ri,total){
     </div>
     <div class="rub-body">
       ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#8a6d0040':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
+        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#d4a85740':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
           <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
           <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
@@ -9918,7 +9923,7 @@ function dashFooterBarHtml(){
   const item=(lbl,valHtml)=>`<div class="dfb-item"><span class="dfb-lbl">${lbl}</span><span class="dfb-val">${valHtml}</span></div>`;
   const parts=[];
   const open=fxMarketOpenNow();
-  parts.push(item('MARKET STATUS',`<span style="color:${open?'#22c55e':'var(--red)'}">● ${open?'OPEN':'CLOSED'}</span>`));
+  parts.push(item('MARKET STATUS',`<span style="color:${open?'var(--success)':'var(--red)'}">● ${open?'OPEN':'CLOSED'}</span>`));
   const now=new Date(),tzH=-now.getTimezoneOffset()/60;
   parts.push(item('GLOBAL TIME',`${now.toLocaleTimeString([],{hour12:false})} UTC${tzH>=0?'+':''}${tzH}`));
   const vixEv=SENTIMENT_DATA&&sentEval('vix',SENTIMENT_DATA.vix);
@@ -11698,11 +11703,11 @@ function globeSkeleton(size,uid){
     <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
     <rect x="1.7" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
     <rect x="-3.8" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
-    <circle cx="2.75" cy="11.6" r="1" fill="#a15c00"/>
-    <circle cx="-2.75" cy="11.6" r="1" fill="#a15c00"/>
+    <circle cx="2.75" cy="11.6" r="1" fill="#d4a857"/>
+    <circle cx="-2.75" cy="11.6" r="1" fill="#d4a857"/>
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
-    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#c0392b"/>
-    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#c0392b"/>
+    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#e35d5d"/>
+    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#e35d5d"/>
   </g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
@@ -12958,7 +12963,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
     const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
     if(pricePts.length>1){
       const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
-      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="1.75" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
@@ -13363,7 +13368,7 @@ function cotMetrics(s){
   const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'#1868a8':v<0?'#c0392b':'var(--t3)';}
+function cotColor(v){return v>0?'#3b82f6':v<0?'#e35d5d':'var(--t3)';}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -13454,7 +13459,7 @@ function cotHistChart(history,availWidth,meta){
   // eine senkrechte Hilfslinie und ein Punkt auf der Long-%-Linie, die per JS
   // (cotChartPointerMove) sichtbar/positioniert werden.
   svg+=`<line id="cotHoverVLine" x1="0" y1="${topPad}" x2="0" y2="${y0}" stroke="var(--t3)" stroke-width="1" stroke-dasharray="2,3" style="display:none;pointer-events:none"/>`;
-  svg+=`<circle id="cotHoverDot" r="4.5" fill="#fff" stroke="#000" stroke-width="2" style="display:none;pointer-events:none"/>`;
+  svg+=`<circle id="cotHoverDot" r="4.5" fill="#fff" stroke="#000" stroke-width="1.75" style="display:none;pointer-events:none"/>`;
   history.forEach((e,i)=>{
     const x=leftPad+i*perBar;
     svg+=`<rect class="cot-hit" data-i="${i}" x="${x.toFixed(1)}" y="${topPad}" width="${perBar.toFixed(1)}" height="${(chartH+bottomPad).toFixed(1)}" fill="transparent"/>`;
@@ -13700,7 +13705,7 @@ function sentGauge(val,lo,hi,unit,maxW,key){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#1868a8')}${arc(P*0.75,P*0.55,'#4a90c2')}${arc(P*0.55,P*0.45,'#a15c00')}${arc(P*0.45,P*0.25,'#b56b3a')}${arc(P*0.25,0,'#c0392b')}
+    ${arc(P,P*0.75,'#3b82f6')}${arc(P*0.75,P*0.55,'#6ea8f0')}${arc(P*0.55,P*0.45,'#d4a857')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#e35d5d')}
     <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
       <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
@@ -13775,13 +13780,13 @@ function sentSpark(series,lo,hi,loTh,hiTh){
   const path=pts.map((e,i)=>`${i?'L':'M'}${xOf(i).toFixed(1)} ${yOf(+e[1]).toFixed(1)}`).join(' ');
   const last=pts[pts.length-1];
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:100px">
-    ${loTh!=null?band(lo,loTh,'rgba(95,168,237,.10)'):''}${hiTh!=null?band(hiTh,hi,'rgba(239,83,80,.10)'):''}
-    ${loTh!=null?`<line x1="0" y1="${yOf(loTh).toFixed(1)}" x2="${W}" y2="${yOf(loTh).toFixed(1)}" stroke="rgba(95,168,237,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
-    ${hiTh!=null?`<line x1="0" y1="${yOf(hiTh).toFixed(1)}" x2="${W}" y2="${yOf(hiTh).toFixed(1)}" stroke="rgba(239,83,80,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
-    <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>
+    ${loTh!=null?band(lo,loTh,'rgba(59,130,246,.10)'):''}${hiTh!=null?band(hiTh,hi,'rgba(227,93,93,.10)'):''}
+    ${loTh!=null?`<line x1="0" y1="${yOf(loTh).toFixed(1)}" x2="${W}" y2="${yOf(loTh).toFixed(1)}" stroke="rgba(59,130,246,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
+    ${hiTh!=null?`<line x1="0" y1="${yOf(hiTh).toFixed(1)}" x2="${W}" y2="${yOf(hiTh).toFixed(1)}" stroke="rgba(227,93,93,.5)" stroke-width="1" stroke-dasharray="4,3"/>`:''}
+    <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="1.75" stroke-linejoin="round"/>
     <circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(+last[1]).toFixed(1)}" r="3.2" fill="var(--blue)"/>
   </svg>`;
-  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#1868a8';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
+  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#3b82f6';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
   return chartHoverWrap(svg,hpts);
 }
 // ── Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14): Balken = Actual,
@@ -13889,7 +13894,7 @@ function indHistChart(ind){
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
-    ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`:''}
+    ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>`:''}
     ${fcDots}
     ${xlab}
   </svg>`;
@@ -13945,24 +13950,24 @@ const SENT_INFO={
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
-     <ul><li><b style="color:${'#c0392b'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
-     <li><b style="color:${'#1868a8'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#a15c00'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
+     <ul><li><b style="color:${'#e35d5d'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
+     <li><b style="color:${'#3b82f6'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#d4a857'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
      <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
-     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#1868a8'}">bullish</b>.</li>
-     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#c0392b'}">bearish</b>.</li>
+     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#3b82f6'}">bullish</b>.</li>
+     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#e35d5d'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
      <p><b>How to read the chart:</b> the stepped line is the daily ratio. The blue-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Net Options Flow (Call−Put)/(Call+Put)',
     `<p><b>What it is:</b> the net balance between call and put volume on a given day, computed directly from the raw end-of-day option volumes as <b>(total call volume − total put volume) ÷ (total call volume + total put volume)</b>. This is cleanly scaled between <b>−1.0</b> (only puts traded) and <b>+1.0</b> (only calls traded); <b>0</b> means calls and puts balanced.</p>
      <p><b>How to read it here:</b> each bar is one day (lightly smoothed with a 5-day average to cut single-day noise).</p>
-     <ul><li><b style="color:${'#1868a8'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
-     <li><b style="color:${'#c0392b'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
+     <ul><li><b style="color:${'#3b82f6'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
+     <li><b style="color:${'#e35d5d'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
      <p>It is a direct, normalized read of who is leaning where in the options market, so it builds up one point per trading day as the underlying put/call series fills in.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (starts fresh per asset).</p>`],
   feargreed:['Fear & Greed / VIX',
@@ -14171,7 +14176,7 @@ function retailNetChart(series,priceSeries){
     const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
     if(pricePts.length>1){
       const ptsStr=pricePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
-      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
+      priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="1.75" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
   const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
@@ -14282,8 +14287,8 @@ function renderPutCallChart(D){
     chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
   }else{
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(95,168,237,.08)"/>
-        <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${(H-padB-yOf(LO)).toFixed(1)}" fill="rgba(239,83,80,.08)"/>
+        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(59,130,246,.08)"/>
+        <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${(H-padB-yOf(LO)).toFixed(1)}" fill="rgba(227,93,93,.08)"/>
         ${gy}
         <line x1="${padL}" y1="${yOf(HI).toFixed(1)}" x2="${W-padR}" y2="${yOf(HI).toFixed(1)}" stroke="${BC.bull}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <line x1="${padL}" y1="${yOf(LO).toFixed(1)}" x2="${W-padR}" y2="${yOf(LO).toFixed(1)}" stroke="${BC.bear}" stroke-width="1.2" stroke-dasharray="5,4"/>
@@ -14630,7 +14635,7 @@ function renderSeasonality(){
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
-   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#1868a8">Blue up-bars</b> = the month was positive on average; <b style="color:#c0392b">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#3b82f6">Blue up-bars</b> = the month was positive on average; <b style="color:#e35d5d">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20) ═══════════════════
