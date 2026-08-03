@@ -959,7 +959,7 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
    Animation), damit es sich nicht wieder wie das bereits verworfene
    "Video-Game"-Design anfuehlt (siehe CLAUDE.md-Historie der vorherigen
    Professionalitaets-Audits), nur spuerbar mehr Tiefe/Politur. */
-.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;margin-bottom:24px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:9px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -985,16 +985,20 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
    der linke Randstreifen (.ab.glow-*), kein Flaechen-Tint. */
-.dash-majors-card .ab-wrap{background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;margin-bottom:4px;overflow:hidden}
-.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:7px 9px 6px;display:flex;flex-wrap:wrap;align-items:center;text-align:left;gap:2px 6px}
-.dash-majors-card .ab .an{order:1;flex:1 1 auto;font-size:12.5px;font-weight:700}
+.dash-majors-card .ab-wrap{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;margin-bottom:2px;overflow:hidden}
+/* Nutzer-Wunsch 2026-08-03 ("ohne Luecken, fast alles direkt sichtbar"):
+   EINE Zeile statt 3 gestapelter Zeilen - Name/Sparkline/Score/Pille
+   nebeneinander wie im FX-Watchlist-Referenzbild, spart pro Zeile ueber
+   die Haelfte der Hoehe (8 Waehrungen machten allein >500px aus). */
+.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:5px 7px;display:flex;align-items:center;text-align:left;gap:5px}
+.dash-majors-card .ab .an{order:1;flex:0 0 30px;font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-majors-card .ab svg.sb-spark{order:2;flex:1 1 auto;min-width:0;width:auto;height:15px;margin:0}
+.dash-majors-card .ab .sb-score{order:3;flex:0 0 auto;text-align:right;margin:0;font-size:11px;font-weight:800}
 /* Referenz-Mockup 2026-08-03 (FX Watchlist): Bias-Pille statt reinem
    Dreieck-Glyph - wiederverwendet .bbadge (siehe fx_bias-Widget), nur
    hier als volle Kapsel statt der dortigen festen 54px-Rechteck-Variante. */
-.dash-majors-card .ab .bbadge{order:2;margin:0;border-radius:999px;width:auto;min-height:0;padding:2px 7px;font-size:8.5px;letter-spacing:.2px;white-space:nowrap}
-.dash-majors-card .ab svg.sb-spark{order:3;flex:0 0 100%;width:100%;height:17px;margin:4px 0 1px}
-.dash-majors-card .ab .sb-score{order:4;flex:0 0 100%;text-align:right;margin:0;font-size:12px;font-weight:800}
-.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:9px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px}
+.dash-majors-card .ab .bbadge{order:4;margin:0;border-radius:999px;width:auto;min-height:0;padding:2px 6px;font-size:8px;letter-spacing:.1px;white-space:nowrap;flex:0 0 auto}
+.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:6px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#565c66;color:var(--t0)}}
 /* flex-wrap (Radial-Layout 2026-07-27): die schmalen Seiten-Zonen (240px)
@@ -1125,7 +1129,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .gt-pct{font-size:10.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:30px;text-align:center}
 @media(max-width:520px){.globe-throttle{display:none}}
 .globe-btn-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-.scan-btn{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
+.scan-btn{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
 .scan-btn:disabled{opacity:.7;cursor:default}
 /* Boost-Button (Nutzer-Wunsch 2026-07-28): eigener Warm-Ton (Feuer) statt
@@ -1283,7 +1287,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    bei der jetzt vierten Spalte (Fuel) innerhalb der 440px-Kartenbreite in
    eine zweite Zeile um (120px×4 + Gaps > 440px) - feste 4 Spalten schrumpfen
    stattdessen einfach schmaler, bleiben aber garantiert in einer Zeile. */
-.globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;margin-top:8px}
+.globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px 10px;margin-top:4px}
 .ghr-item{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.3px;text-transform:uppercase}
 .ghr-item b{display:block;font-size:13px;color:var(--t0);font-weight:700;letter-spacing:0;text-transform:none;margin-top:1px}
 .globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
@@ -1379,7 +1383,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 .globe-tip b{font-size:12.5px}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
 /* Currency Strength Ranking */
-.rank-list{display:flex;flex-direction:column;gap:5px}
+.rank-list{display:flex;flex-direction:column;gap:3px}
 .rank-row{display:grid;grid-template-columns:20px 52px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
 .rank-pos{font-size:10px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* white-space/overflow: seit die Karte frei waehlbare Assets zeigt (nicht
@@ -1794,7 +1798,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      verdeckt, weil deren Hintergrund im Dokumentfluss SPAETER/OBEN
      gezeichnet wird. 8px reicht, damit sowas wieder sichtbar ist, ohne die
      kompakte Optik von "keine grossen Luecken" aufzugeben. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(212px,262px) minmax(280px,1fr) minmax(212px,262px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:28px;align-items:start}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(200px,250px) minmax(280px,1fr) minmax(200px,250px);grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:9px;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -2087,12 +2091,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-279 — Dashboard nach Referenzbild umgebaut (Nutzer-Freigabe: Form/Groesse/Aussehen aller Elemente durften sich aendern): die linke 'Majors'-Leiste zeigt pro Waehrung jetzt Name + volle Bias-Pille (BULLISH/NEUTRAL/BEARISH) in einer Zeile statt nur einem kleinen Dreieck-Glyph, dieselbe Kapsel wie im FX-Watchlist-Referenzbild. Linke/rechte Dashboard-Spalte dafuer etwas breiter (212-300px statt 190-280px), damit die Pille bequem Platz hat.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-280 — Dashboard deutlich kompakter (Nutzer-Wunsch: 'Anordnung ohne Luecken, fast alles direkt sichtbar'): Majors-Zeilen jetzt EINE Zeile (Name+Sparkline+Score+Bias-Pille nebeneinander) statt 3 gestapelter Zeilen, Karten-Innenabstaende/-Abstaende deutlich verkleinert, Globus-Maximalgroesse 480->400px, zwei rechte Widgets (Market Sentiment/Economic Calendar) in die untere Reihe verschoben statt in der ohnehin schon hohen rechten Spalte gestapelt. Gesamthoehe des Dashboards dadurch spuerbar reduziert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-279</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-280</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -6752,7 +6756,7 @@ function miniSparklineSvg(id,col){
     const y=ht-pad-((v-min)/range)*(ht-2*pad);
     return x.toFixed(1)+','+y.toFixed(1);
   }).join(' ');
-  return`<svg class="sb-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/></svg>`;
+  return`<svg class="sb-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/></svg>`;
 }
 // Trend-Sparkline pro Indikator (tech-design-Skill, Nutzer-Wunsch 2026-07-28
 // "Tabellen-Darstellung genau wie auf dem Bild") - ersetzt den bisherigen
@@ -10819,7 +10823,7 @@ function dashMajorsHtml(){
   const rows=list.map(c=>{
     const sc=symScoreCmp(c);
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <div class="an">${escH(c.name)}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${BL[c.bias]}</span>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>
+      <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
@@ -10880,7 +10884,15 @@ function toggleIndEditMode(){
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'right',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',sentiment_snapshot:'right'};
+// Nutzer-Wunsch 2026-08-03 ("Anordnung ohne Luecken, fast alles direkt
+// sichtbar"): die rechte Spalte war mit 4 gestapelten Widgets (risk_sentiment/
+// vol_leaders/sentiment_snapshot/mini_calendar) uebermaessig hoch, waehrend
+// die "bottom"-Zone (flex-wrap, Karten NEBENEINANDER statt gestapelt, siehe
+// .dash-zone-bottom) den Platz effizienter nutzt. sentiment_snapshot +
+// mini_calendar wandern deshalb von "right" (Spalte) nach "bottom" (Reihe) -
+// rechte Spalte bleibt mit nur noch 2 Karten deutlich kompakter, Gesamthoehe
+// des Dashboards sinkt spuerbar, ohne dass ein Widget entfernt wurde.
+const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',sentiment_snapshot:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -12097,7 +12109,12 @@ function startGlobes(){
     // braucht, also darf er deutlich groesser werden als vorher (260px,
     // dann 340px). Obergrenze bleibt trotzdem bestehen, damit er auf sehr
     // breiten Screens nicht unkontrolliert weiterwaechst.
-    const size=Math.max(140,Math.min(w||220,480));
+    // Nutzer-Wunsch 2026-08-03 ("ohne Luecken, fast alles direkt sichtbar"):
+    // Obergrenze von 480 auf 400px gesenkt - bleibt klar die groesste/
+    // dominante Dashboard-Flaeche (Hero-Status unangetastet), gibt aber
+    // spuerbar Hoehe frei, die vorher den Rest der Seite unter die Scroll-
+    // Kante drueckte.
+    const size=Math.max(140,Math.min(w||220,400));
     // .globe-zoom-wrap umschliesst NUR das SVG (Globus+Fahrzeug) - Pinch/
     // Mausrad-Zoom (Nutzer-Wunsch 2026-07-27) skaliert ausschliesslich diesen
     // Wrapper per CSS-transform, nicht den HUD-Rahmen/die Scanline/Badges
