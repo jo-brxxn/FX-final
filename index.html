@@ -18,7 +18,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(101deg,transparent 21.5%,rgba(138,135,126,.12) 22%,rgba(138,135,126,.03) 22.6%,transparent 23.4%),linear-gradient(101deg,transparent 59%,rgba(138,135,126,.08) 59.4%,transparent 60%),linear-gradient(34deg,transparent 42%,rgba(150,146,136,.09) 42.5%,rgba(150,146,136,.02) 43.2%,transparent 44%),linear-gradient(34deg,transparent 76%,rgba(150,146,136,.07) 76.4%,transparent 77.1%),linear-gradient(128deg,rgba(255,255,255,.5) 0%,transparent 38%),linear-gradient(305deg,rgba(90,80,60,.04) 0%,transparent 45%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.5) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(214,207,193,.16) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(222,214,198,.14) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(199,193,178,.12) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(138,133,121,.11) 14.1%,rgba(138,133,121,.025) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(150,144,131,.05) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(140,134,121,.09) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(150,144,130,.08) 27.9%,rgba(150,144,130,.02) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(145,139,125,.06) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(135,129,115,.065) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(140,134,119,.055) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(148,142,127,.05) 46.9%,transparent 47.6%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
 *,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
@@ -262,12 +262,12 @@ svg.ic{vertical-align:-2px;flex:none}
    Textgroesse gekoppelt statt fest, damit sie bei den responsiven .atitle-
    Breakpoints (21px/30px) automatisch mitskaliert. */
 .atitle-flag{display:inline-block;font-size:.72em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
-.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
+.score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
+.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
 .brow{display:flex;gap:5px;flex-wrap:wrap}
-.bo{padding:5px 10px;border-radius:var(--rs);border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}@media (hover:hover){.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
+.bo{padding:5px 10px;border-radius:999px;border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}@media (hover:hover){.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 /* Overview-Karte (tech-design-Skill): Badge-WORT gedaempft grau, nur Icon+
    Score tragen die Bias-Farbe - siehe renderOverviewCard(). */
 .ov-bias.bo.on .bo-word{color:var(--t3)}
@@ -518,7 +518,7 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
    hoch bleiben und nichts ueber den Rand laeuft (CLAUDE.md-Grundsatz
    "Karten-Inhalt darf nie ueber den Kartenrand hinausgehen"). Voller Text
    bleibt als Tooltip erreichbar. Alt: ohne -webkit-line-clamp-Block. */
-.ov2-summary{font-size:12px;line-height:1.45;color:var(--t3);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.ov2-summary{font-size:12px;line-height:1.45;color:var(--t3);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
 /* ── SIDEBAR-ZEILEN EINZEILIG (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ──
    Vorher dreizeilig gestapelt (Name / Sparkline / Score+Pfeil), im Referenz-
    bild steht alles in EINER Zeile: Name → Sparkline → Score → Bias-Pfeil.
@@ -603,22 +603,35 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .res-list-ct{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .res-sort{background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);padding:3px 6px;font-size:11px;outline:none;cursor:pointer}
 .res-list{display:flex;flex-direction:column}
-.res-note{padding:10px 12px;border-bottom:1px solid var(--bd);border-left:2px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
+.res-note{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid var(--bd);border-left:2px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
 .res-note:last-child{border-bottom:none}
 @media (hover:hover){.res-note:hover{background:var(--bg4);border-left-color:var(--blue)}}
+/* Referenz-Mockup 2026-08-03: eigener Datums-Block links (Tag gross,
+   Monat/Jahr klein darunter) statt reinem Inline-Datumstext. */
+.res-note-datebox{flex:none;width:42px;text-align:center;padding-top:1px}
+.res-note-day{font-size:19px;font-weight:800;color:var(--t0);line-height:1.05;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-note-mon{font-size:9px;font-weight:700;letter-spacing:.6px;color:var(--t3);text-transform:uppercase;margin-top:1px}
+.res-note-yr{font-size:9px;color:var(--t3);opacity:.8}
+.res-note-body{flex:1;min-width:0}
 .res-note-top{display:flex;align-items:baseline;gap:8px}
-.res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:3px;padding:1px 5px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.res-note-ti{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.res-note-dt{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;white-space:nowrap}
-.res-note-star{background:none;border:none;cursor:pointer;font-size:11px;opacity:.2;padding:0;line-height:1;flex-shrink:0;transition:opacity .12s}
-.res-note-star.on{opacity:1}
-@media (hover:hover){.res-note-star:hover{opacity:.75}.res-note-star.on:hover{opacity:1}}
+.res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:6px;padding:1px 5px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-note-ti{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Rechte Spalte: Themen-Pill oben, darunter das Stern-Icon, ganz unten die
+   Uhrzeit - gestapelt statt inline (Referenz-Mockup). */
+.res-note-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:96px}
+.res-note-dt{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.res-note-star{background:none;border:none;cursor:pointer;color:var(--t3);opacity:.45;padding:0;line-height:1;flex-shrink:0;transition:opacity .12s,color .12s}
+.res-note-star.on{opacity:1;color:var(--star)}
+.res-note-star.on svg{fill:var(--star)}
+@media (hover:hover){.res-note-star:hover{opacity:.8}.res-note-star.on:hover{opacity:1}}
 .res-note-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
-.res-tag{font-size:10.5px;color:var(--t3);background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;transition:all .12s}
-@media (hover:hover){.res-tag:hover{border-color:var(--blue);color:var(--blue)}}
-.res-tag.on{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.1)}
+.res-tag{font-size:10.5px;color:var(--blue);background:rgba(var(--blue-rgb),.08);border:1px solid rgba(var(--blue-rgb),.22);border-radius:999px;padding:2px 8px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;transition:all .12s}
+@media (hover:hover){.res-tag:hover{border-color:var(--blue);background:rgba(var(--blue-rgb),.16)}}
+.res-tag.on{border-color:var(--blue);color:#fff;background:var(--blue)}
 .res-note-ex{font-size:12px;line-height:1.5;color:var(--t3);margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.res-note-fold{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);margin-top:6px;opacity:.75;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Themen-Pille (z.B. "Macro"/"Central Banks") - rechts oben in der Zeile,
+   Referenz-Mockup zeigt sie als dezente graue Pille statt Fliesstext. */
+.res-note-fold{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t2);background:var(--bg2);border:1px solid var(--bd2);border-radius:999px;padding:3px 9px;white-space:nowrap}
 .res-empty{padding:26px 14px;text-align:center;font-size:12.5px;color:var(--t3)}
 .res-rail{display:flex;flex-direction:column;gap:12px;min-width:0}
 .res-rail-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 11px}
@@ -2085,12 +2098,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-276 — Header/Tab-Leiste an Nutzer-Referenzbild angeglichen: kein eigenes Panel mehr, Marmor-Hintergrund scheint durchgehend durch (nur noch eine duenne Trennlinie unter der Tab-Leiste). Marmor-Aederung deutlicher sichtbar (duenne graue Vene-Linien statt nur weichem Verlauf). Logo + aktiver Tab jetzt dunkel/Anthrazit mit fetter Unterstreichung statt Blau. Header-Buttons (Search/Data/Design/Help/Inbox) wirken jetzt wie eine reine Icon+Label-Zeile ohne sichtbare Pille, erst beim Hover erscheint ein dezenter Hintergrund.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-277 — Feindetail-Abgleich mit dem Nutzer-Referenzbild: Marmor-Hintergrund weiter verfeinert (organische Wolken-Farbvariation + verzweigte Vene-Linien statt weniger gerader Striche). Pillen/Badges (Bias-Pille, Score-Zahl, Research-Tags) jetzt durchgehend als volle Kapsel-Form abgerundet. Notiz-Zeilen im Research-Tab wie im Referenzbild umgebaut (Datums-Block links, Themen-Pille + Stern-Icon + Uhrzeit rechts gestapelt, Umriss-Stern statt Emoji). Overview-Kacheln zeigen jetzt eine einzeilige Kurzfassung der Auto-Zusammenfassung. Data-Quality-HIGH nutzt jetzt das eigene Status-Gruen statt Blau.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-276</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-277</span>
   </div>
   <div class="hdr-r">
     <div class="green-alert-wrap ga-zero" id="greenAlertWrap" title="Symbols with high-impact events today / yesterday" onclick="alert('This counter shows how many of your symbols have high-impact news today or had one yesterday. The red ! flags in the sidebar mark the affected symbols.')" style="cursor:pointer">
@@ -2757,7 +2770,11 @@ const ICONS={
   // Nutzer-Wunsch 2026-07-22: Auto-Lock-Kettensymbol (gespiegelte Karten/
   // Indikatoren, "Risk Correlation") war noch ein Emoji (🔗) statt des
   // App-weiten SVG-Icon-Sets - ersetzt.
-  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  // Referenz-Mockup 2026-08-03 (Research Terminal): duennes Umriss-Sternchen
+  // fuer Favoriten statt Emoji - fuellt sich per CSS (fill:currentColor),
+  // wenn der Favoriten-Status aktiv ist (siehe .res-note-star.on).
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
@@ -10114,6 +10131,15 @@ function resFmtDate(iso){
   const MM=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return d.getDate()+' '+MM[d.getMonth()]+' '+d.getFullYear()+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
+// Referenz-Mockup 2026-08-03 (Research Terminal): eigener Datums-BLOCK links
+// an der Notizzeile (Tag gross/Monat/Jahr gestapelt) statt eines reinen
+// Inline-Textes - liefert dieselben Datumsteile einzeln fuer das Template.
+function resFmtDateParts(iso){
+  if(!iso)return{day:'',mon:'',year:'',time:''};
+  const d=new Date(iso);if(isNaN(d))return{day:'',mon:'',year:'',time:''};
+  const MM=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return{day:d.getDate(),mon:MM[d.getMonth()],year:d.getFullYear(),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+}
 // Alle vergebenen Tags mit Haeufigkeit (fuer die Tag-Cloud), haeufigste zuerst.
 function resAllTags(){
   const m=new Map();
@@ -10179,17 +10205,26 @@ function renderResearch(){
     </div>`;
   // ── Notizliste ──
   const scopeLbl=resSel==='all'?'All notes':resSel==='fav'?'Favorites':resSel.startsWith('f:')?resFolderName(resSel.slice(2)):resSel.slice(2);
-  const rows=shown.length?shown.map(n=>`<div class="res-note" onclick="openResNote('${n.id}')">
-      <div class="res-note-top">
-        ${n.asset?`<span class="res-note-as">${escH(n.asset)}</span>`:''}
-        <span class="res-note-ti">${escH(n.title||'Untitled note')}</span>
-        <span class="res-note-dt">${escH(resFmtDate(n.up||n.ts))}</span>
-        <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">⭐</button>
+  const rows=shown.length?shown.map(n=>{const dp=resFmtDateParts(n.up||n.ts);return`<div class="res-note" onclick="openResNote('${n.id}')">
+      <div class="res-note-datebox">
+        <div class="res-note-day">${dp.day}</div>
+        <div class="res-note-mon">${dp.mon}</div>
+        <div class="res-note-yr">${dp.year}</div>
       </div>
-      ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resSetTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
-      ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,200))}${n.body.length>200?'…':''}</div>`:''}
-      <div class="res-note-fold">${icn('note',10)} ${escH(resFolderName(n.fid))}</div>
-    </div>`).join(''):`<div class="res-empty">${notes.length?'No notes match this filter.':'No notes yet — tap “＋ New note” to capture your first market observation.'}</div>`;
+      <div class="res-note-body">
+        <div class="res-note-top">
+          ${n.asset?`<span class="res-note-as">${escH(n.asset)}</span>`:''}
+          <span class="res-note-ti">${escH(n.title||'Untitled note')}</span>
+        </div>
+        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resSetTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
+        ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,200))}${n.body.length>200?'…':''}</div>`:''}
+      </div>
+      <div class="res-note-side">
+        <div class="res-note-fold">${escH(resFolderName(n.fid))}</div>
+        <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">${icn('star',15)}</button>
+        <div class="res-note-dt">${dp.time}</div>
+      </div>
+    </div>`;}).join(''):`<div class="res-empty">${notes.length?'No notes match this filter.':'No notes yet — tap “＋ New note” to capture your first market observation.'}</div>`;
   const list=`<div class="res-list-card">
       <div class="res-list-hdr">
         <span class="res-list-ti">${escH(scopeLbl)}</span>
@@ -10702,7 +10737,7 @@ function symSourceLabel(c){
 }
 function detailMetaHtml(c,nextLbl){
   const dq=symDataQuality(c),src=symSourceLabel(c);
-  const dqCol=dq.lvl==='HIGH'?'var(--green)':dq.lvl==='MEDIUM'?'var(--amber)':dq.lvl==='LOW'?'var(--red)':'var(--t3)';
+  const dqCol=dq.lvl==='HIGH'?'var(--success)':dq.lvl==='MEDIUM'?'var(--amber)':dq.lvl==='LOW'?'var(--red)':'var(--t3)';
   const upd=_lastFeedTs?new Date(_lastFeedTs).toLocaleTimeString([],{hour12:false}):'–';
   const mi=(lbl,val,title)=>`<div class="dmeta-i"${title?` title="${escH(title)}"`:''}><div class="dmeta-l">${lbl}</div><div class="dmeta-v">${val}</div></div>`;
   return`<div class="dmeta">
