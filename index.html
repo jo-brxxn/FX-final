@@ -602,6 +602,48 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .res-chip{font-size:10.5px;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:3px;padding:2px 7px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .res-chip.on{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.1)}
 .res-flbl{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px}
+/* ── RESEARCH: ASSETS-MODUS (Nutzer-Wunsch 2026-08-03) ──
+   Ersetzt/ergaenzt die freie Themen-Bibliothek um einen Asset-Browser nach
+   festen Kategorie-Ordnern (FX/Indices/Commodities/Crypto/Stocks). Zwei
+   Moden ueber .res-mode-toggle umschaltbar - "Notes" bleibt die bisherige
+   res-wrap-Ansicht unveraendert. */
+.res-mode-toggle{display:flex;gap:6px;margin-bottom:12px}
+.res-mode-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}
+@media (hover:hover){.res-mode-btn:hover{color:var(--t0);border-color:var(--bd2)}}
+.res-mode-btn.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue);color:var(--blue)}
+.resf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.resf-tile{display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:22px 12px;cursor:pointer;transition:border-color .12s,background .12s}
+@media (hover:hover){.resf-tile:hover{border-color:var(--blue);background:var(--bg4)}}
+.resf-tile-ic{color:var(--blue);opacity:.85}
+.resf-tile-nm{font-size:14px;font-weight:800;color:var(--t0)}
+.resf-tile-ct{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.resf-crumb{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--t2);font-weight:700}
+.resf-back{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12.5px;font-weight:700;padding:0}
+@media (hover:hover){.resf-back:hover{text-decoration:underline}}
+.resf-split{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){.resf-split{grid-template-columns:1fr}}
+.resf-asset-list{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:6px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0}
+@media(max-width:900px){.resf-asset-list{position:static}}
+.resf-asset-row{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;border-left:2px solid transparent;color:var(--t2);padding:7px 8px;border-radius:var(--rss);cursor:pointer;font-size:12.5px;text-align:left}
+@media (hover:hover){.resf-asset-row:hover{background:var(--bg4);color:var(--t0)}}
+.resf-asset-row.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--t0)}
+.resf-asset-nm{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resf-asset-sc{font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700}
+.resf-empty-detail{background:var(--bg3);border:1px dashed var(--bd2);border-radius:var(--r);padding:30px 14px;text-align:center;color:var(--t3);font-size:12.5px}
+.resf-detail-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.resf-detail-nm{font-size:22px;font-weight:800;color:var(--t0)}
+.resf-detail-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;align-items:start}
+@media(max-width:1100px){.resf-detail-grid{grid-template-columns:1fr}}
+.resf-detail-main{min-width:0;display:flex;flex-direction:column;gap:10px}
+.resf-detail-side{min-width:0;display:flex;flex-direction:column;gap:12px}
+.resf-side-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 11px}
+.resf-side-tall{flex:1}
+.resf-rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden}
+.resf-rub-hd{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer}
+.resf-rub-tog{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0;flex-shrink:0}
+.resf-rub-nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t0)}
+.resf-rub-sc{font-size:12px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:999px;padding:1px 8px}
+.resf-rub-body{padding:0 13px 12px}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
 .carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
@@ -2058,12 +2100,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-281 — Grosses Sammel-Update (Nutzer-Wunsch, 14 Punkte): Marmor-Hintergrund verstaerkt; Dashboard-Globus verkleinert; Top-Ticker-Zeile kompakter (mehrere Kacheln pro Zeile); komplettes rotes/gruenes Ausrufezeichen-Event-Flag-System entfernt, ersetzt durch eine echte Dashboard-Notification (kind:'evt' im Postfach) samt 'View FF'-Link zum Forex-Factory-Kalender; die komplette untere Statusleiste (Market Status/Global Time/Volatility Index/DXY/Gold/BTC, sowohl die Dashboard-Fusszeile als auch die app-weit fixierte Leiste) entfernt; FX- und Non-FX-Tab zu EINEM Tab zusammengelegt (Non-FX-Kategorien erscheinen jetzt direkt unter FX in derselben Sidebar); Score-Badge neben dem Asset-Kuerzel faerbt sich jetzt nach dem VORZEICHEN des angezeigten Scores statt der Auto-Bias-Schwelle; '· auto'-Zusatz bei Bias-Pillen entfernt; Indikator-Tabellen sind jetzt IMMER fest/nicht horizontal scrollbar (Score-Spalte dafuer entfernt, feste Spaltenbreiten); Klick auf die Trend-Sparkline zeigt wieder die 0/2-1/2-2/2-Trend-Aufschluesselung; Actual-Werte von Bond-Renditen und forecastlosen Indikatoren sind jetzt gegen Previous eingefaerbt; sehr lange Indikator-Namen werden mit '...' abgekuerzt (Tooltip zeigt den vollen Namen); der 'Auto Refresh'-Pause-Schalter oben rechts auf der Detailseite ist komplett entfernt, Live-Feeds aktualisieren jetzt immer automatisch.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-282 — Research-Tab komplett neu als Asset-Browser (Nutzer-Wunsch): die freie Themen-Ordner-Struktur (Macro/Central Banks/Politics/Journal/eigene) ist ersetzt durch genau 5 feste, nicht loeschbare Kategorie-Ordner (FX/Indices/Commodities/Crypto/Stocks) mit Ordner-Symbol - bestehende Notizen aus entfernten Ordnern landen automatisch unter 'Unfiled', kein Datenverlust. Die Asset-Zuordnung je Ordner ist rein abgeleitet aus der Asset-Kategorie (kein zusaetzlicher Speicher noetig) - ein neues Asset erscheint dadurch automatisch im richtigen Ordner. Ordner oeffnen zeigt links alle Assets darin (Name/Score/Bias), Klick auf ein Asset zeigt rechts: kompakte Rubrik-Uebersichtskarten (Name/Score/Bias, Klick klappt die volle Indikator-Tabelle auf - Wiederverwendung derselben Komponente wie auf der Asset-Detailseite), sowie eine Last-Events-Karte (letzte 10 Tage) direkt ueber einer langen Upcoming-Events-Karte. Die bisherige freie Notiz-Bibliothek bleibt vollstaendig erhalten, umschaltbar ueber einen Assets/Notes-Toggle oben im Tab.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-281</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-282</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2242,7 +2284,7 @@ function introLogin(){
      gespeicherte Tab-Stapel (tabStacks) weiter greifen; nur das Label heisst
      jetzt "Research". Aufbau + Inhalt kommen aus renderResearch(). -->
 <div class="pc" id="pgNotes" style="display:none">
-  <div class="res-wrap" id="resWrap"></div>
+  <div id="resWrap"></div>
 </div>
 <!-- MODAL: RESEARCH NOTE -->
 <div class="ov" id="mResNote" style="display:none">
@@ -5719,18 +5761,35 @@ function mkNCs(){return[
 // plus Favoriten-Filter, Freitext-Tags (#inflation ...) und Volltextsuche.
 // Teil von snap() (Undo + Cloud-Sync laufen dadurch automatisch mit, siehe
 // CLAUDE.md "WICHTIGSTE REGEL" - kein eigener 4-Punkte-Sync noetig).
-const RESEARCH_FOLDER_ICONS=['globe','bars','trendUp','zap','flame','note','shuffle','pin'];
-function mkResearchFolders(){return[
-  {id:uid(),name:'Macro',icon:'globe'},
-  {id:uid(),name:'FX',icon:'shuffle'},
-  {id:uid(),name:'Indices',icon:'bars'},
-  {id:uid(),name:'Commodities',icon:'flame'},
-  {id:uid(),name:'Crypto',icon:'zap'},
-  {id:uid(),name:'Central Banks',icon:'pin'},
-  {id:uid(),name:'Politics',icon:'trendUp'},
-  {id:uid(),name:'Journal',icon:'note'},
-];}
-function mkResearch(){return{folders:mkResearchFolders(),notes:[]};}
+const RESEARCH_FOLDER_ICONS=['bars','trendUp','zap','flame','shuffle'];
+// Feste Asset-Kategorie-Ordner (Nutzer-Wunsch 2026-08-03: "genau diese 5
+// Ordner, alle anderen entferne ich" - ersetzt die fruehere frei anlegbare
+// Themen-Ordner-Struktur). IDs sind bewusst FEST/stabil (nicht uid()), damit
+// researchFolderIdFor() sie referenzieren kann - nicht umbenennbar/loeschbar.
+const RESEARCH_ASSET_FOLDERS=[
+  {id:'fx',name:'FX',icon:'shuffle'},
+  {id:'indices',name:'Indices',icon:'bars'},
+  {id:'commodities',name:'Commodities',icon:'flame'},
+  {id:'crypto',name:'Crypto',icon:'zap'},
+  {id:'stocks',name:'Stocks',icon:'trendUp'},
+];
+function mkResearchFolders(){return RESEARCH_ASSET_FOLDERS.map(f=>({...f}));}
+function mkResearch(){return{folders:mkResearchFolders(),notes:[],_folderSchemaV:2};}
+// Asset-ID -> fester Research-Ordner, rein aus der Asset-Klasse abgeleitet
+// (ASSET_CLASS/customIds via assetCls) - KEIN zusaetzlicher State noetig:
+// ein neu ueber "+ Add Symbol" angelegtes Asset erscheint dadurch automatisch
+// im richtigen Ordner (Nutzer-Wunsch: "sobald ein Asset hinzugefuegt wird,
+// passiert das gleiche bei der Research-Kategorie").
+function researchFolderIdFor(id){
+  if(FX.includes(id))return'fx';
+  const cls=assetCls(id);
+  if(cls==='crypto')return'crypto';
+  if(cls==='metal'||cls==='energy')return'commodities';
+  if(cls==='index')return'indices';
+  if(cls==='stock')return'stocks';
+  return null;
+}
+function researchAssetsIn(fid){return (syms||[]).filter(s=>researchFolderIdFor(s.id)===fid);}
 // Titel aus einem alten Freitext-Eintrag ableiten: erste Zeile, auf eine
 // lesbare Laenge gekuerzt. Der VOLLE Text bleibt immer im Body erhalten -
 // es geht bei der Migration nichts verloren.
@@ -5744,23 +5803,36 @@ function researchTitleFrom(text){
 // snap() - faellt bei der Migration etwas auf die Nase, sind die
 // Originaldaten noch vollstaendig vorhanden.
 function migrateResearch(r,legacyCats){
-  if(r&&Array.isArray(r.folders)&&Array.isArray(r.notes))return r;
-  const out=mkResearch();
-  if(Array.isArray(legacyCats)&&legacyCats.length){
-    const nowIso=new Date().toISOString();
-    out.folders=legacyCats.map(c=>({id:uid(),name:String(c&&c.name||'Notes'),icon:'note'}));
-    legacyCats.forEach((c,ci)=>{
-      (c&&c.items||[]).forEach(it=>{
-        out.notes.push({id:uid(),fid:out.folders[ci].id,title:researchTitleFrom(it&&it.text),
-          body:String(it&&it.text||''),tags:[],asset:'',fav:!!(it&&it.imp),ts:nowIso,up:nowIso});
+  if(!r||!Array.isArray(r.folders)||!Array.isArray(r.notes)){
+    r=mkResearch();
+    if(Array.isArray(legacyCats)&&legacyCats.length){
+      const nowIso=new Date().toISOString();
+      // Alte noteCats-Eintraege werden als unfiled-Notizen uebernommen (kein
+      // Datenverlust) - eigene Themenordner dafuer gibt es nicht mehr (siehe
+      // migrateResearchToAssetFolders unten).
+      legacyCats.forEach(c=>{
+        (c&&c.items||[]).forEach(it=>{
+          r.notes.push({id:uid(),fid:'',title:researchTitleFrom(it&&it.text),
+            body:String(it&&it.text||''),tags:[],asset:'',fav:!!(it&&it.imp),ts:nowIso,up:nowIso});
+        });
       });
-    });
-    // Standard-Themenordner zusaetzlich anbieten, falls die Altdaten sie
-    // nicht ohnehin schon abdecken (Namensvergleich, klein geschrieben).
-    const have=new Set(out.folders.map(f=>f.name.toLowerCase()));
-    mkResearchFolders().forEach(f=>{if(!have.has(f.name.toLowerCase()))out.folders.push(f);});
+    }
   }
-  return out;
+  return migrateResearchToAssetFolders(r);
+}
+// Einmalige Migration (Nutzer-Wunsch 2026-08-03): die fruehere freie Themen-
+// Ordner-Struktur (beliebig viele, per "+Add topic" erweiterbar) wird durch
+// genau 5 feste Asset-Kategorie-Ordner ersetzt. Notizen aus jetzt entfernten
+// Ordnern werden NICHT geloescht, sondern auf fid='' (Unfiled) umgehaengt -
+// kein Datenverlust, nur die Ordnerzuordnung geht verloren. Ueber
+// _folderSchemaV idempotent (laeuft nur einmal pro Nutzer).
+function migrateResearchToAssetFolders(r){
+  if(r._folderSchemaV===2)return r;
+  const validIds=new Set(RESEARCH_ASSET_FOLDERS.map(f=>f.id));
+  (r.notes||[]).forEach(n=>{if(n.fid&&!validIds.has(n.fid))n.fid='';});
+  r.folders=mkResearchFolders();
+  r._folderSchemaV=2;
+  return r;
 }
 // Keine fest einprogrammierten Beispiel-Events mehr: der Kalender wird
 // ausschließlich live von Forex Factory befüllt (autoFetchFF beim Laden +
@@ -9997,6 +10069,11 @@ let resSel='all';        // 'all' | 'fav' | 'f:<folderId>' | 'a:<assetId>'
 let resQuery='';
 let resTag='';
 let resSort='new';       // 'new' | 'old' | 'az'
+// Asset-Browser-Modus (Nutzer-Wunsch 2026-08-03) - zweiter View neben den
+// freien Notizen, standardmaessig aktiv. Rein transient wie resSel/resQuery.
+let resMode='folders';   // 'folders' | 'notes'
+let resFolderOpen=null;  // aktuell geoeffneter Asset-Kategorie-Ordner (fid) oder null
+let resExpandedRubs={};  // Klapp-Status der Rubrik-Karten im Asset-Detail (nach rub.id)
 function resNotes(){return (research&&research.notes)||[];}
 function resFolders(){return (research&&research.folders)||[];}
 function resFolderName(fid){const f=resFolders().find(x=>x.id===fid);return f?f.name:'Unfiled';}
@@ -10047,7 +10124,17 @@ function resFilteredNotes(){
   else out.sort((a,b)=>String(key(b)).localeCompare(String(key(a))));
   return out;
 }
+// Einstiegspunkt fuer den Research-Tab: schaltet zwischen dem neuen Asset-
+// Browser (Nutzer-Wunsch 2026-08-03, Standard) und der bisherigen freien
+// Notiz-Bibliothek um. Alle bestehenden Aufrufer (resSelect/resSetTag/
+// togResFav/saveResNote/... sowie showTab('notes')/rerender()) rufen weiter
+// unveraendert renderResearch() auf.
 function renderResearch(){
+  const wrap=document.getElementById('resWrap');if(!wrap)return;
+  if(resMode==='notes'){renderResearchNotes();return;}
+  renderResearchFolders();
+}
+function renderResearchNotes(){
   const wrap=document.getElementById('resWrap');if(!wrap)return;
   const notes=resNotes(),folders=resFolders(),shown=resFilteredNotes();
   const favN=notes.filter(n=>n.fav).length;
@@ -10055,12 +10142,14 @@ function renderResearch(){
   const cnt=fid=>notes.filter(n=>n.fid===fid).length;
   const selCls=k=>resSel===k?' on':'';
   // ── Linke Bibliothek ──
+  // Topics-Liste zeigt jetzt die 5 festen Asset-Kategorie-Ordner (nicht mehr
+  // umbenennbar/loeschbar, siehe RESEARCH_ASSET_FOLDERS) - kein Long-Press,
+  // kein "+Add topic" mehr.
   const lib=`<div class="res-lib-hd">Research Library</div>
     <button class="res-libitem${selCls('all')}" onclick="resSelect('all')"><span class="res-li-ic">${icn('bars',13)}</span><span class="res-li-nm">All notes</span><span class="res-li-ct">${notes.length}</span></button>
     <button class="res-libitem res-fav${selCls('fav')}" onclick="resSelect('fav')"><span class="res-li-ic">⭐</span><span class="res-li-nm">Favorites</span><span class="res-li-ct">${favN}</span></button>
     <div class="res-lib-sec">Topics</div>
-    ${folders.map(f=>`<button class="res-libitem${selCls('f:'+f.id)}" onclick="resSelect('f:${f.id}')" oncontextmenu="return false" onpointerdown="resFolderPressStart(event,'${f.id}')" onpointerup="resFolderPressEnd()" onpointerleave="resFolderPressEnd()" onpointercancel="resFolderPressEnd()" title="${escH(f.name)} — long-press to rename or delete"><span class="res-li-ic">${icn(f.icon&&RESEARCH_FOLDER_ICONS.indexOf(f.icon)>=0?f.icon:'note',13)}</span><span class="res-li-nm">${escH(f.name)}</span><span class="res-li-ct">${cnt(f.id)}</span></button>`).join('')}
-    <button class="res-addfolder" onclick="addResFolder()">＋ Add topic</button>
+    ${folders.map(f=>`<button class="res-libitem${selCls('f:'+f.id)}" onclick="resSelect('f:${f.id}')" title="${escH(f.name)}"><span class="res-li-ic">${icn(f.icon&&RESEARCH_FOLDER_ICONS.indexOf(f.icon)>=0?f.icon:'note',13)}</span><span class="res-li-nm">${escH(f.name)}</span><span class="res-li-ct">${cnt(f.id)}</span></button>`).join('')}
     ${assets.length?`<div class="res-lib-sec">Assets</div>
     ${assets.map(([a,c])=>`<button class="res-libitem${selCls('a:'+a)}" onclick="resSelect('a:${escJH(a)}')"><span class="res-li-ic">${icn('trendUp',13)}</span><span class="res-li-nm">${escH(a)}</span><span class="res-li-ct">${c}</span></button>`).join('')}`:''}`;
   // ── Kopfbereich + Kennzahlen ──
@@ -10123,7 +10212,102 @@ function renderResearch(){
       <div class="res-rail-hd">Recently updated</div>
       ${recent.length?recent.map(n=>`<button class="res-recent" onclick="openResNote('${n.id}')"><span class="res-recent-ti">${escH(n.title||'Untitled note')}</span><span class="res-recent-dt">${escH(resFmtDate(n.up||n.ts).split(' · ')[0])}</span></button>`).join(''):'<div class="res-rail-empty">Nothing yet.</div>'}
     </div>`;
-  wrap.innerHTML=`<aside class="res-lib">${lib}</aside><div class="res-main">${head}${list}</div><aside class="res-rail">${rail}</aside>`;
+  wrap.innerHTML=`${resModeToggleHtml()}<div class="res-wrap"><aside class="res-lib">${lib}</aside><div class="res-main">${head}${list}</div><aside class="res-rail">${rail}</aside></div>`;
+}
+function resModeToggleHtml(){
+  return`<div class="res-mode-toggle">
+    <button class="res-mode-btn${resMode==='folders'?' on':''}" onclick="setResMode('folders')">${icn('bars',13)} Assets</button>
+    <button class="res-mode-btn${resMode==='notes'?' on':''}" onclick="setResMode('notes')">${icn('note',13)} Notes</button>
+  </div>`;
+}
+function setResMode(m){resMode=m;renderResearch();}
+// ── ASSET-BROWSER (Nutzer-Wunsch 2026-08-03) ──────────────────────────
+// Ordner-Grid (FX/Indices/Commodities/Crypto/Stocks) -> Asset-Liste je
+// Ordner -> Asset-Detail rechts (Rubrik-Uebersichtskarten + Events). Die
+// Asset-Zuordnung ist rein abgeleitet (researchAssetsIn), es gibt keinen
+// eigenen Speicher/Sync-Zustand dafuer.
+function renderResearchFolders(){
+  const wrap=document.getElementById('resWrap');if(!wrap)return;
+  const toggle=resModeToggleHtml();
+  if(!resFolderOpen){
+    const tiles=resFolders().map(f=>{
+      const n=researchAssetsIn(f.id).length;
+      return`<button class="resf-tile" onclick="openResFolder('${f.id}')">
+        <span class="resf-tile-ic">${icn(f.icon,26)}</span>
+        <span class="resf-tile-nm">${escH(f.name)}</span>
+        <span class="resf-tile-ct">${n} asset${n===1?'':'s'}</span>
+      </button>`;
+    }).join('');
+    wrap.innerHTML=`${toggle}<div class="resf-grid">${tiles}</div>`;
+    return;
+  }
+  const f=resFolders().find(x=>x.id===resFolderOpen);
+  if(!f){resFolderOpen=null;renderResearchFolders();return;}
+  const assets=researchAssetsIn(f.id).slice().sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
+  const list=assets.length?assets.map(s=>{
+    const sc=symScoreCmp(s);
+    return`<button class="resf-asset-row${selId===s.id?' on':''}" onclick="resPickAsset('${s.id}')">
+      <span class="resf-asset-nm">${escH(s.name)}</span>
+      <span class="resf-asset-sc" style="color:${BC[s.bias]}">${sc>0?'+':''}${sc}</span>
+      <span style="color:${BC[s.bias]}">${s.bias==='bull'?'▲':s.bias==='bear'?'▼':'◆'}</span>
+    </button>`;
+  }).join(''):'<div class="dw-empty" style="padding:14px 8px">No assets in this folder yet.</div>';
+  const detail=(selId&&assets.some(s=>s.id===selId))?renderResAssetDetail(selId):`<div class="resf-empty-detail">Select an asset on the left to see its details.</div>`;
+  wrap.innerHTML=`${toggle}
+    <div class="resf-crumb"><button class="resf-back" onclick="openResFolder(null)">‹ Folders</button><span>${icn(f.icon,14)} ${escH(f.name)}</span></div>
+    <div class="resf-split">
+      <div class="resf-asset-list">${list}</div>
+      <div class="resf-detail">${detail}</div>
+    </div>`;
+}
+function openResFolder(fid){resFolderOpen=fid;renderResearchFolders();}
+// Waehlt ein Asset innerhalb des geoeffneten Ordners - setzt bewusst dieselbe
+// globale selId wie die Assets-Seite (getSym()/renderRub()/renderIndsTable()
+// haengen daran), damit diese Funktionen 1:1 wiederverwendet werden koennen.
+function resPickAsset(id){selId=id;renderResearchFolders();}
+function resToggleRubExpand(rid){resExpandedRubs[rid]=!resExpandedRubs[rid];renderResearchFolders();}
+// Rechte Detailansicht: Last Events (letzte 10 Tage, calEvts ist ohnehin auf
+// CAL_PAST_DAYS=10 gekappt) direkt ueber der langen Upcoming-Events-Karte,
+// darunter die Rubrik-Karten als kompakte Uebersicht (Name+Score+Bias), die
+// per Klick die volle Indikator-Tabelle aufklappen (renderIndsTable - gleiche
+// Komponente wie auf der Assets-Detailseite, inkl. aller dortigen Fixes).
+function renderResAssetDetail(id){
+  const s=(syms||[]).find(x=>x.id===id);if(!s)return'';
+  const all=getSymEventsAll(id);
+  const today=todayStr();
+  const past=all.filter(ev=>ev.date<today);
+  const upcoming=all.filter(ev=>ev.date>=today);
+  const pastHtml=past.length?calTableHtml(past,{compact:true,idPrefix:'respast-'}):'<div class="dw-empty" style="padding:8px 2px">No events in the last 10 days.</div>';
+  const upHtml=upcoming.length?calTableHtml(upcoming,{compact:true,idPrefix:'resup-'}):'<div class="dw-empty" style="padding:8px 2px">No upcoming events.</div>';
+  const rubs=s.rubrics||[];
+  const rubCards=rubs.map(rub=>{
+    const bco=BC[rub.bias];
+    const sc=rubScore(rub);
+    const open=!!resExpandedRubs[rub.id];
+    const ri=rubs.indexOf(rub);
+    return`<div class="resf-rub-card ${glowClass(rub.bias)}">
+      <div class="resf-rub-hd" onclick="resToggleRubExpand('${rub.id}')">
+        <button class="resf-rub-tog">${open?'▾':'▸'}</button>
+        <span class="resf-rub-nm">${escH(rub.name)}</span>
+        <span class="resf-rub-sc" style="color:${bco};border-color:${bco}">${sc>0?'+':''}${sc}</span>
+        <span class="bbadge" style="background:${bco}18;color:${bco}">${BL[rub.bias]}</span>
+      </div>
+      ${open?`<div class="resf-rub-body">${renderIndsTable(rub,ri)}</div>`:''}
+    </div>`;
+  }).join('')||'<div class="dw-empty">No categories yet for this asset.</div>';
+  return`<div class="resf-detail-hd">
+      ${FX_FLAG[s.id]?`<span class="atitle-flag">${FX_FLAG[s.id]}</span>`:''}
+      <span class="resf-detail-nm">${escH(s.name)}</span>
+      ${scoreBadge(symScoreCmp(s),'','resfd-'+s.id)}
+      <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
+    </div>
+    <div class="resf-detail-grid">
+      <div class="resf-detail-main">${rubCards}</div>
+      <div class="resf-detail-side">
+        <div class="resf-side-card"><div class="dw-t-txt">Last Events</div>${pastHtml}</div>
+        <div class="resf-side-card resf-side-tall"><div class="dw-t-txt">Upcoming Events</div>${upHtml}</div>
+      </div>
+    </div>`;
 }
 function resSelect(k){resSel=k;renderResearch();}
 function resSetTag(t){resTag=t;renderResearch();}
@@ -10137,33 +10321,6 @@ function resSetQuery(v){
   renderResearch();
   const el2=document.getElementById('resSearchInp');
   if(el2){el2.focus();if(pos!=null){try{el2.setSelectionRange(pos,pos);}catch(e){}}}
-}
-function addResFolder(){
-  const n=prompt('Topic name:');if(n===null)return;
-  const nm=n.trim();if(!nm)return;
-  pushU();research.folders.push({id:uid(),name:nm.slice(0,40),icon:'note'});save();renderResearch();
-}
-// Langdruck auf einen Themen-Ordner: umbenennen oder loeschen (gleiches
-// Muster wie die uebrigen Long-Press-Bedienungen in dieser App).
-let _resFolderPressTimer=null,_resFolderLongFired=false;
-function resFolderPressStart(e,fid){
-  if(e&&e.button&&e.button!==0)return;
-  _resFolderLongFired=false;
-  _resFolderPressTimer=setTimeout(()=>{_resFolderPressTimer=null;_resFolderLongFired=true;editResFolder(fid);},550);
-}
-function resFolderPressEnd(){if(_resFolderPressTimer){clearTimeout(_resFolderPressTimer);_resFolderPressTimer=null;}}
-function editResFolder(fid){
-  const f=resFolders().find(x=>x.id===fid);if(!f)return;
-  const used=resNotes().filter(n=>n.fid===fid).length;
-  const nn=prompt('Rename topic (empty = delete'+(used?' — '+used+' note'+(used===1?'':'s')+' will move to Unfiled':'')+'):',f.name);
-  if(nn===null)return;
-  pushU();
-  if(!nn.trim()){
-    research.folders=research.folders.filter(x=>x.id!==fid);
-    resNotes().forEach(n=>{if(n.fid===fid)n.fid='';});
-    if(resSel==='f:'+fid)resSel='all';
-  }else f.name=nn.trim().slice(0,40);
-  save();renderResearch();
 }
 function togResFav(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
