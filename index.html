@@ -1078,6 +1078,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .dw-empty{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+/* Motivations-Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz): drei fette
+   blaue Woerter untereinander, mittig, mit genug Eigenhoehe um die
+   markierte Luecke rechts im Dashboard sichtbar zu fuellen. */
+.dw-motivation{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;min-height:230px;padding:14px 0}
+.dw-motivation-word{font-size:27px;font-weight:900;color:var(--blue);letter-spacing:3px;text-transform:uppercase;text-align:center}
 .dw-nav{padding:1px 4px;font-size:9px;line-height:1.4}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2091,12 +2096,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-283 — Designer-Funktion (🎨 im Header, Hintergrund-Farbregler mit Hue/Helligkeit/Grau-Modus/Presets/gespeicherten Farben) komplett entfernt (Nutzer-Wunsch): Button, Modal, alle zugehoerigen Funktionen/States sowie die Cloud-Sync-Anbindung (cloudPush/cloudPull/exportData/importData) sind raus. Der Marmor-Hintergrund ist dadurch dauerhaft - nichts ueberschreibt document.body.style.background mehr, unabhaengig vom Risk-Sentiment. Der Aurora-Hintergrund (Dashboard-Blobs) faerbt sich weiterhin automatisch nach dem Risk-Sentiment, jetzt aber immer im Auto-Modus (feste Deckkraft statt Helligkeits-Regler).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-284 — Dashboard-Luecken geschlossen (Nutzer-Foto mit eingezeichneten Luecken): rechte Spalte bekommt nach Volatility Leaders zwei neue hohe Karten - Watchlist &amp; Quick Notes (bereits vorhandener Widget-Typ, jetzt wieder Teil der Standardansicht) und eine neue, rein dekorative 'Focus / Believe / Do'-Karte (fette blaue Woerter untereinander). Die kleinere Luecke unter dem Globus wird bewusst anders gefuellt: mit 'Today's Movers' (score_changes, ebenfalls bereits vorhandener Typ) statt einer weiteren Karte im rechten-Spalten-Stil. DASH_V15-Migration ergaenzt alle drei Karten automatisch auch bei Bestandsnutzern.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-283</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-284</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -5809,9 +5814,12 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'globe',title:'Radar Globe',order:0},
+  {id:uid(),type:'score_changes',title:"Today's Movers",order:1},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
   {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:5},
+  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',order:5.3},
+  {id:uid(),type:'motivation',title:'Focus • Believe • Do',order:5.6},
   {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:6},
   {id:uid(),type:'market_watch',title:'Market Watch',order:7},
   {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
@@ -6014,10 +6022,18 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // DASH_DROP, dazugehoerige Helper (sessionBarHtml()/startSessionBar()/
 // GLOBE_SESSIONS/sessionActiveNow()/activeSessions()) waren ausschliesslich
 // von diesem Widget genutzt und wurden mitentfernt (kein toter Code).
-const DASH_V=14;
+// DASH_V15 (Nutzer-Foto 2026-08-03, Luecken im Dashboard eingezeichnet):
+// rechte Spalte bekommt nach Volatility Leaders zwei neue Karten - Watchlist
+// (bereits vorhandener, aber seit DASH_V9 nicht mehr Teil der Standard-
+// ansicht) + die brandneue, rein dekorative "Focus/Believe/Do"-Karte
+// (motivation). Die kleinere Luecke unter dem Globus wird bewusst ANDERS
+// gefuellt (Nutzer-Wunsch "die Luecke in der Mitte sollst du irgendwie
+// anders schliessen") - mit "Today's Movers" (score_changes, ebenfalls
+// bereits vorhanden) statt einer weiteren rechten-Spalten-artigen Loesung.
+const DASH_V=15;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
-  const DASH_DROP=new Set(['score_changes','fx_bias','asset_heatmap','watchlist','live_data','daily_bias','key_insights','session_clock']);
+  const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock']);
   if((dashV||0)>=DASH_V){widgets=widgets.filter(w=>!DASH_DROP.has(w.type));return;}
   widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   // Radial-Layout (Nutzer-Wunsch 2026-07-27): Globus steht jetzt ALLEIN im
@@ -6030,9 +6046,9 @@ function migrateDash(){
   // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
   // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
   // Platz kuenstlich zu strecken.
-  [['globe','Radar Globe'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
+  [['globe','Radar Globe'],['score_changes',"Today's Movers"],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['watchlist','Watchlist & Quick Notes'],['motivation','Focus • Believe • Do'],['sentiment_snapshot','Market Sentiment'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
-  const rank={globe:0,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,watchlist:11,score_changes:13,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+  const rank={globe:0,score_changes:1,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,watchlist:5.3,motivation:5.6,sentiment_snapshot:6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
   widgets.forEach((w,i)=>w.order=i);
   dashV=DASH_V;
@@ -10343,6 +10359,7 @@ const W_TYPES=[
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
+  {type:'motivation',label:'Focus • Believe • Do',sub:'Decorative motivational card — no data'},
 ];
 // Baut nur noch die HTML-STRINGS (Nutzer-Wunsch 2026-07-25: "Pop ups wie zB
 // cot in die notifications rein" - kein eigener schwebender Banner mehr
@@ -10583,7 +10600,7 @@ function toggleIndEditMode(){
 // mini_calendar wandern deshalb von "right" (Spalte) nach "bottom" (Reihe) -
 // rechte Spalte bleibt mit nur noch 2 Karten deutlich kompakter, Gesamthoehe
 // des Dashboards sinkt spuerbar, ohne dass ein Widget entfernt wurde.
-const ZONE_OF_TYPE={globe:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',sentiment_snapshot:'bottom'};
+const ZONE_OF_TYPE={globe:'center',score_changes:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'right',motivation:'right',sentiment_snapshot:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -10762,6 +10779,16 @@ function renderDash(){
       const notes=`<div class="dw-notes-sub">📝 Quick Notes</div>
         <textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
       content=wlList+notes;
+    }else if(w.type==='motivation'){
+      // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
+      // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
+      // fette blaue Woerter untereinander statt eines echten Bilds (bleibt
+      // dadurch theme-faehig und braucht keine Bilddatei).
+      content=`<div class="dw-motivation">
+        <span class="dw-motivation-word">FOCUS</span>
+        <span class="dw-motivation-word">BELIEVE</span>
+        <span class="dw-motivation-word">DO</span>
+      </div>`;
     }else if(w.type==='pairs_editor'){
       // Shows all pairs across all categories with add/remove/move-category
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair</button>`;
