@@ -4,10 +4,6 @@
    "source": "https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield",
    "series": [
     [
-     "2026-06-29",
-     "4.38"
-    ],
-    [
      "2026-06-30",
      "4.44"
     ],
@@ -142,16 +138,16 @@
     [
      "2026-08-02",
      "4.718"
+    ],
+    [
+     "2026-08-03",
+     "4.688"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.1"
-    ],
     [
      "2026-06-30",
      "4.14"
@@ -287,6 +283,10 @@
     [
      "2026-08-02",
      "4.262"
+    ],
+    [
+     "2026-08-03",
+     "4.248"
     ]
    ]
   }
@@ -295,10 +295,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/germany-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "2.923"
-    ],
     [
      "2026-06-30",
      "2.924"
@@ -434,16 +430,16 @@
     [
      "2026-08-02",
      "3.212"
+    ],
+    [
+     "2026-08-03",
+     "3.148"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/germany-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "2.477"
-    ],
     [
      "2026-06-30",
      "2.476"
@@ -579,6 +575,10 @@
     [
      "2026-08-02",
      "2.816"
+    ],
+    [
+     "2026-08-03",
+     "2.756"
     ]
    ]
   }
@@ -587,10 +587,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/uk-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.729"
-    ],
     [
      "2026-06-30",
      "4.765"
@@ -726,16 +722,16 @@
     [
      "2026-08-02",
      "5.056"
+    ],
+    [
+     "2026-08-03",
+     "4.967"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/uk-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.139"
-    ],
     [
      "2026-06-30",
      "4.165"
@@ -871,6 +867,10 @@
     [
      "2026-08-02",
      "4.413"
+    ],
+    [
+     "2026-08-03",
+     "4.315"
     ]
    ]
   }
@@ -879,10 +879,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "0.266"
-    ],
     [
      "2026-06-30",
      "0.272"
@@ -1018,16 +1014,16 @@
     [
      "2026-08-02",
      "0.415"
+    ],
+    [
+     "2026-08-03",
+     "0.406"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "0.034"
-    ],
     [
      "2026-06-30",
      "0.04"
@@ -1163,6 +1159,10 @@
     [
      "2026-08-02",
      "0.135"
+    ],
+    [
+     "2026-08-03",
+     "0.107"
     ]
    ]
   }
@@ -1171,10 +1171,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/japan-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "2.644"
-    ],
     [
      "2026-06-30",
      "2.69"
@@ -1310,16 +1306,16 @@
     [
      "2026-08-02",
      "2.791"
+    ],
+    [
+     "2026-08-03",
+     "2.822"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/japan-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "1.411"
-    ],
     [
      "2026-06-30",
      "1.382"
@@ -1455,6 +1451,10 @@
     [
      "2026-08-02",
      "1.504"
+    ],
+    [
+     "2026-08-03",
+     "1.567"
     ]
    ]
   }
@@ -1463,10 +1463,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/canada-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "3.37"
-    ],
     [
      "2026-06-30",
      "3.38"
@@ -1602,16 +1598,16 @@
     [
      "2026-08-02",
      "3.665"
+    ],
+    [
+     "2026-08-03",
+     "3.665"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/canada-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "2.73"
-    ],
     [
      "2026-06-30",
      "2.74"
@@ -1747,6 +1743,10 @@
     [
      "2026-08-02",
      "2.921"
+    ],
+    [
+     "2026-08-03",
+     "2.921"
     ]
    ]
   }
@@ -1755,10 +1755,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/australia-10-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.759"
-    ],
     [
      "2026-06-30",
      "4.734"
@@ -1894,16 +1890,16 @@
     [
      "2026-08-02",
      "4.965"
+    ],
+    [
+     "2026-08-03",
+     "4.975"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/australia-2-year-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.43"
-    ],
     [
      "2026-06-30",
      "4.413"
@@ -2039,6 +2035,10 @@
     [
      "2026-08-02",
      "4.524"
+    ],
+    [
+     "2026-08-03",
+     "4.559"
     ]
    ]
   }
@@ -2047,10 +2047,6 @@
   "10Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "4.4"
-    ],
     [
      "2026-06-30",
      "4.418"
@@ -2185,17 +2181,17 @@
     ],
     [
      "2026-08-02",
-     "4.703"
+     "4.75"
+    ],
+    [
+     "2026-08-03",
+     "4.765"
     ]
    ]
   },
   "2Y Bond Yield": {
    "source": "https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield",
    "series": [
-    [
-     "2026-06-29",
-     "3.333"
-    ],
     [
      "2026-06-30",
      "3.362"
@@ -2330,7 +2326,11 @@
     ],
     [
      "2026-08-02",
-     "3.635"
+     "3.668"
+    ],
+    [
+     "2026-08-03",
+     "3.67"
     ]
    ]
   }
