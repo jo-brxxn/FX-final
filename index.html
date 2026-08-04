@@ -2157,12 +2157,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-287 — Assets-Tab (Nutzer-Fotos): der 'FX'-Tab zeigt seit dem Zusammenlegen mit Non-FX alle Asset-Klassen, Label auf 'Assets' umbenannt, Sidebar-Zeilen bekommen 7px Abstand zum linken Rand statt daran zu kleben. Dashboard: Focus/Believe/Do-Karte gekuerzt (keine feste min-height mehr, kompakteres Wortabstand/Schriftgroesse) fuer mehr Reihen-Gleichstand mit den Nachbarkarten. Globus-Karte: Schubregler ('THRUST') nicht mehr dauerhaft daneben, jetzt ein Popup per Klick auf das Flugzeug (openGlobeThrottleM/#mThrottle) - der freigewordene Platz geht an den Globus selbst (Groessen-Obergrenze 260->320px). Rotations-Rendering grundlegend korrigiert: Landmassen wurden bisher Punkt-fuer-Punkt sichtbar/unsichtbar geschaltet, was bei grossen Polygonen mehrere offene Teilpfade erzeugte (SVG schliesst die automatisch mit Kunst-Sehnen -> sah wie ein Neuladen aus); jetzt EIN durchgehender Pfad pro Landmasse mit exakt interpoliertem Horizont-Punkt an jeder Kante - Kontinente tauchen jetzt glatt am Kugelrand ab/auf.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-288 — Watchlist-Karte (Nutzer-Wunsch): Zeilen auf das Wesentliche reduziert - nur noch Asset-Name + Score, kein Preis-Chip/SL-TP-Meta mehr. Bias-Badge zeigt nur noch das Symbol (▲/▼/◆) statt des ausgeschriebenen Texts (BULL/BEAR/NEUT), Bedeutung bleibt per Hover-Tooltip erreichbar.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-287</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-288</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -10860,11 +10860,14 @@ function renderDash(){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair('Watchlist')">＋ Add Pair to Watchlist</button>`;
       const wlList=addBtn+(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
+      // Nutzer-Wunsch 2026-08-04: Zeile auf das Wesentliche reduziert - nur
+      // noch Name + Score, kein Preis-Chip/SL-TP-Meta mehr. Bias-Badge zeigt
+      // nur noch das Symbol (▲/▼/◆), nicht mehr den ausgeschriebenen Text
+      // (BULL/BEAR/NEUT) - Farbe/Bedeutung bleibt identisch, nur kompakter.
       wp.map(p=>`<div class="sym-row ${glowClass(p.bias)}">
-        <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}${p.sl||p.tp?` <span class="dw-meta">${p.sl?'SL:'+p.sl:''}${p.sl&&p.tp?' ':''}${p.tp?'TP:'+p.tp:''}</span>`:''}</div>
-        ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
+        <div class="sym-name dw-pname" style="flex:1;min-width:0">${escH(p.name)}</div>
         ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
-        <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
+        <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="${p.bias==='bull'?'Bullish':p.bias==='bear'?'Bearish':'Neutral'}">${p.bias==='bull'?'▲':p.bias==='bear'?'▼':'◆'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
       // Quick Notes direkt unter der Watchlist in derselben Karte.
