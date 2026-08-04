@@ -2028,50 +2028,80 @@ body.dash-edit-mode .mw-bar{display:flex}
    (siehe HTML-Kommentar bei #introOv und runIntroBoostSequence()). ── */
 #introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#eef0f2}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
-.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,26px);padding:2vh 3vw}
-.intro-title{font-weight:800;font-size:clamp(28px,5.4vw,62px);letter-spacing:clamp(1px,.6vw,6px);white-space:nowrap;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
-.intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,3.6vw,52px);width:100%;opacity:0;animation:introSubIn .9s ease .5s both}
-.intro-hud-col{display:flex;flex-direction:column;gap:clamp(10px,2vh,22px);min-width:92px}
+/* Nutzer-Korrektur 2026-08-04 (Foto): das Cockpit liess oben/unten zu viel
+   Leerraum - soll den ganzen verfuegbaren Bildschirm einnehmen. justify-
+   content:space-evenly statt center verteilt Titel/Reihe/Signatur ueber die
+   volle Hoehe, alle Groessen (Titel/Globus/HUD/Regler) deutlich angehoben. */
+/* padding-top:max(2vh,64px) statt nur 2vh (Kollisions-Fund, per Playwright
+   ueber 641-1180px reproduziert): der "Set up sync"-Button sitzt oben rechts
+   fest bei top:14-26px/Hoehe ~33-40px (bottom bis ~66px) - der Titel ist bei
+   den jetzt deutlich groesseren Schriftgroessen breit genug, dass sein
+   rechter Rand in genau diese Ecke reicht. 64px Mindestabstand haelt den
+   Titel unabhaengig von der Bildschirmbreite sicher darunter, statt nur den
+   Text schmaler zu machen (loest die Y-Ueberlappung direkt, nicht nur
+   Symptome bei einzelnen Breakpoints). */
+.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:clamp(6px,1.4vh,18px);padding:2vh 3vw;padding-top:max(2vh,64px)}
+.intro-title{font-weight:800;font-size:clamp(34px,7.2vw,100px);letter-spacing:clamp(1px,.6vw,6px);white-space:normal;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
+.intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,64px);width:100%;flex:1 1 auto;min-height:0;opacity:0;animation:introSubIn .9s ease .5s both}
+.intro-hud-col{display:flex;flex-direction:column;gap:clamp(14px,3vh,34px);min-width:110px}
 .intro-hud-stat{text-align:right}
-.intro-hud-lbl{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.intro-hud-val{font-size:clamp(17px,2.4vw,28px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
+.intro-hud-lbl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
 .intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
-.intro-globe-host{width:clamp(230px,36vw,560px);height:clamp(230px,36vw,560px);flex:0 0 auto}
+.intro-globe-host{width:min(72vh,52vw,860px);height:min(72vh,52vw,860px);flex:0 0 auto}
 .intro-throttle-col{display:flex;align-items:center}
-.intro-throttle-col .gt-track{width:30px;height:clamp(140px,22vh,240px)}
-.intro-throttle-col .gt-label{font-size:10px}
-.intro-throttle-col .gt-pct{font-size:13px}
-.intro-created{font-size:clamp(11px,1.6vw,16px);font-weight:600;letter-spacing:clamp(1.5px,.6vw,4px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .9s both}
+.intro-throttle-col .gt-track{width:38px;height:clamp(180px,34vh,420px)}
+.intro-throttle-col .gt-label{font-size:12px}
+.intro-throttle-col .gt-pct{font-size:15px}
+.intro-created{font-size:clamp(13px,1.9vw,20px);font-weight:600;letter-spacing:clamp(1.5px,.6vw,4px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .9s both}
 @media(max-width:640px){
+  /* Kollision selbst gefunden (Screenshot-Verifikation): der Titel sitzt
+     dank justify-content:space-evenly nah am oberen Rand, auf schmalen
+     Screens reicht "FX ANALYST PRO" fast bis zur rechten Kante - genau dort
+     sitzt der "Set up sync"-Button (top-right, hoeherer z-index). Die
+     Y-Ueberlappung selbst behebt jetzt die staerkere padding-top:max(2vh,
+     64px)-Basisregel oben (gilt fuer ALLE Breiten, nicht nur hier) - diese
+     Mobil-Regel bleibt nur noch fuer die kleinere Schriftgroesse zustaendig. */
+  .intro-title{font-size:clamp(24px,9vw,40px);white-space:normal;line-height:1.08}
   .intro-cockpit-row{gap:10px}
-  .intro-hud-col{min-width:70px;gap:12px}
-  .intro-hud-lbl{font-size:7.5px}
-  .intro-hud-val{font-size:14px}
-  .intro-globe-host{width:44vw;height:44vw}
-  .intro-throttle-col .gt-track{width:22px;height:128px}
+  .intro-hud-col{min-width:74px;gap:16px}
+  .intro-hud-lbl{font-size:8px}
+  .intro-hud-val{font-size:16px}
+  .intro-globe-host{width:58vw;height:58vw}
+  .intro-throttle-col .gt-track{width:26px;height:190px}
 }
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62)}100%{opacity:1;transform:scale(1)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
-/* ── INTRO-BOOST-SEQUENZ (Nutzer-Wunsch 2026-08-04) ──
-   Phase 1: der komplette Globus (inkl. Flugzeug+Flamme, ein zusammen-
-   haengendes SVG) waechst und rast auf den Betrachter zu. */
-.intro-cockpit.intro-launch{animation:introLaunchZoom 2000ms cubic-bezier(.55,0,.85,.35) forwards}
-@keyframes introLaunchZoom{0%{transform:scale(1)}100%{transform:scale(16)}}
+/* ── INTRO-BOOST-SEQUENZ (Nutzer-Korrektur 2026-08-04, zweite Runde) ──
+   Phase 1: KEIN Zoom mehr aufs Cockpit/Flugzeug - der Globus dreht sich
+   bereits mit maximaler Geschwindigkeit (Regler stand auf 100%, Vorbedingung
+   fuer das Boost-Fenster), die Flamme waechst zusaetzlich kurz auf das
+   30-fache (.mega-flame) als sichtbarer Spannungsaufbau vor der Explosion. */
+.globe-vehicle.mega-flame .globe-jet-flame{animation:introMegaFlame 900ms cubic-bezier(.3,0,.6,1) forwards,jetFlameFlicker .12s steps(2) infinite}
+@keyframes introMegaFlame{0%{transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*1.8))}100%{transform:scaleY(30) scaleX(30)}}
 body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 @keyframes introShake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
-/* Phase 2: Explosion - heller Blitz + Funken-Burst. */
-.intro-explosion{position:fixed;inset:0;z-index:100002;pointer-events:none;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,.65) 35%,rgba(255,200,120,0) 70%);animation:introFlash .5s ease-out forwards}
-@keyframes introFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
-.intro-spark{position:absolute;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#fff,#ffb347 55%,rgba(255,140,40,0) 75%);transform:translate(-50%,-50%);animation:introSpark .55s cubic-bezier(.2,.8,.3,1) both}
-@keyframes introSpark{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) scale(1);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) scale(.2);opacity:0}}
-/* Phase 3+4: Weissblende zieht sich vom UNTEREN Rand nach oben zurueck
-   (clip-path-Wipe) - das laengst fertig gerenderte Dashboard darunter
-   "erscheint" dadurch scheinbar von unten, ohne echte Dashboard-DOM-
-   Elemente eigens animieren zu muessen. */
-.intro-whiteout{position:fixed;inset:0;z-index:100001;background:#fff;clip-path:inset(0 0 0 0);transition:clip-path 1150ms cubic-bezier(.65,0,.35,1)}
-.intro-whiteout.wiping{clip-path:inset(0 0 100% 0)}
+/* Phase 2: das Flugzeug zerspringt in Einzelteile - mehrere Truemmerstuecke
+   fliegen radial weg (introDebrisFly, wiederverwendet das rotate+translateX-
+   Burst-Muster: rotate(--a) dreht das lokale Koordinatensystem auf den
+   Burst-Winkel, translateX(--d) bewegt dann entlang dieser Achse - so ohne
+   CSS-Trigonometriefunktionen (cos/sin), die nicht ueberall unterstuetzt
+   sind). EINE Tragflaeche (.intro-wing) fliegt bewusst NICHT weg, sondern
+   waechst direkt auf den Betrachter zu, bis sie den ganzen Bildschirm
+   einnimmt UND dabei weiss wird - erzeugt dadurch selbst die Weissblende,
+   kein separater Flash-Layer mehr noetig. */
+.intro-debris{position:fixed;left:0;top:0;z-index:100002;background:linear-gradient(135deg,#1c2733,#04101c);border:1.4px solid #9fd8f2;box-shadow:0 0 6px rgba(0,0,0,.35);transform:translate(-50%,-50%);animation:introDebrisFly 950ms cubic-bezier(.18,.75,.3,1) both}
+@keyframes introDebrisFly{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) rotate(0deg);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) rotate(var(--rot));opacity:0}}
+.intro-wing{position:fixed;left:0;top:0;z-index:100002;width:64px;height:20px;border-radius:3px 50% 3px 50%;box-shadow:0 0 10px rgba(0,0,0,.3);background:#8fd3ee;transform:translate(-50%,-50%) rotate(-16deg) scale(1);animation:introWingGrow 1050ms cubic-bezier(.4,0,.7,1) forwards}
+@keyframes introWingGrow{0%{transform:translate(-50%,-50%) rotate(-16deg) scale(1);background:#8fd3ee}55%{background:#eaf6ff}100%{transform:translate(-50%,-50%) rotate(6deg) scale(90);background:#fff}}
+/* Phase 3+4: die Weissblende (von der wachsenden Tragflaeche uebernommen)
+   schiebt sich nach oben aus dem Bild - das laengst fertig gerenderte
+   Dashboard darunter "steigt" dadurch scheinbar von unten ins Bild, ohne
+   echte Dashboard-DOM-Elemente eigens animieren zu muessen. */
+.intro-whiteout{position:fixed;inset:0;z-index:100001;background:#fff;transform:translateY(0);transition:transform 1150ms cubic-bezier(.65,0,.35,1)}
+.intro-whiteout.wiping{transform:translateY(-100%)}
 /* Phase 3-5: Fallschirm-Agent - schwebt von oben herein, haengt kurz, segelt
    dann links aus dem Bild. */
 .intro-parachute{position:fixed;top:-40vh;left:50%;width:min(30vw,190px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
@@ -2079,7 +2109,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 @keyframes introDescend{0%{top:-40vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:38vh;transform:translate(-50%,0) rotate(-2deg)}}
 .intro-parachute.exit-left{animation:introExitLeft 1350ms cubic-bezier(.4,0,.7,.3) forwards}
 @keyframes introExitLeft{0%{left:50%;top:38vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-30vw;top:58vh;transform:translate(-50%,0) rotate(-16deg)}}
-@media(prefers-reduced-motion:reduce){.intro-cockpit.intro-launch,body.intro-shake,.intro-explosion,.intro-spark,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media(prefers-reduced-motion:reduce){.globe-vehicle.mega-flame .globe-jet-flame,body.intro-shake,.intro-debris,.intro-wing,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
 .detail-fade{animation:detailFadeIn .26s ease both}
@@ -2207,11 +2237,21 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
   </div>
 </div>
 <script>
-// Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
-// Cloud-Sync bereits eingerichtet ist, sonst "Set up sync". Kein Klick-zum-
-// Wegklicken mehr auf dem Rest des Overlays - Dismiss laeuft ausschliesslich
-// ueber die Boost-Sequenz (introBoostSequence()).
+// Nutzer-Wunsch 2026-08-04 ("Animation genau wie den Code aktivieren/
+// deaktivieren koennen"): ist sie deaktiviert, verschwindet das komplette
+// Cockpit-Overlay SOFORT, bevor es je sichtbar wird - direkter localStorage-
+// Read, weil dieses <script> lange vor der spaeteren introAnimEnabled-
+// Variablendeklaration im Hauptskript (ganz unten im Body) laeuft.
 (function(){
+  if(localStorage.getItem('fxpro_intro_anim_enabled')==='0'){
+    var ov=document.getElementById('introOv');if(ov)ov.remove();
+    var bm=document.getElementById('mIntroBoost');if(bm)bm.remove();
+    return;
+  }
+  // Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
+  // Cloud-Sync bereits eingerichtet ist, sonst "Set up sync". Kein Klick-zum-
+  // Wegklicken mehr auf dem Rest des Overlays - Dismiss laeuft ausschliesslich
+  // ueber die Boost-Sequenz (introBoostSequence()).
   var loginBtn=document.getElementById('introLoginBtn');
   if(loginBtn){
     var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
@@ -2258,12 +2298,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-296 — Lade-/Intro-Screen komplett neu gebaut (Nutzer-Wunsch, per Rueckfrage bestaetigt): erscheint weiterhin bei jedem Laden/Reload, zeigt jetzt FX ANALYST PRO oben, einen grossen interaktiven Globus in der Mitte (Speedometer/Active Signals/Fuel links, grosser Thrust-Regler rechts), 'created by Jonathan Brinkmann' darunter. Regler auf Maximum -> Bestaetigungsfenster -> Boost aktiviert -> Globus rast auf den Betrachter zu und explodiert -> Weissblende, aus der ein Fallschirm-Agent (dunkler Anzug, Sonnenbrille, Ohrhoerer, weisser Schirm mit rotem Stier-Emblem) herabschwebt, waehrend darunter das laengst fertig gerenderte Dashboard sichtbar wird -> Agent segelt nach links aus dem Bild -> Overlay komplett entfernt, Dashboard voll nutzbar. Der alte Klick-zum-Wegklicken-Shard-Effekt ist komplett ersetzt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-297 — Lade-/Intro-Cockpit nimmt jetzt den ganzen Bildschirm ein (Titel/Globus/HUD/Regler deutlich groesser, justify-content:space-evenly statt center). Boost-Sequenz ueberarbeitet: kein Zoom mehr aufs Cockpit - stattdessen dreht sich der Globus mit maximaler Geschwindigkeit und die Flamme waechst kurz auf das 30-fache, dann zerspringt das Flugzeug in ~8 Truemmerstuecke; eine Tragflaeche fliegt statt wegzufliegen direkt auf den Betrachter zu, waechst auf Bildschirmgroesse und wird dabei weiss (ersetzt den vorherigen separaten Flash). Neuer Einstellungs-Schalter 'Intro animation' direkt unter dem PIN-Code-Schalter (Cloud-Sync-Fenster) - deaktiviert, ueberspringt das komplette Cockpit-Overlay ab dem naechsten Laden. Nebenbei einen Layout-Bug gefunden+behoben: der jetzt groessere Titel kollidierte mit dem 'Set up sync'-Button oben rechts auf Breiten von ~640-1180px.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-296</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-297</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2696,6 +2736,13 @@ function introLogin(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
       <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
+    </div>
+    <!-- Nutzer-Wunsch 2026-08-04: "genau wie den Code aktivieren und
+         deaktivieren koennen, direkt unter dem Code" - gleiche Zeile/Stil
+         wie der PIN-Toggle direkt darueber, exakt dasselbe An/Aus-Muster. -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
+      <span style="font-size:12px;color:var(--t2)">Intro animation (globe + boost launch on load)</span>
+      <button class="btn" id="introAnimToggleBtn" onclick="toggleIntroAnimEnabled()">Disable Animation</button>
     </div>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
@@ -6423,7 +6470,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -6431,7 +6478,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6446,6 +6493,7 @@ function cloudHeaders(cfg){
 }
 function openCloudM(fromIntro){
   try{updPinToggleBtn()}catch(e){}
+  try{updIntroAnimToggleBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
@@ -6655,7 +6703,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6746,6 +6794,7 @@ async function cloudPull(manual){
       // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
       // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
+      if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
       // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
       // Tagen, an denen es offen war), ein Overwrite wuerde die jeweils
@@ -11474,42 +11523,50 @@ function confirmIntroBoost(){
 // Zeit-Konstanten der Sequenz (ms) - eine Stelle, an der sich Tempo/Timing
 // der gesamten Choreografie einstellen laesst, statt verstreuter Magic
 // Numbers in jedem setTimeout().
-const INTRO_SEQ={grow:2000,shake:480,whiteHold:260,wipe:1150,descend:1750,exitDelay:250,exit:1350};
+const INTRO_SEQ={flameUp:900,shatter:1050,whiteHold:150,wipe:1150,descend:1750,exitDelay:250,exit:1350};
 function runIntroBoostSequence(){
   const ov=document.getElementById('introOv');if(!ov)return;
-  const cockpit=document.getElementById('introCockpit');
-  // Phase 1: Globus (samt Flugzeug+Flamme, ein zusammenhaengendes SVG) waechst
-  // kontinuierlich und rast auf den Betrachter zu, bis er den Bildschirm
-  // ueberragt - technisch einfacher/robuster als Flugzeug+Flamme isoliert aus
-  // der rotierenden Globus-Szene herauszuloesen und separat zu skalieren
-  // (beide sitzen als Teil DESSELBEN SVG in Globus-lokalen Koordinaten),
-  // liefert aber optisch denselben "rast auf einen zu"-Effekt.
-  if(cockpit)cockpit.classList.add('intro-launch');
-  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting'));
+  // Phase 1: KEIN Zoom aufs Cockpit/Flugzeug (Nutzer-Korrektur 2026-08-04) -
+  // der Globus dreht bereits mit maximaler Geschwindigkeit (Regler stand auf
+  // 100%, Vorbedingung fuer dieses Fenster, siehe introMaybeOfferBoost()).
+  // Die Flamme waechst zusaetzlich kurz auf das 30-fache (.mega-flame) als
+  // sichtbarer Spannungsaufbau vor der Explosion.
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting','mega-flame'));
   document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
-  let t=INTRO_SEQ.grow;
-  // Phase 2: Explosion (Flash + Partikel-Burst + kurzer Screen-Shake)
+  let t=INTRO_SEQ.flameUp;
+  // Phase 2: das Flugzeug zerspringt in Einzelteile. Der Globus/das
+  // Flugzeug selbst wird ausgeblendet (visibility:hidden, kein remove() -
+  // haelt startGlobes()' Referenzen intakt, falls die Sequenz je unterbrochen
+  // wuerde), die Truemmerstuecke uebernehmen ab hier die Szene.
   setTimeout(()=>{
-    ov.insertAdjacentHTML('beforeend',introExplosionHtml());
+    const host=document.querySelector('.intro-globe-host');
+    const r=host?host.getBoundingClientRect():null;
+    const cx=r?r.left+r.width/2:window.innerWidth/2,cy=r?r.top+r.height/2:window.innerHeight/2;
+    if(host)host.style.visibility='hidden';
+    ov.insertAdjacentHTML('beforeend',introShatterHtml(cx,cy));
     document.body.classList.add('intro-shake');
-    setTimeout(()=>document.body.classList.remove('intro-shake'),INTRO_SEQ.shake);
+    setTimeout(()=>document.body.classList.remove('intro-shake'),480);
   },t);
-  t+=INTRO_SEQ.shake;
-  // Phase 3: Weissblende deckt alles ab, kurzer Beat auf vollem Weiss
+  t+=INTRO_SEQ.shatter;
+  // Phase 3: die waechst-auf-den-Betrachter-zu-Tragflaeche ist inzwischen
+  // weiss und bildschirmfuellend - Weissblende + Fallschirm-Agent kommen
+  // dazu (die Weissblende ist der "saubere" volldeckende Zustand, den die
+  // Tragflaeche optisch bereits erreicht hat).
   setTimeout(()=>{
     ov.insertAdjacentHTML('beforeend','<div class="intro-whiteout" id="introWhiteout"></div>'+parachuteFigureHtml());
   },t);
   t+=INTRO_SEQ.whiteHold;
-  // Phase 4: Weiss zieht sich von UNTEN nach oben zurueck (clip-path-Wipe,
-  // s. CSS) - das Dashboard darunter ist bereits fertig gerendert (Boot lief
-  // laengst durch), "erscheint" dadurch scheinbar von unten. Gleichzeitig
-  // schwebt der Fallschirm-Agent von oben herein.
+  // Phase 4: Weiss schiebt sich nach oben aus dem Bild (s. CSS) - das
+  // laengst fertig gerenderte Dashboard darunter "steigt" dadurch scheinbar
+  // von unten ins Bild. Gleichzeitig schwebt der Fallschirm-Agent von oben
+  // herein.
   setTimeout(()=>{
     const wo=document.getElementById('introWhiteout');if(wo)wo.classList.add('wiping');
     const pf=document.getElementById('introParachute');if(pf)pf.classList.add('descend');
   },t);
   t+=Math.max(INTRO_SEQ.wipe,INTRO_SEQ.descend)+INTRO_SEQ.exitDelay;
-  // Phase 5: Agent segelt links aus dem Bild
+  // Phase 5: Agent segelt links aus dem Bild - danach ist das Dashboard
+  // vollstaendig sichtbar/nutzbar (Cleanup direkt im Anschluss).
   setTimeout(()=>{
     const pf=document.getElementById('introParachute');if(pf)pf.classList.add('exit-left');
   },t);
@@ -11521,13 +11578,21 @@ function runIntroBoostSequence(){
     const bm=document.getElementById('mIntroBoost');if(bm&&bm.parentNode)bm.remove();
   },t+250);
 }
-function introExplosionHtml(){
-  const bits=Array.from({length:14},(_,i)=>{
-    const ang=(i/14)*360+Math.random()*14;
-    const dist=40+Math.random()*46;
-    return`<span class="intro-spark" style="--a:${ang}deg;--d:${dist}vmax;animation-delay:${(Math.random()*80).toFixed(0)}ms"></span>`;
+// Zerspringt in ~8 radial wegfliegende Truemmerstuecke (introDebrisFly, s.
+// CSS - rotate(--a)+translateX(--d)-Burst-Muster, kein CSS-cos()/sin()
+// noetig) PLUS eine Tragflaeche (.intro-wing), die stattdessen direkt auf
+// den Betrachter zu waechst und dabei weiss wird - siehe CSS-Kommentar bei
+// .intro-wing fuer die Begruendung ("keine separate Weissblende noetig").
+function introShatterHtml(cx,cy){
+  const bits=Array.from({length:8},(_,i)=>{
+    const ang=(i/8)*360+(Math.random()*20-10);
+    const dist=(40+Math.random()*50).toFixed(0);
+    const rot=(Math.random()*640-320).toFixed(0);
+    const w=(9+Math.random()*13).toFixed(0),h=(4+Math.random()*6).toFixed(0);
+    return`<span class="intro-debris" style="left:${cx}px;top:${cy}px;width:${w}px;height:${h}px;--a:${ang.toFixed(0)}deg;--d:${dist}vmax;--rot:${rot}deg;animation-delay:${(Math.random()*60).toFixed(0)}ms"></span>`;
   }).join('');
-  return`<div class="intro-explosion">${bits}</div>`;
+  const wing=`<div class="intro-wing" id="introWing" style="left:${cx}px;top:${cy}px"></div>`;
+  return bits+wing;
 }
 // FBI-Agent an einem Fallschirm (Nutzer-Wunsch 2026-08-04: "undercover im
 // Anzug mit Knopf im Ohr"). Flache, stilisierte Formen (Kreise/Rechtecke/
@@ -12162,7 +12227,7 @@ function startGlobes(){
     // ein Karten-Raster eingepasst werden muss, sondern der Bildschirmmitte
     // gehoert (siehe .intro-globe-host-CSS fuer die tatsaechliche Breite).
     const isIntro=!!h.closest('#introOv');
-    const size=Math.max(140,Math.min(w||220,isIntro?640:320));
+    const size=Math.max(140,Math.min(w||220,isIntro?900:320));
     // .globe-zoom-wrap umschliesst NUR das SVG (Globus+Fahrzeug) - Pinch/
     // Mausrad-Zoom (Nutzer-Wunsch 2026-07-27) skaliert ausschliesslich diesen
     // Wrapper per CSS-transform, nicht den HUD-Rahmen/die Scanline/Badges
@@ -15601,6 +15666,25 @@ function togglePinEnabled(){
     try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}
     const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
   }
+}
+// Nutzer-Wunsch 2026-08-04 ("genau wie den Code aktivieren/deaktivieren
+// koennen, direkt unter dem Code"): identisches An/Aus-Muster wie
+// pinEnabled direkt darueber - liegt bewusst ausserhalb von snap()/Undo
+// (reine Geraet-/Nutzer-Praeferenz, kein Kern-Datenzustand). Der eigentliche
+// Effekt (Intro ueberspringen) wird NICHT hier ausgewertet, sondern ganz
+// frueh im eigenen <script> direkt bei #introOv (das laeuft VOR diesem
+// Skriptblock hier, kann also nicht auf diese spaeter deklarierte Variable
+// zugreifen - liest denselben localStorage-Key stattdessen direkt).
+let introAnimEnabled=localStorage.getItem('fxpro_intro_anim_enabled')!=='0';
+function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimToggleBtn');if(btn)btn.textContent=introAnimEnabled?'Disable Animation':'Enable Animation';}
+function toggleIntroAnimEnabled(){
+  introAnimEnabled=!introAnimEnabled;
+  try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+  updIntroAnimToggleBtn();
 }
 async function checkLockCode(code){
   try{
