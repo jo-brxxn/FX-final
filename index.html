@@ -2040,7 +2040,13 @@ body.dash-edit-mode .mw-bar{display:flex}
 .intro-hud-lbl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
 .intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
-.intro-globe-host{width:min(58vh,50vw,760px);height:min(58vh,50vw,760px);flex:0 0 auto}
+.intro-globe-host{width:min(58vh,50vw,760px);height:min(58vh,50vw,760px)}
+/* Boost-Button zentriert unter dem Globus (Nutzer-Wunsch 2026-08-04, neue
+   Runde): eigene Flex-Spalte um Globus+Button, damit der Button IMMER exakt
+   mittig unter dem Globus sitzt, unabhaengig von den unterschiedlich breiten
+   HUD-/Throttle-Spalten links/rechts davon in der Reihe. */
+.intro-globe-col{display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,20px);flex:0 0 auto}
+.intro-boost-btn{font-size:13px;padding:9px 22px;border-radius:var(--r)}
 .intro-throttle-col{display:flex;align-items:center}
 .intro-throttle-col .gt-track{width:38px;height:clamp(180px,34vh,420px)}
 .intro-throttle-col .gt-label{font-size:12px}
@@ -2097,11 +2103,11 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .intro-whiteout.wiping{transform:translateY(-100%)}
 /* Phase 3-5: Fallschirm-Agent - schwebt von oben herein, haengt kurz, segelt
    dann links aus dem Bild. */
-.intro-parachute{position:fixed;top:-40vh;left:50%;width:min(30vw,190px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
+.intro-parachute{position:fixed;top:-40vh;left:50%;width:min(46vw,300px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
 .intro-parachute.descend{animation:introDescend 1750ms cubic-bezier(.24,.72,.34,1) forwards}
 @keyframes introDescend{0%{top:-40vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:38vh;transform:translate(-50%,0) rotate(-2deg)}}
 .intro-parachute.exit-left{animation:introExitLeft 1350ms cubic-bezier(.4,0,.7,.3) forwards}
-@keyframes introExitLeft{0%{left:50%;top:38vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-30vw;top:58vh;transform:translate(-50%,0) rotate(-16deg)}}
+@keyframes introExitLeft{0%{left:50%;top:38vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-55vw;top:58vh;transform:translate(-50%,0) rotate(-16deg)}}
 @media(prefers-reduced-motion:reduce){.globe-vehicle.mega-flame .globe-jet-flame,body.intro-shake,.intro-debris,.intro-wing,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
@@ -2204,7 +2210,10 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
         <div class="intro-hud-stat"><div class="intro-hud-lbl">Active signals</div><div class="intro-hud-val" id="introHudSignals">–</div></div>
         <div class="intro-hud-stat"><div class="intro-hud-lbl">Fuel</div><div class="intro-hud-val" id="hudFuel" style="color:var(--green)">100%</div></div>
       </div>
-      <div class="globe-host intro-globe-host"></div>
+      <div class="intro-globe-col">
+        <div class="globe-host intro-globe-host"></div>
+        <button class="btn scan-btn boost-btn intro-boost-btn" id="introBoostBtn" onclick="triggerIntroBoost()">🔥 BOOST</button>
+      </div>
       <div class="intro-throttle-col">
         <div class="globe-throttle" title="Drag to control thrust">
           <div class="gt-label">THRUST</div>
@@ -2292,12 +2301,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-298 — Intro-Cockpit: Titel liegt jetzt fest ganz oben (behebt Ueberlappung mit den TRACKING/SIGNAL-HUD-Badges), Marmor-Hintergrund auch auf dem Intro-Screen, Globus-Zoom (Pinch/Mausrad) komplett entfernt (Drag-Drehen bleibt), Flamme waechst nur noch aufs 10-fache statt 30-fache. Echten Fehler gefunden+behoben, warum das Dashboard beim Fallschirm-Reveal nie sichtbar 'hochstieg': #introOv hatte einen eigenen opaken Hintergrund UND die weiss gewachsene Tragflaeche blieb permanent ueber der Weissblende liegen - beides wird jetzt im richtigen Moment durchsichtig/entfernt. Waehrungs-Klick auf dem Globus zeigt jetzt SOFORT den Fallschirm-Agenten, waehrend darunter direkt der Asset-Tab mit der Waehrung hochsteigt. Neuer 'Skip'-Knopf oben links (dezent, grauer Rahmen) ueberspringt das Intro per Kurz-Uebergang.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-299 — Intro-Cockpit: neuer 'BOOST'-Knopf zentriert direkt unter dem Globus startet die komplette Boost-Animation sofort per Klick (setzt den Thrust-Regler mit auf 100% und startet direkt, kein Bestaetigungs-Fenster noetig) - der Regler-Weg bleibt daneben weiter nutzbar. Fallschirm: das rote Stier-Emblem ist komplett entfernt, stattdessen steht jetzt 'WELCOME BACK,' / 'TRADER' (zentriert, zweizeilig) auf dem Schirm; der Schirm selbst ist deutlich groesser (Breite ~46vw/300px statt 30vw/190px), die Segel-links-raus-Distanz wurde entsprechend vergroessert, damit er bei jeder Bildschirmgroesse vollstaendig aus dem Bild verschwindet.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-298</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-299</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -11508,6 +11517,20 @@ function confirmIntroBoost(){
   _introBoostRunning=true;
   runIntroBoostSequence();
 }
+// Boost-Button zentriert unter dem Globus (Nutzer-Wunsch 2026-08-04, neue
+// Runde "machen wir nochmal anders"): startet die komplette Animation SOFORT
+// per eigenem Klick, ohne erst den Regler auf Maximum ziehen zu muessen -
+// setzt den Regler dabei einfach mit auf 100% (setGlobeThrust(1), damit Fuel-
+// /Speedometer-HUD und die Flammen-"boosting"-Optik konsistent bleiben) und
+// startet direkt danach dieselbe Sequenz wie bisher der Bestaetigungs-Dialog
+// (confirmIntroBoost() - der Klick auf den Button IST die Bestaetigung, kein
+// zweites Fenster noetig). Der Regler-Weg (Maximum -> Modal) bleibt daneben
+// weiter nutzbar, falls jemand ihn lieber zieht.
+function triggerIntroBoost(){
+  if(_introBoostRunning)return;
+  setGlobeThrust(1);
+  confirmIntroBoost();
+}
 // Zeit-Konstanten der Sequenz (ms) - eine Stelle, an der sich Tempo/Timing
 // der gesamten Choreografie einstellen laesst, statt verstreuter Magic
 // Numbers in jedem setTimeout().
@@ -11651,19 +11674,16 @@ function introShatterHtml(cx,cy){
 // einfache Pfade) statt einer detaillierten Illustration - passend zum
 // sonstigen Stroke-Icon-Stil der App, aber mit genug Merkmalen (Anzug,
 // Krawatte, Sonnenbrille, Ohrhoerer+Kabel) um klar erkennbar zu sein.
-// Bewusst KEIN 1:1-Nachbau des echten Red-Bull-Markenlogos auf dem
-// Fallschirm (das ist eine geschuetzte Marke, hier oeffentlich auf GitHub
-// Pages gehostet) - stattdessen ein generisches rotes Stier-Emblem als
-// Deko-Anspielung, keine Logo-Reproduktion.
+// Kein Marken-/Logo-Aufdruck mehr auf dem Fallschirm (Nutzer-Korrektur
+// 2026-08-04, naechste Runde: das rote Stier-Emblem sollte komplett raus) -
+// stattdessen ein persoenlicher Begruessungstext, zweizeilig zentriert.
 function parachuteFigureHtml(){
   return`<div class="intro-parachute" id="introParachute">
     <svg viewBox="0 0 140 230" width="100%" height="100%">
       <path d="M8,58 C8,15 132,15 132,58 C110,46 96,42 70,42 C44,42 30,46 8,58 Z" fill="#f4f6f8" stroke="#c3cad2" stroke-width="1.5"/>
       <path d="M70,42 L70,20 M70,42 L34,50 M70,42 L106,50" fill="none" stroke="#c3cad2" stroke-width="1.2"/>
-      <g transform="translate(70,38) scale(1.05)">
-        <path d="M-13,4 C-13,-6 -4,-11 0,-11 C4,-11 13,-6 13,4 C13,9 8,9 6,6 C4,10 -4,10 -6,6 C-8,9 -13,9 -13,4 Z" fill="#d81e2c"/>
-        <path d="M-9,-8 L-15,-15 M9,-8 L15,-15" stroke="#d81e2c" stroke-width="2.4" stroke-linecap="round"/>
-      </g>
+      <text x="70" y="33" text-anchor="middle" font-size="8" font-weight="700" letter-spacing=".3" fill="#5a6472" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">WELCOME BACK,</text>
+      <text x="70" y="46" text-anchor="middle" font-size="11.5" font-weight="800" letter-spacing=".8" fill="#171b20" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">TRADER</text>
       <path d="M12,56 L54,100 M128,56 L86,100 M40,52 L60,100 M100,52 L80,100" fill="none" stroke="#8a94a0" stroke-width="1"/>
       <g>
         <path d="M60,100 Q70,92 80,100 L84,118 L56,118 Z" fill="#12161c"/>
