@@ -7124,17 +7124,13 @@
    "source": "tv"
   },
   "JOLTS Job Openings": {
-   "actual": "7.594M",
-   "forecast": "7.3M",
-   "previous": "7.618M",
-   "date": "2026-06-30",
+   "actual": "7.359M",
+   "forecast": "7.4M",
+   "previous": "7.594M",
+   "date": "2026-08-04",
    "event": "JOLTs Job Openings",
    "period": null,
    "history": [
-    [
-     "2026-03-31",
-     "6.882M"
-    ],
     [
      "2026-05-05",
      "6.866M"
@@ -7146,8 +7142,13 @@
     [
      "2026-06-30",
      "7.594M"
+    ],
+    [
+     "2026-08-04",
+     "7.359M"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-29",
@@ -7318,9 +7319,13 @@
      "2026-06-30",
      "7.594M",
      "7.3M"
+    ],
+    [
+     "2026-08-04",
+     "7.359M",
+     "7.4M"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Consumer Confidence": {
    "actual": "90.8",
