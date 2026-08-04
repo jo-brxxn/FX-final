@@ -260,14 +260,14 @@ svg.ic{vertical-align:-2px;flex:none}
    im Asset-Header) auf Nutzer-Wunsch entfernt (Foto 2026-08-04, durch-
    gestrichen markiert) - war rein informativ (nicht klickbar, cursor:
    default) und duplizierte die bereits vorhandene Bias-Info (Score-Badge-
-   Farbe direkt daneben + die Bullish/Bearish-Prozentleiste weiter unten,
-   .pbar-i). Die einzige noch aktive Fundstelle dieses Musters im ganzen
-   Projekt; .ov-bias/.bo-word waren schon seit dem 2026-07-29-Umbau von
-   renderOverviewCard() toter Code (der zugehoerige HTML-Zweig steht dort
-   nur noch auskommentiert), jetzt mit entfernt statt laenger mitzuschleppen. */
-.pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
-.pbar{height:100%;border-radius:2px;transition:width .3s}
-.pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+   Farbe direkt daneben). Die einzige noch aktive Fundstelle dieses Musters
+   im ganzen Projekt; .ov-bias/.bo-word waren schon seit dem 2026-07-29-
+   Umbau von renderOverviewCard() toter Code (der zugehoerige HTML-Zweig
+   steht dort nur noch auskommentiert), jetzt mit entfernt statt laenger
+   mitzuschleppen. .pbar-w/.pbar/.pbar-i (die Bullish/Bearish-Prozentleiste
+   direkt darunter) im selben Nutzer-Foto ebenfalls durchgestrichen markiert
+   ("bullish Symbol weg") - komplett entfernt statt nur die Duplikation zu
+   dokumentieren, war die einzige Fundstelle dieses Musters. */
 /* ── BIAS GLOW (static, non-animated highlight) ── */
 .ab.glow-bull,.ab.on.glow-bull{border-left-color:rgba(var(--green-rgb),.9)}
 .ab.glow-bear,.ab.on.glow-bear{border-left-color:rgba(var(--red-rgb),.9)}
@@ -487,27 +487,32 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
    eigenen duennen Rahmen (vorher nur der gemeinsame .ov-card-Aussenrahmen).
    Alt: margin:0;cursor:pointer;display:flex;flex-direction:column;gap:9px;
    padding:14px 12px;transition:border-color .15s,transform .12s */
-.ov-field2{margin:0;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:14px 12px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);transition:border-color .15s,transform .12s}
+/* Nutzer-Foto 2026-08-04: bei ovCols()'s neuer, frueherer 6er-Schwelle
+   (ab 900px statt 1450px) ist jede Kachel oft nur noch ~130-150px breit -
+   Innenabstaende/Schriftgroessen ueberall verkleinert, damit der Text
+   weiterhin gut lesbar reinpasst statt umzubrechen/abgeschnitten zu werden.
+   Alt: gap:8px;padding:14px 12px. */
+.ov-field2{margin:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:9px 8px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field2:hover{border-color:var(--bd2);transform:translateY(-1px)}}
-.ov2-titleline{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.ov2-title{font-size:12px;font-weight:700;color:var(--t3);letter-spacing:1.4px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-titleline{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.ov2-title{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Skill-Kritik 2026-08-02: (i)-Info-Icon oben rechts, wie im Referenzbild -
    wiederverwendet .rinfo-Optik, eigene kleinere Variante fuer die Kachel. */
-.ov2-info{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1.2px solid var(--blue);color:var(--blue);font-size:10px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
+.ov2-info{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1.1px solid var(--blue);color:var(--blue);font-size:8px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 @media (hover:hover){.ov2-info:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}}
-.ov2-scoreline{display:flex;align-items:baseline;gap:8px}
-.ov2-score{font-size:22px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.ov2-scoreline{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+.ov2-score{font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): Bias-Wort neben der Score-Zahl
    zurueckgebracht, aber gedaempft grau statt in Bias-Farbe (Nutzer-Wunsch
    2026-07-29 hatte es entfernt - siehe renderOverviewCard-Kommentar dort,
    dort ausklammert statt geloescht, falls das wieder bevorzugt wird). */
-.ov2-badge{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-badge{font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Foto-Referenz 2026-08-02: bei 6 Kacheln pro Reihe ist jede nur ~200px
    breit - Zusammenfassung auf 3 Zeilen begrenzen, damit die Kacheln gleich
    hoch bleiben und nichts ueber den Rand laeuft (CLAUDE.md-Grundsatz
    "Karten-Inhalt darf nie ueber den Kartenrand hinausgehen"). Voller Text
    bleibt als Tooltip erreichbar. Alt: ohne -webkit-line-clamp-Block. */
-.ov2-summary{font-size:12px;line-height:1.45;color:var(--t3);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
+.ov2-summary{font-size:10.5px;line-height:1.4;color:var(--t3);white-space:pre-wrap;overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
 /* ── SIDEBAR-ZEILEN EINZEILIG (Foto-Referenz, Nutzer-Wunsch 2026-08-02) ──
    Vorher dreizeilig gestapelt (Name / Sparkline / Score+Pfeil), im Referenz-
    bild steht alles in EINER Zeile: Name → Sparkline → Score → Bias-Pfeil.
@@ -530,6 +535,18 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
 .dmeta-l{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
 .dmeta-v{font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
 @media(max-width:900px){.dmeta{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none}.dmeta::-webkit-scrollbar{display:none}.dmeta-i{padding:0 10px}.dmeta-i:first-child{padding-left:0}}
+/* Nutzer-Foto 2026-08-04: History/Settings/Kompakt-Regler ziehen aus der
+   stabs-row (neben Quick Note, die entfernt wurde) hier in die Kopfzeilen-
+   Leiste um - gleicher Trenner-Look wie .dmeta-i, aber kompaktere
+   Icon-/Regler-Groessen statt der fuer eine eigene Toolbar-Zeile gedachten
+   34/52px-Originalmasse (".Design der Symbole anpassen"). Reihenfolge in
+   der Leiste: Historie, Einstellungen (nur Non-FX), Regler ganz rechts. */
+.dmeta-controls{display:flex;align-items:center;gap:6px;padding-left:14px;margin-left:4px;border-left:1px solid var(--bd)}
+.dmeta-controls .cfg-gear{width:24px;height:24px;font-size:12px;border-radius:6px}
+.dmeta-controls .compact-sw{width:38px;height:22px;border-radius:11px}
+.dmeta-controls .compact-sw .knob{width:16px;height:16px;top:2px;left:2px}
+.dmeta-controls .compact-sw.on .knob{transform:translateX(16px)}
+@media(max-width:900px){.dmeta-controls{padding-left:10px}}
 /* ── RESEARCH LIBRARY (Nutzer-Wunsch 2026-08-02, Foto-Referenz) ──
    Dreispaltig auf breiten Schirmen (Bibliothek | Notizen | Seitenleiste),
    klappt auf schmaleren Geraeten gestaffelt auf 2 bzw. 1 Spalte zurueck. */
@@ -1101,6 +1118,18 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .sym-name:not(.dw-pname){flex:none}
 .bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
 .row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
+/* Nutzer-Wunsch 2026-08-04 (Watchlist-Karte, Foto): Name+Score+Bias-Symbol
+   sollen IMMER ohne Scrollen lesbar sein - .bbadge/.row-score sind app-weit
+   fuer laengere Wortlabels ("BULLISH" etc.) dimensioniert (bis 74px breit auf
+   grossen Screens), fuer das inzwischen auf ein einzelnes Zeichen (▲/▼/◆)
+   reduzierte Watchlist-Badge (siehe VERSION-CHECK-288) viel zu breit. Eigene,
+   spezifischere Regel (2 Klassen schlagen die 1-Klassen-Basis/Breakpoint-
+   Varianten unabhaengig von der Fensterbreite) macht Badge/Score/Zeile
+   kompakter, nur in diesem einen Kartentyp. */
+.dw-watchlist .sym-row{gap:6px;padding:5px 8px}
+.dw-watchlist .sym-row .bbadge{width:auto;min-height:0;padding:3px 8px;font-size:13px}
+.dw-watchlist .sym-row .row-score{width:32px;font-size:11px}
+.dw-watchlist .sym-row .dw-pname{font-size:13px}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
@@ -2169,12 +2198,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-289 — Nutzer-Foto (Assets-Tab, GBP): Flagge war neben dem Asset-Namen viel zu klein (font-size:.72em statt 1em bzw. fehlende explizite Groesse) - jetzt an beiden Fundstellen exakt so gross wie der Name selbst. Echter Bug behoben: der Score-Badge neben dem Namen faerbte sich nach dem reinen VORZEICHEN des Scores (-0.5 erschien komplett bearish-rot statt neutral) statt nach der ±3-Auto-Bias-Schwelle - zurueckgesetzt auf scoreBias(), betrifft automatisch jede Stelle, die dieselbe scoreBadge()-Funktion nutzt. Redundante '◆ NEUTRAL'-Pille neben dem Score im Asset-Header entfernt (Foto zeigte sie durchgestrichen) - dupliziert die bereits vorhandene Farb-Info + die Prozentleisten-Beschriftung darunter, war die einzige Stelle dieses Musters im Projekt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-290 — Nutzer-Foto (Watchlist-Karte + Assets-Tab): Watchlist zeigt nur noch Watchlist, Quick Notes komplett raus, Name/Score/Bias-Symbol jetzt kompakt genug um immer ohne Scrollen lesbar zu sein. Asset-Detailseite (alle Assets): Bullish/Bearish-Prozentleiste unter 'Next Event' entfernt, Quick-Note-Feld entfernt; Historie-Button + Kompakt-Regler (und bei Non-FX zusaetzlich das Asset-Einstellungen-Zahnrad) ziehen aus der Tab-Zeile in die Kopfzeilen-Leiste oben rechts um (Reihenfolge: Historie, Einstellungen, Regler ganz rechts), mit eigener kompakterer Icon-/Reglergroesse fuer den neuen Platz. Die 6 Rubrik-Uebersichtskacheln (Inflation/Labour Market/...) stehen jetzt schon ab 900px (statt 1450px) in einer Reihe, dafuer kompaktere Schrift/Abstaende.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-289</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-290</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -5905,7 +5934,7 @@ function mkWidgets(){return[
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
   {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:5},
-  {id:uid(),type:'watchlist',title:'Watchlist & Quick Notes',order:5.3},
+  {id:uid(),type:'watchlist',title:'Watchlist',order:5.3},
   {id:uid(),type:'motivation',title:'Focus • Believe • Do',order:5.6},
   {id:uid(),type:'market_watch',title:'Market Watch',order:7},
   {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
@@ -6125,7 +6154,13 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // Zeile (mini_calendar/notification/movers_fx) verliert dadurch eine Karte
 // und wird automatisch breiter (die Zeile ist flex:1 1 260px - weniger
 // Geschwister heisst mehr Breite pro Karte, keine eigene CSS-Aenderung noetig).
-const DASH_V=16;
+// DASH_V17 (Nutzer-Wunsch 2026-08-04): Quick Notes raus aus der Watchlist-
+// Karte ("ich will nur das dort Watchlist ist"), Titel dadurch wieder
+// schlicht "Watchlist" statt "Watchlist & Quick Notes" - Bestandstitel
+// werden hier einmalig mitgezogen (gleiches Muster wie die Globus-
+// Titelmigration direkt darunter), eigene Umbenennungen des Nutzers bleiben
+// unangetastet.
+const DASH_V=17;
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock','score_changes']);
@@ -6136,12 +6171,14 @@ function migrateDash(){
   // eigene Umbenennungen des Nutzers bleiben unangetastet.
   const gw=widgets.find(w=>w.type==='globe');
   if(gw&&(gw.title==='FX World Globe'||gw.title==='Daily Bias'))gw.title='Radar Globe';
+  const wlw=widgets.find(w=>w.type==='watchlist');
+  if(wlw&&wlw.title==='Watchlist & Quick Notes')wlw.title='Watchlist';
   // DASH_V11 (Nutzer-Foto 2026-07-27): Karten sind jetzt wieder genau so
   // hoch wie ihr Inhalt (kein Stretchen mehr) - drei neue Karten fuellen die
   // dadurch entstehenden leeren Bereiche in der Zentrum-/Rechts-Spalte mit
   // echter, bisher auf dem Dashboard fehlender Funktionalitaet auf, statt
   // Platz kuenstlich zu strecken.
-  [['globe','Radar Globe'],['sentiment_snapshot','Market Sentiment'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['watchlist','Watchlist & Quick Notes'],['motivation','Focus • Believe • Do'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
+  [['globe','Radar Globe'],['sentiment_snapshot','Market Sentiment'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['watchlist','Watchlist'],['motivation','Focus • Believe • Do'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']]
     .forEach(([type,title])=>{if(!widgets.find(w=>w.type===type))widgets.push({id:uid(),type,title});});
   const rank={globe:0,sentiment_snapshot:1,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,watchlist:5.3,motivation:5.6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
   widgets.sort((a,b)=>(rank[a.type]??50)-(rank[b.type]??50));
@@ -6894,33 +6931,26 @@ function renderSidebar(){
 // ══ DETAIL ═════════════════════════════════════════════════════════
 function renderDetail(){
   const c=getSym();if(!c)return;
-  // Quick-Note-Fokus ueber den Rebuild retten (Bugreport 2026-07-20: Tippen
-  // im Quick-Note-Feld warf staendig raus) - renderDetail() baut #detail
-  // komplett per innerHTML neu, u.a. ausgeloest von Hintergrund-Vorgaengen
-  // waehrend der Nutzer noch tippt (periodischer Feed-Poll, Cloud-Pull,
-  // bootFetchScoreFeeds usw. rufen rerender()/renderDetail() unabhaengig
-  // vom Tippen auf) - das zerstoert die aktive Textarea und der Fokus geht
-  // verloren. Gleiches Muster wie die #pgDash.scrollTop-Rettung beim
-  // Risk-Sentiment-Regler (oben dokumentiert): Zustand vor dem Rebuild
-  // merken, danach wiederherstellen.
-  const detailEl=document.getElementById('detail');
-  const qnActive=document.activeElement;
-  const qnFocused=!!(qnActive&&qnActive.classList&&qnActive.classList.contains('quick-note')&&detailEl&&detailEl.contains(qnActive));
-  const qnSelStart=qnFocused?qnActive.selectionStart:null,qnSelEnd=qnFocused?qnActive.selectionEnd:null;
-  const bull=c.genBull||[],bear=c.genBear||[];
-  // Nur Einträge mit tatsächlichem Bias zählen - ein einzelner Eintrag, der
-  // per Toggle auf "neutral" (0) gesetzt wurde, soll die Bullish/Bearish-
-  // Prozentleiste nicht mehr beeinflussen, egal in welchem Array er steht.
-  const bullN=bull.filter(r=>(r.bias||'bull')==='bull').length;
-  const bearN=bear.filter(r=>(r.bias||'bear')==='bear').length;
-  const pct=Math.round((bullN/(bullN+bearN||1))*100);
   const{events:symEvts,nextHighDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
   const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
+  // Nutzer-Foto 2026-08-04: History-Button, Kompakt-Regler und (bei Non-FX)
+  // das Asset-Einstellungen-Zahnrad ziehen aus der stabs-row (neben Quick
+  // Note, die gleichzeitig entfernt wird) in die Kopfzeilen-Leiste
+  // (.dmeta, "Next event/Last update/Data quality/Source") um - Reihenfolge
+  // wie gewuenscht: Regler ganz rechts, davor die Einstellungen (nur
+  // Non-FX), davor die Historie. Eigene, kompaktere Groessen (.dmeta-controls)
+  // passend zum schmalen Leisten-Kontext statt der vorherigen, fuer eine
+  // eigene Toolbar-Zeile gedachten 34/52px-Groessen.
+  const dmetaControls=`<div class="dmeta-controls">
+    <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',13)}</button>
+    ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button>`:''}
+    <button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
+  </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${FX_FLAG[c.id]?`<span class="atitle-flag">${FX_FLAG[c.id]}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
-      ${detailMetaHtml(c,nextLbl)}
+      ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${symEvts.length?`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
@@ -6929,25 +6959,15 @@ function renderDetail(){
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
-    <div class="pbar-w"><div class="pbar" style="width:${pct}%;background:${BC[c.bias]}"></div></div>
-    <div class="pbar-i"><span style="color:${BC[c.bias]};font-weight:600">${BL[c.bias]}</span></div>
     <div class="stabs-row">
       <div class="stabs">
         <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">${icn('zap',13)} Macro</button>
         <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">${icn('note',13)} Notes</button>
       </div>
-      <textarea class="quick-note" rows="1" placeholder="Quick Note – short note, directly visible" oninput="ar(this);setQuickNote(this.value)" title="Short note that is visible right when you open the symbol">${escH(c.quickNote||'')}</textarea>
-      <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',14)}</button>
-      <button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
-      ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',14)}</button>`:''}
     </div>
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
-  document.querySelectorAll('.rtxt,.rub-summary-txt,.quick-note,.nt-item-tx').forEach(ar);
-  if(qnFocused){
-    const qn=detailEl.querySelector('.quick-note');
-    if(qn){qn.focus();try{qn.setSelectionRange(qnSelStart,qnSelEnd);}catch(e){}}
-  }
+  document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
   attachChartHovers(document.getElementById('detail'));
   animChanges();
   updateStat();
@@ -6971,7 +6991,11 @@ function masonryHTML(items,renderFn){
 // Foto-Referenz (Nutzer-Wunsch 2026-08-02): die 6 Rubrik-Kacheln stehen auf
 // breiten Schirmen in EINER Reihe statt in zwei Dreier-Reihen - "viel auf
 // wenig Platz". Alt: return window.innerWidth>=900?3:window.innerWidth>=600?2:1;
-function ovCols(){return window.innerWidth>=1450?6:window.innerWidth>=1100?3:window.innerWidth>=600?2:1;}
+// Nutzer-Foto 2026-08-04: die 6er-Reihe griff auf dem eigenen (iPad-
+// Breiten-)Geraet noch nicht ("mach die so klein dass die Schrift noch gut
+// drauf passt aber alle 6 in einer Reihe stehen") - Schwelle von 1450 auf
+// 900px gesenkt, .ov-field2 dafuer kompakter (siehe CSS-Kommentar dort).
+function ovCols(){return window.innerWidth>=900?6:window.innerWidth>=650?3:window.innerWidth>=450?2:1;}
 function renderOverviewCard(rubs){
   // Frueher auf die ersten 5 Rubriken gedeckelt - das schnitt bei der Standard-
   // Reihenfolge (siehe mkRubOrder) "Macro & Risk Environment" (Position 6) und
@@ -7363,7 +7387,6 @@ function gotoSym(id){
   selSym(id);
 }
 function setSub(s){curSub=s;renderDetail();const dp=document.querySelector('#detail .dp');if(dp)dp.classList.add('detail-fade');}
-function setQuickNote(v){const c=getSym();if(!c)return;c.quickNote=v;saveSoon();}
 // ══ ACTIONS – RUBRICS ═══════════════════════════════════════════════
 function getRub(ri){const c=getSym();return c&&c.rubrics?c.rubrics[ri]:null;}
 function getInd(ri,ii){const r=getRub(ri);return r&&r.indicators?r.indicators[ii]:null;}
@@ -10450,7 +10473,7 @@ const W_TYPES=[
   {type:'asset_heatmap',label:'Asset Heatmap',sub:'Commodities, indices & crypto coloured by score'},
   {type:'live_data',label:'Live Data',sub:'Auto-refresh status — when prices, calendar, COT & sentiment last updated'},
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
-  {type:'watchlist',label:'Watchlist & Quick Notes',sub:'Tracked pairs with SL/TP + freeform notes'},
+  {type:'watchlist',label:'Watchlist',sub:'Tracked pairs, name + score + bias only'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
   {type:'motivation',label:'Focus • Believe • Do',sub:'Decorative motivational card — no data'},
 ];
@@ -10601,16 +10624,21 @@ function symSourceLabel(c){
   const list=[...set];
   return{lbl:list.length>1?'MULTI':list[0],list};
 }
-function detailMetaHtml(c,nextLbl){
+function detailMetaHtml(c,nextLbl,extraControlsHtml){
   const dq=symDataQuality(c),src=symSourceLabel(c);
   const dqCol=dq.lvl==='HIGH'?'var(--success)':dq.lvl==='MEDIUM'?'var(--amber)':dq.lvl==='LOW'?'var(--red)':'var(--t3)';
   const upd=_lastFeedTs?new Date(_lastFeedTs).toLocaleTimeString([],{hour12:false}):'–';
   const mi=(lbl,val,title)=>`<div class="dmeta-i"${title?` title="${escH(title)}"`:''}><div class="dmeta-l">${lbl}</div><div class="dmeta-v">${val}</div></div>`;
+  // extraControlsHtml (Nutzer-Foto 2026-08-04): History/Settings/Kompakt-
+  // Regler haengen sich hier ganz rechts an die Leiste an (siehe Aufrufer
+  // in renderDetail()) - optional, damit detailMetaHtml() ohne dieses
+  // Argument (falls je von woanders aufgerufen) unveraendert funktioniert.
   return`<div class="dmeta">
     ${mi('Next event',escH(nextLbl),'Next high-impact calendar event for this asset')}
     ${mi('Last update',escH(upd),_lastFeedTs?'Last successful live-feed refresh in this session':'No live-feed refresh completed yet in this session')}
     ${mi('Data quality',`<span style="color:${dqCol}">◆ ${dq.lvl}</span>`,`${dq.live} of ${dq.tot} auto-priced indicators are fed live (${dq.pct}%). HIGH ≥ 80%, MEDIUM ≥ 50%, otherwise LOW.`)}
     ${mi('Source',escH(src.lbl),src.list.length?src.list.join(' · '):'No live source yet')}
+    ${extraControlsHtml||''}
   </div>`;
 }
 // Persistente MAJORS-Sidebar links vom Dashboard-Grid (Referenz-Foto,
@@ -10878,10 +10906,9 @@ function renderDash(){
         <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="${p.bias==='bull'?'Bullish':p.bias==='bear'?'Bearish':'Neutral'}">${p.bias==='bull'?'▲':p.bias==='bear'?'▼':'◆'}</span>
         <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
       </div>`).join(''));
-      // Quick Notes direkt unter der Watchlist in derselben Karte.
-      const notes=`<div class="dw-notes-sub">📝 Quick Notes</div>
-        <textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
-      content=wlList+notes;
+      // Nutzer-Wunsch 2026-08-04: Quick Notes komplett raus - Karte zeigt
+      // ausschliesslich die Watchlist. content besteht jetzt nur noch aus wlList.
+      content=wlList;
     }else if(w.type==='motivation'){
       // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
       // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
