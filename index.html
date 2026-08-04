@@ -2023,38 +2023,63 @@ body.dash-edit-mode .mw-bar{display:flex}
 @media(min-width:1600px){
   .dp{max-width:none}
 }
-/* ── INTRO-ANIMATION (Start/Reload) ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#eef0f2;cursor:pointer}
-#introShards{position:absolute;inset:0;z-index:1}
-.intro-shard{position:absolute;background-image:radial-gradient(circle at 50% 45%,#ffffff 0%,#eef0f2 58%,#dde1e5 100%);box-shadow:inset 0 0 0 1px rgba(var(--blue-rgb),.1);will-change:transform,opacity}
+/* ── INTRO-ANIMATION (Start/Reload) ── Nutzer-Wunsch 2026-08-04: komplett
+   neu als interaktives Globus-Cockpit statt Klick-zum-Wegklicken-Shards
+   (siehe HTML-Kommentar bei #introOv und runIntroBoostSequence()). ── */
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#eef0f2}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
-#introZoom{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-/* Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): Intro wirkte wie ein
-   Spiele-Startbildschirm (Gradient-Text + starker Glow + dramatischer
-   Zoom-in). Jetzt einfarbig, kein Glow, dezenterer Zoom (.94->1 statt
-   .62->1). */
-.intro-title{font-weight:800;font-size:clamp(32px,7vw,80px);letter-spacing:clamp(1px,.6vw,6px);white-space:nowrap;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
-.intro-sub{margin-top:clamp(12px,2.1vw,28px);font-size:clamp(12px,2.1vw,24px);font-weight:600;letter-spacing:clamp(2px,.85vw,9px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .7s both}
-/* Lade-Indikator: eine Reihe kleiner Quadrate, eines "wandert" hell
-   aufleuchtend und leicht breiter von links nach rechts durch (Nutzer-
-   Referenz-Screenshot 2026-07-19, myfxbook-Splash-Screen-Stil) - eigener
-   Hintergrund bleibt (Nutzer-Wunsch: nur dieses Element uebernehmen). */
-.intro-loader{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:clamp(16px,2.6vw,30px);opacity:0;animation:introSubIn .8s ease .9s both}
-.intro-loader-sq{width:10px;height:10px;border-radius:3px;background:rgba(20,23,26,.16);animation:introLoaderSweep 1.6s steps(1) infinite}
-.intro-loader-sq:nth-child(1){animation-delay:0s}
-.intro-loader-sq:nth-child(2){animation-delay:.16s}
-.intro-loader-sq:nth-child(3){animation-delay:.32s}
-.intro-loader-sq:nth-child(4){animation-delay:.48s}
-.intro-loader-sq:nth-child(5){animation-delay:.64s}
-@keyframes introLoaderSweep{0%{width:10px;background:rgba(20,23,26,.16)}10%{width:22px;background:var(--blue,#3b82f6)}18%{width:10px;background:rgba(20,23,26,.16)}100%{width:10px;background:rgba(20,23,26,.16)}}
-.intro-hint{position:absolute;bottom:5%;left:0;right:0;height:1.4em;pointer-events:none}
-.ih-txt{position:absolute;left:0;right:0;text-align:center;font-size:clamp(11px,1.5vw,15px);color:rgba(255,255,255,.85);font-weight:500;letter-spacing:2px;text-shadow:0 1px 8px rgba(0,0,0,.4);opacity:0;animation:ihCycle 6s ease-in-out infinite}
-.ih-2{animation-delay:3s}
-@keyframes ihCycle{0%{opacity:0}5%{opacity:1}45%{opacity:1}50%{opacity:0}100%{opacity:0}}
+.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2.2vh,26px);padding:2vh 3vw}
+.intro-title{font-weight:800;font-size:clamp(28px,5.4vw,62px);letter-spacing:clamp(1px,.6vw,6px);white-space:nowrap;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
+.intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,3.6vw,52px);width:100%;opacity:0;animation:introSubIn .9s ease .5s both}
+.intro-hud-col{display:flex;flex-direction:column;gap:clamp(10px,2vh,22px);min-width:92px}
+.intro-hud-stat{text-align:right}
+.intro-hud-lbl{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.intro-hud-val{font-size:clamp(17px,2.4vw,28px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
+.intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
+.intro-globe-host{width:clamp(230px,36vw,560px);height:clamp(230px,36vw,560px);flex:0 0 auto}
+.intro-throttle-col{display:flex;align-items:center}
+.intro-throttle-col .gt-track{width:30px;height:clamp(140px,22vh,240px)}
+.intro-throttle-col .gt-label{font-size:10px}
+.intro-throttle-col .gt-pct{font-size:13px}
+.intro-created{font-size:clamp(11px,1.6vw,16px);font-weight:600;letter-spacing:clamp(1.5px,.6vw,4px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .9s both}
+@media(max-width:640px){
+  .intro-cockpit-row{gap:10px}
+  .intro-hud-col{min-width:70px;gap:12px}
+  .intro-hud-lbl{font-size:7.5px}
+  .intro-hud-val{font-size:14px}
+  .intro-globe-host{width:44vw;height:44vw}
+  .intro-throttle-col .gt-track{width:22px;height:128px}
+}
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62)}100%{opacity:1;transform:scale(1)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
+/* ── INTRO-BOOST-SEQUENZ (Nutzer-Wunsch 2026-08-04) ──
+   Phase 1: der komplette Globus (inkl. Flugzeug+Flamme, ein zusammen-
+   haengendes SVG) waechst und rast auf den Betrachter zu. */
+.intro-cockpit.intro-launch{animation:introLaunchZoom 2000ms cubic-bezier(.55,0,.85,.35) forwards}
+@keyframes introLaunchZoom{0%{transform:scale(1)}100%{transform:scale(16)}}
+body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
+@keyframes introShake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
+/* Phase 2: Explosion - heller Blitz + Funken-Burst. */
+.intro-explosion{position:fixed;inset:0;z-index:100002;pointer-events:none;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,.65) 35%,rgba(255,200,120,0) 70%);animation:introFlash .5s ease-out forwards}
+@keyframes introFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+.intro-spark{position:absolute;top:50%;left:50%;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#fff,#ffb347 55%,rgba(255,140,40,0) 75%);transform:translate(-50%,-50%);animation:introSpark .55s cubic-bezier(.2,.8,.3,1) both}
+@keyframes introSpark{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) scale(1);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) scale(.2);opacity:0}}
+/* Phase 3+4: Weissblende zieht sich vom UNTEREN Rand nach oben zurueck
+   (clip-path-Wipe) - das laengst fertig gerenderte Dashboard darunter
+   "erscheint" dadurch scheinbar von unten, ohne echte Dashboard-DOM-
+   Elemente eigens animieren zu muessen. */
+.intro-whiteout{position:fixed;inset:0;z-index:100001;background:#fff;clip-path:inset(0 0 0 0);transition:clip-path 1150ms cubic-bezier(.65,0,.35,1)}
+.intro-whiteout.wiping{clip-path:inset(0 0 100% 0)}
+/* Phase 3-5: Fallschirm-Agent - schwebt von oben herein, haengt kurz, segelt
+   dann links aus dem Bild. */
+.intro-parachute{position:fixed;top:-40vh;left:50%;width:min(30vw,190px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
+.intro-parachute.descend{animation:introDescend 1750ms cubic-bezier(.24,.72,.34,1) forwards}
+@keyframes introDescend{0%{top:-40vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:38vh;transform:translate(-50%,0) rotate(-2deg)}}
+.intro-parachute.exit-left{animation:introExitLeft 1350ms cubic-bezier(.4,0,.7,.3) forwards}
+@keyframes introExitLeft{0%{left:50%;top:38vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-30vw;top:58vh;transform:translate(-50%,0) rotate(-16deg)}}
+@media(prefers-reduced-motion:reduce){.intro-cockpit.intro-launch,body.intro-shake,.intro-explosion,.intro-spark,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
 .detail-fade{animation:detailFadeIn .26s ease both}
@@ -2135,86 +2160,66 @@ body.dash-edit-mode .mw-bar{display:flex}
 
 
 <!-- INTRO-ANIMATION -->
+<!-- Nutzer-Wunsch 2026-08-04 (Foto+Beschreibung): der alte Klick-zum-
+     Wegklicken-Shard-Effekt ist komplett ersetzt durch ein interaktives
+     Cockpit - Titel oben, grosser Globus in der Mitte (Speedometer/Active
+     Signals/Fuel links, grosser Thrust-Regler rechts), "created by..."
+     darunter. Regler auf Maximum -> Bestaetigungs-Fenster -> Boost aktiviert
+     -> Globus rast auf den Betrachter zu und "explodiert" -> Weissblende ->
+     ein an einem Fallschirm haengender Agent schwebt herein und segelt nach
+     links raus, waehrend das Dashboard darunter enthuellt wird. Erscheint
+     bei JEDEM Laden/Reload (Nutzer-Bestaetigung, kein "einmalig"-Flag). -->
 <div id="introOv">
   <button id="introLoginBtn" onclick="introLogin()">Set up sync</button>
-  <div id="introShards"></div>
   <div class="intro-grid"></div>
-  <div id="introZoom">
+  <div class="intro-cockpit" id="introCockpit">
     <div class="intro-title">FX ANALYST&nbsp;PRO</div>
-    <div class="intro-sub">created by Jonathan Brinkmann</div>
-    <div class="intro-loader" aria-hidden="true"><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span><span class="intro-loader-sq"></span></div>
+    <div class="intro-cockpit-row">
+      <div class="intro-hud-col">
+        <div class="intro-hud-stat"><div class="intro-hud-lbl">Speedometer</div><div class="intro-hud-val" id="introHudSpeed">0<span class="intro-hud-unit">kn</span></div></div>
+        <div class="intro-hud-stat"><div class="intro-hud-lbl">Active signals</div><div class="intro-hud-val" id="introHudSignals">–</div></div>
+        <div class="intro-hud-stat"><div class="intro-hud-lbl">Fuel</div><div class="intro-hud-val" id="hudFuel" style="color:var(--green)">100%</div></div>
+      </div>
+      <div class="globe-host intro-globe-host"></div>
+      <div class="intro-throttle-col">
+        <div class="globe-throttle" title="Drag to control thrust">
+          <div class="gt-label">THRUST</div>
+          <div class="gt-track" id="globeThrottleTrack" onpointerdown="throttlePressStart(event)">
+            <div class="gt-notches"><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="gt-fill" id="globeThrottleFill"></div>
+            <div class="gt-handle" id="globeThrottleHandle"></div>
+          </div>
+          <div class="gt-pct" id="globeThrottlePct">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="intro-created">created by Jonathan Brinkmann</div>
   </div>
-  <div class="intro-hint" id="introHint">
-    <span class="ih-txt ih-1">tap to continue</span>
-    <span class="ih-txt ih-2">click to continue</span>
+</div>
+<!-- Boost-Bestaetigung, erscheint sobald der Thrust-Regler auf Maximum steht
+     (setGlobeThrust() -> introMaybeOfferBoost()) -->
+<div class="ov" id="mIntroBoost" style="display:none;z-index:100004" onclick="if(event.target===this)closeM('mIntroBoost')">
+  <div class="modal" style="max-width:260px;text-align:center">
+    <h3>🔥 Ready for Launch</h3>
+    <p style="font-size:13px;color:var(--t2);margin:6px 0 14px">Thrust at maximum. Enable boost?</p>
+    <button class="btn scan-btn boost-btn" style="width:100%;justify-content:center" onclick="confirmIntroBoost()">🔥 ENABLE BOOST</button>
+    <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="closeM('mIntroBoost')">Not yet</button>
   </div>
 </div>
 <script>
+// Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
+// Cloud-Sync bereits eingerichtet ist, sonst "Set up sync". Kein Klick-zum-
+// Wegklicken mehr auf dem Rest des Overlays - Dismiss laeuft ausschliesslich
+// ueber die Boost-Sequenz (introBoostSequence()).
 (function(){
-  var ov=document.getElementById('introOv');
-  if(!ov)return;
-  // Bewusst KEINE prefers-reduced-motion-Abfrage: viele PCs haben "Bewegung
-  // reduzieren" systemweit aktiv, wodurch das Intro dort komplett übersprungen
-  // wurde (auf iPad sichtbar, am PC nicht). Das Intro soll überall erscheinen.
-  var done=false;
-  var layer=document.getElementById('introShards');
-  var vw=window.innerWidth,vh=window.innerHeight;
-  var cols=vw<700?5:7,rows=vw<700?7:5;
-  var tw=vw/cols,th=vh/rows,cx=vw/2,cy=vh*0.45;
-  var shards=[];
-  for(var r=0;r<rows;r++){for(var c=0;c<cols;c++){
-    var x=c*tw,y=r*th;
-    var el=document.createElement('div');
-    el.className='intro-shard';
-    el.style.left=x+'px';el.style.top=y+'px';
-    el.style.width=(Math.ceil(tw)+1)+'px';el.style.height=(Math.ceil(th)+1)+'px';
-    el.style.backgroundSize=vw+'px '+vh+'px';
-    el.style.backgroundPosition=(-x)+'px '+(-y)+'px';
-    layer.appendChild(el);
-    shards.push({el:el,cx:x+tw/2,cy:y+th/2});
-  }}
-  // Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
-  // Cloud-Sync bereits eingerichtet ist, sonst "Log in".
   var loginBtn=document.getElementById('introLoginBtn');
   if(loginBtn){
     var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
     if(cc&&(cc.username||cc.syncId)){loginBtn.textContent='👤 '+(cc.username||cc.syncId);}
     else{loginBtn.textContent='Set up sync';}
   }
-  // Hinweis unten wechselt alle 3 Sekunden zwischen "tap to continue" und
-  // "click to continue" - rein per CSS-Keyframes (zwei überlagerte Spans mit
-  // versetztem animation-delay), damit die Anzeige unabhängig von JS-Timern
-  // läuft und auch bei verzögertem Skript-Start sofort sichtbar ist.
-  function dismiss(){
-    if(done)return;done=true;
-    var zoom=document.getElementById('introZoom');
-    if(zoom){zoom.style.transition='opacity .35s ease';zoom.style.opacity='0';}
-    var hint=document.querySelector('.intro-hint');
-    if(hint){hint.style.transition='opacity .2s ease';hint.style.opacity='0';}
-    var lb=document.getElementById('introLoginBtn');
-    if(lb){lb.style.transition='opacity .2s ease';lb.style.opacity='0';}
-    shards.forEach(function(s){
-      var dx=s.cx-cx,dy=s.cy-cy,dist=Math.hypot(dx,dy)||1;
-      var push=Math.max(vw,vh)*(0.85+Math.random()*0.5);
-      var rot=(Math.random()*2-1)*180;
-      var delay=Math.random()*280;
-      s.el.animate([
-        {transform:'translate(0,0) rotate(0deg)',opacity:1},
-        {transform:'translate('+(dx/dist*push)+'px,'+(dy/dist*push-100)+'px) rotate('+rot+'deg) scale(.3)',opacity:0}
-      ],{duration:580,delay:delay,easing:'cubic-bezier(.36,0,.4,1)',fill:'forwards'});
-    });
-    setTimeout(function(){if(ov.parentNode)ov.remove();},1050);
-  }
-  // Klick/Tap auf den Login-Button NICHT als "Intro wegklicken" werten.
-  function onTap(e){if(e.target&&e.target.closest&&e.target.closest('#introLoginBtn'))return;dismiss();}
-  ov.addEventListener('click',onTap);
-  ov.addEventListener('touchstart',onTap,{passive:true});
 })();
-// Vom Intro aus zum Login (Cloud-Sync) springen: Intro ausblenden und das
-// Cloud-Modal oberhalb des Sperrbildschirms öffnen.
 function introLogin(){
-  var ov=document.getElementById('introOv');
-  if(ov){ov.style.transition='opacity .35s ease';ov.style.opacity='0';setTimeout(function(){if(ov.parentNode)ov.remove();},360);}
   if(typeof openCloudM==='function')openCloudM(true);
 }
 </script>
@@ -2253,12 +2258,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-295 — Watchlist-Karte war spurlos vom Dashboard verschwunden (Nutzer-Bugreport per Foto) - Root Cause gefunden: migrateDash()s 'bereits migriert'-Abkuerzung sprang komplett ueber den Absicherungs-Schritt, der fehlende Standard-Widgets nachtraegt, sodass ein einmal unvollstaendiges widgets-Array (z.B. durch einen ungluecklich getimten Cloud-Push) sich NIE mehr selbst heilte. Fix: dieser Schritt laeuft jetzt bei JEDEM Boot/Cloud-Pull/Undo, ohne Nutzer-Umsortierungen anzutasten; ein neues dashRemovedTypes-Feld (Cloud-synced) merkt sich bewusst geloeschte Standard-Widgets, damit die kommen nicht von selbst zurueck. Globus-Karte komplett vom Dashboard entfernt (zieht kuenftig auf den Lade-/Intro-Screen um).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-296 — Lade-/Intro-Screen komplett neu gebaut (Nutzer-Wunsch, per Rueckfrage bestaetigt): erscheint weiterhin bei jedem Laden/Reload, zeigt jetzt FX ANALYST PRO oben, einen grossen interaktiven Globus in der Mitte (Speedometer/Active Signals/Fuel links, grosser Thrust-Regler rechts), 'created by Jonathan Brinkmann' darunter. Regler auf Maximum -> Bestaetigungsfenster -> Boost aktiviert -> Globus rast auf den Betrachter zu und explodiert -> Weissblende, aus der ein Fallschirm-Agent (dunkler Anzug, Sonnenbrille, Ohrhoerer, weisser Schirm mit rotem Stier-Emblem) herabschwebt, waehrend darunter das laengst fertig gerenderte Dashboard sichtbar wird -> Agent segelt nach links aus dem Bild -> Overlay komplett entfernt, Dashboard voll nutzbar. Der alte Klick-zum-Wegklicken-Shard-Effekt ist komplett ersetzt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-295</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-296</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2538,23 +2543,6 @@ function introLogin(){
       <button class="btn r" onclick="clearDateM()">🗑 Clear</button>
       <div style="display:flex;gap:7px"><button class="btn" onclick="closeM('mDate')">Cancel</button><button class="btn g" onclick="saveDateM()">Save</button></div>
     </div>
-  </div>
-</div>
-<!-- MODAL: Globe thrust control (Nutzer-Wunsch 2026-08-03: Regler nicht mehr
-     dauerhaft neben dem Globus, nur noch hier per Klick auf das Flugzeug) -->
-<div class="ov" id="mThrottle" style="display:none" onclick="if(event.target===this)closeM('mThrottle')">
-  <div class="modal" style="max-width:230px;text-align:center">
-    <h3>🔥 Thrust Control</h3>
-    <div class="globe-throttle" title="Drag to control thrust: rotation speed and afterburner intensity" style="margin:14px auto 4px">
-      <div class="gt-label">THRUST</div>
-      <div class="gt-track" id="globeThrottleTrack" onpointerdown="throttlePressStart(event)">
-        <div class="gt-notches"><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="gt-fill" id="globeThrottleFill"></div>
-        <div class="gt-handle" id="globeThrottleHandle"></div>
-      </div>
-      <div class="gt-pct" id="globeThrottlePct">0%</div>
-    </div>
-    <button class="btn" onclick="closeM('mThrottle')" style="margin-top:10px">Close</button>
   </div>
 </div>
 <!-- MODAL: Rename -->
@@ -11408,9 +11396,10 @@ function endGlobeBoost(){
 // die zwei Geschwindigkeits-Quellen nicht mitten in ihrer jeweiligen Kurve
 // gegenseitig ueberschreiben.
 let _throttleFrac=0,_throttleDragging=false;
-// Nutzer-Wunsch 2026-08-03: Regler nicht mehr dauerhaft neben dem Globus,
-// nur noch per Klick auf das Flugzeug erreichbar (jetHit in globeSkeleton()).
-function openGlobeThrottleM(){openM('mThrottle');}
+// Nutzer-Wunsch 2026-08-04: der Globus (samt Thrust-Regler) lebt jetzt nur
+// noch auf dem Intro-/Lade-Screen, der Regler steht dort permanent sichtbar
+// neben dem Globus - kein Popup mehr noetig. Klick auf das Flugzeug (jetHit
+// in globeSkeleton()) ist dadurch wieder rein dekorativ, kein Handler mehr.
 function throttlePressStart(ev){
   if(_globeMode==='boost')return; // BOOST-Stoss laeuft gerade, Regler blockiert bis er durch ist
   const track=ev.currentTarget;if(!track)return;
@@ -11431,10 +11420,18 @@ function throttleUpdateFromEvent(ev,track){
 }
 function setGlobeThrust(frac){
   _throttleFrac=frac;
+  introBoostOfferReset(frac);
   const fill=document.getElementById('globeThrottleFill'),handle=document.getElementById('globeThrottleHandle'),pct=document.getElementById('globeThrottlePct');
   if(fill)fill.style.height=(frac*100).toFixed(1)+'%';
   if(handle)handle.style.bottom=(frac*100).toFixed(1)+'%';
   if(pct)pct.textContent=Math.round(frac*100)+'%';
+  // Speedometer (Intro-Screen-HUD, Nutzer-Wunsch 2026-08-04): rein
+  // dekorative "Knoten"-Anzeige direkt aus der Reglerposition abgeleitet -
+  // wie schon "Fuel" ein Spielmechanik-Wert, kein Marktdatum (CLAUDE.md-
+  // Grundsatz "nie erfundene Werte" gilt fuer Markt-/Indikatordaten, nicht
+  // fuer diese ohnehin fiktive Cockpit-Deko).
+  const spd=document.getElementById('introHudSpeed');
+  if(spd)spd.innerHTML=Math.round(frac*480)+'<span class="intro-hud-unit">kn</span>';
   const engaged=frac>0.02;
   document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.toggle('boosting',engaged));
   document.querySelectorAll('.globe-host').forEach(h=>h.classList.toggle('boosting',engaged));
@@ -11444,6 +11441,147 @@ function setGlobeThrust(frac){
     _globeMode='decel';
     document.querySelectorAll('.globe-host').forEach(h=>{h.style.removeProperty('--boost-i');h.style.removeProperty('--boost-blur');});
   }
+  // Regler auf Maximum -> Boost-Bestaetigung anbieten (Nutzer-Wunsch
+  // 2026-08-04). Nur auf dem Intro-Screen relevant (dort lebt der Globus
+  // jetzt ausschliesslich) - introMaybeOfferBoost() haelt selbst fest, ob
+  // das Fenster schon offen war/die Sequenz schon lief, damit ein Drag, der
+  // kurz ueber 97% oszilliert, es nicht mehrfach oeffnet.
+  if(frac>=0.97)introMaybeOfferBoost();
+}
+// ══ INTRO-BOOST-SEQUENZ (Nutzer-Wunsch 2026-08-04, Foto+Beschreibung) ══════
+// Regler auf Maximum -> Bestaetigungsfenster -> Boost aktiviert -> Globus
+// rast auf den Betrachter zu und "explodiert" -> Weissblende, aus der ein an
+// einem Fallschirm haengender Agent hervorschwebt, waehrend darunter das
+// Dashboard sichtbar wird -> Agent segelt nach links aus dem Bild -> Intro-
+// Overlay komplett entfernt. Laeuft ausschliesslich auf #introOv (kein
+// Dashboard-Globus mehr, seit DASH_V18 - siehe migrateDash()).
+let _introBoostOffered=false,_introBoostRunning=false;
+function introMaybeOfferBoost(){
+  if(_introBoostOffered||_introBoostRunning)return;
+  if(!document.getElementById('introOv'))return; // Intro schon weg (z.B. Sequenz lief bereits durch)
+  _introBoostOffered=true;
+  openM('mIntroBoost');
+}
+// Regler unter 90% zurueckgezogen, ohne dass die Sequenz lief -> Angebot
+// darf beim naechsten Erreichen von 100% erneut erscheinen.
+function introBoostOfferReset(frac){if(frac<0.9)_introBoostOffered=false;}
+function confirmIntroBoost(){
+  closeM('mIntroBoost');
+  if(_introBoostRunning)return;
+  _introBoostRunning=true;
+  runIntroBoostSequence();
+}
+// Zeit-Konstanten der Sequenz (ms) - eine Stelle, an der sich Tempo/Timing
+// der gesamten Choreografie einstellen laesst, statt verstreuter Magic
+// Numbers in jedem setTimeout().
+const INTRO_SEQ={grow:2000,shake:480,whiteHold:260,wipe:1150,descend:1750,exitDelay:250,exit:1350};
+function runIntroBoostSequence(){
+  const ov=document.getElementById('introOv');if(!ov)return;
+  const cockpit=document.getElementById('introCockpit');
+  // Phase 1: Globus (samt Flugzeug+Flamme, ein zusammenhaengendes SVG) waechst
+  // kontinuierlich und rast auf den Betrachter zu, bis er den Bildschirm
+  // ueberragt - technisch einfacher/robuster als Flugzeug+Flamme isoliert aus
+  // der rotierenden Globus-Szene herauszuloesen und separat zu skalieren
+  // (beide sitzen als Teil DESSELBEN SVG in Globus-lokalen Koordinaten),
+  // liefert aber optisch denselben "rast auf einen zu"-Effekt.
+  if(cockpit)cockpit.classList.add('intro-launch');
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting'));
+  document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
+  let t=INTRO_SEQ.grow;
+  // Phase 2: Explosion (Flash + Partikel-Burst + kurzer Screen-Shake)
+  setTimeout(()=>{
+    ov.insertAdjacentHTML('beforeend',introExplosionHtml());
+    document.body.classList.add('intro-shake');
+    setTimeout(()=>document.body.classList.remove('intro-shake'),INTRO_SEQ.shake);
+  },t);
+  t+=INTRO_SEQ.shake;
+  // Phase 3: Weissblende deckt alles ab, kurzer Beat auf vollem Weiss
+  setTimeout(()=>{
+    ov.insertAdjacentHTML('beforeend','<div class="intro-whiteout" id="introWhiteout"></div>'+parachuteFigureHtml());
+  },t);
+  t+=INTRO_SEQ.whiteHold;
+  // Phase 4: Weiss zieht sich von UNTEN nach oben zurueck (clip-path-Wipe,
+  // s. CSS) - das Dashboard darunter ist bereits fertig gerendert (Boot lief
+  // laengst durch), "erscheint" dadurch scheinbar von unten. Gleichzeitig
+  // schwebt der Fallschirm-Agent von oben herein.
+  setTimeout(()=>{
+    const wo=document.getElementById('introWhiteout');if(wo)wo.classList.add('wiping');
+    const pf=document.getElementById('introParachute');if(pf)pf.classList.add('descend');
+  },t);
+  t+=Math.max(INTRO_SEQ.wipe,INTRO_SEQ.descend)+INTRO_SEQ.exitDelay;
+  // Phase 5: Agent segelt links aus dem Bild
+  setTimeout(()=>{
+    const pf=document.getElementById('introParachute');if(pf)pf.classList.add('exit-left');
+  },t);
+  t+=INTRO_SEQ.exit;
+  // Cleanup: komplettes Intro-Overlay (inkl. Boost-Modal) entfernen - exakt
+  // wie der alte dismiss() das Shard-Overlay entfernt hat.
+  setTimeout(()=>{
+    if(ov.parentNode)ov.remove();
+    const bm=document.getElementById('mIntroBoost');if(bm&&bm.parentNode)bm.remove();
+  },t+250);
+}
+function introExplosionHtml(){
+  const bits=Array.from({length:14},(_,i)=>{
+    const ang=(i/14)*360+Math.random()*14;
+    const dist=40+Math.random()*46;
+    return`<span class="intro-spark" style="--a:${ang}deg;--d:${dist}vmax;animation-delay:${(Math.random()*80).toFixed(0)}ms"></span>`;
+  }).join('');
+  return`<div class="intro-explosion">${bits}</div>`;
+}
+// FBI-Agent an einem Fallschirm (Nutzer-Wunsch 2026-08-04: "undercover im
+// Anzug mit Knopf im Ohr"). Flache, stilisierte Formen (Kreise/Rechtecke/
+// einfache Pfade) statt einer detaillierten Illustration - passend zum
+// sonstigen Stroke-Icon-Stil der App, aber mit genug Merkmalen (Anzug,
+// Krawatte, Sonnenbrille, Ohrhoerer+Kabel) um klar erkennbar zu sein.
+// Bewusst KEIN 1:1-Nachbau des echten Red-Bull-Markenlogos auf dem
+// Fallschirm (das ist eine geschuetzte Marke, hier oeffentlich auf GitHub
+// Pages gehostet) - stattdessen ein generisches rotes Stier-Emblem als
+// Deko-Anspielung, keine Logo-Reproduktion.
+function parachuteFigureHtml(){
+  return`<div class="intro-parachute" id="introParachute">
+    <svg viewBox="0 0 140 230" width="100%" height="100%">
+      <path d="M8,58 C8,15 132,15 132,58 C110,46 96,42 70,42 C44,42 30,46 8,58 Z" fill="#f4f6f8" stroke="#c3cad2" stroke-width="1.5"/>
+      <path d="M70,42 L70,20 M70,42 L34,50 M70,42 L106,50" fill="none" stroke="#c3cad2" stroke-width="1.2"/>
+      <g transform="translate(70,38) scale(1.05)">
+        <path d="M-13,4 C-13,-6 -4,-11 0,-11 C4,-11 13,-6 13,4 C13,9 8,9 6,6 C4,10 -4,10 -6,6 C-8,9 -13,9 -13,4 Z" fill="#d81e2c"/>
+        <path d="M-9,-8 L-15,-15 M9,-8 L15,-15" stroke="#d81e2c" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <path d="M12,56 L54,100 M128,56 L86,100 M40,52 L60,100 M100,52 L80,100" fill="none" stroke="#8a94a0" stroke-width="1"/>
+      <g>
+        <path d="M60,100 Q70,92 80,100 L84,118 L56,118 Z" fill="#12161c"/>
+        <circle cx="70" cy="112" r="1.6" fill="#c9a27a"/>
+        <rect x="66" y="108" width="8" height="14" rx="2" fill="#1b2129"/>
+        <path d="M69,110 L70,120 L71,110 Z" fill="#7a1a20"/>
+        <path d="M56,118 C48,124 44,140 46,158 L58,158 L58,132 Z" fill="#1b2129"/>
+        <path d="M84,118 C92,124 96,140 94,158 L82,158 L82,132 Z" fill="#1b2129"/>
+        <path d="M46,158 L44,178 L54,178 L58,160 Z" fill="#2a323d"/>
+        <path d="M94,158 L96,178 L86,178 L82,160 Z" fill="#2a323d"/>
+        <rect x="41" y="176" width="15" height="6" rx="2" fill="#0c0f13"/>
+        <rect x="84" y="176" width="15" height="6" rx="2" fill="#0c0f13"/>
+        <circle cx="70" cy="98" r="12" fill="#c9a27a"/>
+        <path d="M58,96 C58,86 82,86 82,96 C82,90 76,88 70,88 C64,88 58,90 58,96 Z" fill="#1b2129"/>
+        <rect x="59" y="95" width="10" height="4.5" rx="1.5" fill="#0c0f13"/>
+        <rect x="71" y="95" width="10" height="4.5" rx="1.5" fill="#0c0f13"/>
+        <rect x="69" y="97" width="2" height="1.6" fill="#0c0f13"/>
+        <circle cx="81" cy="101" r="1.7" fill="#0c0f13"/>
+        <path d="M82,102 C86,104 87,110 85,116" fill="none" stroke="#0c0f13" stroke-width="1.1"/>
+      </g>
+    </svg>
+  </div>`;
+}
+// "Active signals" auf dem Intro-HUD (Nutzer-Wunsch 2026-08-04) - dieselbe
+// Kennzahl wie zuvor im Dashboard-Globus-Widget (globeHudHtml()): Anzahl FX-
+// Majors mit nicht-neutralem Bias von der Gesamtzahl. Eigener, schlanker
+// Aufruf statt globeHudHtml() zu importieren, da hier nur diese eine Zahl
+// gebraucht wird (kein Readout-Rahmen/Intel-Feed auf dem Intro-Screen).
+// Laeuft NACH loadState() (siehe Boot-Zeile ganz unten) - vorher waere syms
+// noch leer.
+function updIntroHud(){
+  const el=document.getElementById('introHudSignals');if(!el)return;
+  const fxSyms=(syms||[]).filter(s=>GLOBE_GEO[s.id]);
+  const active=fxSyms.filter(s=>s.bias!=='neu').length;
+  el.textContent=active+'/'+fxSyms.length;
 }
 // Fuel-Anzeige (Nutzer-Wunsch 2026-07-28, ersetzt "Liquidity" im HUD-
 // Readout): rein dekorativer Cockpit-Wert fuer den Jet, KEINE Marktdaten -
@@ -11658,16 +11796,12 @@ function globeSkeleton(size,uid){
     <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#e35d5d"/>
     <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#e35d5d"/>
   </g>`;
-  // Klick-Ziel fuer den Schubregler-Popup (Nutzer-Wunsch 2026-08-03: "lass
-  // den Regler nur in einem neuen Fenster erscheinen, wenn man auf das
-  // Flugzeug drueckt"). Eigene Gruppe statt Klick direkt auf .globe-vehicle
-  // (das traegt pointer-events:none, damit die Silhouette selbst nie Drag/
-  // Marker-Klicks blockiert) - data-id (wie die echten Marker-<g>s) sorgt
-  // dafuer, dass globeOnPointerDown() den Klick NICHT als Drag-Start
+  // data-id-Gruppe (wie echte Marker-<g>s) sorgt dafuer, dass
+  // globeOnPointerDown() einen Klick/Tap aufs Flugzeug NICHT als Drag-Start
   // interpretiert (dessen bestehender g[data-id]-Ausschluss greift hier
-  // automatisch mit). pointer-events="all" statt "auto": ein transparentes
-  // fill zaehlt in manchen Browsern sonst nicht als "getroffen".
-  const jetHit=`<g data-id="jet" transform="translate(${cx},${cy})" style="cursor:pointer" pointer-events="all" onclick="openGlobeThrottleM()"><circle r="15" fill="transparent"/></g>`;
+  // automatisch mit) - rein dekorativ seit der Thrust-Regler auf dem Intro-
+  // Screen permanent sichtbar ist (kein Popup-Trigger mehr noetig).
+  const jetHit=`<g data-id="jet" transform="translate(${cx},${cy})" pointer-events="all"><circle r="15" fill="transparent"/></g>`;
   return`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="max-width:100%" onclick="if(!event.target.closest('g[data-id]'))closeGlobeTip()">
     <defs>
       <radialGradient id="${lmgid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="70%" stop-color="#fff"/><stop offset="100%" stop-color="#000"/></radialGradient>
@@ -12022,29 +12156,13 @@ function startGlobes(){
     // dass der Globus beim allerersten Aufbau in der falschen Groesse "reinpoppt".
     let w=h.clientWidth;
     if(!w){const card=h.closest('.dw');w=card?card.clientWidth-24:0;}
-    // Kappung auf 480px (Radial-Layout, Nutzer-Wunsch 2026-07-27: Globus
-    // steht jetzt ALLEIN im Zentrum - keine Text-Spalte mehr, die Platz
-    // braucht, also darf er deutlich groesser werden als vorher (260px,
-    // dann 340px). Obergrenze bleibt trotzdem bestehen, damit er auf sehr
-    // breiten Screens nicht unkontrolliert weiterwaechst.
-    // Nutzer-Wunsch 2026-08-03 (2. Runde): Globus-KARTE soll jetzt etwa so
-    // gross wie die anderen Dashboard-Karten sein (nicht mehr die dominante
-    // Hero-Flaeche) - Mittelspalte selbst wurde dafuer im CSS ebenfalls auf
-    // Seitenspalten-Breite begrenzt (siehe #dashWidgets.dash-layout), die
-    // Kugel-Obergrenze hier von 400 auf 260px gesenkt (etwas groesser als
-    // eine Standardkarte, wie gewuenscht, aber kein Hero-Element mehr).
-    // Nutzer-Wunsch 2026-08-03 (3. Runde, "Globus groesser ohne die Karte zu
-    // vergroessern"): der Schubregler stand bis eben als fester Nachbar
-    // NEBEN dem Globus in .globe-main-row und nahm ihm dauerhaft ~50px
-    // Breite weg (siehe openGlobeThrottleM()-Kommentar - der Regler ist jetzt
-    // ein Popup). .globe-host bekommt dadurch die VOLLE Kartenbreite statt
-    // sie mit dem Regler zu teilen - Obergrenze von 260 auf 320px angehoben,
-    // damit der Globus den neu gewonnenen Platz auch wirklich ausfuellt
-    // (die Karten-BREITE bleibt unangetastet, die ist ohnehin raster-
-    // bestimmt, siehe #dashWidgets.dash-layout - nur die Kartenhoehe waechst
-    // mit, weil der Globus quadratisch ist, exakt wie jede andere Karte
-    // hier bereits inhaltsgetrieben hoch wird).
-    const size=Math.max(140,Math.min(w||220,320));
+    // Nutzer-Wunsch 2026-08-04: der Globus lebt jetzt nur noch auf dem Intro-
+    // /Lade-Screen (Dashboard-Karte komplett entfernt) - dort darf er deutlich
+    // groesser werden als die alte 320px-Kartenobergrenze, da er nicht mehr in
+    // ein Karten-Raster eingepasst werden muss, sondern der Bildschirmmitte
+    // gehoert (siehe .intro-globe-host-CSS fuer die tatsaechliche Breite).
+    const isIntro=!!h.closest('#introOv');
+    const size=Math.max(140,Math.min(w||220,isIntro?640:320));
     // .globe-zoom-wrap umschliesst NUR das SVG (Globus+Fahrzeug) - Pinch/
     // Mausrad-Zoom (Nutzer-Wunsch 2026-07-27) skaliert ausschliesslich diesen
     // Wrapper per CSS-transform, nicht den HUD-Rahmen/die Scanline/Badges
@@ -15612,7 +15730,7 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();
+renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();updIntroHud();
 maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
