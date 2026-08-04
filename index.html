@@ -761,6 +761,42 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rtree-add,.rtree-del{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 @media(hover:hover){.rtree-add:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}.rtree-del:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}}
 .rtree-placeholder{padding:16px;background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);color:var(--t3);font-size:13px;text-align:center}
+/* ── RESEARCH-TERMINAL (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots) ──
+   Karten-Reihe oben (wiederverwendet .ov-field2/.ov2-* vom Overview-Grid,
+   "im gleichen Style") + 3-Spalten-Koerper: einklappbare Sidebar / leere
+   Mitte / schmale Timeline. */
+.rterm-top{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.rterm-top .ov-field2{flex:1 1 150px;min-width:130px}
+.rterm-topcard.open{border-color:var(--blue)}
+.rterm-topexp{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:14px}
+.rterm-body{display:flex;gap:14px;align-items:flex-start}
+.rterm-side{flex:0 0 auto}
+.rterm-tree{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:6px;width:300px;max-width:80vw}
+.rterm-side-toggle{flex:0 0 auto;width:26px;height:26px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+@media(hover:hover){.rterm-side-toggle:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
+.rterm-side-toggle-in{transform:rotate(180deg)}
+.rterm-side-collapsed{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:8px 6px}
+.rterm-shortcuts{display:flex;flex-direction:column;gap:6px}
+.rterm-shortcut{width:30px;height:30px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+@media(hover:hover){.rterm-shortcut:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
+.rterm-mid{flex:1 1 auto;min-height:260px}
+.rterm-timeline{flex:0 0 220px;max-width:260px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px;max-height:640px;overflow-y:auto}
+.rterm-tl-title{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.rterm-tl-list{position:relative;padding-left:14px;border-left:2px solid var(--bd2)}
+.rterm-tl-item{position:relative;padding-bottom:14px}
+.rterm-tl-item:last-child{padding-bottom:0}
+.rterm-tl-dot{position:absolute;left:-19px;top:2px;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2)}
+.rterm-tl-item.past .rterm-tl-dot{background:var(--t3)}
+.rterm-tl-item.past{opacity:.6}
+.rterm-tl-date{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3)}
+.rterm-tl-name{font-size:12px;font-weight:600;color:var(--t1);margin:1px 0}
+.rterm-tl-vals{font-size:10.5px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rterm-tl-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px 4px}
+@media(max-width:900px){.rterm-body{flex-direction:column}.rterm-tree{width:100%}.rterm-timeline{flex:1 1 auto;max-width:none;max-height:280px}}
+/* Rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04): schwebt unten links auf
+   JEDER Seite, sobald ein Research-Terminal-Shortcut benutzt wurde. */
+.rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+body.res-return-active .rterm-back-pill{display:flex}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
 .ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
 .ranl-title{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:10px}
@@ -2363,12 +2399,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-306 — Gleitschirm: die Zellen-Rippen-Linien auf dem Fluegel ragten oben ueber die Kuppel-Kruemmung hinaus (die Linien-Endpunkte lagen weiter oben als die tatsaechliche Fluegel-Kontur an der jeweiligen Stelle, sichtbar als duenne graue Striche, die ueber den Rand hinausstehen). Auf Nutzer-Wunsch entfernt - der Fluegel zeigt jetzt eine sauber geschlossene Kontur, die Leinen zum Piloten (die korrekt innerhalb der Kontur blieben) sind unveraendert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-307 — Research-Terminal neu aufgebaut (Referenz-Screenshots): oben 5 Karten (Inflation/Labour Market/Economic Growth/Interest Rates fuer das im Ordnerbaum gewaehlte Asset + eine 5. Risk-Environment-Karte, die exakt die Dashboard-Risk-Sentiment-Karte zeigt), Klick klappt eine Indikator-Tabelle auf. Rechte Spalte: schmale Timeline mit den letzten/naechsten 10 News-Events (Datum, Actual/Forecast/Previous) fuer die Waehrung des Assets. Ordnerbaum-Sidebar links jetzt einklappbar auf einen Pfeil-Button; eingeklappt erscheinen Shortcut-Icons zu den 7 Insights-Tabs (Seasonality/Trends/COT/Sentiment/Data/Rate Probabilities/Carry) mit automatischer Asset-Vorauswahl - ein rotes Back-Symbol unten links fuehrt von dort direkt zurueck. Mittlerer Bereich bleibt bewusst leer (kommt spaeter).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-306</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-307</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2905,6 +2941,12 @@ function introLogin(){
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mCcyCfg')">Done</button></div>
   </div>
 </div>
+<!-- Research-Terminal: rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04) -
+     erscheint auf JEDER Seite, sobald ein Shortcut aus dem eingeklappten
+     Research-Baum benutzt wurde (researchShortcutGo), unabhaengig von der
+     restlichen Tab-Rendering-Pipeline (body.res-return-active steuert die
+     Sichtbarkeit rein per CSS). -->
+<button id="resBackPill" class="rterm-back-pill" onclick="researchBackFromShortcut()" title="Back to the Research Terminal"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
 
 <script>
 'use strict';
@@ -3007,7 +3049,11 @@ const ICONS={
   // Research-Ordnerbaum (Nutzer-Wunsch 2026-08-04): Ordner-Icon fuer
   // benutzerdefinierte und Asset-Ordner - die 5 festen Kategorie-Ordner
   // behalten ihre eigenen, bereits bestehenden Icons (shuffle/bars/...).
-  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  // Research-Terminal (Nutzer-Wunsch 2026-08-04): Ein-/Ausklapp-Pfeil fuer
+  // die Sidebar (kein Emoji) - dieselbe Pfeilspitze wird per CSS-Klasse
+  // gespiegelt, statt ein zweites chevronLeft-Icon zu pflegen.
+  chevronRight:'<polyline points="9 18 15 12 9 6"/>'
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
@@ -6110,8 +6156,27 @@ function researchNotesContextFor(selId){
 // Blatt) - bewusst NICHT persistiert, gleiches Muster wie indDetailsOpen{}/
 // dashEditMode (App-Grundsatz: reiner Navigations-/Sitzungszustand).
 let researchTreeOpen={},researchTreeSel=null;
+// Research-Terminal (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots):
+// researchFocusAsset = das Asset, das die 5 Top-Karten + die Timeline-Spalte
+// zeigen (gesetzt durch Klick auf einen Asset-Ordner im Baum) - genau wie
+// dataAsset/seasAsset an anderer Stelle bewusst NICHT persistiert (reiner
+// Anzeige-Zustand, kein Nutzer-Inhalt). researchTopOpen haelt fest, welche
+// der 5 Karten gerade aufgeklappt ist (immer nur eine, wie ein Akkordeon -
+// sonst wuerde die Kartenreihe bei mehreren offenen Tabellen zu hoch/
+// unuebersichtlich). resTreeCollapsed klappt die Sidebar auf einen
+// schmalen Pfeil-Streifen ein.
+let researchFocusAsset=null,researchTopOpen=null,resTreeCollapsed=false,_resReturnActive=false;
 function researchToggleNode(id){researchTreeOpen[id]=!researchTreeOpen[id];renderResearch();}
 function researchSelectLeaf(id){researchTreeSel=id;renderResearch();}
+// Klick auf einen Asset-Ordner: klappt wie jeder andere Knoten auf/zu UND
+// macht dieses Asset zum Fokus der Top-Karten/Timeline (Referenz-Foto zeigt
+// diese Karten IMMER fuer "das gerade betrachtete Asset").
+function researchSelectAsset(nodeId){
+  researchTreeOpen[nodeId]=!researchTreeOpen[nodeId];
+  researchFocusAsset=nodeId.slice(6); // 'asset:EUR' -> 'EUR'
+  researchTopOpen=null;
+  renderResearch();
+}
 // Notizen-Ordner (General-Notes-Wurzel + eigene Unterordner) sind gleich-
 // zeitig aufklappbar UND ausgewaehlt (zeigt direkt seine eigenen Notizen
 // rechts an, wie ein Ordner im Windows-Explorer, der per Klick sowohl
@@ -6184,10 +6249,11 @@ function researchNodeRow(node,depth){
   const isNotes=node.type==='notesRoot'||node.type==='notesFolder';
   const isCustom=node.type==='custom'||node.type==='notesFolder';
   const canAddChild=node.type==='cat'||node.type==='custom'||isNotes;
-  const selCls=researchTreeSel===node.id?' on':'';
+  const selCls=(researchTreeSel===node.id||(node.type==='asset'&&researchFocusAsset===node.id.slice(6)))?' on':'';
   const kids=hasKids&&open?researchChildrenOf(node.type,node.id):[];
   const onclick=node.type==='analysis'?`researchSelectLeaf('${node.id}')`
     :isNotes?`researchSelectAndToggle('${node.id}')`
+    :node.type==='asset'?`researchSelectAsset('${node.id}')`
     :`researchToggleNode('${node.id}')`;
   return`<div class="rtree-node">
     <div class="rtree-row${selCls}" style="padding-left:${10+depth*20}px" onclick="${onclick}">
@@ -10587,25 +10653,150 @@ function researchTreeSelLabel(){
   }
   return researchTreeSel;
 }
-// Einstiegspunkt fuer den Research-Tab (Nutzer-Wunsch 2026-08-04: "ich mache
-// das wieder rueckgaengig" - loest den bisherigen Assets/Notes-Umschalter
-// ab durch EINEN durchgehenden Ordnerbaum, siehe researchChildrenOf() weiter
-// oben). Nur die Baum-NAVIGATION ist hier fertig - der Nutzer hat
-// angekuendigt, als naechstes zu spezifizieren, was beim Anklicken eines
-// Blatts (General Notes/Analysis/eigener Ordner) rechts erscheinen soll,
-// daher bislang nur ein Platzhalter dafuer.
-function renderResearch(){
-  const wrap=document.getElementById('resWrap');if(!wrap)return;
+// ══ RESEARCH-TERMINAL (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots) ══
+// Ersetzt das vorherige Baum+Rechtspanel-Layout durch: eine Reihe aus 5
+// Karten oben (Inflation/Labour Market/Economic Growth/Interest Rates fuer
+// researchFocusAsset + eine 5. "Risk Environment"-Karte, die beim
+// Ausklappen 1:1 die Dashboard-Risk-Sentiment-Karte zeigt), darunter drei
+// Spalten: einklappbare Ordnerbaum-Sidebar (oder, eingeklappt, Shortcut-
+// Icons zu den 7 Insights-Tabs) - Mitte (bewusst leer, "da kommen spaeter
+// Sachen") - schmale Timeline-Spalte (10 vergangene + 10 kommende
+// Kalender-Events fuer die Waehrung des Fokus-Assets).
+const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest Rates'];
+// Schlanke Nur-Lese-Tabelle (kein Bias-Picker/Edit - das Terminal ist ein
+// Ueberblick, keine Bearbeitungsflaeche) - nutzt bewusst dieselbe .ind-table-
+// CSS wie die Asset-Detailseite (Grundsatz "wiederkehrende UI-Bausteine
+// muessen einheitlich sein"), nur mit eigenen, einfacheren Zeilen.
+function researchTopIndTableHtml(rub){
+  const inds=(rub&&rub.indicators)||[];
+  if(!inds.length)return`<div class="dw-empty">No indicators on this card.</div>`;
+  const rows=inds.map(ind=>{
+    const r=ind.research||{};
+    const bco=BC[ind.bias]||'var(--t3)';
+    const val=v=>(v!=null&&v!=='')?escH(String(v)):'–';
+    return`<tr class="ind-row" style="border-left-color:${bco}">
+      <td class="ir-name"><span class="ir-name-txt">${escH(ind.displayName||ind.name)}</span></td>
+      <td>${val(r.actual)}</td><td>${val(r.forecast)}</td><td>${val(r.previous)}</td>
+    </tr>`;
+  }).join('');
+  return`<table class="ind-table"><thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+// Akkordeon (nur eine Karte gleichzeitig offen, sonst wird die Reihe zu
+// unuebersichtlich) - erneuter Klick auf die offene Karte klappt sie zu.
+function researchToggleTop(key){researchTopOpen=researchTopOpen===key?null:key;renderResearch();}
+function researchTopCardsHtml(){
+  const sym=researchFocusAsset?(syms||[]).find(s=>s.id===researchFocusAsset):null;
+  const cards=RESEARCH_TOP_RUBS.map(name=>{
+    const rub=sym?(sym.rubrics||[]).find(r=>r.name===name):null;
+    const sc=rub?rubScore(rub):0;
+    const bco=rub?BC[rub.bias]:'var(--t3)';
+    const open=researchTopOpen===name;
+    return`<div class="ov-field2 rterm-topcard${open?' open':''}" onclick="researchToggleTop('${name}')" title="${sym?'Show the indicator table':'Select an asset in the sidebar first'}">
+      <div class="ov2-titleline"><span class="ov2-title">${escH(name)}</span></div>
+      <div class="ov2-scoreline"><span class="ov2-score" style="color:${bco}">${rub?`${sc>0?'+':''}${sc}`:'–'}</span><span class="ov2-badge">${rub?BL[rub.bias]:''}</span></div>
+    </div>`;
+  }).join('');
+  // Risk Environment zeigt bewusst NICHT die asset-eigene Risk-Environment-
+  // Rubrik (Risk Correlation/Geopolitics), sondern beim Ausklappen 1:1 die
+  // Dashboard-Karte (riskSentimentWidgetHtml) - Nutzer-Korrektur 2026-08-04.
+  const{pct,lbl,col}=riskOnOffState();
+  const riskOpen=researchTopOpen==='risk';
+  const riskCard=`<div class="ov-field2 rterm-topcard${riskOpen?' open':''}" onclick="researchToggleTop('risk')" title="Show the Risk Sentiment card">
+    <div class="ov2-titleline"><span class="ov2-title">Risk Environment</span></div>
+    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span></div>
+  </div>`;
+  let expandHtml='';
+  if(riskOpen)expandHtml=`<div class="rterm-topexp">${riskSentimentWidgetHtml('resRisk')}</div>`;
+  else if(researchTopOpen){
+    const rub=sym?(sym.rubrics||[]).find(r=>r.name===researchTopOpen):null;
+    expandHtml=`<div class="rterm-topexp">${sym?researchTopIndTableHtml(rub):`<div class="dw-empty">Select an asset in the sidebar first.</div>`}</div>`;
+  }
+  return`<div class="rterm-top">${cards}${riskCard}</div>${expandHtml}`;
+}
+// Timeline-Spalte: 10 vergangene + 10 kommende Kalender-Events fuer die
+// Waehrung des Fokus-Assets (macroCcyFor - dieselbe Ableitung, die auch
+// die automatischen Score-Events nutzt: FX-Symbole ihre eigene Waehrung,
+// Non-FX default USD, sofern nicht anders verknuepft).
+function researchTimelineHtml(){
+  if(!researchFocusAsset)return`<div class="rterm-tl-empty">Select an asset in the sidebar to see its news timeline.</div>`;
+  const ccy=macroCcyFor(researchFocusAsset);
+  const list=(calEvts||[]).filter(ev=>evtMatchesSym(ev,ccy)).sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
+  const past=list.filter(ev=>isEvtPast(ev)).slice(-10);
+  const upcoming=list.filter(ev=>!isEvtPast(ev)).slice(0,10);
+  const row=(ev,isPast)=>{
+    const val=v=>(v!=null&&v!=='')?escH(String(v)):'–';
+    return`<div class="rterm-tl-item${isPast?' past':''}">
+      <div class="rterm-tl-dot"></div>
+      <div class="rterm-tl-body">
+        <div class="rterm-tl-date">${fmtDayHdr(ev.date)}</div>
+        <div class="rterm-tl-name">${escH(ev.name)}</div>
+        <div class="rterm-tl-vals">A ${val(ev.actual)} · F ${val(ev.forecast)} · P ${val(ev.previous)}</div>
+      </div>
+    </div>`;
+  };
+  const items=[...past.map(ev=>row(ev,true)),...upcoming.map(ev=>row(ev,false))].join('');
+  return items||`<div class="rterm-tl-empty">No ${escH(ccy)} events in the calendar yet.</div>`;
+}
+// Sidebar auf einen schmalen Pfeil-Streifen einklappen (Nutzer-Wunsch: "kein
+// Emoji", nur der Pfeil-Button bleibt) - eingeklappt erscheinen stattdessen
+// vertikale Shortcut-Icons zu den 7 Insights-Tabs.
+function researchToggleSidebar(){resTreeCollapsed=!resTreeCollapsed;renderResearch();}
+const RESEARCH_SHORTCUTS=[
+  ['seas','clock'],['trends','trendUp'],['cot','bars'],['sent','zap'],
+  ['data','note'],['rate','globe'],['carry','shuffle'],
+];
+// Setzt vor der Navigation den passenden Asset-Filter der Zielseite, damit
+// "automatisch ist schon das richtige Symbol ausgewaehlt" zutrifft - nutzt
+// dieselben Funktionen, die auch die jeweilige Toolbar dort selbst aufruft
+// (kein zweiter, potenziell abweichender Vorauswahl-Pfad).
+function researchShortcutGo(tabId){
+  const id=researchFocusAsset;
+  if(id){
+    if(tabId==='seas')setSeasAsset(id);
+    else if(tabId==='trends')setTrendsFilter(id);
+    else if(tabId==='cot')pickCotFilter(id);
+    else if(tabId==='data')setDataAsset(id);
+    else if(tabId==='carry'){const q=document.getElementById('carrySearch');if(q)q.value=id;}
+  }
+  _resReturnActive=true;
+  document.body.classList.add('res-return-active');
+  showTab(tabId);
+  if(tabId==='carry'){const q=document.getElementById('carrySearch');if(q&&id){q.value=id;renderCarry();}}
+}
+function researchBackFromShortcut(){
+  _resReturnActive=false;
+  document.body.classList.remove('res-return-active');
+  showTab('notes');
+}
+function researchSidebarHtml(){
+  if(resTreeCollapsed){
+    return`<div class="rterm-side-collapsed">
+      <button class="rterm-side-toggle" onclick="researchToggleSidebar()" title="Show folders">${icn('chevronRight',15)}</button>
+      <div class="rterm-shortcuts">${RESEARCH_SHORTCUTS.map(([tabId,ic])=>`<button class="rterm-shortcut" onclick="researchShortcutGo('${tabId}')" title="${escH(TABS[tabId].label)}">${icn(ic,16)}</button>`).join('')}</div>
+    </div>`;
+  }
   const anyOpen=researchAllFolderIds().some(id=>researchTreeOpen[id]);
   const rows=researchChildrenOf('root',null).map(n=>researchNodeRow(n,0)).join('');
-  wrap.innerHTML=`<div class="rtree-toolbar">
+  return`<div class="rterm-tree">
+    <div class="rtree-toolbar">
+      <button class="rterm-side-toggle rterm-side-toggle-in" onclick="researchToggleSidebar()" title="Collapse folders">${icn('chevronRight',15)}</button>
       <div class="rtree-title">Research</div>
       <button class="btn" onclick="researchExpandAllToggle()">${anyOpen?'Collapse all':'Expand all'}</button>
       <button class="btn rtree-edit-ctrls rtree-add-root" onclick="researchAddFolder(null)">${icn('folder',13)} + Add folder</button>
     </div>
-    <div class="rtree-split">
-      <div class="rtree-root">${rows}</div>
-      <div class="rtree-panel">${researchRightPanelHtml()}</div>
+    ${rows}
+  </div>`;
+}
+function renderResearch(){
+  const wrap=document.getElementById('resWrap');if(!wrap)return;
+  wrap.innerHTML=`${researchTopCardsHtml()}
+    <div class="rterm-body${resTreeCollapsed?' collapsed':''}">
+      <div class="rterm-side">${researchSidebarHtml()}</div>
+      <div class="rterm-mid"></div>
+      <div class="rterm-timeline">
+        <div class="rterm-tl-title">Timeline</div>
+        <div class="rterm-tl-list">${researchTimelineHtml()}</div>
+      </div>
     </div>`;
   attachChartHovers(wrap);
 }
@@ -11449,43 +11640,7 @@ function renderDash(){
         <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${BC[r.s.bias]}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
     }else if(w.type==='risk_sentiment'){
-      const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
-      // Vergleichs-Score (symScoreCmp) statt roh (Nutzer-Bugreport 2026-07-13):
-      // sonst passt die "Risk assets X / Safe havens Y"-Summenzeile nicht zu
-      // den einzelnen Asset-Zeilen darunter, die schon symScoreCmp zeigen.
-      // Geteilte Berechnung mit updateAuroraColors()/dem Daily-Bias-Widget
-      // (riskOnOffState) - ein einziges net>0.8/<-0.8-Kriterium ueberall.
-      const sc=id=>{const s=syms.find(x=>x.id===id);return s?symScoreCmp(s):null;};
-      const{on,off,net,pct,lbl,col}=riskOnOffState();
-      const mx=Math.max(1,...[...ON_IDS,...OFF_IDS].map(id=>Math.abs(sc(id)||0)));
-      // Nur Name + Wert (Referenz-Foto, Nutzer-Wunsch 2026-07-25 "1 zu 1"):
-      // der fruehere Mini-Balken war rein dekorativ (der Zahlenwert steht
-      // ohnehin daneben) und presste den Namen so weit zusammen, dass
-      // "S&P 500" in der schmaleren 3-Spalten-Karte abgeschnitten wurde.
-      const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
-        <span class="risk-asset-name">${escH(s.name||id)}</span>
-        <span class="risk-asset-sc" style="color:${BC[s.bias]}">${v>0?'+':''}${Math.round(v*10)/10}</span>
-      </div>`;};
-      // Regler fuer den Nutzer-eigenen Risk-Environment-Read (Nutzer-Wunsch
-      // 2026-07-13): 3 Stufen statt eines echten Drag-Sliders (robuster auf
-      // Touch, gleiches Bedienmuster wie sonst im Projekt ueberall - Button-
-      // Gruppen statt Custom-Drag-Widgets). Treibt "Risk Correlation" auf
-      // JEDEM Asset mit einer Risk-Environment-Karte (siehe recomputeRiskCorr).
-      const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
-      const envSetUI=`<div class="risk-env-set">
-        <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
-        <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
-      </div>`;
-      content=`<div class="risk-gauge">
-        ${envSetUI}
-        <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100,'dashRisk')}</div>
-        <div class="risk-lbl" style="color:${col}">${lbl}</div>
-        <div class="risk-sub" title="Net = risk assets − safe havens; >+0.8 RISK-ON, <−0.8 RISK-OFF">Risk ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
-        <div class="risk-assets-grid">
-          <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
-          <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
-        </div>
-      </div>`;
+      content=riskSentimentWidgetHtml();
     }else if(w.type==='movers_fx'){
       // Preisbasierte Bewegung (nicht Score!): die groessten FX-Gewinner UND
       // -Verlierer seit dem letzten verfuegbaren Vortageswert, in getrennten
@@ -13038,6 +13193,43 @@ function riskOnOffState(){
   const net=on-off,pct=Math.max(2,Math.min(98,50+net*8));
   const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
   return{on,off,net,pct,lbl,col};
+}
+// Ausgelagert aus dem Dashboard-Widget-Renderer (Nutzer-Wunsch 2026-08-04:
+// die "Risk Environment"-Karte im Research-Terminal zeigt beim Ausklappen
+// GENAU diese Karte vom Dashboard) - jetzt von renderDash() UND
+// researchTopCardsHtml() genutzt, exakt derselbe Markup/State (kein
+// zweiter, potenziell abweichender Nachbau).
+function riskSentimentWidgetHtml(gaugeKey){
+  const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
+  const{on,off,pct,lbl,col}=riskOnOffState();
+  // Nur Name + Wert (Referenz-Foto, Nutzer-Wunsch 2026-07-25 "1 zu 1"):
+  // der fruehere Mini-Balken war rein dekorativ (der Zahlenwert steht
+  // ohnehin daneben) und presste den Namen so weit zusammen, dass
+  // "S&P 500" in der schmaleren 3-Spalten-Karte abgeschnitten wurde.
+  const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
+    <span class="risk-asset-name">${escH(s.name||id)}</span>
+    <span class="risk-asset-sc" style="color:${BC[s.bias]}">${v>0?'+':''}${Math.round(v*10)/10}</span>
+  </div>`;};
+  // Regler fuer den Nutzer-eigenen Risk-Environment-Read (Nutzer-Wunsch
+  // 2026-07-13): 3 Stufen statt eines echten Drag-Sliders (robuster auf
+  // Touch, gleiches Bedienmuster wie sonst im Projekt ueberall - Button-
+  // Gruppen statt Custom-Drag-Widgets). Treibt "Risk Correlation" auf
+  // JEDEM Asset mit einer Risk-Environment-Karte (siehe recomputeRiskCorr).
+  const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
+  const envSetUI=`<div class="risk-env-set">
+    <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
+    <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
+  </div>`;
+  return`<div class="risk-gauge">
+    ${envSetUI}
+    <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100,gaugeKey||'dashRisk')}</div>
+    <div class="risk-lbl" style="color:${col}">${lbl}</div>
+    <div class="risk-sub" title="Net = risk assets − safe havens; >+0.8 RISK-ON, <−0.8 RISK-OFF">Risk ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
+    <div class="risk-assets-grid">
+      <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
+      <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
+    </div>
+  </div>`;
 }
 // "Global Market Surveillance"-HUD unter dem Globus (Nutzer-Wunsch
 // 2026-07-27: "immernoch die sich drehende Kugel und dann so Infos die
@@ -15896,6 +16088,11 @@ function showTab(tab,btn,fxMode){
   if(tab!=='dash'&&dashEditMode){dashEditMode=false;document.body.classList.remove('dash-edit-mode');}
   if(tab!=='cur'&&indEditMode){indEditMode=false;document.body.classList.remove('ind-edit-mode');}
   if(tab!=='notes'&&resEditMode){resEditMode=false;document.body.classList.remove('res-edit-mode');}
+  // Rotes "Back"-Symbol (Research-Terminal-Shortcut, siehe researchShortcutGo)
+  // verschwindet automatisch, sobald der Nutzer tatsaechlich zurueck im
+  // Research-Terminal ankommt - egal ob ueber die Back-Pille selbst oder
+  // ueber die normale Tab-Leiste.
+  if(tab==='notes'&&_resReturnActive){_resReturnActive=false;document.body.classList.remove('res-return-active');}
   if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
