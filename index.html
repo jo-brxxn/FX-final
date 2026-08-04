@@ -363,7 +363,15 @@ svg.ic{vertical-align:-2px;flex:none}
    in der Rubrik-Karte selbst als auch in der Overview-Kachel oben (Nutzer-
    Nachschliff 2026-07-29: "auch bei den overview Karten" - vorher nur
    `.rub-summary` erfasst, `.ov2-summary` blieb sichtbar). */
-body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
+body.compact-view .rub-summary{display:none}
+/* Nutzer-Wunsch 2026-08-04: die 6 Overview-Kachel-Summarys sollen beim
+   Umlegen des Kompakt-Reglers NICHT mehr verschwinden, sondern komplett
+   ausklappen (voller Text statt 1-Zeilen-Klammer per -webkit-line-clamp) -
+   die Kachel darf dabei beliebig hoeher werden (.ov-grid hat align-items:
+   stretch, Nachbarn in derselben Reihe wachsen automatisch mit), aber NICHT
+   breiter (Spaltenbreite kommt fest aus grid-template-columns, davon
+   unberuehrt). */
+body.compact-view .ov2-summary{display:block;-webkit-line-clamp:unset;overflow:visible}
 /* Auf schmalen Screens nur Icons in der Header-Leiste (Text-Labels weg),
    damit die Buttons nicht mehrzeilig umbrechen. */
 @media(max-width:760px){.btn-lbl{display:none}.hdr .btn{padding:7px 9px}
@@ -541,7 +549,22 @@ body.compact-view .rub-summary,body.compact-view .ov2-summary{display:none}
    Icon-/Regler-Groessen statt der fuer eine eigene Toolbar-Zeile gedachten
    34/52px-Originalmasse (".Design der Symbole anpassen"). Reihenfolge in
    der Leiste: Historie, Einstellungen (nur Non-FX), Regler ganz rechts. */
-.dmeta-controls{display:flex;align-items:center;gap:6px;padding-left:14px;margin-left:4px;border-left:1px solid var(--bd)}
+.dmeta-controls{display:flex;align-items:stretch;padding-left:14px;margin-left:4px;border-left:1px solid var(--bd)}
+/* Nutzer-Korrektur 2026-08-04: der Historie-Button sah als eigener
+   Quadrat-Button mit hellem Kartenhintergrund (.cfg-gear) neben dem
+   Filter-Regler "unpassend" aus - auf explizite Nachfrage (AskUserQuestion)
+   entschied sich der Nutzer fuer ein reines Text-Label OHNE Hintergrund,
+   "einfach wie die anderen" (gemeint: wie die .dmeta-i-Info-Werte davor,
+   selbe Typografie/kein Rahmen/keine Fuellflaeche), mit einem duennen
+   Trenner-Strich davor - exakt das bereits etablierte .dmeta-i-Trenner-
+   Muster (border-left, kein eigener neuer Trenner-Stil noetig). Das
+   Einstellungs-Zahnrad bei Non-FX bleibt bewusst ein Icon-Button
+   (Nutzer-Wunsch "soll so bleiben"), bekommt aber denselben .dmeta-ctrl-
+   Trenner links wie die anderen beiden Elemente. */
+.dmeta-ctrl{display:flex;align-items:center;height:100%;padding:0 10px;border-left:1px solid var(--bd)}
+.dmeta-ctrl:first-child{border-left:none;padding-left:0}
+.dmeta-hist-btn{background:none;border:none;padding:0;margin:0;font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;cursor:pointer;outline:none}
+@media (hover:hover){.dmeta-hist-btn:hover{color:var(--blue)}}
 .dmeta-controls .cfg-gear{width:24px;height:24px;font-size:12px;border-radius:6px}
 .dmeta-controls .compact-sw{width:38px;height:22px;border-radius:11px}
 .dmeta-controls .compact-sw .knob{width:16px;height:16px;top:2px;left:2px}
@@ -714,10 +737,18 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .ind-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:4px}
 .ind-table thead th{text-align:right;font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--t3);font-weight:700;padding:0 4px 6px;border-bottom:1px solid var(--bd);white-space:normal;overflow:hidden;word-break:break-word}
 .ind-table thead th.iht-name{text-align:left}
+.ind-table thead th.iht-trend{text-align:center}
 .ind-table tbody tr.ind-row{border-left:3px solid var(--bd2);border-bottom:1px solid var(--bd)}
 .ind-table tbody tr.ind-row:last-child{border-bottom:none}
 .ind-table td{padding:7px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
-.ir-name{text-align:left;white-space:normal;display:flex;align-items:center;gap:3px;min-width:0}
+/* .ind-table td.ir-name statt nur .ir-name: braucht die hoehere Spezifitaet
+   (Klasse+Element vs. nur Klasse), um die generische .ind-table-td-Regel
+   (text-align:right) zu schlagen - sonst gewinnt IMMER die rechtsbuendige
+   Regel unabhaengig von der Deklarationsreihenfolge, und der volle-Breite-
+   Flex-Text (.ir-name-txt, flex:1 1 auto) erbt text-align:right, wodurch
+   kurze Namen weit nach rechts rutschen statt alle am selben linken Rand zu
+   beginnen (Nutzer-Bugreport 2026-08-04, per Foto). */
+.ind-table td.ir-name{text-align:left;white-space:normal;display:flex;align-items:center;gap:3px;min-width:0}
 /* Sehr lange Indikator-Namen werden auf einer Zeile abgeschnitten ("...")
    statt die feste Tabellenbreite zu sprengen (Nutzer-Wunsch 2026-08-03) -
    braucht min-width:0 auf dem Flex-Item, sonst verweigert Flexbox das
@@ -742,8 +773,15 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 /* Sparkline schrumpft mit der (jetzt festen, nicht mehr scrollbaren) Trend-
    Spalte statt mit fester Pixelbreite ueberzustehen (Nutzer-Wunsch
    2026-08-03: Tabelle darf nie ueberlaufen). */
-.ir-spark{width:100%;max-width:36px;height:14px;display:block}
-.ir-trend{overflow:hidden}
+.ir-spark{width:100%;max-width:36px;height:14px;display:block;margin:0 auto}
+/* .ind-table td.ir-trend statt nur .ir-trend: dieselbe Spezifitaets-Falle
+   wie bei .ir-name (s.o.) - text-align:center muesste sonst die generische
+   .ind-table-td-Regel schlagen, tut es aber wegen niedrigerer Spezifitaet
+   nicht. margin:0 auto auf .ir-spark zusaetzlich noetig, weil das SVG
+   display:block ist - text-align wirkt nur auf Inline-Content, nicht auf
+   block-level Kinder (Nutzer-Bugreport 2026-08-04: Trend-Icon sass sichtbar
+   links im Feld statt unter der zentrierten "TREND"-Ueberschrift). */
+.ind-table td.ir-trend{overflow:hidden;text-align:center}
 .ind-row{cursor:pointer}
 .ind-row.ind-flash>td{animation:indFlash 1.8s ease-out}
 /* Ausklappbare Detail-Zeile pro Indikator (Nutzer-Wunsch 2026-07-29,
@@ -2198,12 +2236,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-290 — Nutzer-Foto (Watchlist-Karte + Assets-Tab): Watchlist zeigt nur noch Watchlist, Quick Notes komplett raus, Name/Score/Bias-Symbol jetzt kompakt genug um immer ohne Scrollen lesbar zu sein. Asset-Detailseite (alle Assets): Bullish/Bearish-Prozentleiste unter 'Next Event' entfernt, Quick-Note-Feld entfernt; Historie-Button + Kompakt-Regler (und bei Non-FX zusaetzlich das Asset-Einstellungen-Zahnrad) ziehen aus der Tab-Zeile in die Kopfzeilen-Leiste oben rechts um (Reihenfolge: Historie, Einstellungen, Regler ganz rechts), mit eigener kompakterer Icon-/Reglergroesse fuer den neuen Platz. Die 6 Rubrik-Uebersichtskacheln (Inflation/Labour Market/...) stehen jetzt schon ab 900px (statt 1450px) in einer Reihe, dafuer kompaktere Schrift/Abstaende.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-291 — Nutzer-Foto (Assets-Tab, Indikator-Tabellen): Indikator-Namen beginnen jetzt in JEDER Karte/JEDEM Asset an derselben linken X-Position (CSS-Spezifitaets-Bug behoben: die generische .ind-table-td-Rechtsbuendig-Regel hatte .ir-names text-align:left bisher immer geschlagen, wodurch kurze Namen wie 'PPI y/y' viel weiter eingerueckt wirkten als lange wie 'CPI (Headline) y/y'). Trend-Spalte: Sparkline/Platzhalter-Strich steht jetzt zentriert unter der 'TREND'-Ueberschrift statt linksbuendig (SVG war display:block, reagierte nicht auf text-align, jetzt zusaetzlich margin:0 auto). Historie-Button (Asset-Detailseite, oben rechts) auf Nutzer-Wunsch (per Rueckfrage bestaetigt) zu einem reinen Text-Label ohne Hintergrund umgebaut (wie die Info-Werte davor), mit duennen Trennstrichen zwischen Historie/Einstellungen(nur Non-FX)/Kompakt-Regler statt vorher nur einem Abstand. Kompakt-Regler: die 6 Rubrik-Uebersichtskacheln zeigen beim Umlegen jetzt den KOMPLETTEN Zusammenfassungstext (statt komplett zu verschwinden) - Kachel waechst dabei nur nach unten, nie in der Breite.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-290</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-291</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6943,9 +6981,9 @@ function renderDetail(){
   // passend zum schmalen Leisten-Kontext statt der vorherigen, fuer eine
   // eigene Toolbar-Zeile gedachten 34/52px-Groessen.
   const dmetaControls=`<div class="dmeta-controls">
-    <button class="cfg-gear" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">${icn('clock',13)}</button>
-    ${isNonFx(c.id)?`<button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button>`:''}
-    <button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button>
+    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
+    ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
+    <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
@@ -7194,7 +7232,7 @@ function renderIndsTable(rub,ri){
   // renderIndRow fuer sehr lange Indikator-Namen).
   return`<table class="ind-table">
     <colgroup><col style="width:29%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:17%"></colgroup>
-    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th>Trend</th></tr></thead>
+    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th class="iht-trend">Trend</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="add-row ind-edit-ctrls" style="margin-top:8px">
