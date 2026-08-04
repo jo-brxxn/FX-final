@@ -60,7 +60,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 9
    Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
    im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
    laeufig in derselben Zeile. */
-.hdr{background:transparent;padding:10px 14px 6px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
+.hdr{background:transparent;padding:6px 14px 4px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
 /* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
    Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
    Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
@@ -71,9 +71,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 9
 .logo{grid-column:1;grid-row:1;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
 .logo-fx{font-weight:900;color:var(--t0);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
-.logo-s{font-size:11px;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
-.saved{font-size:11px;color:var(--success);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
-.net-status{font-size:11px;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
+.logo-s{font-size:11px;line-height:1.25;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:0}
+.saved{font-size:11px;line-height:1.25;color:var(--success);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.net-status{font-size:11px;line-height:1.25;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
 .hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 /* Referenz-Mockup 2026-08-03: Header-Buttons wirken dort wie ein reiner
    Icon+Label-Streifen ohne sichtbare Pille (kein Rahmen/Hintergrund im
@@ -376,7 +376,7 @@ body.compact-view .rub-summary{display:block}
 /* Mobiler Header kompakter (Nutzer-Wunsch 2026-07-16) - Avatar/Name sind
    jetzt app-weit klein/namenlos (siehe .profile-circle/.profile-name oben),
    hier bleibt nur noch der engere Innenabstand als Mobil-Sonderfall. */
-.hdr{padding:7px 10px;gap:5px}
+.hdr{padding:5px 10px 4px;gap:5px}
 .profile-btn{margin-left:2px}}
 /* Today's-Movers-Dashboard-Karte */
 .mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
@@ -1856,7 +1856,7 @@ body.dash-edit-mode .mw-bar{display:flex}
 @keyframes lockshake{10%,90%{transform:translateX(-6px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
 /* ── DESKTOP / TABLET (iPad+, PC) ── */
 @media(min-width:760px){
-  .hdr{padding:13px 22px}
+  .hdr{padding:8px 22px 6px}
   .logo{font-size:20px}
   .logo-s,.saved{font-size:13px}
   .btn{font-size:13px;padding:6px 12px}
@@ -2105,18 +2105,20 @@ body.dash-edit-mode .mw-bar{display:flex}
 .hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
 /* Schmale Screens: Buttons neben den Logo-Block (Zeile 1), Banner darunter
    ueber die volle Breite - sonst waere die Button-Leiste dort zu eng. */
-/* Unter 1080px: EINE Spalte, alles untereinander (Logo, Statuszeile,
-   Buttons, Banner). Das Foto-Grid (Banner in Zeile 1, Buttons rechts in
-   Zeile 2) braucht Platz fuer Logo-Spalte UND die volle Button-Spalte
-   nebeneinander - darunter quetscht es den Logo-/Statustext mehrzeilig
-   zusammen (per Playwright bei 820px und 390px gesehen). Grenze bewusst
-   1080px, damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt. */
+/* Unter 1080px: die Button-Spalte (.hdr-r) und die Statuszeile (.hdr-sub)
+   brauchen weiterhin je eine eigene volle Zeile, sonst quetscht es den
+   Logo-/Statustext mehrzeilig zusammen (per Playwright bei 820px und 390px
+   gesehen). Logo + Live-Banner bleiben aber (Nutzer-Foto 2026-08-04: "in
+   eine Zeile") IMMER zusammen in Zeile 1 - dafuer reicht eine 2-Spalten-
+   Aufteilung (Logo links, Banner rechts daneben), der Squeeze-Grund von
+   oben betraf nur hdr-sub/hdr-r, nicht Logo/Banner. Grenze bewusst 1080px,
+   damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt. */
 @media(max-width:1079px){
-  .hdr{grid-template-columns:minmax(0,1fr)}
+  .hdr{grid-template-columns:auto minmax(0,1fr)}
   .logo{grid-column:1;grid-row:1;justify-self:start}
-  .hdr-sub{grid-column:1;grid-row:2}
-  .hdr-r{grid-column:1;grid-row:3;justify-self:start;margin-top:4px}
-  .hdr-livebanner{grid-column:1;grid-row:4;margin-top:4px;justify-self:center}
+  .hdr-livebanner{grid-column:2;grid-row:1;justify-self:center}
+  .hdr-sub{grid-column:1/-1;grid-row:2}
+  .hdr-r{grid-column:1/-1;grid-row:3;justify-self:start;margin-top:3px}
 }
 </style>
 </head>
@@ -2242,12 +2244,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-293 — Nutzer-Foto: der Kompakt-Regler ist jetzt ein echter binaerer Ein/Aus-Schalter fuer die Zusammenfassungen. In der Aus-Stellung (wie im Foto gezeigt) ist KEINE Summary mehr sichtbar - weder in der Overview-Kachel (.ov2-summary) noch in der Rubrik-Karte selbst (.rub-summary), beide vorher noch in Resten sichtbar (1-zeilig geklammert bzw. immer voll da). Erst beim Umlegen klappen beide komplett aus (voller Text), die Karte waechst dabei nur nach unten (Spaltenbreite bleibt fest).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-294 — Nutzer-Foto: Kopfzeile deutlich kompakter. Logo + LIVE-Banner teilen sich jetzt IMMER eine Zeile (auch unter 1080px Breite, wo vorher jedes Element eine eigene Zeile bekam - nur Statuszeile/Icon-Reihe brauchen weiterhin je eine eigene Zeile). Vertikales Padding der Kopfzeile spuerbar reduziert (Desktop 13px->8px/6px, Mobil 7px->5px/4px), Zeilenabstand zwischen 'FX: Bull/Bear/Neutral' und 'Saved' gestrafft (engere line-height/margins) - Kopfzeile bei 1366px+ von 101px auf 83px Gesamthoehe geschrumpft.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-293</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-294</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
