@@ -242,16 +242,29 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Landesflagge vor dem Ticker-Titel (tech-design-Skill) - Groesse an die
    Textgroesse gekoppelt statt fest, damit sie bei den responsiven .atitle-
    Breakpoints (21px/30px) automatisch mitskaliert. */
-.atitle-flag{display:inline-block;font-size:.72em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+/* Nutzer-Bugreport 2026-08-04 (Foto): die Flagge wirkte neben dem grossen
+   Asset-Namen winzig - font-size war auf .72em der jeweils VERERBTEN
+   Schriftgroesse gedeckelt, nicht auf die des Namens selbst abgestimmt.
+   1em (= exakt Vererbungsgroesse) behebt das an der Stelle, wo die Flagge
+   direkt IN der Namens-Ueberschrift steckt (.atitle, 34px) und dadurch
+   automatisch deren Groesse erbt; die zweite Fundstelle (Research-Tab,
+   .resf-detail-hd - dort ist die Flagge ein GESCHWISTER des Namens, nicht
+   dessen Kind, erbt also nicht automatisch dieselbe Groesse) bekommt dafuer
+   direkt am Verwendungsort eine explizite Groesse passend zu .resf-detail-nm. */
+.atitle-flag{display:inline-block;font-size:1em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
 .rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
 .afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* ── BIAS ── */
-.brow{display:flex;gap:5px;flex-wrap:wrap}
-.bo{padding:5px 10px;border-radius:999px;border:1.5px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}@media (hover:hover){.bo:hover:not(.on){background:var(--bg3);color:var(--t1)}}.bo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
-/* Overview-Karte (tech-design-Skill): Badge-WORT gedaempft grau, nur Icon+
-   Score tragen die Bias-Farbe - siehe renderOverviewCard(). */
-.ov-bias.bo.on .bo-word{color:var(--t3)}
+/* .brow/.bo/.ov-bias/.bo-word (Bias-Wort-Pille "◆ NEUTRAL" neben dem Score
+   im Asset-Header) auf Nutzer-Wunsch entfernt (Foto 2026-08-04, durch-
+   gestrichen markiert) - war rein informativ (nicht klickbar, cursor:
+   default) und duplizierte die bereits vorhandene Bias-Info (Score-Badge-
+   Farbe direkt daneben + die Bullish/Bearish-Prozentleiste weiter unten,
+   .pbar-i). Die einzige noch aktive Fundstelle dieses Musters im ganzen
+   Projekt; .ov-bias/.bo-word waren schon seit dem 2026-07-29-Umbau von
+   renderOverviewCard() toter Code (der zugehoerige HTML-Zweig steht dort
+   nur noch auskommentiert), jetzt mit entfernt statt laenger mitzuschleppen. */
 .pbar-w{height:3px;background:var(--bg4);border-radius:2px;margin-top:9px;overflow:hidden}
 .pbar{height:100%;border-radius:2px;transition:width .3s}
 .pbar-i{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1789,7 +1802,6 @@ body.dash-edit-mode .mw-bar{display:flex}
   #pgDash{padding-top:8px;padding-bottom:8px}
   .atitle{font-size:38px}
   .afull{font-size:13px}
-  .bo{font-size:13px;padding:6px 13px}
   .st{font-size:14px;padding:7px 16px}
   .slbl{font-size:11px}
   .rtxt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
@@ -2157,12 +2169,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-288 — Watchlist-Karte (Nutzer-Wunsch): Zeilen auf das Wesentliche reduziert - nur noch Asset-Name + Score, kein Preis-Chip/SL-TP-Meta mehr. Bias-Badge zeigt nur noch das Symbol (▲/▼/◆) statt des ausgeschriebenen Texts (BULL/BEAR/NEUT), Bedeutung bleibt per Hover-Tooltip erreichbar.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-289 — Nutzer-Foto (Assets-Tab, GBP): Flagge war neben dem Asset-Namen viel zu klein (font-size:.72em statt 1em bzw. fehlende explizite Groesse) - jetzt an beiden Fundstellen exakt so gross wie der Name selbst. Echter Bug behoben: der Score-Badge neben dem Namen faerbte sich nach dem reinen VORZEICHEN des Scores (-0.5 erschien komplett bearish-rot statt neutral) statt nach der ±3-Auto-Bias-Schwelle - zurueckgesetzt auf scoreBias(), betrifft automatisch jede Stelle, die dieselbe scoreBadge()-Funktion nutzt. Redundante '◆ NEUTRAL'-Pille neben dem Score im Asset-Header entfernt (Foto zeigte sie durchgestrichen) - dupliziert die bereits vorhandene Farb-Info + die Prozentleisten-Beschriftung darunter, war die einzige Stelle dieses Musters im Projekt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-288</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-289</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3130,18 +3142,15 @@ function scoreColor(n){return n>=3?'var(--blue)':n<=-3?'var(--red)':'var(--amber
 // Automatische Bias-Einstufung aus dem Score: >=+3 bullish, <=-3 bearish,
 // dazwischen neutral. Gilt fuer Symbole (symScore) und Paare (pairScore).
 function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
-// Skill-Kritik 2026-08-02 (Foto-Referenz): Kopfzeilen-Score-Chip ist im
-// Referenzbild konstant blau umrandet, unabhaengig vom Bias - der Bias wird
-// separat als Wort daneben gezeigt (.brow in renderDetail). Alt:
-// style="color:${scoreColor(n)};border-color:${scoreColor(n)}${oc?';cursor:pointer':''}"
-// Farbe/Rand folgen dem VORZEICHEN des Scores selbst (positiv=bullish,
-// negativ=bearish, 0=neutral) - NICHT der ±3-Auto-Bias-Schwelle von c.bias
-// (Nutzer-Wunsch 2026-08-03: Score-Badge neben dem Asset-Kuerzel soll sich
-// direkt nach dem angezeigten Score richten, Beispiel CHF mit negativem
-// Score → Badge in der bearish-Farbe, auch wenn c.bias noch nicht ueber die
-// Schwelle gekippt ist).
+// Nutzer-Bugreport 2026-08-04 (Foto): die Score-Badge-Farbe folgte bis eben
+// dem reinen VORZEICHEN des Scores (jede negative Zahl, egal wie klein,
+// erschien bearish-rot) - das war ein Bug, kein gewuenschtes Verhalten mehr
+// ("die -0.5 steht in bias Farbe bearish, muss aber in neutral stehen").
+// Zurueckgesetzt auf die ±3-Auto-Bias-Schwelle (scoreBias(), dieselbe, die
+// auch c.bias bestimmt) - ein Score wie -0.5 bleibt jetzt korrekt neutral-
+// grau, erst ab ≥3/≤-3 kippt die Farbe auf bullish/bearish.
 function scoreBadge(n,title,key,oc){
-  const col=n>0?BC.bull:n<0?BC.bear:BC.neu;
+  const col=BC[scoreBias(n)];
   return`<span class="score-badge"${key?` data-anim-score="${key}" data-sv="${n}"`:''}${oc?` onclick="${oc}" role="button"`:''} style="color:${col};border-color:${col}${oc?';cursor:pointer':''}" title="${escH(title||'Score = sum of the indicators (Bullish +1, Neutral 0, Bearish −1; Important ★ adds +0.5; an indicator with its own Core variant counts ±0.5 each)')}">${n>0?'+':''}${n}</span>`;
 }
 // Animiert Score-/Bias-Wechsel: Score-Zahlen zaehlen fließend hoch/runter mit
@@ -6911,7 +6920,6 @@ function renderDetail(){
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
       <div><div class="atitle">${FX_FLAG[c.id]?`<span class="atitle-flag">${FX_FLAG[c.id]}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × normalisation factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: Bullish +1, Neutral 0, Bearish −1; an indicator with its own Core variant counts ±0.5 each; CB Tone counts ±0.5, Next CB Move ±1; the 2Y/10Y Spread is display-only and counts 0; a release with no forecast uses actual-vs-previous instead: ±0.5 as soon as it differs, PLUS a further ±1 on top once a confirmed 2-step trend forms (total ±1.5); with a forecast, a confirmed trend adds ±1 on top of the normal beat/miss score; half-weight indicators get half of the trend bonus specifically (±0.5 instead of ±1), so a pair like CPI + Core CPI shares the full amount; 2Y/10Y yields add ±0.5 each when higher/lower than 25 days ago - every indicator with trend data shows a 📈 chip, tap it for the values behind the check. The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
-      <div class="brow"><span class="bo on" style="--bc:${BC[c.bias]};--bca:${BC[c.bias]}18;cursor:default" title="Bias is set automatically from the score: +3 or higher bullish, −3 or lower bearish, neutral in between">${c.bias==='bull'?'▲ BULLISH':c.bias==='bear'?'▼ BEARISH':'◆ NEUTRAL'}</span></div>
       ${detailMetaHtml(c,nextLbl)}
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -10344,7 +10352,7 @@ function renderResAssetDetail(id){
     </div>`;
   }).join('')||'<div class="dw-empty">No categories yet for this asset.</div>';
   return`<div class="resf-detail-hd">
-      ${FX_FLAG[s.id]?`<span class="atitle-flag">${FX_FLAG[s.id]}</span>`:''}
+      ${FX_FLAG[s.id]?`<span class="atitle-flag" style="font-size:22px">${FX_FLAG[s.id]}</span>`:''}
       <span class="resf-detail-nm">${escH(s.name)}</span>
       ${scoreBadge(symScoreCmp(s),'','resfd-'+s.id)}
       <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
