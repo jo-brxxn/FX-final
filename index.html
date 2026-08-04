@@ -322,8 +322,6 @@ svg.ic{vertical-align:-2px;flex:none}
 .ri.imp:not([class*="glow-"]){background:rgba(255,221,51,.16)!important;border-color:#ffe14d!important;box-shadow:0 0 0 1px rgba(255,221,51,.7),inset 0 0 13px 2px rgba(255,221,51,.26)!important}
 /* ── SUBTABS ── */
 .stabs{display:flex;gap:2px;margin:11px 0 9px;background:var(--bg2);border-radius:var(--rs);padding:3px;width:fit-content}
-.stabs-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.stabs-row .stabs{margin:11px 0 9px}
 .quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:13px;padding:6px 9px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.4;white-space:pre-wrap;word-break:break-word;min-height:33px}
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
@@ -358,12 +356,15 @@ svg.ic{vertical-align:-2px;flex:none}
 .compact-sw .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--t3);transition:transform .18s cubic-bezier(.2,.7,.3,1),background .15s}
 .compact-sw.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue)}
 .compact-sw.on .knob{transform:translateX(18px);background:var(--blue)}
-/* Nur noch 2 Stufen (Nutzer-Wunsch 2026-07-29): Stufe 1 zeigt alles inkl. der
-   Rubrik-Zusammenfassungen, Stufe 2 blendet die Zusammenfassungen aus - sowohl
-   in der Rubrik-Karte selbst als auch in der Overview-Kachel oben (Nutzer-
-   Nachschliff 2026-07-29: "auch bei den overview Karten" - vorher nur
-   `.rub-summary` erfasst, `.ov2-summary` blieb sichtbar). */
-body.compact-view .rub-summary{display:none}
+/* Nutzer-Korrektur 2026-08-04: `.rub-summary` (die Zusammenfassung direkt in
+   der Rubrik-Karte) wurde bei Stufe 1 vorher komplett AUSGEBLENDET, waehrend
+   `.ov2-summary` (Overview-Kachel oben) beim selben Regler-Klick voll
+   AUSGEKLAPPT wird (siehe Regel direkt darunter) - das fuehlte sich fuer den
+   Nutzer wie "entweder/oder" an statt wie ein einheitliches Verhalten. Fix:
+   `.rub-summary` wird nicht mehr ausgeblendet (die Textarea ist ohnehin
+   schon immer unclamped/auto-hoch via ar(), zeigt also so oder so den
+   vollen Text) - beide Summary-Arten "klappen" damit konsistent aus, keine
+   verschwindet mehr. */
 /* Nutzer-Wunsch 2026-08-04: die 6 Overview-Kachel-Summarys sollen beim
    Umlegen des Kompakt-Reglers NICHT mehr verschwinden, sondern komplett
    ausklappen (voller Text statt 1-Zeilen-Klammer per -webkit-line-clamp) -
@@ -565,7 +566,15 @@ body.compact-view .ov2-summary{display:block;-webkit-line-clamp:unset;overflow:v
 .dmeta-ctrl:first-child{border-left:none;padding-left:0}
 .dmeta-hist-btn{background:none;border:none;padding:0;margin:0;font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;cursor:pointer;outline:none}
 @media (hover:hover){.dmeta-hist-btn:hover{color:var(--blue)}}
-.dmeta-controls .cfg-gear{width:24px;height:24px;font-size:12px;border-radius:6px}
+/* Nutzer-Korrektur 2026-08-04: das Einstellungs-Zahnrad (Non-FX) UND das neue
+   Notes-Icon (s.u.) sollen "keinen weissen Hintergrund, nur das Symbol"
+   haben - .cfg-gear ist app-weit sonst ein gefuellter Quadrat-Button
+   (var(--bg2)+Rahmen), hier innerhalb von .dmeta-controls auf ein reines,
+   randloses Icon reduziert (gleiche Bare-Icon-Optik wie der Text-Link
+   .dmeta-hist-btn daneben). */
+.dmeta-controls .cfg-gear,.dmeta-icon-btn{width:24px;height:24px;font-size:12px;border-radius:6px;background:none;border:none;color:var(--t1);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;outline:none}
+.dmeta-controls .cfg-gear.on,.dmeta-icon-btn.on{color:var(--blue)}
+@media (hover:hover){.dmeta-controls .cfg-gear:hover,.dmeta-icon-btn:hover{color:var(--blue)}}
 .dmeta-controls .compact-sw{width:38px;height:22px;border-radius:11px}
 .dmeta-controls .compact-sw .knob{width:16px;height:16px;top:2px;left:2px}
 .dmeta-controls .compact-sw.on .knob{transform:translateX(16px)}
@@ -2236,12 +2245,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-291 — Nutzer-Foto (Assets-Tab, Indikator-Tabellen): Indikator-Namen beginnen jetzt in JEDER Karte/JEDEM Asset an derselben linken X-Position (CSS-Spezifitaets-Bug behoben: die generische .ind-table-td-Rechtsbuendig-Regel hatte .ir-names text-align:left bisher immer geschlagen, wodurch kurze Namen wie 'PPI y/y' viel weiter eingerueckt wirkten als lange wie 'CPI (Headline) y/y'). Trend-Spalte: Sparkline/Platzhalter-Strich steht jetzt zentriert unter der 'TREND'-Ueberschrift statt linksbuendig (SVG war display:block, reagierte nicht auf text-align, jetzt zusaetzlich margin:0 auto). Historie-Button (Asset-Detailseite, oben rechts) auf Nutzer-Wunsch (per Rueckfrage bestaetigt) zu einem reinen Text-Label ohne Hintergrund umgebaut (wie die Info-Werte davor), mit duennen Trennstrichen zwischen Historie/Einstellungen(nur Non-FX)/Kompakt-Regler statt vorher nur einem Abstand. Kompakt-Regler: die 6 Rubrik-Uebersichtskacheln zeigen beim Umlegen jetzt den KOMPLETTEN Zusammenfassungstext (statt komplett zu verschwinden) - Kachel waechst dabei nur nach unten, nie in der Breite.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-292 — Nutzer-Korrektur: Kompakt-Regler klappt jetzt konsistent BEIDE Zusammenfassungs-Arten aus (Overview-Kachel UND Rubrik-Karte selbst) statt vorher eine zu verstecken (.rub-summary) waehrend die andere (.ov2-summary) auskappt - .rub-summary wird nicht mehr ausgeblendet. Die grosse Macro/Notes-Umschalter-Zeile auf der Asset-Detailseite ist weg (per Rueckfrage bestaetigt): Macro-Inhalt steht jetzt immer direkt da, Notes bleibt ueber ein kleines einfarbiges Icon (kein Emoji) oben in der Kopfzeilen-Leiste erreichbar, gleich neben Historie. Einstellungs-Zahnrad bei Non-FX hat keinen weissen Kartenhintergrund mehr, nur noch das blanke Symbol wie die anderen Controls in der Zeile.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-291</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-292</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6980,8 +6989,15 @@ function renderDetail(){
   // Non-FX), davor die Historie. Eigene, kompaktere Groessen (.dmeta-controls)
   // passend zum schmalen Leisten-Kontext statt der vorherigen, fuer eine
   // eigene Toolbar-Zeile gedachten 34/52px-Groessen.
+  // Nutzer-Wunsch 2026-08-04: die grosse "⚡ Macro / 📝 Notes"-Umschalter-
+  // Zeile (.stabs-row) ist weg - Macro-Inhalt (Rubrik-Karten) steht ab jetzt
+  // immer direkt da (curSub bleibt 'specific' als Default, siehe selSym()),
+  // Notes bleibt ueber ein kleines, einfarbiges Icon (kein Emoji, per
+  // AskUserQuestion bestaetigt) hier in der Kopfzeilen-Leiste erreichbar -
+  // Klick schaltet zwischen Macro/Notes um wie zuvor die Buttons.
   const dmetaControls=`<div class="dmeta-controls">
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
+    <div class="dmeta-ctrl"><button class="dmeta-icon-btn${curSub==='notes'?' on':''}" onclick="setSub(curSub==='notes'?'specific':'notes')" title="${curSub==='notes'?'Back to Macro':'Notes'}">${icn('note',13)}</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
@@ -6997,12 +7013,6 @@ function renderDetail(){
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
-    <div class="stabs-row">
-      <div class="stabs">
-        <button class="st${curSub==='specific'?' on':''}" onclick="setSub('specific')">${icn('zap',13)} Macro</button>
-        <button class="st${curSub==='notes'?' on':''}" onclick="setSub('notes')">${icn('note',13)} Notes</button>
-      </div>
-    </div>
     ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
