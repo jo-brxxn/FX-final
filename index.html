@@ -776,19 +776,21 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-back-sm{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer;margin-bottom:8px}
 @media(hover:hover){.rterm-back-sm:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-riskbox{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
+/* Ueberschrift + Fokus-Asset-Identitaet AUSSERHALB der geborderten Box
+   (Nutzer-Korrektur 2026-08-04), deutlich groesser als die vorherige
+   kleine Titel-/Chip-Variante innerhalb der Box. */
+.rterm-side-title{padding:2px 4px 12px}
+.rterm-title-big{font-size:26px;font-weight:800;color:var(--t0);letter-spacing:-.2px}
+.rterm-side-asset{display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap}
+.rterm-side-asset-flag{font-size:22px}
+.rterm-side-asset-ticker{font-size:22px;font-weight:800;color:var(--t0)}
+.rterm-side-asset-name{font-size:15px;color:var(--t2)}
+.rterm-side-asset-sc{font-size:20px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-left:2px}
 .rterm-tree{flex:1 1 auto;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:6px;width:300px;max-width:80vw}
-.rterm-tree-hd{display:flex;align-items:center;gap:8px;padding:6px 6px 10px}
-.rterm-title-big{font-size:18px;font-weight:800;color:var(--t0)}
 .rterm-side-toggle{flex:0 0 auto;width:26px;height:26px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer}
 @media(hover:hover){.rterm-side-toggle:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-side-toggle-in{transform:rotate(180deg)}
 .rterm-side-collapsed{flex:1 1 auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 8px;width:168px}
-.rterm-focus-chip{display:flex;align-items:center;justify-content:space-between;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--bd2)}
-.rterm-focus-top{display:flex;align-items:center;gap:5px}
-.rterm-focus-flag{font-size:15px}
-.rterm-focus-ticker{font-size:13px;font-weight:800;color:var(--t0)}
-.rterm-focus-name{font-size:10.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px}
-.rterm-focus-sc{font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:0 0 auto}
 .rterm-shortcuts{display:flex;flex-direction:column;gap:4px}
 .rterm-shortcut{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer;text-align:left}
 .rterm-shortcut-lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -805,7 +807,10 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-tl-dot{position:absolute;left:-19px;top:2px;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2)}
 .rterm-tl-item.past .rterm-tl-dot{background:var(--t3)}
 .rterm-tl-item.past{opacity:.6}
-.rterm-tl-date{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3)}
+.rterm-tl-date{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.rterm-tl-bell{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.rterm-tl-bell.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.5);background:rgba(var(--blue-rgb),.12)}
+@media(hover:hover){.rterm-tl-bell:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-tl-name{font-size:12px;font-weight:600;color:var(--t1);margin:1px 0}
 .rterm-tl-vals{font-size:10.5px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .rterm-tl-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px 4px}
@@ -2416,12 +2421,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-308 — Research-Terminal-Feinschliff (Nutzer-Foto): die Ordnerbaum-Sidebar bildet jetzt die linke Spalte ueber die VOLLE Hoehe (Karten-Reihe+Timeline zusammen) - die Kartenreihe reicht dadurch nie mehr bis ganz links. Grosse Ueberschrift 'Research Terminal' ueber dem Baum, klappt mit ein. Eingeklappt: beschriftete Shortcut-Icons (nicht mehr nur Icons) + bei gewaehltem Asset Flagge/Ticker/Name + Score in Bias-Farbe oben. Klick auf eine Karte ersetzt die ganze Kartenreihe durch die ECHTE, editierbare Rubrik-Karte 1:1 wie auf der Assets-Seite (inkl. Bias-Picker/Summary/Umbenennen), kleiner Pfeil-Button oben links schaltet zurueck - dasselbe gilt fuer die Risk-Environment-Karte. Timeline ist jetzt standardmaessig auf High-Impact-News gefiltert, mit einem Umschalt-Button oben (wie im Kalender) fuer alle Impact-Stufen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-309 — Research-Terminal: Notiz-Funktionen in der Mitte eingebaut (zeigt General Notes des gewaehlten Assets samt Unterordner-Navigation ueber den Baum, '+ New note'), Glocke zum Anlegen von News-Alarmen auf kommenden Timeline-Events (dieselbe Funktion/Modal wie im Kalender). Ueberschrift 'Research Terminal' UND die Fokus-Asset-Identitaet (Flagge/Ticker/Name/Score) stehen jetzt ausserhalb der geborderten Ordner-Box, deutlich groesser (26px/22px statt vorher 18px/13px), immer sichtbar unabhaengig vom Auf-/Zugeklappt-Zustand der Sidebar.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-308</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-309</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -10692,6 +10697,22 @@ const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest
 // mit researchFocusAsset, damit renderRub()s eingebettete onclick-Handler
 // (getRub/getSym-basiert) exakt denselben Rubrik-Eintrag treffen wie auf der
 // Assets-Seite. Ein kleiner Pfeil-Button oben links schaltet zurueck.
+// Mitte (Nutzer-Wunsch 2026-08-04 "füg in der Mitte Notiz Funktionen ein"):
+// zeigt die Notizen des Fokus-Assets - wiederverwendet researchNotesPanelHtml
+// (schon vorher fuer den Baum-Blattklick "General Notes" gebaut, bis jetzt
+// aber dormant/unbenutzt). Standardmaessig die "General Notes"-Wurzel;
+// klickt der Nutzer im Baum in einen konkreten Unterordner DIESES Assets,
+// zeigt die Mitte genau den (researchNotesContextFor loest researchTreeSel
+// dafuer auf) - ein Klick in einen Unterordner eines ANDEREN Assets wird
+// ignoriert (faellt zurueck auf die Wurzel), kann nicht vorkommen, da
+// researchSelectAsset() researchTopOpen aber nicht researchTreeSel zuruecksetzt;
+// der assetId-Abgleich schuetzt trotzdem vor einem veralteten Treffer.
+function researchMidHtml(){
+  if(!researchFocusAsset)return`<div class="dw-empty" style="padding:16px">Select an asset in the sidebar to see its notes here.</div>`;
+  const ctx=researchNotesContextFor(researchTreeSel);
+  const use=(ctx&&ctx.assetId===researchFocusAsset)?ctx:{assetId:researchFocusAsset,fid:null};
+  return researchNotesPanelHtml(use.assetId,use.fid);
+}
 function researchToggleTop(key){researchTopOpen=researchTopOpen===key?null:key;renderResearch();}
 function researchTopCardsHtml(){
   const sym=researchFocusAsset?(syms||[]).find(s=>s.id===researchFocusAsset):null;
@@ -10741,10 +10762,20 @@ function researchTimelineHtml(){
   const upcoming=list.filter(ev=>!isEvtPast(ev)).slice(0,10);
   const row=(ev,isPast)=>{
     const val=v=>(v!=null&&v!=='')?escH(String(v)):'–';
+    // Glocke zum Anlegen eines News-Alarms (Nutzer-Wunsch 2026-08-04) - exakt
+    // dieselbe Funktion/Modal wie im Kalender (openEvtAlertM/eventAlerts),
+    // kein zweiter Alarm-Mechanismus. Nur fuer kommende Events mit gueltiger
+    // Uhrzeit (dieselbe Einschraenkung wie calRowHtml).
+    let bell='';
+    if(!isPast&&evtTimeValid(ev.time)){
+      const ekey=evtDismissKey(ev);
+      const hasAlert=eventAlerts.some(a=>a.evKey===ekey);
+      bell=`<button class="rterm-tl-bell${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="event.stopPropagation();openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Alert set — tap to edit or remove':'Set an alert for this event'}">${icn('bell',13)}</button>`;
+    }
     return`<div class="rterm-tl-item${isPast?' past':''}">
       <div class="rterm-tl-dot"></div>
       <div class="rterm-tl-body">
-        <div class="rterm-tl-date">${fmtDayHdr(ev.date)}</div>
+        <div class="rterm-tl-date">${fmtDayHdr(ev.date)}${bell}</div>
         <div class="rterm-tl-name">${escH(ev.name)}</div>
         <div class="rterm-tl-vals">A ${val(ev.actual)} · F ${val(ev.forecast)} · P ${val(ev.previous)}</div>
       </div>
@@ -10788,34 +10819,39 @@ function researchBackFromShortcut(){
 // FX bekommt die Landesflagge (FX_FLAG, wie im Asset-Seitentitel) - fuer
 // Non-FX (Indices/Commodities/Crypto/Stocks) gibt es dort bewusst kein
 // erfundenes Ersatz-Icon, nur Ticker+Name+Score.
-function researchFocusChipHtml(sym){
-  if(!sym)return'';
-  const sc=symScoreCmp(sym);
-  return`<div class="rterm-focus-chip">
-    <div class="rterm-focus-l">
-      <div class="rterm-focus-top">${FX_FLAG[sym.id]?`<span class="rterm-focus-flag">${FX_FLAG[sym.id]}</span>`:''}<span class="rterm-focus-ticker">${escH(sym.id)}</span></div>
-      <div class="rterm-focus-name">${escH(sym.name)}</div>
-    </div>
-    <div class="rterm-focus-sc" style="color:${BC[sym.bias]}">${sc>0?'+':''}${sc}</div>
+// Ueberschrift + Fokus-Asset-Identitaet stehen jetzt AUSSERHALB der
+// geborderten Baum-/Shortcut-Box, deutlich groesser (Nutzer-Korrektur
+// 2026-08-04: "mach das die Ueberschrift Research Terminal und die Asset
+// Namen deutlich groesser sein und ausserhalb der Ordner Karte") - immer
+// sichtbar, unabhaengig davon ob die Sidebar auf- oder zugeklappt ist.
+function researchSideTitleHtml(){
+  const sym=researchFocusAsset?(syms||[]).find(s=>s.id===researchFocusAsset):null;
+  const assetLine=sym?(()=>{
+    const sc=symScoreCmp(sym);
+    return`<div class="rterm-side-asset">
+      ${FX_FLAG[sym.id]?`<span class="rterm-side-asset-flag">${FX_FLAG[sym.id]}</span>`:''}
+      <span class="rterm-side-asset-ticker">${escH(sym.id)}</span>
+      <span class="rterm-side-asset-name">${escH(sym.name)}</span>
+      <span class="rterm-side-asset-sc" style="color:${BC[sym.bias]}">${sc>0?'+':''}${sc}</span>
+    </div>`;
+  })():'';
+  return`<div class="rterm-side-title">
+    <div class="rterm-title-big">Research Terminal</div>
+    ${assetLine}
   </div>`;
 }
 function researchSidebarHtml(){
-  const sym=researchFocusAsset?(syms||[]).find(s=>s.id===researchFocusAsset):null;
   if(resTreeCollapsed){
     return`<div class="rterm-side-collapsed">
       <button class="rterm-side-toggle" onclick="researchToggleSidebar()" title="Show folders">${icn('chevronRight',15)}</button>
-      ${researchFocusChipHtml(sym)}
       <div class="rterm-shortcuts">${RESEARCH_SHORTCUTS.map(([tabId,ic])=>`<button class="rterm-shortcut" onclick="researchShortcutGo('${tabId}')" title="${escH(TABS[tabId].label)}">${icn(ic,16)}<span class="rterm-shortcut-lbl">${escH(TABS[tabId].label)}</span></button>`).join('')}</div>
     </div>`;
   }
   const anyOpen=researchAllFolderIds().some(id=>researchTreeOpen[id]);
   const rows=researchChildrenOf('root',null).map(n=>researchNodeRow(n,0)).join('');
   return`<div class="rterm-tree">
-    <div class="rterm-tree-hd">
-      <button class="rterm-side-toggle rterm-side-toggle-in" onclick="researchToggleSidebar()" title="Collapse folders">${icn('chevronRight',15)}</button>
-      <div class="rterm-title-big">Research Terminal</div>
-    </div>
     <div class="rtree-toolbar">
+      <button class="rterm-side-toggle rterm-side-toggle-in" onclick="researchToggleSidebar()" title="Collapse folders">${icn('chevronRight',15)}</button>
       <button class="btn" onclick="researchExpandAllToggle()">${anyOpen?'Collapse all':'Expand all'}</button>
       <button class="btn rtree-edit-ctrls rtree-add-root" onclick="researchAddFolder(null)">${icn('folder',13)} + Add folder</button>
     </div>
@@ -10831,11 +10867,11 @@ function renderResearch(){
   // rechte Spalte NEBEN der Sidebar, statt die Karten ueber die volle Breite
   // laufen zu lassen.
   wrap.innerHTML=`<div class="rterm-shell">
-    <div class="rterm-side">${researchSidebarHtml()}</div>
+    <div class="rterm-side">${researchSideTitleHtml()}${researchSidebarHtml()}</div>
     <div class="rterm-main">
       ${researchTopCardsHtml()}
       <div class="rterm-lower">
-        <div class="rterm-mid"></div>
+        <div class="rterm-mid">${researchMidHtml()}</div>
         <div class="rterm-timeline">
           <div class="rterm-tl-hd">
             <div class="rterm-tl-title">Timeline</div>
