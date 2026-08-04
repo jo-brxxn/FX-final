@@ -2103,11 +2103,17 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .intro-whiteout.wiping{transform:translateY(-100%)}
 /* Phase 3-5: Fallschirm-Agent - schwebt von oben herein, haengt kurz, segelt
    dann links aus dem Bild. */
-.intro-parachute{position:fixed;top:-40vh;left:50%;width:min(46vw,300px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
+/* Gleiter deutlich vergroessert (Nutzer-Wunsch 2026-08-04, naechste Runde
+   "viel groesser, ein richtiger Gleiter") - Start-/Endpositionen (top/left)
+   entsprechend mit angepasst, damit der jetzt viel groessere Schirm beim
+   Start weiterhin komplett ausserhalb des sichtbaren Bereichs beginnt
+   (-90vh statt -40vh) und beim Rausgleiten links wirklich vollstaendig aus
+   dem Bild verschwindet (-95vw statt -55vw). */
+.intro-parachute{position:fixed;top:-90vh;left:50%;width:min(76vw,560px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
 .intro-parachute.descend{animation:introDescend 1750ms cubic-bezier(.24,.72,.34,1) forwards}
-@keyframes introDescend{0%{top:-40vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:38vh;transform:translate(-50%,0) rotate(-2deg)}}
+@keyframes introDescend{0%{top:-90vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:22vh;transform:translate(-50%,0) rotate(-2deg)}}
 .intro-parachute.exit-left{animation:introExitLeft 1350ms cubic-bezier(.4,0,.7,.3) forwards}
-@keyframes introExitLeft{0%{left:50%;top:38vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-55vw;top:58vh;transform:translate(-50%,0) rotate(-16deg)}}
+@keyframes introExitLeft{0%{left:50%;top:22vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-95vw;top:42vh;transform:translate(-50%,0) rotate(-16deg)}}
 @media(prefers-reduced-motion:reduce){.globe-vehicle.mega-flame .globe-jet-flame,body.intro-shake,.intro-debris,.intro-wing,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
@@ -2301,12 +2307,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-299 — Intro-Cockpit: neuer 'BOOST'-Knopf zentriert direkt unter dem Globus startet die komplette Boost-Animation sofort per Klick (setzt den Thrust-Regler mit auf 100% und startet direkt, kein Bestaetigungs-Fenster noetig) - der Regler-Weg bleibt daneben weiter nutzbar. Fallschirm: das rote Stier-Emblem ist komplett entfernt, stattdessen steht jetzt 'WELCOME BACK,' / 'TRADER' (zentriert, zweizeilig) auf dem Schirm; der Schirm selbst ist deutlich groesser (Breite ~46vw/300px statt 30vw/190px), die Segel-links-raus-Distanz wurde entsprechend vergroessert, damit er bei jeder Bildschirmgroesse vollstaendig aus dem Bild verschwindet.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-300 — Fallschirm ist jetzt ein richtiger, viel groesserer Gleitschirm (breiter, flacher Fluegel mit Zellen-Rippen + Zwei-Buendel-Leinenfaecher statt des kleinen runden Doms; Breite ~76vw/560px statt ~46vw/300px, Start-/Ausstiegs-Distanzen entsprechend vergroessert, damit er bei jeder Bildschirmgroesse komplett verschwindet). Neues Feld 'Glider name' im Cloud-Sync-Fenster (Sync-Zugangsdaten) - eingeloggt UND mit eingetragenem Namen steht jetzt 'WELCOME BACK, <Name>' auf dem Schirm statt 'WELCOME BACK, TRADER'.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-299</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-300</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2750,6 +2756,8 @@ function introLogin(){
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
+    <label class="dm-lbl">Glider name (shown on the parachute on the loading screen instead of "Trader")</label>
+    <input class="m-inp" id="cloudPilotName" placeholder="e.g. Jonathan" maxlength="18">
     <label class="dm-lbl">Project URL</label>
     <input class="m-inp" id="cloudUrl" placeholder="https://xxxxx.supabase.co">
     <label class="dm-lbl">Anon / Public API Key</label>
@@ -6499,6 +6507,7 @@ function openCloudM(fromIntro){
   try{updIntroAnimToggleBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
+  document.getElementById('cloudPilotName').value=cfg.pilotName||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
   document.getElementById('cloudKey').value=cfg.key||'';
   document.getElementById('cloudSyncId').value=cfg.syncId||'';
@@ -6512,11 +6521,12 @@ function setCloudStatus(txt){
 }
 function saveCloudCfg(){
   const username=document.getElementById('cloudUsername').value.trim();
+  const pilotName=document.getElementById('cloudPilotName').value.trim();
   const url=document.getElementById('cloudUrl').value.trim().replace(/\/+$/,'');
   const key=document.getElementById('cloudKey').value.trim();
   const syncId=document.getElementById('cloudSyncId').value.trim();
   if(!url||!key||!syncId){alert('Please fill in URL, API key and Sync ID.');return;}
-  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,url,key,syncId}));
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,pilotName,url,key,syncId}));
   // Falls der Login-Button im Intro noch sichtbar ist, sofort aktualisieren.
   const lb=document.getElementById('introLoginBtn');
   if(lb)lb.textContent='👤 '+(username||syncId);
@@ -11669,23 +11679,44 @@ function introShatterHtml(cx,cy){
   const wing=`<div class="intro-wing" id="introWing" style="left:${cx}px;top:${cy}px"></div>`;
   return bits+wing;
 }
-// FBI-Agent an einem Fallschirm (Nutzer-Wunsch 2026-08-04: "undercover im
-// Anzug mit Knopf im Ohr"). Flache, stilisierte Formen (Kreise/Rechtecke/
-// einfache Pfade) statt einer detaillierten Illustration - passend zum
-// sonstigen Stroke-Icon-Stil der App, aber mit genug Merkmalen (Anzug,
-// Krawatte, Sonnenbrille, Ohrhoerer+Kabel) um klar erkennbar zu sein.
-// Kein Marken-/Logo-Aufdruck mehr auf dem Fallschirm (Nutzer-Korrektur
-// 2026-08-04, naechste Runde: das rote Stier-Emblem sollte komplett raus) -
-// stattdessen ein persoenlicher Begruessungstext, zweizeilig zentriert.
+// Name auf dem Fallschirm/Gleiter (Nutzer-Wunsch 2026-08-04, naechste Runde):
+// steht statt "TRADER" da, sobald ueber Cloud Sync eingeloggt UND ein eigener
+// Gleiter-Name hinterlegt ist - eigenes Feld (cfg.pilotName), bewusst
+// GETRENNT von "Username" (das ist fuer den Header-Profilkreis gedacht, ein
+// anderer Anzeigekontext). Lebt im selben lokalen Cloud-Config-Objekt wie
+// Username/URL/Key/SyncId - Verbindungs-Zugangsdaten sind bewusst NICHT Teil
+// des app-weiten Cloud-Datensyncs (chicken-and-egg: man braucht die Zugangs-
+// daten erst, um ueberhaupt syncen zu koennen), exakt dasselbe Muster wie
+// "Username" daneben.
+function introPilotName(){
+  const cfg=getCloudCfg();
+  const loggedIn=!!(cfg&&cfg.url&&cfg.key&&cfg.syncId);
+  const n=loggedIn&&cfg.pilotName?String(cfg.pilotName).trim():'';
+  return n||'TRADER';
+}
+// FBI-Agent an einem Gleitschirm (Nutzer-Wunsch 2026-08-04, naechste Runde:
+// "viel groesser, ein richtiger Gleiter" - vorher ein kleiner runder
+// Fallschirm-Dom, jetzt ein breiter, flacher Gleitschirm-Fluegel mit
+// sichtbaren Zellen-Rippen und einem Zwei-Buendel-Leinenfaecher zu den
+// Schulter-D-Ringen, wie ein echter Paraglider). Flache, stilisierte Formen
+// (Kreise/Rechtecke/einfache Pfade) statt einer detaillierten Illustration -
+// passend zum sonstigen Stroke-Icon-Stil der App, aber mit genug Merkmalen
+// (Anzug, Krawatte, Sonnenbrille, Ohrhoerer+Kabel) um klar erkennbar zu sein.
+// Kein Marken-/Logo-Aufdruck mehr auf dem Schirm (Nutzer-Korrektur
+// 2026-08-04, vorherige Runde: das rote Stier-Emblem wurde bereits entfernt)
+// - stattdessen ein persoenlicher Begruessungstext, zweizeilig zentriert auf
+// dem Fluegel.
 function parachuteFigureHtml(){
+  const name=escH(introPilotName());
+  const nameFontSize=name.length>14?8.5:(name.length>9?10.5:13);
   return`<div class="intro-parachute" id="introParachute">
-    <svg viewBox="0 0 140 230" width="100%" height="100%">
-      <path d="M8,58 C8,15 132,15 132,58 C110,46 96,42 70,42 C44,42 30,46 8,58 Z" fill="#f4f6f8" stroke="#c3cad2" stroke-width="1.5"/>
-      <path d="M70,42 L70,20 M70,42 L34,50 M70,42 L106,50" fill="none" stroke="#c3cad2" stroke-width="1.2"/>
-      <text x="70" y="33" text-anchor="middle" font-size="8" font-weight="700" letter-spacing=".3" fill="#5a6472" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">WELCOME BACK,</text>
-      <text x="70" y="46" text-anchor="middle" font-size="11.5" font-weight="800" letter-spacing=".8" fill="#171b20" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">TRADER</text>
-      <path d="M12,56 L54,100 M128,56 L86,100 M40,52 L60,100 M100,52 L80,100" fill="none" stroke="#8a94a0" stroke-width="1"/>
-      <g>
+    <svg viewBox="0 0 220 260" width="100%" height="100%">
+      <path d="M14,78 C40,20 180,20 206,78 C180,60 160,55 140,53 C120,51 100,51 80,53 C60,55 40,60 14,78 Z" fill="#f4f6f8" stroke="#c3cad2" stroke-width="1.5"/>
+      <path d="M35,29 L35,58 M65,22 L65,53 M95,20 L95,51 M125,20 L125,51 M155,22 L155,53 M185,29 L185,58" fill="none" stroke="#c3cad2" stroke-width="1"/>
+      <text x="110" y="33" text-anchor="middle" font-size="9" font-weight="700" letter-spacing=".3" fill="#5a6472" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">WELCOME BACK,</text>
+      <text x="110" y="48" text-anchor="middle" font-size="${nameFontSize}" font-weight="800" letter-spacing=".8" fill="#171b20" font-family="'SF Mono',SFMono-Regular,Consolas,monospace" style="text-transform:uppercase">${name}</text>
+      <path d="M35,58 L100,96 M65,53 L100,96 M95,51 L100,96 M125,51 L120,96 M155,53 L120,96 M185,58 L120,96" fill="none" stroke="#8a94a0" stroke-width="1"/>
+      <g transform="translate(40,0)">
         <path d="M60,100 Q70,92 80,100 L84,118 L56,118 Z" fill="#12161c"/>
         <circle cx="70" cy="112" r="1.6" fill="#c9a27a"/>
         <rect x="66" y="108" width="8" height="14" rx="2" fill="#1b2129"/>
