@@ -2363,12 +2363,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-305 — Nutzer-Fund per Foto: die Begruessungsschrift auf dem Gleitschirm ragte teilweise ueber den Fluegel-Rand hinaus (Text stand an einer Stelle, an der die Kuppel-Kruemmung schon schmaler war als die Textbreite). Beide Zeilen tiefer/kleiner gesetzt und geometrisch exakt verifiziert (SVG isPointInFill() gegen alle vier Ecken + Kanten-Mitte jeder Text-Bounding-Box, nicht nur optisch geschaetzt) - liegt jetzt bei jedem Namen (kurz/mittel/absichtlich ueberlang getestet) vollstaendig innerhalb der Fluegel-Flaeche.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-306 — Gleitschirm: die Zellen-Rippen-Linien auf dem Fluegel ragten oben ueber die Kuppel-Kruemmung hinaus (die Linien-Endpunkte lagen weiter oben als die tatsaechliche Fluegel-Kontur an der jeweiligen Stelle, sichtbar als duenne graue Striche, die ueber den Rand hinausstehen). Auf Nutzer-Wunsch entfernt - der Fluegel zeigt jetzt eine sauber geschlossene Kontur, die Leinen zum Piloten (die korrekt innerhalb der Kontur blieben) sind unveraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-305</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-306</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -12125,7 +12125,6 @@ function parachuteFigureHtml(){
   return`<div class="intro-parachute" id="introParachute">
     <svg viewBox="0 0 300 300" width="100%" height="100%">
       <path d="M5,140 C50,5 250,5 295,140 C260,105 230,88 200,80 C170,74 130,74 100,80 C70,88 40,105 5,140 Z" fill="#dfe4ea" stroke="#7c8794" stroke-width="2.5"/>
-      <path d="M50,100 L50,40 M90,82 L90,15 M130,75 L130,6 M170,75 L170,6 M210,82 L210,15 M250,100 L250,40" fill="none" stroke="#9aa4af" stroke-width="1.4"/>
       <text x="150" y="58" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing=".3" fill="#5a6472" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">WELCOME BACK,</text>
       <text x="150" y="72" text-anchor="middle" font-size="${nameFontSize}" font-weight="800" letter-spacing=".6" fill="#171b20" font-family="'SF Mono',SFMono-Regular,Consolas,monospace" style="text-transform:uppercase">${name}</text>
       <path d="M50,100 L135,150 M90,82 L135,150 M130,75 L135,150 M170,75 L165,150 M210,82 L165,150 M250,100 L165,150" fill="none" stroke="#8a94a0" stroke-width="1"/>
