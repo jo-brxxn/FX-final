@@ -1604,6 +1604,28 @@
    ],
    "source": "tv"
   },
+  "Manufacturing PMI": {
+   "actual": "53.5",
+   "forecast": "50.2",
+   "previous": "53",
+   "date": "2026-08-04",
+   "event": "S&P Global Manufacturing PMI",
+   "period": null,
+   "history": [
+    [
+     "2026-08-04",
+     "53.5"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-08-04",
+     "53.5",
+     "50.2"
+    ]
+   ]
+  },
   "GDP Growth QoQ": {
    "actual": "0%",
    "forecast": null,
