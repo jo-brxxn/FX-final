@@ -737,6 +737,28 @@ body.compact-view .rub-summary{display:block}
    Button und der Bias-Long-Press bleiben davon unberuehrt, immer verfuegbar. */
 .ind-edit-ctrls{display:none;align-items:center;gap:0}
 body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
+/* ── RESEARCH-ORDNERBAUM (Nutzer-Wunsch 2026-08-04) ── Windows-Explorer-
+   artiger Klappbaum: Wurzel = 5 feste Kategorien + eigene Ordner, darunter
+   Asset-Ordner (auto) + eigene Unterordner, darunter die zwei festen
+   Blaetter "General Notes"/"Analysis". +/× zum Anlegen/Loeschen eigener
+   Ordner erscheinen erst nach 5s-Long-Press (body.res-edit-mode), gleiches
+   Muster wie dashEditMode/indEditMode. */
+.rtree-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.rtree-title{font-size:16px;font-weight:700;color:var(--t0);margin-right:auto}
+.rtree-edit-ctrls{display:none;align-items:center;gap:4px}
+body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
+.rtree-root{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:6px;max-width:640px}
+.rtree-row{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;border-radius:var(--rs);font-size:13px;color:var(--t1);user-select:none}
+@media(hover:hover){.rtree-row:hover{background:var(--bg3)}}
+.rtree-row.on{background:rgba(var(--blue-rgb),.12);color:var(--blue)}
+.rtree-toggle{width:12px;flex:0 0 auto;color:var(--t3);font-size:10px;text-align:center}
+.rtree-ic{flex:0 0 auto;display:flex;color:var(--t2)}
+.rtree-row.on .rtree-ic{color:var(--blue)}
+.rtree-nm{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rtree-row .rtree-edit-ctrls{margin-left:auto}
+.rtree-add,.rtree-del{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+@media(hover:hover){.rtree-add:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}.rtree-del:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}}
+.rtree-placeholder{margin-top:14px;padding:16px;max-width:640px;background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);color:var(--t3);font-size:13px;text-align:center}
 /* ── INDIKATOR-TABELLE (tech-design-Skill 2026-07-28, ersetzt die Karten-
    pro-Indikator-Darstellung durch eine flache Report-Tabelle, siehe Skill
    "Detail-Tabelle vs. editierbare Karten-Zeile", Modus 2) ── */
@@ -2320,12 +2342,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-302 — Gleitschirm-Fluegel auf dem echten Geraet praktisch unsichtbar gewesen (Foto-Bugreport): Fuell-/Randfarbe (#f4f6f8/#c3cad2) waren beide fast weiss, blendeten dadurch komplett in den hellen Marmor-/Dashboard-Hintergrund dahinter ein - sichtbar war nur das Leinen-Faecher, nicht der Fluegel selbst. Fix: deutlich kontrastreichere Fuellung (#dfe4ea) + kraeftigerer Rand (#7c8794, 2.5px) + eigener Drop-Shadow direkt auf dem Fluegel-Pfad, damit er sich unabhaengig vom Hintergrund dahinter klar abhebt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-303 — Research-Tab komplett neu als Windows-Explorer-artiger Ordnerbaum (loest den bisherigen Assets/Notes-Umschalter ab): Wurzel = die 5 festen Kategorien (FX/Indices/Commodities/Crypto/Stocks) + eigene Ordner, darunter automatisch abgeleitete Asset-Ordner + eigene Unterordner, darunter die zwei festen Blaetter 'General Notes'/'Analysis'. Ordner klappen per Klick auf/zu, ein 'Expand all'/'Collapse all'-Knopf steuert den ganzen Baum auf einmal. 5-Sekunden-Long-Press aktiviert einen Bearbeitungsmodus (wie beim Dashboard), erst dort erscheinen +/×-Knoepfe zum beliebigen Anlegen/Loeschen eigener Ordner/Unterordner (kaskadierend). Reine Navigation - was beim Anklicken eines Blatts rechts erscheint, folgt als naechstes.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-302</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-303</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2502,7 +2524,7 @@ function introLogin(){
      bleibt bewusst 'notes'/'pgNotes', damit bestehende, im localStorage
      gespeicherte Tab-Stapel (tabStacks) weiter greifen; nur das Label heisst
      jetzt "Research". Aufbau + Inhalt kommen aus renderResearch(). -->
-<div class="pc" id="pgNotes" style="display:none">
+<div class="pc" id="pgNotes" style="display:none" onpointerdown="resEditPressStart(event)" onpointermove="resEditPressMove(event)" onpointerup="resEditPressEnd()" onpointercancel="resEditPressEnd()" onpointerleave="resEditPressEnd()">
   <div id="resWrap"></div>
 </div>
 <!-- MODAL: RESEARCH NOTE -->
@@ -2960,7 +2982,11 @@ const ICONS={
   // Referenz-Mockup 2026-08-03 (Research Terminal): duennes Umriss-Sternchen
   // fuer Favoriten statt Emoji - fuellt sich per CSS (fill:currentColor),
   // wenn der Favoriten-Status aktiv ist (siehe .res-note-star.on).
-  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  // Research-Ordnerbaum (Nutzer-Wunsch 2026-08-04): Ordner-Icon fuer
+  // benutzerdefinierte und Asset-Ordner - die 5 festen Kategorie-Ordner
+  // behalten ihre eigenen, bereits bestehenden Icons (shuffle/bars/...).
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
@@ -5981,6 +6007,137 @@ function researchFolderIdFor(id){
   return null;
 }
 function researchAssetsIn(fid){return (syms||[]).filter(s=>researchFolderIdFor(s.id)===fid);}
+// ══ RESEARCH-ORDNERBAUM (Nutzer-Wunsch 2026-08-04) ══════════════════════
+// Ersetzt den bisherigen "Assets"/"Notes"-Umschalter (renderResearchFolders/
+// renderResearchNotes, beide bleiben als Code stehen, aber werden vom neuen
+// Einstiegspunkt nicht mehr aufgerufen - der Nutzer hat explizit angekuendigt,
+// als naechstes zu spezifizieren, was auf der rechten Seite erscheinen soll,
+// moeglicherweise unter Wiederverwendung dieser Funktionen) durch EINEN
+// durchgehenden, klappbaren Ordnerbaum wie im Windows-Explorer:
+//   Wurzel: die 5 festen RESEARCH_ASSET_FOLDERS-Kategorien + benutzerdefinierte
+//           Top-Level-Ordner (researchFolders mit parentId:null)
+//   Kategorie-Ordner: automatisch aus den Assets abgeleitete Asset-Ordner
+//           (researchAssetsIn, KEIN eigener Speicher noetig - ein neues Asset
+//           erscheint automatisch) + benutzerdefinierte Unterordner
+//   Asset-Ordner: GENAU 2 feste Blaetter "General Notes"/"Analysis" - keine
+//           benutzerdefinierten Kinder dort (Nutzer-Wunsch: "und das war's")
+//   Benutzerdefinierter Ordner: beliebig tief verschachtelbare weitere
+//           benutzerdefinierte Unterordner
+// researchFolders speichert NUR die benutzerdefinierten Knoten (id/name/
+// parentId) - alles Abgeleitete wird bei jedem Render frisch berechnet,
+// genau wie researchFolderIdFor() das schon fuer die Kategorie-Zuordnung tut.
+function researchCustomChildren(parentId){return (researchFolders||[]).filter(f=>f.parentId===parentId);}
+function researchChildrenOf(type,id){
+  if(type==='root'){
+    return RESEARCH_ASSET_FOLDERS.map(f=>({id:f.id,name:f.name,icon:f.icon,type:'cat'}))
+      .concat(researchCustomChildren(null).map(f=>({id:f.id,name:f.name,icon:'folder',type:'custom'})));
+  }
+  if(type==='cat'){
+    const assets=researchAssetsIn(id).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    return assets.map(s=>({id:'asset:'+s.id,name:s.name,icon:'folder',type:'asset'}))
+      .concat(researchCustomChildren(id).map(f=>({id:f.id,name:f.name,icon:'folder',type:'custom'})));
+  }
+  if(type==='asset'){
+    return[
+      {id:id+':gen',name:'General Notes',icon:'note',type:'leaf'},
+      {id:id+':analysis',name:'Analysis',icon:'trendUp',type:'leaf'},
+    ];
+  }
+  if(type==='custom'){
+    return researchCustomChildren(id).map(f=>({id:f.id,name:f.name,icon:'folder',type:'custom'}));
+  }
+  return[];
+}
+function researchAllFolderIds(){
+  const ids=[];
+  (function walk(type,id){
+    researchChildrenOf(type,id).forEach(k=>{if(k.type!=='leaf'){ids.push(k.id);walk(k.type,k.id);}});
+  })('root',null);
+  return ids;
+}
+// Transiente UI-Zustaende (Auf-/Zuklapp-Status pro Knoten, aktuell markiertes
+// Blatt) - bewusst NICHT persistiert, gleiches Muster wie indDetailsOpen{}/
+// dashEditMode (App-Grundsatz: reiner Navigations-/Sitzungszustand).
+let researchTreeOpen={},researchTreeSel=null;
+function researchToggleNode(id){researchTreeOpen[id]=!researchTreeOpen[id];renderResearch();}
+function researchSelectLeaf(id){researchTreeSel=id;renderResearch();}
+function researchExpandAllToggle(){
+  const anyOpen=researchAllFolderIds().some(id=>researchTreeOpen[id]);
+  if(anyOpen)researchTreeOpen={};
+  else researchAllFolderIds().forEach(id=>researchTreeOpen[id]=true);
+  renderResearch();
+}
+// Neuen benutzerdefinierten Ordner anlegen - unter der Wurzel (parentId:null,
+// "grosser" Top-Level-Ordner) oder unter einer Kategorie/einem anderen
+// benutzerdefinierten Ordner (Unterordner). Kategorie- und Asset-Ordner sowie
+// die beiden festen Blaetter sind bewusst NICHT anlegbar/loeschbar - nur
+// benutzerdefinierte Knoten sind es (matcht "und das war's" fuer die feste
+// Struktur, waehrend eigene Ordner "beliebig oft" hinzufuegbar bleiben).
+function researchAddFolder(parentId){
+  const name=prompt(parentId?'Name of the new subfolder:':'Name of the new folder:');
+  if(!name||!name.trim())return;
+  pushU();
+  researchFolders.push({id:uid(),name:name.trim().slice(0,60),parentId:parentId||null});
+  if(parentId)researchTreeOpen[parentId]=true;
+  save();renderResearch();
+}
+function researchDelFolder(id){
+  if(!confirm('Delete this folder and all its subfolders?'))return;
+  pushU();
+  // Kaskadierendes Loeschen: sonst wuerden verschachtelte Unterordner als
+  // erreichbare, aber elternlose Knoten im Speicher haengen bleiben.
+  const doomed=new Set([id]);
+  let grew=true;
+  while(grew){
+    grew=false;
+    researchFolders.forEach(f=>{if(f.parentId&&doomed.has(f.parentId)&&!doomed.has(f.id)){doomed.add(f.id);grew=true;}});
+  }
+  researchFolders=researchFolders.filter(f=>!doomed.has(f.id));
+  delete researchTreeOpen[id];
+  if(researchTreeSel&&doomed.has(researchTreeSel.split(':')[0]))researchTreeSel=null;
+  save();renderResearch();
+}
+// 5s-Long-Press -> Bearbeitungsmodus (identisches Muster zu dashEditMode/
+// indEditMode, siehe dort) - erst im Bearbeitungsmodus erscheinen die
+// +/×-Knoepfe zum Hinzufuegen/Loeschen eigener Ordner.
+let resEditMode=false,_resEditTimer=null,_resEditStart=null;
+function resEditPressStart(ev){
+  if(ev.button!==undefined&&ev.button!==0)return;
+  if(ev.target.closest('button,input,textarea,select,a'))return;
+  if(_resEditTimer)clearTimeout(_resEditTimer);
+  _resEditStart={x:ev.clientX,y:ev.clientY};
+  _resEditTimer=setTimeout(()=>{_resEditTimer=null;toggleResEditMode();},5000);
+}
+function resEditPressMove(ev){
+  if(!_resEditTimer||!_resEditStart)return;
+  if(Math.abs(ev.clientX-_resEditStart.x)>14||Math.abs(ev.clientY-_resEditStart.y)>14){clearTimeout(_resEditTimer);_resEditTimer=null;}
+}
+function resEditPressEnd(){if(_resEditTimer){clearTimeout(_resEditTimer);_resEditTimer=null;}}
+function toggleResEditMode(){
+  resEditMode=!resEditMode;
+  document.body.classList.toggle('res-edit-mode',resEditMode);
+  if(navigator.vibrate)try{navigator.vibrate(resEditMode?[25,35,25]:20);}catch(e){}
+}
+function researchNodeRow(node,depth){
+  const open=!!researchTreeOpen[node.id];
+  const hasKids=node.type!=='leaf';
+  const isCustom=node.type==='custom';
+  const canAddChild=node.type==='cat'||node.type==='custom';
+  const selCls=researchTreeSel===node.id?' on':'';
+  const kids=hasKids&&open?researchChildrenOf(node.type,node.id):[];
+  return`<div class="rtree-node">
+    <div class="rtree-row${selCls}" style="padding-left:${10+depth*20}px" onclick="${hasKids?`researchToggleNode('${node.id}')`:`researchSelectLeaf('${node.id}')`}">
+      <span class="rtree-toggle">${hasKids?(open?'▾':'▸'):''}</span>
+      <span class="rtree-ic">${icn(node.icon,14)}</span>
+      <span class="rtree-nm">${escH(node.name)}</span>
+      <span class="rtree-edit-ctrls">
+        ${canAddChild?`<button class="rtree-add" title="Add subfolder" onclick="event.stopPropagation();researchAddFolder('${node.id}')">+</button>`:''}
+        ${isCustom?`<button class="rtree-del" title="Delete folder" onclick="event.stopPropagation();researchDelFolder('${node.id}')">×</button>`:''}
+      </span>
+    </div>
+    ${kids.length?`<div class="rtree-children">${kids.map(k=>researchNodeRow(k,depth+1)).join('')}</div>`:''}
+  </div>`;
+}
 // Titel aus einem alten Freitext-Eintrag ableiten: erste Zeile, auf eine
 // lesbare Laenge gekuerzt. Der VOLLE Text bleibt immer im Body erhalten -
 // es geht bei der Migration nichts verloren.
@@ -6100,7 +6257,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,calEvts,widgets,dashRemovedTypes,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,calEvts,widgets,dashRemovedTypes,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -6138,13 +6295,14 @@ function sanitizeSnapIds(d){
   if(Array.isArray(d.widgets))d.widgets=d.widgets.filter(w=>w&&typeof w.id==='string'&&SAFE_UID_RE.test(w.id));
   if(Array.isArray(d.pairCats)){d.pairCats=d.pairCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.pairCats.length)d.pairCats=mkPairCats();}
   if(Array.isArray(d.noteCats)){d.noteCats=d.noteCats.filter(c=>c&&typeof c.id==='string'&&SAFE_UID_RE.test(c.id));if(!d.noteCats.length)d.noteCats=mkNCs();}
+  if(Array.isArray(d.researchFolders))d.researchFolders=d.researchFolders.filter(f=>f&&typeof f.id==='string'&&SAFE_UID_RE.test(f.id)&&typeof f.name==='string'&&(f.parentId===null||typeof f.parentId==='string'));
   if(d.research&&typeof d.research==='object'){
     if(Array.isArray(d.research.folders))d.research.folders=d.research.folders.filter(f=>f&&typeof f.id==='string'&&SAFE_UID_RE.test(f.id));
     if(Array.isArray(d.research.notes))d.research.notes=d.research.notes.filter(n=>n&&typeof n.id==='string'&&SAFE_UID_RE.test(n.id));
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -6194,7 +6352,7 @@ function restoreLocalBackup(i){
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,research,calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
+let syms,pairCats,pairs,noteCats,research,researchFolders=[],calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -6349,6 +6507,7 @@ function loadState(){
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
       noteCats=d.noteCats||mkNCs();
       research=migrateResearch(d.research,noteCats);
+      researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
       // "No Direction"-Widget wurde entfernt (in "Possible Set-ups" zusammengeführt).
@@ -6392,7 +6551,7 @@ function loadState(){
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -10339,15 +10498,33 @@ function resFilteredNotes(){
   else out.sort((a,b)=>String(key(b)).localeCompare(String(key(a))));
   return out;
 }
-// Einstiegspunkt fuer den Research-Tab: schaltet zwischen dem neuen Asset-
-// Browser (Nutzer-Wunsch 2026-08-03, Standard) und der bisherigen freien
-// Notiz-Bibliothek um. Alle bestehenden Aufrufer (resSelect/resSetTag/
-// togResFav/saveResNote/... sowie showTab('notes')/rerender()) rufen weiter
-// unveraendert renderResearch() auf.
+function researchTreeSelLabel(){
+  if(!researchTreeSel)return'';
+  const parts=researchTreeSel.split(':');
+  if(parts[0]==='asset'&&parts.length===3){
+    const sym=(syms||[]).find(s=>s.id===parts[1]);
+    return(sym?sym.name:parts[1])+' — '+(parts[2]==='gen'?'General Notes':'Analysis');
+  }
+  return researchTreeSel;
+}
+// Einstiegspunkt fuer den Research-Tab (Nutzer-Wunsch 2026-08-04: "ich mache
+// das wieder rueckgaengig" - loest den bisherigen Assets/Notes-Umschalter
+// ab durch EINEN durchgehenden Ordnerbaum, siehe researchChildrenOf() weiter
+// oben). Nur die Baum-NAVIGATION ist hier fertig - der Nutzer hat
+// angekuendigt, als naechstes zu spezifizieren, was beim Anklicken eines
+// Blatts (General Notes/Analysis/eigener Ordner) rechts erscheinen soll,
+// daher bislang nur ein Platzhalter dafuer.
 function renderResearch(){
   const wrap=document.getElementById('resWrap');if(!wrap)return;
-  if(resMode==='notes'){renderResearchNotes();return;}
-  renderResearchFolders();
+  const anyOpen=researchAllFolderIds().some(id=>researchTreeOpen[id]);
+  const rows=researchChildrenOf('root',null).map(n=>researchNodeRow(n,0)).join('');
+  wrap.innerHTML=`<div class="rtree-toolbar">
+      <div class="rtree-title">Research</div>
+      <button class="btn" onclick="researchExpandAllToggle()">${anyOpen?'Collapse all':'Expand all'}</button>
+      <button class="btn rtree-edit-ctrls rtree-add-root" onclick="researchAddFolder(null)">${icn('folder',13)} + Add folder</button>
+    </div>
+    <div class="rtree-root">${rows}</div>
+    <div class="rtree-placeholder">${researchTreeSel?escH(researchTreeSelLabel()):'Select a folder on the left.'}</div>`;
 }
 function renderResearchNotes(){
   const wrap=document.getElementById('resWrap');if(!wrap)return;
@@ -15500,6 +15677,7 @@ function showTab(tab,btn,fxMode){
   // aktiv zu lassen (die Steuerbuttons existieren ohnehin nur dort).
   if(tab!=='dash'&&dashEditMode){dashEditMode=false;document.body.classList.remove('dash-edit-mode');}
   if(tab!=='cur'&&indEditMode){indEditMode=false;document.body.classList.remove('ind-edit-mode');}
+  if(tab!=='notes'&&resEditMode){resEditMode=false;document.body.classList.remove('res-edit-mode');}
   if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
