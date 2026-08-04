@@ -1242,18 +1242,6 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    leuchteffekte im Hintergrund") - .globe-host hat dadurch wieder einen
    reinen, gleichmaessig dunklen Hintergrund, kein ::before/::after mehr. */
 .dw-globe .globe-host svg{position:relative;z-index:1}
-/* Zoom-Wrapper (Nutzer-Wunsch 2026-07-27 "auf dem Globus zoomen"): umschliesst
-   NUR das SVG (Globus+Fahrzeug), nicht den HUD-Rahmen/die Scanline/Badges
-   darum (die bleiben als fixe Konsolen-Elemente unskaliert). transform-
-   origin:50% 50%, damit beim Reinzoomen alles - inkl. dem Auto/Schiff in der
-   Mitte - exakt zentriert bleibt ("soll sich immer mittig zentriert
-   mitbewegen"). .no-transition wird waehrend eines aktiven Pinch/Scrolls
-   gesetzt (1:1-Tracking ohne Verzoegerung); beim automatischen Zurueckfahren
-   nach 2s (globeZoomScheduleRevert()) wird sie entfernt, damit die volle
-   .6s-Transition greift - fuehlt sich dadurch weich statt ruckartig an. */
-.globe-zoom-wrap{transform-origin:50% 50%;transition:transform .6s cubic-bezier(.22,.7,.3,1)}
-.globe-zoom-wrap.no-transition{transition:none}
-@media(prefers-reduced-motion:reduce){.globe-zoom-wrap{transition:none}}
 /* Karte ist wieder genau so hoch wie ihr Inhalt (Nutzer-Korrektur
    2026-07-27, kein Stretchen mehr - siehe #dashWidgets.dash-layout oben);
    align-items:center bleibt, weil die Zentrum-Spalte breiter ist als der
@@ -2026,51 +2014,56 @@ body.dash-edit-mode .mw-bar{display:flex}
 /* ── INTRO-ANIMATION (Start/Reload) ── Nutzer-Wunsch 2026-08-04: komplett
    neu als interaktives Globus-Cockpit statt Klick-zum-Wegklicken-Shards
    (siehe HTML-Kommentar bei #introOv und runIntroBoostSequence()). ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#eef0f2}
+#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.6) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(193,198,204,.26) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(198,203,209,.24) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(180,185,191,.22) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(96,103,111,.2) 14.1%,rgba(96,103,111,.05) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(108,114,121,.1) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(100,107,115,.17) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(108,114,121,.16) 27.9%,rgba(108,114,121,.04) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(104,110,117,.12) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(94,100,107,.14) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(98,104,111,.11) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(106,112,119,.1) 46.9%,transparent 47.6%),#eef0f2}
 .intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
 /* Nutzer-Korrektur 2026-08-04 (Foto): das Cockpit liess oben/unten zu viel
    Leerraum - soll den ganzen verfuegbaren Bildschirm einnehmen. justify-
    content:space-evenly statt center verteilt Titel/Reihe/Signatur ueber die
    volle Hoehe, alle Groessen (Titel/Globus/HUD/Regler) deutlich angehoben. */
-/* padding-top:max(2vh,64px) statt nur 2vh (Kollisions-Fund, per Playwright
-   ueber 641-1180px reproduziert): der "Set up sync"-Button sitzt oben rechts
-   fest bei top:14-26px/Hoehe ~33-40px (bottom bis ~66px) - der Titel ist bei
-   den jetzt deutlich groesseren Schriftgroessen breit genug, dass sein
-   rechter Rand in genau diese Ecke reicht. 64px Mindestabstand haelt den
-   Titel unabhaengig von der Bildschirmbreite sicher darunter, statt nur den
-   Text schmaler zu machen (loest die Y-Ueberlappung direkt, nicht nur
-   Symptome bei einzelnen Breakpoints). */
-.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;gap:clamp(6px,1.4vh,18px);padding:2vh 3vw;padding-top:max(2vh,64px)}
-.intro-title{font-weight:800;font-size:clamp(34px,7.2vw,100px);letter-spacing:clamp(1px,.6vw,6px);white-space:normal;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
+/* Titel jetzt GANZ OBEN fest positioniert (Nutzer-Korrektur 2026-08-04,
+   dritte Runde - vorheriger Fund war eine Kollision mit dem Sync-Button,
+   diesmal ueberlappten TRACKING/SIGNAL-HUD-Badges mit Titel/Signatur, siehe
+   Foto-Bugreport). Ursache war strukturell: .intro-cockpit-row hatte zwar
+   flex:1 1 auto, aber der Globus selbst ist per vh/vw-Formel (nicht per
+   Flex-Anteil) gross - auf kurzen Viewports konnte er dadurch trotz
+   schrumpfender Row-Box optisch ueber die Row hinaus in den Titel-/Signatur-
+   Bereich hineinragen. Fix zweiteilig: (1) Titel raus aus dem Fluss,
+   position:absolute fest oben (reserviert per padding-top einen GARANTIERTEN
+   eigenen Bereich, den die Row nie beanspruchen kann), (2) Globus-Obergrenze
+   von 72vh auf 58vh gesenkt (haelt auf kurzen Screens verlaesslich Abstand zu
+   Titel oben UND Signatur unten, statt fast die volle Hoehe zu beanspruchen). */
+.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2vh,26px);padding:2vh 3vw;padding-top:clamp(96px,15vh,180px)}
+.intro-title{position:absolute;top:max(2vh,26px);left:3vw;right:3vw;z-index:4;font-weight:800;font-size:clamp(28px,6.4vw,88px);letter-spacing:clamp(1px,.6vw,6px);white-space:normal;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
 .intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,64px);width:100%;flex:1 1 auto;min-height:0;opacity:0;animation:introSubIn .9s ease .5s both}
 .intro-hud-col{display:flex;flex-direction:column;gap:clamp(14px,3vh,34px);min-width:110px}
 .intro-hud-stat{text-align:right}
 .intro-hud-lbl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
 .intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
-.intro-globe-host{width:min(72vh,52vw,860px);height:min(72vh,52vw,860px);flex:0 0 auto}
+.intro-globe-host{width:min(58vh,50vw,760px);height:min(58vh,50vw,760px);flex:0 0 auto}
 .intro-throttle-col{display:flex;align-items:center}
 .intro-throttle-col .gt-track{width:38px;height:clamp(180px,34vh,420px)}
 .intro-throttle-col .gt-label{font-size:12px}
 .intro-throttle-col .gt-pct{font-size:15px}
 .intro-created{font-size:clamp(13px,1.9vw,20px);font-weight:600;letter-spacing:clamp(1.5px,.6vw,4px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .9s both}
 @media(max-width:640px){
-  /* Kollision selbst gefunden (Screenshot-Verifikation): der Titel sitzt
-     dank justify-content:space-evenly nah am oberen Rand, auf schmalen
-     Screens reicht "FX ANALYST PRO" fast bis zur rechten Kante - genau dort
-     sitzt der "Set up sync"-Button (top-right, hoeherer z-index). Die
-     Y-Ueberlappung selbst behebt jetzt die staerkere padding-top:max(2vh,
-     64px)-Basisregel oben (gilt fuer ALLE Breiten, nicht nur hier) - diese
-     Mobil-Regel bleibt nur noch fuer die kleinere Schriftgroesse zustaendig. */
-  .intro-title{font-size:clamp(24px,9vw,40px);white-space:normal;line-height:1.08}
+  .intro-title{font-size:clamp(22px,8vw,36px);white-space:normal;line-height:1.08;top:max(1.6vh,20px)}
+  .intro-cockpit{padding-top:clamp(76px,13vh,120px)}
   .intro-cockpit-row{gap:10px}
   .intro-hud-col{min-width:74px;gap:16px}
   .intro-hud-lbl{font-size:8px}
   .intro-hud-val{font-size:16px}
-  .intro-globe-host{width:58vw;height:58vw}
+  .intro-globe-host{width:56vw;height:56vw}
   .intro-throttle-col .gt-track{width:26px;height:190px}
 }
 #introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
+/* Skip-Button (Nutzer-Wunsch 2026-08-04): unauffaellig oben links, graue
+   Schrift auf duennem grauen Rahmen - bewusst zurueckhaltend gestaltet
+   (kein Farbakzent, kein Blur/Backdrop wie #introLoginBtn), damit er nicht
+   mit dem Cockpit-Chrome konkurriert. */
+#introSkipBtn{position:absolute;top:clamp(14px,2.4vw,26px);left:clamp(14px,2.4vw,26px);z-index:6;background:transparent;border:1px solid rgba(20,23,26,.22);color:#7c8794;font-size:12px;font-weight:600;letter-spacing:.5px;padding:6px 14px;border-radius:8px;cursor:pointer;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,border-color .2s ease,color .2s ease}
+@media (hover:hover){#introSkipBtn:hover{background:rgba(20,23,26,.06);border-color:rgba(20,23,26,.34);color:#4b535c}}
+#introSkipBtn:active{transform:scale(.95)}
 #introLoginBtn:active{transform:scale(.95)}
 @keyframes introTitleIn{0%{opacity:0;transform:scale(.62)}100%{opacity:1;transform:scale(1)}}
 @keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
@@ -2080,7 +2073,7 @@ body.dash-edit-mode .mw-bar{display:flex}
    fuer das Boost-Fenster), die Flamme waechst zusaetzlich kurz auf das
    30-fache (.mega-flame) als sichtbarer Spannungsaufbau vor der Explosion. */
 .globe-vehicle.mega-flame .globe-jet-flame{animation:introMegaFlame 900ms cubic-bezier(.3,0,.6,1) forwards,jetFlameFlicker .12s steps(2) infinite}
-@keyframes introMegaFlame{0%{transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*1.8))}100%{transform:scaleY(30) scaleX(30)}}
+@keyframes introMegaFlame{0%{transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*1.8))}100%{transform:scaleY(10) scaleX(10)}}
 body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 @keyframes introShake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
 /* Phase 2: das Flugzeug zerspringt in Einzelteile - mehrere Truemmerstuecke
@@ -2200,6 +2193,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
      links raus, waehrend das Dashboard darunter enthuellt wird. Erscheint
      bei JEDEM Laden/Reload (Nutzer-Bestaetigung, kein "einmalig"-Flag). -->
 <div id="introOv">
+  <button id="introSkipBtn" onclick="skipIntro()">Skip</button>
   <button id="introLoginBtn" onclick="introLogin()">Set up sync</button>
   <div class="intro-grid"></div>
   <div class="intro-cockpit" id="introCockpit">
@@ -2298,12 +2292,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-297 — Lade-/Intro-Cockpit nimmt jetzt den ganzen Bildschirm ein (Titel/Globus/HUD/Regler deutlich groesser, justify-content:space-evenly statt center). Boost-Sequenz ueberarbeitet: kein Zoom mehr aufs Cockpit - stattdessen dreht sich der Globus mit maximaler Geschwindigkeit und die Flamme waechst kurz auf das 30-fache, dann zerspringt das Flugzeug in ~8 Truemmerstuecke; eine Tragflaeche fliegt statt wegzufliegen direkt auf den Betrachter zu, waechst auf Bildschirmgroesse und wird dabei weiss (ersetzt den vorherigen separaten Flash). Neuer Einstellungs-Schalter 'Intro animation' direkt unter dem PIN-Code-Schalter (Cloud-Sync-Fenster) - deaktiviert, ueberspringt das komplette Cockpit-Overlay ab dem naechsten Laden. Nebenbei einen Layout-Bug gefunden+behoben: der jetzt groessere Titel kollidierte mit dem 'Set up sync'-Button oben rechts auf Breiten von ~640-1180px.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-298 — Intro-Cockpit: Titel liegt jetzt fest ganz oben (behebt Ueberlappung mit den TRACKING/SIGNAL-HUD-Badges), Marmor-Hintergrund auch auf dem Intro-Screen, Globus-Zoom (Pinch/Mausrad) komplett entfernt (Drag-Drehen bleibt), Flamme waechst nur noch aufs 10-fache statt 30-fache. Echten Fehler gefunden+behoben, warum das Dashboard beim Fallschirm-Reveal nie sichtbar 'hochstieg': #introOv hatte einen eigenen opaken Hintergrund UND die weiss gewachsene Tragflaeche blieb permanent ueber der Weissblende liegen - beides wird jetzt im richtigen Moment durchsichtig/entfernt. Waehrungs-Klick auf dem Globus zeigt jetzt SOFORT den Fallschirm-Agenten, waehrend darunter direkt der Asset-Tab mit der Waehrung hochsteigt. Neuer 'Skip'-Knopf oben links (dezent, grauer Rahmen) ueberspringt das Intro per Kurz-Uebergang.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-297</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-298</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -11394,12 +11388,6 @@ let _globeRAF=null,_globeLon=GLOBE_HOME_LON,_globeLast=0,_globeHosts=[],_globeUi
 // 'decel' = nach dem Loslassen klingt der Schwung Richtung Normaltempo ab.
 const GLOBE_AUTO_VEL=0.004; // Grad/ms im Normalbetrieb
 let _globeMode='auto',_globeVel=GLOBE_AUTO_VEL,_globeDrag=null;
-// Zoom (Nutzer-Wunsch 2026-07-27): _globeZoom ist der aktuell angewendete
-// Skalierungsfaktor (1 = normal, bis 2.2 = maximal reingezoomt), gesteuert
-// per Zwei-Finger-Pinch (_globePointers/_globePinch) oder Mausrad. Nach jeder
-// Zoom-Aenderung startet globeZoomScheduleRevert() einen 2s-Timer, der
-// automatisch wieder auf 1 zurueckfaehrt, sobald 2s lang nichts mehr passiert.
-let _globeZoom=1,_globeZoomRevertT=null,_globePointers=new Map(),_globePinch=null;
 // Fahrzeug-Reise (Nutzer-Wunsch 2026-07-27): waehrend das Auto/Schiff zu
 // einer angeklickten Waehrung unterwegs ist, pausiert globeUpdateVehicle()
 // die normale Land/Wasser-Ruheposition-Aktualisierung.
@@ -11524,35 +11512,30 @@ function confirmIntroBoost(){
 // der gesamten Choreografie einstellen laesst, statt verstreuter Magic
 // Numbers in jedem setTimeout().
 const INTRO_SEQ={flameUp:900,shatter:1050,whiteHold:150,wipe:1150,descend:1750,exitDelay:250,exit:1350};
-function runIntroBoostSequence(){
-  const ov=document.getElementById('introOv');if(!ov)return;
-  // Phase 1: KEIN Zoom aufs Cockpit/Flugzeug (Nutzer-Korrektur 2026-08-04) -
-  // der Globus dreht bereits mit maximaler Geschwindigkeit (Regler stand auf
-  // 100%, Vorbedingung fuer dieses Fenster, siehe introMaybeOfferBoost()).
-  // Die Flamme waechst zusaetzlich kurz auf das 30-fache (.mega-flame) als
-  // sichtbarer Spannungsaufbau vor der Explosion.
-  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting','mega-flame'));
-  document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
-  let t=INTRO_SEQ.flameUp;
-  // Phase 2: das Flugzeug zerspringt in Einzelteile. Der Globus/das
-  // Flugzeug selbst wird ausgeblendet (visibility:hidden, kein remove() -
-  // haelt startGlobes()' Referenzen intakt, falls die Sequenz je unterbrochen
-  // wuerde), die Truemmerstuecke uebernehmen ab hier die Szene.
+// Gemeinsame Reveal-Choreografie (Weissblende weg -> Fallschirm-Agent runter
+// -> links raus -> Cleanup) - genutzt sowohl von der vollen Boost-Explosion
+// als auch vom direkten Waehrungs-Klick auf dem Globus (Nutzer-Wunsch
+// 2026-08-04: dort erscheint der Agent SOFORT, ganz ohne Explosion/
+// Truemmerteile). delay0 ist die Wartezeit (ms) bis die Weissblende ueberhaupt
+// erscheint - bei der Boost-Sequenz die Zeit fuer Flammenaufbau+Zersplittern,
+// beim Waehrungs-Klick 0 (direkt).
+function introRevealAndExit(ov,delay0){
+  let t=delay0||0;
+  // Phase 3: Weissblende + Fallschirm-Agent erscheinen.
   setTimeout(()=>{
-    const host=document.querySelector('.intro-globe-host');
-    const r=host?host.getBoundingClientRect():null;
-    const cx=r?r.left+r.width/2:window.innerWidth/2,cy=r?r.top+r.height/2:window.innerHeight/2;
-    if(host)host.style.visibility='hidden';
-    ov.insertAdjacentHTML('beforeend',introShatterHtml(cx,cy));
-    document.body.classList.add('intro-shake');
-    setTimeout(()=>document.body.classList.remove('intro-shake'),480);
-  },t);
-  t+=INTRO_SEQ.shatter;
-  // Phase 3: die waechst-auf-den-Betrachter-zu-Tragflaeche ist inzwischen
-  // weiss und bildschirmfuellend - Weissblende + Fallschirm-Agent kommen
-  // dazu (die Weissblende ist der "saubere" volldeckende Zustand, den die
-  // Tragflaeche optisch bereits erreicht hat).
-  setTimeout(()=>{
+    // Fehlerursache gefunden (Nutzer-Wunsch 2026-08-04 "finde den Fehler"):
+    // #introOv selbst hatte einen eigenen, opaken (Marmor-)Hintergrund - der
+    // blieb bestehen, bis ov.remove() ganz am Ende der Sequenz lief. Die
+    // Weissblende (.intro-whiteout) sass zwar farblich passend DAVOR, aber
+    // wenn sie per .wiping wegtranslatiert wurde, gab sie den Blick nur auf
+    // #introOvs EIGENEN, ebenfalls opaken Hintergrund frei - nicht auf das
+    // tatsaechliche Dashboard darunter. Das Dashboard poppte dadurch erst
+    // ganz am Schluss (ov.remove()) schlagartig auf, statt sichtbar "hoch-
+    // zusteigen". Fix: #introOv wird GENAU HIER (Weissblende deckt in diesem
+    // Moment ohnehin noch alles ab) durchsichtig gemacht - ab jetzt ist die
+    // Weissblende selbst die einzige Deckschicht, ihr Wegschieben legt
+    // dadurch wirklich das darunterliegende Dashboard frei.
+    ov.style.background='transparent';
     ov.insertAdjacentHTML('beforeend','<div class="intro-whiteout" id="introWhiteout"></div>'+parachuteFigureHtml());
   },t);
   t+=INTRO_SEQ.whiteHold;
@@ -11560,8 +11543,20 @@ function runIntroBoostSequence(){
   // laengst fertig gerenderte Dashboard darunter "steigt" dadurch scheinbar
   // von unten ins Bild. Gleichzeitig schwebt der Fallschirm-Agent von oben
   // herein.
+  // Zweiter Teil desselben Fehlers (s. Kommentar oben bei ov.style.background):
+  // .intro-wing (die gewachsene, weisse Tragflaeche) liegt mit z-index:100002
+  // UEBER der Weissblende (100001) und behaelt ihren Endzustand dank
+  // animation-fill-mode:forwards dauerhaft bei - sie wurde bisher NIE entfernt,
+  // blieb also als zweite, staerker liegende deckende Flaeche permanent stehen
+  // und blockierte die Weissblenden-Wisch-Animation komplett (das Dashboard
+  // "stieg" dadurch nie sichtbar hoch, sondern poppte erst ganz am Ende beim
+  // Cleanup schlagartig auf). Fix: die Tragflaeche verschwindet HIER, im
+  // exakt selben Moment wie die Weissblende zu wischen beginnt. (Beim
+  // Waehrungs-Klick gibt es gar keine Tragflaeche - der Check ist dann einfach
+  // ein No-Op.)
   setTimeout(()=>{
     const wo=document.getElementById('introWhiteout');if(wo)wo.classList.add('wiping');
+    const wing=document.getElementById('introWing');if(wing)wing.style.display='none';
     const pf=document.getElementById('introParachute');if(pf)pf.classList.add('descend');
   },t);
   t+=Math.max(INTRO_SEQ.wipe,INTRO_SEQ.descend)+INTRO_SEQ.exitDelay;
@@ -11576,7 +11571,64 @@ function runIntroBoostSequence(){
   setTimeout(()=>{
     if(ov.parentNode)ov.remove();
     const bm=document.getElementById('mIntroBoost');if(bm&&bm.parentNode)bm.remove();
+    _introBoostRunning=false;
   },t+250);
+}
+function runIntroBoostSequence(){
+  const ov=document.getElementById('introOv');if(!ov)return;
+  // Phase 1: KEIN Zoom aufs Cockpit/Flugzeug (Nutzer-Korrektur 2026-08-04) -
+  // der Globus dreht bereits mit maximaler Geschwindigkeit (Regler stand auf
+  // 100%, Vorbedingung fuer dieses Fenster, siehe introMaybeOfferBoost()).
+  // Die Flamme waechst zusaetzlich kurz auf das 10-fache (.mega-flame) als
+  // sichtbarer Spannungsaufbau vor der Explosion.
+  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting','mega-flame'));
+  document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
+  let t=INTRO_SEQ.flameUp;
+  // Phase 2: das Flugzeug zerspringt in Einzelteile. Der Globus/das
+  // Flugzeug selbst wird ausgeblendet (visibility:hidden, kein remove() -
+  // haelt startGlobes()' Referenzen intakt, falls die Sequenz je unterbrochen
+  // wuerde), die Truemmerstuecke uebernehmen ab hier die Szene.
+  setTimeout(()=>{
+    const host=document.querySelector('.intro-globe-host');
+    const r=host?host.getBoundingClientRect():null;
+    const cx=r?r.left+r.width/2:window.innerWidth/2,cy=r?r.top+r.height/2:window.innerHeight/2;
+    if(host)host.style.visibility='hidden';
+    // Restliches Cockpit-Chrome (Titel/HUD-Werte/Regler/Signatur) verschwindet
+    // hier mit, statt bis zum ganz finalen Cleanup als tote Deko ueber der
+    // Explosion/dem spaeteren Dashboard-Reveal stehen zu bleiben.
+    const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
+    ov.insertAdjacentHTML('beforeend',introShatterHtml(cx,cy));
+    document.body.classList.add('intro-shake');
+    setTimeout(()=>document.body.classList.remove('intro-shake'),480);
+  },t);
+  t+=INTRO_SEQ.shatter;
+  introRevealAndExit(ov,t);
+}
+// Waehrungs-Klick auf dem Globus (Nutzer-Wunsch 2026-08-04): der Fallschirm-
+// Agent erscheint SOFORT (keine Explosion/Truemmerteile - die ist der Boost-
+// Sequenz vorbehalten), waehrend darunter direkt der Asset-Tab mit der
+// angeklickten Waehrung ausgewaehlt hochsteigt. Nutzt dieselbe
+// introRevealAndExit()-Choreografie, nur ohne jeden Vorlauf.
+function runIntroCurrencyReveal(id){
+  const ov=document.getElementById('introOv');
+  if(!ov){gotoSym(id);return;} // Intro schon weg -> ganz normale Navigation
+  if(_introBoostRunning)return;
+  _introBoostRunning=true;
+  gotoSym(id); // Ziel-Tab+Waehrung sofort im Hintergrund fertig rendern
+  const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
+  introRevealAndExit(ov,0);
+}
+// Skip-Button (Nutzer-Wunsch 2026-08-04, oben links, unauffaellig): ueber-
+// springt den Rest des Intros direkt ueber dieselbe Weissblende+Fallschirm-
+// Reveal-Choreografie wie ein Waehrungs-Klick - nur OHNE gotoSym(), das
+// Dashboard bleibt einfach auf dem Tab, der ohnehin schon aktiv ist.
+function skipIntro(){
+  const ov=document.getElementById('introOv');if(!ov)return;
+  if(_introBoostRunning)return;
+  closeM('mIntroBoost');
+  _introBoostRunning=true;
+  const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
+  introRevealAndExit(ov,0);
 }
 // Zerspringt in ~8 radial wegfliegende Truemmerstuecke (introDebrisFly, s.
 // CSS - rotate(--a)+translateX(--d)-Burst-Muster, kein CSS-cos()/sin()
@@ -11672,9 +11724,7 @@ function globeFuelTick(dtMs,thrustI){
 function stopGlobe(){
   if(_globeRAF){cancelAnimationFrame(_globeRAF);_globeRAF=null;}
   _globeHosts=[];_globeMode='auto';_globeVel=GLOBE_AUTO_VEL;_globeDrag=null;
-  _globePointers.clear();_globePinch=null;_globeVehicleBusy=false;
-  if(_globeZoomRevertT){clearTimeout(_globeZoomRevertT);_globeZoomRevertT=null;}
-  _globeZoom=1;
+  _globeVehicleBusy=false;
 }
 function globeProject(lat,lon,lon0,R){
   const f=lat*Math.PI/180,l=(lon-lon0)*Math.PI/180;
@@ -12045,45 +12095,25 @@ function globeVehicleTravel(st,x1,y1,dur,onDone){
   }
   requestAnimationFrame(step);
 }
-// Klick auf eine Waehrung (Nutzer-Wunsch 2026-07-27/28): der Jet dreht sich
-// in Flugrichtung und fliegt vom aktuellen Standort zur Waehrung, pulsiert
-// dort kurz auf und oeffnet dann die Waehrung - GENAU dieselbe Navigation
-// (gotoSym) wie ein Tap auf die Majors-Liste links, inkl. deren bereits
-// bestehendem .detail-fade-Uebergang (selSym() setzt die Klasse) - kein
-// zweiter, abweichender "Oeffnen"-Mechanismus noetig. Laeuft bewusst UNAB-
-// HAENGIG von prefers-reduced-motion (Nutzer-Bugreport 2026-07-28: "am PC
-// funktionieren die Animationen... gar nicht" - Windows/Chrome kann diese
-// Systemeinstellung aktiv haben, die den Effekt sonst komplett uebersprungen
-// haette; der Nutzer hat diese konkrete, kurze, direkt selbst ausgeloeste
-// Animation ausdruecklich gewuenscht, das ist keine ambiente Dauerbewegung).
+// Klick auf eine Waehrung (Nutzer-Wunsch 2026-08-04, dritte Runde): der
+// Fallschirm-Agent soll SOFORT erscheinen, waehrend darunter direkt der
+// Asset-Tab mit der angeklickten Waehrung hochsteigt (runIntroCurrencyReveal)
+// - kein Zwischenschritt mehr. Laeuft bewusst UNABHAENGIG von prefers-
+// reduced-motion (Nutzer-Bugreport 2026-07-28: "am PC funktionieren die
+// Animationen... gar nicht" - Windows/Chrome kann diese Systemeinstellung
+// aktiv haben, die den Effekt sonst komplett uebersprungen haette; der
+// Nutzer hat diese konkrete, kurze, direkt selbst ausgeloeste Animation
+// ausdruecklich gewuenscht, das ist keine ambiente Dauerbewegung).
 function globeMarkerClick(ev,id){
   ev.stopPropagation();
-  if(_globeVehicleBusy)return;
+  if(_globeVehicleBusy||_introBoostRunning)return;
   const sym=syms.find(s=>s.id===id);if(!sym)return;
-  const host=ev.currentTarget.closest('.globe-host');if(!host)return;
-  const st=_globeHosts.find(h=>h.host===host);
-  const mk=st&&st.markers[id];
-  if(!st||!st.vehicle||!mk){gotoSym(id);return;} // Fallback ohne Reise-Optik, falls Refs fehlen
   closeGlobeTip();
-  const svg=host.querySelector('svg');
-  const x1=parseFloat(mk.circle.getAttribute('cx')),y1=parseFloat(mk.circle.getAttribute('cy'));
-  _globeVehicleBusy=true;
-  globeVehicleTravel(st,x1,y1,750,()=>{
-    if(svg){
-      const burst=document.createElementNS('http://www.w3.org/2000/svg','circle');
-      burst.setAttribute('cx',x1.toFixed(1));burst.setAttribute('cy',y1.toFixed(1));burst.setAttribute('r','5');
-      burst.setAttribute('fill','none');burst.setAttribute('stroke',mk.circle.getAttribute('fill')||'#dff4ff');
-      burst.setAttribute('stroke-width','2');burst.setAttribute('class','globe-arrival-burst');
-      svg.appendChild(burst);
-    }
-    setTimeout(()=>{_globeVehicleBusy=false;gotoSym(id);},380);
-  });
+  runIntroCurrencyReveal(id);
 }
 // Drag-zum-Drehen: Ziehen am Globus dreht ihn direkt mit dem Finger/der Maus mit;
 // nach dem Loslassen laeuft der Schwung aus dem Drag weiter (Traegheit), bevor er
 // sanft (exponentiell) wieder auf die normale Auto-Rotationsgeschwindigkeit abklingt.
-// Zwei gleichzeitige Pointer = Pinch-Zoom statt Dreh-Drag (Nutzer-Wunsch
-// 2026-07-27, siehe globeZoomApply()/globeZoomScheduleRevert() weiter unten).
 function globeHitTest(ev,host){
   // Hitbox: nur starten, wenn der Zeiger auf der Kugel oder knapp daneben
   // liegt (Radius + 10px) - NICHT auf der gesamten Widget-Breite. Gerenderte
@@ -12101,49 +12131,24 @@ function globeHitTest(ev,host){
 function globeOnPointerDown(ev,host){
   if(ev.target.closest('g[data-id]'))return; // Marker-Klicks nicht als Drag-Start behandeln
   if(!globeHitTest(ev,host))return;
+  if(_globeDrag)return; // schon ein Dreh-Drag aktiv, weitere gleichzeitige Finger ignorieren
   try{host.setPointerCapture(ev.pointerId);}catch(e){}
-  _globePointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-  if(_globePointers.size===2){
-    _globeDrag=null;host.classList.remove('grabbing');_globeMode='auto';
-    const ids=[..._globePointers.keys()];
-    const p0=_globePointers.get(ids[0]),p1=_globePointers.get(ids[1]);
-    _globePinch={ids,d0:Math.hypot(p1.x-p0.x,p1.y-p0.y)||1,zoom0:_globeZoom,host};
-    closeGlobeTip();
-    return;
-  }
-  if(_globePointers.size>2)return; // 3.+ Finger ignorieren
   closeGlobeTip();
   _globeMode='drag';
   _globeDrag={lastX:ev.clientX,lastY:ev.clientY,lastT:performance.now(),pid:ev.pointerId,host};
   host.classList.add('grabbing');
 }
 function globeOnPointerMove(ev){
-  if(_globePointers.has(ev.pointerId))_globePointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-  if(_globePinch&&_globePinch.ids.includes(ev.pointerId)){
-    const p0=_globePointers.get(_globePinch.ids[0]),p1=_globePointers.get(_globePinch.ids[1]);
-    if(p0&&p1){
-      const d1=Math.hypot(p1.x-p0.x,p1.y-p0.y)||1;
-      globeZoomApply(_globePinch.zoom0*(d1/_globePinch.d0));
-      globeZoomScheduleRevert();
-    }
-    return;
-  }
   if(_globeMode!=='drag'||!_globeDrag||ev.pointerId!==_globeDrag.pid)return;
-  const now=performance.now(),dx=ev.clientX-_globeDrag.lastX,dy=ev.clientY-_globeDrag.lastY,dt=Math.max(1,now-_globeDrag.lastT);
+  const now=performance.now(),dx=ev.clientX-_globeDrag.lastX,dt=Math.max(1,now-_globeDrag.lastT);
   const dDeg=dx*0.4; // Drag-Sensitivitaet: Pixel -> Grad
   _globeLon=(_globeLon-dDeg+360)%360;
   _globeVel=-dDeg/dt; // Schwung fuers Abklingen nach dem Loslassen merken
   _globeDrag.lastX=ev.clientX;_globeDrag.lastY=ev.clientY;_globeDrag.lastT=now;
-  if(_globeZoom>1&&dy!==0){globePanBy(0,dy);globeZoomScheduleRevert();} // vertikal wegbewegen vom Zentrum, nur wenn gezoomt (sonst nichts zu sehen)
   _globeHosts.forEach(globeUpdateOne);
 }
 function globeOnPointerUp(ev){
   try{ev.currentTarget.releasePointerCapture(ev.pointerId);}catch(e){}
-  _globePointers.delete(ev.pointerId);
-  if(_globePinch&&_globePinch.ids.includes(ev.pointerId)){
-    _globePinch=null;
-    globeZoomScheduleRevert();
-  }
   if(!_globeDrag||ev.pointerId!==_globeDrag.pid)return;
   _globeDrag.host.classList.remove('grabbing');
   _globeDrag=null;
@@ -12156,55 +12161,6 @@ function globeOnPointerUp(ev){
     _globeVel=Math.max(-0.2,Math.min(0.2,_globeVel)); // Schwung deckeln
     _globeMode='decel';
   }
-}
-// Zoom (Pinch/Mausrad, Nutzer-Wunsch 2026-07-27) + Pan (Nutzer-Wunsch
-// 2026-07-28 "nicht nur vergroessern, auch hoch/runter bewegen koennen"):
-// "wenn man zoomt, bleibt es 2 Sekunden so und kommt dann automatisch wieder
-// raus". globeApplyTransform() setzt Zoom+Pan SOFORT (ohne CSS-Transition,
-// damit Pinch/Scroll/Drag 1:1 folgen), globeZoomScheduleRevert() startet/
-// erneuert bei jeder Aenderung einen 2s-Timer, der die Transition wieder
-// aktiviert und sanft auf Zoom 1 / Pan 0 zurueckfaehrt. translate() steht
-// VOR scale() im transform-String, damit panX/panY reine Bildschirm-Pixel
-// bleiben (nicht durch den Zoomfaktor mit-skaliert werden) - fuehlt sich
-// dadurch bei jeder Zoomstufe gleich schnell an.
-let _globePanX=0,_globePanY=0;
-function globeApplyTransform(){
-  document.querySelectorAll('.globe-zoom-wrap').forEach(w=>{
-    w.classList.add('no-transition');
-    w.style.transform='translate('+_globePanX.toFixed(1)+'px,'+_globePanY.toFixed(1)+'px) scale('+_globeZoom.toFixed(3)+')';
-  });
-}
-function globeZoomApply(z){
-  _globeZoom=Math.max(1,Math.min(2.2,z));
-  // Pan-Spielraum waechst mit dem Zoom - bei 1x (nicht gezoomt) gibt es
-  // nichts zusaetzliches zu sehen, daher dort 0 (kein Wegdriften ins Leere).
-  const panLimit=140*(_globeZoom-1);
-  _globePanX=Math.max(-panLimit,Math.min(panLimit,_globePanX));
-  _globePanY=Math.max(-panLimit,Math.min(panLimit,_globePanY));
-  globeApplyTransform();
-}
-function globePanBy(dx,dy){
-  if(_globeZoom<=1)return; // ohne Zoom nichts zum Wegbewegen
-  const panLimit=140*(_globeZoom-1);
-  _globePanX=Math.max(-panLimit,Math.min(panLimit,_globePanX+dx));
-  _globePanY=Math.max(-panLimit,Math.min(panLimit,_globePanY+dy));
-  globeApplyTransform();
-}
-function globeZoomScheduleRevert(){
-  if(_globeZoomRevertT)clearTimeout(_globeZoomRevertT);
-  _globeZoomRevertT=setTimeout(()=>{
-    _globeZoomRevertT=null;_globeZoom=1;_globePanX=0;_globePanY=0;
-    document.querySelectorAll('.globe-zoom-wrap').forEach(w=>{
-      w.classList.remove('no-transition');
-      w.style.transform='translate(0px,0px) scale(1)';
-    });
-  },2000);
-}
-function globeOnWheel(ev,host){
-  ev.preventDefault();
-  closeGlobeTip();
-  globeZoomApply(_globeZoom*(1-ev.deltaY*0.0016));
-  globeZoomScheduleRevert();
 }
 function startGlobes(){
   stopGlobe();
@@ -12228,11 +12184,7 @@ function startGlobes(){
     // gehoert (siehe .intro-globe-host-CSS fuer die tatsaechliche Breite).
     const isIntro=!!h.closest('#introOv');
     const size=Math.max(140,Math.min(w||220,isIntro?900:320));
-    // .globe-zoom-wrap umschliesst NUR das SVG (Globus+Fahrzeug) - Pinch/
-    // Mausrad-Zoom (Nutzer-Wunsch 2026-07-27) skaliert ausschliesslich diesen
-    // Wrapper per CSS-transform, nicht den HUD-Rahmen/die Scanline/Badges
-    // darum herum (die bleiben als fixe Konsolen-Elemente unskaliert).
-    h.innerHTML='<div class="globe-zoom-wrap">'+globeSkeleton(size,_globeUid++)+'</div>';
+    h.innerHTML=globeSkeleton(size,_globeUid++);
     // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
     // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
     // Neuaufbau (Tab-Wechsel, Resize) sofort wieder loeschen.
@@ -12253,11 +12205,6 @@ function startGlobes(){
     h.addEventListener('pointermove',globeOnPointerMove);
     h.addEventListener('pointerup',globeOnPointerUp);
     h.addEventListener('pointercancel',globeOnPointerUp);
-    // Zoom (Nutzer-Wunsch 2026-07-27): Zwei-Finger-Pinch UEBER die Pointer-
-    // Handler oben, Mausrad/Trackpad-Scroll hier extra (Desktop hat i.d.R.
-    // kein Pinch). passive:false, weil preventDefault() noetig ist, damit
-    // der Scroll nicht stattdessen die ganze Seite scrollt.
-    h.addEventListener('wheel',ev=>globeOnWheel(ev,h),{passive:false});
   });
   _globeLast=performance.now();
   const STEP_MS=50; // ~20 FPS: glatt genug fuer langsame Rotation, billig genug fuers UI
