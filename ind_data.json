@@ -1604,28 +1604,6 @@
    ],
    "source": "tv"
   },
-  "Manufacturing PMI": {
-   "actual": "53.5",
-   "forecast": "50.2",
-   "previous": "53",
-   "date": "2026-08-04",
-   "event": "S&P Global Manufacturing PMI",
-   "period": null,
-   "history": [
-    [
-     "2026-08-04",
-     "53.5"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-08-04",
-     "53.5",
-     "50.2"
-    ]
-   ]
-  },
   "GDP Growth QoQ": {
    "actual": "0%",
    "forecast": null,
@@ -8617,17 +8595,13 @@
    "source": "tv"
   },
   "Services PMI": {
-   "actual": "54",
-   "forecast": "54",
-   "previous": "54.5",
-   "date": "2026-07-06",
+   "actual": "54.1",
+   "forecast": "54.5",
+   "previous": "54",
+   "date": "2026-08-05",
    "event": "ISM Services PMI",
    "period": null,
    "history": [
-    [
-     "2026-04-06",
-     "54"
-    ],
     [
      "2026-05-05",
      "53.6"
@@ -8639,8 +8613,13 @@
     [
      "2026-07-06",
      "54"
+    ],
+    [
+     "2026-08-05",
+     "54.1"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-06",
@@ -8821,10 +8800,13 @@
      "2026-07-24",
      "53.6",
      "51.5"
+    ],
+    [
+     "2026-08-05",
+     "54.1",
+     "54.5"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "53.6"
+   ]
   },
   "Core CPI": {
    "actual": "2.6%",
