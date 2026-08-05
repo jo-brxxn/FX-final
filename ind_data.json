@@ -11788,6 +11788,28 @@
    ],
    "source": "tv"
   },
+  "Services PMI": {
+   "actual": "51.2",
+   "forecast": "51.9",
+   "previous": "52.2",
+   "date": "2026-08-05",
+   "event": "S&P Global Services PMI Final",
+   "period": null,
+   "history": [
+    [
+     "2026-08-05",
+     "51.2"
+    ]
+   ],
+   "historyFull": [
+    [
+     "2026-08-05",
+     "51.2",
+     "51.9"
+    ]
+   ],
+   "source": "tv"
+  },
   "GDP Growth QoQ": {
    "actual": "0.5%",
    "forecast": "0.3%",
