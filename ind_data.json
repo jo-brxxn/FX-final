@@ -5310,6 +5310,28 @@
    ],
    "source": "tv"
   },
+  "Services PMI": {
+   "actual": "53.6",
+   "forecast": "53",
+   "previous": "50.5",
+   "date": "2026-08-04",
+   "event": "S&P Global Services PMI Final",
+   "period": null,
+   "history": [
+    [
+     "2026-08-04",
+     "53.6"
+    ]
+   ],
+   "historyFull": [
+    [
+     "2026-08-04",
+     "53.6",
+     "53"
+    ]
+   ],
+   "source": "tv"
+  },
   "Central Bank Rate": {
    "actual": "4.35%",
    "forecast": "4.35%",
@@ -15972,17 +15994,13 @@
    "source": "tv"
   },
   "NFP / Employment Change": {
-   "actual": "0.2%",
-   "forecast": "0.3%",
-   "previous": "0.5%",
-   "date": "2026-05-05",
+   "actual": "0.5%",
+   "forecast": "0.2%",
+   "previous": "0.2%",
+   "date": "2026-08-04",
    "event": "Employment Change QoQ",
    "period": null,
    "history": [
-    [
-     "2025-08-05",
-     "-0.1%"
-    ],
     [
      "2025-11-04",
      "0%"
@@ -15994,8 +16012,13 @@
     [
      "2026-05-05",
      "0.2%"
+    ],
+    [
+     "2026-08-04",
+     "0.5%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-10-31",
@@ -16051,22 +16074,22 @@
      "2026-05-05",
      "0.2%",
      "0.3%"
+    ],
+    [
+     "2026-08-04",
+     "0.5%",
+     "0.2%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Unemployment Rate": {
-   "actual": "5.3%",
+   "actual": "5.6%",
    "forecast": "5.4%",
-   "previous": "5.4%",
-   "date": "2026-05-05",
+   "previous": "5.3%",
+   "date": "2026-08-04",
    "event": "Unemployment Rate",
    "period": null,
    "history": [
-    [
-     "2025-08-05",
-     "5.2%"
-    ],
     [
      "2025-11-04",
      "5.3%"
@@ -16078,8 +16101,13 @@
     [
      "2026-05-05",
      "5.3%"
+    ],
+    [
+     "2026-08-04",
+     "5.6%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-10-31",
@@ -16135,9 +16163,13 @@
      "2026-05-05",
      "5.3%",
      "5.4%"
+    ],
+    [
+     "2026-08-04",
+     "5.6%",
+     "5.4%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Consumer Confidence": {
    "actual": "80.4",
