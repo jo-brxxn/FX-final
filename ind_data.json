@@ -3837,17 +3837,13 @@
    "source": "tv"
   },
   "PPI": {
-   "actual": "5.9%",
-   "forecast": "5.7%",
-   "previous": "4.9%",
-   "date": "2026-07-06",
+   "actual": "4.6%",
+   "forecast": "4.6%",
+   "previous": "5.9%",
+   "date": "2026-08-05",
    "event": "PPI YoY",
    "period": "y/y",
    "history": [
-    [
-     "2026-04-08",
-     "-3%"
-    ],
     [
      "2026-05-06",
      "2.1%"
@@ -3859,6 +3855,10 @@
     [
      "2026-07-06",
      "5.9%"
+    ],
+    [
+     "2026-08-05",
+     "4.6%"
     ]
    ],
    "historyFull": [
@@ -4036,6 +4036,11 @@
      "2026-07-06",
      "5.9%",
      "5.7%"
+    ],
+    [
+     "2026-08-05",
+     "4.6%",
+     "4.6%"
     ]
    ],
    "source": "tv"
@@ -4397,6 +4402,28 @@
     ]
    ],
    "source": "tv"
+  },
+  "Services PMI": {
+   "actual": "51.7",
+   "forecast": "51.6",
+   "previous": "49.4",
+   "date": "2026-08-05",
+   "event": "S&P Global Services PMI Final",
+   "period": null,
+   "history": [
+    [
+     "2026-08-05",
+     "51.7"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-08-05",
+     "51.7",
+     "51.6"
+    ]
+   ]
   }
  },
  "AUD": {
@@ -14072,6 +14099,28 @@
     ]
    ],
    "source": "tv"
+  },
+  "Services PMI": {
+   "actual": "52.1",
+   "forecast": "51.8",
+   "previous": "48.8",
+   "date": "2026-08-05",
+   "event": "S&P Global Services PMI Final",
+   "period": null,
+   "history": [
+    [
+     "2026-08-05",
+     "52.1"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-08-05",
+     "52.1",
+     "51.8"
+    ]
+   ]
   }
  },
  "CHF": {
