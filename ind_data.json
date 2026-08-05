@@ -7586,17 +7586,13 @@
    "source": "tv"
   },
   "ADP Employment": {
-   "actual": "98K",
-   "forecast": "113K",
-   "previous": "122K",
-   "date": "2026-07-01",
+   "actual": "44K",
+   "forecast": "70K",
+   "previous": "98K",
+   "date": "2026-08-05",
    "event": "ADP Employment Change",
    "period": null,
    "history": [
-    [
-     "2026-04-01",
-     "62K"
-    ],
     [
      "2026-05-06",
      "109K"
@@ -7608,8 +7604,13 @@
     [
      "2026-07-01",
      "98K"
+    ],
+    [
+     "2026-08-05",
+     "44K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-30",
@@ -7785,9 +7786,13 @@
      "2026-07-01",
      "98K",
      "113K"
+    ],
+    [
+     "2026-08-05",
+     "44K",
+     "70K"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Manufacturing PMI": {
    "actual": "55.6",
