@@ -2426,12 +2426,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-310 — Nutzer-Bugreport untersucht (&quot;ohne Supabase aktualisieren sich Indikatoren nicht, Set-ups komplett andere Verteilung&quot;): per Playwright empirisch geprueft (frisches localStorage, volle Boot-Feed-Sequenz abgewartet, gegen ind_data.json gegengeprueft) - die Live-Feeds aktualisieren Indikatoren nachweislich UNABHAENGIG vom Cloud-Status identisch, kein Feed-Bug gefunden. Die abweichende Set-ups-Verteilung kommt vom fehlenden eigenen Kontext (manuelle Bias-Einordnungen auf CB Tone/Next CB Move/Risk Correlation/Geopolitics, Risk-Environment-Reglerstufe) auf einem nicht verbundenen/generischen Profil - beabsichtigtes Cloud-Sync-Verhalten, wirkte aber ohne Hinweis wie ein Defekt. Fix: neue, nicht-pulsierende &quot;NOT SYNCED&quot;-Hinweiskarte in Set-ups UND im Dashboard (Notifications-Karte), sobald kein Cloud Sync eingerichtet ist - Klick oeffnet direkt den Sync-Dialog.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-311 — Echten Bug gefunden+gefixt (Nutzer-Bugreport &quot;Pin/Animation-Schalter springen nach Save zurueck, Gleiter erscheint trotz deaktivierter Animation&quot;): saveCloudCfg() rief cloudPull(true) auf - manual=true hob den prefPending-Schutz komplett auf und liess einen gerade getoggelten pinEnabled/introAnimEnabled-Wert vom noch alten Cloud-Stand ueberschreiben, sobald direkt nach dem Umschalten auf Save gedrueckt wurde (der 1,5s-Auto-Push war noch nicht gelaufen). cloudPull() bekommt einen neuen forceOverwrite-Parameter, entkoppelt von der reinen UI-Rueckmeldung (manual) - saveCloudCfg() setzt ihn explizit auf false, der explizite Download-Button behaelt sein bisheriges Ueberschreib-Verhalten. Per Playwright mit gemocktem Supabase-Server reproduziert (Bug VOR dem Fix bestaetigt, danach behoben) - erklaert auch das Gleiter-Symptom: die komplette Boost-Sequenz war schon immer korrekt an introAnimEnabled gekoppelt, nur die Einstellung selbst hat vorher nicht zuverlaessig gehalten. Kalender-Tab zusaetzlich per Vorher/Nachher-Screenshot-Vergleich (Commit vor der Design-Umstellung) auf Regressionen geprueft - Tages-Gruppierung/Einklappen ist strukturell unveraendert, keine Design-bedingte Regression gefunden.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-310</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-311</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6881,7 +6881,11 @@ function saveCloudCfg(){
   if(lb)lb.textContent='👤 '+(username||syncId);
   updProfile();
   setCloudStatus('Saved. Syncing...');
-  cloudPull(true);
+  // manual:true fuer die Status-Rueckmeldung ("Downloaded"/Fehlertext),
+  // forceOverwrite:false, damit ein gerade erst getoggeltes pinEnabled/
+  // introAnimEnabled (noch nicht ausgepusht) hier nicht vom alten
+  // Cloud-Stand ueberschrieben wird (siehe Kommentar bei cloudPull).
+  cloudPull(true,false);
 }
 // Profil-Button oben rechts: zeigt den eingetragenen Benutzernamen (oder
 // ersatzweise die Sync-ID), wenn der Cloud-Sync eingerichtet ist, sonst "Log in".
@@ -7096,7 +7100,24 @@ async function cloudPush(manual){
     return false;
   }
 }
-async function cloudPull(manual){
+// forceOverwrite (Nutzer-Bugreport 2026-08-06 "PIN/Animation-Schalter
+// springen nach Save zurueck"): war bisher hart an "manual" gekoppelt -
+// jedes MANUELLE cloudPull() (inkl. dem impliziten Pull, das
+// saveCloudCfg() nach dem Speichern der Zugangsdaten ausloest, um die
+// Verbindung sofort zu pruefen) hob den prefPending-Schutz komplett auf und
+// ueberschrieb frisch getoggelte pinEnabled/introAnimEnabled-Werte mit dem
+// (noch alten) Cloud-Stand, wenn der Nutzer direkt nach dem Toggle auf
+// "Save" drueckte - der 1,5s-Auto-Push aus togglePinEnabled()/
+// toggleIntroAnimEnabled() war zu diesem Zeitpunkt noch nicht gelaufen.
+// "manual" steuert weiterhin NUR die UI-Rueckmeldung (Status-Text/Alert
+// bei Erfolg/Fehler) - forceOverwrite ist die eigentliche "lokale
+// Praeferenz-Aenderung verwerfen"-Entscheidung, standardmaessig gleich
+// manual (unveraendertes Verhalten fuer den expliziten "Download"-Button
+// und alle Hintergrund-Pulls), aber saveCloudCfg() setzt sie explizit auf
+// false - der Nutzer wollte dort nur die Zugangsdaten testen, nicht seine
+// gerade getroffene Wahl verwerfen.
+async function cloudPull(manual,forceOverwrite){
+  if(forceOverwrite===undefined)forceOverwrite=manual;
   const cfg=getCloudCfg();if(!cfg){if(manual)setCloudStatus('Please save first.');return;}
   // Beim Start einen evtl. anstehenden Auto-Push (vom Kalender-Refresh) abbrechen
   // und ZUERST pullen, damit lokale Daten die Cloud nicht überschreiben.
@@ -7128,7 +7149,7 @@ async function cloudPull(manual){
       // sobald irgendein anderes Geraet zwischen Toggle und Push irgendwas
       // gepusht hat. Ein MANUELLER Download uebernimmt weiterhin alles.
       // WICHTIG: vor pushU() lesen - pushU() setzt das Flag selbst.
-      const prefPending=!manual&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
+      const prefPending=!forceOverwrite&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
       pushU();applySnap(JSON.stringify(cd));
       // prefPending muss VOR diesen beiden Zeilen ausgewertet sein (ist es,
