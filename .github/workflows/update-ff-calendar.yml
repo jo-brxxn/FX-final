@@ -3463,8 +3463,58 @@ jobs:
           '
           rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_tv.json rate_tv_tickers.json
 
+      # Nutzer-Wunsch 2026-08-06: Dashboard-Karte ganz rechts mit den neusten
+      # Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick, ...).
+      # Quelle: Marketaux (aggregiert ~5.000 Nachrichtenquellen, spezialisiert
+      # auf Finanz-/Marktnews, Free-Tier 100 Requests/Tag - bei 1 Request/
+      # stuendlichem Lauf = 24/Tag reichlich Puffer). Optional wie Myfxbook:
+      # Repo -> Settings -> Secrets and variables -> Actions -> New repository
+      # secret: MARKETAUX_API_KEY (kostenloser Account auf marketaux.com).
+      # Ohne den Secret bleibt news_data.json leer - die Dashboard-Karte zeigt
+      # dann ehrlich "No headlines yet" statt erfundener Schlagzeilen.
+      # Suchbegriffe bewusst auf die in der App gelisteten Assets/Makro-Themen
+      # zugeschnitten (Grundsatz "nur nuetzliche Daten ziehen"), nicht auf
+      # allgemeine Nachrichten. ⚠️ Der genaue Marketaux-Query-Syntax (Boolean-
+      # Operatoren fuer den search-Parameter) ist HIER NOCH UNGETESTET, da
+      # diese Sandbox keinen Netzwerkzugriff auf marketaux.com hat - wie bei
+      # jeder neuen Quelle in diesem Projekt (Bond-Yields, Rate Probabilities,
+      # ...) muss der erste echte workflow_dispatch-Lauf per Job-Log
+      # verifiziert werden, danach ggf. den Query iterativ anpassen.
+      - name: Fetch financial news headlines -> news_data.json
+        continue-on-error: true
+        env:
+          MARKETAUX_API_KEY: ${{ secrets.MARKETAUX_API_KEY }}
+        run: |
+          rm -f news_marketaux.json
+          if [ -n "$MARKETAUX_API_KEY" ]; then
+            Q='(Fed OR "Federal Reserve" OR Powell OR ECB OR "Bank of England" OR "Bank of Japan" OR "Reserve Bank" OR "interest rate" OR inflation OR "central bank" OR Hormuz OR OPEC OR oil OR gold OR silver OR bitcoin OR crypto OR "S&P 500" OR Nasdaq OR "stock market")'
+            Q_ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$Q")
+            curl -sL --max-time 20 "https://api.marketaux.com/v1/news/all?api_token=${MARKETAUX_API_KEY}&language=en&limit=20&sort=published_desc&search=${Q_ENC}" -o news_marketaux.json || true
+            echo "[debug] marketaux response: $(wc -c < news_marketaux.json 2>/dev/null || echo 0) bytes"
+            head -c 300 news_marketaux.json 2>/dev/null; echo
+          else
+            echo "[debug] MARKETAUX_API_KEY not set - news_data.json stays empty (see workflow comment to enable)"
+          fi
+          node -e '
+            const fs=require("fs");
+            let heads=[];
+            try{
+              const j=JSON.parse(fs.readFileSync("news_marketaux.json","utf8"));
+              const arr=Array.isArray(j&&j.data)?j.data:[];
+              heads=arr.map(a=>({
+                title:String(a.title||"").trim(),
+                url:String(a.url||""),
+                source:String(a.source||""),
+                publishedAt:String(a.published_at||""),
+              })).filter(h=>h.title&&h.url);
+            }catch(e){console.log("[debug] news parse: "+e.message);}
+            fs.writeFileSync("news_data.json",JSON.stringify({updated:new Date().toISOString(),headlines:heads},null,1));
+            console.log("news_data.json: "+heads.length+" headlines");
+          '
+          rm -f news_marketaux.json
+
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt news_marketaux.json
 
       - name: Commit and push if changed
         run: |
@@ -3478,6 +3528,7 @@ jobs:
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json
           [ -f rate_probabilities.json ] && git add rate_probabilities.json
+          [ -f news_data.json ] && git add news_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"
             # Retry mit Rebase bei Push-Kollision (Nutzer-Wunsch 2026-07-13:
