@@ -14904,17 +14904,13 @@
    ]
   },
   "Unemployment Rate": {
-   "actual": "2.9%",
-   "forecast": "3.1%",
-   "previous": "3.1%",
-   "date": "2026-07-06",
+   "actual": "3%",
+   "forecast": null,
+   "previous": "2.9%",
+   "date": "2026-08-06",
    "event": "Unemployment Rate",
    "period": null,
    "history": [
-    [
-     "2026-04-08",
-     "3.1%"
-    ],
     [
      "2026-05-07",
      "3%"
@@ -14926,8 +14922,13 @@
     [
      "2026-07-06",
      "2.9%"
+    ],
+    [
+     "2026-08-06",
+     "3%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-07",
@@ -15103,10 +15104,13 @@
      "2026-07-06",
      "2.9%",
      "3.1%"
+    ],
+    [
+     "2026-08-06",
+     "3%",
+     null
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "3%"
+   ]
   },
   "Consumer Confidence": {
    "actual": "-36",
