@@ -2085,17 +2085,13 @@
    "source": "tv"
   },
   "Retail Sales": {
-   "actual": "0.2%",
-   "forecast": "0.3%",
-   "previous": "-0.3%",
-   "date": "2026-07-06",
+   "actual": "-0.3%",
+   "forecast": "0.1%",
+   "previous": "0.2%",
+   "date": "2026-08-06",
    "event": "Retail Sales MoM",
    "period": "m/m",
    "history": [
-    [
-     "2026-04-08",
-     "-0.2%"
-    ],
     [
      "2026-05-07",
      "-0.1%"
@@ -2107,8 +2103,13 @@
     [
      "2026-07-06",
      "0.2%"
+    ],
+    [
+     "2026-08-06",
+     "-0.3%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-06",
@@ -2284,10 +2285,13 @@
      "2026-07-06",
      "0.2%",
      "0.3%"
+    ],
+    [
+     "2026-08-06",
+     "-0.3%",
+     "0.1%"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "-0.4%"
+   ]
   },
   "Unemployment Rate": {
    "actual": "6.3%",
@@ -4380,28 +4384,6 @@
     ]
    ],
    "source": "tv"
-  },
-  "Services PMI": {
-   "actual": "51.7",
-   "forecast": "51.6",
-   "previous": "49.4",
-   "date": "2026-08-05",
-   "event": "S&P Global Services PMI Final",
-   "period": null,
-   "history": [
-    [
-     "2026-08-05",
-     "51.7"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-08-05",
-     "51.7",
-     "51.6"
-    ]
-   ]
   }
  },
  "AUD": {
@@ -14042,28 +14024,6 @@
     ]
    ],
    "source": "tv"
-  },
-  "Services PMI": {
-   "actual": "52.1",
-   "forecast": "51.8",
-   "previous": "48.8",
-   "date": "2026-08-05",
-   "event": "S&P Global Services PMI Final",
-   "period": null,
-   "history": [
-    [
-     "2026-08-05",
-     "52.1"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-08-05",
-     "52.1",
-     "51.8"
-    ]
-   ]
   }
  },
  "CHF": {
