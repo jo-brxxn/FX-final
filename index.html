@@ -1100,6 +1100,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 @keyframes riskEnvNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--purple-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--purple-rgb),.18)}}
 .risk-env-notify-card{background:var(--bg2);border-left-color:var(--purple);box-shadow:0 2px 10px rgba(var(--purple-rgb),.12);animation:riskEnvNotifyPulse 1.8s ease-in-out infinite}
 .risk-env-notify-card .cot-notify-txt{color:var(--purple)}
+/* Cloud-Sync-Hinweis (Nutzer-Bugreport 2026-08-05, siehe cloudNotConnectedNoticeHtml)
+   - reuses .cot-notify-card, aber ohne Puls (kein "neuer Datenstand", nur ein
+   dauerhafter Zustandshinweis). */
+.sync-notify-card{animation:none}
+.sync-notify-card .cot-notify-ic{display:inline-flex}
 .ind-data-val{font-weight:600;color:var(--t2)}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px}
@@ -2421,12 +2426,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-309 — Research-Terminal: Notiz-Funktionen in der Mitte eingebaut (zeigt General Notes des gewaehlten Assets samt Unterordner-Navigation ueber den Baum, '+ New note'), Glocke zum Anlegen von News-Alarmen auf kommenden Timeline-Events (dieselbe Funktion/Modal wie im Kalender). Ueberschrift 'Research Terminal' UND die Fokus-Asset-Identitaet (Flagge/Ticker/Name/Score) stehen jetzt ausserhalb der geborderten Ordner-Box, deutlich groesser (26px/22px statt vorher 18px/13px), immer sichtbar unabhaengig vom Auf-/Zugeklappt-Zustand der Sidebar.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-310 — Nutzer-Bugreport untersucht (&quot;ohne Supabase aktualisieren sich Indikatoren nicht, Set-ups komplett andere Verteilung&quot;): per Playwright empirisch geprueft (frisches localStorage, volle Boot-Feed-Sequenz abgewartet, gegen ind_data.json gegengeprueft) - die Live-Feeds aktualisieren Indikatoren nachweislich UNABHAENGIG vom Cloud-Status identisch, kein Feed-Bug gefunden. Die abweichende Set-ups-Verteilung kommt vom fehlenden eigenen Kontext (manuelle Bias-Einordnungen auf CB Tone/Next CB Move/Risk Correlation/Geopolitics, Risk-Environment-Reglerstufe) auf einem nicht verbundenen/generischen Profil - beabsichtigtes Cloud-Sync-Verhalten, wirkte aber ohne Hinweis wie ein Defekt. Fix: neue, nicht-pulsierende &quot;NOT SYNCED&quot;-Hinweiskarte in Set-ups UND im Dashboard (Notifications-Karte), sobald kein Cloud Sync eingerichtet ist - Klick oeffnet direkt den Sync-Dialog.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-309</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-310</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -9473,7 +9478,7 @@ function renderPairs(){
   // Filterleiste: einzelne Währungen auswählen -> nur Paare mit dieser Währung.
   const active=setupCcyFilter.length>0;
   const chip=c=>`<button class="cmp-chip${setupCcyFilter.includes(c)?' on':''}" onclick="toggleSetupCcy('${c}')">${c}</button>`;
-  const filterBar=`<div class="cmp-filter" style="margin-bottom:11px">
+  const filterBar=cloudNotConnectedNoticeHtml()+`<div class="cmp-filter" style="margin-bottom:11px">
     <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Filter by currency</span>${FX.map(chip).join('')}</div>
     <div class="cmp-filter-grp">
       <button class="cmp-quick${active?'':' on'}" onclick="clearSetupCcy()" title="Show all pairs &amp; assets">All</button>
@@ -11298,6 +11303,34 @@ function cotNotifyHtml(){
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
   </div>`;
 }
+// Nutzer-Bugreport 2026-08-05: "wenn man kein supabase verbunden hat, dann
+// aktualisieren sich teilweise Indikatoren usw nicht - z.B. Set-ups komplett
+// unterschiedliche Verteilung mit unterschiedlichen Scores". Per Playwright
+// empirisch geprueft (frisches, komplett geleertes localStorage, volle
+// bootFetchScoreFeeds()-Sequenz abgewartet, gegen ind_data.json
+// gegengeprueft): die Live-Feeds (ind/bond/COT/Sentiment) aktualisieren
+// Indikatoren NACHWEISLICH unabhaengig vom Cloud-Status identisch (feed:true,
+// korrekte Actual-Werte) - kein Feed-Update-Bug. Die abweichende Set-ups-
+// Verteilung erklaert sich vollstaendig dadurch, dass ein nicht verbundenes
+// Profil den generischen DEFAULT-Zustand zeigt: keine eigenen manuellen
+// Bias-Einordnungen (CB Tone/Next CB Move/Risk Correlation/Geopolitics -
+// diese vier sind grundsaetzlich nie live-gespeist, sondern immer
+// nutzereigene Einschaetzung) und der Risk-Environment-Regler steht auf
+// "None" statt der eigenen Stufe - beides kann viele Assets gleichzeitig
+// verschieben (siehe CLAUDE.md Risk-Environment-Eintraege). Das ist
+// beabsichtigtes Cloud-Sync-Verhalten (genau dafuer ist es da), wirkt aber
+// ohne Hinweis wie ein Defekt - daher hier transparent gemacht (Grundsatz
+// "nie schaetzen -> Dashboard-Meldung" gilt sinngemaess auch fuer fehlenden
+// Kontext, nicht nur fehlende Datenquellen). Nicht pulsierend (kein neuer
+// Datenstand, nur ein dauerhafter Zustandshinweis).
+function cloudNotConnectedNoticeHtml(){
+  if(getCloudCfg())return'';
+  return`<div class="cot-notify-card sync-notify-card" onclick="openCloudM()">
+    <span class="cot-notify-ic">${icn('link',13)}</span>
+    <span class="cot-notify-txt">NOT SYNCED</span>
+    <span class="cot-notify-sub">Showing default scores, not your own bias overrides/Risk Environment setting — tap to set up Cloud Sync</span>
+  </div>`;
+}
 function renderCotNotify(){if(document.getElementById('dashWidgets'))renderDash();}
 // ── Sonntags-Erinnerung "Risk Environment pruefen" (Nutzer-Wunsch
 // 2026-07-13): erscheint unter dem COT-Hinweis im GLEICHEN Stil
@@ -11821,7 +11854,7 @@ function renderDash(){
       // per Ausrufezeichen, stattdessen eine Notification sobald das Event
       // eingetroffen ist"). Der "View FF"-Link im Kartenkopf (hdrHtml weiter
       // unten) fuehrt direkt zum Forex-Factory-Kalender.
-      const popups=cotNotifyHtml()+riskEnvRemindHtml();
+      const popups=cloudNotConnectedNoticeHtml()+cotNotifyHtml()+riskEnvRemindHtml();
       const evtNotifs=[...inbox].filter(m=>m.kind==='evt').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,6);
       const evtRows=evtNotifs.map(n=>{
         const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
