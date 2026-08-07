@@ -2430,12 +2430,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-314 — Audit-Session: (1) BoE-Zinskurven-Schritt aus dem Workflow entfernt - er erwischte die INSTANTANEOUS-FORWARD- statt der Spot-Kurve und ueberschrieb damit an jedem Handelstag den korrekten TradingView-Wert (GBP 10Y sprang zwischen ~4,9% und ~6,1%, verfaelschte GBPs Score); Mehrwert hatte der Schritt keinen (nur der laufende Monat). 23 bereits verfaelschte Punkte aus bond_data.json entfernt (geloescht, nicht geschaetzt). (2) Bond-Signal komplett neu: statt zweier sich widersprechender Fenster (15-Tage-Punkt fuer den Bias + separater 25-Tage-Trend, der laut Modal ±0,5 geben sollte, von indScoreParts aber verworfen wurde - auf den echten Daten widersprachen sich 11 von 16 Indikatoren) jetzt EIN Signal: SMA5 gegen SMA21 mit 3bp-Totzone. Empirisch gemessene Fehlsignale: 15-Tage-Punkt 26, reine SMA21 30, SMA5-vs-SMA21 15, mit Totzone 0. Trend-Modal erklaert jetzt genau das Signal, das auch zaehlt. (3) Bug: setSentimentRangeCustom fehlte komplett - \"Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-315 — Sicherheits-Audit Runde 2: (1) safeUrl() eingefuehrt und auf ALLE 12 interpolierten href-Stellen gezogen. escH() schuetzt nur die HTML-Ebene, laesst das URL-SCHEMA aber unangetastet - eine javascript:-URL waere beim Klick ausgefuehrt worden. Relevant vor allem fuer die neue Schlagzeilen-Karte (Marketaux liefert fremde URLs) und die selbst hinterlegbaren Quellen-/Zinserwartungs-Links, die per Cloud-Sync auch von einem anderen Geraet kommen koennen. Nur http/https/mailto sowie relative Pfade und Anker passieren, alles andere wird zu \"#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-314</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-315</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3028,6 +3028,26 @@ const uid=()=>Math.random().toString(36).slice(2,9);
 // Quote-Maskierung konnte ein " im Text aus dem Attribut ausbrechen und
 // eigene Attribute/Event-Handler injizieren (XSS).
 const escH=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// escH() schuetzt die HTML-Ebene, sagt aber NICHTS ueber das URL-Schema: ein
+// href="javascript:..." kommt da unveraendert durch und wuerde beim Klick
+// ausgefuehrt. Relevant, weil mehrere hrefs aus Quellen kommen, die nicht
+// vollstaendig unter unserer Kontrolle stehen - vor allem die Schlagzeilen-
+// Karte (Marketaux liefert fremde URLs) sowie die selbst hinterlegbaren
+// Quellen-/Zinserwartungs-Links, die zusaetzlich per Cloud-Sync von einem
+// anderen Geraet kommen koennen. safeUrl() laesst nur die Schemata durch, die
+// hier ueberhaupt vorkommen duerfen (http/https/mailto sowie relative Pfade
+// und Anker) und macht aus allem anderen ein wirkungsloses "#".
+// Reihenfolge wie bei escJH: erst Inhalt pruefen, DANN fuers Attribut escapen.
+function safeUrl(u){
+  const s=String(u==null?'':u).trim();
+  if(!s)return'#';
+  // Steuerzeichen entfernen: "java\tscript:" wird vom Browser sonst wieder zu
+  // "javascript:" zusammengezogen und umginge die Schema-Pruefung.
+  const clean=s.replace(/[\u0000-\u0020]/g,'');
+  if(/^(https?:|mailto:)/i.test(clean))return escH(clean);
+  if(/^[#/]/.test(clean)||/^[\w.\-]+(\/|$)/.test(clean)&&!/^[a-z][a-z0-9+.\-]*:/i.test(clean))return escH(clean);
+  return'#';
+}
 // ── Gemeinsames Inline-SVG-Icon-Set (statt Emojis, Nutzer-Wunsch 2026-07-16:
 // professionellere Optik; Emojis rendern je Plattform unterschiedlich).
 // Stroke-Stil, erbt currentColor. icn(name,size) liefert das <svg>-Markup
@@ -7607,9 +7627,9 @@ function renderRub(rub,ri,total){
   return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
     <div class="rub-hdr" onpointerdown="biasPressStart(event,'rub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
       <span class="ind-edit-ctrls"><button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button></span>
-      <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
+      <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="markUserEditTs();getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       <span class="ind-edit-ctrls">
-        ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${rateWatchUrl(getSym().id)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
+        ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${safeUrl(rateWatchUrl(getSym().id))}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
         ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
         <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
         <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -7625,7 +7645,7 @@ function renderRub(rub,ri,total){
         <div class="rub-summary-lbl">
           <span style="color:${bco}">▸ SUMMARY</span>
         </div>
-        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(getSym(),r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
+        <textarea class="rub-summary-txt" placeholder="Summarize the overall ${escH(rub.name)} picture here..." oninput="ar(this);getRub(${ri}).summary=this.value;saveSoon()" onchange="markUserEditTs();const r=getRub(${ri});r.summary=this.value;r._summarySig=rubSummarySig(getSym(),r);syncMacroRub(${ri});save()">${escH(rub.summary||'')}</textarea>
       </div>
       <!-- INDICATORS -->
       ${renderIndsTable(rub,ri)}
@@ -7697,8 +7717,8 @@ function renderIndRow(ind,ri,ii,rub,total){
     const ilKey1=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb1=cs||'https://www.forexfactory.com/calendar';
     const fin1=(indLinkCustom&&indLinkCustom[ilKey1])||fb1;
-    const srcLink=`<a href="${escH(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
-    const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${escH(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
+    const srcLink=`<a href="${safeUrl(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
+    const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${safeUrl(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
     actTxt=ev.actual;actCls=ac||'';fcTxt=ev.forecast||'–';prevTxt=ev.previous||'–';
     detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>`;
   }else if(ind.research){
@@ -7711,8 +7731,8 @@ function renderIndRow(ind,ri,ii,rub,total){
     const ilKey2=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb2=r.source||'';
     const fin2=(indLinkCustom&&indLinkCustom[ilKey2])||fb2;
-    const srcLink=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Source not on file</span>';
-    const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
+    const srcLink=fin2?`<a href="${safeUrl(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Source not on file</span>';
+    const secLink=r.secondarySource?` · <a href="${safeUrl(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
     const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> ${dt||'–'}<span class="ind-data-sep">·</span><span class="ind-data-lbl">21d avg since:</span> ${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}<span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">As of:</span> ${dt||'–'}${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
     actTxt=A.val;actCls=ac||'';
@@ -7815,13 +7835,13 @@ function renderNotesSubTab(c){
   ${masonryHTML(rubs,(rub,ri)=>renderNoteRub(rub,ri,rubs.length))}
   <div style="margin-top:10px">
     <div class="slbl"><span style="color:var(--t3)">FREE NOTES</span><div class="slbl-line"></div></div>
-    <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." oninput="getSym().notes=this.value;saveSoon()" onchange="getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
+    <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." oninput="getSym().notes=this.value;saveSoon()" onchange="markUserEditTs();getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
   </div>`;}
 
 function renderNoteRub(rub,ri,total){
   return`<div class="rub-card${rub.imp?' imp':''}">
     <div class="rub-hdr" onpointerdown="biasPressStart(event,'noteRub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-      <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
+      <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="markUserEditTs();getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
       <button class="rstar${rub.imp?' on':''}" onclick="togNoteRubImp(${ri})">⭐</button>
       <button class="rmv" onclick="mvNoteRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
       <button class="rmv" onclick="mvNoteRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -11805,7 +11825,7 @@ function renderDash(){
       // Schlagzeilen (Grundsatz "nie schaetzen").
       const heads=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines.slice(0,12):[];
       content=heads.length===0?`<div class="dw-empty">No headlines yet${NEWS_DATA?'':' — news feed not configured'}.</div>`:
-        heads.map(h=>`<a class="hl-row" href="${escH(h.url||'#')}" target="_blank" rel="noopener">
+        heads.map(h=>`<a class="hl-row" href="${safeUrl(h.url)}" target="_blank" rel="noopener">
           <span class="hl-title">${escH(h.title||'')}</span>
           <span class="hl-meta"><span class="hl-src">${escH(h.source||'')}</span>${h.publishedAt?`<span class="hl-time">${escH(relTime(h.publishedAt))}</span>`:''}</span>
         </a>`).join('');
@@ -11843,7 +11863,7 @@ function renderDash(){
           <button onclick="delPair('${p.id}');renderDash()" class="dw-del" style="opacity:.5" title="Remove">×</button>
         </div>`;}).join(''));
     }else if(w.type==='quick_notes'){
-      content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
+      content=`<textarea class="nbox" style="min-height:70px" placeholder="Quick notes..." oninput="widgets.find(x=>x.id==='${w.id}').content=this.value;saveSoon()" onchange="markUserEditTs();widgets.find(x=>x.id==='${w.id}').content=this.value;save()">${escH(w.content||'')}</textarea>`;
     }else if(w.type==='ccy_ranking'){
       // Frei waehlbare Assets statt fest FX-Majors (Nutzer-Wunsch 2026-07-27,
       // Konfig ueber das Zahnrad/openCcyCfgM) - max. CCY_MAX_ASSETS, per
@@ -13290,8 +13310,8 @@ function renderCompare(){
         const lk=cmpCellLinks(id,rubName,base);
         if(!lk||(!lk.primary&&!lk.secondary))return`<td class="cmp-na">–</td>`;
         const parts=[];
-        if(lk.primary)parts.push(`<a href="${escH(lk.primary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.primary.label)} ↗</a>`);
-        if(lk.secondary)parts.push(`<a href="${escH(lk.secondary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.secondary.label)} ↗</a>`);
+        if(lk.primary)parts.push(`<a href="${safeUrl(lk.primary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.primary.label)} ↗</a>`);
+        if(lk.secondary)parts.push(`<a href="${safeUrl(lk.secondary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.secondary.label)} ↗</a>`);
         return`<td class="cmp-link-cell"><div class="cmp-link-wrap">${parts.join('')}</div></td>`;
       }).join('');
       return mainRow+`<tr class="cmp-exp-row"><td class="cmp-ind cmp-exp-lbl">🔗 Sources</td>${linkCells}</tr>`;
@@ -15106,7 +15126,7 @@ function renderRetailBars(D){
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
   const filt=sentFilterBar();
   const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
   if(sentSym)return renderRetailHistory(D,sentSym,hdr);
   const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
@@ -15272,7 +15292,7 @@ function renderPutCallChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
   const HI=th.HI,LO=th.LO;
   const W=760,H=360,padL=44,padR=54,padT=24,padB=46;
@@ -15346,7 +15366,7 @@ function renderNetFlowChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">(Call−Put)/(Call+Put) · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">(Call−Put)/(Call+Put) · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const s=rawSeries.filter(e=>filteredDates.has(e[0]));
@@ -16125,7 +16145,7 @@ function renderRateProb(){
   el.innerHTML=ccyBar+`<div class="cot-card">
       <div class="cot-card-title">Current ${escH(rateProbCcy)} ${escH(refLabel)}${approxBadge}${iBtn('rateprob')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">source: ${escH(D.refSource||'')} · ${escH(upd)}</span></div>
       <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
-      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next ${escH(meetLabel)} (${escH(withData[0].label)}) · <a class="rate-watch" href="${escH(linkUrl)}" target="_blank" rel="noopener" title="Official source">${linkTxt}</a></div>
+      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next ${escH(meetLabel)} (${escH(withData[0].label)}) · <a class="rate-watch" href="${safeUrl(linkUrl)}" target="_blank" rel="noopener" title="Official source">${linkTxt}</a></div>
       <div class="rateprob-pillbar">${pills}</div>
       <div style="padding:0 14px 4px">${rangeBar}</div>
       ${rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount)}
