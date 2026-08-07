@@ -2017,7 +2017,12 @@ jobs:
               let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
               series.push([today,val]);
               series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-              series=series.slice(-100);
+              // 2026-08-07 von 100 auf 1100 Punkte (~3 Jahre Handelstage)
+              // angehoben: der Yahoo-Backfill-Schritt weiter unten laedt
+              // 3 Jahre Tageskurse nach, die hier sonst sofort wieder
+              // abgeschnitten wuerden. Basis fuer Performance-Ranking,
+              // Korrelationen und die Marktrelevanz-Gewichtung.
+              series=series.slice(-1100);
               out[m.id]={source:SRC[m.id]||cur.source||"",invert:m.invert,series:series};
               okN++;
             });
@@ -2505,6 +2510,102 @@ jobs:
       # "inv" bleibt nur als Schema-Feld (immer 0) fuer App-Kompatibilitaet.
       # NZD hat wie beim Put/Call-Schritt keinen etablierten ETF und bleibt
       # aussen vor.
+      # ── 3-JAHRES-PREISHISTORIE (einmaliger Backfill, danach No-Op) ────
+      # price_data.json waechst sonst nur einen Punkt pro Stunde/Tag mit. Fuer
+      # Performance-Ranking ueber 1M/YTD, belastbare Korrelationen und vor
+      # allem die Marktrelevanz-Gewichtung (durchschnittlicher Kursausschlag
+      # an Release-Tagen eines Indikators) braucht es echte Jahre statt Wochen.
+      # Quelle ist derselbe Yahoo-Chart-Endpunkt, der beim Seasonality-Schritt
+      # schon laeuft (inkl. Cookie+Crumb-Auth) - nur mit range=3y&interval=1d.
+      #
+      # WICHTIG - Konventionstreue: die Yahoo-Symbole sind so gewaehlt, dass
+      # sie DASSELBE Underlying und DIESELBE invert-Konvention wie der
+      # TradingView-Schritt oben treffen (CHF/JPY/CAD sind USD/XXX-Notierungen
+      # -> invert:true). Sonst wuerden alte und neue Punkte derselben Reihe in
+      # entgegengesetzte Richtungen zeigen.
+      #
+      # Rein ADDITIV: bestehende Tage bleiben unangetastet, es werden nur
+      # fehlende AELTERE Daten ergaenzt. Reicht eine Reihe schon >=700 Punkte
+      # zurueck, wird sie uebersprungen - der Schritt ist damit nach dem ersten
+      # erfolgreichen Lauf ein No-Op und kostet praktisch nichts.
+      - name: Backfill 3y daily price history (Yahoo) -> price_data.json
+        continue-on-error: true
+        run: |
+          NEED=$(node -e '
+            try{
+              const d=JSON.parse(require("fs").readFileSync("price_data.json","utf8"));
+              const short=Object.keys(d).filter(k=>!(d[k]&&Array.isArray(d[k].series)&&d[k].series.length>=700));
+              console.log(short.length?"yes":"no");
+            }catch(e){console.log("yes");}
+          ')
+          if [ "$NEED" = "no" ]; then
+            echo "[debug] price backfill: all series already >=700 points, skipping"
+            exit 0
+          fi
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          curl -sL --max-time 15 -A "$UA" -c ypc.txt "https://fc.yahoo.com" -o /dev/null || true
+          CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ypc.txt -c ypc.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
+          echo "[debug] price backfill crumb: len=${#CRUMB}"
+          # Asset -> Yahoo-Symbol (Underlying identisch zum TradingView-Schritt)
+          MAPS="USD:DX-Y.NYB EUR:EURUSD=X GBP:GBPUSD=X CHF:CHF=X JPY:JPY=X CAD:CAD=X AUD:AUDUSD=X NZD:NZDUSD=X GOLD:GC=F SILVER:SI=F OIL:CL=F BTC:BTC-USD SP500:^GSPC NAS:^NDX DAX:^GDAXI"
+          rm -f pbf_meta.txt
+          for PAIR in $MAPS; do
+            ASSET="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            ENC=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$SYM")
+            HCODE=$(curl -sL --max-time 30 -A "$UA" -b ypc.txt -H "Accept: application/json" -w "%{http_code}" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/${ENC}?range=3y&interval=1d&crumb=${CRUMB}" -o "pbf_${ASSET}.json" || echo "000")
+            SZ=$(wc -c < "pbf_${ASSET}.json" 2>/dev/null || echo 0)
+            echo "[debug] price backfill $ASSET <- $SYM: http=$HCODE $SZ bytes"
+            if [ "$HCODE" = "200" ] && [ "$SZ" -gt 500 ]; then
+              echo "$ASSET" >> pbf_meta.txt
+            else
+              echo "[debug] price backfill $ASSET body: $(head -c 200 "pbf_${ASSET}.json" 2>/dev/null | tr -d '\r')"
+              rm -f "pbf_${ASSET}.json"
+            fi
+          done
+          node -e '
+            const fs=require("fs");
+            const CAP=1100;
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("price_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            let ids=[];
+            try{ids=fs.readFileSync("pbf_meta.txt","utf8").trim().split("\n").filter(Boolean);}catch(e){}
+            let touched=0;
+            ids.forEach(id=>{
+              let j;try{j=JSON.parse(fs.readFileSync("pbf_"+id+".json","utf8"));}catch(e){console.log("[debug] "+id+": bad json");return;}
+              const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
+              const ts=r&&r.timestamp;
+              const cl=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              if(!ts||!cl||!ts.length){console.log("[debug] "+id+": no bars");return;}
+              const cur=out[id]||{};
+              const have=new Set((Array.isArray(cur.series)?cur.series:[]).map(e=>e&&e[0]));
+              // Nur FEHLENDE Tage ergaenzen - was der stuendliche
+              // TradingView-Schritt geschrieben hat, bleibt massgeblich.
+              const add=[];
+              for(let i=0;i<ts.length;i++){
+                const c=cl[i];
+                if(c==null||!isFinite(c)||c<=0)continue;
+                const d=new Date(ts[i]*1000).toISOString().slice(0,10);
+                if(have.has(d))continue;
+                have.add(d);
+                add.push([d,Math.round(Number(c)*100000)/100000]);
+              }
+              if(!add.length){console.log("[debug] "+id+": nothing new");return;}
+              const merged=(Array.isArray(cur.series)?cur.series:[]).concat(add)
+                .sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0).slice(-CAP);
+              out[id]=Object.assign({},cur,{series:merged});
+              touched++;
+              console.log("[debug] "+id+": +"+add.length+" points -> "+merged.length+" total ("+merged[0][0]+" .. "+merged[merged.length-1][0]+")");
+            });
+            if(touched){
+              fs.writeFileSync("price_data.json",JSON.stringify(out,null,1));
+              console.log("price_data.json: backfilled "+touched+" series");
+            }else{
+              console.log("price_data: backfill added nothing, file unchanged");
+            }
+          '
+          rm -f pbf_*.json pbf_meta.txt ypc.txt
+
       - name: Fetch seasonality (Yahoo ETF proxies, monthly bars) -> seasonality_data.json
         continue-on-error: true
         run: |
