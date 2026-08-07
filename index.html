@@ -2530,12 +2530,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-324 — Stern und Watchlist sind ab jetzt dasselbe, plus ein eigener Watchlist-Tab (Nutzer-Wunsch). Vorher waren das ZWEI unabhaengige Zustaende: der Stern setzte p.marked (reine Einfaerbung), die Watchlist war eine eigene Kategorie in pairCats - beides konnte beliebig auseinanderlaufen. Statt die zwei Zustaende gegenseitig zu synchronisieren (zwei Quellen, die man fuer immer im Gleichschritt halten muss - genau die Fehlerklasse, die in diesem Projekt schon mehrfach teuer war), gibt es jetzt nur noch EINE Wahrheit: ein Paar ist markiert, genau dann wenn es einen Eintrag in der Watchlist-Kategorie hat. Der Stern liest und schaltet diesen Zustand; p.marked wird nicht mehr gelesen. Non-FX-Assets laufen ueber ihren kanonischen Paarnamen (Gold sternen legt XAU/USD an, Rueckrichtung ueber die bereits vorhandene PAIR_CODE_TO_ID-Zuordnung, keine zweite Uebersetzung). Beim Abwaehlen wird der Watchlist-Eintrag entfernt - ausser er ist der EINZIGE Eintrag des Paares, dann wandert er in die erste andere Kategorie statt geloescht zu werden (sonst haette ein Klick auf den Stern das Paar komplett aus den Set-ups entfernt). Klick auf eine Zeile der Dashboard-Watchlist oeffnet jetzt die Paar-Overview aus V321; das Loeschkreuz stoppt die Weitergabe. NEU: eigener Watchlist-Tab direkt neben Set-ups (kein Insights-Eintrag - die Watchlist ist kein Analysewerkzeug, sondern der taegliche Arbeitszettel): je Paar eine Karte untereinander mit Kurs, Tagesveraenderung, Carry, COT-Positionierung, dem naechsten Termin beider Seiten und einem eigenen Notizfeld. Die Notiz liegt im bereits vorhandenen p.notes-Feld, laeuft also ohne weiteres Zutun ueber Undo und Cloud-Sync. Jede Kennzahl kommt aus derselben Funktion wie anderswo in der App - kein zweiter Rechenweg. Das Notizfeld rettet Fokus und Cursor ueber ein Hintergrund-Rendern (gleiche Absicherung wie die Quick Note). Per Test bestaetigt: Stern setzt Watchlist und umgekehrt, Gold laeuft korrekt als XAU/USD, das letzte Vorkommen wird nie geloescht, Undo stellt den Sternzustand her, Notiz ueberlebt das Neu-Rendern mit Cursorposition, kein Ueberlauf bei 1500 und 430px, 15 Tabs fehlerfrei.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-325 — Zwei Korrekturen (Nutzer-Wunsch). (1) Der Zurueck-Pfeil der Paar-Overview fuehrt jetzt dorthin zurueck, wo man vorher stand: die Overview lebt im Set-ups-Container, laesst sich aber auch aus der Dashboard-Watchlist und dem Watchlist-Tab oeffnen - bisher landete man immer in der Set-ups-Liste. gotoPairOverview merkt sich jetzt Tab UND Scrollposition, closePairOverview stellt beides wieder her (per requestAnimationFrame, weil showTab die Zielseite komplett neu aufbaut und ein sofortiges scrollTop danach wieder auf 0 stuende). Auch der Klick aus der Set-ups-Liste selbst laeuft jetzt darueber, damit man dort ebenfalls an derselben Stelle der Liste landet statt oben. Per Test bestaetigt: aus Dashboard/Watchlist/Set-ups heraus geoeffnet, fuehrt Zurueck jeweils auf denselben Tab mit identischer Scrollposition (160 auf 160, echter Klick 140 auf 140). (2) Der normalisierte Score-Modus multiplizierte jeden Indikator mit einem Faktor zwischen 0,4 und 1,8 - dabei entstanden Werte wie -0.6035497225634944, die roh in den Kartenscore und die Overview-Kacheln liefen. Gerundet wird jetzt auf zwei Nachkommastellen an der QUELLE (indScore/rubScore/symScore ueber einen gemeinsamen roundSc-Helfer mit EPSILON gegen Gleitkomma-Artefakte), nicht an den Anzeigestellen: sonst muesste man jede Stelle einzeln erwischen und jede kuenftige neue wieder, und die Summe der gerundeten Teile koennte von der gerundeten Summe abweichen. So stimmen Teil und Summe per Konstruktion ueberein - Voraussetzung dafuer, dass das Score-Modal nie von der echten Rechnung abweichen kann. Per Test bestaetigt: keine Zahl mit mehr als 2 Nachkommastellen mehr in irgendeinem Score-Element ueber 7 Tabs, Summe der Teile identisch zum Kartenscore, und der classic-Modus liefert weiterhin bitgenau dieselben Werte wie vorher (dort sind alle Betraege ohnehin Vielfache von 0,25).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-324</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-325</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3604,7 +3604,20 @@ function indScoreParts(ind,rub,symId){
     :biasScore(ind.trendBias||'neu')*mag;
   return{w,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false,norm};
 }
-function indScore(ind,rub){return indScoreParts(ind,rub).total;}
+// Score-Rundung auf 2 Nachkommastellen (Nutzer-Wunsch 2026-08-07: "durch die
+// neue Rechnung gibt es viele Nachkommastellen, runde sodass es maximal 2
+// gibt"). Bewusst an der QUELLE statt an den Anzeigestellen: der normalisierte
+// Modus multipliziert jeden Indikator mit einem Faktor zwischen 0,4 und 1,8 -
+// dabei entstehen Werte wie -0.6035497225634944, die roh in .rub-score und
+// .ov2-score landeten. Wuerde man nur beim Anzeigen runden, muesste man JEDE
+// Stelle einzeln erwischen (und jede kuenftige neue Stelle wieder), und die
+// Summe der gerundeten Teile koennte von der gerundeten Summe abweichen.
+// Rundet man dagegen den Indikator-Score selbst, stimmen Teil und Summe per
+// Konstruktion ueberein - Voraussetzung dafuer, dass das Score-Modal nie von
+// der echten Rechnung abweichen kann (Projekt-Grundsatz). Das EPSILON faengt
+// die ueblichen Gleitkomma-Artefakte ab (0.1+0.2 = 0.30000000000000004).
+function roundSc(n){return Math.round((n+(n>=0?1:-1)*Number.EPSILON)*100)/100;}
+function indScore(ind,rub){return roundSc(indScoreParts(ind,rub).total);}
 // ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
 function fmtScNum(v){v=Math.round(v*100)/100;return(v>0?'+':'')+v;}
 function scoreInfoIndRow(ind,rub){
@@ -3725,8 +3738,8 @@ function openScoreInfoPair(pairName){
 // CB Tone) - unabhaengig davon, ob gerade ein Forecast vorliegt (die
 // Halbierung gilt fuer den Bonus immer).
 function indTrendAdjMag(ind,rub){return indIsHalfWeight(ind,rub)?0.5:1;}
-function rubScore(rub){return(rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0);}
-function symScore(sym){return(sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0);}
+function rubScore(rub){return roundSc((rub&&rub.indicators||[]).reduce((s,ind)=>s+indScore(ind,rub),0));}
+function symScore(sym){return roundSc((sym&&sym.rubrics||[]).reduce((s,rub)=>s+rubScore(rub),0));}
 // Farbe des Scores folgt der Bias-Einstufung (>=+3 bullish/blau, <=-3 bearish/rot,
 // dazwischen neutral/orange) - so ist die Zahl z.B. bei einem neutralen Asset mit
 // +1 oder -1 ebenfalls orange, passend zum Bias.
@@ -9861,6 +9874,13 @@ function openCarryDetail(pairName){
 // PAGE_IDS/renderTabBar voellig unberuehrt - eine neue PAGE_IDS-Kennung
 // ohne zugehoerigen TABS-Eintrag haette renderTabBar/tabIdFor betroffen.
 let pairOvName=null;           // null = Liste, sonst Paar-Name (transient)
+// Woher kam der Nutzer? (Nutzer-Wunsch 2026-08-07: "wenn man auf zurueck
+// drueckt soll man dahin kommen wo man vorher war"). Die Overview lebt im
+// Set-ups-Container, laesst sich aber auch aus dem Dashboard oder dem
+// Watchlist-Tab heraus oeffnen - "zurueck" muss dann dorthin fuehren, nicht
+// in die Set-ups-Liste. Gemerkt werden Tab UND Scrollposition, damit man
+// wirklich an derselben Stelle landet und nicht oben.
+let pairOvBack=null;
 // Zeitraum des Verlaufs-Diagramms in der Overview. Bewusst 3M statt des
 // app-weiten MAX-Defaults: der Chart hat feste 48px pro Tag, MAX waere auf
 // einer Uebersichtsseite eine sehr breite Rolle statt eines Ueberblicks.
@@ -9872,7 +9892,20 @@ function openPairOverview(name){
   renderPairs();
   const pg=document.getElementById('pgPairs');if(pg)pg.scrollTop=0;
 }
-function closePairOverview(){pairOvName=null;renderPairs();const pg=document.getElementById('pgPairs');if(pg)pg.scrollTop=0;}
+function closePairOverview(){
+  const back=pairOvBack;pairOvBack=null;
+  pairOvName=null;
+  renderPairs();
+  if(back&&back.tab&&back.tab!=='pairs'){
+    showTab(back.tab);
+    // Nach dem Rendern zuruecksetzen: showTab baut die Zielseite komplett neu
+    // auf, ein sofortiges scrollTop waere danach wieder 0.
+    requestAnimationFrame(()=>{const el=document.getElementById(PAGE_IDS[back.tab]);if(el)el.scrollTop=back.scroll||0;});
+    return;
+  }
+  const pg=document.getElementById('pgPairs');
+  if(pg)requestAnimationFrame(()=>{pg.scrollTop=back?(back.scroll||0):0;});
+}
 
 // Beide Beine eines Paarnamens auf echte Asset-IDs aufloesen (XAU->GOLD usw.),
 // exakt dieselbe Zuordnung wie pairScore/renderTrendsPair.
@@ -10218,7 +10251,11 @@ function toggleWatch(name){
   if(curPage==='dash')renderDash();
 }
 // Aus der Watchlist-Karte / den Set-ups direkt in die Paar-Overview springen.
+// Merkt sich vorher, wo der Nutzer stand (Tab + Scrollposition) - der
+// Zurueck-Pfeil der Overview bringt ihn genau dorthin zurueck.
 function gotoPairOverview(name){
+  const el=document.getElementById(PAGE_IDS[curPage]);
+  pairOvBack={tab:curPage,scroll:el?el.scrollTop:0};
   showTab('pairs');
   openPairOverview(name);
 }
@@ -10397,7 +10434,7 @@ function renderPairs(){
     const rd=(it.kind==='pair'?rateDiff(it.name):'')||'<span></span>';
     return`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
     ${it.kind==='pair'
-      ?`<div class="sym-name dw-pname pov-open" onclick="openPairOverview('${escJH(it.name)}')" title="Open the full overview for this pair">${escH(it.name)}</div>`
+      ?`<div class="sym-name dw-pname pov-open" onclick="gotoPairOverview('${escJH(it.name)}')" title="Open the full overview for this pair">${escH(it.name)}</div>`
       :`<div class="sym-name dw-pname pov-open" onclick="gotoSym('${escJH(it.id)}')" title="Open this asset">${escH(it.name)}</div>`}
     ${chip}
     ${rd}
