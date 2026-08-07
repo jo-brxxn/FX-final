@@ -1453,7 +1453,7 @@ jobs:
       #   Arbeitsmappen je Kurventyp) - die "spot curve"-Tabelle enthaelt
       #   Punkte in Halbjahres-Abstaenden, darunter exakt 2J/10J.
       # - Neuseeland: RBNZ B2 "Wholesale interest rates" taegliche XLSX.
-      # BoE/RBNZ liefern kein CSV, nur XLSX - da keine Node-XLSX-Bibliothek
+      # RBNZ liefert kein CSV, nur XLSX - da keine Node-XLSX-Bibliothek
       # verfuegbar ist (kein npm install im Workflow), wird das XLSX (= ZIP
       # mit XML-Worksheets) per `unzip` entpackt und die Worksheet-XML direkt
       # mit einem kleinen Parser gelesen (kein externes Package noetig).
@@ -1461,7 +1461,7 @@ jobs:
       # - `continue-on-error` + ausfuehrliches Debug-Logging, damit ein
       # workflow_dispatch-Lauf zeigt, welche Quelle funktioniert und welche
       # ggf. Format-Anpassungen braucht.
-      - name: Backfill bond history (BoE + Japan MOF + RBA + SNB + RBNZ, no key)
+      - name: Backfill bond history (Japan MOF + RBA + SNB + RBNZ, no key)
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -1478,7 +1478,18 @@ jobs:
             echo "[debug] snb.csv filtered request empty, falling back to unfiltered endpoint"
             curl -sL -A "$UA" "https://data.snb.ch/api/cube/rendoblid/data/csv/en" -o snb.csv || true
           fi
-          curl -sL -A "$UA" "https://www.bankofengland.co.uk/-/media/boe/files/statistics/yield-curves/latest-yield-curve-data.zip" -o boe.zip || true
+          # BoE-Zinskurven-ZIP wurde 2026-08-06 ENTFERNT (Nutzer-Entscheid):
+          # die Datei enthaelt mehrere gleich aufgebaute Kurven (Spot/Forward/
+          # Par) und die Sheet-Heuristik ("nimm das mit den meisten Punkten")
+          # konnte sie nicht unterscheiden - sie erwischte regelmaessig die
+          # INSTANTANEOUS-FORWARD-Kurve, die am 10Y-Punkt ~120bp ueber der
+          # echten Spot-Rendite liegt, und ueberschrieb damit an jedem
+          # Handelstag den korrekten TradingView-Wert (GBP 10Y sprang
+          # zwischen ~4,9% und ~6,1% hin und her -> verfaelschte GBPs Score).
+          # Mehrwert gab es keinen: die Datei enthaelt nur den laufenden
+          # Monat, also ~2 Punkte, die TVC:GB10Y/TVC:GB02Y (Schritt weiter
+          # unten) ohnehin taeglich liefern - GBP laeuft jetzt wie die
+          # anderen 7 Waehrungen rein ueber TradingView.
           curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/ReserveBank/Files/Statistics/tables/b2/hb2-daily.xlsx" -o rbnz.xlsx || true
           if [ -s rbnz.xlsx ] && ! head -c 4 rbnz.xlsx | grep -q "PK"; then
             echo "[debug] rbnz.xlsx candidate 1 not a zip/xlsx (likely HTML error page), trying candidate 2"
@@ -1488,7 +1499,7 @@ jobs:
             echo "[debug] rbnz.xlsx candidate 2 not a zip/xlsx either, trying candidate 3"
             curl -sL -A "$UA" "https://www.rbnz.govt.nz/-/media/project/sites/rbnz/files/statistics/series/b/b2/hb2.xlsx" -o rbnz.xlsx || true
           fi
-          for f in jgb.csv jgb_utf8.csv rba.csv snb.csv boe.zip rbnz.xlsx; do
+          for f in jgb.csv jgb_utf8.csv rba.csv snb.csv rbnz.xlsx; do
             if [ -s "$f" ]; then
               echo "[debug] $f: $(wc -c <"$f" | tr -d ' ') bytes, first line/bytes: $(head -c 200 "$f" | tr -d '\0')"
             else
@@ -1693,22 +1704,13 @@ jobs:
             console.log("bond backfill (CSV sources): JPY 2Y="+jpy2+"/10Y="+jpy10+", AUD 2Y="+aud2+"/10Y="+aud10+", CHF 2Y="+chf2+"/10Y="+chf10+" pts");
           '
 
-          # ── BoE (GBP) und RBNZ (NZD): XLSX-Dateien, keine CSV verfuegbar.
-          # Kein npm/Node-XLSX-Paket im Workflow (kein package.json/Install-
-          # Schritt) - stattdessen XLSX (= ZIP-Container mit XML-Worksheets)
-          # per `unzip` (auf ubuntu-latest vorinstalliert) entpacken und die
-          # Worksheet-XML mit einem kleinen Inline-Parser lesen.
-          if [ -s boe.zip ]; then
-            unzip -o -q boe.zip -d boe_extract 2>&1 | head -20 || true
-            echo "[debug] boe.zip entries: $(ls boe_extract 2>/dev/null | tr '\n' '|')"
-            NOMFILE=$(ls boe_extract 2>/dev/null | grep -i nominal | head -1)
-            if [ -n "$NOMFILE" ]; then
-              unzip -o -q "boe_extract/$NOMFILE" -d boe_xlsx 2>&1 | head -20 || true
-              echo "[debug] boe nominal workbook sheets: $(ls boe_xlsx/xl/worksheets 2>/dev/null | tr '\n' '|')"
-            fi
-          else
-            echo "[debug] boe.zip missing/empty, skipping BoE"
-          fi
+          # ── RBNZ (NZD): XLSX-Datei, keine CSV verfuegbar. Kein npm/Node-
+          # XLSX-Paket im Workflow (kein package.json/Install-Schritt) -
+          # stattdessen XLSX (= ZIP-Container mit XML-Worksheets) per `unzip`
+          # (auf ubuntu-latest vorinstalliert) entpacken und die Worksheet-XML
+          # mit einem kleinen Inline-Parser lesen. (Der frueher hier ebenfalls
+          # entpackte BoE-Block ist 2026-08-06 entfallen, siehe Begruendung
+          # beim Download weiter oben.)
           if [ -s rbnz.xlsx ]; then
             unzip -o -q rbnz.xlsx -d rbnz_xlsx 2>&1 | head -20 || true
             echo "[debug] rbnz.xlsx sheets: $(ls rbnz_xlsx/xl/worksheets 2>/dev/null | tr '\n' '|')"
@@ -1781,78 +1783,11 @@ jobs:
               return d.toISOString().slice(0,10);
             }
 
-            // ── BoE: "spot curve"-Sheet automatisch anhand der Kopfzeile
-            // erkennen (enthaelt Reifen in Halbjahresschritten von 0.5 bis
-            // 25/40 - wir suchen die Zeile, die sowohl ~2 als auch ~10
-            // enthaelt; das ist robust gegen unbekannte Sheet-Reihenfolge/
-            // -namen).
+            // (Der BoE-Block, der hier fruehe die GBP-Zinskurve aus der
+            // Bank-of-England-XLSX gelesen hat, ist 2026-08-06 entfernt
+            // worden - er erwischte die falsche Kurve und verfaelschte
+            // GBP 10Y. Siehe ausfuehrliche Begruendung beim Download.)
             let gbp2=0,gbp10=0;
-            try{
-              const dir="boe_xlsx/xl/worksheets";
-              const files=fs.readdirSync(dir).filter(f=>/\.xml$/.test(f));
-              // Ueber ALLE Sheets die Kandidaten sammeln und den mit den
-              // meisten Datenpunkten nehmen - beim ersten Sheet, das
-              // ueberhaupt eine (auch nur duenn befuellte) Kopfzeile
-              // erfuellt, sofort abzubrechen traf im 2. Testlauf ein Sheet
-              // mit nur 2 verwertbaren Punkten, obwohl ein anderes Sheet
-              // vermutlich die eigentliche "spot curve"-Tabelle ist.
-              let best=null;
-              for(const f of files){
-                const rows=readSheet(dir+"/"+f);
-                // Echte Maturity-Kopfzeile: mind. 5 numerische Zellen in
-                // Spaltenreihenfolge MONOTON steigend, Spanne von <=1 bis
-                // >=10.
-                let headerRow=null,col2=null,col10=null;
-                for(const rIdx of Object.keys(rows)){
-                  const cols=rows[rIdx];
-                  const entries=Object.keys(cols).map(ci=>({col:Number(ci),v:cols[ci].num})).filter(e=>e.v!=null).sort((a,b)=>a.col-b.col);
-                  if(entries.length<5)continue;
-                  let monotonic=true;
-                  for(let k=1;k<entries.length;k++){if(entries[k].v<=entries[k-1].v){monotonic=false;break;}}
-                  if(!monotonic)continue;
-                  if(entries[0].v>1||entries[entries.length-1].v<10)continue;
-                  const c2=entries.find(e=>Math.abs(e.v-2)<0.01);
-                  const c10=entries.find(e=>Math.abs(e.v-10)<0.01);
-                  if(c2&&c10){headerRow=Number(rIdx);col2=c2.col;col10=c10.col;break;}
-                }
-                if(headerRow==null)continue;
-                // Datumsspalte nicht fest auf Spalte 1 (A) annehmen: die
-                // Spalte unter den ersten 3 Spalten nehmen, die in den
-                // meisten Zeilen unterhalb der Kopfzeile einen plausiblen
-                // Excel-Datums-Serienwert (Jahre ~2005-2035) enthaelt.
-                let dateCol=1,bestDateCount=-1;
-                for(const dc of [1,2,3]){
-                  let cnt=0;
-                  Object.keys(rows).forEach(rIdx=>{
-                    if(Number(rIdx)<=headerRow)return;
-                    const v=rows[rIdx][dc]&&rows[rIdx][dc].num;
-                    if(v!=null&&v>38000&&v<50000)cnt++;
-                  });
-                  if(cnt>bestDateCount){bestDateCount=cnt;dateCol=dc;}
-                }
-                const p2=[],p10=[];
-                Object.keys(rows).forEach(rIdx=>{
-                  const ri=Number(rIdx);
-                  if(ri<=headerRow)return;
-                  const cols=rows[rIdx];
-                  const dateCell=cols[dateCol];
-                  if(!dateCell||dateCell.num==null)return;
-                  const date=excelDateToIso(dateCell.num);
-                  if(!date||date<CUTOFF)return;
-                  const v2=cols[col2]&&cols[col2].num,v10=cols[col10]&&cols[col10].num;
-                  if(isFinite(v2))p2.push([date,v2]);
-                  if(isFinite(v10))p10.push([date,v10]);
-                });
-                console.log("BoE: candidate sheet "+f+" (header row "+headerRow+", dateCol "+dateCol+"): "+p2.length+"/"+p10.length+" pts");
-                if(!best||(p2.length+p10.length)>(best.p2.length+best.p10.length))best={f,p2,p10};
-              }
-              if(best&&(best.p2.length||best.p10.length)){
-                gbp2=merge("GBP","2Y Bond Yield",best.p2);gbp10=merge("GBP","10Y Bond Yield",best.p10);
-                console.log("BoE: using sheet "+best.f);
-              }else{
-                console.log("BoE: no sheet with both a ~2 and ~10 year header column found");
-              }
-            }catch(e){console.log("BoE: unavailable ("+e.message+")");}
 
             // ── RBNZ: Spaltenkoepfe sind Text (Shared Strings) - Header-
             // Zeile per Volltextsuche nach "2 year"/"10 year"+"government"
@@ -1900,8 +1835,8 @@ jobs:
             fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
             console.log("bond backfill (XLSX sources): GBP 2Y="+gbp2+"/10Y="+gbp10+", NZD 2Y="+nzd2+"/10Y="+nzd10+" pts");
           '
-          rm -f jgb.csv jgb_utf8.csv rba.csv snb.csv boe.zip rbnz.xlsx
-          rm -rf boe_extract boe_xlsx rbnz_xlsx
+          rm -f jgb.csv jgb_utf8.csv rba.csv snb.csv rbnz.xlsx
+          rm -rf rbnz_xlsx
 
       # ── ANLEIHERENDITEN (bond_data.json) ──────────────────────────────
       # 2J-/10J-Staatsanleiherenditen je Waehrung von TradingViews Scanner-API

@@ -1951,17 +1951,10 @@ body.dash-edit-mode .mw-bar{display:flex}
 .modal.inbox-modal{max-width:min(1300px,94vw)}
 #inboxList{max-height:65vh;overflow-y:auto}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
+.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
-.date-modal{background:var(--bg1);border:1px solid var(--bd2);border-radius:var(--r);padding:16px;width:100%;max-width:min(520px,94vw);box-shadow:0 8px 40px rgba(0,0,0,.5);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
-.date-modal h3{font-size:14px;font-weight:700;color:var(--t0);margin-bottom:12px}
-.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
-.dm-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
-.dm-fieldset.disabled{opacity:.35;pointer-events:none}
-.dm-nodate{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);margin:2px 0 14px;cursor:pointer}
-.dm-nodate input{flex-shrink:0}
-.dm-inp::placeholder{color:var(--t3)}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:26px}}
 /* ── LOCK SCREEN ── */
 .lock-ov{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
@@ -2002,7 +1995,7 @@ body.dash-edit-mode .mw-bar{display:flex}
   .afull{font-size:13px}
   .st{font-size:14px;padding:7px 16px}
   .slbl{font-size:11px}
-  .rtxt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.dm-inp,.fsel,.pcat-sel,.pair-name{font-size:15px}
+  .rtxt,.nbox,.rub-summary-txt,.ai,.pfinp,.finp,.m-inp,.m-sel,.fsel,.pcat-sel,.pair-name{font-size:15px}
   .rub-inp,.nc-inp,.pcc-name{font-size:20px;font-weight:800}
   .dw{padding:16px}
   .dw-t{font-size:12.5px}
@@ -2019,7 +2012,6 @@ body.dash-edit-mode .mw-bar{display:flex}
   .modal h3{font-size:17px}
   .modal.inbox-modal{max-width:min(1300px,94vw)}
   #inboxList{max-height:72vh}
-  .date-modal{max-width:min(520px,94vw);padding:20px}
   .lock-logo{font-size:28px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
   .lock-key{width:68px;height:68px;font-size:25px}
@@ -2438,12 +2430,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-313 — Neue Dashboard-Karte ganz rechts (Zone 'right2', vor Focus/Believe/Do) mit den neusten Finanz-Schlagzeilen (Nutzer-Wunsch): Titel+Quelle+Zeit, ganze Zeile klickbar (oeffnet den Artikel im neuen Tab). Quelle ist Marketaux (aggregiert ~5.000 Nachrichtenquellen, Free-Tier 100 Requests/Tag), neuer optionaler Workflow-Schritt (Secret MARKETAUX_API_KEY, Repo -&gt; Settings -&gt; Secrets and variables -&gt; Actions) mit Keyword-Suche zugeschnitten auf die gelisteten Assets/Makro-Themen (Fed/EZB/BoE/BoJ, Zinsen/Inflation, Hormuz/Oel/OPEC, Gold/Silber, Bitcoin, S&amp;P 500/Nasdaq). Ohne gesetzten Secret bleibt news_data.json leer, Karte zeigt ehrlich &quot;No headlines yet&quot; statt erfundener Schlagzeilen. ⚠️ Der genaue Marketaux-Query noch UNGETESTET (kein Sandbox-Netzwerkzugriff) - braucht wie jede neue Quelle in diesem Projekt einen ersten echten workflow_dispatch-Lauf + Job-Log-Verifikation, sobald der Key hinterlegt ist. Frontend/Rendering per Playwright mit simulierten Schlagzeilen verifiziert (Position, Leerzustand, Klick-Links), voller 14-Tab-Regressionstest fehlerfrei.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-314 — Audit-Session: (1) BoE-Zinskurven-Schritt aus dem Workflow entfernt - er erwischte die INSTANTANEOUS-FORWARD- statt der Spot-Kurve und ueberschrieb damit an jedem Handelstag den korrekten TradingView-Wert (GBP 10Y sprang zwischen ~4,9% und ~6,1%, verfaelschte GBPs Score); Mehrwert hatte der Schritt keinen (nur der laufende Monat). 23 bereits verfaelschte Punkte aus bond_data.json entfernt (geloescht, nicht geschaetzt). (2) Bond-Signal komplett neu: statt zweier sich widersprechender Fenster (15-Tage-Punkt fuer den Bias + separater 25-Tage-Trend, der laut Modal ±0,5 geben sollte, von indScoreParts aber verworfen wurde - auf den echten Daten widersprachen sich 11 von 16 Indikatoren) jetzt EIN Signal: SMA5 gegen SMA21 mit 3bp-Totzone. Empirisch gemessene Fehlsignale: 15-Tage-Punkt 26, reine SMA21 30, SMA5-vs-SMA21 15, mit Totzone 0. Trend-Modal erklaert jetzt genau das Signal, das auch zaehlt. (3) Bug: setSentimentRangeCustom fehlte komplett - \"Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-313</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-314</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2709,22 +2701,6 @@ function introLogin(){
   </div>
 </div>
 <!-- MODAL: Date -->
-<div class="ov" id="mDate" style="display:none">
-  <div class="date-modal">
-    <h3>📅 Release Date & Interval</h3>
-    <div class="dm-fieldset" id="dmFields">
-    <label class="dm-lbl">NEXT RELEASE DATE</label>
-    <input type="date" class="dm-inp" id="dmDate">
-    <label class="dm-lbl">RELEASE INTERVAL</label>
-    <input class="dm-inp" id="dmIntv" placeholder="e.g. Monthly, Weekly, Quarterly">
-    </div>
-    <label class="dm-nodate"><input type="checkbox" id="dmNoDate" onchange="toggleDmNoDate()"> This indicator has no release date (don't ask again)</label>
-    <div style="display:flex;gap:7px;justify-content:space-between">
-      <button class="btn r" onclick="clearDateM()">🗑 Clear</button>
-      <div style="display:flex;gap:7px"><button class="btn" onclick="closeM('mDate')">Cancel</button><button class="btn g" onclick="saveDateM()">Save</button></div>
-    </div>
-  </div>
-</div>
 <!-- MODAL: Rename -->
 <div class="ov" id="mRename" style="display:none">
   <div class="modal">
@@ -4327,7 +4303,7 @@ function renderSymHistory(id){
     const col=has?(BC[d.bias]||BC.neu):'';
     const wd=new Date(d.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'}).slice(0,2);
     const dn=new Date(d.date+'T00:00:00').getDate();
-    const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 15d ago)`:(ev.cot||ev.sent)?`${ev.name}: ${ev.actual}`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
+    const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 21d avg)`:(ev.cot||ev.sent)?`${ev.name}: ${ev.actual}`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
     return`<div class="hist-day${has?' hist-has':''}${d.date===today?' hist-today':''}" style="${has?`--hc:${col}`:''}" title="${escH(fmtDayHdr(d.date)+': '+tip)}">
       <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
     </div>`;
@@ -4378,7 +4354,7 @@ function renderSymHistoryPanel(id){
       // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
       // den 15-Tage-Vergleichswert fuer die Bias-Berechnung (s.o.), wird aber
       // NICHT als "fc" beschriftet, um keinen echten Analysten-Forecast vorzutaeuschen.
-      const fcLine=ev.bond?`vs ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'} (15d ago)`
+      const fcLine=ev.bond?`vs ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'} (21d avg)`
         :ev.cot?`prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`
         :ev.sent?''
         :`fc ${(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–'} · prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`;
@@ -4713,14 +4689,23 @@ function openTrendInfo(ri,ii){
   let html='';
   const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span style="color:var(--t3)">${l}</span><span style="font-weight:700">${v}${sub?` <span style="color:var(--t3);font-weight:600">${sub}</span>`:''}</span></div>`;
   if(isBond){
-    if(ind.trendCmp){
-      const[td,tv,ad,av]=ind.trendCmp;
-      const d=av>tv?1:av<tv?-1:0;
-      html+=row(`25 days ago (${escH(td)})`,fmtYield(tv));
-      html+=row(`Latest (${escH(ad)})`,fmtYield(av));
-      html+=`<div style="margin-top:7px">${d===0?'Unchanged vs. 25 days ago → no trend adjustment (0).':`Yield is <b>${d>0?'higher':'lower'}</b> than 25 days ago → <b>${d>0?'+':'−'}0.5</b> on this indicator's score.`}</div>`;
-      html+=`<div style="margin-top:5px;color:var(--t3)">2Y and 10Y each contribute ±0.5 (sharing the full ±1) but trigger independently.</div>`;
-    }else html='<div>No yield history available yet for the 25-day comparison.</div>';
+    // Anleihen haben KEINEN separaten Trend-Bonus (Nutzer-Entscheid
+    // 2026-08-06) - ihr einziges Signal ist der SMA-Vergleich, der direkt den
+    // Bias setzt. Frueher stand hier ein 25-Tage-Punktvergleich mit der
+    // Behauptung, er gaebe ±0,5 auf den Score; indScoreParts verwarf ihn fuer
+    // Bonds aber ueber `noTrend`, sodass die Anzeige der echten Score-Wirkung
+    // widersprechen konnte (auf den realen Daten bei 11 von 16 Indikatoren).
+    // Das Modal erklaert jetzt genau das Signal, das auch tatsaechlich zaehlt.
+    const rr=ind.research||{};
+    if(rr.bond&&rr.previous){
+      html+=row('Latest close'+(rr.date?` (${escH(rr.date)})`:''),escH(rr.actual||'–'));
+      html+=row(`${BOND_SMA_SLOW}-day average`+(rr.prevDate?` (since ${escH(rr.prevDate)})`:''),escH(rr.previous));
+      const d=rr.bondColor==='bond-up'?1:rr.bondColor==='bond-down'?-1:0;
+      html+=`<div style="margin-top:7px">${d===0
+        ?`The ${BOND_SMA_FAST}-day average is within <b>${(BOND_DEAD_BAND*100).toFixed(0)} basis points</b> of the ${BOND_SMA_SLOW}-day average → treated as <b>no clear direction</b> (0).`
+        :`The ${BOND_SMA_FAST}-day average is <b>${d>0?'above':'below'}</b> the ${BOND_SMA_SLOW}-day average by more than ${(BOND_DEAD_BAND*100).toFixed(0)} basis points → yields are <b>${d>0?'rising':'falling'}</b>, counting <b>${d>0?'+':'−'}0.5</b> on this indicator's score.`}</div>`;
+      html+=`<div style="margin-top:5px;color:var(--t3)">Two moving averages are compared instead of two single days, so one outlier day cannot flip the signal. The ${(BOND_DEAD_BAND*100).toFixed(0)}bp dead band filters out moves too small to mean anything. 2Y and 10Y each contribute ±0.5 (sharing the full ±1) but trigger independently.</div>`;
+    }else html=`<div>Not enough yield history yet for the ${BOND_SMA_SLOW}-day average - it builds up one point per trading day.</div>`;
   }else{
     const h=Array.isArray(ind.valHist)?ind.valHist:[];
     const ds=Array.isArray(ind.valDates)?ind.valDates:[];
@@ -7291,7 +7276,7 @@ document.addEventListener('click',ev=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAssetCfg','mHist','mAddPair','mDate','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -7647,45 +7632,6 @@ function renderRub(rub,ri,total){
     </div>
   </div>`;}
 
-// ── DATE MODAL STATE ──
-// ind.noDate (Nutzer-Wunsch 2026-07-22): manche Indikatoren (CB Tone,
-// Geopolitics, sonstige rein qualitative Werte) haben grundsaetzlich KEIN
-// Release-Datum/-Intervall - die "+ Date"-Einladung war fuer die daher
-// dauerhaft sinnlos ("es gibt dazu keins"). Checkbox merkt sich das PRO
-// Indikator, dauerhaft (Teil von snap()/Cloud-Sync wie jedes andere
-// Indikator-Feld, da Indikatoren als Ganzes serialisiert werden - keine
-// eigene Sync-Anbindung noetig). Ist sie gesetzt, zeigt die Zeile in der
-// Spalte keine "+ Date"-Aufforderung mehr (renderInd), bleibt aber als
-// leerer, klickbarer Slot bestehen, um jederzeit wieder aenderbar zu sein.
-let _dmRi=-1,_dmIi=-1;
-function openDateM(ri,ii){
-  _dmRi=ri;_dmIi=ii;
-  const ind=getInd(ri,ii);if(!ind)return;
-  document.getElementById('dmDate').value=ind.date||'';
-  document.getElementById('dmIntv').value=ind.interval||'';
-  document.getElementById('dmNoDate').checked=!!ind.noDate;
-  toggleDmNoDate();
-  openM('mDate');
-}
-function toggleDmNoDate(){
-  const on=document.getElementById('dmNoDate').checked;
-  document.getElementById('dmFields').classList.toggle('disabled',on);
-}
-function saveDateM(){
-  const ind=getInd(_dmRi,_dmIi);if(!ind)return;
-  pushU();
-  const noDate=document.getElementById('dmNoDate').checked;
-  ind.noDate=noDate;
-  if(noDate){ind.date='';ind.interval='';}
-  else{ind.date=document.getElementById('dmDate').value;ind.interval=document.getElementById('dmIntv').value.trim();}
-  syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
-}
-function clearDateM(){
-  const ind=getInd(_dmRi,_dmIi);if(!ind)return;
-  pushU();
-  ind.date='';ind.interval='';ind.noDate=false;
-  syncMacroRub(_dmRi);save();closeM('mDate');renderDetail();
-}
 
 // Paare, die nur optisch (eine gemeinsam umrandete .ind-pair-group) gruppiert
 // werden - zusätzlich zu den CORE_PAIRS (die auch die Score-Gewichtung
@@ -7767,7 +7713,7 @@ function renderIndRow(ind,ri,ii,rub,total){
     const fin2=(indLinkCustom&&indLinkCustom[ilKey2])||fb2;
     const srcLink=fin2?`<a href="${escH(fin2)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey2)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin2))} ↗</a>`:'<span>Source not on file</span>';
     const secLink=r.secondarySource?` · <a href="${escH(r.secondarySource)}" target="_blank" rel="noopener">${escH(r.secondaryLabel||srcLabel(r.secondarySource))} ↗</a>`:'';
-    const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> ${dt||'–'}<span class="ind-data-sep">·</span><span class="ind-data-lbl">Previous date:</span> ${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}<span class="ind-data-sep">·</span>`:
+    const bondDates=r.bond?`<span class="ind-data-lbl">Actual date:</span> ${dt||'–'}<span class="ind-data-sep">·</span><span class="ind-data-lbl">21d avg since:</span> ${r.prevDate?fmtResearchDateFull(r.prevDate):'–'}<span class="ind-data-sep">·</span>`:
       `<span class="ind-data-lbl">As of:</span> ${dt||'–'}${notes?`<span class="ind-data-sep">·</span><span>${escH(notes)}</span>`:''}`;
     actTxt=A.val;actCls=ac||'';
     fcTxt=(r.bond||r.cot||r.sent)?'–':(F.val??'–');
@@ -10347,6 +10293,24 @@ function isoMinusDays(iso,days){
   t.setUTCDate(t.getUTCDate()-days);
   return t.toISOString().slice(0,10);
 }
+// Bond-Signal-Parameter (siehe ausfuehrliche Begruendung in applyBondDataFeed).
+// SMA-Laengen in HANDELSTAGEN (die Reihe enthaelt nur Handelstage), Totzone in
+// Prozentpunkten: 0.03 = 3 Basispunkte.
+const BOND_SMA_FAST=5,BOND_SMA_SLOW=21,BOND_DEAD_BAND=0.03;
+// Einfacher gleitender Durchschnitt ueber die letzten n Punkte der Reihe.
+// Gibt null zurueck, wenn die Historie dafuer noch nicht reicht oder ein Wert
+// unbrauchbar ist - der Aufrufer bleibt dann bewusst neutral, statt auf einer
+// zu duennen Basis ein Signal zu erfinden.
+function bondSma(series,n){
+  if(!Array.isArray(series)||series.length<n)return null;
+  let sum=0;
+  for(let i=series.length-n;i<series.length;i++){
+    const v=Number(series[i][1]);
+    if(!isFinite(v))return null;
+    sum+=v;
+  }
+  return sum/n;
+}
 // Letzter Eintrag der (aufsteigend nach Datum sortierten) Reihe mit Datum <= target.
 function bondPick(series,target){
   let pick=null;
@@ -10375,44 +10339,58 @@ function applyBondDataFeed(){
         if(!BOND_INDS.includes(base))return;
         const series=bd[base]&&bd[base].series;
         if(!Array.isArray(series)||!series.length)return;
-        const aEntry=bondPick(series,yesterday)||series[series.length-1];
+        // Nur abgeschlossene Handelstage: der heutige (noch laufende) Wert
+        // wuerde die kurze SMA sonst mit einem Teiltag verzerren.
+        const hist=series.filter(e=>e&&e[0]<=yesterday);
+        const use=hist.length>=BOND_SMA_SLOW?hist:series;
+        const aEntry=use[use.length-1];
         if(!aEntry)return;
         const aDate=aEntry[0],aVal=Number(aEntry[1]);
         if(!isFinite(aVal))return;
-        // Previous = Schlusskurs von vor 15 Tagen (heute − 15, bzw. der
-        // letzte Handelstag davor) - Vergleichsbasis fuer Farbe & Bias.
-        const pEntry=bondPick(series,isoMinusDays(today,15));
-        const pVal=pEntry?Number(pEntry[1]):null;
-        let bondColor='bond-flat',bias='neu';
-        if(pVal!=null&&isFinite(pVal)){
-          if(aVal>pVal){bondColor='bond-up';bias='bull';}
-          else if(aVal<pVal){bondColor='bond-down';bias='bear';}
+        // ── Bond-Signal (Nutzer-Entscheid 2026-08-06) ──────────────────────
+        // Vorher gab es ZWEI Fenster nebeneinander: ein 15-Tage-Punktvergleich
+        // trieb den Bias, ein 25-Tage-Punktvergleich einen separaten Trend.
+        // Das war doppelt problematisch: (1) beide Fenster ueberlappen stark
+        // und massen faktisch dasselbe zweimal, (2) sie widersprachen sich
+        // regelmaessig (auf den echten Daten 11 von 16 Indikatoren) - das
+        // Trend-Modal zeigte das 25-Tage-Fenster und behauptete eine
+        // Score-Wirkung, die indScoreParts fuer Bonds ueber `noTrend` ohnehin
+        // verwarf. Jetzt gibt es nur noch EIN Signal.
+        //
+        // Verfahren: kurzer gegen langen gleitenden Durchschnitt (SMA5 vs
+        // SMA21) mit einer Totzone von 3 Basispunkten. Zwei Durchschnitte
+        // gegeneinander entfernen Rauschen auf BEIDEN Seiten des Vergleichs -
+        // ein einzelner Ausreissertag kann weder das "Jetzt" noch die
+        // Vergleichsbasis verfaelschen, anders als beim frueheren Vergleich
+        // gegen einen einzelnen Stichtag. Die Totzone filtert zusaetzlich
+        // Bewegungen heraus, die zu klein sind, um etwas zu bedeuten (vorher
+        // kippte der Bias schon bei 0,001 Prozentpunkten Unterschied).
+        // Empirisch auf der echten Bond-Historie gemessen (Fehlsignale =
+        // Vorzeichenwechsel ueber alle 14 sauberen Indikatoren): 15-Tage-Punkt
+        // 26, reine SMA21 30 (schlechter!), SMA5-vs-SMA21 15, mit Totzone 0.
+        const fast=bondSma(use,BOND_SMA_FAST),slow=bondSma(use,BOND_SMA_SLOW);
+        let bondColor='bond-flat',bias='neu',pStr=null,pDate=null;
+        if(fast!=null&&slow!=null){
+          const diff=fast-slow;
+          if(diff>BOND_DEAD_BAND){bondColor='bond-up';bias='bull';}
+          else if(diff<-BOND_DEAD_BAND){bondColor='bond-down';bias='bear';}
+          // Vergleichsbasis fuer die Anzeige ist die lange SMA (nicht mehr ein
+          // einzelner Stichtagswert), prevDate der Beginn ihres Fensters.
+          pStr=fmtYield(slow);
+          pDate=use[use.length-BOND_SMA_SLOW][0];
         }
-        // Yields-Trend: aktueller Wert vs. Schlusskurs von vor 25 Tagen.
-        // Hoeher -> +0,5, tiefer -> -0,5 (trendAdj in indScore skaliert den
-        // +/-1-Bonus mit dem Halbgewicht 0,5 der Bond-Indikatoren). 2Y und
-        // 10Y teilen sich so die volle 1 Score-Veraenderung, loesen ihren
-        // Anteil aber unabhaengig voneinander aus. Der Spread bleibt via
-        // SCORE_ZERO ohnehin bei 0.
-        const tEntry=bondPick(series,isoMinusDays(today,25));
-        const tVal=tEntry?Number(tEntry[1]):null;
-        const tb=(tVal!=null&&isFinite(tVal))?(aVal>tVal?'bull':aVal<tVal?'bear':'neu'):'neu';
         const src=indResearchSource(macroCcyFor(c.id),base)||bd[base].source||(ind.research&&ind.research.source);
-        const aStr=fmtYield(aVal),pStr=(pVal!=null&&isFinite(pVal))?fmtYield(pVal):null;
-        const pDate=pEntry?pEntry[0]:null;
+        const aStr=fmtYield(aVal);
         const r=ind.research||{};
         if(!(r.bond&&r.actual===aStr&&r.previous===pStr&&r.date===aDate&&r.bondColor===bondColor&&r.prevDate===pDate&&r.source===src)){
-          ind.research={actual:aStr,forecast:null,previous:pStr,date:aDate,prevDate:pDate,source:src,bond:true,bondColor:bondColor};
+          ind.research={actual:aStr,forecast:null,previous:pStr,date:aDate,prevDate:pDate,source:src,bond:true,bondColor:bondColor,sma:true};
           changed=true;
         }
         if(fx&&!indBiasPinned(ind,indBiasInputSig(aStr,null,pStr,aDate))&&ind.bias!==bias){ind.bias=bias;changed=true;}
-        if(fx&&ind.trendBias!==tb){ind.trendBias=tb;changed=true;}
-        // Vergleichswerte fuers Trend-Detail-Modal persistieren (auch offline
-        // abrufbar): [Datum vor 25T, Wert vor 25T, aktuelles Datum, Wert].
-        if(fx){
-          const cmp=(tVal!=null&&isFinite(tVal))?[tEntry[0],tVal,aDate,aVal]:null;
-          if(JSON.stringify(ind.trendCmp||null)!==JSON.stringify(cmp)){ind.trendCmp=cmp;changed=true;}
-        }
+        // Kein separater Trend mehr bei Anleihen - Altbestaende aktiv raeumen,
+        // damit kein eingefrorener Wert aus der Vorversion haengen bleibt.
+        if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+        if(ind.trendCmp){delete ind.trendCmp;changed=true;}
       });
     });
   });
@@ -10993,14 +10971,6 @@ function renderResearch(){
 // openResNote()) - keine neue Speicherform fuer die Notizen selbst, nur die
 // Ordnerzuordnung (note.fid) zeigt jetzt auf researchFolders-Knoten statt
 // auf die alten research.folders-Themen.
-function researchRightPanelHtml(){
-  if(!researchTreeSel)return`<div class="rtree-placeholder">Select a folder on the left.</div>`;
-  const am=/^asset:(.+):analysis$/.exec(researchTreeSel);
-  if(am)return researchAnalysisPanelHtml(am[1]);
-  const ctx=researchNotesContextFor(researchTreeSel);
-  if(ctx)return researchNotesPanelHtml(ctx.assetId,ctx.fid);
-  return`<div class="rtree-placeholder">${escH(researchTreeSelLabel())} — content coming soon.</div>`;
-}
 let researchAnOpen={};
 function researchAnKey(a,r){return a+'|'+r;}
 function researchAnalysisFor(assetId,rubName){
@@ -15026,6 +14996,13 @@ function setFearGreedRange(r){fearGreedRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r
 // Namen folgen der timeRangeCustomHtml-Konvention "<setFnName>Custom"
 // (setFnName='setPcRange' -> setPcRangeCustom), damit der Custom-Datumsfilter
 // tatsaechlich greift (vorher fehlbenannt als setPcCustomRange -> tote Calls).
+// setSentimentRangeCustom fehlte bis 2026-08-06 komplett: timeRangeCustomHtml
+// baut den Handler als String ("<setFnName>Custom"), ein fehlender Name faellt
+// deshalb nicht beim Laden auf, sondern erst beim Klick - in der
+// Retail-Sentiment-Historie warf "Custom" + Datumseingabe still einen
+// ReferenceError und es passierte gar nichts. Alle 5 Geschwister hatten die
+// Funktion, nur diese eine nicht.
+function setSentimentRangeCustom(from,to){sentimentCustomFrom=from||'';sentimentCustomTo=to||'';renderSentiment();}
 function setPcRangeCustom(from,to){pcCustomFrom=from||'';pcCustomTo=to||'';renderSentiment();}
 function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreedCustomTo=to||'';renderSentiment();}
 // Symbol-Filter fuer den Sentiment-Tab: die im Retail-Feed vorhandenen
@@ -15063,10 +15040,28 @@ function sentFilterBar(){
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
 // Summe (alle US-Optionsboersen), sonst der ETF-Proxy des gewaehlten Assets
 // (D.putCallByAsset, siehe Workflow-Schritt "Fetch per-asset put/call").
+// Assets mit belastbarem Options-Volumen (Nutzer-Entscheid 2026-08-06).
+// Vorher standen ALLE 13 Proxys im Filter, die zu duennen nur mit einem
+// ⚠ markiert. Gemessen an den echten Daten sind vier davon aber statistisch
+// wertlos statt nur "verrauscht": GBP/FXB handelt 155 Kontrakte am Tag,
+// AUD/FXA 288, CHF/FXF 331, CAD/FXC 614 - bei so duennen Ketten erzeugt ein
+// einzelner Tag mit 3 Kontrakten schon einen Ausschlag auf "extrem bearish",
+// und die Reihen haben Luecken bis zu 47 Tagen. Das widerspricht dem
+// Projekt-Grundsatz "nie schaetzen - lieber nichts zeigen als etwas
+// Falsches", deshalb erscheinen sie gar nicht mehr im Filter. Die Schwelle
+// ist dieselbe (PC_THIN_VOL), sie blendet jetzt aus statt zu warnen.
+// Bewusst dynamisch statt einer festen Sperrliste: erreicht ein Proxy
+// irgendwann echtes Volumen, taucht er automatisch wieder auf.
+function pcUsableAssetIds(D){
+  const pa=D&&D.putCallByAsset||{};
+  return Object.keys(pa).filter(id=>{
+    const a=pa[id];
+    return a&&((+a.callVol||0)+(+a.putVol||0))>=PC_THIN_VOL;
+  });
+}
 function pcFilterBar(D){
-  const ids=Object.keys(D.putCallByAsset||{});
-  const thin=id=>{const a=D.putCallByAsset[id];return a&&((+a.callVol||0)+(+a.putVol||0))<PC_THIN_VOL?' ⚠':'';};
-  return assetFilterSelect(ids,pcAsset,'setPcAsset','Market-wide (all U.S. options)','Filter by asset (⚠ = low options volume today, reading may be noisy)',id=>`${escH(COT_NAME[id]||id)}${thin(id)}`);
+  const ids=pcUsableAssetIds(D);
+  return assetFilterSelect(ids,pcAsset,'setPcAsset','Market-wide (all U.S. options)','Filter by asset — only assets with enough daily options volume to be meaningful are listed',id=>escH(COT_NAME[id]||id));
 }
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
@@ -15264,7 +15259,10 @@ function pcThresholds(id){
 }
 function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
-  const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
+  // Eine gespeicherte Auswahl kann auf ein inzwischen ausgeblendetes
+  // (zu duennes) Asset zeigen - dann still auf markt-weit zurueckfallen,
+  // statt die unbrauchbare Reihe doch noch anzuzeigen.
+  const perAsset=(pcAsset&&pcUsableAssetIds(D).includes(pcAsset))?D.putCallByAsset[pcAsset]:null;
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
@@ -15273,7 +15271,7 @@ function renderPutCallChart(D){
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
-  const filt=(D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D):'';
+  const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
   const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Contrarian · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
   const HI=th.HI,LO=th.LO;
@@ -15338,13 +15336,16 @@ function renderPutCallChart(D){
 // <0 = put-lastiger Fluss (rot, bearish). ──
 function renderNetFlowChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
-  const perAsset=pcAsset&&D.putCallByAsset&&D.putCallByAsset[pcAsset];
+  // Eine gespeicherte Auswahl kann auf ein inzwischen ausgeblendetes
+  // (zu duennes) Asset zeigen - dann still auf markt-weit zurueckfallen,
+  // statt die unbrauchbare Reihe doch noch anzuzeigen.
+  const perAsset=(pcAsset&&pcUsableAssetIds(D).includes(pcAsset))?D.putCallByAsset[pcAsset]:null;
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
-  const filt=(D.putCallByAsset&&Object.keys(D.putCallByAsset).length)?pcFilterBar(D):'';
+  const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
   const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">(Call−Put)/(Call+Put) · source: <a href="${escH(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
