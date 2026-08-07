@@ -1315,6 +1315,23 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .corr-big{font-size:28px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
 .corr-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
 .dw-note{font-size:10px;color:var(--t3);line-height:1.45;margin-top:7px}
+/* Notiz-Richtung, Event-Bezug und Trefferquote (2026-08-07) */
+.note-dirpick{display:flex;gap:4px}
+.note-dirbtn{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:11px;font-weight:700;padding:6px 4px;cursor:pointer}
+.note-dirbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.note-dir{font-size:11px;font-weight:800;margin-left:6px}
+.note-dir.nd-bull{color:var(--green)}.note-dir.nd-bear{color:var(--red)}
+.note-out{font-size:10px;font-weight:800;margin-left:6px;padding:1px 5px;border-radius:999px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.no-hit{color:var(--green);background:rgba(var(--blue-rgb),.12)}
+.no-miss{color:var(--red);background:rgba(var(--red-rgb),.12)}
+.no-flat{color:var(--t3);background:var(--bg3)}
+.no-pend{color:var(--t3);background:var(--bg3)}
+.note-evt{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
+.note-stats{display:flex;align-items:center;gap:9px;margin:6px 0 8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
+.ns-big{font-size:24px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.ns-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
+.rterm-noterow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.rterm-notesearch{flex:1;min-width:150px}
 /* Headlines-Karte (Nutzer-Wunsch 2026-08-06): kompakte Schlagzeilen-Liste,
    ganz rechte Dashboard-Spalte - Titel + Quelle/Zeit, ganze Zeile klickbar
    (oeffnet den Artikel in einem neuen Tab). */
@@ -2462,12 +2479,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-319 — Vier neue Dashboard-Karten nach Profi-Vorbild (Nutzer-Wunsch), alle ausschliesslich aus bereits vorhandenen Daten: (1) Performance Ranking (Bloomberg WCRS) - echte Kursperformance ueber 1D/1W/1M/YTD neben dem Score, denn die Luecke zwischen \"was die Daten sagen\" und \"was der Markt daraus machte\" ist oft das eigentliche Signal. (2) Carry Ranking (FXFA) - Zinsdifferenz je FX-Paar, getrennt nach \"Long zahlt am meisten\" und \"Long kostet am meisten\"; die App kannte Carry schon im Paar-Score, zeigte ihn aber nirgends fuer sich. (3) Correlation Check - wie korreliert die Watchlist wirklich ist, mit Benennung des engsten Paares; haeufigste Fehlerquelle bei Einzeltradern sind vier Positionen, die in Wahrheit eine sind (Test: EUR/USD ↔ GBP/USD bei +0,87). (4) Surprise Index (Citi-CESI-Stil) je Waehrung - Daten gegen Forecast in eigenen Standardabweichungen, alters-gewichtet mit 45-Tage-Halbwertszeit, aber als gewichteter DURCHSCHNITT statt als Summe: Citi veroeffentlicht Summen und vergleicht Laender deshalb bewusst nicht absolut - wir muessen es, also normiert, damit Waehrungen mit wenigen quartalsweisen Indikatoren nicht strukturell benachteiligt sind. DASH_V20; der Ensure-Block ergaenzt die Karten bei Bestandsnutzern automatisch, ohne deren eigene Sortierung anzutasten."classic\" bleibt Standard und rechnet bitgenau wie bisher (per Test bestaetigt: Faktor exakt 1 bei allen 186 Indikatoren, Zurueckschalten liefert identische Werte). \"normalized\" legt drei gemessene Gewichte darueber: (1) Ueberraschungsgroesse als z-Score gegen die Streuung der eigenen historischen Prognosefehler - erst dadurch sind NFP (Streuung ~37.000) und CPI (~0,04) vergleichbar, ab 5 Beobachtungen wie bei Citi, 86% der Indikatoren erfuellen das; (2) Zeit-Decay ZYKLUS-RELATIV statt in festen Tagen, damit ein Quartalswert langsamer altert als ein Wochenwert (Halbwertszeit = 1,5 eigene Release-Zyklen); (3) Marktrelevanz aus dem gemessenen durchschnittlichen Kursausschlag an den Release-Tagen des Indikators - greift erst mit genug Preishistorie, bis dahin bewusst neutral statt geraten. Faktor bewusst um 1,0 zentriert und auf 0,4-1,8 geklemmt: die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein frei laufender Faktor haette sie still bedeutungslos gemacht. Das Score-Modal schluesselt jeden Teilfaktor einzeln auf, damit die Ebene keine Blackbox ist. scoreMode an allen vier Sync-Ecken angebunden."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-320 — Research Terminal wird zum Feedback-Werkzeug (Nutzer-Wunsch). Eine Notiz kann jetzt zwei optionale Zusaetze tragen: eine RICHTUNG (bullish/bearish) und einen BEZUG zu einem Kalender-Event. Beides freiwillig - Notizen ohne Richtung verhalten sich exakt wie bisher und tauchen in keiner Statistik auf. Der Sinn: Profis dokumentieren nicht wegen des Aufschreibens, sondern wegen des messbaren Feedbacks. noteOutcome() vergleicht den Assetkurs am Notiz-Tag mit dem Kurs 5 HANDELSTAGE spaeter (echte Reihen-Eintraege, Wochenenden fallen automatisch raus) - moeglich erst durch den 3-Jahres-Preis-Backfill aus V317. Bewegungen unter 0,15 Prozent zaehlen als seitwaerts, also weder Treffer noch Fehlschlag; ein noch nicht abgelaufenes Fenster zeigt bewusst 'offen' statt zu raten. Daraus baut der Mittelteil eine Trefferquote je Asset (Anteil korrekt, plus hit/miss/flat/open im Detail) und jede Notizzeile ein kleines Ergebnis-Abzeichen mit der tatsaechlichen Kursbewegung im Tooltip. Zusaetzlich Volltextsuche ueber Titel, Text und Tags aller Notizen - die hebt bei aktiver Suche bewusst die Ordner-Einschraenkung auf, sonst findet man genau das nicht, wonach man sucht. Das Notiz-Modal bekommt drei Richtungs-Buttons und ein Event-Dropdown (Waehrung des Assets, plus/minus 30 Tage). Per Test bestaetigt: 2 Treffer / 0 Fehlschlaege / 1 offen bei vier Testnotizen, Suche findet Woerter aus dem Notiztext (nicht nur dem Titel), 28 Event-Optionen fuer EUR.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-319</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-320</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2659,6 +2676,20 @@ function introLogin(){
       <div style="flex:1;min-width:150px"><div class="res-flbl">Asset</div><select class="finp" id="resNAsset"></select></div>
     </div>
     <div style="margin-bottom:8px"><div class="res-flbl">Tags (comma separated)</div><input class="finp" id="resNTags" placeholder="inflation, cpi, fed"></div>
+    <!-- Richtung + Event-Bezug (Nutzer-Wunsch 2026-08-07): beides optional.
+         Erst eine Richtung macht die Notiz spaeter automatisch auswertbar -
+         ohne sie verhaelt sich die Notiz exakt wie vorher. -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="flex:1;min-width:150px">
+        <div class="res-flbl">Your call (makes this note scoreable)</div>
+        <div class="note-dirpick">
+          <button type="button" class="note-dirbtn" id="resNDirBull" onclick="resPickDir('bull')">▲ Bullish</button>
+          <button type="button" class="note-dirbtn" id="resNDirNone" onclick="resPickDir('')">— None</button>
+          <button type="button" class="note-dirbtn" id="resNDirBear" onclick="resPickDir('bear')">▼ Bearish</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px"><div class="res-flbl">Related calendar event</div><select class="finp" id="resNEvt"></select></div>
     <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);cursor:pointer"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
     <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeM('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
   </div>
@@ -10998,6 +11029,117 @@ function resAssetCounts(){
   resNotes().forEach(n=>{if(n.asset)m.set(n.asset,(m.get(n.asset)||0)+1);});
   return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
+// ══ NOTIZ-RICHTUNG, EVENT-BEZUG UND TREFFERQUOTE ═════════════════════════
+// (Nutzer-Wunsch 2026-08-07) Der eigentliche Grund, warum Profis
+// dokumentieren, ist nicht das Aufschreiben, sondern das messbare Feedback:
+// lag ich richtig? Dafuer bekommt eine Notiz zwei optionale Zusaetze -
+// eine RICHTUNG (bullish/bearish) und einen BEZUG zu einem Kalender-Event.
+// Beides ist freiwillig; Notizen ohne Richtung verhalten sich exakt wie
+// bisher und tauchen in keiner Statistik auf.
+//
+// Die Auswertung vergleicht den Kurs des Assets am Notiz-Tag mit dem Kurs
+// NOTE_HORIZON_D Handelstage spaeter - rein aus price_data.json, das seit
+// dem 3-Jahres-Backfill weit genug zurueckreicht. Bewusst KEINE Bewertung,
+// solange das Fenster noch nicht abgelaufen ist ("pending" statt raten).
+const NOTE_HORIZON_D=5;        // Handelstage bis zur Auswertung
+const NOTE_FLAT_PCT=0.15;      // darunter gilt die Bewegung als seitwaerts
+
+// Kurs eines Assets am (oder zuletzt vor dem) gegebenen Datum.
+function priceAtOrBefore(id,iso){
+  const s=priceSeriesFor(id);
+  if(!Array.isArray(s)||!s.length)return null;
+  let pick=null;
+  for(let i=0;i<s.length;i++){if(s[i][0]<=iso)pick=s[i];else break;}
+  return pick?{d:pick[0],v:Number(pick[1])}:null;
+}
+// Der Punkt n Handelstage NACH dem Startdatum (zaehlt echte Reihen-Eintraege,
+// nicht Kalendertage - Wochenenden/Feiertage fallen so automatisch raus).
+function priceNBarsAfter(id,iso,n){
+  const s=priceSeriesFor(id);
+  if(!Array.isArray(s)||!s.length)return null;
+  let idx=-1;
+  for(let i=0;i<s.length;i++){if(s[i][0]<=iso)idx=i;else break;}
+  if(idx<0)return null;
+  const t=idx+n;
+  if(t>=s.length)return null;                 // Fenster noch nicht abgelaufen
+  return{d:s[t][0],v:Number(s[t][1])};
+}
+// Auswertung einer einzelnen Notiz.
+//   null      -> nicht auswertbar (keine Richtung/kein Asset/keine Kurse)
+//   'pending' -> Fenster laeuft noch
+//   {hit:bool, pct:number, ...}
+function noteOutcome(n){
+  if(!n||!n.dir||(n.dir!=='bull'&&n.dir!=='bear'))return null;
+  if(!n.asset)return null;
+  const iso=String(n.ts||'').slice(0,10);
+  if(!iso)return null;
+  const a=priceAtOrBefore(n.asset,iso);
+  if(!a||!isFinite(a.v)||a.v<=0)return null;
+  const b=priceNBarsAfter(n.asset,iso,NOTE_HORIZON_D);
+  if(!b)return{status:'pending'};
+  if(!isFinite(b.v)||b.v<=0)return null;
+  const pct=(b.v/a.v-1)*100;
+  if(Math.abs(pct)<NOTE_FLAT_PCT)return{status:'flat',pct,from:a.d,to:b.d};
+  const hit=(n.dir==='bull')===(pct>0);
+  return{status:hit?'hit':'miss',hit,pct,from:a.d,to:b.d};
+}
+// Gesamtbilanz ueber alle auswertbaren Notizen (optional auf ein Asset
+// eingeschraenkt). Seitwaerts-Faelle zaehlen bewusst NICHT als Treffer und
+// NICHT als Fehlschlag - sie sagen ueber die Richtung nichts aus.
+function noteHitStats(assetId){
+  let hit=0,miss=0,flat=0,pending=0;
+  resNotes().forEach(n=>{
+    if(assetId&&n.asset!==assetId)return;
+    const o=noteOutcome(n);
+    if(!o)return;
+    if(o.status==='pending')pending++;
+    else if(o.status==='flat')flat++;
+    else if(o.hit)hit++;else miss++;
+  });
+  const graded=hit+miss;
+  return{hit,miss,flat,pending,graded,rate:graded?hit/graded:null};
+}
+// Kleines Ergebnis-Abzeichen fuer eine Notizzeile.
+function noteOutcomeBadge(n){
+  const o=noteOutcome(n);
+  if(!o)return n&&n.dir?`<span class="note-dir ${n.dir==='bull'?'nd-bull':'nd-bear'}" title="Direction you called — needs an asset and price history to be scored">${n.dir==='bull'?'▲':'▼'}</span>`:'';
+  if(o.status==='pending')return`<span class="note-out no-pend" title="Called ${n.dir==='bull'?'bullish':'bearish'} — outcome window (${NOTE_HORIZON_D} trading days) has not closed yet">⋯</span>`;
+  if(o.status==='flat')return`<span class="note-out no-flat" title="Called ${n.dir==='bull'?'bullish':'bearish'} — price moved only ${o.pct.toFixed(2)}% over ${NOTE_HORIZON_D} trading days, too flat to score">≈ ${o.pct>0?'+':''}${o.pct.toFixed(1)}%</span>`;
+  return`<span class="note-out ${o.hit?'no-hit':'no-miss'}" title="Called ${n.dir==='bull'?'bullish':'bearish'} on ${escH(o.from)} — price ${o.pct>0?'rose':'fell'} ${Math.abs(o.pct).toFixed(2)}% by ${escH(o.to)}">${o.hit?'✓':'✗'} ${o.pct>0?'+':''}${o.pct.toFixed(1)}%</span>`;
+}
+// Statistik-Zeile fuer den Terminal-Mittelteil.
+function noteHitStatsHtml(assetId){
+  const st=noteHitStats(assetId);
+  if(!st.graded&&!st.pending)return'';
+  const pct=st.rate==null?null:Math.round(st.rate*100);
+  const col=pct==null?'var(--t3)':pct>=60?BC.bull:pct<=40?BC.bear:'var(--amber)';
+  return`<div class="note-stats" title="Only notes with a direction, an asset and a closed ${NOTE_HORIZON_D}-day window are scored. Sideways moves under ${NOTE_FLAT_PCT}% count as neither.">
+    <span class="ns-big" style="color:${col}">${pct==null?'–':pct+'%'}</span>
+    <span class="ns-lbl">calls correct<br><span style="color:var(--t3)">${st.hit} hit · ${st.miss} miss${st.flat?' · '+st.flat+' flat':''}${st.pending?' · '+st.pending+' open':''}</span></span>
+  </div>`;
+}
+// Kalender-Events rund um heute fuer die Verknuepfung im Notiz-Modal.
+// Nur Events der gewaehlten Waehrung, +/-30 Tage, High/Medium zuerst.
+function noteEventOptions(assetId,sel){
+  const ccy=assetId?macroCcyFor(assetId):null;
+  const today=todayStr();
+  const from=isoMinusDays(today,30),to=isoMinusDays(today,-30);
+  // Waehrungsfeld heisst im Client `currencies` (kann mehrere enthalten,
+  // z.B. "EUR,USD") - evtMatchesSym() ist die bestehende, bereits erprobte
+  // Zuordnung Event->Asset und wird hier wiederverwendet statt eigener Logik.
+  const evs=(calEvts||[]).filter(e=>{
+    if(!e||!e.date)return false;
+    const d=String(e.date).slice(0,10);
+    if(d<from||d>to)return false;
+    return !assetId||evtMatchesSym(e,assetId)||(ccy&&String(e.currencies||'').toUpperCase().includes(ccy));
+  }).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,60);
+  return'<option value="">— No event —</option>'+evs.map(e=>{
+    const d=String(e.date).slice(0,10);
+    const k=d+'|'+(e.name||e.title||'');
+    return`<option value="${escH(k)}"${sel===k?' selected':''}>${escH(d)} · ${escH(e.currencies||'')} ${escH(String(e.name||e.title||'').slice(0,42))}</option>`;
+  }).join('');
+}
+
 function resFilteredNotes(){
   const q=resQuery.trim().toLowerCase();
   let out=resNotes().filter(n=>{
@@ -11218,7 +11360,7 @@ function renderResearch(){
     <div class="rterm-main">
       ${researchTopCardsHtml()}
       <div class="rterm-lower">
-        <div class="rterm-mid">${researchMidHtml()}</div>
+        <div class="rterm-mid" id="rtermMid">${researchMidHtml()}</div>
         <div class="rterm-timeline">
           <div class="rterm-tl-hd">
             <div class="rterm-tl-title">Timeline</div>
@@ -11317,16 +11459,40 @@ function researchNotesFolderOptions(assetId){
   return out;
 }
 function researchFolderNameOf(fid){const f=researchFolderById(fid);return f?f.name:'Folder';}
+// Volltextsuche im Terminal-Mittelteil (Nutzer-Wunsch 2026-08-07): "nach 200
+// Notizen findest du ohne Suche nichts wieder". Sucht ueber Titel, Text, Tags
+// und Ordnernamen. Ist etwas eingegeben, wird die Ordner-Einschraenkung
+// bewusst AUFGEHOBEN und ueber alle Notizen dieses Assets gesucht - sonst
+// findet man genau die Notiz nicht, deren Ordner man vergessen hat.
+let researchNoteQuery='';
+function researchSetNoteQuery(v){
+  researchNoteQuery=v||'';
+  const el=document.getElementById('rtermMid');
+  if(el){
+    el.innerHTML=researchMidHtml();
+    const inp=el.querySelector('#rtermNoteSearch');
+    if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  }else renderResearch();
+}
 function researchNotesPanelHtml(assetId,fid){
   const sym=(syms||[]).find(s=>s.id===assetId);
-  const notes=resNotes().filter(n=>n.asset===assetId&&(n.fid||null)===(fid||null))
-    .slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
+  const q=researchNoteQuery.trim().toLowerCase();
+  const notes=resNotes().filter(n=>{
+    if(n.asset!==assetId)return false;
+    if(!q&&(n.fid||null)!==(fid||null))return false;
+    if(q){
+      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+researchFolderNameOf(n.fid||'')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
   const rows=notes.length?notes.map(n=>{
     const dp=resFmtDateParts(n.up||n.ts);
     return`<div class="res-note" onclick="openResNote('${n.id}')">
       <div class="res-note-datebox"><div class="res-note-day">${dp.day}</div><div class="res-note-mon">${dp.mon}</div><div class="res-note-yr">${dp.year}</div></div>
       <div class="res-note-body">
-        <div class="res-note-top"><span class="res-note-ti">${escH(n.title||'Untitled note')}</span></div>
+        <div class="res-note-top"><span class="res-note-ti">${escH(n.title||'Untitled note')}</span>${noteOutcomeBadge(n)}</div>
+        ${n.evt?`<div class="note-evt" title="Linked calendar event">${icn('clock',10)} ${escH(String(n.evt).replace('|',' · '))}</div>`:''}
         ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag">#${escH(t)}</span>`).join('')}</div>`:''}
         ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
       </div>
@@ -11337,8 +11503,12 @@ function researchNotesPanelHtml(assetId,fid){
     </div>`;
   }).join(''):`<div class="dw-empty">No notes here yet.</div>`;
   return`<div class="ranl-wrap">
-    <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${fid?escH(researchFolderNameOf(fid)):'General Notes'}</div>
-    <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
+    <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${q?'Search results':(fid?escH(researchFolderNameOf(fid)):'General Notes')}</div>
+    ${noteHitStatsHtml(assetId)}
+    <div class="rterm-noterow">
+      <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search all notes for ${escH(sym?sym.name:assetId)}…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
+      <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
+    </div>
     <div class="res-list" style="margin-top:10px">${rows}</div>
   </div>`;
 }
@@ -11558,6 +11728,14 @@ function openResNote(id){
   resFillNoteModal(n);
   openM('mResNote');
 }
+let _resDir='';
+function resPickDir(d){_resDir=(d==='bull'||d==='bear')?d:'';resPaintDir();}
+function resPaintDir(){
+  [['resNDirBull','bull'],['resNDirNone',''],['resNDirBear','bear']].forEach(([id,v])=>{
+    const b=document.getElementById(id);
+    if(b)b.classList.toggle('on',_resDir===v);
+  });
+}
 function resFillNoteModal(n){
   document.getElementById('resNTitle').value=n.title||'';
   document.getElementById('resNBody').value=n.body||'';
@@ -11571,6 +11749,12 @@ function resFillNoteModal(n){
   // haengt vom gewaehlten Asset ab, aktualisiert sich daher live bei dessen Wechsel.
   resFillNoteFolderOptions(n.asset,n.fid);
   as.onchange=()=>resFillNoteFolderOptions(as.value,'');
+  _resDir=(n.dir==='bull'||n.dir==='bear')?n.dir:'';
+  resPaintDir();
+  const ev=document.getElementById('resNEvt');
+  if(ev)ev.innerHTML=noteEventOptions(n.asset||'',n.evt||'');
+  const asEl=document.getElementById('resNAsset');
+  if(asEl)asEl.addEventListener('change',()=>{const e2=document.getElementById('resNEvt');if(e2)e2.innerHTML=noteEventOptions(asEl.value,'');},{once:false});
   document.getElementById('resNDel').style.display=_resEditId?'':'none';
   document.getElementById('resNMeta').textContent=_resEditId&&n.ts?('Created '+resFmtDate(n.ts)+(n.up&&n.up!==n.ts?'  ·  updated '+resFmtDate(n.up):'')):'New note';
 }
@@ -11591,9 +11775,9 @@ function saveResNote(){
   pushU();
   if(_resEditId){
     const n=resNotes().find(x=>x.id===_resEditId);
-    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fid=fid;n.asset=asset;n.fav=fav;n.up=now;}
+    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fid=fid;n.asset=asset;n.fav=fav;n.up=now;n.dir=_resDir||null;n.evt=(document.getElementById('resNEvt')||{}).value||null;}
   }else{
-    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,ts:now,up:now});
+    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,ts:now,up:now,dir:_resDir||null,evt:(document.getElementById('resNEvt')||{}).value||null});
   }
   save();closeM('mResNote');renderResearch();
 }
