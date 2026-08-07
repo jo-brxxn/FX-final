@@ -703,13 +703,25 @@ body.compact-view .rub-summary{display:block}
 .carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
 .carry-rank{font-size:16px;font-weight:800;color:var(--t3);min-width:26px;padding-top:1px;text-align:center}
 .carry-main{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
-.carry-top{display:flex;align-items:center;gap:10px}
-.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .carry-dir{font-size:11px;font-weight:700;border:1px solid;border-radius:4px;padding:2px 7px;white-space:nowrap}
 .carry-val{margin-left:auto;font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
 .carry-bar-wrap{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
 .carry-bar{height:100%;border-radius:4px}
 .carry-rates{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Bugfund 2026-08-07 (Audit): auf 390px lief die Carry-Zeile 27px ueber den
+   Bildschirmrand hinaus - Paarname (16px Mono), Richtungs-Badge und der
+   nowrap-Zinswert passten nebeneinander nicht mehr in die Zeile, und
+   .carry-top hatte weder Umbruch noch min-width:0, konnte also nicht
+   nachgeben. Auf schmalen Screens darf die Zeile jetzt umbrechen und die
+   Schrift ist etwas kleiner. */
+@media(max-width:520px){
+  .carry-row{gap:8px;padding:8px 10px}
+  .carry-rank{min-width:20px;font-size:14px}
+  .carry-pair,.carry-val{font-size:14px}
+  .carry-dir{font-size:10px;padding:2px 5px}
+}
 .carry-lookup{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px}
 .carry-lk-pair{font-size:18px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
 .carry-lk-grid{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
@@ -2530,12 +2542,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-325 — Zwei Korrekturen (Nutzer-Wunsch). (1) Der Zurueck-Pfeil der Paar-Overview fuehrt jetzt dorthin zurueck, wo man vorher stand: die Overview lebt im Set-ups-Container, laesst sich aber auch aus der Dashboard-Watchlist und dem Watchlist-Tab oeffnen - bisher landete man immer in der Set-ups-Liste. gotoPairOverview merkt sich jetzt Tab UND Scrollposition, closePairOverview stellt beides wieder her (per requestAnimationFrame, weil showTab die Zielseite komplett neu aufbaut und ein sofortiges scrollTop danach wieder auf 0 stuende). Auch der Klick aus der Set-ups-Liste selbst laeuft jetzt darueber, damit man dort ebenfalls an derselben Stelle der Liste landet statt oben. Per Test bestaetigt: aus Dashboard/Watchlist/Set-ups heraus geoeffnet, fuehrt Zurueck jeweils auf denselben Tab mit identischer Scrollposition (160 auf 160, echter Klick 140 auf 140). (2) Der normalisierte Score-Modus multiplizierte jeden Indikator mit einem Faktor zwischen 0,4 und 1,8 - dabei entstanden Werte wie -0.6035497225634944, die roh in den Kartenscore und die Overview-Kacheln liefen. Gerundet wird jetzt auf zwei Nachkommastellen an der QUELLE (indScore/rubScore/symScore ueber einen gemeinsamen roundSc-Helfer mit EPSILON gegen Gleitkomma-Artefakte), nicht an den Anzeigestellen: sonst muesste man jede Stelle einzeln erwischen und jede kuenftige neue wieder, und die Summe der gerundeten Teile koennte von der gerundeten Summe abweichen. So stimmen Teil und Summe per Konstruktion ueberein - Voraussetzung dafuer, dass das Score-Modal nie von der echten Rechnung abweichen kann. Per Test bestaetigt: keine Zahl mit mehr als 2 Nachkommastellen mehr in irgendeinem Score-Element ueber 7 Tabs, Summe der Teile identisch zum Kartenscore, und der classic-Modus liefert weiterhin bitgenau dieselben Werte wie vorher (dort sind alle Betraege ohnehin Vielfache von 0,25).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-326 — Bugfix aus dem Gesamt-Audit: die Carry-Zeile lief auf 390px 27px ueber den Bildschirmrand hinaus. Paarname (16px Mono), Richtungs-Badge und der nowrap-Zinswert passten nebeneinander nicht mehr in eine Zeile, und .carry-top hatte weder Umbruch noch min-width:0, konnte also nicht nachgeben. Auf schmalen Screens darf die Zeile jetzt umbrechen, der Paarname kuerzen und die Schrift ist etwas kleiner. Per Test bestaetigt: scrollWidth wieder exakt gleich clientWidth, und der Durchlauf ueber alle 15 Tabs auf 390px meldet jetzt gar keinen horizontalen Ueberlauf mehr - vorher war Carry der einzige Treffer.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-325</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-326</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
