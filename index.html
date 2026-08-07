@@ -776,6 +776,8 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-back-sm{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer;margin-bottom:8px}
 @media(hover:hover){.rterm-back-sm:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-riskbox{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
+.rterm-riskown{margin-top:9px}
+.rterm-ownsc{margin-left:auto;font-size:12px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 /* Ueberschrift + Fokus-Asset-Identitaet AUSSERHALB der geborderten Box
    (Nutzer-Korrektur 2026-08-04), deutlich groesser als die vorherige
    kleine Titel-/Chip-Variante innerhalb der Box. */
@@ -2503,12 +2505,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-322 — Dashboard nach Terminal-Logik neu geordnet und die Ticker-Zeile entfernt (Nutzer-Wunsch). Die Market-Watch-Leiste oben (Assets + Tagesveraenderungen) ist komplett raus - samt Widget-Typ, Konfigurations-Modal, der kompletten 'top'-Zone im Grid und dem zugehoerigen CSS; die Preise und Tagesveraenderungen stehen ohnehin in der Majors-Schiene links und im Performance-Ranking. Bestandsnutzer verlieren die Karte automatisch ueber DASH_DROP. Die uebrigen Karten sind jetzt nach dem Entscheidungsweg angeordnet, den man an einem Terminal von links nach rechts abgeht: LINKS das eigene Buch (Majors, Watchlist, Korrelations-Check - letzterer direkt unter der Watchlist, weil er genau ueber diese Liste eine Aussage macht) - MITTE, in der breitesten Spalte, worauf man zuerst schaut: das Regime (Risk Sentiment) und darunter, was der Markt daraus tatsaechlich gemacht hat (Performance Ranking) - RECHTS die Instrumentenwahl (Staerke-Ranking, Carry, Volatilitaet: alle drei beantworten welches Instrument, nicht welche Richtung) - GANZ RECHTS Stimmung und Terminrisiko (Sentiment-Schnappschuss, Surprise Index, Headlines, Kalender - der Kalender stand vorher in der Fussleiste, gehoert aber neben den Nachrichtenfluss) - UNTEN als flache Reihe das Nebensaechliche (Movers, Notifications, Motivationskarte). Die konkrete Spaltenverteilung ist zusaetzlich an den GEMESSENEN Kartenhoehen ausgerichtet: ein erster, rein semantischer Entwurf ergab 1404px in der Mitte gegen 315px rechts aussen, weil drei lange Ranglisten zu dicht beieinander sassen; jetzt liegen alle Spalten zwischen 523 und 953px, ohne dass eine Gruppe auseinandergerissen wurde. DASH_V21 setzt die Reihenfolge bei Bestandsnutzern einmalig neu - hier IST die Reihenfolge die Aenderung, ohne diesen Schritt haetten alle weiter das alte Layout gesehen. Per Test ueber 1920/1500/1180/900/430px geprueft: kein horizontaler Ueberlauf, Zonenbelegung ueberall korrekt, Migration eines Alt-Zustands mit eigener Sortierung fuehrt sauber zum neuen Raster.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-323 — Bugfix: score-tragende Karten, die im Research Terminal nicht erreichbar waren (Nutzer-Bugreport: GBPs Geopolitics steht auf bearish, laesst sich nicht aendern, zaehlt aber weiter in den Score). Ursache per Audit ueber ALLE Assets eingegrenzt: auf der Assets-Detailseite war jede score-tragende Karte immer sichtbar und editierbar - im Research Terminal, dem taeglichen Arbeitsplatz, fehlten ZWEI. (1) COT Data war ueberhaupt keine Kachel, obwohl die Karte bei fast jedem Asset einen Beitrag liefert (GBP -1, USD +1, GOLD +1). (2) Die Risk-Environment-Kachel zeigte beim Aufklappen bewusst den Dashboard-Regler statt der asset-eigenen Karte (Nutzer-Korrektur 2026-08-04) - dadurch war Geopolitics, der einzige manuell setzbare Indikator dieser Karte, nirgends im Terminal erreichbar. Fix ohne die Entscheidung von 2026-08-04 zurueckzunehmen: COT Data ist jetzt eine eigene Kachel, und die Risk-Environment-Kachel behaelt den Regler, haengt beim Aufklappen aber zusaetzlich die asset-eigene Karte darunter (Risk Correlation automatisch + Geopolitics manuell). Zusaetzlich weist die Kachel den Kartenscore aus, sobald er nicht 0 ist - sonst bliebe ein Score-Beitrag in der Kartenreihe unsichtbar, genau der gemeldete Fall. Per Test bestaetigt: Geopolitics laesst sich im Terminal aendern (bearish auf neutral, GBP-Score 5.6 auf 6.6), die COT-Karte klappt mit echten Werten auf, und der wiederholte Audit findet keine score-tragende Karte mehr, die irgendwo nicht erreichbar waere. Kachelreihe bleibt bei 6 Kacheln ohne Ueberlauf (1600/1180/430px geprueft).">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-322</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-323</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -11466,7 +11468,18 @@ function researchTreeSelLabel(){
 // Icons zu den 7 Insights-Tabs) - Mitte (bewusst leer, "da kommen spaeter
 // Sachen") - schmale Timeline-Spalte (10 vergangene + 10 kommende
 // Kalender-Events fuer die Waehrung des Fokus-Assets).
-const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest Rates'];
+// Bugreport 2026-08-07 ("bei GBP gibt es noch den Indikator Geopolitics, den
+// gibt es nicht mehr, also kann ich den nicht aendern, aber der zaehlt
+// immernoch in den Score"): der Terminal-Kartenreihe fehlte "COT Data"
+// komplett, und die Risk-Environment-Kachel zeigte statt der asset-eigenen
+// Karte nur den Dashboard-Regler (bewusst so, Nutzer-Korrektur 2026-08-04) -
+// dadurch waren ZWEI score-tragende Karten hier nicht erreichbar. Auf der
+// Assets-Detailseite war beides immer sichtbar (per Audit ueber alle Assets
+// bestaetigt), im Terminal - dem taeglichen Arbeitsplatz - aber nicht.
+// COT Data ist jetzt eine eigene Kachel; die Risk-Environment-Kachel behaelt
+// den Regler, haengt beim Aufklappen aber zusaetzlich die asset-eigene Karte
+// darunter (dort leben Risk Correlation + Geopolitics).
+const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest Rates','COT Data'];
 // Akkordeon (Nutzer-Korrektur 2026-08-04: "die Karte tauscht sich durch die
 // Tabelle aus... eins zu eins wie aus den Assets") - ein Klick ersetzt die
 // GESAMTE Kartenreihe durch die ECHTE, editierbare Rubrik-Karte (renderRub,
@@ -11497,7 +11510,13 @@ function researchTopCardsHtml(){
   if(researchTopOpen&&sym){
     const backBtn=`<button class="rterm-back-sm" onclick="researchToggleTop('${escJH(researchTopOpen)}')" title="Back to the card row">${icn('chevronRight',14)}</button>`;
     if(researchTopOpen==='risk'){
-      return`<div class="rterm-topexp">${backBtn}<div class="rterm-riskbox">${riskSentimentWidgetHtml('resRisk')}</div></div>`;
+      // Oben der Dashboard-Regler (Nutzer-Korrektur 2026-08-04), darunter die
+      // asset-eigene Risk-Environment-Karte - sie traegt Risk Correlation
+      // (automatisch aus genau diesem Regler) und Geopolitics (manuell) und
+      // ist damit die EINZIGE Stelle, an der Geopolitics editierbar ist.
+      const rri=(sym.rubrics||[]).findIndex(r=>r.name===MACRO_NAME);
+      const own=rri>=0?`<div class="rterm-riskown">${renderRub(sym.rubrics[rri],rri,sym.rubrics.length)}</div>`:'';
+      return`<div class="rterm-topexp">${backBtn}<div class="rterm-riskbox">${riskSentimentWidgetHtml('resRisk')}</div>${own}</div>`;
     }
     const ri=(sym.rubrics||[]).findIndex(r=>r.name===researchTopOpen);
     if(ri>=0)return`<div class="rterm-topexp">${backBtn}${renderRub(sym.rubrics[ri],ri,sym.rubrics.length)}</div>`;
@@ -11515,9 +11534,16 @@ function researchTopCardsHtml(){
   // Rubrik (Risk Correlation/Geopolitics), sondern beim Ausklappen 1:1 die
   // Dashboard-Karte (riskSentimentWidgetHtml) - Nutzer-Korrektur 2026-08-04.
   const{pct,lbl,col}=riskOnOffState();
-  const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the Risk Sentiment card">
+  // Die Kachel zeigt die Regler-Lage (Nutzer-Korrektur 2026-08-04). Traegt die
+  // asset-eigene Karte darunter aber einen Score ungleich 0 (typisch: ein
+  // manuell gesetztes Geopolitics), wird der hier zusaetzlich ausgewiesen -
+  // sonst waere ein Score-Beitrag in der Kartenreihe unsichtbar, genau der
+  // gemeldete Fall.
+  const riskRub=sym?(sym.rubrics||[]).find(r=>r.name===MACRO_NAME):null;
+  const riskSc=riskRub?Math.round(rubScore(riskRub)*10)/10:0;
+  const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the Risk Sentiment dial and this asset's own Risk Environment card">
     <div class="ov2-titleline"><span class="ov2-title">Risk Environment</span></div>
-    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span></div>
+    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span>${riskSc?`<span class="rterm-ownsc" style="color:${BC[scoreBias(riskSc)]}" title="This asset's own Risk Environment card contributes ${riskSc>0?'+':''}${riskSc} to its score">${riskSc>0?'+':''}${riskSc}</span>`:''}</div>
   </div>`;
   return`<div class="rterm-top">${cards}${riskCard}</div>`;
 }
