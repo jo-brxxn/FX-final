@@ -1289,6 +1289,32 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .wl-row .row-score{width:34px;font-size:12.5px}
 .wl-row .dw-del{font-size:16px;padding:0 3px}
 .wl-sep{height:1px;background:var(--bd);opacity:.7;margin:8px 0}
+/* ── Vier Profi-Karten (2026-08-07): gemeinsame Zeilen-/Balken-Bausteine.
+   Bewusst EIN Satz Klassen fuer alle vier statt vier eigener - dieselbe
+   Zeilenhoehe, dieselbe Balkenoptik, dieselbe Zahlenspalte (Grundsatz
+   "wiederkehrende UI-Bausteine muessen einheitlich sein"). */
+.perf-winbar{display:flex;gap:4px;margin-bottom:8px}
+.perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:10.5px;font-weight:700;padding:4px 0;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-win.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.perf-list{display:flex;flex-direction:column}
+.perf-row{display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:default;min-height:26px}
+.perf-row[onclick]{cursor:pointer}
+@media (hover:hover){.perf-row[onclick]:hover{background:var(--bg2)}}
+.perf-rank{width:16px;flex-shrink:0;text-align:right;font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-name{flex:0 0 58px;min-width:0;font-size:12.5px;font-weight:700;color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-barwrap{flex:1;min-width:24px;height:7px;background:var(--bg3);border-radius:4px;position:relative;overflow:hidden}
+.perf-bar{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
+/* Surprise-Index: Nulllinie in der Mitte, Balken nach beiden Seiten. */
+.esi-wrap{overflow:visible}
+.esi-zero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
+.esi-bar{border-radius:2px}
+.perf-pct{flex:0 0 58px;text-align:right;font-size:11.5px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-sec{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:8px 0 2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-sec:first-child{margin-top:0}
+.corr-head{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.corr-big{font-size:28px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.corr-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
+.dw-note{font-size:10px;color:var(--t3);line-height:1.45;margin-top:7px}
 /* Headlines-Karte (Nutzer-Wunsch 2026-08-06): kompakte Schlagzeilen-Liste,
    ganz rechte Dashboard-Spalte - Titel + Quelle/Zeit, ganze Zeile klickbar
    (oeffnet den Artikel in einem neuen Tab). */
@@ -2436,12 +2462,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-318 — Score-Gewichtung als zusaetzliche, abschaltbare Ebene (Nutzer-Wunsch): neuer Schalter im Cloud-Modal, \"classic\" bleibt Standard und rechnet bitgenau wie bisher (per Test bestaetigt: Faktor exakt 1 bei allen 186 Indikatoren, Zurueckschalten liefert identische Werte). \"normalized\" legt drei gemessene Gewichte darueber: (1) Ueberraschungsgroesse als z-Score gegen die Streuung der eigenen historischen Prognosefehler - erst dadurch sind NFP (Streuung ~37.000) und CPI (~0,04) vergleichbar, ab 5 Beobachtungen wie bei Citi, 86% der Indikatoren erfuellen das; (2) Zeit-Decay ZYKLUS-RELATIV statt in festen Tagen, damit ein Quartalswert langsamer altert als ein Wochenwert (Halbwertszeit = 1,5 eigene Release-Zyklen); (3) Marktrelevanz aus dem gemessenen durchschnittlichen Kursausschlag an den Release-Tagen des Indikators - greift erst mit genug Preishistorie, bis dahin bewusst neutral statt geraten. Faktor bewusst um 1,0 zentriert und auf 0,4-1,8 geklemmt: die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein frei laufender Faktor haette sie still bedeutungslos gemacht. Das Score-Modal schluesselt jeden Teilfaktor einzeln auf, damit die Ebene keine Blackbox ist. scoreMode an allen vier Sync-Ecken angebunden."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-319 — Vier neue Dashboard-Karten nach Profi-Vorbild (Nutzer-Wunsch), alle ausschliesslich aus bereits vorhandenen Daten: (1) Performance Ranking (Bloomberg WCRS) - echte Kursperformance ueber 1D/1W/1M/YTD neben dem Score, denn die Luecke zwischen \"was die Daten sagen\" und \"was der Markt daraus machte\" ist oft das eigentliche Signal. (2) Carry Ranking (FXFA) - Zinsdifferenz je FX-Paar, getrennt nach \"Long zahlt am meisten\" und \"Long kostet am meisten\"; die App kannte Carry schon im Paar-Score, zeigte ihn aber nirgends fuer sich. (3) Correlation Check - wie korreliert die Watchlist wirklich ist, mit Benennung des engsten Paares; haeufigste Fehlerquelle bei Einzeltradern sind vier Positionen, die in Wahrheit eine sind (Test: EUR/USD ↔ GBP/USD bei +0,87). (4) Surprise Index (Citi-CESI-Stil) je Waehrung - Daten gegen Forecast in eigenen Standardabweichungen, alters-gewichtet mit 45-Tage-Halbwertszeit, aber als gewichteter DURCHSCHNITT statt als Summe: Citi veroeffentlicht Summen und vergleicht Laender deshalb bewusst nicht absolut - wir muessen es, also normiert, damit Waehrungen mit wenigen quartalsweisen Indikatoren nicht strukturell benachteiligt sind. DASH_V20; der Ensure-Block ergaenzt die Karten bei Bestandsnutzern automatisch, ohne deren eigene Sortierung anzutasten."classic\" bleibt Standard und rechnet bitgenau wie bisher (per Test bestaetigt: Faktor exakt 1 bei allen 186 Indikatoren, Zurueckschalten liefert identische Werte). \"normalized\" legt drei gemessene Gewichte darueber: (1) Ueberraschungsgroesse als z-Score gegen die Streuung der eigenen historischen Prognosefehler - erst dadurch sind NFP (Streuung ~37.000) und CPI (~0,04) vergleichbar, ab 5 Beobachtungen wie bei Citi, 86% der Indikatoren erfuellen das; (2) Zeit-Decay ZYKLUS-RELATIV statt in festen Tagen, damit ein Quartalswert langsamer altert als ein Wochenwert (Halbwertszeit = 1,5 eigene Release-Zyklen); (3) Marktrelevanz aus dem gemessenen durchschnittlichen Kursausschlag an den Release-Tagen des Indikators - greift erst mit genug Preishistorie, bis dahin bewusst neutral statt geraten. Faktor bewusst um 1,0 zentriert und auf 0,4-1,8 geklemmt: die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein frei laufender Faktor haette sie still bedeutungslos gemacht. Das Score-Modal schluesselt jeden Teilfaktor einzeln auf, damit die Ebene keine Blackbox ist. scoreMode an allen vier Sync-Ecken angebunden."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-318</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-319</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6610,6 +6636,10 @@ function cleanLegacySeedEvts(){
 }
 function mkWidgets(){return[
   {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:1},
+  {id:uid(),type:'perf_ranking',title:'Performance Ranking',order:1.5},
+  {id:uid(),type:'surprise_index',title:'Surprise Index',order:1.7},
+  {id:uid(),type:'corr_warn',title:'Correlation Check',order:2},
+  {id:uid(),type:'carry_ranking',title:'Carry Ranking',order:5.4},
   {id:uid(),type:'watchlist',title:'Watchlist',order:0},
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
   {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
@@ -6859,6 +6889,13 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // DASH_V18 (Nutzer-Wunsch 2026-08-04): Globus-Karte komplett vom Dashboard
 // entfernt (zieht auf den Lade-Screen um) - 'globe' zu DASH_DROP hinzugefuegt
 // wie jedes andere entfernte Widget zuvor.
+// DASH_V20 (Nutzer-Wunsch 2026-08-07): vier neue Karten nach Profi-Vorbild -
+// perf_ranking (Bloomberg WCRS: echte Kursperformance neben dem Score),
+// carry_ranking (FXFA: Zinsdifferenz je Paar), corr_warn (wie korreliert die
+// Watchlist wirklich ist) und surprise_index (Citi-CESI-Stil je Waehrung).
+// Alle vier rechnen ausschliesslich aus bereits vorhandenen Daten. Der
+// Ensure-Block unten ergaenzt sie bei Bestandsnutzern automatisch, ohne deren
+// eigene Sortierung anzutasten.
 // DASH_V19 (Nutzer-Wunsch 2026-08-06, Foto-Referenz): Watchlist zieht an den
 // Anfang der 'left'-Zone (vor Currency Strength) - ZONE_OF_TYPE.watchlist
 // 'right2'->'left', DASH_RANK/mkWidgets() order 5.3->0. dashZoneOf() liest
@@ -6890,9 +6927,9 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // BEWUSST per delWidget() geloescht hat - genau diese ueberspringt der
 // Ensure-Block, sonst kaeme ein absichtlich entferntes Widget bei jedem
 // Boot wieder zurueck (siehe delWidget()).
-const DASH_V=19;
-const DASH_DEFAULTS=[['watchlist','Watchlist'],['sentiment_snapshot','Market Sentiment'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['headlines','Headlines'],['motivation','Focus • Believe • Do'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']];
-const DASH_RANK={watchlist:0,sentiment_snapshot:1,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,headlines:5.5,motivation:5.6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+const DASH_V=20;
+const DASH_DEFAULTS=[['watchlist','Watchlist'],['sentiment_snapshot','Market Sentiment'],['perf_ranking','Performance Ranking'],['surprise_index','Surprise Index'],['corr_warn','Correlation Check'],['carry_ranking','Carry Ranking'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['headlines','Headlines'],['motivation','Focus • Believe • Do'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']];
+const DASH_RANK={watchlist:0,sentiment_snapshot:1,perf_ranking:1.5,surprise_index:1.7,corr_warn:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,carry_ranking:5.4,headlines:5.5,motivation:5.6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if(!Array.isArray(dashRemovedTypes))dashRemovedTypes=[];
@@ -11585,6 +11622,10 @@ const W_TYPES=[
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
   {type:'motivation',label:'Focus • Believe • Do',sub:'Decorative motivational card — no data'},
   {type:'headlines',label:'Headlines',sub:'Latest financial news headlines (Fed speeches, geopolitics, index outlook, ...) — display-only, no score impact'},
+  {type:'perf_ranking',label:'Performance Ranking',sub:'Actual price performance over 1D/1W/1M/YTD — what the market did, next to what the score says'},
+  {type:'carry_ranking',label:'Carry Ranking',sub:'Policy-rate differential per FX pair — which pairs pay to hold long, which cost'},
+  {type:'corr_warn',label:'Correlation Check',sub:'How correlated your watchlist pairs really are — spots positions that are secretly one'},
+  {type:'surprise_index',label:'Surprise Index',sub:'Economic data vs. forecast per currency, in own standard deviations, age-weighted (Citi CESI style)'},
 ];
 // Baut nur noch die HTML-STRINGS (Nutzer-Wunsch 2026-07-25: "Pop ups wie zB
 // cot in die notifications rein" - kein eigener schwebender Banner mehr
@@ -11864,7 +11905,7 @@ function toggleIndEditMode(){
 // fuellt jetzt die Luecke unter dem Globus, die vorher score_changes hatte.
 // "bottom" verliert dadurch eine Karte (nur noch mini_calendar/notification/
 // movers_fx) und wird automatisch breiter (flex:1, siehe .dash-zone-bottom>.dw).
-const ZONE_OF_TYPE={sentiment_snapshot:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'left',motivation:'right2',headlines:'right2'};
+const ZONE_OF_TYPE={sentiment_snapshot:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'left',motivation:'right2',headlines:'right2',perf_ranking:'center',carry_ranking:'right2',corr_warn:'left',surprise_index:'center'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -11881,6 +11922,207 @@ function mvWidget(id,d){
   const tmp=mates[i].order;mates[i].order=mates[j].order;mates[j].order=tmp;
   save();renderDash();
 }
+// ══ VIER PROFI-KARTEN (Nutzer-Wunsch 2026-08-07, Bloomberg-Vorbilder) ═════
+// Alle vier rechnen ausschliesslich aus Daten, die die App bereits hat -
+// keine neue Quelle, kein neuer Feed. Wo die Historie fuer eine belastbare
+// Aussage (noch) nicht reicht, sagen sie das ehrlich, statt eine Zahl zu
+// erfinden (Projekt-Grundsatz "nie schaetzen").
+
+// ── 1. PERFORMANCE-RANKING (Vorbild: Bloomberg WCRS) ─────────────────────
+// Nicht "wer ist bullish", sondern "wer hat tatsaechlich gewonnen". Der
+// Score sagt, was die Daten nahelegen - das hier sagt, was der Markt daraus
+// gemacht hat. Die Luecke zwischen beiden ist oft das eigentliche Signal.
+const PERF_WINDOWS=[['1D',1],['1W',7],['1M',30],['YTD',null]];
+let perfWindow='1W';
+function setPerfWindow(w){perfWindow=w;renderDash();}
+// Rendite ueber ein Zeitfenster aus der (bereits invert-bereinigten) Reihe.
+// null, wenn kein Startpunkt im Fenster liegt - dann zeigt die Zeile "–".
+function perfReturn(id,days){
+  const s=priceSeriesFor(id);
+  if(!Array.isArray(s)||s.length<2)return null;
+  const last=s[s.length-1];
+  const lastV=Number(last[1]);
+  if(!isFinite(lastV)||lastV<=0)return null;
+  let cutoff;
+  if(days==null){cutoff=String(new Date().getUTCFullYear())+'-01-01';}
+  else{const d=new Date(last[0]+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-days);cutoff=d.toISOString().slice(0,10);}
+  // letzter Punkt VOR dem Fensterbeginn (bzw. der erste im Fenster, falls
+  // die Reihe erst danach anfaengt - dann ist die Aussage kuerzer als das
+  // Label, was der Hinweis unter der Karte offenlegt).
+  let base=null;
+  for(let i=0;i<s.length;i++){if(s[i][0]<=cutoff)base=s[i];else break;}
+  if(!base)base=s[0];
+  if(base[0]===last[0])return null;
+  const bv=Number(base[1]);
+  if(!isFinite(bv)||bv<=0)return null;
+  return{pct:(lastV/bv-1)*100,from:base[0],to:last[0]};
+}
+function perfRankingHtml(){
+  const win=PERF_WINDOWS.find(w=>w[0]===perfWindow)||PERF_WINDOWS[1];
+  const rows=syms.map(s=>{const r=perfReturn(s.id,win[1]);return r?{id:s.id,name:s.name,pct:r.pct,from:r.from}:null;})
+    .filter(Boolean).sort((a,b)=>b.pct-a.pct);
+  const bar=`<div class="perf-winbar">${PERF_WINDOWS.map(w=>
+    `<button class="perf-win${w[0]===perfWindow?' on':''}" onclick="setPerfWindow('${w[0]}')">${w[0]}</button>`).join('')}</div>`;
+  if(!rows.length)return bar+`<div class="dw-empty">Not enough price history yet.</div>`;
+  const max=Math.max(...rows.map(r=>Math.abs(r.pct)))||1;
+  // Ehrlicher Tiefen-Ausweis: reicht die Reihe nicht ueber das ganze
+  // Fenster, ist die Zahl kuerzer als das Label verspricht.
+  const shortest=rows.reduce((a,r)=>r.from>a?r.from:a,'');
+  const body=rows.map((r,i)=>{
+    const col=r.pct>0?BC.bull:r.pct<0?BC.bear:'var(--t3)';
+    return`<div class="perf-row" onclick="gotoSym('${escJH(r.id)}')" title="${escH(r.name)} · since ${escH(r.from)}">
+      <span class="perf-rank">${i+1}</span>
+      <span class="perf-name">${escH(r.name)}</span>
+      <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.pct)/max*100).toFixed(1)}%;background:${col}"></span></span>
+      <span class="perf-pct" style="color:${col}">${r.pct>0?'+':''}${r.pct.toFixed(2)}%</span>
+    </div>`;}).join('');
+  return bar+`<div class="perf-list">${body}</div>`+
+    `<div class="dw-note">Actual price performance — compare against the score to spot where the market disagrees.${shortest?' Data from '+escH(shortest)+'.':''}</div>`;
+}
+
+// ── 2. CARRY-RANKING (Vorbild: Bloomberg FXFA) ───────────────────────────
+// Zinsdifferenz je Paar - der Kern jeder laenger gehaltenen FX-Position.
+// Die App kennt Carry bereits (pairCarryAdj im Paar-Score), zeigt ihn aber
+// nirgends fuer sich. Hier als eigenes Ranking ueber die kanonischen Paare.
+function carryRankingHtml(){
+  const rows=[];
+  FX_PAIRS.forEach(n=>{
+    const [b,q]=n.split('/');
+    const rb=rateInfo(b),rq=rateInfo(q);
+    if(!rb||!rq)return;
+    rows.push({name:n,diff:rb.rate-rq.rate,rb:rb.rate,rq:rq.rate,adj:pairCarryAdj(n)});
+  });
+  if(!rows.length)return`<div class="dw-empty">No policy rates available.</div>`;
+  rows.sort((a,b)=>b.diff-a.diff);
+  // Nur die Extreme zeigen - die Mitte (Carry nahe 0) traegt keine Aussage.
+  const top=rows.slice(0,5),bot=rows.slice(-5).reverse();
+  const max=Math.max(...rows.map(r=>Math.abs(r.diff)))||1;
+  const row=r=>{
+    const col=r.diff>0?BC.bull:r.diff<0?BC.bear:'var(--t3)';
+    return`<div class="perf-row" title="${escH(r.name)}: ${r.rb.toFixed(2)}% − ${r.rq.toFixed(2)}% · score effect ${r.adj>0?'+':''}${r.adj}">
+      <span class="perf-name" style="flex:0 0 84px">${escH(r.name)}</span>
+      <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.diff)/max*100).toFixed(1)}%;background:${col}"></span></span>
+      <span class="perf-pct" style="color:${col}">${r.diff>0?'+':''}${r.diff.toFixed(2)}%</span>
+    </div>`;};
+  return`<div class="carry-sec">Long pays most</div><div class="perf-list">${top.map(row).join('')}</div>`+
+    `<div class="carry-sec">Long costs most</div><div class="perf-list">${bot.map(row).join('')}</div>`+
+    `<div class="dw-note">Policy-rate differential per pair (base − quote). Positive = holding long earns carry.</div>`;
+}
+
+// ── 3. KORRELATIONS-WARNUNG ──────────────────────────────────────────────
+// Die haeufigste Fehlerquelle bei Einzeltradern: vier Positionen, die in
+// Wahrheit EINE sind. Zeigt die Durchschnittskorrelation der Watchlist und
+// benennt das engste Paar konkret.
+const CORR_MIN_DAYS=10;
+function watchlistCorrPairs(){
+  const cat=pairCats.find(c=>c.name==='Watchlist');
+  if(!cat)return null;
+  const items=pairs.filter(p=>p.catId===cat.id);
+  if(items.length<2)return null;
+  // Log-Returns je Paar aus der aufgeloesten Preisreihe.
+  const rets={};
+  items.forEach(p=>{
+    const parts=(p.name||'').split('/');
+    let ser=null;
+    if(parts.length===2)ser=resolvePairPriceSeries(PAIR_CODE_TO_ID[parts[0]]||parts[0],PAIR_CODE_TO_ID[parts[1]]||parts[1]);
+    if(!ser||ser.length<CORR_MIN_DAYS+1)return;
+    const m={};
+    for(let i=1;i<ser.length;i++){
+      const a=Number(ser[i-1][1]),b=Number(ser[i][1]);
+      if(a>0&&b>0)m[ser[i][0]]=Math.log(b/a);
+    }
+    rets[p.name]=m;
+  });
+  const names=Object.keys(rets);
+  if(names.length<2)return null;
+  const out=[];
+  for(let i=0;i<names.length;i++)for(let j=i+1;j<names.length;j++){
+    const A=rets[names[i]],B=rets[names[j]];
+    const common=Object.keys(A).filter(d=>B[d]!=null);
+    if(common.length<CORR_MIN_DAYS)continue;
+    const r=pearsonR(common.map(d=>A[d]),common.map(d=>B[d]));
+    if(r!=null)out.push({a:names[i],b:names[j],r,n:common.length});
+  }
+  return out.length?out:null;
+}
+function corrWarnHtml(){
+  const ps=watchlistCorrPairs();
+  if(!ps)return`<div class="dw-empty">Add at least two watchlist pairs with enough price history to see how correlated they are.</div>`;
+  const avg=ps.reduce((a,b)=>a+Math.abs(b.r),0)/ps.length;
+  const worst=ps.slice().sort((a,b)=>Math.abs(b.r)-Math.abs(a.r))[0];
+  const depth=Math.min(...ps.map(p=>p.n));
+  const lvl=avg>=0.7?'high':avg>=0.45?'med':'low';
+  const col=lvl==='high'?BC.bear:lvl==='med'?'var(--amber)':BC.bull;
+  const msg=lvl==='high'
+    ?'Your watchlist is effectively one position — sizing each separately understates the real exposure.'
+    :lvl==='med'?'Moderate overlap — a few of these will move together.'
+    :'Well diversified — these move largely independently.';
+  const rows=ps.slice().sort((a,b)=>Math.abs(b.r)-Math.abs(a.r)).slice(0,5).map(p=>{
+    const c=Math.abs(p.r)>=0.7?BC.bear:Math.abs(p.r)>=0.45?'var(--amber)':'var(--t2)';
+    return`<div class="perf-row" title="${p.n} common days">
+      <span class="perf-name" style="flex:1">${escH(p.a)} <span style="color:var(--t3)">↔</span> ${escH(p.b)}</span>
+      <span class="perf-pct" style="color:${c}">${p.r>0?'+':''}${p.r.toFixed(2)}</span>
+    </div>`;}).join('');
+  return`<div class="corr-head"><span class="corr-big" style="color:${col}">${avg.toFixed(2)}</span>
+      <span class="corr-lbl">average absolute correlation<br><span style="color:var(--t3)">closest: ${escH(worst.a)} ↔ ${escH(worst.b)} (${worst.r>0?'+':''}${worst.r.toFixed(2)})</span></span></div>
+    <div class="dw-note" style="margin:2px 0 8px">${msg}</div>
+    <div class="perf-list">${rows}</div>
+    <div class="dw-note">Based on ${depth} common trading days — grows more reliable as price history builds.</div>`;
+}
+
+// ── 4. ECONOMIC SURPRISE INDEX je Waehrung (Vorbild: Citi CESI) ──────────
+// Nicht der Score, sondern: kommen die Daten dieser Waehrung zuletzt BESSER
+// oder SCHLECHTER als erwartet herein? Genau Citis Konstruktion - jede
+// Ueberraschung in eigenen Standardabweichungen, exponentiell nach Alter
+// gewichtet - aber als gewichteter DURCHSCHNITT statt als Summe, damit eine
+// Waehrung mit vielen monatlichen Indikatoren nicht automatisch groesser
+// ausschlaegt als eine mit wenigen quartalsweisen (siehe Diskussion
+// 2026-08-07: Citi veroeffentlicht Summen und vergleicht Laender deshalb
+// bewusst NICHT absolut - wir muessen es, also normieren wir).
+const ESI_HALFLIFE_D=45;   // Citi-Konvention
+function esiForCcy(ccy){
+  const sym=syms.find(s=>s.id===ccy);
+  if(!sym)return null;
+  let wsum=0,vsum=0,n=0,newest='';
+  (sym.rubrics||[]).forEach(rub=>{
+    if(!IND_AUTO_RUBS.includes(rub.name))return;
+    (rub.indicators||[]).forEach(ind=>{
+      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
+      const r=ind.research||{};
+      if(r.bond||r.cot||r.sent)return;         // keine Ueberraschungs-Semantik
+      const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
+      if(a==null||f==null||!r.date)return;
+      const sd=indSurpriseSigma(ind);
+      if(sd==null)return;                       // <5 Beobachtungen -> auslassen
+      let z=(a-f)/sd;
+      if(LOWER_IS_BETTER_RE.test(ind.name||''))z=-z;
+      z=Math.max(-3,Math.min(3,z));             // Ausreisser kappen
+      const age=(Date.now()-new Date(r.date+'T00:00:00Z').getTime())/86400000;
+      if(!isFinite(age)||age<0||age>270)return;
+      const w=Math.pow(0.5,age/ESI_HALFLIFE_D);
+      wsum+=w;vsum+=w*z;n++;
+      if(r.date>newest)newest=r.date;
+    });
+  });
+  if(n<3||wsum<=0)return null;
+  return{val:vsum/wsum,n,newest};
+}
+function esiCardHtml(){
+  const rows=FX.map(c=>{const e=esiForCcy(c);return e?{c,...e}:null;}).filter(Boolean)
+    .sort((a,b)=>b.val-a.val);
+  if(rows.length<2)return`<div class="dw-empty">Not enough release history yet — the surprise index needs at least 5 past releases per indicator.</div>`;
+  const max=Math.max(...rows.map(r=>Math.abs(r.val)))||1;
+  const body=rows.map(r=>{
+    const col=r.val>0.05?BC.bull:r.val<-0.05?BC.bear:'var(--t3)';
+    return`<div class="perf-row" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}">
+      <span class="perf-name" style="flex:0 0 44px">${escH(r.c)}</span>
+      <span class="perf-barwrap esi-wrap"><span class="esi-zero"></span><span class="perf-bar esi-bar" style="left:${r.val>=0?50:50-Math.abs(r.val)/max*50}%;width:${(Math.abs(r.val)/max*50).toFixed(1)}%;background:${col}"></span></span>
+      <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
+    </div>`;}).join('');
+  return`<div class="perf-list">${body}</div>`+
+    `<div class="dw-note">Data vs. forecast in own standard deviations, weighted by age (45-day half-life) — positive = beating expectations lately. Averaged, not summed, so currencies with fewer indicators are not penalised.</div>`;
+}
+
 function renderDash(){
   updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
@@ -11983,6 +12225,14 @@ function renderDash(){
       // Wunsch 2026-07-11). Eine einzige, volle Spalte; Subgrid haelt weiterhin
       // Name/Chip/Score/Badge/Stern exakt untereinander.
       content=`<div class="ba-col-rows">${fxSorted.length?fxSorted.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}</div>`;
+    }else if(w.type==='perf_ranking'){
+      content=perfRankingHtml();
+    }else if(w.type==='carry_ranking'){
+      content=carryRankingHtml();
+    }else if(w.type==='corr_warn'){
+      content=corrWarnHtml();
+    }else if(w.type==='surprise_index'){
+      content=esiCardHtml();
     }else if(w.type==='watchlist'){
       // Nutzer-Wunsch 2026-08-06 (Foto-Referenz): komplett neu als reine
       // Tabelle - kein Kartenkopf (siehe hdrHtml oben), zwei Bloecke (FX/
