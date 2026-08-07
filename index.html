@@ -1351,7 +1351,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Nutzer-Korrektur (selber Tag): Karte soll "komplett weiss sein mit nur
    dem Text, keine Ueberschrift" + "mehr special markiert, krasse
    Schriftart" - Kartenkopf entfaellt komplett (hdrHtml-Ausnahme wie
-   market_watch/globe), Rahmen weg (reines weisses Feld statt normaler
+   der Globus-Karte), Rahmen weg (reines weisses Feld statt normaler
    Karten-Optik), Schatten bleibt als einziger Abhebe-Effekt gegen den
    Marmor-Hintergrund. Schriftart: Systemstack aus fetten "Poster"-
    Groteskschriften (Impact/Arial Black - auf praktisch jedem Geraet ohne
@@ -1374,8 +1374,8 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Move/Umbenennen/Loeschen bleiben moeglich (kein anderer Weg dazu, siehe
    delWidget()/renameWidget()/mvWidget() - nur ueber genau diese Buttons
    erreichbar), aber ohne die normale .dw-hdr-Kopfzeile (die haette wieder
-   eine sichtbare Ueberschrift bedeutet). Gleiches Muster wie .mw-bar bei
-   Market Watch: eigene, nur im Bearbeitungsmodus sichtbare Leiste. */
+   eine sichtbare Ueberschrift bedeutet): eigene, nur im Bearbeitungsmodus
+   sichtbare Leiste. */
 .motivation-editbar{display:none;justify-content:flex-end;margin-bottom:4px}
 body.dash-edit-mode .motivation-editbar{display:flex}
 .motivation-editbar .dw-btns{position:static;transform:none;background:none;padding:0}
@@ -1625,46 +1625,6 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    keine ganze Karte mit Ueberschriften und so") - kein Rahmen, kein
    Kartenhintergrund, kein Padding, keine Kopfzeile, keine Fusszeile.
    Die Pillen selbst tragen die Optik. */
-.dw.dw-market_watch{background:transparent;border:none;border-radius:0;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
-@media (hover:hover){.dw.dw-market_watch:hover{border-color:transparent}}
-/* .mw-bar enthaelt nur noch Bearbeitungsmodus-Inhalte (Kategorie-Umschalter +
-   Zahnrad/Steuerbuttons) - ausserhalb des Modus bliebe sonst eine leere,
-   unsichtbare Zeile stehen. Ganze Zeile daher wie .dash-edit-bar erst ab
-   body.dash-edit-mode sichtbar. */
-.mw-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
-body.dash-edit-mode .mw-bar{display:flex}
-/* Steuerbuttons hier inline (nicht absolut wie in .dw-hdr), rechts neben
-   den Tabs. */
-.mw-bar .dw-btns{position:static;transform:none;background:none;padding:0;opacity:1;pointer-events:auto}
-/* FX/Indices/Commodities/Bonds-Umschalter - sitzt in .mw-bar, die als Ganzes
-   schon auf den Bearbeitungsmodus gated ist (Nutzer-Wunsch 2026-07-27, per
-   Foto markiert). Die gerade gewaehlte Kategorie selbst bleibt ausserhalb
-   des Modus unveraendert in der Ticker-Leiste sichtbar. */
-.mw-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.mw-tab{background:transparent;border:1px solid var(--bd);color:var(--t3);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s}
-@media (hover:hover){.mw-tab:hover{color:var(--t1);border-color:var(--bd2)}}
-.mw-tab.on{background:rgba(59,130,246,.14);border-color:var(--blue);color:var(--blue)}
-/* Exakt 4 Kacheln pro Reihe (Nutzer-Wunsch 2026-07-27, per Foto markiert),
-   nicht "so viele wie reinpassen" wie beim vorherigen flex-wrap - echtes
-   Grid mit 4 gleich breiten Spalten. Passt sich per Breakpoint dynamisch an
-   kleinere Bildschirme an (2 bzw. 1 Spalte), behaelt dabei aber durch die
-   Spaltenreduktion selbst immer genug Breite pro Kachel fuer lesbaren Text
-   (kein beliebiges Zusammenschrumpfen einer 4-Spalten-Reihe auf Handy-
-   Breite - das wuerde Symbol/Preis/Aenderung abschneiden). */
-/* Nutzer-Wunsch 2026-08-03: Ticker-Kacheln nicht mehr auf 4 gleich breite
-   Spalten gestreckt (das erzeugte per justify-content:space-between viel
-   Leerraum INNERHALB jeder Kachel) - jede Kachel ist jetzt nur so breit wie
-   ihr Inhalt (flex:0 0 auto) und die Reihe packt so viele Kacheln wie
-   passen nebeneinander, kein verschenkter Platz mehr. */
-.mw-strip{display:flex;flex-wrap:wrap;gap:6px}
-.mw-tile{display:flex;align-items:baseline;justify-content:flex-start;gap:7px;flex:0 0 auto;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;padding:6px 10px;white-space:nowrap;transition:border-color .12s}
-@media (hover:hover){.mw-tile:hover{border-color:var(--t3)}}
-@media (hover:hover){.mw-tile[style*="cursor:pointer"]:hover{background:var(--bg3)}}
-.mw-tile-sym{font-size:13px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-price{font-size:13px;font-weight:500;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-tile-chg{font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-/* Fusszeilen-Link wie im Referenz-Foto: Text links, Chevron rechts in
-   einem eigenen kleinen Kasten. */
 .mw-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:1px solid var(--bd);font-size:12px;color:var(--blue);font-weight:600;cursor:pointer}
 .mw-footer::after{content:'›';display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--bd2);border-radius:6px;font-size:15px;line-height:1;color:var(--t3);flex-shrink:0}
 @media (hover:hover){.mw-footer:hover::after{border-color:var(--blue);color:var(--t1)}}
@@ -1678,9 +1638,6 @@ body.dash-edit-mode .mw-bar{display:flex}
 .hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hie-imp{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
 .hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mw-cfg-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
-.mw-cfg-opt{font-size:11px;padding:5px 9px}
-.mw-cfg-opt.on{border-color:var(--blue);background:rgba(59,130,246,.14);color:var(--t0)}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
 .live-data-top{display:flex;align-items:center;gap:8px}
 .live-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:livePulse 2s infinite}
@@ -2123,17 +2080,15 @@ body.dash-edit-mode .mw-bar{display:flex}
      links (beides nur noch das .dp/.pc-Padding), kein Restfreiraum mehr.
      Center (Globus) behaelt ihr bisheriges Breiten-Verhaeltnis (~1.2x) zu
      den drei gleich breiten Seiten-Spalten bei. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(200px,1fr);grid-template-areas:"top top top top" "left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
-  .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(200px,1fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
-  .dash-zone-top>.dw,.dash-zone-bottom>.dw{flex:1 1 260px;min-width:0;margin-bottom:0}
+  .dash-zone-bottom>.dw{flex:1 1 260px;min-width:0;margin-bottom:0}
   /* Market Watch braucht die volle Zeilenbreite fuer seine 4-Spalten-Ticker
      (sonst quetscht es sich neben Daily Bias zusammen und schneidet Werte
      ab) - immer alleine auf eigener Zeile in der Zone. */
-  .dash-zone-top>.dw-market_watch,.dash-zone-bottom>.dw-market_watch{flex-basis:100%}
   .dash-zone-left{grid-area:left;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-right{grid-area:right;display:flex;flex-direction:column;gap:8px;min-width:0}
   .dash-zone-right2{grid-area:right2;display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -2548,12 +2503,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-321 — Paar-Overview (Nutzer-Wunsch): ein Paar war bisher nur eine Zeile in den Set-ups - Name, Score, Stern. Alles, was man zu diesem Paar wissen will, lag ueber sechs Tabs verstreut. Ein Klick auf den Paarnamen oeffnet jetzt EINE Seite mit neun Bloecken: Score-Zerlegung (Basis minus Kurswaehrung plus Carry, mit Balken und Link ins Score-Modal), Kurs und Performance ueber 1D/1W/1M/YTD, Carry mit beiden Leitzinsen und dem konkreten Score-Effekt, die Makro-Karten beider Waehrungen nebeneinander samt Differenzspalte, Positionierung (COT je Seite plus die Retail-Verteilung des Paares mit contrarian Lesart), die naechsten Termine beider Waehrungen, die Ueberlappung mit den anderen eigenen Paaren (Pearson auf Log-Renditen - warnt konkret, wenn zwei Positionen in Wahrheit eine sind), die Notizen beider Beine mit Trefferabzeichen aus V320, und der Score-Verlauf gegen den Kurs mit Zeitraum-Filter. Keine einzige neue Datenquelle: jeder Block ruft exakt die Funktion, die auch der jeweilige Tab benutzt, damit die Overview per Konstruktion nie etwas anderes zeigen kann als der Rest der App - die in diesem Projekt mehrfach teuer gelernte Dual-Source-Lehre. Per Test gegengeprueft: die angezeigte Zerlegung ergibt exakt pairScore(), nichts ragt ueber einen Kartenrand, Non-FX-Beine (XAU/USD) sagen beim Carry ehrlich, dass er nicht anwendbar ist. Technisch bewusst kein eigener Tab - die Overview lebt im Set-ups-Container, damit showTab/rerender/PAGE_IDS/renderTabBar unberuehrt bleiben.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-322 — Dashboard nach Terminal-Logik neu geordnet und die Ticker-Zeile entfernt (Nutzer-Wunsch). Die Market-Watch-Leiste oben (Assets + Tagesveraenderungen) ist komplett raus - samt Widget-Typ, Konfigurations-Modal, der kompletten 'top'-Zone im Grid und dem zugehoerigen CSS; die Preise und Tagesveraenderungen stehen ohnehin in der Majors-Schiene links und im Performance-Ranking. Bestandsnutzer verlieren die Karte automatisch ueber DASH_DROP. Die uebrigen Karten sind jetzt nach dem Entscheidungsweg angeordnet, den man an einem Terminal von links nach rechts abgeht: LINKS das eigene Buch (Majors, Watchlist, Korrelations-Check - letzterer direkt unter der Watchlist, weil er genau ueber diese Liste eine Aussage macht) - MITTE, in der breitesten Spalte, worauf man zuerst schaut: das Regime (Risk Sentiment) und darunter, was der Markt daraus tatsaechlich gemacht hat (Performance Ranking) - RECHTS die Instrumentenwahl (Staerke-Ranking, Carry, Volatilitaet: alle drei beantworten welches Instrument, nicht welche Richtung) - GANZ RECHTS Stimmung und Terminrisiko (Sentiment-Schnappschuss, Surprise Index, Headlines, Kalender - der Kalender stand vorher in der Fussleiste, gehoert aber neben den Nachrichtenfluss) - UNTEN als flache Reihe das Nebensaechliche (Movers, Notifications, Motivationskarte). Die konkrete Spaltenverteilung ist zusaetzlich an den GEMESSENEN Kartenhoehen ausgerichtet: ein erster, rein semantischer Entwurf ergab 1404px in der Mitte gegen 315px rechts aussen, weil drei lange Ranglisten zu dicht beieinander sassen; jetzt liegen alle Spalten zwischen 523 und 953px, ohne dass eine Gruppe auseinandergerissen wurde. DASH_V21 setzt die Reihenfolge bei Bestandsnutzern einmalig neu - hier IST die Reihenfolge die Aenderung, ohne diesen Schritt haetten alle weiter das alte Layout gesehen. Per Test ueber 1920/1500/1180/900/430px geprueft: kein horizontaler Ueberlauf, Zonenbelegung ueberall korrekt, Migration eines Alt-Zustands mit eigener Sortierung fuehrt sauber zum neuen Raster.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-321</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-322</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3077,15 +3032,6 @@ function introLogin(){
     </div>
     <div id="mRiskEnvCfgList"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mRiskEnvCfg')">Done</button></div>
-  </div>
-</div>
-<!-- MODAL: Market-Watch-Symbolauswahl (Nutzer-Wunsch 2026-07-25) -->
-<div class="ov" id="mMwCfg" style="display:none">
-  <div class="modal">
-    <h3>⚙️ Market Watch symbols</h3>
-    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Choose which symbols appear in the Market Watch widget. Prices &amp; changes come from the same live feed as everywhere else in the app.</div>
-    <div id="mwCfgBody"></div>
-    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mMwCfg')">Done</button></div>
   </div>
 </div>
 <!-- MODAL: Asset-Strength-Karte, Asset-Auswahl (Nutzer-Wunsch 2026-07-27) -->
@@ -6735,21 +6681,20 @@ function cleanLegacySeedEvts(){
   return calEvts.length!==before;
 }
 function mkWidgets(){return[
-  {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:1},
-  {id:uid(),type:'perf_ranking',title:'Performance Ranking',order:1.5},
-  {id:uid(),type:'surprise_index',title:'Surprise Index',order:1.7},
-  {id:uid(),type:'corr_warn',title:'Correlation Check',order:2},
-  {id:uid(),type:'carry_ranking',title:'Carry Ranking',order:5.4},
   {id:uid(),type:'watchlist',title:'Watchlist',order:0},
-  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:3},
-  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:4},
-  {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:5},
-  {id:uid(),type:'headlines',title:'Headlines',order:5.5},
-  {id:uid(),type:'motivation',title:'Focus • Believe • Do',order:5.6},
-  {id:uid(),type:'market_watch',title:'Market Watch',order:7},
-  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:8},
-  {id:uid(),type:'notification',title:'Notifications',order:9},
-  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:10},
+  {id:uid(),type:'corr_warn',title:'Correlation Check',order:1},
+  {id:uid(),type:'risk_sentiment',title:'Risk Sentiment',order:2},
+  {id:uid(),type:'perf_ranking',title:'Performance Ranking',order:3},
+  {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:4},
+  {id:uid(),type:'carry_ranking',title:'Carry Ranking',order:5},
+  {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:6},
+  {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:7},
+  {id:uid(),type:'surprise_index',title:'Surprise Index',order:8},
+  {id:uid(),type:'headlines',title:'Headlines',order:9},
+  {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:10},
+  {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:11},
+  {id:uid(),type:'notification',title:'Notifications',order:12},
+  {id:uid(),type:'motivation',title:'Focus • Believe • Do',order:13},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -6936,7 +6881,7 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // daily_bias-Widget ganz oben, Risk Sentiment ruecken direkt neben Globus/
 // Currency Strength in eine gemeinsame Hero-Reihe (siehe #dashWidgets-CSS,
 // .dw-daily_bias/.dw-globe/.dw-ccy_ranking/.dw-risk_sentiment), neues
-// konfigurierbares market_watch-Widget + live_data-Statuskarte ans Ende.
+// die live_data-Statuskarte ans Ende.
 // DASH_V 8 (Nutzer-Wunsch 2026-07-25, selber Tag - 1:1-Nachbau des
 // Referenz-Fotos): daily_bias wieder entfernt (jetzt Teil der Globus-Karte,
 // siehe dailyBiasInfo()/der globe-Zweig in renderDash()) - alte
@@ -7027,18 +6972,36 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // BEWUSST per delWidget() geloescht hat - genau diese ueberspringt der
 // Ensure-Block, sonst kaeme ein absichtlich entferntes Widget bei jedem
 // Boot wieder zurueck (siehe delWidget()).
-const DASH_V=20;
-const DASH_DEFAULTS=[['watchlist','Watchlist'],['sentiment_snapshot','Market Sentiment'],['perf_ranking','Performance Ranking'],['surprise_index','Surprise Index'],['corr_warn','Correlation Check'],['carry_ranking','Carry Ranking'],['ccy_ranking','Currency Strength'],['risk_sentiment','Risk Sentiment'],['vol_leaders','Volatility Leaders'],['headlines','Headlines'],['motivation','Focus • Believe • Do'],['market_watch','Market Watch'],['mini_calendar','Economic Calendar'],['notification','Notifications'],['movers_fx','Biggest Movers FX']];
-const DASH_RANK={watchlist:0,sentiment_snapshot:1,perf_ranking:1.5,surprise_index:1.7,corr_warn:2,ccy_ranking:3,risk_sentiment:4,vol_leaders:5,carry_ranking:5.4,headlines:5.5,motivation:5.6,market_watch:7,mini_calendar:8,notification:9,movers_fx:10,fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+const DASH_V=21;
+const DASH_DEFAULTS=[['watchlist','Watchlist'],['corr_warn','Correlation Check'],['risk_sentiment','Risk Sentiment'],['perf_ranking','Performance Ranking'],['ccy_ranking','Currency Strength'],['carry_ranking','Carry Ranking'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['surprise_index','Surprise Index'],['headlines','Headlines'],['mini_calendar','Economic Calendar'],['movers_fx','Biggest Movers FX'],['notification','Notifications'],['motivation','Focus • Believe • Do']];
+// Globale Reihenfolge; renderDash sortiert danach und verteilt erst dann auf
+// die Zonen - der Rang bestimmt also auch die Reihenfolge INNERHALB einer
+// Spalte. Bloecke entsprechen den Zonen (siehe ZONE_OF_TYPE-Kommentar).
+const DASH_RANK={
+  watchlist:0,corr_warn:1,
+  risk_sentiment:2,perf_ranking:3,
+  ccy_ranking:4,carry_ranking:5,vol_leaders:6,
+  sentiment_snapshot:7,surprise_index:8,headlines:9,mini_calendar:10,
+  movers_fx:11,notification:12,motivation:13,
+  fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if(!Array.isArray(dashRemovedTypes))dashRemovedTypes=[];
-  const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock','score_changes','globe']);
+  const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock','score_changes','globe','market_watch']);
   widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   if((dashV||0)<DASH_V){
     const wlw=widgets.find(w=>w.type==='watchlist');
     if(wlw&&wlw.title==='Watchlist & Quick Notes')wlw.title='Watchlist';
-    if(wlw)wlw.order=0;
+    // DASH_V21: die Karten wurden bewusst komplett neu geordnet (siehe
+    // ZONE_OF_TYPE-Kommentar). Anders als bei fruheren Migrationen, die nur
+    // EINE Karte an ihren Platz geschoben haben, ist hier die REIHENFOLGE
+    // SELBST die Aenderung - deshalb bekommt jede bekannte Karte einmalig
+    // ihren neuen Rang. Das setzt eine eigene Umsortierung des Nutzers
+    // zurueck; das ist der bewusst in Kauf genommene Preis dafuer, dass die
+    // gewuenschte neue Anordnung auch bei Bestandsnutzern wirklich ankommt
+    // (ohne das haetten alle weiter das alte Layout gesehen - genau der
+    // Fehler, der beim Summarizer-Umbau schon einmal passiert ist).
+    widgets.forEach(w=>{if(DASH_RANK[w.type]!=null)w.order=DASH_RANK[w.type];});
     dashV=DASH_V;
   }
   DASH_DEFAULTS.forEach(([type,title])=>{
@@ -11263,66 +11226,6 @@ function bondYieldChangeInfo(ccy,indName){
   const bias=changePct>0.001?'bull':changePct<-0.001?'bear':'neu';
   return{price:aVal,date:aEntry[0],changePct,bias};
 }
-// Market-Watch-Widget: konfigurierbare Symbolliste (Nutzer-Wunsch 2026-07-25,
-// gleiche Preisquelle wie Set-ups/Watchlist - siehe tickerInfoForItem oben).
-// Jeder Eintrag ist "kind:id" ('pair:EUR/USD','asset:GOLD','asset:USD' fuer
-// DXY, 'bond:US10Y').
-const MW_DEFAULT_SYMS=['pair:EUR/USD','pair:GBP/USD','pair:USD/JPY','asset:USD','asset:GOLD','asset:BTC','asset:SP500','bond:US10Y'];
-function parseMwSym(s){const i=s.indexOf(':');return{kind:s.slice(0,i),id:s.slice(i+1)};}
-// Kategorie fuer die Markt-Watch-Tabs (Referenz-Foto: FX/Indices/
-// Commodities/Bonds) - nutzt das bestehende ASSET_CLASS-Mapping statt eine
-// zweite, unabhaengige Zuordnung zu pflegen. Einzelaktien (AMZN/NVDA) tauchen
-// hier bewusst nicht auf - passen zu keiner der vier Foto-Kategorien und sind
-// fuer ein FX-Analyse-Tool ohnehin Randfaelle.
-function mwCatOf(key){
-  const p=parseMwSym(key);
-  if(p.kind==='pair')return'FX';
-  if(p.kind==='bond')return'Bonds';
-  if(p.id==='USD')return'FX';
-  const cls=ASSET_CLASS[p.id];
-  if(cls==='index')return'Indices';
-  return'Commodities';
-}
-const MW_TABS=['FX','Indices','Commodities','Bonds'];
-function mwAllOptions(){
-  const pairs=canonicalFxPairs().map(([b,q])=>({key:'pair:'+b+'/'+q,label:b+'/'+q,grp:'FX'}));
-  const dxy={key:'asset:USD',label:'DXY (Dollar Index)',grp:'FX'};
-  const bond={key:'bond:US10Y',label:'US 10Y Yield',grp:'Bonds'};
-  const others=syms.filter(s=>isNonFx(s.id)&&ASSET_CLASS[s.id]!=='stock').map(s=>({key:'asset:'+s.id,label:s.name||s.id,grp:mwCatOf('asset:'+s.id)}));
-  return[...pairs,dxy,...others,bond];
-}
-let _mwEditWidgetId=null;
-function openMwCfgM(widgetId){_mwEditWidgetId=widgetId;renderMwCfgBody();openM('mMwCfg');}
-function renderMwCfgBody(){
-  const w=widgets.find(x=>x.id===_mwEditWidgetId);const body=document.getElementById('mwCfgBody');
-  if(!w||!body)return;
-  const sel=new Set(w.symbols&&w.symbols.length?w.symbols:MW_DEFAULT_SYMS);
-  const opts=mwAllOptions();
-  const groups=MW_TABS;
-  body.innerHTML=groups.map(g=>`
-    <div class="dw-notes-sub" style="margin-top:10px">${escH(g)}</div>
-    <div class="mw-cfg-grid">${opts.filter(o=>o.grp===g).map(o=>`<button class="btn mw-cfg-opt${sel.has(o.key)?' on':''}" onclick="toggleMwSym('${o.key}')">${sel.has(o.key)?'✓ ':''}${escH(o.label)}</button>`).join('')}</div>`).join('');
-}
-// pushU() fehlte hier bisher (Nutzer-Bugreport 2026-07-27: im Bearbeitungs-
-// menue ein FX-Paar abwaehlen, nach ein paar Sekunden ist es wieder da) -
-// widgets (inkl. w.symbols) ist Teil des snap()-Kernbaums, ohne pushU()
-// erkannte weder save()s Multi-Tab-Schutz noch cloudPush()s optimistische
-// Versionspruefung diese Aenderung als "der Nutzer hat hier gerade selbst
-// editiert" - ein zeitgleicher Cloud-Pull (auch vom selben Geraet, z.B. der
-// naechste automatische Refresh) konnte die Auswahl binnen Sekunden wieder
-// auf den alten Stand zuruecksetzen. Gleiche Bug-Klasse wie die Notes-Rubrik-
-// Funktionen weiter oben in dieser Datei (siehe CLAUDE.md-Merksatz dazu).
-function toggleMwSym(key){
-  const w=widgets.find(x=>x.id===_mwEditWidgetId);if(!w)return;
-  let list=w.symbols&&w.symbols.length?[...w.symbols]:[...MW_DEFAULT_SYMS];
-  list=list.includes(key)?list.filter(k=>k!==key):[...list,key];
-  pushU();w.symbols=list;
-  renderMwCfgBody();save();renderDash();
-}
-function setMwTab(widgetId,tab){
-  const w=widgets.find(x=>x.id===widgetId);if(!w)return;
-  pushU();w.mwTab=tab;save();renderDash();
-}
 // ── Asset-Strength-Karte (frueher fest auf die 8 FX-Majors beschraenkt,
 // Nutzer-Wunsch 2026-07-27: "soll jetzt eine Asset Karte werden") - frei
 // waehlbare Assets statt hartcodiert FX, max. 9, Konfig ueber ein Zahnrad
@@ -12181,7 +12084,6 @@ const W_TYPES=[
   {type:'risk_sentiment',label:'Risk Sentiment',sub:'Risk-on vs risk-off from risk assets vs safe havens'},
   {type:'vol_leaders',label:'Volatility Leaders',sub:'Most volatile tracked assets by 20-day realized volatility (annualized)'},
   {type:'sentiment_snapshot',label:'Market Sentiment',sub:'VIX, Crypto Fear & Greed and the market-wide Put/Call ratio at a glance'},
-  {type:'market_watch',label:'Market Watch',sub:'Configurable price ticker — FX pairs, Gold, DXY, BTC, US10Y & more'},
   {type:'mini_calendar',label:'Economic Calendar',sub:'Same events & controls as the main calendar'},
   {type:'notification',label:'Notifications',sub:'Placeholder — content still to be decided'},
   {type:'movers_fx',label:'Biggest Movers FX',sub:'Top 2 gainers + top 2 losers vs. yesterday, in separate groups'},
@@ -12461,21 +12363,50 @@ function toggleIndEditMode(){
 // unbekannte/neu hinzugefuegte Typen fallen auf 'bottom' zurueck. Wird auch
 // von mvWidget() genutzt, um "rauf/runter" innerhalb derselben Zone (nicht
 // global) zu verschieben.
-// Nutzer-Wunsch 2026-08-03 ("Anordnung ohne Luecken, fast alles direkt
-// sichtbar"): die rechte Spalte war mit 4 gestapelten Widgets (risk_sentiment/
-// vol_leaders/sentiment_snapshot/mini_calendar) uebermaessig hoch, waehrend
-// die "bottom"-Zone (flex-wrap, Karten NEBENEINANDER statt gestapelt, siehe
-// .dash-zone-bottom) den Platz effizienter nutzt. sentiment_snapshot +
-// mini_calendar wandern deshalb von "right" (Spalte) nach "bottom" (Reihe) -
-// rechte Spalte bleibt mit nur noch 2 Karten deutlich kompakter, Gesamthoehe
-// des Dashboards sinkt spuerbar, ohne dass ein Widget entfernt wurde.
-// Nutzer-Foto 2026-08-03 (direkte Korrektur, selber Tag): score_changes
-// ("Today's Movers") komplett entfernt (siehe DASH_V16-Kommentar bei
-// migrateDash), sentiment_snapshot zieht von "bottom" nach "center" um -
-// fuellt jetzt die Luecke unter dem Globus, die vorher score_changes hatte.
-// "bottom" verliert dadurch eine Karte (nur noch mini_calendar/notification/
-// movers_fx) und wird automatisch breiter (flex:1, siehe .dash-zone-bottom>.dw).
-const ZONE_OF_TYPE={sentiment_snapshot:'center',market_watch:'top',ccy_ranking:'left',risk_sentiment:'right',mini_calendar:'bottom',notification:'bottom',movers_fx:'bottom',vol_leaders:'right',watchlist:'left',motivation:'right2',headlines:'right2',perf_ranking:'center',carry_ranking:'right2',corr_warn:'left',surprise_index:'center'};
+// Neuordnung 2026-08-07 (Nutzer-Wunsch "ordne die Karten so an wie es jemand
+// bei Bloomberg machen wuerde"): ein Terminal-Launchpad ist nicht nach
+// Kartengroesse sortiert, sondern nach dem ENTSCHEIDUNGSWEG, den man von
+// links nach rechts abgeht. Genau danach sind die vier Spalten jetzt belegt:
+//
+//   left   "wo stehe ich"  - Majors-Schiene, Watchlist, Korrelations-Check.
+//          Der Korrelations-Check gehoert direkt unter die Watchlist, weil er
+//          genau ueber DIESE Liste eine Aussage macht. Die linke Schiene ist
+//          damit ausschliesslich das eigene Buch und scrollt nie weg.
+//   center "was ist los"   - die beiden Karten, auf die man zuerst schaut:
+//          Risk Sentiment (das Regime - risk-on oder risk-off entscheidet,
+//          wie man alles Folgende liest) und darunter, was der Markt daraus
+//          tatsaechlich gemacht hat (Performance Ranking). Bewusst die
+//          breiteste Spalte (1.2fr).
+//   right  "welches Instrument" - der Querschnitt: Staerke-Ranking, Carry,
+//          Volatilitaet. Alle drei beantworten die Instrumentenwahl, nicht
+//          die Richtung - deshalb stehen sie zusammen.
+//   right2 "wie ist die Stimmung, was kommt" - Sentiment-Schnappschuss
+//          (VIX/Fear&Greed/Put-Call), Surprise Index (Daten gegen Prognose),
+//          Headlines und Kalender. An einem echten Desk haengen Stimmungs-
+//          messer, Nachrichtenfluss und Terminrisiko zusammen; der Kalender
+//          stand vorher in der Fussleiste.
+//   bottom Nebensaechliches (Movers, Notifications, Motivationskarte) als
+//          flache Reihe unter allem - nichts davon ist entscheidungsrelevant.
+//
+// Die konkrete Verteilung auf die vier Spalten ist zusaetzlich an den
+// GEMESSENEN Kartenhoehen ausgerichtet (Playwright, 1500px): ein erster
+// Entwurf, der rein der Semantik folgte, ergab 1404px in der Mitte gegen
+// 315px rechts aussen - drei lange Ranglisten (Performance 557, Carry 424,
+// Surprise 340) sassen zu dicht beieinander und darunter klaffte eine
+// riesige Luecke. Die jetzige Aufteilung haelt die Spalten bei 523-938px,
+// ohne eine der Gruppen auseinanderzureissen.
+//
+// Die frueher oberste Zone ('top') gibt es nicht mehr: sie enthielt
+// ausschliesslich die Market-Watch-Tickerleiste, die auf Nutzer-Wunsch
+// 2026-08-07 komplett entfernt wurde ("entfern oben die Zeile mit den Assets
+// und den taeglichen Veraenderungen") - die Preise/Tagesveraenderungen stehen
+// ohnehin in der Majors-Schiene und im Performance-Ranking.
+const ZONE_OF_TYPE={
+  watchlist:'left',corr_warn:'left',
+  risk_sentiment:'center',perf_ranking:'center',
+  ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
+  sentiment_snapshot:'right2',surprise_index:'right2',headlines:'right2',mini_calendar:'right2',
+  movers_fx:'bottom',notification:'bottom',motivation:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -12725,14 +12656,13 @@ function renderDash(){
   // der eigenen Zone), nicht mehr global.
   const zoneMates={};
   ['top','left','center','right','right2','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
-  const zones={top:[],left:[],center:[],right:[],right2:[],bottom:[]};
+  const zones={left:[],center:[],right:[],right2:[],bottom:[]};
   sorted.forEach((w)=>{
     let content='';
     const zone=dashZoneOf(w.type);
     const mates=zoneMates[zone];
     const wi=mates.indexOf(w);
     const btnsHtml=`<div class="dw-btns">
-      ${w.type==='market_watch'?`<button class="btn dw-nav" onclick="openMwCfgM('${w.id}')" title="Choose symbols">${icn('gear',12)}</button>`:''}
       ${w.type==='ccy_ranking'?`<button class="btn dw-nav" onclick="openCcyCfgM('${w.id}')" title="Choose assets (max 9)">${icn('gear',12)}</button>`:''}
       <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
       <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===mates.length-1?'disabled':''} title="Move down">▼</button>
@@ -12972,41 +12902,6 @@ function renderDash(){
       </div>`).join('');
       content=(mc.length===0?`<div class="dw-empty">No upcoming high-impact events.</div>`:`<div class="hie-list">${rows}</div>`)+
         `<div class="mw-footer" onclick="showTab('cal')"><span>Go to Calendar</span></div>`;
-    }else if(w.type==='market_watch'){
-      // Preise/Aenderung aus derselben Quelle wie Set-ups/Watchlist
-      // (tickerInfoForItem/assetTickerInfo/pairTickerInfo, price_data.json) -
-      // keine neuen Daten, nur eine andere, konfigurierbare Zusammenstellung
-      // (Nutzer-Wunsch 2026-07-25: Zahnrad zum Hinzufuegen/Entfernen, Tabs
-      // wie im Referenz-Foto FX/Indices/Commodities/Bonds). Jetzt volle
-      // Kartenbreite in der mittleren Dashboard-Reihe (statt Macro Overview)
-      // - Symbole stehen deshalb als Kacheln nebeneinander statt als Liste.
-      const full=(w.symbols&&w.symbols.length)?w.symbols:MW_DEFAULT_SYMS;
-      const tab=w.mwTab&&MW_TABS.includes(w.mwTab)?w.mwTab:'FX';
-      const list=full.filter(k=>mwCatOf(k)===tab);
-      const tabsHtml=`<div class="mw-tabs">${MW_TABS.map(t=>`<button class="mw-tab${t===tab?' on':''}" onclick="setMwTab('${w.id}','${t}')">${t}</button>`).join('')}</div>`;
-      const tiles=list.map(key=>{
-        const p=parseMwSym(key);
-        let info=null,label=key,clickable=null;
-        if(p.kind==='pair'){info=pairTickerInfo(...p.id.split('/'));label=p.id;}
-        else if(p.kind==='bond'){info=bondYieldChangeInfo('USD','10Y Bond Yield');label='US10Y';}
-        else{info=assetTickerInfo(p.id);label=p.id==='USD'?'DXY':((syms.find(x=>x.id===p.id)||{}).name||p.id);clickable=p.id;}
-        if(!info)return`<div class="mw-tile"><span class="mw-tile-sym">${escH(label)}</span><span class="dw-empty">No data</span></div>`;
-        const col=BC[info.bias];
-        const priceTxt=p.kind==='bond'?fmtYield(info.price):fmtPriceTick(info.price);
-        const pctTxt=p.kind==='bond'?(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(3)+'pp')
-          :(info.changePct==null?'–':(info.changePct>0?'+':'')+info.changePct.toFixed(2)+'%');
-        const arrow=info.bias==='bull'?'▲':info.bias==='bear'?'▼':'◆';
-        return`<div class="mw-tile"${clickable?` onclick="gotoSym('${clickable}')" style="cursor:pointer"`:''}>
-          <span class="mw-tile-sym">${escH(label)}</span>
-          <span class="mw-tile-price">${priceTxt}</span>
-          <span class="mw-tile-chg" style="color:${col}">${arrow}${pctTxt}</span>
-        </div>`;
-      }).join('')||`<div class="dw-empty" style="padding:14px 4px">No ${tab.toLowerCase()} symbols selected - use ${icn('gear',11)} to add some.</div>`;
-      // Kartenlose Ticker-Leiste: Tabs links, Steuerbuttons rechts, darunter
-      // die Pillen - kein Kartenrahmen, keine Ueberschrift, keine Fusszeile
-      // (Nutzer-Wunsch 2026-07-25). Spart gegenueber der frueheren Vollkarte
-      // rund 110px Hoehe in der mittleren Reihe.
-      content=`<div class="mw-bar">${tabsHtml}${btnsHtml}</div><div class="mw-strip">${tiles}</div>`;
     }else if(w.type==='notification'){
       // Sammelt die frueher als eigene schwebende Banner ueber dem Grid
       // gezeigten Popups (COT/Risk-Env-Erinnerung, Nutzer-Wunsch 2026-07-25:
@@ -13071,13 +12966,12 @@ function renderDash(){
     // wie eine eigene Toolbar-Leiste. Steuerbuttons bleiben bewusst sichtbar
     // (nur blasser) statt hover-only: auf Touch gaebe es sonst keinen Weg,
     // sie zu erreichen.
-    // Market Watch und der Globus sind reine Chrome-lose Elemente ohne
-    // Kartenkopf (Globus: "nur den Globus", Nutzer-Wunsch 2026-07-27) - ihre
-    // Steuerbuttons stecken oben in der mw-bar bzw. entfallen ganz. Die
-    // Watchlist war zwischenzeitlich (2026-08-06) ebenfalls kartenkopflos,
-    // hat ihre Ueberschrift auf Nutzer-Wunsch 2026-08-07 aber wieder - die
-    // Tabellen-Optik der Zeilen bleibt davon unberuehrt.
-    const hdrHtml=(w.type==='market_watch'||w.type==='motivation')?'':`<div class="dw-hdr">
+    // Die Motivationskarte ist bewusst chrome-los (reine Deko, kein
+    // Datentitel noetig). Die Watchlist war zwischenzeitlich (2026-08-06)
+    // ebenfalls kartenkopflos, hat ihre Ueberschrift auf Nutzer-Wunsch
+    // 2026-08-07 aber wieder - die Tabellen-Optik der Zeilen bleibt davon
+    // unberuehrt.
+    const hdrHtml=w.type==='motivation'?'':`<div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${w.type==='notification'?`<span class="dw-hdlink" onclick="window.open('https://www.forexfactory.com/calendar','_blank','noopener')">View FF</span>`:''}
@@ -13098,7 +12992,6 @@ function renderDash(){
   // Zonen zusammensetzen - Majors-Sidebar (frueher ein eigenstaendiges
   // <aside>) ist jetzt schlicht das erste Element der 'left'-Zone.
   el.innerHTML=`
-    <div class="dash-zone-top">${zones.top.join('')}</div>
     <div class="dash-zone-left"><div class="dw dash-majors-card">${dashMajorsHtml()}</div>${zones.left.join('')}</div>
     <div class="dash-zone-center">${zones.center.join('')}</div>
     <div class="dash-zone-right">${zones.right.join('')}</div>
