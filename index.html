@@ -2361,6 +2361,75 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
   .hdr-sub{grid-column:1/-1;grid-row:2}
   .hdr-r{grid-column:1/-1;grid-row:3;justify-self:start;margin-top:3px}
 }
+/* ── Paar-Overview (Set-ups -> Klick auf einen Paarnamen) ─────────────── */
+.pov-wrap{animation:fadeIn .18s ease}
+.pov-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--bd2);border-radius:var(--r);padding:11px 14px;margin-bottom:11px}
+.pov-back{background:var(--bg4);border:1px solid var(--bd2);color:var(--t1);border-radius:var(--rs);width:30px;height:28px;font-size:15px;cursor:pointer;flex:0 0 auto}
+.pov-back:hover{background:var(--bg5);color:var(--t0)}
+.pov-title{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0}
+.pov-name{font-size:20px;font-weight:800;color:var(--t0);letter-spacing:.3px;white-space:nowrap}
+.pov-bias{font-size:11px;font-weight:700;border:1px solid;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.pov-score{font-size:15px;font-weight:800;border:1px solid;border-radius:var(--rs);padding:3px 11px;background:transparent;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:11px;align-items:start}
+.pov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.pov-card.pov-wide{grid-column:1/-1}
+.pov-card-t{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--t2);padding:10px 13px 8px;border-bottom:1px solid var(--bd)}
+.pov-card-b{padding:11px 13px 12px}
+.pov-empty{color:var(--t3);font-size:12px;line-height:1.6}
+.pov-note{color:var(--t3);font-size:11px;line-height:1.55;margin-top:8px}
+.pov-note b{color:var(--t2)}
+.pov-link{background:none;border:none;color:var(--blue);font-size:11px;cursor:pointer;padding:0;text-decoration:underline;font-family:inherit}
+.pov-sub{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:2px 0 5px}
+.pov-sub:not(:first-child){margin-top:12px}
+.pov-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--bd2)}
+.pov-row:last-of-type{border-bottom:none}
+.pov-row-l{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pov-row-v{font-size:12.5px;font-weight:700;color:var(--t0);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Score-Zerlegung: Balken mit Nulllinie in der Mitte (wie der Surprise Index) */
+.pov-srow{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.pov-sname{flex:0 0 128px;font-size:11.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pov-bwrap{position:relative;flex:1 1 auto;height:8px;background:var(--bg4);border-radius:4px;min-width:40px}
+.pov-bzero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
+.pov-bar{position:absolute;top:0;bottom:0;border-radius:4px}
+.pov-sval{flex:0 0 46px;text-align:right;font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-stot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid var(--bd);font-size:12.5px;font-weight:700;color:var(--t1)}
+.pov-stot span:last-child{font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-price{margin-bottom:8px}
+.pov-price-v{font-size:22px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-price-d{font-size:11px;color:var(--t3);margin-left:8px}
+/* Makro-Vergleich: vier Spalten, Zahlen rechtsbuendig untereinander */
+.pov-mrow{display:grid;grid-template-columns:minmax(0,1fr) 62px 62px 62px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd2)}
+.pov-mrow:last-of-type{border-bottom:none}
+.pov-mhead{border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:2px}
+.pov-mhead .pov-mv{font-size:11px;font-weight:700;color:var(--t3)}
+.pov-mname{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pov-mv{text-align:right;font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-split{display:flex;align-items:center;gap:9px;margin-top:2px}
+.pov-splitbar{display:flex;flex:1 1 auto;height:9px;border-radius:5px;overflow:hidden;background:var(--bg4);min-width:40px}
+.pov-splitbar span{display:block;height:100%}
+.pov-splitv{font-size:11.5px;font-weight:700;color:var(--t1);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Kalender-Zeilen: Countdown | Waehrung | Name | Uhrzeit */
+.pov-ev{display:grid;grid-template-columns:66px 38px minmax(0,1fr) 44px;gap:7px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--bd2);font-size:12px}
+.pov-ev:last-of-type{border-bottom:none}
+.pov-ev-d{color:var(--t3);font-size:11px;white-space:nowrap}
+.pov-ev-c{font-weight:700;font-size:11px}
+.pov-ev-n{color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pov-ev-t{color:var(--t3);font-size:11px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-note-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto 74px;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd2);cursor:pointer}
+.pov-note-row:last-of-type{border-bottom:none}
+.pov-note-row:hover .pov-ntitle{color:var(--t0)}
+.pov-nleg{font-size:10.5px;font-weight:700;color:var(--t3)}
+.pov-ntitle{font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pov-ndate{font-size:10.5px;color:var(--t3);text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+/* Paarname in der Set-ups-Liste ist jetzt anklickbar (oeffnet die Overview) */
+.sym-name.pov-open{cursor:pointer}
+.sym-name.pov-open:hover{color:var(--t0);text-decoration:underline}
+@media(max-width:560px){
+  .pov-grid{grid-template-columns:1fr}
+  .pov-name{font-size:17px}
+  .pov-sname{flex-basis:96px}
+}
+
 </style>
 </head>
 <body>
@@ -2479,12 +2548,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-320 — Research Terminal wird zum Feedback-Werkzeug (Nutzer-Wunsch). Eine Notiz kann jetzt zwei optionale Zusaetze tragen: eine RICHTUNG (bullish/bearish) und einen BEZUG zu einem Kalender-Event. Beides freiwillig - Notizen ohne Richtung verhalten sich exakt wie bisher und tauchen in keiner Statistik auf. Der Sinn: Profis dokumentieren nicht wegen des Aufschreibens, sondern wegen des messbaren Feedbacks. noteOutcome() vergleicht den Assetkurs am Notiz-Tag mit dem Kurs 5 HANDELSTAGE spaeter (echte Reihen-Eintraege, Wochenenden fallen automatisch raus) - moeglich erst durch den 3-Jahres-Preis-Backfill aus V317. Bewegungen unter 0,15 Prozent zaehlen als seitwaerts, also weder Treffer noch Fehlschlag; ein noch nicht abgelaufenes Fenster zeigt bewusst 'offen' statt zu raten. Daraus baut der Mittelteil eine Trefferquote je Asset (Anteil korrekt, plus hit/miss/flat/open im Detail) und jede Notizzeile ein kleines Ergebnis-Abzeichen mit der tatsaechlichen Kursbewegung im Tooltip. Zusaetzlich Volltextsuche ueber Titel, Text und Tags aller Notizen - die hebt bei aktiver Suche bewusst die Ordner-Einschraenkung auf, sonst findet man genau das nicht, wonach man sucht. Das Notiz-Modal bekommt drei Richtungs-Buttons und ein Event-Dropdown (Waehrung des Assets, plus/minus 30 Tage). Per Test bestaetigt: 2 Treffer / 0 Fehlschlaege / 1 offen bei vier Testnotizen, Suche findet Woerter aus dem Notiztext (nicht nur dem Titel), 28 Event-Optionen fuer EUR.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-321 — Paar-Overview (Nutzer-Wunsch): ein Paar war bisher nur eine Zeile in den Set-ups - Name, Score, Stern. Alles, was man zu diesem Paar wissen will, lag ueber sechs Tabs verstreut. Ein Klick auf den Paarnamen oeffnet jetzt EINE Seite mit neun Bloecken: Score-Zerlegung (Basis minus Kurswaehrung plus Carry, mit Balken und Link ins Score-Modal), Kurs und Performance ueber 1D/1W/1M/YTD, Carry mit beiden Leitzinsen und dem konkreten Score-Effekt, die Makro-Karten beider Waehrungen nebeneinander samt Differenzspalte, Positionierung (COT je Seite plus die Retail-Verteilung des Paares mit contrarian Lesart), die naechsten Termine beider Waehrungen, die Ueberlappung mit den anderen eigenen Paaren (Pearson auf Log-Renditen - warnt konkret, wenn zwei Positionen in Wahrheit eine sind), die Notizen beider Beine mit Trefferabzeichen aus V320, und der Score-Verlauf gegen den Kurs mit Zeitraum-Filter. Keine einzige neue Datenquelle: jeder Block ruft exakt die Funktion, die auch der jeweilige Tab benutzt, damit die Overview per Konstruktion nie etwas anderes zeigen kann als der Rest der App - die in diesem Projekt mehrfach teuer gelernte Dual-Source-Lehre. Per Test gegengeprueft: die angezeigte Zerlegung ergibt exakt pairScore(), nichts ragt ueber einen Kartenrand, Non-FX-Beine (XAU/USD) sagen beim Carry ehrlich, dass er nicht anwendbar ist. Technisch bewusst kein eigener Tab - die Overview lebt im Set-ups-Container, damit showTab/rerender/PAGE_IDS/renderTabBar unberuehrt bleiben.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-320</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-321</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2593,7 +2662,7 @@ function introLogin(){
 </div>
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
-  <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
+  <div id="pairsHdr" style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
     <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
@@ -9777,8 +9846,323 @@ function openCarryDetail(pairName){
     </div>`;
   openM('mCarryDetail');
 }
+// ══ PAAR-OVERVIEW ═════════════════════════════════════════════════════════
+// (Nutzer-Wunsch 2026-08-07) Bisher war ein Paar nur eine Zeile in den
+// Set-ups: Name, Score, Stern. Alles, was man zu diesem Paar wissen will,
+// lag ueber sechs Tabs verstreut (Score-Modal, Carry-Tab, Trends, COT,
+// Sentiment, Kalender, Notizen). Die Overview buendelt genau das auf EINER
+// Seite - ohne eine einzige neue Datenquelle: jeder Block liest exakt
+// dieselben Funktionen, die auch der jeweilige Tab benutzt, damit die
+// Overview per Konstruktion nie etwas anderes zeigen kann als der Rest der
+// App (die in diesem Projekt schon mehrfach teuer gelernte Dual-Source-
+// Lehre).
+//
+// Technisch bewusst KEINE eigene Seite/kein eigener Tab: die Overview lebt
+// im vorhandenen Set-ups-Container (#pairCats) und wird ueber einen
+// transienten Zustand ein-/ausgeblendet. Damit bleiben showTab/rerender/
+// PAGE_IDS/renderTabBar voellig unberuehrt - eine neue PAGE_IDS-Kennung
+// ohne zugehoerigen TABS-Eintrag haette renderTabBar/tabIdFor betroffen.
+let pairOvName=null;           // null = Liste, sonst Paar-Name (transient)
+// Zeitraum des Verlaufs-Diagramms in der Overview. Bewusst 3M statt des
+// app-weiten MAX-Defaults: der Chart hat feste 48px pro Tag, MAX waere auf
+// einer Uebersichtsseite eine sehr breite Rolle statt eines Ueberblicks.
+let pairOvRange=3,pairOvFrom=null,pairOvTo=null;
+function setPairOvRange(v){pairOvRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderPairs();}
+function setPairOvRangeCustom(from,to){if(from!==null)pairOvFrom=from||null;if(to!==null)pairOvTo=to||null;renderPairs();}
+function openPairOverview(name){
+  pairOvName=name||null;
+  renderPairs();
+  const pg=document.getElementById('pgPairs');if(pg)pg.scrollTop=0;
+}
+function closePairOverview(){pairOvName=null;renderPairs();const pg=document.getElementById('pgPairs');if(pg)pg.scrollTop=0;}
+
+// Beide Beine eines Paarnamens auf echte Asset-IDs aufloesen (XAU->GOLD usw.),
+// exakt dieselbe Zuordnung wie pairScore/renderTrendsPair.
+function pairLegs(name){
+  const p=(name||'').split('/');
+  if(p.length!==2)return null;
+  const bc=p[0].trim().toUpperCase(),qc=p[1].trim().toUpperCase();
+  return{bc,qc,bId:PAIR_CODE_TO_ID[bc]||bc,qId:PAIR_CODE_TO_ID[qc]||qc};
+}
+// Rendite eines PAARES ueber ein Zeitfenster. perfReturn() gibt es schon,
+// arbeitet aber auf einer Asset-ID; ein Paar braucht die aufgeloeste
+// Kreuz-Reihe (resolvePairPriceSeries) - die Fenster-Logik selbst ist
+// bewusst identisch, damit beide Stellen dieselbe Zahl liefern.
+function pairPerfReturn(series,days){
+  if(!Array.isArray(series)||series.length<2)return null;
+  const last=series[series.length-1],lastV=Number(last[1]);
+  if(!isFinite(lastV)||lastV<=0)return null;
+  let cutoff;
+  if(days==null)cutoff=String(new Date().getUTCFullYear())+'-01-01';
+  else{const d=new Date(last[0]+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-days);cutoff=d.toISOString().slice(0,10);}
+  let base=null;
+  for(let i=0;i<series.length;i++){if(series[i][0]<=cutoff)base=series[i];else break;}
+  if(!base)base=series[0];
+  if(base[0]===last[0])return null;
+  const bv=Number(base[1]);
+  if(!isFinite(bv)||bv<=0)return null;
+  return{pct:(lastV/bv-1)*100,from:base[0]};
+}
+// Wie stark korreliert dieses Paar mit den ANDEREN Paaren der Watchlist?
+// Gleiche Rechnung wie die Dashboard-Karte (Log-Returns + Pearson), nur aus
+// der Sicht EINES Paares statt als Gesamtdurchschnitt.
+function pairCorrRows(name){
+  const own=(()=>{const l=pairLegs(name);return l?resolvePairPriceSeries(l.bId,l.qId):null;})();
+  if(!own||own.length<CORR_MIN_DAYS+1)return null;
+  const toRet=ser=>{const m={};for(let i=1;i<ser.length;i++){const a=Number(ser[i-1][1]),b=Number(ser[i][1]);if(a>0&&b>0)m[ser[i][0]]=Math.log(b/a);}return m;};
+  const A=toRet(own);
+  const seen=new Set([name]);
+  const out=[];
+  pairs.forEach(p=>{
+    if(seen.has(p.name))return;seen.add(p.name);
+    const l=pairLegs(p.name);if(!l)return;
+    const ser=resolvePairPriceSeries(l.bId,l.qId);
+    if(!ser||ser.length<CORR_MIN_DAYS+1)return;
+    const B=toRet(ser);
+    const common=Object.keys(A).filter(d=>B[d]!=null);
+    if(common.length<CORR_MIN_DAYS)return;
+    const r=pearsonR(common.map(d=>A[d]),common.map(d=>B[d]));
+    if(r!=null)out.push({name:p.name,r,n:common.length});
+  });
+  out.sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+  return out.length?out:null;
+}
+// Kleine wiederverwendbare Karte im Overview-Raster.
+function povCard(title,body,wide){
+  return`<div class="pov-card${wide?' pov-wide':''}"><div class="pov-card-t">${title}</div><div class="pov-card-b">${body}</div></div>`;
+}
+function povEmpty(t){return`<div class="pov-empty">${t}</div>`;}
+// Eine Zeile "Label ........ Wert" im Overview-Stil.
+function povRow(label,value,color,title){
+  return`<div class="pov-row"${title?` title="${escH(title)}"`:''}><span class="pov-row-l">${label}</span><span class="pov-row-v"${color?` style="color:${color}"`:''}>${value}</span></div>`;
+}
+
+// ── Block 1: Score-Zerlegung ─────────────────────────────────────────────
+// Zeigt exakt die Rechnung aus pairScore(): Vergleichs-Score Basis minus
+// Vergleichs-Score Kurswaehrung plus Carry. Die Zahlen kommen aus denselben
+// Funktionen, das Score-Modal bleibt fuer die Tiefe einen Klick entfernt.
+function povScoreHtml(name){
+  const l=pairLegs(name);if(!l)return povEmpty('Unknown pair.');
+  const bS=syms.find(s=>s.id===l.bId),qS=syms.find(s=>s.id===l.qId);
+  if(!bS||!qS)return povEmpty('One side of this pair is not a tracked asset.');
+  const b=symScoreCmp(bS),q=symScoreCmp(qS),c=pairCarryAdj(name),tot=pairScore(name);
+  const max=Math.max(Math.abs(b),Math.abs(q),Math.abs(c),1);
+  const bar=(v,col)=>`<span class="pov-bwrap"><span class="pov-bzero"></span><span class="pov-bar" style="left:${v>=0?50:50-Math.abs(v)/max*50}%;width:${(Math.abs(v)/max*50).toFixed(1)}%;background:${col}"></span></span>`;
+  const line=(lbl,v,sub)=>{
+    const col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
+    return`<div class="pov-srow" title="${escH(sub||'')}"><span class="pov-sname">${escH(lbl)}</span>${bar(v,col)}<span class="pov-sval" style="color:${col}">${v>0?'+':''}${v}</span></div>`;
+  };
+  return line(l.bc+' (base)',b,`raw ${fmtScNum(symScore(bS))} scaled to the common indicator base`)+
+    line(l.qc+' (quote, subtracted)',-q,`raw ${fmtScNum(symScore(qS))} scaled to the common indicator base`)+
+    (FX.includes(l.bId)&&FX.includes(l.qId)?line('Carry',c,'policy-rate differential, staged ±0.5 / ±1'):'')+
+    `<div class="pov-stot"><span>Pair score</span><span style="color:${BC[scoreBias(tot)]}">${tot>0?'+':''}${tot}</span></div>
+     <div class="pov-note">Both sides are scaled to a common indicator base before subtracting, so a currency that simply tracks more releases does not dominate structurally. <button class="pov-link" onclick="openScoreInfoPair('${escJH(name)}')">Full breakdown</button></div>`;
+}
+
+// ── Block 2: Kurs & Performance ──────────────────────────────────────────
+function povPerfHtml(name){
+  const l=pairLegs(name);if(!l)return povEmpty('Unknown pair.');
+  const ser=resolvePairPriceSeries(l.bId,l.qId);
+  if(!ser||ser.length<2)return povEmpty('No price history for this pair yet — it fills in as the daily price job runs.');
+  const last=ser[ser.length-1];
+  const dec=Math.abs(Number(last[1]))>=50?2:Math.abs(Number(last[1]))>=5?3:5;
+  let html=`<div class="pov-price"><span class="pov-price-v">${Number(last[1]).toFixed(dec)}</span><span class="pov-price-d">as of ${escH(last[0])}</span></div>`;
+  let short=null;
+  html+=PERF_WINDOWS.map(([lbl,d])=>{
+    const r=pairPerfReturn(ser,d);
+    if(!r)return povRow(lbl,'–','var(--t3)');
+    if(d!=null&&r.from>dateAddStr(last[0],-d+1))short=true;
+    const col=r.pct>0?BC.bull:r.pct<0?BC.bear:'var(--t3)';
+    return povRow(lbl,(r.pct>0?'+':'')+r.pct.toFixed(2)+'%',col,'since '+r.from);
+  }).join('');
+  if(short)html+=`<div class="pov-note">A window marked with a shorter start date means the price series does not reach back that far yet.</div>`;
+  return html;
+}
+
+// ── Block 3: Carry ───────────────────────────────────────────────────────
+// Inhaltlich dasselbe wie openCarryDetail(), nur eingebettet statt als Modal.
+function povCarryHtml(name){
+  const l=pairLegs(name);if(!l)return'';
+  if(!FX.includes(l.bId)||!FX.includes(l.qId))return povEmpty('Carry applies to currency pairs only — one side here is not a currency.');
+  const rb=rateInfo(l.bc),rq=rateInfo(l.qc);
+  if(!rb||!rq)return povEmpty('Policy rate not known for both sides yet.');
+  const d=Math.round((rb.rate-rq.rate)*100)/100,adj=pairCarryAdj(name);
+  const col=d>0?BC.bull:d<0?BC.bear:'var(--t3)';
+  return povRow(l.bc+' policy rate',rb.rate+'%')+povRow(l.qc+' policy rate',rq.rate+'%')+
+    `<div class="pov-stot"><span>Differential</span><span style="color:${col}">${d>0?'+':''}${d}%</span></div>`+
+    `<div class="pov-note">${d===0?'No carry edge either way.':(d>0?`Holding long ${escH(l.bc)}/${escH(l.qc)} <b>earns</b> carry.`:`Holding long ${escH(l.bc)}/${escH(l.qc)} <b>costs</b> carry.`)} Score effect <b>${adj>0?'+':''}${adj}</b> — staged from |differential|: ≥1.5% → ±1, ≥0.5% → ±0.5, otherwise 0.</div>`;
+}
+
+// ── Block 4: Makro Seite an Seite ────────────────────────────────────────
+// Die vier Makro-Karten beider Waehrungen nebeneinander, plus die Differenz -
+// genau die Groesse, die der Paar-Score aus ihnen bildet. Klick springt in
+// die jeweilige Asset-Detailseite.
+function povMacroHtml(name){
+  const l=pairLegs(name);if(!l)return'';
+  const bS=syms.find(s=>s.id===l.bId),qS=syms.find(s=>s.id===l.qId);
+  if(!bS||!qS)return povEmpty('One side of this pair is not a tracked asset.');
+  const rubOf=(sym,n)=>(sym.rubrics||[]).find(r=>r.name===n);
+  const rows=MACRO_DERIVE_RUBS.concat(['COT Data',MACRO_NAME]).map(rn=>{
+    const rb=rubOf(bS,rn),rq=rubOf(qS,rn);
+    if(!rb&&!rq)return'';
+    const sb=rb?Math.round(rubScore(rb)*10)/10:null,sq=rq?Math.round(rubScore(rq)*10)/10:null;
+    const cell=(v,bias)=>v==null?'<span class="pov-mv" style="color:var(--t3)">–</span>':
+      `<span class="pov-mv" style="color:${BC[bias||'neu']}">${v>0?'+':''}${v}</span>`;
+    const diff=(sb!=null&&sq!=null)?Math.round((sb-sq)*10)/10:null;
+    const dcol=diff==null?'var(--t3)':diff>0?BC.bull:diff<0?BC.bear:'var(--t3)';
+    return`<div class="pov-mrow">
+      <span class="pov-mname">${escH(rn)}</span>
+      ${cell(sb,rb&&rb.bias)}
+      ${cell(sq,rq&&rq.bias)}
+      <span class="pov-mv" style="color:${dcol};font-weight:800">${diff==null?'–':(diff>0?'+':'')+diff}</span>
+    </div>`;
+  }).join('');
+  return`<div class="pov-mrow pov-mhead">
+      <span class="pov-mname"></span>
+      <span class="pov-mv"><button class="pov-link" onclick="gotoSym('${escJH(l.bId)}')">${escH(l.bc)}</button></span>
+      <span class="pov-mv"><button class="pov-link" onclick="gotoSym('${escJH(l.qId)}')">${escH(l.qc)}</button></span>
+      <span class="pov-mv">Diff</span>
+    </div>${rows}
+    <div class="pov-note">Card scores of both sides, straight from the same rubrics you see on each asset page. The difference column is what feeds the pair score (before the common-base scaling).</div>`;
+}
+
+// ── Block 5: Positionierung (COT + Retail) ───────────────────────────────
+function povPositioningHtml(name){
+  const l=pairLegs(name);if(!l)return'';
+  let html='';
+  const cotLine=(code,id)=>{
+    const m=COT_DATA&&COT_DATA.symbols?cotMetrics(COT_DATA.symbols[id]):null;
+    if(!m)return povRow(code,'–','var(--t3)','No COT report for this side');
+    const col=m.longPct>=60?BC.bull:m.longPct<=40?BC.bear:'var(--t3)';
+    return povRow(code,`${m.longPct.toFixed(1)}% long`,col,`net ${cotNum(m.net)} contracts · weekly change ${m.dNetPct>0?'+':''}${m.dNetPct.toFixed(1)}pp`);
+  };
+  html+=`<div class="pov-sub">Institutions (COT)</div>`+cotLine(l.bc,l.bId)+cotLine(l.qc,l.qId);
+  // Retail: Myfxbook fuehrt das PAAR selbst (EURUSD), nicht die Einzelbeine -
+  // deshalb hier der Paar-Eintrag statt zweier Seiten.
+  const key=(l.bc+l.qc).toUpperCase();
+  const alt=Object.keys(SENT_NONFX_PRICE_ID).find(k=>SENT_NONFX_PRICE_ID[k]===l.bId&&l.qc==='USD');
+  const rec=(SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).find(r=>r&&(r.sym===key||(alt&&r.sym===alt)));
+  html+=`<div class="pov-sub">Retail crowd (contrarian)</div>`;
+  if(!rec||!isFinite(+rec.long))html+=povEmpty('No retail positioning for this pair.');
+  else{
+    const L=Math.round(Math.max(0,Math.min(100,+rec.long))),S=100-L;
+    const cb=L>=60?'bear':L<=40?'bull':'neu';
+    html+=`<div class="pov-split"><span class="pov-splitbar"><span style="width:${L}%;background:${BC.bull}"></span><span style="width:${S}%;background:${BC.bear}"></span></span>
+      <span class="pov-splitv">${L}% long · ${S}% short</span></div>
+      <div class="pov-note" style="color:${BC[cb]}">Crowd is ${L>=60?'heavily long → read bearish':L<=40?'heavily short → read bullish':'fairly balanced → no contrarian edge'}.</div>`;
+  }
+  return html;
+}
+
+// ── Block 6: Kalender beider Waehrungen ──────────────────────────────────
+function povCalendarHtml(name){
+  const l=pairLegs(name);if(!l)return'';
+  const list=(calEvts||[]).filter(ev=>ev&&ev.date&&(evtMatchesSym(ev,l.bId)||evtMatchesSym(ev,l.qId))&&!isEvtPast(ev))
+    .sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):String(a.date).localeCompare(String(b.date)))
+    .slice(0,12);
+  if(!list.length)return povEmpty('No upcoming events for either side in the current calendar window.');
+  return list.map(ev=>{
+    const side=evtMatchesSym(ev,l.bId)?l.bc:l.qc;
+    const imp=evtImpact(ev);
+    const col=imp==='high'?BC.bear:imp==='medium'?'var(--amber)':'var(--t3)';
+    return`<div class="pov-ev" title="${escH((ev.currencies||'')+' '+(ev.name||''))}">
+      <span class="pov-ev-d">${escH(countdownLbl(ev.date))}</span>
+      <span class="pov-ev-c" style="color:${col}">${escH(side)}</span>
+      <span class="pov-ev-n">${escH(ev.name||'')}</span>
+      <span class="pov-ev-t">${escH(ev.time||'')}</span>
+    </div>`;}).join('')+
+    `<div class="pov-note">Upcoming releases that touch either side of the pair — high impact in red, medium in amber. <button class="pov-link" onclick="showTab('cal')">Open calendar</button></div>`;
+}
+
+// ── Block 7: Korrelation zu den anderen Paaren ───────────────────────────
+function povCorrHtml(name){
+  const rows=pairCorrRows(name);
+  if(!rows)return povEmpty('Add more pairs with enough price history to see how this one overlaps with them.');
+  const body=rows.slice(0,6).map(r=>{
+    const a=Math.abs(r.r);
+    const col=a>=0.7?BC.bear:a>=0.45?'var(--amber)':'var(--t2)';
+    return`<div class="pov-row" title="${r.n} common trading days"><span class="pov-row-l">${escH(r.name)}</span><span class="pov-row-v" style="color:${col}">${r.r>0?'+':''}${r.r.toFixed(2)}</span></div>`;
+  }).join('');
+  const worst=rows[0],a=Math.abs(worst.r);
+  return body+`<div class="pov-note">${a>=0.7?`Careful: this moves almost identically to <b>${escH(worst.name)}</b> — holding both is close to holding one position twice.`:a>=0.45?`Moderate overlap with <b>${escH(worst.name)}</b>.`:'Largely independent from your other pairs.'} Based on log returns over the common trading days of each pair.</div>`;
+}
+
+// ── Block 8: Notizen zu diesem Paar ──────────────────────────────────────
+// Notizen haengen an einem ASSET, nicht an einem Paar - hier erscheinen
+// deshalb die Notizen BEIDER Beine, mit Kennzeichnung welcher Seite sie
+// gehoeren. Richtung/Ergebnis-Abzeichen kommen aus derselben Funktion wie im
+// Research Terminal.
+function povNotesHtml(name){
+  const l=pairLegs(name);if(!l)return'';
+  const list=resNotes().filter(n=>n&&(n.asset===l.bId||n.asset===l.qId))
+    .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||''))).slice(0,8);
+  if(!list.length)return povEmpty('No notes on either side yet. Write them in the Research Terminal — they show up here automatically.')+
+    `<div class="pov-note"><button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
+  return list.map(n=>`<div class="pov-note-row" onclick="showTab('notes')" title="Open in the Research Terminal">
+      <span class="pov-nleg">${escH(n.asset===l.bId?l.bc:l.qc)}</span>
+      <span class="pov-ntitle">${escH(n.title||'(untitled)')}</span>
+      ${typeof noteOutcomeBadge==='function'?noteOutcomeBadge(n):''}
+      <span class="pov-ndate">${escH(String(n.ts||'').slice(0,10))}</span>
+    </div>`).join('')+
+    `<div class="pov-note">Notes from both currencies of this pair, newest first. <button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
+}
+
+// ── Block 9: Score-Verlauf gegen den Kurs ────────────────────────────────
+// Dieselbe Reihe wie der Trends-Tab im Paar-Modus (Differenz der taeglichen
+// Score-Snapshots beider Seiten), damit beide Ansichten nie auseinanderlaufen.
+function povTrendHtml(name){
+  const l=pairLegs(name);if(!l)return povEmpty('Unknown pair.');
+  const baseArr=scoreHist[l.bId]||[],qm={};(scoreHist[l.qId]||[]).forEach(e=>qm[e[0]]=e);
+  const diff=[];
+  baseArr.forEach(be=>{const qe=qm[be[0]];if(!qe)return;diff.push([be[0],Math.round((be[1]-qe[1])*10)/10]);});
+  const bar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(pairOvRange,'setPairOvRange')}${timeRangeCustomHtml(pairOvRange,pairOvFrom,pairOvTo,'setPairOvRange')}</div>`;
+  if(diff.length<2)return bar+povEmpty('The pair line grows from the day both sides have a score snapshot on record \u2014 it needs at least two shared days.');
+  const dates=filterDatesByRange(diff.map(e=>e[0]),pairOvRange,pairOvFrom,pairOvTo);
+  if(dates.length<2)return bar+povEmpty('No data in the selected time range \u2014 pick a wider one above.');
+  const scoreMap={},biasMap={};
+  diff.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
+  return bar+scoreVsPriceCard(dates,scoreMap,14,BC[scoreBias(pairScore(name))],resolvePairPriceSeries(l.bId,l.qId),'Pair score vs price',biasMap)+
+    `<div class="pov-note">Same series as the Trends tab in pair mode (daily score of the base minus the quote side), so both views can never drift apart.</div>`;
+}
+
+// ── Zusammenbau ──────────────────────────────────────────────────────────
+function renderPairOverview(el,name){
+  const l=pairLegs(name);
+  const sc=pairScore(name);
+  const rec=pairs.find(p=>p.name===name);
+  const bias=rec?rec.bias:scoreBias(sc);
+  const chip=tickerChipHtml(tickerInfoForItem('pair',name))||'';
+  el.innerHTML=`<div class="pov-wrap">
+    <div class="pov-head ${glowClass(bias)}">
+      <button class="pov-back" onclick="closePairOverview()" title="Back to the set-ups list">←</button>
+      <div class="pov-title"><span class="pov-name">${escH(name)}</span>${chip}</div>
+      <span class="pov-bias" style="color:${BC[bias]};border-color:${BC[bias]}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
+      <button class="pov-score" style="color:${BC[scoreBias(sc)]};border-color:${BC[scoreBias(sc)]}" onclick="openScoreInfoPair('${escJH(name)}')" title="Pair score — tap for the full breakdown">${sc>0?'+':''}${sc}</button>
+      ${rec?`<button class="dw-mark${rec.marked?' on':''}" onclick="togPairMark('${escJH(rec.id)}');openPairOverview('${escJH(name)}')" title="Mark yellow">★</button>`:''}
+    </div>
+    <div class="pov-grid">
+      ${povCard('Score breakdown',povScoreHtml(name))}
+      ${povCard('Price &amp; performance',povPerfHtml(name))}
+      ${povCard('Carry',povCarryHtml(name))}
+      ${povCard('Macro side by side',povMacroHtml(name),true)}
+      ${povCard('Positioning',povPositioningHtml(name))}
+      ${povCard('Upcoming events (both sides)',povCalendarHtml(name))}
+      ${povCard('Overlap with your other pairs',povCorrHtml(name))}
+      ${povCard('Notes on both sides',povNotesHtml(name))}
+      ${povCard('Pair score vs price',povTrendHtml(name),true)}
+    </div>
+  </div>`;
+  attachChartHovers(el);
+}
+
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
+  // Die Paar-Overview lebt im selben Container wie die Liste (siehe Kommentar
+  // bei pairOvName) - die statische Set-ups-Ueberschrift daher mit umschalten,
+  // sonst stuenden zwei Titel uebereinander.
+  const hdr=document.getElementById('pairsHdr');
+  if(hdr)hdr.style.display=pairOvName?'none':'flex';
+  if(pairOvName){renderPairOverview(el,pairOvName);return;}
   // Die Set-ups-Ansicht fasst ALLE Kategorien (z.B. Set-ups + Watchlist) zu
   // einer einzigen Bullish/Neutral/Bearish-Übersicht zusammen. Dasselbe Paar
   // kann aber in mehreren Kategorien stehen (z.B. EUR/USD in Set-ups UND
@@ -9830,7 +10214,9 @@ function renderPairs(){
     const chip=tickerChipHtml(tickerInfoForItem(it.kind,it.kind==='pair'?it.name:it.id))||'<span></span>';
     const rd=(it.kind==='pair'?rateDiff(it.name):'')||'<span></span>';
     return`<div class="sym-row ${glowClass(it.bias)}${it.marked?' row-marked':''}">
-    <div class="sym-name dw-pname">${escH(it.name)}</div>
+    ${it.kind==='pair'
+      ?`<div class="sym-name dw-pname pov-open" onclick="openPairOverview('${escJH(it.name)}')" title="Open the full overview for this pair">${escH(it.name)}</div>`
+      :`<div class="sym-name dw-pname pov-open" onclick="gotoSym('${escJH(it.id)}')" title="Open this asset">${escH(it.name)}</div>`}
     ${chip}
     ${rd}
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${escJH(it.name)}')`)}
