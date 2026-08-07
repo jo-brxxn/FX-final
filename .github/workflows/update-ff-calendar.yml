@@ -1370,13 +1370,15 @@ jobs:
             };
             let out={};
             try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            // Historien-Tiefe: siehe Kommentar beim Backfill-Schritt.
+            const BOND_KEEP=400;
             function merge(ccy,ind,points){
               if(!points.length)return 0;
               const cur=(out[ccy]&&out[ccy][ind])||{};
               const m=new Map();
               (Array.isArray(cur.series)?cur.series:[]).forEach(e=>{if(e&&e[0])m.set(e[0],String(e[1]));});
               points.forEach(p=>{if(p&&p[0]&&isFinite(Number(p[1])))m.set(p[0],String(Math.round(Number(p[1])*1000)/1000));});
-              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-35).map(e=>[e[0],e[1]]);
+              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-BOND_KEEP).map(e=>[e[0],e[1]]);
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
               return points.length;
             }
@@ -1523,14 +1525,23 @@ jobs:
               "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
               "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
             };
-            const CUTOFF=new Date(Date.now()-45*86400000).toISOString().slice(0,10);
+            // Historien-Tiefe (2026-08-06 von 35 Tagen / 45 Tagen Cutoff angehoben):
+            // die Bond-Signale rechnen mit einer SMA21, dafuer waren ~25
+            // Handelstage viel zu knapp - faellt eine Quelle ein paar Tage aus,
+            // reicht die Historie fuer die lange SMA nicht mehr und der
+            // Indikator faellt auf neutral. 400 Punkte (~18 Monate Handelstage)
+            // entspricht der Konvention der uebrigen Reihen (Put/Call nutzt
+            // ebenfalls slice(-400)). Der Cutoff begrenzt nur, wie weit
+            // ZURUECK eine Quelle beim Nachladen liefern darf.
+            const BOND_KEEP=400;
+            const CUTOFF=new Date(Date.now()-420*86400000).toISOString().slice(0,10);
             function merge(ccy,ind,points){
               if(!points.length)return 0;
               const cur=(out[ccy]&&out[ccy][ind])||{};
               const m=new Map();
               (Array.isArray(cur.series)?cur.series:[]).forEach(e=>{if(e&&e[0])m.set(e[0],String(e[1]));});
               points.forEach(p=>{if(p&&p[0]&&isFinite(Number(p[1])))m.set(p[0],String(Math.round(Number(p[1])*1000)/1000));});
-              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-35).map(e=>[e[0],e[1]]);
+              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-BOND_KEEP).map(e=>[e[0],e[1]]);
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
               return points.length;
             }
@@ -1728,14 +1739,23 @@ jobs:
               "NZD|10Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield",
               "NZD|2Y Bond Yield":"https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield"
             };
-            const CUTOFF=new Date(Date.now()-45*86400000).toISOString().slice(0,10);
+            // Historien-Tiefe (2026-08-06 von 35 Tagen / 45 Tagen Cutoff angehoben):
+            // die Bond-Signale rechnen mit einer SMA21, dafuer waren ~25
+            // Handelstage viel zu knapp - faellt eine Quelle ein paar Tage aus,
+            // reicht die Historie fuer die lange SMA nicht mehr und der
+            // Indikator faellt auf neutral. 400 Punkte (~18 Monate Handelstage)
+            // entspricht der Konvention der uebrigen Reihen (Put/Call nutzt
+            // ebenfalls slice(-400)). Der Cutoff begrenzt nur, wie weit
+            // ZURUECK eine Quelle beim Nachladen liefern darf.
+            const BOND_KEEP=400;
+            const CUTOFF=new Date(Date.now()-420*86400000).toISOString().slice(0,10);
             function merge(ccy,ind,points){
               if(!points.length)return 0;
               const cur=(out[ccy]&&out[ccy][ind])||{};
               const m=new Map();
               (Array.isArray(cur.series)?cur.series:[]).forEach(e=>{if(e&&e[0])m.set(e[0],String(e[1]));});
               points.forEach(p=>{if(p&&p[0]&&isFinite(Number(p[1])))m.set(p[0],String(Math.round(Number(p[1])*1000)/1000));});
-              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-35).map(e=>[e[0],e[1]]);
+              const series=[...m.entries()].sort((a,b)=>a[0]<b[0]?-1:1).slice(-BOND_KEEP).map(e=>[e[0],e[1]]);
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[ccy+"|"+ind]||cur.source||"",series:series};
               return points.length;
             }
@@ -1896,6 +1916,8 @@ jobs:
             if(!rows){console.log("bond_data: unexpected TradingView shape, keeping existing file");process.exit(0);}
             let out={};
             try{const d=JSON.parse(fs.readFileSync("bond_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+            // Historien-Tiefe: siehe Kommentar beim Backfill-Schritt.
+            const BOND_KEEP=400;
             let okN=0;const miss=[];
             rows.forEach(r=>{
               const key=MAP[r.s];if(!key)return;
@@ -1907,7 +1929,7 @@ jobs:
               let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
               series.push([today,val]);
               series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-              series=series.slice(-35);
+              series=series.slice(-BOND_KEEP);
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[key]||cur.source||"",series:series};
               okN++;
             });
