@@ -281,9 +281,9 @@ svg.ic{vertical-align:-2px;flex:none}
    Hintergrund-Glow (2026-07-20/21 kurzzeitig ergaenzt und verstaerkt, dann
    per Nutzer-Wunsch "mach den glow wieder aus" 2026-07-21 komplett wieder
    entfernt) - nur noch der Rand-Streifen traegt die Bias-Farbe. */
-.rub-card.glow-bull,.pair-card.glow-bull{border-left-color:rgba(var(--green-rgb),.85)}
-.rub-card.glow-bear,.pair-card.glow-bear{border-left-color:rgba(var(--red-rgb),.85)}
-.rub-card.glow-neu,.pair-card.glow-neu{border-left-color:rgba(var(--amber-rgb),.85)}
+.rub-card.glow-bull,.pair-card.glow-bull,.wt-card.glow-bull,.pov-head.glow-bull{border-left-color:rgba(var(--green-rgb),.85)}
+.rub-card.glow-bear,.pair-card.glow-bear,.wt-card.glow-bear,.pov-head.glow-bear{border-left-color:rgba(var(--red-rgb),.85)}
+.rub-card.glow-neu,.pair-card.glow-neu,.wt-card.glow-neu,.pov-head.glow-neu{border-left-color:rgba(var(--amber-rgb),.85)}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): Detail-Tabellen-Karten im
    Referenzbild haben KEINEN farbigen linken Rand - Bias steckt nur noch im
    Score-Chip der Karte selbst. Nur .rub-card betroffen, .pair-card behaelt
@@ -2387,6 +2387,31 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
   .pov-sname{flex-basis:96px}
 }
 
+
+/* ── Watchlist-Tab (Nutzer-Wunsch 2026-08-07) ───────────────────────── */
+.wt-sec{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin:14px 2px 7px}
+.wt-sec:first-child{margin-top:0}
+.wt-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--bd2);border-radius:var(--r);padding:11px 13px 12px;margin-bottom:9px}
+.wt-head{display:flex;align-items:center;gap:9px;cursor:pointer;flex-wrap:wrap}
+.wt-icons{font-size:15px;display:flex;align-items:center;gap:3px;flex:0 0 auto}
+.wt-name{font-size:15px;font-weight:800;color:var(--t0);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-bias{font-size:10.5px;font-weight:700;border:1px solid;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.wt-score{font-size:14px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;text-align:right}
+.wt-open{display:flex;align-items:center;color:var(--t3);flex:0 0 auto}
+@media(hover:hover){.wt-head:hover .wt-name{text-decoration:underline}.wt-head:hover .wt-open{color:var(--blue)}}
+.wt-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px;margin-top:10px}
+.wt-metric{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;min-width:0}
+.wt-m-l{display:block;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-m-v{display:block;font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-note{width:100%;margin-top:9px;background:var(--bg0);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:12.5px;padding:7px 10px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.5;min-height:36px}
+.wt-note:focus{border-color:rgba(var(--blue-rgb),.5)}
+.wt-note::placeholder{color:var(--t3)}
+.wt-empty{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px 18px;text-align:center}
+.wt-empty-t{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.wt-empty-s{font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:12px}
+.wl-row.wl-click{cursor:pointer}
+@media(hover:hover){.wl-row.wl-click:hover .wl-name{text-decoration:underline;color:var(--t0)}}
+@media(max-width:560px){.wt-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -2505,12 +2530,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-323 — Bugfix: score-tragende Karten, die im Research Terminal nicht erreichbar waren (Nutzer-Bugreport: GBPs Geopolitics steht auf bearish, laesst sich nicht aendern, zaehlt aber weiter in den Score). Ursache per Audit ueber ALLE Assets eingegrenzt: auf der Assets-Detailseite war jede score-tragende Karte immer sichtbar und editierbar - im Research Terminal, dem taeglichen Arbeitsplatz, fehlten ZWEI. (1) COT Data war ueberhaupt keine Kachel, obwohl die Karte bei fast jedem Asset einen Beitrag liefert (GBP -1, USD +1, GOLD +1). (2) Die Risk-Environment-Kachel zeigte beim Aufklappen bewusst den Dashboard-Regler statt der asset-eigenen Karte (Nutzer-Korrektur 2026-08-04) - dadurch war Geopolitics, der einzige manuell setzbare Indikator dieser Karte, nirgends im Terminal erreichbar. Fix ohne die Entscheidung von 2026-08-04 zurueckzunehmen: COT Data ist jetzt eine eigene Kachel, und die Risk-Environment-Kachel behaelt den Regler, haengt beim Aufklappen aber zusaetzlich die asset-eigene Karte darunter (Risk Correlation automatisch + Geopolitics manuell). Zusaetzlich weist die Kachel den Kartenscore aus, sobald er nicht 0 ist - sonst bliebe ein Score-Beitrag in der Kartenreihe unsichtbar, genau der gemeldete Fall. Per Test bestaetigt: Geopolitics laesst sich im Terminal aendern (bearish auf neutral, GBP-Score 5.6 auf 6.6), die COT-Karte klappt mit echten Werten auf, und der wiederholte Audit findet keine score-tragende Karte mehr, die irgendwo nicht erreichbar waere. Kachelreihe bleibt bei 6 Kacheln ohne Ueberlauf (1600/1180/430px geprueft).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-324 — Stern und Watchlist sind ab jetzt dasselbe, plus ein eigener Watchlist-Tab (Nutzer-Wunsch). Vorher waren das ZWEI unabhaengige Zustaende: der Stern setzte p.marked (reine Einfaerbung), die Watchlist war eine eigene Kategorie in pairCats - beides konnte beliebig auseinanderlaufen. Statt die zwei Zustaende gegenseitig zu synchronisieren (zwei Quellen, die man fuer immer im Gleichschritt halten muss - genau die Fehlerklasse, die in diesem Projekt schon mehrfach teuer war), gibt es jetzt nur noch EINE Wahrheit: ein Paar ist markiert, genau dann wenn es einen Eintrag in der Watchlist-Kategorie hat. Der Stern liest und schaltet diesen Zustand; p.marked wird nicht mehr gelesen. Non-FX-Assets laufen ueber ihren kanonischen Paarnamen (Gold sternen legt XAU/USD an, Rueckrichtung ueber die bereits vorhandene PAIR_CODE_TO_ID-Zuordnung, keine zweite Uebersetzung). Beim Abwaehlen wird der Watchlist-Eintrag entfernt - ausser er ist der EINZIGE Eintrag des Paares, dann wandert er in die erste andere Kategorie statt geloescht zu werden (sonst haette ein Klick auf den Stern das Paar komplett aus den Set-ups entfernt). Klick auf eine Zeile der Dashboard-Watchlist oeffnet jetzt die Paar-Overview aus V321; das Loeschkreuz stoppt die Weitergabe. NEU: eigener Watchlist-Tab direkt neben Set-ups (kein Insights-Eintrag - die Watchlist ist kein Analysewerkzeug, sondern der taegliche Arbeitszettel): je Paar eine Karte untereinander mit Kurs, Tagesveraenderung, Carry, COT-Positionierung, dem naechsten Termin beider Seiten und einem eigenen Notizfeld. Die Notiz liegt im bereits vorhandenen p.notes-Feld, laeuft also ohne weiteres Zutun ueber Undo und Cloud-Sync. Jede Kennzahl kommt aus derselben Funktion wie anderswo in der App - kein zweiter Rechenweg. Das Notizfeld rettet Fokus und Cursor ueber ein Hintergrund-Rendern (gleiche Absicherung wie die Quick Note). Per Test bestaetigt: Stern setzt Watchlist und umgekehrt, Gold laeuft korrekt als XAU/USD, das letzte Vorkommen wird nie geloescht, Undo stellt den Sternzustand her, Notiz ueberlebt das Neu-Rendern mit Cursorposition, kein Ueberlauf bei 1500 und 430px, 15 Tabs fehlerfrei.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-323</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-324</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2627,6 +2652,14 @@ function introLogin(){
     </div>
   </div>
   <div id="pairCats"></div>
+</div>
+<!-- PAGE: WATCHLIST (Nutzer-Wunsch 2026-08-07) -->
+<div class="pc" id="pgWatch" style="display:none">
+  <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Watchlist</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Everything you starred in Set-ups &mdash; with price, carry, positioning, the next event and your own notes</div></div>
+    <button class="btn g" onclick="openAddPair('Watchlist')">&#65291; Add pair</button>
+  </div>
+  <div id="watchBody"></div>
 </div>
 
 <!-- MODAL: Preis-Alerts (Level ueber-/unterschritten -> Inbox + Telegram) -->
@@ -10103,7 +10136,7 @@ function renderPairOverview(el,name){
       <div class="pov-title"><span class="pov-name">${escH(name)}</span>${chip}</div>
       <span class="pov-bias" style="color:${BC[bias]};border-color:${BC[bias]}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
       <button class="pov-score" style="color:${BC[scoreBias(sc)]};border-color:${BC[scoreBias(sc)]}" onclick="openScoreInfoPair('${escJH(name)}')" title="Pair score — tap for the full breakdown">${sc>0?'+':''}${sc}</button>
-      ${rec?`<button class="dw-mark${rec.marked?' on':''}" onclick="togPairMark('${escJH(rec.id)}');openPairOverview('${escJH(name)}')" title="Mark yellow">★</button>`:''}
+      <button class="dw-mark${isWatched(name)?' on':''}" onclick="toggleWatch('${escJH(name)}');openPairOverview('${escJH(name)}')" title="${isWatched(name)?'Remove from the watchlist':'Add to the watchlist'}">★</button>
     </div>
     <div class="pov-grid">
       ${povCard('Score breakdown',povScoreHtml(name))}
@@ -10120,6 +10153,185 @@ function renderPairOverview(el,name){
   attachChartHovers(el);
 }
 
+// ══ WATCHLIST ALS EINZIGE WAHRHEIT ═══════════════════════════════════════
+// (Nutzer-Wunsch 2026-08-07) Der Stern in den Set-ups und die Zugehoerigkeit
+// zur Watchlist waren bisher ZWEI unabhaengige Dinge: der Stern setzte
+// p.marked (reine Einfaerbung), die Watchlist war eine eigene Kategorie in
+// pairCats. Beides konnte beliebig auseinanderlaufen - ein markiertes Paar
+// stand nicht in der Watchlist und umgekehrt.
+//
+// Statt die zwei Zustaende gegenseitig zu synchronisieren (zwei Quellen, die
+// man fuer immer im Gleichschritt halten muss - genau die Fehlerklasse, die
+// in diesem Projekt schon mehrfach teuer war), gibt es jetzt nur noch EINE
+// Wahrheit: ein Paar ist markiert, GENAU DANN wenn es einen Eintrag in der
+// Watchlist-Kategorie hat. Der Stern liest diesen Zustand und schaltet ihn
+// um; p.marked wird nicht mehr gelesen und bleibt nur als Altlast in
+// gespeicherten Staenden liegen, ohne Wirkung.
+function watchlistCat(){
+  let c=pairCats.find(x=>x.name==='Watchlist');
+  if(!c){c={id:uid(),name:'Watchlist',open:true};pairCats.unshift(c);}
+  return c;
+}
+// Asset-ID -> kanonischer Paarname, unter dem das Asset in der Watchlist
+// gefuehrt wird ('GOLD' -> 'XAU/USD'). Nutzt die bestehende
+// PAIR_CODE_TO_ID-Zuordnung rueckwaerts, damit es genau EINE Uebersetzung
+// zwischen Asset und Paarname gibt (nonFxLegAssetId ist die Gegenrichtung).
+function watchPairNameForAsset(id){
+  const code=Object.keys(PAIR_CODE_TO_ID).find(k=>PAIR_CODE_TO_ID[k]===id)||id;
+  return code+'/USD';
+}
+function isWatched(name){
+  const c=pairCats.find(x=>x.name==='Watchlist');
+  return !!(c&&pairs.some(p=>p.name===name&&p.catId===c.id));
+}
+// An-/Abschalten. Beim Abschalten wird der Watchlist-Eintrag entfernt - ausser
+// er ist der EINZIGE Eintrag dieses Paares: dann wandert er stattdessen in die
+// erste Nicht-Watchlist-Kategorie. Sonst wuerde ein Klick auf den Stern das
+// Paar komplett aus den Set-ups loeschen (die Set-ups-Liste zeigt alle
+// Kategorien zusammen), was niemand erwartet, wenn er nur "nicht mehr
+// beobachten" meint.
+function setWatched(name,on){
+  const c=watchlistCat();
+  const inWl=pairs.filter(p=>p.name===name&&p.catId===c.id);
+  if(on){
+    if(!inWl.length){
+      const bias=typeof autoPairBias==='function'?autoPairBias(name):'neu';
+      pairs.push({id:uid(),name,bias,catId:c.id,entry:'',entryTrigger:'',sl:'',tp:'',rr:'',size:'',notes:'',_open:false});
+      c.open=true;
+    }
+  }else{
+    const others=pairs.filter(p=>p.name===name&&p.catId!==c.id);
+    if(others.length)pairs=pairs.filter(p=>!(p.name===name&&p.catId===c.id));
+    else{
+      const fallback=pairCats.find(x=>x.name!=='Watchlist')||c;
+      inWl.forEach(p=>{p.catId=fallback.id;});
+    }
+  }
+}
+function toggleWatch(name){
+  if(!name)return;
+  pushU();
+  setWatched(name,!isWatched(name));
+  save();
+  if(curPage==='pairs')renderPairs();
+  if(curPage==='watch')renderWatchlistTab();
+  if(curPage==='dash')renderDash();
+}
+// Aus der Watchlist-Karte / den Set-ups direkt in die Paar-Overview springen.
+function gotoPairOverview(name){
+  showTab('pairs');
+  openPairOverview(name);
+}
+
+// ══ WATCHLIST-TAB ════════════════════════════════════════════════════════
+// (Nutzer-Wunsch 2026-08-07) Eigene Seite, die die beobachteten Paare
+// UNTEREINANDER mit deutlich mehr Kontext zeigt als die schmale Dashboard-
+// Karte - und pro Paar ein Notizfeld. Die Notiz liegt im bereits
+// vorhandenen p.notes-Feld des Paar-Objekts (Teil von snap(), laeuft also
+// ohne weiteres Zutun ueber Undo und Cloud-Sync mit).
+//
+// Jede Kennzahl kommt aus derselben Funktion wie anderswo in der App
+// (pairScore/pairCarryAdj/tickerInfoForItem/cotMetrics/calEvts) - kein
+// zweiter Rechenweg, der spaeter abweichen koennte.
+function watchlistPairs(){
+  const c=pairCats.find(x=>x.name==='Watchlist');
+  if(!c)return[];
+  return pairs.filter(p=>p.catId===c.id);
+}
+// Naechster anstehender Termin, der eine der beiden Seiten betrifft.
+function watchNextEvent(name){
+  const l=pairLegs(name);if(!l)return null;
+  const list=(calEvts||[]).filter(ev=>ev&&ev.date&&(evtMatchesSym(ev,l.bId)||evtMatchesSym(ev,l.qId))&&!isEvtPast(ev));
+  if(!list.length)return null;
+  list.sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):String(a.date).localeCompare(String(b.date)));
+  const hi=list.find(ev=>evtImpact(ev)==='high');
+  return hi||list[0];
+}
+function watchMetric(label,value,color,title){
+  return`<div class="wt-metric"${title?` title="${escH(title)}"`:''}><span class="wt-m-l">${escH(label)}</span><span class="wt-m-v"${color?` style="color:${color}"`:''}>${value}</span></div>`;
+}
+function watchRowHtml(p){
+  const name=p.name;
+  const l=pairLegs(name);
+  const sc=pairScore(name);
+  const bias=p.bias||scoreBias(sc);
+  const isFx=isPureFxPair(name);
+  const assetId=isFx?null:nonFxLegAssetId(name);
+  const sym=assetId?syms.find(s=>s.id===assetId):null;
+  const title=sym?sym.name:name;
+  const icons=isFx&&l?`${FX_FLAG[l.bc]||''}<span class="wl-flag-sep">|</span>${FX_FLAG[l.qc]||''}`:(assetId?nonFxWatchIconHtml(assetId):'');
+  // Kurs + Tagesveraenderung
+  const info=sym?assetTickerInfo(assetId):tickerInfoForItem('pair',name);
+  const chg=(!info||info.changePct==null)?['–','var(--t3)']
+    :[(info.changePct>0?'+':'')+info.changePct.toFixed(2)+'%',BC[info.bias]];
+  const px=(info&&info.price!=null)?fmtPriceTick(info.price):'–';
+  // Carry
+  const carry=(()=>{
+    if(!l||!FX.includes(l.bId)||!FX.includes(l.qId))return null;
+    const rb=rateInfo(l.bc),rq=rateInfo(l.qc);
+    if(!rb||!rq)return null;
+    return Math.round((rb.rate-rq.rate)*100)/100;
+  })();
+  // COT der Basisseite (bei Non-FX das Asset selbst)
+  const cotId=isFx&&l?l.bId:assetId;
+  const cm=(COT_DATA&&COT_DATA.symbols&&cotId)?cotMetrics(COT_DATA.symbols[cotId]):null;
+  // Naechster Termin
+  const ev=watchNextEvent(name);
+  const evTxt=ev?`${escH(countdownLbl(ev.date))} · ${escH((ev.name||'').slice(0,26))}`:'–';
+  const evCol=ev&&evtImpact(ev)==='high'?BC.bear:'var(--t2)';
+  return`<div class="wt-card ${glowClass(bias)}">
+    <div class="wt-head" onclick="gotoPairOverview('${escJH(name)}')" title="Open the full overview for this pair">
+      <span class="wt-icons">${icons}</span>
+      <span class="wt-name">${escH(title)}</span>
+      <span class="wt-bias" style="color:${BC[bias]};border-color:${BC[bias]}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
+      <span class="wt-score" style="color:${BC[scoreBias(sc)]}">${sc>0?'+':''}${sc}</span>
+      <span class="wt-open">${icn('chevronRight',15)}</span>
+    </div>
+    <div class="wt-metrics">
+      ${watchMetric('Price',px,'var(--t0)')}
+      ${watchMetric('1D',chg[0],chg[1],'Change vs. the previous close')}
+      ${watchMetric('Carry',carry==null?'–':(carry>0?'+':'')+carry.toFixed(2)+'%',carry==null?'var(--t3)':carry>0?BC.bull:carry<0?BC.bear:'var(--t3)','Policy-rate differential (base − quote)')}
+      ${watchMetric('COT '+(cotId||''),cm?cm.longPct.toFixed(0)+'% long':'–',cm?(cm.longPct>=60?BC.bull:cm.longPct<=40?BC.bear:'var(--t3)'):'var(--t3)','Share of speculative positions that are long')}
+      ${watchMetric('Next event',evTxt,evCol,ev?`${ev.currencies||''} ${ev.name||''} · ${ev.date} ${ev.time||''}`:'No upcoming event for either side')}
+    </div>
+    <textarea class="wt-note" data-pid="${escH(p.id)}" placeholder="Notes on ${escH(title)} — your plan, the level you are waiting for, why you are watching it..."
+      oninput="ar(this);watchSetNote('${escJH(p.id)}',this.value)"
+      onchange="markUserEditTs();watchSetNote('${escJH(p.id)}',this.value);save()">${escH(p.notes||'')}</textarea>
+  </div>`;
+}
+function watchSetNote(id,val){
+  const p=pairs.find(x=>x.id===id);
+  if(!p)return;
+  p.notes=val;
+  saveSoon();
+}
+function renderWatchlistTab(){
+  const el=document.getElementById('watchBody');if(!el)return;
+  // Fokus/Cursor ueber den Rebuild retten - dieselbe Absicherung wie in
+  // renderDetail() fuer die Quick Note: ein Hintergrund-Render (Feed-Poll,
+  // Cloud-Pull) darf einen gerade getippten Text nicht aus dem Feld werfen.
+  const act=document.activeElement;
+  const keep=(act&&act.classList&&act.classList.contains('wt-note'))
+    ?{id:act.getAttribute('data-pid'),s:act.selectionStart,e:act.selectionEnd}:null;
+  const list=watchlistPairs();
+  if(!list.length){
+    el.innerHTML=cloudNotConnectedNoticeHtml()+`<div class="wt-empty">
+      <div class="wt-empty-t">Your watchlist is empty.</div>
+      <div class="wt-empty-s">Star a pair in Set-ups, or add one directly — starring and watching are the same thing now.</div>
+      <button class="btn g" onclick="openAddPair('Watchlist')">＋ Add pair</button>
+    </div>`;
+    return;
+  }
+  const fx=list.filter(p=>isPureFxPair(p.name)),other=list.filter(p=>!isPureFxPair(p.name));
+  const sec=(t,arr)=>arr.length?`<div class="wt-sec">${escH(t)}</div>${arr.map(watchRowHtml).join('')}`:'';
+  el.innerHTML=cloudNotConnectedNoticeHtml()+sec('FX Pairs',fx)+sec('Other Assets',other);
+  el.querySelectorAll('.wt-note').forEach(t=>{ar(t);});
+  if(keep&&keep.id){
+    const t=el.querySelector(`.wt-note[data-pid="${keep.id}"]`);
+    if(t){t.focus();try{t.setSelectionRange(keep.s,keep.e);}catch(e){}}
+  }
+}
+
 function renderPairs(){
   const el=document.getElementById('pairCats');if(!el)return;
   // Die Paar-Overview lebt im selben Container wie die Liste (siehe Kommentar
@@ -10134,8 +10346,13 @@ function renderPairs(){
   // Watchlist) - daher pro Paar-Name nur EINMAL anzeigen, sonst doppelt es sich.
   const seenPair=new Set();
   const items=[
-    ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:p.marked,score:pairScore(p.name)})),
-    ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:s.marked,score:symScoreCmp(s)})),
+    // "marked" ist jetzt KEIN eigenes Feld mehr, sondern schlicht: steht das
+    // Paar in der Watchlist? (siehe isWatched/setWatched) - Stern und
+    // Watchlist sind damit ein und dasselbe, statt zwei Zustaende, die
+    // auseinanderlaufen koennen. Non-FX-Assets werden ueber ihren
+    // kanonischen Paarnamen ('GOLD' -> 'XAU/USD') gefuehrt.
+    ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:isWatched(p.name),score:pairScore(p.name)})),
+    ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:isWatched(watchPairNameForAsset(s.id)),score:symScoreCmp(s)})),
   ];
   // Filterleiste: einzelne Währungen auswählen -> nur Paare mit dieser Währung.
   const active=setupCcyFilter.length>0;
@@ -10185,7 +10402,7 @@ function renderPairs(){
     ${chip}
     ${rd}
     ${rowScore(it.score,it.kind==='asset'?'Symbol-Score':'Paar-Score',null,it.kind==='asset'?`openScoreInfoSym('${it.id}')`:`openScoreInfoPair('${escJH(it.name)}')`)}
-    <button class="dw-mark${it.marked?' on':''}" onclick="${it.kind==='asset'?`togSymMark('${it.id}')`:`togPairMark('${it.id}')`}" title="Gelb markieren">★</button>
+    <button class="dw-mark${it.marked?' on':''}" onclick="event.stopPropagation();toggleWatch('${it.kind==='asset'?escJH(watchPairNameForAsset(it.id)):escJH(it.name)}')" title="${it.marked?'Remove from the watchlist':'Add to the watchlist'}">★</button>
   </div>`;};
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
@@ -10206,8 +10423,11 @@ function renderPairs(){
   </div>`;
 }
 
-function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p){pushU();p.marked=!p.marked;save();renderPairs();if(curPage==='dash')renderDash();}}
-function togSymMark(id){const s=syms.find(x=>x.id===id);if(s){pushU();s.marked=!s.marked;save();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}}
+// Beide Altfunktionen leiten jetzt auf toggleWatch um - der Stern IST die
+// Watchlist. Sie bleiben bestehen, weil sie noch von anderen Stellen
+// aufgerufen werden (Dashboard-Asset-Zeilen, Paar-Overview-Kopf).
+function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p)toggleWatch(p.name);}
+function togSymMark(id){const s=syms.find(x=>x.id===id);if(s)toggleWatch(watchPairNameForAsset(s.id));}
 function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;save();renderPairs();if(curPage==='dash')renderDash();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();if(curPage==='dash')renderDash();}
 
@@ -12738,13 +12958,13 @@ function renderDash(){
       }
     }else if(w.type==='fx_bias'){
       const fxSorted=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
-      const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${s.marked?' row-marked':''}" onclick="gotoSym('${s.id}')">
+      const symRow=s=>`<div class="sym-row ${glowClass(s.bias)}${isWatched(watchPairNameForAsset(s.id))?' row-marked':''}" onclick="gotoSym('${s.id}')">
           <div class="sym-name">${escH(s.name)}</div>
           <span class="evt-flag-slot"></span>
           ${(isNonFx(s.id)&&tickerChipHtml(assetTickerInfo(s.id)))||'<span></span>'}
           ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
           <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
-          <button class="dw-mark${s.marked?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Als wichtig markieren">★</button>
+          <button class="dw-mark${isWatched(watchPairNameForAsset(s.id))?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Add to / remove from the watchlist">★</button>
         </div>`;
       // Nur noch die FX-Majors ("FX Bias") - die anderen Assets stehen bereits
       // in der Asset-Heatmap-Karte, daher hier nicht mehr doppelt (Nutzer-
@@ -12775,12 +12995,12 @@ function renderDash(){
       };
       const fxRow=p=>{
         const parts=p.name.split('/');
-        return`<div class="wl-row">
+        return`<div class="wl-row wl-click" onclick="gotoPairOverview('${escJH(p.name)}')" title="Open the full overview for this pair">
           <span class="wl-icons">${FX_FLAG[parts[0]]||''}<span class="wl-flag-sep">|</span>${FX_FLAG[parts[1]]||''}</span>
           <span class="wl-name">${escH(p.name)}</span>
           ${wlChg(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
-          <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
+          <button onclick="event.stopPropagation();delPair('${p.id}');renderDash()" class="dw-del" title="Remove from the watchlist">×</button>
         </div>`;
       };
       // Non-FX-"Paare" in der Watchlist (z.B. "XAU/USD") zeigen sich als das
@@ -12795,12 +13015,12 @@ function renderDash(){
         const score=sym?symScoreCmp(sym):pairScore(p.name);
         const chg=sym?assetTickerInfo(assetId):tickerInfoForItem('pair',p.name);
         const oc=sym?`openScoreInfoSym('${assetId}')`:`openScoreInfoPair('${escJH(p.name)}')`;
-        return`<div class="wl-row">
+        return`<div class="wl-row wl-click" onclick="gotoPairOverview('${escJH(p.name)}')" title="Open the full overview for this pair">
           <span class="wl-icons">${nonFxWatchIconHtml(assetId)}</span>
           <span class="wl-name">${escH(nm)}</span>
           ${wlChg(chg)}
           ${rowScore(score,sym?'Symbol-Score':'Paar-Score',null,oc)}
-          <button onclick="delPair('${p.id}');renderDash()" class="dw-del" title="Remove">×</button>
+          <button onclick="event.stopPropagation();delPair('${p.id}');renderDash()" class="dw-del" title="Remove from the watchlist">×</button>
         </div>`;
       };
       const fxItems=wp.filter(p=>isPureFxPair(p.name));
@@ -17110,14 +17330,14 @@ function renderRateProb(){
   scrollRateProbTo(rateProbFocus,false);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
 // zusammenmachen, Non-FX unter FX anreihen") - die 'cur'-Seite zeigt jetzt
 // immer ALLE SB_CATS-Kategorien (FX zuerst, dann Crypto/Metals/Energy/
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
-const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','carry','pairs','cal','notes'];
+const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','carry','pairs','watch','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   // Label 2026-08-03 von 'FX' auf 'Assets' umbenannt (Nutzer-Wunsch, per Foto):
@@ -17137,6 +17357,12 @@ const TABS={
   rate:{label:'Rate Probabilities',tab:'rate'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
+  // Eigener Tab statt eines Eintrags im Insights-Stapel (Nutzer-Wunsch
+  // 2026-08-07): die Watchlist ist keine Analyse-Ansicht, sondern der
+  // taegliche Arbeitszettel und gehoert direkt neben die Set-ups. Nicht in
+  // tabStacks eingereiht - renderTabBar rendert eine ID, die in keinem
+  // Stapel steht, automatisch als eigenen Top-Level-Button.
+  watch:{label:'Watchlist',tab:'watch'},
   cal:{label:'Calendar',tab:'cal'},
   // Label 2026-08-02 von 'Notes' auf 'Research' umbenannt (Nutzer-Wunsch);
   // der Schluessel 'notes' bleibt bewusst, damit gespeicherte tabStacks halten.
@@ -17338,6 +17564,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='rate'){renderRateProb();autoFetchRateProb();}
   else if(tab==='carry')renderCarry();
   else if(tab==='pairs')renderPairs();
+  else if(tab==='watch')renderWatchlistTab();
   else if(tab==='cal')renderCalendar();
   else if(tab==='notes')renderResearch();
 }
@@ -17354,6 +17581,7 @@ function rerender(){
   else if(curPage==='rate')renderRateProb();
   else if(curPage==='carry')renderCarry();
   else if(curPage==='pairs')renderPairs();
+  else if(curPage==='watch')renderWatchlistTab();
   else if(curPage==='cal')renderCalendar();
   else if(curPage==='notes')renderResearch();
 }
