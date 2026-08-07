@@ -1273,16 +1273,22 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    FX-/Non-FX-Block getrennt durch genau EINEN dezenten Strich (.wl-sep),
    sonst keine Zeilen-/Rahmenlinien. */
 .wl-table{display:flex;flex-direction:column}
-.wl-row{display:flex;align-items:center;gap:7px;padding:5px 2px}
+/* Nutzer-Wunsch 2026-08-07: "so gross, dass alles komplett lesbar ist".
+   Zeilen luftiger, Schrift groesser, und - der eigentliche Punkt - KEINE
+   Ellipse mehr auf dem Namen: die Spalten sind jetzt so bemessen, dass auch
+   der laengste Assetname ("S&P 500", "Nasdaq") vollstaendig hineinpasst,
+   statt abgeschnitten zu werden. */
+.wl-row{display:flex;align-items:center;gap:7px;padding:8px 2px;min-height:34px}
 .wl-row.wl-add{cursor:pointer;color:var(--t3);opacity:.75}
 .wl-row.wl-add:hover{opacity:1}
 .wl-row.wl-add .wl-name{color:inherit;font-weight:600}
-.wl-icons{display:inline-flex;align-items:center;gap:2px;font-size:14px;width:42px;flex-shrink:0;color:var(--t2)}
+.wl-icons{display:inline-flex;align-items:center;gap:2px;font-size:15px;width:44px;flex-shrink:0;color:var(--t2)}
 .wl-flag-sep{color:var(--t3);font-size:9px}
-.wl-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;font-size:13px;color:var(--t0)}
-.wl-chg{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;font-weight:700;width:58px;text-align:right;flex-shrink:0}
-.wl-row .row-score{width:32px;font-size:11px}
-.wl-sep{height:1px;background:var(--bd);opacity:.7;margin:6px 0}
+.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:14.5px;color:var(--t0)}
+.wl-chg{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:12.5px;font-weight:700;width:58px;text-align:right;flex-shrink:0}
+.wl-row .row-score{width:34px;font-size:12.5px}
+.wl-row .dw-del{font-size:16px;padding:0 3px}
+.wl-sep{height:1px;background:var(--bd);opacity:.7;margin:8px 0}
 /* Headlines-Karte (Nutzer-Wunsch 2026-08-06): kompakte Schlagzeilen-Liste,
    ganz rechte Dashboard-Spalte - Titel + Quelle/Zeit, ganze Zeile klickbar
    (oeffnet den Artikel in einem neuen Tab). */
@@ -2074,7 +2080,7 @@ body.dash-edit-mode .mw-bar{display:flex}
      links (beides nur noch das .dp/.pc-Padding), kein Restfreiraum mehr.
      Center (Globus) behaelt ihr bisheriges Breiten-Verhaeltnis (~1.2x) zu
      den drei gleich breiten Seiten-Spalten bei. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(200px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(200px,1fr);grid-template-areas:"top top top top" "left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(200px,1fr);grid-template-areas:"top top top top" "left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
   .dash-zone-top{grid-area:top;display:flex;flex-wrap:wrap;gap:8px}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
@@ -2125,7 +2131,7 @@ body.dash-edit-mode .mw-bar{display:flex}
    bei @media(min-width:1100px)) - hoehere Mindestbreiten fuer diesen
    Breakpoint, aber weiterhin volle Breitenausnutzung ohne rechten Rest. */
 @media(min-width:1400px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(232px,1fr) minmax(260px,1.2fr) minmax(232px,1fr) minmax(232px,1fr)}
+  #dashWidgets.dash-layout{grid-template-columns:minmax(320px,1fr) minmax(260px,1.2fr) minmax(232px,1fr) minmax(232px,1fr)}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -2430,12 +2436,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-315 — Sicherheits-Audit Runde 2: (1) safeUrl() eingefuehrt und auf ALLE 12 interpolierten href-Stellen gezogen. escH() schuetzt nur die HTML-Ebene, laesst das URL-SCHEMA aber unangetastet - eine javascript:-URL waere beim Klick ausgefuehrt worden. Relevant vor allem fuer die neue Schlagzeilen-Karte (Marketaux liefert fremde URLs) und die selbst hinterlegbaren Quellen-/Zinserwartungs-Links, die per Cloud-Sync auch von einem anderen Geraet kommen koennen. Nur http/https/mailto sowie relative Pfade und Anker passieren, alles andere wird zu \"#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-316 — Watchlist-Karte (Nutzer-Wunsch): Ueberschrift ist zurueck (der Kartenkopf war seit 312 unterdrueckt) und die Karte ist so dimensioniert, dass alle Zeilen vollstaendig lesbar sind - Zeilenhoehe 34px, Name 14,5px, keine Ellipse mehr auf dem Namen. Dafuer musste die linke Dashboard-Grid-Spalte breiter werden (min. 300px bzw. 320px ab dem grossen Breakpoint): ein min-width auf .dash-zone-left blieb wirkungslos, weil eine spaetere Regel es mit min-width:0 ueberschreibt - die Begrenzung sass in grid-template-columns selbst. Feste Spalten (Flaggen/Prozent/Score) leicht verschlankt, damit auch die laengeren FX-Namen bei 1100-1280px Fensterbreite passen. Per Playwright auf 5 Fensterbreiten geprueft: kein abgeschnittener Text, kein Ueberlauf."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-315</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-316</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -12037,10 +12043,11 @@ function renderDash(){
     // sie zu erreichen.
     // Market Watch und der Globus sind reine Chrome-lose Elemente ohne
     // Kartenkopf (Globus: "nur den Globus", Nutzer-Wunsch 2026-07-27) - ihre
-    // Steuerbuttons stecken oben in der mw-bar bzw. entfallen ganz. Watchlist
-    // (Nutzer-Wunsch 2026-08-06, Foto-Referenz) ist jetzt ebenfalls kartenkopf-
-    // los - "wie eine Art Tabelle... ohne oben eine Kategorie".
-    const hdrHtml=(w.type==='market_watch'||w.type==='motivation'||w.type==='watchlist')?'':`<div class="dw-hdr">
+    // Steuerbuttons stecken oben in der mw-bar bzw. entfallen ganz. Die
+    // Watchlist war zwischenzeitlich (2026-08-06) ebenfalls kartenkopflos,
+    // hat ihre Ueberschrift auf Nutzer-Wunsch 2026-08-07 aber wieder - die
+    // Tabellen-Optik der Zeilen bleibt davon unberuehrt.
+    const hdrHtml=(w.type==='market_watch'||w.type==='motivation')?'':`<div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${w.type==='notification'?`<span class="dw-hdlink" onclick="window.open('https://www.forexfactory.com/calendar','_blank','noopener')">View FF</span>`:''}
