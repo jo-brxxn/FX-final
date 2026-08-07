@@ -494,7 +494,7 @@
    ]
   ]
  },
- "updated": "2026-08-07T21:28:59.339Z",
+ "updated": "2026-08-07T22:27:03.982Z",
  "stockFng": {
   "value": 64,
   "label": "greed",
@@ -1404,8 +1404,8 @@
   "SILVER": {
    "value": 0.36,
    "proxy": "SLV",
-   "callVol": 390266,
-   "putVol": 138708,
+   "callVol": 390268,
+   "putVol": 138664,
    "series": [
     [
      "2025-07-14",
@@ -2516,8 +2516,8 @@
   "SP500": {
    "value": 0.9,
    "proxy": "SPY",
-   "callVol": 5912023,
-   "putVol": 5333470,
+   "callVol": 5911970,
+   "putVol": 5333452,
    "series": [
     [
      "2025-07-14",
@@ -4244,8 +4244,8 @@
   "JPY": {
    "value": 0.34,
    "proxy": "FXY",
-   "callVol": 7826,
-   "putVol": 2690,
+   "callVol": 7785,
+   "putVol": 2672,
    "series": [
     [
      "2025-07-14",
@@ -5300,8 +5300,8 @@
   "GOLD": {
    "value": 0.64,
    "proxy": "GLD",
-   "callVol": 387577,
-   "putVol": 247609,
+   "callVol": 387467,
+   "putVol": 247409,
    "series": [
     [
      "2025-07-14",
@@ -6905,7 +6905,7 @@
    "value": 0.51,
    "proxy": "IBIT",
    "callVol": 417693,
-   "putVol": 212770,
+   "putVol": 212763,
    "series": [
     [
      "2025-07-14",
@@ -8000,8 +8000,8 @@
   "NAS": {
    "value": 0.95,
    "proxy": "QQQ",
-   "callVol": 3577717,
-   "putVol": 3385997,
+   "callVol": 3577491,
+   "putVol": 3385954,
    "series": [
     [
      "2025-07-14",
@@ -9097,7 +9097,7 @@
    "value": 0.76,
    "proxy": "FXE",
    "callVol": 862,
-   "putVol": 653,
+   "putVol": 651,
    "series": [
     [
      "2025-07-14",
@@ -11185,7 +11185,7 @@
    "value": 4.06,
    "proxy": "UUP",
    "callVol": 774,
-   "putVol": 3146,
+   "putVol": 3142,
    "series": [
     [
      "2025-07-14",
