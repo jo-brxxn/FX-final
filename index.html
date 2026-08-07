@@ -2436,12 +2436,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-317 — 3 Jahre Tages-Preishistorie: neuer Workflow-Schritt laedt ueber denselben Yahoo-Chart-Endpunkt, der beim Seasonality-Schritt schon laeuft (range=3y, interval=1d), die fehlende Historie fuer alle 15 Assets nach und schreibt sie in dasselbe price_data.json - dadurch profitieren alle bestehenden Charts und Korrelationen sofort, ohne neuen Client-Code. Der Cap in price_data lag bei 100 Punkten und haette die Historie sonst direkt wieder abgeschnitten, jetzt 1100 (~3 Jahre Handelstage). Yahoo-Symbole bewusst so gewaehlt, dass sie dasselbe Underlying UND dieselbe invert-Konvention wie der TradingView-Schritt treffen (CHF/JPY/CAD sind USD/XXX-Notierungen), sonst zeigten alte und neue Punkte derselben Reihe gegenlaeufig. Rein additiv, bestehende Tage bleiben massgeblich; laeuft nur solange eine Reihe unter 700 Punkten liegt und ist danach ein No-Op. Merge-Logik gegen das echte price_data.json getestet: sortiert, duplikatfrei, bestehende Werte unveraendert, idempotent. Basis fuer Performance-Ranking, Korrelationen und die Marktrelevanz-Gewichtung."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-318 — Score-Gewichtung als zusaetzliche, abschaltbare Ebene (Nutzer-Wunsch): neuer Schalter im Cloud-Modal, \"classic\" bleibt Standard und rechnet bitgenau wie bisher (per Test bestaetigt: Faktor exakt 1 bei allen 186 Indikatoren, Zurueckschalten liefert identische Werte). \"normalized\" legt drei gemessene Gewichte darueber: (1) Ueberraschungsgroesse als z-Score gegen die Streuung der eigenen historischen Prognosefehler - erst dadurch sind NFP (Streuung ~37.000) und CPI (~0,04) vergleichbar, ab 5 Beobachtungen wie bei Citi, 86% der Indikatoren erfuellen das; (2) Zeit-Decay ZYKLUS-RELATIV statt in festen Tagen, damit ein Quartalswert langsamer altert als ein Wochenwert (Halbwertszeit = 1,5 eigene Release-Zyklen); (3) Marktrelevanz aus dem gemessenen durchschnittlichen Kursausschlag an den Release-Tagen des Indikators - greift erst mit genug Preishistorie, bis dahin bewusst neutral statt geraten. Faktor bewusst um 1,0 zentriert und auf 0,4-1,8 geklemmt: die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein frei laufender Faktor haette sie still bedeutungslos gemacht. Das Score-Modal schluesselt jeden Teilfaktor einzeln auf, damit die Ebene keine Blackbox ist. scoreMode an allen vier Sync-Ecken angebunden."#\". Gegen 17 Angriffsvarianten getestet (Gross-/Kleinschreibung, Tab-/Zeilenumbruch-/Nullbyte-Obfuskation, data:, vbscript:, Attribut-Ausbruch). (2) Fuenf onchange-Handler (Rubrik-/Notiz-Namen, Karten-Zusammenfassung, Asset-Notizen, Widget-Inhalt) aenderten Kernbaum-State und riefen save() ohne Schutzmarker - klickte man nach dem Tippen weg, waehrend im Hintergrund ein Feed-Update lief, hielt save()s Multi-Tab-Schutz die eigene Eingabe fuer eine Fremdaenderung und verwarf sie via adoptExternalState. markUserEditTs() ergaenzt. Keine Secrets im Code, in den Daten-JSONs oder in der Git-Historie gefunden; alle Workflows nutzen durchgehend ${{ secrets.X }}."Custom\"-Zeitraum in der Retail-Sentiment-Historie warf still einen ReferenceError. (4) Put/Call: die vier zu duennen FX-Proxys (GBP 155, AUD 288, CHF 331, CAD 614 Kontrakte/Tag) werden ausgeblendet statt nur mit ⚠ markiert. (5) Toter Code entfernt: verwaistes Datums-Modal samt 3 Funktionen und CSS (die Buttons dazu existierten seit dem Tabellen-Redesign nicht mehr) + researchRightPanelHtml.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-317</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-318</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2859,6 +2859,15 @@ function introLogin(){
       <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
       <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
     </div>
+    <!-- Score-Gewichtung (Nutzer-Wunsch 2026-08-07): bewusst als SCHALTER
+         neben den anderen Praeferenzen, nicht als stiller Umbau. "classic"
+         bleibt Standard und rechnet bitgenau wie bisher; "normalized" legt
+         die Gewichtung nach Ueberraschungsgroesse, Aktualitaet und gemessener
+         Marktreaktion darueber. Jederzeit zurueckschaltbar. -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
+      <span style="font-size:12px;color:var(--t2)">Score weighting<br><span style="font-size:10.5px;color:var(--t3)">normalized = size of surprise, freshness &amp; market impact</span></span>
+      <button class="btn" id="scoreModeBtn" onclick="toggleScoreMode()">Weighting: classic</button>
+    </div>
     <!-- Nutzer-Wunsch 2026-08-04: "genau wie den Code aktivieren und
          deaktivieren koennen, direkt unter dem Code" - gleiche Zeile/Stil
          wie der PIN-Toggle direkt darueber, exakt dasselbe An/Aus-Muster. -->
@@ -3259,10 +3268,198 @@ const NO_TREND_RUBS=new Set(['Interest Rates']);
 // abweichen kann. Rueckgabe: {w, base, trend, total, zero, noTrend}.
 // (Der fruehere ★-Wichtig-Bonus/+0.5 auf das Gewicht wurde 2026-07-28 auf
 // Nutzer-Wunsch komplett entfernt - siehe tech-design-Skill-Session.)
-function indScoreParts(ind,rub){
-  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false};
+// Score-Modus (Nutzer-Wunsch 2026-08-07): 'classic' = die bisherige,
+// vollstaendig im Kopf nachrechenbare Punktlogik (Standard). 'normalized' =
+// zusaetzliche Gewichtung nach Ueberraschungsgroesse, Aktualitaet und
+// gemessener Marktreaktion (siehe indNormFactor). Bewusst eine PRAEFERENZ
+// ausserhalb von snap()/Undo - der Modus ist eine Sicht auf dieselben Daten,
+// kein Inhalt. Anbindung an den Cross-Device-Sync deshalb nach dem
+// pinEnabled-Muster an allen vier Stellen (cloudPush/cloudPull/export/import)
+// plus markPrefEdit() in der Save-Funktion.
+let scoreMode=localStorage.getItem('fxpro_score_mode')==='normalized'?'normalized':'classic';
+function saveScoreMode(){
+  try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}
+  try{localStorage.setItem('fxpro_updated',new Date().toISOString());_lsUpdatedSeen=localStorage.getItem('fxpro_updated');}catch(e){}
+  markPrefEdit();cloudAutoSync();
+}
+function setScoreMode(m){
+  const n=(m==='normalized')?'normalized':'classic';
+  if(n===scoreMode)return;
+  scoreMode=n;
+  invalidateNormCache();invalidateCmpCache();
+  saveScoreMode();
+  recomputeAuto();save();rerender();updScoreModeBtn();
+}
+function toggleScoreMode(){setScoreMode(scoreMode==='normalized'?'classic':'normalized');}
+function updScoreModeBtn(){
+  const b=document.getElementById('scoreModeBtn');
+  if(b)b.textContent=scoreMode==='normalized'?'Weighting: normalized':'Weighting: classic';
+}
+
+// ══ SCORE-V2: NORMIERUNGS-EBENE (Nutzer-Wunsch 2026-08-07) ═══════════════
+// Bewusst eine ZUSAETZLICHE, abschaltbare Ebene ueber dem klassischen Score,
+// kein Ersatz: `scoreMode==='classic'` (Standard) rechnet exakt wie bisher,
+// jede Zahl bleibt im Kopf nachrechenbar. Erst `scoreMode==='normalized'`
+// multipliziert den Basis-Anteil jedes Indikators mit einem Faktor aus drei
+// Bausteinen, die Profi-Haeuser (Citi ESI) genauso verwenden:
+//
+//   1. UEBERRASCHUNGS-GROESSE  Ein CPI-Beat von 0,01 zaehlt heute wie einer
+//      von 0,8. Citi teilt die Ueberraschung durch die STREUUNG der
+//      historischen Prognosefehler DIESES Indikators - erst dadurch werden
+//      NFP (Streuung ~37.000) und CPI (Streuung ~0,04) vergleichbar. Ab 5
+//      historischen Beobachtungen (exakt Citis eigene Schwelle), sonst 1.
+//   2. ZEIT-DECAY, ZYKLUS-RELATIV  Ein Wert altert - aber ein Quartalswert
+//      langsamer als ein Wochenwert. Halbwertszeit ist deshalb NICHT fix,
+//      sondern skaliert mit dem eigenen Release-Zyklus. Ein 60 Tage altes BIP
+//      ist mitten im Zyklus (Gewicht ~0,73), ein 60 Tage alter Claims-Wert
+//      ist 8 Zyklen alt und praktisch wertlos.
+//   3. MARKTRELEVANZ  NFP bewegt den Markt um ein Vielfaches staerker als
+//      Bauinvestitionen. GEMESSEN, nicht geschaetzt: durchschnittlicher
+//      absoluter Tagesausschlag der Waehrung an den Release-Tagen dieses
+//      Indikators, geteilt durch den Ausschlag an gewoehnlichen Tagen.
+//
+// ⚠️ Der Faktor ist bewusst um 1,0 ZENTRIERT und geklemmt (0,4..1,8), nicht
+// frei skalierend. Die gesamte Downstream-Logik (Karten-Schwelle ±2,
+// Symbol-Schwelle ±3, Farbstufen) ist auf ±1-Einheiten kalibriert - ein frei
+// laufender Faktor haette diese Schwellen still bedeutungslos gemacht. So
+// bleibt die Groessenordnung erhalten und nur die GEWICHTUNG untereinander
+// verschiebt sich, was genau der gewuenschte Effekt ist.
+const SCORE_NORM_MIN=0.4,SCORE_NORM_MAX=1.8;
+const NORM_MIN_OBS=5;          // wie Citi: erst ab 5 Beobachtungen normieren
+const DECAY_HALFLIFE_CYCLES=1.5; // Halbwertszeit = 1,5 eigene Release-Zyklen
+
+// Release-Zyklus eines Indikators in Tagen. Bevorzugt aus dem tatsaechlichen
+// Abstand seiner Releases gemessen (Median, robust gegen Ausreisser), sonst
+// aus dem Intervall-Text, sonst 30 Tage als neutrale Annahme.
+function indCycleDays(ind){
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const ds=h.map(e=>e&&e[0]).filter(Boolean).sort();
+  if(ds.length>=4){
+    const gaps=[];
+    for(let i=1;i<ds.length;i++){
+      const g=(new Date(ds[i])-new Date(ds[i-1]))/86400000;
+      if(isFinite(g)&&g>0&&g<400)gaps.push(g);
+    }
+    if(gaps.length>=3){gaps.sort((a,b)=>a-b);return gaps[Math.floor(gaps.length/2)];}
+  }
+  const t=String(ind.interval||'').toLowerCase();
+  if(/week/.test(t))return 7;
+  if(/quarter/.test(t))return 90;
+  if(/year|annual/.test(t))return 365;
+  if(/month/.test(t))return 30;
+  return 30;
+}
+// Streuung der historischen Prognosefehler (actual - forecast). null, wenn zu
+// wenige Beobachtungen - dann wird NICHT normiert statt auf duenner Basis zu
+// raten.
+function indSurpriseSigma(ind){
+  if(ind._sigCache!==undefined&&ind._sigCacheLen===(ind.chartHist||[]).length)return ind._sigCache;
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const s=[];
+  h.forEach(e=>{
+    if(!Array.isArray(e)||e.length<3)return;
+    const a=parseNumLike(e[1]),f=parseNumLike(e[2]);
+    if(a==null||f==null)return;
+    s.push(a-f);
+  });
+  let out=null;
+  if(s.length>=NORM_MIN_OBS){
+    const m=s.reduce((x,y)=>x+y,0)/s.length;
+    const v=s.reduce((x,y)=>x+(y-m)*(y-m),0)/s.length;
+    const sd=Math.sqrt(v);
+    if(isFinite(sd)&&sd>0)out=sd;
+  }
+  try{Object.defineProperty(ind,'_sigCache',{value:out,writable:true,enumerable:false,configurable:true});
+      Object.defineProperty(ind,'_sigCacheLen',{value:h.length,writable:true,enumerable:false,configurable:true});}catch(e){}
+  return out;
+}
+// Wie gross war die AKTUELLE Ueberraschung, gemessen in eigenen
+// Standardabweichungen? 1,0 = eine durchschnittlich grosse Ueberraschung.
+function indSurpriseMag(ind){
+  const r=ind.research||{};
+  const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
+  if(a==null||f==null)return 1;
+  const sd=indSurpriseSigma(ind);
+  if(sd==null)return 1;
+  const z=Math.abs(a-f)/sd;
+  // z=1 (durchschnittliche Ueberraschung) -> Faktor 1. Wurzel daempft
+  // Extremwerte, damit ein 5-Sigma-Ausreisser nicht den halben Score traegt.
+  return Math.sqrt(Math.max(0.05,z));
+}
+// Zyklus-relativer Zeit-Decay: 0,5^(Alter / (1,5 * eigener Zyklus)).
+function indDecayWeight(ind){
+  const r=ind.research||{};
+  const d=r.date||ind.date;
+  if(!d)return 1;
+  const age=(Date.now()-new Date(d+'T00:00:00Z').getTime())/86400000;
+  if(!isFinite(age)||age<=0)return 1;
+  const half=DECAY_HALFLIFE_CYCLES*indCycleDays(ind);
+  if(!(half>0))return 1;
+  return Math.pow(0.5,age/half);
+}
+// Marktrelevanz: mittlerer absoluter Tagesausschlag der zugehoerigen Waehrung
+// an den Release-Tagen dieses Indikators, relativ zum Ausschlag an allen
+// Tagen. >1 = der Markt reagiert auf diesen Indikator ueberdurchschnittlich.
+// Braucht ausreichend Preishistorie - sonst neutral 1 statt geraten.
+function indMarketWeight(ind,symId){
+  const key=symId+'|'+ind.name;
+  if(_mktWeightCache[key]!==undefined)return _mktWeightCache[key];
+  let out=1;
+  const ser=priceSeriesFor(macroCcyFor(symId))||priceSeriesFor(symId);
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  if(ser&&ser.length>=60&&h.length>=NORM_MIN_OBS){
+    const px={};ser.forEach(e=>{if(e&&e[0]!=null&&e[1]!=null)px[e[0]]=Number(e[1]);});
+    const dates=Object.keys(px).sort();
+    const moves={};
+    for(let i=1;i<dates.length;i++){
+      const p0=px[dates[i-1]],p1=px[dates[i]];
+      if(p0>0&&isFinite(p1))moves[dates[i]]=Math.abs(p1/p0-1);
+    }
+    const all=Object.values(moves);
+    if(all.length>=40){
+      const baseline=all.reduce((a,b)=>a+b,0)/all.length;
+      const hits=[];
+      h.forEach(e=>{const d=e&&e[0];if(d&&moves[d]!=null)hits.push(moves[d]);});
+      if(hits.length>=NORM_MIN_OBS&&baseline>0){
+        const avg=hits.reduce((a,b)=>a+b,0)/hits.length;
+        // Wurzel daempft auch hier - ein Indikator soll hoechstens etwa
+        // doppelt so schwer wiegen, nicht zehnfach.
+        out=Math.sqrt(Math.max(0.1,avg/baseline));
+      }
+    }
+  }
+  _mktWeightCache[key]=out;
+  return out;
+}
+let _mktWeightCache={};
+function invalidateNormCache(){_mktWeightCache={};}
+// Gesamtfaktor, um 1,0 zentriert und geklemmt (siehe Kommentar oben).
+function indNormFactor(ind,symId){
+  if(scoreMode!=='normalized')return 1;
+  const f=indSurpriseMag(ind)*indDecayWeight(ind)*indMarketWeight(ind,symId);
+  if(!isFinite(f))return 1;
+  return Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,f));
+}
+// Aufschluesselung fuer das Score-Modal - damit die Ebene NICHT als Blackbox
+// wirkt, sondern jeder Teilfaktor einzeln nachvollziehbar bleibt.
+function indNormBreakdown(ind,symId){
+  const mag=indSurpriseMag(ind),dec=indDecayWeight(ind),mkt=indMarketWeight(ind,symId);
+  const sd=indSurpriseSigma(ind);
+  const r=ind.research||{};
+  const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
+  const z=(a!=null&&f!=null&&sd)?Math.abs(a-f)/sd:null;
+  return{mag,dec,mkt,sigma:sd,z,cycle:indCycleDays(ind),
+         total:Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,mag*dec*mkt))};
+}
+
+function indScoreParts(ind,rub,symId){
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false,norm:1};
   const w=indBaseWeight(ind,rub);
-  const base=biasScore(ind.bias)*w;
+  // norm ist im Standardmodus IMMER exakt 1 - der klassische Score bleibt
+  // damit bitgenau unveraendert. Nur bei scoreMode==='normalized' greift die
+  // zusaetzliche Gewichtung (siehe indNormFactor weiter oben).
+  const norm=indNormFactor(ind,symId||(typeof selId!=='undefined'?selId:null));
+  const base=biasScore(ind.bias)*w*norm;
   // Revisions-Anteil (Nutzer-Wunsch 2026-07-21): wurde das Previous dieses
   // Release gegenueber dem urspruenglich gemeldeten Vor-Actual revidiert
   // (ind.revBias, gesetzt in applyIndDataFeed aus dem Workflow-Feld
@@ -3274,7 +3471,7 @@ function indScoreParts(ind,rub){
   // (Step-Signal ohne Forecast 0,5, kleine COT-WoW-Bewegung 0,5). Gilt nur
   // fuer den aktuellen Release-Zyklus (verschwindet mit dem naechsten
   // Release automatisch, da der Feed revisedFrom dann nicht mehr traegt).
-  const rev=ind.revBias?biasScore(ind.revBias)*0.5*w:0;
+  const rev=ind.revBias?biasScore(ind.revBias)*0.5*w*norm:0;
   // Bond-Renditen bleiben ohne Trend-Anteil, auch nachdem sie (Nutzer-Wunsch
   // 2026-07-20) aus der Interest-Rates- in die Inflation-Karte umgezogen
   // sind - die Nutzer-Entscheidung "kein Trend-Bonus fuer Renditen" bezog
@@ -3282,7 +3479,7 @@ function indScoreParts(ind,rub){
   // gerade angezeigt werden. Deshalb zusaetzlich zur Rubrik-Pruefung direkt
   // ueber BOND_HALF_PT geprueft (indikator-spezifisch, kartenunabhaengig).
   const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name))||BOND_HALF_PT.has(ind.name);
-  if(noTrend)return{w,base,trend:0,rev:0,total:base,zero:false,noTrend:true};
+  if(noTrend)return{w,base,trend:0,rev:0,total:base,zero:false,noTrend:true,norm};
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
   //   (optionale) bestaetigte Trend kommt separat ueber ind.trendBias dazu.
@@ -3298,7 +3495,7 @@ function indScoreParts(ind,rub){
   const trendAdj=ind.stepDriven
     ?(ind.trendDriven?biasScore(ind.bias)*mag:0)
     :biasScore(ind.trendBias||'neu')*mag;
-  return{w,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false};
+  return{w,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false,norm};
 }
 function indScore(ind,rub){return indScoreParts(ind,rub).total;}
 // ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
@@ -3319,6 +3516,17 @@ function scoreInfoIndRow(ind,rub){
     if(ind.research&&ind.research.sent)bits.push('contrarian sentiment, half weight, only counts at extremes');
     const partners=indGroupPartners(ind,rub);
     if(partners)bits.push('shares weight with '+partners.join(' + '));
+    // Normierungs-Ebene NIE als blosse Zahl stehen lassen: solange sie aktiv
+    // ist, wird jeder Teilfaktor einzeln aufgeschluesselt, damit der Beitrag
+    // nachvollziehbar bleibt statt zu einer Blackbox zu werden.
+    if(scoreMode==='normalized'&&p.norm!=null&&Math.abs(p.norm-1)>0.005){
+      const nb=indNormBreakdown(ind,typeof selId!=='undefined'?selId:null);
+      const parts=[];
+      if(nb.z!=null)parts.push(`surprise ${nb.z.toFixed(2)}σ → ×${nb.mag.toFixed(2)}`);
+      if(Math.abs(nb.dec-1)>0.005)parts.push(`age → ×${nb.dec.toFixed(2)} (${Math.round(nb.cycle)}d cycle)`);
+      if(Math.abs(nb.mkt-1)>0.005)parts.push(`market impact → ×${nb.mkt.toFixed(2)}`);
+      bits.push(`weighted ×${p.norm.toFixed(2)}${parts.length?' ('+parts.join(', ')+')':''}`);
+    }
     sub=bits.join(' · ');
   }
   // Release-Alter: macht sichtbar, wie frisch das Signal hinter dem Beitrag
@@ -6883,15 +7091,15 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6907,6 +7115,7 @@ function cloudHeaders(cfg){
 function openCloudM(fromIntro){
   try{updPinToggleBtn()}catch(e){}
   try{updIntroAnimToggleBtn()}catch(e){}
+  try{updScoreModeBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
   document.getElementById('cloudPilotName').value=cfg.pilotName||'';
@@ -7122,7 +7331,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -7229,6 +7438,7 @@ async function cloudPull(manual,forceOverwrite){
       // 2026-07-27) - anders als compactLevel/designHue direkt daneben wurde
       // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
       // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
+      if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){scoreMode=cd.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
