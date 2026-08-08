@@ -2467,6 +2467,29 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .wl-row.wl-click{cursor:pointer}
 @media(hover:hover){.wl-row.wl-click:hover .wl-name{text-decoration:underline;color:var(--t0)}}
 @media(max-width:560px){.wt-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ── Meldung: veraltete Indikatoren (Nutzer-Auftrag 2026-08-08) ─────────
+   Optik nach dem bestehenden Muster der Dashboard-Meldungen: neutraler
+   Grund, farbiger linker Randstreifen, keine Vollflaeche. Amber statt Rot -
+   es ist ein Hinweis, kein Fehler. */
+.stale-notify-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--amber);border-radius:var(--r);padding:11px 13px;margin-bottom:9px}
+.stale-notify-hd{display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);font-weight:700;color:var(--amber);margin-bottom:8px}
+.stale-notify-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:8px;align-items:baseline;width:100%;background:none;border:none;padding:4px 0;cursor:pointer;text-align:left;border-bottom:1px solid var(--bd2)}
+.stale-notify-row:last-of-type{border-bottom:none}
+@media(hover:hover){.stale-notify-row:hover .stale-notify-name{color:var(--t0);text-decoration:underline}}
+.stale-notify-sym{font-size:var(--fs-xs);font-weight:800;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.stale-notify-name{font-size:var(--fs-sm);color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stale-notify-age{font-size:var(--fs-xs);font-weight:700;color:var(--amber);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.stale-notify-more{font-size:var(--fs-xs);color:var(--t3);padding-top:5px}
+.stale-notify-note{font-size:var(--fs-2xs);color:var(--t3);line-height:1.5;margin-top:8px}
+/* Veralteter Indikator in der Tabelle: gedaempft + eigener Hinweis, aber
+   NICHT versteckt - der Wert bleibt lesbar, er zaehlt nur nicht mehr. */
+.ind-row.ind-stale .ir-name-txt{opacity:.55}
+.ir-stale{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
+
+/* Duenne Datenbasis im Surprise Index sichtbar (Audit 2026-08-08) */
+.esi-thin-mark{margin-left:4px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-row.esi-thin .perf-name{color:var(--t2)}
 </style>
 </head>
 <body>
@@ -2585,12 +2608,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-328 — Dashboard-Typografie und Flaggen nach recherchierten Design-Grundsaetzen (Nutzer-Wunsch). Messung vorab: im Dashboard kamen 33 verschiedene Groessen/Gewichts-Kombinationen vor (8px bis 32px, dazwischen 9.5, 10.5, 11.5, 12.5) - also gar keine Skala, sondern pro Stelle ad hoc gewaehlte Werte. Der Kartentitel war mit 11px sogar KLEINER als der Fliesstext daneben (12px), die Hierarchie war umgekehrt. Jetzt sieben feste Stufen als CSS-Variablen (30/22/17/15/13/12/11/10px, Schrittverhaeltnis ~1,15-1,3, alles auf ganzen Pixeln). Grundsatz dahinter (Stephen Few, Information Dashboard Design; Tuftes Data-Ink-Ratio; uebliche Modular-Scale-Praxis): wenige Stufen erzwingen Hierarchie, viele loesen sie auf. Kartentitel von 11px Mikro-Versalien auf 15px im Fliesstext-Schnitt - er ist jetzt die groesste Schrift der Karte ausser der Leitzahl. Versalien und weites Sperren entfallen, beides erschwert das Lesen bei dieser Groesse. Zahlen durchgehend Gewicht 800 mit Tabellenziffern, Beschriftungen klein in Grossbuchstaben. FLAGGEN: die Majors-Schiene ist das erste Element im Blickverlauf (F-Muster) und trug als einzige Asset-Liste gar keine Laenderkennung - jetzt Flagge vor dem Kuerzel, bewusst 18px gegen 13px Text, weil sie hier das Erkennungsmerkmal ist und als Farbfleck traegt. Watchlist-Flaggen von 15 auf 17px. KARTEN-ABSCHLUSS (Nutzer-Wunsch woertlich): nichts wird gestreckt, um Luecken zu fuellen - align-items:start ueberall, per Test bestaetigt null gestreckte Karten. Stattdessen zieht eine Haarlinie ueber der Fussleiste einen klaren Schlussstrich, wodurch die unterschiedlich hohen Spaltenfuesse wie Zeitungsspalten gewollt wirken statt unfertig. Spalten-Spreizung von 175 auf 127px gesunken. Kein horizontaler Ueberlauf auf 1920/1500/1180/900/430px, 15 Tabs fehlerfrei.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-329 — Vier Punkte aus dem Audit umgesetzt. (1) ALTERSGRENZE: ein Release, das mehr als 2 eigene Zyklen ueberfaellig ist, zaehlt nicht mehr in den Score. Anlass war AUD Retail Sales mit einem Release vom 31.07.2025 - 372 Tage alt, 14,9 Zyklen ueberfaellig, mit vollem +1 im Score; die Reihe ist in ind_data.json komplett zu Ende, das australische Statistikamt hat sie 2025 ersetzt. Ein toter Indikator scorte also unbefristet weiter. Citi und Bloomberg loesen das beide mit einem HARTEN Schnitt statt mit Ausfaden (CESI: rollierendes Drei-Monats-Fenster). Relativ zum eigenen Zyklus gemessen, damit Quartalswerte nicht benachteiligt werden. Aktuell betroffen: 22 Indikatoren, alle sichtbar mit OUT-OF-DATE-Marke an der Zeile, eigener Dashboard-Meldung und Klartext im Score-Modal - sie erscheinen dort ausdruecklich EINZELN statt in der Sammelzeile 'N weitere bei 0 (neutral)', denn neutral sind sie ja gerade nicht. Manuelle und Bond/COT/Sentiment-Indikatoren sind per Test nachweislich nicht betroffen. (2) TREND-HISTORIE auf den revidierten Stand: valHist trug bisher immer den Erstdruck. Bei GBP Unemployment Claims stand dort 26.800/26.500/31.200/6.700 - die 31.200 wurden aber auf 1.300 revidiert, mit dem korrigierten Wert dreht das Signal. Bei 3 von 8 Revisionen kippte dadurch die Richtung. Standard aus der Real-Time-Data-Praxis: Ueberraschung gegen den Erstdruck, Niveau und Pfad immer auf neuestem Stand. Alle 8 aktiven Revisionen jetzt korrekt uebernommen. (3) SURPRISE INDEX weist duenne Basis aus: USD stuetzt sich auf 18 Indikatoren, CAD auf 4 - unter 8 steht die Zahl jetzt neben dem Kuerzel und im Fusstext. (4) AMZN und NVDA bekommen Preisdaten (TradingView live + Yahoo-Dreijahres-Backfill) - sie waren gelistet, hatten aber keine Reihe und erschienen ueberall als Strich.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-328</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-329</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3614,8 +3637,68 @@ function indNormBreakdown(ind,symId){
          total:Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,mag*dec*mkt))};
 }
 
+// ══ ALTERSGRENZE ("stale guard") ═════════════════════════════════════════
+// Nutzer-Auftrag 2026-08-08 nach dem Audit. Gemessener Anlass: 25 der 102
+// score-treibenden Werte waren aelter als 60 Tage, darunter AUD Retail Sales
+// mit einem Release vom 31.07.2025 - 372 Tage alt, 14,9 eigene Zyklen
+// ueberfaellig, und trotzdem mit vollem +1 im Score. Nachgesehen: die Reihe
+// ist in ind_data.json komplett zu Ende, das australische Statistikamt hat
+// sie 2025 durch einen anderen Indikator ersetzt. Ein toter Indikator scorte
+// also unbefristet weiter.
+//
+// Sowohl Citi als auch Bloomberg loesen das mit einem HARTEN Schnitt statt
+// mit Ausfaden: das CESI haelt ein rollierendes Fenster von rund drei
+// Monaten, aeltere Beobachtungen sind draussen - nicht auf kleinem Gewicht,
+// sondern weg. Bloomberg markiert eingestellte Reihen und nimmt sie aus den
+// Berechnungen. Beides folgt derselben Ueberlegung: ein Wert ist entweder
+// aktuell genug oder er ist es nicht, ein Zwischenzustand hilft niemandem.
+//
+// Umgesetzt relativ zum EIGENEN Zyklus des Indikators statt in festen Tagen -
+// ein Quartalswert darf laenger gelten als ein Wochenwert, sonst waeren
+// quartalsweise berichtende Volkswirtschaften strukturell benachteiligt
+// (dieselbe Ueberlegung wie beim zyklus-relativen Decay im normalisierten
+// Modus).
+const IND_STALE_CYCLES=2;
+// null = nicht bewertbar (kein Datum, kein echter Release-Indikator).
+// Zahl = wie viele eigene Zyklen der Wert ueberfaellig ist.
+function indOverdueCycles(ind){
+  const r=ind&&ind.research;
+  if(!r||!r.date)return null;
+  // Rein manuelle/qualitative Indikatoren (CB Tone, Geopolitics, Risk
+  // Correlation) haben bewusst kein Release-Konzept - sie altern nicht.
+  if(r.bond||r.cot||r.sent)return null;
+  const cyc=indCycleDays(ind);
+  if(!isFinite(cyc)||cyc<=0)return null;
+  const age=(new Date(todayStr())-new Date(String(r.date).slice(0,10)))/86400000;
+  if(!isFinite(age)||age<0)return null;
+  return age/cyc;
+}
+function indIsStale(ind){
+  const c=indOverdueCycles(ind);
+  return c!=null&&c>IND_STALE_CYCLES;
+}
+// Alle veralteten Indikatoren fuer die Dashboard-Meldung (Projekt-Grundsatz:
+// wenn ein echter Wert fehlt, wird er nicht geschaetzt, sondern gemeldet).
+function staleIndicators(){
+  const out=[];
+  (syms||[]).forEach(s=>{
+    if(!FX.includes(s.id))return;   // Non-FX spiegelt ohnehin nur
+    (s.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{
+      const c=indOverdueCycles(i);
+      if(c==null||c<=IND_STALE_CYCLES)return;
+      out.push({sym:s.id,name:i.displayName||i.name,date:i.research.date,
+        cycles:Math.round(c*10)/10,cycle:Math.round(indCycleDays(i))});
+    }));
+  });
+  out.sort((a,b)=>b.cycles-a.cycles);
+  return out;
+}
 function indScoreParts(ind,rub,symId){
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false,norm:1};
+  // Veralteter Wert: traegt 0, bleibt aber vollstaendig sichtbar (eigener
+  // Hinweis an der Zeile + Dashboard-Meldung). Bewusst VOR jeder weiteren
+  // Rechnung, damit auch Gewicht/Normierung gar nicht erst greifen.
+  if(indIsStale(ind))return{w:0,base:0,trend:0,rev:0,total:0,zero:false,stale:true,noTrend:false,norm:1};
   const w=indBaseWeight(ind,rub);
   // norm ist im Standardmodus IMMER exakt 1 - der klassische Score bleibt
   // damit bitgenau unveraendert. Nur bei scoreMode==='normalized' greift die
@@ -3712,6 +3795,10 @@ function scoreInfoIndRow(ind,rub){
   const p=indScoreParts(ind,rub);
   let sub;
   if(p.zero)sub='display-only, counts 0 by design';
+  else if(p.stale){
+    const c=indOverdueCycles(ind);
+    sub=`release ${c?c.toFixed(1):'?'}× its own cycle overdue (last ${escH((ind.research&&ind.research.date)||'?')}) — excluded from the score until a new one arrives`;
+  }
   else{
     const bits=[];
     const bl=ind.bias==='bull'?'Bullish':ind.bias==='bear'?'Bearish':'Neutral';
@@ -3766,7 +3853,12 @@ function openScoreInfoRub(symId,rubId){
   const sym=syms.find(s=>s.id===symId);if(!sym)return;
   const rub=(sym.rubrics||[]).find(r=>r.id===rubId);if(!rub)return;
   const inds=rub.indicators||[];
-  const active=inds.filter(i=>indScoreParts(i,rub).total!==0);
+  // Veraltete Indikatoren tragen zwar 0 bei, duerfen aber NICHT in der
+  // "N weitere bei 0 (neutral / kein Signal)"-Sammelzeile verschwinden -
+  // sie sind eben NICHT neutral, sondern ausgeschlossen, und genau das
+  // muss man hier sehen koennen (sonst sucht man vergeblich, warum ein
+  // sichtbar bullisher Indikator nichts beitraegt).
+  const active=inds.filter(i=>indScoreParts(i,rub).total!==0||indIsStale(i));
   const zero=inds.length-active.length;
   let html=active.map(i=>scoreInfoIndRow(i,rub)).join('');
   if(!active.length)html+='<div style="color:var(--t3)">No indicator currently contributes to this card\'s score.</div>';
@@ -3781,7 +3873,8 @@ function openScoreInfoSym(symId){
   let html='';
   (sym.rubrics||[]).forEach(rub=>{
     const inds=rub.indicators||[];
-    const active=inds.filter(i=>indScoreParts(i,rub).total!==0);
+    // Veraltete auch hier explizit listen (siehe Kommentar in openScoreInfoRub).
+    const active=inds.filter(i=>indScoreParts(i,rub).total!==0||indIsStale(i));
     const sc=rubScore(rub);
     html+=`<div style="display:flex;justify-content:space-between;gap:10px;margin:9px 0 4px;font-weight:700;color:var(--t2)"><span>${escH(rub.name)}</span><span style="color:${scoreColor(sc)}">${fmtScNum(sc)}</span></div>`;
     if(active.length)html+=active.map(i=>scoreInfoIndRow(i,rub)).join('');
@@ -5061,6 +5154,39 @@ function trackIndValues(ind,ccy,dateKey,actualRaw,prevRaw){
 // angesammelte Historie samt Recherche-Backfill (letzterer ist teils nur
 // approximiert): ab 3 Punkten wird immer uebernommen, darunter nur, wenn der
 // Feed mehr weiss als die lokale Historie. Rueckgabe true bei Aenderung.
+// Korrigiert den vorletzten Punkt der Trend-Historie auf den REVIDIERTEN
+// Wert, sobald der Feed eine Revision meldet (Audit-Fund 2026-08-08).
+//
+// Gemessener Anlass: valHist trug durchgehend den URSPRUENGLICH gemeldeten
+// Wert, nie den revidierten. Bei GBP Unemployment Claims stand dort
+// 26.800 -> 26.500 -> 31.200 -> 6.700, was wie ein massiver Rueckgang der
+// Arbeitslosmeldungen aussieht. Die 31.200 wurden aber auf 1.300 revidiert -
+// mit dem korrigierten Wert steigen die Meldungen wieder. Bei 3 von 8
+// aktiven Revisionen kippte dadurch die Signalrichtung.
+//
+// Die Regel dahinter ist der Standard aus der Real-Time-Data-Praxis und bei
+// Bloomberg/Nowcasting-Modellen: die UEBERRASCHUNG wird gegen den Erstdruck
+// gemessen und nie neu geschrieben, das NIVEAU und der PFAD dagegen immer
+// auf dem neuesten Stand gefuehrt - man will den heute besten Schaetzer der
+// Wirtschaftslage, nicht den, den das Amt inzwischen selbst zurueckgezogen
+// hat. valHist ist genau eine Pfad-Groesse (sie speist das Step-Signal fuer
+// die 38 Indikatoren ohne Forecast) und gehoert damit auf den neuen Stand.
+//
+// Nur der vorletzte Punkt wird angefasst, und nur wenn dort exakt der als
+// revidiert gemeldete Ursprungswert steht - aeltere Punkte bleiben
+// unberuehrt (fuer die liefert der Feed keine Revisionsinformation, und
+// raten waere schlechter als nichts zu tun).
+function applyRevisionToValHist(ind,f){
+  if(!f||f.revisedFrom==null||f.revisedFrom==='')return false;
+  const h=ind&&Array.isArray(ind.valHist)?ind.valHist:null;
+  if(!h||h.length<2)return false;
+  const orig=parseNumLike(f.revisedFrom),rev=parseNumLike(f.previous);
+  if(orig==null||rev==null||orig===rev)return false;
+  const i=h.length-2;
+  if(Math.abs(h[i]-orig)>1e-9)return false;
+  h[i]=rev;
+  return true;
+}
 function adoptFeedHistory(ind,f){
   if(!f||!Array.isArray(f.history)||!f.history.length)return false;
   const pairs=f.history.map(h=>[String((h&&h[0])||'').slice(0,10),parseNumLike(h&&h[1])]).filter(p=>p[1]!=null);
@@ -8209,8 +8335,10 @@ function renderIndRow(ind,ri,ii,rub,total){
   const spark=indSparklineSvg(ind,bco);
   const lockIc=ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, gear icon to configure)">${icn('link',11)}</span>`:rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
   const isOpen=!!indDetailsOpen[ind.id];
-  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
-    <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}
+  const stale=indIsStale(ind);
+  const staleBadge=stale?`<span class="ir-stale" title="Last release ${escH((ind.research&&ind.research.date)||'?')} — more than ${IND_STALE_CYCLES} of its own release cycles overdue, so it no longer counts toward the score. The value stays visible.">OUT OF DATE</span>`:'';
+  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
+    <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}${staleBadge}
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -11210,6 +11338,11 @@ function applyIndDataFeed(){
         if(fx){
           if(adoptFeedHistory(ind,f))changed=true;
           if(trackIndValues(ind,macroCcyFor(c.id),f.date,na,np))changed=true;
+          // Revision NACH beiden Historien-Schritten einspielen: adoptFeedHistory
+          // ueberschreibt valHist komplett aus der Feed-Reihe (die weiter den
+          // Erstdruck traegt), eine vorher gesetzte Korrektur waere danach
+          // wieder weg (siehe applyRevisionToValHist).
+          if(applyRevisionToValHist(ind,f))changed=true;
           if(applyTrendModel(ind,nf==null,false,indBiasInputSig(na,nf,np,f.date)))changed=true;
         }
         // Verlaufschart-Historie unabhaengig von fx/non-fx (non-FX-Assets
@@ -12483,6 +12616,25 @@ const W_TYPES=[
 // Kompat-Wrapper fuer die bestehenden Aufrufstellen (Boot, cloudPull,
 // Dismiss-Klick) erhalten - stossen einfach ein renderDash() an, exakt wie
 // jede andere State-Aenderung, die die Notifications-Karte betrifft.
+// Dashboard-Meldung fuer veraltete Indikatoren (Projekt-Grundsatz: fehlt ein
+// echter Wert, wird er nicht geschaetzt, sondern gemeldet). Klick springt zum
+// betroffenen Asset, damit man direkt sieht, welcher Wert haengt.
+function staleNotifyHtml(){
+  const st=staleIndicators();
+  if(!st.length)return'';
+  const top=st.slice(0,4);
+  const rest=st.length-top.length;
+  return`<div class="stale-notify-card">
+    <div class="stale-notify-hd">${icn('clock',13)}<span>${st.length} indicator${st.length>1?'s':''} out of date — excluded from the score</span></div>
+    ${top.map(x=>`<button class="stale-notify-row" onclick="gotoSym('${escJH(x.sym)}')" title="Last release ${escH(x.date)} · normal cycle about ${x.cycle} days">
+      <span class="stale-notify-sym">${escH(x.sym)}</span>
+      <span class="stale-notify-name">${escH(x.name)}</span>
+      <span class="stale-notify-age">${x.cycles}× overdue</span>
+    </button>`).join('')}
+    ${rest>0?`<div class="stale-notify-more">and ${rest} more</div>`:''}
+    <div class="stale-notify-note">A release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting — it is either badly delayed or the series was discontinued. The value stays visible on the asset page.</div>
+  </div>`;
+}
 function cotNotifyHtml(){
   if(!cotWarningActive())return'';
   return`<div class="cot-notify-card" onclick="showTab('cot')">
@@ -12962,7 +13114,10 @@ function corrWarnHtml(){
 // ausschlaegt als eine mit wenigen quartalsweisen (siehe Diskussion
 // 2026-08-07: Citi veroeffentlicht Summen und vergleicht Laender deshalb
 // bewusst NICHT absolut - wir muessen es, also normieren wir).
-const ESI_HALFLIFE_D=45;   // Citi-Konvention
+const ESI_HALFLIFE_D=45;
+// Ab wie vielen Indikatoren gilt die Basis als belastbar. Gemessen 2026-08-08:
+// USD 18, EUR 9, GBP 9, CHF 6, JPY 6, AUD 5, NZD 5, CAD 4.
+const ESI_THIN_N=8;   // Citi-Konvention
 function esiForCcy(ccy){
   const sym=syms.find(s=>s.id===ccy);
   if(!sym)return null;
@@ -12997,13 +13152,22 @@ function esiCardHtml(){
   const max=Math.max(...rows.map(r=>Math.abs(r.val)))||1;
   const body=rows.map(r=>{
     const col=r.val>0.05?BC.bull:r.val<-0.05?BC.bear:'var(--t3)';
-    return`<div class="perf-row" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}">
-      <span class="perf-name" style="flex:0 0 44px">${escH(r.c)}</span>
+    // Duenne Basis sichtbar machen (Audit 2026-08-08): gemessen stuetzt sich
+    // USD auf 18 Indikatoren, CAD auf 4. Ein Durchschnitt aus 4 Beobachtungen
+    // steht sonst gleichberechtigt neben einem aus 18, ohne dass man es
+    // sieht. Citi hat dieses Problem nicht, weil Citi Laender gar nicht
+    // absolut vergleicht - wir muessen es, also wird die Basis ausgewiesen
+    // statt sie zu verschweigen (Projekt-Grundsatz: lieber melden als so
+    // tun, als waere die Zahl gleich belastbar).
+    const duenn=r.n<ESI_THIN_N;
+    return`<div class="perf-row${duenn?' esi-thin':''}" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}${duenn?` · thin basis: fewer than ${ESI_THIN_N} indicators, read with care`:''}">
+      <span class="perf-name" style="flex:0 0 44px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
       <span class="perf-barwrap esi-wrap"><span class="esi-zero"></span><span class="perf-bar esi-bar" style="left:${r.val>=0?50:50-Math.abs(r.val)/max*50}%;width:${(Math.abs(r.val)/max*50).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
     </div>`;}).join('');
+  const thin=rows.filter(r=>r.n<ESI_THIN_N);
   return`<div class="perf-list">${body}</div>`+
-    `<div class="dw-note">Data vs. forecast in own standard deviations, weighted by age (45-day half-life) — positive = beating expectations lately. Averaged, not summed, so currencies with fewer indicators are not penalised.</div>`;
+    `<div class="dw-note">Data vs. forecast in own standard deviations, weighted by age (45-day half-life) — positive = beating expectations lately. Averaged, not summed, so currencies with fewer indicators are not penalised.${thin.length?` <b>${thin.map(r=>escH(r.c)).join(', ')}</b> rest on fewer than ${ESI_THIN_N} indicators (count shown next to the code) — the same number is less reliable there.`:''}</div>`;
 }
 
 function renderDash(){
@@ -13294,7 +13458,7 @@ function renderDash(){
       // per Ausrufezeichen, stattdessen eine Notification sobald das Event
       // eingetroffen ist"). Der "View FF"-Link im Kartenkopf (hdrHtml weiter
       // unten) fuehrt direkt zum Forex-Factory-Kalender.
-      const popups=cloudNotConnectedNoticeHtml()+cotNotifyHtml()+riskEnvRemindHtml();
+      const popups=cloudNotConnectedNoticeHtml()+staleNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
       const evtNotifs=[...inbox].filter(m=>m.kind==='evt').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,6);
       const evtRows=evtNotifs.map(n=>{
         const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
