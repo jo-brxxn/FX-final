@@ -976,10 +976,33 @@ jobs:
               {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="GBP"&&/claimant count/.test(t)},
+              // Lohnwachstum war bis 2026-08-08 auf USD gegated - dabei fuehrt
+              // TradingView fuer sechs weitere Waehrungen eine passende Reihe
+              // MIT Actual (per TITLE DIAG desselben Tages belegt): GBP
+              // "Average Earnings incl. Bonus (3Mo/Yr)", JPY "Average Cash
+              // Earnings YoY", CAD "Average Hourly Wages YoY", EUR "Negotiated
+              // Wage Growth", AUD "Wage Price Index YoY". Deshalb je eine
+              // eigene Zeile statt eines gemeinsamen Musters: die Reihen
+              // heissen nicht nur anders, sie haben auch verschiedene
+              // Perioden-Kennungen, und GBP fuehrt zusaetzlich eine
+              // "excl. Bonus"-Reihe, die NICHT die Headline ist.
               {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="USD"&&/average hourly earnings/.test(t)},
+              {ind:"Avg Hourly Earnings",period:null,test:(t,c)=>c==="GBP"&&/average earnings/.test(t)&&/incl/.test(t)},
+              {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="JPY"&&/average cash earnings/.test(t)},
+              {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="CAD"&&/average hourly wages/.test(t)},
+              {ind:"Avg Hourly Earnings",period:null,test:(t,c)=>c==="EUR"&&/negotiated wage growth/.test(t)},
+              {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="AUD"&&/wage price index/.test(t)},
+              {ind:"Avg Hourly Earnings",period:"q/q",test:(t,c)=>c==="NZD"&&/labou?r cost index/.test(t)},
               {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},
               {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
               {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
+              // CAD: die Ivey-Reihe ist Kanadas Stimmungsindex und heisst bei
+              // TradingView "Ivey PMI s.a" - traf also weder "services pmi"
+              // noch "non-manufacturing pmi". Die App selbst kennt diese
+              // Zuordnung laengst (IND_EVENT_MATCHERS hat CAD:/ivey/ und
+              // IND_DISPLAY_NAMES zeigt "Ivey PMI"), nur der Workflow nicht -
+              // die einzige CAD-PMI-Reihe MIT Actual lief dadurch ins Leere.
+              {ind:"Services PMI",period:null,test:(t,c)=>c==="CAD"&&/ivey/.test(t)},
               // NZD: BusinessNZ fuehrt eigene, anders betitelte Reihen statt
               // der generischen S&P-Global-Namen ("business nz pmi"/
               // "services nz psi" statt "manufacturing/services pmi") - per
