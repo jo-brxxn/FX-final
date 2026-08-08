@@ -384,7 +384,7 @@ body.compact-view .rub-summary{display:block}
 .mover-name{font-weight:700;color:var(--t0);font-size:13px;min-width:52px}
 .mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.movers-upd{font-size:10.5px;color:var(--t3);margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.movers-upd{font-size:var(--fs-xs);color:var(--t3);margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-group-hdr{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:9px 0 5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .mover-group-hdr:first-child{margin-top:0}
 .ticker-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:5px;padding:2px 6px;flex-shrink:0;white-space:nowrap;line-height:1.3}
@@ -1102,7 +1102,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
 .cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.12);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
-.cot-notify-txt{font-weight:800;font-size:11.5px;letter-spacing:.2px;color:#5b9bd8}
+.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#5b9bd8}
 .cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
 .cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
@@ -1207,15 +1207,19 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    EINE Zeile statt 3 gestapelter Zeilen - Name/Sparkline/Score/Pille
    nebeneinander wie im FX-Watchlist-Referenzbild, spart pro Zeile ueber
    die Haelfte der Hoehe (8 Waehrungen machten allein >500px aus). */
-.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:5px 7px;display:flex;align-items:center;text-align:left;gap:5px}
-.dash-majors-card .ab .an{order:1;flex:0 0 30px;font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-majors-card .ab{border-radius:0;border-left-width:3px;padding:7px 9px;display:flex;align-items:center;text-align:left;gap:7px}
+/* Flagge zuerst, dann Kuerzel. Die Flagge ist bewusst deutlich groesser als
+   der Text (18px gegen 13px) - sie ist hier das Erkennungsmerkmal, nicht der
+   Text, und traegt bei dieser Groesse auch als Farbfleck. */
+.dash-majors-card .ab .an-flag{order:0;flex:0 0 auto;font-size:18px;line-height:1;filter:saturate(1.05)}
+.dash-majors-card .ab .an{order:1;flex:0 0 32px;font-size:var(--fs-base);font-weight:700;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dash-majors-card .ab svg.sb-spark{order:2;flex:1 1 auto;min-width:0;width:auto;height:15px;margin:0}
-.dash-majors-card .ab .sb-score{order:3;flex:0 0 auto;text-align:right;margin:0;font-size:11px;font-weight:800}
+.dash-majors-card .ab .sb-score{order:3;flex:0 0 auto;text-align:right;margin:0;font-size:var(--fs-base);font-weight:800;font-variant-numeric:tabular-nums}
 /* Referenz-Mockup 2026-08-03 (FX Watchlist): Bias-Pille statt reinem
    Dreieck-Glyph - wiederverwendet .bbadge (siehe fx_bias-Widget), nur
    hier als volle Kapsel statt der dortigen festen 54px-Rechteck-Variante. */
-.dash-majors-card .ab .bbadge{order:4;margin:0;border-radius:999px;width:auto;min-height:0;padding:2px 6px;font-size:8px;letter-spacing:.1px;white-space:nowrap;flex:0 0 auto}
-.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t2);padding:6px 10px;margin-top:2px;cursor:pointer;font-weight:600;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px}
+.dash-majors-card .ab .bbadge{order:4;margin:0;border-radius:999px;width:auto;min-height:0;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto}
+.dash-majors-viewall{display:flex;align-items:center;justify-content:space-between;font-size:var(--fs-sm);color:var(--t2);padding:8px 11px;margin-top:4px;cursor:pointer;font-weight:600;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px}
 .dash-majors-viewall::after{content:'›';color:var(--t3);font-size:15px;line-height:1}
 @media (hover:hover){.dash-majors-viewall:hover{border-color:#565c66;color:var(--t0)}}
 /* flex-wrap (Radial-Layout 2026-07-27): die schmalen Seiten-Zonen (240px)
@@ -1224,11 +1228,33 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    statt den Titel per Ellipsis zu kuerzen (CLAUDE.md-Grundsatz: Titel
    duerfen nicht trunkiert werden, wenn eigentlich Platz da waere - hier
    ist "Platz da", nur eben in Zeile 2). */
-.dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:9px}
+/* ══ TYPOGRAFISCHE SKALA (Dashboard) ═══════════════════════════════════
+   Vor dem Umbau kamen im Dashboard 33 verschiedene Groessen/Gewichts-
+   Kombinationen vor (8px bis 32px, dazwischen 9.5, 10.5, 11.5, 12.5 ...) -
+   also gar keine Skala, sondern pro Stelle ad hoc gewaehlte Werte. Der
+   Kartentitel war mit 11px sogar KLEINER als der Fliesstext daneben (12px),
+   die Hierarchie war damit umgekehrt.
+   Jetzt sieben feste Stufen mit ungefaehr gleichem Schrittverhaeltnis
+   (~1,15-1,3), alle auf ganzen Pixeln. Regel dahinter (Stephen Few,
+   "Information Dashboard Design", und die uebliche Modular-Scale-Praxis):
+   eine begrenzte Zahl von Stufen erzwingt Hierarchie, viele Stufen loesen
+   sie auf. Zahlen bekommen durchgehend das hoechste Gewicht (800) und
+   Tabellenziffern, Beschriftungen das niedrigste Gewicht in Grossbuchstaben. */
+:root{
+  --fs-hero:30px;   /* eine Leitzahl pro Karte, hoechstens */
+  --fs-xl:22px;     /* grosse Kennzahl */
+  --fs-lg:17px;     /* hervorgehobener Wert */
+  --fs-md:15px;     /* KARTENTITEL - bewusst groesser als der Fliesstext */
+  --fs-base:13px;   /* Fliesstext, Zeilenname */
+  --fs-sm:12px;     /* Sekundaertext */
+  --fs-xs:11px;     /* Beschriftung, Grossbuchstaben */
+  --fs-2xs:10px;    /* Mikro-Beschriftung, Fussnote */
+}
+.dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:11px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
    Steuerbuttons, gleicher Blauton wie die Fusszeilen-Links. */
-.dw-hdlink{font-size:11.5px;font-weight:600;color:var(--blue);cursor:pointer;margin-left:auto;white-space:nowrap}
+.dw-hdlink{font-size:var(--fs-sm);font-weight:600;color:var(--blue);cursor:pointer;margin-left:auto;white-space:nowrap}
 @media (hover:hover){.dw-hdlink:hover{text-decoration:underline}}
 /* Minimaler Kartenkopf wie im Referenz-Foto (Nutzer-Korrektur 2026-07-25:
    "Keine Ueberschrift einfach so") - kleiner Kleinbuchstaben-Titel + kleines
@@ -1244,7 +1270,13 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    Nutzer selbst umbenannte Titel (✎) - normale (kurze) Titel werden davon
    nie beruehrt, da .dw-t jetzt flex:0 0 auto ist und seine Geschwister
    (Link/Buttons) lieber umbricht als den Titel zu kuerzen. */
-.dw-t-txt{font-size:11px;font-weight:700;color:#7f90a8;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1.6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+/* Kartentitel: von 11px Mikro-Versalien auf 15px Fliesstext-Schnitt. Er ist
+   jetzt die groesste Schrift der Karte ausser der Leitzahl - damit gibt es
+   endlich einen echten Sprung zwischen Ueberschrift und Inhalt. Versalien
+   und das weite Sperren entfallen, beides macht Text bei dieser Groesse nur
+   schwerer lesbar und war ein Ueberbleibsel aus der Zeit, als der Titel als
+   kleine Beschriftung gedacht war. */
+.dw-t-txt{font-size:var(--fs-md);font-weight:700;color:var(--t1);letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
 .dw-t .rinfo{width:13px;height:13px;font-size:10px;opacity:.55;flex-shrink:0}
 .dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
 /* Bearbeitungsmodus statt Hover (Nutzer-Wunsch 2026-07-25: "komm weg von
@@ -1281,7 +1313,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
 .bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
-.row-score{display:inline-block;font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
+.row-score{display:inline-block;font-size:var(--fs-base);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 /* Watchlist-Karte (Nutzer-Wunsch 2026-08-06, Foto-Referenz): reine Tabelle
    ohne Kartenkopf (siehe hdrHtml) - Icon(s) | Name | Tages-% | Score | x,
    FX-/Non-FX-Block getrennt durch genau EINEN dezenten Strich (.wl-sep),
@@ -1296,10 +1328,10 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .wl-row.wl-add{cursor:pointer;color:var(--t3);opacity:.75}
 .wl-row.wl-add:hover{opacity:1}
 .wl-row.wl-add .wl-name{color:inherit;font-weight:600}
-.wl-icons{display:inline-flex;align-items:center;gap:2px;font-size:15px;width:44px;flex-shrink:0;color:var(--t2)}
-.wl-flag-sep{color:var(--t3);font-size:9px}
-.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:14.5px;color:var(--t0)}
-.wl-chg{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:12.5px;font-weight:700;width:58px;text-align:right;flex-shrink:0}
+.wl-icons{display:inline-flex;align-items:center;gap:3px;font-size:17px;width:48px;flex-shrink:0;color:var(--t2)}
+.wl-flag-sep{color:var(--t3);font-size:var(--fs-2xs)}
+.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
+.wl-chg{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
 .wl-row .row-score{width:34px;font-size:12.5px}
 .wl-row .dw-del{font-size:16px;padding:0 3px}
 .wl-sep{height:1px;background:var(--bd);opacity:.7;margin:8px 0}
@@ -1308,27 +1340,27 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Zeilenhoehe, dieselbe Balkenoptik, dieselbe Zahlenspalte (Grundsatz
    "wiederkehrende UI-Bausteine muessen einheitlich sein"). */
 .perf-winbar{display:flex;gap:4px;margin-bottom:8px}
-.perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:10.5px;font-weight:700;padding:4px 0;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:var(--fs-xs);font-weight:700;padding:4px 0;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .perf-win.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .perf-list{display:flex;flex-direction:column}
 .perf-row{display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:default;min-height:26px}
 .perf-row[onclick]{cursor:pointer}
 @media (hover:hover){.perf-row[onclick]:hover{background:var(--bg2)}}
 .perf-rank{width:16px;flex-shrink:0;text-align:right;font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.perf-name{flex:0 0 58px;min-width:0;font-size:12.5px;font-weight:700;color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf-name{flex:0 0 58px;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .perf-barwrap{flex:1;min-width:24px;height:7px;background:var(--bg3);border-radius:4px;position:relative;overflow:hidden}
 .perf-bar{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
 /* Surprise-Index: Nulllinie in der Mitte, Balken nach beiden Seiten. */
 .esi-wrap{overflow:visible}
 .esi-zero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
 .esi-bar{border-radius:2px}
-.perf-pct{flex:0 0 58px;text-align:right;font-size:11.5px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.carry-sec{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:8px 0 2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-pct{flex:0 0 58px;text-align:right;font-size:var(--fs-base);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
+.carry-sec{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:8px 0 2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .carry-sec:first-child{margin-top:0}
 .corr-head{display:flex;align-items:center;gap:10px;margin-bottom:2px}
-.corr-big{font-size:28px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
-.corr-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
-.dw-note{font-size:10px;color:var(--t3);line-height:1.45;margin-top:7px}
+.corr-big{font-size:var(--fs-hero);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.corr-lbl{font-size:var(--fs-xs);color:var(--t2);line-height:1.35}
+.dw-note{font-size:var(--fs-2xs);color:var(--t3);line-height:1.5;margin-top:9px}
 /* Notiz-Richtung, Event-Bezug und Trefferquote (2026-08-07) */
 .note-dirpick{display:flex;gap:4px}
 .note-dirbtn{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:11px;font-weight:700;padding:6px 4px;cursor:pointer}
@@ -1342,7 +1374,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .no-pend{color:var(--t3);background:var(--bg3)}
 .note-evt{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
 .note-stats{display:flex;align-items:center;gap:9px;margin:6px 0 8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
-.ns-big{font-size:24px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.ns-big{font-size:var(--fs-xl);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
 .ns-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
 .rterm-noterow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .rterm-notesearch{flex:1;min-width:150px}
@@ -1356,7 +1388,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hl-meta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hl-time::before{content:'· '}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
-.dw-empty{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.55}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
 /* Motivations-Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz): drei fette
@@ -1647,10 +1679,10 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
 .hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:29px;height:29px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:7px}
 .hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.hie-wd{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.hie-wd{font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hie-imp{font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
+.hie-imp{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
 .hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
 .live-data-top{display:flex;align-items:center;gap:8px}
@@ -1690,7 +1722,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    mehr nur 3-stellige FX-Kuerzel), koennen Namen wie "GER100"/"SP500"
    laenger sein - sollen abgeschnitten statt umzubrechen und die Zeilenhoehe
    zu sprengen. */
-.rank-name{font-size:12.5px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{font-size:var(--fs-base);font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
 .rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
 .rank-sc{font-size:12px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -1708,7 +1740,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .risk-env-set-hdr{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--t3);flex-shrink:0}
 .risk-env-gear{background:none;border:1px solid var(--bd2);border-radius:6px;color:var(--t2);cursor:pointer;font-size:12px;padding:1px 5px;line-height:1.3;flex-shrink:0}
 .risk-env-slider{display:flex;gap:4px;margin-top:0;flex:1;min-width:0}
-.risk-env-pos{flex:1;padding:4px 3px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
+.risk-env-pos{flex:1;padding:4px 3px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:var(--fs-xs);font-weight:700;transition:all .12s}
 .risk-env-pos.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
 .risk-env-set-note{font-size:10px;color:var(--t3);margin-top:6px;line-height:1.4}
 .risk-env-cfg-grp+.risk-env-cfg-grp{margin-top:10px}
@@ -1738,7 +1770,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-calc b{color:var(--t2)}
 .risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.risk-assets-hd{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-assets-hd{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
 .risk-asset-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;cursor:pointer;padding:1px 2px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
 .risk-asset-name{font-size:10px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
@@ -2100,6 +2132,17 @@ body.dash-edit-mode .motivation-editbar{display:flex}
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
   .dash-zone-bottom>.dw{flex:1 1 260px;min-width:0;margin-bottom:0}
+  /* Nutzer-Wunsch 2026-08-08: "Karten sollen gleich abschliessen, ohne dass
+     eine gestreckt aussieht, nur um die Luecke zu schliessen." Genau deshalb
+     wird hier NICHT gestreckt (align-items:start ueberall), sondern der
+     Abschluss uebernommen: die vier Spalten duerfen unterschiedlich hoch
+     enden wie Zeitungsspalten, und eine Haarlinie ueber der Fussleiste
+     zieht darunter einen klaren Schlussstrich. Dadurch liest sich der
+     ungleiche Spaltenfuss als gewollt statt als unfertig - und keine Karte
+     bekommt Inhalt, den sie nicht hat, nur um Hoehe zu fuellen. */
+  #dashWidgets.dash-layout{align-items:start}
+  .dash-zone-left,.dash-zone-center,.dash-zone-right,.dash-zone-right2{align-content:start}
+  .dash-zone-bottom{border-top:1px solid var(--bd);padding-top:12px;margin-top:4px}
   /* Market Watch braucht die volle Zeilenbreite fuer seine 4-Spalten-Ticker
      (sonst quetscht es sich neben Daily Bias zusammen und schneidet Werte
      ab) - immer alleine auf eigener Zeile in der Zone. */
@@ -2542,12 +2585,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-327 — Revision und 2-Schritt-Trend zaehlen nicht mehr in den Score (Nutzer-Entscheid nach dem Audit). Beide bleiben vollstaendig SICHTBAR: das revidierte Previous steht weiter ausgeklappt im Klartext und ist weiter in der Bias-Farbe eingefaerbt (blau bei guenstiger, rot bei unguenstiger Revision - per Test ueber GBP/USD/JPY/AUD bestaetigt), die Trend-Sparkline bleibt an jeder Indikator-Zeile. Nur die Score-Wirkung ist 0. Gruende (gemessen, nicht vermutet): Die Revision kam unzuverlaessig an - TradingViews previous-Feld traegt sie nur ~3 Tage, bei geblocktem Workflow war sie fuer immer weg, dasselbe Ereignis brachte also mal 0,5 und mal 0 je nach Scraping-Glueck. Ausserdem hing die Bonus-Dauer an der Frequenz: NZD GDP trug ihn 91 Tage, GBP NFP 28 - dreifache Score-Zeit fuer dasselbe Signal, weil der Bonus am alten Release klebte statt an seinem eigenen Datum. Der Trend war als Bonus obendrauf gedacht, war faktisch aber gleichrangiger Treiber: bei USD 47 Prozent des Gesamtscores, bei AUD 100 Prozent - dieselbe Zahl bedeutete bei GBP reine Ueberraschung und bei AUD reines Momentum. Citis CESI hat aus genau diesem Grund keinen Trend-Term, weil Ueberraschung und Momentum auf verschiedenen Zeithorizonten wirken. NICHT angetastet: ind.stepDriven. Das ist nicht der Trend, sondern der Ersatz fuer Beat/Miss bei den 38 Indikatoren ohne Forecast (Actual gegen Previous) - ohne ihn koennten die gar nichts mehr beitragen. Das Score-Modal nennt Trend und Revision weiterhin, jetzt aber ausdruecklich mit dem Zusatz 'shown only, counts 0'. Alle drei Score-Ebenen bleiben konsistent, 15 Tabs fehlerfrei.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-328 — Dashboard-Typografie und Flaggen nach recherchierten Design-Grundsaetzen (Nutzer-Wunsch). Messung vorab: im Dashboard kamen 33 verschiedene Groessen/Gewichts-Kombinationen vor (8px bis 32px, dazwischen 9.5, 10.5, 11.5, 12.5) - also gar keine Skala, sondern pro Stelle ad hoc gewaehlte Werte. Der Kartentitel war mit 11px sogar KLEINER als der Fliesstext daneben (12px), die Hierarchie war umgekehrt. Jetzt sieben feste Stufen als CSS-Variablen (30/22/17/15/13/12/11/10px, Schrittverhaeltnis ~1,15-1,3, alles auf ganzen Pixeln). Grundsatz dahinter (Stephen Few, Information Dashboard Design; Tuftes Data-Ink-Ratio; uebliche Modular-Scale-Praxis): wenige Stufen erzwingen Hierarchie, viele loesen sie auf. Kartentitel von 11px Mikro-Versalien auf 15px im Fliesstext-Schnitt - er ist jetzt die groesste Schrift der Karte ausser der Leitzahl. Versalien und weites Sperren entfallen, beides erschwert das Lesen bei dieser Groesse. Zahlen durchgehend Gewicht 800 mit Tabellenziffern, Beschriftungen klein in Grossbuchstaben. FLAGGEN: die Majors-Schiene ist das erste Element im Blickverlauf (F-Muster) und trug als einzige Asset-Liste gar keine Laenderkennung - jetzt Flagge vor dem Kuerzel, bewusst 18px gegen 13px Text, weil sie hier das Erkennungsmerkmal ist und als Farbfleck traegt. Watchlist-Flaggen von 15 auf 17px. KARTEN-ABSCHLUSS (Nutzer-Wunsch woertlich): nichts wird gestreckt, um Luecken zu fuellen - align-items:start ueberall, per Test bestaetigt null gestreckte Karten. Stattdessen zieht eine Haarlinie ueber der Fussleiste einen klaren Schlussstrich, wodurch die unterschiedlich hohen Spaltenfuesse wie Zeitungsspalten gewollt wirken statt unfertig. Spalten-Spreizung von 175 auf 127px gesunken. Kein horizontaler Ueberlauf auf 1920/1500/1180/900/430px, 15 Tabs fehlerfrei.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-327</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-328</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -12635,8 +12678,13 @@ function dashMajorsHtml(){
   const list=syms.filter(s=>FX.includes(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
   const rows=list.map(c=>{
     const sc=symScoreCmp(c);
+    // Flagge vor dem Kuerzel (Nutzer-Wunsch 2026-08-08): die Majors-Schiene
+    // ist das erste Element im Blickverlauf und trug als einzige Asset-Liste
+    // der App gar keine Laenderkennung - dabei ist die Flagge das schnellste
+    // Erkennungsmerkmal, das es hier gibt. FX_FLAG ist dieselbe Quelle wie
+    // im Asset-Kopf, in der Watchlist und im Research-Terminal.
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
+      <span class="an-flag">${FX_FLAG[c.id]||''}</span><div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
