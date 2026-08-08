@@ -168,6 +168,93 @@ Citi hat das Problem nicht, weil Citi Laender gar nicht absolut
 vergleicht - diese App muss es (sie stellt sie nebeneinander), also wird
 die Basis ausgewiesen statt verschwiegen.
 
+## ⚠️ STAERKE 1-10 aus der eigenen Historie (Stand 2026-08-08)
+
+Nur im Modus `normalized`. Drei Stufen, bewusst getrennt (alle bei
+`symScoreCmp`, ≈ Zeile 4366):
+
+| Funktion | Was sie liefert |
+|---|---|
+| `symScoreAvg` | Mittelwert: Punkte je getracktem Indikator. `symScoreCmp` ist derselbe Mittelwert, nur mit der Ø-FX-Indikatorzahl zurueckskaliert, damit die ±3-Schwellen weiter passen. |
+| `symOwnZ` | Dieser Wert gemessen an der EIGENEN Historie des Assets (z-Wert). Quelle ist `scoreHist` - dieselbe wie Trends/History-Karte, KEINE zweite Aufzeichnung. Der heutige Eintrag wird ausgelassen, sonst misst man den Tag gegen sich selbst. |
+| `symStrength10` | z auf 1-10 abgebildet, `STRENGTH_Z_BANDS` (9 feste Grenzen). |
+
+Anzeige: `strengthBadgeHtml()` neben dem Punkte-Score im Asset-Kopf,
+volle Rechnung + Grenzen in `symStrengthSectionHtml()` im Score-Fenster.
+
+**⚠️ Zwei Entscheidungen, die NICHT neu aufgerollt werden sollten:**
+
+1. **Feste Sigma-Baender, KEIN Perzentil-Rang.** Ein Rang macht jede
+   Waehrung per Konstruktion gleich (jede hat ihr eigenes Maximum) und
+   verschluckt damit die Groessenordnung. An der echten Historie vom
+   2026-08-08 nachgerechnet: JPY +7,3 (mit Abstand am staerksten), CAD
+   -1,0 und NZD -1,4 landeten ALLE DREI im selben Dezil 4.
+2. **Die Note ersetzt den Punkte-Score NICHT, sie steht daneben.** Note
+   allein = keine Groessenordnung; Punkte allein = keine Aussage, ob der
+   Wert fuer DIESES Asset ungewoehnlich ist. Erst zusammen ergeben sie
+   beides. Fuer Asset-Vergleiche bleiben die Punkte massgeblich.
+
+`STRENGTH_MIN_OBS`=10. Darunter - oder bei einer Reihe ohne jede Varianz -
+erscheint ausdruecklich `–/10` mit Begruendung statt einer Note. Eine
+geratene Note waere schlechter als keine (Grundsatz "nie schaetzen").
+
+## ⚠️ PMI-FEED: TradingView liefert fuer S&P Global/HCOB/Jibun KEINE Actuals
+
+Belegt am 2026-08-08 durch die Titel-Diagnose im Workflow (`ind_data TITLE
+DIAG`, dauerhaft eingebaut, gibt alle Kalendertitel im Themenfeld je
+Waehrung aus, mit Hinweis ob ein Actual dranhaengt - 126 Reihen im
+Testlauf).
+
+**Jede** S&P-Global-, HCOB- und Jibun-Bank-PMI-Reihe kommt ohne Actual an,
+bei allen acht Waehrungen, auch bei USD. Actuals liefern ausschliesslich:
+**ISM** (USD), **procure.ch** (CHF, nur Manufacturing), **Ivey** (CAD),
+**BusinessNZ** (NZD). Genau diese vier stehen auch in `ind_data.json` -
+kein Zufall, das ist die vollstaendige Erklaerung.
+
+**Daraus folgt: fuer EUR/GBP/JPY/AUD Manufacturing + Services PMI hilft an
+TradingView KEIN Regel-Fix.** Nicht nochmal Zeit mit Muster-Basteln
+verbrennen - es braucht eine andere Quelle. Investing.com waere der
+Kandidat, ist aber derzeit in allen drei Versuchen pro Lauf
+Cloudflare-geblockt (`invcal.json: 3 bytes`).
+
+Bei "Indikator veraltet"-Meldungen deshalb IMMER zuerst die TITLE-DIAG-
+Zeile im Job-Log lesen und unterscheiden:
+- Titel steht da MIT `[actual]`, aber kein Wert in `ind_data` → Regel-Luecke, fixbar.
+- Titel steht da mit `[kein actual]` → Quellenproblem, Regel-Fix sinnlos.
+- Titel steht gar nicht da → die Quelle fuehrt die Reihe nicht.
+
+So gefunden und gefixt (2026-08-08): **Lohnwachstum** war in den RULES auf
+USD gegated, obwohl fuer GBP (`Average Earnings incl. Bonus (3Mo/Yr)`),
+JPY (`Average Cash Earnings YoY`), CAD (`Average Hourly Wages YoY`), EUR
+(`Negotiated Wage Growth`), AUD (`Wage Price Index YoY`) und NZD (`Labour
+Cost Index QoQ`) je eine Reihe MIT Actual existiert. Und **CAD Services
+PMI** heisst `Ivey PMI s.a` und traf weder `services pmi` noch
+`non-manufacturing pmi` - die App kannte die Zuordnung laengst
+(`IND_EVENT_MATCHERS` hat `CAD:/ivey/`), nur der Workflow nicht.
+
+**Echte Datenluecken (keine Quelle, kein Bug):** CHF Core CPI, CHF PPI,
+CHF Services PMI, JPY Employment Change, JPY Services Inflation (CSPI,
+bewusst aus den RULES ausgelassen), AUD Core CPI (Trimmed Mean), AUD
+Retail Sales (ABS-Reihe 2025 eingestellt).
+
+**Zweite, unabhaengige Baustelle:** im `ff_calendar` hatten am 2026-08-08
+**82 bereits vergangene** Events immer noch kein Actual. Die
+Unmatched-Diagnose der Enrichment-Stufe meldet aber NUR High/Medium -
+PMIs laufen dort als "Low" still ins Leere. Falls das angegangen wird:
+die Diagnose dort auf alle Impact-Stufen ausweiten.
+
+## ⚠️ EUR-PMI-Kalendermatcher: "Final" nicht vergessen
+
+`IND_EVENT_MATCHERS['Manufacturing PMI'/'Services PMI']` hat fuer EUR ein
+VERANKERTES Muster, damit "German Final Manufacturing PMI" und die
+spanische/italienische/franzoesische Reihe (alle ebenfalls als EUR
+getaggt) draussen bleiben. Genau diese Verankerung hat bis 2026-08-08 aber
+auch das Aggregat selbst ausgesperrt: Forex Factory nennt es **"Final
+Manufacturing PMI"**, und `final ` stand nicht in der Praefix-Liste - EUR
+war die EINZIGE Waehrung mit null Treffern. Bei kuenftigen Aenderungen an
+diesem Muster IMMER gegen die echten FF-Titel testen, nicht nur gegen den
+theoretischen Reihennamen.
+
 ## ⚠️ SCHRIFT (Stand 2026-08-08)
 
 Zwei Variablen: `--ff-text` (Oberflaechentext) und `--ff-num` (alle
