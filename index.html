@@ -2668,12 +2668,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-332 — Diagnose fuer die veralteten Indikatoren. Der Nutzer hat recht: die Quellen aktualisieren, die App bekommt es nur nicht. Zwei getrennte Luecken, beide aus den Job-Logs belegt statt vermutet. (a) In ind_data.json gibt es fuer die betroffenen Indikatoren ueberhaupt KEINEN Schluessel - sie sind nicht alt, sie sind nie angekommen: Manufacturing PMI fehlt bei EUR, GBP, JPY, CAD und AUD, Services PMI zusaetzlich bei CHF, dazu CHF Core CPI, AUD Core CPI, GBP Avg Hourly Earnings, CAD Ivey PMI und JPY Employment Change. Diese Karten leben seither von der einmaligen Startbefuellung und frieren zwangslaeufig ein. (b) Im ff_calendar stehen dieselben PMI-Zeilen zwar drin, aber mit leerem Actual - auch Tage nach dem Release. Der MISSING-Report im Workflow sagte bisher nur DASS eine Regel leer ausging, nie WARUM. Genau das war schon bei der NZD-Luecke im Juli das Problem: dort hiess die Reihe bei der Landesquelle Business NZ PMI statt Manufacturing PMI, und das sah man erst, nachdem die echten TradingView-Titel einmal ausgegeben wurden. Diese Ausgabe ist jetzt fest im Workflow (TITLE DIAG): alle Titel im Themenfeld der luecken-behafteten Indikatoren, je Waehrung, mit Hinweis ob ein Actual dranhaengt. Kostet nichts und macht jede kuenftige Luecke sofort diagnostizierbar.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-333 — EUR Manufacturing PMI und Services PMI konnten strukturell nie live werden. Das waehrungsspezifische EUR-Muster war so eng verankert, dass es die Eurozone-Reihe selbst nicht mehr traf: Forex Factory nennt sie Final Manufacturing PMI beziehungsweise Final Services PMI, das Wort final stand aber nicht in der erlaubten Praefix-Liste. Ergebnis: NULL Treffer - weder das Aggregat (versehentlich) noch die nationalen Varianten (so gewollt). Per Test gegen die echten Kalendertitel aller Waehrungen bestaetigt: EUR war die einzige mit null Treffern, GBP, JPY, CAD, CHF und AUD liefen ueber das generische Muster. Die Verankerung bleibt, sie ist ja der eigentliche Zweck - German Final Manufacturing PMI und die spanische, italienische und franzoesische Reihe tragen alle ebenfalls die Kennung EUR und muessen draussen bleiben; im Test nach dem Fix greift weiterhin keine davon. Damit hat EUR erstmals ueberhaupt einen Live-Pfad fuer diese beiden Karten.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-332</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-333</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -5337,12 +5337,24 @@ const IND_EVENT_MATCHERS={
   'Retail Sales':RETAIL_SALES_MATCHER,
   // PMI: USA = ISM (Headline) statt S&P-Global-Flash; Eurozone = das Aggregat
   // (kein deutsches/franzoesisches Flash, das ebenfalls als "EUR" getaggt ist).
+  //
+  // ⚠ Bugfix 2026-08-08 (Nutzer: die veralteten Indikatoren werden an der
+  // Quelle sehr wohl aktualisiert): das EUR-Muster war so eng verankert, dass
+  // es die Eurozone-Reihe selbst nicht mehr traf. Forex Factory nennt sie
+  // "Final Manufacturing PMI" bzw. "Final Services PMI" - "final " stand
+  // aber nicht in der Praefix-Liste, also matchte NICHTS: weder das Aggregat
+  // (versehentlich) noch die nationalen Varianten (korrekt). Per Test gegen
+  // die echten Kalendertitel bestaetigt - EUR war die EINZIGE Waehrung mit
+  // null Treffern, alle anderen liefen ueber das generische Muster.
+  // Die Verankerung bleibt, sie ist der eigentliche Zweck: "German Final
+  // Manufacturing PMI" und die spanische/italienische/franzoesische Reihe
+  // tragen alle ebenfalls die Kennung EUR und muessen draussen bleiben.
   'Manufacturing PMI':mkCcyIndMatcher(
-    {USD:/ism manufacturing pmi/,EUR:/^(flash |s&p global |hcob )?manufacturing pmi( flash)?$/},
+    {USD:/ism manufacturing pmi/,EUR:/^(flash |final |s&p global |hcob )*manufacturing pmi( flash| final)?$/},
     [/manufacturing pmi/]
   ),
   'Services PMI':mkCcyIndMatcher(
-    {USD:/ism (services|non-?manufacturing) pmi/,EUR:/^(flash |s&p global |hcob )?services pmi( flash)?$/,CAD:/ivey/},
+    {USD:/ism (services|non-?manufacturing) pmi/,EUR:/^(flash |final |s&p global |hcob )*services pmi( flash| final)?$/,CAD:/ivey/},
     [/services pmi/,/non-?manufacturing pmi/]
   ),
   'Consumer Confidence':mkCcyIndMatcher(
