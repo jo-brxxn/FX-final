@@ -2542,12 +2542,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-326 — Bugfix aus dem Gesamt-Audit: die Carry-Zeile lief auf 390px 27px ueber den Bildschirmrand hinaus. Paarname (16px Mono), Richtungs-Badge und der nowrap-Zinswert passten nebeneinander nicht mehr in eine Zeile, und .carry-top hatte weder Umbruch noch min-width:0, konnte also nicht nachgeben. Auf schmalen Screens darf die Zeile jetzt umbrechen, der Paarname kuerzen und die Schrift ist etwas kleiner. Per Test bestaetigt: scrollWidth wieder exakt gleich clientWidth, und der Durchlauf ueber alle 15 Tabs auf 390px meldet jetzt gar keinen horizontalen Ueberlauf mehr - vorher war Carry der einzige Treffer.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-327 — Revision und 2-Schritt-Trend zaehlen nicht mehr in den Score (Nutzer-Entscheid nach dem Audit). Beide bleiben vollstaendig SICHTBAR: das revidierte Previous steht weiter ausgeklappt im Klartext und ist weiter in der Bias-Farbe eingefaerbt (blau bei guenstiger, rot bei unguenstiger Revision - per Test ueber GBP/USD/JPY/AUD bestaetigt), die Trend-Sparkline bleibt an jeder Indikator-Zeile. Nur die Score-Wirkung ist 0. Gruende (gemessen, nicht vermutet): Die Revision kam unzuverlaessig an - TradingViews previous-Feld traegt sie nur ~3 Tage, bei geblocktem Workflow war sie fuer immer weg, dasselbe Ereignis brachte also mal 0,5 und mal 0 je nach Scraping-Glueck. Ausserdem hing die Bonus-Dauer an der Frequenz: NZD GDP trug ihn 91 Tage, GBP NFP 28 - dreifache Score-Zeit fuer dasselbe Signal, weil der Bonus am alten Release klebte statt an seinem eigenen Datum. Der Trend war als Bonus obendrauf gedacht, war faktisch aber gleichrangiger Treiber: bei USD 47 Prozent des Gesamtscores, bei AUD 100 Prozent - dieselbe Zahl bedeutete bei GBP reine Ueberraschung und bei AUD reines Momentum. Citis CESI hat aus genau diesem Grund keinen Trend-Term, weil Ueberraschung und Momentum auf verschiedenen Zeithorizonten wirken. NICHT angetastet: ind.stepDriven. Das ist nicht der Trend, sondern der Ersatz fuer Beat/Miss bei den 38 Indikatoren ohne Forecast (Actual gegen Previous) - ohne ihn koennten die gar nichts mehr beitragen. Das Score-Modal nennt Trend und Revision weiterhin, jetzt aber ausdruecklich mit dem Zusatz 'shown only, counts 0'. Alle drei Score-Ebenen bleiben konsistent, 15 Tabs fehlerfrei.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-326</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-327</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3590,7 +3590,27 @@ function indScoreParts(ind,rub,symId){
   // (Step-Signal ohne Forecast 0,5, kleine COT-WoW-Bewegung 0,5). Gilt nur
   // fuer den aktuellen Release-Zyklus (verschwindet mit dem naechsten
   // Release automatisch, da der Feed revisedFrom dann nicht mehr traegt).
-  const rev=ind.revBias?biasScore(ind.revBias)*0.5*w*norm:0;
+  // ⚠ Seit 2026-08-08 (Nutzer-Entscheid nach dem Audit) traegt die Revision
+  // NICHT mehr zum Score bei. ind.revBias bleibt gesetzt und faerbt den
+  // Previous-Wert auf der Karte weiterhin ein - nur der Score-Anteil ist 0.
+  // Begruendung (gemessen, nicht vermutet):
+  //  (1) Sie kommt unzuverlaessig an. TradingViews previous-Feld traegt die
+  //      Revision nur ~3 Tage; ist der Workflow in dem Fenster geblockt
+  //      (dokumentiert vorgekommen), ist sie fuer immer weg. Dasselbe
+  //      Ereignis brachte damit mal ±0,5 und mal 0 - abhaengig vom
+  //      Scraping-Glueck, nicht von der Wirtschaft.
+  //  (2) Die Bonus-Dauer haengt an der Frequenz. Gemessen: NZD GDP trug den
+  //      Bonus 91 Tage, GBP NFP 28 Tage - dreifache Score-Zeit fuer dasselbe
+  //      Signal, nur weil das eine quartalsweise erscheint. Ursache: der
+  //      Bonus klebte am ALTEN Release statt an seinem eigenen Datum.
+  //  (3) Citi (CESI) und Bloomberg fuehren Revisionen aus genau diesen
+  //      Gruenden nicht im Ueberraschungs-Index - dort zaehlt der Erstdruck
+  //      gegen den Konsens, und eine Revision ist ein eigenes Ereignis an
+  //      ihrem eigenen Tag.
+  // Der Wert bleibt im Rueckgabe-Objekt (immer 0), damit das Score-Modal
+  // weiterhin dieselbe Struktur bekommt und ein spaeteres Wieder-Anschalten
+  // nur diese eine Zeile braucht.
+  const rev=0;
   // Bond-Renditen bleiben ohne Trend-Anteil, auch nachdem sie (Nutzer-Wunsch
   // 2026-07-20) aus der Interest-Rates- in die Inflation-Karte umgezogen
   // sind - die Nutzer-Entscheidung "kein Trend-Bonus fuer Renditen" bezog
@@ -3610,10 +3630,23 @@ function indScoreParts(ind,rub,symId){
   // Bonus-Betrag: 1 bei normalem, 0,5 bei einem Core-Paar-Indikator - die
   // Partner teilen sich die volle Veraenderung, bleiben aber unabhaengig
   // voneinander (jeder kann seinen Anteil einzeln ausloesen).
-  const mag=indTrendAdjMag(ind,rub);
-  const trendAdj=ind.stepDriven
-    ?(ind.trendDriven?biasScore(ind.bias)*mag:0)
-    :biasScore(ind.trendBias||'neu')*mag;
+  // ⚠ Seit 2026-08-08 (Nutzer-Entscheid nach dem Audit) traegt auch der
+  // 2-Schritt-Trend NICHT mehr zum Score bei. Der 📈-Chip an der Indikator-
+  // Zeile bleibt vollstaendig erhalten (Fortschritt 0/2, 1/2, bestaetigt) -
+  // er ist jetzt reine Zusatzinformation statt Score-Treiber.
+  // Begruendung (gemessen): der Trend war als Bonus OBENDRAUF gedacht, war
+  // aber faktisch ein gleichrangiger Treiber - bei USD 47% des Gesamtscores
+  // (Basis -4,5 / Trend -4,5), bei AUD sogar 100% (Basis 0 / Trend +0,5).
+  // Dieselbe Score-Zahl bedeutete dadurch bei zwei Assets voellig
+  // Verschiedenes: bei GBP reine Ueberraschung, bei AUD reines Momentum.
+  // Citis CESI hat aus genau diesem Grund gar keinen Trend-Term - Momentum
+  // und Ueberraschung wirken auf verschiedenen Zeithorizonten (Minuten bis
+  // Tage vs. Monate) und gehoeren nicht in dieselbe Zahl.
+  // WICHTIG: ind.stepDriven bleibt unangetastet. Das ist NICHT der Trend,
+  // sondern der Ersatz fuer Beat/Miss bei Indikatoren ohne Forecast (Actual
+  // gegen Previous) - der bleibt die Basis, sonst koennten 38 Indikatoren
+  // ohne Forecast-Abdeckung gar nichts mehr beitragen.
+  const trendAdj=0;
   return{w,base,trend:trendAdj,rev,total:base+trendAdj+rev,zero:false,noTrend:false,norm};
 }
 // Score-Rundung auf 2 Nachkommastellen (Nutzer-Wunsch 2026-08-07: "durch die
@@ -3640,9 +3673,15 @@ function scoreInfoIndRow(ind,rub){
     const bits=[];
     const bl=ind.bias==='bull'?'Bullish':ind.bias==='bear'?'Bearish':'Neutral';
     bits.push(bl+(p.base?` × ${p.w}`:''));
-    if(ind.stepDriven)bits.push(ind.trendDriven?`2-step trend confirmed ${fmtScNum(p.trend)}`:'step signal (no forecast), no confirmed trend yet');
-    else if(p.trend)bits.push(`trend ${fmtScNum(p.trend)}`);
-    if(p.rev)bits.push(`prev revised${ind.research&&ind.research.revisedFrom?' from '+ind.research.revisedFrom:''} ${fmtScNum(p.rev)}`);
+    // Trend und Revision zaehlen seit 2026-08-08 nicht mehr in den Score
+    // (siehe Kommentare in indScoreParts). Sie werden hier weiterhin
+    // ERWAEHNT, aber ausdruecklich als wirkungslos gekennzeichnet - sonst
+    // saehe der Nutzer den Trend-Chip an der Karte und suchte im Modal
+    // vergeblich nach seinem Beitrag.
+    if(ind.stepDriven)bits.push('step signal (no forecast): actual vs previous');
+    if(ind.trendDriven||ind.trendBias==='bull'||ind.trendBias==='bear')
+      bits.push(`2-step trend ${ind.trendDriven?'confirmed':(ind.trendBias==='bull'?'bullish':'bearish')} — shown only, counts 0`);
+    if(ind.revBias)bits.push(`prev revised${ind.research&&ind.research.revisedFrom?' from '+ind.research.revisedFrom:''} — shown only, counts 0`);
     if(p.noTrend)bits.push('card excluded from trend adjustments');
     if(cotWowIsSmall(ind))bits.push('small WoW shift (<3 pp), half weight');
     if(ind.research&&ind.research.sent)bits.push('contrarian sentiment, half weight, only counts at extremes');
