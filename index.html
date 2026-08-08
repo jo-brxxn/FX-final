@@ -2668,12 +2668,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-333 — EUR Manufacturing PMI und Services PMI konnten strukturell nie live werden. Das waehrungsspezifische EUR-Muster war so eng verankert, dass es die Eurozone-Reihe selbst nicht mehr traf: Forex Factory nennt sie Final Manufacturing PMI beziehungsweise Final Services PMI, das Wort final stand aber nicht in der erlaubten Praefix-Liste. Ergebnis: NULL Treffer - weder das Aggregat (versehentlich) noch die nationalen Varianten (so gewollt). Per Test gegen die echten Kalendertitel aller Waehrungen bestaetigt: EUR war die einzige mit null Treffern, GBP, JPY, CAD, CHF und AUD liefen ueber das generische Muster. Die Verankerung bleibt, sie ist ja der eigentliche Zweck - German Final Manufacturing PMI und die spanische, italienische und franzoesische Reihe tragen alle ebenfalls die Kennung EUR und muessen draussen bleiben; im Test nach dem Fix greift weiterhin keine davon. Damit hat EUR erstmals ueberhaupt einen Live-Pfad fuer diese beiden Karten.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-334 — Lohnwachstum: das Kalender-Muster kannte faktisch nur die US-Reihe. An den echten Kalendertiteln geprueft liefen GBP (Average Earnings incl. Bonus 3Mo/Yr) und JPY (Average Cash Earnings y/y) ins Leere, obwohl beide Zeilen im Kalender stehen - genau die zwei, die die App als veraltet meldet. Die Muster spiegeln jetzt die Anzeigenamen: GBP ausdruecklich die Reihe INKLUSIVE Bonus (Forex Factory fuehrt beide, Headline ist incl.), JPY die Barverdienste, CHF den Lohnindex, EUR die EZB-Tarifloehne, CAD die Durchschnittsloehne aus der Arbeitskraefteerhebung. AUD (Wage Price Index) und NZD (Labour Cost Index) waren schon abgedeckt. Test mit allen acht Waehrungen gleichzeitig im Kalender: jede trifft ihre eigene Reihe, GBP waehlt korrekt incl. statt excl. Bonus, und Prelim Unit Labor Costs wird bei USD weiterhin nicht faelschlich gegriffen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-333</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-334</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -5322,7 +5322,20 @@ const IND_EVENT_MATCHERS={
   'Unemployment Rate':mkIndMatcher([/unemployment rate/]),
   'ADP Employment':mkIndMatcher([/\badp\b/],[/weekly/]),
   'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/,/job vacanc/]),
-  'Avg Hourly Earnings':mkIndMatcher([/average hourly earnings/,/avg hourly earnings/,/wage price index/,/labou?r cost index/]),
+  // Lohnwachstum heisst in JEDEM Land anders - das Muster kannte bisher aber
+  // faktisch nur die US-Reihe. Ergebnis (2026-08-08 an den echten
+  // Kalendertiteln geprueft): GBP "Average Earnings incl. Bonus (3Mo/Yr)" und
+  // JPY "Average Cash Earnings y/y" liefen ins Leere, obwohl beide Zeilen im
+  // Kalender stehen - genau die zwei, die die App als veraltet meldet. Die
+  // waehrungsspezifischen Muster spiegeln jetzt IND_DISPLAY_NAMES: GBP nimmt
+  // ausdruecklich die Reihe INKLUSIVE Bonus (Forex Factory fuehrt beide, die
+  // Headline ist incl.), CHF den Lohnindex, EUR die EZB-Tarifloehne, CAD die
+  // Durchschnittsloehne aus der LFS. AUD (Wage Price Index) und NZD (Labour
+  // Cost Index) waren ueber die generische Liste schon abgedeckt.
+  'Avg Hourly Earnings':mkCcyIndMatcher(
+    {GBP:/average earnings.*incl/,JPY:/average cash earnings/,CHF:/^wage index/,EUR:/negotiated wage/},
+    [/average hourly earnings/,/avg hourly earnings/,/average hourly wages/,/wage price index/,/labou?r cost index/]
+  ),
   // Economic Growth: GDP-Wachstum, Retail Sales, Manufacturing-/Services-PMI und
   // Consumer Confidence ziehen jetzt ebenfalls LIVE-Werte aus dem Kalender -
   // mit PRAEZISEN, ggf. waehrungsspezifischen Mustern, damit nicht ein falscher
