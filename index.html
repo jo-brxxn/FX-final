@@ -18,9 +18,21 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.6) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(193,198,204,.26) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(198,203,209,.24) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(180,185,191,.22) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(96,103,111,.2) 14.1%,rgba(96,103,111,.05) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(108,114,121,.1) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(100,107,115,.17) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(108,114,121,.16) 27.9%,rgba(108,114,121,.04) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(104,110,117,.12) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(94,100,107,.14) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(98,104,111,.11) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(106,112,119,.1) 46.9%,transparent 47.6%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
-/* User-Wunsch: überall Arial, Text voll deckend (keine Transparenz) */
-*,*::before,*::after{font-family:Arial,Helvetica,sans-serif!important}
+body{font-family:var(--ff-text);background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.6) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(193,198,204,.26) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(198,203,209,.24) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(180,185,191,.22) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(96,103,111,.2) 14.1%,rgba(96,103,111,.05) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(108,114,121,.1) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(100,107,115,.17) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(108,114,121,.16) 27.9%,rgba(108,114,121,.04) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(104,110,117,.12) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(94,100,107,.14) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(98,104,111,.11) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(106,112,119,.1) 46.9%,transparent 47.6%),var(--bg0);color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+/* Frueherer Nutzer-Wunsch war "ueberall Arial" - umgesetzt als globales
+   !important. Das hat allerdings ALLE 200 Monospace-Deklarationen der App
+   mit ueberschrieben, die Zahlen waren dadurch nie dicktengleich.
+   Nutzer-Wunsch 2026-08-08 ("fuehr die Bloomberg Schriftart ein") kehrt das
+   bewusst um: Terminal-Typografie lebt genau davon, dass Ziffern eine eigene
+   Familie mit fester Dickte haben - mit Arial ueberall ist sie nicht
+   herstellbar.
+   Die Absicht von damals (EINE einheitliche Textschrift statt eines
+   Flickenteppichs) bleibt erhalten: der Stern setzt weiterhin fuer alles
+   dieselbe Textfamilie - nur ohne !important, damit die gezielten
+   var(--ff-num)-Regeln fuer Zahlen wieder greifen. Ein Selektor aus lauter
+   Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn also
+   automatisch, ohne dass irgendwo ein Gegen-!important noetig waere. */
+*,*::before,*::after{font-family:var(--ff-text)}
 .rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
 :root{
@@ -71,9 +83,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:radial-gradient(ellipse 9
 .logo{grid-column:1;grid-row:1;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
 .logo-fx{font-weight:900;color:var(--t0);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
-.logo-s{font-size:11px;line-height:1.25;color:var(--t3);font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:0}
-.saved{font-size:11px;line-height:1.25;color:var(--success);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
-.net-status{font-size:11px;line-height:1.25;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:1px}
+.logo-s{font-size:11px;line-height:1.25;color:var(--t3);font-weight:600;font-family:var(--ff-num);margin-top:0}
+.saved{font-size:11px;line-height:1.25;color:var(--success);font-family:var(--ff-num);margin-top:1px}
+.net-status{font-size:11px;line-height:1.25;color:var(--amber);font-family:var(--ff-num);margin-top:1px}
 .hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 /* Referenz-Mockup 2026-08-03: Header-Buttons wirken dort wie ein reiner
    Icon+Label-Streifen ohne sichtbare Pille (kein Rahmen/Hintergrund im
@@ -118,7 +130,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .bias-picker-opt.cur.bb{border-color:var(--green);background:rgba(var(--green-rgb),.12);color:var(--green)}
 .bias-picker-opt.cur.br{border-color:var(--red);background:rgba(var(--red-rgb),.12);color:var(--red)}
 .bias-picker-opt.cur.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
-.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 /* Nutzer-Wunsch 2026-08-02 (Grau-/Schwarz-Regler): aktiver Zustand fuer
    Toggle-Buttons im .btn-Stil (bisher nutzten .on-Toggles im Projekt immer
    eigene Klassen wie .bo.on - diese ist die erste generische .btn.on). */
@@ -138,7 +150,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
 .tabbar{background:transparent;border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
-.tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:var(--ff-text)}
 .tp.on{color:var(--t0);font-weight:800;border-bottom-color:var(--t0)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
 .tp.tp-member{font-size:12px}
 .tp.tp-stack{font-weight:700}
@@ -146,7 +158,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .tp.tp-stack.has-active{color:var(--green)}
 .tp.tp-stack.open{color:var(--blue)}
 .tab-menu{position:fixed;z-index:100001;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
-.tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--ff-text)}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 /* ── BODY ── */
 .body{display:flex;flex:1;min-height:0}
@@ -167,15 +179,15 @@ svg.ic{vertical-align:-2px;flex:none}
    Hauptinhalt). */
 .sb{width:138px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0 4px 7px}
 @media(max-width:760px){.sb{width:120px}}
-.sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
+.sb-lbl{font-size:9px;color:var(--t3);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:var(--ff-num);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
 .sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
 .ab-move.cat{position:static;width:18px;height:16px}
 .ab-wrap{position:relative}
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}@media (hover:hover){.ab:hover:not(.on){background:var(--bg2)}}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
-.ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}.ab.on .an{color:var(--t0)}
+.ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:var(--ff-num)}.ab.on .an{color:var(--t0)}
 .ab .av{font-size:11px;margin-top:1px;font-weight:600;display:inline-block}
-.ab .sb-score{font-size:10px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;display:inline-block;margin-right:5px;margin-top:1px}
+.ab .sb-score{font-size:10px;font-weight:800;font-family:var(--ff-num);display:inline-block;margin-right:5px;margin-top:1px}
 .sb-spark{display:block;margin:2px auto 1px}
 /* Score-Flip-Moment: kurzer Hinweis um die Sidebar-Zeile + Score-Puls, wenn
    ein Symbol gerade sein Bias gewechselt hat (siehe triggerFlipGlow).
@@ -252,9 +264,9 @@ svg.ic{vertical-align:-2px;flex:none}
    dessen Kind, erbt also nicht automatisch dieselbe Groesse) bekommt dafuer
    direkt am Verwendungsort eine explizite Groesse passend zu .resf-detail-nm. */
 .atitle-flag{display:inline-block;font-size:1em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-.score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
-.rub-score{font-size:11px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1.5px solid;border-radius:8px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
-.afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:var(--ff-num);border:1.5px solid;border-radius:8px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
+.rub-score{font-size:11px;font-weight:800;font-family:var(--ff-num);border:1.5px solid;border-radius:8px;padding:1px 6px;flex-shrink:0;line-height:1.3;min-width:44px;text-align:right}
+.afull{font-size:12px;color:var(--t3);margin-top:1px;font-weight:600;font-family:var(--ff-num)}
 /* ── BIAS ── */
 /* .brow/.bo/.ov-bias/.bo-word (Bias-Wort-Pille "◆ NEUTRAL" neben dem Score
    im Asset-Header) auf Nutzer-Wunsch entfernt (Foto 2026-08-04, durch-
@@ -304,7 +316,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .dw-chip.glow-bear{border-color:rgba(var(--red-rgb),.5)}
 .dw-chip.glow-neu{border-color:rgba(var(--amber-rgb),.5)}
 /* ── MARKED PAIRS / EVENT BANNER ── */
-.cal-empty-day{padding:7px 9px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cal-empty-day{padding:7px 9px;font-size:11px;color:var(--t3);border-bottom:1px solid var(--bd);font-family:var(--ff-num)}
 .cal-day-body .cal-empty-day:last-child,.cal-empty-day:last-child{border-bottom:none}
 .sym-row.row-marked{border:1px solid var(--star);background:rgba(var(--star-rgb),.08)}
 .pair-card.row-marked{border-color:var(--star);box-shadow:0 0 0 1px var(--star)}
@@ -340,7 +352,7 @@ svg.ic{vertical-align:-2px;flex:none}
 @media(hover:hover){.nt-del:hover{color:var(--red)}}
 .nt-add{width:100%;margin-top:2px;background:transparent;border:1px dashed var(--ntc);color:var(--ntc);border-radius:7px;padding:6px;cursor:pointer;font-size:12px;font-weight:600;opacity:.8}
 @media(hover:hover){.nt-add:hover{opacity:1}}
-.nt-sub-lbl{font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--t3);margin:5px 0 6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.nt-sub-lbl{font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--t3);margin:5px 0 6px;font-family:var(--ff-num)}
 .nt-divider{border-top:1px solid var(--bd);margin:12px 0 6px}
 .nt-item-ctrl{display:flex;align-items:center;gap:0;flex:none}
 .nt-mv{background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:10px;padding:1px 3px;line-height:1}
@@ -382,15 +394,15 @@ body.compact-view .rub-summary{display:block}
 .mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
 @media(hover:hover){.mover-row:hover{border-color:rgba(var(--blue-rgb),.5)}}
 .mover-name{font-weight:700;color:var(--t0);font-size:13px;min-width:52px}
-.mover-vals{color:var(--t3);font-size:11.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.movers-upd{font-size:var(--fs-xs);color:var(--t3);margin-bottom:7px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.mover-group-hdr{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:9px 0 5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mover-vals{color:var(--t3);font-size:11.5px;font-family:var(--ff-num)}
+.mover-delta{margin-left:auto;font-weight:800;font-size:12.5px;font-family:var(--ff-num)}
+.movers-upd{font-size:var(--fs-xs);color:var(--t3);margin-bottom:7px;font-family:var(--ff-num)}
+.mover-group-hdr{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:9px 0 5px;font-family:var(--ff-num)}
 .mover-group-hdr:first-child{margin-top:0}
-.ticker-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:5px;padding:2px 6px;flex-shrink:0;white-space:nowrap;line-height:1.3}
+.ticker-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;font-family:var(--ff-num);border:1px solid;border-radius:5px;padding:2px 6px;flex-shrink:0;white-space:nowrap;line-height:1.3}
 .ticker-chip-pct{opacity:.85}
 /* Zins-Differenz (Carry) Badge in den Set-ups-Zeilen */
-.rate-diff{font:700 10.5px 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);background:transparent;color:var(--t3);white-space:nowrap;cursor:pointer;transition:border-color .12s}
+.rate-diff{font:700 10.5px var(--ff-num);padding:2px 6px;border-radius:var(--rs);border:1px solid var(--bd);background:transparent;color:var(--t3);white-space:nowrap;cursor:pointer;transition:border-color .12s}
 .rate-diff.pos{color:var(--green);border-color:rgba(var(--green-rgb),.4)}
 .rate-diff.neg{color:var(--red);border-color:rgba(var(--red-rgb),.4)}
 @media(hover:hover){.rate-diff:hover{border-color:var(--bd2)}}
@@ -403,7 +415,7 @@ body.compact-view .rub-summary{display:block}
 /* Auto-abgeleitete/gesperrte Bias (Non-FX Regel same/inverse, Risk Correlation): Kettensymbol statt Buttons */
 .auto-lock-ic{font-size:10px;margin-left:2px;opacity:.7}
 /* Spiegel-Vorschau im Asset-Einstellungs-Modal */
-.acfg-mirror{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.acfg-mirror{margin-left:auto;font-size:11px;color:var(--t3);font-family:var(--ff-num);white-space:nowrap}
 /* Hilfe-Modal */
 .help-sec{margin:13px 0 5px;font-size:12px;font-weight:800;color:var(--t0);text-transform:uppercase;letter-spacing:.6px}
 .help-p{font-size:12.5px;color:var(--t2);line-height:1.65;margin:4px 0}
@@ -423,22 +435,22 @@ body.compact-view .rub-summary{display:block}
 .acfg-seg button.on-off{background:var(--bg3);color:var(--t1)}
 .st{padding:5px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:12px;font-weight:600;border-radius:6px;white-space:nowrap;transition:all .12s}
 .st.on{background:var(--bg4);color:var(--t0);box-shadow:0 1px 5px rgba(0,0,0,.3)}@media (hover:hover){.st:hover:not(.on){color:var(--t1)}}
-.slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
+.slbl{font-size:10px;letter-spacing:2px;font-weight:700;font-family:var(--ff-num);margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
 .ri{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#e9edf1;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
-.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.6;outline:none;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;min-height:21px}
+.rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:13px;line-height:1.6;outline:none;padding:0;font-family:var(--ff-text);resize:none;min-height:21px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
 .mv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.15;transition:all .12s;line-height:1;margin-top:2px}@media (hover:hover){.ri:hover .mv{opacity:.4}}@media (hover:hover){.mv:hover{opacity:1!important;color:var(--blue)}}.mv:disabled{opacity:.05!important;cursor:default}
 .istar{background:none;border:none;cursor:pointer;font-size:13px;padding:0;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1;margin-top:3px}
 .istar.on{opacity:1;color:var(--star)}@media (hover:hover){.ri:hover .istar{opacity:.4}}.ri .istar.on{opacity:1;color:var(--star)}
 .idel{background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 1px;flex-shrink:0;opacity:0;transition:opacity .12s;line-height:1;margin-top:1px}@media (hover:hover){.ri:hover .idel{opacity:.5}}@media (hover:hover){.idel:hover{opacity:1!important}}
 .add-row{display:flex;gap:5px;margin-top:4px}
-.ai{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.ai{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:var(--ff-text);transition:border-color .12s}
 .ai:focus{border-color:var(--bd2);color:var(--t0);background:var(--bg3)}.ai::placeholder{color:var(--t3);font-size:12px}
 .add-btn{padding:6px 9px;border-radius:var(--rs);cursor:pointer;font-size:15px;font-weight:700;flex-shrink:0;transition:all .12s;line-height:1;border:1px solid transparent}
-.nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.nbox{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:9px 11px;color:var(--t1);font-size:13px;line-height:1.7;resize:vertical;min-height:60px;outline:none;font-family:var(--ff-text);transition:border-color .12s}
 .nbox:focus{border-color:var(--bd2);color:var(--t0)}.nbox::placeholder{color:var(--t3)}
 /* ── RUBRIC ── */
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): duennerer, einheitlicher 1px-
@@ -454,7 +466,7 @@ body.compact-view .rub-summary{display:block}
    mehr, Header sitzt auf derselben Flaeche wie der Kartenkoerper (nur die
    duenne Trennlinie bleibt). Alt: background:var(--bg4); */
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:800;letter-spacing:.2px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;min-width:40px}
+.rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:800;letter-spacing:.2px;outline:none;font-family:var(--ff-text);min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
 .rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:12px;padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}@media (hover:hover){.rmv:hover{opacity:1;color:var(--blue)}}.rmv:disabled{opacity:.05;cursor:default}
 .rstar{background:none;border:none;cursor:pointer;font-size:13px;padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
@@ -469,8 +481,8 @@ body.compact-view .rub-summary{display:block}
 .rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}@media (hover:hover){.rate-watch:hover{opacity:1}}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
-.rub-summary-lbl{font-size:10px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
-.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:none;overflow:hidden;min-height:30px}
+.rub-summary-lbl{font-size:10px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:var(--ff-num);text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
+.rub-summary-txt{width:100%;background:transparent;border:none;color:var(--t1);font-size:12px;line-height:1.6;outline:none;font-family:var(--ff-text);resize:none;overflow:hidden;min-height:30px}
 .rub-summary-txt:focus{color:var(--t0)}
 .rub-summary-txt::placeholder{color:var(--t3)}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): keine umschliessende Rahmen-Karte
@@ -478,7 +490,7 @@ body.compact-view .rub-summary{display:block}
    ander, ohne gemeinsamen Aussenrahmen/Titel. Alt: background:var(--bg2);
    border:3px solid var(--bd);border-radius:var(--rs);padding:9px; */
 .ov-card{margin-bottom:9px}
-.ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:var(--ff-num)}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
 .ov-sum-line{color:var(--t1)}
@@ -501,18 +513,18 @@ body.compact-view .rub-summary{display:block}
 .ov-field2{margin:0;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:9px 8px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);transition:border-color .15s,transform .12s}
 @media (hover:hover){.ov-field2:hover{border-color:var(--bd2);transform:translateY(-1px)}}
 .ov2-titleline{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
-.ov2-title{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov2-title{font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase;font-family:var(--ff-num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Skill-Kritik 2026-08-02: (i)-Info-Icon oben rechts, wie im Referenzbild -
    wiederverwendet .rinfo-Optik, eigene kleinere Variante fuer die Kachel. */
 .ov2-info{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1.1px solid var(--blue);color:var(--blue);font-size:8px;font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}
 @media (hover:hover){.ov2-info:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}}
 .ov2-scoreline{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
-.ov2-score{font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.ov2-score{font-size:16px;font-weight:800;font-family:var(--ff-num);flex-shrink:0}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): Bias-Wort neben der Score-Zahl
    zurueckgebracht, aber gedaempft grau statt in Bias-Farbe (Nutzer-Wunsch
    2026-07-29 hatte es entfernt - siehe renderOverviewCard-Kommentar dort,
    dort ausklammert statt geloescht, falls das wieder bevorzugt wird). */
-.ov2-badge{font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ov2-badge{font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num)}
 /* Nutzer-Foto 2026-08-04: die Zusammenfassung ist jetzt komplett an den
    Kompakt-Regler gekoppelt (display:none/block, siehe Regel bei .compact-sw
    weiter oben) statt permanent 1-zeilig geklammert sichtbar zu sein - kein
@@ -538,8 +550,8 @@ body.compact-view .rub-summary{display:block}
 .dmeta{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-left:auto}
 .dmeta-i{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 14px;border-left:1px solid var(--bd)}
 .dmeta-i:first-child{border-left:none}
-.dmeta-l{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
-.dmeta-v{font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.dmeta-l{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);white-space:nowrap}
+.dmeta-v{font-size:12.5px;font-weight:700;color:var(--t1);font-family:var(--ff-num);white-space:nowrap}
 @media(max-width:900px){.dmeta{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none}.dmeta::-webkit-scrollbar{display:none}.dmeta-i{padding:0 10px}.dmeta-i:first-child{padding-left:0}}
 /* Nutzer-Foto 2026-08-04: History/Settings/Kompakt-Regler ziehen aus der
    stabs-row (neben Quick Note, die entfernt wurde) hier in die Kopfzeilen-
@@ -561,7 +573,7 @@ body.compact-view .rub-summary{display:block}
    Trenner links wie die anderen beiden Elemente. */
 .dmeta-ctrl{display:flex;align-items:center;height:100%;padding:0 10px;border-left:1px solid var(--bd)}
 .dmeta-ctrl:first-child{border-left:none;padding-left:0}
-.dmeta-hist-btn{background:none;border:none;padding:0;margin:0;font-size:12.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;cursor:pointer;outline:none}
+.dmeta-hist-btn{background:none;border:none;padding:0;margin:0;font-size:12.5px;font-weight:700;color:var(--t1);font-family:var(--ff-num);white-space:nowrap;cursor:pointer;outline:none}
 @media (hover:hover){.dmeta-hist-btn:hover{color:var(--blue)}}
 /* Nutzer-Korrektur 2026-08-04: das Einstellungs-Zahnrad (Non-FX) UND das neue
    Notes-Icon (s.u.) sollen "keinen weissen Hintergrund, nur das Symbol"
@@ -584,33 +596,33 @@ body.compact-view .rub-summary{display:block}
 @media(max-width:760px){.res-wrap{grid-template-columns:1fr}.res-rail{grid-template-columns:1fr}}
 .res-lib{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px;position:sticky;top:0}
 @media(max-width:760px){.res-lib{position:static}}
-.res-lib-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
-.res-lib-sec{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:11px 0 5px;padding-top:8px;border-top:1px solid var(--bd)}
+.res-lib-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin-bottom:8px}
+.res-lib-sec{font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin:11px 0 5px;padding-top:8px;border-top:1px solid var(--bd)}
 .res-libitem{display:flex;align-items:center;gap:7px;width:100%;background:transparent;border:none;border-left:2px solid transparent;color:var(--t2);padding:5px 6px;border-radius:var(--rss);cursor:pointer;font-size:12.5px;text-align:left;transition:background .12s,color .12s}
 @media (hover:hover){.res-libitem:hover{background:var(--bg4);color:var(--t0)}}
 .res-libitem.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--blue)}
 .res-libitem.res-fav.on{background:rgba(var(--star-rgb),.12);border-left-color:var(--star);color:var(--star)}
 .res-li-ic{display:inline-flex;align-items:center;flex-shrink:0;opacity:.8;font-size:11px}
 .res-li-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.res-li-ct{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.res-li-ct{font-size:10.5px;color:var(--t3);font-family:var(--ff-num);flex-shrink:0}
 .res-addfolder{width:100%;margin-top:7px;background:transparent;border:1px dashed var(--bd2);color:var(--t3);padding:5px;border-radius:var(--rss);cursor:pointer;font-size:11.5px;transition:all .12s}
 @media (hover:hover){.res-addfolder:hover{border-color:var(--blue);color:var(--blue)}}
 .res-main{min-width:0;display:flex;flex-direction:column;gap:10px}
 .res-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .res-title-wrap{margin-right:auto}
-.res-title{font-size:19px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-title{font-size:19px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--t0);font-family:var(--ff-num)}
 .res-sub{font-size:11px;color:var(--t3);letter-spacing:.4px;margin-top:1px}
 .res-search{flex:1;min-width:180px;max-width:340px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;color:var(--t1);font-size:12.5px;outline:none;transition:border-color .12s}
 .res-search:focus{border-color:var(--blue)}.res-search::placeholder{color:var(--t3)}
 .res-newbtn{flex-shrink:0}
 .res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .res-stat{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 11px}
-.res-stat-v{font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.1}
-.res-stat-l{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:3px}
+.res-stat-v{font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num);line-height:1.1}
+.res-stat-l{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin-top:3px}
 .res-list-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden}
 .res-list-hdr{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--bd)}
-.res-list-ti{font-size:12px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.res-list-ct{margin-left:auto;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-list-ti{font-size:12px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--t2);font-family:var(--ff-num)}
+.res-list-ct{margin-left:auto;font-size:11px;color:var(--t3);font-family:var(--ff-num)}
 .res-sort{background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);padding:3px 6px;font-size:11px;outline:none;cursor:pointer}
 .res-list{display:flex;flex-direction:column}
 .res-note{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid var(--bd);border-left:2px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
@@ -619,23 +631,23 @@ body.compact-view .rub-summary{display:block}
 /* Referenz-Mockup 2026-08-03: eigener Datums-Block links (Tag gross,
    Monat/Jahr klein darunter) statt reinem Inline-Datumstext. */
 .res-note-datebox{flex:none;width:42px;text-align:center;padding-top:1px}
-.res-note-day{font-size:19px;font-weight:800;color:var(--t0);line-height:1.05;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-note-day{font-size:19px;font-weight:800;color:var(--t0);line-height:1.05;font-family:var(--ff-num)}
 .res-note-mon{font-size:9px;font-weight:700;letter-spacing:.6px;color:var(--t3);text-transform:uppercase;margin-top:1px}
 .res-note-yr{font-size:9px;color:var(--t3);opacity:.8}
 .res-note-body{flex:1;min-width:0}
 .res-note-top{display:flex;align-items:baseline;gap:8px}
-.res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:6px;padding:1px 5px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:6px;padding:1px 5px;flex-shrink:0;font-family:var(--ff-num)}
 .res-note-ti{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Rechte Spalte: Themen-Pill oben, darunter das Stern-Icon, ganz unten die
    Uhrzeit - gestapelt statt inline (Referenz-Mockup). */
 .res-note-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:96px}
-.res-note-dt{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.res-note-dt{font-size:10px;color:var(--t3);font-family:var(--ff-num);white-space:nowrap}
 .res-note-star{background:none;border:none;cursor:pointer;color:var(--t3);opacity:.45;padding:0;line-height:1;flex-shrink:0;transition:opacity .12s,color .12s}
 .res-note-star.on{opacity:1;color:var(--star)}
 .res-note-star.on svg{fill:var(--star)}
 @media (hover:hover){.res-note-star:hover{opacity:.8}.res-note-star.on:hover{opacity:1}}
 .res-note-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
-.res-tag{font-size:10.5px;color:var(--blue);background:rgba(var(--blue-rgb),.08);border:1px solid rgba(var(--blue-rgb),.22);border-radius:999px;padding:2px 8px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;transition:all .12s}
+.res-tag{font-size:10.5px;color:var(--blue);background:rgba(var(--blue-rgb),.08);border:1px solid rgba(var(--blue-rgb),.22);border-radius:999px;padding:2px 8px;cursor:pointer;font-family:var(--ff-num);transition:all .12s}
 @media (hover:hover){.res-tag:hover{border-color:var(--blue);background:rgba(var(--blue-rgb),.16)}}
 .res-tag.on{border-color:var(--blue);color:#fff;background:var(--blue)}
 .res-note-ex{font-size:12px;line-height:1.5;color:var(--t3);margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -645,17 +657,17 @@ body.compact-view .rub-summary{display:block}
 .res-empty{padding:26px 14px;text-align:center;font-size:12.5px;color:var(--t3)}
 .res-rail{display:flex;flex-direction:column;gap:12px;min-width:0}
 .res-rail-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:10px 11px}
-.res-rail-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
+.res-rail-hd{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin-bottom:8px}
 .res-rail-empty{font-size:11.5px;color:var(--t3);line-height:1.5}
 .res-tagcloud{display:flex;flex-wrap:wrap;gap:5px}
 .res-recent{display:flex;align-items:baseline;gap:8px;width:100%;background:transparent;border:none;color:var(--t2);padding:4px 0;cursor:pointer;text-align:left;font-size:12px;border-bottom:1px solid var(--bd)}
 .res-recent:last-child{border-bottom:none}
 @media (hover:hover){.res-recent:hover{color:var(--blue)}}
 .res-recent-ti{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.res-recent-dt{font-size:10px;color:var(--t3);flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.res-chip{font-size:10.5px;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:3px;padding:2px 7px;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.res-recent-dt{font-size:10px;color:var(--t3);flex-shrink:0;font-family:var(--ff-num)}
+.res-chip{font-size:10.5px;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:3px;padding:2px 7px;cursor:pointer;font-family:var(--ff-num)}
 .res-chip.on{border-color:var(--blue);color:var(--blue);background:rgba(var(--blue-rgb),.1)}
-.res-flbl{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px}
+.res-flbl{font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin-bottom:3px}
 /* ── RESEARCH: ASSETS-MODUS (Nutzer-Wunsch 2026-08-03) ──
    Ersetzt/ergaenzt die freie Themen-Bibliothek um einen Asset-Browser nach
    festen Kategorie-Ordnern (FX/Indices/Commodities/Crypto/Stocks). Zwei
@@ -670,7 +682,7 @@ body.compact-view .rub-summary{display:block}
 @media (hover:hover){.resf-tile:hover{border-color:var(--blue);background:var(--bg4)}}
 .resf-tile-ic{color:var(--blue);opacity:.85}
 .resf-tile-nm{font-size:14px;font-weight:800;color:var(--t0)}
-.resf-tile-ct{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.resf-tile-ct{font-size:10.5px;color:var(--t3);font-family:var(--ff-num)}
 .resf-crumb{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--t2);font-weight:700}
 .resf-back{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12.5px;font-weight:700;padding:0}
 @media (hover:hover){.resf-back:hover{text-decoration:underline}}
@@ -682,7 +694,7 @@ body.compact-view .rub-summary{display:block}
 @media (hover:hover){.resf-asset-row:hover{background:var(--bg4);color:var(--t0)}}
 .resf-asset-row.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--t0)}
 .resf-asset-nm{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.resf-asset-sc{font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700}
+.resf-asset-sc{font-size:11px;font-family:var(--ff-num);font-weight:700}
 .resf-empty-detail{background:var(--bg3);border:1px dashed var(--bd2);border-radius:var(--r);padding:30px 14px;text-align:center;color:var(--t3);font-size:12.5px}
 .resf-detail-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .resf-detail-nm{font-size:22px;font-weight:800;color:var(--t0)}
@@ -696,7 +708,7 @@ body.compact-view .rub-summary{display:block}
 .resf-rub-hd{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer}
 .resf-rub-tog{background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px;padding:0;flex-shrink:0}
 .resf-rub-nm{flex:1;min-width:0;font-size:13.5px;font-weight:700;color:var(--t0)}
-.resf-rub-sc{font-size:12px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border:1px solid;border-radius:999px;padding:1px 8px}
+.resf-rub-sc{font-size:12px;font-weight:800;font-family:var(--ff-num);border:1px solid;border-radius:999px;padding:1px 8px}
 .resf-rub-body{padding:0 13px 12px}
 /* ── CARRY TRADE SCANNER ── */
 .carry-list{display:flex;flex-direction:column;gap:5px}
@@ -704,12 +716,12 @@ body.compact-view .rub-summary{display:block}
 .carry-rank{font-size:16px;font-weight:800;color:var(--t3);min-width:26px;padding-top:1px;text-align:center}
 .carry-main{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
 .carry-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
-.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:var(--ff-num);min-width:0;overflow:hidden;text-overflow:ellipsis}
 .carry-dir{font-size:11px;font-weight:700;border:1px solid;border-radius:4px;padding:2px 7px;white-space:nowrap}
-.carry-val{margin-left:auto;font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.carry-val{margin-left:auto;font-size:16px;font-weight:800;font-family:var(--ff-num);white-space:nowrap}
 .carry-bar-wrap{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
 .carry-bar{height:100%;border-radius:4px}
-.carry-rates{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-rates{font-size:11px;color:var(--t3);font-family:var(--ff-num)}
 /* Bugfund 2026-08-07 (Audit): auf 390px lief die Carry-Zeile 27px ueber den
    Bildschirmrand hinaus - Paarname (16px Mono), Richtungs-Badge und der
    nowrap-Zinswert passten nebeneinander nicht mehr in die Zeile, und
@@ -723,10 +735,10 @@ body.compact-view .rub-summary{display:block}
   .carry-dir{font-size:10px;padding:2px 5px}
 }
 .carry-lookup{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px}
-.carry-lk-pair{font-size:18px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:8px}
+.carry-lk-pair{font-size:18px;font-weight:800;color:var(--t0);font-family:var(--ff-num);margin-bottom:8px}
 .carry-lk-grid{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
-.carry-lk-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.carry-lk-rate{font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.carry-lk-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num)}
+.carry-lk-rate{font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)}
 .carry-lk-op{font-size:18px;color:var(--t3);padding-bottom:2px}
 .carry-lk-dir{margin-top:9px;font-size:13px;font-weight:700}
 /* ── SCORE TRENDS ── */
@@ -734,7 +746,7 @@ body.compact-view .rub-summary{display:block}
 .tr-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--bd)}
 .tr-card-title{font-size:18px;font-weight:800;color:var(--t0);letter-spacing:.2px}
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
-.tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t1);font-family:var(--ff-num)}
 .tr-leg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
 .tr-leg-dash{width:14px;height:0;border-top:2px dashed var(--t0);display:inline-block;flex:none;opacity:.85}
 .tr-svg{display:block}
@@ -789,7 +801,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 @media(hover:hover){.rterm-back-sm:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-riskbox{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
 .rterm-riskown{margin-top:9px}
-.rterm-ownsc{margin-left:auto;font-size:12px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rterm-ownsc{margin-left:auto;font-size:12px;font-weight:800;font-family:var(--ff-num)}
 /* Ueberschrift + Fokus-Asset-Identitaet AUSSERHALB der geborderten Box
    (Nutzer-Korrektur 2026-08-04), deutlich groesser als die vorherige
    kleine Titel-/Chip-Variante innerhalb der Box. */
@@ -799,7 +811,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-side-asset-flag{font-size:22px}
 .rterm-side-asset-ticker{font-size:22px;font-weight:800;color:var(--t0)}
 .rterm-side-asset-name{font-size:15px;color:var(--t2)}
-.rterm-side-asset-sc{font-size:20px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-left:2px}
+.rterm-side-asset-sc{font-size:20px;font-weight:800;font-family:var(--ff-num);margin-left:2px}
 .rterm-tree{flex:1 1 auto;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:6px;width:300px;max-width:80vw}
 .rterm-side-toggle{flex:0 0 auto;width:26px;height:26px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer}
 @media(hover:hover){.rterm-side-toggle:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
@@ -826,7 +838,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-tl-bell.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.5);background:rgba(var(--blue-rgb),.12)}
 @media(hover:hover){.rterm-tl-bell:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-tl-name{font-size:12px;font-weight:600;color:var(--t1);margin:1px 0}
-.rterm-tl-vals{font-size:10.5px;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rterm-tl-vals{font-size:10.5px;color:var(--t2);font-family:var(--ff-num)}
 .rterm-tl-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px 4px}
 @media(max-width:900px){.rterm-shell{flex-direction:column}.rterm-side{flex-direction:row}.rterm-tree{width:100%}.rterm-side-collapsed{width:100%;flex-direction:row;flex-wrap:wrap}.rterm-lower{flex-direction:column}.rterm-timeline{flex:1 1 auto;max-width:none;max-height:280px}}
 /* Rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04): schwebt unten links auf
@@ -844,7 +856,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .ranl-hd{display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer}
 .ranl-tog{flex:0 0 auto;width:16px;background:none;border:none;color:var(--t3);cursor:pointer;font-size:11px}
 .ranl-nm{flex:1 1 auto;font-size:13px;font-weight:600;color:var(--t1)}
-.ranl-appscore{flex:0 0 auto;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.ranl-appscore{flex:0 0 auto;font-size:11px;font-family:var(--ff-num)}
 .ranl-bias{display:flex;gap:3px;flex:0 0 auto}
 .ranl-bbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
 .ranl-bbtn.on.bull{background:rgba(var(--green-rgb),.16);border-color:var(--green);color:var(--green)}
@@ -855,7 +867,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 /* ── INDIKATOR-TABELLE (tech-design-Skill 2026-07-28, ersetzt die Karten-
    pro-Indikator-Darstellung durch eine flache Report-Tabelle, siehe Skill
    "Detail-Tabelle vs. editierbare Karten-Zeile", Modus 2) ── */
-.ind-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:4px}
+.ind-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;font-family:var(--ff-num);margin-top:4px}
 .ind-table thead th{text-align:right;font-size:9.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--t3);font-weight:700;padding:0 4px 6px;border-bottom:1px solid var(--bd);white-space:normal;overflow:hidden;word-break:break-word}
 .ind-table thead th.iht-name{text-align:left}
 .ind-table thead th.iht-trend{text-align:center}
@@ -874,7 +886,7 @@ body.res-return-active .rterm-back-pill{display:flex}
    statt die feste Tabellenbreite zu sprengen (Nutzer-Wunsch 2026-08-03) -
    braucht min-width:0 auf dem Flex-Item, sonst verweigert Flexbox das
    Schrumpfen unter die Inhaltsbreite. */
-.ir-name-txt{font-weight:700;color:var(--t0);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
+.ir-name-txt{font-weight:700;color:var(--t0);font-family:var(--ff-text);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
 .ir-act{font-weight:800;color:var(--t1)}
 .ir-act.act-good{color:var(--green)}
 .ir-act.act-bad{color:var(--red)}
@@ -912,7 +924,7 @@ body.res-return-active .rterm-back-pill{display:flex}
    Aufklappen ueber toggleIndDetailRow()). */
 .ind-detail-row td{padding:0;background:var(--bg5);border-bottom:1px solid var(--bd)}
 .ind-detail-row .ind-data-body{padding-top:2px}
-.ind-data{display:block;font-size:9.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd);background:var(--bg5)}
+.ind-data{display:block;font-size:9.5px;font-family:var(--ff-num);border-bottom:1px solid var(--bd);background:var(--bg5)}
 .ind-data-sum{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:3px 8px 5px;cursor:pointer;list-style:none}
 .ind-data-sum::-webkit-details-marker{display:none}
 .ind-data-sum::after{content:'Source ▾';margin-left:auto;color:var(--t3);font-size:10px;letter-spacing:.5px;text-transform:uppercase}
@@ -935,7 +947,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cmp-filter-grp{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
 .cmp-filter-lbl{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t3);font-weight:700;margin-right:3px}
 .cmp-filter-none{font-size:11px;color:var(--t3);font-style:italic}
-.cmp-chip{font:600 11px/1 'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t2);background:var(--bg0);border:1px solid var(--bd2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-chip:hover{border-color:var(--blue);color:var(--t0)}}
+.cmp-chip{font:600 11px/1 var(--ff-num);color:var(--t2);background:var(--bg0);border:1px solid var(--bd2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-chip:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-chip.on{background:rgba(var(--blue-rgb),.18);border-color:var(--blue);color:var(--blue)}
 .cmp-chip.nf{border-style:dashed}
 .cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
@@ -944,9 +956,9 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cmp-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .cmp-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px}
 .cmp-title-ic{font-size:15px;filter:saturate(1.2)}
-.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;margin-left:auto;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;margin-left:auto;font-family:var(--ff-num)}
 .cmp-scroll{overflow-x:auto}
-.cmp-tbl{border-collapse:separate;border-spacing:0;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px}
+.cmp-tbl{border-collapse:separate;border-spacing:0;width:100%;font-family:var(--ff-num);font-size:11px}
 .cmp-tbl th,.cmp-tbl td{padding:7px 12px;text-align:center;border-bottom:1px solid var(--bd);border-right:1px solid rgba(255,255,255,.04);white-space:nowrap}
 .cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1;font-size:12px;letter-spacing:.5px}
 .cmp-tbl thead th.cmp-col-nf{color:var(--purple)}
@@ -975,38 +987,38 @@ body.res-return-active .rterm-back-pill{display:flex}
 /* ── MATRIX / STRENGTH ── */
 .mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .mx-card-title{font-size:13px;font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.mx-card-title small{font-weight:500;color:var(--t3);font-size:10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-card-title small{font-weight:500;color:var(--t3);font-size:10px;font-family:var(--ff-num)}
 .mx-rank-head,.mx-rank-row{display:grid;grid-template-columns:26px 48px 1fr 52px 74px 56px;align-items:center;gap:9px;padding:7px 14px}
-.mx-rank-head{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;border-bottom:1px solid var(--bd)}
+.mx-rank-head{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num);border-bottom:1px solid var(--bd)}
 .mx-rank-row{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .12s}@media (hover:hover){.mx-rank-row:hover{background:var(--bg4)}}
 .mx-rank-row:last-child{border-bottom:none}
-.mx-rank-pos{color:var(--t3);font-size:12px;font-weight:700;text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-pos{color:var(--t3);font-size:12px;font-weight:700;text-align:center;font-family:var(--ff-num)}
 .mx-rank-id{font-size:14px;font-weight:700;color:var(--t0)}
 .mx-rank-bar-wrap{height:9px;background:var(--bg4);border-radius:5px;overflow:hidden}
 .mx-rank-bar{height:100%;border-radius:5px;transition:width .3s}
-.mx-rank-score{font-size:14px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-score{font-size:14px;font-weight:700;text-align:right;font-family:var(--ff-num)}
 .mx-rank-spark{display:flex;justify-content:center;align-items:center}
-.mx-rank-surp{text-align:right;font-size:13px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.mx-rank-surp{text-align:right;font-size:13px;font-weight:700;font-family:var(--ff-num)}
 .mx-rank-surp small{color:var(--t3);font-weight:500;font-size:9px}
 .mx-hm-scroll{overflow-x:auto;padding:14px}
-.mx-hm{border-collapse:separate;border-spacing:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin:0 auto}
+.mx-hm{border-collapse:separate;border-spacing:3px;font-family:var(--ff-num);margin:0 auto}
 .mx-hm th{font-size:13px;font-weight:700;color:var(--t2);padding:6px 9px;text-align:center}
 .mx-hm th.mx-hm-rowh{color:var(--t0)}
 .mx-hm th.mx-hm-corner{color:var(--t3);font-size:10px}
 .mx-hm td{font-size:14px;font-weight:700;color:var(--t1);text-align:center;padding:10px 13px;border-radius:6px;min-width:52px;min-height:38px;border:1px solid var(--bd)}
 .mx-hm td.mx-hm-diag{color:var(--t3);opacity:.35;border-color:transparent;background:var(--bg3)}
 /* ── COT ── */
-.cot-empty{color:var(--t3);font-size:14px;padding:16px 4px;line-height:1.6;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cot-meta{font-size:13px;color:var(--t3);margin-bottom:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-empty{color:var(--t3);font-size:14px;padding:16px 4px;line-height:1.6;font-family:var(--ff-num)}
+.cot-meta{font-size:13px;color:var(--t3);margin-bottom:12px;font-family:var(--ff-num)}
 .cot-meta b{color:var(--t1)}
 .cot-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .cot-card-title{font-size:15px;font-weight:700;color:var(--t0);padding:12px 15px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.cot-card-title small{font-weight:500;color:var(--t3);font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-card-title small{font-weight:500;color:var(--t3);font-size:12px;font-family:var(--ff-num)}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#3b82f6;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#e35d5d;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#3b82f6;font-family:var(--ff-num)}
+.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#e35d5d;font-family:var(--ff-num)}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
 .cot-bar-long{background:linear-gradient(90deg,#6ea8f0,#3b82f6);min-width:0;transition:width .3s}
 .cot-bar-short{background:linear-gradient(90deg,#d8525f,#e35d5d);min-width:0;transition:width .3s}
@@ -1045,7 +1057,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
-.cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
+.cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:var(--ff-num);font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
 /* Generisches Chart-Hover (chartHoverWrap/attachChartHovers): Fuehrungslinie,
    Punkt und Werte-Fenster folgen dem Finger/der Maus; touch-action:pan-y am
    Wrapper erlaubt vertikales Seiten-Scrollen, verhindert aber horizontales
@@ -1053,12 +1065,12 @@ body.res-return-active .rterm-back-pill{display:flex}
 .chv{position:relative;touch-action:pan-y}
 .chv-line{position:absolute;top:4px;bottom:22px;width:1px;background:var(--t3);opacity:.45;pointer-events:none}
 .chv-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:transparent;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
-.chv-tip{position:absolute;z-index:6;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px))}
+.chv-tip{position:absolute;z-index:6;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;font-family:var(--ff-num);font-size:11px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px))}
 .chv-tip b{color:var(--t0)}.chv-tip .chv-tip-d{color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
 .cot-tip-date{font-weight:700;color:var(--t1);margin-bottom:4px;font-size:10px;letter-spacing:.3px;text-transform:uppercase}
 .cot-tip-row{display:flex;align-items:center;justify-content:space-between;gap:10px;line-height:1.5}
 .cot-tip-row span{color:var(--t3)}
-.cot-tbl{border-collapse:collapse;width:100%;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:13px;white-space:nowrap}
+.cot-tbl{border-collapse:collapse;width:100%;font-family:var(--ff-num);font-size:13px;white-space:nowrap}
 .cot-tbl th,.cot-tbl td{padding:8px 11px;text-align:right;border-bottom:1px solid var(--bd)}
 .cot-tbl thead th{color:var(--t3);font-size:11px;letter-spacing:.4px;text-transform:uppercase;font-weight:700;position:sticky;top:0;background:var(--bg2)}
 .cot-tbl th.cot-corner,.cot-tbl th.cot-rowh{text-align:left;position:sticky;left:0;background:var(--bg2);z-index:1}
@@ -1074,10 +1086,10 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cot-cd-box{display:flex;flex-direction:column;gap:1px}
 .cot-cd-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--t3);font-weight:700}
-.cot-cd{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:18px;color:var(--t1);font-weight:600}
+.cot-cd{font-family:var(--ff-num);font-size:18px;color:var(--t1);font-weight:600}
 .cot-cd b{color:var(--t0);font-weight:800}
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.cot-note{font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cot-note{font-size:12px;color:var(--t3);font-family:var(--ff-num)}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
 @media (hover:hover){.cot-refresh:hover{border-color:#3b82f6;color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
@@ -1136,7 +1148,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .pcc-tog{color:var(--t3);font-size:12px;flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}
 .pcc.open .pcc-tog{transform:rotate(90deg)}
-.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.pcc-name{flex:1;background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;font-family:var(--ff-text)}
 .pcc-name::placeholder{color:var(--t3)}
 .pcc-body{display:none;padding:10px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px}
 .pcc.open .pcc-body{display:grid}
@@ -1145,20 +1157,20 @@ body.res-return-active .rterm-back-pill{display:flex}
 .pair-hdr{display:flex;align-items:center;padding:9px 10px;cursor:pointer;background:var(--bg3);transition:background .12s;gap:6px;user-select:none}
 @media (hover:hover){.pair-hdr:hover{background:var(--bg4)}}
 .pair-card.open .pair-hdr{background:var(--bg4)}
-.pair-name{font-size:14px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex:1;min-width:0}
+.pair-name{font-size:14px;font-weight:700;font-family:var(--ff-num);flex:1;min-width:0}
 .pbg{display:flex;gap:3px;flex-shrink:0}
 .pbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;font-size:10px;font-weight:700;transition:all .1s}
 .pbo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pair-body{padding:10px;display:none;border-top:1px solid var(--bd)}
 .pair-card.open .pair-body{display:block}
-.pfl{font-size:9px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;text-transform:uppercase}
-.pfinp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;resize:vertical;min-height:28px;transition:border-color .12s}
+.pfl{font-size:9px;letter-spacing:2px;color:var(--t3);font-weight:700;font-family:var(--ff-num);margin-bottom:3px;text-transform:uppercase}
+.pfinp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:var(--ff-text);resize:vertical;min-height:28px;transition:border-color .12s}
 .pfinp:focus{border-color:var(--bd2);color:var(--t0)}.pfinp::placeholder{color:var(--t3)}
-.pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
+.pcat-sel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rss);padding:5px 7px;color:var(--t1);font-size:12px;outline:none;font-family:var(--ff-text);cursor:pointer}
 /* ── NOTE CATS ── */
 .nc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:8px}@media (hover:hover){.nc:hover{border-color:var(--bd2)}}
 .nc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
-.nc-inp{background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;flex:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.nc-inp{background:transparent;border:none;color:var(--t0);font-size:17px;font-weight:700;outline:none;flex:1;font-family:var(--ff-text)}
 .nc-inp::placeholder{color:var(--t3)}
 .nc-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;opacity:.25;padding:0;line-height:1;transition:all .12s}@media (hover:hover){.nc-del:hover{color:var(--red);opacity:1}}
 .nc-body{padding:10px 12px}
@@ -1250,6 +1262,34 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
   --fs-xs:11px;     /* Beschriftung, Grossbuchstaben */
   --fs-2xs:10px;    /* Mikro-Beschriftung, Fussnote */
 }
+/* ══ SCHRIFT ═══════════════════════════════════════════════════════════
+   Nutzer-Wunsch 2026-08-08: "fuehr die Bloomberg Schriftart ein."
+   Ehrlich vorweg: DIE Bloomberg-Schrift gibt es nicht zu haben. Bloomberg
+   liess sie bei Matthew Carter (Georgia, Verdana, Tahoma) als "Bloomberg
+   Prop Unicode" anfertigen; sie ist bei Carter & Cone markenrechtlich
+   geschuetzt, kommerziell lizenziert und exklusiv fuer Bloomberg. Die
+   "Free Download"-Seiten dazu sind Raubkopien - die kommen hier nicht rein.
+   Und eine Web-Schrift ueber ein CDN scheidet ohnehin aus: die App ist eine
+   einzelne Datei, die per Service Worker offline laufen muss.
+
+   Nachgebaut wird deshalb das, was den Terminal-Charakter tatsaechlich
+   ausmacht - und das sind nicht die Buchstabenformen, sondern die ZIFFERN:
+   - dicktengleiche Ziffern (tnum): jede Ziffer gleich breit, dadurch rasten
+     Zahlenspalten optisch ein, ohne dass man Linien zeichnen muss. Genau
+     Tuftes Data-Ink-Gedanke, und der Grund, warum Bloomberg ueberhaupt eine
+     eigene Mono anfertigen liess.
+   - geschlitzte Null (zero): trennt 0 von O - in einer Oberflaeche, die zu
+     90 Prozent aus Zahlen besteht, ist das kein Detail.
+   - etwas fetterer Schnitt: Bloomberg hat seine Schrift 2007 bewusst dicker
+     rendern lassen, um die Lesbarkeit bei kleinen Groessen zu verbessern.
+   Die Stapel selbst bevorzugen Schriften, die diese Merkmale mitbringen. */
+:root{
+  --ff-text:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-num:'SF Mono',SFMono-Regular,'Cascadia Mono','JetBrains Mono','Roboto Mono',Consolas,'Liberation Mono',Menlo,monospace;
+}
+/* Ziffern-Merkmale global: greift auch dort, wo eine Stelle noch keine
+   eigene Familie gesetzt hat. */
+body{font-feature-settings:'tnum' 1,'zero' 1,'ss01' 1;font-variant-numeric:tabular-nums slashed-zero}
 .dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:11px}
 /* Kopfzeilen-Link rechts neben dem Titel (Referenz-Foto: "View Calendar"
    in der High-Impact-Events-Karte) - sitzt zwischen Titel und den
@@ -1278,7 +1318,7 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    kleine Beschriftung gedacht war. */
 .dw-t-txt{font-size:var(--fs-md);font-weight:700;color:var(--t1);letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
 .dw-t .rinfo{width:13px;height:13px;font-size:10px;opacity:.55;flex-shrink:0}
-.dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.dw-sub{font-size:11px;color:var(--t3);margin-top:3px;font-weight:600;font-family:var(--ff-text)}
 /* Bearbeitungsmodus statt Hover (Nutzer-Wunsch 2026-07-25: "komm weg von
    diesem Karten Design wo oben rechts immer die hoch runter Pfeile und das
    x steht" - die Steuerbuttons (Auf/Ab/Umbenennen/Loeschen) sind jetzt
@@ -1310,10 +1350,10 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    passt (kein Scrollbalken sichtbar). Gilt fuer JEDE Karte mit .sym-row,
    nicht nur Watchlist. */
 .sym-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:var(--rs);margin-bottom:3px;background:var(--bg2);transition:background .12s;cursor:pointer;overflow-x:auto;-webkit-overflow-scrolling:touch}@media (hover:hover){.sym-row:hover{background:var(--bg3)}}
-.sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:34px}
+.sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:var(--ff-num);min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
-.bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
-.row-score{display:inline-block;font-size:var(--fs-base);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
+.bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:var(--ff-num);flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
+.row-score{display:inline-block;font-size:var(--fs-base);font-weight:800;font-family:var(--ff-num);flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
 /* Watchlist-Karte (Nutzer-Wunsch 2026-08-06, Foto-Referenz): reine Tabelle
    ohne Kartenkopf (siehe hdrHtml) - Icon(s) | Name | Tages-% | Score | x,
    FX-/Non-FX-Block getrennt durch genau EINEN dezenten Strich (.wl-sep),
@@ -1331,7 +1371,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .wl-icons{display:inline-flex;align-items:center;gap:3px;font-size:17px;width:48px;flex-shrink:0;color:var(--t2)}
 .wl-flag-sep{color:var(--t3);font-size:var(--fs-2xs)}
 .wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
-.wl-chg{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
+.wl-chg{font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
 .wl-row .row-score{width:34px;font-size:12.5px}
 .wl-row .dw-del{font-size:16px;padding:0 3px}
 .wl-sep{height:1px;background:var(--bd);opacity:.7;margin:8px 0}
@@ -1340,13 +1380,13 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Zeilenhoehe, dieselbe Balkenoptik, dieselbe Zahlenspalte (Grundsatz
    "wiederkehrende UI-Bausteine muessen einheitlich sein"). */
 .perf-winbar{display:flex;gap:4px;margin-bottom:8px}
-.perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:var(--fs-xs);font-weight:700;padding:4px 0;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:var(--fs-xs);font-weight:700;padding:4px 0;cursor:pointer;font-family:var(--ff-num)}
 .perf-win.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .perf-list{display:flex;flex-direction:column}
 .perf-row{display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:default;min-height:26px}
 .perf-row[onclick]{cursor:pointer}
 @media (hover:hover){.perf-row[onclick]:hover{background:var(--bg2)}}
-.perf-rank{width:16px;flex-shrink:0;text-align:right;font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-rank{width:16px;flex-shrink:0;text-align:right;font-size:10px;color:var(--t3);font-family:var(--ff-num)}
 .perf-name{flex:0 0 58px;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .perf-barwrap{flex:1;min-width:24px;height:7px;background:var(--bg3);border-radius:4px;position:relative;overflow:hidden}
 .perf-bar{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
@@ -1354,11 +1394,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .esi-wrap{overflow:visible}
 .esi-zero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
 .esi-bar{border-radius:2px}
-.perf-pct{flex:0 0 58px;text-align:right;font-size:var(--fs-base);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-variant-numeric:tabular-nums}
-.carry-sec{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:8px 0 2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.perf-pct{flex:0 0 58px;text-align:right;font-size:var(--fs-base);font-weight:800;font-family:var(--ff-num);font-variant-numeric:tabular-nums}
+.carry-sec{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:8px 0 2px;font-family:var(--ff-num)}
 .carry-sec:first-child{margin-top:0}
 .corr-head{display:flex;align-items:center;gap:10px;margin-bottom:2px}
-.corr-big{font-size:var(--fs-hero);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.corr-big{font-size:var(--fs-hero);font-weight:800;font-family:var(--ff-num);line-height:1}
 .corr-lbl{font-size:var(--fs-xs);color:var(--t2);line-height:1.35}
 .dw-note{font-size:var(--fs-2xs);color:var(--t3);line-height:1.5;margin-top:9px}
 /* Notiz-Richtung, Event-Bezug und Trefferquote (2026-08-07) */
@@ -1367,14 +1407,14 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .note-dirbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .note-dir{font-size:11px;font-weight:800;margin-left:6px}
 .note-dir.nd-bull{color:var(--green)}.note-dir.nd-bear{color:var(--red)}
-.note-out{font-size:10px;font-weight:800;margin-left:6px;padding:1px 5px;border-radius:999px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap}
+.note-out{font-size:10px;font-weight:800;margin-left:6px;padding:1px 5px;border-radius:999px;font-family:var(--ff-num);white-space:nowrap}
 .no-hit{color:var(--green);background:rgba(var(--blue-rgb),.12)}
 .no-miss{color:var(--red);background:rgba(var(--red-rgb),.12)}
 .no-flat{color:var(--t3);background:var(--bg3)}
 .no-pend{color:var(--t3);background:var(--bg3)}
 .note-evt{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
 .note-stats{display:flex;align-items:center;gap:9px;margin:6px 0 8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
-.ns-big{font-size:var(--fs-xl);font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1}
+.ns-big{font-size:var(--fs-xl);font-weight:800;font-family:var(--ff-num);line-height:1}
 .ns-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
 .rterm-noterow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .rterm-notesearch{flex:1;min-width:150px}
@@ -1385,12 +1425,12 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hl-row:last-child{border-bottom:none}
 .hl-title{font-size:12.5px;font-weight:700;color:var(--t0);line-height:1.35}
 @media(hover:hover){.hl-row:hover .hl-title{color:var(--blue)}}
-.hl-meta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hl-meta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--t3);font-family:var(--ff-num)}
 .hl-time::before{content:'· '}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.55}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
-.dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:var(--ff-num);letter-spacing:.5px;text-transform:uppercase}
 /* Motivations-Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz): drei fette
    blaue Woerter untereinander, mittig, mit genug Eigenhoehe um die
    markierte Luecke rechts im Dashboard sichtbar zu fuellen.
@@ -1430,9 +1470,9 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dw-mark{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}@media (hover:hover){.dw-mark:hover{opacity:.8}}
 .dw-mark.on{color:var(--star);opacity:1}
-.dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.dw-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bd);border-radius:5px;padding:3px 6px 3px 8px;font-family:var(--ff-num)}
 .dw-chip-x{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;opacity:.5;line-height:1}
-.dw-meta{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;flex-shrink:0}
+.dw-meta{font-size:11px;color:var(--t3);font-family:var(--ff-num);flex-shrink:0}
 /* Nutzer-Wunsch 2026-08-04: die Globus-KARTE ist komplett vom Dashboard
    entfernt (widgets-Array/ZONE_OF_TYPE/Render-Zweig, siehe migrateDash()
    DASH_V18-Kommentar) - zieht stattdessen auf den Lade-/Intro-Screen um
@@ -1477,7 +1517,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
 .globe-main-row .globe-host{flex:1;min-width:0;width:auto}
 .globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
-.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:var(--ff-num)}
 /* Track im "Cockpit-Metall"-Look: dunkler Schlitz mit leichtem Glanzrand,
    Kerben als Skala (5 Stufen). Handle ist ein breiterer Griff-Riegel, der
    ueber den Track hinausragt (klassische Throttle-Optik statt eines duennen
@@ -1489,7 +1529,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .gt-handle{position:absolute;left:-5px;right:-5px;bottom:0%;height:16px;border-radius:4px;background:linear-gradient(180deg,#3c4a58,#151c24);border:1px solid rgba(223,244,255,.55);box-shadow:0 1px 3px rgba(0,0,0,.5);transform:translateY(50%);transition:bottom .08s linear}
 .gt-handle::after{content:'';position:absolute;left:5px;right:5px;top:50%;height:2px;background:rgba(223,244,255,.6);transform:translateY(-50%)}
 .gt-track.gt-dragging .gt-fill,.gt-track.gt-dragging .gt-handle{transition:none}
-.gt-pct{font-size:10.5px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:30px;text-align:center}
+.gt-pct{font-size:10.5px;font-weight:700;color:var(--t1);font-family:var(--ff-num);min-width:30px;text-align:center}
 .globe-btn-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
 .scan-btn{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
 @media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
@@ -1620,7 +1660,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    Ueberwachungsmodus-Objekte"): "TRACKING" oben mittig zwischen den Eck-
    Klammern, "SIGNAL" unten mittig - beides reine Modus-/Status-Label wie
    "GLOBAL MARKET SURVEILLANCE" selbst, keine erfundenen Messwerte. */
-.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase}
+.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:var(--ff-num);text-transform:uppercase}
 .globe-hud-badge.top{top:9px}
 .globe-hud-badge.bottom{bottom:9px}
 /* Waehrend eines Boosts (Nutzer-Bugreport 2026-08-04 "die Flamme wird
@@ -1653,16 +1693,16 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    optisch an den Globus angebunden statt beliebig breit. Bei dieser Breite
    passen 3 Readout-Felder pro Zeile (minmax(120px,1fr)) statt darunter
    einzeln gestapelt zu werden - deutlich kompakter (iPad-Bildschirmhoehe). */
-.globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:var(--ff-num)}
 /* repeat(4,1fr) statt auto-fit/minmax (Nutzer-Wunsch 2026-07-28 "unter dem
    Globus maximal eine Zeile mit Daten"): auto-fit+minmax(120px,...) brach
    bei der jetzt vierten Spalte (Fuel) innerhalb der 440px-Kartenbreite in
    eine zweite Zeile um (120px×4 + Gaps > 440px) - feste 4 Spalten schrumpfen
    stattdessen einfach schmaler, bleiben aber garantiert in einer Zeile. */
 .globe-hud-readout{width:100%;max-width:440px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px 10px;margin-top:4px}
-.ghr-item{font-size:10.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.3px;text-transform:uppercase}
+.ghr-item{font-size:10.5px;color:var(--t3);font-family:var(--ff-num);letter-spacing:.3px;text-transform:uppercase}
 .ghr-item b{display:block;font-size:13px;color:var(--t0);font-weight:700;letter-spacing:0;text-transform:none;margin-top:1px}
-.globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--t3)}
+.globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:var(--ff-num);font-size:10.5px;line-height:1.9;color:var(--t3)}
 .ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 @media (hover:hover){.ghi-row:hover{color:var(--t1)}}
 .ghi-t{color:#5fd0ff;opacity:.8}
@@ -1678,23 +1718,23 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .hie-row{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:var(--rs);cursor:pointer;transition:background .12s}
 @media (hover:hover){.hie-row:hover{background:var(--bg3)}}
 .hie-date{display:flex;flex-direction:column;align-items:center;justify-content:center;width:29px;height:29px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd);border-radius:7px}
-.hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:var(--ff-num)}
 .hie-wd{font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
-.hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:var(--ff-num)}
 .hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hie-imp{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
-.hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:var(--ff-num)}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
 .live-data-top{display:flex;align-items:center;gap:8px}
 .live-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:livePulse 2s infinite}
 @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,.5)}70%{box-shadow:0 0 0 8px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
 .live-data-lbl{font-size:13px;font-weight:800;letter-spacing:1.5px;color:var(--blue)}
-.live-clock{font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-left:auto}
+.live-clock{font-size:13px;font-weight:700;color:var(--t1);font-family:var(--ff-num);margin-left:auto}
 .live-data-sub{font-size:11.5px;color:var(--t3);margin-top:-6px}
 .live-src-list{display:flex;flex-direction:column}
 .live-src-row{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)}
 .live-src-row span:first-child{color:var(--t2);font-weight:600}
-.live-src-row span:last-child{color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.live-src-row span:last-child{color:var(--t0);font-family:var(--ff-num)}
 .dw-sel{background:var(--bg3);border:1px solid var(--bd);border-radius:3px;padding:2px 5px;color:var(--t1);font-size:11px;outline:none;cursor:pointer;flex-shrink:0}
 /* Grab-Cursor nur auf der Kugel selbst (die Kreis-Elemente decken exakt die
    Kugelflaeche ab), nicht auf der gesamten Widget-Breite - passend zur
@@ -1709,23 +1749,23 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .globe-host{position:relative;display:flex;justify-content:center;align-items:center;padding:2px 0 4px;min-height:120px;touch-action:none;user-select:none}
 .globe-host svg circle{cursor:grab}
 .globe-host.grabbing,.globe-host.grabbing svg circle{cursor:grabbing}
-.globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.globe-legend{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--t3);font-family:var(--ff-num)}
 .globe-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
+.globe-tip{position:absolute;z-index:5;background:var(--bg2);border:1px solid var(--bd2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:var(--ff-num);box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none;min-width:120px;transform:translate(-50%,-100%)}
 .globe-tip b{font-size:12.5px}
 .globe-tip .gt-row{color:var(--t3);margin-top:3px}
 /* Currency Strength Ranking */
 .rank-list{display:flex;flex-direction:column;gap:3px}
 .rank-row{display:grid;grid-template-columns:20px 52px 1fr 46px;align-items:center;gap:8px;cursor:pointer;padding:3px 4px;border-radius:5px}@media (hover:hover){.rank-row:hover{background:var(--bg3)}}
-.rank-pos{font-size:10px;color:var(--t3);text-align:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-pos{font-size:10px;color:var(--t3);text-align:center;font-family:var(--ff-num)}
 /* white-space/overflow: seit die Karte frei waehlbare Assets zeigt (nicht
    mehr nur 3-stellige FX-Kuerzel), koennen Namen wie "GER100"/"SP500"
    laenger sein - sollen abgeschnitten statt umzubrechen und die Zeilenhoehe
    zu sprengen. */
-.rank-name{font-size:var(--fs-base);font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{font-size:var(--fs-base);font-weight:700;color:var(--t0);font-family:var(--ff-num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-track{height:9px;background:var(--bg3);border-radius:5px;overflow:hidden}
 .rank-bar{height:100%;border-radius:5px;transition:width .4s ease}
-.rank-sc{font-size:12px;font-weight:700;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.rank-sc{font-size:12px;font-weight:700;text-align:right;font-family:var(--ff-num)}
 /* Gestrichelte Trennlinie am Vorzeichenwechsel positiv->negativ (Nutzer-
    Wunsch 2026-07-27) - eigene Zeile in der Grid-Liste, kein Rahmen an der
    Karte selbst. */
@@ -1765,28 +1805,28 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .risk-env-list-add input{flex:1;background:var(--bg1);border:1px solid var(--bd2);border-radius:6px;color:var(--t1);font-size:12px;padding:6px 8px}
 .risk-env-list-add .btn{flex-shrink:0;font-size:11.5px;white-space:nowrap}
 .risk-gauge-arc{margin-top:2px}
-.risk-lbl{text-align:center;font-size:15px;font-weight:800;margin-top:0;letter-spacing:1.2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-sub{text-align:center;font-size:10px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-lbl{text-align:center;font-size:15px;font-weight:800;margin-top:0;letter-spacing:1.2px;font-family:var(--ff-num)}
+.risk-sub{text-align:center;font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--ff-num)}
+.risk-calc{margin-top:10px;padding:7px 9px;background:var(--bg2);border-radius:var(--rs);font-size:11px;line-height:1.6;color:var(--t3);font-family:var(--ff-num)}
 .risk-calc b{color:var(--t2)}
 .risk-assets-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.risk-assets-hd{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-assets-hd{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;font-family:var(--ff-num)}
 .risk-asset-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;cursor:pointer;padding:1px 2px;border-radius:5px}
 @media (hover:hover){.risk-asset-row:hover{background:var(--bg3)}}
-.risk-asset-name{font-size:10px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-name{font-size:10px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;font-family:var(--ff-num)}
 .risk-asset-track{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .risk-asset-bar{height:100%;border-radius:4px;transition:width .4s ease}
-.risk-asset-sc{font-size:10px;font-weight:700;text-align:right;line-height:1.5;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.risk-asset-sc{font-size:10px;font-weight:700;text-align:right;line-height:1.5;font-family:var(--ff-num)}
 /* Asset Heatmap */
 .heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:7px}
 .heat-tile{border:1px solid;border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:transform .12s}@media (hover:hover){.heat-tile:hover{transform:translateY(-2px)}}
 .heat-name{font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.heat-sc{font-size:18px;font-weight:800;margin:3px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.heat-bias{font-size:10px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.heat-sc{font-size:18px;font-weight:800;margin:3px 0;font-family:var(--ff-num)}
+.heat-bias{font-size:10px;font-weight:700;font-family:var(--ff-num)}
 .dw-mini_calendar .cal-scroll{max-height:52vh;overflow-y:auto}
 /* ── CALENDAR TABLE (FF-Style) ── */
 .cal-table{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto;margin-bottom:6px}
-.cal-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+.cal-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;background:var(--bg4);border-bottom:1px solid var(--bd);font-family:var(--ff-num);letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
 .cal-day-hdr.today{color:var(--red)}
 .cal-day-hdr .cal-day-cd{color:var(--t3);font-weight:700}
 .cal-day-hdr.today .cal-day-cd{color:var(--red)}
@@ -1794,7 +1834,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .cal-day-chev{display:inline-block;transition:transform .15s;font-size:10px;color:var(--t3);margin-right:3px}
 .cal-day-hdr.past.collapsed .cal-day-chev{transform:rotate(-90deg)}
 .cal-day-cnt{color:var(--t3);font-weight:600;font-size:11px;margin-left:5px}
-.cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 30px;gap:6px;align-items:center;padding:5px 9px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
+.cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 30px;gap:6px;align-items:center;padding:5px 9px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:var(--ff-num);text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-col-hdr span{text-align:center}
 .cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
 .cal-row{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 30px;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--bd);min-width:390px}
@@ -1804,17 +1844,17 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .cal-row.cal-past{opacity:.42}@media (hover:hover){.cal-row.cal-past:hover{opacity:.75}}
 /* Dünne rote "Jetzt"-Linie mit linksbündiger Uhrzeit. */
 .cal-now-line{display:flex;align-items:center;gap:6px;padding:3px 9px}
-.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.5;letter-spacing:.3px}
+.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:var(--ff-num);line-height:1.5;letter-spacing:.3px}
 .cal-now-rule{flex:1;height:2px;background:var(--red);border-radius:1px;box-shadow:0 0 4px rgba(var(--red-rgb),.6)}
 /* Scrollbarer Kalender-Container (Dashboard-Widget "Upcoming Events"). */
 .cal-scroll{position:relative;max-height:620px;overflow-y:auto}
-.cal-time{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
-.cal-ccy{font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--blue);font-weight:700}
-.cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.cal-time{font-size:12px;font-family:var(--ff-num);color:var(--t3)}
+.cal-ccy{font-size:12px;font-family:var(--ff-num);color:var(--blue);font-weight:700}
+.cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:var(--ff-num)}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
 .cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .cal-evsub{grid-column:4/8;font-size:9.5px;color:var(--t3);margin-top:2px}
-.cal-val{font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:700;color:var(--t1);text-align:center}
+.cal-val{font-size:10.5px;font-family:var(--ff-num);font-weight:700;color:var(--t1);text-align:center}
 .cal-val.ph{color:var(--t3);font-weight:400}
 .cal-val.act-good{color:var(--green)}
 .cal-val.act-bad{color:var(--red)}
@@ -1836,13 +1876,13 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 @media (hover:hover){.search-row:hover{background:var(--bg4)}}
 .search-row.sel{background:var(--bg4);outline:1px solid rgba(var(--blue-rgb),.4)}
 .search-row small{color:var(--t3);margin-left:auto;flex:none;font-size:10.5px}
-.search-row .sr-id{flex:none;min-width:44px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-size:11.5px;color:var(--t2)}
+.search-row .sr-id{flex:none;min-width:44px;font-weight:800;font-family:var(--ff-num);font-size:11.5px;color:var(--t2)}
 .search-empty{color:var(--t3);font-size:12px;padding:14px 10px;text-align:center}
 .evt-alert-row{display:flex;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid var(--bd)}
 .evt-alert-row:last-child{border-bottom:none}
 .evt-alert-row-main{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;background:none;border:none;text-align:left;cursor:pointer;padding:2px 4px;border-radius:6px;color:inherit;font:inherit}
 @media (hover:hover){.evt-alert-row-main:hover{background:var(--bg3)}}
-.evt-alert-row-time{flex:none;font-size:10.5px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;color:var(--t3)}
+.evt-alert-row-time{flex:none;font-size:10.5px;font-family:var(--ff-num);color:var(--t3)}
 .evt-alert-row-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--t1);font-weight:600}
 .evt-alert-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;padding:0 3px;line-height:1;flex:none}@media (hover:hover){.evt-alert-row-del:hover{color:var(--red)}}
 .evt-alert-empty{font-size:12px;color:var(--t3);padding:4px 2px 8px}
@@ -1889,7 +1929,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    gross egal wie viele Spalten gerade da sind. */
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
 .evt-section{margin-bottom:11px}
-.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
+.evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:var(--ff-num);letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
 .evt-toggle.open .evt-tog-arrow{transform:rotate(90deg)}
@@ -1908,7 +1948,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .hist-day.hist-has .hist-dot{background:var(--hc);border-color:var(--hc)}
 .hist-day.hist-today .hist-wd{color:var(--t1)}
 .hist-day.hist-today .hist-dot{box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--bd2)}
-.hist-dn{font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hist-dn{font-size:10px;color:var(--t3);font-family:var(--ff-num)}
 /* ── HISTORY-FENSTER (ausklappbar, Tage untereinander wie im Kalender) ── */
 .histp{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);max-height:340px;overflow-y:auto;padding:4px}
 .histp-day{padding:7px 8px;border-bottom:1px solid var(--bd)}
@@ -1974,18 +2014,18 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 /* ── INBOX / POSTFACH ── */
 .inbox-btn{position:relative}
 .inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.6}
+.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:var(--ff-num);line-height:1.6}
 /* ── INBOX SCORE NOTIFICATIONS ── */
 .nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
-.nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px;text-transform:uppercase}
+.nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:var(--ff-num);letter-spacing:.5px;text-transform:uppercase}
 .nb-day-hdr:first-child{margin-top:0}
 .nb-day-hdr.nb-day-today{background:rgba(239,107,120,.18);color:#e35d5d;border-bottom-color:rgba(239,107,120,.4)}
-.nb-ccy{font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
+.nb-ccy{font-family:var(--ff-num);font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
 .nb-main{flex:1;min-width:0}
 .nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nb-rub{color:var(--t3);font-weight:500;font-size:11px}
-.nb-sub{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-top:2px}
-.nb-dir{font-size:11px;font-weight:700;flex-shrink:0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.nb-sub{font-size:11px;color:var(--t3);font-family:var(--ff-num);margin-top:2px}
+.nb-dir{font-size:11px;font-weight:700;flex-shrink:0;font-family:var(--ff-num)}
 .nb-dir.nb-bull{color:var(--blue)}.nb-dir.nb-bear{color:var(--red)}.nb-dir.nb-neu{color:var(--amber)}
 .nb-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;line-height:1;padding:0 2px;flex-shrink:0;transition:color .12s}@media (hover:hover){.nb-del:hover{color:var(--red)}}
 .ind-card.ind-flash{animation:indFlash 1.8s ease-out}
@@ -1993,36 +2033,36 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
-.finp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:border-color .12s}
+.finp{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:var(--ff-text);transition:border-color .12s}
 .finp:focus{border-color:var(--bd2);color:var(--t0)}.finp::placeholder{color:var(--t3)}
-.fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;cursor:pointer}
+.fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:var(--ff-text);cursor:pointer}
 /* ── MODALS ── */
 .ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
 .modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
 .modal.inbox-modal{max-width:min(1300px,94vw)}
 #inboxList{max-height:65vh;overflow-y:auto}
-.m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px}
-.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px}
+.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
-.m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin-bottom:10px;cursor:pointer;max-height:180px}
+.m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:26px}}
 /* ── LOCK SCREEN ── */
 .lock-ov{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
 .lock-box{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px}
 .lock-logo{font-size:24px;font-weight:800;color:var(--t0);display:flex;align-items:center;gap:8px;letter-spacing:.5px}
-.lock-sub{font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:3px;text-transform:uppercase;margin-top:-14px}
+.lock-sub{font-size:11px;color:var(--t3);font-family:var(--ff-num);letter-spacing:3px;text-transform:uppercase;margin-top:-14px}
 .lock-dots{display:flex;gap:16px;margin:4px 0 6px}
 .lock-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--bd2);transition:all .15s;background:transparent}
 .lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px rgba(var(--blue-rgb),.53)}
 .lock-pad{display:grid;grid-template-columns:repeat(3,62px);gap:14px}
-.lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:23px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.lock-key{width:62px;height:62px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:23px;font-weight:600;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-family:var(--ff-num)}
 @media (hover:hover){.lock-key:hover{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 .lock-key:active{background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}
 .lock-key.empty{visibility:hidden;cursor:default}
 .lock-box.shake{animation:lockshake .4s}
-.lock-err{font-size:12px;color:var(--red);height:14px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:1px}
+.lock-err{font-size:12px;color:var(--red);height:14px;font-family:var(--ff-num);letter-spacing:1px}
 @keyframes lockshake{10%,90%{transform:translateX(-6px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
 /* ── DESKTOP / TABLET (iPad+, PC) ── */
 @media(min-width:760px){
@@ -2218,8 +2258,8 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,64px);width:100%;flex:1 1 auto;min-height:0;opacity:0;animation:introSubIn .9s ease .5s both}
 .intro-hud-col{display:flex;flex-direction:column;gap:clamp(14px,3vh,34px);min-width:110px}
 .intro-hud-stat{text-align:right}
-.intro-hud-lbl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
-.intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;line-height:1.15}
+.intro-hud-lbl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:var(--ff-num)}
+.intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:var(--ff-num);line-height:1.15}
 .intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
 .intro-globe-host{width:min(58vh,50vw,760px);height:min(58vh,50vw,760px)}
 /* Boost-Button zentriert unter dem Globus (Nutzer-Wunsch 2026-08-04, neue
@@ -2347,7 +2387,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
    Alarm-Zaehler bzw. die Undo/Redo-Pfeile (per Playwright bei 1366px
    gesehen). So kann er nie etwas verdecken - er bekommt einfach den Platz,
    der zwischen beiden Bloecken uebrig ist. */
-.hdr-livebanner{grid-column:2/-1;grid-row:1;justify-self:center;min-width:0;max-width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.hdr-livebanner{grid-column:2/-1;grid-row:1;justify-self:center;min-width:0;max-width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:var(--ff-num)}
 .hlb-name{overflow:hidden;text-overflow:ellipsis}
 .hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
@@ -2381,7 +2421,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .pov-title{display:flex;align-items:center;gap:8px;flex:1 1 auto;min-width:0}
 .pov-name{font-size:20px;font-weight:800;color:var(--t0);letter-spacing:.3px;white-space:nowrap}
 .pov-bias{font-size:11px;font-weight:700;border:1px solid;border-radius:20px;padding:3px 10px;white-space:nowrap}
-.pov-score{font-size:15px;font-weight:800;border:1px solid;border-radius:var(--rs);padding:3px 11px;background:transparent;cursor:pointer;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-score{font-size:15px;font-weight:800;border:1px solid;border-radius:var(--rs);padding:3px 11px;background:transparent;cursor:pointer;font-family:var(--ff-num)}
 .pov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:11px;align-items:start}
 .pov-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
 .pov-card.pov-wide{grid-column:1/-1}
@@ -2396,18 +2436,18 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .pov-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--bd2)}
 .pov-row:last-of-type{border-bottom:none}
 .pov-row-l{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pov-row-v{font-size:12.5px;font-weight:700;color:var(--t0);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-row-v{font-size:12.5px;font-weight:700;color:var(--t0);white-space:nowrap;font-family:var(--ff-num)}
 /* Score-Zerlegung: Balken mit Nulllinie in der Mitte (wie der Surprise Index) */
 .pov-srow{display:flex;align-items:center;gap:9px;margin-bottom:6px}
 .pov-sname{flex:0 0 128px;font-size:11.5px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pov-bwrap{position:relative;flex:1 1 auto;height:8px;background:var(--bg4);border-radius:4px;min-width:40px}
 .pov-bzero{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
 .pov-bar{position:absolute;top:0;bottom:0;border-radius:4px}
-.pov-sval{flex:0 0 46px;text-align:right;font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-sval{flex:0 0 46px;text-align:right;font-size:12.5px;font-weight:700;font-family:var(--ff-num)}
 .pov-stot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid var(--bd);font-size:12.5px;font-weight:700;color:var(--t1)}
-.pov-stot span:last-child{font-size:16px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-stot span:last-child{font-size:16px;font-weight:800;font-family:var(--ff-num)}
 .pov-price{margin-bottom:8px}
-.pov-price-v{font-size:22px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-price-v{font-size:22px;font-weight:800;color:var(--t0);font-family:var(--ff-num)}
 .pov-price-d{font-size:11px;color:var(--t3);margin-left:8px}
 /* Makro-Vergleich: vier Spalten, Zahlen rechtsbuendig untereinander */
 .pov-mrow{display:grid;grid-template-columns:minmax(0,1fr) 62px 62px 62px;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd2)}
@@ -2415,24 +2455,24 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .pov-mhead{border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:2px}
 .pov-mhead .pov-mv{font-size:11px;font-weight:700;color:var(--t3)}
 .pov-mname{font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pov-mv{text-align:right;font-size:12.5px;font-weight:700;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-mv{text-align:right;font-size:12.5px;font-weight:700;font-family:var(--ff-num)}
 .pov-split{display:flex;align-items:center;gap:9px;margin-top:2px}
 .pov-splitbar{display:flex;flex:1 1 auto;height:9px;border-radius:5px;overflow:hidden;background:var(--bg4);min-width:40px}
 .pov-splitbar span{display:block;height:100%}
-.pov-splitv{font-size:11.5px;font-weight:700;color:var(--t1);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-splitv{font-size:11.5px;font-weight:700;color:var(--t1);white-space:nowrap;font-family:var(--ff-num)}
 /* Kalender-Zeilen: Countdown | Waehrung | Name | Uhrzeit */
 .pov-ev{display:grid;grid-template-columns:66px 38px minmax(0,1fr) 44px;gap:7px;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--bd2);font-size:12px}
 .pov-ev:last-of-type{border-bottom:none}
 .pov-ev-d{color:var(--t3);font-size:11px;white-space:nowrap}
 .pov-ev-c{font-weight:700;font-size:11px}
 .pov-ev-n{color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pov-ev-t{color:var(--t3);font-size:11px;text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-ev-t{color:var(--t3);font-size:11px;text-align:right;font-family:var(--ff-num)}
 .pov-note-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto 74px;gap:7px;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd2);cursor:pointer}
 .pov-note-row:last-of-type{border-bottom:none}
 .pov-note-row:hover .pov-ntitle{color:var(--t0)}
 .pov-nleg{font-size:10.5px;font-weight:700;color:var(--t3)}
 .pov-ntitle{font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pov-ndate{font-size:10.5px;color:var(--t3);text-align:right;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.pov-ndate{font-size:10.5px;color:var(--t3);text-align:right;font-family:var(--ff-num)}
 /* Paarname in der Set-ups-Liste ist jetzt anklickbar (oeffnet die Overview) */
 .sym-name.pov-open{cursor:pointer}
 .sym-name.pov-open:hover{color:var(--t0);text-decoration:underline}
@@ -2451,13 +2491,13 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .wt-icons{font-size:15px;display:flex;align-items:center;gap:3px;flex:0 0 auto}
 .wt-name{font-size:15px;font-weight:800;color:var(--t0);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-bias{font-size:10.5px;font-weight:700;border:1px solid;border-radius:20px;padding:2px 9px;white-space:nowrap}
-.wt-score{font-size:14px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;min-width:40px;text-align:right}
+.wt-score{font-size:14px;font-weight:800;font-family:var(--ff-num);min-width:40px;text-align:right}
 .wt-open{display:flex;align-items:center;color:var(--t3);flex:0 0 auto}
 @media(hover:hover){.wt-head:hover .wt-name{text-decoration:underline}.wt-head:hover .wt-open{color:var(--blue)}}
 .wt-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px;margin-top:10px}
 .wt-metric{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;min-width:0}
 .wt-m-l{display:block;font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wt-m-v{display:block;font-size:13px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-m-v{display:block;font-size:13px;font-weight:700;color:var(--t0);font-family:var(--ff-num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-note{width:100%;margin-top:9px;background:var(--bg0);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:12.5px;padding:7px 10px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.5;min-height:36px}
 .wt-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .wt-note::placeholder{color:var(--t3)}
@@ -2477,9 +2517,9 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .stale-notify-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:8px;align-items:baseline;width:100%;background:none;border:none;padding:4px 0;cursor:pointer;text-align:left;border-bottom:1px solid var(--bd2)}
 .stale-notify-row:last-of-type{border-bottom:none}
 @media(hover:hover){.stale-notify-row:hover .stale-notify-name{color:var(--t0);text-decoration:underline}}
-.stale-notify-sym{font-size:var(--fs-xs);font-weight:800;color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.stale-notify-sym{font-size:var(--fs-xs);font-weight:800;color:var(--t2);font-family:var(--ff-num)}
 .stale-notify-name{font-size:var(--fs-sm);color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stale-notify-age{font-size:var(--fs-xs);font-weight:700;color:var(--amber);white-space:nowrap;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.stale-notify-age{font-size:var(--fs-xs);font-weight:700;color:var(--amber);white-space:nowrap;font-family:var(--ff-num)}
 .stale-notify-more{font-size:var(--fs-xs);color:var(--t3);padding-top:5px}
 .stale-notify-note{font-size:var(--fs-2xs);color:var(--t3);line-height:1.5;margin-top:8px}
 /* Veralteter Indikator in der Tabelle: gedaempft + eigener Hinweis, aber
@@ -2488,8 +2528,28 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .ir-stale{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
 
 /* Duenne Datenbasis im Surprise Index sichtbar (Audit 2026-08-08) */
-.esi-thin-mark{margin-left:4px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace}
+.esi-thin-mark{margin-left:4px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);font-family:var(--ff-num)}
 .perf-row.esi-thin .perf-name{color:var(--t2)}
+
+/* ── Datenqualitaets-Fenster (Nutzer-Wunsch 2026-08-08) ─────────────── */
+.dq-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:13px}
+.dq-sum-item{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;display:flex;align-items:baseline;gap:9px}
+.dq-sum-v{font-size:var(--fs-xl);font-weight:800;color:var(--t0);font-family:var(--ff-num);line-height:1}
+.dq-sum-l{font-size:var(--fs-2xs);color:var(--t2);line-height:1.4}
+.dq-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:var(--rs)}
+.dq-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);min-width:640px}
+.dq-table th{text-align:right;font-size:var(--fs-2xs);font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--t3);padding:8px 9px;background:var(--bg2);border-bottom:1px solid var(--bd);white-space:nowrap;cursor:help}
+.dq-table th.dq-l,.dq-table td.dq-l{text-align:left}
+.dq-table td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--bd2);color:var(--t1);font-family:var(--ff-num);white-space:nowrap}
+.dq-table tr:last-child td{border-bottom:none}
+.dq-table td.dq-l{font-family:var(--ff-text)}
+.dq-name{display:block;font-size:var(--fs-sm);font-weight:600;color:var(--t0)}
+.dq-rub{display:block;font-size:var(--fs-2xs);color:var(--t3)}
+.dq-dim{color:var(--t3);font-style:italic}
+.dq-table tr.dq-stale td{opacity:.6}
+.dq-note{font-size:var(--fs-xs);color:var(--t2);line-height:1.65;margin-top:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
+.dq-note b{color:var(--t0)}
+.dq-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.6;padding:14px 0}
 </style>
 </head>
 <body>
@@ -2608,12 +2668,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-329 — Vier Punkte aus dem Audit umgesetzt. (1) ALTERSGRENZE: ein Release, das mehr als 2 eigene Zyklen ueberfaellig ist, zaehlt nicht mehr in den Score. Anlass war AUD Retail Sales mit einem Release vom 31.07.2025 - 372 Tage alt, 14,9 Zyklen ueberfaellig, mit vollem +1 im Score; die Reihe ist in ind_data.json komplett zu Ende, das australische Statistikamt hat sie 2025 ersetzt. Ein toter Indikator scorte also unbefristet weiter. Citi und Bloomberg loesen das beide mit einem HARTEN Schnitt statt mit Ausfaden (CESI: rollierendes Drei-Monats-Fenster). Relativ zum eigenen Zyklus gemessen, damit Quartalswerte nicht benachteiligt werden. Aktuell betroffen: 22 Indikatoren, alle sichtbar mit OUT-OF-DATE-Marke an der Zeile, eigener Dashboard-Meldung und Klartext im Score-Modal - sie erscheinen dort ausdruecklich EINZELN statt in der Sammelzeile 'N weitere bei 0 (neutral)', denn neutral sind sie ja gerade nicht. Manuelle und Bond/COT/Sentiment-Indikatoren sind per Test nachweislich nicht betroffen. (2) TREND-HISTORIE auf den revidierten Stand: valHist trug bisher immer den Erstdruck. Bei GBP Unemployment Claims stand dort 26.800/26.500/31.200/6.700 - die 31.200 wurden aber auf 1.300 revidiert, mit dem korrigierten Wert dreht das Signal. Bei 3 von 8 Revisionen kippte dadurch die Richtung. Standard aus der Real-Time-Data-Praxis: Ueberraschung gegen den Erstdruck, Niveau und Pfad immer auf neuestem Stand. Alle 8 aktiven Revisionen jetzt korrekt uebernommen. (3) SURPRISE INDEX weist duenne Basis aus: USD stuetzt sich auf 18 Indikatoren, CAD auf 4 - unter 8 steht die Zahl jetzt neben dem Kuerzel und im Fusstext. (4) AMZN und NVDA bekommen Preisdaten (TradingView live + Yahoo-Dreijahres-Backfill) - sie waren gelistet, hatten aber keine Reihe und erschienen ueberall als Strich.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-330 — Vier Punkte. (1) FAIRNESS-FEHLER GEFIXT, den der Nutzer selbst vermutet hatte und der durch meine Altersgrenze entstanden war: symTrackedCount zaehlte veraltete Indikatoren weiter im Nenner mit. Ein Asset wurde dadurch DOPPELT bestraft - einmal durch das fehlende Signal, noch einmal durch den zu grossen Divisor. Gemessen: JPY hatte 23 getrackte Indikatoren, 6 davon veraltet, Faktor 0,97 statt 1,15, angezeigter Score 3,9 statt 4,6 - 0,7 Punkte Verlust allein dafuer, dass der Feed haengt. Zur Frage selbst: nein, Assets mit wenigen aber schnell aktualisierenden Indikatoren sind NICHT benachteiligt, denn die Altersgrenze wird relativ zum EIGENEN Zyklus gemessen - der Divisor war der uebersehene zweite Kanal. (2) SCHRIFT: die echte Bloomberg-Schrift (Bloomberg Prop Unicode, Matthew Carter) ist bei Carter & Cone geschuetzt, kommerziell lizenziert und exklusiv - nicht erhaeltlich, die Free-Download-Seiten sind Raubkopien. Nachgebaut ist stattdessen, was den Terminal-Charakter ausmacht: die Ziffern. Dabei kam ein groesserer Fund heraus - ein globales *{font-family:Arial!important} aus einer frueheren Session hat ALLE 200 Monospace-Deklarationen der App still ueberschrieben, die Zahlen waren nie dicktengleich. Jetzt zwei Variablen (--ff-text/--ff-num) plus tnum und slashed-zero. (3) NEUES FENSTER 'Data quality' pro Asset: Beobachtungen, Median-Ueberraschung, Streuung Sigma, aktuelle Ueberraschung in Sigma, Zyklus, Halbwertszeit in Tagen, gemessene Marktrelevanz und resultierender Gewichtsfaktor - je Indikator, alles aus denselben Funktionen wie der Score. Die App RECHNETE das alles laengst, zeigte es aber nur als winzige Klammer im Score-Modal und nur im normalisierten Modus. (4) Alle Details jetzt vollstaendig in der CLAUDE.md dokumentiert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-329</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-330</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2643,7 +2703,7 @@ function introLogin(){
 <div class="pc" id="pgCmp" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Compare</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Side-by-side macro data across all currencies · each cell shows Actual · (Forecast / Previous)</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Side-by-side macro data across all currencies · each cell shows Actual · (Forecast / Previous)</div>
   </div>
   <div id="cmpCards"></div>
 </div>
@@ -2651,14 +2711,14 @@ function introLogin(){
 <div class="pc" id="pgMx" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Strength Matrix</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Live currency-strength ranking, score trend &amp; data-surprise momentum · pair heatmap from the single-currency scores</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Live currency-strength ranking, score trend &amp; data-surprise momentum · pair heatmap from the single-currency scores</div>
   </div>
   <div id="mxBody"></div>
 </div>
 <!-- PAGE: TRENDS (Score-Verlauf) -->
 <div class="pc" id="pgTrends" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
+    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:12px;color:var(--t3);margin-top:2px;font-family:var(--ff-num)">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
@@ -2674,7 +2734,7 @@ function introLogin(){
 <div class="pc" id="pgCot" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">COT Report</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Non-Commercial net long / short positioning (%) &amp; weekly change · source: CFTC</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Non-Commercial net long / short positioning (%) &amp; weekly change · source: CFTC</div>
   </div>
   <div id="cotBody"></div>
 </div>
@@ -2682,7 +2742,7 @@ function introLogin(){
 <div class="pc" id="pgSent" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Market Sentiment</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Contrarian crowd sentiment &amp; options positioning · Fear &amp; Greed, Put/Call, VIX · read against the crowd at extremes</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Contrarian crowd sentiment &amp; options positioning · Fear &amp; Greed, Put/Call, VIX · read against the crowd at extremes</div>
   </div>
   <div id="sentBody"></div>
 </div>
@@ -2690,7 +2750,7 @@ function introLogin(){
 <div class="pc" id="pgSeas" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Seasonality</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
   </div>
   <div id="seasBody"></div>
 </div>
@@ -2698,7 +2758,7 @@ function introLogin(){
 <div class="pc" id="pgData" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Data</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Browse any indicator's release history — actual vs. forecast, up to 3 years</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Browse any indicator's release history — actual vs. forecast, up to 3 years</div>
   </div>
   <div id="dataBody"></div>
 </div>
@@ -2706,7 +2766,7 @@ function introLogin(){
 <div class="pc" id="pgRate" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Rate Probabilities</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Market-implied Fed hike/hold/cut odds per FOMC meeting, from 30-Day Fed Funds futures · display-only, no score effect</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Market-implied Fed hike/hold/cut odds per FOMC meeting, from 30-Day Fed Funds futures · display-only, no score effect</div>
   </div>
   <div id="rateBody"></div>
 </div>
@@ -2714,7 +2774,7 @@ function introLogin(){
 <div class="pc" id="pgCarry" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Carry Trade Scanner</div>
-    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
   </div>
   <div style="margin-bottom:10px"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:420px"></div>
   <div id="carryLookup"></div>
@@ -2723,7 +2783,7 @@ function introLogin(){
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
   <div id="pairsHdr" style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
@@ -2734,7 +2794,7 @@ function introLogin(){
 <!-- PAGE: WATCHLIST (Nutzer-Wunsch 2026-08-07) -->
 <div class="pc" id="pgWatch" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Watchlist</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Everything you starred in Set-ups &mdash; with price, carry, positioning, the next event and your own notes</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Watchlist</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Everything you starred in Set-ups &mdash; with price, carry, positioning, the next event and your own notes</div></div>
     <button class="btn g" onclick="openAddPair('Watchlist')">&#65291; Add pair</button>
   </div>
   <div id="watchBody"></div>
@@ -2763,9 +2823,9 @@ function introLogin(){
 <!-- PAGE: CALENDAR -->
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Upcoming events · sorted by date</div></div>
+    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-      <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace"></span>
+      <span id="ffLastUpd" style="font-size:11px;color:var(--t3);font-family:var(--ff-num)"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
@@ -2775,22 +2835,22 @@ function introLogin(){
   </div>
   <div id="calEvents"></div>
   <div class="ev-form">
-    <div style="font-size:11px;font-weight:700;color:var(--t0);margin-bottom:9px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;letter-spacing:.5px">＋ ADD EVENT</div>
+    <div style="font-size:11px;font-weight:700;color:var(--t0);margin-bottom:9px;font-family:var(--ff-num);letter-spacing:.5px">＋ ADD EVENT</div>
     <div class="fg2">
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">EVENT NAME</div><input class="finp" id="evName" placeholder="e.g. US NFP, ECB Rate Decision..."></div>
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">DATE</div><input class="finp" id="evDate" type="date"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">EVENT NAME</div><input class="finp" id="evName" placeholder="e.g. US NFP, ECB Rate Decision..."></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">DATE</div><input class="finp" id="evDate" type="date"></div>
     </div>
     <div class="fg3">
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
     </div>
     <div class="fg3">
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="e.g. 0.7%"></div>
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">PREVIOUS</div><input class="finp" id="evPrevious" placeholder="e.g. 1.4%"></div>
-      <div><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">ACTUAL</div><input class="finp" id="evActual" placeholder="e.g. 0.9%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="e.g. 0.7%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">PREVIOUS</div><input class="finp" id="evPrevious" placeholder="e.g. 1.4%"></div>
+      <div><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">ACTUAL</div><input class="finp" id="evActual" placeholder="e.g. 0.9%"></div>
     </div>
-    <div style="margin-bottom:7px"><div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:3px;letter-spacing:1px">NOTES</div><input class="finp" id="evNotes" placeholder="What to watch..."></div>
+    <div style="margin-bottom:7px"><div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">NOTES</div><input class="finp" id="evNotes" placeholder="What to watch..."></div>
     <button class="btn g" style="width:100%;padding:8px;justify-content:center" onclick="addCalEv()">＋ Add to Calendar</button>
   </div>
 </div>
@@ -2805,7 +2865,7 @@ function introLogin(){
 <div class="ov" id="mResNote" style="display:none">
   <div class="modal" style="max-width:640px">
     <h3>📓 Research note</h3>
-    <div id="resNMeta" style="font-size:11px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
+    <div id="resNMeta" style="font-size:11px;color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <input class="finp" id="resNTitle" placeholder="Title — e.g. Core CPI surprised to the downside" style="margin-bottom:8px">
     <textarea class="nbox" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…" style="margin-bottom:8px;min-height:170px"></textarea>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -2891,11 +2951,11 @@ function introLogin(){
 <div class="ov" id="mAddPair" style="display:none">
   <div class="modal">
     <h3>Add Pair</h3>
-    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">SELECT PAIR</div>
+    <div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:4px;letter-spacing:1px">SELECT PAIR</div>
     <select class="m-sel" id="mPairSel" size="8"></select>
-    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">OR ENTER CUSTOM</div>
+    <div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:4px;letter-spacing:1px">OR ENTER CUSTOM</div>
     <input class="m-inp" id="mPairCustom" placeholder="e.g. USD/NOK (custom)">
-    <div style="font-size:10px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:4px;letter-spacing:1px">CATEGORY</div>
+    <div style="font-size:10px;color:var(--t3);font-family:var(--ff-num);margin-bottom:4px;letter-spacing:1px">CATEGORY</div>
     <select class="m-sel" id="mPairCat" size="1" style="max-height:40px;margin-bottom:10px"></select>
     <div class="m-btns"><button class="btn" onclick="closeM('mAddPair')">Cancel</button><button class="btn g" onclick="confirmAddPair()">Add</button></div>
   </div>
@@ -2923,7 +2983,7 @@ function introLogin(){
     <h3 id="mInfoTitle">ℹ️ Info</h3>
     <div id="mInfoGeneric" style="display:none;font-size:12px;color:var(--t2);margin:-4px 0 8px"></div>
     <div id="mInfoStd" style="display:none;font-size:12.5px;color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;margin:0 0 10px"></div>
-    <div id="mInfoNotesLbl" style="display:none;font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">YOUR NOTES</div>
+    <div id="mInfoNotesLbl" style="display:none;font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">YOUR NOTES</div>
     <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Enter explanation..."></textarea>
     <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Close</button><button class="btn g" onclick="saveInfoM()">Save</button></div>
   </div>
@@ -2968,7 +3028,7 @@ function introLogin(){
 <div class="ov" id="mEvtAlertPicker" style="display:none">
   <div class="modal">
     <h3>🔔 New Telegram Alert</h3>
-    <div style="font-size:11px;color:var(--t3);margin:-4px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">FROM AN UPCOMING EVENT</div>
+    <div style="font-size:11px;color:var(--t3);margin:-4px 0 5px;font-weight:600;font-family:var(--ff-num)">FROM AN UPCOMING EVENT</div>
     <select class="m-inp" id="evtAlertPickerSel"></select>
     <div class="m-btns">
       <button class="btn" onclick="closeM('mEvtAlertPicker')">Cancel</button>
@@ -2990,7 +3050,7 @@ function introLogin(){
   <div class="modal">
     <h3>🔔 Telegram Alert</h3>
     <div id="evtAlertInfo" style="font-size:12.5px;color:var(--t2);margin:-4px 0 10px"></div>
-    <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">MESSAGE</div>
+    <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">MESSAGE</div>
     <textarea class="nbox" id="evtAlertTxt" style="min-height:110px"></textarea>
     <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertFFLink"> Append the Forex Factory link</label>
     <div style="font-size:11px;color:var(--t3);margin-top:6px">Sent via the Telegram bot at the event's release time.</div>
@@ -3001,19 +3061,19 @@ function introLogin(){
 <div class="ov" id="mEvtAlertCustom" style="display:none">
   <div class="modal">
     <h3>🔔 Custom Telegram Alert</h3>
-    <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">ALERT NAME</div>
+    <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">ALERT NAME</div>
     <input class="m-inp" id="evtAlertCustomName" placeholder="e.g. Check open trades" maxlength="80">
     <div style="display:flex;gap:8px;margin-top:8px">
       <div style="flex:1">
-        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">DATE</div>
+        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">DATE</div>
         <input class="m-inp" type="date" id="evtAlertCustomDate">
       </div>
       <div style="flex:1">
-        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">TIME</div>
+        <div style="font-size:11px;color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">TIME</div>
         <input class="m-inp" type="time" id="evtAlertCustomTime">
       </div>
     </div>
-    <div style="font-size:11px;color:var(--t3);margin:8px 0 5px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">MESSAGE</div>
+    <div style="font-size:11px;color:var(--t3);margin:8px 0 5px;font-weight:600;font-family:var(--ff-num)">MESSAGE</div>
     <textarea class="nbox" id="evtAlertCustomTxt" style="min-height:90px" placeholder="What should the Telegram message say?"></textarea>
     <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertCustomFFLink"> Append the Forex Factory link</label>
     <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertCustom')">Cancel</button><button class="btn" id="evtAlertCustomRemoveBtn" style="display:none;color:var(--red)" onclick="removeCustomEvtAlert()">Remove alert</button><button class="btn g" onclick="saveCustomEvtAlert()">Save</button></div>
@@ -3080,7 +3140,7 @@ function introLogin(){
     <input class="m-inp" id="cloudKey" placeholder="eyJhbGciOi...">
     <label class="dm-lbl">Sync ID (use the same ID on all devices)</label>
     <input class="m-inp" id="cloudSyncId" placeholder="e.g. my-fx-tracker">
-    <div id="cloudStatus" style="font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace;margin-bottom:10px"></div>
+    <div id="cloudStatus" style="font-size:12px;color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <div class="m-btns">
       <button class="btn" onclick="closeM('mCloud')">Close</button>
       <button class="btn" onclick="cloudPull(true)">⬇ Download</button>
@@ -3145,6 +3205,14 @@ function introLogin(){
     </div>
     <div id="mRiskEnvCfgList"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mRiskEnvCfg')">Done</button></div>
+  </div>
+</div>
+<!-- MODAL: Datenqualitaet & Gewichtung je Asset (Nutzer-Wunsch 2026-08-08) -->
+<div class="ov" id="mDataQuality" style="display:none" onclick="if(event.target===this)closeM('mDataQuality')">
+  <div class="modal modal-wide">
+    <h3 id="dqTitle">Data quality &amp; weighting</h3>
+    <div id="dqBody"></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mDataQuality')">Close</button></div>
   </div>
 </div>
 <!-- MODAL: Asset-Strength-Karte, Asset-Auswahl (Nutzer-Wunsch 2026-07-27) -->
@@ -3849,6 +3917,122 @@ function scoreInfoIndRow(ind,rub){
 function scoreInfoTotalRow(label,val){
   return`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 8px;margin-top:7px;border-top:1px solid var(--bd2);font-weight:700"><span>${escH(label)}</span><span style="color:${scoreColor(val)}">${fmtScNum(val)}</span></div>`;
 }
+// ══ DATENQUALITAET & GEWICHTUNG PRO ASSET ════════════════════════════════
+// (Nutzer-Wunsch 2026-08-08) Die App RECHNET Streuung, Zyklus, Halbwertszeit
+// und Marktrelevanz laengst - aber sie zeigte sie nur als winzige Klammer im
+// Score-Modal, und auch das nur im normalisierten Modus. Wer wissen wollte,
+// wie belastbar ein Indikator ueberhaupt ist, konnte es nirgends nachlesen.
+// Dieses Fenster stellt die Groessen erstmals vollstaendig und pro Asset
+// nebeneinander - alle aus denselben Funktionen, die auch der Score benutzt,
+// nichts eigens fuer die Anzeige neu gerechnet.
+//
+// Median der Ueberraschungen: bewusst der MEDIAN und nicht der Mittelwert.
+// Ein einzelner Ausreisser (etwa ein NFP-Sondereffekt) verschiebt den
+// Mittelwert stark, den Median kaum - und die Frage lautet hier "wie weit
+// liegt dieser Indikator UEBLICHERWEISE daneben", nicht "wie hoch ist die
+// Summe der Abweichungen".
+function indSurpriseStats(ind){
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const s=[];
+  h.forEach(e=>{
+    if(!Array.isArray(e)||e.length<3)return;
+    const a=parseNumLike(e[1]),f=parseNumLike(e[2]);
+    if(a==null||f==null)return;
+    s.push(a-f);
+  });
+  if(!s.length)return{n:0,median:null,medianAbs:null,sigma:indSurpriseSigma(ind)};
+  const sorted=s.slice().sort((a,b)=>a-b);
+  const mid=x=>{const k=Math.floor(x.length/2);return x.length%2?x[k]:(x[k-1]+x[k])/2;};
+  const abs=s.map(Math.abs).sort((a,b)=>a-b);
+  return{n:s.length,median:mid(sorted),medianAbs:mid(abs),sigma:indSurpriseSigma(ind)};
+}
+// Halbwertszeit in TAGEN. Der Score rechnet sie zyklus-relativ
+// (DECAY_HALFLIFE_CYCLES eigene Release-Zyklen), damit ein Quartalswert
+// langsamer altert als ein Wochenwert. Fuer die Anzeige wird daraus die
+// konkrete Tageszahl - die kann man sich vorstellen, "1,5 Zyklen" nicht.
+function indHalfLifeDays(ind){
+  const c=indCycleDays(ind);
+  return isFinite(c)&&c>0?c*DECAY_HALFLIFE_CYCLES:null;
+}
+function dqNum(v,dig){
+  if(v==null||!isFinite(v))return'–';
+  const a=Math.abs(v);
+  if(a>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(a>=1e3)return(v/1e3).toFixed(1)+'K';
+  return v.toFixed(dig==null?2:dig);
+}
+function openDataQuality(symId){
+  const sym=syms.find(s=>s.id===symId);if(!sym)return;
+  const rows=[];
+  (sym.rubrics||[]).forEach(rub=>{
+    (rub.indicators||[]).forEach(ind=>{
+      const r=ind.research||{};
+      // Rein qualitative und Nicht-Release-Indikatoren haben keine dieser
+      // Groessen - sie hier mit Strichen aufzufuehren waere nur Rauschen.
+      if(r.bond||r.cot||r.sent)return;
+      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
+      if(!Array.isArray(ind.chartHist)||!ind.chartHist.length)return;
+      const st=indSurpriseStats(ind);
+      const cyc=indCycleDays(ind);
+      const hl=indHalfLifeDays(ind);
+      const mkt=indMarketWeight(ind,symId);
+      const nb=indNormBreakdown(ind,symId);
+      rows.push({rub:rub.name,name:ind.displayName||ind.name,
+        n:st.n,median:st.median,medianAbs:st.medianAbs,sigma:st.sigma,
+        cyc,hl,mkt,z:nb.z,norm:nb.total,
+        stale:indIsStale(ind),over:indOverdueCycles(ind),
+        date:r.date||null});
+    });
+  });
+  rows.sort((a,b)=>b.mkt-a.mkt);
+  const belastbar=rows.filter(r=>r.sigma!=null).length;
+  const veraltet=rows.filter(r=>r.stale).length;
+  const mktRange=rows.length?[Math.min(...rows.map(r=>r.mkt)),Math.max(...rows.map(r=>r.mkt))]:[1,1];
+
+  const head=`<div class="dq-summary">
+    <div class="dq-sum-item"><span class="dq-sum-v">${rows.length}</span><span class="dq-sum-l">indicators with history</span></div>
+    <div class="dq-sum-item"><span class="dq-sum-v" style="color:${belastbar>=8?BC.bull:belastbar>=5?'var(--amber)':BC.bear}">${belastbar}</span><span class="dq-sum-l">with a usable spread<br><span style="color:var(--t3)">(at least ${NORM_MIN_OBS} past forecasts)</span></span></div>
+    <div class="dq-sum-item"><span class="dq-sum-v" style="color:${veraltet?'var(--amber)':'var(--t2)'}">${veraltet}</span><span class="dq-sum-l">out of date<br><span style="color:var(--t3)">(over ${IND_STALE_CYCLES} own cycles overdue)</span></span></div>
+  </div>`;
+
+  const body=rows.length?`<div class="dq-scroll"><table class="dq-table">
+    <thead><tr>
+      <th class="dq-l">Indicator</th>
+      <th title="How many past releases carry both an actual and a forecast — everything to the right rests on this number">n</th>
+      <th title="Median surprise (actual minus forecast). Median, not mean: a single outlier barely moves it. Near zero = the forecasters are unbiased for this series.">Median</th>
+      <th title="Standard deviation of the past forecast errors. This is the yardstick that makes NFP and CPI comparable — a surprise is measured in these units, not in raw points. Needs at least ${NORM_MIN_OBS} observations, otherwise it stays empty rather than being guessed.">Spread σ</th>
+      <th title="Current surprise measured in those standard deviations. 1.0 = an averagely large surprise for this indicator.">Now</th>
+      <th title="Typical gap between releases, taken as the median of the actual gaps in its own history.">Cycle</th>
+      <th title="After this many days the age weighting has halved. Derived from the indicator's own cycle (${DECAY_HALFLIFE_CYCLES} cycles), so a quarterly series ages slower than a weekly one.">Half-life</th>
+      <th title="Average price move on this indicator's release days, divided by the average move on all days. Above 1 = the market tends to move more than usual when this one prints. Measured, not assigned.">Impact</th>
+      <th title="The three factors multiplied, clamped to ${SCORE_NORM_MIN}–${SCORE_NORM_MAX}. Only active while the score mode is set to normalised.">Weight</th>
+    </tr></thead>
+    <tbody>${rows.map(r=>`<tr${r.stale?' class="dq-stale"':''}>
+      <td class="dq-l"><span class="dq-name">${escH(r.name)}</span><span class="dq-rub">${escH(r.rub)}</span>${r.stale?`<span class="ir-stale" title="Last release ${escH(r.date||'?')}">OUT OF DATE</span>`:''}</td>
+      <td>${r.n||'–'}</td>
+      <td>${dqNum(r.median)}</td>
+      <td${r.sigma==null?' class="dq-dim" title="Fewer than '+NORM_MIN_OBS+' past forecasts — no spread is computed rather than one being guessed from thin data"':''}>${r.sigma==null?'too few':dqNum(r.sigma)}</td>
+      <td>${r.z==null?'–':r.z.toFixed(2)+'σ'}</td>
+      <td>${Math.round(r.cyc)}d</td>
+      <td>${r.hl==null?'–':Math.round(r.hl)+'d'}</td>
+      <td style="color:${r.mkt>1.15?BC.bull:r.mkt<0.85?'var(--t3)':'var(--t1)'}">${r.mkt.toFixed(2)}×</td>
+      <td style="font-weight:800">${r.norm.toFixed(2)}×</td>
+    </tr>`).join('')}</tbody>
+  </table></div>` : `<div class="dq-empty">No indicator of this asset has enough release history yet. The values build up as the hourly job collects releases.</div>`;
+
+  const note=`<div class="dq-note">
+    <b>How to read this.</b> Every column is measured from this indicator's own past releases — nothing here is assigned by hand.
+    <b>Spread σ</b> is the yardstick: NFP misses by tens of thousands, CPI by hundredths of a percent, so a surprise only becomes comparable once it is expressed in the indicator's own standard deviations. This follows Citi's construction for its Economic Surprise Index.
+    <b>Impact</b> answers a different question — not "how far off was the forecast" but "does the market actually care". It compares the average price move on release days against the average move on all days, so it is observed behaviour rather than an opinion.
+    <b>Half-life</b> is deliberately measured in the indicator's own cycles, not in fixed days: otherwise a quarterly series would always look stale next to a weekly one.
+    Where the history is too thin, the cell stays empty instead of showing a number derived from too few observations.
+    ${scoreMode==='normalized'?'':'<br><br><b>Note:</b> the score is currently in <b>classic</b> mode, so the Weight column is shown for information only and does not affect any score. Switch to normalised mode to activate it.'}
+  </div>`;
+  document.getElementById('dqTitle').textContent='Data quality & weighting — '+sym.id;
+  document.getElementById('dqBody').innerHTML=head+body+note;
+  openM('mDataQuality');
+}
+
 function openScoreInfoRub(symId,rubId){
   const sym=syms.find(s=>s.id===symId);if(!sym)return;
   const rub=(sym.rubrics||[]).find(r=>r.id===rubId);if(!rub)return;
@@ -4024,9 +4208,30 @@ function pairCarryAdj(pairName){
 // roher Summe. Der Symbol-Score selbst (Detailansicht, Karten, Heatmap,
 // ±3-Schwellen) bleibt unveraendert die vertraute rohe Summe; der
 // Umrechnungsschritt ist im Score-Modal je Seite offengelegt.
+// Zaehlt die WERTBAREN Indikatoren, nicht die vorhandenen.
+//
+// Nutzer-Einwand 2026-08-08, und er war berechtigt: seit der Altersgrenze
+// koennen Indikatoren 0 beitragen, ohne aus der Liste zu verschwinden. Stand
+// so ein Indikator weiter im Nenner, wurde das Asset DOPPELT bestraft -
+// einmal, weil das Signal fehlt, und noch einmal, weil der Divisor zu gross
+// bleibt und den Rest kleiner rechnet.
+//
+// Gemessen: JPY hatte 23 getrackte Indikatoren, 6 davon veraltet. Der Faktor
+// lag bei 0,97 statt 1,15, der angezeigte Score bei 3,9 statt 4,6 - 0,7
+// Punkte Verlust allein dafuer, dass der Feed haengt.
+//
+// Die Absicht hinter symScoreCmp ist "Signalstaerke pro getracktem
+// Indikator". Ein Indikator, der gar nicht mehr beitragen KANN, ist kein
+// getracktes Signal - er gehoert weder in den Zaehler noch in den Nenner.
+// SCORE_ZERO-Indikatoren (2Y/10Y Spread) waren aus demselben Grund schon
+// immer ausgenommen.
 function symTrackedCount(sym){
   let n=0;
-  (sym&&sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(i=>{if(!SCORE_ZERO.has(stripPeriodSuffix(i.name).base))n++;}));
+  (sym&&sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(i=>{
+    if(SCORE_ZERO.has(stripPeriodSuffix(i.name).base))return;
+    if(indIsStale(i))return;
+    n++;
+  }));
   return n;
 }
 // Memoisiert (Performance-Fix 2026-07-19): fxRefCount haengt AUSSCHLIESSLICH
@@ -8073,6 +8278,7 @@ function renderDetail(){
   // Klick schaltet zwischen Macro/Notes um wie zuvor die Buttons.
   const dmetaControls=`<div class="dmeta-controls">
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
+    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-icon-btn${curSub==='notes'?' on':''}" onclick="setSub(curSub==='notes'?'specific':'notes')" title="${curSub==='notes'?'Back to Macro':'Notes'}">${icn('note',13)}</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
@@ -8415,7 +8621,7 @@ function renderNotesSubTab(c){
     ${col('bear','▼ BEARISH',BC.bear,nt.bear)}
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
-    <div style="font-size:12px;color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">Organized notes for ${escH(c.name)}</div>
+    <div style="font-size:12px;color:var(--t3);font-family:var(--ff-num)">Organized notes for ${escH(c.name)}</div>
     <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:11px">＋ Category</button>
   </div>
   ${masonryHTML(rubs,(rub,ri)=>renderNoteRub(rub,ri,rubs.length))}
@@ -10064,13 +10270,13 @@ function openCarryDetail(pairName){
   const col=d>0?'var(--green)':d<0?'var(--red)':'var(--t3)';
   body.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px">
-      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${rb.rate}%</div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rb.rate}%</div></div>
       <div style="font-size:16px;color:var(--t3)">−</div>
-      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${rq.rate}%</div></div>
+      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rq.rate}%</div></div>
     </div>
     <div style="text-align:center;margin-bottom:10px">
       <div style="font-size:11px;color:var(--t3);font-weight:700;text-transform:uppercase">Differential</div>
-      <div style="font-size:24px;font-weight:800;color:${col};font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${d>0?'+':''}${d}%</div>
+      <div style="font-size:24px;font-weight:800;color:${col};font-family:var(--ff-num)">${d>0?'+':''}${d}%</div>
       <div style="font-size:12px;color:var(--t2);margin-top:2px">${d===0?'No carry edge either way.':(long?`Favours going long ${escH(b)} / short ${escH(q)}`:`Favours going long ${escH(q)} / short ${escH(b)}`)}</div>
     </div>
     <div style="font-size:12.5px;color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px">
@@ -10624,7 +10830,7 @@ function renderPairs(){
     </div>
   </div>`;
   if(items.length===0){
-    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs yet. Click "＋ Add Pair" above.</div>`;
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:var(--ff-num)">No pairs yet. Click "＋ Add Pair" above.</div>`;
     return;
   }
   // Bei aktivem Waehrungsfilter NUR Paare mit einer der gewaehlten Waehrungen;
@@ -10669,7 +10875,7 @@ function renderPairs(){
   </div>`;
   if(shown.length===0){
     const why=[active?setupCcyFilter.join(', '):'',setupFxOnly?'FX-only':''].filter(Boolean).join(' · ');
-    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:var(--ff-num)">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
     return;
   }
   const bull=shown.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
@@ -10699,7 +10905,7 @@ function renderCalendar(){
   if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   const empty=calCcyFilter!=='ALL'?`No events for ${calCcyFilter} in this range.`:(calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.');
-  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${empty}</div>`;return;}
+  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:var(--ff-num)">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
   el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
@@ -10754,7 +10960,7 @@ function renderEvtAlertList(){
   const calAlerts=eventAlerts.filter(a=>a.evKey).sort(byTime);
   const customAlerts=eventAlerts.filter(a=>!a.evKey).sort(byTime);
   if(!calAlerts.length&&!customAlerts.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
-  const section=(title,list)=>list.length?`<div style="font-size:11px;color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:'SF Mono',SFMono-Regular,Consolas,'Liberation Mono',Menlo,monospace">${title}</div>${evtAlertRowsHtml(list)}`:'';
+  const section=(title,list)=>list.length?`<div style="font-size:11px;color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:var(--ff-num)">${title}</div>${evtAlertRowsHtml(list)}`:'';
   wrap.innerHTML=section('📅 CALENDAR ALERTS',calAlerts)+section('✏️ CUSTOM ALERTS',customAlerts);
 }
 function deleteEvtAlertById(id){
@@ -13161,7 +13367,7 @@ function esiCardHtml(){
     // tun, als waere die Zahl gleich belastbar).
     const duenn=r.n<ESI_THIN_N;
     return`<div class="perf-row${duenn?' esi-thin':''}" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}${duenn?` · thin basis: fewer than ${ESI_THIN_N} indicators, read with care`:''}">
-      <span class="perf-name" style="flex:0 0 44px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
+      <span class="perf-name" style="flex:0 0 62px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
       <span class="perf-barwrap esi-wrap"><span class="esi-zero"></span><span class="perf-bar esi-bar" style="left:${r.val>=0?50:50-Math.abs(r.val)/max*50}%;width:${(Math.abs(r.val)/max*50).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
     </div>`;}).join('');

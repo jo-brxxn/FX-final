@@ -68,6 +68,156 @@ Cloud-Stufe drüber, sobald irgendein anderes Gerät zwischen Toggle und
 lokalen Präferenz-Felder (Kompakt-Stufe, designHue) in Ruhe und schiebt sie
 danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
 
+## ⚠️ SCORE-MODELL: der vollstaendige Stand (2026-08-08)
+
+Nach dem grossen Audit und den Nutzer-Entscheiden dieser Session ist der
+Score deutlich enger definiert als vorher. Diese Uebersicht ist die
+Referenz - bei Widerspruch zu aelteren Session-Notizen weiter unten gilt
+DIESE hier.
+
+### Was in den Score einfliesst
+
+| Bestandteil | Gewicht | Bemerkung |
+|---|---|---|
+| Beat/Miss gegen Forecast | ±1 | Basis. Halbgewicht ±0,5 bei Core-Paaren, Bonds, COT-Netto, CB Tone |
+| Step-Signal (Actual vs. Previous) | ±0,5 | NUR wenn kein Forecast existiert - Ersatz fuer Beat/Miss, betrifft 38 Indikatoren |
+| ★ Wichtig | +0,5 additiv | Nutzer-Markierung |
+| Normierung (nur Modus `normalized`) | ×0,4 bis ×1,8 | drei gemessene Faktoren, siehe unten |
+
+### Was NICHT (mehr) in den Score einfliesst
+
+| Bestandteil | Seit | Grund |
+|---|---|---|
+| 2-Schritt-Trend | 2026-08-08 | war als Bonus gedacht, war faktisch gleichrangiger Treiber (USD 47%, AUD 100% des Scores). Citis CESI hat aus demselben Grund keinen Trend-Term: Ueberraschung und Momentum wirken auf verschiedenen Zeithorizonten. Chip/Sparkline bleiben sichtbar. |
+| Revision des Previous | 2026-08-08 | kam unzuverlaessig an (TVs previous-Feld traegt sie nur ~3 Tage; bei geblocktem Workflow fuer immer weg) UND die Bonus-Dauer hing an der Frequenz (NZD GDP 91 Tage vs. GBP NFP 28). Anzeige + Bias-Faerbung bleiben. |
+| Veraltete Releases | 2026-08-08 | siehe Altersgrenze unten |
+| 2Y/10Y Spread | laenger | `SCORE_ZERO`, bewusst display-only |
+
+### Altersgrenze (`IND_STALE_CYCLES = 2`)
+
+Ein Release, das mehr als 2 EIGENE Zyklen ueberfaellig ist, traegt 0 bei.
+Relativ zum eigenen Zyklus gemessen (`indCycleDays`, Median der echten
+Abstaende der eigenen Historie), NICHT in festen Tagen - sonst waeren
+quartalsweise berichtende Volkswirtschaften strukturell benachteiligt.
+
+Ausgenommen: manuelle/qualitative Indikatoren (CB Tone, Geopolitics, Risk
+Correlation - kein Release-Konzept) sowie Bond/COT/Sentiment (laufen
+kontinuierlich).
+
+Anlass: AUD Retail Sales, Release 31.07.2025, 372 Tage alt, 14,9 Zyklen
+ueberfaellig, mit vollem +1 im Score. Die Reihe ist in ind_data.json
+komplett zu Ende - das ABS hat sie 2025 ersetzt. Citi/Bloomberg loesen
+das beide mit hartem Schnitt statt Ausfaden (CESI: rollierendes
+3-Monats-Fenster).
+
+Sichtbar an drei Stellen: `OUT OF DATE`-Marke an der Indikator-Zeile,
+Dashboard-Meldung (`staleNotifyHtml`), und im Score-Modal AUSDRUECKLICH
+EINZELN aufgefuehrt statt in der Sammelzeile "N weitere bei 0 (neutral)" -
+denn neutral sind sie gerade nicht.
+
+**⚠️ Merksatz:** `symTrackedCount` MUSS veraltete Indikatoren
+ueberspringen. Ohne das wird ein Asset doppelt bestraft - einmal durch das
+fehlende Signal, noch einmal durch den zu grossen Divisor in
+`symScoreCmp`. Gemessen: JPY verlor dadurch 0,7 Punkte (Faktor 0,97 statt
+1,15). Bei JEDER kuenftigen Regel, die einen Indikator auf 0 setzt, hier
+mitpruefen.
+
+### Die drei Normierungs-Faktoren (nur Modus `normalized`)
+
+| Faktor | Funktion | Was er misst |
+|---|---|---|
+| Ueberraschungsgroesse | `indSurpriseMag` | (Actual − Forecast) / Streuung der eigenen historischen Prognosefehler. Erst dadurch sind NFP (σ ≈ 75.700) und CPI (σ ≈ 0,12) vergleichbar. Ab `NORM_MIN_OBS`=5 Beobachtungen, sonst neutral statt geraten. |
+| Zeit-Decay | `indDecayWeight` | Halbwertszeit = `DECAY_HALFLIFE_CYCLES`=1,5 EIGENE Zyklen. Bei einem 28-Tage-Zyklus also 42 Tage. Zyklus-relativ, damit Quartalswerte langsamer altern. |
+| Marktrelevanz | `indMarketWeight` | durchschnittliche Kursbewegung an den Release-Tagen dieses Indikators, geteilt durch die durchschnittliche Bewegung aller Tage. Wurzel-gedaempft. Gemessen, nicht zugewiesen. Braucht ≥60 Preistage und ≥5 Treffer. |
+
+Produkt geklemmt auf `SCORE_NORM_MIN`=0,4 bis `SCORE_NORM_MAX`=1,8 und um
+1,0 zentriert - die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein
+frei laufender Faktor haette sie still bedeutungslos gemacht.
+
+### Datenstand-Regel (Vintages)
+
+Standard aus der Real-Time-Data-Praxis, bei Bloomberg strukturell erzwungen:
+
+- **Ueberraschung** (Beat/Miss) → immer gegen den **Erstdruck**, nie neu geschrieben
+- **Niveau und Pfad** (`valHist`, Step-Signal) → immer **neuester Stand**, also revidiert
+- **Revision selbst** → eigenes Ereignis, kein Score-Term
+
+`applyRevisionToValHist()` setzt den vorletzten valHist-Punkt auf den
+revidierten Wert. MUSS nach `adoptFeedHistory` laufen - die ueberschreibt
+valHist komplett aus der Feed-Reihe, die weiter den Erstdruck traegt.
+
+Anlass: GBP Unemployment Claims stand als 26.800/26.500/31.200/6.700 in
+der Historie; die 31.200 wurden auf 1.300 revidiert. Bei 3 von 8
+Revisionen kippte dadurch die Signalrichtung.
+
+### Datenqualitaets-Fenster (`openDataQuality`)
+
+Pro Asset erreichbar ueber den Knopf "Data quality" in der Kopfzeile der
+Detailseite. Zeigt je Indikator: Beobachtungen, Median-Ueberraschung
+(Median statt Mittelwert - ein Ausreisser verschiebt den Mittelwert stark,
+den Median kaum), Streuung σ, aktuelle Ueberraschung in σ, Zyklus in
+Tagen, Halbwertszeit in Tagen, gemessene Marktrelevanz, resultierender
+Gewichtsfaktor. Alles aus denselben Funktionen wie der Score - nichts
+eigens fuer die Anzeige gerechnet.
+
+### Surprise Index: duenne Basis
+
+`ESI_THIN_N`=8. Gemessen: USD 18 Indikatoren, EUR/GBP 9, CHF/JPY 6,
+AUD/NZD 5, CAD 4. Unter 8 wird die Zahl neben dem Kuerzel ausgewiesen.
+Citi hat das Problem nicht, weil Citi Laender gar nicht absolut
+vergleicht - diese App muss es (sie stellt sie nebeneinander), also wird
+die Basis ausgewiesen statt verschwiegen.
+
+## ⚠️ SCHRIFT (Stand 2026-08-08)
+
+Zwei Variablen: `--ff-text` (Oberflaechentext) und `--ff-num` (alle
+Zahlen). Bei neuen Stellen IMMER eine der beiden verwenden, nie einen
+eigenen Stapel.
+
+**Die echte Bloomberg-Schrift ist nicht verfuegbar.** "Bloomberg Prop
+Unicode" wurde bei Matthew Carter angefertigt, ist bei Carter & Cone
+markenrechtlich geschuetzt, kommerziell lizenziert und exklusiv fuer
+Bloomberg. Die "Free Download"-Seiten dazu sind Raubkopien. Eine
+Web-Schrift ueber ein CDN scheidet ohnehin aus - die App ist eine einzelne
+Datei, die per Service Worker offline laufen muss.
+
+Nachgebaut ist deshalb das, was den Terminal-Charakter ausmacht - die
+ZIFFERN: `font-feature-settings:'tnum' 1,'zero' 1,'ss01' 1` plus
+`font-variant-numeric:tabular-nums slashed-zero` auf `body`. Dicktengleiche
+Ziffern lassen Zahlenspalten optisch einrasten, ohne dass man Linien
+zeichnen muss (Tuftes Data-Ink-Gedanke, und der Grund, warum Bloomberg
+ueberhaupt eine eigene Mono anfertigen liess); die geschlitzte Null trennt
+0 von O.
+
+**Historie, damit es nicht nochmal passiert:** ein frueherer Nutzer-Wunsch
+"ueberall Arial" war als globales
+`*,*::before,*::after{font-family:Arial...!important}` umgesetzt. Das hat
+ALLE 200 Monospace-Deklarationen der App stillschweigend ueberschrieben -
+die Zahlen waren nie dicktengleich. Der Stern setzt jetzt weiterhin die
+einheitliche Textfamilie, aber OHNE `!important`: ein Selektor aus lauter
+Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn automatisch.
+**Nie wieder ein globales `!important` auf font-family setzen.**
+
+## ⚠️ TYPOGRAFISCHE SKALA (Dashboard, Stand 2026-08-08)
+
+Sieben feste Stufen als CSS-Variablen statt frei gewaehlter Werte:
+`--fs-hero` 30 · `--fs-xl` 22 · `--fs-lg` 17 · `--fs-md` 15 (KARTENTITEL) ·
+`--fs-base` 13 · `--fs-sm` 12 · `--fs-xs` 11 · `--fs-2xs` 10.
+
+Vor dem Umbau kamen 33 verschiedene Groessen/Gewichts-Kombinationen vor
+(8 bis 32px, dazwischen 9,5 / 10,5 / 11,5 / 12,5) - keine Skala, sondern
+pro Stelle ad hoc gewaehlt. Der Kartentitel war mit 11px KLEINER als der
+Fliesstext daneben (12px), die Hierarchie also umgekehrt.
+
+Grundsatz (Stephen Few, *Information Dashboard Design*): wenige Stufen
+erzwingen Hierarchie, viele loesen sie auf. Bei neuen Elementen IMMER eine
+der sieben Stufen verwenden, keine neue Zwischengroesse einfuehren.
+
+Karten-Abschluss: NICHTS wird gestreckt, um Luecken zu fuellen
+(`align-items:start` ueberall). Die Spalten duerfen unterschiedlich hoch
+enden wie Zeitungsspalten; eine Haarlinie ueber der Fussleiste zieht den
+Schlussstrich.
+
 ## ⚠️ GRUNDSATZ: wiederkehrende UI-Bausteine müssen einheitlich sein
 
 **Nutzer-Wunsch 2026-07-12:** Elemente, die an mehreren Stellen der Webseite
