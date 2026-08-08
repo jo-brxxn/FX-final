@@ -1338,6 +1338,30 @@ jobs:
             const noFc=[];
             Object.keys(out).forEach(ccy=>Object.keys(out[ccy]).forEach(n=>{const v=out[ccy][n];if(v.actual!=null&&(v.forecast==null||v.forecast===""))noFc.push(ccy+" "+n+" ("+(v.event||"?")+", "+v.date+")");}));
             console.log("ind_data STILL WITHOUT FORECAST ("+noFc.length+"): "+noFc.join(" | "));
+            // ── TITEL-DIAGNOSE (2026-08-08) ────────────────────────────────
+            // Der MISSING-Report oben sagt nur DASS eine Regel leer ausging,
+            // nicht WARUM. Bei der NZD-Luecke 2026-07-22 war die Ursache, dass
+            // die Landesquelle ihre Reihe voellig anders betitelt
+            // ("Business NZ PMI" statt "Manufacturing PMI") - das liess sich
+            // erst sehen, nachdem die echten TradingView-Titel einmal
+            // ausgegeben wurden. Genau diese Ausgabe fehlte seither und wird
+            // hier dauerhaft nachgeholt: alle Titel im Themenfeld der aktuell
+            // luecken-behafteten Indikatoren, je Waehrung, mit dem Hinweis, ob
+            // ein Actual dranhaengt. Kostet nichts (die Events liegen ohnehin
+            // schon im Speicher) und macht jede kuenftige Luecke sofort
+            // diagnostizierbar, ohne erst einen Extra-Lauf bauen zu muessen.
+            const DIAG=/pmi|\bpsi\b|purchasing manag|earnings|wage|ivey|core inflation|producer pric|\bppi\b|employment/;
+            const diagSeen={};
+            evts.forEach(ev=>{
+              const ccy=TV2CCY[ev.country];if(!ccy)return;
+              const raw=String(ev.title||ev.indicator||"");
+              if(!DIAG.test(norm(raw)))return;
+              const k=ccy+"|"+raw;
+              const hasA=fmt(ev.actual,ev.unit,ev.scale)!=null;
+              if(!diagSeen[k]||(!diagSeen[k].a&&hasA))diagSeen[k]={a:hasA};
+            });
+            const diagLines=Object.keys(diagSeen).sort().map(k=>k+(diagSeen[k].a?" [actual]":" [kein actual]"));
+            console.log("ind_data TITLE DIAG ("+diagLines.length+" distinct):\n  "+diagLines.join("\n  "));
           '
 
       # ── BOND-HISTORIE BACKFILL (offizielle Gratis-Quellen, ohne Key) ──
