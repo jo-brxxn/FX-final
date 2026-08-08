@@ -498,7 +498,7 @@
    ]
   ]
  },
- "updated": "2026-08-08T00:50:37.379Z",
+ "updated": "2026-08-08T02:50:05.979Z",
  "stockFng": {
   "value": 64,
   "label": "greed",
@@ -1159,7 +1159,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.77,
+  "value": 0.66,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1401,6 +1401,10 @@
    [
     "2026-08-06",
     0.77
+   ],
+   [
+    "2026-08-07",
+    0.66
    ]
   ]
  },
