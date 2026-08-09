@@ -238,9 +238,50 @@ kein Zufall, das ist die vollstaendige Erklaerung.
 
 **Daraus folgt: fuer EUR/GBP/JPY/AUD Manufacturing + Services PMI hilft an
 TradingView KEIN Regel-Fix.** Nicht nochmal Zeit mit Muster-Basteln
-verbrennen - es braucht eine andere Quelle. Investing.com waere der
-Kandidat, ist aber derzeit in allen drei Versuchen pro Lauf
-Cloudflare-geblockt (`invcal.json: 3 bytes`).
+verbrennen.
+
+### ✅ GELOEST (2026-08-09): Trading-Economics-Laenderseiten
+
+Vorher geprueft, welche freie Quelle vom Runner aus ueberhaupt erreichbar
+ist UND die Zahl fuehrt (Sonde, Ergebnisse im Job-Log):
+
+| Quelle | Ergebnis |
+|---|---|
+| FXStreet-Kalender | **0** PMI-Reihen im gesamten Payload |
+| FF-Website / TradingEconomics-API / TV (`altActuals`) | 4 PMI-Reihen, nur `CAD Ivey` mit Wert |
+| Investing.com | Cloudflare, `invcal.json: 3 bytes`, 3/3 Versuche |
+| S&P Global Release-Uebersicht | 200, 92 KB - aber nur eine LISTE, Zahlen erst in den Einzelmitteilungen |
+| HCOB | vom Runner **nicht erreichbar** (curl 000, 0 Byte) |
+| **tradingeconomics.com/`<land>`/`<kind>`-pmi** | **200, ~300 KB, Wert im KLARTEXT** ✅ |
+
+Der Berichtssatz dort lautet z.B. *"Manufacturing PMI in Japan decreased
+to 54.50 points in July from 54.80 points in June of 2026."* - Actual,
+Vorwert, Referenzmonat und Jahr in einem Zug. Schritt **"Fetch PMI actuals
+from Trading Economics country pages"**, 6 Waehrungen × mfg/svc.
+
+**⚠️ Drei Fallen, die dort schon geloest sind - nicht neu aufmachen:**
+
+1. **Die Verben sind abschliessend aufgezaehlt** (`increased|decreased|
+   rose|fell|declined|edged up|edged down|was unchanged at|remained at|
+   stood at`). Auf derselben Seite stehen Prognose- ("is expected to be"),
+   Durchschnitts- ("averaged") und Ausblickssaetze ("projected to trend")
+   mit demselben Satzbau. Ein offenes Muster liest die Prognose als Actual.
+   Geprueft: 6/6 Formulierungen geparst, 3/3 Nicht-Treffer verworfen.
+2. **Der Wert geht DIREKT nach `ind_data`, nicht nur ueber den Kalender.**
+   Erster Livelauf: 12/12 Werte geholt, **0 zuzuordnen** - der FF-Feed
+   umfasst nur zwei Wochen, die PMI-Zeile vom 3.-5.8. war am 9.8. schon
+   weg. Der Kalender-Pfad bleibt zusaetzlich bestehen (fuellt die Zeile,
+   solange es sie gibt), traegt aber nicht allein.
+3. **Ohne echtes Release-Datum wird NICHTS eingetragen.** Das Datum wird
+   von derselben Seite gelesen (juengstes nicht-zukuenftiges, beide
+   Schreibweisen) - daran haengen Altersgrenze und Zyklus-Rechnung, ein
+   geratenes waere schlimmer als kein Eintrag. Live: 9 geschrieben,
+   1 uebersprungen (CHF Services fuehrt kein Datum), 2 hatten schon einen
+   juengeren Wert. `ind_data` dadurch von 84 auf **99** Werte.
+
+Bei der Zuordnung im Kalender bleiben die nationalen Teilreihen der
+Eurozone (`German`/`French`/`Italian`/`Spanish` …) ausdruecklich
+ausgeschlossen - sonst landet der Eurozone-Wert auf der deutschen Zeile.
 
 Bei "Indikator veraltet"-Meldungen deshalb IMMER zuerst die TITLE-DIAG-
 Zeile im Job-Log lesen und unterscheiden:
