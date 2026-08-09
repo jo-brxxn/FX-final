@@ -198,6 +198,31 @@ volle Rechnung + Grenzen in `symStrengthSectionHtml()` im Score-Fenster.
 erscheint ausdruecklich `–/10` mit Begruendung statt einer Note. Eine
 geratene Note waere schlechter als keine (Grundsatz "nie schaetzen").
 
+### ⚠️ `SCORE_MODEL_VERSION` - bei JEDER Score-Formel-Aenderung hochzaehlen
+
+`scoreHist` traegt seit 2026-08-08 ein 7. Feld: `SCORE_MODEL_TAG()` =
+`SCORE_MODEL_VERSION + ':' + scoreMode`. `symOwnHistory()` nimmt NUR
+Eintraege mit dem aktuellen Tag - alles andere waere ein Vergleich zweier
+verschiedener Rechnungen.
+
+Anlass (Nutzer-Bugreport per Foto): JPY zeigte `1/10`, obwohl es mit
+Abstand die staerkste Waehrung war. Kein Rechenfehler, sondern zwei
+Bruchstellen gleichzeitig: (1) das MODELL hat sich geaendert - Revisionen
+und Trend sind seit V327 raus, die Altersgrenze kam in V329 dazu; JPYs
+aufgezeichnete Reihe stand im Mittel bei 7,6, dieselbe Lage liefert heute
+3,0, gemessen z = -6,55. (2) Der MODUS wurde mitgeschrieben, aber nicht
+mitgedacht - `classic` und `normalized` haben verschiedene
+Groessenordnungen und landeten in derselben Reihe.
+
+Nach dem Fix fallen alle Alt-Eintraege (ohne Tag) aus der z-Rechnung, die
+Note zeigt ehrlich `–/10 - noch N Tage` und baut sich taeglich neu auf.
+**Ohne den Versions-Bump vergleicht die Note wieder stillschweigend zwei
+verschiedene Rechnungen** - dieselbe Pflicht wie bei
+`SUMMARY_ENGINE_VERSION`. Der Trends-Chart liest bewusst weiter die VOLLE
+Reihe: dort ist jeder Punkt fuer sich der Wert, der an dem Tag galt, und
+das bleibt richtig - nur ein z-Wert QUER ueber die Reihe braucht eine
+einheitliche Skala.
+
 ## ⚠️ PMI-FEED: TradingView liefert fuer S&P Global/HCOB/Jibun KEINE Actuals
 
 Belegt am 2026-08-08 durch die Titel-Diagnose im Workflow (`ind_data TITLE

@@ -2674,7 +2674,7 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-336 — Die Skala 1-10 ist gebaut, im normalisierten Modus. Drei Stufen: der MITTELWERT (Punkte je getracktem Indikator, jetzt unskaliert sichtbar), dieser Mittelwert gemessen an der EIGENEN Historie des Assets statt an anderen Waehrungen (z-Wert, genau wie Citis CESI je Land vorgeht), und daraus die Note. Sie steht als eigener Badge neben dem Punkte-Score und aufgeklappt im Score-Fenster mit voller Rechnung. Zwei bewusste Entscheidungen, beide an deinen echten Daten begruendet: erstens FESTE Sigma-Baender statt Perzentil-Rang - ein Rang macht jede Waehrung per Konstruktion gleich, nachgerechnet am 08.08. landeten JPY mit +7,3, CAD mit -1,0 und NZD mit -1,4 alle drei im selben Dezil. Zweitens steht die Note NEBEN dem Punkte-Score statt ihn zu ersetzen: die Note allein verschluckt die Groessenordnung, die Punkte allein sagen nicht, ob der Wert fuer dieses Asset ungewoehnlich ist - erst zusammen ergeben sie beides. Unter zehn eigenen Tagen Historie oder bei einer Reihe ohne jede Bewegung erscheint ausdruecklich KEINE Note, sondern ein Strich mit Begruendung - eine geratene Note waere schlechter als keine. Die Grenze der Methode steht im Score-Fenster mit dabei, nicht im Kleingedruckten.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-336 — Das Bild hat einen zweiten, ernsteren Bug sichtbar gemacht: im normalisierten Modus stand bei JPY die Note 1/10, obwohl JPY mit Abstand die staerkste Waehrung war. Kein Rechenfehler im z-Wert, sondern ein Vergleich zweier verschiedener Rechnungen - und zwar aus zwei Richtungen gleichzeitig. Erstens hat sich das Score-MODELL geaendert: Revisionen und Trend sind seit V327 draussen, die Altersgrenze kam in V329 dazu. Die aufgezeichnete Historie stammt aus der Zeit davor - JPYs Reihe stand im Mittel bei 7,6, dieselbe Lage liefert heute 3,0, gemessen z gleich minus 6,55, also automatisch die schlechteste Note. Zweitens wurde der MODUS zwar mitgeschrieben, aber nicht mitgedacht: classic und normalized haben verschiedene Groessenordnungen und landeten in derselben Reihe, ein Wechsel des Schalters vergiftet sie also. Beides ist dieselbe Frage - ist ein historischer Wert ueberhaupt mit dem heutigen vergleichbar. Ja nur dann, wenn er unter demselben Modell UND demselben Modus entstanden ist. Genau das haelt jetzt ein Marker an jedem Historien-Eintrag fest. Folge fuers Erste: alle bisherigen Tage fallen aus dieser einen Rechnung raus, die Note zeigt ehrlich Strich-durch-10 mit der Angabe wie viele Tage noch fehlen, statt einer falschen 1 - und baut sich taeglich von selbst wieder auf. Im Trends-Chart bleiben die alten Tage vollstaendig sichtbar, dort ist jeder Punkt fuer sich ja richtig. Geprueft: mit zwoelf Tagen unter dem aktuellen Modell entstehen wieder plausible Noten (JPY mitten in seiner Spanne 7 von 10), ein Moduswechsel setzt die vergleichbare Basis korrekt auf null, und der Trends-Chart rendert unveraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
@@ -4111,8 +4111,10 @@ function symStrengthSectionHtml(sym){
   const s=symStrength10(sym),z=symOwnZ(sym);
   if(s==null){
     const miss=symStrengthMissing(sym);
-    h+=row('Own history so far',past.length+' day'+(past.length===1?'':'s'));
-    h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">No grade yet. It needs ${STRENGTH_MIN_OBS} days of this asset's own score history${miss>0?` (${miss} more to go)`:''} — below that the average and the spread would be guessed rather than measured, and a guessed grade is worse than none. ${past.length>=STRENGTH_MIN_OBS?'The series so far shows no variation at all, so there is nothing to measure against.':''}</div>`;
+    const raw=((typeof scoreHist!=='undefined'&&scoreHist&&scoreHist[sym.id])||[]).length;
+    h+=row('Comparable history',past.length+' day'+(past.length===1?'':'s')+(raw>past.length?' (of '+raw+' recorded)':''));
+    h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">No grade yet. It needs ${STRENGTH_MIN_OBS} days recorded under the <b>current</b> score model and weighting mode${miss>0?` (${miss} more to go)`:''} — below that the average and the spread would be guessed rather than measured, and a guessed grade is worse than none. ${past.length>=STRENGTH_MIN_OBS?'The series so far shows no variation at all, so there is nothing to measure against.':''}</div>`;
+    if(raw>past.length)h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px"><b>Why the older days do not count:</b> the score formula itself changed (revisions and the trend bonus were removed, the staleness cut-off was added), and the two weighting modes produce different magnitudes. Measured on this asset, the old series averaged a different level from what the same situation yields today — comparing across that break would not have produced a weak grade, it would have produced a meaningless one. Those days are still kept and still show in Trends; they are only excluded from this one calculation.</div>`;
   }else{
     const m=past.reduce((a,b)=>a+b,0)/past.length;
     h+=row('Own average / spread',fmtScNum(Math.round(m*10)/10)+' ± '+fmtScNum(Math.round(Math.sqrt(past.reduce((a,b)=>a+(b-m)*(b-m),0)/past.length)*10)/10)+' ('+past.length+'d)');
@@ -4423,6 +4425,34 @@ function symScoreCmp(sym){
 // haben das Problem nicht: sie messen zwar auch in Einheiten der eigenen
 // Streuung, aber ein Asset, das sich kaum bewegt, erreicht die aeusseren
 // Stufen dann eben nicht.
+// ⚠ Nutzer-Bugreport 2026-08-08 (Foto, normalisierter Modus): JPY bekam
+// 1/10, obwohl es mit Abstand die staerkste Waehrung war. Kein Rechenfehler
+// im z-Wert, sondern ein Vergleich von Aepfeln mit Birnen - und zwar aus
+// ZWEI Richtungen gleichzeitig:
+//
+//   1. Das Score-MODELL hat sich geaendert. Revisionen und Trend sind seit
+//      V327 draussen, die Altersgrenze kam in V329 dazu. Die aufgezeichnete
+//      Historie stammt aber aus der Zeit davor: JPYs Reihe stand im Mittel
+//      bei 7,6, heute liefert dieselbe Lage 3,0. Gemessen ergab das z=-6,55.
+//   2. Der MODUS wird mitgeschrieben, aber nicht mitgedacht. classic und
+//      normalized liefern verschiedene Groessenordnungen und landen beide in
+//      derselben Reihe - ein Wechsel des Schalters vergiftet sie also.
+//
+// Beides ist dieselbe Grundfrage: ist ein historischer Wert ueberhaupt mit
+// dem heutigen vergleichbar? Antwort ist nur dann ja, wenn er unter
+// demselben Modell UND demselben Modus entstanden ist. Genau das haelt der
+// Tag fest; symOwnHistory laesst alles andere aussen vor.
+//
+// Folge fuers Erste: alle bisherigen Eintraege tragen keinen Tag, fallen
+// also raus, und die Note zeigt ehrlich "-/10 - noch N Tage" statt einer
+// falschen 1. Das ist der Projekt-Grundsatz (nie schaetzen, stattdessen
+// sagen was fehlt) und heilt sich taeglich von selbst.
+//
+// ⚠ BEI JEDER AENDERUNG AN DER SCORE-FORMEL diese Zahl hochzaehlen -
+// dieselbe Pflicht wie bei SUMMARY_ENGINE_VERSION. Ohne den Bump vergleicht
+// die Note wieder stillschweigend zwei verschiedene Rechnungen.
+const SCORE_MODEL_VERSION=1;
+function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 const STRENGTH_MIN_OBS=10;     // darunter keine Note - zu duenn zum Messen
 const STRENGTH_Z_BANDS=[-1.5,-1.0,-0.6,-0.2,0.2,0.6,1.0,1.5,2.0]; // 9 Grenzen -> 10 Stufen
 function symScoreAvg(sym){
@@ -4435,10 +4465,17 @@ function symScoreAvg(sym){
 // konkurrierende Aufzeichnung (siehe die Dual-Source-Lehren in der
 // CLAUDE.md). Der heutige Eintrag wird ausgelassen und stattdessen der
 // LIVE-Wert verwendet, sonst misst man den Tag gegen sich selbst.
+// Nur Eintraege desselben Score-Modells UND desselben Modus - alles andere
+// waere ein Vergleich zweier verschiedener Rechnungen (siehe den Merksatz
+// bei SCORE_MODEL_VERSION). Der Trends-Chart liest bewusst weiter die volle
+// Reihe: dort ist jeder Punkt fuer sich der Wert, der an dem Tag galt, und
+// das bleibt richtig - nur ein z-Wert QUER ueber die Reihe braucht eine
+// einheitliche Skala.
 function symOwnHistory(id){
   const h=(typeof scoreHist!=='undefined'&&scoreHist&&scoreHist[id])||[];
   const today=new Date().toISOString().slice(0,10);
-  return h.filter(e=>Array.isArray(e)&&e[0]!==today&&typeof e[1]==='number').map(e=>e[1]);
+  const tag=SCORE_MODEL_TAG();
+  return h.filter(e=>Array.isArray(e)&&e[0]!==today&&typeof e[1]==='number'&&e[6]===tag).map(e=>e[1]);
 }
 // z-Wert des heutigen Scores in der eigenen Historie. null = zu wenig Basis
 // oder eine Reihe ohne jede Bewegung (dann waere jede Note geraten).
@@ -4476,7 +4513,7 @@ function strengthBadgeHtml(sym){
   const s=symStrength10(sym);
   if(s==null){
     const miss=symStrengthMissing(sym);
-    return`<span class="strength-badge thin" title="Strength needs ${STRENGTH_MIN_OBS} days of this asset's own score history to be measured instead of guessed - ${miss>0?miss+' more day'+(miss===1?'':'s')+' to go':'the series so far shows no variation at all'}.">–/10</span>`;
+    return`<span class="strength-badge thin" title="Strength needs ${STRENGTH_MIN_OBS} days of own score history recorded under the CURRENT score model and weighting mode - ${miss>0?miss+' more day'+(miss===1?'':'s')+' to go':'the series so far shows no variation at all'}. Older days still exist and still show in Trends, but they were produced by a different calculation, so measuring today against them would be a false comparison rather than a grade.">–/10</span>`;
   }
   const z=symOwnZ(sym);
   return`<span class="strength-badge" onclick="openScoreInfoSym('${escJH(sym.id)}')" title="Strength ${s}/10 - how unusual today's score is for ${escH(sym.name)} ITSELF (${z>0?'+':''}${z} standard deviations from its own average). Not a cross-asset ranking: tap for the full breakdown and its limits."><b>${s}</b>/10</span>`;
@@ -15331,9 +15368,15 @@ function recordScoreHist(){
     const inf=rubScoreByName(sym,'Inflation'),lab=rubScoreByName(sym,'Labour Market'),gro=rubScoreByName(sym,'Economic Growth');
     const arr=scoreHist[id]||(scoreHist[id]=[]);
     const last=arr[arr.length-1];
-    const e=[t,tot,inf,lab,gro,sym.bias];
+    // 7. Feld: unter WELCHEM Score-Modell dieser Wert entstanden ist
+    // (siehe SCORE_MODEL_TAG). Nur so laesst sich spaeter unterscheiden,
+    // ob ein historischer Wert ueberhaupt mit dem heutigen vergleichbar
+    // ist. Aeltere Eintraege haben das Feld nicht und gelten damit
+    // automatisch als "anderes Modell" - genau richtig, denn sie sind es.
+    const tag=SCORE_MODEL_TAG();
+    const e=[t,tot,inf,lab,gro,sym.bias,tag];
     if(last&&last[0]===t){
-      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias){arr[arr.length-1]=e;changed=true;}
+      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias||last[6]!==tag){arr[arr.length-1]=e;changed=true;}
     }else{arr.push(e);changed=true;}
     // 1100 Tage (~3 Jahre) statt vorher 95 (~3 Monate) - "maximale Historie"
     // (Nutzer-Wunsch 2026-07-20), angelehnt an den 3-Jahres-Horizont, den
