@@ -234,55 +234,65 @@ jobs:
       #    offizielle Doku von investing.com). Der Endpunkt ist Cloudflare-
       #    geschuetzt - kann daher auf GitHub-Runnern blockiert sein; Diagnose
       #    unten (Laenge/"cf-"/"challenge") zeigt das im Job-Log.
-      # ── SONDE: PMI direkt beim Herausgeber (2026-08-08/09) ────────────────
-      # Ausgangslage, gemessen statt vermutet: KEINE der vier bereits
-      # angebundenen Quellen fuehrt die PMI-Actuals fuer EUR/GBP/JPY/AUD.
-      # TradingView liefert fuer S&P Global/HCOB/Jibun grundsaetzlich keine
-      # Werte, FXStreets Kalender enthaelt 0 PMI-Reihen, die Alt-Quellen
-      # kennen nur Ivey (CAD) mit Wert, und Investing.com ist per Cloudflare
-      # dicht. Bezahlt scheidet nach der Projekt-Regel aus.
+      # ── PMI-ERSATZQUELLE: Trading-Economics-Laenderseiten ────────────────
+      # Ausgangslage, gemessen statt vermutet (siehe CLAUDE.md): KEINE der
+      # vier bereits angebundenen Quellen fuehrt die PMI-Actuals fuer
+      # EUR/GBP/JPY/AUD. TradingView liefert fuer S&P Global/HCOB/Jibun
+      # grundsaetzlich keine Werte, FXStreets Kalender enthaelt 0 PMI-Reihen,
+      # die Alt-Quellen kennen nur Ivey (CAD) mit Wert, Investing.com ist per
+      # Cloudflare dicht. Bezahlt scheidet nach der Projekt-Regel aus.
       #
-      # Uebrig bleibt der HERAUSGEBER selbst: S&P Global und HCOB
-      # veroeffentlichen ihre PMI-Mitteilungen frei im Netz, ohne Konto.
-      # Bevor darauf ein Parser gebaut wird, muss aber bekannt sein, WIE die
-      # Seiten aussehen - genau daran ist der Investing.com-Anlauf im Juli
-      # gescheitert (eine geratene Regex traf nie, sechs Testlaeufe verloren).
-      # Deshalb erst diese reine Sonde: sie holt die Seiten, meldet
-      # Erreichbarkeit und Groesse und gibt die Umgebung der Zahl aus. Sie
-      # schreibt NICHTS in die Daten - ausgewertet wird das Job-Log, danach
-      # entsteht der Parser aus dem echten Dump statt aus einer Vermutung.
-      - name: Probe PMI publisher pages (diagnostic only, writes nothing)
+      # Per Sonde am 2026-08-09 geprueft, welche freie Quelle vom Runner aus
+      # erreichbar ist UND die Zahl fuehrt:
+      #   S&P Global Release-Uebersicht  200, 92 KB - aber nur eine Liste,
+      #                                  die Zahlen stehen erst in den
+      #                                  Einzelmitteilungen
+      #   HCOB                           nicht erreichbar (curl 000, 0 Byte)
+      #   Trading-Economics-Laenderseite 200, ~300 KB, Wert im KLARTEXT
+      # Also die Laenderseiten. Sie tragen den Satz
+      #   "Manufacturing PMI in Japan decreased to 54.50 points in July
+      #    from 54.80 points in June of 2026."
+      # - damit Actual, Previous, Referenzmonat und Jahr in einem Zug.
+      #
+      # Die Muster sind gegen die ECHTEN Saetze aus dem Sondenlauf geprueft:
+      # 6 von 6 Formulierungen korrekt geparst (increased/decreased/unchanged/
+      # remained), 3 von 3 Nicht-Treffer korrekt verworfen (Prognose-,
+      # Durchschnitts- und Trendsaetze auf derselben Seite).
+      - name: Fetch PMI actuals from Trading Economics country pages
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          probe(){
-            local label="$1"; local url="$2"
-            local out="probe_$(echo "$label" | tr -cd 'A-Za-z0-9').html"
-            local code
-            code=$(curl -sL -A "$UA" -m 25 -w "%{http_code}" -o "$out" "$url" 2>/dev/null || echo "000")
-            local size; size=$(wc -c <"$out" 2>/dev/null || echo 0)
-            echo "[pmi-probe] $label http=$code size=$size url=$url"
-            if [ "$size" -gt 2000 ]; then
-              node -e '
-                const fs=require("fs");
-                const h=fs.readFileSync(process.argv[1],"utf8").replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ");
-                const txt=h.replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/\s+/g," ");
-                // Umgebung jeder Stelle, an der eine PMI-Zahl stehen koennte
-                const re=/(index|pmi)[^.]{0,60}?(\d{2}\.\d)/gi;let m,n=0;
-                while((m=re.exec(txt))&&n<6){console.log("   ~ "+txt.slice(Math.max(0,m.index-90),m.index+70).trim());n++;}
-                if(!n)console.log("   (keine PMI-Zahl im Text gefunden - erste 220 Zeichen: "+txt.slice(0,220)+")");
-              ' "$out" || true
-            fi
-            rm -f "$out"
-          }
-          # Herausgeber-Mitteilungen (frei, ohne Konto)
-          probe "spglobal-releases" "https://www.pmi.spglobal.com/Public/Release/PressReleases"
-          probe "hcob-eurozone"     "https://www.hcob-economics.com/en/"
-          # Sekundaerquellen ohne Konto, die die Zahl im Klartext fuehren
-          probe "te-euro-mfg"       "https://tradingeconomics.com/euro-area/manufacturing-pmi"
-          probe "te-gb-mfg"         "https://tradingeconomics.com/united-kingdom/manufacturing-pmi"
-          probe "te-jp-mfg"         "https://tradingeconomics.com/japan/manufacturing-pmi"
-          probe "te-au-mfg"         "https://tradingeconomics.com/australia/manufacturing-pmi"
+          for spec in "EUR euro-area" "GBP united-kingdom" "JPY japan" "AUD australia" "CAD canada" "CHF switzerland"; do
+            set -- $spec
+            for kind in manufacturing services; do
+              curl -sL -A "$UA" -m 25 "https://tradingeconomics.com/$2/$kind-pmi" -o "tepage_$1_$kind.html" || true
+              sleep 1
+            done
+          done
+          node -e '
+            const fs=require("fs");
+            const CC=["EUR","GBP","JPY","AUD","CAD","CHF"];
+            // Nur der BERICHTSSATZ. Prognose ("is expected to be"),
+            // Durchschnitt ("averaged") und Ausblick ("projected to trend")
+            // stehen auf derselben Seite und duerfen NICHT treffen - deshalb
+            // sind die Verben abschliessend aufgezaehlt statt offen gelassen.
+            const RE=/(manufacturing|services)\s+pmi\s+(?:in|in the)\s+[^.]{0,40}?\b(?:increased|decreased|rose|fell|declined|edged up|edged down|was unchanged at|remained at|stood at)\s+(?:to\s+)?([\d]+(?:\.[\d]+)?)\s+points\s+in\s+([a-z]+)\s+from\s+([\d]+(?:\.[\d]+)?)\s+points\s+in\s+[a-z]+\s+of\s+(\d{4})/i;
+            const out=[];
+            CC.forEach(c=>["manufacturing","services"].forEach(kind=>{
+              const f="tepage_"+c+"_"+kind+".html";
+              let h;try{h=fs.readFileSync(f,"utf8");}catch(e){console.log("[te-page] "+c+" "+kind+": nicht geladen");return;}
+              const txt=h.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ")
+                         .replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ");
+              const m=RE.exec(txt);
+              if(!m){console.log("[te-page] "+c+" "+kind+": kein Berichtssatz gefunden ("+h.length+" Byte)");return;}
+              if(m[1].toLowerCase()!==kind){console.log("[te-page] "+c+" "+kind+": Satz gehoert zu "+m[1]+" - verworfen");return;}
+              out.push({source:"tepage",country:c,kind:kind,name:(kind==="manufacturing"?"Manufacturing":"Services")+" PMI",
+                        actual:m[2],previous:m[4],refMonth:m[3],refYear:m[5]});
+              console.log("[te-page] "+c+" "+kind+": "+m[2]+" (vorher "+m[4]+") fuer "+m[3]+" "+m[5]);
+            }));
+            fs.writeFileSync("te_pages.json",JSON.stringify(out));
+            console.log("te_pages.json: "+out.length+"/12 PMI-Werte");
+          '
 
       - name: Fetch alternative actual sources (FF website + Trading Economics + Investing.com)
         run: |
@@ -836,7 +846,43 @@ jobs:
                 unmatched.push(ev.title+" ("+ev.country+", "+ev.date+") -> FXStreet: "+(near.length?near.join(" | "):"NONE")+" || Alt: "+(nearAlt.length?nearAlt.join(" | "):"NONE"));
               }
             });
-            console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from TradingView/TradingEconomics");
+            // ── PMI-Actuals aus den Trading-Economics-Laenderseiten ──────
+            // Letzte Instanz fuer genau die Luecke, die keine der anderen
+            // Quellen schliesst (siehe Kommentar am Fetch-Schritt). Die
+            // Seite fuehrt immer den ZULETZT veroeffentlichten Wert - er
+            // gehoert also zur juengsten bereits stattgefundenen
+            // Kalenderzeile dieses Landes und dieser Art. Genau so wird
+            // zugeordnet: nicht ueber den Referenzmonat (der liegt je nach
+            // Flash/Final mal im selben, mal im Vormonat), sondern ueber
+            // "juengste vergangene Zeile ohne Wert". Fenster 40 Tage, damit
+            // nach einem laengeren Ausfall nicht ein uralter Termin
+            // rueckwirkend befuellt wird.
+            let matchedTEP=0;
+            try{
+              const tep=JSON.parse(fs.readFileSync("te_pages.json","utf8"));
+              const isKind=(title,kind)=>{
+                const t=String(title||"").toLowerCase();
+                if(!/pmi/.test(t))return false;
+                if(kind==="manufacturing")return /manufacturing pmi/.test(t)&&!/non-?manufacturing/.test(t);
+                return /services pmi|non-?manufacturing pmi|\bpsi\b|ivey/.test(t);
+              };
+              // Nationale Teilreihen tragen bei der Eurozone dieselbe
+              // Waehrungskennung und duerfen NICHT befuellt werden - sonst
+              // landet der Eurozone-Wert auf der deutschen Zeile.
+              const isNational=t=>/german|french|italian|spanish|dutch|irish|greek/i.test(String(t||""));
+              tep.forEach(e=>{
+                const cands=combined.filter(ev=>ev.country===e.country&&!ev.actual&&
+                  isKind(ev.title,e.kind)&&!isNational(ev.title)&&
+                  (()=>{const t=new Date(ev.date).getTime();
+                        return !isNaN(t)&&t<=Date.now()&&Date.now()-t<=40*86400000;})());
+                if(!cands.length)return;
+                cands.sort((a,b)=>new Date(b.date)-new Date(a.date));
+                cands[0].actual=e.actual;
+                matchedTEP++;
+                console.log("[te-page] -> "+e.country+" \""+cands[0].title+"\" ("+cands[0].date+") = "+e.actual);
+              });
+            }catch(err){console.log("[te-page] te_pages.json nicht nutzbar: "+err.message);}
+            console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from TradingView/TradingEconomics, "+matchedTEP+" from TE country pages");
             if(unmatched.length){
               console.log("Unmatched due/recent events (all impact levels):");
               unmatched.forEach(u=>console.log("  - "+u));
@@ -865,7 +911,7 @@ jobs:
             };
             dump("FXStreet",fxEvents,r=>r.name,r=>r.currencyCode,r=>r.actual,r=>r.dateUtc);
             dump("Alt-Quellen (ffhtml/tv/te/investingcom)",altActuals,r=>r.title||r.name,r=>r.country,r=>r.actual,r=>r.dateUtc||r.day);
-            if(matched+matchedFFW+matchedTE>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
+            if(matched+matchedFFW+matchedTE+matchedTEP>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
           '
 
       # Schutznetz gegen Dopplungen im Kalender (z.B. "GDP q/q" vom FF-Feed
@@ -3709,7 +3755,7 @@ jobs:
           rm -f news_marketaux.json
 
       - name: Cleanup temp files
-        run: rm -f thisweek.json nextweek.json fxstreet.json te.json invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt news_marketaux.json
+        run: rm -f thisweek.json nextweek.json fxstreet.json te.json te_pages.json tepage_*.html invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt news_marketaux.json
 
       - name: Commit and push if changed
         run: |
