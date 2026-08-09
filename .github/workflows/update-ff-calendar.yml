@@ -284,11 +284,11 @@ jobs:
           mfg_CHF|CHF|switzerland/manufacturing-pmi
           svc_CHF|CHF|switzerland/services-pmi
           retail_AUD|AUD|australia/retail-sales
-          hhspend_AUD|AUD|australia/household-spending
           corecpi_AUD|AUD|australia/core-inflation-rate
           corecpi_CHF|CHF|switzerland/core-inflation-rate
           ppi_CHF|CHF|switzerland/producer-prices-change
-          svcinfl_JPY|JPY|japan/services-producer-prices
+          svcinfl_JPY|JPY|japan/services-inflation
+          svcinfl2_JPY|JPY|japan/producer-prices-services
           gdp_JPY|JPY|japan/gdp-growth
           emp_JPY|JPY|japan/employed-persons
           jolts_JPY|JPY|japan/job-vacancies
@@ -302,30 +302,44 @@ jobs:
             //           auch Nachbar-Reihen, ein offenes Muster griffe daneben)
             //   unit  = wie der Wert in der App formatiert wird
             const MAP={
-              mfg:{ind:"Manufacturing PMI",anchor:"manufacturing pmi",unit:"points"},
-              svc:{ind:"Services PMI",anchor:"(?:services pmi|services psi)",unit:"points"},
-              retail:{ind:"Retail Sales",anchor:"retail sales",unit:"percent"},
-              hhspend:{ind:"Retail Sales",anchor:"household spending",unit:"percent"},
-              corecpi:{ind:"Core CPI",anchor:"core inflation rate",unit:"percent"},
-              ppi:{ind:"PPI",anchor:"producer pric",unit:"percent"},
-              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|producer pric)",unit:"percent"},
-              gdp:{ind:"GDP Growth QoQ",anchor:"gdp growth",unit:"percent"},
+              mfg:{ind:"Manufacturing PMI",anchor:"manufacturing pmi"},
+              svc:{ind:"Services PMI",anchor:"(?:services pmi|services psi)"},
+              // Anker = wie die Seite die Reihe im BERICHTSSATZ nennt, nicht
+              // wie sie im Menue heisst. Die Schweiz schreibt "Core consumer
+              // prices", Australien nennt beim Kernmass die RBA-Reihe
+              // (Trimmed Mean), Japan formuliert "Japan's GDP grew" und
+              // "The number of employed persons".
+              retail:{ind:"Retail Sales",anchor:"retail sales"},
+              corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
+              ppi:{ind:"PPI",anchor:"producer pric"},
+              svcinfl2:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              gdp:{ind:"GDP Growth QoQ",anchor:"gdp"},
               // Japan fuehrt keine monatliche "Beschaeftigungsaenderung" wie
               // USA/Kanada/Australien. Die Zahl der Erwerbstaetigen ist die
               // naechstliegende echte Reihe - fuer den Score zaehlt ohnehin
               // die RICHTUNG gegen den Vorwert, und die ist hier dieselbe
               // Aussage. Damit auf der Karte trotzdem sichtbar ist, WELCHE
               // Reihe das ist, traegt sie ein eigenes Label.
-              emp:{ind:"NFP / Employment Change",anchor:"(?:employed persons|employment change)",label:"Employed Persons"},
-              jolts:{ind:"JOLTS Job Openings",anchor:"job (?:vacanc|offers)",label:"Job Vacancies"}
+              emp:{ind:"NFP / Employment Change",anchor:"(?:employed persons|employment change|employment in)",label:"Employed Persons"},
+              jolts:{ind:"JOLTS Job Openings",anchor:"job (?:vacanc|offers|openings)",label:"Job Vacancies"}
             };
             // Abschliessende Verbliste: auf derselben Seite stehen Prognose
             // ("is expected to be"), Durchschnitt ("averaged") und Ausblick
             // ("projected to trend") im selben Satzbau. Ein offenes Muster
             // liest die Prognose als Actual.
-            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|was unchanged at|remained at|remained unchanged at|stood at)";
+            // An den ECHTEN Saetzen der Seiten nachgezogen (Diagnoselauf
+            // 2026-08-09): Japan schreibt "GDP grew", die Eurozone
+            // "increased BY 0,1 percent", Japan "from A RECORD HIGH OF 68820
+            // Thousand", und manche Seiten setzen das Prozentzeichen statt
+            // des Wortes. Die Verbliste bleibt abschliessend - der Schutz
+            // gegen Prognosesaetze liegt ohnehin im geforderten Monats- und
+            // Jahres-Anhang, den "is expected to be ... by the end of this
+            // quarter" nicht hat.
+            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|grew|expanded|contracted|shrank|shrunk|advanced|climbed|dropped|jumped|slid|was unchanged at|remained at|remained unchanged at|stood at)";
             const NUM="(-?[\\d]+(?:\\.[\\d]+)?)";
-            const UNIT="(percent|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion)";
+            const UNIT="(percent|%|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion)";
+            const FROM="from\\s+(?:a\\s+record\\s+(?:high|low)\\s+of\\s+|an\\s+all[\\s-]time\\s+(?:high|low)\\s+of\\s+)?";
             const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
             const out=[];
             fs.readdirSync(".").filter(f=>/^tepage_.+\.html$/.test(f)).sort().forEach(f=>{
@@ -337,9 +351,9 @@ jobs:
               const txt=h.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ")
                          .replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ");
               // Form A: "... increased TO x <unit> in <Monat> from y <unit> in <Monat> of <Jahr>"
-              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+from\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+[a-z]+\\s+of\\s+(\\d{4})","i");
-              // Form B: "... increased x percent in <Monat> of <Jahr>" (Veraenderungsreihen)
-              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+of\\s+(\\d{4})","i");
+              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+"+FROM+NUM+"\\s+"+UNIT+"\\s+in\\s+[a-z]+\\s+of\\s+(\\d{4})","i");
+              // Form B: "... increased (by) x percent in <Monat> of <Jahr>" (Veraenderungsreihen)
+              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+of\\s+(\\d{4})","i");
               let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null;
               let m=A.exec(txt);
               if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];prev=m[4];refYear=m[6];shape="A";}
@@ -359,7 +373,7 @@ jobs:
               }
               // Einheit -> Darstellung wie im Rest der App
               let fmtA,fmtP;
-              if(unit==="percent"||unit==="percent of gdp"){fmtA=actual+"%";fmtP=prev!=null?prev+"%":null;}
+              if(unit==="percent"||unit==="%"||unit==="percent of gdp"){fmtA=actual+"%";fmtP=prev!=null?prev+"%":null;}
               else if(unit==="points"){fmtA=actual;fmtP=prev;}
               else if(unit==="thousand"){fmtA=actual+"K";fmtP=prev!=null?prev+"K":null;}
               else if(/million/.test(unit)){fmtA=actual+"M";fmtP=prev!=null?prev+"M":null;}
