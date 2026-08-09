@@ -327,6 +327,30 @@ Ankervorkommen ausgegeben). Was dabei herauskam - nicht neu aufmachen:
 **Ohne echtes Release-Datum wird NIE etwas eingetragen** - daran haengen
 Altersgrenze und Zyklus-Rechnung.
 
+**Ausnahme, eng gefasst:** fehlt der Termin auf der Seite, darf er von der
+SCHWESTERREIHE derselben Veroeffentlichung uebernommen werden - aber nur,
+wenn beide denselben Berichtsmonat und dasselbe Jahr melden (`SIBLING`).
+Aktuell nur `svc_CHF` ← `mfg_CHF`: procure.ch bringt beide Schweizer PMIs
+in einer gemeinsamen Mitteilung. Weicht der Monat ab, bleibt der Eintrag
+ohne Datum und wird nicht geschrieben.
+
+### ⚠️ Zyklus-Untergrenze: Reihen mit Vorabschaetzung UND Endstand
+
+`indCycleDaysCalc` misst den Zyklus als Median der echten Release-Abstaende.
+Bei Reihen mit ZWEI Terminen je Periode wechseln sich kurze und lange
+Abstaende ab - und der Median landet auf dem KURZEN. Gemessen an EUR
+Employment Change: 21/70/21/68/23 Tage → Median 23, obwohl die Reihe
+quartalsweise erscheint; JPY GDP ebenso mit 25 statt 90. Die Altersgrenze
+hat beide dadurch nach gut zwei Monaten faelschlich auf 0 gesetzt, obwohl
+die Quelle schlicht noch nichts Neues hatte.
+
+Der angegebene Turnus (`ind.interval`) dient deshalb als **Untergrenze**
+(`Math.max(median, turnus*0,6)`). Das wirkt ausschliesslich entschaerfend -
+die Grenze kann nie strenger werden als vorher, echte Terminverschiebungen
+(Feiertage, unregelmaessige Termine) laufen weiter durch. Bei kuenftigen
+Aenderungen an der Zyklus-Messung diesen Fall mitpruefen: Prel/Final-Reihen
+sind der Normalfall bei BIP und Beschaeftigung, nicht die Ausnahme.
+
 Bei "Indikator veraltet"-Meldungen deshalb IMMER zuerst die TITLE-DIAG-
 Zeile im Job-Log lesen und unterscheiden:
 - Titel steht da MIT `[actual]`, aber kein Wert in `ind_data` → Regel-Luecke, fixbar.

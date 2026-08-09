@@ -289,10 +289,6 @@ jobs:
           corecpi_CHF|CHF|switzerland/core-inflation-rate
           ppi_CHF|CHF|switzerland/producer-prices-change
           svcinfl_JPY|JPY|japan/services-inflation
-          svcinfl2_JPY|JPY|japan/producer-prices-services
-          svcinfl3_JPY|JPY|japan/services-ppi
-          svcinfl4_JPY|JPY|japan/services-producer-price-index
-          svcinfl5_JPY|JPY|japan/corporate-services-price-index
           gdp_JPY|JPY|japan/gdp-growth
           emp_JPY|JPY|japan/employed-persons
           jolts_JPY|JPY|japan/job-vacancies
@@ -317,11 +313,7 @@ jobs:
               hhspend:{ind:"Retail Sales",anchor:"household spending",label:"Household Spending"},
               corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
               ppi:{ind:"PPI",anchor:"producer pric"},
-              svcinfl2:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
-              svcinfl3:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
-              svcinfl4:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
-              svcinfl5:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
-              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric|services inflation)"},
               gdp:{ind:"GDP Growth QoQ",anchor:"gdp"},
               // Japan fuehrt keine monatliche "Beschaeftigungsaenderung" wie
               // USA/Kanada/Australien. Die Zahl der Erwerbstaetigen ist die
