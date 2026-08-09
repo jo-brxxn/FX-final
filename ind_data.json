@@ -6284,6 +6284,22 @@
     ]
    ],
    "source": "tv"
+  },
+  "Manufacturing PMI": {
+   "actual": "54.50",
+   "forecast": null,
+   "previous": "54.80",
+   "date": "2026-08-03",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage"
+  },
+  "Services PMI": {
+   "actual": "51.20",
+   "forecast": null,
+   "previous": "52.20",
+   "date": "2026-08-05",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "EUR": {
@@ -9025,6 +9041,22 @@
     ]
    ],
    "source": "tv"
+  },
+  "Manufacturing PMI": {
+   "actual": "51.90",
+   "forecast": null,
+   "previous": "51.40",
+   "date": "2026-08-03",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage"
+  },
+  "Services PMI": {
+   "actual": "51.70",
+   "forecast": null,
+   "previous": "49.40",
+   "date": "2026-08-05",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "GBP": {
@@ -11233,6 +11265,22 @@
     ]
    ],
    "source": "tv"
+  },
+  "Manufacturing PMI": {
+   "actual": "51.90",
+   "forecast": null,
+   "previous": "52.50",
+   "date": "2026-08-03",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage"
+  },
+  "Services PMI": {
+   "actual": "52.10",
+   "forecast": null,
+   "previous": "48.80",
+   "date": "2026-08-05",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "CHF": {
@@ -14569,6 +14617,14 @@
     ]
    ],
    "source": "tv"
+  },
+  "Manufacturing PMI": {
+   "actual": "53.50",
+   "forecast": null,
+   "previous": "53",
+   "date": "2026-08-04",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "NZD": {
@@ -16804,6 +16860,22 @@
     ]
    ],
    "source": "tv"
+  },
+  "Manufacturing PMI": {
+   "actual": "52",
+   "forecast": null,
+   "previous": "51.50",
+   "date": "2026-08-02",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage"
+  },
+  "Services PMI": {
+   "actual": "53.60",
+   "forecast": null,
+   "previous": "50.50",
+   "date": "2026-08-04",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "_histChunksFetched": 18
