@@ -16716,12 +16716,12 @@
    "source": "tv"
   },
   "Retail Sales": {
-   "actual": "1.2%",
-   "forecast": "0.4%",
-   "previous": "0.5%",
-   "date": "2025-07-31",
-   "event": "Retail Sales MoM",
-   "period": "m/m",
+   "actual": "6%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-08-04",
+   "event": "Household Spending (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2025-07-31",
@@ -16889,8 +16889,15 @@
      "1.2%",
      "0.4%"
     ]
-   ],
-   "source": "tv"
+   ]
+  },
+  "Core CPI": {
+   "actual": "3.6%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-07-29",
+   "event": "Core CPI (Trading Economics)",
+   "source": "tepage"
   },
   "Manufacturing PMI": {
    "actual": "52",
