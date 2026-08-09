@@ -1703,12 +1703,12 @@
    "source": "tv"
   },
   "GDP Growth QoQ": {
-   "actual": "0.5%",
-   "forecast": "0.3%",
-   "previous": "0.5%",
-   "date": "2026-06-07",
-   "event": "GDP Growth Rate QoQ Final",
-   "period": "q/q",
+   "actual": "0.50%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-06-30",
+   "event": "GDP Growth QoQ (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-02-15",
@@ -1848,8 +1848,23 @@
      "0.5%",
      "0.3%"
     ]
-   ],
-   "source": "tv"
+   ]
+  },
+  "NFP / Employment Change": {
+   "actual": "68460K",
+   "forecast": null,
+   "previous": "68820K",
+   "date": "2026-06-30",
+   "event": "Employed Persons (Trading Economics)",
+   "source": "tepage"
+  },
+  "JOLTS Job Openings": {
+   "actual": "794K",
+   "forecast": null,
+   "previous": "786K",
+   "date": "2026-06-30",
+   "event": "Job Vacancies (Trading Economics)",
+   "source": "tepage"
   },
   "Manufacturing PMI": {
    "actual": "54.50",
@@ -12720,6 +12735,22 @@
     ]
    ],
    "source": "tv"
+  },
+  "Core CPI": {
+   "actual": "0.30%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-07-31",
+   "event": "Core CPI (Trading Economics)",
+   "source": "tepage"
+  },
+  "PPI": {
+   "actual": "2.10%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-07-14",
+   "event": "PPI (Trading Economics)",
+   "source": "tepage"
   }
  },
  "CAD": {
@@ -12748,7 +12779,6 @@
      "55.1"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2025-08-07",
@@ -12815,7 +12845,8 @@
      "55.1",
      "55.5"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Avg Hourly Earnings": {
    "actual": "3%",
