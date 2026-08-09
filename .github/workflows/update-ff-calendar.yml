@@ -234,6 +234,56 @@ jobs:
       #    offizielle Doku von investing.com). Der Endpunkt ist Cloudflare-
       #    geschuetzt - kann daher auf GitHub-Runnern blockiert sein; Diagnose
       #    unten (Laenge/"cf-"/"challenge") zeigt das im Job-Log.
+      # ── SONDE: PMI direkt beim Herausgeber (2026-08-08/09) ────────────────
+      # Ausgangslage, gemessen statt vermutet: KEINE der vier bereits
+      # angebundenen Quellen fuehrt die PMI-Actuals fuer EUR/GBP/JPY/AUD.
+      # TradingView liefert fuer S&P Global/HCOB/Jibun grundsaetzlich keine
+      # Werte, FXStreets Kalender enthaelt 0 PMI-Reihen, die Alt-Quellen
+      # kennen nur Ivey (CAD) mit Wert, und Investing.com ist per Cloudflare
+      # dicht. Bezahlt scheidet nach der Projekt-Regel aus.
+      #
+      # Uebrig bleibt der HERAUSGEBER selbst: S&P Global und HCOB
+      # veroeffentlichen ihre PMI-Mitteilungen frei im Netz, ohne Konto.
+      # Bevor darauf ein Parser gebaut wird, muss aber bekannt sein, WIE die
+      # Seiten aussehen - genau daran ist der Investing.com-Anlauf im Juli
+      # gescheitert (eine geratene Regex traf nie, sechs Testlaeufe verloren).
+      # Deshalb erst diese reine Sonde: sie holt die Seiten, meldet
+      # Erreichbarkeit und Groesse und gibt die Umgebung der Zahl aus. Sie
+      # schreibt NICHTS in die Daten - ausgewertet wird das Job-Log, danach
+      # entsteht der Parser aus dem echten Dump statt aus einer Vermutung.
+      - name: Probe PMI publisher pages (diagnostic only, writes nothing)
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          probe(){
+            local label="$1"; local url="$2"
+            local out="probe_$(echo "$label" | tr -cd 'A-Za-z0-9').html"
+            local code
+            code=$(curl -sL -A "$UA" -m 25 -w "%{http_code}" -o "$out" "$url" 2>/dev/null || echo "000")
+            local size; size=$(wc -c <"$out" 2>/dev/null || echo 0)
+            echo "[pmi-probe] $label http=$code size=$size url=$url"
+            if [ "$size" -gt 2000 ]; then
+              node -e '
+                const fs=require("fs");
+                const h=fs.readFileSync(process.argv[1],"utf8").replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ");
+                const txt=h.replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/\s+/g," ");
+                // Umgebung jeder Stelle, an der eine PMI-Zahl stehen koennte
+                const re=/(index|pmi)[^.]{0,60}?(\d{2}\.\d)/gi;let m,n=0;
+                while((m=re.exec(txt))&&n<6){console.log("   ~ "+txt.slice(Math.max(0,m.index-90),m.index+70).trim());n++;}
+                if(!n)console.log("   (keine PMI-Zahl im Text gefunden - erste 220 Zeichen: "+txt.slice(0,220)+")");
+              ' "$out" || true
+            fi
+            rm -f "$out"
+          }
+          # Herausgeber-Mitteilungen (frei, ohne Konto)
+          probe "spglobal-releases" "https://www.pmi.spglobal.com/Public/Release/PressReleases"
+          probe "hcob-eurozone"     "https://www.hcob-economics.com/en/"
+          # Sekundaerquellen ohne Konto, die die Zahl im Klartext fuehren
+          probe "te-euro-mfg"       "https://tradingeconomics.com/euro-area/manufacturing-pmi"
+          probe "te-gb-mfg"         "https://tradingeconomics.com/united-kingdom/manufacturing-pmi"
+          probe "te-jp-mfg"         "https://tradingeconomics.com/japan/manufacturing-pmi"
+          probe "te-au-mfg"         "https://tradingeconomics.com/australia/manufacturing-pmi"
+
       - name: Fetch alternative actual sources (FF website + Trading Economics + Investing.com)
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
