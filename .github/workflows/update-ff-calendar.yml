@@ -394,7 +394,13 @@ jobs:
                 const an=new RegExp(cfg.anchor,"i").exec(txt);
                 if(an)console.log("      am Anker: ..."+txt.slice(Math.max(0,an.index-30),an.index+260).replace(/\s+/g," ")+"...");
                 else console.log("      Anker \""+cfg.anchor+"\" kommt auf der Seite gar nicht vor");
-                const sent=/[^.]{0,150}\b(?:increased|decreased|rose|fell|declined|expanded|grew|contracted|shrank|advanced|jumped|slid|edged)\b[^.]{0,150}\./i.exec(txt);
+                // Fenster um JEDES Ankervorkommen, ohne am Satzende oder am
+                // Dezimalpunkt abzubrechen - beides hat vorher genau die Stelle
+                // verdeckt, auf die es ankam.
+                const rgA=new RegExp(cfg.anchor,"gi");let am2,seen2=0;
+                while((am2=rgA.exec(txt))&&seen2<3){seen2++;
+                  console.log("      Vorkommen "+seen2+": "+txt.substr(am2.index,300));}
+                const sent=null;
                 if(sent)console.log("      erster Bewegungssatz: "+sent[0].trim().slice(0,240));
                 return;
               }
