@@ -284,6 +284,7 @@ jobs:
           mfg_CHF|CHF|switzerland/manufacturing-pmi
           svc_CHF|CHF|switzerland/services-pmi
           retail_AUD|AUD|australia/retail-sales
+          hhspend_AUD|AUD|australia/household-spending
           corecpi_AUD|AUD|australia/core-inflation-rate
           corecpi_CHF|CHF|switzerland/core-inflation-rate
           ppi_CHF|CHF|switzerland/producer-prices-change
@@ -310,6 +311,7 @@ jobs:
               // (Trimmed Mean), Japan formuliert die eigene Reihe als
               // "GDP grew" bzw. "The number of employed persons".
               retail:{ind:"Retail Sales",anchor:"retail sales"},
+              hhspend:{ind:"Retail Sales",anchor:"household spending",label:"Household Spending"},
               corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
               ppi:{ind:"PPI",anchor:"producer pric"},
               svcinfl2:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
@@ -336,9 +338,11 @@ jobs:
             // gegen Prognosesaetze liegt ohnehin im geforderten Monats- und
             // Jahres-Anhang, den "is expected to be ... by the end of this
             // quarter" nicht hat.
-            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|grew|expanded|contracted|shrank|shrunk|advanced|climbed|dropped|jumped|slid|was unchanged at|remained at|remained unchanged at|stood at|was|came in at|hit|reached)";
+            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|grew|expanded|contracted|shrank|shrunk|advanced|climbed|dropped|jumped|slid|was unchanged at|remained at|remained unchanged at|stood at|held steady at|held at|remained steady at|steadied at|was|came in at|hit|reached)";
             const NUM="(-?[\\d]+(?:\\.[\\d]+)?)";
-            const UNIT="(percent|%|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion)";
+            const UNITS="percent|%|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion";
+            const UNIT="("+UNITS+")";
+            const UNITOPT="(?:\\s*("+UNITS+"))?";
             const FROM="from\\s+(?:a\\s+record\\s+(?:high|low)\\s+of\\s+|an\\s+all[\\s-]time\\s+(?:high|low)\\s+of\\s+)?";
             const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
             const out=[];
@@ -358,10 +362,10 @@ jobs:
               // der eigentliche Schutz gegen die Prognosesaetze derselben
               // Seite ("by the end of this quarter", "from 1983 until 2026"),
               // die genau diesen Anhang nicht haben.
-              const TAIL="(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+of\\s+(\\d{4})";
-              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+of\\s+(\\d{4})","i");
+              const TAIL="(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+(?:of\\s+)?(\\d{4})";
+              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+(?:of\\s+)?(\\d{4})","i");
               // Form B: "... increased (by) x percent in <Periode> of <Jahr>"
-              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s*"+UNIT+TAIL,"i");
+              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+UNITOPT+TAIL,"i");
               // ⚠ ALLE Vorkommen des Ankers durchprobieren, nicht nur das
               // erste. Der Reihenname steht auf jeder Seite zuerst in der
               // Navigation und in der Ueberschrift - dort folgt kein Verb,
@@ -380,7 +384,19 @@ jobs:
                 while((mm=rg.exec(txt))){
                   const yr=+(tag==="A"?mm[6]:mm[4]);
                   if(!(yr>=thisYear-1))continue;   // Rekord-/Durchschnittssatz
-                  actual=mm[1];unit=mm[2].toLowerCase();refMonth=mm[3];
+                  // Fehlt die Einheit im Satz, wird sie NICHT geraten,
+                  // sondern vom Durchschnittssatz derselben Seite gelesen
+                  // ("Employment Change in Euro Area averaged 0.21 percent
+                  // from 1995 until 2026") - das ist eine Messung, keine
+                  // Annahme. Findet sich auch dort keine, wird nichts
+                  // eingetragen.
+                  let u=mm[2];
+                  if(!u){
+                    const pu=new RegExp("averaged\\s+-?[\\d.]+\\s+("+UNITS+")","i").exec(txt);
+                    if(!pu){console.log("[te] "+key+": Satz ohne Einheit und keine auf der Seite - uebersprungen");continue;}
+                    u=pu[1];
+                  }
+                  actual=mm[1];unit=u.toLowerCase();refMonth=mm[3];
                   prev=tag==="A"?mm[4]:null;refYear=String(yr);shape=tag;
                   break;
                 }
