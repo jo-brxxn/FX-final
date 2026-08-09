@@ -351,13 +351,25 @@ jobs:
               const txt=h.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ")
                          .replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ");
               // Form A: "... increased TO x <unit> in <Monat> from y <unit> in <Monat> of <Jahr>"
-              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+"+FROM+NUM+"\\s+"+UNIT+"\\s+in\\s+[a-z]+\\s+of\\s+(\\d{4})","i");
-              // Form B: "... increased (by) x percent in <Monat> of <Jahr>" (Veraenderungsreihen)
-              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+of\\s+(\\d{4})","i");
+              // Perioden-Anhang. Monatsreihen schreiben "in June of 2026",
+              // Quartalsreihen "in the second quarter of 2026", und dazwischen
+              // stehen teils Fuellwoerter ("from a month earlier",
+              // "month-over-month"). Der Anhang bleibt aber PFLICHT - er ist
+              // der eigentliche Schutz gegen die Prognosesaetze derselben
+              // Seite ("by the end of this quarter", "from 1983 until 2026"),
+              // die genau diesen Anhang nicht haben.
+              const TAIL="(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+of\\s+(\\d{4})";
+              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+of\\s+(\\d{4})","i");
+              // Form B: "... increased (by) x percent in <Periode> of <Jahr>"
+              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s+"+UNIT+TAIL,"i");
               let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null;
               let m=A.exec(txt);
               if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];prev=m[4];refYear=m[6];shape="A";}
               else{m=B.exec(txt); if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];refYear=m[4];shape="B";}}
+              if(actual&&refYear&&(+refYear)<(new Date().getFullYear()-1)){
+                console.log("[te] "+key+": Treffer verworfen, Bezugsjahr "+refYear+" liegt zu weit zurueck (vermutlich ein Rekord-/Durchschnittssatz)");
+                actual=null;
+              }
               if(!actual){
                 // Diagnose statt Raten: WAS steht dort stattdessen? Ohne das
                 // muesste man das Satzmuster blind variieren - genau die Art
@@ -382,13 +394,22 @@ jobs:
               // Release-DATUM. Ohne echtes Datum wird NICHTS geschrieben - es
               // steuert Altersgrenze und Zyklus-Rechnung, ein geratenes waere
               // schlimmer als kein Eintrag (Grundsatz "nie schaetzen").
+              // WICHTIG: auch im ROHEN HTML suchen. Das Tag-Strippen entfernt
+              // die Attribute, und genau dort stehen die Termine haeufig
+              // (data-date="2026-08-04") - bei vier Seiten war deshalb im
+              // reinen Text ueberhaupt keine Datumsangabe zu finden.
               const dates=[];let dm;
-              const D1=/\b([a-z]{3})[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/gi;
-              while((dm=D1.exec(txt))){const mo=MON[dm[1].toLowerCase()];if(mo)dates.push(dm[3]+"-"+String(mo).padStart(2,"0")+"-"+String(dm[2]).padStart(2,"0"));}
-              const D2=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
-              while((dm=D2.exec(txt)))dates.push(dm[1]+"-"+dm[2]+"-"+dm[3]);
+              [txt,h].forEach(src=>{
+                const D1=/\b([a-z]{3})[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/gi;
+                while((dm=D1.exec(src))){const mo=MON[dm[1].toLowerCase()];if(mo)dates.push(dm[3]+"-"+String(mo).padStart(2,"0")+"-"+String(dm[2]).padStart(2,"0"));}
+                const D2=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
+                while((dm=D2.exec(src)))dates.push(dm[1]+"-"+dm[2]+"-"+dm[3]);
+                const D3=/\b(\d{2})\/(\d{2})\/(\d{4})\b/g;
+                while((dm=D3.exec(src)))dates.push(dm[3]+"-"+dm[1]+"-"+dm[2]);
+              });
               const today=new Date().toISOString().slice(0,10);
-              const past=dates.filter(d=>d<=today).sort();
+              const floor=new Date(Date.now()-120*86400000).toISOString().slice(0,10);
+              const past=dates.filter(d=>d<=today&&d>=floor).sort();
               const relDate=past.length?past[past.length-1]:null;
               if(!relDate)console.log("      [datum] keine vergangene Datumsangabe gefunden; gefundene Kandidaten: "+dates.slice(0,6).join(", ")||"(keine)");
               out.push({source:"tepage",country:ccy,key:kind,ind:cfg.ind,label:cfg.label||null,

@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-345 — Eigener Fehler gefunden und behoben: der Schritt, der die Indikatorwerte von den Laenderseiten holt, ist im letzten Lauf komplett gestorben, ohne dass der Lauf rot wurde. Ursache war ein Apostroph in einem von MIR geschriebenen deutschen Kommentar - der gesamte Node-Code steckt in einem einfach-quotierten Shell-String, ein Apostroph darin beendet ihn, und der Rest wurde als Shell-Befehl gelesen. Sichtbar war das nur daran, dass die erzeugte Datei fehlte; der Schritt selbst meldete Erfolg, weil er bewusst continue-on-error traegt, damit ein Quellenausfall nicht den ganzen Lauf killt. Wichtig dabei: der uebliche node-Syntaxcheck findet diesen Fehler NICHT, weil er den bereits herausgeloesten JavaScript-Code prueft und nicht die Shell-Quotierung drumherum. Deshalb ist der Apostroph raus, und in der Projektdoku steht jetzt die Regel, nach jeder Aenderung an einem Workflow-Schritt zusaetzlich die Shell-Syntax zu pruefen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-346 — Zweite Runde am selben Punkt, wieder anhand der echten Seiten statt auf Verdacht. Drei Reihen scheiterten am Perioden-Anhang: Quartalsreihen schreiben in the second quarter of 2026 statt in June of 2026, und dazwischen stehen teils Fuellwoerter wie from a month earlier. Beides ist jetzt abgedeckt, der Anhang bleibt aber Pflicht - er ist der eigentliche Schutz gegen die Prognose- und Rekordsaetze derselben Seite. Zusaetzlich verwirft ein Jahres-Check jeden Treffer, dessen Bezugsjahr zu weit zurueckliegt, damit ein Satz wie reaching an all time high of 10,70 percent in March of 1983 nicht als aktueller Wert durchgeht. Vier weitere Reihen hatten einen Wert, aber kein Datum - Ursache: das Datum steht dort nur im HTML-Attribut, und das Herausloesen des reinen Textes hatte es vorher weggeschnitten. Die Datumssuche laeuft jetzt zusaetzlich auf dem rohen HTML und akzeptiert eine dritte Schreibweise; ein Termin, der laenger als 120 Tage zurueck liegt, gilt weiterhin nicht als Release. Offline an nachgestellten Seiten geprueft: Quartals- und Monatsformulierung, Fuellwoerter, Datum nur im Attribut, reiner Rekordsatz ohne Wert und ein zu altes Datum verhalten sich alle wie vorgesehen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-345</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-346</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
