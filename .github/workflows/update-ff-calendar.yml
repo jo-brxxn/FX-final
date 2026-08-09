@@ -344,7 +344,19 @@ jobs:
               let m=A.exec(txt);
               if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];prev=m[4];refYear=m[6];shape="A";}
               else{m=B.exec(txt); if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];refYear=m[4];shape="B";}}
-              if(!actual){console.log("[te] "+key+": kein Berichtssatz ("+h.length+" Byte)");return;}
+              if(!actual){
+                // Diagnose statt Raten: WAS steht dort stattdessen? Ohne das
+                // muesste man das Satzmuster blind variieren - genau die Art
+                // Zeitverschwendung, die die TITLE-DIAG bei den PMIs schon
+                // einmal erspart hat.
+                console.log("[te] "+key+": kein Berichtssatz ("+h.length+" Byte)");
+                const an=new RegExp(cfg.anchor,"i").exec(txt);
+                if(an)console.log("      am Anker: ..."+txt.slice(Math.max(0,an.index-30),an.index+260).replace(/\s+/g," ")+"...");
+                else console.log("      Anker \""+cfg.anchor+"\" kommt auf der Seite gar nicht vor");
+                const sent=/[^.]{0,150}\b(?:increased|decreased|rose|fell|declined|expanded|grew|contracted|shrank|advanced|jumped|slid|edged)\b[^.]{0,150}\./i.exec(txt);
+                if(sent)console.log("      erster Bewegungssatz: "+sent[0].trim().slice(0,240));
+                return;
+              }
               // Einheit -> Darstellung wie im Rest der App
               let fmtA,fmtP;
               if(unit==="percent"||unit==="percent of gdp"){fmtA=actual+"%";fmtP=prev!=null?prev+"%":null;}
@@ -364,6 +376,7 @@ jobs:
               const today=new Date().toISOString().slice(0,10);
               const past=dates.filter(d=>d<=today).sort();
               const relDate=past.length?past[past.length-1]:null;
+              if(!relDate)console.log("      [datum] keine vergangene Datumsangabe gefunden; gefundene Kandidaten: "+dates.slice(0,6).join(", ")||"(keine)");
               out.push({source:"tepage",country:ccy,key:kind,ind:cfg.ind,label:cfg.label||null,
                         actual:fmtA,previous:fmtP,date:relDate,refMonth:refMonth,refYear:refYear});
               console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
