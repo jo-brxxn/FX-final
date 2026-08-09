@@ -286,9 +286,26 @@ jobs:
               const m=RE.exec(txt);
               if(!m){console.log("[te-page] "+c+" "+kind+": kein Berichtssatz gefunden ("+h.length+" Byte)");return;}
               if(m[1].toLowerCase()!==kind){console.log("[te-page] "+c+" "+kind+": Satz gehoert zu "+m[1]+" - verworfen");return;}
+              // Release-DATUM. Ohne echtes Datum wird der Wert NICHT nach
+              // ind_data geschrieben - das Datum steuert Altersgrenze und
+              // Zyklus-Rechnung, ein geratenes waere schlimmer als keines
+              // (Projekt-Grundsatz "nie schaetzen"). Die Seite fuehrt es in
+              // der Kalender-Tabelle als "Aug 03, 2026" bzw. "2026-08-03";
+              // beide Formen werden probiert, gefunden wird das juengste
+              // Datum, das nicht in der Zukunft liegt.
+              const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+              const dates=[];
+              let dm;
+              const D1=/\b([a-z]{3})[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/gi;
+              while((dm=D1.exec(txt))){const mo=MON[dm[1].toLowerCase()];if(mo)dates.push(dm[3]+"-"+String(mo).padStart(2,"0")+"-"+String(dm[2]).padStart(2,"0"));}
+              const D2=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
+              while((dm=D2.exec(txt)))dates.push(dm[1]+"-"+dm[2]+"-"+dm[3]);
+              const today=new Date().toISOString().slice(0,10);
+              const past=dates.filter(d=>d<=today).sort();
+              const relDate=past.length?past[past.length-1]:null;
               out.push({source:"tepage",country:c,kind:kind,name:(kind==="manufacturing"?"Manufacturing":"Services")+" PMI",
-                        actual:m[2],previous:m[4],refMonth:m[3],refYear:m[5]});
-              console.log("[te-page] "+c+" "+kind+": "+m[2]+" (vorher "+m[4]+") fuer "+m[3]+" "+m[5]);
+                        actual:m[2],previous:m[4],refMonth:m[3],refYear:m[5],date:relDate});
+              console.log("[te-page] "+c+" "+kind+": "+m[2]+" (vorher "+m[4]+") fuer "+m[3]+" "+m[5]+" | Release-Datum: "+(relDate||"KEINS - nur Kalender-Pfad"));
             }));
             fs.writeFileSync("te_pages.json",JSON.stringify(out));
             console.log("te_pages.json: "+out.length+"/12 PMI-Werte");
@@ -1471,6 +1488,33 @@ jobs:
             });
             if(revN)console.log("ind_data revisions detected this run: "+revN);
 
+            // ── PMI aus den Trading-Economics-Laenderseiten nachtragen ──
+            // Direkt nach ind_data, nicht nur ueber den Kalender: der
+            // FF-Feed umfasst nur zwei Wochen, die PMI-Zeile ist also schon
+            // wenige Tage nach dem Release verschwunden und der Wert haette
+            // nichts mehr zum Andocken (live beobachtet am 2026-08-09 -
+            // 12 von 12 Werten geholt, 0 zuzuordnen). Nur eintragen, wenn
+            // die Reihe hier KEINEN Wert hat oder der TE-Wert NEUER ist,
+            // und nur MIT echtem Release-Datum - ohne Datum liesse sich
+            // weder Alter noch Zyklus rechnen, und ein geratenes Datum
+            // waere schlimmer als kein Eintrag.
+            try{
+              const tep=JSON.parse(fs.readFileSync("te_pages.json","utf8"));
+              let tepN=0,tepSkip=0;
+              tep.forEach(e=>{
+                if(!e.date){tepSkip++;return;}
+                const ind=e.kind==="manufacturing"?"Manufacturing PMI":"Services PMI";
+                out[e.country]=out[e.country]||{};
+                const cur=out[e.country][ind];
+                if(cur&&cur.date&&cur.date>=e.date)return;   // schon aktueller
+                out[e.country][ind]={actual:e.actual,forecast:(cur&&cur.date===e.date?cur.forecast:null)||null,
+                  previous:e.previous,date:e.date,event:ind+" (Trading Economics)",source:"tepage",
+                  history:(cur&&cur.history)||undefined,historyFull:(cur&&cur.historyFull)||undefined};
+                tepN++;
+                console.log("[te-page->ind_data] "+e.country+" "+ind+" = "+e.actual+" ("+e.date+")");
+              });
+              console.log("ind_data <- TE country pages: "+tepN+" written, "+tepSkip+" skipped (no release date)");
+            }catch(err){console.log("ind_data <- TE country pages: nicht nutzbar ("+err.message+")");}
             fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
             // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
             const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];
