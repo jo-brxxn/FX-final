@@ -327,6 +327,25 @@ Ankervorkommen ausgegeben). Was dabei herauskam - nicht neu aufmachen:
 **Ohne echtes Release-Datum wird NIE etwas eingetragen** - daran haengen
 Altersgrenze und Zyklus-Rechnung.
 
+**Drei Satzformen** (in dieser Reihenfolge probiert): **A** `… to X <Einheit>
+in <Monat> from Y <Einheit> in <Monat> of <Jahr>` (Actual + Vorwert), **B**
+`… X <Einheit> in <Periode> of <Jahr>` (nur Actual), **C** `… X <Einheit> in
+<Monat>.` OHNE Jahr - nur als letzte Rueckfalloption, Jahr aus dem Monat
+abgeleitet (juengstes nicht-zukuenftiges Vorkommen), Monate aelter als ein
+halbes Jahr werden verworfen.
+
+**⚠️ Drei Reihen messen NICHT exakt dasselbe wie der Kartenname** und tragen
+deshalb ein eigenes Label, damit das auf der Karte sichtbar ist statt
+stillschweigend gleichgesetzt zu werden:
+- JPY `NFP / Employment Change` ← **Employed Persons** (Japan fuehrt keine
+  monatliche Beschaeftigungsaenderung; fuer den Score zaehlt die Richtung
+  gegen den Vorwert, und die ist dieselbe Aussage)
+- AUD `Retail Sales` ← **Household Spending** (ABS hat die Handelsumsatz-
+  Reihe 2025 eingestellt; verifiziert als Monatsrate: *"increased 6 percent
+  in June of 2026 over the previous month"*)
+- JPY `Services Inflation` ← **CPI-Dienstleistungskomponente** des
+  Innenministeriums, NICHT der Unternehmens-Dienstleistungspreisindex der BoJ
+
 **Ausnahme, eng gefasst:** fehlt der Termin auf der Seite, darf er von der
 SCHWESTERREIHE derselben Veroeffentlichung uebernommen werden - aber nur,
 wenn beide denselben Berichtsmonat und dasselbe Jahr melden (`SIBLING`).
