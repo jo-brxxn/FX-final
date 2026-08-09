@@ -258,44 +258,105 @@ jobs:
       # 6 von 6 Formulierungen korrekt geparst (increased/decreased/unchanged/
       # remained), 3 von 3 Nicht-Treffer korrekt verworfen (Prognose-,
       # Durchschnitts- und Trendsaetze auf derselben Seite).
-      - name: Fetch PMI actuals from Trading Economics country pages
+      - name: Fetch indicator actuals from Trading Economics country pages
         continue-on-error: true
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          for spec in "EUR euro-area" "GBP united-kingdom" "JPY japan" "AUD australia" "CAD canada" "CHF switzerland"; do
-            set -- $spec
-            for kind in manufacturing services; do
-              curl -sL -A "$UA" -m 25 "https://tradingeconomics.com/$2/$kind-pmi" -o "tepage_$1_$kind.html" || true
-              sleep 1
-            done
-          done
+          # Jede Zeile: KUERZEL|WAEHRUNG|TE-PFAD. Erst PMI (seit 2026-08-09
+          # produktiv), dann die uebrigen Reihen, fuer die KEINE der anderen
+          # vier Quellen einen Wert liefert - jede einzeln aus der
+          # OUT-OF-DATE-Liste der App abgeleitet, nicht auf Verdacht.
+          while IFS='|' read -r key ccy path; do
+            [ -z "$key" ] && continue
+            curl -sL -A "$UA" -m 25 "https://tradingeconomics.com/$path" -o "tepage_$key.html" || true
+            sleep 1
+          done <<'URLS'
+          mfg_EUR|EUR|euro-area/manufacturing-pmi
+          svc_EUR|EUR|euro-area/services-pmi
+          mfg_GBP|GBP|united-kingdom/manufacturing-pmi
+          svc_GBP|GBP|united-kingdom/services-pmi
+          mfg_JPY|JPY|japan/manufacturing-pmi
+          svc_JPY|JPY|japan/services-pmi
+          mfg_AUD|AUD|australia/manufacturing-pmi
+          svc_AUD|AUD|australia/services-pmi
+          mfg_CAD|CAD|canada/manufacturing-pmi
+          svc_CAD|CAD|canada/services-pmi
+          mfg_CHF|CHF|switzerland/manufacturing-pmi
+          svc_CHF|CHF|switzerland/services-pmi
+          retail_AUD|AUD|australia/retail-sales
+          hhspend_AUD|AUD|australia/household-spending
+          corecpi_AUD|AUD|australia/core-inflation-rate
+          corecpi_CHF|CHF|switzerland/core-inflation-rate
+          ppi_CHF|CHF|switzerland/producer-prices-change
+          svcinfl_JPY|JPY|japan/services-producer-prices
+          gdp_JPY|JPY|japan/gdp-growth
+          emp_JPY|JPY|japan/employed-persons
+          jolts_JPY|JPY|japan/job-vacancies
+          emp_EUR|EUR|euro-area/employment-change
+          URLS
           node -e '
             const fs=require("fs");
-            const CC=["EUR","GBP","JPY","AUD","CAD","CHF"];
-            // Nur der BERICHTSSATZ. Prognose ("is expected to be"),
-            // Durchschnitt ("averaged") und Ausblick ("projected to trend")
-            // stehen auf derselben Seite und duerfen NICHT treffen - deshalb
-            // sind die Verben abschliessend aufgezaehlt statt offen gelassen.
-            const RE=/(manufacturing|services)\s+pmi\s+(?:in|in the)\s+[^.]{0,40}?\b(?:increased|decreased|rose|fell|declined|edged up|edged down|was unchanged at|remained at|stood at)\s+(?:to\s+)?([\d]+(?:\.[\d]+)?)\s+points\s+in\s+([a-z]+)\s+from\s+([\d]+(?:\.[\d]+)?)\s+points\s+in\s+[a-z]+\s+of\s+(\d{4})/i;
+            // key -> was die Seite fuer uns bedeutet.
+            //   ind   = Indikatorname in der App
+            //   anchor= womit der Berichtssatz beginnen MUSS (die Seite nennt
+            //           auch Nachbar-Reihen, ein offenes Muster griffe daneben)
+            //   unit  = wie der Wert in der App formatiert wird
+            const MAP={
+              mfg:{ind:"Manufacturing PMI",anchor:"manufacturing pmi",unit:"points"},
+              svc:{ind:"Services PMI",anchor:"(?:services pmi|services psi)",unit:"points"},
+              retail:{ind:"Retail Sales",anchor:"retail sales",unit:"percent"},
+              hhspend:{ind:"Retail Sales",anchor:"household spending",unit:"percent"},
+              corecpi:{ind:"Core CPI",anchor:"core inflation rate",unit:"percent"},
+              ppi:{ind:"PPI",anchor:"producer pric",unit:"percent"},
+              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|producer pric)",unit:"percent"},
+              gdp:{ind:"GDP Growth QoQ",anchor:"gdp growth",unit:"percent"},
+              // Japan fuehrt keine monatliche "Beschaeftigungsaenderung" wie
+              // USA/Kanada/Australien. Die Zahl der Erwerbstaetigen ist die
+              // naechstliegende echte Reihe - fuer den Score zaehlt ohnehin
+              // die RICHTUNG gegen den Vorwert, und die ist hier dieselbe
+              // Aussage. Damit auf der Karte trotzdem sichtbar ist, WELCHE
+              // Reihe das ist, traegt sie ein eigenes Label.
+              emp:{ind:"NFP / Employment Change",anchor:"(?:employed persons|employment change)",label:"Employed Persons"},
+              jolts:{ind:"JOLTS Job Openings",anchor:"job (?:vacanc|offers)",label:"Job Vacancies"}
+            };
+            // Abschliessende Verbliste: auf derselben Seite stehen Prognose
+            // ("is expected to be"), Durchschnitt ("averaged") und Ausblick
+            // ("projected to trend") im selben Satzbau. Ein offenes Muster
+            // liest die Prognose als Actual.
+            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|was unchanged at|remained at|remained unchanged at|stood at)";
+            const NUM="(-?[\\d]+(?:\\.[\\d]+)?)";
+            const UNIT="(percent|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion)";
+            const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
             const out=[];
-            CC.forEach(c=>["manufacturing","services"].forEach(kind=>{
-              const f="tepage_"+c+"_"+kind+".html";
-              let h;try{h=fs.readFileSync(f,"utf8");}catch(e){console.log("[te-page] "+c+" "+kind+": nicht geladen");return;}
+            fs.readdirSync(".").filter(f=>/^tepage_.+\.html$/.test(f)).sort().forEach(f=>{
+              const key=f.slice(7,-5);            // z.B. "corecpi_CHF"
+              const kind=key.split("_")[0], ccy=key.split("_")[1];
+              const cfg=MAP[kind];
+              if(!cfg){console.log("[te] "+key+": keine Zuordnung");return;}
+              let h;try{h=fs.readFileSync(f,"utf8");}catch(e){console.log("[te] "+key+": nicht geladen");return;}
               const txt=h.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ")
                          .replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\s+/g," ");
-              const m=RE.exec(txt);
-              if(!m){console.log("[te-page] "+c+" "+kind+": kein Berichtssatz gefunden ("+h.length+" Byte)");return;}
-              if(m[1].toLowerCase()!==kind){console.log("[te-page] "+c+" "+kind+": Satz gehoert zu "+m[1]+" - verworfen");return;}
-              // Release-DATUM. Ohne echtes Datum wird der Wert NICHT nach
-              // ind_data geschrieben - das Datum steuert Altersgrenze und
-              // Zyklus-Rechnung, ein geratenes waere schlimmer als keines
-              // (Projekt-Grundsatz "nie schaetzen"). Die Seite fuehrt es in
-              // der Kalender-Tabelle als "Aug 03, 2026" bzw. "2026-08-03";
-              // beide Formen werden probiert, gefunden wird das juengste
-              // Datum, das nicht in der Zukunft liegt.
-              const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
-              const dates=[];
-              let dm;
+              // Form A: "... increased TO x <unit> in <Monat> from y <unit> in <Monat> of <Jahr>"
+              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+from\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+[a-z]+\\s+of\\s+(\\d{4})","i");
+              // Form B: "... increased x percent in <Monat> of <Jahr>" (Veraenderungsreihen)
+              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+([a-z]+)\\s+of\\s+(\\d{4})","i");
+              let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null;
+              let m=A.exec(txt);
+              if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];prev=m[4];refYear=m[6];shape="A";}
+              else{m=B.exec(txt); if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];refYear=m[4];shape="B";}}
+              if(!actual){console.log("[te] "+key+": kein Berichtssatz ("+h.length+" Byte)");return;}
+              // Einheit -> Darstellung wie im Rest der App
+              let fmtA,fmtP;
+              if(unit==="percent"||unit==="percent of gdp"){fmtA=actual+"%";fmtP=prev!=null?prev+"%":null;}
+              else if(unit==="points"){fmtA=actual;fmtP=prev;}
+              else if(unit==="thousand"){fmtA=actual+"K";fmtP=prev!=null?prev+"K":null;}
+              else if(/million/.test(unit)){fmtA=actual+"M";fmtP=prev!=null?prev+"M":null;}
+              else if(/billion/.test(unit)){fmtA=actual+"B";fmtP=prev!=null?prev+"B":null;}
+              else{console.log("[te] "+key+": Einheit \""+unit+"\" nicht unterstuetzt - uebersprungen");return;}
+              // Release-DATUM. Ohne echtes Datum wird NICHTS geschrieben - es
+              // steuert Altersgrenze und Zyklus-Rechnung, ein geratenes waere
+              // schlimmer als kein Eintrag (Grundsatz "nie schaetzen").
+              const dates=[];let dm;
               const D1=/\b([a-z]{3})[a-z]*\s+(\d{1,2}),?\s+(\d{4})\b/gi;
               while((dm=D1.exec(txt))){const mo=MON[dm[1].toLowerCase()];if(mo)dates.push(dm[3]+"-"+String(mo).padStart(2,"0")+"-"+String(dm[2]).padStart(2,"0"));}
               const D2=/\b(\d{4})-(\d{2})-(\d{2})\b/g;
@@ -303,12 +364,12 @@ jobs:
               const today=new Date().toISOString().slice(0,10);
               const past=dates.filter(d=>d<=today).sort();
               const relDate=past.length?past[past.length-1]:null;
-              out.push({source:"tepage",country:c,kind:kind,name:(kind==="manufacturing"?"Manufacturing":"Services")+" PMI",
-                        actual:m[2],previous:m[4],refMonth:m[3],refYear:m[5],date:relDate});
-              console.log("[te-page] "+c+" "+kind+": "+m[2]+" (vorher "+m[4]+") fuer "+m[3]+" "+m[5]+" | Release-Datum: "+(relDate||"KEINS - nur Kalender-Pfad"));
-            }));
+              out.push({source:"tepage",country:ccy,key:kind,ind:cfg.ind,label:cfg.label||null,
+                        actual:fmtA,previous:fmtP,date:relDate,refMonth:refMonth,refYear:refYear});
+              console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
+            });
             fs.writeFileSync("te_pages.json",JSON.stringify(out));
-            console.log("te_pages.json: "+out.length+"/12 PMI-Werte");
+            console.log("te_pages.json: "+out.length+" Werte");
           '
 
       - name: Fetch alternative actual sources (FF website + Trading Economics + Investing.com)
@@ -877,11 +938,16 @@ jobs:
             let matchedTEP=0;
             try{
               const tep=JSON.parse(fs.readFileSync("te_pages.json","utf8"));
-              const isKind=(title,kind)=>{
+              // Nur die PMI-Reihen werden zusaetzlich in den Kalender
+              // gespiegelt - dort steht ohnehin eine Zeile, der nur der Wert
+              // fehlt. Alle anderen TE-Reihen gehen ausschliesslich direkt
+              // nach ind_data (der Kalender fuehrt sie teils gar nicht).
+              const isKind=(title,ind)=>{
                 const t=String(title||"").toLowerCase();
                 if(!/pmi/.test(t))return false;
-                if(kind==="manufacturing")return /manufacturing pmi/.test(t)&&!/non-?manufacturing/.test(t);
-                return /services pmi|non-?manufacturing pmi|\bpsi\b|ivey/.test(t);
+                if(ind==="Manufacturing PMI")return /manufacturing pmi/.test(t)&&!/non-?manufacturing/.test(t);
+                if(ind==="Services PMI")return /services pmi|non-?manufacturing pmi|\bpsi\b|ivey/.test(t);
+                return false;
               };
               // Nationale Teilreihen tragen bei der Eurozone dieselbe
               // Waehrungskennung und duerfen NICHT befuellt werden - sonst
@@ -889,7 +955,7 @@ jobs:
               const isNational=t=>/german|french|italian|spanish|dutch|irish|greek/i.test(String(t||""));
               tep.forEach(e=>{
                 const cands=combined.filter(ev=>ev.country===e.country&&!ev.actual&&
-                  isKind(ev.title,e.kind)&&!isNational(ev.title)&&
+                  isKind(ev.title,e.ind)&&!isNational(ev.title)&&
                   (()=>{const t=new Date(ev.date).getTime();
                         return !isNaN(t)&&t<=Date.now()&&Date.now()-t<=40*86400000;})());
                 if(!cands.length)return;
@@ -1502,16 +1568,16 @@ jobs:
               const tep=JSON.parse(fs.readFileSync("te_pages.json","utf8"));
               let tepN=0,tepSkip=0;
               tep.forEach(e=>{
-                if(!e.date){tepSkip++;return;}
-                const ind=e.kind==="manufacturing"?"Manufacturing PMI":"Services PMI";
+                if(!e.date){tepSkip++;console.log("[te->ind_data] "+e.country+" "+e.ind+": uebersprungen, kein Release-Datum");return;}
+                const ind=e.ind;
                 out[e.country]=out[e.country]||{};
                 const cur=out[e.country][ind];
                 if(cur&&cur.date&&cur.date>=e.date)return;   // schon aktueller
                 out[e.country][ind]={actual:e.actual,forecast:(cur&&cur.date===e.date?cur.forecast:null)||null,
-                  previous:e.previous,date:e.date,event:ind+" (Trading Economics)",source:"tepage",
+                  previous:e.previous,date:e.date,event:(e.label||ind)+" (Trading Economics)",source:"tepage",
                   history:(cur&&cur.history)||undefined,historyFull:(cur&&cur.historyFull)||undefined};
                 tepN++;
-                console.log("[te-page->ind_data] "+e.country+" "+ind+" = "+e.actual+" ("+e.date+")");
+                console.log("[te->ind_data] "+e.country+" "+ind+" = "+e.actual+" ("+e.date+", "+(e.label||ind)+")");
               });
               console.log("ind_data <- TE country pages: "+tepN+" written, "+tepSkip+" skipped (no release date)");
             }catch(err){console.log("ind_data <- TE country pages: nicht nutzbar ("+err.message+")");}
