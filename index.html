@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-347 — Die letzten drei Reihen scheiterten an etwas, das man nur an den echten Seiten sieht: der Reihenname steht dort ZUERST in der Navigationsleiste und in der Ueberschrift, und die Suche nahm genau diesen ersten Treffer - dort folgt aber kein Bericht, sondern Calendar News Markets Commodities. Der eigentliche Satz weiter unten wurde nie erreicht. Jetzt werden ALLE Vorkommen des Reihennamens durchprobiert, bis einer davon ein vollstaendiges Ergebnis liefert. Damit sind AUD Core CPI, AUD Retail Sales und EUR Beschaeftigungsaenderung erledigt. Der Jahres-Check ist in dieselbe Schleife gewandert, sonst haette sie sich an einem Rekordsatz festgehalten und die spaeteren Vorkommen nicht mehr geprueft. Gegen alle drei bisherigen Testreihen nachgefahren, Form A wie Form B, ohne Rueckschritt - und eine Seite, die nur Durchschnitts- und Rekordsaetze enthaelt, liefert weiterhin nichts.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-348 — Letzte drei Reihen: die Diagnose brach bisher selbst am Dezimalpunkt ab, deshalb war nie zu sehen, wie der Satz weitergeht. Nach dem Fix daran waren die Ursachen sofort klar. Erstens setzen manche Seiten das Prozentzeichen direkt an die Zahl (0,1% statt 0,1 percent) - das Leerzeichen ist jetzt optional. Zweitens meldet die australische Kernmass-Seite einen ZUSTAND statt einer Bewegung (RBA Trimmed Mean CPI was 2,7%), also sind Zustandsverben ergaenzt. Das ist ungefaehrlich, weil der Jahres-Check jeden Rekord- und Historiensatz ohnehin verwirft - im Test liefert eine Seite mit ausschliesslich Durchschnitts- und Rekordsaetzen weiterhin nichts, ebenso eine reine Prognoseseite. Damit haben AUD Core CPI, AUD Retail Sales und EUR Beschaeftigungsaenderung eine Quelle. Alle drei frueheren Testreihen unveraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-347</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-348</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>

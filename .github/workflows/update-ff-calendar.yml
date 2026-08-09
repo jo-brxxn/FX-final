@@ -336,7 +336,7 @@ jobs:
             // gegen Prognosesaetze liegt ohnehin im geforderten Monats- und
             // Jahres-Anhang, den "is expected to be ... by the end of this
             // quarter" nicht hat.
-            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|grew|expanded|contracted|shrank|shrunk|advanced|climbed|dropped|jumped|slid|was unchanged at|remained at|remained unchanged at|stood at)";
+            const VERB="(?:increased|decreased|rose|fell|declined|edged up|edged down|went up|went down|grew|expanded|contracted|shrank|shrunk|advanced|climbed|dropped|jumped|slid|was unchanged at|remained at|remained unchanged at|stood at|was|came in at|hit|reached)";
             const NUM="(-?[\\d]+(?:\\.[\\d]+)?)";
             const UNIT="(percent|%|points|percent of gdp|thousand|million|billion|[a-z]{3} million|[a-z]{3} billion)";
             const FROM="from\\s+(?:a\\s+record\\s+(?:high|low)\\s+of\\s+|an\\s+all[\\s-]time\\s+(?:high|low)\\s+of\\s+)?";
@@ -359,9 +359,9 @@ jobs:
               // Seite ("by the end of this quarter", "from 1983 until 2026"),
               // die genau diesen Anhang nicht haben.
               const TAIL="(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+of\\s+(\\d{4})";
-              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+of\\s+(\\d{4})","i");
+              const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s*"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+of\\s+(\\d{4})","i");
               // Form B: "... increased (by) x percent in <Periode> of <Jahr>"
-              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s+"+UNIT+TAIL,"i");
+              const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s*"+UNIT+TAIL,"i");
               // ⚠ ALLE Vorkommen des Ankers durchprobieren, nicht nur das
               // erste. Der Reihenname steht auf jeder Seite zuerst in der
               // Navigation und in der Ueberschrift - dort folgt kein Verb,
