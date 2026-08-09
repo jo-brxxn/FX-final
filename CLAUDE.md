@@ -262,11 +262,51 @@ CHF Services PMI, JPY Employment Change, JPY Services Inflation (CSPI,
 bewusst aus den RULES ausgelassen), AUD Core CPI (Trimmed Mean), AUD
 Retail Sales (ABS-Reihe 2025 eingestellt).
 
-**Zweite, unabhaengige Baustelle:** im `ff_calendar` hatten am 2026-08-08
-**82 bereits vergangene** Events immer noch kein Actual. Die
-Unmatched-Diagnose der Enrichment-Stufe meldet aber NUR High/Medium -
-PMIs laufen dort als "Low" still ins Leere. Falls das angegangen wird:
-die Diagnose dort auf alle Impact-Stufen ausweiten.
+**Zweite, unabhaengige Baustelle (erledigt 2026-08-08):** im `ff_calendar`
+hatten **82 bereits vergangene** Events immer noch kein Actual. Die
+Unmatched-Diagnose der Enrichment-Stufe meldete NUR High/Medium - PMIs
+laufen dort als "Low" und fielen still durch, ausgerechnet die
+Indikatoren also, ueber die es nie eine Meldung gab. Die Diagnose zaehlt
+jetzt jede Impact-Stufe; dazu gibt eine **Quellen-Diagnose** die rohen
+FXStreet- und Alt-Payloads nach PMI-Reihen aus, damit die Frage nach
+einer Ersatzquelle mit Messwerten statt Vermutungen beantwortet wird.
+
+## ⚠️ "Release faellig, aber kein Wert" muss GEMELDET werden
+
+Nutzer-Vermutung 2026-08-08, bestaetigt: "bei dem automatischen Update
+bei neuen Releases [muss] einen Bug geben wenn die Quelle da nicht
+gefunden wird". Es war eine LUECKE, keine Fehlrechnung.
+
+`findIndEventHistory()` verwirft jedes Kalender-Event **ohne Actual**
+(`if(!ev.actual...)return false`), und der Feed-Pfad kennt die betroffenen
+Indikatoren teils gar nicht. Ein Release, das stattgefunden hat, dessen
+Zahl aber von keiner Quelle kam, war damit **unsichtbar**: die Karte zeigt
+unveraendert den ALTEN Wert mit dem ALTEN Datum, als waere er aktuell.
+Erst nach `IND_STALE_CYCLES`=2 eigenen Zyklen greift die Altersgrenze -
+bei einem monatlichen Indikator also erst nach rund zwei Monaten, ohne
+ein einziges Signal dazwischen.
+
+Loesung nach dem Grundsatz "nie schaetzen → Dashboard-Meldung":
+`indAwaitingEvent(symId,ind)` sucht ein Kalender-Event, das (a) faellig
+war (`AWAIT_GRACE_H`=6h Karenz), (b) NEUER ist als `ind.research.date`
+und (c) immer noch keinen Actual hat. `awaitingIndicators()` sammelt sie;
+sichtbar als **`AWAITING VALUE`** an der Indikator-Zeile (gestrichelter
+Rahmen, bewusst ruhiger als das amberfarbene `OUT OF DATE`) und als
+eigene Dashboard-Karte `awaitingNotifyHtml()`.
+
+**Bewusst zwei getrennte Zustaende, nicht einer:** `OUT OF DATE` heisst
+"zaehlt nicht mehr", `AWAITING VALUE` heisst "der angezeigte Wert ist
+womoeglich ueberholt, wir haben die neue Zahl nur nicht bekommen". An der
+ZEILE wird nur eine Marke gezeigt (`OUT OF DATE` gewinnt, weil sie den
+Score-Beitrag 0 erklaert), im Dashboard erscheinen beide.
+
+**⚠️ Grenze, die man kennen muss:** der FF-Feed umfasst nur diese +
+naechste Woche. Eine verpasste Zeile rollt also binnen Tagen aus dem
+Kalender und ist danach nicht mehr erkennbar - genau das ist beim Test am
+2026-08-09 passiert (die PMI-Zeilen vom 3.-5.8. waren weg, die Erkennung
+meldete korrekt 0). Die Meldung faengt den Fall also im Zeitfenster, sie
+ist keine rueckwirkende Buchhaltung. Bei JEDER neuen Regel, die ein Event
+ohne Actual verwirft, hier mitpruefen.
 
 ## ⚠️ EUR-PMI-Kalendermatcher: "Final" nicht vergessen
 
