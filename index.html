@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-341 — Die PMI-Quelle ist jetzt vollstaendig angebunden. Der erste Livelauf holte 12 von 12 Werten (EUR, GBP, JPY, AUD, CAD, CHF, je Manufacturing und Services), konnte aber KEINEN zuordnen - die Kalenderzeilen vom 3. bis 5. August waren zu dem Zeitpunkt schon aus dem Zwei-Wochen-Fenster von Forex Factory gerollt. Die Werte lagen also vor und hatten nichts zum Andocken. Deshalb gehen sie jetzt zusaetzlich DIREKT nach ind_data, unabhaengig vom Kalender. Dafuer wird von derselben Seite auch das echte Release-Datum gelesen - juengstes Datum, das nicht in der Zukunft liegt, in beiden auf der Seite vorkommenden Schreibweisen. Ohne echtes Datum wird NICHTS eingetragen, denn daran haengen Altersgrenze und Zyklus-Rechnung, und ein geratenes Datum waere schlimmer als kein Eintrag. Ein vorhandener Wert wird nur ueberschrieben, wenn der neue juenger ist. Beides offline an nachgestellten Seiten geprueft: das Datum wird korrekt erkannt, kuenftige Termine aus der Vorschau-Tabelle werden ignoriert, und eine Seite, die nur Prognose- und Durchschnittssaetze enthaelt, liefert weiterhin gar keinen Wert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-342 — Die PMI-Werte sind live und committet: EUR 51,90 Manufacturing und 51,70 Services, GBP 51,90 und 52,10, JPY 54,50 und 51,20, AUD 52 und 53,60 - alles Werte vom 2. bis 5. August, die vorher komplett fehlten und deren Karten deshalb als veraltet gefuehrt wurden. ind_data ist von 84 auf 99 Werte gewachsen, die Zahl der veralteten Indikatoren von 22 auf 10 gefallen. Uebrig bleiben nur echte Datenluecken: AUD Retail Sales (ABS-Reihe 2025 eingestellt), JPY Services Inflation (bewusst ausgelassen), CHF PPI, CHF Core CPI, CHF Services PMI, JPY Employment Change und JOLTS (Japan veroeffentlicht diese Reihen so nicht), AUD Core CPI, sowie EUR Employment Change und JPY GDP - beides Quartalswerte, deren naechster Termin ansteht. Dabei ist noch ein Anzeigefehler aufgefallen und behoben: der 2Y/10Y-Spread wurde als veraltet gemeldet, obwohl er per Definition immer 0 zaehlt und nicht wegen seines Alters. Gerechnet wurde dort nie etwas falsch, die Marke behauptete nur einen Grund, den es nicht gibt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-341</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-342</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3767,6 +3767,14 @@ function indOverdueCycles(ind){
   return age/cyc;
 }
 function indIsStale(ind){
+  // Anzeigefehler 2026-08-09: der 2Y/10Y-Spread tauchte als "veraltet" auf.
+  // Er ist aber SCORE_ZERO - er zaehlt per Definition immer 0, nicht wegen
+  // seines Alters. Die Marke OUT OF DATE behauptet dort also einen Grund,
+  // den es nicht gibt, und die Dashboard-Meldung zaehlt ihn mit, obwohl
+  // sich am Score nichts aendert. Rechnerisch war nie etwas falsch
+  // (indScoreParts prueft SCORE_ZERO ohnehin VOR der Altersgrenze) - es
+  // ging allein um die Aussage.
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return false;
   const c=indOverdueCycles(ind);
   return c!=null&&c>IND_STALE_CYCLES;
 }
@@ -3777,8 +3785,9 @@ function staleIndicators(){
   (syms||[]).forEach(s=>{
     if(!FX.includes(s.id))return;   // Non-FX spiegelt ohnehin nur
     (s.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{
+      if(!indIsStale(i))return;      // deckt auch den SCORE_ZERO-Ausschluss ab
       const c=indOverdueCycles(i);
-      if(c==null||c<=IND_STALE_CYCLES)return;
+      if(c==null)return;
       out.push({sym:s.id,name:i.displayName||i.name,date:i.research.date,
         cycles:Math.round(c*10)/10,cycle:Math.round(indCycleDays(i))});
     }));
