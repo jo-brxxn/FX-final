@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-349 — Mit der jetzt vollstaendigen Diagnose waren die letzten drei Saetze endlich lesbar, und alle drei brauchten etwas anderes. Australiens Kernmass meldet held steady at 3,6% in June 2026 - also ein Zustandsverb UND ein Datum ohne das Woertchen of. Die Eurozone schreibt increased by 0,10 in March of 2026 - komplett OHNE Einheit. Die wird jetzt nicht geraten, sondern vom Durchschnittssatz derselben Seite gelesen (averaged 0,21 percent); findet sich auch dort keine, wird nichts eingetragen. Und Australiens alte Retail-Sales-Reihe ist bei der Quelle selbst stehengeblieben - ihr Satz spricht noch von Juni 2025. Genau dafuer ist das 120-Tage-Fenster da: der Wert wird erkannt, aber mangels aktuellem Release-Datum nicht eingetragen, und die Nachfolgereihe Household Spending liefert stattdessen den aktuellen Stand. Gegenproben unveraendert stumm, alle vier bisherigen Testreihen unveraendert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-350 — Von 22 veralteten Indikatoren sind noch 2 uebrig. Dabei kam ein echter Rechenfehler ans Licht: EUR Beschaeftigungsaenderung und JPY BIP sind QUARTALSREIHEN, die App hat ihren Zyklus aber mit 23 beziehungsweise 25 Tagen gemessen. Grund ist, dass beide Reihen ZWEI Termine je Quartal haben - Vorabschaetzung und Endstand. Die Abstaende wechseln sich dadurch ab (gemessen 21, 70, 21, 68, 23 Tage), und der Median landet auf dem KURZEN. Die Altersgrenze hat beide dadurch nach gut zwei Monaten faelschlich auf 0 gesetzt, obwohl die Quelle schlicht noch nichts Neues hatte. Der angegebene Turnus dient jetzt als Untergrenze - das wirkt ausschliesslich entschaerfend, die Grenze kann nie strenger werden als vorher. Beide zaehlen wieder normal mit. Dazu die Schweizer Dienstleistungs-PMI: die Seite fuehrt einen Wert, aber kein Datum. procure.ch veroeffentlicht beide Schweizer PMIs in DERSELBEN Mitteilung, deshalb wird der Termin der Schwesterreihe uebernommen - aber nur, wenn beide denselben Berichtsmonat melden. Das ist eine gepruefte Gleichsetzung, keine Schaetzung; im Gegentest mit abweichendem Monat bleibt der Eintrag korrekt ohne Datum und wird nicht geschrieben.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-349</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-350</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3610,22 +3610,43 @@ function indCycleDays(ind){
       Object.defineProperty(ind,'_cycCacheLen',{value:h.length,writable:true,enumerable:false,configurable:true});}catch(e){}
   return out;
 }
+function indCycleTextDays(ind){
+  const t=String(ind.interval||'').toLowerCase();
+  if(/week/.test(t))return 7;
+  if(/quarter/.test(t))return 90;
+  if(/year|annual/.test(t))return 365;
+  if(/month/.test(t))return 30;
+  return null;
+}
 function indCycleDaysCalc(ind,h){
   const ds=h.map(e=>e&&e[0]).filter(Boolean).sort();
+  const txt=indCycleTextDays(ind);
   if(ds.length>=4){
     const gaps=[];
     for(let i=1;i<ds.length;i++){
       const g=(new Date(ds[i])-new Date(ds[i-1]))/86400000;
       if(isFinite(g)&&g>0&&g<400)gaps.push(g);
     }
-    if(gaps.length>=3){gaps.sort((a,b)=>a-b);return gaps[Math.floor(gaps.length/2)];}
+    if(gaps.length>=3){
+      gaps.sort((a,b)=>a-b);
+      const med=gaps[Math.floor(gaps.length/2)];
+      // ⚠ Bugfix 2026-08-09: Reihen mit ZWEI Terminen je Periode (Vorab-
+      // schaetzung und Endstand) haben abwechselnd kurze und lange
+      // Abstaende - der Median landet dann auf dem KURZEN. Gemessen an EUR
+      // Employment Change: Abstaende 21/70/21/68/23 Tage, Median 23, obwohl
+      // die Reihe quartalsweise erscheint. Die Altersgrenze hat den
+      // Indikator dadurch nach gut zwei Monaten faelschlich auf 0 gesetzt,
+      // obwohl die Quelle schlicht noch nichts Neues hatte. Dasselbe bei
+      // JPY GDP (gemessen 25 statt 90).
+      //
+      // Der angegebene Turnus dient deshalb als UNTERGRENZE - nur nach
+      // unten korrigierend, die Grenze kann also nie strenger werden als
+      // vorher. 0,6 laesst echte Abweichungen vom Turnus (Feiertags-
+      // verschiebungen, unregelmaessige Termine) weiterhin durch.
+      return txt?Math.max(med,txt*0.6):med;
+    }
   }
-  const t=String(ind.interval||'').toLowerCase();
-  if(/week/.test(t))return 7;
-  if(/quarter/.test(t))return 90;
-  if(/year|annual/.test(t))return 365;
-  if(/month/.test(t))return 30;
-  return 30;
+  return txt||30;
 }
 // Streuung der historischen Prognosefehler (actual - forecast). null, wenn zu
 // wenige Beobachtungen - dann wird NICHT normiert statt auf duenner Basis zu

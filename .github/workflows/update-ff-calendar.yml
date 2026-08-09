@@ -290,6 +290,9 @@ jobs:
           ppi_CHF|CHF|switzerland/producer-prices-change
           svcinfl_JPY|JPY|japan/services-inflation
           svcinfl2_JPY|JPY|japan/producer-prices-services
+          svcinfl3_JPY|JPY|japan/services-ppi
+          svcinfl4_JPY|JPY|japan/services-producer-price-index
+          svcinfl5_JPY|JPY|japan/corporate-services-price-index
           gdp_JPY|JPY|japan/gdp-growth
           emp_JPY|JPY|japan/employed-persons
           jolts_JPY|JPY|japan/job-vacancies
@@ -315,6 +318,9 @@ jobs:
               corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
               ppi:{ind:"PPI",anchor:"producer pric"},
               svcinfl2:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              svcinfl3:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              svcinfl4:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
+              svcinfl5:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
               svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric)"},
               gdp:{ind:"GDP Growth QoQ",anchor:"gdp"},
               // Japan fuehrt keine monatliche "Beschaeftigungsaenderung" wie
@@ -454,6 +460,25 @@ jobs:
                         actual:fmtA,previous:fmtP,date:relDate,refMonth:refMonth,refYear:refYear});
               console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
               console.log("      Satz: "+hit);
+            });
+            // Termin-Uebernahme innerhalb DERSELBEN Veroeffentlichung.
+            // procure.ch bringt Manufacturing- und Services-PMI der Schweiz in
+            // einer gemeinsamen Mitteilung; die Services-Seite fuehrt aber
+            // kein Datum. Uebernommen wird der Termin der Schwesterreihe NUR,
+            // wenn beide denselben Berichtsmonat und dasselbe Jahr melden -
+            // damit ist es eine gepruefte Gleichsetzung und keine Annahme.
+            // Faellt der Abgleich aus, bleibt der Eintrag ohne Datum und wird
+            // wie bisher gar nicht geschrieben.
+            const SIBLING={svc_CHF:"mfg_CHF"};
+            out.forEach(e=>{
+              if(e.date)return;
+              const key=e.key+"_"+e.country;
+              const sibKey=SIBLING[key];if(!sibKey)return;
+              const sib=out.find(x=>x.key+"_"+x.country===sibKey);
+              if(!sib||!sib.date)return;
+              if(String(sib.refMonth).toLowerCase()!==String(e.refMonth).toLowerCase()||sib.refYear!==e.refYear)return;
+              e.date=sib.date;
+              console.log("[te] "+key+": Termin aus derselben Veroeffentlichung uebernommen ("+sibKey+", "+e.date+", beide "+e.refMonth+" "+e.refYear+")");
             });
             fs.writeFileSync("te_pages.json",JSON.stringify(out));
             console.log("te_pages.json: "+out.length+" Werte");
