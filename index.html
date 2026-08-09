@@ -3833,6 +3833,12 @@ function indAwaitingEvent(symId,ind){
   return best;
 }
 // Alle Indikatoren, deren Release fällig war, aber ohne Wert blieb.
+// BEWUSST NICHT memoisiert. Ein Versuch damit brachte gemessen nichts
+// (renderDash 21,1ms mit Cache gegen 20,8ms ohne - die Funktion laeuft je
+// Durchlauf ohnehin nur einmal), zeigte im Test aber sofort denselben
+// Veraltungs-Fehler, der heute erst beim Fairness-Faktor gefixt wurde:
+// nach einer Aenderung an calEvts lieferte sie den alten Stand. Kein
+// Gewinn gegen ein echtes Risiko - deshalb rausgelassen.
 function awaitingIndicators(){
   const out=[];
   (syms||[]).forEach(s=>{
