@@ -307,8 +307,8 @@ jobs:
               // Anker = wie die Seite die Reihe im BERICHTSSATZ nennt, nicht
               // wie sie im Menue heisst. Die Schweiz schreibt "Core consumer
               // prices", Australien nennt beim Kernmass die RBA-Reihe
-              // (Trimmed Mean), Japan formuliert "Japan's GDP grew" und
-              // "The number of employed persons".
+              // (Trimmed Mean), Japan formuliert die eigene Reihe als
+              // "GDP grew" bzw. "The number of employed persons".
               retail:{ind:"Retail Sales",anchor:"retail sales"},
               corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
               ppi:{ind:"PPI",anchor:"producer pric"},

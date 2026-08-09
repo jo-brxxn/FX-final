@@ -552,6 +552,18 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   Aenderung als LETZTEN Satz explizit nennen, wie der neue Banner-Name/die
   neue Nummer lautet (z. B. „Aktuelle Version ist jetzt VERSION-CHECK-243.")
   - nicht nur im Code bumpen, sondern dem Nutzer auch im Chat mitteilen.
+- **⚠️ KEIN Apostroph in einem `node -e '...'`-Block der Workflow-YAML —
+  auch nicht im Kommentar.** Der gesamte Node-Code steckt in einem
+  einfach-quotierten Shell-String; ein `'` darin beendet ihn, der Rest wird
+  als Shell interpretiert und der Schritt stirbt mit
+  `syntax error near unexpected token '('` (Exit 2). Passiert 2026-08-09
+  durch einen deutschen Kommentar mit `Japan's`. Der Schritt hat
+  `continue-on-error`, faellt also nur dadurch auf, dass die erzeugte Datei
+  fehlt (`ENOENT`) - nicht dadurch, dass der Lauf rot wird. **`node --check`
+  findet das NICHT** (es prueft den bereits extrahierten JS-Code). Deshalb
+  nach JEDER Aenderung an einem Workflow-Schritt zusaetzlich
+  `bash -n <extrahierter run-Block>` laufen lassen, nicht nur
+  `yaml.safe_load` + `node --check`.
 - **JS-Syntax-Check vor jedem Push** von `index.html`: `<script>`-Blöcke
   extrahieren, zusammenfügen, `node --check` laufen lassen. Für die Workflow-YAML
   zusätzlich `python3 -c "import yaml; yaml.safe_load(...)"` und das eingebettete
