@@ -168,6 +168,34 @@ Citi hat das Problem nicht, weil Citi Laender gar nicht absolut
 vergleicht - diese App muss es (sie stellt sie nebeneinander), also wird
 die Basis ausgewiesen statt verschwiegen.
 
+### ⚠️ Die Asset-ID MUSS bis in `indScoreParts` durchkommen
+
+Im normalisierten Modus haengt ein Faktor am Asset: `indMarketWeight(ind,
+symId)` misst die Kursbewegung an den Release-Tagen **im Preisverlauf
+dieses Assets**. `indScoreParts(ind,rub,symId)` nimmt die ID entgegen -
+aber `symScore -> rubScore -> indScore` gab sie NICHT weiter, und der
+Rueckfall war das GLOBAL gewaehlte Asset (`selId`).
+
+Folge (Nutzer-Bugreport 2026-08-09, drei Screenshots): beim Wechsel
+zwischen Assets aenderten sich ALLE Scores in der Leiste, jedes Mal mit
+Zaehl-Animation - der Score jedes Assets wurde mit dem Preisverlauf des
+gerade GEOEFFNETEN gewichtet. Gemessen: `symScore('USD')` = -4,38 / -3,99 /
+-3,97 / -3,85 je nach offenem Asset, und exakt wieder -3,99, sobald EUR
+erneut geoeffnet wurde. Ueber die ±3-Schwelle kippte dadurch sogar die
+Bull/Bear-Zaehlung im Kopf (2 Bull -> 3 Bull).
+
+**Loesung: `stampRubOwners()` in `recomputeAuto()`** stempelt jeder Rubrik
+ihr Asset als nicht-enumerierbares `rub._symId` auf (nicht-enumerierbar =
+faellt aus `snap()`/Cloud-Sync). `indScoreParts` nutzt die Reihenfolge
+*uebergebene ID → `rub._symId` → `selId`*. Bewusst NICHT durch die rund 16
+`rubScore`-Aufrufstellen gefaedelt: eine davon zu vergessen haette den
+Fehler still zurueckgebracht.
+
+**Merksatz:** JEDE neue Groesse, die vom Asset abhaengt, muss ueber
+`rub._symId` gehen - nie ueber `selId`. `selId` ist die ANZEIGE-Auswahl,
+nicht der Besitzer der Daten. Das Score-Fenster (`indNormBreakdown`) liest
+dieselbe Quelle, sonst zeigt es einen anderen Faktor als die Rechnung.
+
 ## ⚠️ STAERKE 1-10 aus der eigenen Historie (Stand 2026-08-08)
 
 Nur im Modus `normalized`. Drei Stufen, bewusst getrennt (alle bei
