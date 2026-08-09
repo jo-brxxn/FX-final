@@ -5332,3 +5332,37 @@ UEBERHAUPT NIE ein Event in ihrer History, unabhaengig vom Score-Sprung.
   IND_AUTO_RUBS-Karten erklaerbar ist - das ist ein direkter Hinweis auf
   eine der beiden nicht abgedeckten Rubriken (COT Data/Risk Environment),
   ohne raten zu muessen, welcher Indikator betroffen war.
+
+### ⚠️ Zwei Zustaende zu einem zusammenlegen heisst: MIGRATION schreiben (Bugreport 2026-08-09)
+
+Nutzer: "Paare die ich zur Watchlist hinzugefuegt habe sind jetzt nicht mehr
+drauf." Kein Datenverlust - eine fehlende Migration.
+
+Bis zum 2026-08-07 waren **Stern** und **Watchlist** zwei unabhaengige Dinge:
+der Stern setzte `p.marked` am Paar, die Watchlist war eine Kategorie in
+`pairCats`. Die Zusammenlegung machte die Kategorie zur alleinigen Wahrheit
+(`isWatched`/`setWatched`/`watchlistPairs` lesen nur noch sie) und erklaerte
+`p.marked` zur "Altlast ohne Wirkung" - **uebertrug es aber nie**. Jedes vorher
+markierte Paar hatte danach ein totes Feld im gespeicherten Stand und keinen
+Eintrag in der Kategorie.
+
+Sichtbar war das asymmetrisch, was die Meldung erklaert: `renderPairs()`
+iteriert ALLE Paare unabhaengig von der Kategorie, `watchlistPairs()` filtert
+strikt auf `p.catId===<Watchlist>.id`. Das Paar stand also weiter in den
+Set-ups und fehlte nur auf der Watchlist.
+
+`migrateMarkedToWatchlist()` (bei `watchlistCat()`) traegt die Markierung nach
+und **loescht danach `p.marked`**. Das Loeschen ist nicht Kosmetik: ohne es
+wuerde ein bewusstes Entfernen von der Watchlist beim naechsten Laden wieder
+rueckgaengig gemacht, weil die Migration ewig neu setzt. Eingehaengt an beiden
+Stellen, die die "WICHTIGSTE REGEL" oben verlangt: `loadState()` UND
+`applySnap()` (Cloud-Pull/Undo/Import/Backup).
+
+**Merksatz:** wird ein Zustand durch einen anderen ERSETZT, reicht es nie, die
+Leseseite umzustellen - der alte Wert muss in denselben Commit hinein
+uebertragen und danach entfernt werden. Ein Kommentar "bleibt als Altlast
+liegen, ohne Wirkung" ist genau das Warnsignal: was ohne Wirkung liegen
+bleibt, war fuer den Nutzer eine getroffene Entscheidung. Und: wenn zwei
+Ansichten dieselbe Sache verschieden filtern (hier alle Kategorien gegen genau
+eine), verschwindet ein Fehler in der einen und bleibt in der anderen sichtbar
+- das ist der Fingerabdruck einer kaputten Zuordnung, nicht geloeschter Daten.
