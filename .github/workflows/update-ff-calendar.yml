@@ -362,14 +362,29 @@ jobs:
               const A=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+to\\s+"+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s+"+FROM+NUM+"\\s+"+UNIT+"\\s+in\\s+(?:the\\s+)?[a-z]+(?:\\s+quarter)?\\s+of\\s+(\\d{4})","i");
               // Form B: "... increased (by) x percent in <Periode> of <Jahr>"
               const B=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+"\\s+"+UNIT+TAIL,"i");
+              // ⚠ ALLE Vorkommen des Ankers durchprobieren, nicht nur das
+              // erste. Der Reihenname steht auf jeder Seite zuerst in der
+              // Navigation und in der Ueberschrift - dort folgt kein Verb,
+              // und ein einzelnes exec() gibt genau diesen ersten Treffer
+              // zurueck und erreicht den echten Berichtssatz weiter unten
+              // nie. Genau daran sind AUD Core CPI, AUD Retail Sales und EUR
+              // Employment Change gescheitert, obwohl ihr Satz auf der Seite
+              // steht (im Log als "am Anker: ... Calendar News Markets ..."
+              // zu sehen - das ist die Menueleiste).
               let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null;
-              let m=A.exec(txt);
-              if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];prev=m[4];refYear=m[6];shape="A";}
-              else{m=B.exec(txt); if(m){actual=m[1];unit=m[2].toLowerCase();refMonth=m[3];refYear=m[4];shape="B";}}
-              if(actual&&refYear&&(+refYear)<(new Date().getFullYear()-1)){
-                console.log("[te] "+key+": Treffer verworfen, Bezugsjahr "+refYear+" liegt zu weit zurueck (vermutlich ein Rekord-/Durchschnittssatz)");
-                actual=null;
-              }
+              const thisYear=new Date().getFullYear();
+              [["A",A],["B",B]].forEach(([tag,re0])=>{
+                if(actual)return;
+                const rg=new RegExp(re0.source,"gi");
+                let mm;
+                while((mm=rg.exec(txt))){
+                  const yr=+(tag==="A"?mm[6]:mm[4]);
+                  if(!(yr>=thisYear-1))continue;   // Rekord-/Durchschnittssatz
+                  actual=mm[1];unit=mm[2].toLowerCase();refMonth=mm[3];
+                  prev=tag==="A"?mm[4]:null;refYear=String(yr);shape=tag;
+                  break;
+                }
+              });
               if(!actual){
                 // Diagnose statt Raten: WAS steht dort stattdessen? Ohne das
                 // muesste man das Satzmuster blind variieren - genau die Art
