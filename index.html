@@ -2532,6 +2532,12 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
    NICHT versteckt - der Wert bleibt lesbar, er zaehlt nur nicht mehr. */
 .ind-row.ind-stale .ir-name-txt{opacity:.55}
 .ir-stale{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
+.ir-await{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--t3);border:1px dashed var(--t3);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
+/* Meldung 'Release faellig, kein Wert' - bewusst neutraler als die
+   Veraltet-Meldung: dort zaehlt etwas nicht mehr, hier fehlt nur eine
+   Zahl, die es geben muesste. */
+.await-notify-card{border-left-color:var(--t3)}
+.await-notify-card .stale-notify-hd{color:var(--t2)}
 
 /* Duenne Datenbasis im Surprise Index sichtbar (Audit 2026-08-08) */
 .esi-thin-mark{margin-left:4px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);font-family:var(--ff-num)}
@@ -2674,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-337 — Beim Nachstellen des Bildes ist aufgefallen, dass die Erklaerungen noch das ALTE Score-Modell beschrieben: der Hilfetext und der Tooltip am Asset-Score erklaerten den 2-Schritt-Trend weiterhin als Score-Treiber mit plus 1 obendrauf und Gesamtwerten von 1,5 - entfernt wurde er aber schon in V327, zusammen mit den Revisionen. Wer den Text gelesen hat, konnte die angezeigten Zahlen also gar nicht nachrechnen. Beide sind jetzt auf den echten Stand gezogen: Beat/Miss plus/minus 1, halbes Gewicht bei Core-Paaren, Anleihen, COT und CB Tone, Step-Signal plus/minus 0,5 nur ohne Forecast, Stern plus 0,5, veraltete Releases zaehlen 0 mit der Marke OUT OF DATE, Spread display-only. Dazu ein eigener Absatz, was bewusst ANGEZEIGT aber NICHT gescort wird (Trend und Revisionen) samt Begruendung, und einer, was der Schalter normalized tatsaechlich rechnet - die drei gemessenen Faktoren mit der Klemmung 0,4 bis 1,8. Nichts davon ist neu berechnet, nur richtig beschrieben.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-338 — Der vermutete Bug beim automatischen Update ist bestaetigt, und er war eine LUECKE, keine Fehlrechnung: der Kalender-Pfad verwirft jedes Event ohne Actual, der Feed-Pfad kennt die betroffenen Indikatoren teils gar nicht. Ein Release, das stattgefunden hat, dessen Zahl aber von keiner Quelle kam, war fuer die App damit schlicht UNSICHTBAR - die Karte zeigte unveraendert den alten Wert mit dem alten Datum, als waere er aktuell, und erst nach zwei eigenen Zyklen griff die Altersgrenze. Bei einem monatlichen Indikator also erst nach rund zwei Monaten ohne ein einziges Signal dazwischen. Gemessen am 8.8.: 82 bereits vergangene Kalenderzeilen standen ohne Actual da. Neu: eine eigene Erkennung dafuer - Release war faellig, ist neuer als der zuletzt erhaltene Wert, hat aber immer noch keine Zahl. Sichtbar an der Indikator-Zeile als AWAITING VALUE und als eigene Dashboard-Meldung, bewusst getrennt von OUT OF DATE, weil es ein anderer Zustand mit anderer Konsequenz ist. Geschaetzt wird nichts, es wird nur gesagt was fehlt. Zweitens im Workflow: die Unmatched-Diagnose war auf High und Medium beschraenkt - PMIs laufen bei Forex Factory aber als Low und fielen damit still durch, ausgerechnet die Indikatoren also, ueber die es nie eine Meldung gab. Jetzt zaehlt jede Stufe. Dazu eine Quellen-Diagnose, die die rohen Payloads von FXStreet und den Alternativquellen nach PMI-Reihen durchsucht - damit die Frage nach einer Ersatzquelle mit Messwerten statt mit Vermutungen beantwortet wird.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-337</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-338</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3778,6 +3784,71 @@ function staleIndicators(){
     }));
   });
   out.sort((a,b)=>b.cycles-a.cycles);
+  return out;
+}
+// ⚠ Nutzer 2026-08-08: "dann muss es auch bei dem automatischen Update bei
+// neuen Releases einen Bug geben wenn die Quelle da nicht gefunden wird".
+//
+// Genau so ist es, und zwar als LUECKE, nicht als Fehlrechnung: der
+// Kalender-Pfad (findIndEventHistory) verwirft jedes Event ohne Actual, der
+// Feed-Pfad kennt den betroffenen Indikator teils gar nicht. Ein Release,
+// das stattgefunden hat, dessen Zahl aber von keiner Quelle kam, ist damit
+// fuer die App schlicht unsichtbar: die Karte zeigt unveraendert den ALTEN
+// Wert mit dem ALTEN Datum, als waere er aktuell. Erst nach zwei eigenen
+// Zyklen greift die Altersgrenze - bei einem monatlichen Indikator also
+// erst nach rund zwei Monaten. Dazwischen gibt es kein einziges Signal.
+//
+// Gemessen am 2026-08-08: 82 bereits vergangene Kalender-Zeilen standen
+// ohne Actual da, darunter die PMIs, fuer die TradingView grundsaetzlich
+// keine Werte liefert.
+//
+// Diese Funktion schliesst die Luecke nach dem Projekt-Grundsatz "nie
+// schaetzen, stattdessen melden": sie sucht je Indikator ein Kalender-Event,
+// das (a) faellig war, (b) NEUER ist als der zuletzt erhaltene Wert und
+// (c) immer noch keinen Actual hat. Sie erfindet dabei nichts - sie sagt
+// nur, dass etwas fehlt.
+const AWAIT_GRACE_H=6;      // Karenz nach dem Termin, bevor gemeldet wird
+const AWAIT_MAX_DAYS=45;    // aelter faellt ohnehin in die Altersgrenze
+function indAwaitingEvent(symId,ind){
+  if(!ind||SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return null;
+  const{base,period}=stripPeriodSuffix(ind.name);
+  const matcher=IND_EVENT_MATCHERS[base];
+  if(!matcher)return null;                       // rein manueller Indikator
+  const ccy=macroCcyFor(symId);
+  if(!ccy)return null;
+  const have=(ind.research&&ind.research.date)||'';
+  const now=Date.now();
+  let best=null;
+  (calEvts||[]).forEach(ev=>{
+    if(ev.actual)return;                         // Wert ist da - kein Fall
+    if(!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return;
+    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return;}
+    const t=new Date(ev.date+'T'+(ev.time&&/^\d/.test(ev.time)?ev.time:'12:00')).getTime();
+    if(isNaN(t))return;
+    if(now-t<AWAIT_GRACE_H*3600e3)return;        // noch nicht faellig/zu frisch
+    if(now-t>AWAIT_MAX_DAYS*864e5)return;
+    if(have&&ev.date<=have)return;               // wir haben schon Neueres
+    if(!best||ev.date>best.date)best=ev;
+  });
+  return best;
+}
+// Alle Indikatoren, deren Release fällig war, aber ohne Wert blieb.
+function awaitingIndicators(){
+  const out=[];
+  (syms||[]).forEach(s=>{
+    if(!FX.includes(s.id))return;               // Non-FX spiegelt nur
+    (s.rubrics||[]).forEach(r=>{
+      if(!IND_AUTO_RUBS.includes(r.name))return;
+      (r.indicators||[]).forEach(i=>{
+        const ev=indAwaitingEvent(s.id,i);
+        if(!ev)return;
+        out.push({sym:s.id,name:i.displayName||i.name,event:ev.name,date:ev.date,
+          days:Math.max(0,Math.round((Date.now()-new Date(ev.date+'T12:00').getTime())/864e5)),
+          had:(i.research&&i.research.date)||null});
+      });
+    });
+  });
+  out.sort((a,b)=>b.days-a.days);
   return out;
 }
 function indScoreParts(ind,rub,symId){
@@ -8838,8 +8909,13 @@ function renderIndRow(ind,ri,ii,rub,total){
   const isOpen=!!indDetailsOpen[ind.id];
   const stale=indIsStale(ind);
   const staleBadge=stale?`<span class="ir-stale" title="Last release ${escH((ind.research&&ind.research.date)||'?')} — more than ${IND_STALE_CYCLES} of its own release cycles overdue, so it no longer counts toward the score. The value stays visible.">OUT OF DATE</span>`:'';
+  // Release war faellig, aber keine Quelle hat einen Wert geliefert -
+  // eigene, ruhigere Marke neben OUT OF DATE. Nur wenn nicht ohnehin
+  // schon veraltet, sonst staenden zwei Marken mit derselben Aussage.
+  const awEv=stale?null:indAwaitingEvent(getSym().id,ind);
+  const awaitBadge=awEv?`<span class="ir-await" title="${escH(awEv.name)} was due on ${escH(awEv.date)}, but no source has delivered a value yet. Nothing is estimated - the figures shown are still the last confirmed ones${(ind.research&&ind.research.date)?` from ${escH(ind.research.date)}`:''}.">AWAITING VALUE</span>`:'';
   const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
-    <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}${staleBadge}
+    <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}${staleBadge}${awaitBadge}
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -13136,6 +13212,27 @@ function staleNotifyHtml(){
     <div class="stale-notify-note">A release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting — it is either badly delayed or the series was discontinued. The value stays visible on the asset page.</div>
   </div>`;
 }
+// Meldung fuer den Fall "Release war faellig, keine Quelle hat geliefert".
+// Bewusst eine EIGENE Karte neben der Veraltet-Meldung: das ist ein anderer
+// Zustand mit einer anderen Konsequenz. Veraltet heisst "zaehlt nicht mehr",
+// hier heisst es "der angezeigte Wert ist womoeglich ueberholt, wir haben
+// die neue Zahl nur nicht bekommen" - und genau das war bisher unsichtbar.
+function awaitingNotifyHtml(){
+  const aw=awaitingIndicators();
+  if(!aw.length)return'';
+  const top=aw.slice(0,4);
+  const rest=aw.length-top.length;
+  return`<div class="stale-notify-card await-notify-card">
+    <div class="stale-notify-hd">${icn('clock',13)}<span>${aw.length} release${aw.length>1?'s':''} due but no value received</span></div>
+    ${top.map(x=>`<button class="stale-notify-row" onclick="gotoSym('${escJH(x.sym)}')" title="Calendar entry &quot;${escH(x.event)}&quot; on ${escH(x.date)} still has no actual from any source${x.had?` — the card still shows the value from ${escH(x.had)}`:''}">
+      <span class="stale-notify-sym">${escH(x.sym)}</span>
+      <span class="stale-notify-name">${escH(x.name)}</span>
+      <span class="stale-notify-age">${x.days}d ago</span>
+    </button>`).join('')}
+    ${rest>0?`<div class="stale-notify-more">and ${rest} more</div>`:''}
+    <div class="stale-notify-note">The calendar knows the release happened, but none of the sources delivered a number. Nothing is estimated — the card keeps the last confirmed value and says so, so you can look it up yourself if it matters.</div>
+  </div>`;
+}
 function cotNotifyHtml(){
   if(!cotWarningActive())return'';
   return`<div class="cot-notify-card" onclick="showTab('cot')">
@@ -13960,7 +14057,7 @@ function renderDash(){
       // per Ausrufezeichen, stattdessen eine Notification sobald das Event
       // eingetroffen ist"). Der "View FF"-Link im Kartenkopf (hdrHtml weiter
       // unten) fuehrt direkt zum Forex-Factory-Kalender.
-      const popups=cloudNotConnectedNoticeHtml()+staleNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
+      const popups=cloudNotConnectedNoticeHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
       const evtNotifs=[...inbox].filter(m=>m.kind==='evt').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,6);
       const evtRows=evtNotifs.map(n=>{
         const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';

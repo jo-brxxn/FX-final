@@ -771,8 +771,14 @@ jobs:
                   canonKey(a.name)===evKey;
               }).sort((a,b)=>Math.abs(new Date(a.dateUtc).getTime()-t)-Math.abs(new Date(b.dateUtc).getTime()-t));
               if(te.length){ev.actual=te[0].actual;matchedTE++;return;}
-              // Diagnose fuer kuerzlich faellige High/Medium-Events ohne Treffer
-              if((ev.impact==="High"||ev.impact==="Medium")&&t<=Date.now()&&Date.now()-t<=48*60*60*1000){
+              // Diagnose fuer kuerzlich faellige Events ohne Treffer.
+              // ⚠ 2026-08-08: die Stufe war auf High/Medium beschraenkt -
+              // PMIs laufen bei Forex Factory aber als "Low" und fielen
+              // damit STILL durch. Genau die Indikatoren, die der Nutzer als
+              // veraltet gemeldet hat, waren also die einzigen, ueber die es
+              // nie eine Meldung gab. Jetzt zaehlt jede Impact-Stufe; das
+              // 48h-Fenster bleibt, damit die Liste kurz bleibt.
+              if(t<=Date.now()&&Date.now()-t<=48*60*60*1000){
                 const near=fxEvents.filter(fx=>fx.currencyCode===ev.country&&Math.abs(new Date(fx.dateUtc).getTime()-t)<=TIME_TOL)
                   .map(fx=>fx.name+" [actual="+fx.actual+" unit="+fx.unit+" potency="+fx.potency+"]");
                 const nearAlt=altActuals.filter(a=>a.country===ev.country&&(a.day===evDayET||(a.dateUtc&&Math.abs(new Date(a.dateUtc).getTime()-t)<=TIME_TOL)))
@@ -782,9 +788,33 @@ jobs:
             });
             console.log("Matched: "+matched+" from FXStreet, "+matchedFFW+" from FF website, "+matchedTE+" from TradingView/TradingEconomics");
             if(unmatched.length){
-              console.log("Unmatched due/recent High+Medium events:");
+              console.log("Unmatched due/recent events (all impact levels):");
               unmatched.forEach(u=>console.log("  - "+u));
             }
+            // ── QUELLEN-DIAGNOSE fuer die Luecken-Indikatoren (2026-08-08) ──
+            // TradingView liefert fuer S&P Global/HCOB/Jibun nachweislich
+            // KEINE Actuals. Bevor eine neue Quelle angebaut wird, muss
+            // geklaert sein, ob eine der BEREITS geholten Quellen die Werte
+            // fuehrt - genau das war bisher nirgends sichtbar, weil die
+            // Diagnose oben nur auf einzelne Kalender-Zeilen schaut. Hier
+            // stattdessen die ROHEN Quell-Payloads durchsuchen.
+            const GAPRE=/pmi|\bpsi\b|purchasing manag/i;
+            const dump=(label,rows,name,ccy,act,when)=>{
+              const seen={};
+              rows.forEach(r=>{
+                const n=name(r)||"";
+                if(!GAPRE.test(n))return;
+                const k=(ccy(r)||"?")+"|"+n;
+                const a=act(r);
+                const has=a!=null&&a!=="";
+                if(!seen[k]||(!seen[k].has&&has))seen[k]={has:has,a:a,d:when(r)};
+              });
+              const ks=Object.keys(seen).sort();
+              console.log(label+" PMI-Reihen ("+ks.length+"):");
+              ks.forEach(k=>console.log("  "+k+(seen[k].has?" = "+seen[k].a:" [kein actual]")+(seen[k].d?" @"+String(seen[k].d).slice(0,10):"")));
+            };
+            dump("FXStreet",fxEvents,r=>r.name,r=>r.currencyCode,r=>r.actual,r=>r.dateUtc);
+            dump("Alt-Quellen (ffhtml/tv/te/investingcom)",altActuals,r=>r.title||r.name,r=>r.country,r=>r.actual,r=>r.dateUtc||r.day);
             if(matched+matchedFFW+matchedTE>0)fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
           '
 
