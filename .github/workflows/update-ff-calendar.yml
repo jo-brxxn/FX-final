@@ -313,7 +313,7 @@ jobs:
               hhspend:{ind:"Retail Sales",anchor:"household spending",label:"Household Spending"},
               corecpi:{ind:"Core CPI",anchor:"(?:core inflation rate|core consumer pric|trimmed mean)"},
               ppi:{ind:"PPI",anchor:"producer pric"},
-              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric|services inflation)"},
+              svcinfl:{ind:"Services Inflation",anchor:"(?:services producer pric|corporate services pric|services pric|services inflation)",label:"Services Inflation (CPI services)"},
               gdp:{ind:"GDP Growth QoQ",anchor:"gdp"},
               // Japan fuehrt keine monatliche "Beschaeftigungsaenderung" wie
               // USA/Kanada/Australien. Die Zahl der Erwerbstaetigen ist die
@@ -375,12 +375,25 @@ jobs:
               // zu sehen - das ist die Menueleiste).
               let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null,hit="";
               const thisYear=new Date().getFullYear();
-              [["A",A],["B",B]].forEach(([tag,re0])=>{
+              const C=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+UNITOPT+"(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s*[.,]","i");
+              [["A",A],["B",B],["C",C]].forEach(([tag,re0])=>{
                 if(actual)return;
                 const rg=new RegExp(re0.source,"gi");
                 let mm;
+                const MONTHS=["january","february","march","april","may","june","july","august","september","october","november","december"];
                 while((mm=rg.exec(txt))){
-                  const yr=+(tag==="A"?mm[6]:mm[4]);
+                  let yr;
+                  if(tag==="C"){
+                    // Kein Jahr im Satz. Aus dem Monatsnamen ableiten: das
+                    // juengste Vorkommen dieses Monats, das nicht in der
+                    // Zukunft liegt. Nur zulaessig, wenn der Monat auch
+                    // wirklich als Monat lesbar ist - sonst waere es geraten.
+                    const mi=MONTHS.indexOf(String(mm[3]).toLowerCase());
+                    if(mi<0)continue;
+                    const now=new Date();
+                    yr=now.getFullYear()-(mi>now.getMonth()?1:0);
+                    if(now.getFullYear()*12+now.getMonth()-(yr*12+mi)>6)continue; // zu weit zurueck
+                  }else yr=+(tag==="A"?mm[6]:mm[4]);
                   if(!(yr>=thisYear-1))continue;   // Rekord-/Durchschnittssatz
                   // Fehlt die Einheit im Satz, wird sie NICHT geraten,
                   // sondern vom Durchschnittssatz derselben Seite gelesen
