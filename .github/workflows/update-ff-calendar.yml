@@ -375,7 +375,7 @@ jobs:
               // Employment Change gescheitert, obwohl ihr Satz auf der Seite
               // steht (im Log als "am Anker: ... Calendar News Markets ..."
               // zu sehen - das ist die Menueleiste).
-              let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null;
+              let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null,hit="";
               const thisYear=new Date().getFullYear();
               [["A",A],["B",B]].forEach(([tag,re0])=>{
                 if(actual)return;
@@ -397,6 +397,7 @@ jobs:
                     u=pu[1];
                   }
                   actual=mm[1];unit=u.toLowerCase();refMonth=mm[3];
+                  hit=txt.substr(Math.max(0,mm.index),190);
                   prev=tag==="A"?mm[4]:null;refYear=String(yr);shape=tag;
                   break;
                 }
@@ -452,6 +453,7 @@ jobs:
               out.push({source:"tepage",country:ccy,key:kind,ind:cfg.ind,label:cfg.label||null,
                         actual:fmtA,previous:fmtP,date:relDate,refMonth:refMonth,refYear:refYear});
               console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
+              console.log("      Satz: "+hit);
             });
             fs.writeFileSync("te_pages.json",JSON.stringify(out));
             console.log("te_pages.json: "+out.length+" Werte");

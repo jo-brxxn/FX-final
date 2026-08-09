@@ -283,6 +283,50 @@ Bei der Zuordnung im Kalender bleiben die nationalen Teilreihen der
 Eurozone (`German`/`French`/`Italian`/`Spanish` …) ausdruecklich
 ausgeschlossen - sonst landet der Eurozone-Wert auf der deutschen Zeile.
 
+### ✅ AUSGEBAUT (2026-08-09): TE-Laenderseiten als ALLGEMEINE Indikatorquelle
+
+Anlass war AUD Retail Sales unter Economic Growth: Wert vom 31.07.2025,
+15 eigene Zyklen ueberfaellig, weil das ABS die Handelsumsatz-Reihe 2025
+durch den **Household Spending Indicator** ersetzt hat. Die Nachfolgereihe
+laeuft weiter - die App kannte sie nur nicht.
+
+Der Schritt heisst jetzt **"Fetch indicator actuals from Trading Economics
+country pages"** und zieht 23 Seiten: PMI (6 Waehrungen × mfg/svc) plus
+AUD Retail Sales (alte UND neue Reihe), AUD/CHF Core CPI, CHF PPI, JPY
+GDP/Erwerbstaetige/offene Stellen, EUR Beschaeftigungsaenderung.
+
+**⚠️ Die Satzmuster sind an den ECHTEN Seiten gemessen, nicht geraten.**
+Fuenf Iterationen waren noetig, jede durch die eingebaute Fehlerdiagnose
+aufgeklaert (bei Nicht-Treffer werden bis zu 3 Fenster um jedes
+Ankervorkommen ausgegeben). Was dabei herauskam - nicht neu aufmachen:
+
+| Falle | Beispiel von der echten Seite |
+|---|---|
+| Anker trifft zuerst die **Navigation** | `Retail Sales MoM Calendar News Markets …` - ein einzelnes `exec()` bleibt dort haengen. Es werden ALLE Vorkommen durchprobiert. |
+| Quartalsformulierung | `in the second quarter of 2026` statt `in June of 2026` |
+| Datum **ohne** `of` | `held steady at 3.6% in June 2026` |
+| Zustands- statt Bewegungsverb | `held steady at`, `was`, `came in at` |
+| Prozentzeichen **ohne** Leerzeichen | `rose 1.2%` statt `1.2 percent` |
+| **Gar keine Einheit** | `increased by 0.10 in March of 2026` → Einheit wird vom Durchschnittssatz derselben Seite gelesen (`averaged 0.21 percent`), NICHT geraten |
+| Fuellwoerter vor der Periode | `rose 1.2% month-on-month in June 2025` |
+| Datum nur im **Attribut** | Das Tag-Strippen entfernt `data-date="2026-08-04"` - die Datumssuche laeuft deshalb auch auf dem ROHEN HTML |
+
+**Zwei Schutzmechanismen, die dabei bleiben muessen:**
+1. **Perioden-Anhang ist Pflicht.** Auf derselben Seite stehen Prognose-
+   (`is expected to be … by the end of this quarter`), Durchschnitts-
+   (`averaged … from 1994 until 2026`) und Ausblickssaetze. Sie haben
+   diesen Anhang nicht - genau das haelt sie draussen, nicht die Verbliste.
+2. **Jahres-Check + 120-Tage-Fenster.** `reaching an all time high of 10.70
+   percent in March of 1990` wird ueber das Bezugsjahr verworfen; ein
+   Release-Datum aelter als 120 Tage gilt nicht als aktuell. Genau das
+   faengt AUD Retail Sales ab, dessen ALTE Reihe bei der Quelle selbst
+   stehengeblieben ist (ihr Satz spricht noch von Juni 2025) - der Wert
+   wird erkannt, aber nicht eingetragen, und Household Spending liefert
+   stattdessen den aktuellen Stand.
+
+**Ohne echtes Release-Datum wird NIE etwas eingetragen** - daran haengen
+Altersgrenze und Zyklus-Rechnung.
+
 Bei "Indikator veraltet"-Meldungen deshalb IMMER zuerst die TITLE-DIAG-
 Zeile im Job-Log lesen und unterscheiden:
 - Titel steht da MIT `[actual]`, aber kein Wert in `ind_data` → Regel-Luecke, fixbar.
