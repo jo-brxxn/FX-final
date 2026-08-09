@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-353 — Der Bug aus deinen drei Screenshots ist gefunden und behoben, und es war keine Anzeige-Macke, sondern eine falsche Rechnung. Im normalisierten Modus haengt ein Faktor am Asset: die gemessene Marktrelevanz nutzt den PREISVERLAUF des jeweiligen Assets. Diese Asset-Kennung kam aber nicht bis zur Rechnung durch - der Weg symScore, rubScore, indScore reichte sie nicht weiter, und der Rueckfall war das gerade GEOEFFNETE Asset. Damit wurde der Score jeder Waehrung mit dem Kursverlauf derjenigen gewichtet, die du zufaellig offen hattest. Nachgemessen: USD kam auf -4,38 mit USD offen, auf -3,99 mit EUR offen, auf -3,85 mit NZD offen - und exakt wieder auf -3,99, sobald EUR erneut geoeffnet war. Deshalb sprangen alle Zahlen bei jedem Wechsel und wurden neu animiert, und ueber die Dreier-Schwelle kippte sogar die Bull-Zaehlung oben im Kopf von 2 auf 3. Jetzt traegt jede Karte ihre Asset-Zugehoerigkeit selbst, gesetzt an einer einzigen Stelle - bewusst nicht durch die rund 16 Aufrufstellen gefaedelt, weil eine vergessene den Fehler still zurueckgebracht haette. Geprueft ueber sechs Asset-Wechsel in beiden Modi: NULL Score-Zellen aendern sich noch, vorher waren es bei jedem Wechsel praktisch alle. Das Score-Fenster liest jetzt dieselbe Quelle, damit es nicht einen anderen Faktor zeigt als den, mit dem gerechnet wurde.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-354 — Die Asset-Namen tragen jetzt ebenfalls die Bias-Farbe, aber in einer dunkleren Zweitfassung: bullisch Blau 1d4ed8 statt 3b82f6, bearisch Rot b23a3a statt e35d5d, neutral Schiefer 475569 statt 64748b. Gleicher Farbton, nur dunkler - Name und Zahl gehoeren dadurch sichtbar zusammen, ohne dass der Name mit der Zahl um Aufmerksamkeit konkurriert; auf dem hellen Grund ist die dunklere Fassung ausserdem die besser lesbare. Gesetzt an beiden Stellen, an denen ein Asset-Name direkt neben seinem Score steht: in der Leiste links und in der Majors-Schiene auf dem Dashboard. Der Nachzieh-Mechanismus faerbt den Namen mit, wenn sich ein Bias ohne vollen Neuaufbau der Leiste aendert - sonst waere der Name stehengeblieben, waehrend die Zahl daneben schon die neue Farbe hatte. Das gerade geoeffnete Asset behaelt seine Bias-Farbe ebenfalls, statt wie bisher auf die neutrale Textfarbe umzuspringen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-353</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-354</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3247,6 +3247,13 @@ function introLogin(){
 'use strict';
 // ══ CONSTANTS ══════════════════════════════════════════════════════
 const BC={bull:'#3b82f6',bear:'#e35d5d',neu:'#64748b'};
+// Dunklere Zweitfassung der Bias-Farben, ausschliesslich fuer den ASSET-NAMEN
+// neben dem Score (Nutzer-Wunsch 2026-08-09: "auch in bias Farbe, aber ein
+// bisschen andere Farbe, dunkler, es soll sich ein wenig abheben"). Gleicher
+// Farbton, nur dunkler - Name und Zahl gehoeren dadurch sichtbar zusammen,
+// ohne dass der Name mit der Zahl um Aufmerksamkeit konkurriert. Auf hellem
+// Grund ist die dunklere Fassung ausserdem die besser lesbare.
+const BCD={bull:'#1d4ed8',bear:'#b23a3a',neu:'#475569'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -4494,6 +4501,11 @@ function syncSidebarScores(){
       const col=BC[sym.bias];
       if(el.style.color!==col)el.style.color=col;
       if(el.getAttribute('data-sv')!==String(sc))el.setAttribute('data-sv',String(sc));
+    }
+    const nm=btn.querySelector('.an');
+    if(nm&&nm.getAttribute('data-bv')!==sym.bias){
+      nm.setAttribute('data-bv',sym.bias);
+      nm.style.color=BCD[sym.bias];
     }
     const want=glowClass(sym.bias);
     if(want&&!btn.classList.contains(want)){
@@ -8638,7 +8650,7 @@ function renderSidebar(){
       const reorder=sbReorderId===id;
       return`<div class="ab-wrap${reorder?' reorder':''}">
         <button data-sym="${id}" class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
-          <div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScoreCmp(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+          <div class="an" data-bv="${c.bias}" style="color:${BCD[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScoreCmp(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
         </button>
         ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
         <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Move down">▼</button>`:''}
@@ -13500,7 +13512,7 @@ function dashMajorsHtml(){
     // Erkennungsmerkmal, das es hier gibt. FX_FLAG ist dieselbe Quelle wie
     // im Asset-Kopf, in der Watchlist und im Research-Terminal.
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <span class="an-flag">${FX_FLAG[c.id]||''}</span><div class="an">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
+      <span class="an-flag">${FX_FLAG[c.id]||''}</span><div class="an" data-bv="${c.bias}" style="color:${BCD[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
