@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-355 — Zurueckgenommen auf die Original-Bias-Farben: der Asset-Name traegt jetzt exakt dieselbe Farbe wie der Score daneben, nicht mehr die dunklere Zweitfassung aus der letzten Version. Der Sonderfarbsatz ist komplett raus, es gibt wieder nur die eine Bias-Palette - Blau 3b82f6 fuer bullish, Rot e35d5d fuer bearish, Schiefer 64748b fuer neutral. Die Werte der verworfenen dunklen Fassung stehen als Kommentar an der Palette, falls sie doch nochmal gebraucht werden. Unveraendert bleibt beides, was beim ersten Anlauf mitkam: der Name faerbt sich mit, wenn sich ein Bias ohne vollen Neuaufbau der Leiste aendert, und das gerade geoeffnete Asset behaelt seine Bias-Farbe statt auf die neutrale Textfarbe umzuspringen. Geprueft an allen 16 Eintraegen der Leiste und allen 8 der Majors-Schiene: Name und Score haben ueberall denselben Farbwert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-356 — Pruefdurchgang durch den zuletzt neu gebauten Code, vier Fehler gefunden und behoben. Erstens: beim Angleichen verknuepfter Assets werden die Karten tief kopiert, dabei ging der Besitzer-Stempel verloren, der seit der letzten Version dafuer sorgt, dass jeder Score mit dem EIGENEN Preisverlauf gewichtet wird - der Score des kopierten Assets haing danach wieder davon ab, welches Asset gerade offen war (gemessen: SP500 -1,31 gegenueber -1,4). Der Stempel wird jetzt direkt nach dem Kopieren neu gesetzt. Zweitens: der Pfeil in der Asset-Leiste blieb rot stehen, waehrend Name und Score schon auf Blau umgesprungen waren - genau die widerspruechliche Faerbung, gegen die dieser Abgleich gebaut wurde; er zieht den Pfeil jetzt mit. Drittens: Indikatoren von den Laenderseiten hatten teils weder Prognose noch Vorwert und zaehlten damit 0, obwohl sie aktuell waren - beide Zahlen werden nun aus demselben Berichtssatz gelesen, streng begrenzt auf eindeutig benannte Formulierungen und auf das Satzende, damit keine Nachbarreihe hineinrutscht. Viertens: die server-seitige Score-Historie schrieb nicht mit, unter welchem Modell sie entstand - dadurch zaehlte KEIN server-ergaenzter Tag zur Staerke-Note, ausgerechnet die Tage also, an denen kein Geraet offen war (gemessen: 14 Eintraege, 0 gezaehlt, keine Note; jetzt 14 von 14). Zusaetzlich erbt eine umgestellte Reihe nicht mehr die Historie ihrer Vorgaengerreihe.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-355</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-356</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -4504,6 +4504,18 @@ function syncSidebarScores(){
       nm.setAttribute('data-bv',sym.bias);
       nm.style.color=BC[sym.bias];
     }
+    // ⚠ Der Pfeil MUSS hier mit. Solange der Name neutral gefaerbt war,
+    // fiel es nicht auf; seit er die Bias-Farbe traegt (2026-08-09), stand
+    // sonst ein roter ▼ neben einem blauen Namen - gemessen: Name
+    // rgb(59,130,246), Pfeil rgb(227,93,93) nach demselben Sync-Lauf.
+    // Genau die widerspruechliche Faerbung, gegen die dieser Sync
+    // ueberhaupt gebaut wurde.
+    const av=btn.querySelector('.av');
+    if(av&&av.getAttribute('data-bv')!==sym.bias){
+      av.setAttribute('data-bv',sym.bias);
+      av.style.color=BC[sym.bias];
+      av.textContent=sym.bias==='bull'?'▲':sym.bias==='bear'?'▼':'◆';
+    }
     const want=glowClass(sym.bias);
     if(want&&!btn.classList.contains(want)){
       btn.classList.remove('glow-bull','glow-bear','glow-neu','glow-sbull','glow-sbear');
@@ -5023,6 +5035,16 @@ function syncAssetGroup(srcId){
       if(JSON.stringify(t[f])!==JSON.stringify(v)){t[f]=v;changed=true;}
     });
   });
+  // ⚠ Die Rubriken werden hier tief geklont (JSON-Rundreise). Dabei geht
+  // rub._symId verloren - es ist bewusst nicht-enumerierbar, damit es nicht
+  // in snap()/Cloud-Sync landet. Ohne den Stempel faellt indScoreParts auf
+  // das gerade GEOEFFNETE Asset zurueck, und der Score des geklonten Assets
+  // wird wieder mit dem falschen Preisverlauf gewichtet (der Bug vom
+  // 2026-08-09). Kritisch ist das, weil save() diese Funktion aufruft, OHNE
+  // dass danach recomputeAuto() laeuft - der Zustand haette also bis zur
+  // naechsten Struktur-Aenderung Bestand. Gemessen ohne diesen Stempel:
+  // SP500 -1,31 mit SP500 offen, -1,4 mit JPY offen.
+  if(changed&&typeof stampRubOwners==='function')stampRubOwners();
   return changed;
 }
 const PAIR_CODE_TO_ID={'XAU':'GOLD','XAG':'SILVER','WTI':'OIL','BTC':'BTC','ETH':'ETH'};
@@ -8322,6 +8344,15 @@ async function cloudPush(manual){
     // Format wie das client-seitige scoreHist fuellen kann (Inflation/
     // Labour/Growth-Karten im Trends-Tab, nicht nur Total Score).
     data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias,infl:rubScoreByName(s,'Inflation'),labour:rubScoreByName(s,'Labour Market'),growth:rubScoreByName(s,'Economic Growth')}));
+    // ⚠ Unter WELCHEM Score-Modell diese Zahlen entstanden sind - der
+    // Workflow schreibt es als 7. Tupel-Element nach score_hist.json.
+    // Ohne das zaehlt KEIN server-ergaenzter Tag zur Staerke-Note
+    // (symOwnHistory verlangt e[6]===SCORE_MODEL_TAG()) - ausgerechnet die
+    // Tage also, an denen kein Geraet offen war und fuer die die
+    // server-seitige Historie ueberhaupt gebaut wurde. Der Schnappschuss
+    // stammt von einem echten Geraet mit genau diesem Modell und Modus,
+    // die Angabe ist also gemessen, nicht angenommen.
+    data.scoreModelTag=SCORE_MODEL_TAG();
     const sentUpdated=localStorage.getItem('fxpro_updated')||new Date().toISOString();
     const body=JSON.stringify([{id:cfg.syncId,data,updated_at:sentUpdated}]);
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?on_conflict=id',{

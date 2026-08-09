@@ -196,6 +196,22 @@ Fehler still zurueckgebracht.
 nicht der Besitzer der Daten. Das Score-Fenster (`indNormBreakdown`) liest
 dieselbe Quelle, sonst zeigt es einen anderen Faktor als die Rechnung.
 
+**⚠️ Nachtrag 2026-08-09 (Pruefdurchgang): Der Stempel ueberlebt keine
+JSON-Rundreise.** `syncAssetGroup()` klont die Rubriken tief
+(`JSON.parse(JSON.stringify(...))`), um verknuepfte Assets anzugleichen -
+dabei faellt `_symId` weg, weil es nicht-enumerierbar ist (genau die
+Eigenschaft, die es aus `snap()` heraushaelt). Und `save()` ruft
+`syncAssetGroup()` auf, OHNE dass danach `recomputeAuto()` laeuft: der
+Zustand haette also bis zur naechsten Struktur-Aenderung Bestand. Gemessen:
+SP500 -1,31 mit SP500 offen, -1,4 mit JPY offen - der Bug war zurueck.
+`syncAssetGroup()` stempelt jetzt am Ende selbst nach.
+
+**Merksatz:** bei JEDER neuen Stelle, die Rubriken kopiert, serialisiert
+oder ersetzt, `stampRubOwners()` nachziehen. Der Test dafuer ist billig und
+sollte bei Verdacht immer gefahren werden: ueber alle Symbole/Rubriken
+zaehlen, wie viele `_symId` gar nicht oder falsch tragen (Soll: 0/0), und
+denselben Score einmal je geoeffnetem Asset messen (Soll: identisch).
+
 ## ⚠️ STAERKE 1-10 aus der eigenen Historie (Stand 2026-08-08)
 
 Nur im Modus `normalized`. Drei Stufen, bewusst getrennt (alle bei
@@ -250,6 +266,24 @@ verschiedene Rechnungen** - dieselbe Pflicht wie bei
 Reihe: dort ist jeder Punkt fuer sich der Wert, der an dem Tag galt, und
 das bleibt richtig - nur ein z-Wert QUER ueber die Reihe braucht eine
 einheitliche Skala.
+
+**⚠️ Der Tag muss AUCH durch die server-seitige Historie** (Fund im
+Pruefdurchgang 2026-08-09). `score_hist.json` (Workflow-Schritt "Fetch
+score snapshot from cloud sync") schrieb ein SECHSstelliges Tupel ohne
+Tag - `symOwnHistory()` verlangt aber `e[6]===SCORE_MODEL_TAG()`. Damit
+zaehlte **kein einziger** server-ergaenzter Tag zur Note: ausgerechnet die
+Tage, an denen kein Geraet offen war und fuer die diese Historie
+ueberhaupt gebaut wurde. Gemessen: 14 Eintraege → 0 gezaehlt → `–/10`;
+mit Tag 14 von 14 und eine echte Note. `cloudPush()` schickt den Tag
+jetzt als `data.scoreModelTag` mit, der Workflow haengt ihn als 7. Element
+an. Fehlt er (alter Client), wird NICHTS geraten - der Eintrag bleibt
+sechsstellig und faellt wie bisher aus der Notenrechnung.
+
+**Merksatz:** zwei Features, die je fuer sich richtig sind, muessen nicht
+zusammenpassen. Bei jedem neuen Feld in `scoreHist` pruefen, ob der
+SERVER-Pfad (`cloudPush` → Workflow → `score_hist.json` → `mergeScoreHist`)
+es genauso mitfuehrt wie der Client-Pfad - sonst ist die Server-Historie
+fuer die neue Auswertung still wertlos.
 
 ## ⚠️ PMI-FEED: TradingView liefert fuer S&P Global/HCOB/Jibun KEINE Actuals
 
@@ -361,6 +395,41 @@ in <Monat> from Y <Einheit> in <Monat> of <Jahr>` (Actual + Vorwert), **B**
 <Monat>.` OHNE Jahr - nur als letzte Rueckfalloption, Jahr aus dem Monat
 abgeleitet (juengstes nicht-zukuenftiges Vorkommen), Monate aelter als ein
 halbes Jahr werden verworfen.
+
+**Prognose + Vorwert aus demselben Berichtssatz** (Pruefdurchgang
+2026-08-09). Die Formen B und C nennen keinen Vorwert - sechs Eintraege
+standen dadurch mit Actual, aber ohne Forecast UND ohne Previous da und
+trugen **0** zum Score bei, obwohl sie taufrisch waren (weder Beat/Miss
+noch Step-Signal ist ohne Vergleichswert moeglich). Beide Zahlen stehen
+aber meist im selben Satz. Zwei Grenzen halten den Unsinn draussen:
+1. **Nur eindeutig benannte Formulierungen.** Forecast nur aus
+   `expectations|forecasts|estimates|consensus of X`, Vorwert nur aus
+   `from|after|compared with/to X percent|%|points`. `is expected to be …
+   by the end of this quarter` (Ausblick) und `averaged … percent`
+   (Langzeitmittel) stehen auf denselben Seiten und werden dadurch NICHT
+   gelesen - live bestaetigt an CHF Core CPI und AUD Retail Sales.
+2. **Das Fenster endet am Satzende** (`. ` + Grossbuchstabe; Dezimalpunkte
+   stehen vor einer Ziffer und zaehlen nicht). Direkt hinter dem
+   Berichtssatz stehen die Nachbarreihen - ohne diese Grenze koennte deren
+   Konsens als unserer gelesen werden. An den zwischengespeicherten echten
+   Seiten gemessen: 0 Treffer ausserhalb des Satzes, die Grenze kostet
+   also nichts und schliesst den Fall trotzdem.
+
+**Einheiten-Formatierung nur an EINER Stelle** (`SUF`/`fmtU`): Actual,
+Vorwert und Forecast teilen sich dieselbe Tabelle. Eine zweite daneben war
+schon nach wenigen Minuten auseinandergelaufen - der Forecast kannte
+`percent of gdp` nicht und haette die Zahl ohne Prozentzeichen neben einen
+Actual MIT Prozentzeichen geschrieben.
+
+**⚠️ Historie NICHT erben, wenn die Reihe gewechselt hat.** Ein eigenes
+`label` heisst per Definition: die Quelle misst etwas anderes als bisher.
+AUD Retail Sales hat 32 `historyFull`-Punkte der eingestellten
+ABS-Handelsumsatzreihe weitergeschleppt, obwohl der Wert inzwischen
+Household Spending ist - Verlaufschart, Trend-Signal und im normalisierten
+Modus auch die Streuung der Prognosefehler haetten damit zwei Messgroessen
+vermischt. `sameSeries=!e.label` entscheidet das; lieber keine Historie als
+eine vermischte, sie baut sich neu auf. Der Verwurf wird geloggt
+(`Historie der alten Reihe verworfen`).
 
 **⚠️ Drei Reihen messen NICHT exakt dasselbe wie der Kartenname** und tragen
 deshalb ein eigenes Label, damit das auf der Karte sichtbar ist statt

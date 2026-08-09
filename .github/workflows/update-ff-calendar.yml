@@ -373,7 +373,7 @@ jobs:
               // Employment Change gescheitert, obwohl ihr Satz auf der Seite
               // steht (im Log als "am Anker: ... Calendar News Markets ..."
               // zu sehen - das ist die Menueleiste).
-              let actual=null,prev=null,unit=null,refMonth=null,refYear=null,shape=null,hit="";
+              let actual=null,prev=null,fc=null,unit=null,refMonth=null,refYear=null,shape=null,hit="";
               const thisYear=new Date().getFullYear();
               const C=new RegExp(cfg.anchor+"[^.]{0,60}?\\b"+VERB+"(?:\\s+by)?\\s+"+NUM+UNITOPT+"(?:\\s+[a-z][a-z-]*){0,4}?\\s+in\\s+(?:the\\s+)?([a-z]+)(?:\\s+quarter)?\\s*[.,]","i");
               [["A",A],["B",B],["C",C]].forEach(([tag,re0])=>{
@@ -410,6 +410,27 @@ jobs:
                   actual=mm[1];unit=u.toLowerCase();refMonth=mm[3];
                   hit=txt.substr(Math.max(0,mm.index),190);
                   prev=tag==="A"?mm[4]:null;refYear=String(yr);shape=tag;
+                  // ⚠ Die Satzformen B und C nennen keinen Vorwert - ohne
+                  // Forecast UND ohne Previous kann der Indikator gar nichts
+                  // beitragen (weder Beat/Miss noch Step-Signal), er stuende
+                  // also aktuell da und zaehlte trotzdem 0. Beide Zahlen
+                  // stehen aber haeufig im selben Berichtsabschnitt. Nur
+                  // EINDEUTIG benannte Formulierungen werden gelesen - eine
+                  // freie Zahlensuche wuerde hier sofort Unsinn einsammeln.
+                  // Das Fenster endet am SATZENDE (Punkt + Grossbuchstabe;
+                  // Dezimalpunkte stehen vor einer Ziffer und zaehlen nicht).
+                  // Direkt hinter dem Berichtssatz stehen auf denselben
+                  // Seiten die Nachbarreihen - ohne diese Grenze koennte
+                  // deren Konsens als unserer gelesen werden.
+                  const win=txt.substr(Math.max(0,mm.index),420);
+                  const dot=win.search(/\.\s+[A-Z]/);
+                  const ctx=dot>=0?win.slice(0,dot+1):win;
+                  const fcM=/(?:market\s+)?(?:expectations|forecasts|estimates|consensus)\s+of\s+(?:a\s+)?(-?[\d]+(?:\.[\d]+)?)/i.exec(ctx);
+                  if(fcM)fc=fcM[1];
+                  if(prev==null){
+                    const pvM=/\b(?:from|after|compared\s+(?:with|to))\s+(?:a\s+)?(?:revised\s+)?(-?[\d]+(?:\.[\d]+)?)\s*(?:percent|%|points)/i.exec(ctx);
+                    if(pvM)prev=pvM[1];
+                  }
                   break;
                 }
               });
@@ -432,14 +453,20 @@ jobs:
                 if(sent)console.log("      erster Bewegungssatz: "+sent[0].trim().slice(0,240));
                 return;
               }
-              // Einheit -> Darstellung wie im Rest der App
-              let fmtA,fmtP;
-              if(unit==="percent"||unit==="%"||unit==="percent of gdp"){fmtA=actual+"%";fmtP=prev!=null?prev+"%":null;}
-              else if(unit==="points"){fmtA=actual;fmtP=prev;}
-              else if(unit==="thousand"){fmtA=actual+"K";fmtP=prev!=null?prev+"K":null;}
-              else if(/million/.test(unit)){fmtA=actual+"M";fmtP=prev!=null?prev+"M":null;}
-              else if(/billion/.test(unit)){fmtA=actual+"B";fmtP=prev!=null?prev+"B":null;}
-              else{console.log("[te] "+key+": Einheit \""+unit+"\" nicht unterstuetzt - uebersprungen");return;}
+              // Einheit -> Darstellung wie im Rest der App. EINE Stelle fuer
+              // Actual, Vorwert UND Forecast: eine zweite Tabelle daneben
+              // laeuft mit Sicherheit irgendwann auseinander (genau das war
+              // hier schon passiert - der Forecast kannte "percent of gdp"
+              // nicht und haette die Zahl ohne Prozentzeichen geschrieben,
+              // waehrend der Actual danebensteht MIT Prozentzeichen).
+              const SUF=(unit==="percent"||unit==="%"||unit==="percent of gdp")?"%"
+                       :unit==="points"?""
+                       :unit==="thousand"?"K"
+                       :/million/.test(unit)?"M"
+                       :/billion/.test(unit)?"B":null;
+              if(SUF===null){console.log("[te] "+key+": Einheit \""+unit+"\" nicht unterstuetzt - uebersprungen");return;}
+              const fmtU=v=>v==null?null:v+SUF;
+              const fmtA=fmtU(actual),fmtP=fmtU(prev);
               // Release-DATUM. Ohne echtes Datum wird NICHTS geschrieben - es
               // steuert Altersgrenze und Zyklus-Rechnung, ein geratenes waere
               // schlimmer als kein Eintrag (Grundsatz "nie schaetzen").
@@ -461,9 +488,10 @@ jobs:
               const past=dates.filter(d=>d<=today&&d>=floor).sort();
               const relDate=past.length?past[past.length-1]:null;
               if(!relDate)console.log("      [datum] keine vergangene Datumsangabe gefunden; gefundene Kandidaten: "+dates.slice(0,6).join(", ")||"(keine)");
+              const fmtF=fmtU(fc);
               out.push({source:"tepage",country:ccy,key:kind,ind:cfg.ind,label:cfg.label||null,
-                        actual:fmtA,previous:fmtP,date:relDate,refMonth:refMonth,refYear:refYear});
-              console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
+                        actual:fmtA,previous:fmtP,forecast:fmtF,date:relDate,refMonth:refMonth,refYear:refYear});
+              console.log("[te] "+key+" -> "+cfg.ind+": "+fmtA+(fmtP?" (vorher "+fmtP+")":"")+(fmtF?" (fc "+fmtF+")":"")+" ["+shape+"/"+unit+"] "+refMonth+" "+refYear+" | Release: "+(relDate||"KEINS"));
               console.log("      Satz: "+hit);
             });
             // Termin-Uebernahme innerhalb DERSELBEN Veroeffentlichung.
@@ -1690,9 +1718,20 @@ jobs:
                 out[e.country]=out[e.country]||{};
                 const cur=out[e.country][ind];
                 if(cur&&cur.date&&cur.date>=e.date)return;   // schon aktueller
-                out[e.country][ind]={actual:e.actual,forecast:(cur&&cur.date===e.date?cur.forecast:null)||null,
+                // ⚠ Historie nur uebernehmen, wenn es DIESELBE Reihe ist.
+                // Ein eigenes Label heisst per Definition: die Quelle misst
+                // etwas anderes als bisher (AUD Retail Sales -> Household
+                // Spending, JPY Beschaeftigung -> Erwerbstaetige). Die alte
+                // Historie weiterzuschleppen wuerde zwei Messgroessen in
+                // einer Reihe mischen - der Verlaufschart, das Trend-Signal
+                // und im normalisierten Modus auch die Streuung der
+                // Prognosefehler waeren damit schlicht falsch. Lieber keine
+                // Historie als eine vermischte; sie baut sich neu auf.
+                const sameSeries=!e.label;
+                out[e.country][ind]={actual:e.actual,forecast:e.forecast||((cur&&cur.date===e.date)?cur.forecast:null)||null,
                   previous:e.previous,date:e.date,event:(e.label||ind)+" (Trading Economics)",source:"tepage",
-                  history:(cur&&cur.history)||undefined,historyFull:(cur&&cur.historyFull)||undefined};
+                  history:(sameSeries&&cur&&cur.history)||undefined,historyFull:(sameSeries&&cur&&cur.historyFull)||undefined};
+                if(!sameSeries&&cur&&cur.historyFull)console.log("[te->ind_data] "+e.country+" "+ind+": Historie der alten Reihe verworfen ("+cur.historyFull.length+" Punkte) - neue Reihe ist "+e.label);
                 tepN++;
                 console.log("[te->ind_data] "+e.country+" "+ind+" = "+e.actual+" ("+e.date+", "+(e.label||ind)+")");
               });
@@ -3317,14 +3356,25 @@ jobs:
               let d={};
               try{d=JSON.parse(fs.readFileSync("score_hist.json","utf8"))||{};}catch(e){}
               const today=new Date().toISOString().slice(0,10);
+              // 7. Tupel-Element: unter welchem Score-Modell der Schnappschuss
+              // entstanden ist (vom Client mitgeschickt, siehe cloudPush).
+              // OHNE das zaehlt kein einziger hier ergaenzter Tag zur
+              // Staerke-Note, weil symOwnHistory genau dieses Feld gegen das
+              // aktuelle Modell prueft - die server-seitige Historie waere
+              // dann fuer die Note wertlos, obwohl sie fuer die Trends-Kurve
+              // laengst funktioniert. Fehlt die Angabe (alter Client), wird
+              // NICHTS geraten: der Eintrag bleibt sechsstellig und faellt
+              // wie bisher aus der Notenrechnung.
+              const tag=rows[0]&&rows[0].data&&rows[0].data.scoreModelTag;
               let changedN=0;
               snap.forEach(s=>{
                 if(!s||!s.id||typeof s.score!=="number")return;
                 const arr=d[s.id]||(d[s.id]=[]);
                 const last=arr[arr.length-1];
                 const e=[today,s.score,s.infl||0,s.labour||0,s.growth||0,s.bias||"neu"];
+                if(tag)e.push(tag);
                 if(last&&last[0]===today){
-                  if(last[1]!==e[1]||last[2]!==e[2]||last[3]!==e[3]||last[4]!==e[4]||last[5]!==e[5]){arr[arr.length-1]=e;changedN++;}
+                  if(last[1]!==e[1]||last[2]!==e[2]||last[3]!==e[3]||last[4]!==e[4]||last[5]!==e[5]||last[6]!==e[6]){arr[arr.length-1]=e;changedN++;}
                 }else{arr.push(e);changedN++;}
                 if(arr.length>1100)arr.splice(0,arr.length-1100);
               });
