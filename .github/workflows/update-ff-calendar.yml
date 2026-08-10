@@ -2396,7 +2396,7 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
-            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40","NASDAQ:AMZN","NASDAQ:NVDA"],"query":{"types":[]}},"columns":["close"]}' \
+            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close"]}' \
             "https://scanner.tradingview.com/global/scan" -o price_tv.json || true
           echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 price_tv.json 2>/dev/null || echo "(missing)"
@@ -2420,13 +2420,7 @@ jobs:
               "COINBASE:BTCUSD":{id:"BTC",invert:false},
               "SP:SPX":{id:"SP500",invert:false},
               "NASDAQ:NDX":{id:"NAS",invert:false},
-              "TVC:DEU40":{id:"DAX",invert:false},
-              // Einzelaktien ergaenzt 2026-08-08 (Audit-Fund: AMZN/NVDA waren
-              // in der App gelistet, hatten aber keinerlei Preisreihe - in
-              // Performance-Ranking, Watchlist, Ticker und Volatilitaet
-              // erschienen sie deshalb dauerhaft als "-").
-              "NASDAQ:AMZN":{id:"AMZN",invert:false},
-              "NASDAQ:NVDA":{id:"NVDA",invert:false}
+              "TVC:DEU40":{id:"DAX",invert:false}
             };
             const SRC={
               USD:"https://www.tradingview.com/symbols/TVC-DXY/",
@@ -2443,9 +2437,7 @@ jobs:
               BTC:"https://www.tradingview.com/symbols/BTCUSD/",
               SP500:"https://www.tradingview.com/symbols/SPX/",
               NAS:"https://www.tradingview.com/symbols/NDX/",
-              DAX:"https://www.tradingview.com/symbols/TVC-DEU40/",
-              AMZN:"https://www.tradingview.com/symbols/NASDAQ-AMZN/",
-              NVDA:"https://www.tradingview.com/symbols/NASDAQ-NVDA/"
+              DAX:"https://www.tradingview.com/symbols/TVC-DEU40/"
             };
             const today=new Date().toISOString().slice(0,10);
             let resp;
@@ -2994,9 +2986,7 @@ jobs:
           CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ypc.txt -c ypc.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
           echo "[debug] price backfill crumb: len=${#CRUMB}"
           # Asset -> Yahoo-Symbol (Underlying identisch zum TradingView-Schritt)
-          # AMZN/NVDA ergaenzt 2026-08-08 (Audit-Fund: in der App gelistet, aber
-          # ohne jede Preisreihe - erschienen ueberall als "-").
-          MAPS="USD:DX-Y.NYB EUR:EURUSD=X GBP:GBPUSD=X CHF:CHF=X JPY:JPY=X CAD:CAD=X AUD:AUDUSD=X NZD:NZDUSD=X GOLD:GC=F SILVER:SI=F OIL:CL=F BTC:BTC-USD SP500:^GSPC NAS:^NDX DAX:^GDAXI AMZN:AMZN NVDA:NVDA"
+          MAPS="USD:DX-Y.NYB EUR:EURUSD=X GBP:GBPUSD=X CHF:CHF=X JPY:JPY=X CAD:CAD=X AUD:AUDUSD=X NZD:NZDUSD=X GOLD:GC=F SILVER:SI=F OIL:CL=F BTC:BTC-USD SP500:^GSPC NAS:^NDX DAX:^GDAXI"
           rm -f pbf_meta.txt
           for PAIR in $MAPS; do
             ASSET="${PAIR%%:*}"; SYM="${PAIR#*:}"

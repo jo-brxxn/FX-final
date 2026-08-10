@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-361 — Vorbereitung fuer den geplanten Cloudflare-Zugriffsschutz: alle 10 Live-Daten-Abrufe (ind_data.json etc.) laufen jetzt ueber DATA_BASE statt eines festen relativen Pfads. Auf GitHub Pages und im lokalen Dev-Server bleibt das unveraendert (leerer Praefix, gleiche Herkunft) - auf jeder anderen Domain (z.B. einer kuenftigen Cloudflare-Pages-Adresse) wird direkt von GitHubs eigenem Raw-Endpunkt gelesen, damit ein Neu-Bau bei jedem stuendlichen Daten-Update nicht noetig ist. Betrifft nur, WOHER die Daten kommen - Rechnung und Anzeige sind unveraendert.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-362 — Amazon und Nvidia sind komplett aus der App entfernt (Nutzer-Wunsch). Betroffen: die Symbol-Definitionen selbst, die Stocks-Kategorie in allen Asset-Filter-Dropdowns (COT/Put-Call/Net-Options-Flow/Saisonalitaet - die Kategorie verschwindet ganz, da sie sonst leer waere), die Risk-Correlation-Erklaertexte und die Standard-Reaktionsrichtung auf den Risk-Sentiment-Regler. Im Workflow holen der TradingView-Preis-Fetch und der Yahoo-3-Jahres-Backfill keine Kurse mehr fuer beide. Die schon aufgezeichnete Kurs- und Score-Historie fuer beide wurde als einmalige Bereinigung mit entfernt, damit nichts verwaist stehen bleibt.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-361</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-362</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3307,8 +3307,7 @@ const SB_CATS=[
   {l:'Crypto',ids:['BTC']},
   {l:'Metals',ids:['GOLD','SILVER']},
   {l:'Energy',ids:['OIL']},
-  {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
-  {l:'Stocks',ids:['AMZN','NVDA']}
+  {l:'Indices',ids:['SP500','NAS','DAX','GER100']}
 ];
 // ── Gemeinsamer Asset-Filter-Dropdown, EIN Muster fuer alle Tabs mit
 // Asset-Auswahl (COT, Put/Call, Net Options Flow, Seasonality): Optionen
@@ -4996,7 +4995,7 @@ function updCalCcySel(){
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
-const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','AMZN','NVDA','DAX','GER100'];
+const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','DAX','GER100'];
 // Kategorie eines Symbols ('fx','crypto','metal','energy','index','stock'): für
 // eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
 // Hinzufügen gewählten Kategorie (customIds[].cls).
@@ -6972,7 +6971,7 @@ function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));
 const CB_MAP={USD:'the Fed (Federal Reserve)',EUR:'the ECB (European Central Bank)',GBP:'the BoE (Bank of England)',CHF:'the SNB (Swiss National Bank)',JPY:'the BoJ (Bank of Japan)',CAD:'the BoC (Bank of Canada)',AUD:'the RBA (Reserve Bank of Australia)',NZD:'the RBNZ (Reserve Bank of New Zealand)'};
 function cbName(id){return CB_MAP[id]||'the Fed (Federal Reserve)';}
 function cbDat(id){return cbName(id).replace(/^die /,'der ');}
-const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',AMZN:'stock',NVDA:'stock',DAX:'index',GER100:'index'};
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',DAX:'index',GER100:'index'};
 
 // ── Info texts for the 5 standard rubrics (Specific tab) ──
 function enrichRubrics(id,rubrics,name){
@@ -7064,14 +7063,6 @@ const DEF=[
   {id:'NAS',name:'Nasdaq',full:'Nasdaq 100',bias:'bear',
     genBull:mkR(['World\'s best tech companies: Apple, NVIDIA, Microsoft','AI infrastructure boom: cloud, chips, data centers'],'bull'),
     genBear:mkR(['Extremely rate-sensitive: growth stocks suffer most','Top 10 = 50% of index – concentration and herd risk'],'bear'),
-    rubrics:mkRubs(),noteRubs:[],notes:''},
-  {id:'AMZN',name:'Amazon',full:'Amazon.com Inc.',bias:'neu',
-    genBull:mkR(['AWS: dominant cloud market share with highest-margin profits','E-commerce scale & logistics moat – hard to replicate','AI investment cycle: AWS benefits from enterprise AI workload demand'],'bull'),
-    genBear:mkR(['High valuation – extremely rate-sensitive growth stock','AWS growth deceleration risk from Azure/Google Cloud competition','Thin e-commerce margins – exposed to consumer spending slowdown'],'bear'),
-    rubrics:mkRubs(),noteRubs:[],notes:''},
-  {id:'NVDA',name:'Nvidia',full:'NVIDIA Corporation',bias:'neu',
-    genBull:mkR(['Dominant AI/GPU chip market share – structural demand from hyperscaler capex','Data center revenue scaling rapidly with AI infrastructure buildout','CUDA software ecosystem creates high switching costs'],'bull'),
-    genBear:mkR(['Extremely high valuation – most rate-sensitive large-cap stock','China export restrictions – geopolitical/regulatory risk','Customer concentration: few hyperscalers drive majority of revenue'],'bear'),
     rubrics:mkRubs(),noteRubs:[],notes:''},
   {id:'DAX',name:'DAX',full:'DAX 40 (Germany)',bias:'neu',linkCcy:'EUR',
     genBull:mkR(['Export-heavy German blue chips benefit from a weaker EUR','ECB easing cycle supports equity valuations'],'bull'),
@@ -7231,16 +7222,6 @@ const MACRO_DATA={
     ron:{info:'In risk-on phases the Nasdaq often outperforms the broader market: low interest rates and high risk appetite especially favor growth stocks whose earnings lie far in the future.'},
     roff:{info:'In risk-off phases the Nasdaq usually falls disproportionately to the S&P 500 – high valuations and the long "duration" of its earnings make it particularly interest-rate sensitive.'},
     extraInfo:'Growth stocks have a high "duration" (much of their earnings lie in the distant future) and therefore react disproportionately to interest rate changes: rising rates sharply lower the present value of those earnings (Nasdaq-negative), while falling rates are strongly supportive. In addition, the AI investment cycle (hyperscaler capex on chips/data centers) is currently driving the expectations and share prices of the largest index members.'},
-  AMZN:{extra:'Cloud growth (AWS) & capital discipline',
-    safe:{info:'Single stocks like Amazon are not considered a safe haven – they are a classic risk asset that gets sold in crises.'},
-    ron:{info:'In risk-on phases Amazon usually benefits above average: lower interest rates support the valuation of the high-margin AWS cloud business, and rising consumption supports the e-commerce business.'},
-    roff:{info:'In risk-off phases Amazon usually falls disproportionately to the overall market – its high valuation and growth dependence make the stock particularly interest-rate sensitive.'},
-    extraInfo:'AWS (Amazon Web Services) delivers the bulk of operating profit despite a smaller revenue share – AWS growth and margin (especially in the competition with Microsoft Azure/Google Cloud for AI workloads) are therefore the most important single driver. In addition, investors watch capital discipline in the low-margin e-commerce business (logistics costs, same-day-delivery investments).'},
-  NVDA:{extra:'AI chip demand & hyperscaler capex',
-    safe:{info:'Single stocks like Nvidia are not considered a safe haven – they are a classic, highly volatile risk asset.'},
-    ron:{info:'In risk-on phases Nvidia is often among the biggest gainers: lower interest rates support the high valuation, and rising risk appetite channels capital into the AI growth trend.'},
-    roff:{info:'In risk-off phases Nvidia usually falls markedly disproportionately – its extremely high valuation and growth expectations make it the most interest-rate sensitive and volatile large-cap stock.'},
-    extraInfo:'Demand for AI accelerator chips (especially from hyperscalers like Microsoft, Google, Amazon, Meta to build out AI data centers) is the dominant driver. Quarterly capex guidance from the major cloud providers, as well as geopolitical export restrictions (particularly China/Taiwan, chip export controls), are among the most immediate price drivers.'},
 };
 // Default-Reaktionsrichtung je Asset auf den Risk-Sentiment-Regler (Nutzer-
 // Wunsch 2026-07-13, Bedeutung am 2026-07-13 abends korrigiert): der Regler
@@ -7255,7 +7236,7 @@ const MACRO_DATA={
 // keine Safe Havens).
 const RISK_ENV_DEFAULT_DIR={
   USD:'bullish',EUR:'bearish',GBP:'bearish',CHF:'bullish',JPY:'bullish',CAD:'bearish',AUD:'bearish',NZD:'bearish',
-  BTC:'bearish',GOLD:'bullish',SILVER:'bearish',OIL:'bearish',SP500:'bearish',NAS:'bearish',AMZN:'bearish',NVDA:'bearish',
+  BTC:'bearish',GOLD:'bullish',SILVER:'bearish',OIL:'bearish',SP500:'bearish',NAS:'bearish',
 };
 // Migration (Nutzer-Wunsch 2026-07-13 abends): alte Werte 'normal'/'inverse'/
 // 'none' aus riskEnvCfg auf die neuen, semantisch korrigierten Namen heben -

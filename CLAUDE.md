@@ -5409,3 +5409,37 @@ Instrument). Bei kuenftigen Aenderungen an `renderPairs()`/aehnlichen
 Listen, die mehrere Quellen kombinieren, immer pruefen, ob ein
 technischer Platzhalter aus der einen Quelle mit einem echten Eintrag
 der anderen Quelle kollidieren kann.
+
+### Stocks (AMZN/NVDA) komplett aus der App entfernt (Nutzer-Wunsch 2026-08-10)
+
+Sieben Fundstellen in `index.html` (Symbol-Definitionen `DEF`, `SB_CATS`
+"Stocks"-Kategorie - komplett geloescht statt leer stehen gelassen,
+`NONFX_IDS`, `ASSET_CLASS`, die Risk-Correlation-Erklaertexte in
+`MACRO_DATA`, `RISK_ENV_DEFAULT_DIR`) und vier im Workflow
+(`update-ff-calendar.yml`: TradingView-Ticker-Liste + MAP + SRC im
+Preis-Fetch-Schritt, `MAPS` im Yahoo-3-Jahres-Backfill). Da diese Assets
+nur eingebaute `DEF`-Eintraege waren (keine Custom-Assets), reicht die
+Entfernung aus `DEF` - `loadState()`s `syms=DEF.map(...)` erzeugt fuer sie
+einfach keine Symbol-Objekte mehr, kein Migrations-Aufwand noetig.
+
+**Einmalige Bereinigung der bereits aufgezeichneten Historie:** anders als
+bei einem neuen, noch nie erhobenen Feld hatten AMZN/NVDA bereits echte
+Daten angesammelt - 3 Jahre Kurshistorie in `price_data.json`, Score-
+Verlauf in `score_hist.json`. Der Workflow haette diese Keys nie von
+selbst geloescht (die Fetch-Schleife aktualisiert nur bekannte Assets aus
+`MAP`, entfernt aber nie verwaiste Alt-Keys) - ohne Bereinigung waeren sie
+fuer immer als totes Gewicht im Repo liegen geblieben. Beide Dateien
+einmalig direkt bereinigt (nicht ueber den Workflow), dokumentiert als
+Ausnahme von "Daten-JSONs nicht manuell editieren" - analog zum bereits
+etablierten Muster bei einmaligen Backfills/Bereinigungen (OCC-Put/Call-
+Backfill, Revisions-Backfill): keine Schaetzung, reine Loeschung von
+Keys, die durch eine echte Code-Aenderung ueberhaupt erst verwaist sind.
+`score_hist.json` dabei im kompakten Format belassen (kein Einruecken),
+wie es der Workflow selbst schreibt (`JSON.stringify(d)` ohne Parameter) -
+`price_data.json` behaelt sein eingerueckte Format (`JSON.stringify(out,
+null,1)`).
+
+**Merksatz:** beim Entfernen eines eingebauten Assets immer pruefen, ob es
+bereits eigene Zeitreihen-Daten in den committeten JSONs hat (nicht nur
+Code-Referenzen) - sonst bleiben verwaiste Keys liegen, die nie wieder
+angefasst werden, aber niemand mehr braucht.
