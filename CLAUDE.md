@@ -5366,3 +5366,46 @@ bleibt, war fuer den Nutzer eine getroffene Entscheidung. Und: wenn zwei
 Ansichten dieselbe Sache verschieden filtern (hier alle Kategorien gegen genau
 eine), verschwindet ein Fehler in der einen und bleibt in der anderen sichtbar
 - das ist der Fingerabdruck einer kaputten Zuordnung, nicht geloeschter Daten.
+
+### Gold/Silber doppelt in den Set-ups: Sternen erzeugt einen leeren Platzhalter-Pair (Bugreport 2026-08-10)
+
+Nutzer-Screenshot: "XAG/USD" (+6) und "Silver" (+3.6) standen als zwei
+eigene Zeilen nebeneinander, gleiches Muster bei Gold.
+
+**Ursache:** `setWatched(name,true)` (der Stern) legt beim Sternen eines
+Non-FX-Assets automatisch einen `pairs`-Eintrag unter dem KANONISCHEN
+Namen an (`GOLD` -> `XAU/USD`, siehe "WATCHLIST ALS EINZIGE WAHRHEIT"
+oben) - reiner technischer Traeger, damit die Watchlist-Kategorie das
+Asset fuehren kann. `renderPairs()` (Set-ups-Tab) baut seine Zeilenliste
+aber aus ZWEI unabhaengigen Quellen: allen `pairs`-Eintraegen UND
+zusaetzlich JEDEM Non-FX-Asset als eigener `kind:'asset'`-Zeile - der
+bestehende Dedup (`seenPair`) griff nur INNERHALB der `pairs`-Liste
+(mehrere Kategorien desselben Paar-Namens), nicht ZWISCHEN den beiden
+Quellen. Der Watchlist-Platzhalter-Pair und die Asset-Zeile zeigten
+dadurch dasselbe Instrument zweimal - einmal mit dem Kuerzel, einmal mit
+dem Asset-Namen, und mit UNTERSCHIEDLICHEM Score (`pairScore('XAU/USD')`
+= Gold minus USD plus Carry, `symScoreCmp(GOLD)` = Golds eigener Score).
+
+**Fix:** `nonFxCanon` (Set der kanonischen Paarnamen aller Non-FX-Assets)
++ `isWatchlistPlaceholder(p)` blendet einen `pairs`-Eintrag nur dann aus,
+wenn er (a) unter einem kanonischen Non-FX-Namen steht UND (b) komplett
+leer ist (kein Entry/Trigger/SL/TP/Notiz) - genau der Zustand, den
+`setWatched()` erzeugt. Ein ECHTER, vom Nutzer manuell mit Handelsdaten
+angelegter Pair-Eintrag unter demselben Namen (z.B. "XAU/USD" mit Entry
+4200/SL 4100/TP 4400) traegt eigene Information, die die Asset-Zeile
+nicht zeigen kann, und bleibt deshalb bewusst als eigene Zeile bestehen.
+
+Per Playwright verifiziert: Sternen von GOLD/SILVER ergibt genau eine
+Zeile ("Gold"/"Silver"), Stern-Status bleibt korrekt gesetzt; Entsternen
+aendert die Zeilenzahl nicht (die Asset-Zeile war immer da); ein Test-
+Pair mit echtem Entry/SL/TP behaelt seine eigene Zeile neben der
+Asset-Zeile.
+
+**Merksatz:** ein Dedup-Set, das nur INNERHALB einer Quelle prueft
+(`seenPair` nur gegen `pairs`), schuetzt nicht vor Duplikaten zwischen
+ZWEI verschiedenen Quellen, die dieselbe Sache unterschiedlich
+repraesentieren (hier: Pair-Eintrag vs. Asset-Zeile fuer dasselbe
+Instrument). Bei kuenftigen Aenderungen an `renderPairs()`/aehnlichen
+Listen, die mehrere Quellen kombinieren, immer pruefen, ob ein
+technischer Platzhalter aus der einen Quelle mit einem echten Eintrag
+der anderen Quelle kollidieren kann.

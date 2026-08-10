@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-358 — Die 1-10-Staerke-Note neben dem Asset-Score ist vorerst ausgeblendet, solange sie ueberall nur "-/10" zeigen konnte. Die Rechnung dahinter laeuft weiter unveraendert im Hintergrund (sie speist sich aus derselben Score-Historie wie der Trends-Chart), nur die Anzeige im Asset-Kopf ist entfernt - kommt zurueck, sobald genug Tage unter dem aktuellen Modell aufgezeichnet sind.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-359 — Gold und Silber standen in den Set-ups doppelt, einmal als "Gold"/"Silver" und einmal als "XAU/USD"/"XAG/USD". Ursache: das Sternen eines Non-FX-Assets legt automatisch einen leeren Paar-Eintrag unter dem Kuerzel an, damit die Watchlist ihn fuehren kann - der erschien bisher zusaetzlich als eigene Zeile, obwohl die Asset-Zeile dasselbe Instrument schon zeigt. Ein rein durchs Sternen erzeugter Platzhalter (keine eigenen Entry/SL/TP/Notizen) wird jetzt ausgeblendet, ein echter, vom Nutzer selbst mit Handelsdaten angelegter Paar-Eintrag bleibt weiterhin als eigene Zeile sichtbar. Geprueft: Sternen ergibt genau eine Zeile mit dem Asset-Namen, Entsternen aendert daran nichts, ein Test-Eintrag mit echtem Entry/SL/TP behaelt seine eigene Zeile neben der Asset-Zeile.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-358</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-359</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -11319,13 +11319,28 @@ function renderPairs(){
   // kann aber in mehreren Kategorien stehen (z.B. EUR/USD in Set-ups UND
   // Watchlist) - daher pro Paar-Name nur EINMAL anzeigen, sonst doppelt es sich.
   const seenPair=new Set();
+  // ⚠ Non-FX-Assets (Gold/Silber/Oel/BTC/ETH) tauchten doppelt auf (Nutzer-
+  // Bugreport 2026-08-10, per Screenshot: "es gibt 2 mal Gold und Silber").
+  // Ursache: setWatched() legt beim Sternen des Assets automatisch einen
+  // 'pairs'-Eintrag unter dem KANONISCHEN Namen an ('GOLD' -> 'XAU/USD'),
+  // damit die Watchlist-Kategorie ihn fuehren kann (siehe "WATCHLIST ALS
+  // EINZIGE WAHRHEIT" oben) - der erschien hier aber zusaetzlich als EIGENE
+  // Zeile mit dem Kuerzel statt dem Asset-Namen, obwohl die Asset-Zeile
+  // (kind:'asset', unten) dasselbe Instrument schon zeigt. Reproduziert:
+  // toggleWatch(watchPairNameForAsset('GOLD')) erzeugt {name:'XAU/USD',
+  // entry:'',sl:'',tp:'',notes:''} - ein reiner Platzhalter ohne eigene
+  // Information. Ein ECHTER, vom Nutzer mit Entry/SL/TP befuellter Pair-
+  // Eintrag traegt dagegen eigene Daten, die die Asset-Zeile nicht zeigen
+  // kann - der bleibt bewusst als eigene Zeile bestehen.
+  const nonFxCanon=new Set(syms.filter(s=>!FX.includes(s.id)).map(s=>watchPairNameForAsset(s.id)));
+  const isWatchlistPlaceholder=p=>nonFxCanon.has(p.name)&&!p.entry&&!p.entryTrigger&&!p.sl&&!p.tp&&!p.notes;
   const items=[
     // "marked" ist jetzt KEIN eigenes Feld mehr, sondern schlicht: steht das
     // Paar in der Watchlist? (siehe isWatched/setWatched) - Stern und
     // Watchlist sind damit ein und dasselbe, statt zwei Zustaende, die
     // auseinanderlaufen koennen. Non-FX-Assets werden ueber ihren
     // kanonischen Paarnamen ('GOLD' -> 'XAU/USD') gefuehrt.
-    ...pairs.filter(p=>{if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:isWatched(p.name),score:pairScore(p.name)})),
+    ...pairs.filter(p=>{if(isWatchlistPlaceholder(p))return false;if(seenPair.has(p.name))return false;seenPair.add(p.name);return true;}).map(p=>({kind:'pair',id:p.id,name:p.name,bias:p.bias,marked:isWatched(p.name),score:pairScore(p.name)})),
     ...syms.filter(s=>!FX.includes(s.id)).map(s=>({kind:'asset',id:s.id,name:s.name,bias:s.bias,marked:isWatched(watchPairNameForAsset(s.id)),score:symScoreCmp(s)})),
   ];
   // Filterleiste: einzelne Währungen auswählen -> nur Paare mit dieser Währung.
