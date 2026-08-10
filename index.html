@@ -2680,12 +2680,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-360 — Die Watchlist ist jetzt innerhalb ihrer beiden Kategorien (FX Pairs / Other Assets) nach Score sortiert, staerkste Bullish-Werte zuerst - vorher standen die Karten in reiner Einfuege-Reihenfolge da. Sortiert wird nach genau dem Score, der auf der Karte selbst steht, damit Reihenfolge und Anzeige nie auseinanderlaufen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-361 — Vorbereitung fuer den geplanten Cloudflare-Zugriffsschutz: alle 10 Live-Daten-Abrufe (ind_data.json etc.) laufen jetzt ueber DATA_BASE statt eines festen relativen Pfads. Auf GitHub Pages und im lokalen Dev-Server bleibt das unveraendert (leerer Praefix, gleiche Herkunft) - auf jeder anderen Domain (z.B. einer kuenftigen Cloudflare-Pages-Adresse) wird direkt von GitHubs eigenem Raw-Endpunkt gelesen, damit ein Neu-Bau bei jedem stuendlichen Daten-Update nicht noetig ist. Betrifft nur, WOHER die Daten kommen - Rechnung und Anzeige sind unveraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-360</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-361</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3259,6 +3259,30 @@ const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // haben keine Landeszugehoerigkeit, bekommen daher keine Flagge).
 const FX_FLAG={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',CHF:'🇨🇭',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',NZD:'🇳🇿'};
 const SK='fxpro_v1';
+// ⚠ Woher die zehn Live-Daten-JSONs (ind_data.json etc.) geladen werden.
+// Grund: geplanter Zugriffsschutz per Cloudflare Pages + Access. Cloudflare
+// Pages baut das Projekt NUR bei einem Push neu und der kostenlose Plan
+// erlaubt 500 Builds/Monat - der stuendliche Daten-Workflow allein braucht
+// aber ~720 Pushes/Monat. Wuerde index.html weiter relativ (gleiche
+// Herkunft) fetchen, laege dort nach kurzer Zeit ein veralteter Snapshot
+// vom letzten tatsaechlichen Build, nicht die aktuelle Stunde.
+// GitHub Pages (jo-brxxn.github.io) UND der lokale Dev-Server haben dieses
+// Problem NICHT: beide liefern die Datei direkt aus dem Branch/Ordner ohne
+// Build-Schritt, also immer den aktuellen Stand - dort bleibt die relative,
+// schnellere Same-Origin-Anfrage bestehen. Ueberall SONST (jede Cloudflare-
+// Pages-Domain, auch eine spaeter dort angehaengte eigene Domain) wird
+// direkt von GitHubs raw-Endpunkt gelesen - dessen CORS-Faehigkeit wurde
+// vor der Umstellung mit einem echten Request gegen dieses Repo verifiziert
+// (access-control-allow-origin: *). Bringt maximal ~5 Minuten Verzug durch
+// GitHubs eigenen CDN-Cache (max-age=300) - bei stuendlichen Updates
+// vernachlaessigbar. Absichtlich per Whitelist (bekannte Immer-frisch-
+// Origins) statt Blacklist (bekannte pages.dev-Domain) entschieden: eine
+// spaeter angehaengte eigene Domain faellt sonst still auf die relative,
+// dann veraltete Anfrage zurueck - mit der Whitelist bleibt sie im
+// sichereren "hole live von GitHub"-Zweig.
+const DATA_BASE=(location.hostname==='jo-brxxn.github.io'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
+  ?''
+  :'https://raw.githubusercontent.com/jo-brxxn/FX-final/main/';
 
 // Official FX pairs list (base/quote correct)
 const ALL_PAIRS=[
@@ -11878,7 +11902,7 @@ async function fetchFFJson(){
     // Cache-Buster (?t=...) erzwingen: iOS-Safari und der Fastly-CDN vor
     // GitHub Pages ignorieren cache:'no-store' teilweise und liefern sonst
     // eine veraltete Kopie OHNE die frisch ergänzten Actual-Werte.
-    const res=await fetch('ff_calendar.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'ff_calendar.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){
       const evts=await res.json();
       if(Array.isArray(evts)&&evts.length)return evts;
@@ -12018,7 +12042,7 @@ function autoFetchFF(){
 let IND_DATA_FEED=null;
 async function fetchIndData(){
   try{
-    const res=await fetch('ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))IND_DATA_FEED=d;}
   }catch(e){}
 }
@@ -12157,7 +12181,7 @@ const BOND_INDS=['2Y Bond Yield','10Y Bond Yield'];
 let BOND_DATA_FEED=null;
 async function fetchBondData(){
   try{
-    const res=await fetch('bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))BOND_DATA_FEED=d;}
   }catch(e){}
 }
@@ -12283,7 +12307,7 @@ let PRICE_DATA_FEED=null;
 let priceDataLastFetch=null;
 async function fetchPriceData(){
   try{
-    const res=await fetch('price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))PRICE_DATA_FEED=d;}
   }catch(e){}
   priceDataLastFetch=Date.now();
@@ -12302,7 +12326,7 @@ function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rere
 // "nie schaetzen").
 let NEWS_DATA=null;
 function fetchNewsData(){
-  return fetch('news_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'news_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&Array.isArray(d.headlines))NEWS_DATA=d;}).catch(()=>{});
 }
 function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')renderDash();});}
@@ -16412,7 +16436,7 @@ function cotMergeHistory(fresh){
 }
 async function fetchCotData(){
   try{
-    const res=await fetch('cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&d.symbols)COT_DATA=d;}
   }catch(e){}
   // Falls die staendlich geschriebene Datei (noch) fehlt oder leer ist, direkt
@@ -16895,7 +16919,7 @@ function sentEval(key,d){
   return null;
 }
 function fetchSentimentData(){
-  return fetch('sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&!Array.isArray(d))SENTIMENT_DATA=d;}).catch(()=>{});
 }
 function autoFetchSentiment(){
@@ -17831,7 +17855,7 @@ function renderCot(){
 // Schema: {updated, assets:{ID:{proxy,inv,months:[[mon,avgPct,hitPct,nYears]x12]}}}
 let SEASONALITY_DATA=null,seasAsset='';
 function fetchSeasonalityData(){
-  return fetch('seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets)SEASONALITY_DATA=d;}).catch(()=>{});
 }
 function autoFetchSeasonality(){fetchSeasonalityData().then(()=>{if(curPage==='seas')renderSeasonality();});}
@@ -17943,7 +17967,7 @@ let RATE_PROB_DATA=null,rateProbFocus=0;
 // kein snap()/Cloud-Sync-Feld noetig (siehe CLAUDE.md-Muster).
 let rateProbCcy='USD';
 function fetchRateProbData(){
-  return fetch('rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object')RATE_PROB_DATA=d;}).catch(()=>{});
 }
 function autoFetchRateProb(){fetchRateProbData().then(()=>{if(curPage==='rate')renderRateProb();});}
@@ -19010,7 +19034,7 @@ async function bootFetchScoreFeeds(){
 let SCORE_HIST_SERVER=null;
 async function fetchScoreHistServer(){
   try{
-    const res=await fetch('score_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'score_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))SCORE_HIST_SERVER=d;}
   }catch(e){}
 }
