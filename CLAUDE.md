@@ -5443,3 +5443,63 @@ null,1)`).
 bereits eigene Zeitreihen-Daten in den committeten JSONs hat (nicht nur
 Code-Referenzen) - sonst bleiben verwaiste Keys liegen, die nie wieder
 angefasst werden, aber niemand mehr braucht.
+
+### Score-Modal als Karten statt Zeilenliste (Nutzer-Wunsch 2026-08-11)
+
+Nutzer-Auftrag (per `/goal`): der Score-Detailausklapp pro Indikator war
+bisher eine dichte einzeilige Liste - Basis/Gewicht/Normierungsfaktoren
+standen als Text-Klammer in einer Zeile, ohne Aufschluesselung, WORAUS ein
+Faktor stammt. Umgebaut auf Karten (`.si-card`) mit Formel-Kette
+(`.si-chain`, Basis × Gewicht × Alter × Marktrelevanz × Ueberraschung als
+einzelne Chips) und aufklappbaren Faktor-Tabellen (natives `<details
+class="si-factor">`, kein JS-Handler noetig) - Klick auf den ⓘ-Chip bei
+"Age" zeigt Release-Datum/eigenen Zyklus/Halbwertszeit/Altersgrenze, bei
+"Surprise size" die eigene Streuung σ + Beobachtungszahl, bei "Market
+impact" den Ø-Kursausschlag-Faktor + Beobachtungszahl.
+
+**Reine Anzeige-Umstellung** (`scoreInfoIndRow()`, ≈ Zeile 4019): liest
+ausschliesslich bereits bestehende Funktionen (`indScoreParts`,
+`indNormBreakdown`, `indSurpriseStats`, `indHalfLifeDays`) - keine neue
+Berechnung, damit das Modal nie von der echten Rechnung abweichen kann
+(Projekt-Grundsatz). Bias weiterhin NUR ueber `border-left-color`
+(CLAUDE.md-Grundsatz "Score-/Asset-Karten: kein Hintergrund-Tint"), Karten
+in `--bg2` (wie der Modal-Hintergrund selbst) mit 1px Rand fuer Kontrast -
+gleiche Konvention wie das bestehende Data-Quality-Fenster
+(`.dq-sum-item`). Modal-Breite von 460px auf 600px erhoeht (die Formel-
+Kette braucht mehr Platz als die alte Textzeile).
+
+Vor der Umsetzung ein vollstaendiges, interaktives Mockup als Artifact
+gebaut und dem Nutzer gezeigt (im exakten "Grey Tech Terminal"-Look der
+App, nicht neu erfunden) - erst danach implementiert, da eine reine
+Anzeige-Aenderung als niedrigrisikoreich eingestuft wurde (keine Score-
+Logik-Aenderung, jederzeit reversibel), waehrend die drei anderen an
+diesem Tag ebenfalls angefragten Punkte (neue Indikatoren, ±3-Schwellen-
+Kalibrierung, Risk-Environment-Score-Trennung) bewusst NICHT ohne
+explizites Nutzer-OK umgesetzt wurden, da sie echte Scoring-Verhaltens-
+Aenderungen waeren.
+
+Per Playwright verifiziert: 127 Aufrufe (`openScoreInfoSym`/
+`openScoreInfoRub`/`openScoreInfoPair`, alle Symbole/Rubriken/15 Paare) in
+BEIDEN Score-Modi fehlerfrei, `<details>`-Toggle oeffnet/schliesst korrekt
+und zeigt die richtigen Zahlen (Live-Beispiel USD CPI: 2,41σ, Streuung
+0,124, 34 Beobachtungen, Faktor ×1,55 - identisch zur Formel-Kette
+darueber). `node --check` sauber.
+
+**Noch offen, wartet auf Nutzer-Entscheidung** (nicht Teil dieses Fixes):
+1. Welche der recherchierten Citi/Bloomberg-Indikatoren (Kandidat mit
+   bester Erfolgsaussicht: University of Michigan Consumer Sentiment -
+   TradingView-Kalender fuehrt laut bestehendem `RULES`-Ausschluss-Regex
+   in `update-ff-calendar.yml` bereits einen Michigan-Titel) ergaenzt
+   werden sollen.
+2. Ob die feste ±3-Bull/Bear-Schwelle im `normalized`-Modus durch eine
+   z-Score-Kalibrierung gegen die eigene `scoreHist`-Verteilung ersetzt
+   wird (empirischer Befund an echten 22 Tagen `score_hist.json`: JPY war
+   100% der Zeit "bullish" eingestuft, mehrere Assets nie ausserhalb der
+   Neutral-Zone - die feste Schwelle wirkt je nach Asset-Streuung sehr
+   unterschiedlich).
+3. Ob `Risk Environment` aus der additiven `symScore`-Summe herausgenommen
+   und als eigenes Overlay separat ausgewiesen wird (nach Vorbild von
+   Citis GMRI/Macro Risk Index, der ebenfalls nie in einen fundamentalen
+   Score gemischt wird) - macht Cross-Asset-Vergleiche zwischen Risk-On-
+   und Risk-Off-Assets aktuell schief, weil der Risk-Sentiment-Regler pro
+   Asset unterschiedlich stark reinzieht.

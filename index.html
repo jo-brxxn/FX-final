@@ -2562,6 +2562,49 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .dq-note{font-size:var(--fs-xs);color:var(--t2);line-height:1.65;margin-top:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
 .dq-note b{color:var(--t0)}
 .dq-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.6;padding:14px 0}
+
+/* ── Score-Aufschluesselung als Karten (Nutzer-Wunsch 2026-08-11) ────
+   Ersetzt die vorherige flache Zeilenliste in scoreInfoIndRow() durch
+   Karten mit Formel-Kette + aufklappbaren Faktor-Tabellen (Alter/
+   Marktrelevanz/Ueberraschung) - dieselben Zahlen wie zuvor, nur anders
+   dargestellt. Bias NUR ueber border-left-color (CLAUDE.md-Grundsatz
+   "Score-/Asset-Karten: kein Hintergrund-Tint"), Karte selbst bg2 wie der
+   Modal-Hintergrund + 1px Rand fuer Kontrast (gleiche Konvention wie
+   .dq-sum-item), Faktor-Panels bg1 als leichte Vertiefung. */
+.si-card{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--t3);border-radius:var(--rs);margin-bottom:9px;overflow:hidden}
+.si-card.bull{border-left-color:var(--blue)}
+.si-card.bear{border-left-color:var(--red)}
+.si-top{display:flex;align-items:flex-start;gap:10px;padding:9px 11px 8px}
+.si-name{font-size:var(--fs-base);font-weight:700;color:var(--t0);font-family:var(--ff-text)}
+.si-tag{font:800 8.5px var(--ff-num);letter-spacing:.4px;color:var(--red);background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:1px;white-space:nowrap}
+.si-meta{color:var(--t3);font-size:var(--fs-xs);font-family:var(--ff-num);margin-top:1px}
+.si-meta b{color:var(--t1);font-weight:700}
+.si-delta{flex-shrink:0;text-align:right;white-space:nowrap}
+.si-delta-n{font:800 var(--fs-lg) var(--ff-num)}
+.si-chain{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;padding:0 11px 9px;font-size:var(--fs-xs);font-family:var(--ff-num)}
+.si-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg1);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 6px;color:var(--t1);font-weight:600}
+.si-chip .v{color:var(--t0);font-weight:800}
+.si-chip-op{color:var(--t3);padding:0 4px;font-weight:800}
+.si-info-btn{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.2px solid var(--t3);color:var(--t3);font:800 8px var(--ff-num);cursor:pointer;background:transparent;flex-shrink:0;margin-left:4px;transition:all .12s;padding:0}
+.si-info-btn:hover,.si-info-btn:focus-visible{border-color:var(--blue);color:var(--blue);outline:none}
+.si-sub{padding:0 11px 9px;color:var(--t3);font-size:var(--fs-xs);line-height:1.5}
+details.si-factor{border-top:1px solid var(--bd)}
+details.si-factor>summary{list-style:none;cursor:pointer;padding:7px 11px;font:700 var(--fs-xs) var(--ff-num);color:var(--t2);display:flex;align-items:center;gap:6px;background:var(--bg1)}
+details.si-factor>summary::-webkit-details-marker{display:none}
+details.si-factor>summary::before{content:'▸';color:var(--t3);font-size:8px;transition:transform .12s}
+details.si-factor[open]>summary::before{transform:rotate(90deg)}
+details.si-factor>summary:hover{color:var(--t0)}
+details.si-factor[open]>summary{border-bottom:1px solid var(--bd)}
+.si-factor-body{padding:9px 11px 11px;background:var(--bg1)}
+table.si-ftab{width:100%;border-collapse:collapse;font-size:var(--fs-xs);font-family:var(--ff-num)}
+table.si-ftab tr{border-bottom:1px solid var(--bd)}
+table.si-ftab tr:last-child{border-bottom:none}
+table.si-ftab td{padding:4px 3px;color:var(--t2)}
+table.si-ftab td:first-child{color:var(--t3);white-space:nowrap;padding-right:12px}
+table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
+.si-total{display:flex;justify-content:space-between;gap:10px;align-items:baseline;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px;margin-top:10px;font-weight:800}
+.si-total-lbl{font-size:var(--fs-sm);color:var(--t1)}
+.si-total-v{font-size:var(--fs-xl);font-family:var(--ff-num)}
 </style>
 </head>
 <body>
@@ -2680,12 +2723,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-362 — Amazon und Nvidia sind komplett aus der App entfernt (Nutzer-Wunsch). Betroffen: die Symbol-Definitionen selbst, die Stocks-Kategorie in allen Asset-Filter-Dropdowns (COT/Put-Call/Net-Options-Flow/Saisonalitaet - die Kategorie verschwindet ganz, da sie sonst leer waere), die Risk-Correlation-Erklaertexte und die Standard-Reaktionsrichtung auf den Risk-Sentiment-Regler. Im Workflow holen der TradingView-Preis-Fetch und der Yahoo-3-Jahres-Backfill keine Kurse mehr fuer beide. Die schon aufgezeichnete Kurs- und Score-Historie fuer beide wurde als einmalige Bereinigung mit entfernt, damit nichts verwaist stehen bleibt.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-363 — Score-Aufschluesselung als Karten statt Zeilenliste (Nutzer-Wunsch). Klick auf einen Score zeigt jetzt pro Indikator eine eigene Karte mit Basis/Gewicht als Formel-Kette; im normalized-Modus zusaetzlich Alter-/Marktrelevanz-/Ueberraschungsgroesse-Faktoren als eigene Chips mit aufklappbarer Tabelle dahinter (Halbwertszeit, eigene Streuung sigma, Ø-Kursausschlag). Reine Anzeige-Umstellung, liest ausschliesslich bereits bestehende Berechnungsfunktionen (indScoreParts/indNormBreakdown/indSurpriseStats) - keine neue Score-Logik, keine neuen Daten.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-362</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-363</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3012,7 +3055,7 @@ function introLogin(){
      Karte oder Paar): zeigt, aus welchen Indikator-Beitraegen sich die Zahl
      zusammensetzt (Basis-Gewicht, Stern, Trend-Anteil). -->
 <div class="ov" id="mScoreInfo" style="display:none">
-  <div class="modal" style="max-width:460px">
+  <div class="modal" style="max-width:600px">
     <h3 id="scoreInfoTitle">Score</h3>
     <div id="scoreInfoBody" style="font-size:12.5px;line-height:1.55"></div>
     <div class="m-btns"><button class="btn" onclick="closeM('mScoreInfo')">Close</button></div>
@@ -4016,66 +4059,118 @@ function roundSc(n){return Math.round((n+(n>=0?1:-1)*Number.EPSILON)*100)/100;}
 function indScore(ind,rub){return roundSc(indScoreParts(ind,rub).total);}
 // ── Score-Aufschluesselung (Modal, Klick auf einen beliebigen Score) ──
 function fmtScNum(v){v=Math.round(v*100)/100;return(v>0?'+':'')+v;}
+// Kartenbasierte Score-Aufschluesselung (Nutzer-Wunsch 2026-08-11): zeigt
+// jeden Indikator als eigene Karte mit Formel-Kette (Basis × Gewicht ×
+// Alter × Marktrelevanz × Ueberraschung) statt einer flachen Zeile -
+// aufklappbare Faktor-Tabellen (i-Knopf, natives <details>, kein JS noetig)
+// legen offen, WORAUS jeder Faktor stammt. Reine Anzeige-Umstellung: liest
+// ausschliesslich bereits bestehende Funktionen (indScoreParts,
+// indNormBreakdown, indSurpriseStats, indHalfLifeDays) - keine neue
+// Berechnung, damit das Modal nie von der echten Rechnung abweichen kann.
 function scoreInfoIndRow(ind,rub){
   const p=indScoreParts(ind,rub);
-  let sub;
-  if(p.zero)sub='display-only, counts 0 by design';
-  else if(p.stale){
-    const c=indOverdueCycles(ind);
-    sub=`release ${c?c.toFixed(1):'?'}× its own cycle overdue (last ${escH((ind.research&&ind.research.date)||'?')}) — excluded from the score until a new one arrives`;
-  }
-  else{
-    const bits=[];
-    const bl=ind.bias==='bull'?'Bullish':ind.bias==='bear'?'Bearish':'Neutral';
-    bits.push(bl+(p.base?` × ${p.w}`:''));
-    // Trend und Revision zaehlen seit 2026-08-08 nicht mehr in den Score
-    // (siehe Kommentare in indScoreParts). Sie werden hier weiterhin
-    // ERWAEHNT, aber ausdruecklich als wirkungslos gekennzeichnet - sonst
-    // saehe der Nutzer den Trend-Chip an der Karte und suchte im Modal
-    // vergeblich nach seinem Beitrag.
-    if(ind.stepDriven)bits.push('step signal (no forecast): actual vs previous');
-    if(ind.trendDriven||ind.trendBias==='bull'||ind.trendBias==='bear')
-      bits.push(`2-step trend ${ind.trendDriven?'confirmed':(ind.trendBias==='bull'?'bullish':'bearish')} — shown only, counts 0`);
-    if(ind.revBias)bits.push(`prev revised${ind.research&&ind.research.revisedFrom?' from '+ind.research.revisedFrom:''} — shown only, counts 0`);
-    if(p.noTrend)bits.push('card excluded from trend adjustments');
-    if(cotWowIsSmall(ind))bits.push('small WoW shift (<3 pp), half weight');
-    if(ind.research&&ind.research.sent)bits.push('contrarian sentiment, half weight, only counts at extremes');
-    const partners=indGroupPartners(ind,rub);
-    if(partners)bits.push('shares weight with '+partners.join(' + '));
-    // Normierungs-Ebene NIE als blosse Zahl stehen lassen: solange sie aktiv
-    // ist, wird jeder Teilfaktor einzeln aufgeschluesselt, damit der Beitrag
-    // nachvollziehbar bleibt statt zu einer Blackbox zu werden.
-    if(scoreMode==='normalized'&&p.norm!=null&&Math.abs(p.norm-1)>0.005){
-      // Dieselbe Quelle wie die Rechnung selbst (siehe stampRubOwners) -
-      // sonst zeigt das Fenster einen anderen Faktor als den, mit dem der
-      // Score tatsaechlich gebildet wurde.
-      const nb=indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null));
-      const parts=[];
-      if(nb.z!=null)parts.push(`surprise ${nb.z.toFixed(2)}σ → ×${nb.mag.toFixed(2)}`);
-      if(Math.abs(nb.dec-1)>0.005)parts.push(`age → ×${nb.dec.toFixed(2)} (${Math.round(nb.cycle)}d cycle)`);
-      if(Math.abs(nb.mkt-1)>0.005)parts.push(`market impact → ×${nb.mkt.toFixed(2)}`);
-      bits.push(`weighted ×${p.norm.toFixed(2)}${parts.length?' ('+parts.join(', ')+')':''}`);
+  const nm=ind.displayName||ind.name;
+  const r=ind.research||{};
+  const biasCls=(ind.bias==='bull'||ind.bias==='sbull')?'bull':(ind.bias==='bear'||ind.bias==='sbear')?'bear':'';
+
+  // ── Display-only / veraltet: schlanke Karte ohne Formel-Kette ──
+  if(p.zero||p.stale){
+    let sub;
+    if(p.zero)sub='Display-only — excluded from the score by design.';
+    else{
+      const c=indOverdueCycles(ind);
+      sub=`Last release ${escH(r.date||'?')}, ${c?c.toFixed(1):'?'}× its own cycle overdue — excluded from the score until a new one arrives.`;
     }
-    sub=bits.join(' · ');
+    return`<div class="si-card">
+      <div class="si-top">
+        <div style="min-width:0;flex:1"><span class="si-name">${escH(nm)}</span>${p.stale?'<span class="si-tag">OUT OF DATE</span>':''}</div>
+        <div class="si-delta"><div class="si-delta-n" style="color:var(--t3)">0.00</div></div>
+      </div>
+      <div class="si-sub">${sub}</div>
+    </div>`;
   }
-  // Release-Alter: macht sichtbar, wie frisch das Signal hinter dem Beitrag
-  // ist (ein Bias aus einem alten Release zaehlt sonst unsichtbar weiter).
-  // >45 Tage wird amber markiert - bei Quartalsdaten normal, bei
-  // Monatsdaten ein Hinweis auf einen verpassten/ausgefallenen Release.
-  const relDate=(ind.research&&ind.research.date)||(Array.isArray(ind.valDates)?ind.valDates[ind.valDates.length-1]:null);
-  let ageHtml='';
+
+  // ── Meta-Zeile: Actual vs. Forecast/Vorwert, Beat/Miss ──
+  const bl=ind.bias==='sbull'?'Strongly bullish':ind.bias==='bull'?'Bullish':ind.bias==='sbear'?'Strongly bearish':ind.bias==='bear'?'Bearish':'Neutral';
+  let meta='';
+  if(r.bond)meta=`SMA5 ${r.bondColor==='bond-up'?'above':r.bondColor==='bond-down'?'below':'within 3bp of'} SMA21 &middot; ${escH(bl)}`;
+  else if(r.cot||r.sent)meta=`${escH(r.actual||'?')}${r.previous!=null?' &middot; prev '+escH(r.previous):''}`;
+  else if(r.actual!=null)meta=`${escH(r.actual)}${r.forecast!=null?' vs. '+escH(r.forecast)+' expected':(r.previous!=null?' &middot; prev '+escH(r.previous):'')}`;
+  else meta=escH(bl);
+  if(r.actual!=null&&r.forecast!=null&&ind.bias!=='neu')meta+=` &middot; <b style="color:${biasCls==='bull'?BC.bull:BC.bear}">${ind.bias==='bull'||ind.bias==='sbull'?'Beat':'Miss'}</b>`;
+
+  // ── Formel-Kette ──
+  const chips=[`<span class="si-chip">Base <span class="v">${biasScore(ind.bias)>0?'+':''}${biasScore(ind.bias)}</span></span>`,
+               `<span class="si-chip">Weight <span class="v">${p.w}</span></span>`];
+  const nb=(scoreMode==='normalized')?indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null)):null;
+  let factorPanels='';
+  if(nb){
+    if(nb.z!=null&&Math.abs(nb.mag-1)>0.005){
+      chips.push(`<span class="si-chip">Surprise size <span class="v">×${nb.mag.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
+      const st=indSurpriseStats(ind);
+      factorPanels+=`<details class="si-factor"><summary>Beat/Miss im historischen Vergleich</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Abweichung jetzt</td><td>${nb.z.toFixed(2)}σ</td></tr>
+        <tr><td>Eigene Streuung σ (Prognosefehler)</td><td>${st.sigma!=null?st.sigma.toFixed(3):'–'}</td></tr>
+        <tr><td>Beobachtungen</td><td>${st.n||0} vergangene Releases</td></tr>
+        <tr><td>Faktor (√, gedämpft auf 0,05–…)</td><td>×${nb.mag.toFixed(2)}</td></tr>
+      </table></div></details>`;
+    }
+    if(Math.abs(nb.dec-1)>0.005){
+      chips.push(`<span class="si-chip">Age <span class="v">×${nb.dec.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
+      const hl=indHalfLifeDays(ind);
+      factorPanels+=`<details class="si-factor"><summary>Veraltungsperiode &amp; Halbwertszeit</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Release-Datum</td><td>${escH(r.date||'?')}</td></tr>
+        <tr><td>Eigener Zyklus</td><td>${Math.round(nb.cycle)} Tage</td></tr>
+        <tr><td>Halbwertszeit (${DECAY_HALFLIFE_CYCLES}× Zyklus)</td><td>${hl!=null?Math.round(hl):'?'} Tage</td></tr>
+        <tr><td>Altersgrenze (0 ab)</td><td>${IND_STALE_CYCLES} eigene Zyklen</td></tr>
+        <tr><td>Gewicht jetzt</td><td>×${nb.dec.toFixed(2)}</td></tr>
+      </table></div></details>`;
+    }
+    if(Math.abs(nb.mkt-1)>0.005){
+      chips.push(`<span class="si-chip">Market impact <span class="v">×${nb.mkt.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
+      factorPanels+=`<details class="si-factor"><summary>Marktrelevanz — Ø-Kursausschlag an Release-Tagen</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Ø-Bewegung an Release-Tagen ggü. sonst</td><td>×${nb.mkt.toFixed(2)}</td></tr>
+        <tr><td>Beobachtungen</td><td>${(Array.isArray(ind.chartHist)?ind.chartHist.length:0)} Releases mit Kurs-Historie</td></tr>
+      </table></div></details>`;
+    }
+  }
+
+  // Bestehende Zusatz-Hinweise (Step-Signal, Trend/Revision nur-Anzeige,
+  // Core-Paar-Partner, kleine WoW-Bewegung, Sentiment-Extrem) bleiben als
+  // kompakte Fusszeile - andere Signalklasse als die Normierungsfaktoren
+  // oben, die zaehlen ja unveraendert nicht in den Score.
+  const extra=[];
+  if(ind.stepDriven)extra.push('step signal (no forecast): actual vs previous');
+  if(ind.trendDriven||ind.trendBias==='bull'||ind.trendBias==='bear')
+    extra.push(`2-step trend ${ind.trendDriven?'confirmed':(ind.trendBias==='bull'?'bullish':'bearish')} — shown only, counts 0`);
+  if(ind.revBias)extra.push(`prev revised${r.revisedFrom?' from '+r.revisedFrom:''} — shown only, counts 0`);
+  if(cotWowIsSmall(ind))extra.push('small WoW shift (<3 pp), half weight');
+  if(r.sent)extra.push('contrarian sentiment, half weight, only counts at extremes');
+  const partners=indGroupPartners(ind,rub);
+  if(partners)extra.push('shares weight with '+partners.join(' + '));
+
+  const relDate=r.date||(Array.isArray(ind.valDates)?ind.valDates[ind.valDates.length-1]:null);
+  let ageNote='';
   if(relDate){
     const days=Math.round((new Date(todayStr())-new Date(String(relDate).slice(0,10)))/86400000);
-    if(isFinite(days)&&days>=0)ageHtml=`<span style="color:${days>45?'var(--amber)':'var(--t3)'};font-size:11px"> · release ${escH(String(relDate).slice(0,10))} (${days}d ago)</span>`;
+    if(isFinite(days)&&days>=0)ageNote=` &middot; release ${escH(String(relDate).slice(0,10))} (${days}d ago)`;
   }
-  const nm=ind.displayName||ind.name;
-  return`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px">
-    <span style="min-width:0"><span style="font-weight:600">${escH(nm)}</span><br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>${ageHtml}</span>
-    <span style="font-weight:700;white-space:nowrap;color:${scoreColor(p.total*3)}">${fmtScNum(p.total)}</span>
+
+  return`<div class="si-card ${biasCls}">
+    <div class="si-top">
+      <div style="min-width:0;flex:1">
+        <span class="si-name">${escH(nm)}</span>
+        <div class="si-meta">${meta}${ageNote}</div>
+      </div>
+      <div class="si-delta"><div class="si-delta-n" style="color:${scoreColor(p.total*3)}">${fmtScNum(p.total)}</div></div>
+    </div>
+    <div class="si-chain">${chips.join('<span class="si-chip-op">×</span>')}<span class="si-chip-op">=</span><b style="color:var(--t0)">${fmtScNum(p.total)}</b></div>
+    ${extra.length?`<div class="si-sub">${escH(extra.join(' · '))}</div>`:''}
+    ${factorPanels}
   </div>`;
 }
 function scoreInfoTotalRow(label,val){
-  return`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 8px;margin-top:7px;border-top:1px solid var(--bd2);font-weight:700"><span>${escH(label)}</span><span style="color:${scoreColor(val)}">${fmtScNum(val)}</span></div>`;
+  return`<div class="si-total"><span class="si-total-lbl">${escH(label)}</span><span class="si-total-v" style="color:${scoreColor(val)}">${fmtScNum(val)}</span></div>`;
 }
 // ══ DATENQUALITAET & GEWICHTUNG PRO ASSET ════════════════════════════════
 // (Nutzer-Wunsch 2026-08-08) Die App RECHNET Streuung, Zyklus, Halbwertszeit
