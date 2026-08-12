@@ -5503,3 +5503,73 @@ darueber). `node --check` sauber.
    Score gemischt wird) - macht Cross-Asset-Vergleiche zwischen Risk-On-
    und Risk-Off-Assets aktuell schief, weil der Risk-Sentiment-Regler pro
    Asset unterschiedlich stark reinzieht.
+
+### Dashboard-Watchlist-Karte sortiert, "vs Price" ueberall dauerhaft an, Seasonality bekommt eine "vs Price"-Ueberlagerung (Nutzer-Wunsch 2026-08-12)
+
+Drei kleinere, unabhaengige Nutzer-Wuensche in einem Rutsch:
+
+- **Dashboard-Watchlist-Karte (`type==='watchlist'`-Widget) sortiert jetzt
+  nach Score absteigend** - dieselbe Sortierregel, die `renderWatchlistTab()`
+  (der eigene Watchlist-Tab) schon seit 2026-08-10 hat, war nie auf die
+  Dashboard-Karte uebertragen worden (klassischer Fall von "wiederkehrende
+  UI-Bausteine muessen einheitlich sein" - zwei Stellen zeigen dieselbe
+  Liste, nur eine wurde beim urspruenglichen Fix erwischt). FX-Zeilen nach
+  `pairScore()`, Non-FX-Zeilen nach dem Symbol-Score (falls das Asset noch
+  existiert, sonst Paar-Score als Fallback) - exakt die Werte, die die
+  jeweilige Zeile auch anzeigt, damit Sortierung und Anzeige nie
+  auseinanderlaufen. **Falle beim ersten Entwurf:** `nonFxLegAssetId()` auf
+  ALLE Items (auch FX-Paare) anzuwenden waere falsch gewesen - fuer
+  z.B. "EUR/USD" liefert das ueber den Praefix-Fallback zufaellig `'EUR'`,
+  was als echte Symbol-ID matcht und faelschlich den EUR-Einzel-Score statt
+  des Paar-Scores zurueckgegeben haette. Getrennte Sortierfunktionen fuer
+  `fxItems` (immer `pairScore`) und `nonFxItems` (`nonFxLegAssetId`-Pfad)
+  vermeiden das.
+- **"vs Price" (Trends-Tab) war ein Toggle-Button (`trendsShowPrice`) - jetzt
+  dauerhaft aktiv**, sobald genau ein Asset oder Paar gewaehlt ist (bei
+  "All assets"/"FX only" war "vs Price" ohnehin nie moeglich, das bleibt
+  unveraendert - mehrere Score-Linien gleichzeitig, kein Platz fuer eine
+  einzelne Preis-Ueberlagerung). Button + State-Variable + die
+  Button-Sync-Logik in `renderTrends()` komplett entfernt, beide
+  Aufrufstellen (`renderTrends()` fuer Einzelasset, `renderTrendsPair()`
+  fuer den Paar-Modus) nehmen jetzt unconditional den `scoreVsPriceCard`-
+  Zweig.
+- **Seasonality bekommt eine eigene "vs Price"-Entsprechung, ebenfalls ohne
+  sichtbare Option.** Anders als beim Trends-Tab gibt es hier keinen Score
+  und keine echte Datums-Zeitreihe (die X-Achse sind die 12 Kalendermonate,
+  gemittelt ueber 15 Jahre) - "vs Price" 1:1 uebertragen ergibt hier keinen
+  Sinn. Sinnvolle Entsprechung: der TATSAECHLICHE Kursverlauf des
+  LAUFENDEN Jahres, Monat fuer Monat, als gestrichelte Linie ueber den
+  historischen Durchschnitts-Balken (`seasCurYearReturns()`, neue Funktion
+  vor `seasBarChart()`) - zeigt auf einen Blick, ob das laufende Jahr dem
+  15-Jahres-Muster folgt oder abweicht. Aus echter Kurshistorie berechnet
+  (`priceSeriesFor()`, dieselbe Quelle wie jeder andere Preis-Chart in der
+  App) - Basis je Monat ist der letzte bekannte Kurs VOR Monatsbeginn,
+  damit auch der laufende, noch unvollstaendige Monat einen echten
+  Zwischenstand zeigt statt zu fehlen; respektiert `A.inv` (dieselbe
+  USD-first-Invertierung wie die historischen Saison-Werte, damit beide
+  Reihen dasselbe Vorzeichen-System nutzen). Folgt der bereits etablierten
+  gestrichelte-Linie-Konvention (`var(--t0)`, `stroke-dasharray`, siehe
+  "Preis-Historie: Kerzen durch gestrichelte Linie ersetzt" oben) statt
+  eine neue Optik zu erfinden, inkl. `.tr-leg-dash`-Legende. **Ein
+  gemeinsamer Tooltip pro Monat** (historischer Ø + "this year so far" im
+  selben `chv-tip`) statt zwei separater Hover-Punkte an derselben
+  X-Position - sonst genau der bereits mehrfach dokumentierte Bug, dass
+  `attachChartHovers()`s Naechster-Punkt-Suche nur den einen von zwei
+  Punkten am selben X zeigt.
+
+Per Playwright verifiziert: Watchlist-Karte zeigt FX-Sektion und Non-FX-
+Sektion je absteigend sortiert (dieselbe zwei-Sektionen-Struktur wie der
+Watchlist-Tab); Trends zeigt fuer ein Einzelasset UND im Paar-Modus immer
+die vs-Price-Karte, `trendsPriceBtn`/`toggleTrendsPrice` existieren nicht
+mehr im DOM/als Funktion; Seasonality zeigt bei vorhandener Kurshistorie
+die gestrichelte Ueberlagerung + Legende, keinen Toggle-Button. Voller
+Tab-Regressionstest weiterhin fehlerfrei.
+
+**Noch offen (Nutzer-Auftrag, wartet auf Bild-Entscheidung):** der Marmor-
+Hintergrund (`body{background:...}`, Grey-Tech-Terminal-Theme) soll
+"deutlich schoener, mehr Details" werden. Vier Prototypen als Artifact
+gebaut und dem Nutzer gezeigt (A=aktueller Stand, B=verfeinerte Version
+derselben Hand-Gradient-Technik, C/D=echte prozedurale Marmorierung per
+SVG `feTurbulence`+`feDisplacementMap` in gedaempfter bzw. kontrastreicher
+Auspraegung) - noch keine Auswahl getroffen, noch nicht in `index.html`
+uebernommen.

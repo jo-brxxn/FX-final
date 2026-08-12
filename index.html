@@ -2723,12 +2723,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-364 — Risk-Sentiment-Karte: automatische RISK-ON/RISK-OFF-Einstufung kommt jetzt vom Kansas City Fed Risk-On/Risk-Off Index (KCRORO, taeglich via FRED) statt einem selbstgebauten Asset-Mittelwert. Neuer Workflow-Schritt zieht den Wert + eigene 3-Jahres-Historie fuer eine Perzentil-Gauge (kein geratener Skalenwert). Der manuelle None/Half/Full-Regler UND riskOnOffState() (Aurora-Faerbung/daily_bias-Widget) bleiben bewusst unveraendert - Nutzer-Wunsch war explizit nur diese eine Karte. Ohne erfolgreichen Live-Fetch zeigt die Karte ehrlich 'kein Live-Wert' statt eines geschaetzten Ersatzes.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-365 — Drei Nutzer-Wuensche: (1) Dashboard-Watchlist-Karte sortiert FX/Non-FX-Zeilen jetzt nach Score absteigend (die Watchlist-TAB-Ansicht tat das schon seit 2026-08-10, die Dashboard-Karte war die einzige verbliebene Stelle ohne diese Sortierung). (2) Trends-Tab: 'vs Price' war ein Toggle-Button - jetzt dauerhaft aktiv (Score-vs-Price-Chart statt reinem Score-Chart), sobald genau ein Asset/Paar gewaehlt ist, kein Button mehr noetig. (3) Seasonality: neue, dauerhaft aktive Ueberlagerung mit dem tatsaechlichen Kursverlauf des laufenden Jahres je Monat (gestrichelte Linie ueber den historischen 15-Jahres-Balken) - aus echter Kurshistorie berechnet, kein Toggle/keine Option.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-364</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-365</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -2780,7 +2780,6 @@ function introLogin(){
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
         <select class="btn" id="trendsPairSel" onchange="setTrendsPair(this.value)" title="Choose pair" style="cursor:pointer"></select>
       </span>
-      <button class="btn" id="trendsPriceBtn" onclick="toggleTrendsPrice()" title="Overlay the Total Score against the asset's actual market price (only with a single asset or pair selected)"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> vs Price</button>
     </div>
   </div>
   <div id="trendsBody"></div>
@@ -14195,8 +14194,14 @@ function renderDash(){
           <button onclick="event.stopPropagation();delPair('${p.id}');renderDash()" class="dw-del" title="Remove from the watchlist">×</button>
         </div>`;
       };
-      const fxItems=wp.filter(p=>isPureFxPair(p.name));
-      const nonFxItems=wp.filter(p=>!isPureFxPair(p.name));
+      // Nach Score absteigend (Nutzer-Wunsch 2026-08-12) - dieselbe Groesse,
+      // die die jeweilige Zeile auch anzeigt (rowScore oben), damit Sortierung
+      // und Anzeige nie auseinanderlaufen: FX-Paare nach pairScore, Non-FX
+      // nach dem Symbol-Score (falls das Asset noch existiert, sonst Paar-
+      // Score als Fallback - exakt wie nonFxRow() selbst es herleitet).
+      const fxItems=wp.filter(p=>isPureFxPair(p.name)).sort((a,b)=>pairScore(b.name)-pairScore(a.name));
+      const nonFxSortScore=p=>{const sym=syms.find(s=>s.id===nonFxLegAssetId(p.name));return sym?symScoreCmp(sym):pairScore(p.name);};
+      const nonFxItems=wp.filter(p=>!isPureFxPair(p.name)).sort((a,b)=>nonFxSortScore(b)-nonFxSortScore(a));
       const addRow=`<div class="wl-row wl-add" onclick="openAddPair('Watchlist')" title="Add pair to Watchlist"><span class="wl-icons">+</span><span class="wl-name">Add pair</span></div>`;
       content=(wp.length===0?`<div class="dw-empty">No pairs in Watchlist yet.</div>`:
         `<div class="wl-table">${fxItems.map(fxRow).join('')}${(fxItems.length&&nonFxItems.length)?'<div class="wl-sep"></div>':''}${nonFxItems.map(nonFxRow).join('')}</div>`)+addRow;
@@ -16290,8 +16295,8 @@ function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
 // gehabt (linke Achse, feste +/-Skala) plus die tatsaechliche Marktkurs-Linie
 // aus price_data.json (rechte Achse, eigene Min/Max-Skala je Chart - Score
 // und Kurs haben voellig unterschiedliche Groessenordnungen).
-let trendsShowPrice=false;
-function toggleTrendsPrice(){trendsShowPrice=!trendsShowPrice;renderTrends();}
+// Nutzer-Wunsch 2026-08-12: "vs Price" war ein Toggle (trendsShowPrice) -
+// jetzt dauerhaft aktiv statt einer Option, kein eigener Button mehr noetig.
 // Kurs eines Paars aus zwei Einzel-Assets (auch nicht-FX moeglich, z.B.
 // GOLD/JPY): USD ist Sonderfall, weil price_data fuer USD den Dollar-Index
 // (DXY) speichert statt eines echten USD-Kreuzkurses - dort direkt die
@@ -16400,16 +16405,6 @@ function renderTrends(){
   if(pairBtn)pairBtn.classList.toggle('active',trendsFilter==='PAIR');
   const pairWrap=document.getElementById('trendsPairWrap');
   if(pairWrap)pairWrap.style.display=trendsFilter==='PAIR'?'flex':'none';
-  // "vs Price" ist nur bei genau einem Asset/Paar sinnvoll (nicht bei "ALL",
-  // wo mehrere Score-Linien gleichzeitig gezeichnet werden).
-  const priceBtn=document.getElementById('trendsPriceBtn');
-  if(priceBtn){
-    const avail=trendsFilter!=='ALL'&&trendsFilter!=='FX';
-    priceBtn.classList.toggle('active',trendsShowPrice&&avail);
-    priceBtn.disabled=!avail;
-    priceBtn.style.opacity=avail?'':'.4';
-    priceBtn.style.cursor=avail?'pointer':'not-allowed';
-  }
   if(trendsFilter==='PAIR'){
     const pairSel=document.getElementById('trendsPairSel');
     if(pairSel&&!pairSel.dataset.opts){
@@ -16441,7 +16436,7 @@ function renderTrends(){
   const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   let html=rangeBar;
-  if(trendsFilter!=='ALL'&&trendsFilter!=='FX'&&trendsShowPrice){
+  if(trendsFilter!=='ALL'&&trendsFilter!=='FX'){
     const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1])){scoreMap[e[0]]=e[1];biasMap[e[0]]=e[5]||scoreBias(e[1]);}});
     html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
   }else{
@@ -16482,11 +16477,9 @@ function renderTrendsPair(el){
   const dates=filterDatesByRange(diffArr.map(e=>e[0]),trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   let html=rangeBar;
-  if(trendsShowPrice){
+  {
     const scoreMap={},biasMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
     html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)',biasMap);
-  }else{
-    html+=scoreTrendCard([pairKey],dates,1,14,'Pair Score (Base − Quote Currency)',colorOverride);
   }
   if(FX.includes(base)&&FX.includes(quote)){
     html+=scoreTrendCard([pairKey],dates,2,7,'Inflation Difference',colorOverride)+
@@ -17968,13 +17961,46 @@ const SEAS_ORDER=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD','GOLD','SILVER
 function seasSortIds(ids){return[...ids].sort((a,b)=>{const ia=SEAS_ORDER.indexOf(a),ib=SEAS_ORDER.indexOf(b);return(ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);});}
 // 12-Monats-Balkenchart: Balken = O-Return des Monats, Label darunter =
 // Monat + Trefferquote, aktueller Monat mit hellem Band + Rahmen markiert.
-function seasBarChart(months,curMon){
+// "vs Price"-Ueberlagerung fuer Seasonality (Nutzer-Wunsch 2026-08-12,
+// dauerhaft aktiv statt einer Option - anders als beim Trends-Tab gibt es
+// hier keinen Score, also kein 1:1 uebertragbares Konzept: die sinnvolle
+// Entsprechung ist, den TATSAECHLICHEN Kursverlauf des laufenden Jahres
+// Monat fuer Monat gegen das 15-Jahres-Saisonmuster zu legen - zeigt, ob das
+// laufende Jahr dem historischen Muster folgt oder abweicht. Aus echter
+// Kurshistorie (price_data.json ueber priceSeriesFor, dieselbe Quelle wie
+// jeder andere Preis-Chart) berechnet, nie geschaetzt: Basis je Monat ist
+// der letzte bekannte Kurs VOR Monatsbeginn, damit auch der laufende
+// (unvollstaendige) Monat einen echten Zwischenstand zeigt statt zu fehlen.
+function seasCurYearReturns(id,inv){
+  const ser=priceSeriesFor(id);
+  if(!ser||ser.length<2)return{};
+  const px={};ser.forEach(e=>{if(e&&e[0]&&e[1]!=null)px[e[0]]=Number(e[1]);});
+  const dates=Object.keys(px).sort();
+  const year=new Date().getFullYear();
+  const out={};
+  for(let m=1;m<=12;m++){
+    const prefix=year+'-'+String(m).padStart(2,'0');
+    const inMonth=dates.filter(d=>d.slice(0,7)===prefix);
+    if(!inMonth.length)continue;
+    const before=dates.filter(d=>d<prefix+'-01');
+    if(!before.length)continue;
+    const p0=px[before[before.length-1]],p1=px[inMonth[inMonth.length-1]];
+    if(!(p0>0)||p1==null)continue;
+    let ret=(p1/p0-1)*100;
+    if(inv)ret=-ret;
+    out[m]=ret;
+  }
+  return out;
+}
+function seasBarChart(months,curMon,curYear){
   // Groesser + groessere Schrift als ein normaler Chart (Nutzer-Feedback
   // 2026-07-12, zweite Runde: das ganze Diagramm soll insgesamt groesser
   // sein, nicht nur die Mindestbreite) - 73px pro Monat, Labels 17px/14px.
   const W=880,H=260,padT=20,padB=64,padL=10,padR=10;
   const iw=(W-padL-padR)/12;
-  const maxAbs=Math.max(0.3,...months.map(m=>Math.abs(m[1])));
+  const cy=curYear||{};
+  const cyVals=Object.values(cy).filter(v=>isFinite(v));
+  const maxAbs=Math.max(0.3,...months.map(m=>Math.abs(m[1])),...cyVals.map(Math.abs));
   const yOf=v=>padT+(1-(v+maxAbs)/(2*maxAbs))*(H-padT-padB);
   const y0=yOf(0);
   // Highlight-Box des aktuellen Monats: exakt um Balken + beide Text-Zeilen
@@ -17993,11 +18019,31 @@ function seasBarChart(months,curMon){
     parts.push(`<rect x="${(cx-iw*.36).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.72).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${mon===curMon?.92:.8}"${mon===curMon?' stroke="rgba(255,255,255,.8)" stroke-width="1"':''}/>`);
     parts.push(`<text x="${cx.toFixed(1)}" y="${monthLblY}" text-anchor="middle" font-size="17" font-weight="${mon===curMon?'800':'600'}" fill="${mon===curMon?'var(--t0)':'var(--t3)'}">${SEAS_MON[mon-1]}</text>`);
     parts.push(`<text x="${cx.toFixed(1)}" y="${hitLblY}" text-anchor="middle" font-size="14" fill="${hit>=60?BC.bull:hit<=40?BC.bear:'var(--t3)'}">${hit}%</text>`);
-    hpts.push({fx:cx/W,fy:yv/H,col,tip:`<div class="chv-tip-d">${SEAS_MON[mon-1]} · ${n} years</div><b>${avg>0?'+':''}${avg.toFixed(2)}%</b> avg · up in ${hit}% of years`});
+    // Ein gemeinsamer Tooltip pro Monat statt zwei getrennter Hover-Punkte an
+    // (fast) derselben Stelle - sonst zeigt attachChartHovers()s Naechster-
+    // Punkt-Suche je nach Mausposition nur EINEN von beiden (dieselbe Lehre
+    // wie beim Rate-Probabilities-Mehrlinien-Chart, siehe CLAUDE.md).
+    const cyv=cy[mon];
+    const cyLine=cyv!=null?`<div style="margin-top:3px;color:${cyv>=0?BC.bull:BC.bear}">This year so far: <b>${cyv>0?'+':''}${cyv.toFixed(2)}%</b></div>`:'';
+    hpts.push({fx:cx/W,fy:yv/H,col,tip:`<div class="chv-tip-d">${SEAS_MON[mon-1]} · ${n} years</div><b>${avg>0?'+':''}${avg.toFixed(2)}%</b> avg · up in ${hit}% of years${cyLine}`});
   });
+  // "vs Price"-Ueberlagerung: tatsaechlicher Kursverlauf des laufenden Jahres
+  // je Monat als gestrichelte Linie ueber den historischen Balken - dieselbe
+  // Konvention wie jeder andere Preis-Overlay in der App (var(--t0),
+  // stroke-dasharray, siehe CLAUDE.md "Preis-Historie: Kerzen durch
+  // gestrichelte Linie ersetzt"). Nur Monate mit echten Kursdaten verbunden -
+  // kuenftige Monate im laufenden Jahr haben schlicht noch keinen Punkt.
+  const cyMonths=Object.keys(cy).map(Number).sort((a,b)=>a-b);
+  let priceOverlay='';
+  if(cyMonths.length){
+    const pts=cyMonths.map(mon=>{const x=padL+(mon-.5)*iw,y=yOf(cy[mon]);return`${x.toFixed(1)},${y.toFixed(1)}`;});
+    const dots=cyMonths.map(mon=>{const x=padL+(mon-.5)*iw,y=yOf(cy[mon]);return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="var(--t0)"/>`;}).join('');
+    priceOverlay=`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--t0)" stroke-width="2" stroke-dasharray="6,4" opacity=".85"/>${dots}`;
+  }
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
     <line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${parts.join('')}
+    ${priceOverlay}
   </svg>`;
   // Mindestbreite, damit Monats-Labels/%-Zahlen bei preserveAspectRatio="none"
   // nie unter die native Groesse herunterskaliert werden (auf schmalen
@@ -18021,9 +18067,14 @@ function renderSeasonality(){
   const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
   const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
   const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
+  // "vs Price" (Nutzer-Wunsch 2026-08-12): dauerhaft aktive Ueberlagerung mit
+  // dem tatsaechlichen Kursverlauf des laufenden Jahres, kein Toggle/keine
+  // sichtbare Option - siehe seasCurYearReturns()-Kommentar oben.
+  const curYear=seasCurYearReturns(seasAsset,A.inv);
+  const cyLegend=Object.keys(curYear).length?`<div class="tr-legend" style="margin-top:6px"><span class="tr-leg-item"><span class="tr-leg-dash"></span>This year so far</span></div>`:'';
   const chartCard=`<div class="cot-card">
     <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">15y stats · proxy: ${proxyLink} · ${escH(upd)}</span></div>
-    <div style="padding:12px 14px;overflow-x:auto">${seasBarChart(A.months,curMon)}${curLine}</div>
+    <div style="padding:12px 14px;overflow-x:auto">${seasBarChart(A.months,curMon,curYear)}${curLine}${cyLegend}</div>
   </div>`;
   // Kompakte Uebersicht: der AKTUELLE Monat quer ueber alle Assets,
   // staerkster historischer Rueckenwind zuerst.
