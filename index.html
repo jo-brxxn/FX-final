@@ -2723,12 +2723,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-363 — Score-Aufschluesselung als Karten statt Zeilenliste (Nutzer-Wunsch). Klick auf einen Score zeigt jetzt pro Indikator eine eigene Karte mit Basis/Gewicht als Formel-Kette; im normalized-Modus zusaetzlich Alter-/Marktrelevanz-/Ueberraschungsgroesse-Faktoren als eigene Chips mit aufklappbarer Tabelle dahinter (Halbwertszeit, eigene Streuung sigma, Ø-Kursausschlag). Reine Anzeige-Umstellung, liest ausschliesslich bereits bestehende Berechnungsfunktionen (indScoreParts/indNormBreakdown/indSurpriseStats) - keine neue Score-Logik, keine neuen Daten.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-364 — Risk-Sentiment-Karte: automatische RISK-ON/RISK-OFF-Einstufung kommt jetzt vom Kansas City Fed Risk-On/Risk-Off Index (KCRORO, taeglich via FRED) statt einem selbstgebauten Asset-Mittelwert. Neuer Workflow-Schritt zieht den Wert + eigene 3-Jahres-Historie fuer eine Perzentil-Gauge (kein geratener Skalenwert). Der manuelle None/Half/Full-Regler UND riskOnOffState() (Aurora-Faerbung/daily_bias-Widget) bleiben bewusst unveraendert - Nutzer-Wunsch war explizit nur diese eine Karte. Ohne erfolgreichen Live-Fetch zeigt die Karte ehrlich 'kein Live-Wert' statt eines geschaetzten Ersatzes.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-363</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-364</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -12406,6 +12406,22 @@ function fetchNewsData(){
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&Array.isArray(d.headlines))NEWS_DATA=d;}).catch(()=>{});
 }
 function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')renderDash();});}
+// KCRORO (Kansas City Fed Risk-On/Risk-Off Index, FRED) - Nutzer-Wunsch
+// 2026-08-12: ersetzt NUR die automatische RISK-ON/RISK-OFF/NEUTRAL-Einstufung
+// in riskSentimentWidgetHtml() (Dashboard-Karte "Risk Sentiment"), nicht
+// riskOnOffState() selbst (bleibt fuer Aurora-Faerbung/daily_bias-Widget die
+// bestehende Quelle - CLAUDE.md-Dual-Source-Lehre: zwei Anzeigen duerfen sich
+// nicht denselben Wert aus verschiedenen Quellen zuschreiben, ohne dass klar
+// ist, welche fuehrt). Eigenstaendiger Fetch wie news_data.json, kein Teil von
+// bootFetchScoreFeeds() (rein display-only, kein Score-Einfluss). Ohne
+// erfolgreichen Workflow-Lauf bleibt risk_index.json leer/fehlt - die Karte
+// zeigt dann ehrlich "kein Live-Wert" statt eines geratenen Ersatzes.
+let RISK_INDEX_DATA=null;
+function fetchRiskIndexData(){
+  return fetch(DATA_BASE+'risk_index.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.value!=null)RISK_INDEX_DATA=d;}).catch(()=>{});
+}
+function autoFetchRiskIndex(){fetchRiskIndexData().then(()=>{if(curPage==='dash')renderDash();});}
 // Kurze relative Zeitangabe ("12m"/"3h"/"2d") fuer Schlagzeilen-Zeitstempel -
 // feiner als der bestehende daysUntil() (Tages-Granularitaet), da News-
 // Zeitstempel minuten-/stundenaktuell sind.
@@ -15785,7 +15801,6 @@ function riskOnOffState(){
 // zweiter, potenziell abweichender Nachbau).
 function riskSentimentWidgetHtml(gaugeKey){
   const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
-  const{on,off,pct,lbl,col}=riskOnOffState();
   // Nur Name + Wert (Referenz-Foto, Nutzer-Wunsch 2026-07-25 "1 zu 1"):
   // der fruehere Mini-Balken war rein dekorativ (der Zahlenwert steht
   // ohnehin daneben) und presste den Namen so weit zusammen, dass
@@ -15804,11 +15819,22 @@ function riskSentimentWidgetHtml(gaugeKey){
     <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
     <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
   </div>`;
+  // Automatische Einstufung kommt seit 2026-08-12 vom Kansas City Fed
+  // Risk-On/Risk-Off Index (KCRORO, taeglich via FRED) statt dem
+  // selbstgebauten Asset-Mittelwert - siehe RISK_INDEX_DATA-Kommentar oben
+  // (Nutzer-Wunsch: nur DIESE Karte umstellen, riskOnOffState() bleibt fuer
+  // Aurora/daily_bias unveraendert). Label-Farbe = offizielle KC-Fed-
+  // Definition (Wert>0 → Risikovermeidung, kein geratener Dead-Band).
+  const rid=RISK_INDEX_DATA;
+  const ridCol=rid?(rid.label==='RISK-OFF'?BC.bear:rid.label==='RISK-ON'?BC.bull:BC.neu):'var(--t3)';
+  const gaugeHtml=rid?`<div class="risk-gauge-arc">${sentGauge(rid.percentile,0,100,'',100,gaugeKey||'dashRisk')}</div>
+    <div class="risk-lbl" style="color:${ridCol}">${rid.label}</div>
+    <div class="risk-sub" title="Kansas City Fed Risk-On/Risk-Off Index (KCRORO) - offizieller, taeglich aktualisierter Institutions-Index von FRED. Positiv = Risikovermeidung, negativ = Risikofreude. Die Zahl im Zifferblatt ist das Perzentil des heutigen Werts in der eigenen 3-Jahres-Historie, nicht eine feste 0-100-Skala."><a href="https://fred.stlouisfed.org/series/KCRORO" target="_blank" rel="noopener" onclick="event.stopPropagation()">KC Fed RORO</a> ${rid.value>0?'+':''}${rid.value.toFixed(2)} &nbsp;·&nbsp; ${rid.percentile}th pct (3y) &nbsp;·&nbsp; ${escH(rid.date)}</div>`
+    :`<div class="risk-lbl" style="color:var(--t3)">NO LIVE READ</div>
+    <div class="risk-sub">Kansas City Fed Risk-On/Risk-Off Index (KCRORO) noch nicht abgerufen - aktualisiert stuendlich.</div>`;
   return`<div class="risk-gauge">
     ${envSetUI}
-    <div class="risk-gauge-arc">${sentGauge(Math.round(pct),0,100,'/100',100,gaugeKey||'dashRisk')}</div>
-    <div class="risk-lbl" style="color:${col}">${lbl}</div>
-    <div class="risk-sub" title="Net = risk assets − safe havens; >+0.8 RISK-ON, <−0.8 RISK-OFF">Risk ${on>0?'+':''}${Math.round(on*10)/10} &nbsp;·&nbsp; Havens ${off>0?'+':''}${Math.round(off*10)/10}</div>
+    ${gaugeHtml}
     <div class="risk-assets-grid">
       <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
       <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bear}">▼ Safe Haven</div>${OFF_IDS.map(assetRow).join('')}</div>
@@ -19139,6 +19165,7 @@ function applyScoreHistServerFeed(){
   bootFetchScoreFeeds();
   autoFetchPriceData();
   autoFetchNewsData();
+  autoFetchRiskIndex();
 })();
 
 // ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
@@ -19185,6 +19212,7 @@ setInterval(()=>{
   }
   autoFetchFF();
   autoFetchNewsData();
+  autoFetchRiskIndex();
 },60*60*1000);
 // Preise/Ticker/Biggest-Movers alle 10 Minuten neu abrufen (schnellerer
 // Rhythmus als die uebrigen Live-Daten, damit sich die Ticker-Leiste und die

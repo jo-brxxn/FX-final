@@ -3971,6 +3971,67 @@ jobs:
           '
           rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_tv.json rate_tv_tickers.json
 
+      # Nutzer-Wunsch 2026-08-12: die Dashboard-"Risk Sentiment"-Karte soll die
+      # automatische RISK-ON/RISK-OFF/NEUTRAL-Einstufung nicht mehr aus einem
+      # selbstgebauten Asset-Mittelwert (riskOnOffState() in index.html)
+      # ableiten, sondern aus einem echten, unabhaengigen Institutions-Index -
+      # Nutzer bat explizit um einen Ersatz nur fuer diese eine Karte (der
+      # manuelle None/Half/Full-Regler UND riskOnOffState() selbst bleiben
+      # fuer Aurora-Faerbung/daily_bias-Widget unveraendert, siehe CLAUDE.md-
+      # Dual-Source-Lehre - nur die Anzeige in riskSentimentWidgetHtml() wird
+      # umgestellt). Kansas City Fed "Risk-On Risk-Off Index" (KCRORO) passt
+      # methodisch am besten (Credit-Spreads, Aktien-Vol, Funding Conditions,
+      # FX/Gold - aehnlich Citis GMRI/Macro Risk Index). Einzige bekannte
+      # Quelle: FRED-Serie KCRORO - eine direkte CSV/API der Kansas City Fed
+      # selbst existiert nicht (nur eine gerenderte Chart-Seite ohne Rohdaten-
+      # Link, recherchiert).
+      # ⚠️ FRED hat bei der EFFR-Anbindung oben (rate_probabilities.json)
+      # wiederholt GitHub-Runner-IPs geblockt und wurde dort komplett durch
+      # die NY-Fed-API ersetzt - fuer KCRORO gibt es aber KEINE alternative
+      # Primaerquelle. continue-on-error faengt das ab; blockt FRED auch hier
+      # dauerhaft, bleibt risk_index.json leer und die Dashboard-Karte zeigt
+      # ehrlich "kein Live-Wert" statt zu schaetzen (Grundsatz "nie
+      # schaetzen"). Nach dem ersten Push per workflow_dispatch verifizieren.
+      #
+      # Bewusst KEIN fest geratener Skalen-/Schwellenwert fuer die Anzeige:
+      # das Vorzeichen selbst ist die offizielle KC-Fed-Definition (>0 =
+      # Risikovermeidung/Risk-Off, <0 = Risikofreude/Risk-On) - kein Dead-
+      # Band noetig. Fuer die Gauge-Position (0-100%) wird stattdessen das
+      # PERZENTIL des aktuellen Werts in der eigenen 3-Jahres-Historie
+      # genutzt (dasselbe Prinzip wie cot_data.json.pct3y) - vermeidet eine
+      # erfundene feste Skala komplett.
+      - name: Fetch Risk-On/Risk-Off index (KCRORO, FRED) -> risk_index.json
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          COSD=$(date -u -d '3 years ago' +%Y-%m-%d 2>/dev/null || date -u -v-3y +%Y-%m-%d)
+          curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] KCRORO curl: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=KCRORO&cosd=${COSD}" -o kcroro.csv || echo "[debug] KCRORO curl: command failed (exit $?)"
+          if [ ! -s kcroro.csv ]; then sleep 5; curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] KCRORO retry: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=KCRORO&cosd=${COSD}" -o kcroro.csv || true; fi
+          echo "[debug] kcroro.csv head:"; head -c 300 kcroro.csv 2>/dev/null || echo "(missing)"; echo
+          node -e '
+            const fs=require("fs");
+            let prevOut={};
+            try{prevOut=JSON.parse(fs.readFileSync("risk_index.json","utf8"));}catch(e){}
+            let raw="";
+            try{raw=fs.readFileSync("kcroro.csv","utf8");}catch(e){}
+            const rows=raw.split(/\r?\n/).slice(1).map(l=>l.split(",")).filter(c=>c.length===2&&c[1]&&c[1].trim()!=="."&&isFinite(Number(c[1])));
+            if(!rows.length){
+              console.log("[debug] KCRORO: no usable rows parsed, keeping previous risk_index.json unchanged");
+              if(Object.keys(prevOut).length)fs.writeFileSync("risk_index.json",JSON.stringify(prevOut,null,1));
+            }else{
+              const hist=rows.map(r=>[r[0].trim(),Number(r[1])]).sort((a,b)=>a[0]<b[0]?-1:1);
+              const latest=hist[hist.length-1];
+              const vals=hist.map(h=>h[1]).sort((a,b)=>a-b);
+              const rank=vals.filter(v=>v<=latest[1]).length;
+              const pct=Math.round(rank/vals.length*100);
+              const label=latest[1]>0?"RISK-OFF":latest[1]<0?"RISK-ON":"NEUTRAL";
+              const out={date:latest[0],value:latest[1],label:label,percentile:pct,history:hist.slice(-800),source:"https://fred.stlouisfed.org/series/KCRORO"};
+              fs.writeFileSync("risk_index.json",JSON.stringify(out,null,1));
+              console.log("risk_index.json: date="+out.date+" value="+out.value+" label="+out.label+" pct="+out.percentile+" history="+out.history.length+"d");
+            }
+          '
+          rm -f kcroro.csv
+
       # Nutzer-Wunsch 2026-08-06: Dashboard-Karte ganz rechts mit den neusten
       # Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick, ...).
       # Quelle: Marketaux (aggregiert ~5.000 Nachrichtenquellen, spezialisiert
