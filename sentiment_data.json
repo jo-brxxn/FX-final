@@ -514,7 +514,7 @@
    ]
   ]
  },
- "updated": "2026-08-12T22:30:22.640Z",
+ "updated": "2026-08-12T23:30:44.043Z",
  "stockFng": {
   "value": 62,
   "label": "greed",
@@ -1089,8 +1089,8 @@
   },
   {
    "sym": "GBPCHF",
-   "long": 19,
-   "short": 81
+   "long": 20,
+   "short": 80
   },
   {
    "sym": "NZDCAD",
@@ -1139,13 +1139,13 @@
   },
   {
    "sym": "GBPAUD",
-   "long": 61,
-   "short": 39
+   "long": 60,
+   "short": 40
   },
   {
    "sym": "XAUUSD",
-   "long": 53,
-   "short": 47
+   "long": 52,
+   "short": 48
   },
   {
    "sym": "XAGUSD",
@@ -1154,8 +1154,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 41,
-   "short": 59
+   "long": 40,
+   "short": 60
   },
   {
    "sym": "US500",
@@ -1436,8 +1436,8 @@
   "SILVER": {
    "value": 0.34,
    "proxy": "SLV",
-   "callVol": 337930,
-   "putVol": 113866,
+   "callVol": 337932,
+   "putVol": 113822,
    "series": [
     [
      "2025-07-14",
@@ -2568,8 +2568,8 @@
   "SP500": {
    "value": 1.17,
    "proxy": "SPY",
-   "callVol": 4392634,
-   "putVol": 5150144,
+   "callVol": 4392581,
+   "putVol": 5150126,
    "series": [
     [
      "2025-07-14",
@@ -4316,8 +4316,8 @@
   "JPY": {
    "value": 0.48,
    "proxy": "FXY",
-   "callVol": 6693,
-   "putVol": 3236,
+   "callVol": 6691,
+   "putVol": 3218,
    "series": [
     [
      "2025-07-14",
@@ -5392,8 +5392,8 @@
   "GOLD": {
    "value": 0.3,
    "proxy": "GLD",
-   "callVol": 415241,
-   "putVol": 124473,
+   "callVol": 415129,
+   "putVol": 124278,
    "series": [
     [
      "2025-07-14",
@@ -7017,7 +7017,7 @@
    "value": 1.07,
    "proxy": "IBIT",
    "callVol": 183748,
-   "putVol": 196910,
+   "putVol": 196903,
    "series": [
     [
      "2025-07-14",
@@ -8132,8 +8132,8 @@
   "NAS": {
    "value": 1.04,
    "proxy": "QQQ",
-   "callVol": 2822270,
-   "putVol": 2926424,
+   "callVol": 2822062,
+   "putVol": 2926400,
    "series": [
     [
      "2025-07-14",
@@ -9249,7 +9249,7 @@
    "value": 0.79,
    "proxy": "FXE",
    "callVol": 882,
-   "putVol": 701,
+   "putVol": 699,
    "series": [
     [
      "2025-07-14",
@@ -11377,7 +11377,7 @@
    "value": 2.55,
    "proxy": "UUP",
    "callVol": 1196,
-   "putVol": 3055,
+   "putVol": 3051,
    "series": [
     [
      "2025-07-14",
@@ -13907,8 +13907,8 @@
    ],
    [
     "2026-08-12",
-    41,
-    59
+    40,
+    60
    ]
   ],
   "CADCHF": [
@@ -15799,8 +15799,8 @@
    ],
    [
     "2026-08-12",
-    61,
-    39
+    60,
+    40
    ]
   ],
   "GBPCAD": [
@@ -16143,8 +16143,8 @@
    ],
    [
     "2026-08-12",
-    19,
-    81
+    20,
+    80
    ]
   ],
   "GBPJPY": [
@@ -18723,8 +18723,8 @@
    ],
    [
     "2026-08-12",
-    53,
-    47
+    52,
+    48
    ]
   ]
  }
