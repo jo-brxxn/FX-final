@@ -469,7 +469,7 @@
      ],
      [
       "2026-12-09",
-      10
+      11
      ]
     ]
    ]
@@ -495,8 +495,8 @@
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
     "rateBefore": 3.79,
-    "rateAfter": 3.89,
-    "deltaBp": 10
+    "rateAfter": 3.9,
+    "deltaBp": 11
    }
   ],
   "pastMeeting": {
@@ -2371,7 +2371,7 @@
     [
      [
       "2026-09-24",
-      3
+      4
      ],
      [
       "2026-12-10",
@@ -2387,14 +2387,14 @@
     "date": "2026-09-24",
     "label": "Sep 24, 2026",
     "rateBefore": -0.05,
-    "rateAfter": -0.02,
-    "deltaBp": 3,
+    "rateAfter": -0.01,
+    "deltaBp": 4,
     "approx": true
    },
    {
     "date": "2026-12-10",
     "label": "Dec 10, 2026",
-    "rateBefore": -0.02,
+    "rateBefore": -0.01,
     "rateAfter": 0.03,
     "deltaBp": 5,
     "approx": true
