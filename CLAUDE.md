@@ -5573,3 +5573,51 @@ derselben Hand-Gradient-Technik, C/D=echte prozedurale Marmorierung per
 SVG `feTurbulence`+`feDisplacementMap` in gedaempfter bzw. kontrastreicher
 Auspraegung) - noch keine Auswahl getroffen, noch nicht in `index.html`
 uebernommen.
+
+### Marmor-Hintergrund ueberarbeitet: echte prozedurale Adern statt Hand-Gradienten (Nutzer-Wunsch 2026-08-13, "Mischung aus D und B")
+
+Vier Prototypen (A=Ist-Zustand, B=verfeinerte Hand-Gradient-Technik, C/D=
+prozedurale SVG-Marmorierung per `feTurbulence`+`feDisplacementMap`) als
+Artifact gezeigt, Nutzer waehlte "Mischung aus D und B".
+
+**Erste zwei Umsetzungsversuche hatten einen echten technischen Fehler,
+nicht nur einen Geschmacks-Unterschied:** `feTurbulence` in Chromium/Skia
+hat eine inhaerente Periodizitaet (fest verdrahtete Permutations-Tabelle,
+wiederholt sich abhaengig von `baseFrequency`) - bei den in den Artifact-
+Vorschau-Panels (nur 340px hoch) unauffaelligen Parametern zeigte sich bei
+voller Seitenhoehe (900px+) ein klar sichtbares Kachel-Wiederholungsmuster
+("Fliesen-Look" statt organischer Adern), reproduzierbar per Playwright-
+Screenshot bei mehreren `baseFrequency`/`scale`-Kombinationen - das Problem
+lag NICHT an falschen Parametern, sondern strukturell daran, dass die
+gesamte Aderform aus rohem Turbulenz-Output abgeleitet wurde.
+
+**Loesung:** die Adern sind jetzt handgezeichnete Bezier-Pfade (organische
+Verzweigung durch mehrere Kontrollpunkte + kleine Seitenaeste, keine
+Wiederholung möglich, da einzigartig gezeichnet) - `feTurbulence` kommt nur
+noch an zwei Stellen zum Einsatz, beide mit stark reduziertem Effekt-Radius
+relativ zur Vorlagen-Groesse, wodurch die Kachel-Periodizitaet nicht mehr
+ins Auge faellt: (1) ein feines Oberflaechenkorn (`baseFrequency 0.9`,
+Alpha nur 0,05) auf der gesamten Flaeche, (2) eine KLEINE Verschiebung
+(`feDisplacementMap scale=7`, hochfrequente Turbulenz) NUR fuer organische
+Rauheit an den Rändern der Adern selbst, nicht fuer deren Grossform. Per
+Playwright bei 1400×900, 1920×1080, 820×1180 und 390×844 verifiziert -
+kein sichtbares Wiederholungsmuster mehr in keiner Groesse.
+
+**Technische Umsetzung:** als eingebettetes SVG-Daten-URI-Bild
+(`background-image:...,url("data:image/svg+xml,...")`, URL-encodiert
+statt Base64 fuer Editierbarkeit) - bleibt dadurch innerhalb der
+Ein-Datei-Architektur (keine externe Bilddatei), rendert einmalig statisch
+(keine Animation, kein `filter:blur()` auf grossen Flaechen - haelt sich an
+die bereits dokumentierte Performance-Lehre bei Hintergrund-Effekten).
+B's fuenf radiale Highlight-Blooms bleiben als eigene CSS-`radial-gradient`-
+Ebenen VOR dem SVG-Bild in `background-image` erhalten (Mehrschicht-
+`background`, je ein `background-size`/`-position`/`-repeat`-Eintrag pro
+Ebene - die 5 Gradient-Ebenen bleiben `auto`/nicht positioniert wie zuvor,
+nur die SVG-Bild-Ebene bekommt `cover`/`center top`). D's rote Mineral-Ader
+(Bias-Rot `#e35d5d`, 6% Deckkraft) blieb als Charakter-Detail erhalten.
+
+Ersetzt exakt die eine `background:`-Deklaration in `body{...}` (≈ Zeile 21)
+- alle anderen Body-Eigenschaften unangetastet. Kein Score-/Daten-Bezug,
+reine Optik. `node --check` sauber, voller 13-Tab-Regressionstest weiterhin
+fehlerfrei, Live-Screenshot des echten Dashboards (nicht nur der isolierten
+Test-Datei) bestaetigt korrekte Darstellung.
