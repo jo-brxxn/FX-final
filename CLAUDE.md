@@ -5621,3 +5621,22 @@ Ersetzt exakt die eine `background:`-Deklaration in `body{...}` (≈ Zeile 21)
 reine Optik. `node --check` sauber, voller 13-Tab-Regressionstest weiterhin
 fehlerfrei, Live-Screenshot des echten Dashboards (nicht nur der isolierten
 Test-Datei) bestaetigt korrekte Darstellung.
+
+### Prozeduraler Marmor-Hintergrund wieder zurueckgesetzt (Nutzer-Wunsch 2026-08-13, direkt im Anschluss)
+
+Direkt nach dem Ship der SVG-Turbulenz-Adern (siehe voriger Eintrag) kam
+"Ne mach den Hintergrund wieder wie es vorher war" - `body{background}`
+ist wieder exakt auf den urspruenglichen Stand (12 hand-platzierte
+`linear-gradient`-Adern + 4 radiale Highlights, kein SVG-Daten-URI mehr).
+
+**Merksatz (Ergaenzung zum "Farbaudit-Rueckbau"/"Hintergrund-Glow"-Muster
+oben):** ein im Artifact-Vorschau positiv bewerteter visueller Vorschlag
+kann trotzdem beim Live-Ansehen im echten Kontext (App-Layout drumherum,
+tatsaechliche Kartendichte) nicht ueberzeugen - der vorige Eintrag
+dokumentiert einen echten technischen Fehler (Turbulenz-Kachelmuster), der
+zwar behoben wurde, aber das GESAMTERGEBNIS war dem Nutzer offenbar
+trotzdem nicht lieber als der Ausgangszustand. Bei einem erneuten
+"Marmor verbessern"-Wunsch nicht wieder bei derselben SVG-Turbulenz-Technik
+anfangen, ohne vorher zu erfragen, was genau am prozeduralen Ergebnis nicht
+gefiel (zu unruhig? zu grau? die rote Ader zu viel?) - der Rueckbau selbst
+gibt darauf keine Antwort.
