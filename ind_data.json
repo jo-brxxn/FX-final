@@ -14828,17 +14828,13 @@
    "source": "tv"
   },
   "Manufacturing PMI": {
-   "actual": "59.7",
+   "actual": "54.3",
    "forecast": null,
-   "previous": "49.9",
-   "date": "2026-07-08",
+   "previous": "59.7",
+   "date": "2026-08-13",
    "event": "Business NZ PMI",
    "period": null,
    "history": [
-    [
-     "2026-04-09",
-     "53.2"
-    ],
     [
      "2026-05-14",
      "50.5"
@@ -14850,8 +14846,13 @@
     [
      "2026-07-08",
      "59.7"
+    ],
+    [
+     "2026-08-13",
+     "54.3"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2025-07-10",
@@ -14917,9 +14918,13 @@
      "2026-07-08",
      "59.7",
      null
+    ],
+    [
+     "2026-08-13",
+     "54.3",
+     null
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Services PMI": {
    "actual": "50.6",
