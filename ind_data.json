@@ -4649,17 +4649,13 @@
  },
  "GBP": {
   "GDP Growth QoQ": {
-   "actual": "0.6%",
-   "forecast": "0.6%",
-   "previous": "0.1%",
-   "date": "2026-06-30",
-   "event": "GDP Growth Rate QoQ Final",
+   "actual": "0.4%",
+   "forecast": "0.4%",
+   "previous": "0.6%",
+   "date": "2026-08-13",
+   "event": "GDP Growth Rate QoQ Prel",
    "period": "q/q",
    "history": [
-    [
-     "2026-02-12",
-     "0.1%"
-    ],
     [
      "2026-03-31",
      "0.1%"
@@ -4671,8 +4667,13 @@
     [
      "2026-06-30",
      "0.6%"
+    ],
+    [
+     "2026-08-13",
+     "0.4%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-29",
@@ -4788,10 +4789,13 @@
      "2026-06-30",
      "0.6%",
      "0.6%"
+    ],
+    [
+     "2026-08-13",
+     "0.4%",
+     "0.4%"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "0.6%"
+   ]
   },
   "Unemployment Rate": {
    "actual": "4.9%",
