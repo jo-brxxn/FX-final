@@ -2723,12 +2723,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-367 — Marmor-Hintergrund zurueckgesetzt (Nutzer-Wunsch, direkt nach VERSION-CHECK-366: 'mach den Hintergrund wieder wie es vorher war'). Die prozedural erzeugten SVG-Adern (feTurbulence/feDisplacementMap) sind wieder raus, body{background} steht wieder exakt auf den 12 hand-platzierten linear-gradient-'Adern' + 4 radialen Highlights von vorher. Keine Aenderung an Score-Logik/Daten.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-368 — Bug-Audit + zwei echte Fehler im Risk-Index gefixt. (1) Der KCRORO-Fetch von FRED lief NIE durch: Job-Log 31825300973 zeigt 'http=000 / exit 28' auf beiden Versuchen - FRED blockt GitHub-Actions-Runner, exakt wie beim EFFR-Fetch dokumentiert. Ersetzt durch eine Berechnung aus echten Marktpreisen, die derselbe Workflow-Lauf ohnehin schon holt (VIX, Gold, AUD/USD, USD/JPY): je Reihe die 20-Tage-Veraenderung, z-normiert an der eigenen 1-Jahres-Verteilung, gemittelt - kein Netzwerk-Request, also nichts, was blockiert werden koennte. (2) risk_index.json fehlte in der git-add-Liste des Commit-Schritts - die Datei waere selbst bei erfolgreichem Fetch nie im Repo gelandet. Zusaetzlich 5 tote Funktionen entfernt (bondYieldChangeInfo, researchTreeSelLabel, setIndHistRangeCustom, strengthBadgeHtml, togPairMark) und eine TDZ-Falle im neuen Workflow-Skript vor dem ersten Lauf abgefangen. Score-Logik unveraendert.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-367</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-368</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -4760,16 +4760,6 @@ function symStrengthMissing(sym){
 // Erscheint nur im normalisierten Modus - dort hat der Nutzer sie verlangt,
 // und nur dort ist der zugrunde liegende Score selbst schon auf die eigene
 // Streuung normiert.
-function strengthBadgeHtml(sym){
-  if(scoreMode!=='normalized'||!sym)return'';
-  const s=symStrength10(sym);
-  if(s==null){
-    const miss=symStrengthMissing(sym);
-    return`<span class="strength-badge thin" title="Strength needs ${STRENGTH_MIN_OBS} days of own score history recorded under the CURRENT score model and weighting mode - ${miss>0?miss+' more day'+(miss===1?'':'s')+' to go':'the series so far shows no variation at all'}. Older days still exist and still show in Trends, but they were produced by a different calculation, so measuring today against them would be a false comparison rather than a grade.">–/10</span>`;
-  }
-  const z=symOwnZ(sym);
-  return`<span class="strength-badge" onclick="openScoreInfoSym('${escJH(sym.id)}')" title="Strength ${s}/10 - how unusual today's score is for ${escH(sym.name)} ITSELF (${z>0?'+':''}${z} standard deviations from its own average). Not a cross-asset ranking: tap for the full breakdown and its limits."><b>${s}</b>/10</span>`;
-}
 // Paar-Score = VERGLEICHS-Score der Basiswaehrung minus dem der
 // Kurswaehrung (auf gemeinsame Indikator-Basis skaliert, s.o.) plus
 // Carry-Komponente.
@@ -7764,7 +7754,7 @@ const SAFE_ID_RE=/^[A-Z0-9._-]{1,15}$/;
 // Indikatoren), folgt IMMER dem Muster [0-9a-z]{7} (siehe uid()). Dieselbe
 // Sync/Import-Umgehung wie bei Symbol-IDs gilt hier genauso - eine
 // manipulierte id in einem dieser Felder landet ebenso ungefiltert in
-// onclick="fn('${x.id}')"-Handlern (delPair/togPairMark/toggleMwSym/...).
+// onclick="fn('${x.id}')"-Handlern (delPair/toggleWatch/toggleMwSym/...).
 const SAFE_UID_RE=/^[a-z0-9]{1,24}$/i;
 function sanitizeSnapIds(d){
   if(Array.isArray(d.syms)){
@@ -11518,7 +11508,6 @@ function renderPairs(){
 // Beide Altfunktionen leiten jetzt auf toggleWatch um - der Stern IST die
 // Watchlist. Sie bleiben bestehen, weil sie noch von anderen Stellen
 // aufgerufen werden (Dashboard-Asset-Zeilen, Paar-Overview-Kopf).
-function togPairMark(id){const p=pairs.find(x=>x.id===id);if(p)toggleWatch(p.name);}
 function togSymMark(id){const s=syms.find(x=>x.id===id);if(s)toggleWatch(watchPairNameForAsset(s.id));}
 function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.catId=catId;save();renderPairs();if(curPage==='dash')renderDash();}}
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();if(curPage==='dash')renderDash();}
@@ -12405,7 +12394,9 @@ function fetchNewsData(){
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&Array.isArray(d.headlines))NEWS_DATA=d;}).catch(()=>{});
 }
 function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')renderDash();});}
-// KCRORO (Kansas City Fed Risk-On/Risk-Off Index, FRED) - Nutzer-Wunsch
+// Risk-On/Risk-Off-Index aus echten Marktpreisen (VIX, Gold, AUD/USD,
+// USD/JPY - Workflow-Schritt "Build Risk-On/Risk-Off index from market data",
+// dort steht die volle Methodik samt Begruendung). Nutzer-Wunsch
 // 2026-08-12: ersetzt NUR die automatische RISK-ON/RISK-OFF/NEUTRAL-Einstufung
 // in riskSentimentWidgetHtml() (Dashboard-Karte "Risk Sentiment"), nicht
 // riskOnOffState() selbst (bleibt fuer Aurora-Faerbung/daily_bias-Widget die
@@ -12546,21 +12537,6 @@ function fmtPriceTick(v){
 // Vergleich zum letzten verfuegbaren Vortageswert), nur als reine Anzeige
 // ohne Bias-/Score-Nebenwirkung. change ist in Prozentpunkten (pp), nicht
 // Prozent-vom-Kurs - bei Renditen ist das die uebliche Angabe.
-function bondYieldChangeInfo(ccy,indName){
-  const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy];
-  const series=bd&&bd[indName]&&bd[indName].series;
-  if(!Array.isArray(series)||!series.length)return null;
-  const aEntry=series[series.length-1];
-  const aVal=Number(aEntry&&aEntry[1]);
-  if(!isFinite(aVal))return null;
-  const pEntry=bondPick(series.slice(0,-1),isoMinusDays(aEntry[0],1));
-  if(!pEntry)return{price:aVal,date:aEntry[0],changePct:null,bias:'neu'};
-  const pVal=Number(pEntry[1]);
-  if(!isFinite(pVal))return{price:aVal,date:aEntry[0],changePct:null,bias:'neu'};
-  const changePct=aVal-pVal;
-  const bias=changePct>0.001?'bull':changePct<-0.001?'bear':'neu';
-  return{price:aVal,date:aEntry[0],changePct,bias};
-}
 // ── Asset-Strength-Karte (frueher fest auf die 8 FX-Majors beschraenkt,
 // Nutzer-Wunsch 2026-07-27: "soll jetzt eine Asset Karte werden") - frei
 // waehlbare Assets statt hartcodiert FX, max. 9, Konfig ueber ein Zahnrad
@@ -12782,15 +12758,6 @@ function resFilteredNotes(){
   else if(resSort==='old')out.sort((a,b)=>String(key(a)).localeCompare(String(key(b))));
   else out.sort((a,b)=>String(key(b)).localeCompare(String(key(a))));
   return out;
-}
-function researchTreeSelLabel(){
-  if(!researchTreeSel)return'';
-  const parts=researchTreeSel.split(':');
-  if(parts[0]==='asset'&&parts.length===3){
-    const sym=(syms||[]).find(s=>s.id===parts[1]);
-    return(sym?sym.name:parts[1])+' — '+(parts[2]==='gen'?'General Notes':'Analysis');
-  }
-  return researchTreeSel;
 }
 // ══ RESEARCH-TERMINAL (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots) ══
 // Ersetzt das vorherige Baum+Rechtspanel-Layout durch: eine Reihe aus 5
@@ -15824,19 +15791,19 @@ function riskSentimentWidgetHtml(gaugeKey){
     <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
     <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
   </div>`;
-  // Automatische Einstufung kommt seit 2026-08-12 vom Kansas City Fed
-  // Risk-On/Risk-Off Index (KCRORO, taeglich via FRED) statt dem
-  // selbstgebauten Asset-Mittelwert - siehe RISK_INDEX_DATA-Kommentar oben
+  // Automatische Einstufung kommt aus echten MARKTPREISEN statt aus dem
+  // Mittelwert der eigenen Asset-Scores - siehe RISK_INDEX_DATA-Kommentar oben
   // (Nutzer-Wunsch: nur DIESE Karte umstellen, riskOnOffState() bleibt fuer
-  // Aurora/daily_bias unveraendert). Label-Farbe = offizielle KC-Fed-
-  // Definition (Wert>0 → Risikovermeidung, kein geratener Dead-Band).
+  // Aurora/daily_bias unveraendert). Vorzeichen-Konvention wie bei den
+  // institutionellen Risk-Indizes: Wert>0 = Risikovermeidung.
   const rid=RISK_INDEX_DATA;
   const ridCol=rid?(rid.label==='RISK-OFF'?BC.bear:rid.label==='RISK-ON'?BC.bull:BC.neu):'var(--t3)';
+  const ridComps=rid&&Array.isArray(rid.components)&&rid.components.length?rid.components.join(' · '):'';
   const gaugeHtml=rid?`<div class="risk-gauge-arc">${sentGauge(rid.percentile,0,100,'',100,gaugeKey||'dashRisk')}</div>
     <div class="risk-lbl" style="color:${ridCol}">${rid.label}</div>
-    <div class="risk-sub" title="Kansas City Fed Risk-On/Risk-Off Index (KCRORO) - offizieller, taeglich aktualisierter Institutions-Index von FRED. Positiv = Risikovermeidung, negativ = Risikofreude. Die Zahl im Zifferblatt ist das Perzentil des heutigen Werts in der eigenen 3-Jahres-Historie, nicht eine feste 0-100-Skala."><a href="https://fred.stlouisfed.org/series/KCRORO" target="_blank" rel="noopener" onclick="event.stopPropagation()">KC Fed RORO</a> ${rid.value>0?'+':''}${rid.value.toFixed(2)} &nbsp;·&nbsp; ${rid.percentile}th pct (3y) &nbsp;·&nbsp; ${escH(rid.date)}</div>`
+    <div class="risk-sub" title="${escH((rid.method||'Composite risk index')+'. Positiv = Risikovermeidung, negativ = Risikofreude. Die Zahl im Zifferblatt ist das Perzentil des heutigen Werts in der eigenen Historie, keine feste 0-100-Skala.'+(ridComps?' Aktuell einbezogen: '+ridComps+'.':''))}">Risk index ${rid.value>0?'+':''}${rid.value.toFixed(2)} &nbsp;·&nbsp; ${rid.percentile}th pct &nbsp;·&nbsp; ${escH(rid.date)}</div>`
     :`<div class="risk-lbl" style="color:var(--t3)">NO LIVE READ</div>
-    <div class="risk-sub">Kansas City Fed Risk-On/Risk-Off Index (KCRORO) noch nicht abgerufen - aktualisiert stuendlich.</div>`;
+    <div class="risk-sub">Risk index noch nicht berechnet - wird stuendlich aus VIX/Gold/AUD-USD/USD-JPY erzeugt.</div>`;
   return`<div class="risk-gauge">
     ${envSetUI}
     ${gaugeHtml}
@@ -17183,12 +17150,6 @@ function setIndHistRange(v){
   // SICHTBARE Chart bleibt stehen, weil das falsche Panel aktualisiert wird
   // (Bugreport 2026-07-16: Range-Buttons im Data-Tab reagierten scheinbar
   // gar nicht).
-  if(curPage==='data')renderDataTab();
-  else renderDetail();
-}
-function setIndHistRangeCustom(from,to){
-  if(from!==null)indHistCustomFrom=from||null;
-  if(to!==null)indHistCustomTo=to||null;
   if(curPage==='data')renderDataTab();
   else renderDetail();
 }

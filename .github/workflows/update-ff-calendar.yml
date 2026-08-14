@@ -3973,64 +3973,111 @@ jobs:
 
       # Nutzer-Wunsch 2026-08-12: die Dashboard-"Risk Sentiment"-Karte soll die
       # automatische RISK-ON/RISK-OFF/NEUTRAL-Einstufung nicht mehr aus einem
-      # selbstgebauten Asset-Mittelwert (riskOnOffState() in index.html)
-      # ableiten, sondern aus einem echten, unabhaengigen Institutions-Index -
-      # Nutzer bat explizit um einen Ersatz nur fuer diese eine Karte (der
-      # manuelle None/Half/Full-Regler UND riskOnOffState() selbst bleiben
-      # fuer Aurora-Faerbung/daily_bias-Widget unveraendert, siehe CLAUDE.md-
-      # Dual-Source-Lehre - nur die Anzeige in riskSentimentWidgetHtml() wird
-      # umgestellt). Kansas City Fed "Risk-On Risk-Off Index" (KCRORO) passt
-      # methodisch am besten (Credit-Spreads, Aktien-Vol, Funding Conditions,
-      # FX/Gold - aehnlich Citis GMRI/Macro Risk Index). Einzige bekannte
-      # Quelle: FRED-Serie KCRORO - eine direkte CSV/API der Kansas City Fed
-      # selbst existiert nicht (nur eine gerenderte Chart-Seite ohne Rohdaten-
-      # Link, recherchiert).
-      # ⚠️ FRED hat bei der EFFR-Anbindung oben (rate_probabilities.json)
-      # wiederholt GitHub-Runner-IPs geblockt und wurde dort komplett durch
-      # die NY-Fed-API ersetzt - fuer KCRORO gibt es aber KEINE alternative
-      # Primaerquelle. continue-on-error faengt das ab; blockt FRED auch hier
-      # dauerhaft, bleibt risk_index.json leer und die Dashboard-Karte zeigt
-      # ehrlich "kein Live-Wert" statt zu schaetzen (Grundsatz "nie
-      # schaetzen"). Nach dem ersten Push per workflow_dispatch verifizieren.
+      # selbstgebauten Asset-SCORE-Mittelwert (riskOnOffState() in index.html)
+      # ableiten, sondern aus echten MARKTPREISEN - der manuelle None/Half/
+      # Full-Regler bleibt unveraendert daneben bestehen.
       #
-      # Bewusst KEIN fest geratener Skalen-/Schwellenwert fuer die Anzeige:
-      # das Vorzeichen selbst ist die offizielle KC-Fed-Definition (>0 =
-      # Risikovermeidung/Risk-Off, <0 = Risikofreude/Risk-On) - kein Dead-
-      # Band noetig. Fuer die Gauge-Position (0-100%) wird stattdessen das
-      # PERZENTIL des aktuellen Werts in der eigenen 3-Jahres-Historie
-      # genutzt (dasselbe Prinzip wie cot_data.json.pct3y) - vermeidet eine
-      # erfundene feste Skala komplett.
-      - name: Fetch Risk-On/Risk-Off index (KCRORO, FRED) -> risk_index.json
+      # ⚠️ ERSTER ANLAUF (2026-08-12) NUTZTE KCRORO VON FRED - GESCHEITERT.
+      # Der Kansas City Fed Risk-On/Risk-Off Index waere methodisch ideal
+      # gewesen, ist aber nur ueber fred.stlouisfed.org zu bekommen, und FRED
+      # blockt GitHub-Actions-Runner. Live-Beleg (Lauf 31825300973, 2026-08-14):
+      #   [debug] KCRORO curl: http=000 size=0
+      #   [debug] KCRORO curl: command failed (exit 28)   <- Timeout
+      #   [debug] KCRORO retry: http=000 size=0
+      # http=000 heisst: gar keine Antwort, nicht einmal ein abgelehnter
+      # Handshake - beide Versuche liefen in die volle --max-time. Exakt
+      # dieselbe Blockade, die den EFFR-Fetch weiter oben schon zur NY-Fed-API
+      # gezwungen hat (siehe dortigen Kommentar). Eine Alternativquelle fuer
+      # KCRORO existiert nicht (die Kansas-City-Fed-Seite rendert nur einen
+      # Chart ohne Rohdaten-Link). NICHT nochmal an fred.stlouisfed.org
+      # versuchen. Moeglicher kuenftiger Weg: FREDs offizielle API auf dem
+      # ANDEREN Host api.stlouisfed.org - braucht einen kostenlosen API-Key
+      # als Repo-Secret (Muster wie MYFXBOOK_*), bisher nicht eingerichtet.
+      #
+      # STATTDESSEN: der Index wird aus echten Marktpreisen berechnet, die
+      # dieser Workflow ohnehin schon geholt hat (price_data.json /
+      # sentiment_data.json) - kein zusaetzlicher Netzwerk-Request, damit auch
+      # nichts, was blockiert werden koennte. Die vier Zutaten sind genau die,
+      # aus denen freie Anbieter (z.B. FXMacroData) ihren Risk-Sentiment-Index
+      # bauen, und decken dieselben Dimensionen ab wie KCRORO (Volatilitaet,
+      # Safe-Haven-Nachfrage, Risikowaehrungen):
+      #   VIX        rauf = Risikoaversion   (+)
+      #   Gold       rauf = Safe-Haven-Nachfrage (+)
+      #   AUD/USD    rauf = Risikofreude     (-)
+      #   USD/JPY    rauf = Risikofreude, JPY als Safe Haven schwach (-)
+      # Je Reihe die 20-Tage-Veraenderung, z-normiert an der EIGENEN
+      # 1-Jahres-Verteilung (macht die vier vergleichbar, ohne eine einzige
+      # zugewiesene Gewichtung), dann gemittelt. Vorzeichen-Konvention wie bei
+      # KCRORO: >0 = Risikovermeidung (RISK-OFF), <0 = Risikofreude (RISK-ON).
+      # Bewusst VERAENDERUNGEN statt Niveaus: Gold steht in einem mehrjaehrigen
+      # Aufwaertstrend, ein Niveau-z-Wert wuerde dauerhaft "risk-off" melden.
+      # Die volle Historie wird bei JEDEM Lauf aus der vorhandenen
+      # 3-Jahres-Kurshistorie neu durchgerechnet - kein Ein-Punkt-pro-Tag-
+      # Aufbau noetig, die Perzentil-Einordnung steht damit sofort zur
+      # Verfuegung. Fehlt eine Zutat, wird ueber die restlichen gemittelt;
+      # fehlen alle, wird NICHTS geschrieben (Grundsatz "nie schaetzen").
+      - name: Build Risk-On/Risk-Off index from market data -> risk_index.json
         continue-on-error: true
         run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          COSD=$(date -u -d '3 years ago' +%Y-%m-%d 2>/dev/null || date -u -v-3y +%Y-%m-%d)
-          curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] KCRORO curl: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=KCRORO&cosd=${COSD}" -o kcroro.csv || echo "[debug] KCRORO curl: command failed (exit $?)"
-          if [ ! -s kcroro.csv ]; then sleep 5; curl -sL --http1.1 --connect-timeout 15 --max-time 45 -A "$UA" -w "[debug] KCRORO retry: http=%{http_code} size=%{size_download}\n" "https://fred.stlouisfed.org/graph/fredgraph.csv?id=KCRORO&cosd=${COSD}" -o kcroro.csv || true; fi
-          echo "[debug] kcroro.csv head:"; head -c 300 kcroro.csv 2>/dev/null || echo "(missing)"; echo
           node -e '
             const fs=require("fs");
-            let prevOut={};
-            try{prevOut=JSON.parse(fs.readFileSync("risk_index.json","utf8"));}catch(e){}
-            let raw="";
-            try{raw=fs.readFileSync("kcroro.csv","utf8");}catch(e){}
-            const rows=raw.split(/\r?\n/).slice(1).map(l=>l.split(",")).filter(c=>c.length===2&&c[1]&&c[1].trim()!=="."&&isFinite(Number(c[1])));
-            if(!rows.length){
-              console.log("[debug] KCRORO: no usable rows parsed, keeping previous risk_index.json unchanged");
-              if(Object.keys(prevOut).length)fs.writeFileSync("risk_index.json",JSON.stringify(prevOut,null,1));
-            }else{
-              const hist=rows.map(r=>[r[0].trim(),Number(r[1])]).sort((a,b)=>a[0]<b[0]?-1:1);
-              const latest=hist[hist.length-1];
-              const vals=hist.map(h=>h[1]).sort((a,b)=>a-b);
-              const rank=vals.filter(v=>v<=latest[1]).length;
-              const pct=Math.round(rank/vals.length*100);
-              const label=latest[1]>0?"RISK-OFF":latest[1]<0?"RISK-ON":"NEUTRAL";
-              const out={date:latest[0],value:latest[1],label:label,percentile:pct,history:hist.slice(-800),source:"https://fred.stlouisfed.org/series/KCRORO"};
-              fs.writeFileSync("risk_index.json",JSON.stringify(out,null,1));
-              console.log("risk_index.json: date="+out.date+" value="+out.value+" label="+out.label+" pct="+out.percentile+" history="+out.history.length+"d");
-            }
+            const rd=f=>{try{return JSON.parse(fs.readFileSync(f,"utf8"));}catch(e){return null;}};
+            const price=rd("price_data.json")||{}, sent=rd("sentiment_data.json")||{};
+            const seriesOf=o=>Array.isArray(o&&o.series)?o.series.filter(e=>e&&e[0]&&e[1]!=null&&isFinite(Number(e[1]))).map(e=>[e[0],Number(e[1])]):[];
+            // ⚠️ LOOK/ZWIN MUESSEN vor dem .filter() stehen, das LOOK benutzt -
+            // const wird nicht initialisiert-gehoisted (temporal dead zone), eine
+            // Deklaration weiter unten haette ReferenceError geworfen. Dieselbe
+            // Falle wie bei SYNC_EXCLUDE_RUBS/SENT_MAP in index.html.
+            const LOOK=20, ZWIN=252;
+            // Mindestlaenge = LOOK (fuer die Veraenderung) + 30 (fuer das
+            // z-Fenster). VIX sammelt erst seit Feature-Start einen Punkt pro
+            // Tag und faellt anfangs noch heraus - er kommt automatisch dazu,
+            // sobald die Reihe lang genug ist, ohne Code-Aenderung.
+            const parts=[
+              {name:"VIX",  sign:+1, s:seriesOf(sent.vix)},
+              {name:"Gold", sign:+1, s:seriesOf(price.GOLD)},
+              {name:"AUDUSD",sign:-1,s:seriesOf(price.AUD)},
+              {name:"USDJPY",sign:-1,s:seriesOf(price.JPY)}
+            ].filter(p=>p.s.length>=LOOK+30);
+            if(!parts.length){console.log("[debug] risk index: no usable input series - risk_index.json unchanged");process.exit(0);}
+            // pro Reihe: Datum -> 20-Tage-Veraenderung in Prozent
+            const chg=parts.map(p=>{
+              const m={};
+              for(let i=LOOK;i<p.s.length;i++){
+                const a=p.s[i-LOOK][1], b=p.s[i][1];
+                if(a>0&&isFinite(b))m[p.s[i][0]]=(b/a-1)*100;
+              }
+              return{name:p.name,sign:p.sign,m:m,dates:Object.keys(m).sort()};
+            });
+            // gemeinsame Datumsachse = Vereinigung, damit eine kurze Reihe die anderen nicht kappt
+            const allD=[...new Set([].concat(...chg.map(c=>c.dates)))].sort();
+            const hist=[], used={};
+            allD.forEach(d=>{
+              const zs=[];
+              chg.forEach(c=>{
+                if(c.m[d]==null)return;
+                const idx=c.dates.indexOf(d); if(idx<30)return;              // zu duenne Basis
+                const win=c.dates.slice(Math.max(0,idx-ZWIN),idx).map(x=>c.m[x]);
+                if(win.length<30)return;
+                const mu=win.reduce((a,b)=>a+b,0)/win.length;
+                const sd=Math.sqrt(win.reduce((a,b)=>a+(b-mu)*(b-mu),0)/win.length);
+                if(!(sd>0))return;
+                zs.push(c.sign*(c.m[d]-mu)/sd);
+                used[c.name]=(used[c.name]||0)+1;
+              });
+              if(zs.length)hist.push([d,Math.round(zs.reduce((a,b)=>a+b,0)/zs.length*1000)/1000]);
+            });
+            if(!hist.length){console.log("[debug] risk index: not enough history yet - risk_index.json unchanged");process.exit(0);}
+            const latest=hist[hist.length-1];
+            const vals=hist.map(h=>h[1]).slice().sort((a,b)=>a-b);
+            const pct=Math.round(vals.filter(v=>v<=latest[1]).length/vals.length*100);
+            const label=latest[1]>0.15?"RISK-OFF":latest[1]<-0.15?"RISK-ON":"NEUTRAL";
+            const out={date:latest[0],value:latest[1],label:label,percentile:pct,
+                       components:parts.map(p=>p.name),history:hist.slice(-800),
+                       method:"Mean z-score of 20-day changes in VIX, Gold, AUD/USD and USD/JPY (positive = risk aversion)"};
+            fs.writeFileSync("risk_index.json",JSON.stringify(out,null,1));
+            console.log("risk_index.json: date="+out.date+" value="+out.value+" label="+out.label+" pct="+out.percentile+" history="+out.history.length+"d components="+JSON.stringify(used));
           '
-          rm -f kcroro.csv
 
       # Nutzer-Wunsch 2026-08-06: Dashboard-Karte ganz rechts mit den neusten
       # Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick, ...).
@@ -4097,6 +4144,7 @@ jobs:
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json
           [ -f rate_probabilities.json ] && git add rate_probabilities.json
+          [ -f risk_index.json ] && git add risk_index.json
           [ -f news_data.json ] && git add news_data.json
           if ! git diff --staged --quiet; then
             git commit -m "Update FF calendar + indicator data"

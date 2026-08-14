@@ -5640,3 +5640,88 @@ trotzdem nicht lieber als der Ausgangszustand. Bei einem erneuten
 anfangen, ohne vorher zu erfragen, was genau am prozeduralen Ergebnis nicht
 gefiel (zu unruhig? zu grau? die rote Ader zu viel?) - der Rueckbau selbst
 gibt darauf keine Antwort.
+
+### Bug-Audit + zwei echte Fehler im Risk-Index (Nutzer-Auftrag 2026-08-14 "schau den ganzen Code nach Bugs")
+
+**Vorgehen:** statischer Scan zuerst, dann Laufzeit - der statische Teil war
+groesstenteils WERTLOS und das ist die wichtigere Lehre. Ein selbstgebauter
+Kommentar-/String-Stripper hat sich an Regex-Literalen verschluckt und 2/3
+der Datei zerstoert (1.097.000 → 357.000 Zeichen), wodurch reihenweise
+existierende Funktionen als "nirgends definiert" gemeldet wurden. Ein Scan
+auf "aufgerufen aber undefiniert" ohne Stripper meldete hunderte deutsche
+Kommentar-Woerter als Funktionsnamen. **Bei kuenftigen Audits nicht wieder
+einen eigenen JS-Parser bauen** - die Laufzeit-Tests (Playwright) haben in
+einem Bruchteil der Zeit die echten Fehler gefunden.
+
+**Laufzeit-Audit (sauber):** alle 15 Tabs gerendert, jeder sichtbare
+Button auf jedem Tab geklickt (destruktive ausgenommen), Score-Modal fuer
+JEDES Symbol/JEDE Rubrik/20 Paare in BEIDEN Score-Modi, jede Asset-
+Detailseite, alle Asset-Filter in Seasonality/Data/Trends, Undo/Redo.
+Ergebnis: 0 Fehler. Ebenso 0 Layout-Fehler ueber 5 Viewports × 15 Tabs
+(Seiten-Ueberlauf, Karten-Ueberlauf, vertikal abgeschnittener Inhalt).
+Ebenso 0 bei den Edge-Case-Tests (Normierungs-Klemmung, `_symId`-Stempel
+vollstaendig, Score identisch unabhaengig vom geoeffneten Asset,
+`seasCurYearReturns` mit unbekanntem Asset/null/invertiert).
+
+**Die dokumentierten Bug-Klassen waren alle sauber:** `saveScoreMode`
+erfuellt alle vier Ecken (fxpro_updated + _lsUpdatedSeen + markPrefEdit +
+cloudAutoSync UND `!prefPending`-Guard in `cloudPull`), die uebrigen
+localStorage-Keys ohne Sync sind zu Recht lokal (Caches, Cloud-Config
+selbst, Einmal-Migrations-Flags wie `fxpro_ruborder_v3/v4`).
+
+**Zwei echte Bugs - beide im Risk-Index vom 2026-08-12, beide von mir
+selbst eingebaut:**
+
+1. **Der KCRORO-Fetch von FRED lief NIE durch.** Der Workflow-Schritt
+   meldete "success" (`continue-on-error`), die Datei fehlte aber im Repo.
+   Auffaellig war die Laufzeit: exakt 95 s = mein Timeout-Budget
+   (45 s + 5 s Pause + 45 s Retry). Job-Log 31825300973 bestaetigt:
+   `[debug] KCRORO curl: http=000 size=0` / `command failed (exit 28)`
+   auf BEIDEN Versuchen. `http=000` heisst gar keine Antwort - **FRED
+   blockt GitHub-Actions-Runner**, exakt dieselbe Blockade, die den
+   EFFR-Fetch schon zur NY-Fed-API gezwungen hat. Das stand sogar im
+   Kommentar des eigenen Schritts als Risiko drin und ist trotzdem
+   eingetreten. **Nicht nochmal `fred.stlouisfed.org` versuchen.** Eine
+   Alternativquelle fuer KCRORO existiert nicht (die Kansas-City-Fed-Seite
+   rendert nur einen Chart ohne Rohdaten-Link). Moeglicher kuenftiger Weg:
+   FREDs offizielle API auf dem ANDEREN Host `api.stlouisfed.org` - braucht
+   einen kostenlosen API-Key als Repo-Secret, bisher nicht eingerichtet.
+   **Ersatz:** der Index wird jetzt aus echten Marktpreisen berechnet, die
+   derselbe Lauf ohnehin schon geholt hat (`price_data.json`/
+   `sentiment_data.json`) - VIX, Gold, AUD/USD, USD/JPY, je die
+   20-Tage-Veraenderung, z-normiert an der eigenen 1-Jahres-Verteilung,
+   dann gemittelt; >0 = Risikovermeidung (Vorzeichen wie KCRORO). Kein
+   zusaetzlicher Netzwerk-Request = nichts, was blockiert werden koennte.
+   Bewusst VERAENDERUNGEN statt Niveaus: Gold steht in einem mehrjaehrigen
+   Aufwaertstrend, ein Niveau-z-Wert wuerde dauerhaft "risk-off" melden.
+   Die volle Historie wird bei jedem Lauf aus der 3-Jahres-Kurshistorie neu
+   durchgerechnet - kein Ein-Punkt-pro-Tag-Aufbau noetig. An den echten
+   Repo-Daten gemessen: 800 Tage, Mittelwert 0,01, Streuung 0,60, Aufteilung
+   35 % risk-off / 41 % risk-on / 24 % neutral - plausibel verteilt, keine
+   Dauer-Schlagseite. **VIX faellt anfangs noch heraus** (sammelt erst seit
+   Feature-Start einen Punkt pro Tag, hatte 37 von noetigen 50) und kommt
+   automatisch dazu, sobald die Reihe lang genug ist - ohne Code-Aenderung.
+2. **`risk_index.json` fehlte in der `git add`-Liste** des Commit-Schritts.
+   Die Datei waere also selbst bei erfolgreichem Fetch nie im Repo gelandet.
+   **Merksatz:** bei JEDEM neuen Workflow-Schritt, der eine Datei erzeugt,
+   sofort pruefen, ob sie auch in der Commit-Liste steht - der Schritt
+   selbst meldet "success", und die fehlende Datei faellt erst auf, wenn
+   jemand im Repo nachsieht.
+
+**Dazu ein Fehler, der VOR dem ersten Lauf abgefangen wurde:** im neuen
+Skript stand `.filter(p=>p.s.length>=LOOK+30)` VOR `const LOOK=20` - die
+temporal dead zone haette einen `ReferenceError` geworfen. Genau die Falle,
+die bei `SYNC_EXCLUDE_RUBS`/`SENT_MAP` in `index.html` schon dokumentiert
+ist. Gefunden durch eine Reihenfolge-Pruefung nach dem Edit, nicht durch
+`node --check` (das meldet TDZ nicht).
+
+**5 tote Funktionen entfernt** (nur noch ihre eigene Definition im File, kein
+Aufrufer, auch nicht als String in einem `onclick`): `bondYieldChangeInfo`,
+`researchTreeSelLabel`, `setIndHistRangeCustom`, `strengthBadgeHtml` (seit
+dem Entfernen des Staerke-Badges am Asset-Kopf), `togPairMark` (seit der
+Watchlist-Zusammenlegung). **Falle beim Dead-Code-Scan:** die vielen
+`setXRange`-Funktionen sehen tot aus, werden aber als STRING an
+`timeRangeBarHtml(...,'setTrendsRange')` uebergeben und dort in ein
+`onclick` gebaut - ein Zaehler, der nur `name(` sucht, meldet sie
+faelschlich. Zaehlen, wie oft der Name UEBERHAUPT im File vorkommt: genau 1 =
+wirklich tot.
