@@ -5772,3 +5772,68 @@ feTurbulence eine inhaerente Periodizitaet hat - und wurden vom Nutzer nach
 dem Live-Ansehen komplett zurueckgerollt). Eine ECHTE Raster-Textur hat
 dieses Problem strukturell nicht: sie wird einmal erzeugt und als Bild
 skaliert, es gibt nichts, was sich wiederholen koennte.
+
+### Dashboard: alle Spalten enden auf einer Linie - MIT Inhalt (Nutzer-Wunsch 2026-08-14)
+
+Woertlich: "mach das alle Karten gleich weit unten enden aber am besten auch
+mit Inhalt und keine weisen Lücken dadrinne". **Das ist KEIN Widerspruch zu
+den beiden frueheren Ablehnungen** (2026-07-27 und 2026-08-08, beide im
+CSS-Kommentar bei `#dashWidgets.dash-layout` dokumentiert): abgelehnt wurde
+damals nicht der gleiche Abschluss an sich, sondern dass dafuer eine Karte
+mit UNVERAENDERT WENIG Inhalt aufgeblasen wurde und ihr Inhalt darin
+"schwebte". Der jetzige Wunsch loest genau das auf - gleich hoch UND gefuellt.
+
+**Ausgangslage gemessen** (1440×900, frisches Profil): Spaltenfuesse bei
+748/1043/1125/1046 px, also **377 px Differenz**. Ursache war fast
+ausschliesslich die linke Spalte: `watchlist` (132 px) und `corr_warn`
+(114 px) waren reine Platzhalter-Karten mit einem Satz Text.
+
+**Drei Bausteine, in dieser Reihenfolge - Inhalt zuerst, Layout zuletzt:**
+
+1. **Die zwei Platzhalter mit echten Daten fuellen** (der eigentliche Fix,
+   brachte allein 377 → 192 px):
+   - `watchlist` bei leerer Liste: die aktuell staerksten Paare nach
+     `|pairScore|` als Ein-Klick-Vorschlag (`setWatched(...,true)`), mit
+     denselben Zeilen-Bausteinen wie die gefuellte Liste - die Karte sieht
+     im leeren und gefuellten Zustand gleich aus. 132 → 380 px.
+   - `corr_warn` bei <2 Watchlist-Paaren: dieselbe Rechnung ersatzweise auf
+     `CORR_FALLBACK_PAIRS` (5 Majors = 10 Kombinationen) statt "bitte erst
+     zwei Paare hinzufuegen". `watchlistCorrPairs(pairNames)` nimmt dafuer
+     jetzt optional eine Namensliste. 114 → 354 px. ⚠ Der Parameter darf
+     NICHT `names` heissen - die Funktion hat intern schon ein `const names`
+     (Redeclaration-Fehler, von `node --check` gefunden).
+2. **Kuenstlich knappe Zeilen-Limits entdrosselt** - diese Listen hatten weit
+   mehr Daten, als sie zeigten: Kalender `slice(0,3)`→`(0,8)`, Volatilitaet
+   `(0,6)`→`(0,10)`, Carry `5+5`→`6+6`. Ohne diesen Schritt haetten die
+   Karten im naechsten Schritt nichts zum Fuellen gehabt.
+3. **Erst dann der Hoehenausgleich:** Grid auf `align-items:stretch`, und
+   genau die LETZTE Karte jeder Seitenspalte bekommt in `renderDash()` die
+   Klasse `dw-grow` (per String-Replace auf dem fertigen Karten-HTML, kein
+   zweiter Render-Pfad). Sie nimmt den Restplatz, und ihre Liste bekommt
+   `flex:1` + **`justify-content:space-between`** - der Restplatz verteilt
+   sich damit gleichmaessig auf die ZEILENABSTAENDE, statt sich unten als
+   weisse Flaeche zu sammeln. Genau das war der "weisse Luecke"-Einwand.
+   Passt die Liste nicht hinein, hat `space-between` nichts zu verteilen und
+   der `overflow-y:auto`-Scroll uebernimmt - beide Faelle sind abgedeckt.
+
+**Ergebnis gemessen ueber 4 Desktop-Viewports** (1920/1600/1440/1180):
+Spaltendifferenz **0 px**, Restluecke in JEDER der vier `dw-grow`-Karten
+**0 px**, kein horizontaler Ueberlauf, keine JS-Fehler.
+
+**⚠ Der Zwischenschritt war noetig, um es richtig zu messen:** eine erste
+Messung meldete faelschlich "17 px Luecke, alles gut" - sie mass gegen das
+LETZTE KIND von `.dw-body`, und das ist die gestreckte Liste SELBST. Der
+Leerraum sass INNERHALB der Liste unter der letzten Zeile. Erst die Messung
+gegen die letzte ZEILE zeigte die echten Luecken (perf_ranking 256 px,
+corr_warn 132 px). **Bei kuenftigen "fuellt die Karte?"-Pruefungen immer
+gegen das letzte sichtbare INHALTS-Element messen, nie gegen den Container.**
+
+**Alles greift nur ab `min-width:1100px`** (die Regeln stehen im bestehenden
+Media-Block) - darunter stapelt das Dashboard weiterhin einspaltig, dort gibt
+es keine Spalten, die zusammen enden koennten. Auf Mobil per Screenshot
+geprueft: unveraendert.
+
+**Headlines-Karte:** hat ohne `MARKETAUX_API_KEY` echt keine Daten. Statt
+einer nackten Zeile erklaert der Leerzustand jetzt, wie man den Feed
+einschaltet - Inhalt mit Nutzen, aber weiterhin KEINE erfundenen
+Schlagzeilen (Grundsatz "nie schaetzen").
