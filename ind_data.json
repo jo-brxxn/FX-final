@@ -1710,7 +1710,7 @@
    "actual": "0.50%",
    "forecast": null,
    "previous": null,
-   "date": "2026-06-30",
+   "date": "2026-08-14",
    "event": "GDP Growth QoQ (Trading Economics)",
    "source": "tepage",
    "history": [
@@ -1853,7 +1853,7 @@
    "actual": "1%",
    "forecast": null,
    "previous": null,
-   "date": "2026-06-30",
+   "date": "2026-08-14",
    "event": "Services Inflation (CPI services) (Trading Economics)",
    "source": "tepage"
   },
@@ -1861,7 +1861,7 @@
    "actual": "68460K",
    "forecast": null,
    "previous": "68820K",
-   "date": "2026-06-30",
+   "date": "2026-08-14",
    "event": "Employed Persons (Trading Economics)",
    "source": "tepage"
   },
@@ -1869,7 +1869,7 @@
    "actual": "794K",
    "forecast": null,
    "previous": "786K",
-   "date": "2026-06-30",
+   "date": "2026-08-14",
    "event": "Job Vacancies (Trading Economics)",
    "source": "tepage"
   },
@@ -1877,7 +1877,7 @@
    "actual": "54.50",
    "forecast": null,
    "previous": "54.80",
-   "date": "2026-08-03",
+   "date": "2026-08-14",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   },
@@ -1885,7 +1885,7 @@
    "actual": "51.20",
    "forecast": null,
    "previous": "52.20",
-   "date": "2026-08-05",
+   "date": "2026-08-14",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -2101,12 +2101,12 @@
    "source": "tv"
   },
   "Manufacturing PMI": {
-   "actual": "53.2",
-   "forecast": "55",
-   "previous": "54.3",
-   "date": "2026-08-03",
-   "event": "procure.ch Manufacturing PMI",
-   "period": null,
+   "actual": "53.20",
+   "forecast": null,
+   "previous": "54.30",
+   "date": "2026-08-14",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-05-04",
@@ -2306,8 +2306,7 @@
      "53.2",
      "55"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "CPI (Headline)": {
    "actual": "0.4%",
@@ -3337,7 +3336,7 @@
    "actual": "0.30%",
    "forecast": null,
    "previous": null,
-   "date": "2026-07-31",
+   "date": "2026-08-14",
    "event": "Core CPI (Trading Economics)",
    "source": "tepage"
   },
@@ -3345,7 +3344,7 @@
    "actual": "2.10%",
    "forecast": null,
    "previous": null,
-   "date": "2026-08-13",
+   "date": "2026-08-14",
    "event": "PPI (Trading Economics)",
    "source": "tepage"
   },
@@ -3353,7 +3352,7 @@
    "actual": "63.90",
    "forecast": null,
    "previous": "59.80",
-   "date": "2026-08-03",
+   "date": "2026-08-14",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -6032,7 +6031,7 @@
    "actual": "51.90",
    "forecast": null,
    "previous": "51.40",
-   "date": "2026-08-03",
+   "date": "2026-08-14",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   },
@@ -6040,7 +6039,7 @@
    "actual": "51.70",
    "forecast": null,
    "previous": "49.40",
-   "date": "2026-08-05",
+   "date": "2026-08-14",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -10500,12 +10499,12 @@
  },
  "CAD": {
   "Services PMI": {
-   "actual": "55.1",
-   "forecast": "55.5",
-   "previous": "56.2",
-   "date": "2026-08-07",
-   "event": "Ivey PMI s.a",
-   "period": null,
+   "actual": "49.10",
+   "forecast": null,
+   "previous": "47.10",
+   "date": "2026-08-14",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-05-06",
@@ -10590,8 +10589,7 @@
      "55.1",
      "55.5"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Avg Hourly Earnings": {
    "actual": "3%",
@@ -12383,7 +12381,7 @@
    "actual": "53.50",
    "forecast": null,
    "previous": "53",
-   "date": "2026-08-04",
+   "date": "2026-08-14",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -14459,7 +14457,7 @@
    "actual": "6%",
    "forecast": null,
    "previous": null,
-   "date": "2026-08-04",
+   "date": "2026-08-14",
    "event": "Household Spending (Trading Economics)",
    "source": "tepage"
   },
@@ -14467,7 +14465,7 @@
    "actual": "3.6%",
    "forecast": "3.7%",
    "previous": null,
-   "date": "2026-07-29",
+   "date": "2026-08-14",
    "event": "Core CPI (Trading Economics)",
    "source": "tepage"
   },
@@ -14475,7 +14473,7 @@
    "actual": "52",
    "forecast": null,
    "previous": "51.50",
-   "date": "2026-08-02",
+   "date": "2026-08-14",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   },
@@ -14483,7 +14481,7 @@
    "actual": "53.60",
    "forecast": null,
    "previous": "50.50",
-   "date": "2026-08-04",
+   "date": "2026-08-14",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -16683,7 +16681,7 @@
    "actual": "51.90",
    "forecast": null,
    "previous": "52.50",
-   "date": "2026-08-03",
+   "date": "2026-08-14",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   },
@@ -16691,7 +16689,7 @@
    "actual": "52.10",
    "forecast": null,
    "previous": "48.80",
-   "date": "2026-08-05",
+   "date": "2026-08-14",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
