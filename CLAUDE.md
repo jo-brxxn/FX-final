@@ -5837,3 +5837,65 @@ geprueft: unveraendert.
 einer nackten Zeile erklaert der Leerzustand jetzt, wie man den Feed
 einschaltet - Inhalt mit Nutzen, aber weiterhin KEINE erfundenen
 Schlagzeilen (Grundsatz "nie schaetzen").
+
+### Dashboard-Abschluss Runde 2: der Fehlbetrag muss auf ALLE Karten verteilt werden (Nutzer-Bugreport 2026-08-14, per Foto)
+
+Nutzer nach Runde 1: "da sieht man noch grosse weise Luecken so war das nicht
+gedacht ... mach vielleicht einfach die Karte vom Kalender als feste Groesse
+und dann innerhalb der Karte scrollbar."
+
+**Warum Runde 1 nicht reichte:** dort bekam genau EINE Karte je Spalte
+(`dw-grow`) den gesamten Restplatz und verteilte ihn per
+`justify-content:space-between` auf die Zeilenabstaende. Das loest eine grosse
+Luecke nur in viele kleine auf - und wenn die Karte einen hohen Kopf hat
+(Correlation Check: Kennzahl + Erklaerzeile), bleibt vom Rest so wenig, dass
+1 von 7 Zeilen sichtbar war. Eine einzelne Karte kann einen Fehlbetrag von
+mehreren hundert Pixeln nicht sinnvoll aufnehmen.
+
+**Loesung: schrumpfen statt strecken, und auf alle verteilt.** Jede Karte mit
+einer Liste traegt `dw-shrink` (`DASH_SHRINKABLE` in `renderDash()`, per
+String-Replace auf dem fertigen Karten-HTML - kein zweiter Render-Pfad):
+`min-height:150px`, Body als Flex-Spalte, die Liste `flex:1;min-height:0;
+overflow-y:auto`. `equalizeDashColumns()` misst je Spalte die natuerliche
+Hoehe UND die Mindesthoehe (Karten ohne Liste zaehlen voll, `dw-shrink`-Karten
+mit `DASH_SHRINK_MIN_H`), nimmt das Maximum aus kuerzester natuerlicher Spalte
+und groesster Mindesthoehe und setzt allen Spalten diese Hoehe. Flexbox
+verteilt den Fehlbetrag danach proportional - jede Karte gibt ein wenig ab,
+keine alles. Die Kalender-Karte bekommt dadurch automatisch die vom Nutzer
+gewuenschte feste Hoehe mit Innen-Scroll; ihr `mw-footer` bleibt unter der
+scrollenden Liste stehen, weil nur `.hie-list` flext.
+
+**⚠ Zwei Fallen, die Messungen unbrauchbar machen:**
+1. **`align-items:stretch` macht die Rechnung zum No-Op.** Mit stretch sind
+   alle Zonen schon vor der Messung gleich hoch, `Math.min(...natuerlich)`
+   ist dann der Maximalwert und es wird nichts angeglichen. Das Grid steht
+   deshalb auf `align-items:start`, die Hoehe kommt ausschliesslich aus JS.
+   `equalizeDashColumns()` setzt `z.style.height=''` VOR dem Messen zurueck,
+   sonst misst der zweite Aufruf die selbst gesetzte Hoehe.
+2. **Gegen das letzte INHALTS-Element messen, nie gegen den Container.** Eine
+   erste Pruefung meldete faelschlich "17 px, alles gut" - sie mass gegen das
+   letzte Kind von `.dw-body`, und das ist die gestreckte Liste selbst. Der
+   Leerraum sass INNERHALB der Liste. Ein Filter auf Blatt-Elemente
+   (`children.length===0`) ist ebenfalls falsch: ein Absatz mit `<b>` darin
+   faellt heraus und meldet Phantom-Luecken von 34-64 px. Richtig: letztes
+   sichtbares direktes Kind von `.dw-body` gegen dessen Unterkante.
+
+Gemessen ueber 1920/1600/1440/1180: **Spalten-Differenz 0 px, Restluecke im
+Karten-Body 0 px in JEDER Karte, jede Liste vollstaendig gerendert** (auch die
+Bottom-Zone: drei Karten je 302 px). Unter 1100 px stapelt das Dashboard
+weiterhin einspaltig - alle Regeln stehen im bestehenden `@media`-Block.
+
+### Marmor v4: heller, frischer, weisser (Nutzer-Wunsch 2026-08-14)
+
+Nur die Parameter des Generators (`marble_gen.py`, Scratchpad) veraendert, die
+Technik bleibt: Grundton 246 → **251,5**, Wolkigkeit 5,0 → **3,0**, Aderkern
+40/15 → **24/7**, zweites Adernsystem 26/9 → **15/4,5**, Verzweigungen 18 →
+**8**, Korn ±1,2. Dazu im CSS der obere Lichtschein kraeftiger
+(`rgba(255,255,255,.55)` → `.72`) und der graue Fleck unten rechts schwaecher
+(`rgba(120,130,142,.10)` → `rgba(132,142,155,.07)`).
+
+Ergebnis: 132 KB base64 statt 156 KB (weniger Kontrast komprimiert besser) -
+die Datei schrumpft dadurch trotz gleicher Bildgroesse. Der Marmor liest sich
+jetzt als moderne weisse Platte mit angedeuteter Aderung statt als grauer
+Stein. Einfaerbung weiterhin ueber `background-blend-mode:multiply` gegen
+`var(--bg0)`, das PNG selbst bleibt Graustufen.
