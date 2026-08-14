@@ -5725,3 +5725,50 @@ Watchlist-Zusammenlegung). **Falle beim Dead-Code-Scan:** die vielen
 `onclick` gebaut - ein Zaehler, der nur `name(` sucht, meldet sie
 faelschlich. Zaehlen, wie oft der Name UEBERHAUPT im File vorkommt: genau 1 =
 wirklich tot.
+
+### Marmor-Hintergrund v3: echte Raster-Textur statt CSS-Gradienten/SVG-Filter (Nutzer-Wunsch 2026-08-14 "richtig realistisch, vlt auch aus dem Internet")
+
+**Warum nicht "aus dem Internet":** Bild-Hoster (Unsplash, Pexels) sind vom
+Sandbox-Egress-Proxy mit HTTP 403 gesperrt (Org-Policy, laut Anweisung nicht
+zu wiederholen). Ausserdem waere ein CDN-Link mit der Ein-Datei-/Offline-
+Architektur unvereinbar - es haette ohnehin eingebettet werden muessen.
+**Und keine Bildbibliotheken:** PIL/numpy sind nicht installiert.
+
+**Loesung: die Textur selbst erzeugen, in reinem Python.** PNG-Encoder von
+Hand (zlib+struct aus der Standardbibliothek, ~10 Zeilen), Value-Noise mit
+Smoothstep-Interpolation, fBm-Turbulenz, klassisches Perlin-Marmor-Verfahren
+(`sin(bandierung + turbulenz*A)` -> die charakteristischen geschwungenen
+Adern). Generator liegt im Scratchpad (`marble_gen.py`), Ergebnis ist als
+Graustufen-PNG-Daten-URI in `body{background-image}` eingebettet.
+
+**Drei Stellschrauben, die den realistischen Eindruck ausmachen** - der erste
+Anlauf hatte sie falsch und sah aus wie eine HOEHENLINIEN-KARTE (zu viele,
+zu gleichmaessig verteilte duenne Linien):
+1. **Sehr niedrige Bandfrequenz** (0.0135 → 0.0026): nur 2-3 dominante Adern
+   queren die Flaeche statt ~20. Echter Calacatta hat wenige grosse Adern auf
+   ruhiger Flaeche, keine gleichmaessige Liniendichte.
+2. **Anisotropes Rauschen** (`noise(x*freq*aniso, y*freq)`, aniso≈0.35): die
+   Strukturen strecken sich in eine Richtung, statt rundliche Blasen zu
+   bilden. ⚠️ Richtung leicht zu verwechseln - X stauchen streckt in X.
+3. **Pro Ader scharfer Kern PLUS breiter weicher Halo** (`vein(p,15)` und
+   `vein(p,3.6)` derselben Phase): erzeugt Tiefe statt Strichzeichnung. Ein
+   zu breiter Halo (Exponent 2.2) liess es "zerlaufen" aussehen.
+
+**Einfaerbung ueber `background-blend-mode:multiply`** gegen
+`background-color:var(--bg0)`: das PNG ist bewusst GRAUSTUFEN (halb so gross
+wie RGB), die Farbe kommt aus dem CSS-Token. Aendert sich die Palette,
+zieht der Marmor automatisch mit - keine zweite Farbquelle.
+
+**Groesse:** 760×475 statt 900×560 gewaehlt - 156 KB statt 284 KB base64 bei
+praktisch identischer Wirkung, weil `background-size:cover` eine weiche
+Textur ohnehin hochskaliert. Der groesste Kompressions-Feind ist das FEINE
+KORN (Zufallsrauschen ist per Definition inkompressibel) - deshalb dezent
+gehalten (±1,2 statt ±2,6). Datei dadurch 1,31 → 1,46 MB.
+
+**Vorgeschichte (nicht nochmal aufrollen):** v1 waren 12 hand-platzierte
+`linear-gradient`-Adern (zu regelmaessig), v2 waren SVG-`feTurbulence`-Adern
+(zeigten bei voller Seitenhoehe ein Kachel-Wiederholungsmuster, weil
+feTurbulence eine inhaerente Periodizitaet hat - und wurden vom Nutzer nach
+dem Live-Ansehen komplett zurueckgerollt). Eine ECHTE Raster-Textur hat
+dieses Problem strukturell nicht: sie wird einmal erzeugt und als Bild
+skaliert, es gibt nichts, was sich wiederholen koennte.
