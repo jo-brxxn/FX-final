@@ -5988,3 +5988,87 @@ die weissen Karten weiterhin abheben. Generator: `stone_gen.py` im Scratchpad.
 (hier: "Streifen") aus den Parametern kommt oder aus der Formel. Periodische
 Funktionen erzeugen periodische Ergebnisse - dagegen hilft kein Nachjustieren,
 nur ein anderes Verfahren.
+
+### Asset-Symbolsatz: echte Flaggen/Materialien mit Dauerbewegung (Nutzer-Wunsch 2026-08-15)
+
+Nutzer: "es gibt ja fuer jedes Asset so eine Art icon also die Flagge oder das
+Symbol [...] richtig hochwertig neu Designst und es realistisch aussehen laesst
+und eine Dauer Animation hinzufuegst die die Flaggen wehen laesst oder zB das
+Oel Symbol tropfen [...] und in den Einstellungen soll man die Option haben die
+Animationen zu deaktivieren." Nach dem Ansehen der Vorschau: "die Animationen
+sind kantig mach das fluessiger und bischen schneller bei den Flaggen".
+
+Ersetzt `FX_FLAG` (Emoji) und die generischen Strich-Icons aus
+`nonFxWatchIconHtml`. `FX_FLAG` bleibt als Datenquelle bestehen, gerendert wird
+`assetIconHtml(id, px)`. Alle Motive liegen einmal als `<symbol>` in einem
+unsichtbaren `<svg id="aiDefs">`, das beim ersten Icon-Bau in den Body kommt
+(`aiEnsureDefs`) - die Icons selbst sind nur `<use>`.
+
+**⚠ Die Performance-Lehre, die diese Umsetzung geformt hat (GEMESSEN):**
+Ein animierter `transform` auf einer SVG-`<g>` wird von Chromium NICHT auf der
+GPU zusammengesetzt, sondern erzwingt Neuzeichnen. Mit 10 Streifen auf allen
+~19 gleichzeitig sichtbaren Icons (190 animierte Gruppen) fiel das Dashboard
+von konstant 61 fps auf **Median 47 mit Einbruechen auf 29**; ohne die
+Streifenwelle waren es 61 in 5 von 5 Messungen. `will-change:transform` und
+`contain:paint` auf dem Wrapper wurden beide gemessen und aenderten **nichts**.
+Auf einer nackten Testseite mit denselben 20 Flaggen lief alles mit 60 fps -
+die Kosten entstehen erst im Zusammenspiel mit dem grossen Hintergrundbild und
+den Karten-Schatten der App. **Loesung:** die Streifenzahl haengt an der
+ANZEIGEGROESSE (`AI_BIG_MIN_PX`=20) - Listen-Icons (17-18px) bekommen 4
+Streifen, die grossen am Asset-Kopf 10. Danach 61 fps in 8 von 8 Messungen,
+exakt wie mit abgeschalteter Animation. Bei kuenftigen SVG-Animationen zuerst
+diese Frage stellen, nicht erst nach dem Ship.
+
+**Merksatz zur Messmethodik:** die ersten fps-Messungen schwankten zwischen 29
+und 61 und liessen sich nicht deuten. Erst ein ABWECHSELNDER A/B-Test in
+derselben Sitzung (8x an, 8x aus im Wechsel, dann Mediane) trennte Signal von
+Rauschen - "aus" lag dabei 8-mal exakt auf 61, "an" streute. Einzelmessungen
+oder Bloecke nacheinander sind in dieser Sandbox wertlos.
+
+**Wie das Wehen entsteht:** senkrechte Streifen (clipPath) mit versetztem
+NEGATIVEM `animation-delay`, dadurch laeuft eine Welle durchs Tuch. Drei
+Details, ohne die es nicht wie Stoff aussieht:
+1. **Die Amplitude waechst von der Stange zum freien Ende** (`--ai-amp`).
+   Gleiche Amplitude ueber die Breite sieht aus wie ein wackelndes Rechteck.
+2. **Fenster und Inhalt sind zwei geschachtelte Gruppen.** Liegen `clip-path`
+   und `transform` auf demselben Element, wandert das Fenster mit - dann laesst
+   sich der Streifen nicht kippen, ohne dass keilfoermige Luecken aufreissen.
+3. **Das Kippen folgt der Steigung der Welle** (Phase um eine Viertelperiode
+   versetzt zur Hoehe) und legt die Bruchkanten zwischen den Streifen um - das
+   ist der Unterschied zwischen "kantig" und "fluessig". Dazu vier Stuetzstellen
+   in den Keyframes statt zwei, sonst interpoliert der Browser linear durch die
+   Mitte und die Bewegung knickt sichtbar um. Der Drehpunkt muss die Mitte
+   GENAU DIESES Streifens sein, nicht die Flaggenmitte.
+
+**Der Schalter** (`assetAnimEnabled`, Einstellungen -> "Asset symbols") liegt
+wie `pinEnabled`/`introAnimEnabled` ausserhalb von `snap()`/Undo und ist an
+allen vier Ecken angebunden (Save-Funktion, `cloudPush`, `cloudPull` MIT
+`prefPending`-Schutz, Export/Import) - siehe "WICHTIGSTE REGEL" oben. Er setzt
+`body.no-asset-anim`; die Symbole bleiben dabei in Ruhelage sichtbar.
+
+**Vier Fehler, die beim Bauen auftraten - nicht neu aufmachen:**
+- **`<use>` auf ein `<symbol>` braucht `width`/`height`,** sonst rendert
+  Chromium wortlos NICHTS (kein Fehler in der Konsole). Daran waren GBP, AUD
+  und NZD zuerst komplett unsichtbar.
+- **Das Ahornblatt direkt in 36x24-Koordinaten zu tippen ergab einen Busch** -
+  die Rundungsfehler summieren sich bei so kleinen Schrittweiten. Jetzt in
+  einer 100x100-Box gezeichnet und per `transform` platziert.
+- **Der Metallglanz lief ueber den Barren hinaus** - er braucht einen
+  `clip-path` auf die Barren-/Muenzform.
+- **Der Barren fuellte die Box nur zu 57% Hoehe** und wirkte neben dem
+  34px-Titel zu klein; die Skalierung sitzt AUSSEN um den gesamten Inhalt
+  inkl. der geclippten Glanz-Gruppe, damit der clip-path mitwaechst.
+
+**Bewusste Abweichung:** die Schweiz bekommt 3:2 statt des quadratischen
+Nationalformats. In Listen stehen die Flaggen in einer Spalte untereinander,
+ein schmaleres Icon braeche die Ausrichtung (Grundsatz "alles bleibt exakt
+untereinander ausgerichtet"). Die Schweizer Seeflagge hat genau dieses Format.
+
+**Container-Stile mitziehen:** `.atitle-flag`/`.an-flag` trugen `drop-shadow`
+bzw. `saturate()` - beides lag auf dem Emoji-GLYPH. Auf dem SVG waeren sie
+doppelt bzw. ein teurer Paint-Filter auf einem dauerhaft animierten Element;
+beide entfernt. `.wl-icons` musste von 48px auf 60px wachsen, weil zwei
+17px-Flaggen breiter sind als zwei Emoji.
+
+Selbst angelegte Assets ohne eigenes Motiv fallen weiterhin auf das
+Research-Ordner-Icon zurueck (`nonFxWatchIconHtml`).

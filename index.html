@@ -263,7 +263,7 @@ svg.ic{vertical-align:-2px;flex:none}
    .resf-detail-hd - dort ist die Flagge ein GESCHWISTER des Namens, nicht
    dessen Kind, erbt also nicht automatisch dieselbe Groesse) bekommt dafuer
    direkt am Verwendungsort eine explizite Groesse passend zu .resf-detail-nm. */
-.atitle-flag{display:inline-block;font-size:1em;margin-right:6px;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.atitle-flag{display:inline-block;margin-right:8px;vertical-align:-3px;line-height:0}
 .score-badge{display:inline-block;font-size:.62em;font-weight:800;font-family:var(--ff-num);border:1.5px solid;border-radius:8px;padding:1px 6px;vertical-align:middle;margin-left:8px;letter-spacing:0;line-height:1.3}
 /* Staerke-Note 1-10 aus der eigenen Historie. Bewusst neutral gerahmt und
    nicht in Bias-Farbe: sie sagt "ungewoehnlich fuer dieses Asset", nicht
@@ -814,7 +814,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-side-title{padding:2px 4px 12px}
 .rterm-title-big{font-size:26px;font-weight:800;color:var(--t0);letter-spacing:-.2px}
 .rterm-side-asset{display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap}
-.rterm-side-asset-flag{font-size:22px}
+.rterm-side-asset-flag{line-height:0;display:inline-flex}
 .rterm-side-asset-ticker{font-size:22px;font-weight:800;color:var(--t0)}
 .rterm-side-asset-name{font-size:15px;color:var(--t2)}
 .rterm-side-asset-sc{font-size:20px;font-weight:800;font-family:var(--ff-num);margin-left:2px}
@@ -1229,7 +1229,7 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
 /* Flagge zuerst, dann Kuerzel. Die Flagge ist bewusst deutlich groesser als
    der Text (18px gegen 13px) - sie ist hier das Erkennungsmerkmal, nicht der
    Text, und traegt bei dieser Groesse auch als Farbfleck. */
-.dash-majors-card .ab .an-flag{order:0;flex:0 0 auto;font-size:18px;line-height:1;filter:saturate(1.05)}
+.dash-majors-card .ab .an-flag{order:0;flex:0 0 auto;line-height:0}
 .dash-majors-card .ab .an{order:1;flex:0 0 32px;font-size:var(--fs-base);font-weight:700;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dash-majors-card .ab svg.sb-spark{order:2;flex:1 1 auto;min-width:0;width:auto;height:15px;margin:0}
 .dash-majors-card .ab .sb-score{order:3;flex:0 0 auto;text-align:right;margin:0;font-size:var(--fs-base);font-weight:800;font-variant-numeric:tabular-nums}
@@ -1374,7 +1374,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .wl-row.wl-add{cursor:pointer;color:var(--t3);opacity:.75}
 .wl-row.wl-add:hover{opacity:1}
 .wl-row.wl-add .wl-name{color:inherit;font-weight:600}
-.wl-icons{display:inline-flex;align-items:center;gap:3px;font-size:17px;width:48px;flex-shrink:0;color:var(--t2)}
+.wl-icons{display:inline-flex;align-items:center;gap:3px;width:60px;flex-shrink:0;color:var(--t2)}
 .wl-flag-sep{color:var(--t3);font-size:var(--fs-2xs)}
 .wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
 .wl-chg{font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
@@ -2628,6 +2628,62 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
 .si-total{display:flex;justify-content:space-between;gap:10px;align-items:baseline;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px;margin-top:10px;font-weight:800}
 .si-total-lbl{font-size:var(--fs-sm);color:var(--t1)}
 .si-total-v{font-size:var(--fs-xl);font-family:var(--ff-num)}
+
+/* ===== Asset-Symbole (Flaggen/Rohstoffe) ===== */
+
+.ai-wrap{display:inline-block;vertical-align:-.18em;line-height:0;flex:0 0 auto}
+.ai-svg{display:block;overflow:visible}
+/* Flaggen bekommen einen echten Schlagschatten + minimal gerundete Ecken -
+   das hebt sie vom Untergrund ab, ohne bunt zu werden. */
+.ai-flag{filter:drop-shadow(0 .5px 1px rgba(15,25,40,.30))}
+.ai-strip{animation:aiWave 1.75s ease-in-out infinite;transform-box:view-box;will-change:transform}
+/* Vier Stuetzstellen statt zwei: bei nur Hoch/Runter interpoliert der Browser
+   linear durch die Mitte und die Bewegung knickt dort sichtbar um. Die
+   Drehung liegt eine Viertelperiode versetzt - sie ist am groessten, wenn die
+   Hoehe gerade durch null geht, also genau dort, wo die Welle am steilsten
+   ist. */
+@keyframes aiWave{
+  0%,100%{transform:translateY(calc(var(--ai-amp) * -.8px)) rotate(0deg) scaleY(calc(1 - var(--ai-amp) * .05))}
+  25%    {transform:translateY(0) rotate(calc(var(--ai-amp) * 1.5deg)) scaleY(1)}
+  50%    {transform:translateY(calc(var(--ai-amp) *  .8px)) rotate(0deg) scaleY(calc(1 + var(--ai-amp) * .05))}
+  75%    {transform:translateY(0) rotate(calc(var(--ai-amp) * -1.5deg)) scaleY(1)}
+}
+/* Wandernder Glanz = das Licht, das ueber die Falte laeuft. Reines
+   translate, also Compositor-Arbeit statt Repaint. */
+.ai-sheen{animation:aiSheen 3.4s linear infinite;opacity:.85}
+@keyframes aiSheen{0%{transform:translateX(-16px)}60%,100%{transform:translateX(38px)}}
+.ai-shade{pointer-events:none}
+
+/* Oel: ein Tropfen loest sich, faellt und zerplatzt - Kernwunsch des Nutzers. */
+.ai-drip{animation:aiDrip 3.4s cubic-bezier(.45,0,.75,.35) infinite;transform-origin:18px 4px}
+@keyframes aiDrip{
+  0%,42%{transform:translateY(0) scale(.55);opacity:0}
+  50%   {transform:translateY(0) scale(1);opacity:1}
+  86%   {transform:translateY(9px) scale(.78);opacity:1}
+  100%  {transform:translateY(12px) scale(1.35,.3);opacity:0}
+}
+/* Metall: schmaler Lichtreflex wandert ueber den Barren/die Muenze. */
+.ai-sheen-el{animation:aiMetalSheen 3.8s ease-in-out infinite}
+@keyframes aiMetalSheen{0%,100%{transform:translateX(0)}55%,100%{transform:translateX(34px)}}
+/* Index: der Kursverlauf zeichnet sich immer wieder neu, der Punkt am Ende
+   erscheint erst, wenn die Linie dort angekommen ist. */
+.ai-tick{stroke-dasharray:46;stroke-dashoffset:46;animation:aiTick 4.5s ease-in-out infinite}
+@keyframes aiTick{0%{stroke-dashoffset:46}45%,88%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
+.ai-tick-dot{animation:aiTickDot 4.5s ease-in-out infinite}
+@keyframes aiTickDot{0%,40%{opacity:0;r:0}52%,88%{opacity:1;r:1.5}100%{opacity:0;r:1.5}}
+
+/* AUS: eine einzige Regel haelt jede Dauerbewegung an. Die Icons bleiben in
+   ihrer Ruhelage sichtbar - kein Layout-Sprung, keine leeren Kaesten. */
+body.no-asset-anim .ai-strip,
+body.no-asset-anim .ai-sheen,
+body.no-asset-anim .ai-drip,
+body.no-asset-anim .ai-sheen-el,
+body.no-asset-anim .ai-tick,
+body.no-asset-anim .ai-tick-dot{animation:none}
+body.no-asset-anim .ai-sheen,
+body.no-asset-anim .ai-drip{opacity:0}
+body.no-asset-anim .ai-tick{stroke-dashoffset:0}
+
 </style>
 </head>
 <body>
@@ -2746,12 +2802,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-373 — Hintergrund zurueck zum Marmor, aber modern und rein grau/weiss (Nutzer: "Doch keine Punkte, ich fand den Marmor Look gut aber moderner wie so ein Kunstboden" + "nur grau und weiss, nicht bunt"). Recherche-Grundlage: Bianco Dolomite gilt als der minimalistische Marmor - helles Weiss mit WENIGEN zarten grauen Adern statt vieler Linien. Der entscheidende technische Unterschied zu allen frueheren Marmor-Versuchen: die Adern kommen nicht mehr aus sin(band + turbulenz). Ein Sinus ist periodisch, erzeugt also zwangslaeufig viele parallele Adern - genau das las sich als "Streifen". Jetzt wird jede Ader als EINZELNER Pfad gelaufen (Richtung pendelt um eine Grundrichtung, Rauschen aus dem fBm-Feld) und gestempelt: drei Adern sind wirklich drei Adern, kein Musteranfang. Merksatz fuer spaeter: der Winkel darf NICHT akkumulieren (ang += ...) - dann driftet die Richtung unbegrenzt und die Ader rollt sich zu Schlaufen ein; richtig ist ang = ang0 + rauschen. Aeste gabeln in flachem Winkel von der Mutterader ab, ein freier Zufallswinkel liesse sie zurueck ins Bild laufen. Graustufen-PNG (820x512, ~150 KB) statt RGB - halber Speicher bei identischer Wirkung, da die Textur ohnehin farblos ist. Verworfen wurden Microcement (zu leer, kein Charakter) und Terrazzo in Grau (die Splitter werden beim cover-Skalieren fleckig).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-374 — Asset-Symbole komplett neu: statt Emoji-Flaggen und generischer Strich-Icons jetzt ein eigener SVG-Satz mit Dauerbewegung. Acht echte Flaggen (US-Streifen mit Sternenfeld, EU-Sternenkreis, konstruierter Union Jack fuer GB/AU/NZ, Schweizer Kreuz, Ahornblatt, Southern Cross), dazu Gold-/Silberbarren mit wanderndem Lichtreflex, ein Oeltropfen der sich loest und zerplatzt, eine Bitcoin-Muenze und Index-Kurven die sich zeichnen. Das Wehen entsteht aus senkrechten Streifen mit versetzter Phase; die Amplitude waechst von der Stange zum freien Ende, sonst wirkt es wie ein wackelndes Rechteck statt wie Stoff. Neuer Schalter in den Einstellungen ("Asset symbols") haelt jede Bewegung an. ⚠ GEMESSEN: animierte transforms auf SVG-<g> werden von Chromium nicht auf der GPU zusammengesetzt - mit 10 Streifen auf allen 19 sichtbaren Icons fiel das Dashboard von konstant 61 fps auf Median 47 mit Einbruechen auf 29. will-change und contain aenderten daran nichts (beide gemessen). Deshalb haengt die Streifenzahl an der Anzeigegroesse: Listen-Icons (17-18px) bekommen 4 Streifen, die grossen Icons am Asset-Kopf 10. Danach 61 fps in 8 von 8 Messungen, exakt wie mit abgeschalteter Animation.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-373</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-374</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3206,6 +3262,10 @@ function introLogin(){
       <span style="font-size:12px;color:var(--t2)">Intro animation (globe + boost launch on load)</span>
       <button class="btn" id="introAnimToggleBtn" onclick="toggleIntroAnimEnabled()">Disable Animation</button>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
+      <span style="font-size:12px;color:var(--t2)">Asset symbols<br><span style="font-size:10.5px;color:var(--t3)">waving flags, dripping oil, shifting metal sheen</span></span>
+      <button class="btn" id="assetAnimToggleBtn" onclick="toggleAssetAnimEnabled()">Disable Animation</button>
+    </div>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
@@ -3323,6 +3383,308 @@ const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Namen, NUR bei echten FX-Waehrungen - Non-FX-Assets wie GOLD/BTC/SP500
 // haben keine Landeszugehoerigkeit, bekommen daher keine Flagge).
 const FX_FLAG={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',CHF:'🇨🇭',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',NZD:'🇳🇿'};
+// FX_FLAG bleibt als Datenquelle/Fallback bestehen; gerendert wird ab
+// VERSION-CHECK-374 aber der SVG-Satz unten (assetIconHtml).
+/* ============================================================================
+   ASSET-ICONS: realistische Flaggen + Rohstoff-/Index-Symbole mit Dauer-
+   Animation. Ersetzt die bisherigen Emoji-Flaggen (FX_FLAG) und die
+   generischen Strich-Icons der Non-FX-Assets (nonFxWatchIconHtml).
+
+   Aufbau (bewusst so und nicht anders):
+
+   1. Jedes Motiv wird EINMAL als <symbol> in einem globalen, unsichtbaren
+      <svg id="aiDefs"> im Body abgelegt. Die Icons selbst sind nur noch
+      <use href="#ai-USD">. Bei ~20 gleichzeitig sichtbaren Icons spart das
+      die 20-fache Wiederholung derselben Pfade im DOM.
+
+   2. WEHEN: die Flagge wird in 10 senkrechte Streifen geschnitten (clipPath),
+      jeder Streifen zeigt dasselbe <use> und bekommt dieselbe Keyframe-
+      Animation mit gestaffeltem NEGATIVEM delay - dadurch laeuft eine Welle
+      von links nach rechts durch das Tuch.
+      ⚠ Das Fenster (clip) und der bewegte Inhalt sind ZWEI geschachtelte
+      Gruppen. Liegen clip-path und transform auf DEMSELBEN Element, wandert
+      das Fenster mit - dann laesst sich der Streifen nicht kippen, ohne dass
+      zwischen den Nachbarn keilfoermige Luecken aufreissen. Aussen also der
+      feste Ausschnitt, innen die Bewegung.
+      Das Kippen ist der Grund, warum es rund statt kantig wirkt: es folgt der
+      STEIGUNG der Welle (Phase um eine Viertelperiode versetzt zur Hoehe) und
+      legt damit die Bruchkanten zwischen den Streifen um.
+      ⚠ Der physikalisch entscheidende Teil: die Amplitude waechst von der
+      Stange (links, fast 0) zum freien Ende (rechts, voll). Eine gleich
+      grosse Amplitude ueber die ganze Breite sieht aus wie ein wackelndes
+      Rechteck, nicht wie Stoff. Das steckt in --ai-amp pro Streifen.
+
+   3. Nur TRANSFORM + OPACITY werden animiert (Compositor), nie filter/blur -
+      siehe die dokumentierte Blur-Performance-Lehre im CLAUDE.md. Bei ~20
+      Icons a 6 Streifen laufen sonst 120 teure Repaints pro Frame.
+
+   4. Die Streifen ueberlappen sich um 0.35 Einheiten (clip ist breiter als
+      der Raster-Schritt), sonst reisst an den Schnittkanten eine Haarlinie
+      auf, sobald zwei Nachbarstreifen unterschiedlich weit verschoben sind.
+   ============================================================================ */
+
+// --- kleine Geometrie-Helfer (Sterne von Hand zu tippen ist fehleranfaellig) --
+function aiStar(cx, cy, rOut, points, rot) {
+  const rIn = rOut * (points === 5 ? 0.382 : 0.5);
+  let d = '';
+  for (let i = 0; i < points * 2; i++) {
+    const r = i % 2 ? rIn : rOut;
+    const a = (Math.PI / points) * i - Math.PI / 2 + (rot || 0);
+    d += (i ? 'L' : 'M') + (cx + Math.cos(a) * r).toFixed(2) + ',' + (cy + Math.sin(a) * r).toFixed(2);
+  }
+  return d + 'Z';
+}
+function aiStars(list) { return list.map(s => aiStar(s[0], s[1], s[2], s[3] || 5, s[4] || 0)).join(''); }
+
+// EU: 12 Sterne auf einem Kreis (r=7), Spitze nach oben
+const AI_EU_STARS = (() => {
+  let d = '';
+  for (let i = 0; i < 12; i++) {
+    const a = (Math.PI / 6) * i - Math.PI / 2;
+    d += aiStar(18 + Math.cos(a) * 7.2, 12 + Math.sin(a) * 7.2, 1.55, 5);
+  }
+  return d;
+})();
+
+// Union Jack als eigenes <symbol>, weil GBP/AUD/NZD ihn alle brauchen -
+// dreimal denselben Pfadsatz im DOM zu halten waere Verschwendung.
+const AI_UNION_JACK = `
+  <rect width="36" height="24" fill="#012169"/>
+  <path d="M0,0 36,24 M36,0 0,24" stroke="#fff" stroke-width="4.8"/>
+  <path d="M0,0 36,24" stroke="#C8102E" stroke-width="2.4" clip-path="url(#aiUjA)"/>
+  <path d="M36,0 0,24" stroke="#C8102E" stroke-width="2.4" clip-path="url(#aiUjB)"/>
+  <path d="M18,0 V24 M0,12 H36" stroke="#fff" stroke-width="8"/>
+  <path d="M18,0 V24 M0,12 H36" stroke="#C8102E" stroke-width="4.8"/>`;
+
+// ── Kanadisches Ahornblatt: 11 Zacken, in einer 100x100-Box gezeichnet und
+//    per transform an seinen Platz gesetzt. In 36x24-Koordinaten direkt zu
+//    tippen war der erste Versuch - das Ergebnis sah aus wie ein Busch, weil
+//    sich die Rundungsfehler bei so kleinen Schrittweiten aufsummieren.
+const AI_MAPLE = 'M50,7 L55,27 L67,23 L64,36 L78,32 L74,45 L93,43 L86,51 L95,62'
+  + ' L69,59 L68,65 L54,61 L57,89 L43,89 L46,61 L32,65 L31,59 L5,62 L14,51'
+  + ' L7,43 L26,45 L22,32 L36,36 L33,23 L45,27 Z';
+
+/* Motive. Alle im selben 36x24-Koordinatenraum gezeichnet.
+   ⚠ Auch die Schweiz bekommt 3:2 statt des quadratischen Nationalformats:
+   in Tabellen/Listen stehen die Flaggen in einer Spalte untereinander, ein
+   abweichend schmales Icon bricht die Ausrichtung (CLAUDE.md-Grundsatz
+   "alles bleibt exakt untereinander ausgerichtet"). 3:2 ist fuer die Schweiz
+   nicht falsch - die Seeflagge (civil ensign) hat genau dieses Format. */
+const AI_FLAGS = {
+  USD: `<rect width="36" height="24" fill="#fff"/>` +
+    [0, 2, 4, 6, 8, 10, 12].map(i => `<rect y="${(i * 24 / 13).toFixed(2)}" width="36" height="${(24 / 13).toFixed(2)}" fill="#B22234"/>`).join('') +
+    `<rect width="14.4" height="${(24 / 13 * 7).toFixed(2)}" fill="#3C3B6E"/>` +
+    (() => { // 9 Reihen abwechselnd 6/5 Sterne - vereinfacht als Punkte, bei 20px ist ein 5-Zack nicht mehr aufloesbar
+      let d = '';
+      for (let r = 0; r < 9; r++) {
+        const odd = r % 2;
+        const n = odd ? 5 : 6, y = 1.05 + r * 1.35, x0 = odd ? 2.3 : 1.25;
+        for (let c = 0; c < n; c++) d += `<circle cx="${(x0 + c * 2.15).toFixed(2)}" cy="${y.toFixed(2)}" r=".42" fill="#fff"/>`;
+      }
+      return d;
+    })(),
+
+  EUR: `<rect width="36" height="24" fill="#039"/><path d="${AI_EU_STARS}" fill="#FC0"/>`,
+
+  GBP: `<use href="#aiUJ"/>`,
+
+  CHF: `<rect width="36" height="24" fill="#D52B1E"/>` +
+    `<path d="M15.6,5.4h4.8v4.2h4.2v4.8h-4.2v4.2h-4.8v-4.2h-4.2v-4.8h4.2Z" fill="#fff"/>`,
+
+  JPY: `<rect width="36" height="24" fill="#fff"/><circle cx="18" cy="12" r="7.2" fill="#BC002D"/>`,
+
+  CAD: `<rect width="36" height="24" fill="#fff"/><rect width="9" height="24" fill="#D52B1E"/>` +
+    `<rect x="27" width="9" height="24" fill="#D52B1E"/>` +
+    `<path transform="translate(18,12) scale(.215) translate(-50,-50)" d="${AI_MAPLE}" fill="#D52B1E"/>`,
+
+  // ⚠ <use> auf ein <symbol> braucht width/height, sonst rendert Chromium
+  //   NICHTS (kein Fehler, einfach leer) - genau daran sind GBP/AUD/NZD im
+  //   ersten Anlauf komplett unsichtbar geblieben.
+  AUD: `<rect width="36" height="24" fill="#012169"/>` +
+    `<use href="#aiUJ" width="36" height="24" transform="scale(.5)"/>` +
+    `<path d="${aiStar(9, 18, 2.6, 7)}" fill="#fff"/>` +
+    `<path d="${aiStars([[27.5, 5.2, 1.5, 7], [31.6, 11.4, 1.6, 7], [26.4, 15.8, 1.5, 7], [22.6, 10.4, 1.2, 7], [29.2, 8.6, .8, 5]])}" fill="#fff"/>`,
+
+  NZD: `<rect width="36" height="24" fill="#012169"/>` +
+    `<use href="#aiUJ" width="36" height="24" transform="scale(.5)"/>` +
+    `<path d="${aiStars([[29.5, 5.6, 2.3], [32.4, 12.6, 2.3], [26.6, 16.6, 2.3], [24.4, 9.8, 2.3]])}" fill="#fff"/>` +
+    `<path d="${aiStars([[29.5, 5.6, 1.5], [32.4, 12.6, 1.5], [26.6, 16.6, 1.5], [24.4, 9.8, 1.5]])}" fill="#C8102E"/>`,
+};
+
+/* Non-FX: keine Flaggen, sondern das Material/Instrument selbst.
+   Jedes bekommt eine EIGENE, zum Motiv passende Dauerbewegung statt eines
+   generischen Pulsierens - genau das war der Nutzer-Wunsch ("das Oel Symbol
+   tropfen usw"). */
+const AI_SYMBOLS = {
+  OIL: `
+    <defs>
+      <linearGradient id="aiOilG" x1="0" y1="0" x2=".35" y2="1">
+        <stop offset="0" stop-color="#4a5560"/><stop offset=".45" stop-color="#1c2430"/><stop offset="1" stop-color="#0a0e14"/>
+      </linearGradient>
+    </defs>
+    <path d="M18,3.2 C22.6,9 25.4,12.6 25.4,15.8 a7.4,7.4 0 0 1-14.8,0 C10.6,12.6 13.4,9 18,3.2Z" fill="url(#aiOilG)"/>
+    <ellipse cx="14.9" cy="14.4" rx="1.9" ry="2.7" fill="#fff" opacity=".26" transform="rotate(-20 14.9 14.4)"/>
+    <path class="ai-drip" d="M18,3.2 C19.4,5 20.3,6.2 20.3,7.2 a2.3,2.3 0 0 1-4.6,0 C15.7,6.2 16.6,5 18,3.2Z" fill="url(#aiOilG)"/>`,
+
+  GOLD: `
+    <defs>
+      <linearGradient id="aiGoldTop" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#FFF0B8"/><stop offset=".5" stop-color="#FFD35C"/><stop offset="1" stop-color="#E8A62C"/>
+      </linearGradient>
+      <linearGradient id="aiGoldFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F2BE45"/><stop offset="1" stop-color="#C7891F"/>
+      </linearGradient>
+    </defs>
+    <g transform="translate(18,12.2) scale(1.28) translate(-18,-12.2)">
+    <path d="M8.2,9.6 h19.6 l2.6,9.4 h-24.8Z" fill="url(#aiGoldFront)"/>
+    <path d="M10.6,5.4 h14.8 l2.4,4.2 h-19.6Z" fill="url(#aiGoldTop)"/>
+    <path d="M8.2,9.6 h19.6" stroke="#fff" stroke-width=".5" opacity=".45"/>
+    <g clip-path="url(#aiBarClip)"><path class="ai-sheen-el" d="M2,22 L10,2 L14,2 L6,22Z" fill="#fff" opacity=".5"/></g>
+    </g>`,
+
+  SILVER: `
+    <defs>
+      <linearGradient id="aiSilTop" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#DCE3EA"/><stop offset="1" stop-color="#A9B4C0"/>
+      </linearGradient>
+      <linearGradient id="aiSilFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#CBD4DE"/><stop offset="1" stop-color="#8994A2"/>
+      </linearGradient>
+    </defs>
+    <g transform="translate(18,12.2) scale(1.28) translate(-18,-12.2)">
+    <path d="M8.2,9.6 h19.6 l2.6,9.4 h-24.8Z" fill="url(#aiSilFront)"/>
+    <path d="M10.6,5.4 h14.8 l2.4,4.2 h-19.6Z" fill="url(#aiSilTop)"/>
+    <path d="M8.2,9.6 h19.6" stroke="#fff" stroke-width=".5" opacity=".5"/>
+    <g clip-path="url(#aiBarClip)"><path class="ai-sheen-el" d="M2,22 L10,2 L14,2 L6,22Z" fill="#fff" opacity=".55"/></g>
+    </g>`,
+
+  BTC: `
+    <defs>
+      <linearGradient id="aiBtcG" x1="0" y1="0" x2=".6" y2="1">
+        <stop offset="0" stop-color="#FBB03B"/><stop offset=".55" stop-color="#F7931A"/><stop offset="1" stop-color="#D9770A"/>
+      </linearGradient>
+    </defs>
+    <circle cx="18" cy="12" r="9.4" fill="url(#aiBtcG)"/>
+    <circle cx="18" cy="12" r="9.4" fill="none" stroke="#fff" stroke-width=".7" opacity=".3"/>
+    <path d="M15.1,6.9 h4.1 c2.5,0 3.9,1.1 3.9,2.9 0,1.2-.6,2-1.7,2.4 1.4.35 2.2,1.3 2.2,2.7 0,2-1.6,3.2-4.3,3.2 h-4.2Z
+             M17.3,8.7 v2.6 h1.7 c1.1,0 1.7-.45 1.7-1.3 0-.85-.6-1.3-1.7-1.3Z
+             M17.3,13 v3 h1.9 c1.3,0 2-.5 2-1.5 0-1-.7-1.5-2-1.5Z" fill="#fff"/>
+    <path d="M17.2,4.6 h1.5 v2.6 h-1.5Z M19.6,4.6 h1.5 v2.6 h-1.5Z
+             M17.2,16.9 h1.5 v2.6 h-1.5Z M19.6,16.9 h1.5 v2.6 h-1.5Z" fill="#fff"/>
+    <g clip-path="url(#aiCoinClip)"><path class="ai-sheen-el" d="M-2,22 L6,2 L10,2 L2,22Z" fill="#fff" opacity=".38"/></g>`,
+};
+
+// Indizes teilen sich dieselbe Zeichnung (Kursverlauf im Rahmen), nur der
+// Akzentton unterscheidet sie - eine eigene Metapher je Index waere
+// Bedeutung, die es nicht gibt.
+function aiIndex(accent) {
+  return `
+    <rect x="3.2" y="3.6" width="29.6" height="16.8" rx="2.4" fill="#131A24"/>
+    <rect x="3.2" y="3.6" width="29.6" height="16.8" rx="2.4" fill="none" stroke="${accent}" stroke-width=".8" opacity=".55"/>
+    <path class="ai-tick" d="M6.4,16.4 L11,12.6 L14.6,14.4 L19.4,9.2 L23.6,11.4 L29.6,6.6"
+          fill="none" stroke="${accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="ai-tick-dot" cx="29.6" cy="6.6" r="1.5" fill="${accent}"/>`;
+}
+const AI_INDEX_ACCENT = { SP500: '#4FA3F7', NAS: '#7C7CF0', DAX: '#F0C24F', GER100: '#F0C24F' };
+
+// ── Definitions-Block: wird EINMAL in den Body geschrieben ──────────────────
+function aiDefsSvg() {
+  const syms = [];
+  for (const id in AI_FLAGS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${AI_FLAGS[id]}</symbol>`);
+  for (const id in AI_SYMBOLS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${AI_SYMBOLS[id]}</symbol>`);
+  for (const id in AI_INDEX_ACCENT) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${aiIndex(AI_INDEX_ACCENT[id])}</symbol>`);
+  return `<svg id="aiDefs" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <clipPath id="aiUjA"><path d="M18,0 H36 V12 H18Z M0,12 H18 V24 H0Z"/></clipPath>
+      <clipPath id="aiUjB"><path d="M0,0 H18 V12 H0Z M18,12 H36 V24 H18Z"/></clipPath>
+      <clipPath id="aiBarClip"><path d="M8.2,9.6 h19.6 l2.6,9.4 h-24.8Z M10.6,5.4 h14.8 l2.4,4.2 h-19.6Z"/></clipPath>
+      <clipPath id="aiCoinClip"><circle cx="18" cy="12" r="9.4"/></clipPath>
+      ${AI_GRIDS.map(n => Array.from({length: n}, (_, i) => {
+        // ⚠ 0.3 breiter als der Rasterschritt: ohne diese Ueberlappung reisst
+        // zwischen zwei unterschiedlich weit verschobenen Streifen eine
+        // Haarlinie auf.
+        const w = 36 / n;
+        return `<clipPath id="aiStrip${n}_${i}"><rect x="${(i * w).toFixed(2)}" y="-6" width="${(w + 0.3).toFixed(2)}" height="36"/></clipPath>`;
+      }).join('')).join('')}
+      <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+        <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
+        <stop offset=".55" stop-color="#fff" stop-opacity=".42"/>
+        <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="aiShadeG" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#000" stop-opacity=".30"/>
+        <stop offset=".18" stop-color="#000" stop-opacity="0"/>
+        <stop offset="1" stop-color="#000" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <symbol id="aiUJ" viewBox="0 0 36 24">${AI_UNION_JACK}</symbol>
+    ${syms.join('')}
+  </svg>`;
+}
+
+// 10 Streifen statt 6: bei 6 war jeder Streifen bei 18px Anzeigegroesse 3px
+// breit, die Treppenstufen der Welle also deutlich sichtbar ("kantig").
+//
+// ⚠ GEMESSEN, nicht geschaetzt: ein animierter transform auf einer SVG-<g>
+// wird von Chromium NICHT auf der GPU zusammengesetzt, sondern zwingt zum
+// Neuzeichnen. Mit 10 Streifen auf allen ~19 gleichzeitig sichtbaren Icons
+// (190 Gruppen) fiel die Bildrate des Dashboards von konstant 61 auf Median
+// 47 mit Einbruechen auf 29. `will-change` und `contain` auf dem Wrapper
+// aenderten daran nichts - beide gemessen, beide wirkungslos.
+// Deshalb haengt die Streifenzahl an der ANZEIGEGROESSE: in Listen (17-18px)
+// ist eine 0,8px-Welle ohnehin kaum aufzuloesen, dort genuegen 4 Streifen;
+// die grossen Icons (Asset-Kopf, Research-Terminal), von denen selten mehr
+// als eines zu sehen ist, behalten die vollen 10.
+const AI_GRIDS = [4, 10];
+const AI_STRIPS_BIG = 10, AI_STRIPS_SMALL = 4, AI_BIG_MIN_PX = 20;
+
+const AI_FLAG_IDS = Object.keys(AI_FLAGS);
+
+// Die <symbol>-Sammlung darf erst in den Body, wenn es einen gibt. Ein Icon
+// ohne seine Defs rendert wortlos nichts - deshalb haengt die Pruefung direkt
+// am Icon-Bau und nicht an einem Boot-Schritt, den man spaeter verschieben
+// koennte.
+let _aiDefsDone = false;
+function aiEnsureDefs() {
+  if (_aiDefsDone || !document.body) return;
+  _aiDefsDone = true;
+  document.body.insertAdjacentHTML('afterbegin', aiDefsSvg());
+}
+
+/* Ein Icon. `size` ist die HOEHE in px; die Breite folgt aus 3:2. */
+function assetIconHtml(id, size) {
+  aiEnsureDefs();
+  const h = size || 18, w = Math.round(h * 1.5 * 10) / 10;
+  const isFlag = AI_FLAG_IDS.indexOf(id) !== -1;
+  const known = isFlag || AI_SYMBOLS[id] || AI_INDEX_ACCENT[id];
+  if (!known) return '';
+  const inner = isFlag
+    // Flagge: 6 Streifen, Amplitude waechst zur freien Kante hin
+    ? (() => {
+        const n = h >= AI_BIG_MIN_PX ? AI_STRIPS_BIG : AI_STRIPS_SMALL, sw = 36 / n;
+        return Array.from({length: n}, (_, i) => {
+          const amp = (0.06 + 0.94 * (i / (n - 1))).toFixed(3);
+          // Drehpunkt = Mitte GENAU DIESES Streifens. Ohne das kippt jeder
+          // Streifen um die Flaggenmitte und die Kanten wandern wieder
+          // auseinander, statt sich anzugleichen.
+          const ox = (i * sw + sw / 2).toFixed(2);
+          // Die Welle braucht ueber die Breite dieselbe Laufzeit, egal wie
+          // viele Streifen sie abtasten - sonst laeuft sie bei 4 Streifen
+          // sichtbar schneller als bei 10.
+          return `<g clip-path="url(#aiStrip${n}_${i})">`
+               + `<g class="ai-strip" style="--ai-amp:${amp};transform-origin:${ox}px 12px;`
+               + `animation-delay:${(-i * 0.85 / n).toFixed(3)}s"><use href="#ai-${id}"/></g></g>`;
+        }).join('');
+      })()
+      + `<rect class="ai-shade" width="36" height="24" fill="url(#aiShadeG)"/>`
+      + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/>`
+    : `<use href="#ai-${id}"/>`;
+  return `<span class="ai-wrap" style="width:${w}px;height:${h}px">`
+       + `<svg class="ai-svg${isFlag ? ' ai-flag' : ''}" viewBox="0 0 36 24" width="${w}" height="${h}" aria-hidden="true">${inner}</svg>`
+       + `</span>`;
+}
+
 const SK='fxpro_v1';
 // ⚠ Woher die zehn Live-Daten-JSONs (ind_data.json etc.) geladen werden.
 // Grund: geplanter Zugriffsschutz per Cloudflare Pages + Access. Cloudflare
@@ -5191,6 +5553,9 @@ function nonFxLegAssetId(name){const base=(name||'').split('/')[0];return PAIR_C
 // die Kategorie, RESEARCH_ASSET_FOLDERS deren Icon-Namen) - kein zweites,
 // konkurrierendes Icon-Set fuer dieselbe Unterscheidung.
 function nonFxWatchIconHtml(assetId){
+  const art=assetIconHtml(assetId,17);
+  if(art)return art;
+  // Selbst angelegtes Asset ohne eigenes Motiv -> Ordner-Icon wie bisher.
   const fid=researchFolderIdFor(assetId);
   const fold=RESEARCH_ASSET_FOLDERS.find(f=>f.id===fid);
   return icn(fold?fold.icon:'trendUp',14);
@@ -8206,7 +8571,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -8214,7 +8579,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -8446,7 +8811,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -8565,6 +8930,7 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){scoreMode=cd.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
+      if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
       // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
       // Tagen, an denen es offen war), ein Overwrite wuerde die jeweils
@@ -8838,7 +9204,7 @@ function renderDetail(){
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
-      <div><div class="atitle">${FX_FLAG[c.id]?`<span class="atitle-flag">${FX_FLAG[c.id]}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${assetIconHtml(c.id,26)?`<span class="atitle-flag">${assetIconHtml(c.id,26)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -11345,7 +11711,7 @@ function watchRowHtml(p){
   const assetId=isFx?null:nonFxLegAssetId(name);
   const sym=assetId?syms.find(s=>s.id===assetId):null;
   const title=sym?sym.name:name;
-  const icons=isFx&&l?`${FX_FLAG[l.bc]||''}<span class="wl-flag-sep">|</span>${FX_FLAG[l.qc]||''}`:(assetId?nonFxWatchIconHtml(assetId):'');
+  const icons=isFx&&l?`${assetIconHtml(l.bc,17)}<span class="wl-flag-sep">|</span>${assetIconHtml(l.qc,17)}`:(assetId?nonFxWatchIconHtml(assetId):'');
   // Kurs + Tagesveraenderung
   const info=sym?assetTickerInfo(assetId):tickerInfoForItem('pair',name);
   const chg=(!info||info.changePct==null)?['–','var(--t3)']
@@ -12956,7 +13322,7 @@ function researchSideTitleHtml(){
   const assetLine=sym?(()=>{
     const sc=symScoreCmp(sym);
     return`<div class="rterm-side-asset">
-      ${FX_FLAG[sym.id]?`<span class="rterm-side-asset-flag">${FX_FLAG[sym.id]}</span>`:''}
+      ${assetIconHtml(sym.id,22)?`<span class="rterm-side-asset-flag">${assetIconHtml(sym.id,22)}</span>`:''}
       <span class="rterm-side-asset-ticker">${escH(sym.id)}</span>
       <span class="rterm-side-asset-name">${escH(sym.name)}</span>
       <span class="rterm-side-asset-sc" style="color:${BC[sym.bias]}">${sc>0?'+':''}${sc}</span>
@@ -13320,7 +13686,7 @@ function renderResAssetDetail(id){
     </div>`;
   }).join('')||'<div class="dw-empty">No categories yet for this asset.</div>';
   return`<div class="resf-detail-hd">
-      ${FX_FLAG[s.id]?`<span class="atitle-flag" style="font-size:22px">${FX_FLAG[s.id]}</span>`:''}
+      ${assetIconHtml(s.id,22)?`<span class="atitle-flag">${assetIconHtml(s.id,22)}</span>`:''}
       <span class="resf-detail-nm">${escH(s.name)}</span>
       ${scoreBadge(symScoreCmp(s),'','resfd-'+s.id,null,s.bias)}
       <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
@@ -13696,7 +14062,7 @@ function dashMajorsHtml(){
     // Erkennungsmerkmal, das es hier gibt. FX_FLAG ist dieselbe Quelle wie
     // im Asset-Kopf, in der Watchlist und im Research-Terminal.
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <span class="an-flag">${FX_FLAG[c.id]||''}</span><div class="an" data-bv="${c.bias}" style="color:${BC[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
+      <span class="an-flag">${assetIconHtml(c.id,18)}</span><div class="an" data-bv="${c.bias}" style="color:${BC[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
@@ -14176,7 +14542,7 @@ function renderDash(){
       const fxRow=p=>{
         const parts=p.name.split('/');
         return`<div class="wl-row wl-click" onclick="gotoPairOverview('${escJH(p.name)}')" title="Open the full overview for this pair">
-          <span class="wl-icons">${FX_FLAG[parts[0]]||''}<span class="wl-flag-sep">|</span>${FX_FLAG[parts[1]]||''}</span>
+          <span class="wl-icons">${assetIconHtml(parts[0],17)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],17)}</span>
           <span class="wl-name">${escH(p.name)}</span>
           ${wlChg(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
@@ -14226,7 +14592,7 @@ function renderDash(){
           <div class="wl-table">${sugg.map(s=>{
             const parts=s.name.split('/');
             return`<div class="wl-row wl-click" onclick="setWatched('${escJH(s.name)}',true);renderDash()" title="Add ${escH(s.name)} to the watchlist">
-              <span class="wl-icons">${FX_FLAG[parts[0]]||''}<span class="wl-flag-sep">|</span>${FX_FLAG[parts[1]]||''}</span>
+              <span class="wl-icons">${assetIconHtml(parts[0],17)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],17)}</span>
               <span class="wl-name">${escH(s.name)}</span>
               ${wlChg(tickerInfoForItem('pair',s.name))}
               ${rowScore(s.sc,'Paar-Score',null,`openScoreInfoPair('${escJH(s.name)}')`)}
@@ -19097,6 +19463,25 @@ function togglePinEnabled(){
 // zugreifen - liest denselben localStorage-Key stattdessen direkt).
 let introAnimEnabled=localStorage.getItem('fxpro_intro_anim_enabled')!=='0';
 function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimToggleBtn');if(btn)btn.textContent=introAnimEnabled?'Disable Animation':'Enable Animation';}
+// Dauerbewegung der Asset-Symbole (wehende Flaggen, tropfendes Oel, ...).
+// Liegt wie pinEnabled/introAnimEnabled bewusst AUSSERHALB von snap()/Undo:
+// eine Anzeige-Praeferenz gehoert nicht in den Undo-Stapel. Damit sie
+// trotzdem auf allen Geraeten ankommt, sind alle vier Ecken bedient -
+// Save-Funktion (unten), cloudPush, cloudPull mit prefPending-Schutz und
+// Export/Import (siehe CLAUDE.md, "WICHTIGSTE REGEL").
+let assetAnimEnabled=localStorage.getItem('fxpro_asset_anim_enabled')!=='0';
+function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);}
+function updAssetAnimToggleBtn(){const b=document.getElementById('assetAnimToggleBtn');if(b)b.textContent=assetAnimEnabled?'Disable Animation':'Enable Animation';}
+function toggleAssetAnimEnabled(){
+  assetAnimEnabled=!assetAnimEnabled;
+  try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+  applyAssetAnim();
+  updAssetAnimToggleBtn();
+}
 function toggleIntroAnimEnabled(){
   introAnimEnabled=!introAnimEnabled;
   try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}
@@ -19226,6 +19611,7 @@ window.addEventListener('resize',()=>{
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
 applyCompactView();
+applyAssetAnim();updAssetAnimToggleBtn();
 migrateGeneralToNotes();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();
