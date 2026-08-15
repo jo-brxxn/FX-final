@@ -5899,3 +5899,50 @@ die Datei schrumpft dadurch trotz gleicher Bildgroesse. Der Marmor liest sich
 jetzt als moderne weisse Platte mit angedeuteter Aderung statt als grauer
 Stein. Einfaerbung weiterhin ueber `background-blend-mode:multiply` gegen
 `var(--bg0)`, das PNG selbst bleibt Graustufen.
+
+### Marmor-Hintergrund ersetzt: Dot-Grid + Farblicht statt Naturstein (Nutzer-Wunsch 2026-08-15)
+
+Nutzer: "Ich will das modern also nicht einfach irgendwelche Streifen" - der
+Marmor (egal wie zart die Adern gezogen waren, siehe v2-v4 oben) liest sich
+fuer den Nutzer als "Streifen", nicht als modern. Statt an der Marmor-Technik
+weiterzudrehen: komplett andere Richtung.
+
+**Vier echte Alternativen verglichen**, nicht nur behauptet - Playwright-
+Screenshots MIT ausgeblendeten Dashboard-Karten (`visibility:hidden` auf
+`#dashWidgets`/`.hdr`/`.tabbar`), weil Karten den Hintergrund grossteils
+verdecken und Unterschiede sonst nicht beurteilbar sind:
+1. Reine Lichtfeld-Gradienten (mehrere grosse `radial-gradient`-Flecken) -
+   zeigten sichtbare KONZENTRISCHE RINGE (Mach-Band-Artefakt: der Browser
+   quantisiert einen sehr grossen, kontrastarmen Farbverlauf in sichtbare
+   Stufen). Sah wie ein Rendering-Fehler aus, nicht wie Absicht.
+2. Flaches Papier (fast reines Weiss) - kein erkennbarer Charakter.
+3. **Dot-Grid** (20px Punktraster, `radial-gradient(circle at 1px 1px,...)`
+   als wiederholtes Kachelmuster) + zwei sanfte Farblicht-Flecken - klar
+   modernstes Ergebnis, direkt am SaaS-Dashboard-Vokabular (Linear/Notion/
+   Vercel) statt an Naturstein orientiert.
+4. Mesh-Gradient (mehrere ueberlappende `radial-gradient`-Kreise, weich
+   ineinanderlaufend) - haette funktioniert, hatte aber dieselben Banding-
+   Ringe wie Variante 1 an den weichen Uebergaengen.
+
+**Gewaehlt: Variante 3.** Vier Ebenen: zwei grosse, sehr sanfte Farbflecken
+(Blau oben-links `rgba(196,219,247,.60)`, Violett unten-rechts
+`rgba(228,216,247,.42)`), ein `radial-gradient`-Dot-Grid (20px Kachel, Punkt-
+Deckkraft nur .28) darueber, ein flacher Grundverlauf (`#ffffff`→`#f5f8fb`)
+darunter, ganz oben ein 160×160-Korn-PNG (Zufallsrauschen, per `zlib`+
+`struct` in reinem Python erzeugt wie beim Marmor, `background-blend-
+mode:multiply`).
+
+**Das Korn ist kein Deko-Extra, sondern die Loesung fuer das Banding-
+Problem aus Variante 1/4:** feines Rauschen dithert einen Farbverlauf -
+bricht die diskreten 8-Bit-Stufen des Browser-Renderings visuell auf, bevor
+sie als Ring sichtbar werden. Genau dieselbe Rolle wie das Korn beim Marmor
+v3/v4 oben, hier aber zusaetzlich gegen ein anderes Artefakt (Banding statt
+Kachel-Wiederholung).
+
+Reines Rauschen ist von Natur aus nahtlos kachelbar (keine raeumliche
+Korrelation zwischen Pixeln), 160×160px wiegt daher nur ein Zwanzigstel
+eines Vollbild-Korns bei identischer Wirkung.
+
+Ersetzt exakt dieselbe eine `background-image:...background-blend-mode:...;`
+Deklaration in `body{...}` wie die Marmor-Versionen davor. Kein Score-/
+Daten-Bezug, reine Optik.
