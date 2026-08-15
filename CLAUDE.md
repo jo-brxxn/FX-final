@@ -5946,3 +5946,45 @@ eines Vollbild-Korns bei identischer Wirkung.
 Ersetzt exakt dieselbe eine `background-image:...background-blend-mode:...;`
 Deklaration in `body{...}` wie die Marmor-Versionen davor. Kein Score-/
 Daten-Bezug, reine Optik.
+
+### Marmor v5: zurueck zum Stein, aber grau/weiss und ohne Streifen-Wirkung (Nutzer-Wunsch 2026-08-15)
+
+Nutzer nach dem Dot-Grid: "Doch keine Punkte ich fand den Marmor Look gut aber
+moderner wie so ein Kunst Boden" und danach "Mach nur grau und weis Toene nicht
+bunt such im Internet nach modernen simplen schlichten Designs".
+
+**Recherche-Ergebnis** (Referenzen 2026): der als minimalistisch geltende
+Marmor ist **Bianco Dolomite** - helles Weiss mit WENIGEN zarten grauen Adern
+("delicate gray lines that add just enough character without overwhelming").
+Gegenprobe war **Microcement** (fugenlos, ganz ohne Adern - "no joints, no
+breaks, no visual interruptions") und Terrazzo in Grau. Alle drei gebaut und
+am echten Dashboard verglichen: Microcement zu leer (kein Charakter), Terrazzo
+wird beim `cover`-Skalieren fleckig, Bianco Dolomite gewinnt klar.
+
+**⚠ Der eigentliche technische Fehler aller frueheren Marmor-Versuche:** die
+Adern kamen aus `sin(band + turbulenz)`. Ein Sinus ist PERIODISCH - daraus
+entstehen zwangslaeufig viele parallele Adern, und genau das liest sich als
+"Streifen". Kein Parameter-Tuning konnte das beheben, weil es an der Formel
+lag. Jetzt wird jede Ader als EINZELNER Pfad gelaufen und gestempelt (Random
+Walk mit rauschgestoerter Richtung, dann Kern + weicher Halo pro Pfadpunkt):
+drei Adern sind wirklich drei Adern, kein Musteranfang.
+
+**Zwei Fallen dabei, die im ersten Anlauf zuschlugen:**
+1. **Der Winkel darf NICHT akkumulieren.** `ang += fbm(...)*wobble` ist ein
+   Random Walk - die Richtung driftet unbegrenzt, die Ader rollt sich zu
+   Schlaufen ein und sah aus wie Gekritzel. Richtig ist `ang = ang0 +
+   fbm(...)*wobble`: der Winkel PENDELT um die Grundrichtung, die Ader laeuft
+   ueber die Platte.
+2. **Aeste brauchen einen flachen Abzweigwinkel** (`ang0 +- 0,22..0,5 rad`).
+   Ein freier Zufallswinkel liess den Ast zurueck ins Bild laufen und sich mit
+   der Mutterader verschlingen. Echte Adern gabeln spitz.
+
+**Graustufen-PNG statt RGB** (820x512, ~150 KB base64): die Textur ist ohnehin
+farblos, Graustufe braucht ein Byte statt drei pro Pixel. Kein `multiply`-Blend
+mehr noetig - das Bild traegt die Endhelligkeit direkt (Grundton 247,5), damit
+die weissen Karten weiterhin abheben. Generator: `stone_gen.py` im Scratchpad.
+
+**Merksatz:** bei einer prozeduralen Textur zuerst fragen, ob die WIRKUNG
+(hier: "Streifen") aus den Parametern kommt oder aus der Formel. Periodische
+Funktionen erzeugen periodische Ergebnisse - dagegen hilft kein Nachjustieren,
+nur ein anderes Verfahren.
