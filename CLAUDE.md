@@ -6131,3 +6131,42 @@ Sync-Pfade auseinander.
 Bildrate sind in dieser Sandbox wertlos - dieselbe Konfiguration lieferte 29
 bis 61. Nur ein ABWECHSELNDER A/B-Test in derselben Sitzung (8x an, 8x aus im
 Wechsel, dann Mediane) trennt Signal von Rauschen.
+
+### ⚠ Doppelt eingefuegter HTML-Block legte das Code-Feld lahm (Bugreport 2026-08-15)
+
+Nutzer: "wenn ich die Seite oeffne lande ich beim Code Feld kann da aber Nix
+eingeben." Ausgeliefert war das mit VERSION-CHECK-375.
+
+**Ursache:** beim 375er-Commit landete ein 107-Zeilen-HTML-Block ein zweites
+Mal in der Datei (Zeilen 2800-2906, wortgleich zu 2907-3013). Damit stand der
+**Sperrbildschirm ZWEIMAL im Dokument** - beide sichtbar, uebereinander.
+Getippt wurde auf den oberen, aber `getElementById('lockDots')` liefert immer
+den ERSTEN Treffer: die Punkte fuellten sich unsichtbar im unteren, der
+sichtbare blieb leer. Fuer den Nutzer sieht das aus, als nehme das Feld nichts
+an. Gemessen und gegenuebergestellt: kaputt = 2 Sperrbildschirme, Punkte im
+unteren; repariert = 1 Sperrbildschirm, Punkte erscheinen. Dieselbe
+Verdopplung traf 19 weitere ids (Header-Statusleiste, Intro-Cockpit,
+Boost-Modal, Versions-Banner).
+
+**⚠ Warum keine der bestehenden Pruefungen das gefangen hat - das ist die
+eigentliche Lehre:**
+- `node --check` war **gruen**, weil das JavaScript voellig gueltig blieb. Ein
+  doppelter HTML-Block ist kein Syntaxfehler.
+- `bughunt.js` und `layoutaudit.js` liefen daran **vorbei**, weil sie den
+  Sperrbildschirm beim Start entfernen (`['introOv','lockScreen'].forEach(...remove())`),
+  um an die App zu kommen. Der Fehler lag exakt in ihrem blinden Fleck.
+- Ein Bisect gegen aeltere Staende fuehrte zunaechst in die Irre: dort war das
+  Keypad AUCH nicht anklickbar - aber nur, weil die Intro-Ebene planmaessig
+  davor liegt, solange man nicht "Skip" drueckt. Erst der Test MIT
+  abgeschalteter Intro (`fxpro_intro_anim_enabled=0`, die Lage des Nutzers)
+  trennte den echten Fehler vom Normalzustand.
+
+**Neu: `structcheck.js`** (Scratchpad) meldet doppelte ids und woertlich
+wiederholte 40-Zeilen-Bloecke. Gegen den kaputten Stand gegengeprueft: 19
+Treffer plus die Blockdopplung. Gegen den reparierten: still. **Gehoert ab
+jetzt vor JEDEN Push von index.html**, zusaetzlich zum JS-Syntax-Check - der
+allein reicht bei einer Ein-Datei-App nachweislich nicht.
+
+**Merksatz:** ein Pruefskript, das ein Element ENTFERNT, um an den Rest zu
+kommen, kann in genau diesem Element keinen Fehler mehr finden. Bei jedem
+Audit mitdenken, was es wegraeumt - und diesen Bereich separat pruefen.

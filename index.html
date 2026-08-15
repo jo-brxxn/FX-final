@@ -2896,119 +2896,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-375 — Animationen jetzt ueberall, komplett abschaltbar und ohne Bildraten-Verlust. Die 19 Bedien-Icons bewegen sich passend zu ihrer Bedeutung: die Glocke schwingt an ihrer Aufhaengung, Zahnrad/Refresh/Globus drehen, die Lupe tastet ab, Blitz und Flamme flackern, Pfeile schieben sich, Karten-Icons atmen. Dazu reagiert JEDES Icon auf Beruehrung. Balken wachsen von links ein und Dashboard-Karten blenden gestaffelt auf - aber nur beim Tabwechsel, nicht bei den minuetlichen Neu-Renders (kurzlebige body.anim-enter-Klasse), sonst zuckt die Seite im Minutentakt. Einstellungen haben jetzt vier einzelne Schalter (Intro, Asset-Symbole, Interface, Daten) plus einen, der alle auf einmal umlegt; alle vier sind geraeteuebergreifend synchronisiert. ⚠ Der Grund, warum das hier billig ist und bei den Flaggen nicht: animiert wird das <svg>-ELEMENT selbst, nicht eine Gruppe darin - ein svg ist im HTML-Fluss ein ersetztes Element, sein transform wird auf der GPU zusammengesetzt. Gemessen wurden ausserdem die Stueckzahlen (max. 10 Glocken, sonst 1-2 je Sorte), bevor Dauerbewegung vergeben wurde. Ergebnis: 61 fps in 8 von 8 Messungen mit allem an, identisch zum abgeschalteten Zustand, und 61 fps auf jedem einzelnen Tab. Im Hintergrundfenster haelt jede Schleife an.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-376 — BUGFIX: das Code-Feld nahm keine Eingabe an. Ursache: mit VERSION-CHECK-375 wurde ein 107-Zeilen-HTML-Block doppelt in die Datei geschrieben, wodurch der Sperrbildschirm ZWEIMAL im Dokument stand. Getippt wurde auf den oberen, aber getElementById liefert immer den ERSTEN - die Punkte fuellten sich also unsichtbar im unteren, der sichtbare blieb leer. Dieselbe Verdopplung traf 19 weitere ids (Header-Statusleiste, Intro-Cockpit, Boost-Modal, Versions-Banner). Der doppelte Block ist entfernt, die id-Struktur stimmt wieder exakt mit dem letzten gesunden Stand ueberein. Getippte Ziffern erscheinen wieder. ⚠ Lehre: node --check war gruen, weil das JS gueltig blieb, und die Playwright-Audits liefen daran vorbei, weil sie den Sperrbildschirm beim Start entfernen - der Fehler lag genau in ihrem blinden Fleck. Neu ist deshalb ein Struktur-Waechter (structcheck.js), der doppelte ids und woertlich wiederholte Bloecke meldet; gegen den kaputten Stand gegengeprueft (19 Treffer), gegen den reparierten still. Er gehoert ab jetzt vor jeden Push.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-375</span>
-  </div>
-  </div>
-  <div class="intro-cockpit" id="introCockpit">
-    <div class="intro-title">FX ANALYST&nbsp;PRO</div>
-    <div class="intro-cockpit-row">
-      <div class="intro-hud-col">
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Speedometer</div><div class="intro-hud-val" id="introHudSpeed">0<span class="intro-hud-unit">kn</span></div></div>
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Active signals</div><div class="intro-hud-val" id="introHudSignals">–</div></div>
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Fuel</div><div class="intro-hud-val" id="hudFuel" style="color:var(--green)">100%</div></div>
-      </div>
-      <div class="intro-globe-col">
-        <div class="globe-host intro-globe-host"></div>
-        <button class="btn scan-btn boost-btn intro-boost-btn" id="introBoostBtn" onclick="triggerIntroBoost()">🔥 BOOST</button>
-      </div>
-      <div class="intro-throttle-col">
-        <div class="globe-throttle" title="Drag to control thrust">
-          <div class="gt-label">THRUST</div>
-          <div class="gt-track" id="globeThrottleTrack" onpointerdown="throttlePressStart(event)">
-            <div class="gt-notches"><span></span><span></span><span></span><span></span><span></span></div>
-            <div class="gt-fill" id="globeThrottleFill"></div>
-            <div class="gt-handle" id="globeThrottleHandle"></div>
-          </div>
-          <div class="gt-pct" id="globeThrottlePct">0%</div>
-        </div>
-      </div>
-    </div>
-    <div class="intro-created">created by Jonathan Brinkmann</div>
-  </div>
-</div>
-<!-- Boost-Bestaetigung, erscheint sobald der Thrust-Regler auf Maximum steht
-     (setGlobeThrust() -> introMaybeOfferBoost()) -->
-<div class="ov" id="mIntroBoost" style="display:none;z-index:100004" onclick="if(event.target===this)closeM('mIntroBoost')">
-  <div class="modal" style="max-width:260px;text-align:center">
-    <h3>🔥 Ready for Launch</h3>
-    <p style="font-size:13px;color:var(--t2);margin:6px 0 14px">Thrust at maximum. Enable boost?</p>
-    <button class="btn scan-btn boost-btn" style="width:100%;justify-content:center" onclick="confirmIntroBoost()">🔥 ENABLE BOOST</button>
-    <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="closeM('mIntroBoost')">Not yet</button>
-  </div>
-</div>
-<script>
-// Nutzer-Wunsch 2026-08-04 ("Animation genau wie den Code aktivieren/
-// deaktivieren koennen"): ist sie deaktiviert, verschwindet das komplette
-// Cockpit-Overlay SOFORT, bevor es je sichtbar wird - direkter localStorage-
-// Read, weil dieses <script> lange vor der spaeteren introAnimEnabled-
-// Variablendeklaration im Hauptskript (ganz unten im Body) laeuft.
-(function(){
-  if(localStorage.getItem('fxpro_intro_anim_enabled')==='0'){
-    var ov=document.getElementById('introOv');if(ov)ov.remove();
-    var bm=document.getElementById('mIntroBoost');if(bm)bm.remove();
-    return;
-  }
-  // Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
-  // Cloud-Sync bereits eingerichtet ist, sonst "Set up sync". Kein Klick-zum-
-  // Wegklicken mehr auf dem Rest des Overlays - Dismiss laeuft ausschliesslich
-  // ueber die Boost-Sequenz (introBoostSequence()).
-  var loginBtn=document.getElementById('introLoginBtn');
-  if(loginBtn){
-    var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
-    if(cc&&(cc.username||cc.syncId)){loginBtn.textContent='👤 '+(cc.username||cc.syncId);}
-    else{loginBtn.textContent='Set up sync';}
-  }
-})();
-function introLogin(){
-  if(typeof openCloudM==='function')openCloudM(true);
-}
-</script>
-
-<!-- LOCK SCREEN -->
-<div class="lock-ov" id="lockScreen">
-  <div class="lock-box" id="lockBox">
-    <div class="lock-logo">📊 FX Analyst Pro</div>
-    <div class="lock-sub">Enter code</div>
-    <div class="lock-dots" id="lockDots">
-      <div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div>
-    </div>
-    <div class="lock-pad">
-      <button class="lock-key" onclick="lockKey('1')">1</button>
-      <button class="lock-key" onclick="lockKey('2')">2</button>
-      <button class="lock-key" onclick="lockKey('3')">3</button>
-      <button class="lock-key" onclick="lockKey('4')">4</button>
-      <button class="lock-key" onclick="lockKey('5')">5</button>
-      <button class="lock-key" onclick="lockKey('6')">6</button>
-      <button class="lock-key" onclick="lockKey('7')">7</button>
-      <button class="lock-key" onclick="lockKey('8')">8</button>
-      <button class="lock-key" onclick="lockKey('9')">9</button>
-      <button class="lock-key empty" tabindex="-1"></button>
-      <button class="lock-key" onclick="lockKey('0')">0</button>
-      <button class="lock-key" onclick="lockBack()">⌫</button>
-    </div>
-    <div class="lock-err" id="lockErr"></div>
-  </div>
-</div>
-<script>if(localStorage.getItem('fxpro_pin_enabled')==='0'||sessionStorage.getItem('fxpro_unlocked')==='1'){document.getElementById('lockScreen').style.display='none';}</script>
-
-<div class="hdr">
-  <div class="logo"><span class="logo-fx">FX</span><span class="logo-rest">Analyst Pro</span></div>
-  <div class="hdr-sub">
-    <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
-    <div class="saved" id="saveBadge">✓ Auto-saved</div>
-    <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
-  </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-374 — Asset-Symbole komplett neu: statt Emoji-Flaggen und generischer Strich-Icons jetzt ein eigener SVG-Satz mit Dauerbewegung. Acht echte Flaggen (US-Streifen mit Sternenfeld, EU-Sternenkreis, konstruierter Union Jack fuer GB/AU/NZ, Schweizer Kreuz, Ahornblatt, Southern Cross), dazu Gold-/Silberbarren mit wanderndem Lichtreflex, ein Oeltropfen der sich loest und zerplatzt, eine Bitcoin-Muenze und Index-Kurven die sich zeichnen. Das Wehen entsteht aus senkrechten Streifen mit versetzter Phase; die Amplitude waechst von der Stange zum freien Ende, sonst wirkt es wie ein wackelndes Rechteck statt wie Stoff. Neuer Schalter in den Einstellungen ("Asset symbols") haelt jede Bewegung an. ⚠ GEMESSEN: animierte transforms auf SVG-<g> werden von Chromium nicht auf der GPU zusammengesetzt - mit 10 Streifen auf allen 19 sichtbaren Icons fiel das Dashboard von konstant 61 fps auf Median 47 mit Einbruechen auf 29. will-change und contain aenderten daran nichts (beide gemessen). Deshalb haengt die Streifenzahl an der Anzeigegroesse: Listen-Icons (17-18px) bekommen 4 Streifen, die grossen Icons am Asset-Kopf 10. Danach 61 fps in 8 von 8 Messungen, exakt wie mit abgeschalteter Animation.">
-    <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
-    <span class="hlb-lbl">LIVE</span>
-    <span class="hlb-clock" id="hlbClock">--:--:--</span>
-    <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-375</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-376</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
