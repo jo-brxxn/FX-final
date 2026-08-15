@@ -6072,3 +6072,62 @@ beide entfernt. `.wl-icons` musste von 48px auf 60px wachsen, weil zwei
 
 Selbst angelegte Assets ohne eigenes Motiv fallen weiterhin auf das
 Research-Ordner-Icon zurueck (`nonFxWatchIconHtml`).
+
+### Animationen app-weit, vierfach abschaltbar, ohne Bildraten-Verlust (Nutzer-Wunsch 2026-08-15)
+
+Nutzer auf die Rueckfrage nach dem Umfang: "Alles aber mach auch alles
+abschaltbar in den Einstellungen und mach das es keine Performance Probleme
+gibt."
+
+**Die drei Ziele gehen nur zusammen, wenn die Technik PRO ELEMENTTYP gewaehlt
+wird.** Vor jeder Entscheidung wurde gemessen, nicht geschaetzt:
+
+1. **Stueckzahlen zuerst zaehlen.** Die Befuerchtung war, dass Massen-Icons
+   (Stern an ~250 Indikator-Zeilen) Dauerbewegung unbezahlbar machen. Gemessen
+   ueber alle Tabs: max. **10 Glocken**, sonst **1-2 je Sorte** gleichzeitig
+   sichtbar. Der Stern ist gar kein `icn()`-Icon, sondern ein Emoji im
+   Notes-Tab, und die Chevrons stecken in `::after`-Regeln. Damit war
+   Dauerbewegung fuer alle 19 Bedien-Icons bezahlbar - die Annahme war falsch,
+   die Messung hat sie widerlegt.
+2. **⚠ Animiert wird das `<svg>`-ELEMENT, nicht eine `<g>` darin.** Das ist der
+   ganze Unterschied zu den Flaggen: ein `<svg>` ist im HTML-Fluss ein
+   ersetztes Element, sein `transform` wird auf der GPU zusammengesetzt; ein
+   `transform` auf einer Gruppe DARIN wird es nicht (siehe die
+   Asset-Symbol-Notiz oben, dort von 61 auf 29 fps gemessen). Deshalb hier kein
+   Streifen-Trick, sondern schlichte Transforms auf dem Icon selbst.
+3. **Einmal-Animationen brauchen ein Tor.** Balken-Einwachsen und
+   Karten-Einblenden haengen an `body.anim-enter`, das `showTab()` fuer 900ms
+   setzt. Ohne dieses Tor wuerden sie bei JEDEM Neu-Render neu starten -
+   Dashboard/Matrix/Kalender bauen sich minuetlich neu auf, die Seite wuerde
+   also im Minutentakt zucken. Das Tor haengt am TABWECHSEL, nicht am Rendern.
+
+**Ergebnis:** 61 fps in 8 von 8 A/B-Messungen mit allem an, identisch zum
+abgeschalteten Zustand; 61 fps auf jedem einzelnen Tab (Dashboard mit 112
+sichtbaren Dauerschleifen, Kalender 29, Rest ~20). Zusaetzlich haelt
+`body.anim-paused` (`visibilitychange`) im Hintergrundfenster jede Schleife an -
+der Browser drosselt zwar selbst, aber nicht bei einem sichtbaren Fenster auf
+einem zweiten Bildschirm.
+
+**Bewegung folgt der Bedeutung, nicht einem Einheits-Puls:** Glocke schwingt an
+ihrer Aufhaengung (`transform-origin:50% 15%`, nicht Mitte), Zahnrad/Refresh/
+Globus drehen unterschiedlich schnell, Lupe tastet ab, Blitz/Flamme flackern,
+Pfeile schieben, Karten-Icons atmen. Dazu reagiert jedes Icon auf Beruehrung -
+das kostet nichts, solange niemand hinfasst.
+
+**`icn()` haengt den Namen als Klasse an** (`ic ic-bell`). Erst dadurch laesst
+sich ein einzelnes Icon per CSS beleben, ohne die ~200 Aufrufstellen
+anzufassen. Die vier Header-Icons stehen als statisches SVG im HTML (dort
+laeuft `icn()` nicht, siehe bestehende Konvention) und haben ihre Klassen
+direkt bekommen.
+
+**Vier Schalter statt einem** (Einstellungen): Intro, Asset-Symbole, Interface,
+Daten - plus einer, der alle auf einmal umlegt ("Turn all off"). Jeder folgt
+dem Vier-Ecken-Muster (Save-Funktion, `cloudPush`, `cloudPull` MIT
+`prefPending`-Schutz, Export/Import). Der Sammelschalter ruft bewusst die
+Einzel-Toggles auf, statt eigene Logik zu haben - sonst laufen die
+Sync-Pfade auseinander.
+
+**Merksatz zur Messmethodik (zum zweiten Mal bestaetigt):** Einzelmessungen der
+Bildrate sind in dieser Sandbox wertlos - dieselbe Konfiguration lieferte 29
+bis 61. Nur ein ABWECHSELNDER A/B-Test in derselben Sitzung (8x an, 8x aus im
+Wechsel, dann Mediane) trennt Signal von Rauschen.
