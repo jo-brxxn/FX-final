@@ -6215,3 +6215,24 @@ als der Elternteil. Ausserdem lagen 20px (Rubrik) neben der dokumentierten
 Sieben-Stufen-Skala. Jetzt monoton fallend in Groesse UND Gewicht:
 Asset-Titel 38/700 -> Rubrik 22/650 (`--fs-xl`) -> Untertitel 13/500 ->
 SUMMARY-Label 10/700 (Versalien, als Label bewusst kraeftig).
+
+### Wo die App tatsaechlich liegt (zwei Adressen, unterschiedlicher Zweck)
+
+- **Cloudflare Worker (die geschuetzte Hauptadresse):**
+  `https://fx-final.jonathan-fa5.workers.dev` - liegt hinter Cloudflare
+  Access, beim Oeffnen kommt zuerst die E-Mail-Code-Abfrage
+  (`jonathan.brinkmann@icloud.com`), danach die App.
+- **GitHub Pages:** `https://jo-brxxn.github.io/FX-final/` - ungeschuetzt,
+  wird direkt aus `main` ausgeliefert.
+
+Der Unterschied ist nicht nur kosmetisch, er steckt auch im Code: `DATA_BASE`
+(bei `const SK='fxpro_v1'`) liest die Daten-JSONs auf GitHub Pages und lokal
+RELATIV (dort liegt immer der aktuelle Branch-Stand), auf jeder anderen
+Herkunft - also auch auf der Cloudflare-Adresse - dagegen direkt von GitHubs
+raw-Endpunkt. Grund: Cloudflare baut nur bei einem Push neu, der stuendliche
+Daten-Workflow braucht aber ~720 Pushes/Monat und der freie Plan erlaubt 500
+Builds - ohne diese Weiche laege dort ein veralteter Snapshot.
+
+⚠ Die URL steht NIRGENDS im Repo (keine `wrangler.toml`, keine CNAME-Datei) -
+deshalb hier notiert. Falls sie doch mal fehlt: Cloudflare Dashboard →
+Workers & Pages → `fx-final` → Domains & Routes.
