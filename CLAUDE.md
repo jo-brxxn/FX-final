@@ -6170,3 +6170,48 @@ allein reicht bei einer Ein-Datei-App nachweislich nicht.
 **Merksatz:** ein Pruefskript, das ein Element ENTFERNT, um an den Rest zu
 kommen, kann in genau diesem Element keinen Fehler mehr finden. Bei jedem
 Audit mitdenken, was es wegraeumt - und diesen Bereich separat pruefen.
+
+### Dashboard-Ueberlapp, Icon-Ausrichtung und Ueberschriften-Rangfolge (Nutzer-Bugreport 2026-08-16)
+
+**(1) Die untere Kartenreihe wurde von den Spalten darueber ueberlappt.**
+Ursache: `equalizeDashColumns()` setzt den vier Spalten-Zonen eine gemeinsame
+`height` - die Zonen waren aber `display:block` mit `align-content:start`.
+In einem Block kann der Inhalt eine gesetzte Hoehe gar nicht einhalten, er
+laeuft schlicht heraus. An JEDER getesteten Breite reproduziert (Ueberlauf
+128-298px). Die `.dw-shrink`-Karten konnten nie schrumpfen, weil ihr Elternteil
+kein Flex-Container war - die `need`-Rechnung ging von einem Minimum aus, das
+das Layout gar nicht herstellen konnte.
+
+Zwei Aenderungen:
+- Die Zonen sind jetzt echte Flex-Spalten (`display:flex;flex-direction:column`).
+  **Nur** die als schrumpfbar markierten Karten geben nach (`flex:0 1 auto` -
+  schrumpfen ja, wachsen NIE; Wachsen war die Ursache der frueheren weissen
+  Luecken). Alle uebrigen stehen auf `flex:0 0 auto`, sonst quetscht der
+  Fehlbetrag auch Karten zusammen, die ihren Inhalt nicht scrollen koennen.
+- `equalizeDashColumns()` **misst nach dem Setzen selbst nach**
+  (`scrollHeight` gegen `clientHeight`), korrigiert einmal nach und nimmt die
+  Hoehe sonst ganz zurueck. Merksatz: ungleich lange Spalten sind haesslich,
+  ueberlappende sind kaputt - im Zweifel gewinnt die Korrektheit.
+
+**Neu: `dashcheck.js`** (Scratchpad) prueft 8 Breiten auf paarweise
+Kartenueberlappung UND Zonen-Ueberlauf, Exit 1 bei Befund. Gehoert wie
+`structcheck.js` vor jeden Push. `layoutaudit.js` hat das NICHT gefunden, weil
+es auf Seiten-/Karten-Ueberlauf prueft, nicht auf zwei Karten, die sich
+gegenseitig ueberdecken.
+
+**(2) Das Asset-Icon sass 7px zu tief.** `.atitle` war ein Block, das Icon
+haing an `vertical-align` - und `.atitle-flag` wie `.ai-wrap` schoben es BEIDE
+nach unten. Jetzt ist `.atitle` eine Flexbox mit `align-items:center`: Versatz
+gemessen 0px, ohne Zahlenraterei, und es haelt auch, wenn sich Schrift- oder
+Icongroesse aendert. **Merksatz:** ein Icon neben Text nie ueber
+`vertical-align` einpassen - der Wert stimmt nur fuer genau eine Kombination
+aus Schriftgroesse und Iconhoehe. Der Container richtet aus, nicht das Icon.
+Die Symbole sind zugleich praesenter: 34 statt 26px im Asset-Kopf, 26 statt
+22px im Research-Bereich.
+
+**(3) Die Ueberschriften-Rangfolge war invertiert.** Gemessen: Rubrik-Titel
+Gewicht **800**, uebergeordneter Asset-Titel nur **600** - das Kind war fetter
+als der Elternteil. Ausserdem lagen 20px (Rubrik) neben der dokumentierten
+Sieben-Stufen-Skala. Jetzt monoton fallend in Groesse UND Gewicht:
+Asset-Titel 38/700 -> Rubrik 22/650 (`--fs-xl`) -> Untertitel 13/500 ->
+SUMMARY-Label 10/700 (Versalien, als Label bewusst kraeftig).
