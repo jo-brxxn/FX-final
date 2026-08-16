@@ -231,8 +231,26 @@ jobs:
           fi
           rm -f morning-report-voice.mp3 bgmusic.mp3
 
+      # Globaler Telegram-Schalter aus den App-Einstellungen (fx_sync-Feld
+      # telegramEnabled). Nur ein ausdrueckliches false schaltet ab - fehlen
+      # Secrets oder Feld, wird wie bisher gesendet.
+      - name: Telegram-Schalter aus den App-Einstellungen lesen
+        id: tg
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SYNC_ID: ${{ secrets.SUPABASE_SYNC_ID }}
+        run: |
+          ON=true
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ] && [ -n "$SUPABASE_SYNC_ID" ]; then
+            BODY="$(curl -sS --max-time 20 -H "apikey: $SUPABASE_ANON_KEY" "$SUPABASE_URL/rest/v1/fx_sync?id=eq.$SUPABASE_SYNC_ID&select=data" || true)"
+            ON="$(printf '%s' "$BODY" | python3 -c "import sys,json;r=json.load(sys.stdin);d=(r[0].get('data') or {}) if r else {};print('false' if d.get('telegramEnabled') is False else 'true')" 2>/dev/null || echo true)"
+          fi
+          [ "$ON" = "false" ] && echo "Telegram in den App-Einstellungen deaktiviert - kein Versand." || echo "Telegram aktiv."
+          echo "on=$ON" >> "$GITHUB_OUTPUT"
+
       - name: Per Telegram senden (Text + Sprachnachricht)
-        if: steps.gate.outputs.proceed == 'true'
+        if: steps.gate.outputs.proceed == 'true' && steps.tg.outputs.on != 'false'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

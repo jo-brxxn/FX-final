@@ -6236,3 +6236,77 @@ Builds - ohne diese Weiche laege dort ein veralteter Snapshot.
 ⚠ Die URL steht NIRGENDS im Repo (keine `wrangler.toml`, keine CNAME-Datei) -
 deshalb hier notiert. Falls sie doch mal fehlt: Cloudflare Dashboard →
 Workers & Pages → `fx-final` → Domains & Routes.
+
+### Telegram-Hauptschalter + Ausloeser in der Score-Flip-Nachricht (Nutzer-Wunsch 2026-08-16)
+
+**⚠ Der Schalter musste SERVERSEITIG wirken, nicht in der App.** Der naive Weg
+waere ein `if(!telegramEnabled)return;` in `queueScoreFlipAlert()` gewesen -
+das haette NICHTS bewirkt: der Browser legt nur die Inbox-Nachricht an, der
+tatsaechliche Telegram-Versand laeuft komplett auf dem GitHub-Runner
+(`event-alerts.yml` liest `eventAlerts`/`priceAlerts` aus der Supabase-
+`fx_sync`-Tabelle, `morning-report.yml`/`weekly-report.yml` senden ganz ohne
+App-Zutun). Ein Schalter, der nur im Browser greift, haette den Nutzer
+glauben lassen, es sei aus - und das Handy haette weiter gebrummt.
+
+`telegramEnabled` folgt dem Vier-Ecken-Muster (Save-Funktion bumpt
+`fxpro_updated`+`_lsUpdatedSeen`+`markPrefEdit()`+`cloudAutoSync()`,
+`cloudPull()` mit `!prefPending`-Guard, Export/Import) und geht damit ueber
+`cloudPush()` automatisch in denselben `data`-Datensatz, den die Workflows
+ohnehin lesen. Kein neues Secret, keine neue Tabelle, kein neuer Endpunkt.
+
+Drei Sendestellen, zwei Muster:
+- **`event-alerts.yml`** liest die Sync-Zeile ohnehin schon (fuer
+  `eventAlerts`) - dort genuegt ein frueher `return` in `main()`, direkt
+  nachdem `syncRows` da ist.
+- **`morning-report.yml` / `weekly-report.yml`** lesen `fx_sync` gar nicht
+  (der Morgenbericht baut sich rein aus den Repo-JSONs). Beide bekommen
+  einen eigenen Schritt `id: tg`, der die Zeile liest, und ihr Sendeschritt
+  haengt zusaetzlich an `steps.tg.outputs.on != 'false'`.
+
+**Die Fehlrichtung ist bewusst "senden":** fehlen die Secrets, ist die Cloud
+nicht erreichbar oder liefert sie Unsinn, wird gesendet
+(`d.get('telegramEnabled') is False` - nur ein ausdrueckliches `false`
+schaltet ab, `None`/fehlend nicht). Ein Netzwerkfehler darf keine Meldung
+verschlucken; ein einmal zu viel gesendeter Bericht ist harmloser als ein
+verpasster Alarm.
+
+**Der Ausloeser in der Flip-Nachricht kommt aus derselben Quelle wie die
+History-Karte** (`symScoreDrivingEventsByDate()` + `indBiasFromEvent()`),
+nicht aus einer zweiten Rechnung - `flipCauseLines()` uebernimmt sogar deren
+Vergleichs-Beschriftungen (`vs X (21d avg)` bei Bonds, `(prev X%)` bei COT,
+nichts bei Sentiment, sonst `(fc X)`). Bewusst so: eine eigene Auswahllogik
+waere die vierte Implementierung derselben Prioritaetsregel gewesen und haette
+frueher oder spaeter etwas anderes gezeigt als die Karte selbst (siehe die
+Dual-Source-Eintraege oben).
+
+Zwei Ehrlichkeits-Regeln darin:
+1. **Zeigt kein Treiber in die Richtung des Flips, heisst die Ueberschrift
+   `Latest score drivers:` statt `Driven by:`.** Beim Test kippte EUR auf
+   bearish, waehrend beide gefundenen Treiber bullisch waren (der Flip kam
+   aus dem Zusammenspiel, nicht aus einem einzelnen Ereignis) - `Driven by:`
+   waere dort schlicht falsch gewesen.
+2. **Kein score-treibendes Ereignis = gar kein Zusatz** (an DAX geprueft,
+   liefert korrekt `[]`), statt eine Begruendung zu erfinden.
+
+Gemessene Beispiele (echte Daten):
+```
+📊 USD (USD) flipped to BEARISH - score -5.7 (was NEUTRAL).
+
+Driven by:
+▼ 2Y Bond Yield 4.171% vs 4.228% (21d avg)
+▲ 10Y Bond Yield 4.692% vs 4.675% (21d avg)
+```
+
+**Merksatz:** bei jedem neuen Schalter zuerst fragen, WO die abzuschaltende
+Wirkung tatsaechlich entsteht. Alles, was ein Workflow tut, laesst sich nur
+im Workflow abschalten - die App kann dafuer bestenfalls das Flag
+transportieren.
+
+**Nebenbefund am Test-Werkzeug (kein App-Bug):** `bughunt.js` meldete einen
+Phantom-Fehler, weil es `applySnap(JSON.parse(snap()))` aufrief - `applySnap`
+erwartet den STRING und parst selbst. Nach der Korrektur blieb eine echte,
+aber harmlose Abweichung: `applySnap` ruft `migrateDash()`, das `dashV`
+einmalig von 0 auf `DASH_V` hebt. Der Test prueft jetzt Stabilitaet AB dem
+ZWEITEN Durchlauf. Bei kuenftigen "roundtrip nicht idempotent"-Meldungen also
+zuerst pruefen, ob eine Migration einmalig zuschlaegt, bevor ein Bug gesucht
+wird.

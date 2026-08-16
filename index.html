@@ -2914,12 +2914,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-377 — Drei Korrekturen. (1) Dashboard: die untere Kartenreihe wurde von den Spalten daruber ueberlappt. Ursache war, dass die Spalten-Zonen Bloecke mit align-content:start waren - eine per JS gesetzte gemeinsame Hoehe konnte der Inhalt dort gar nicht einhalten, er lief einfach heraus (an JEDER Breite reproduziert, Ueberlauf 128-298px). Die Zonen sind jetzt echte Flex-Spalten, und nur die als schrumpfbar markierten Karten geben nach (flex:0 1 auto - schrumpfen ja, wachsen nie). equalizeDashColumns() misst nach dem Setzen selbst nach und nimmt die Hoehe notfalls ganz zurueck: ungleich lange Spalten sind haesslich, ueberlappende sind kaputt. Neuer Waechter dashcheck.js prueft 8 Breiten auf Kartenueberlappung und Zonen-Ueberlauf. (2) Asset-Kopfzeile: die Flagge sass gemessen 7px zu tief, weil .atitle ein Block war und zwei Regeln sie zusaetzlich nach unten schoben. Jetzt Flexbox mit align-items:center - Versatz 0px, ohne Zahlenraterei, und haelt auch bei geaenderter Schrift- oder Icongroesse. Die Symbole sind zudem praesenter: 34 statt 26px im Asset-Kopf, 26 statt 22px im Research-Bereich. (3) Ueberschriften-Hierarchie war invertiert: der Rubrik-Titel stand auf Gewicht 800, der uebergeordnete Asset-Titel nur auf 600 - das Kind war fetter als der Elternteil. Jetzt 38/700 -> 22/650 -> 13/500, und 22px liegt auf der dokumentierten Skala (20px lag daneben).">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-378 - Zwei Ergaenzungen rund um Telegram. (1) Ein Hauptschalter in den Einstellungen schaltet ALLE Telegram-Mitteilungen ab (Event-Alarme, Preis-Alarme, Morgenbericht, Wochenbericht). Der Schalter wirkt SERVERSEITIG, nicht nur in der App: die drei sendenden Workflows lesen den Stand aus demselben Cloud-Sync-Datensatz, den die App ohnehin pusht - ein rein lokaler Schalter haette gar nichts bewirkt, weil der Versand auf dem Runner passiert und nicht im Browser. event-alerts.yml steigt frueh aus, morning-report.yml und weekly-report.yml bekommen einen eigenen Lese-Schritt und haengen ihren Sendeschritt daran. Ist der Schalter nie angefasst oder die Cloud nicht erreichbar, wird gesendet - Ausfall der Abfrage darf eine Meldung nicht verschlucken. (2) Die Score-Flip-Nachricht nennt jetzt den Ausloeser: bis zu drei Indikatoren mit Wert und Vergleichswert, aus derselben Quelle wie die History-Karte (symScoreDrivingEventsByDate + indBiasFromEvent), also nie eine zweite, abweichende Rechnung. Zeigen die Treiber in die Richtung des Flips, steht "Driven by:" darueber, sonst ehrlich "Latest score drivers:" - und ein Asset ohne score-treibende Ereignisse bekommt gar keinen Zusatz statt einer erfundenen Begruendung.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-377</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-378</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3385,6 +3385,10 @@ function introLogin(){
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">Data<br><span style="font-size:10.5px;color:var(--t3)">bars grow in, cards fade in on tab change</span></span>
       <button class="btn" id="dataAnimToggleBtn" onclick="toggleDataAnimEnabled()">Disable Animation</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
+      <span style="font-size:12px;color:var(--t2)">Telegram messages<br><span style="font-size:10.5px;color:var(--t3)">event &amp; price alerts, score flips, morning and weekly report</span></span>
+      <button class="btn" id="telegramToggleBtn" onclick="toggleTelegramEnabled()">Disable</button>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">All animations at once</span>
@@ -8698,7 +8702,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -8706,7 +8710,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -8938,7 +8942,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -9060,6 +9064,7 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
+      if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
       updAllAnimToggleBtn();
       // scoreHist: mergen statt ueberschreiben - die beiden Geraete haben
       // typischerweise disjunkte Tage angesammelt (jedes schreibt nur an
@@ -10310,6 +10315,55 @@ function autoPairBias(pairName){
 // sein aktualisiertes lastNotifBias mit -> kein Doppel-Alarm vom Zweitgeraet;
 // Undo stellt Bias UND lastNotifBias konsistent zusammen wieder her.
 const BIAS_LBL={bull:'BULLISH',bear:'BEARISH',neu:'NEUTRAL'};
+// Was hat den Flip ausgeloest? Bewusst DIESELBE Quelle wie die History-Karte
+// (symScoreDrivingEventsByDate) und dieselbe Richtungs-Einstufung
+// (indBiasFromEvent) - eine zweite, eigene Auswahl waere genau die
+// Dual-Source-Falle, die in diesem Projekt schon mehrfach zugeschlagen hat
+// (EUR PPI, GBP Claimant Count - siehe CLAUDE.md).
+// Genommen wird der Tag, an dem der Flip passiert (heute); gab es dort keine
+// score-treibenden Events, der letzte Tag mit welchen - denn dann hat kein
+// Release den Ausschlag gegeben, sondern ein aelterer Wert in Verbindung mit
+// einer anderen Aenderung. Ohne jeden Treffer wird NICHTS erfunden, die Zeile
+// bleibt dann einfach weg.
+function flipCauseLines(sym,max,newB){
+  let byDate={};
+  try{byDate=symScoreDrivingEventsByDate(sym.id)||{};}catch(e){return[];}
+  const dates=Object.keys(byDate).filter(d=>(byDate[d]||[]).length).sort();
+  if(!dates.length)return[];
+  const today=todayStr();
+  const day=byDate[today]&&byDate[today].length?today:dates[dates.length-1];
+  const dirOf=ev=>{try{return indBiasFromEvent(ev);}catch(e){return'neu';}};
+  const evts=(byDate[day]||[]).filter(ev=>dirOf(ev)!=='neu');
+  if(!evts.length)return[];
+  // Unter "Driven by" gehoeren die Treiber IN die Flip-Richtung nach vorn -
+  // gegenlaeufige Werte haben den Wechsel ja gerade nicht verursacht. Sie
+  // werden nicht unterschlagen (der Pfeil zeigt die Richtung), stehen aber
+  // hinten.
+  if(newB==='bull'||newB==='bear')
+    evts.sort((a,b)=>(dirOf(b)===newB?1:0)-(dirOf(a)===newB?1:0));
+  const val=v=>(v!=null&&v!=='')?String(v):'-';
+  return evts.slice(0,max||3).map(ev=>{
+    const b=dirOf(ev);
+    // Vergleichswert exakt so beschriftet wie in der History-Karte: Bond-
+    // Renditen haben kein echtes Forecast, das waere sonst vorgetaeuscht.
+    const cmp=ev.bond?' vs '+val(ev.previous)+' (21d avg)'
+      :ev.cot?' (prev '+val(ev.previous)+')'
+      :ev.sent?''
+      :' (fc '+val(ev.forecast)+')';
+    return (b==='bull'?'▲':'▼')+' '+(ev.name||'')+' '+val(ev.actual)+cmp;
+  });
+}
+// Ueberschrift richtet sich nach der Faktenlage: nur wenn wenigstens ein
+// Treiber IN die Flip-Richtung zeigt, ist "Driven by" eine wahre Aussage.
+// Zeigen alle dagegen, hat der Wechsel eine andere Ursache (aeltere Werte,
+// Gewichtung) - dann wird das auch nicht behauptet.
+function flipCauseBlock(sym,newB){
+  const lines=flipCauseLines(sym,3,newB);
+  if(!lines.length)return'';
+  const pfeil=newB==='bull'?'▲':newB==='bear'?'▼':null;
+  const passt=pfeil&&lines.some(l=>l.indexOf(pfeil)===0);
+  return'\n\n'+(passt?'Driven by:':'Latest score drivers:')+'\n'+lines.join('\n');
+}
 function queueScoreFlipAlert(sym,oldB,newB){
   // Deterministische ID (Symbol+Wechsel+Tag): erkennen zwei Geraete denselben
   // Flip parallel, verhindert fx_alert_log den zweiten Versand.
@@ -10324,7 +10378,8 @@ function queueScoreFlipAlert(sym,oldB,newB){
   eventAlerts.push({
     id,
     name:'Score flip: '+sym.id+' → '+BIAS_LBL[newB],
-    msg:'📊 '+sym.id+' ('+(sym.name||'')+') flipped to '+BIAS_LBL[newB]+' — score '+(sc>0?'+':'')+sc+' (was '+BIAS_LBL[oldB]+').',
+    msg:'📊 '+sym.id+' ('+(sym.name||'')+') flipped to '+BIAS_LBL[newB]+' — score '+(sc>0?'+':'')+sc+' (was '+BIAS_LBL[oldB]+').'
+      +flipCauseBlock(sym,newB),
     fireAt:new Date().toISOString(),
     ffLink:false
   });
@@ -19667,6 +19722,25 @@ function toggleAllAnim(){
   if(dataAnimEnabled!==to)toggleDataAnimEnabled();
   updAllAnimToggleBtn();
 }
+// Telegram-Versand global an/aus. ⚠ Der Schalter wirkt SERVERSEITIG: gesendet
+// wird in den drei Workflows (event-alerts/morning-report/weekly-report), also
+// muss die Entscheidung dorthin. Sie reist im normalen Sync-Stand mit
+// (data.telegramEnabled) - dadurch wirkt ein Umlegen auf JEDEM Geraet, auch
+// wenn dieses gerade geschlossen ist. Ein rein clientseitiges Unterdruecken
+// waere wirkungslos, sobald ein anderes Geraet Alarme einreiht.
+let telegramEnabled=localStorage.getItem('fxpro_telegram_enabled')!=='0';
+function updTelegramToggleBtn(){const b=document.getElementById('telegramToggleBtn');if(b)b.textContent=telegramEnabled?'Disable':'Enable';}
+function toggleTelegramEnabled(){
+  telegramEnabled=!telegramEnabled;
+  try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  // Sofort hochschieben statt auf den naechsten Save zu warten - der Server
+  // liest den Stand im naechsten Lauf, der schon in wenigen Minuten kommt.
+  cloudAutoSync();
+  updTelegramToggleBtn();
+}
 function toggleIntroAnimEnabled(){
   introAnimEnabled=!introAnimEnabled;
   try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}
@@ -19803,7 +19877,7 @@ document.addEventListener('visibilitychange',()=>{
 loadState();
 applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
-applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();
+applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();
 migrateGeneralToNotes();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();

@@ -66,6 +66,13 @@ jobs:
             const syncRes = await fetch(`${SUPABASE_URL}/rest/v1/fx_sync?id=eq.${encodeURIComponent(SUPABASE_SYNC_ID)}&select=data`, { headers });
             if (!syncRes.ok) throw new Error('fx_sync fetch failed: ' + syncRes.status);
             const syncRows = await syncRes.json();
+            // Globaler Telegram-Schalter aus den App-Einstellungen. Nur ein
+            // ausdrueckliches false schaltet ab - fehlt das Feld (aelterer
+            // Client), wird wie bisher gesendet.
+            if (syncRows[0] && syncRows[0].data && syncRows[0].data.telegramEnabled === false) {
+              console.log('Telegram in den App-Einstellungen deaktiviert - kein Versand.');
+              return;
+            }
             const alerts = (syncRows[0] && syncRows[0].data && syncRows[0].data.eventAlerts) || [];
             const priceAlerts = (syncRows[0] && syncRows[0].data && syncRows[0].data.priceAlerts) || [];
 
