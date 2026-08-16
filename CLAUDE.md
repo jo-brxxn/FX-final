@@ -6310,3 +6310,91 @@ einmalig von 0 auf `DASH_V` hebt. Der Test prueft jetzt Stabilitaet AB dem
 ZWEITEN Durchlauf. Bei kuenftigen "roundtrip nicht idempotent"-Meldungen also
 zuerst pruefen, ob eine Migration einmalig zuschlaegt, bevor ein Bug gesucht
 wird.
+
+### ⚠ Forecastlose Indikatoren behielten ihren Bias FUER IMMER (Bugreport 2026-08-16, Score-Fehler)
+
+Nutzer schickte einen Screenshot der AUD-History und schrieb "das ergibt
+keinen Sinn". Dahinter steckten drei Fehler - einer davon im Score selbst.
+
+**Der Score-Fehler:** ein Indikator OHNE Forecast wurde nie wieder
+korrigiert. Zwei Tore verriegelten sich gegenseitig:
+- die Bias-Selbstheilung in `applyIndDataFeed()` haengt an `nf!=null`,
+  laeuft also nur MIT Forecast;
+- der Ersatzweg `applyTrendModel(ind,nf==null,/*allowBiasReplace*/false,sig)`
+  wendet das Step-Signal nur an, wenn `allowBiasReplace||ind.bias==='neu'
+  ||ind.stepDriven`.
+
+Ein Indikator mit einem alten, nicht-neutralen Bias, der nie step-getrieben
+war, fiel durch JEDEN Zweig. Er behielt seinen Wert dauerhaft - und weil
+`stepDriven` dabei nie gesetzt wurde, mit **vollem** Gewicht statt der
+dokumentierten halben Step-Wirkung. Doppelt falsch: Richtung UND Groesse.
+
+Gemessen an den echten Daten, 14 Faelle - u.a. AUD Services PMI auf bearish,
+obwohl der Wert von 50,5 auf 53,6 gestiegen war; AUD Retail Sales auf bearish
+ganz ohne Vergleichswert; CHF Manufacturing PMI und JPY GDP auf bullish ohne
+Grundlage. Score-Wirkung: **AUD -2,0 → +0,4** (Vorzeichenwechsel), GBP 5,2 →
+2,3, CHF 2,5 → -0,1, EUR -3,7 → -2,4.
+
+Fix: das dritte Argument am Feed-Aufruf auf `true`. Es wirkt ausschliesslich
+im `noForecast`-Zweig (mit Forecast ignoriert `applyTrendModel` es ohnehin).
+**Der Schutz einer MANUELLEN Wahl haengt NICHT an diesem Flag**, sondern an
+`indBiasPinned(ind,sig)`, das in `applyTrendModel` ZUERST geprueft wird -
+verifiziert, dass ein manueller Bias den automatischen Lauf weiterhin
+ueberlebt.
+
+**Merksatz:** wenn zwei Pfade sich einen Zustand teilen und jeder annimmt,
+der andere kuemmere sich, kuemmert sich keiner. Bei JEDEM Guard, der eine
+Korrektur ueberspringt, pruefen, ob fuer den uebersprungenen Fall
+tatsaechlich eine ANDERE Instanz zustaendig ist - hier lief die
+"Selbstheilung" seit ihrer Einfuehrung an genau den Indikatoren vorbei, die
+sie am noetigsten hatten.
+
+### ⚠ Die History darf Richtung und Effekt NIE selbst berechnen (selber Bugreport)
+
+Zwei weitere Fehler, beide dieselbe Ursache: das History-Fenster hat die
+Zahlen nachgerechnet, statt sie aus der Score-Rechnung zu uebernehmen.
+
+1. **Der Effekt war hartcodiert `±1`** (`b==='bull'?'+1':...`) und ignorierte
+   das Gewicht komplett. Gemessen: **68 von 220** Indikatoren mit falscher
+   Groesse - Bonds, Core-Paare, COT-Netto und CB Tone sind Halbgewicht, im
+   Modus `normalized` kommt der Normierungsfaktor obendrauf.
+2. **Die Richtung wurde neu klassifiziert.** Der Live-Bias fuer Anleihen ist
+   SMA5 gegen SMA21 mit `BOND_DEAD_BAND`=3 Basispunkten; die History verglich
+   den Tageswert direkt gegen die SMA21 OHNE Totzone. **13 von 220** Zeilen
+   behaupteten dadurch einen Treiber, dessen echter Beitrag exakt 0 ist. Im
+   gemeldeten Screenshot: 10Y 4,987 % gegen 4,978 % sind 0,9 Basispunkte -
+   der Score fuehrt das als neutral, die History schrieb "▲ +1".
+
+`symScoreDrivingEventsByDate()` heftet jetzt jedem Event `sc` (echter Beitrag
+aus `indScoreParts`) und `scBias` (Vorzeichen dieses Beitrags) an; alle
+Verbraucher (`renderSymHistoryPanel`, `renderSymHistory`, `symHistoryDays`,
+`flipCauseLines` fuer Telegram) lesen ueber `histEvtBias(ev)`/`ev.sc`. Damit
+kann die Anzeige der Rechnung strukturell nicht mehr widersprechen.
+
+**⚠ Das Kalender-Event MUSS kopiert werden** (`Object.assign({},ev,meta)`) -
+`findIndEvent()` liefert ein Objekt direkt aus `calEvts`; es anzureichern
+wuerde den gemeinsamen Kalender-Datensatz veraendern. Als Testfall im
+Verifikationsskript verankert (`calEvtsSauber`).
+
+Zeilen ohne Wirkung bleiben sichtbar, zeigen aber `0` mit neutraler Raute und
+einer echten Begruendung im Tooltip (`histZeroReason`: Totzone / veraltet /
+display-only / kein klares Signal) - eine Zeile verschwinden zu lassen waere
+genauso irrefuehrend wie einen Treiber zu erfinden.
+
+**Gespiegelte Non-FX-Karten drehen bei `inverse` zusaetzlich das Vorzeichen**
+(`pushForInd(...,sign)`): fuer GOLD ist ein heisser US-Inflationswert bearish.
+Vorher zeigte die History dort unveraendert die USD-Richtung. Verifiziert:
+USD PPI -0,33 bearish → GOLD PPI +0,33 bullish.
+
+**Merksatz (zum wiederholten Mal, jetzt strukturell geloest):** das
+Tages-Badge neben dem Datum ist der GESAMTSCORE dieses Tages aus `scoreHist`,
+die Zeilen darunter sind einzelne Beitraege - das eine ist nie die Summe des
+anderen. Wer hier etwas ergaenzt, uebernimmt Richtung und Zahl aus
+`indScoreParts`/`ind.bias` und klassifiziert NIE selbst.
+
+**Offener Nebenbefund (nicht in diesem Fix, VOR der Aenderung genauso
+vorhanden - per `git stash` gegengeprueft):** `applyIndDataFeed()` meldet bei
+JEDEM Lauf `changed=true`, weil 42 Non-FX-Indikator-Biases zwischen
+`deriveMacroBiasAll()` (setzt sie) und `resetNonFxIndBias()` (raeumt sie ab)
+hin- und herpendeln. Das verfaelscht keinen Score (Non-FX scort ueber den
+Rubrik-Bias), loest aber stuendlich einen unnoetigen Save + Cloud-Push aus.

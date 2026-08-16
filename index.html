@@ -2914,12 +2914,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-378 - Zwei Ergaenzungen rund um Telegram. (1) Ein Hauptschalter in den Einstellungen schaltet ALLE Telegram-Mitteilungen ab (Event-Alarme, Preis-Alarme, Morgenbericht, Wochenbericht). Der Schalter wirkt SERVERSEITIG, nicht nur in der App: die drei sendenden Workflows lesen den Stand aus demselben Cloud-Sync-Datensatz, den die App ohnehin pusht - ein rein lokaler Schalter haette gar nichts bewirkt, weil der Versand auf dem Runner passiert und nicht im Browser. event-alerts.yml steigt frueh aus, morning-report.yml und weekly-report.yml bekommen einen eigenen Lese-Schritt und haengen ihren Sendeschritt daran. Ist der Schalter nie angefasst oder die Cloud nicht erreichbar, wird gesendet - Ausfall der Abfrage darf eine Meldung nicht verschlucken. (2) Die Score-Flip-Nachricht nennt jetzt den Ausloeser: bis zu drei Indikatoren mit Wert und Vergleichswert, aus derselben Quelle wie die History-Karte (symScoreDrivingEventsByDate + indBiasFromEvent), also nie eine zweite, abweichende Rechnung. Zeigen die Treiber in die Richtung des Flips, steht "Driven by:" darueber, sonst ehrlich "Latest score drivers:" - und ein Asset ohne score-treibende Ereignisse bekommt gar keinen Zusatz statt einer erfundenen Begruendung.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-379 - Score-Audit nach einem Nutzer-Screenshot, drei Fehler gefunden. (1) SCHWER, betraf den Score selbst: ein Indikator OHNE Forecast bekam seinen Bias nie wieder korrigiert. Die Selbstheilung in applyIndDataFeed haengt an nf!=null, und der Trend-Pfad lief mit allowBiasReplace=false, wo das Step-Signal nur bei bias===neu oder bereits step-getrieben greift - ein alter, nicht-neutraler Bias fiel durch JEDEN Zweig und blieb fuer immer stehen, bei VOLLEM Gewicht statt der dokumentierten halben Step-Wirkung. Gemessen an 14 echten Indikatoren: AUD Services PMI stand auf bearish, obwohl der Wert von 50,5 auf 53,6 gestiegen war; AUD Retail Sales auf bearish ganz ohne Vergleichswert; CHF Manufacturing PMI und JPY GDP auf bullish ohne Grundlage. Korrigiert: AUD -2,0 auf +0,4, GBP 5,2 auf 2,3, CHF 2,5 auf -0,1, EUR -3,7 auf -2,4. Der Schutz einer MANUELLEN Wahl haengt nicht an diesem Flag, sondern an indBiasPinned - unveraendert wirksam. (2) Der Effekt neben jeder History-Zeile war hartcodiert plus/minus 1 und ignorierte das Gewicht: 68 von 220 Indikatoren zeigten die falsche Groesse. Jetzt steht dort der ECHTE Beitrag aus indScoreParts - dieselbe Zahl wie im Score-Fenster. (3) Die History rechnete die Richtung selbst nach, statt sie zu uebernehmen. Bei Anleihen vergleicht der Score SMA5 gegen SMA21 mit 3-Basispunkt-Totzone, die History dagegen den Tageswert direkt gegen die SMA21 ohne Totzone - 13 von 220 Zeilen behaupteten dadurch einen Treiber, dessen Beitrag exakt 0 ist. Im gemeldeten Screenshot standen 0,9 Basispunkte Unterschied als plus 1 da. Zeilen ohne Wirkung zeigen jetzt 0 mit Begruendung im Tooltip (Totzone, veraltet, display-only) statt einen Treiber zu erfinden. Gespiegelte Non-FX-Karten drehen bei inverse zusaetzlich das Vorzeichen - fuer Gold ist heisse US-Inflation bearish. Verifiziert: 220 Zeilen in beiden Score-Modi, 0 Abweichungen zwischen Anzeige und Rechnung.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-378</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-379</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6009,27 +6009,56 @@ function symScoreDrivingEventsByDate(id){
   // gespiegelten Nicht-FX-Karten die verknuepfte Waehrung statt des Assets
   // selbst); null unterdrueckt den Kalender-Fallback komplett (COT Data/Risk
   // Environment haben keine currency-getaggten Kalender-Events).
-  const pushForInd=(ind,lookupId)=>{
+  // ⚠ Richtung UND Zahl kommen aus DERSELBEN Rechnung wie der Score
+  // (indScoreParts + ind.bias), nicht aus einem eigenen Actual-vs-Forecast-
+  // Vergleich. Bugreport 2026-08-16: die History rechnete die Richtung selbst
+  // nach und zeigte den Effekt als hartcodiertes ±1. Beides wich vom Score ab -
+  // gemessen 81 von 220 Indikatoren. Zwei Klassen: (a) falsche Groesse, weil
+  // Halbgewicht-Typen (Bonds, Core-Paare, COT-Netto, CB Tone) und im Modus
+  // `normalized` zusaetzlich der Normierungsfaktor ignoriert wurden; (b) frei
+  // erfundene Treiber - bei Anleihen vergleicht der Score SMA5 gegen SMA21 mit
+  // einer 3-Basispunkt-Totzone, die History dagegen den Tageswert direkt gegen
+  // die SMA21 ohne Totzone. Im gemeldeten Screenshot standen dadurch 0,9
+  // Basispunkte Unterschied als "▲ +1" da, obwohl der Score sie als neutral
+  // fuehrt. Wer hier kuenftig etwas ergaenzt: NIE wieder selbst klassifizieren.
+  const effOf=(ind,rub,scoreId,sign)=>{
+    let ps=null;try{ps=indScoreParts(ind,rub,scoreId);}catch(e){}
+    const v=ps?+(ps.total||0):0;
+    return sign===-1?-v:v;
+  };
+  const biasOf=(ind,sc)=>{
+    // Vorzeichen des ECHTEN Beitrags entscheidet - so kann Pfeil und Zahl
+    // nicht auseinanderlaufen (z.B. wenn eine same/inverse-Regel dreht).
+    if(sc>0.0001)return'bull';
+    if(sc<-0.0001)return'bear';
+    return'neu';
+  };
+  const pushForInd=(ind,lookupId,rub,scoreId,sign)=>{
     const r=ind.research;
+    const sc=effOf(ind,rub,scoreId,sign),sb=biasOf(ind,sc);
+    const meta={sc,scBias:sb,scZero:sc===0,scStale:(()=>{try{return !!indIsStale(ind);}catch(e){return false;}})(),
+      scDisplayOnly:(typeof SCORE_ZERO!=='undefined'&&SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))};
     if(r&&r.feed&&r.date&&r.actual!=null){
-      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous};
+      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
     const ev=lookupId?findIndEvent(lookupId,ind.name):null;
-    if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(ev);return;}
+    // ⚠ Kopie: `ev` stammt direkt aus calEvts - die Felder dort anzureichern
+    // wuerde den gemeinsamen Kalender-Datensatz veraendern.
+    if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(Object.assign({},ev,meta));return;}
     if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
-      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true};
+      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
     if(r&&r.cot&&r.date&&r.actual!=null){
-      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:r.previous,bias:ind.bias,cot:true};
+      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:r.previous,cot:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
     if(r&&r.sent&&r.date&&r.actual!=null){
-      const synth={name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:null,bias:ind.bias,sent:true};
+      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:null,sent:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
     }
   };
@@ -6037,23 +6066,48 @@ function symScoreDrivingEventsByDate(id){
   (c.rubrics||[]).forEach(rub=>{
     if(!rub.indicators)return;
     if(rub.name==='COT Data'||rub.name===MACRO_NAME){
-      rub.indicators.forEach(ind=>pushForInd(ind,null));
+      rub.indicators.forEach(ind=>pushForInd(ind,null,rub,id,1));
       return;
     }
     if(!IND_AUTO_RUBS.includes(rub.name))return;
-    if(!nonFx){rub.indicators.forEach(ind=>pushForInd(ind,id));return;}
+    if(!nonFx){rub.indicators.forEach(ind=>pushForInd(ind,id,rub,id,1));return;}
     const ccy=macroCcyFor(id);if(!ccy)return;
     const rule=effDeriveRules(c)[rub.name];
     if(rule!=='same'&&rule!=='inverse')return;
     const srcSym=syms.find(s=>s.id===ccy);
     const srcRub=srcSym&&(srcSym.rubrics||[]).find(r=>r.name===rub.name);
     if(!srcRub||!srcRub.indicators)return;
+    // Bei einer gespiegelten Karte gilt der Beitrag der QUELLWAEHRUNG, bei
+    // 'inverse' mit gedrehtem Vorzeichen - fuer GOLD ist ein heisser
+    // USD-Inflationswert bearish, nicht bullish. Vorher zeigte die History
+    // dort unveraendert die USD-Richtung.
+    const sign=rule==='inverse'?-1:1;
     rub.indicators.forEach(ind=>{
       const srcInd=srcRub.indicators.find(i=>i.name===ind.name);
-      if(srcInd)pushForInd(srcInd,ccy);
+      if(srcInd)pushForInd(srcInd,ccy,srcRub,ccy,sign);
     });
   });
   return byDate;
+}
+// Richtung/Effekt einer History-Zeile - IMMER aus dem angehefteten echten
+// Score-Beitrag (siehe symScoreDrivingEventsByDate). Der Rueckfall auf
+// indBiasFromEvent greift nur fuer Events, die nicht ueber diesen Weg kamen.
+function histEvtBias(ev){return ev&&ev.scBias?ev.scBias:indBiasFromEvent(ev);}
+// Beitrag als kurze Zahl: ganze Werte ohne Nachkomma (+1, -1), sonst zwei
+// Stellen ohne ueberfluessige Null (+0.5 statt +0.50).
+function fmtHistEff(v){
+  const n=+v||0;
+  if(!n)return'0';
+  const s=Math.abs(n)>=1&&Number.isInteger(n)?String(Math.abs(n)):(+Math.abs(n).toFixed(2)).toString();
+  return(n>0?'+':'-')+s;
+}
+// Warum traegt diese Zeile 0 bei? Nur echte, nachlesbare Gruende - nie geraten.
+function histZeroReason(ev){
+  if(!ev)return'';
+  if(ev.scDisplayOnly)return'Display only - this indicator never counts toward the score.';
+  if(ev.scStale)return'Out of date - more than '+IND_STALE_CYCLES+' of its own release cycles overdue, so it no longer counts.';
+  if(ev.bond)return'Inside the '+(BOND_DEAD_BAND*100)+'bp dead band between the 5-day and 21-day average - too small to count as a move.';
+  return'No clear signal - the score counts this release as neutral.';
 }
 function symHistoryDays(id,days){
   days=days||HIST_DAYS;
@@ -6065,7 +6119,7 @@ function symHistoryDays(id,days){
     const evs=evsByDate[date]||[];
     let bias='';
     if(evs.length){
-      const biases=[...new Set(evs.map(ev=>indBiasFromEvent(ev)))];
+      const biases=[...new Set(evs.map(ev=>histEvtBias(ev)))];
       bias=biases.length===1?biases[0]:'neu';
     }
     out.push({date,events:evs,bias});
@@ -6079,6 +6133,8 @@ function renderSymHistory(id){
     const col=has?(BC[d.bias]||BC.neu):'';
     const wd=new Date(d.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'}).slice(0,2);
     const dn=new Date(d.date+'T00:00:00').getDate();
+    // Richtung/Farbe kommen ueber d.bias aus histEvtBias, also aus dem echten
+    // Score-Beitrag - nicht aus einem eigenen Actual-vs-Forecast-Vergleich.
     const tip=has?d.events.map(ev=>ev.bond?`${ev.name}: ${ev.actual} (vs ${ev.previous} 21d avg)`:(ev.cot||ev.sent)?`${ev.name}: ${ev.actual}`:`${ev.name}: ${ev.actual} (fc ${ev.forecast})`).join(' / '):'No event';
     return`<div class="hist-day${has?' hist-has':''}${d.date===today?' hist-today':''}" style="${has?`--hc:${col}`:''}" title="${escH(fmtDayHdr(d.date)+': '+tip)}">
       <div class="hist-wd">${wd}</div><div class="hist-dot"></div><div class="hist-dn">${dn}</div>
@@ -6121,10 +6177,16 @@ function renderSymHistoryPanel(id){
     const scoreLbl=dayScore!=null?(dayScore>0?'+':'')+dayScore:'–';
     const scoreTip=dayScore==null?'No recorded score for this day':(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
     const evHtml=evs.map(ev=>{
-      const b=indBiasFromEvent(ev);
+      const b=histEvtBias(ev);
       const col=BC[b]||BC.neu;
       const arr=b==='bull'?'▲':b==='bear'?'▼':'◆';
-      const eff=b==='bull'?'+1':b==='bear'?'-1':'0';
+      // Der EFFEKT ist der echte Score-Beitrag dieses Indikators, nicht ein
+      // pauschales ±1 (Bugreport 2026-08-16). Halbgewicht-Typen stehen damit
+      // korrekt bei ±0,5, und im Modus `normalized` steckt der
+      // Normierungsfaktor mit drin - genau die Zahl, die auch im Score-Fenster
+      // fuer diesen Indikator steht.
+      const eff=ev.sc!=null?fmtHistEff(ev.sc):(b==='bull'?'+1':b==='bear'?'-1':'0');
+      const effTip=ev.sc!=null&&ev.sc===0?histZeroReason(ev):'Contribution of this release to the current score';
       const ac=actualColor(ev);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
       // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
@@ -6139,7 +6201,7 @@ function renderSymHistoryPanel(id){
         <span class="histp-arrow" style="color:${col}">${arr}</span>
         <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
         <span class="histp-val">${acv} <span class="histp-fc">${fcLine}</span></span>
-        <span class="histp-eff" style="color:${col};border-color:${col}">${eff}</span>
+        <span class="histp-eff" style="color:${col};border-color:${col}" title="${escH(effTip)}">${eff}</span>
       </div>`;
     }).join('');
     // Manuelle Aenderungen dieses Tages (mit ihrem exakten Score-Delta).
@@ -10332,7 +10394,11 @@ function flipCauseLines(sym,max,newB){
   if(!dates.length)return[];
   const today=todayStr();
   const day=byDate[today]&&byDate[today].length?today:dates[dates.length-1];
-  const dirOf=ev=>{try{return indBiasFromEvent(ev);}catch(e){return'neu';}};
+  // Dieselbe Quelle wie die History-Karte: die Richtung kommt aus dem echten
+  // Score-Beitrag (ev.scBias), nicht aus einem eigenen Actual-vs-Forecast-
+  // Vergleich - sonst nennt die Telegram-Nachricht einen Treiber, den der
+  // Score gar nicht kennt (Bugreport 2026-08-16, Anleihen-Totzone).
+  const dirOf=ev=>{try{return histEvtBias(ev);}catch(e){return'neu';}};
   const evts=(byDate[day]||[]).filter(ev=>dirOf(ev)!=='neu');
   if(!evts.length)return[];
   // Unter "Driven by" gehoeren die Treiber IN die Flip-Richtung nach vorn -
@@ -12739,7 +12805,21 @@ function applyIndDataFeed(){
           // Erstdruck traegt), eine vorher gesetzte Korrektur waere danach
           // wieder weg (siehe applyRevisionToValHist).
           if(applyRevisionToValHist(ind,f))changed=true;
-          if(applyTrendModel(ind,nf==null,false,indBiasInputSig(na,nf,np,f.date)))changed=true;
+          // allowBiasReplace=true (Bugreport 2026-08-16, gemessen an 14 echten
+          // Indikatoren): OHNE Forecast gibt es KEINE zweite Instanz, die den
+          // Bias je korrigiert - die Selbstheilung weiter unten haengt an
+          // `nf!=null`. Mit `false` griff in applyTrendModel nur noch
+          // `ind.bias==='neu'||ind.stepDriven`; ein Indikator mit einem alten,
+          // nicht-neutralen Bias, der nie step-getrieben war, fiel durch JEDEN
+          // Zweig und behielt seinen Wert fuer immer - bei VOLLEM Gewicht.
+          // Gemessen: AUD Services PMI stand auf bear (-0,96), obwohl der Wert
+          // von 50,5 auf 53,6 gestiegen war; AUD Retail Sales auf bear (-0,96)
+          // ganz ohne Vergleichswert. Korrigiert bewegte sich AUD von -2,0 auf
+          // +1,5, GBP von 5,4 auf 2,9, CHF von 2,7 auf 0,6.
+          // Der Schutz fuer eine MANUELLE Wahl haengt nicht an diesem Flag,
+          // sondern an indBiasPinned(ind,sig) - das wird in applyTrendModel
+          // ZUERST geprueft und bleibt unveraendert wirksam (verifiziert).
+          if(applyTrendModel(ind,nf==null,true,indBiasInputSig(na,nf,np,f.date)))changed=true;
         }
         // Verlaufschart-Historie unabhaengig von fx/non-fx (non-FX-Assets
         // zeigen dieselbe gespiegelte Makro-Karte wie ihre verbundene
