@@ -1980,6 +1980,8 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
 .histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px 54px}
+.histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
+.tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
 @media(max-width:560px){.histp-val{display:none}.histp-name{white-space:normal}}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
@@ -2914,12 +2916,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-379 - Score-Audit nach einem Nutzer-Screenshot, drei Fehler gefunden. (1) SCHWER, betraf den Score selbst: ein Indikator OHNE Forecast bekam seinen Bias nie wieder korrigiert. Die Selbstheilung in applyIndDataFeed haengt an nf!=null, und der Trend-Pfad lief mit allowBiasReplace=false, wo das Step-Signal nur bei bias===neu oder bereits step-getrieben greift - ein alter, nicht-neutraler Bias fiel durch JEDEN Zweig und blieb fuer immer stehen, bei VOLLEM Gewicht statt der dokumentierten halben Step-Wirkung. Gemessen an 14 echten Indikatoren: AUD Services PMI stand auf bearish, obwohl der Wert von 50,5 auf 53,6 gestiegen war; AUD Retail Sales auf bearish ganz ohne Vergleichswert; CHF Manufacturing PMI und JPY GDP auf bullish ohne Grundlage. Korrigiert: AUD -2,0 auf +0,4, GBP 5,2 auf 2,3, CHF 2,5 auf -0,1, EUR -3,7 auf -2,4. Der Schutz einer MANUELLEN Wahl haengt nicht an diesem Flag, sondern an indBiasPinned - unveraendert wirksam. (2) Der Effekt neben jeder History-Zeile war hartcodiert plus/minus 1 und ignorierte das Gewicht: 68 von 220 Indikatoren zeigten die falsche Groesse. Jetzt steht dort der ECHTE Beitrag aus indScoreParts - dieselbe Zahl wie im Score-Fenster. (3) Die History rechnete die Richtung selbst nach, statt sie zu uebernehmen. Bei Anleihen vergleicht der Score SMA5 gegen SMA21 mit 3-Basispunkt-Totzone, die History dagegen den Tageswert direkt gegen die SMA21 ohne Totzone - 13 von 220 Zeilen behaupteten dadurch einen Treiber, dessen Beitrag exakt 0 ist. Im gemeldeten Screenshot standen 0,9 Basispunkte Unterschied als plus 1 da. Zeilen ohne Wirkung zeigen jetzt 0 mit Begruendung im Tooltip (Totzone, veraltet, display-only) statt einen Treiber zu erfinden. Gespiegelte Non-FX-Karten drehen bei inverse zusaetzlich das Vorzeichen - fuer Gold ist heisse US-Inflation bearish. Verifiziert: 220 Zeilen in beiden Score-Modi, 0 Abweichungen zwischen Anzeige und Rechnung.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-380 - Nachtrag zum Score-Fix: SCORE_MODEL_VERSION war nicht hochgezaehlt. Die Score-Formel hat sich mit V379 geaendert, die Versionsnummer blieb aber auf 1 - dadurch stand im History-Fenster der heutige Wert aus dem KORRIGIERTEN Modell direkt neben den Vortagen aus dem ALTEN (AUD -0,8 heute gegen +2,4 / +3 / +3,1 davor). Der Sprung war kein Marktereignis, sondern der Modellwechsel, und nichts hat das kenntlich gemacht. Die Nummer steht jetzt auf 2. Aufgezeichnete Tage aus einem frueheren Modell werden NICHT geloescht und NICHT umgerechnet - sie bleiben unveraendert stehen, weil sie echt aufgezeichnet sind, aber gedaempft mit Sternchen und einer Fussnote, die erklaert warum sie nicht vergleichbar sind. Der Trends-Chart bekommt denselben Hinweis, sobald im gewaehlten Zeitraum Punkte aus beiden Modellen liegen (gemessen: 405 von 420 Punkten). Die Reihe baut sich taeglich neu auf. Merksatz fuer kuenftige Aenderungen an der Score-Formel: der Bump ist Pflicht und gehoert in DENSELBEN Commit wie die Formel-Aenderung.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-379</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-380</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -5219,8 +5221,16 @@ function symScoreCmp(sym){
 // ⚠ BEI JEDER AENDERUNG AN DER SCORE-FORMEL diese Zahl hochzaehlen -
 // dieselbe Pflicht wie bei SUMMARY_ENGINE_VERSION. Ohne den Bump vergleicht
 // die Note wieder stillschweigend zwei verschiedene Rechnungen.
-const SCORE_MODEL_VERSION=1;
+// V2 (2026-08-16): forecastlose Indikatoren behielten ihren Bias fuer immer und
+// zaehlten mit vollem statt halbem Gewicht - die Korrektur hat die Scores
+// deutlich verschoben (AUD -2,0 -> +0,4, GBP 5,2 -> 2,3, CHF 2,5 -> -0,1).
+// Alles, was VOR diesem Bump aufgezeichnet wurde, ist damit eine andere
+// Rechnung und darf nicht stillschweigend danebengestellt werden.
+const SCORE_MODEL_VERSION=2;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
+// Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
+// alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
+function scoreHistEntryCurrent(e){return Array.isArray(e)&&e[6]===SCORE_MODEL_TAG();}
 const STRENGTH_MIN_OBS=10;     // darunter keine Note - zu duenn zum Messen
 const STRENGTH_Z_BANDS=[-1.5,-1.0,-0.6,-0.2,0.2,0.6,1.0,1.5,2.0]; // 9 Grenzen -> 10 Stufen
 function symScoreAvg(sym){
@@ -6164,8 +6174,14 @@ function renderSymHistoryPanel(id){
   const logByDate={};
   (scoreLog||[]).filter(x=>x&&x.sym===id).forEach(x=>{const dk=String(x.t).slice(0,10);(logByDate[dk]=logByDate[dk]||[]).push(x);});
   const BLAB={sbull:'▲ Strongly bullish',bull:'▲ Bullish',neu:'◆ Neutral',bear:'▼ Bearish',sbear:'▼ Strongly bearish'};
-  const histMap={};
-  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];});
+  // ⚠ Ein Eintrag aus einem FRUEHEREN Score-Modell ist eine andere Rechnung.
+  // Ihn unmarkiert neben den heutigen Wert zu stellen erzeugt einen Sprung,
+  // den es nie gab (Nutzer-Bugreport 2026-08-16: AUD stand auf -0,8, die
+  // Vortage auf +2,4/+3/+3,1 - alle aus dem Modell VOR dem Bias-Fix). Der
+  // Wert wird deshalb weiterhin gezeigt (er ist echt aufgezeichnet), aber
+  // gedaempft und mit Begruendung - nicht geloescht und nicht umgerechnet.
+  const histMap={},histOld={};
+  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);});
   const liveScore=sym?symScoreCmp(sym):0; // Fallback fuer "heute", falls recordScoreHist() diese Sitzung noch nicht lief
   const rows=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
@@ -6173,9 +6189,13 @@ function renderSymHistoryPanel(id){
     const isToday=d.date===today;
     const hdrTxt=escH(fmtDayHdr(d.date))+(isToday?' · Today':'');
     const dayScore=histMap[d.date]!=null?histMap[d.date]:(isToday?liveScore:null);
-    const scoreCol=dayScore!=null?scoreColor(dayScore):'var(--t3)';
-    const scoreLbl=dayScore!=null?(dayScore>0?'+':'')+dayScore:'–';
-    const scoreTip=dayScore==null?'No recorded score for this day':(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
+    // Ein Wert aus einem frueheren Score-Modell ist NICHT mit heute vergleichbar.
+    const altesModell=histMap[d.date]!=null&&histOld[d.date];
+    const scoreCol=dayScore==null?'var(--t3)':altesModell?'var(--t3)':scoreColor(dayScore);
+    const scoreLbl=(dayScore!=null?(dayScore>0?'+':'')+dayScore:'–')+(altesModell?' *':'');
+    const scoreTip=dayScore==null?'No recorded score for this day'
+      :altesModell?'Recorded under an earlier version of the score model, so it is not comparable to today’s value. The number is shown unchanged — it is what was recorded — but it was produced by a different calculation.'
+      :(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
     const evHtml=evs.map(ev=>{
       const b=histEvtBias(ev);
       const col=BC[b]||BC.neu;
@@ -6227,7 +6247,11 @@ function renderSymHistoryPanel(id){
       ${evHtml}${manHtml}${nothing}
     </div>`;
   }).join('');
-  return`<div class="histp">${rows}</div>`;
+  // Fussnote nur, wenn tatsaechlich ein Tag aus einem frueheren Modell dabei
+  // ist - sonst gar kein Hinweis (kein Rauschen im Normalfall).
+  const tageAltesModell=days.filter(d=>histMap[d.date]!=null&&histOld[d.date]).length;
+  const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
+  return`<div class="histp">${rows}${fuss}</div>`;
 }
 function openHistModal(id){
   const c=syms.find(s=>s.id===id);if(!c)return;
@@ -17190,7 +17214,17 @@ function renderTrends(){
   const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
   const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
-  let html=rangeBar;
+  // Hinweis, wenn im gewaehlten Zeitraum Punkte aus einem FRUEHEREN
+  // Score-Modell stecken. Die Punkte bleiben stehen (jeder ist der Wert, der
+  // an dem Tag galt), aber ein Sprung an der Modellgrenze ist sonst nicht
+  // erklaerbar - genau der Fall aus dem Bugreport vom 2026-08-16.
+  const dSet=new Set(dates);
+  let altPunkte=0,neuPunkte=0;
+  totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>{
+    if(!dSet.has(e[0])||e[1]==null)return;
+    if(scoreHistEntryCurrent(e))neuPunkte++;else altPunkte++;
+  }));
+  let html=rangeBar+(altPunkte&&neuPunkte?`<div class="tr-modelnote">${altPunkte} of ${altPunkte+neuPunkte} recorded points in this range come from an earlier version of the score model. They are shown unchanged &ndash; each one is the value that was valid on that day &ndash; but a step at the changeover is the model change, not a market move.</div>`:'');
   if(trendsFilter!=='ALL'&&trendsFilter!=='FX'){
     const scoreMap={},biasMap={};(scoreHist[trendsFilter]||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1])){scoreMap[e[0]]=e[1];biasMap[e[0]]=e[5]||scoreBias(e[1]);}});
     html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,priceSeriesFor(trendsFilter),'Total Score vs Price',biasMap);
