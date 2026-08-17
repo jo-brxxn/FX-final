@@ -555,7 +555,7 @@
      ],
      [
       "2026-10-28",
-      5
+      4
      ],
      [
       "2026-12-09",
@@ -578,13 +578,13 @@
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
     "rateBefore": 3.72,
-    "rateAfter": 3.77,
-    "deltaBp": 5
+    "rateAfter": 3.76,
+    "deltaBp": 4
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.77,
+    "rateBefore": 3.76,
     "rateAfter": 3.86,
     "deltaBp": 10
    }
@@ -1987,7 +1987,7 @@
     [
      [
       "2026-09-02",
-      9
+      8
      ],
      [
       "2026-10-28",
@@ -2007,23 +2007,23 @@
     "date": "2026-09-02",
     "label": "Sep 2, 2026",
     "rateBefore": 2.28,
-    "rateAfter": 2.37,
-    "deltaBp": 9,
+    "rateAfter": 2.36,
+    "deltaBp": 8,
     "approx": true
    },
    {
     "date": "2026-10-28",
     "label": "Oct 28, 2026",
-    "rateBefore": 2.37,
-    "rateAfter": 2.47,
+    "rateBefore": 2.36,
+    "rateAfter": 2.46,
     "deltaBp": 10,
     "approx": true
    },
    {
     "date": "2026-12-09",
     "label": "Dec 9, 2026",
-    "rateBefore": 2.47,
-    "rateAfter": 2.57,
+    "rateBefore": 2.46,
+    "rateAfter": 2.56,
     "deltaBp": 10,
     "approx": true
    }
