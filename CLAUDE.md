@@ -6398,3 +6398,74 @@ JEDEM Lauf `changed=true`, weil 42 Non-FX-Indikator-Biases zwischen
 `deriveMacroBiasAll()` (setzt sie) und `resetNonFxIndBias()` (raeumt sie ab)
 hin- und herpendeln. Das verfaelscht keinen Score (Non-FX scort ueber den
 Rubrik-Bias), loest aber stuendlich einen unnoetigen Save + Cloud-Push aus.
+
+### ⚠ SCORE_MODEL_VERSION-Bump gehoert in DENSELBEN Commit wie die Formel-Aenderung (2026-08-16)
+
+Der Score-Fix (V379) hat die Zahlen deutlich verschoben, die Versionsnummer
+blieb aber auf 1. Folge im History-Fenster: der heutige Wert aus dem
+KORRIGIERTEN Modell stand direkt neben den Vortagen aus dem ALTEN (AUD -0,8
+gegen +2,4 / +3 / +3,1), ohne dass irgendetwas den Unterschied kenntlich
+machte. Der Nutzer hat das zu Recht als "ergibt keinen Sinn" gemeldet - der
+Sprung war der Modellwechsel, kein Marktereignis.
+
+Aufgezeichnete Tage aus einem frueheren Modell werden **weder geloescht noch
+umgerechnet**: sie bleiben unveraendert stehen (sie sind echt aufgezeichnet),
+aber gedaempft mit Sternchen, Tooltip und Fussnote. Der Trends-Chart bekommt
+denselben Hinweis, sobald im Zeitraum Punkte aus beiden Modellen liegen.
+`scoreHistEntryCurrent(e)` ist die eine gemeinsame Quelle dafuer.
+
+**Merksatz:** der Bump ist kein Nachtrag. Aendert sich die Formel, gehoert
+`SCORE_MODEL_VERSION++` in denselben Commit - sonst vergleicht jede Ansicht,
+die eine Reihe zeigt, still zwei verschiedene Rechnungen.
+
+### ⚠ Zwei Funktionen schrieben sich bei JEDEM Feed-Lauf gegenseitig um (2026-08-16)
+
+Gefunden beim vollstaendigen Score-Audit. `applyIndDataFeed()` meldete bei
+jedem Lauf `changed=true`, obwohl der Endzustand stabil war - ein
+Falsch-Positiv, das stuendlich einen ueberfluessigen Save + Cloud-Push
+ausgeloest hat. Zwei unabhaengige Ursachen, beide dieselbe Bauart:
+
+1. **Erstdruck gegen Revision.** `adoptFeedHistory()` schreibt `valHist` aus
+   `f.history` - und die Feed-Reihe traegt weiter den ERSTDRUCK.
+   `applyRevisionToValHist()` spielt danach die Revision ein. Beim naechsten
+   Lauf sah die eingespielte Revision fuer `adoptFeedHistory` wie eine
+   Abweichung aus und wurde zurueckgeschrieben, dann wieder eingespielt.
+   Gemessen: 6 Indikatoren pro Durchlauf. Fix: die Revision wird ueber
+   `reviseValHistArr(nh,f)` schon VOR dem Vergleich auf die neue Reihe
+   angewendet - EINE gemeinsame Regel fuer beide Aufrufer statt zwei
+   Implementierungen (Dual-Source-Lehre).
+2. **Feed-Reihe haengt hinter dem Release.** Kommt ein Wert von einer
+   Trading-Economics-Laenderseite, setzt der Workflow `date`/`actual`,
+   verlaengert `history` aber NICHT. `trackIndValues()` haengt den neueren
+   Punkt lokal an, `adoptFeedHistory()` schnitt ihn beim naechsten Lauf
+   wieder ab. Gemessen an JPY GDP Growth QoQ: Reihe endet am 07.06., das
+   Release steht auf dem 16.08. Fix: `if(ind.valDate&&nd&&ind.valDate>nd)
+   return false;` - eine lokal neuere Reihe wird nicht mehr abgeschnitten.
+
+**Die Scores aendern sich dadurch NICHT** - ueber fuenf aufeinanderfolgende
+Feed-Laeufe vor und nach der Aenderung gemessen, identisch. Der Gewinn ist,
+dass alle vier Feeds jetzt idempotent sind.
+
+**Merksatz:** wenn zwei Schritte im selben Durchlauf dasselbe Feld schreiben
+und der zweite den ersten korrigiert, pruefen, ob der erste beim NAECHSTEN
+Lauf die Korrektur als Abweichung liest. Der Endzustand kann dabei voellig
+richtig aussehen - der Fehler zeigt sich nur daran, dass jeder Lauf Arbeit
+meldet. Messverfahren: die beteiligten Funktionen wrappen und zaehlen, wie
+oft sie auf einem STABILEN Zustand noch `true` zurueckgeben (Soll: 0).
+
+### Score-Audit-Werkzeug (2026-08-16)
+
+`score_audit.js` und `dom_audit3.js` im Scratchpad pruefen in BEIDEN Modi:
+Additivitaet der Rechenkette ueber alle Indikatoren, Drift des Scores je
+geoeffnetem Asset (256 Kombinationen), `_symId`-Stempel nach Boot/`save()`/
+`applySnap()`, jeden Indikator-Bias gegen seine eigenen Rohdaten, jedes
+Karten-Badge gegen `rubScore` und Schwelle, Idempotenz aller vier Feeds,
+sowie im echten DOM Sidebar / Asset-Kopf / Score-Fenster aller Assets und
+alle Paar-Scores. **Bei jeder kuenftigen Aenderung an der Score-Logik beide
+laufen lassen.**
+
+⚠ Zwei Fallen im Pruefskript selbst, damit sie nicht neu gebaut werden:
+`rubScore`/`indScore`/`symScore` RUNDEN auf zwei Stellen - eine Toleranz von
+1e-6 meldet dutzende Phantom-Fehler, richtig ist ~0,011 je Stufe. Und der
+Score steht am ENDE der Zeile: Namen wie "S&P 500" oder "GER 100" tragen
+selbst Ziffern, ein Regex von vorn liest "500" als Score.

@@ -2916,12 +2916,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-380 - Nachtrag zum Score-Fix: SCORE_MODEL_VERSION war nicht hochgezaehlt. Die Score-Formel hat sich mit V379 geaendert, die Versionsnummer blieb aber auf 1 - dadurch stand im History-Fenster der heutige Wert aus dem KORRIGIERTEN Modell direkt neben den Vortagen aus dem ALTEN (AUD -0,8 heute gegen +2,4 / +3 / +3,1 davor). Der Sprung war kein Marktereignis, sondern der Modellwechsel, und nichts hat das kenntlich gemacht. Die Nummer steht jetzt auf 2. Aufgezeichnete Tage aus einem frueheren Modell werden NICHT geloescht und NICHT umgerechnet - sie bleiben unveraendert stehen, weil sie echt aufgezeichnet sind, aber gedaempft mit Sternchen und einer Fussnote, die erklaert warum sie nicht vergleichbar sind. Der Trends-Chart bekommt denselben Hinweis, sobald im gewaehlten Zeitraum Punkte aus beiden Modellen liegen (gemessen: 405 von 420 Punkten). Die Reihe baut sich taeglich neu auf. Merksatz fuer kuenftige Aenderungen an der Score-Formel: der Bump ist Pflicht und gehoert in DENSELBEN Commit wie die Formel-Aenderung.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-381 - Vollstaendiger Score-Audit. Geprueft in BEIDEN Score-Modi: 395 Indikatoren auf Additivitaet der Rechenkette, 256 Kombinationen aus geoeffnetem und gemessenem Asset auf Drift, der _symId-Stempel nach Boot / save / applySnap, jeder Indikator-Bias gegen seine eigenen Rohdaten, jedes Karten-Badge gegen rubScore und Schwelle, alle 16 Assets in Sidebar / Asset-Kopf / Score-Fenster gegen den Sollwert im echten DOM, 35 Paar-Scores und alle 14 Tabs. Ergebnis: 0 Abweichungen, ausser einem Befund - der ist behoben. Zwei Funktionen im Feed-Lauf haben sich gegenseitig ueberschrieben: adoptFeedHistory schreibt die Werte-Reihe aus der Feed-Historie, die weiter den ERSTDRUCK traegt, applyRevisionToValHist spielt danach die Revision ein - beim naechsten Lauf sah die eingespielte Revision wie eine Abweichung aus und wurde zurueckgeschrieben, dann wieder eingespielt, und das bei JEDEM Lauf (gemessen 6 Indikatoren pro Durchlauf). Derselbe Kampf zwischen adoptFeedHistory und trackIndValues, wenn die history-Reihe des Feeds HINTER dem aktuellen Release zurueckliegt - bei JPY GDP endet die Reihe am 07.06., das Release steht auf dem 16.08. Folge: applyIndDataFeed meldete dauerhaft geaendert und loeste stuendlich einen ueberfluessigen Save samt Cloud-Push aus. Jetzt wird die Revision schon VOR dem Vergleich angewendet (eine gemeinsame Regel reviseValHistArr fuer beide Aufrufer statt zwei Implementierungen), und eine lokal neuere Reihe wird nicht mehr abgeschnitten. Alle vier Feeds sind damit idempotent. Die Scores selbst aendern sich dadurch NICHT - vorher und nachher ueber fuenf aufeinanderfolgende Feed-Laeufe gemessen, identisch.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-380</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-381</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -6522,16 +6522,24 @@ function trackIndValues(ind,ccy,dateKey,actualRaw,prevRaw){
 // revidiert gemeldete Ursprungswert steht - aeltere Punkte bleiben
 // unberuehrt (fuer die liefert der Feed keine Revisionsinformation, und
 // raten waere schlechter als nichts zu tun).
-function applyRevisionToValHist(ind,f){
+// Revision auf eine Werte-Reihe anwenden: der VORLETZTE Punkt traegt den
+// Erstdruck (`revisedFrom`), ersetzt wird er durch den revidierten Stand
+// (`previous`). Gibt true zurueck, wenn sich dabei wirklich etwas geaendert
+// hat. EINE gemeinsame Regel fuer beide Aufrufer (adoptFeedHistory und
+// applyRevisionToValHist) - zwei getrennte Implementierungen waeren genau
+// die Dual-Source-Falle, die dieses Projekt schon mehrfach getroffen hat.
+function reviseValHistArr(h,f){
+  if(!Array.isArray(h)||h.length<2)return false;
   if(!f||f.revisedFrom==null||f.revisedFrom==='')return false;
-  const h=ind&&Array.isArray(ind.valHist)?ind.valHist:null;
-  if(!h||h.length<2)return false;
   const orig=parseNumLike(f.revisedFrom),rev=parseNumLike(f.previous);
   if(orig==null||rev==null||orig===rev)return false;
   const i=h.length-2;
   if(Math.abs(h[i]-orig)>1e-9)return false;
   h[i]=rev;
   return true;
+}
+function applyRevisionToValHist(ind,f){
+  return reviseValHistArr(ind&&Array.isArray(ind.valHist)?ind.valHist:null,f);
 }
 function adoptFeedHistory(ind,f){
   if(!f||!Array.isArray(f.history)||!f.history.length)return false;
@@ -6542,6 +6550,24 @@ function adoptFeedHistory(ind,f){
   const nh=pairs.slice(-4).map(p=>p[1]);
   const ndates=pairs.slice(-4).map(p=>p[0]);
   const nd=ndates[ndates.length-1];
+  // ⚠ Die Feed-Reihe traegt weiter den ERSTDRUCK. Eine bereits eingespielte
+  // Revision saehe hier deshalb wie eine Abweichung aus - dann schriebe
+  // adoptFeedHistory den unrevidierten Wert zurueck, applyRevisionToValHist
+  // korrigierte ihn direkt danach wieder, und das bei JEDEM Lauf. Gemessen
+  // (2026-08-16): 6 Indikatoren pro Durchlauf, dadurch meldete
+  // applyIndDataFeed() dauerhaft "geaendert" und loeste stuendlich einen
+  // ueberfluessigen Save + Cloud-Push aus. Die Revision wird deshalb schon
+  // VOR dem Vergleich auf die neue Reihe angewendet - danach ist der Zustand
+  // wirklich stabil und applyRevisionToValHist findet nichts mehr zu tun.
+  reviseValHistArr(nh,f);
+  // ⚠ Die history-Reihe des Feeds kann HINTER dem aktuellen Release
+  // zurueckliegen: kommt ein Wert von einer Trading-Economics-Laenderseite,
+  // setzt der Workflow date/actual, verlaengert die Reihe aber nicht.
+  // trackIndValues() haengt diesen neueren Punkt lokal an - adoptFeedHistory
+  // darf ihn dann NICHT wieder abschneiden, sonst schreiben sich beide bei
+  // jedem Lauf gegenseitig um. Gemessen 2026-08-16 an JPY GDP Growth QoQ:
+  // Feed-Reihe endet am 07.06., das Release steht auf dem 16.08.
+  if(ind.valDate&&nd&&ind.valDate>nd)return false;
   if(ind.valDate===nd&&JSON.stringify(ind.valHist)===JSON.stringify(nh)&&JSON.stringify(ind.valDates||null)===JSON.stringify(ndates))return false;
   ind.valHist=nh;
   ind.valDates=ndates;
