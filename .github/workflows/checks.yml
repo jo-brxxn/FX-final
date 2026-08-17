@@ -1,0 +1,55 @@
+name: Waechter
+
+# Laeuft bei jedem Push und jedem Pull Request auf index.html, die Workflows
+# oder die Waechter selbst. Die stuendlichen Daten-Commits (nur *.json)
+# loesen ihn NICHT aus - sie aendern keinen Code.
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'check/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'check/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  waechter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # die Regel-Pruefung braucht den Vorher-Stand
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: PyYAML bereitstellen
+        run: python3 -m pip install --quiet pyyaml
+
+      - name: Statische Waechter
+        run: node check/all.js --static --base "${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}"
+
+      - name: Chromium fuer die Browser-Waechter
+        run: |
+          npm install --no-save playwright@latest
+          npx playwright install --with-deps chromium
+
+      - name: Testserver starten
+        run: |
+          nohup python3 -m http.server 8935 --directory . >/dev/null 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://127.0.0.1:8935/index.html; then echo "Server steht."; exit 0; fi
+            sleep 1
+          done
+          echo "Server kam nicht hoch"; exit 1
+
+      - name: Alle Waechter
+        env:
+          PW_PATH: playwright
+        run: node check/all.js --base "${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}"

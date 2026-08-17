@@ -6469,3 +6469,46 @@ laufen lassen.**
 1e-6 meldet dutzende Phantom-Fehler, richtig ist ~0,011 je Stufe. Und der
 Score steht am ENDE der Zeile: Namen wie "S&P 500" oder "GER 100" tragen
 selbst Ziffern, ein Regex von vorn liest "500" als Score.
+
+## ⚠ WAECHTER: `node check/all.js` vor JEDEM Push (Stand 2026-08-16)
+
+Alle Pruefskripte liegen ab sofort **im Repo** unter `check/`, nicht mehr im
+Sitzungs-Scratchpad. Siehe `check/README.md` fuer die vollstaendige Liste.
+
+```bash
+python3 -m http.server 8935 --directory . &    # einmal pro Sitzung
+node check/all.js                               # ~2,5 Minuten, 9 Pruefungen
+node check/all.js --static                      # ~1 Sekunde, ohne Browser
+```
+
+Dieselben Pruefungen laufen zusaetzlich bei jedem Push automatisch
+(`.github/workflows/checks.yml`), damit sie nicht davon abhaengen, dass
+jemand daran denkt. Der Workflow reagiert bewusst nur auf `index.html`,
+`check/**` und `.github/workflows/**` - die stuendlichen Daten-Commits
+(reine `*.json`) loesen ihn nicht aus.
+
+**Der Anlass:** die Fehler dieser Session waren nicht zufaellig. Jeder war
+eine Regel, die NUR als Prosa in dieser Datei stand - `SCORE_MODEL_VERSION`
+war hier sogar mit ⚠ markiert und wurde trotzdem vergessen. Prosa-Regeln
+werden vergessen, ausfuehrbare nicht. `check/rules.js` uebersetzt vier davon
+in ein Abbruch-Kriterium:
+
+1. `index.html` geaendert → VERSION-CHECK-Nummer muss steigen
+2. Score-Formel angefasst → `SCORE_MODEL_VERSION` muss steigen
+3. Formulierungs-Logik angefasst → `SUMMARY_ENGINE_VERSION` muss steigen
+4. Workflow erzeugt eine `.json` → sie muss in einem `git add` desselben
+   Workflows stehen (ausser er loescht sie selbst wieder)
+
+**Merksatz:** eine neue Konvention gehoert ab jetzt als PRUEFUNG nach
+`check/`, nicht als Absatz in diese Datei. Ein Absatz erinnert niemanden;
+ein roter Lauf schon. Und: eine neue Score-Groesse ohne zugehoerige Pruefung
+ist ein blinder Fleck - `check/score.js` entsprechend erweitern.
+
+**⚠ Falle, die beim Bau des Waechters selbst zugeschlagen hat:** `execSync`
+hat ein `maxBuffer` von 1 MB. `git show HEAD:index.html` liefert ~1,5 MB -
+der Aufruf schlug fehl, der `catch` lieferte einen leeren String, und JEDE
+Regel, die den Vorher-Stand braucht, wurde STILL uebersprungen. Der erste
+Testlauf meldete "ok" auf einem echten Verstoss. Seither wirft der
+git-Helfer statt zu schlucken. Bei jedem neuen Pruefskript daran denken:
+ein Waechter, der bei einem eigenen Fehler "gruen" meldet, ist schlimmer
+als keiner.
