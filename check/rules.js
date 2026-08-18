@@ -74,7 +74,14 @@ const SCORE_FN = [
   'function researchBias', 'function indSurpriseMag', 'function indDecayWeight', 'function indMarketWeight',
   'function symTrackedCount', 'function indIsStale', 'function symCmpFactor',
   'CORE_PAIRS=', 'SCORE_ZERO=', 'BOND_HALF_PT=', 'NO_TREND_RUBS=', 'IND_STALE_CYCLES=',
-  'SCORE_NORM_MIN=', 'SCORE_NORM_MAX=', 'DECAY_HALFLIFE_CYCLES=', 'BOND_DEAD_BAND='
+  'SCORE_NORM_MIN=', 'SCORE_NORM_MAX=', 'DECAY_HALFLIFE_CYCLES=', 'BOND_DEAD_BAND=',
+  // Ergaenzt 2026-08-16 beim Einbau der AAII-Umfrage: ein neuer Indikator in
+  // SENT_MAP oder eine neue/geaenderte Schwelle in sentEval veraendert den
+  // Score genauso wie eine Formel-Aenderung - die aufgezeichnete Historie ist
+  // danach nicht mehr mit der neuen Rechnung vergleichbar. Der Waechter
+  // waechst hier bewusst mit: JEDE neue Score-Quelle gehoert in diese Liste.
+  'const SENT_MAP=', 'function sentEval', 'COT_NET_HALF=', 'SENT_HALF=',
+  'function applyCotDataFeed', 'function applySentimentFeed', 'function recomputeRiskCorr'
 ];
 const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s));
 if (formelBeruehrt.length) {
@@ -134,6 +141,43 @@ wfDateien.forEach(f => {
       fail('Workflow-Ausgabe', `${p} erzeugt "${name}", aber die Datei steht in keinem "git add" dieses Workflows.`);
   });
 });
+
+// ── Regel 5: neue Score-Groesse -> es MUSS eine Pruefung dazukommen ──
+// Der Waechter soll mit jedem Update mitwachsen. Wer eine neue Funktion
+// einfuehrt, die den Score berechnet, gewichtet oder klassifiziert, fuegt im
+// selben Commit eine Pruefung dafuer hinzu - sonst ist sie ein blinder Fleck.
+// Bewusst grob: lieber einmal zu oft nachfragen als eine Groesse ungeprueft
+// lassen. Wer wirklich nichts zu pruefen hat, erweitert check/score.js um
+// eine Zeile, die genau das festhaelt.
+const neueScoreFn = [...diffText.matchAll(/^\+.*\bfunction\s+(\w*(?:Score|Bias|Weight|Norm|Strength)\w*)\s*\(/gm)]
+  .map(m => m[1]);
+if (neueScoreFn.length) {
+  const checkBeruehrt = geaendert.some(f => f.startsWith('check/'));
+  if (!checkBeruehrt)
+    fail('Neue Score-Groesse ohne Pruefung',
+      `Neu eingefuehrt: ${[...new Set(neueScoreFn)].join(', ')}. ` +
+      `In diesem Commit wurde aber keine Datei unter check/ angefasst. ` +
+      `Eine neue Score-Groesse ohne Pruefung ist ein blinder Fleck - check/score.js erweitern.`);
+}
+
+// ── Regel 6: neuer persistierter Zustand -> alle vier Ecken anbinden ──
+// Die meistwiederholte Fehlerklasse dieses Projekts (tabStacks, scoreHist,
+// setupCcyFilter, calHighOnly, cmpCols, pinEnabled ...): ein Feld landet nur
+// im localStorage und kommt auf keinem anderen Geraet an. Pflicht sind:
+// Save-Funktion, cloudPush, cloudPull (mit prefPending-Schutz), Export/Import.
+const LOKAL_ERLAUBT = /(cloud|updated|seen|pending|cache|migrat|_v\d|intro|help|verbanner|score_mode|lastfetch)/i;
+const altHtmlFuerKeys = indexGeaendert ? git(`show ${BASE}:index.html`) : '';
+const neueKeys = [...new Set([...diffText.matchAll(/^\+.*localStorage\.setItem\(\s*['"](fxpro_[\w]+)['"]/gm)]
+  .map(m => m[1]))].filter(k => !LOKAL_ERLAUBT.test(k) && !altHtmlFuerKeys.includes(k));
+if (neueKeys.length) {
+  const fehlt = ['cloudPush', 'cloudPull'].filter(fn => !diffText.includes(fn));
+  if (fehlt.length)
+    fail('Neuer persistierter Zustand ohne Sync',
+      `Neue Schluessel: ${neueKeys.join(', ')}. Im selben Commit fehlt: ${fehlt.join(' und ')}. ` +
+      `Ohne Anbindung an cloudPush UND cloudPull (dort mit prefPending-Schutz) kommt der Wert ` +
+      `auf keinem zweiten Geraet an - genau der Fehler, der in diesem Projekt am haeufigsten passiert ist. ` +
+      `Gehoert der Schluessel bewusst nur auf dieses Geraet, den Namen in LOKAL_ERLAUBT aufnehmen.`);
+}
 
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');

@@ -6512,3 +6512,69 @@ Testlauf meldete "ok" auf einem echten Verstoss. Seither wirft der
 git-Helfer statt zu schlucken. Bei jedem neuen Pruefskript daran denken:
 ein Waechter, der bei einem eigenen Fehler "gruen" meldet, ist schlimmer
 als keiner.
+
+### AAII Investor Sentiment Survey (Nutzer-Wunsch 2026-08-16)
+
+Woechentliche Umfrage der **American Association of Individual Investors**
+(Non-Profit, Chicago, gegruendet 1978; Umfrage laeuft ununterbrochen seit
+**Juli 1987** - eine der laengsten Stimmungsreihen der Finanzwelt). Befragt
+werden die eigenen MITGLIEDER, also US-**Privat**anleger, per freiwilliger
+Online-Abstimmung auf aaii.com. Genau EINE Frage: Richtung des US-Aktien-
+marktes auf Sicht von sechs Monaten - bullish / neutral / bearish.
+Umfragewoche Donnerstag bis Mittwoch, Veroeffentlichung donnerstags.
+
+**Gemessen wird der SPREAD** (bullish minus bearish in Prozentpunkten): die
+Einzelanteile schwanken stark und "neutral" verzerrt sie. Contrarian gelesen,
+Schwellen **+/-20 Punkte**. Bewusst NICHT symmetrisch um null - der
+langjaehrige Mittelwert liegt bei rund **+6,5 Punkten** (37,5% bullish gegen
+31,0% bearish), die Umfrage ist von Haus aus leicht optimistisch verzerrt.
+
+**Scort NUR S&P 500 und Nasdaq**, halbes Gewicht, nur an den Extremen - wie
+jedes andere Sentiment-Mass hier. Die Umfrage fragt ausdruecklich nach dem
+AKTIENmarkt; daraus ein allgemeines Risikoappetit-Signal fuer FX/Gold/Krypto
+abzuleiten waere eine Interpretation, keine Messung (Grundsatz "nie
+schaetzen"). Doppelzaehlung mit VIX ist vertretbar: VIX ist der GEZAHLTE
+Optionspreis am Terminmarkt, AAII die BEFRAGTE Erwartung von Privatanlegern -
+zwei verschiedene Dinge, beide mit halbem Gewicht.
+
+**Der Workflow-Schritt schreibt nur bei bestandener Summenprobe.** Die drei
+Anteile MUESSEN 100 ergeben (Toleranz 98,5-101,5) - das ist der eigentliche
+Schutz gegen einen falschen Parse, nicht die Mustertreue. Ohne echtes
+Wochendatum von der Seite wird NICHTS geschrieben (kein geratenes Datum, sonst
+haengt der Verlauf an einem erfundenen Tag). Bei Nicht-Treffer werden die
+Kandidaten und ein Textfenster um "Bullish" geloggt.
+
+**⚠ Der Node-Code steht als HEREDOC-Datei, nicht in `node -e '...'`** - damit
+ist die dokumentierte Apostroph-Falle strukturell ausgeschlossen. Bei neuen
+Workflow-Schritten mit laengerem JS diese Form bevorzugen.
+
+Gegen synthetische Seiten getestet: gueltige Seite wird geschrieben, Summe
+ungleich 100 wird verworfen, fehlendes Datum schreibt nichts. Im Browser
+verifiziert: Indikator erscheint auf SP500/NAS und NICHT auf FX, Schwellen
+exakt bei +/-20 (19,9 loest nicht aus), Score-Wirkung SP500 -2,6 auf -2,2 bei
+simulierter Kapitulation, Leerzustand nennt ehrlich, dass noch nichts da ist.
+
+### ⚠ Der Waechter waechst mit jedem Update mit (2026-08-16)
+
+Zwei neue Regeln in `check/rules.js`, die genau die beiden am haeufigsten
+wiederholten Fehlerklassen dieses Projekts mechanisch abfangen:
+
+- **Neue Score-Groesse ohne Pruefung**: fuehrt ein Commit eine Funktion mit
+  `Score`/`Bias`/`Weight`/`Norm`/`Strength` im Namen ein, ohne dass eine Datei
+  unter `check/` angefasst wurde, bricht der Lauf ab. Bewusst grob - lieber
+  einmal zu oft nachfragen als eine Groesse ungeprueft lassen.
+- **Neuer persistierter Zustand ohne Sync**: taucht ein neuer
+  `fxpro_*`-localStorage-Schluessel auf, ohne dass derselbe Commit `cloudPush`
+  UND `cloudPull` beruehrt, bricht der Lauf ab. Bewusst lokale Schluessel
+  kommen in die `LOKAL_ERLAUBT`-Liste.
+
+**Und die Liste der score-relevanten Stellen waechst selbst mit:** beim Einbau
+von AAII kamen `const SENT_MAP=`, `function sentEval`, `applyCotDataFeed`,
+`applySentimentFeed` und `recomputeRiskCorr` dazu. **Merksatz: JEDE neue
+Score-Quelle gehoert in diese Liste** - sonst merkt der Waechter beim naechsten
+Mal nicht, dass `SCORE_MODEL_VERSION` haette steigen muessen.
+
+Genau das ist hier passiert: AAII ist ein neuer Score-Beitrag fuer SP500/NAS,
+also wurde `SCORE_MODEL_VERSION` auf **3** gehoben - aufgezeichnete Tage davor
+sind mit der neuen Zusammensetzung nicht vergleichbar und werden in History
+und Trends entsprechend markiert.

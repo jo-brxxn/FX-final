@@ -2716,6 +2716,77 @@ jobs:
       # Tages-Momentaufnahme (Yahoo liefert kein historisches Volumen) - die
       # Serie waechst wie bei allen anderen Feeds ab jetzt taeglich um einen
       # Punkt, kein Backfill moeglich.
+      # ── AAII INVESTOR SENTIMENT SURVEY ────────────────────────────────
+      # Woechentliche Umfrage der American Association of Individual Investors
+      # (Non-Profit, Chicago; laeuft seit Juli 1987). Befragt werden die
+      # eigenen Mitglieder - US-Privatanleger - per Online-Abstimmung auf
+      # aaii.com. Eine Frage, drei Antworten: bullish / neutral / bearish fuer
+      # den US-Aktienmarkt auf Sicht von sechs Monaten. Veroeffentlichung
+      # donnerstags fuer die Woche bis Mittwoch.
+      #
+      # ⚠ Der Node-Code steht bewusst in einer HEREDOC-Datei statt in
+      # node -e "..." - in einem einfach-quotierten Shell-String beendet ein
+      # einzelner Apostroph (auch im Kommentar) den String und der Schritt
+      # stirbt mit einem Syntaxfehler. Mit der Heredoc-Form kann das nicht
+      # passieren.
+      - name: Fetch AAII investor sentiment survey -> sentiment_data.json
+        continue-on-error: true
+        run: |
+          curl -sS --http1.1 --compressed --connect-timeout 15 --max-time 45 \
+            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36" \
+            -w "[debug] aaii: http=%{http_code} size=%{size_download}\n" \
+            -o aaii_raw.html "https://www.aaii.com/sentimentsurvey" || echo "[debug] aaii: curl exit $?"
+          cat > aaii_parse.js <<'AAIIJS'
+          const fs=require("fs");
+          let raw="";try{raw=fs.readFileSync("aaii_raw.html","utf8");}catch(e){console.log("[debug] aaii: keine Datei");process.exit(0);}
+          if(raw.length<2000){console.log("[debug] aaii: Antwort zu klein ("+raw.length+" Bytes) - vermutlich geblockt");process.exit(0);}
+          const txt=raw.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/\s+/g," ");
+          const num=x=>{const v=parseFloat(String(x).replace(",","."));return isFinite(v)?v:null;};
+          // Mehrere Muster, weil die Seite ihr Layout schon geaendert hat.
+          // Entschieden wird NICHT nach dem huebschesten Treffer, sondern nach
+          // der Summenprobe unten - die drei Anteile MUESSEN 100 ergeben.
+          const kand=[];
+          const holen=(re,quelle)=>{const m=txt.match(re);if(m)kand.push({bull:num(m[1]),neutral:num(m[2]),bear:num(m[3]),quelle});};
+          holen(/Bullish[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%[^0-9%]{0,60}Neutral[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%[^0-9%]{0,60}Bearish[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%/i,"text");
+          const j=raw.match(/"?bullish"?\s*[:=]\s*"?([0-9.]+)"?[\s\S]{0,200}?"?neutral"?\s*[:=]\s*"?([0-9.]+)"?[\s\S]{0,200}?"?bearish"?\s*[:=]\s*"?([0-9.]+)"?/i);
+          if(j){let b=num(j[1]),n=num(j[2]),r=num(j[3]);
+            if(b!=null&&b<=1&&n!=null&&n<=1&&r!=null&&r<=1){b*=100;n*=100;r*=100;}
+            kand.push({bull:b,neutral:n,bear:r,quelle:"json"});}
+          const gut=kand.filter(k=>{
+            if(k.bull==null||k.neutral==null||k.bear==null)return false;
+            if([k.bull,k.neutral,k.bear].some(v=>v<0||v>100))return false;
+            const sum=k.bull+k.neutral+k.bear;
+            return sum>98.5&&sum<101.5;   // Summenprobe: der eigentliche Schutz
+          });
+          if(!gut.length){
+            console.log("[debug] aaii: kein gueltiger Treffer. Kandidaten: "+JSON.stringify(kand));
+            const i=txt.toLowerCase().indexOf("bullish");
+            if(i>=0)console.log("[debug] aaii: Fenster um Bullish: "+txt.slice(Math.max(0,i-120),i+320));
+            process.exit(0);
+          }
+          const w=gut[0];
+          // Datum der Umfragewoche - NIE raten: ohne echtes Datum wird nichts
+          // geschrieben, sonst haengt der Verlauf an einem erfundenen Tag.
+          let datum=null;
+          const dm=txt.match(/(?:week ending|for the week ending|as of)[^A-Za-z0-9]{0,8}([A-Za-z]{3,9})\s+([0-9]{1,2}),?\s+([0-9]{4})/i);
+          const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+          if(dm){const mm=MON[dm[1].slice(0,3).toLowerCase()];
+            if(mm)datum=dm[3]+"-"+String(mm).padStart(2,"0")+"-"+String(+dm[2]).padStart(2,"0");}
+          if(!datum){console.log("[debug] aaii: kein Wochendatum auf der Seite gefunden - nichts geschrieben (kein geratenes Datum)");process.exit(0);}
+          let out={};
+          try{const d=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+          const alt=(out.aaii&&Array.isArray(out.aaii.history))?out.aaii.history:[];
+          const map={};alt.forEach(e=>{if(Array.isArray(e)&&e.length>=4)map[e[0]]=e;});
+          map[datum]=[datum,+w.bull.toFixed(1),+w.neutral.toFixed(1),+w.bear.toFixed(1)];
+          const hist=Object.keys(map).sort().map(k=>map[k]).slice(-520);   // 10 Jahre Wochen
+          out.aaii={date:datum,bull:+w.bull.toFixed(1),neutral:+w.neutral.toFixed(1),bear:+w.bear.toFixed(1),
+            value:+(w.bull-w.bear).toFixed(1),source:"https://www.aaii.com/sentimentsurvey",history:hist};
+          fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+          console.log("[debug] aaii: "+datum+" bull "+w.bull+" / neutral "+w.neutral+" / bear "+w.bear+" (Muster "+w.quelle+"), Spread "+out.aaii.value+"pp, Historie "+hist.length+" Wochen");
+          AAIIJS
+          node aaii_parse.js
+          rm -f aaii_raw.html aaii_parse.js
+
       - name: Fetch per-asset put/call via ETF option chains -> sentiment_data.json
         continue-on-error: true
         run: |

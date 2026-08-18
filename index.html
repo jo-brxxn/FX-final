@@ -2916,12 +2916,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-381 - Vollstaendiger Score-Audit. Geprueft in BEIDEN Score-Modi: 395 Indikatoren auf Additivitaet der Rechenkette, 256 Kombinationen aus geoeffnetem und gemessenem Asset auf Drift, der _symId-Stempel nach Boot / save / applySnap, jeder Indikator-Bias gegen seine eigenen Rohdaten, jedes Karten-Badge gegen rubScore und Schwelle, alle 16 Assets in Sidebar / Asset-Kopf / Score-Fenster gegen den Sollwert im echten DOM, 35 Paar-Scores und alle 14 Tabs. Ergebnis: 0 Abweichungen, ausser einem Befund - der ist behoben. Zwei Funktionen im Feed-Lauf haben sich gegenseitig ueberschrieben: adoptFeedHistory schreibt die Werte-Reihe aus der Feed-Historie, die weiter den ERSTDRUCK traegt, applyRevisionToValHist spielt danach die Revision ein - beim naechsten Lauf sah die eingespielte Revision wie eine Abweichung aus und wurde zurueckgeschrieben, dann wieder eingespielt, und das bei JEDEM Lauf (gemessen 6 Indikatoren pro Durchlauf). Derselbe Kampf zwischen adoptFeedHistory und trackIndValues, wenn die history-Reihe des Feeds HINTER dem aktuellen Release zurueckliegt - bei JPY GDP endet die Reihe am 07.06., das Release steht auf dem 16.08. Folge: applyIndDataFeed meldete dauerhaft geaendert und loeste stuendlich einen ueberfluessigen Save samt Cloud-Push aus. Jetzt wird die Revision schon VOR dem Vergleich angewendet (eine gemeinsame Regel reviseValHistArr fuer beide Aufrufer statt zwei Implementierungen), und eine lokal neuere Reihe wird nicht mehr abgeschnitten. Alle vier Feeds sind damit idempotent. Die Scores selbst aendern sich dadurch NICHT - vorher und nachher ueber fuenf aufeinanderfolgende Feed-Laeufe gemessen, identisch.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-382 - AAII Investor Sentiment Survey eingebaut plus zwei neue Waechter-Regeln. Die AAII-Umfrage ist die laengste ununterbrochene Stimmungsreihe der Finanzwelt (seit Juli 1987): die American Association of Individual Investors, ein Non-Profit aus Chicago, fragt woechentlich ihre eigenen Mitglieder - US-PRIVATanleger - per Online-Abstimmung genau eine Frage: in welche Richtung geht der Aktienmarkt in den naechsten sechs Monaten? Drei Antworten, bullish neutral bearish, Ergebnis donnerstags fuer die Woche bis Mittwoch. Neuer Unterreiter im Sentiment-Tab mit der 100-Prozent-Aufteilung, dem Spread bullish minus bearish und dem Verlauf inklusive 8-Wochen-Glaettung. Gelesen wird contrarian: Spread ab plus 20 Punkten heisst Sorglosigkeit (bearish), ab minus 20 Kapitulation (bullish) - nicht symmetrisch um null, weil der langjaehrige Mittelwert bei plus 6,5 liegt. Scort mit halbem Gewicht NUR S&P 500 und Nasdaq: die Umfrage fragt ausdruecklich nach dem Aktienmarkt, sie auf FX, Gold oder Krypto zu uebertragen waere eine Interpretation und keine Messung. Der Workflow-Schritt schreibt nur bei bestandener Summenprobe (die drei Anteile muessen 100 ergeben) und nur mit echtem Wochendatum von der Seite - lieber kein Eintrag als ein geratener. Dazu waechst der Waechter mit: eine neue Score-Groesse ohne Pruefung unter check/ bricht den Lauf ab, und ein neuer persistierter Schluessel ohne Anbindung an cloudPush und cloudPull ebenfalls - die beiden am haeufigsten wiederholten Fehlerklassen dieses Projekts sind damit mechanisch abgefangen.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-381</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-382</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -4075,7 +4075,8 @@ const SENT_SOURCE={
   cryptoFng:'https://alternative.me/crypto/fear-and-greed-index/',
   stockFng:'https://www.cnn.com/markets/fear-and-greed',
   putCall:'https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics',
-  vix:'https://www.tradingview.com/symbols/CBOE-VIX/'
+  vix:'https://www.tradingview.com/symbols/CBOE-VIX/',
+  aaii:'https://www.aaii.com/sentimentsurvey'
 };
 // Welches Symbol bekommt welche Sentiment-Indikatoren (Basisname -> Feed-Key).
 // Nur Krypto (Fear&Greed) und Aktienindizes (Put/Call + Fear&Greed) - fuer
@@ -4090,8 +4091,17 @@ const SENT_SOURCE={
 const SENT_MAP={
   BTC:[['Crypto Fear & Greed','cryptoFng']],
   ETH:[['Crypto Fear & Greed','cryptoFng']],
-  SP500:[['VIX (Volatility)','vix']],
-  NAS:[['VIX (Volatility)','vix']],
+  // AAII misst die Erwartung US-amerikanischer PRIVATanleger fuer den
+  // AKTIENMARKT auf Sicht von sechs Monaten - deshalb speist es nur die
+  // Aktienindizes, genau wie VIX. Bewusst NICHT auf FX/Gold/Krypto
+  // uebertragen: die Umfrage fragt ausschliesslich nach dem Aktienmarkt,
+  // ein Risikoappetit-Signal daraus abzuleiten waere eine Interpretation,
+  // keine Messung (Projekt-Grundsatz "nie schaetzen"). Doppelzaehlung mit
+  // VIX ist vertretbar, weil beide voellig verschiedene Dinge messen:
+  // VIX ist der GEZAHLTE Optionspreis am Terminmarkt, AAII die BEFRAGTE
+  // Erwartung von Privatanlegern - halbes Gewicht haben ohnehin beide.
+  SP500:[['VIX (Volatility)','vix'],['AAII Bull-Bear Spread','aaii']],
+  NAS:[['VIX (Volatility)','vix'],['AAII Bull-Bear Spread','aaii']],
 };
 // Alle Sentiment-Indikator-Basisnamen (fuers Seeding + Halbgewicht).
 const SENT_IND_NAMES=[...new Set(Object.values(SENT_MAP).flat().map(p=>p[0]))];
@@ -5226,7 +5236,11 @@ function symScoreCmp(sym){
 // deutlich verschoben (AUD -2,0 -> +0,4, GBP 5,2 -> 2,3, CHF 2,5 -> -0,1).
 // Alles, was VOR diesem Bump aufgezeichnet wurde, ist damit eine andere
 // Rechnung und darf nicht stillschweigend danebengestellt werden.
-const SCORE_MODEL_VERSION=2;
+// V3 (2026-08-16): die AAII-Umfrage kam als zusaetzlicher Score-Beitrag fuer
+// S&P 500 und Nasdaq dazu. Ein neuer Indikator veraendert die Zusammensetzung
+// genauso wie eine geaenderte Formel - aufgezeichnete Tage davor sind mit der
+// neuen Rechnung nicht vergleichbar.
+const SCORE_MODEL_VERSION=3;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -17826,6 +17840,22 @@ function sentEval(key,d){
     // Sorglosigkeit -> contrarian bearish (oft nahe Tops).
     return{bias:v>=28?'bull':v<=13?'bear':'neu',actual:v.toFixed(1),extreme:v>=28||v<=13};
   }
+  if(key==='aaii'){
+    // AAII-Umfrage: Anteil der befragten Privatanleger, die den US-Aktien-
+    // markt auf Sicht von sechs Monaten bullish bzw. bearish sehen. `value`
+    // ist die Differenz Bullish minus Bearish in Prozentpunkten ("Spread").
+    //
+    // Contrarian wie jedes andere Stimmungsmass hier: viel Optimismus heisst,
+    // dass die Kaufkraft schon investiert ist; viel Pessimismus, dass die
+    // Verkaeufer schon verkauft haben. Schwellen +/-20 Punkte - der
+    // langjaehrige Mittelwert der Umfrage liegt bei rund +6,5 Punkten
+    // (im Schnitt 37,5% bullish gegen 31,0% bearish), die Umfrage ist also
+    // von Haus aus leicht optimistisch verzerrt; +/-20 liegt somit deutlich
+    // ausserhalb des normalen Schwankungsbereichs und nicht symmetrisch um 0.
+    const vz=v>0?'+':'';
+    const lbl=v<=-20?' (capitulation)':v>=20?' (complacency)':'';
+    return{bias:v<=-20?'bull':v>=20?'bear':'neu',actual:vz+v.toFixed(1)+'pp'+lbl,extreme:v<=-20||v>=20};
+  }
   return null;
 }
 function fetchSentimentData(){
@@ -18130,6 +18160,18 @@ function sentReadBadge(ev){
 }
 // ── Info-Texte fuer die "i"-Buttons (ausfuehrlich, einfach verstaendlich) ──
 const SENT_INFO={
+  aaii:['AAII Investor Sentiment Survey',
+    `<p><b>What it is:</b> a weekly poll asking private investors one single question — <i>"In which direction do you feel the stock market will be in the next six months?"</i> — with exactly three possible answers: <b>bullish</b>, <b>neutral</b>, <b>bearish</b>. The three shares always add up to 100%.</p>
+     <p><b>Who runs it:</b> the <b>American Association of Individual Investors</b> (AAII), a non-profit investor-education organisation founded in 1978 and based in Chicago. It sells no products and manages no money — the survey is a member service, not a sell-side forecast. It has run continuously since <b>July 1987</b>, which makes it one of the longest unbroken sentiment series in finance.</p>
+     <p><b>Who answers, and where:</b> AAII's own members — U.S. <b>private</b> investors, not banks, funds or analysts. They vote voluntarily in an online poll on aaii.com; the week runs Thursday to Wednesday and the result is published on <b>Thursday</b>. Two things follow from that design: participation is <b>self-selected</b> (whoever feels like voting, votes), and the number of responses varies from week to week. So single weeks are noisy — the smoothed line in the chart is the more reliable read.</p>
+     <p><b>Why it matters:</b> it is the classic gauge of the <b>retail mood in U.S. equities</b>, and it is read <b>contrarian</b>. The logic is simple: if almost everyone is already bullish, most of them have already bought — there is little buying power left, and disappointments hit a market that is fully invested. If almost everyone is bearish, the selling has largely happened. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
+     <p><b>What is measured here:</b> the <b>spread</b> = bullish % minus bearish %, in percentage points. The individual shares jump around a lot and "neutral" distorts them; the spread is the standard summary. The long-run average is about <b>+6.5pp</b> (roughly 37.5% bullish against 31.0% bearish) — the survey leans mildly optimistic by construction, which is why the thresholds are not symmetric around zero:</p>
+     <ul><li><b style="color:${'#3b82f6'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#e35d5d'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
+     <li>In between — normal range, no signal.</li></ul>
+     <p><b>Which assets it affects here:</b> only <b>S&amp;P 500</b> and <b>Nasdaq</b>, with half weight, and only at the extremes — the same rule every other sentiment gauge in this app follows. The survey asks explicitly about the <b>stock market</b>, so that is where it is applied.</p>
+     <p><b>Why not FX, gold or crypto:</b> it would be tempting to treat extreme equity pessimism as a general risk-off signal and credit the dollar, the yen, the franc or gold for it. That step is an <b>interpretation, not a measurement</b> — the respondents were never asked about currencies. This app does not turn one market's survey into another market's score. Read it as background for the general risk climate, but it does not move any FX, metals or crypto score.</p>
+     <p><b>How to read the chart:</b> the thin grey line is the raw weekly spread, the thick line is the ${'8'}-week average that filters the weekly noise. The shaded bands and dashed lines mark the two extreme zones. Hover any point to see the full bullish/neutral/bearish split for that week. Since the survey publishes once a week, a one-month window would show only four points — the default range is therefore one year.</p>`],
   retail:['Retail Sentiment (Crowd Positioning)',
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
@@ -18173,6 +18215,10 @@ let sentSub='retail',sentSym='',pcAsset='';
 let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
+// AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
+// vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).
+let aaiiRange=12,aaiiCustomFrom='',aaiiCustomTo='';
+function setAaiiRange(r){aaiiRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){aaiiCustomFrom='';aaiiCustomTo='';}renderSentiment();}
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
 function setPcAsset(v){pcAsset=v||'';renderSentiment();}
@@ -18252,13 +18298,14 @@ function pcFilterBar(D){
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
   const D=SENTIMENT_DATA;
-  const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Net Options Flow'],['feargreed','😱 Fear & Greed']];
+  const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Net Options Flow'],['feargreed','😱 Fear & Greed'],['aaii','🗳️ AAII Survey']];
   const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${escH(l)}</button>`).join('')}</div>`;
   let body;
   if(!D)body=`<div class="cot-empty">Loading sentiment data… (written hourly by the GitHub workflow into sentiment_data.json).</div>`;
   else if(sentSub==='putcall')body=renderPutCallChart(D);
   else if(sentSub==='netflow')body=renderNetFlowChart(D);
   else if(sentSub==='feargreed')body=renderFearGreedCards(D);
+  else if(sentSub==='aaii')body=renderAaiiCard(D);
   else body=renderRetailBars(D);
   // Filter (Asset -> Titelzeile) und Zeitraum (-> in die Grafik) werden jetzt
   // von den einzelnen Renderern selbst platziert, keine separate Toolbar mehr.
@@ -18570,6 +18617,99 @@ function renderNetFlowChart(D){
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
+// ── AAII Investor Sentiment Survey ────────────────────────────────────────
+// Woechentliche Umfrage der American Association of Individual Investors
+// (Non-Profit, Chicago, seit 1978; Umfrage laeuft seit Juli 1987). Befragt
+// werden die eigenen MITGLIEDER - also US-Privatanleger, keine Profis - per
+// Online-Abstimmung auf aaii.com. Genau EINE Frage: in welche Richtung geht
+// der Aktienmarkt in den naechsten sechs Monaten? Drei Antworten: bullish,
+// neutral, bearish. Ergebnis erscheint donnerstags fuer die Woche bis
+// Mittwoch. Die Teilnahme ist freiwillig, die Zahl der Antworten schwankt.
+//
+// Ausgewertet wird der SPREAD (bullish minus bearish in Prozentpunkten), weil
+// die einzelnen Anteile stark schwanken und "neutral" die Summe verzerrt.
+// Contrarian gelesen - siehe sentEval('aaii') fuer die Schwellen.
+const AAII_SMOOTH_W=8; // Wochen fuer den geglaetteten Verlauf (Marktstandard)
+function aaiiSmooth(vals,w){
+  const out=[];
+  for(let i=0;i<vals.length;i++){
+    const von=Math.max(0,i-w+1),teil=vals.slice(von,i+1);
+    out.push(teil.reduce((a,b)=>a+b,0)/teil.length);
+  }
+  return out;
+}
+function renderAaiiCard(D){
+  const a=D&&D.aaii;
+  const quelle=`<a href="${SENT_SOURCE.aaii}" target="_blank" rel="noopener" style="color:var(--blue)">AAII ↗</a>`;
+  if(!a||a.bull==null){
+    return`<div class="cot-card"><div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}</div>
+      <div class="cot-empty">No AAII data yet. The weekly survey is fetched by the GitHub workflow into
+      sentiment_data.json; the series starts building as soon as the first reading arrives. Source: ${quelle}</div></div>`;
+  }
+  const bull=+a.bull,neu=+a.neutral,bear=+a.bear,spread=+a.value;
+  const ev=sentEval('aaii',a);
+  const hist=Array.isArray(a.history)?a.history.filter(e=>Array.isArray(e)&&e.length>=4):[];
+  const daten=filterDatesByRange(hist.map(e=>e[0]),aaiiRange,aaiiCustomFrom,aaiiCustomTo);
+  const drin=new Set(daten);
+  const reihe=hist.filter(e=>drin.has(e[0]));
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
+  // Aufteilung als ein 100%-Balken - die drei Anteile ergeben immer 100.
+  const bar=(()=>{
+    const seg=(w,c,t)=>w>0.5?`<div style="width:${w}%;background:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${t}</div>`:'';
+    return`<div style="display:flex;height:26px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd)">
+      ${seg(bull,BC.bull,bull.toFixed(1)+'%')}${seg(neu,'var(--t3)',neu.toFixed(1)+'%')}${seg(bear,BC.bear,bear.toFixed(1)+'%')}
+    </div><div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10.5px;margin-top:3px">
+      <span>Bullish</span><span>Neutral</span><span>Bearish</span></div>`;
+  })();
+  // Verlauf: roher Spread + geglaetteter Spread ueber AAII_SMOOTH_W Wochen.
+  const chart=(()=>{
+    if(reihe.length<2)return`<div style="color:var(--t3);font-size:12px;padding:8px 0">Not enough history in this range yet — the survey publishes once a week.</div>`;
+    const W=760,H=210,padL=34,padR=12,padT=44,padB=26;
+    const sp=reihe.map(e=>(+e[1])-(+e[3]));
+    const gl=aaiiSmooth(sp,AAII_SMOOTH_W);
+    const alle=sp.concat(gl,[-25,25]);
+    const lo=Math.min(...alle),hi=Math.max(...alle);
+    const x=i=>padL+(reihe.length<2?0:i*(W-padL-padR)/(reihe.length-1));
+    const y=v=>padT+(hi-v)*(H-padT-padB)/((hi-lo)||1);
+    const pl=(arr,col,sw,dash)=>`<polyline points="${arr.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="${sw}"${dash?` stroke-dasharray="${dash}"`:''} stroke-linejoin="round"/>`;
+    const zone=(von,bis,col)=>`<rect x="${padL}" y="${y(bis).toFixed(1)}" width="${W-padL-padR}" height="${Math.max(0,y(von)-y(bis)).toFixed(1)}" fill="${col}" opacity="0.07"/>`;
+    const ticks=pcXTickIdx(reihe.length,6);
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:210px">
+      ${zone(20,hi,BC.bear)}${zone(lo,-20,BC.bull)}
+      <line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+      <line x1="${padL}" y1="${y(20).toFixed(1)}" x2="${W-padR}" y2="${y(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
+      <line x1="${padL}" y1="${y(-20).toFixed(1)}" x2="${W-padR}" y2="${y(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
+      ${pl(sp,'var(--t3)',1.4)}${pl(gl,BC.neu,2.6)}
+      <text x="${padL}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="10">+20 complacency</text>
+      <text x="${padL}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="10">−20 capitulation</text>
+      ${ticks.map(i=>`<text x="${x(i).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="middle">${pcXLabel(reihe[i][0])}</text>`).join('')}
+    </svg>`;
+    // EIN Hover-Punkt pro Datum, der ALLE Linien auflistet (Projekt-Muster -
+    // sonst zeigt attachChartHovers bei mehreren Linien nur eine davon).
+    const pts=reihe.map((e,i)=>({fx:x(i)/W,fy:y(sp[i])/H,
+      tip:`<b>${pcXLabel(e[0])}</b><br>Bullish ${(+e[1]).toFixed(1)}% · Neutral ${(+e[2]).toFixed(1)}% · Bearish ${(+e[3]).toFixed(1)}%`
+        +`<br><span style="color:var(--t3)">Spread</span> ${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp`
+        +`<br><span style="color:var(--t3)">${AAII_SMOOTH_W}-week avg</span> ${(gl[i]>0?'+':'')+gl[i].toFixed(1)}pp`}));
+    const leg=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:var(--t3)"></span>Weekly spread</span>`
+      +`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.neu}"></span>${AAII_SMOOTH_W}-week average</span></div>`;
+    return leg+chartHoverWrap(svg,pts);
+  })();
+  const anzahl=a.responses!=null?` · ${a.responses} responses`:'';
+  const stand=a.date?`week ending ${escH(a.date)}`:'';
+  return`<div class="cot-card">
+    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${stand}${anzahl}</span></div>
+    <div style="padding:12px 14px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <div style="flex:2;min-width:260px">${bar}</div>
+        <div style="flex:1;min-width:190px">
+          <div style="font-size:22px;font-weight:700;color:${spread>=20?BC.bear:spread<=-20?BC.bull:'var(--t0)'}">${(spread>0?'+':'')+spread.toFixed(1)}<span style="font-size:13px;color:var(--t3);font-weight:400"> pp spread</span></div>
+          ${sentReadBadge(ev)}
+          <div style="color:var(--t3);font-size:11px;margin-top:6px">Long-run average +6.5pp. Applies to: S&amp;P 500, Nasdaq. Source: ${quelle}</div>
+        </div>
+      </div>
+      ${rangeBar}${chart}
+    </div></div>`;
+}
 function renderFearGreedCards(D){
   const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange')}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange')}</div>`;
