@@ -14469,16 +14469,12 @@
  "GBP": {
   "Unemployment Rate": {
    "actual": "4.9%",
-   "forecast": "5%",
+   "forecast": "4.8%",
    "previous": "4.9%",
-   "date": "2026-07-21",
+   "date": "2026-08-18",
    "event": "Unemployment Rate",
    "period": null,
    "history": [
-    [
-     "2026-04-21",
-     "4.9%"
-    ],
     [
      "2026-05-19",
      "5%"
@@ -14490,8 +14486,13 @@
     [
      "2026-07-21",
      "4.9%"
+    ],
+    [
+     "2026-08-18",
+     "4.9%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-12",
@@ -14667,22 +14668,22 @@
      "2026-07-21",
      "4.9%",
      "5%"
+    ],
+    [
+     "2026-08-18",
+     "4.9%",
+     "4.8%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Unemployment Claims": {
-   "actual": "6.7K",
-   "forecast": "29.4K",
-   "previous": "1.3K",
-   "date": "2026-07-21",
+   "actual": "-11K",
+   "forecast": "11.2K",
+   "previous": "6.7K",
+   "date": "2026-08-18",
    "event": "Claimant Count Change",
    "period": null,
    "history": [
-    [
-     "2026-04-21",
-     "26.8K"
-    ],
     [
      "2026-05-19",
      "26.5K"
@@ -14694,8 +14695,13 @@
     [
      "2026-07-21",
      "6.7K"
+    ],
+    [
+     "2026-08-18",
+     "-11K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-12",
@@ -14836,23 +14842,22 @@
      "2026-07-21",
      "6.7K",
      "29.4K"
+    ],
+    [
+     "2026-08-18",
+     "-11K",
+     "11.2K"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "31.2K"
+   ]
   },
   "NFP / Employment Change": {
-   "actual": "147K",
-   "forecast": "85K",
-   "previous": "99K",
-   "date": "2026-07-21",
+   "actual": "83K",
+   "forecast": null,
+   "previous": "147K",
+   "date": "2026-08-18",
    "event": "Employment Change",
    "period": null,
    "history": [
-    [
-     "2026-04-21",
-     "25K"
-    ],
     [
      "2026-05-19",
      "148K"
@@ -14864,8 +14869,13 @@
     [
      "2026-07-21",
      "147K"
+    ],
+    [
+     "2026-08-18",
+     "83K"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-12",
@@ -15041,23 +15051,22 @@
      "2026-07-21",
      "147K",
      "85K"
+    ],
+    [
+     "2026-08-18",
+     "83K",
+     null
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "100K"
+   ]
   },
   "Avg Hourly Earnings": {
-   "actual": "4.3%",
-   "forecast": "4.5%",
-   "previous": "4.4%",
-   "date": "2026-07-21",
+   "actual": "4.1%",
+   "forecast": "4.1%",
+   "previous": "4.3%",
+   "date": "2026-08-18",
    "event": "Average Earnings incl. Bonus (3Mo/Yr)",
    "period": null,
    "history": [
-    [
-     "2026-04-21",
-     "3.8%"
-    ],
     [
      "2026-05-19",
      "4.1%"
@@ -15069,8 +15078,13 @@
     [
      "2026-07-21",
      "4.3%"
+    ],
+    [
+     "2026-08-18",
+     "4.1%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2025-07-17",
@@ -15136,9 +15150,13 @@
      "2026-07-21",
      "4.3%",
      "4.5%"
+    ],
+    [
+     "2026-08-18",
+     "4.1%",
+     "4.1%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "PPI": {
    "actual": "3.5%",
