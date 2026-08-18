@@ -13242,17 +13242,13 @@
  },
  "AUD": {
   "Consumer Confidence": {
-   "actual": "83.9",
+   "actual": "88.9",
    "forecast": null,
-   "previous": "80.6",
-   "date": "2026-07-14",
+   "previous": "83.9",
+   "date": "2026-08-18",
    "event": "Westpac Consumer Confidence Index",
    "period": null,
    "history": [
-    [
-     "2026-04-14",
-     "80.1"
-    ],
     [
      "2026-05-19",
      "83"
@@ -13264,8 +13260,13 @@
     [
      "2026-07-14",
      "83.9"
+    ],
+    [
+     "2026-08-18",
+     "88.9"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-09-12",
@@ -13441,9 +13442,13 @@
      "2026-07-14",
      "83.9",
      null
+    ],
+    [
+     "2026-08-18",
+     "88.9",
+     null
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Unemployment Rate": {
    "actual": "4.4%",
