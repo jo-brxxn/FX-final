@@ -2947,11 +2947,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-387 - Der stuendliche Datenlauf verlor bei zwei gleichzeitig laufenden Laeufen seine kompletten Daten. Die Annahme im Push-Schritt, ein Rebase auf den aktuellen Stand sei "immer konfliktfrei", war falsch: ueberlappen sich Zeitplan-Lauf und manueller Lauf, schreiben beide dieselben JSON-Dateien neu, der Rebase bricht mit Konflikten ab und der Lauf endet rot - genau die Fehlermail, die dieser Block verhindern sollte. Bei einem Konflikt gewinnt jetzt immer die Fassung des laufenden Abrufs, danach laeuft der Rebase weiter und der Push geht durch. Gegen ein echtes Repo mit erzwungener Kollision getestet, beide Faelle: mit Konflikt (die frischeren Daten landen auf dem Server, der fremde Commit bleibt in der Historie) und ohne Konflikt (die fremde Datei bleibt erhalten). Ausserdem live bestaetigt, dass die Schlagzeilen-Quellen jetzt vollstaendig liefern: Bank of England 50, CNBC Economy 30, CNBC Finance 30 Eintraege - vorher lieferten alle drei null, weil die BoE-Adresse 404 antwortete und CNBCs alter Endpunkt eine leere Antwort mit Status 200. Insgesamt 371 statt 285 Schlagzeilen."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-388 - Die Karte "Focus - Believe - Do" war seit V385 eine leere Box von 419 Pixeln Hoehe. Ursache war eine doppelt eingefuegte else-if-Zeile: der erste Zweig war leer und traf immer zu, der zweite mit dem eigentlichen Inhalt war dadurch toter Code, den nie etwas erreicht hat. Der JS-Syntax-Check konnte das nicht finden - der Code war voellig gueltig, nur unerreichbar."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-387</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-388</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -15008,7 +15008,7 @@ function renderDash(){
           alleH.length?`Nothing in this window yet — try <b>Week</b> or <b>Month</b>.`
             :`No headlines yet. They are pulled from free RSS feeds (Fed, ECB, Bank of England, CNBC, MarketWatch, Yahoo Finance and a targeted search for bank research) by the hourly workflow — no API key needed. Nothing is invented in the meantime.`}</div>`;
       content=bar+liste;
-    }else if(w.type==='motivation'){    }else if(w.type==='motivation'){
+    }else if(w.type==='motivation'){
       // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
       // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
       // fette blaue Woerter untereinander statt eines echten Bilds (bleibt
