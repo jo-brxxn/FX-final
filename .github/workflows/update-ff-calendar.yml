@@ -2729,6 +2729,142 @@ jobs:
       # einzelner Apostroph (auch im Kommentar) den String und der Schritt
       # stirbt mit einem Syntaxfehler. Mit der Heredoc-Form kann das nicht
       # passieren.
+      # ── AAII: EINMALIGER HISTORIEN-BACKFILL ───────────────────────────
+      # AAII veroeffentlicht die komplette Wochenreihe seit Juli 1987 als
+      # Datei. Der Schritt laeuft NUR, solange weniger als AAII_MIN_HIST
+      # Wochen vorliegen - danach ist er ein sofortiger No-Op und laedt nichts
+      # mehr herunter. Damit ist es ein echter Backfill echter Werte, kein
+      # wiederkehrender Grossabruf.
+      #
+      # ⚠ Es wird NICHTS geschaetzt oder interpoliert. Jede Zeile muss ein
+      # echtes Datum tragen und die drei Anteile muessen 100 ergeben - sonst
+      # wird sie verworfen. Lieber eine kuerzere Reihe als eine erfundene.
+      - name: Backfill AAII survey history (one-off, real published series)
+        continue-on-error: true
+        run: |
+          AAII_MIN_HIST=60
+          HAVE=$(node -e "try{const d=require('./sentiment_data.json');console.log((d.aaii&&d.aaii.history&&d.aaii.history.length)||0);}catch(e){console.log(0);}")
+          echo "[debug] aaii-hist: bereits vorhanden: $HAVE Wochen (Schwelle $AAII_MIN_HIST)"
+          if [ "$HAVE" -ge "$AAII_MIN_HIST" ]; then
+            echo "[debug] aaii-hist: genug Historie vorhanden - No-Op"
+            exit 0
+          fi
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          for U in \
+            "https://www.aaii.com/files/surveys/sentiment.xls" \
+            "https://www.aaii.com/files/surveys/sentiment.xlsx" \
+            "https://www.aaii.com/sentimentsurvey/sent_results"; do
+            N=$(echo "$U" | md5sum | cut -c1-8)
+            curl -sSL --http1.1 --compressed --connect-timeout 15 --max-time 90 -A "$UA" \
+              -w "[debug] aaii-hist: $U -> http=%{http_code} size=%{size_download} type=%{content_type}\n" \
+              -o "aaii_hist_$N.bin" "$U" || echo "[debug] aaii-hist: curl exit $? fuer $U"
+          done
+          cat > aaii_hist.js <<'AAIIHIST'
+          const fs=require("fs"),cp=require("child_process");
+          const dateien=fs.readdirSync(".").filter(f=>/^aaii_hist_[0-9a-f]{8}\.bin$/.test(f));
+          const MON={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+          const iso=(y,m,d)=>y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+          // Excel-Seriennummer (Tage seit 1899-12-30) -> ISO
+          const ausSerie=n=>{const ms=(n-25569)*86400000;const d=new Date(Math.round(ms));
+            return isFinite(d.getTime())?d.toISOString().slice(0,10):null;};
+          function datumAus(x){
+            const t=String(x).trim();
+            let m=t.match(/^([0-9]{1,2})[\/.-]([0-9]{1,2})[\/.-]([0-9]{2,4})$/);
+            if(m){let y=+m[3];if(y<100)y+=y<50?2000:1900;return iso(y,+m[1],+m[2]);}
+            m=t.match(/^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})/);
+            if(m)return iso(+m[1],+m[2],+m[3]);
+            m=t.match(/^([A-Za-z]{3,9})\s+([0-9]{1,2}),?\s*([0-9]{4})$/);
+            if(m&&MON[m[1].slice(0,3).toLowerCase()])return iso(+m[3],MON[m[1].slice(0,3).toLowerCase()],+m[2]);
+            const n=parseFloat(t);
+            if(isFinite(n)&&n>20000&&n<60000)return ausSerie(n);
+            return null;
+          }
+          // Aus einer beliebigen Textform Zeilen mit Datum + drei Anteilen holen.
+          function ausText(txt){
+            // ⚠ HTML-Tabellen stehen oft komplett in EINER Zeile - dann findet
+            // die Zeilenschleife nur einen einzigen Datensatz. Zeilenenden der
+            // Tabelle deshalb vorher zu echten Umbruechen machen.
+            const vor=txt.replace(/\r/g,"").replace(/<\/tr\s*>/gi,"\n").replace(/<tr[^>]*>/gi,"\n");
+            const roh=vor.split("\n");
+            const out=[];
+            // ⚠ Mehrere Trenn-Strategien NACHEINANDER, nicht alle gleichzeitig:
+            // ein Datum wie "Jan 02, 2025" enthaelt selbst ein Komma und wuerde
+            // von einem kombinierten Muster mitten durchgeschnitten. Zuerst die
+            // HTML-Zellen, dann Tabulator, dann Semikolon, dann Komma.
+            const TRENNER=[/<\/?t[dhr][^>]*>/i,/\t/,/;/,/,/,/\s{2,}/];
+            roh.forEach(z=>{
+              for(const tr of TRENNER){
+                const felder=z.split(tr).map(x=>String(x).replace(/<[^>]+>/g," ").trim()).filter(x=>x!=="");
+                if(felder.length<4)continue;
+                if(zeileLesen(felder,out))return;
+              }
+            });
+            return out;
+          }
+          function zeileLesen(felder,out){
+              for(let i=0;i+3<=felder.length-1;i++){
+                const d=datumAus(felder[i]);if(!d)continue;
+                const drei=[felder[i+1],felder[i+2],felder[i+3]].map(x=>parseFloat(String(x).replace("%","").replace(",",".")));
+                if(drei.some(v=>!isFinite(v)))continue;
+                let [b,n,r]=drei;
+                if(b<=1&&n<=1&&r<=1){b*=100;n*=100;r*=100;}
+                const sum=b+n+r;
+                if(sum<98.5||sum>101.5)continue;
+                if([b,n,r].some(v=>v<0||v>100))continue;
+                out.push([d,+b.toFixed(1),+n.toFixed(1),+r.toFixed(1)]);
+                return true;
+              }
+              return false;
+          }
+          function inhalt(f){
+            const buf=fs.readFileSync(f);
+            if(buf.length<200)return "";
+            // XLSX ist ein ZIP - Blatt und Zeichenketten per unzip herausholen.
+            if(buf[0]===0x50&&buf[1]===0x4b){
+              try{
+                const sheet=cp.execSync("unzip -p "+f+" xl/worksheets/sheet1.xml",{maxBuffer:256*1024*1024}).toString();
+                let shared=[];
+                try{const ss=cp.execSync("unzip -p "+f+" xl/sharedStrings.xml",{maxBuffer:256*1024*1024}).toString();
+                  shared=[...ss.matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m=>m[1].replace(/<[^>]+>/g,""));}catch(e){}
+                const zeilen=[...sheet.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)].map(m=>{
+                  return [...m[1].matchAll(/<c([^>]*)>(?:<v>([^<]*)<\/v>)?/g)].map(c=>{
+                    const istS=/t="s"/.test(c[1]);
+                    if(istS)return shared[+c[2]]!==undefined?shared[+c[2]]:"";
+                    return c[2]===undefined?"":c[2];
+                  }).join("\t");
+                });
+                return zeilen.join("\n");
+              }catch(e){console.log("[debug] aaii-hist: XLSX-Entpacken fehlgeschlagen: "+e.message.slice(0,120));return "";}
+            }
+            return buf.toString("latin1");
+          }
+          let beste=[];
+          dateien.forEach(f=>{
+            const txt=inhalt(f);
+            if(!txt){console.log("[debug] aaii-hist: "+f+" leer/unlesbar");return;}
+            const w=ausText(txt);
+            console.log("[debug] aaii-hist: "+f+" -> "+w.length+" gueltige Wochen"+(w.length?(" ("+w[0][0]+" bis "+w[w.length-1][0]+")"):""));
+            if(w.length>beste.length)beste=w;
+          });
+          if(beste.length<8){
+            console.log("[debug] aaii-hist: keine brauchbare Reihe gefunden - nichts geschrieben");
+            process.exit(0);
+          }
+          const map={};beste.forEach(e=>{map[e[0]]=e;});
+          let out={};
+          try{const d=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
+          // Bereits vorhandene Wochen gewinnen - sie kamen vom Live-Schritt.
+          ((out.aaii&&out.aaii.history)||[]).forEach(e=>{if(Array.isArray(e)&&e.length>=4)map[e[0]]=e;});
+          const hist=Object.keys(map).sort().map(k=>map[k]).slice(-520);
+          const l=hist[hist.length-1];
+          out.aaii=Object.assign({},out.aaii||{},{history:hist,source:"https://www.aaii.com/sentimentsurvey"});
+          if(out.aaii.bull==null){out.aaii.date=l[0];out.aaii.bull=l[1];out.aaii.neutral=l[2];out.aaii.bear=l[3];out.aaii.value=+(l[1]-l[3]).toFixed(1);}
+          fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+          console.log("[debug] aaii-hist: "+hist.length+" Wochen geschrieben ("+hist[0][0]+" bis "+l[0]+"), letzter Spread "+(l[1]-l[3]).toFixed(1)+"pp");
+          AAIIHIST
+          node aaii_hist.js
+          rm -f aaii_hist_*.bin aaii_hist.js
+
       - name: Fetch AAII investor sentiment survey -> sentiment_data.json
         continue-on-error: true
         run: |
