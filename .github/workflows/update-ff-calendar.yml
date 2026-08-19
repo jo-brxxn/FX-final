@@ -4334,15 +4334,35 @@ jobs:
         run: |
           rm -f news_rss_*.xml
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-          hole(){ # $1=Datei $2=URL
-            curl -sSL --http1.1 --compressed --connect-timeout 12 --max-time 30 -A "$UA" \
-              -w "[debug] news: $1 http=%{http_code} size=%{size_download}\n" -o "$1" "$2" || echo "[debug] news: curl exit $? fuer $1"
+          # $1=Zieldatei, danach BELIEBIG VIELE Kandidaten-URLs. Es wird die
+          # erste genommen, die tatsaechlich ein Feed IST (enthaelt <item oder
+          # <entry) - nicht die erste, die HTTP 200 liefert. Genau daran sind
+          # im Lauf vom 2026-08-19 zwei Quellen still gescheitert: die alte
+          # BoE-Adresse antwortete mit 404-HTML, CNBCs search-Endpunkt mit
+          # einer 20 Byte langen leeren Antwort - beides ohne Fehler, beides
+          # 0 Eintraege. Die Kandidatenliste heilt einen Adresswechsel selbst.
+          hole(){
+            local ziel="$1"; shift
+            local u
+            for u in "$@"; do
+              curl -sSL --http1.1 --compressed --connect-timeout 12 --max-time 30 -A "$UA" \
+                -w "[debug] news: $ziel http=%{http_code} size=%{size_download} <- $u\n" -o "$ziel" "$u" \
+                || echo "[debug] news: curl exit $? fuer $ziel ($u)"
+              if [ -s "$ziel" ] && grep -qE "<item|<entry" "$ziel"; then return 0; fi
+              echo "[debug] news: $ziel - kein Feed-Inhalt, naechster Kandidat"
+            done
+            rm -f "$ziel"
+            return 0
           }
           hole news_rss_fed.xml   "https://www.federalreserve.gov/feeds/press_all.xml"
           hole news_rss_ecb.xml   "https://www.ecb.europa.eu/rss/press.html"
-          hole news_rss_boe.xml   "https://www.bankofengland.co.uk/boeapps/rss/feeds.aspx?feed=News"
-          hole news_rss_cnbce.xml "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=20910258"
-          hole news_rss_cnbcf.xml "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=10000664"
+          hole news_rss_boe.xml   "https://www.bankofengland.co.uk/rss/news" \
+                                  "https://www.bankofengland.co.uk/rss/publications" \
+                                  "https://www.bankofengland.co.uk/boeapps/rss/feeds.aspx?feed=News"
+          hole news_rss_cnbce.xml "https://www.cnbc.com/id/20910258/device/rss/rss.html" \
+                                  "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=20910258"
+          hole news_rss_cnbcf.xml "https://www.cnbc.com/id/10000664/device/rss/rss.html" \
+                                  "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=10000664"
           hole news_rss_mw.xml    "https://feeds.content.dowjones.io/public/rss/mw_topstories"
           hole news_rss_yf.xml    "https://finance.yahoo.com/news/rssindex"
           hole news_rss_banks.xml "https://news.google.com/rss/search?q=%28JPMorgan+OR+%22Goldman+Sachs%22+OR+%22Morgan+Stanley%22+OR+%22Bank+of+America%22+OR+Citigroup%29+%28outlook+OR+forecast+OR+economy+OR+rates+OR+recession%29+when%3A14d&hl=en-US&gl=US&ceid=US%3Aen"
@@ -4426,7 +4446,10 @@ jobs:
             .slice(0,600);
           out.headlines=liste;
           out.updated=new Date().toISOString();
-          out.sources=Object.values(QUELLEN).map(q=>q[0]);
+          // Nur Quellen ausweisen, die tatsaechlich etwas geliefert haben -
+          // eine Quelle zu nennen, deren Adresse gerade tot ist, waere eine
+          // stille Falschaussage in der Karte.
+          out.sources=[...new Set(liste.map(h=>h.s))].sort();
           fs.writeFileSync("news_data.json",JSON.stringify(out,null,1));
           const heute=liste.filter(h=>Date.parse(h.d)>Date.now()-864e5).length;
           console.log("[debug] news: "+liste.length+" Schlagzeilen gesamt, "+heute+" aus den letzten 24h");

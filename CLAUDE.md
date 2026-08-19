@@ -6764,3 +6764,42 @@ Zeile wird jetzt aus den TATSAECHLICH verwendeten Reihen gebaut und waechst
 automatisch mit. **Merksatz:** eine fest getippte Aufzaehlung neben einer
 berechneten Liste laeuft frueher oder spaeter auseinander - immer aus derselben
 Quelle erzeugen.
+
+### ⚠ Eine Quelle kann HTTP 200 liefern und trotzdem tot sein (2026-08-19)
+
+Der erste Livelauf der Schlagzeilen-Karte holte 285 Eintraege aus 9 Feeds -
+zwei davon lieferten aber **null**, ohne dass irgendwo ein Fehler stand:
+
+| Quelle | Antwort | Eintraege |
+|---|---|---|
+| Bank of England (`boeapps/rss/feeds.aspx`) | **http=404**, 11 KB HTML | 0 |
+| CNBC Economy/Finance (`search.cnbc.com`) | **http=200**, **20 Byte** | 0 |
+
+Der 404 war eine gewoehnliche HTML-Fehlerseite (der Parser findet darin kein
+`<item>` und meldet ruhig "0"), CNBCs alter Such-Endpunkt antwortete mit einer
+praktisch leeren, aber formal erfolgreichen Antwort. **Ein Statuscode-Check
+haette den zweiten Fall nicht gefangen, ein Groessen-Check nicht den ersten.**
+
+`hole()` nimmt deshalb jetzt **je Quelle eine Liste von Adressen** und
+verwendet die erste, die tatsaechlich ein Feed IST (`grep -qE "<item|<entry"`) -
+nicht die erste mit Status 200. Die alte Adresse bleibt als letzter Kandidat
+stehen; liefert keine etwas, wird die Datei geloescht und die Quelle faellt
+sauber aus (`try/catch` im Parser ueberspringt sie).
+
+`out.sources` listet nur noch Quellen, aus denen wirklich etwas in der Liste
+steht (`[...new Set(liste.map(h=>h.s))]`) - vorher zaehlte die Karte alle neun
+auf, auch die beiden toten. Das war eine stille Falschaussage in der UI.
+
+**Merksatz:** bei JEDEM neuen HTTP-Feed pruefen, ob die Antwort das ERWARTETE
+FORMAT hat, nicht ob sie erfolgreich war. Und wo eine Adresse sich aendern
+kann (Notenbanken und Medien bauen ihre Seiten regelmaessig um), eine
+Kandidatenliste statt einer festen Adresse verwenden - das heilt sich selbst,
+ohne dass jemand einen leeren Kartenzustand melden muss.
+
+**Nebenbefund, kein Fehler:** der Risk-Index laeuft seit dem `git add`-Fix
+(Commit `7ab7512`) korrekt - VOR diesem Commit lag `risk_index.json` nie im
+Repo, die Karte zeigte deshalb zu Recht "NO LIVE READ". Aktuell gemessen:
++0,34, RISK-OFF, 74. Perzentil, 800 Punkte Historie aus Gold/AUDUSD/USDJPY.
+**VIX fehlt weiterhin bewusst** (43 von 50 noetigen Tagen, sammelt einen Punkt
+pro Handelstag) und kommt ohne Code-Aenderung dazu, sobald die Reihe reicht -
+die Methodenzeile nennt seit V385 nur die tatsaechlich verwendeten Reihen.
