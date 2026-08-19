@@ -6803,3 +6803,43 @@ Repo, die Karte zeigte deshalb zu Recht "NO LIVE READ". Aktuell gemessen:
 **VIX fehlt weiterhin bewusst** (43 von 50 noetigen Tagen, sammelt einen Punkt
 pro Handelstag) und kommt ohne Code-Aenderung dazu, sobald die Reihe reicht -
 die Methodenzeile nennt seit V385 nur die tatsaechlich verwendeten Reihen.
+
+### ⚠ "Ein Rebase ist hier immer konfliktfrei" - war falsch (2026-08-19)
+
+Der Push-Schritt des Datenlaufs traegt seit 2026-07-13 eine Retry-Schleife mit
+`git pull --rebase`, begruendet mit: die JSONs seien reine Workflow-Ausgaben,
+ein Rebase daher konfliktfrei. **Am 2026-08-19 eingetreten und widerlegt:**
+ueberlappen sich ZWEI Laeufe (Zeitplan + `workflow_dispatch`), schreiben beide
+dieselben Dateien neu, und der Rebase bricht ab:
+
+```
+CONFLICT (content): Merge conflict in bond_data.json
+CONFLICT (content): Merge conflict in news_data.json
+CONFLICT (content): Merge conflict in price_data.json
+CONFLICT (content): Merge conflict in risk_index.json
+CONFLICT (content): Merge conflict in sentiment_data.json
+##[error]Process completed with exit code 1
+```
+
+Der Lauf verlor damit ALLE frisch geholten Daten (u.a. die 371 Schlagzeilen)
+UND erzeugte genau die Fehlermail, die die Schleife verhindern sollte.
+
+Aufloesung: bei einem Konflikt gewinnt die Fassung DIESES Laufs - die Dateien
+sind Ausgaben eines gerade gelaufenen Abrufs, also der neuere Stand derselben
+Quellen. Danach `rebase --continue`, dann Push.
+
+**⚠ Im Rebase sind die Seiten VERTAUSCHT:** `--ours` ist der ZIELZWEIG
+(origin/main), `--theirs` der gerade aufgesetzte eigene Commit. Wer hier
+intuitiv `--ours` schreibt, wirft genau die frischen Daten weg, die er
+retten wollte.
+
+Gegen ein echtes Repo mit erzwungener Kollision getestet, beide Pfade:
+mit Konflikt (frischere Daten landen auf dem Server, der fremde Commit bleibt
+in der Historie) und ohne Konflikt (eine fremde Datei bleibt erhalten). Beide
+Laeufe enden mit Exit 0.
+
+**Merksatz:** eine Begruendung im Kommentar ("kann nicht passieren") ist keine
+Absicherung. Wo ein Fehlerfall billig abzufangen ist, abfangen - auch wenn er
+unwahrscheinlich scheint. Zwei parallele Laeufe sind bei einem stuendlichen
+Zeitplan plus gelegentlichem manuellen Anstoss nicht die Ausnahme, sondern
+regelmaessig.

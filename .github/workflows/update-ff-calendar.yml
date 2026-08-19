@@ -4481,12 +4481,38 @@ jobs:
             # manueller Push auf main (z.B. ein Code-Commit waehrend dieser
             # Lauf noch lief) zu "! [rejected] ... fetch first" und einer
             # GitHub-Fehlermail, obwohl alle Datenabrufe erfolgreich waren.
-            # Die JSON-Dateien hier sind reine Workflow-Outputs, ein Rebase
-            # auf den aktuellen origin/main-Stand ist daher immer konfliktfrei.
+            #
+            # ⚠ Die urspruengliche Annahme "ein Rebase ist immer konfliktfrei"
+            # war FALSCH und ist am 2026-08-19 eingetreten: ueberlappen sich
+            # ZWEI Laeufe (Zeitplan + workflow_dispatch), schreiben beide
+            # dieselben JSONs neu, und der Rebase bricht mit Konflikten in
+            # bond/price/sentiment/risk/news ab. Der Lauf verlor dabei seine
+            # kompletten Daten UND erzeugte genau die Fehlermail, die dieser
+            # Block verhindern sollte.
+            #
+            # Aufloesung: bei einem Konflikt gewinnt IMMER die Fassung DIESES
+            # Laufs - die Dateien sind reine Ausgaben eines frisch gelaufenen
+            # Abrufs, also der neuere Stand derselben Quellen.
+            # ⚠ Im Rebase sind die Seiten VERTAUSCHT: "--ours" ist der
+            # Zielzweig (origin/main), "--theirs" der gerade aufgesetzte
+            # eigene Commit. Deshalb --theirs, nicht --ours.
             for i in 1 2 3 4 5; do
               if git push; then break; fi
               echo "[debug] push rejected (attempt $i/5) - rebasing onto origin/main and retrying"
-              git pull --rebase origin main
+              if ! git pull --rebase origin main; then
+                konflikte=$(git diff --name-only --diff-filter=U)
+                if [ -n "$konflikte" ]; then
+                  echo "[debug] Rebase-Konflikt in: $konflikte - eigene (frischere) Fassung gewinnt"
+                  for f in $konflikte; do
+                    git checkout --theirs -- "$f" || true
+                    git add "$f"
+                  done
+                  GIT_EDITOR=true git rebase --continue || git rebase --abort || true
+                else
+                  echo "[debug] Rebase fehlgeschlagen ohne Konfliktdatei - Abbruch und neuer Versuch"
+                  git rebase --abort || true
+                fi
+              fi
               sleep 3
             done
           fi
