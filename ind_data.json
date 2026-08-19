@@ -1890,15 +1890,11 @@
   "CPI (Headline)": {
    "actual": "2.9%",
    "forecast": "2.9%",
-   "previous": "2.8%",
-   "date": "2026-07-31",
-   "event": "Inflation Rate YoY Flash",
+   "previous": "2.9%",
+   "date": "2026-08-19",
+   "event": "Inflation Rate YoY Final",
    "period": "y/y",
    "history": [
-    [
-     "2026-06-17",
-     "3.2%"
-    ],
     [
      "2026-07-01",
      "2.8%"
@@ -1910,8 +1906,13 @@
     [
      "2026-07-31",
      "2.9%"
+    ],
+    [
+     "2026-08-19",
+     "2.9%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-31",
@@ -2267,22 +2268,22 @@
      "2026-07-31",
      "2.9%",
      "2.9%"
+    ],
+    [
+     "2026-08-19",
+     "2.9%",
+     "2.9%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "CPI": {
    "actual": "0.2%",
-   "forecast": null,
-   "previous": "-0.1%",
-   "date": "2026-07-31",
-   "event": "Inflation Rate MoM Flash",
+   "forecast": "2.8%",
+   "previous": "0.2%",
+   "date": "2026-08-19",
+   "event": "Inflation Rate MoM Final",
    "period": "m/m",
    "history": [
-    [
-     "2026-06-17",
-     "0.1%"
-    ],
     [
      "2026-07-01",
      "-0.1%"
@@ -2293,6 +2294,10 @@
     ],
     [
      "2026-07-31",
+     "0.2%"
+    ],
+    [
+     "2026-08-19",
      "0.2%"
     ]
    ],
@@ -2651,22 +2656,23 @@
      "2026-07-31",
      "0.2%",
      null
+    ],
+    [
+     "2026-08-19",
+     "0.2%",
+     null
     ]
    ],
    "source": "tv"
   },
   "Core CPI": {
    "actual": "2.5%",
-   "forecast": "2.4%",
-   "previous": "2.4%",
-   "date": "2026-07-31",
-   "event": "Core Inflation Rate YoY Flash",
+   "forecast": "2.5%",
+   "previous": "2.5%",
+   "date": "2026-08-19",
+   "event": "Core Inflation Rate YoY Final",
    "period": "y/y",
    "history": [
-    [
-     "2026-06-17",
-     "2.6%"
-    ],
     [
      "2026-07-01",
      "2.4%"
@@ -2678,8 +2684,13 @@
     [
      "2026-07-31",
      "2.5%"
+    ],
+    [
+     "2026-08-19",
+     "2.5%"
     ]
    ],
+   "source": "tv",
    "historyFull": [
     [
      "2023-08-31",
@@ -3035,9 +3046,13 @@
      "2026-07-31",
      "2.5%",
      "2.4%"
+    ],
+    [
+     "2026-08-19",
+     "2.5%",
+     "2.5%"
     ]
-   ],
-   "source": "tv"
+   ]
   },
   "Central Bank Rate": {
    "actual": "2.4%",
@@ -11461,7 +11476,6 @@
      "3%"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2023-09-19",
@@ -11643,7 +11657,8 @@
      "3%",
      "2.9%"
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Core CPI": {
    "actual": "2.3%",
@@ -11670,7 +11685,6 @@
      "2.3%"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2023-09-19",
@@ -11852,7 +11866,8 @@
      "2.3%",
      null
     ]
-   ]
+   ],
+   "source": "tv"
   },
   "Retail Sales": {
    "actual": "1%",
