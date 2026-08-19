@@ -4363,13 +4363,28 @@ jobs:
                                   "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=20910258"
           hole news_rss_cnbcf.xml "https://www.cnbc.com/id/10000664/device/rss/rss.html" \
                                   "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=10000664"
-          hole news_rss_mw.xml    "https://feeds.content.dowjones.io/public/rss/mw_topstories"
+          # ⚠ mw_topstories fuehrt auch Lebenshilfe ("Our son and daughter-in-law
+          # cut us out of their lives ... should we change our 3 million dollar
+          # will?") - das ist keine Wirtschaftsnachricht. Deshalb zuerst der
+          # Wirtschafts-Feed, topstories nur noch als letzter Rueckfall.
+          hole news_rss_mw.xml    "https://feeds.content.dowjones.io/public/rss/mw_economy" \
+                                  "https://feeds.content.dowjones.io/public/rss/mw_marketpulse" \
+                                  "https://feeds.content.dowjones.io/public/rss/mw_topstories"
           hole news_rss_yf.xml    "https://finance.yahoo.com/news/rssindex"
+          hole news_rss_bbg.xml   "https://feeds.bloomberg.com/economics/news.rss" \
+                                  "https://feeds.bloomberg.com/markets/news.rss"
+          # Reuters hat seine oeffentlichen RSS-Feeds eingestellt - eine
+          # site-Suche bei Google News ist der verbleibende freie Weg und
+          # liefert dank des <source>-Tags trotzdem "Reuters" als Verlag.
+          hole news_rss_reuters.xml "https://news.google.com/rss/search?q=site%3Areuters.com+%28economy+OR+inflation+OR+%22central+bank%22+OR+rates+OR+markets%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
           hole news_rss_banks.xml "https://news.google.com/rss/search?q=%28JPMorgan+OR+%22Goldman+Sachs%22+OR+%22Morgan+Stanley%22+OR+%22Bank+of+America%22+OR+Citigroup%29+%28outlook+OR+forecast+OR+economy+OR+rates+OR+recession%29+when%3A14d&hl=en-US&gl=US&ceid=US%3Aen"
           hole news_rss_macro.xml "https://news.google.com/rss/search?q=%28inflation+OR+%22interest+rates%22+OR+%22central+bank%22+OR+payrolls+OR+GDP+OR+tariffs%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
           cat > news_parse.js <<'NEWSJS'
           const fs=require("fs");
-          // Datei -> [Quellenname, Klasse]
+          // Datei -> [Anzeigename der Quelle, Klasse]
+          // Klasse 3 = Notenbank selbst, 2 = etabliertes Wirtschaftsmedium,
+          // 1 = gezielte Suche (der echte Verlag steht dort im <source>-Tag und
+          // ersetzt den Sammelnamen, siehe titelUndQuelle).
           const QUELLEN={
             "news_rss_fed.xml":["Federal Reserve",3],
             "news_rss_ecb.xml":["ECB",3],
@@ -4378,81 +4393,316 @@ jobs:
             "news_rss_cnbcf.xml":["CNBC Finance",2],
             "news_rss_mw.xml":["MarketWatch",2],
             "news_rss_yf.xml":["Yahoo Finance",2],
+            "news_rss_bbg.xml":["Bloomberg",2],
+            "news_rss_reuters.xml":["Reuters",1],
             "news_rss_banks.xml":["Bank research",1],
             "news_rss_macro.xml":["Macro wire",1]
           };
-          // Themen, die den Score-Assets dieser App entsprechen - jeder Treffer
-          // erhoeht die Wichtigkeit. Bewusst eine feste, nachlesbare Liste
+          // Sammelnamen der Suchtreffer - nur bei diesen darf der Verlag aus dem
+          // Titelanhang gezogen werden (bei einem Direktfeed IST der Name schon der
+          // Verlag und der Titel enthaelt keinen Anhang).
+          const SAMMEL=new Set(["Bank research","Macro wire","Reuters"]);
+
+          // Themen, die den Assets dieser App entsprechen. Feste, nachlesbare Liste
           // statt einer freien Bewertung.
           const SCHWER=["rate decision","interest rate","rate cut","rate hike","fomc","inflation","cpi",
             "payrolls","nonfarm","unemployment","recession","gdp","tariff","stimulus","default",
             "central bank","quantitative","yield curve","credit","bailout","emergency"];
-          const ASSETS=["dollar","euro","yen","pound","sterling","franc","gold","silver","oil","crude",
-            "bitcoin","nasdaq","s&p","dax","treasury","bond","equities","stocks"];
-          const ent=t=>String(t).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1")
-            .replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"')
-            .replace(/&#39;/g,"'").replace(/&apos;/g,"'").replace(/&amp;/g,"&")
-            .replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+
+          // Schlagzeile -> betroffene Assets. IDs wie in der App (siehe FX/COT_NAME).
+          const ASSET_MAP={
+            USD:["fed","federal reserve","fomc","dollar","greenback","powell","treasury","treasuries","u.s. economy","us economy"],
+            EUR:["ecb","european central bank","euro","eurozone","euro area","lagarde","german","france","italy","spain"],
+            GBP:["boe","bank of england","sterling","pound","britain","british","uk economy","bailey","gilt"],
+            JPY:["boj","bank of japan","yen","japan","japanese"],
+            CHF:["snb","swiss national bank","franc","switzerland","swiss"],
+            CAD:["boc","bank of canada","canadian dollar","loonie","canada","canadian"],
+            AUD:["rba","reserve bank of australia","australian dollar","aussie","australia","australian"],
+            NZD:["rbnz","new zealand dollar","kiwi","new zealand"],
+            GOLD:["gold","bullion","xau"],
+            SILVER:["silver","xag"],
+            OIL:["oil","crude","opec","wti","brent","petroleum"],
+            BTC:["bitcoin","btc","crypto","cryptocurrency"],
+            SP500:["s&p 500","wall street","us stocks","equities","stock market"],
+            NAS:["nasdaq","tech stocks","big tech"]
+          };
+
+          // Lebenshilfe/Boulevard - kommt bei MarketWatch und Yahoo regelmaessig mit
+          // durch und ist keine Wirtschaftsnachricht. Am echten Bestand gemessen.
+          const RAUS=[/\bmy (son|daughter|husband|wife|mother|father|parents|kids?|landlord|boss|ex)\b/i,
+            /\bshould (i|we)\b/i,/\bdear [a-z]/i,/\bmy \$[\d.]/i,/\binheritance\b/i,/\bmedicare\b/i,
+            /\bhoroscope\b/i,/\brecipe\b/i,/\bdating\b/i,/\bcelebrity\b/i,/\bmy (401|ira|pension)\b/i,
+            /\bi'?m \d\d\b/i,/\bretire(ment)? (at|in) \d/i,/\bwedding\b/i,/\bdivorce\b/i];
+
+          // Notenbank-Verwaltungskram vs. echte geldpolitische Meldung. Ohne diese
+          // Trennung dominierten Meldungen wie "Fed bittet um Kommentare zu einem
+          // Regel-Vorschlag" die Rangfolge, weil die Quellenklasse allein zaehlte.
+          const CB_ECHT=/\b(statement|decision|monetary policy|rate|speech|remarks|press conference|projections|minutes|inflation|outlook|economy|forecast)\b/i;
+          const CB_VERWALTUNG=/\b(requests comment|request for comment|survey|framework|facility|accessibility|appointment|calendar|publication of|consultation|call for|vacanc|award|anniversar|exhibition|website|conference on|working paper|glossary)\b/i;
+
+          // ── Text-Hilfen ───────────────────────────────────────────────────────────
+          const NAMED={amp:"&",lt:"<",gt:">",quot:'"',apos:"'",nbsp:" ",ndash:"–",mdash:"—",
+            lsquo:"‘",rsquo:"’",ldquo:"“",rdquo:"”",hellip:"…",eacute:"é",
+            pound:"£",euro:"€",yen:"¥",deg:"°",times:"×",middot:"·"};
+          // ⚠ Numerische Entities (dezimal UND hexadezimal) muessen mit aufgeloest
+          // werden - im Bestand standen 8 Titel als "Here&#x2019;s why ..." in der
+          // Karte, weil nur ein paar benannte Entities ersetzt wurden.
+          function ent(t){
+            let s=String(t).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/<[^>]+>/g," ");
+            for(let i=0;i<2;i++){                       // doppelt kodierte Feeds (&amp;#39;)
+              s=s.replace(/&#x([0-9a-f]+);/gi,(m,h)=>String.fromCodePoint(parseInt(h,16)))
+                 .replace(/&#(\d+);/g,(m,d)=>String.fromCodePoint(parseInt(d,10)))
+                 .replace(/&([a-z]+);/gi,(m,n)=>NAMED[n.toLowerCase()]!==undefined?NAMED[n.toLowerCase()]:m);
+            }
+            return s.replace(/\s+/g," ").trim();
+          }
           const _reCache={};
           function wortTreffer(text,wort){
             if(!_reCache[wort]){
               const esc=wort.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-              // Optionales Plural-s: "interest rate" soll auch "interest rates"
-              // treffen, ohne dass "gold" in "Goldman" anschlaegt.
+              // Optionales Plural-s: "interest rate" soll auch "interest rates" treffen,
+              // ohne dass "gold" in "Goldman" anschlaegt.
               _reCache[wort]=new RegExp("(^|[^a-z0-9])"+esc+"s?([^a-z0-9]|$)","i");
             }
             return _reCache[wort].test(text);
           }
-          const alle=[];
-          Object.keys(QUELLEN).forEach(f=>{
-            let xml="";try{xml=fs.readFileSync(f,"utf8");}catch(e){return;}
-            const [name,klasse]=QUELLEN[f];
-            // RSS <item> und Atom <entry> gleichermassen
-            const bloecke=[...xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/g)].map(m=>m[0]);
-            let n=0;
-            bloecke.forEach(b=>{
-              const t=ent((b.match(/<title[^>]*>([\s\S]*?)<\/title>/)||[])[1]||"");
-              let u=(b.match(/<link[^>]*>([\s\S]*?)<\/link>/)||[])[1]||"";
-              // Atom: selbstschliessendes <link href="..."/> - Anfuehrungszeichen
-              // koennen einfach ODER doppelt sein.
-              if(!u||/^\s*$/.test(u)){const m=b.match(/<link[^>]*href=["']([^"']+)["']/);if(m)u=m[1];}
-              u=ent(u);
-              const dRoh=(b.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated|dc:date)>/)||[])[1]||"";
-              const ts=Date.parse(ent(dRoh));
-              if(!t||!u||!isFinite(ts))return;   // ohne Titel, Link oder echtes Datum: nicht aufnehmen
-              const tl=t.toLowerCase();
-              // ⚠ Wortgrenzen statt includes: "Goldman Sachs" enthaelt "gold"
-              // und wurde sonst als Gold-Bezug gewertet (im Test aufgefallen).
-              const treffer=SCHWER.filter(k=>wortTreffer(tl,k));
-              const bezug=ASSETS.filter(k=>wortTreffer(tl,k));
-              // Wichtigkeit: Quellenklasse + gedeckelte Themen- und Bezugstreffer.
-              const w=klasse*2+Math.min(4,treffer.length*2)+Math.min(2,bezug.length);
-              alle.push({t,u,s:name,k:klasse,d:new Date(ts).toISOString(),w,
-                tags:[...new Set(treffer.concat(bezug))].slice(0,4)});
-              n++;
+          // Verlagsnamen kuerzen: "ABC News - Breaking News, Latest News and Videos"
+          // -> "ABC News". Feeds haengen ihren kompletten Seitentitel an.
+          function kurzVerlag(n){
+            let s=String(n||"").split(/\s+[-|–]\s+/)[0].replace(/\s*\(.*?\)\s*$/,"").trim();
+            if(s.length>26)s=s.slice(0,25).trim()+"…";
+            return s;
+          }
+          // Google News haengt " - Verlag" an JEDEN Titel. Steht der Verlag im
+          // <source>-Tag, wird exakt dieser Anhang entfernt (kein Raten). Fehlt das
+          // Tag - etwa bei Altbestand aus news_data.json - greift der Rueckfall ueber
+          // den letzten " - " mit kurzem Schwanz.
+          function titelUndQuelle(titel,quelle,srcTag){
+            let t=String(titel||"").trim(),s=quelle;
+            if(srcTag){
+              const v=srcTag.trim(),i=t.lastIndexOf(" - "+v);
+              if(i>0&&i+3+v.length===t.length)t=t.slice(0,i).trim();
+              s=kurzVerlag(v);
+            }else if(SAMMEL.has(quelle)){
+              // ⚠ Das ERSTE passende " - " nehmen, nicht das letzte: Verlagsnamen
+              // enthalten selbst Gedankenstriche ("ABC News - Breaking News, Latest
+              // News and Videos"). Mit dem letzten bliebe " - ABC News" im Titel
+              // stehen und der Verlag hiesse "Breaking News, Latest News and Videos".
+              for(let i=t.indexOf(" - ");i>20;i=t.indexOf(" - ",i+3)){
+                const schwanz=t.slice(i+3).trim();
+                if(schwanz.length<=60&&!/[.!?:]$/.test(schwanz)&&/^[A-Z0-9]/.test(schwanz)){
+                  t=t.slice(0,i).trim(); s=kurzVerlag(schwanz); break;
+                }
+              }
+            }
+            return {t,s};
+          }
+
+          // ── Dubletten ─────────────────────────────────────────────────────────────
+          const STOPP=new Set(("the a an and or of to in on for at by with from as is are was were be been "+
+            "it its this that these those he she they his her their we you i not no but if then than "+
+            "will would can could may might should new says say said after before over under about "+
+            "more most less least up down out off into per via amid").split(" "));
+          function schluesselWorte(t){
+            return String(t||"").toLowerCase().replace(/[^a-z0-9$% ]/g," ").split(/\s+/)
+              .filter(w=>w.length>2&&!STOPP.has(w));
+          }
+          function aehnlich(a,b){
+            if(a.size<4||b.size<4)return false;
+            let g=0; a.forEach(w=>{if(b.has(w))g++;});
+            const jac=g/(a.size+b.size-g), enth=g/Math.min(a.size,b.size);
+            // Zwei Schwellen: gleich lange Titel ueber Jaccard, ein kurzer Titel in
+            // einem langen ueber die Enthaltensrate - sonst faellt "Trump pausiert
+            // Zoelle" gegen die ausfuehrliche Variante desselben Hauses durch.
+            return jac>=0.45||enth>=0.7;
+          }
+          const CLUSTER_FENSTER_MS=3*864e5;
+          const MAX_JE_QUELLE=80;
+          // Gruppiert dieselbe Meldung aus verschiedenen Haeusern. Liefert je Eintrag
+          // n (Anzahl DISTINKTER Verlage) und o (die weiteren Quellen).
+          function clustern(liste){
+            const sortiert=liste.slice().sort((a,b)=>Date.parse(b.d)-Date.parse(a.d));
+            const gruppen=[];
+            sortiert.forEach(h=>{
+              const wArr=schluesselWorte(h.t), w=new Set(wArr), ts=Date.parse(h.d);
+              let ziel=null;
+              for(let i=gruppen.length-1;i>=0;i--){
+                const g=gruppen[i];
+                if(Math.abs(g.ts-ts)>CLUSTER_FENSTER_MS)continue;
+                if(aehnlich(w,g.w)){ziel=g;break;}
+              }
+              if(ziel){ziel.items.push(h);}
+              else gruppen.push({w,ts,items:[h]});
             });
-            console.log("[debug] news: "+f+" -> "+n+" Eintraege ("+name+")");
-          });
-          if(!alle.length){console.log("[debug] news: keine Eintraege - nichts geschrieben");process.exit(0);}
-          let out={};
-          try{const d=JSON.parse(fs.readFileSync("news_data.json","utf8"));if(d&&typeof d==="object")out=d;}catch(e){}
-          const map={};
-          ((out.headlines)||[]).forEach(h=>{if(h&&h.u)map[h.u]=h;});
-          alle.forEach(h=>{map[h.u]=h;});
-          const grenze=Date.now()-35*864e5;
-          const liste=Object.values(map)
-            .filter(h=>{const ts=Date.parse(h.d);return isFinite(ts)&&ts>=grenze;})
-            .sort((a,b)=>Date.parse(b.d)-Date.parse(a.d))
-            .slice(0,600);
-          out.headlines=liste;
-          out.updated=new Date().toISOString();
-          // Nur Quellen ausweisen, die tatsaechlich etwas geliefert haben -
-          // eine Quelle zu nennen, deren Adresse gerade tot ist, waere eine
-          // stille Falschaussage in der Karte.
-          out.sources=[...new Set(liste.map(h=>h.s))].sort();
-          fs.writeFileSync("news_data.json",JSON.stringify(out,null,1));
-          const heute=liste.filter(h=>Date.parse(h.d)>Date.now()-864e5).length;
-          console.log("[debug] news: "+liste.length+" Schlagzeilen gesamt, "+heute+" aus den letzten 24h");
+            gruppen.forEach(g=>{
+              // Repraesentant: hoechste Quellenklasse, bei Gleichstand die aelteste
+              // Meldung (wer zuerst berichtet hat).
+              g.items.sort((a,b)=>(b.k||0)-(a.k||0)||Date.parse(a.d)-Date.parse(b.d));
+              const verlage=[...new Set(g.items.map(x=>x.s))];
+              g.items.forEach((x,i)=>{
+                x._rep=(i===0); x.n=verlage.length;
+                x.o=(i===0)?g.items.slice(1,6).map(y=>({s:y.s,u:y.u})):[];
+              });
+            });
+            return gruppen;
+          }
+
+          // ── Wichtigkeit ───────────────────────────────────────────────────────────
+          // Hauptsignal ist, wie viele UNABHAENGIGE Haeuser dieselbe Meldung bringen -
+          // ein gemessener Relevanzbeleg statt einer zugewiesenen Quellenklasse. Vorher
+          // dominierte die Klasse alles: 80% aller Meldungen landeten bei LOW und alle
+          // HIGH-Meldungen waren Notenbank-Verwaltungskram.
+          function gewicht(h){
+            const tl=(h.t||"").toLowerCase();
+            const themen=SCHWER.filter(k=>wortTreffer(tl,k));
+            const assets=Object.keys(ASSET_MAP).filter(id=>ASSET_MAP[id].some(k=>wortTreffer(tl,k)));
+            let w=Math.min(6,2*Math.max(0,(h.n||1)-1))      // 1 Haus 0, 2 Haeuser 2, 4+ 6
+                 +Math.min(3,themen.length*1.5)
+                 +Math.min(2,assets.length);
+            if((h.k||0)===3){                                 // Notenbank direkt
+              if(CB_VERWALTUNG.test(h.t))w-=3;                // Umfragen, Regelanhoerungen ...
+              else if(CB_ECHT.test(h.t))w+=5;                 // Beschluss, Rede, Projektionen
+            }
+            return {w:Math.max(0,Math.round(w*10)/10),themen,assets};
+          }
+
+          // ── Hauptlauf ─────────────────────────────────────────────────────────────
+          function einlesen(){
+            const alle=[];
+            Object.keys(QUELLEN).forEach(f=>{
+              let xml="";try{xml=fs.readFileSync(f,"utf8");}catch(e){return;}
+              const [name,klasse]=QUELLEN[f];
+              const bloecke=[...xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/g)].map(m=>m[0]);
+              let n=0,raus=0;
+              bloecke.forEach(b=>{
+                const roh=ent((b.match(/<title[^>]*>([\s\S]*?)<\/title>/)||[])[1]||"");
+                let u=(b.match(/<link[^>]*>([\s\S]*?)<\/link>/)||[])[1]||"";
+                if(!u||/^\s*$/.test(u)){const m=b.match(/<link[^>]*href=["']([^"']+)["']/);if(m)u=m[1];}
+                u=ent(u);
+                const dRoh=(b.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated|dc:date)>/)||[])[1]||"";
+                const ts=Date.parse(ent(dRoh));
+                if(!roh||!u||!isFinite(ts))return;   // ohne Titel, Link oder echtes Datum: nicht aufnehmen
+                const srcTag=ent((b.match(/<source[^>]*>([\s\S]*?)<\/source>/)||[])[1]||"");
+                const {t,s}=titelUndQuelle(roh,name,srcTag);
+                if(RAUS.some(r=>r.test(t))){raus++;return;}
+                alle.push({t,u,s,k:klasse,d:new Date(ts).toISOString()});
+                n++;
+              });
+              console.log("[debug] news: "+f+" -> "+n+" Eintraege ("+name+")"+(raus?", "+raus+" als Lebenshilfe verworfen":""));
+            });
+            return alle;
+          }
+
+          function anreichern(liste){
+            // ⚠ Ueber den GESAMTEN Bestand rechnen, nicht nur ueber die frischen
+            // Eintraege - sonst behielte der Altbestand aus news_data.json fuer immer
+            // seinen alten Titel, seine alte Quelle und sein altes Gewicht.
+            liste.forEach(h=>{
+              const {t,s}=titelUndQuelle(h.t,h.s,null);
+              h.t=ent(t); h.s=s; h._nAlt=h.n||1;
+            });
+            const rein=liste.filter(h=>!RAUS.some(r=>r.test(h.t)));
+            clustern(rein);
+            // Nur der Repraesentant bleibt in der Liste - die uebrigen Haeuser stecken
+            // als o[] daran. Sonst stuenden vier Fassungen derselben Meldung mit
+            // identischem Gewicht direkt untereinander in der Karte.
+            const reps=rein.filter(h=>h._rep);
+            reps.forEach(h=>{
+              // n nie nach unten korrigieren: aeltere Meldungen rollen aus den Feeds
+              // heraus, die Zahl der Haeuser, die berichtet haben, schrumpft dadurch
+              // aber nicht rueckwirkend.
+              const gesehen=Math.max(h.n||1,h._nAlt||1);
+              h.n=gesehen;
+              const g=gewicht(h);
+              h.w=g.w; h.a=g.assets.slice(0,4); h.tg=g.themen.slice(0,3);
+              delete h.tags; delete h._rep; delete h._nAlt;
+              if(!h.o||!h.o.length)delete h.o;
+              if(h.n<=1)delete h.n;
+            });
+            return reps;
+          }
+
+          // Beherrschendes Thema der letzten 24 Stunden. ⚠ NICHT ueber die Dubletten-
+          // Gruppen: am echten Bestand gemessen hat die groesste Gruppe 3 Eintraege,
+          // waehrend 24 von 220 Meldungen dasselbe THEMA hatten - verschiedene Haeuser
+          // schreiben ueber dieselbe Sache mit zu verschiedenen Titeln, um als Dublette
+          // zu gelten. Gezaehlt wird deshalb die Wortverteilung: das haeufigste
+          // Sachwort des Tages plus die zwei, die am oeftesten damit zusammen
+          // auftreten. Die genannte Zahl ist immer, wie viele Meldungen das Leitwort
+          // tatsaechlich enthalten - nichts geschaetzt.
+          const THEMA_MIN_ANTEIL=0.06, THEMA_MIN_ABS=4;
+          // Woerter, die zwar haeufig sind, aber kein THEMA benennen - "Stock" stand
+          // im Test in 31 von 220 Meldungen und waere als Thema des Tages ausgegeben
+          // worden, obwohl es nur die Rubrik beschreibt.
+          const THEMA_UNSPEZIFISCH=new Set(("stock stocks market markets share shares investor investors "+
+            "today week month report reports update news analysis live close open high low price prices "+
+            "trading session premarket outlook watch things know here").split(" "));
+          function themaDesTages(liste){
+            const seit=Date.now()-864e5;
+            // ⚠ Nur Meldungen MIT Markt- oder Themenbezug: sonst gewinnt der Yahoo-
+            // Sammelfeed. Im Test kam sonst "Earnings - Call - Highlights" heraus
+            // (Transkript-Meldungen), nicht das beherrschende Marktthema.
+            const heute=liste.filter(h=>Date.parse(h.d)>=seit&&((h.tg&&h.tg.length)||(h.a&&h.a.length)));
+            if(heute.length<8)return null;
+            const woerter=heute.map(h=>new Set(schluesselWorte(h.t).filter(w=>w.length>3)));
+            const zaehl={};
+            woerter.forEach(set=>set.forEach(w=>{zaehl[w]=(zaehl[w]||0)+1;}));
+            const leit=Object.keys(zaehl).filter(w=>!THEMA_UNSPEZIFISCH.has(w))
+              .sort((a,b)=>zaehl[b]-zaehl[a]||a.localeCompare(b))[0];
+            if(!leit)return null;
+            const n=zaehl[leit];
+            if(n<Math.max(THEMA_MIN_ABS,Math.ceil(heute.length*THEMA_MIN_ANTEIL)))return null;
+            const mit={};
+            woerter.filter(set=>set.has(leit)).forEach(set=>set.forEach(w=>{if(w!==leit)mit[w]=(mit[w]||0)+1;}));
+            const begleiter=Object.keys(mit).filter(w=>!THEMA_UNSPEZIFISCH.has(w)&&mit[w]>=Math.max(2,Math.ceil(n*0.2)))
+              .sort((a,b)=>mit[b]-mit[a]||a.localeCompare(b)).slice(0,2);
+            const gross=w=>w.charAt(0).toUpperCase()+w.slice(1);
+            return {label:[leit].concat(begleiter).map(gross).join(" · "),n,total:heute.length};
+          }
+
+          function main(){
+            const frisch=einlesen();
+            let out={};
+            try{const d=JSON.parse(fs.readFileSync("news_data.json","utf8"));if(d&&typeof d==="object")out=d;}catch(e){}
+            const bestand=Array.isArray(out.headlines)?out.headlines:[];
+            if(!frisch.length&&!bestand.length){console.log("[debug] news: keine Eintraege - nichts geschrieben");return;}
+            const map={};
+            bestand.forEach(h=>{if(h&&h.u)map[h.u]=h;});
+            frisch.forEach(h=>{map[h.u]=h;});
+            const grenze=Date.now()-35*864e5;
+            let liste=Object.values(map).filter(h=>{const ts=Date.parse(h&&h.d);return isFinite(ts)&&ts>=grenze;});
+            liste=anreichern(liste);
+            // Fuer den Deckel nach Wichtigkeit sortieren, danach wieder nach Datum -
+            // sonst behielte der Deckel einfach die neuesten statt der wichtigsten.
+            liste.sort((a,b)=>(b.w||0)-(a.w||0)||Date.parse(b.d)-Date.parse(a.d));
+            // ⚠ Deckel je Quelle: Yahoos Sammelfeed stellte allein 310 von 537
+            // Eintraegen - ueber die Haelfte des Bestands aus einer einzigen, wenig
+            // aussagekraeftigen Quelle. Behalten werden je Quelle die wichtigsten,
+            // bei gleichem Gewicht die neuesten.
+            const proQuelle={};
+            liste=liste.filter(h=>{
+              const k=h.s||"?";
+              proQuelle[k]=(proQuelle[k]||0)+1;
+              return proQuelle[k]<=MAX_JE_QUELLE;
+            });
+            liste.sort((a,b)=>Date.parse(b.d)-Date.parse(a.d));
+            liste=liste.slice(0,600);
+            out.headlines=liste;
+            out.updated=new Date().toISOString();
+            // Nur Quellen ausweisen, die tatsaechlich etwas geliefert haben - eine
+            // Quelle zu nennen, deren Adresse gerade tot ist, waere eine stille
+            // Falschaussage in der Karte.
+            out.sources=[...new Set(liste.map(h=>h.s))].sort();
+            const th=themaDesTages(liste);
+            if(th)out.topic=th; else delete out.topic;
+            fs.writeFileSync("news_data.json",JSON.stringify(out,null,1));
+            const heute=liste.filter(h=>Date.parse(h.d)>Date.now()-864e5).length;
+            const gebuendelt=liste.filter(h=>h.n>1).length;
+            console.log("[debug] news: "+liste.length+" Schlagzeilen gesamt, "+heute+" aus den letzten 24h, "
+              +gebuendelt+" mit mehreren Quellen"+(th?", Thema des Tages: "+th.label+" ("+th.n+"/"+th.total+")":""));
+          }
+
+          main();
           NEWSJS
           node news_parse.js
           rm -f news_rss_*.xml news_parse.js

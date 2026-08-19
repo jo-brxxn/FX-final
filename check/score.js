@@ -89,7 +89,28 @@ const MODE = process.argv[2] || 'normalized';
     try{feeds[n]();recomputeAuto();const zweiter=feeds[n]();ok.idempotenz[n]=zweiter;
       if(zweiter)add('Feed nicht idempotent',{feed:n});}catch(e){ok.idempotenz[n]='ERR '+e;}
   });
-  // ── G) NaN/undefined in irgendeinem Score ──────────────────────
+  // ── G2) Flip-Tage gegen scoreHist ──────────────────────────────
+  // symBiasFlipDays speist die Flip-Marke an den Asset-Schlagzeilen. Sie darf
+  // NUR Tage melden, an denen scoreHist wirklich einen Bias-Wechsel
+  // aufgezeichnet hat - eine eigene Herleitung waere die naechste Auspraegung
+  // der Dual-Source-Fehlerklasse.
+  if(typeof symBiasFlipDays==='function'){
+    Object.keys(scoreHist||{}).forEach(id=>{
+      const reihe=scoreHist[id]||[],flips=symBiasFlipDays(id);
+      const soll={};
+      for(let i=1;i<reihe.length;i++){
+        const a=reihe[i-1][5],b2=reihe[i][5];
+        if(a&&b2&&a!==b2)soll[reihe[i][0]]=a+'->'+b2;
+      }
+      Object.keys(flips).forEach(d=>{
+        if(!soll[d])add('Flip-Tag ohne Beleg in scoreHist',{sym:id,tag:d});
+        else if(soll[d]!==flips[d].from+'->'+flips[d].to)
+          add('Flip-Richtung weicht von scoreHist ab',{sym:id,tag:d,ist:flips[d].from+'->'+flips[d].to,soll:soll[d]});
+      });
+      Object.keys(soll).forEach(d=>{if(!flips[d])add('Flip-Tag in scoreHist nicht gemeldet',{sym:id,tag:d});});
+    });
+  }
+  // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});
   (typeof ALL_PAIRS!=='undefined'?ALL_PAIRS:[]).forEach(n=>{

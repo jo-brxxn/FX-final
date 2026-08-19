@@ -6843,3 +6843,83 @@ Absicherung. Wo ein Fehlerfall billig abzufangen ist, abfangen - auch wenn er
 unwahrscheinlich scheint. Zwei parallele Laeufe sind bei einem stuendlichen
 Zeitplan plus gelegentlichem manuellen Anstoss nicht die Ausnahme, sondern
 regelmaessig.
+
+### Schlagzeilen-Karte neu gebaut: Rangfolge, Buendelung, Titel, Design (Nutzer-Wunsch 2026-08-19)
+
+Nutzer: "mach das Widget auf dem Dashboard fuer die News besser finde selber
+die Probleme und Sorg fuer guten Inhalt sowie Design." Sieben Befunde, alle
+an den echten 297 Schlagzeilen gemessen, nicht geschaetzt:
+
+| Befund | Messwert |
+|---|---|
+| Rangfolge unbrauchbar | 80% aller Meldungen LOW, nur 6 HIGH - und alle 6 waren Notenbank-VERWALTUNG ("Fed bittet um Kommentare zu einem Regel-Vorschlag"). 143 Eintraege trugen exakt dasselbe Gewicht. |
+| Dieselbe Meldung mehrfach | 11 von 27 Meldungen eines Tages betrafen Trump/Kanada/Zoelle |
+| Verlags-Anhang im Titel | 164 von 297, teils "- ABC News - Breaking News, Latest News and Videos" |
+| echte Quelle unsichtbar | 205 Eintraege standen als "Macro wire"/"Bank research" da |
+| rohe HTML-Codes | 8 Titel als `Here&#x2019;s why ...` |
+| Lebenshilfe im Wirtschafts-Feed | MarketWatch-Topstories: "Our son ... Should we change our $3 million will?" |
+| Karte zu gross | 3112px hoch, 91-123px je Eintrag, ein Titel 240 Zeichen |
+
+**Rangfolge: gezaehlt statt zugewiesen.** Hauptsignal ist jetzt, wie viele
+UNABHAENGIGE Haeuser dieselbe Meldung bringen (`Math.min(6,2*(n-1))`) - ein
+gemessener Relevanzbeleg. Die Quellenklasse wirkt nur noch als Zu-/Abschlag:
+echte Notenbank-Beschluesse und Reden +5 (`CB_ECHT`), deren Verwaltungs-
+meldungen −3 (`CB_VERWALTUNG`). Ohne diese Trennung dominierte die Klasse
+alles. Schwellen im Client: HIGH ab 5, MED ab 2,5 - an der echten Verteilung
+kalibriert (HIGH trifft rund 2%).
+
+**⚠ Der Verlags-Anhang wird NICHT geraten.** Google News liefert je Eintrag
+ein `<source>`-Tag mit dem Verlag; genau dieser Anhang wird abgeschnitten.
+Nur wo das Tag fehlt (Altbestand), greift ein Rueckfall - und der nimmt das
+ERSTE passende " - ", nicht das letzte: Verlagsnamen enthalten selbst
+Gedankenstriche, mit dem letzten bliebe " - ABC News" stehen und der Verlag
+hiesse "Breaking News, Latest News and Videos".
+
+**⚠ Die Anreicherung laeuft ueber den GESAMTEN Bestand, nicht nur ueber die
+frischen Eintraege** - sonst behielte der Altbestand aus `news_data.json`
+fuer immer seinen alten Titel, seine alte Quelle und sein altes Gewicht.
+
+**⚠ Nur der Repraesentant einer Gruppe bleibt in der Liste**, die uebrigen
+Haeuser stecken als `o[]` daran (Plus-Chip in der Zeile). `n` wird dabei NIE
+nach unten korrigiert: aeltere Meldungen rollen aus den Feeds heraus, die
+Zahl der Haeuser, die berichtet haben, schrumpft aber nicht rueckwirkend.
+
+**⚠ "Thema des Tages" ueber die WORTVERTEILUNG, nicht ueber die Gruppen.**
+Gemessen: die groesste Dubletten-Gruppe hatte 3 Eintraege, waehrend 24 von
+220 Meldungen dasselbe Thema hatten - verschiedene Haeuser titeln zu
+verschieden, um als Dublette zu gelten. Gezaehlt wird das haeufigste Sachwort
+plus die zwei, die am oeftesten damit auftreten; die genannte Zahl ist immer,
+wie viele Meldungen das Leitwort enthalten. Zwei Filter noetig: generische
+Woerter raus (sonst gewinnt "Stock"), und nur Meldungen MIT Markt- oder
+Themenbezug zaehlen (sonst gewinnt Yahoos Transkript-Strom mit "Earnings -
+Call - Highlights"). Ergebnis am echten Bestand: "Tariffs · Trump · Canada,
+15 von 53".
+
+**Deckel je Quelle** (`MAX_JE_QUELLE`=80): Yahoos Sammelfeed stellte 310 von
+537 Eintraegen. Fuer den Deckel wird nach Wichtigkeit sortiert, danach wieder
+nach Datum - sonst behielte er die neuesten statt der wichtigsten.
+
+**Anzeige.** Zeilenhoehe 91-123px -> rund 45px, Kartenhoehe 3112 -> 517px.
+Wichtigkeit als linker Randstreifen (Konvention der Score-Karten), nicht als
+graue Box in eigener Zeile. **⚠ Der Titel darf zwei Zeilen brauchen:**
+einzeilig mit Auslassung war in der 364px schmalen Dashboard-Spalte unlesbar
+("Donald Trump says de…") - die Schlagzeile IST der Inhalt. Im Wochen-/
+Monatsfenster wird nach TAG sortiert und erst innerhalb des Tages nach
+Wichtigkeit, sonst erscheint derselbe Trenner mehrfach (im Test stand "Today"
+siebenmal in einer Liste). Aufgeklappt bleibt die Karte bei 40 Zeilen
+gedeckelt - ohne Deckel wurde sie 13687px hoch und sprengte die
+Spaltenangleichung.
+
+**Neu dazu:** Watchlist-Filter, Ungelesen-Markierung (`newsSeenTs`, an allen
+vier Sync-Ecken, beim Pull gewinnt der SPAETERE Zeitstempel), Schlagzeilen je
+Asset auf der Detailseite mit Hinweis auf einen Score-Flip desselben Tages
+(Quelle ausschliesslich `scoreHist`, geprueft in `check/score.js`), ein
+Zaehler an jeder Kalenderzeile (⚠ das Feld heisst zur Laufzeit `currencies`,
+nicht `country` wie in der Rohdatei) und ein eigener Insights-Tab "News" mit
+Volltextsuche, Asset- und Quellenfilter.
+
+**Merksatz:** eine Rangfolge, die eine EIGENSCHAFT der Quelle gewichtet
+(Klasse, Prominenz), bevorzugt strukturell das, was diese Quelle am
+haeufigsten produziert - bei Notenbanken ist das Verwaltung, nicht
+Geldpolitik. Ein gezaehltes Signal (wie viele andere berichten mit) ist
+robuster als jede zugewiesene Stufe.

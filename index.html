@@ -1427,15 +1427,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .ns-lbl{font-size:10.5px;color:var(--t2);line-height:1.35}
 .rterm-noterow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .rterm-notesearch{flex:1;min-width:150px}
-/* Headlines-Karte (Nutzer-Wunsch 2026-08-06): kompakte Schlagzeilen-Liste,
-   ganz rechte Dashboard-Spalte - Titel + Quelle/Zeit, ganze Zeile klickbar
-   (oeffnet den Artikel in einem neuen Tab). */
-.hl-row{display:flex;flex-direction:column;gap:2px;padding:7px 2px;border-bottom:1px solid var(--bd);text-decoration:none;color:inherit}
-.hl-row:last-child{border-bottom:none}
-.hl-title{font-size:12.5px;font-weight:700;color:var(--t0);line-height:1.35}
-@media(hover:hover){.hl-row:hover .hl-title{color:var(--blue)}}
-.hl-meta{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--t3);font-family:var(--ff-num)}
-.hl-time::before{content:'· '}
 .evt-flag-slot{display:inline-flex;align-items:center;justify-content:center;width:13px;flex-shrink:0}
 .dw-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.55}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
@@ -1869,6 +1860,8 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .cal-val.act-bad{color:var(--red)}
 .cal-row-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:15px;opacity:.2;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.cal-row:hover .cal-row-del{opacity:.5}}@media (hover:hover){.cal-row-del:hover{opacity:1!important;color:var(--red)}}
 .cal-row-actions{display:flex;align-items:center;justify-content:center;gap:5px}
+.cal-news-btn{display:inline-flex;align-items:center;gap:2px;background:none;border:1px solid var(--bd);color:var(--t3);border-radius:var(--rss);padding:0 3px;font-family:var(--ff-num);font-size:9.5px;cursor:pointer;line-height:1.5}
+@media (hover:hover){.cal-news-btn:hover{color:var(--blue);border-color:var(--blue)}}
 .cal-alert-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0;line-height:1;opacity:.22;filter:grayscale(1);transition:opacity .12s,filter .12s}@media (hover:hover){.cal-row:hover .cal-alert-btn{opacity:.55}}@media (hover:hover){.cal-alert-btn:hover{opacity:1!important;filter:none}}
 .cal-alert-btn.on{opacity:1;filter:none;color:var(--amber)}
 /* Sichtbare Kurz-Legende unter dem Currency-Strength-Ranking (Touch hat
@@ -1980,23 +1973,66 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
 .histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px 54px}
-.hl-tabs{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
-.hl-tab{background:var(--bg2);border:1px solid var(--bd);color:var(--t2);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+/* Schlagzeilen-Karte. Eine Zeile je Meldung (Titel links mit Auslassung,
+   Quelle/Zeit/Assets rechts) - vorher waren es 91 bis 123 Pixel je Eintrag
+   und 3112 Pixel Kartenhoehe. Die Wichtigkeit sitzt als linker Randstreifen
+   an der Zeile, nach derselben Konvention wie die Score-Karten (siehe
+   CLAUDE.md "kalmes Design statt Farbflut"), statt als graue Box in einer
+   eigenen Zeile. */
+.hl-topic{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--t3);
+  background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);
+  border-radius:var(--rs);padding:5px 9px;margin-bottom:8px}
+.hl-topic b{color:var(--t0);font-size:12px;font-weight:700}
+.hl-topic-n{font-family:var(--ff-num);color:var(--t3)}
+.hl-tabs{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;align-items:center}
+.hl-tab{background:var(--bg2);border:1px solid var(--bd);color:var(--t2);border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px}
 .hl-tab.on{background:var(--bg5);border-color:var(--bd2);color:var(--t0)}
 .hl-cnt{font-family:var(--ff-num);font-size:10px;color:var(--t3);background:var(--bg0);border-radius:999px;padding:0 5px;line-height:1.5}
 .hl-tab.on .hl-cnt{color:var(--t1)}
-.hl-row{display:flex;gap:8px;align-items:flex-start;padding:6px 2px;border-bottom:1px solid var(--bd);text-decoration:none}
+.hl-tab.hl-new{border-color:var(--blue);color:var(--blue)}
+.hl-tab.hl-new .hl-cnt{color:var(--blue)}
+
+.hl-day{font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--t3);text-transform:uppercase;
+  padding:9px 0 3px;border-bottom:1px solid var(--bd);margin-bottom:2px}
+.hl-day:first-child{padding-top:0}
+.hl-row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;
+  padding:5px 6px 5px 7px;border-left:3px solid transparent;border-bottom:1px solid var(--bd);
+  text-decoration:none;color:inherit}
 .hl-row:last-child{border-bottom:none}
-.hl-rank{flex:0 0 34px;font-family:var(--ff-num);font-size:9px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:var(--rss);padding:2px 0;margin-top:1px}
-.hl-hi{color:#fff;background:var(--red)}
-.hl-mid{color:var(--t0);background:var(--bg5);border:1px solid var(--bd2)}
-.hl-lo{color:var(--t3);background:var(--bg2);border:1px solid var(--bd)}
-.hl-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.hl-title{color:var(--t1);font-size:12px;line-height:1.4}
-.hl-row:hover .hl-title{color:var(--blue)}
-.hl-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;color:var(--t3)}
-.hl-src{font-weight:600;color:var(--t2)}
-.hl-tag{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:0 4px;font-size:9.5px;color:var(--t3)}
+.hl-row.lv-hi{border-left-color:var(--blue)}
+.hl-row.lv-mid{border-left-color:var(--bd2)}
+/* ⚠ Der Titel darf zwei Zeilen brauchen. Einzeilig mit Auslassung war in der
+   364px breiten Dashboard-Spalte unlesbar ("Donald Trump says de…") - die
+   Schlagzeile IST der Inhalt, die Randdaten stehen daneben. Zwei Zeilen
+   ergeben rund 40px je Eintrag statt der frueheren 91 bis 123. */
+.hl-title{color:var(--t1);font-size:12px;line-height:1.4;min-width:0;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hl-row.lv-hi .hl-title{color:var(--t0);font-weight:600}
+@media(hover:hover){.hl-row:hover .hl-title{color:var(--blue)}}
+.hl-side{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;
+  max-width:92px;font-size:10px;color:var(--t3)}
+.hl-side-r{display:flex;align-items:center;gap:4px}
+.hl-src{font-weight:600;color:var(--t2);max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hl-time{font-family:var(--ff-num)}
+.hl-ass{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--t2);
+  border:1px solid var(--bd2);border-radius:var(--rss);padding:0 4px}
+.hl-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;align-self:center}
+.hl-more{font-family:var(--ff-num);font-size:9.5px;color:var(--t3);border:1px solid var(--bd);
+  border-radius:var(--rss);padding:0 4px;cursor:pointer;background:none}
+.hl-more:hover{color:var(--blue);border-color:var(--blue)}
+.hl-srcs{display:flex;flex-wrap:wrap;gap:8px;padding:2px 6px 6px 10px;border-bottom:1px solid var(--bd);font-size:10.5px}
+.hl-srcs a{color:var(--t2);text-decoration:none}
+.hl-srcs a:hover{color:var(--blue);text-decoration:underline}
+.news-card .rub-hdr{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.rub-name-static{font-size:var(--fs-md);font-weight:650;color:var(--t0)}
+.news-card-n{font-family:var(--ff-num);font-size:11px;color:var(--t3)}
+.news-card-body .hl-row{padding-left:0;border-left-width:2px;padding-right:0}
+.hl-flip{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--blue);border:1px solid var(--blue);border-radius:var(--rss);padding:0 4px;white-space:nowrap}
+.news-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.news-q{flex:1 1 220px;min-width:160px;background:var(--bg2);border:1px solid var(--bd);color:var(--t0);border-radius:var(--rs);padding:5px 9px;font-size:12px}
+.news-tools select{background:var(--bg2);border:1px solid var(--bd);color:var(--t1);border-radius:var(--rs);padding:5px 8px;font-size:12px}
+.hl-expand{width:100%;margin-top:6px;font-size:10.5px;padding:3px 8px;background:none;border:1px solid var(--bd);color:var(--t3);border-radius:var(--rs);cursor:pointer}
+.hl-expand:hover{color:var(--blue);border-color:var(--blue)}
 .aaii-lead{color:var(--t2);font-size:12px;line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);border-radius:var(--rs);padding:9px 11px}
 .aaii-src{color:var(--blue);font-weight:600;white-space:nowrap}
 .aaii-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:10px}
@@ -2947,11 +2983,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-388 - Die Karte "Focus - Believe - Do" war seit V385 eine leere Box von 419 Pixeln Hoehe. Ursache war eine doppelt eingefuegte else-if-Zeile: der erste Zweig war leer und traf immer zu, der zweite mit dem eigentlichen Inhalt war dadurch toter Code, den nie etwas erreicht hat. Der JS-Syntax-Check konnte das nicht finden - der Code war voellig gueltig, nur unerreichbar."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-389 - Die Schlagzeilen-Karte komplett ueberarbeitet, Daten- wie Anzeigeseite. DATEN: Die Rangfolge war unbrauchbar - 80 Prozent aller Meldungen galten als LOW, und alle sechs HIGH-Meldungen waren Notenbank-Verwaltungskram wie "Fed bittet um Kommentare zu einem Regel-Vorschlag", weil allein die Quellenklasse zaehlte. Hauptsignal ist jetzt, wie viele UNABHAENGIGE Haeuser dieselbe Meldung bringen; echte Beschluesse und Reden werden angehoben, Verwaltungsmeldungen abgewertet. Dieselbe Meldung aus mehreren Haeusern wird zu EINER Zeile gebuendelt, die uebrigen Quellen stecken hinter dem Plus-Zeichen - von 27 Meldungen eines Tages drehten sich 11 um dieselbe Sache. 164 von 297 Titeln trugen einen Verlags-Anhang wie "- ABC News - Breaking News, Latest News and Videos"; der wird jetzt exakt ueber das source-Tag des Feeds abgeschnitten und der Verlag stattdessen als Quelle angezeigt, statt aller 205 Suchtreffer als "Macro wire". Rohe HTML-Codes werden vollstaendig aufgeloest. MarketWatch laeuft auf dem Wirtschafts-Feed statt auf Topstories, Bloomberg und Reuters kamen dazu, Lebenshilfe-Meldungen fliegen raus. Jede Schlagzeile bekommt die betroffenen Assets zugeordnet, und eine Zeile nennt das Leitthema des Tages samt Zaehlung. ANZEIGE: Die Karte war 3112 Pixel hoch bei 91 bis 123 Pixel je Eintrag - jetzt rund 45 Pixel je Zeile, Wichtigkeit als linker Randstreifen statt grauer Box, Tages-Trenner im Wochen- und Monatsfenster, standardmaessig die acht wichtigsten mit Aufklapper. Dazu ein Watchlist-Filter, eine Ungelesen-Markierung, Schlagzeilen je Asset auf der Detailseite mit Hinweis auf Score-Flips desselben Tages, ein Zaehler an jeder Kalenderzeile und ein eigener Insights-Tab "News" mit Volltextsuche, Asset- und Quellenfilter."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-388</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-389</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3024,6 +3060,13 @@ function introLogin(){
   <div id="sentBody"></div>
 </div>
 <!-- PAGE: SEASONALITY -->
+<div class="pc" id="pgNews" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">News</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Economic headlines from free RSS feeds &middot; up to 35 days &middot; display-only, no score impact</div>
+  </div>
+  <div id="newsBody"></div>
+</div>
 <div class="pc" id="pgSeas" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Seasonality</div>
@@ -5504,7 +5547,12 @@ function calRowHtml(ev,opts){
       const canAlert=!isPast&&evtTimeValid(ev.time);
       const alertBtn=canAlert?`<button class="cal-alert-btn${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Telegram alert set — tap to edit or remove':'Set a Telegram alert for this event'}">${icn('bell',13)}</button>`:'';
       const other=opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`:'';
-      return(alertBtn||other)?`<div class="cal-row-actions">${alertBtn}${other}</div>`:'<div></div>';
+      // Schlagzeilen zu diesem Termin: gleiche Waehrung, gleicher Tag. Reine
+      // Koinzidenz-Anzeige - der Knopf oeffnet den News-Tab auf dieses Asset
+      // und diesen Tag, es wird kein inhaltlicher Zusammenhang behauptet.
+      const nH=evtNewsCount(ev);
+      const newsBtn=nH?`<button class="cal-news-btn" onclick="gotoNewsFor('${escJH(evtNewsIds(ev)[0]||'')}','${escJH(ev.date||'')}')" title="${escH(nH+' headline(s) on this day mentioning '+evtNewsIds(ev).join('/'))}">${icn('note',11)}<span>${nH}</span></button>`:'';
+      return(alertBtn||other||newsBtn)?`<div class="cal-row-actions">${newsBtn}${alertBtn}${other}</div>`:'<div></div>';
     })()}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;
@@ -8865,14 +8913,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -9104,7 +9152,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -9221,6 +9269,7 @@ async function cloudPull(manual,forceOverwrite){
       // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
       // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
       if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){scoreMode=cd.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
+      if(!prefPending&&typeof cd.newsSeenTs==='string'&&cd.newsSeenTs>newsSeenTs){newsSeenTs=cd.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
@@ -9633,6 +9682,7 @@ function renderSpecTab(c){
   const rubs=c.rubrics||[];
   return`${renderOverviewCard(rubs)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
+  ${newsAssetSectionHtml(c)}
   <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
 
 function renderRub(rub,ri,total){
@@ -14978,36 +15028,11 @@ function renderDash(){
       //
       // Drei Zeitfenster (Tag/Woche/Monat), innerhalb des Fensters nach
       // WICHTIGKEIT sortiert. Die Wichtigkeit ist keine freie Bewertung,
-      // sondern eine nachlesbare Rechnung (siehe newsWeightNote): Quellenklasse
-      // mal zwei, plus gedeckelte Treffer auf einer festen Themenliste, plus
-      // gedeckelte Treffer auf den in dieser App gelisteten Maerkten.
-      const alleH=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
-      const fenster={day:1,week:7,month:30}[newsRange]||1;
-      const grenze=Date.now()-fenster*864e5;
-      const heads=alleH.filter(h=>{const ts=Date.parse(h&&h.d);return isFinite(ts)&&ts>=grenze;})
-        .sort((x,y)=>(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
-      const tabs=[['day','Today'],['week','Week'],['month','Month']];
-      const bar=`<div class="hl-tabs">${tabs.map(([k,l])=>{
-        const n=alleH.filter(h=>{const ts=Date.parse(h&&h.d);
-          return isFinite(ts)&&ts>=Date.now()-({day:1,week:7,month:30}[k])*864e5;}).length;
-        return`<button class="hl-tab${newsRange===k?' on':''}" onclick="setNewsRange('${k}')">${l}${n?`<span class="hl-cnt">${n}</span>`:''}</button>`;
-      }).join('')}</div>`;
-      // Wichtigkeit als drei Stufen sichtbar machen - die Rohzahl waere ohne
-      // Erklaerung wertlos, die Stufe ist auf einen Blick lesbar.
-      const stufe=v=>v>=8?['hl-hi','HIGH']:v>=5?['hl-mid','MED']:['hl-lo','LOW'];
-      const liste=heads.length?heads.map(h=>{
-        const [cls,lbl]=stufe(+h.w||0);
-        const tags=(Array.isArray(h.tags)?h.tags:[]).slice(0,3)
-          .map(t=>`<span class="hl-tag">${escH(t)}</span>`).join('');
-        return`<a class="hl-row" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${escH((h.t||'')+' — '+(h.s||''))}">
-          <span class="hl-rank ${cls}" title="Importance ${(+h.w||0)} — source class x2 + topic hits + market hits">${lbl}</span>
-          <span class="hl-main"><span class="hl-title">${escH(h.t||'')}</span>
-            <span class="hl-meta"><span class="hl-src">${escH(h.s||'')}</span>${h.d?`<span class="hl-time">${escH(relTime(h.d))}</span>`:''}${tags}</span></span>
-        </a>`;}).join('')
-        :`<div class="dw-empty" style="text-align:left;line-height:1.55">${
-          alleH.length?`Nothing in this window yet — try <b>Week</b> or <b>Month</b>.`
-            :`No headlines yet. They are pulled from free RSS feeds (Fed, ECB, Bank of England, CNBC, MarketWatch, Yahoo Finance and a targeted search for bank research) by the hourly workflow — no API key needed. Nothing is invented in the meantime.`}</div>`;
-      content=bar+liste;
+      // sondern eine nachlesbare Rechnung im Workflow: wie viele UNABHAENGIGE
+      // Haeuser dieselbe Meldung bringen, plus gedeckelte Treffer auf einer
+      // festen Themenliste und auf den hier gelisteten Maerkten; echte
+      // Notenbank-Beschluesse hoch, deren Verwaltungsmeldungen runter.
+      content=newsCardHtml();
     }else if(w.type==='motivation'){
       // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
       // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
@@ -18284,10 +18309,258 @@ let sentSub='retail',sentSym='',pcAsset='';
 let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
-// Zeitfenster der Headlines-Karte: day | week | month. Reine
-// Lese-Auswahl wie pcAsset - bewusst nicht persistiert, kein Sync noetig.
-let newsRange='day';
-function setNewsRange(r){newsRange=r;renderDash();}
+// ── Schlagzeilen ──────────────────────────────────────────────────────────
+// Zeitfenster der Karte: day | week | month. Reine Lese-Auswahl wie pcAsset -
+// bewusst nicht persistiert, kein Sync noetig. Ebenso der Watchlist-Filter,
+// der Aufklapp-Zustand und die geoeffneten Quellenlisten.
+let newsRange='day',newsWatchOnly=false,newsExpanded=false;
+let newsOpenSrc={};
+function setNewsRange(r){newsRange=r;newsExpanded=false;renderDash();}
+function toggleNewsWatch(){newsWatchOnly=!newsWatchOnly;newsExpanded=false;renderDash();}
+function toggleNewsExpand(){newsExpanded=!newsExpanded;renderDash();}
+function toggleNewsSrc(u){newsOpenSrc[u]=!newsOpenSrc[u];renderDash();}
+// Wie viele Zeilen ohne Aufklappen sichtbar sind.
+const NEWS_TOP_N=8,NEWS_MAX_N=40;
+// Wichtigkeitsstufen. ⚠ Die Zahl kommt aus dem Workflow (siehe dort
+// "gewicht") und ist dort nachlesbar zusammengesetzt; hier wird sie nur in
+// drei Stufen uebersetzt. Die Schwellen sind an der echten Verteilung
+// kalibriert: HIGH trifft rund 2% der Meldungen, MED rund 5%.
+function newsLevel(w){const v=+w||0;return v>=5?['lv-hi','HIGH']:v>=2.5?['lv-mid','MED']:['lv-lo','LOW'];}
+// Assets, die in der Watchlist stecken - beide Seiten jedes Paares.
+function newsWatchAssets(){
+  const out=new Set();
+  watchlistPairs().forEach(p=>{
+    const l=pairLegs(p.name);
+    if(l){if(l.bId)out.add(l.bId);if(l.qId)out.add(l.qId);}
+    else{const id=nonFxLegAssetId(p.name);if(id)out.add(id);}
+  });
+  return out;
+}
+// Zeitstempel des letzten "alles gelesen". Alles Neuere gilt als ungelesen.
+// ⚠ Persistiert und geraeteuebergreifend - siehe die vier Ecken in
+// saveNewsSeen/cloudPush/cloudPull/exportData.
+let newsSeenTs=localStorage.getItem('fxpro_news_seen')||'';
+function saveNewsSeen(ts){
+  newsSeenTs=ts;
+  localStorage.setItem('fxpro_news_seen',ts);
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+}
+function markNewsSeen(){saveNewsSeen(new Date().toISOString());renderDash();}
+function newsIsNew(h){return !!(newsSeenTs&&h&&h.d&&h.d>newsSeenTs);}
+// Alle Schlagzeilen, bereits nach dem gewaehlten Fenster und dem
+// Watchlist-Filter beschnitten. EINE Quelle fuer Karte und News-Tab, damit
+// beide nie unterschiedlich filtern.
+function newsPool(range,watchOnly){
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  const tage={day:1,week:7,month:30}[range]||1;
+  const grenze=Date.now()-tage*864e5;
+  let l=alle.filter(h=>{const ts=Date.parse(h&&h.d);return isFinite(ts)&&ts>=grenze;});
+  if(watchOnly){
+    const w=newsWatchAssets();
+    l=l.filter(h=>Array.isArray(h.a)&&h.a.some(id=>w.has(id)));
+  }
+  return l.sort((x,y)=>(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+}
+// Eine Zeile. Titel einzeilig mit Auslassung, rechts Quelle/Zeit/Assets,
+// Wichtigkeit als linker Randstreifen. Bei mehreren Haeusern haengt darunter
+// - erst auf Klick - die Liste der uebrigen Quellen.
+function newsRowHtml(h){
+  const [cls]=newsLevel(h.w);
+  const ass=(Array.isArray(h.a)?h.a:[]).slice(0,2)
+    .map(id=>`<span class="hl-ass">${escH(id)}</span>`).join('');
+  const neu=newsIsNew(h)?`<span class="hl-dot" title="New since you last marked the headlines as read"></span>`:'';
+  const andere=(Array.isArray(h.o)?h.o:[]);
+  const mehr=(h.n>1&&andere.length)
+    ? `<button class="hl-more" onclick="event.preventDefault();event.stopPropagation();toggleNewsSrc('${escJH(h.u)}')" title="${escH(h.n+' outlets reported this')}">+${andere.length}</button>`:'';
+  const tip=escH((h.t||'')+' — '+(h.s||'')+(h.n>1?' · reported by '+h.n+' outlets':'')
+    +' · importance '+(+h.w||0));
+  const srcs=(mehr&&newsOpenSrc[h.u])
+    ? `<div class="hl-srcs">${andere.map(o=>`<a href="${safeUrl(o.u)}" target="_blank" rel="noopener">${escH(o.s||'')}</a>`).join('')}</div>`:'';
+  return`<a class="hl-row ${cls}" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${tip}">
+    <span class="hl-title">${escH(h.t||'')}</span>
+    <span class="hl-side">
+      <span class="hl-side-r">${ass}${mehr}${neu}</span>
+      <span class="hl-side-r"><span class="hl-src">${escH(h.s||'')}</span>${h.d?`<span class="hl-time">${escH(relTime(h.d))}</span>`:''}</span>
+    </span>
+  </a>${srcs}`;
+}
+// Tages-Trenner nur im Wochen-/Monatsfenster - im Tagesfenster waere er
+// eine einzige Ueberschrift ueber allem und damit nutzlos.
+function newsDayLabel(iso){
+  const d=new Date(iso),heute=new Date(),gestern=new Date(Date.now()-864e5);
+  const g=x=>x.toISOString().slice(0,10);
+  if(g(d)===g(heute))return'Today';
+  if(g(d)===g(gestern))return'Yesterday';
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+}
+// Schlagzeilen zu genau einem Asset. Zuordnung kommt aus dem Workflow
+// (Feld a[]), hier wird nichts neu erraten.
+function newsForAsset(id,limit){
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  const l=alle.filter(h=>Array.isArray(h.a)&&h.a.indexOf(id)>=0)
+    .sort((x,y)=>(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+  return limit?l.slice(0,limit):l;
+}
+// Tage, an denen der Bias dieses Assets gekippt ist. ⚠ Quelle ist
+// ausschliesslich scoreHist - dieselbe Reihe, aus der Trends und die
+// History-Karte lesen. Keine zweite Rechnung (siehe die Dual-Source-Lehren
+// in CLAUDE.md).
+function symBiasFlipDays(id){
+  const r=(scoreHist&&scoreHist[id])||[];
+  const out={};
+  for(let i=1;i<r.length;i++){
+    const vor=r[i-1][5],jetzt=r[i][5];
+    if(vor&&jetzt&&vor!==jetzt)out[r[i][0]]={from:vor,to:jetzt};
+  }
+  return out;
+}
+function newsAssetSectionHtml(sym){
+  const heads=newsForAsset(sym.id,6);
+  if(!heads.length)return'';
+  const flips=symBiasFlipDays(sym.id);
+  const zeilen=heads.map(h=>{
+    const [cls]=newsLevel(h.w);
+    const f=flips[String(h.d||'').slice(0,10)];
+    const flip=f?`<span class="hl-flip" title="${escH(sym.id+' flipped from '+(BIAS_LBL[f.from]||f.from)+' to '+(BIAS_LBL[f.to]||f.to)+' on this day - shown because it coincides, not as a cause')}">${bMark(f.to)} flip</span>`:'';
+    return`<a class="hl-row ${cls}" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${escH((h.t||'')+' — '+(h.s||''))}">
+      <span class="hl-title">${escH(h.t||'')}</span>
+      <span class="hl-side"><span class="hl-side-r">${flip}</span>
+        <span class="hl-side-r"><span class="hl-src">${escH(h.s||'')}</span><span class="hl-time">${escH(relTime(h.d))}</span></span></span>
+    </a>`;}).join('');
+  return`<div class="rub-card news-card">
+    <div class="rub-hdr"><span class="rub-name-static">Headlines</span>
+      <span class="news-card-n">${newsForAsset(sym.id).length}</span></div>
+    <div class="news-card-body">${zeilen}</div>
+  </div>`;
+}
+// ── News-Tab ──────────────────────────────────────────────────────────────
+// Volle Historie (bis 35 Tage), Volltextsuche, Asset- und Quellenfilter.
+// Zeitraum ueber den app-weiten TIME_RANGES-Helfer, kein eigener Filter
+// (CLAUDE.md: wiederkehrende UI-Bausteine muessen einheitlich sein).
+let newsTabQuery='',newsTabAsset='ALL',newsTabSrc='ALL',newsTabRange=1,newsTabFrom='',newsTabTo='';
+let newsTabLimit=60;
+function setNewsTabRange(v){newsTabRange=v;newsTabLimit=60;renderNewsTab();}
+function setNewsTabRangeCustom(a,b){newsTabFrom=a;newsTabTo=b;newsTabLimit=60;renderNewsTab();}
+function setNewsTabQuery(v){newsTabQuery=v;newsTabLimit=60;renderNewsTab();}
+function setNewsTabAsset(v){newsTabAsset=v;newsTabLimit=60;renderNewsTab();}
+function setNewsTabSrc(v){newsTabSrc=v;newsTabLimit=60;renderNewsTab();}
+function newsTabMore(){newsTabLimit+=60;renderNewsTab();}
+// Sprung aus dem Kalender: Asset und Tag setzen, dann den Tab oeffnen.
+function gotoNewsFor(sym,datum){
+  newsTabAsset=sym||'ALL';newsTabQuery='';newsTabSrc='ALL';newsTabLimit=60;
+  if(datum){newsTabRange='CUSTOM';newsTabFrom=datum;newsTabTo=datum;}
+  showTab('news');
+}
+// Wie viele Schlagzeilen am Tag eines Kalender-Events dessen Waehrung nennen.
+// ⚠ Das Feld heisst zur Laufzeit "currencies" (String oder Liste), nicht
+// "country" wie in der Rohdatei - processCalEvts benennt es um.
+function evtNewsIds(ev){
+  const c=ev&&ev.currencies;
+  return (Array.isArray(c)?c:String(c||'').split(/[,\s/]+/)).filter(Boolean);
+}
+function evtNewsCount(ev){
+  const tag=ev&&ev.date;if(!tag)return 0;
+  const ids=evtNewsIds(ev);if(!ids.length)return 0;
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  return alle.filter(h=>String(h.d||'').slice(0,10)===tag&&Array.isArray(h.a)&&h.a.some(x=>ids.indexOf(x)>=0)).length;
+}
+function renderNewsTab(){
+  const el=document.getElementById('newsBody');if(!el)return;
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  const daten=[...new Set(alle.map(h=>String(h.d||'').slice(0,10)).filter(Boolean))].sort();
+  const erlaubt=new Set(filterDatesByRange(daten,newsTabRange,newsTabFrom,newsTabTo));
+  const q=newsTabQuery.trim().toLowerCase();
+  let l=alle.filter(h=>{
+    if(!erlaubt.has(String(h.d||'').slice(0,10)))return false;
+    if(newsTabAsset!=='ALL'&&!(Array.isArray(h.a)&&h.a.indexOf(newsTabAsset)>=0))return false;
+    if(newsTabSrc!=='ALL'&&h.s!==newsTabSrc)return false;
+    if(q&&String(h.t||'').toLowerCase().indexOf(q)<0&&String(h.s||'').toLowerCase().indexOf(q)<0)return false;
+    return true;
+  }).sort((x,y)=>String(y.d).slice(0,10).localeCompare(String(x.d).slice(0,10))
+      ||(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+  const assetIds=[...new Set(alle.flatMap(h=>Array.isArray(h.a)?h.a:[]))]
+    .sort((a,b)=>a.localeCompare(b));
+  const quellen=[...new Set(alle.map(h=>h.s).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const opt=(v,lbl,cur)=>`<option value="${escH(v)}"${cur===v?' selected':''}>${escH(lbl)}</option>`;
+  const kopf=`<div class="news-tools">
+    <input class="news-q" type="search" placeholder="Search headlines…" value="${escH(newsTabQuery)}"
+      oninput="setNewsTabQuery(this.value)">
+    <select onchange="setNewsTabAsset(this.value)">${opt('ALL','All assets',newsTabAsset)}${assetIds.map(id=>opt(id,(COT_NAME[id]||id),newsTabAsset)).join('')}</select>
+    <select onchange="setNewsTabSrc(this.value)">${opt('ALL','All sources',newsTabSrc)}${quellen.map(x=>opt(x,x,newsTabSrc)).join('')}</select>
+  </div>
+  ${timeRangeBarHtml(newsTabRange,'setNewsTabRange')}
+  ${newsTabRange==='CUSTOM'?timeRangeCustomHtml(newsTabFrom,newsTabTo,'setNewsTabRangeCustom'):''}`;
+  if(!l.length){
+    el.innerHTML=kopf+`<div class="cot-card" style="margin-top:10px"><div class="dw-empty" style="text-align:left">${
+      alle.length?'Nothing matches these filters.':'No headlines yet - the hourly workflow fills this from free RSS feeds.'}</div></div>`;
+    return;
+  }
+  const sichtbar=l.slice(0,newsTabLimit);
+  let rows='',tag='';
+  sichtbar.forEach(h=>{
+    const d=String(h.d||'').slice(0,10);
+    if(d!==tag){tag=d;rows+=`<div class="hl-day">${escH(newsDayLabel(h.d))}</div>`;}
+    rows+=newsRowHtml(h);
+  });
+  const rest=l.length-sichtbar.length;
+  el.innerHTML=kopf+`<div class="cot-card" style="margin-top:10px">
+    <div class="cot-card-title">${l.length} headline${l.length===1?'':'s'}${iBtn('news')}</div>
+    ${rows}
+    ${rest>0?`<button class="hl-expand" onclick="newsTabMore()">Show ${Math.min(rest,60)} more</button>`:''}
+  </div>`;
+}
+function newsCardHtml(){
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  let heads=newsPool(newsRange,newsWatchOnly);
+  const tabs=[['day','Today'],['week','Week'],['month','Month']];
+  const zaehl=k=>newsPool(k,newsWatchOnly).length;
+  const neuN=heads.filter(newsIsNew).length;
+  const bar=`<div class="hl-tabs">${tabs.map(([k,l])=>
+      `<button class="hl-tab${newsRange===k?' on':''}" onclick="setNewsRange('${k}')">${l}<span class="hl-cnt">${zaehl(k)}</span></button>`).join('')}
+    <button class="hl-tab${newsWatchOnly?' on':''}" onclick="toggleNewsWatch()" title="Only headlines that touch an asset in your Watchlist">${icn('star',11)}</button>
+    <button class="hl-tab${neuN?' hl-new':''}" onclick="markNewsSeen()" title="${escH(newsSeenTs?'Mark everything as read':'Set the read marker to now - anything newer is then flagged')}">${icn('bell',11)}${neuN?`<span class="hl-cnt">${neuN}</span>`:''}</button></div>`;
+  // Leitthema des Tages: kommt fertig aus dem Workflow (dort gezaehlt, nicht
+  // geschaetzt) und wird nur im Tagesfenster gezeigt, weil es genau darauf
+  // gerechnet ist.
+  const th=NEWS_DATA&&NEWS_DATA.topic;
+  const topic=(th&&th.label&&newsRange==='day'&&!newsWatchOnly)
+    ? `<div class="hl-topic" title="${escH('The most frequent subject word across market-relevant headlines of the last 24h, plus the two words that most often appear with it. '+th.n+' of '+th.total+' headlines contain it.')}">Leading topic <b>${escH(th.label)}</b><span class="hl-topic-n">${th.n}/${th.total}</span></div>`:'';
+  if(!heads.length){
+    return topic+bar+`<div class="dw-empty" style="text-align:left;line-height:1.55">${
+      newsWatchOnly?`Nothing in this window touches your Watchlist — switch the star off or try <b>Week</b>.`
+      :alle.length?`Nothing in this window yet — try <b>Week</b> or <b>Month</b>.`
+      :`No headlines yet. They are pulled from free RSS feeds (Fed, ECB, Bank of England, CNBC, MarketWatch, Bloomberg, Yahoo Finance, Reuters and a targeted search for bank research) by the hourly workflow — no API key needed. Nothing is invented in the meantime.`}</div>`;
+  }
+  // ⚠ Im Wochen-/Monatsfenster zuerst nach TAG sortieren und erst innerhalb
+  // des Tages nach Wichtigkeit - sonst mischt die reine Wichtigkeits-
+  // Sortierung die Tage und derselbe Trenner erscheint mehrfach ("Today"
+  // stand im Test siebenmal in einer Liste).
+  if(newsRange!=='day'){
+    heads=heads.slice().sort((x,y)=>String(y.d).slice(0,10).localeCompare(String(x.d).slice(0,10))
+      ||(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+  }
+  // Aufgeklappt bleibt die Karte gedeckelt: ohne Deckel wurde sie im Test
+  // 13687 Pixel hoch und sprengte die Spaltenangleichung des Dashboards.
+  // Der vollstaendige Bestand steht im Insights-Tab "News".
+  const sichtbar=newsExpanded?heads.slice(0,NEWS_MAX_N):heads.slice(0,NEWS_TOP_N);
+  let html='',letzterTag='';
+  sichtbar.forEach(h=>{
+    if(newsRange!=='day'){
+      const tag=String(h.d||'').slice(0,10);
+      if(tag&&tag!==letzterTag){letzterTag=tag;html+=`<div class="hl-day">${escH(newsDayLabel(h.d))}</div>`;}
+    }
+    html+=newsRowHtml(h);
+  });
+  const rest=heads.length-sichtbar.length;
+  const mehr=(rest>0||newsExpanded)
+    ? `<button class="hl-expand" onclick="toggleNewsExpand()">${newsExpanded
+        ?'Show top '+NEWS_TOP_N+(rest>0?' &nbsp;·&nbsp; '+rest+' more in the News tab':'')
+        :'Show '+Math.min(rest,NEWS_MAX_N-NEWS_TOP_N)+' more'}</button>`:'';
+  return topic+bar+html+mehr;
+}
 // AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
 // vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).
 let aaiiRange=12,aaiiCustomFrom='',aaiiCustomTo='';
@@ -19278,6 +19551,12 @@ function renderSeasonality(){
   attachChartHovers(el);
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
+SENT_INFO.news=['Headlines (free RSS feeds, no key)',
+  `<p><b>Where it comes from:</b> central banks directly (Federal Reserve, ECB, Bank of England), established market media (CNBC, MarketWatch, Bloomberg, Yahoo Finance) and a targeted search for Reuters and for what the big houses are saying (JPMorgan, Goldman Sachs, Morgan Stanley, Bank of America, Citigroup). All free RSS, no API key, no quota.</p>
+   <p><b>How the ranking works — it is counted, not judged:</b> the main signal is how many <b>independent outlets</b> carried the same story (2 outlets, 4 outlets…). On top of that come capped hits on a fixed topic list and on the markets listed in this app. A real central-bank decision or speech is lifted; their administrative notices (comment requests, surveys, facility frameworks) are pushed down — without that, a note like "Fed requests comment on a proposal" outranked everything that actually moved a market.</p>
+   <p><b>Duplicates are folded:</b> the same story from several houses becomes one row; the <b>+N</b> chip opens the other outlets. The asset chips (USD, CAD…) come from the same keyword mapping the leading-topic line uses.</p>
+   <p><b>Leading topic:</b> the most frequent subject word across market-relevant headlines of the last 24 hours, plus the two words that most often appear with it. The number is simply how many of those headlines contain the leading word — nothing is estimated.</p>
+   <p><b>Limits:</b> the archive holds 35 days. A headline is never scored — this is context, not a signal. Where a headline lands on a day your score flipped, that is shown as a coincidence on the asset page, not as a cause.</p>`];
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
    <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#3b82f6">Blue up-bars</b> = the month was positive on average; <b style="color:#e35d5d">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
@@ -19750,14 +20029,14 @@ function renderRateProb(){
   scrollRateProbTo(rateProbFocus,false);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={news:'pgNews',dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
 // zusammenmachen, Non-FX unter FX anreihen") - die 'cur'-Seite zeigt jetzt
 // immer ALLE SB_CATS-Kategorien (FX zuerst, dann Crypto/Metals/Energy/
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
-const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','carry','pairs','watch','cal','notes'];
+const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','news','carry','pairs','watch','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   // Label 2026-08-03 von 'FX' auf 'Assets' umbenannt (Nutzer-Wunsch, per Foto):
@@ -19775,6 +20054,7 @@ const TABS={
   seas:{label:'Seasonality',tab:'seas'},
   data:{label:'Data',tab:'data'},
   rate:{label:'Rate Probabilities',tab:'rate'},
+  news:{label:'News',tab:'news'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   // Eigener Tab statt eines Eintrags im Insights-Stapel (Nutzer-Wunsch
@@ -19821,9 +20101,22 @@ function loadTabStacks(){
       const anyIns=tabStacks.find(st=>st.members&&(st.members.includes('cot')||st.members.includes('data')||st.members.includes('sent')||st.members.includes('seas')||st.members.includes('trends')));
       if(anyIns){anyIns.members.push('rate');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     }
+    // 'news' (2026-08-19) nach demselben Muster: erst der Anker hinter
+    // 'rate', dann der stapelweite Rueckfall - ein einzelner Anker reicht
+    // laut dem Bugreport von 2026-07-20 nicht, weil Bestandsnutzer ihre
+    // Stapel umsortiert haben koennen.
+    if(!tabStacks.some(st=>st.members&&st.members.includes('news'))){
+      const insN=tabStacks.find(st=>st.members&&st.members.includes('rate'));
+      if(insN){const i=insN.members.indexOf('rate');insN.members.splice(i+1,0,'news');}
+      else{
+        const anyN=tabStacks.find(st=>st.members&&(st.members.includes('cot')||st.members.includes('data')||st.members.includes('sent')||st.members.includes('seas')||st.members.includes('trends')));
+        if(anyN)anyN.members.push('news');
+      }
+      try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
+    }
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','rate','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','rate','news','carry']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -19996,6 +20289,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='cot'){renderCot();autoFetchCot();}
   else if(tab==='sent'){renderSentiment();autoFetchSentiment();}
   else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
+  else if(tab==='news'){renderNewsTab();}
   else if(tab==='data')renderDataTab();
   else if(tab==='rate'){renderRateProb();autoFetchRateProb();}
   else if(tab==='carry')renderCarry();
