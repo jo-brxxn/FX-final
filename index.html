@@ -1980,6 +1980,19 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
 .histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px 54px}
+.aaii-lead{color:var(--t2);font-size:12px;line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);border-radius:var(--rs);padding:9px 11px}
+.aaii-src{color:var(--blue);font-weight:600;white-space:nowrap}
+.aaii-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:10px}
+.aaii-kpi{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 9px}
+.aaii-kpi-v{font-family:var(--ff-num);font-size:17px;font-weight:700;color:var(--t0);line-height:1.15}
+.aaii-kpi-l{color:var(--t3);font-size:10px;margin-top:2px;line-height:1.3}
+.aaii-views{margin:0 0 6px;flex-wrap:wrap}
+.aaii-impact{margin-top:12px;border-top:1px solid var(--bd);padding-top:9px}
+.aaii-impact summary{cursor:pointer;color:var(--t2);font-size:12px;font-weight:600}
+.aaii-tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.aaii-tbl td{padding:3px 6px;border-bottom:1px solid var(--bd)}
+.aaii-tbl td:first-child{color:var(--t1);font-weight:600;white-space:nowrap;width:130px}
+.aaii-note{color:var(--t3);font-size:11px;line-height:1.5;margin-top:8px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
@@ -2916,12 +2929,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-382 - AAII Investor Sentiment Survey eingebaut plus zwei neue Waechter-Regeln. Die AAII-Umfrage ist die laengste ununterbrochene Stimmungsreihe der Finanzwelt (seit Juli 1987): die American Association of Individual Investors, ein Non-Profit aus Chicago, fragt woechentlich ihre eigenen Mitglieder - US-PRIVATanleger - per Online-Abstimmung genau eine Frage: in welche Richtung geht der Aktienmarkt in den naechsten sechs Monaten? Drei Antworten, bullish neutral bearish, Ergebnis donnerstags fuer die Woche bis Mittwoch. Neuer Unterreiter im Sentiment-Tab mit der 100-Prozent-Aufteilung, dem Spread bullish minus bearish und dem Verlauf inklusive 8-Wochen-Glaettung. Gelesen wird contrarian: Spread ab plus 20 Punkten heisst Sorglosigkeit (bearish), ab minus 20 Kapitulation (bullish) - nicht symmetrisch um null, weil der langjaehrige Mittelwert bei plus 6,5 liegt. Scort mit halbem Gewicht NUR S&P 500 und Nasdaq: die Umfrage fragt ausdruecklich nach dem Aktienmarkt, sie auf FX, Gold oder Krypto zu uebertragen waere eine Interpretation und keine Messung. Der Workflow-Schritt schreibt nur bei bestandener Summenprobe (die drei Anteile muessen 100 ergeben) und nur mit echtem Wochendatum von der Seite - lieber kein Eintrag als ein geratener. Dazu waechst der Waechter mit: eine neue Score-Groesse ohne Pruefung unter check/ bricht den Lauf ab, und ein neuer persistierter Schluessel ohne Anbindung an cloudPush und cloudPull ebenfalls - die beiden am haeufigsten wiederholten Fehlerklassen dieses Projekts sind damit mechanisch abgefangen.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-383 - AAII-Karte deutlich ausgebaut und der Waechter leitet seine Abdeckung jetzt selbst aus dem Code ab. Die AAII-Karte hat fuenf Ansichten auf dieselben Daten: Spread (roh plus 8-Wochen-Glaettung mit Extremzonen), Shares (die drei Anteile als eigene Linien), 100 Prozent gestapelt (Flaechen uebereinander, 50-Prozent-Marke gestrichelt), Distribution (Haeufigkeit jedes Spread-Niveaus ueber alle aufgezeichneten Wochen, heutiger Wert als Marke plus Perzentil) und vs S&P 500 (Spread gegen den Kurs, fuer Divergenzen). Dazu sechs Kennzahlen (Spread, Glaettung, Perzentil, Bullish, Bearish, Wochen seit dem letzten Extrem), eine Kurzerklaerung samt Quell-Link direkt in der Karte statt nur hinter dem i-Knopf, und eine ausklappbare Tabelle mit der Wirkung auf JEDES Asset der Seite - S&P 500 und Nasdaq mit halbem Gewicht, alle uebrigen ausdruecklich ohne Score-Wirkung mit Begruendung. Zwei Darstellungsfehler dabei behoben: das letzte X-Achsen-Label war abgeschnitten (erstes und letztes jetzt buendig verankert), und die beiden Legendenpunkte waren farblich kaum zu unterscheiden. Beim Waechter ersetzt check/scoreSurface.js die handgepflegte Liste score-relevanter Stellen: ausgehend von der Rechenkette und den fuenf Bias-Pfaden werden alle aufgerufenen Funktionen und die dort genutzten Konstanten bei jedem Lauf neu abgeleitet - aktuell 71 Funktionen und 26 Konstanten. Damit verbessert sich der Waechter mit jedem Update von selbst; gegengeprueft an roundSc, das in keiner Handliste stand und trotzdem erkannt wird.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-382</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-383</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -18218,6 +18231,10 @@ let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 // AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
 // vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).
 let aaiiRange=12,aaiiCustomFrom='',aaiiCustomTo='';
+// Ansicht der AAII-Karte: spread | shares | stack | dist | price.
+// Reine Lese-Auswahl wie pcAsset/seasAsset - bewusst nicht persistiert.
+let aaiiView='spread';
+function setAaiiView(v){aaiiView=v;renderSentiment();}
 function setAaiiRange(r){aaiiRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){aaiiCustomFrom='';aaiiCustomTo='';}renderSentiment();}
 function setSentSub(s){sentSub=s;renderSentiment();}
 function setSentSym(v){sentSym=v||'';renderSentiment();}
@@ -18640,76 +18657,231 @@ function aaiiSmooth(vals,w){
 }
 function renderAaiiCard(D){
   const a=D&&D.aaii;
-  const quelle=`<a href="${SENT_SOURCE.aaii}" target="_blank" rel="noopener" style="color:var(--blue)">AAII ↗</a>`;
+  const quelle=`<a href="${SENT_SOURCE.aaii}" target="_blank" rel="noopener" class="aaii-src">aaii.com/sentimentsurvey ↗</a>`;
+  // Kurzerklaerung direkt in der Karte - nicht nur hinter dem i-Knopf, damit
+  // beim ersten Blick klar ist, wessen Meinung hier steht.
+  const kopf=`<div class="aaii-lead">
+    <b>Weekly poll of private U.S. investors.</b> The <b>American Association of Individual Investors</b>
+    (AAII, non-profit, Chicago, founded 1978) asks its own members one question — <i>which way will the
+    stock market go over the next six months?</i> — with three possible answers: bullish, neutral, bearish.
+    Running since July 1987. Voting is voluntary and online; the week runs Thursday to Wednesday and the
+    result is published on Thursday. Source: ${quelle}</div>`;
   if(!a||a.bull==null){
     return`<div class="cot-card"><div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}</div>
-      <div class="cot-empty">No AAII data yet. The weekly survey is fetched by the GitHub workflow into
-      sentiment_data.json; the series starts building as soon as the first reading arrives. Source: ${quelle}</div></div>`;
+      <div style="padding:12px 14px">${kopf}
+      <div class="cot-empty" style="margin-top:10px">No AAII reading has arrived yet. The survey is fetched by the
+      GitHub workflow into sentiment_data.json; the chart starts building with the first published week.
+      Nothing is estimated in the meantime.</div></div></div>`;
   }
   const bull=+a.bull,neu=+a.neutral,bear=+a.bear,spread=+a.value;
   const ev=sentEval('aaii',a);
   const hist=Array.isArray(a.history)?a.history.filter(e=>Array.isArray(e)&&e.length>=4):[];
-  const daten=filterDatesByRange(hist.map(e=>e[0]),aaiiRange,aaiiCustomFrom,aaiiCustomTo);
-  const drin=new Set(daten);
+  const drin=new Set(filterDatesByRange(hist.map(e=>e[0]),aaiiRange,aaiiCustomFrom,aaiiCustomTo));
   const reihe=hist.filter(e=>drin.has(e[0]));
-  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
-  // Aufteilung als ein 100%-Balken - die drei Anteile ergeben immer 100.
-  const bar=(()=>{
-    const seg=(w,c,t)=>w>0.5?`<div style="width:${w}%;background:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${t}</div>`:'';
-    return`<div style="display:flex;height:26px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd)">
-      ${seg(bull,BC.bull,bull.toFixed(1)+'%')}${seg(neu,'var(--t3)',neu.toFixed(1)+'%')}${seg(bear,BC.bear,bear.toFixed(1)+'%')}
-    </div><div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10.5px;margin-top:3px">
-      <span>Bullish</span><span>Neutral</span><span>Bearish</span></div>`;
-  })();
-  // Verlauf: roher Spread + geglaetteter Spread ueber AAII_SMOOTH_W Wochen.
-  const chart=(()=>{
-    if(reihe.length<2)return`<div style="color:var(--t3);font-size:12px;padding:8px 0">Not enough history in this range yet — the survey publishes once a week.</div>`;
-    const W=760,H=210,padL=34,padR=12,padT=44,padB=26;
-    const sp=reihe.map(e=>(+e[1])-(+e[3]));
-    const gl=aaiiSmooth(sp,AAII_SMOOTH_W);
+  const spAll=hist.map(e=>(+e[1])-(+e[3]));            // Spread ueber die GANZE Reihe
+  const sp=reihe.map(e=>(+e[1])-(+e[3]));             // ... und im gewaehlten Zeitraum
+  const gl=aaiiSmooth(sp,AAII_SMOOTH_W);
+  const W=760,H=absAaiiH(),padL=40,padR=14,padT=40,padB=26;
+  const xOf=(i,n)=>padL+(n<2?0:i*(W-padL-padR)/(n-1));
+  const ticks=n=>pcXTickIdx(n,6);
+  // Erstes und letztes Label buendig ausrichten - mittig verankert ragt das
+  // letzte ueber den rechten Rand hinaus und wird abgeschnitten
+  // (Projekt-Grundsatz: nichts darf unlesbar ueberlappen oder wegfallen).
+  const achse=(n)=>ticks(n).map(i=>{
+    const anker=i===0?'start':i===n-1?'end':'middle';
+    return`<text x="${xOf(i,n).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="${anker}">${pcXLabel(reihe[i][0])}</text>`;
+  }).join('');
+  const zuWenig=`<div style="color:var(--t3);font-size:12px;padding:14px 0">Not enough weeks in this range yet — the survey publishes once a week.</div>`;
+
+  // ── Ansicht 1: Spread (roh + Glaettung) mit Extremzonen ──────────────
+  function ansichtSpread(){
+    if(reihe.length<2)return zuWenig;
     const alle=sp.concat(gl,[-25,25]);
     const lo=Math.min(...alle),hi=Math.max(...alle);
-    const x=i=>padL+(reihe.length<2?0:i*(W-padL-padR)/(reihe.length-1));
     const y=v=>padT+(hi-v)*(H-padT-padB)/((hi-lo)||1);
-    const pl=(arr,col,sw,dash)=>`<polyline points="${arr.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="${sw}"${dash?` stroke-dasharray="${dash}"`:''} stroke-linejoin="round"/>`;
-    const zone=(von,bis,col)=>`<rect x="${padL}" y="${y(bis).toFixed(1)}" width="${W-padL-padR}" height="${Math.max(0,y(von)-y(bis)).toFixed(1)}" fill="${col}" opacity="0.07"/>`;
-    const ticks=pcXTickIdx(reihe.length,6);
-    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:210px">
+    const pl=(arr,col,sw)=>`<polyline points="${arr.map((v,i)=>xOf(i,reihe.length).toFixed(1)+','+y(v).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+    const zone=(v1,v2,col)=>`<rect x="${padL}" y="${y(v2).toFixed(1)}" width="${W-padL-padR}" height="${Math.max(0,y(v1)-y(v2)).toFixed(1)}" fill="${col}" opacity="0.07"/>`;
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
       ${zone(20,hi,BC.bear)}${zone(lo,-20,BC.bull)}
       <line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
       <line x1="${padL}" y1="${y(20).toFixed(1)}" x2="${W-padR}" y2="${y(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
       <line x1="${padL}" y1="${y(-20).toFixed(1)}" x2="${W-padR}" y2="${y(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
-      ${pl(sp,'var(--t3)',1.4)}${pl(gl,BC.neu,2.6)}
-      <text x="${padL}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="10">+20 complacency</text>
-      <text x="${padL}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="10">−20 capitulation</text>
-      ${ticks.map(i=>`<text x="${x(i).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="middle">${pcXLabel(reihe[i][0])}</text>`).join('')}
+      ${pl(sp,'var(--t3)',1.3)}${pl(gl,'var(--t0)',2.6)}
+      <text x="${padL+3}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="10">+20 complacency</text>
+      <text x="${padL+3}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="10">−20 capitulation</text>
+      ${achse(reihe.length)}</svg>`;
+    const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(sp[i])/H,
+      tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
+        +`<br><span style="color:var(--t3)">${AAII_SMOOTH_W}-week avg</span> ${(gl[i]>0?'+':'')+gl[i].toFixed(1)}pp`
+        +`<br>Bull ${(+e[1]).toFixed(1)}% · Neu ${(+e[2]).toFixed(1)}% · Bear ${(+e[3]).toFixed(1)}%`}));
+    return legende([['Weekly spread','var(--t3)'],[AAII_SMOOTH_W+'-week average','var(--t0)']])+chartHoverWrap(svg,pts);
+  }
+
+  // ── Ansicht 2: die drei Anteile als eigene Linien ────────────────────
+  function ansichtAnteile(){
+    if(reihe.length<2)return zuWenig;
+    const y=v=>padT+(100-v)*(H-padT-padB)/100;
+    const pl=(idx,col)=>`<polyline points="${reihe.map((e,i)=>xOf(i,reihe.length).toFixed(1)+','+y(+e[idx]).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    const gr=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".5"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('');
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+      ${gr}${pl(1,BC.bull)}${pl(2,'var(--t3)')}${pl(3,BC.bear)}${achse(reihe.length)}</svg>`;
+    const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(+e[1])/H,
+      tip:`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
+        +`<br><span style="color:var(--t3)">Neutral</span> ${(+e[2]).toFixed(1)}%`
+        +`<br><span style="color:${BC.bear}">Bearish</span> ${(+e[3]).toFixed(1)}%`}));
+    return legende([['Bullish',BC.bull],['Neutral','var(--t3)'],['Bearish',BC.bear]])+chartHoverWrap(svg,pts);
+  }
+
+  // ── Ansicht 3: 100%-Flaechen uebereinander ───────────────────────────
+  function ansichtStapel(){
+    if(reihe.length<2)return zuWenig;
+    const y=v=>padT+(100-v)*(H-padT-padB)/100;
+    const flaeche=(unten,oben,col)=>{
+      const auf=reihe.map((e,i)=>xOf(i,reihe.length).toFixed(1)+','+y(oben(e,i)).toFixed(1));
+      const ab=reihe.map((e,i)=>xOf(i,reihe.length).toFixed(1)+','+y(unten(e,i)).toFixed(1)).reverse();
+      return`<polygon points="${auf.concat(ab).join(' ')}" fill="${col}" opacity="0.82"/>`;
+    };
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+      ${flaeche(()=>0,e=>+e[1],BC.bull)}
+      ${flaeche(e=>+e[1],e=>(+e[1])+(+e[2]),'var(--t3)')}
+      ${flaeche(e=>(+e[1])+(+e[2]),()=>100,BC.bear)}
+      <line x1="${padL}" y1="${y(50).toFixed(1)}" x2="${W-padR}" y2="${y(50).toFixed(1)}" stroke="#fff" stroke-width="1" opacity=".45" stroke-dasharray="5,4"/>
+      ${achse(reihe.length)}</svg>`;
+    const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(+e[1]/2)/H,
+      tip:`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
+        +`<br><span style="color:var(--t3)">Neutral</span> ${(+e[2]).toFixed(1)}%`
+        +`<br><span style="color:${BC.bear}">Bearish</span> ${(+e[3]).toFixed(1)}%`}));
+    return legende([['Bullish',BC.bull],['Neutral','var(--t3)'],['Bearish',BC.bear]])
+      +`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">The dashed line marks 50% — above it the bullish camp alone holds the majority.</div>`
+      +chartHoverWrap(svg,pts);
+  }
+
+  // ── Ansicht 4: Verteilung des Spreads, heutiger Wert markiert ────────
+  function ansichtVerteilung(){
+    if(spAll.length<8)return`<div style="color:var(--t3);font-size:12px;padding:14px 0">Needs at least 8 recorded weeks to show a distribution — ${spAll.length} so far.</div>`;
+    const lo=Math.floor(Math.min(...spAll,-40)/10)*10,hi=Math.ceil(Math.max(...spAll,40)/10)*10;
+    const nB=Math.max(6,Math.min(20,Math.round((hi-lo)/5)));
+    const breite=(hi-lo)/nB,eimer=new Array(nB).fill(0);
+    spAll.forEach(v=>{let k=Math.floor((v-lo)/breite);if(k<0)k=0;if(k>=nB)k=nB-1;eimer[k]++;});
+    const max=Math.max(...eimer,1);
+    const y=c=>padT+(1-c/max)*(H-padT-padB);
+    const bw=(W-padL-padR)/nB;
+    const farbe=(mitte)=>mitte<=-20?BC.bull:mitte>=20?BC.bear:'var(--t3)';
+    const balken=eimer.map((c,k)=>{
+      const mitte=lo+breite*(k+0.5);
+      return`<rect x="${(padL+k*bw+1).toFixed(1)}" y="${y(c).toFixed(1)}" width="${(bw-2).toFixed(1)}" height="${Math.max(0,H-padB-y(c)).toFixed(1)}" fill="${farbe(mitte)}" opacity="${Math.abs(mitte)>=20?0.85:0.55}"/>`;
+    }).join('');
+    const xJetzt=padL+Math.max(0,Math.min(1,(spread-lo)/((hi-lo)||1)))*(W-padL-padR);
+    const rang=spAll.filter(v=>v<=spread).length/spAll.length*100;
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+      ${balken}
+      <line x1="${xJetzt.toFixed(1)}" y1="${padT-14}" x2="${xJetzt.toFixed(1)}" y2="${H-padB}" stroke="var(--t0)" stroke-width="2"/>
+      <text x="${xJetzt.toFixed(1)}" y="${padT-18}" fill="var(--t0)" font-size="11" font-weight="700" text-anchor="middle">now ${(spread>0?'+':'')+spread.toFixed(1)}</text>
+      ${[0,1,2,3,4].map(k=>{const v=lo+(hi-lo)*k/4;return`<text x="${(padL+(W-padL-padR)*k/4).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="middle">${v>0?'+':''}${v.toFixed(0)}</text>`;}).join('')}
     </svg>`;
-    // EIN Hover-Punkt pro Datum, der ALLE Linien auflistet (Projekt-Muster -
-    // sonst zeigt attachChartHovers bei mehreren Linien nur eine davon).
-    const pts=reihe.map((e,i)=>({fx:x(i)/W,fy:y(sp[i])/H,
-      tip:`<b>${pcXLabel(e[0])}</b><br>Bullish ${(+e[1]).toFixed(1)}% · Neutral ${(+e[2]).toFixed(1)}% · Bearish ${(+e[3]).toFixed(1)}%`
-        +`<br><span style="color:var(--t3)">Spread</span> ${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp`
-        +`<br><span style="color:var(--t3)">${AAII_SMOOTH_W}-week avg</span> ${(gl[i]>0?'+':'')+gl[i].toFixed(1)}pp`}));
-    const leg=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:var(--t3)"></span>Weekly spread</span>`
-      +`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.neu}"></span>${AAII_SMOOTH_W}-week average</span></div>`;
-    return leg+chartHoverWrap(svg,pts);
+    const pts=eimer.map((c,k)=>({fx:(padL+k*bw+bw/2)/W,fy:y(c)/H,
+      tip:`<b>${(lo+breite*k>0?'+':'')+(lo+breite*k).toFixed(0)} to ${(lo+breite*(k+1)>0?'+':'')+(lo+breite*(k+1)).toFixed(0)}pp</b><br>${c} of ${spAll.length} weeks (${(c/spAll.length*100).toFixed(1)}%)`}));
+    return`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">How often each spread level occurred across all ${spAll.length} recorded weeks. The current reading sits at the <b style="color:var(--t0)">${rang.toFixed(0)}th percentile</b> of its own history — coloured bars are the two extreme zones.</div>`
+      +chartHoverWrap(svg,pts);
+  }
+
+  // ── Ansicht 5: Spread gegen den S&P-500-Kurs ─────────────────────────
+  function ansichtPreis(){
+    if(reihe.length<2)return zuWenig;
+    const ser=priceSeriesFor('SP500')||[];
+    const kurs={};ser.forEach(e=>{if(Array.isArray(e))kurs[e[0]]=+e[1];});
+    // Je Umfragewoche den letzten bekannten Kurs bis zu diesem Datum.
+    const daten=Object.keys(kurs).sort();
+    const kursZu=d=>{let v=null;for(let i=0;i<daten.length;i++){if(daten[i]<=d)v=kurs[daten[i]];else break;}return v;};
+    const kw=reihe.map(e=>kursZu(e[0]));
+    if(kw.filter(v=>v!=null).length<2)
+      return`<div style="color:var(--t3);font-size:12px;padding:14px 0">No overlapping S&amp;P 500 price history for this range yet. The price series is built up daily by the workflow.</div>`;
+    const gute=kw.filter(v=>v!=null);
+    const pLo=Math.min(...gute),pHi=Math.max(...gute);
+    const sLo=Math.min(...sp,-25),sHi=Math.max(...sp,25);
+    const yS=v=>padT+(sHi-v)*(H-padT-padB)/((sHi-sLo)||1);
+    const yP=v=>padT+(pHi-v)*(H-padT-padB)/((pHi-pLo)||1);
+    const linieS=`<polyline points="${sp.map((v,i)=>xOf(i,reihe.length).toFixed(1)+','+yS(v).toFixed(1)).join(' ')}" fill="none" stroke="${BC.bull}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    const pPts=[];kw.forEach((v,i)=>{if(v!=null)pPts.push(xOf(i,reihe.length).toFixed(1)+','+yP(v).toFixed(1));});
+    const linieP=`<polyline points="${pPts.join(' ')}" fill="none" stroke="var(--t0)" stroke-width="2" stroke-dasharray="6,4"/>`;
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+      <line x1="${padL}" y1="${yS(0).toFixed(1)}" x2="${W-padR}" y2="${yS(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+      <line x1="${padL}" y1="${yS(20).toFixed(1)}" x2="${W-padR}" y2="${yS(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
+      <line x1="${padL}" y1="${yS(-20).toFixed(1)}" x2="${W-padR}" y2="${yS(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
+      ${linieP}${linieS}${achse(reihe.length)}</svg>`;
+    const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:yS(sp[i])/H,
+      tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
+        +(kw[i]!=null?`<br><span style="color:var(--t3)">S&amp;P 500</span> ${kw[i].toFixed(2)}`:'')}));
+    return`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>AAII spread</span><span class="tr-leg-item"><span class="tr-leg-dash"></span>S&amp;P 500 price</span></div>`
+      +`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">Read it for divergences: a market grinding higher while the spread collapses means the crowd does not believe the move — historically the more durable kind of rally.</div>`
+      +chartHoverWrap(svg,pts);
+  }
+
+  const ANSICHTEN=[['spread','Spread'],['shares','Shares'],['stack','100% stacked'],['dist','Distribution'],['price','vs S&P 500']];
+  const umschalter=`<div class="stabs aaii-views">${ANSICHTEN.map(([k,l])=>`<button class="st${aaiiView===k?' on':''}" onclick="setAaiiView('${k}')">${escH(l)}</button>`).join('')}</div>`;
+  const inhalt=aaiiView==='shares'?ansichtAnteile():aaiiView==='stack'?ansichtStapel()
+    :aaiiView==='dist'?ansichtVerteilung():aaiiView==='price'?ansichtPreis():ansichtSpread();
+
+  // ── Kennzahlen ──────────────────────────────────────────────────────
+  const glAll=aaiiSmooth(spAll,AAII_SMOOTH_W);
+  const glJetzt=glAll.length?glAll[glAll.length-1]:null;
+  const rang=spAll.length?spAll.filter(v=>v<=spread).length/spAll.length*100:null;
+  let seitExtrem=null;
+  for(let i=spAll.length-1;i>=0;i--){if(Math.abs(spAll[i])>=20){seitExtrem=spAll.length-1-i;break;}}
+  const kachel=(w,l,c)=>`<div class="aaii-kpi"><div class="aaii-kpi-v"${c?` style="color:${c}"`:''}>${w}</div><div class="aaii-kpi-l">${l}</div></div>`;
+  const kpis=`<div class="aaii-kpis">
+    ${kachel((spread>0?'+':'')+spread.toFixed(1)+'pp','Bull − bear spread',spread>=20?BC.bear:spread<=-20?BC.bull:'var(--t0)')}
+    ${kachel(glJetzt!=null?(glJetzt>0?'+':'')+glJetzt.toFixed(1)+'pp':'–',AAII_SMOOTH_W+'-week average')}
+    ${kachel(rang!=null?rang.toFixed(0)+'.':'–','Percentile of own history')}
+    ${kachel(bull.toFixed(1)+'%','Bullish',BC.bull)}
+    ${kachel(bear.toFixed(1)+'%','Bearish',BC.bear)}
+    ${kachel(seitExtrem==null?'never':seitExtrem===0?'now':seitExtrem+'w','Since last extreme')}
+  </div>`;
+
+  // ── Aufteilung als 100%-Balken ──────────────────────────────────────
+  const seg=(w,c,t)=>w>0.5?`<div style="width:${w}%;background:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${t}</div>`:'';
+  const balken=`<div style="display:flex;height:26px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd)">
+      ${seg(bull,BC.bull,bull.toFixed(1)+'%')}${seg(neu,'var(--t3)',neu.toFixed(1)+'%')}${seg(bear,BC.bear,bear.toFixed(1)+'%')}
+    </div><div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10.5px;margin-top:3px">
+      <span>Bullish</span><span>Neutral</span><span>Bearish</span></div>`;
+
+  // ── Auswirkung je Asset - vollstaendig, damit nichts offen bleibt ────
+  const wirkung=(()=>{
+    const betroffen=Object.keys(SENT_MAP).filter(id=>(SENT_MAP[id]||[]).some(p=>p[1]==='aaii'));
+    const zeile=(nm,txt,col)=>`<tr><td>${escH(nm)}</td><td style="color:${col||'var(--t3)'}">${txt}</td></tr>`;
+    const rows=syms.map(s=>{
+      if(betroffen.includes(s.id)){
+        const wirk=ev&&ev.extreme?(ev.bias==='bull'?'currently <b>+0.5</b> to the score':'currently <b>−0.5</b> to the score'):'no effect right now (not at an extreme)';
+        return zeile(s.name,'Scored, half weight — '+wirk,ev&&ev.extreme?(ev.bias==='bull'?BC.bull:BC.bear):'var(--t3)');
+      }
+      return zeile(s.name,'No score effect — the survey asks about the stock market only');
+    }).join('');
+    return`<details class="aaii-impact"><summary>Effect on each asset on this site</summary>
+      <table class="aaii-tbl"><tbody>${rows}</tbody></table>
+      <div class="aaii-note">Only the two U.S. equity indices are scored, with half weight and only at the extremes.
+      Extending an equity survey to currencies, metals or crypto would be an interpretation rather than a
+      measurement — the respondents were never asked about those markets — so this app does not do it.</div>
+    </details>`;
   })();
+
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
   const anzahl=a.responses!=null?` · ${a.responses} responses`:'';
-  const stand=a.date?`week ending ${escH(a.date)}`:'';
   return`<div class="cot-card">
-    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${stand}${anzahl}</span></div>
+    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
     <div style="padding:12px 14px">
-      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-        <div style="flex:2;min-width:260px">${bar}</div>
-        <div style="flex:1;min-width:190px">
-          <div style="font-size:22px;font-weight:700;color:${spread>=20?BC.bear:spread<=-20?BC.bull:'var(--t0)'}">${(spread>0?'+':'')+spread.toFixed(1)}<span style="font-size:13px;color:var(--t3);font-weight:400"> pp spread</span></div>
-          ${sentReadBadge(ev)}
-          <div style="color:var(--t3);font-size:11px;margin-top:6px">Long-run average +6.5pp. Applies to: S&amp;P 500, Nasdaq. Source: ${quelle}</div>
-        </div>
+      ${kopf}${kpis}
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 12px">
+        <div style="flex:2;min-width:260px">${balken}</div>
+        <div style="flex:1;min-width:200px">${sentReadBadge(ev)}
+          <div style="color:var(--t3);font-size:11px;margin-top:5px">Thresholds ±20pp. Long-run average +6.5pp, so they are not symmetric around zero.</div></div>
       </div>
-      ${rangeBar}${chart}
+      ${umschalter}${rangeBar}${inhalt}${wirkung}
     </div></div>`;
 }
+function legende(paare){
+  return`<div class="tr-legend">${paare.map(([l,c])=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${c}"></span>${escH(l)}</span>`).join('')}</div>`;
+}
+function absAaiiH(){return 220;}
 function renderFearGreedCards(D){
   const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange')}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange')}</div>`;

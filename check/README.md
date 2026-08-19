@@ -34,6 +34,7 @@ Nutzer angekommen ist.
 
 | Datei | Prueft | Browser |
 |---|---|---|
+| `scoreSurface.js` | leitet die score-relevanten Funktionen und Konstanten bei jedem Lauf aus dem Code ab (Wurzeln: Rechenkette + fuenf Bias-Pfade, zwei Ebenen tief) - dadurch waechst die Abdeckung automatisch mit | nein |
 | `syntax.js` | JS aller `<script>`-Bloecke, jede Workflow-YAML, jeder `run`-Block per `bash -n` | nein |
 | `rules.js` | Versions-Bumps und Workflow-Ausgaben (siehe unten) | nein |
 | `structure.js` | doppelte `id`s, woertlich wiederholte HTML-Bloecke | nein |
@@ -51,6 +52,30 @@ Sie uebersetzen Konventionen, die bisher nur Prosa waren, in ein Abbruch-Kriteri
 2. **SCORE_MODEL_VERSION** - wird die Score-Formel angefasst, muss die Modell-Version steigen. Sonst vergleichen History, Trends und die Staerke-Note still zwei verschiedene Rechnungen.
 3. **SUMMARY_ENGINE_VERSION** - wird die Formulierungs-Logik angefasst, muss sie steigen. `rubSummarySig()` haengt nur an den Rohdaten und erkennt eine reine Text-Aenderung nie.
 4. **Workflow-Ausgaben** - erzeugt ein Workflow eine `.json`, muss sie in einem `git add` desselben Workflows stehen (ausser er loescht sie selbst wieder als Zwischendatei).
+
+## Warum sich der Waechter selbst verbessert
+
+`rules.js` hatte anfangs eine **handgepflegte** Liste score-relevanter
+Funktionen. Die veraltet zwangslaeufig: wer eine neue Hilfsfunktion in die
+Rechenkette einbaut und die Liste nicht ergaenzt, umgeht den
+`SCORE_MODEL_VERSION`-Zwang, ohne es zu merken.
+
+`scoreSurface.js` leitet die Menge deshalb bei **jedem Lauf** neu aus
+`index.html` ab: ausgehend von festen Wurzeln (`indScoreParts`, `rubScore`,
+`symScoreCmp`, `pairScore`, die fuenf Bias-Pfade, `sentEval` ...) werden alle
+von dort aufgerufenen Funktionen eingesammelt - zwei Ebenen tief - plus die
+dort verwendeten Konstanten (nur solche, die im File auch wirklich deklariert
+sind, sonst landen deutsche Kommentarwoerter in der Liste). Aktuell sind das
+**71 Funktionen und 26 Konstanten**.
+
+Gegengeprueft: eine Aenderung an `roundSc` - das in keiner Handliste stand -
+wird seither erkannt und verlangt den Versions-Bump.
+
+Zwei weitere Regeln sorgen dafuer, dass die Pruefungen selbst mitwachsen:
+eine neue Funktion mit `Score`/`Bias`/`Weight`/`Norm`/`Strength` im Namen
+verlangt, dass im selben Commit eine Datei unter `check/` angefasst wurde;
+ein neuer `fxpro_*`-Schluessel verlangt, dass `cloudPush` UND `cloudPull`
+angefasst wurden.
 
 ## Beim Erweitern beachten
 

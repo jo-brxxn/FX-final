@@ -67,22 +67,16 @@ if (indexGeaendert) {
 // Grund (2026-08-16): die Formel wurde korrigiert, die Nummer blieb stehen -
 // dadurch standen im History-Fenster Werte aus zwei verschiedenen Rechnungen
 // unmarkiert nebeneinander und erzeugten einen Sprung, den es nie gab.
-const SCORE_FN = [
-  'function indScoreParts', 'function indScore', 'function rubScore', 'function symScore',
-  'function symScoreCmp', 'function pairScore', 'function biasScore', 'function indIsHalfWeight',
-  'function indBaseWeight', 'function applyTrendModel', 'function indStepBias', 'function indTrendBias',
-  'function researchBias', 'function indSurpriseMag', 'function indDecayWeight', 'function indMarketWeight',
-  'function symTrackedCount', 'function indIsStale', 'function symCmpFactor',
-  'CORE_PAIRS=', 'SCORE_ZERO=', 'BOND_HALF_PT=', 'NO_TREND_RUBS=', 'IND_STALE_CYCLES=',
-  'SCORE_NORM_MIN=', 'SCORE_NORM_MAX=', 'DECAY_HALFLIFE_CYCLES=', 'BOND_DEAD_BAND=',
-  // Ergaenzt 2026-08-16 beim Einbau der AAII-Umfrage: ein neuer Indikator in
-  // SENT_MAP oder eine neue/geaenderte Schwelle in sentEval veraendert den
-  // Score genauso wie eine Formel-Aenderung - die aufgezeichnete Historie ist
-  // danach nicht mehr mit der neuen Rechnung vergleichbar. Der Waechter
-  // waechst hier bewusst mit: JEDE neue Score-Quelle gehoert in diese Liste.
-  'const SENT_MAP=', 'function sentEval', 'COT_NET_HALF=', 'SENT_HALF=',
-  'function applyCotDataFeed', 'function applySentimentFeed', 'function recomputeRiskCorr'
-];
+// ⚠ Die Menge der score-relevanten Stellen wird NICHT mehr von Hand
+// gepflegt, sondern bei jedem Lauf aus dem Code abgeleitet (siehe
+// check/scoreSurface.js): ausgehend von der Rechenkette und den fuenf
+// Bias-Pfaden alle davon aufgerufenen Funktionen plus die dort verwendeten
+// Konstanten. Dadurch verbessert sich der Waechter mit jedem Update von
+// selbst - eine neue Hilfsfunktion in der Rechenkette ist ab dem naechsten
+// Lauf automatisch geschuetzt, ohne dass jemand eine Liste ergaenzt.
+const flaeche = require('./scoreSurface.js').ableiten('index.html');
+const SCORE_FN = flaeche.funktionen.map(n => 'function ' + n)
+  .concat(flaeche.konstanten.map(n => n + '='));
 const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s));
 if (formelBeruehrt.length) {
   const jetzt = wert(/const SCORE_MODEL_VERSION=(\d+)/);

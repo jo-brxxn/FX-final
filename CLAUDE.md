@@ -6578,3 +6578,53 @@ Genau das ist hier passiert: AAII ist ein neuer Score-Beitrag fuer SP500/NAS,
 also wurde `SCORE_MODEL_VERSION` auf **3** gehoben - aufgezeichnete Tage davor
 sind mit der neuen Zusammensetzung nicht vergleichbar und werden in History
 und Trends entsprechend markiert.
+
+### ⚠ Waechter leitet seine Abdeckung selbst ab (2026-08-16)
+
+`check/rules.js` hatte eine HANDGEPFLEGTE Liste score-relevanter Funktionen.
+Die veraltet zwangslaeufig - wer eine neue Hilfsfunktion in die Rechenkette
+einbaut und die Liste nicht ergaenzt, umgeht den `SCORE_MODEL_VERSION`-Zwang,
+ohne es zu merken.
+
+**`check/scoreSurface.js` leitet die Menge jetzt bei JEDEM Lauf neu aus
+`index.html` ab:** ausgehend von festen Wurzeln (`indScoreParts`, `rubScore`,
+`symScoreCmp`, `pairScore`, `symTrackedCount`, `symOwnZ`, die fuenf
+Bias-Pfade, `applyTrendModel`, `sentEval` ...) werden alle von dort
+aufgerufenen Funktionen eingesammelt - zwei Ebenen tief - plus die dort
+verwendeten Konstanten. Aktuell 71 Funktionen und 26 Konstanten.
+
+⚠ Zwei Fallen beim Bau, damit sie nicht neu entstehen: (1) Konstanten NUR
+uebernehmen, wenn der Name im File auch wirklich als `const NAME=` deklariert
+ist - sonst landen deutsche Kommentarwoerter (IMMER, KEIN, NICHT ...) in der
+Liste; (2) reine Darstellungs-Helfer (`escH`, `icn`, `fmtDayHdr` ...) gehoeren
+in `IGNORIEREN`, sie aendern nie einen Score-WERT.
+
+Gegengeprueft: eine Aenderung an `roundSc` - das in keiner Handliste stand -
+wird seither erkannt und verlangt den Bump.
+
+**Merksatz:** eine Liste, die jemand pflegen muss, ist kein Waechter, sondern
+eine zweite Stelle zum Vergessen. Wo sich die Menge aus dem Code ableiten
+laesst, ableiten.
+
+### AAII-Karte: fuenf Ansichten auf dieselben Daten (2026-08-16)
+
+Nutzer-Wunsch "ausfuehrliche Darstellung mit vielen Moeglichkeiten es anders
+anzugucken". `renderAaiiCard` hat einen Ansichts-Umschalter (`aaiiView`, reine
+Lese-Auswahl, bewusst nicht persistiert):
+
+| Ansicht | Zeigt |
+|---|---|
+| **Spread** | roher Wochen-Spread + 8-Wochen-Glaettung, Extremzonen schattiert |
+| **Shares** | die drei Anteile als eigene Linien (0-100%) |
+| **100% stacked** | Flaechen uebereinander, 50-Prozent-Marke gestrichelt |
+| **Distribution** | Haeufigkeit jedes Spread-Niveaus ueber ALLE aufgezeichneten Wochen, heutiger Wert als Marke + Perzentil |
+| **vs S&P 500** | Spread gegen den Kurs (gestrichelte Preislinie nach Projekt-Konvention), fuer Divergenzen |
+
+Dazu sechs Kennzahlen-Kacheln, eine Kurzerklaerung mit Quell-Link DIREKT in
+der Karte (nicht nur hinter dem i-Knopf) und eine ausklappbare Tabelle mit der
+Wirkung auf JEDES gelistete Asset - die beiden Aktienindizes mit halbem
+Gewicht, alle uebrigen ausdruecklich ohne Score-Wirkung samt Begruendung.
+
+Zwei Darstellungsfehler dabei gefunden und behoben: das letzte X-Achsen-Label
+war abgeschnitten (erstes/letztes jetzt buendig verankert statt mittig), und
+die beiden Legendenpunkte im Spread-Chart waren farblich kaum zu unterscheiden.
