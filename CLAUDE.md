@@ -6709,3 +6709,58 @@ noch, 22 nicht mehr; ein fuenf Monate alter Extremwert traegt 0 statt 0,5.
 eine Altersgrenze dazu, sobald Historie und Live-Stand aus VERSCHIEDENEN
 Endpunkten kommen - die beiden koennen beliebig weit auseinanderlaufen, und
 der aeltere gewinnt sonst still.
+
+### Schlagzeilen-Karte: RSS statt API-Schluessel (Nutzer-Wunsch 2026-08-19)
+
+Die Karte war dauerhaft leer, weil der Marketaux-Zugang einen
+`MARKETAUX_API_KEY` brauchte, den es nie gab. Quellen sind jetzt **freie
+RSS-Feeds ohne Schluessel** - kein Kontingent, keine Anmeldung:
+
+| Klasse | Quellen |
+|---|---|
+| **3** Primaerquelle | Federal Reserve, EZB, Bank of England (Mitteilungen direkt) |
+| **2** Wirtschaftsmedium | CNBC Economy, CNBC Finance, MarketWatch, Yahoo Finance |
+| **1** gezielte Suche | Google News RSS fuer Aussagen einzelner Haeuser (JPMorgan, Goldman Sachs, Morgan Stanley, BofA, Citigroup) und fuer Makro-Themen |
+
+**Drei Zeitfenster** (Today/Week/Month) mit Anzahl je Fenster; sortiert wird
+INNERHALB des Fensters nach Wichtigkeit. Die Wichtigkeit ist **keine freie
+Bewertung**, sondern eine nachlesbare Rechnung: Quellenklasse x2 + gedeckelte
+Treffer auf einer festen Themenliste (`SCHWER`) + gedeckelte Treffer auf den
+hier gelisteten Maerkten (`ASSETS`). Sichtbar als HIGH/MED/LOW.
+
+**Zwei Parser-Fehler im Test gefunden - nicht neu aufmachen:**
+1. **Atom-`<link href='...'/>` mit EINFACHEN Anfuehrungszeichen** wurde nicht
+   erkannt (nur `"` erlaubt) - der komplette Fed-Feed lieferte 0 Eintraege.
+2. **`includes` traf "gold" in "Goldman Sachs".** Stichworte werden jetzt nur
+   an Wortgrenzen gematcht, mit optionalem Plural-s (damit "interest rate"
+   auch "interest rates" trifft, ohne dass "gold" in "Goldman" anschlaegt).
+
+Ohne echtes Datum wird ein Eintrag verworfen. Bestand wird ueber die URL
+dedupliziert, 35 Tage gehalten, max. 600 Eintraege.
+
+### Dashboard: kompletter Karteninhalt sichtbar, keine Innen-Scroller (2026-08-19)
+
+Nutzer-Wunsch: "man sieht den kompletten Inhalt aller Karten und muss nicht
+scrollen". Die gemeinsame Spaltenhoehe in `equalizeDashColumns()` richtet sich
+jetzt nach der **LAENGSTEN** Spalte statt nach der kuerzesten. Vorher wurde auf
+die kuerzeste angeglichen und der Rest zusammengedrueckt - genau dadurch
+entstanden die Innen-Scroller. `.dw-shrink`-Karten geben keine Hoehe mehr ab
+(`flex:0 0 auto`) und ihre Listen scrollen nicht mehr (`overflow:visible`);
+die kuerzeren Spalten bekommen den Ueberschuss ueber ihre `dw-grow`-Karte.
+
+Gemessen ueber 1920/1600/1440/1180: **0 Innen-Scroller, 0 ueberlaufende
+Karten, 0 Ueberlappungen**, alle Zonen exakt gleich hoch mit 0 Ueberlauf.
+
+**Merksatz:** die Nachmess-Korrektur in `equalizeDashColumns()` bleibt - eine
+Hoehe, die der Inhalt nicht einhalten kann, laesst ihn in die untere
+Kartenreihe laufen. Ungleich lange Spalten sind haesslich, ueberlappende sind
+kaputt.
+
+### Risk-Index: Methodenzeile nannte mehr Reihen als einbezogen (2026-08-19)
+
+`method` behauptete "VIX, Gold, AUD/USD and USD/JPY", `components` enthielt
+aber nur drei - VIX faellt heraus, solange seine eigene Reihe zu kurz ist. Die
+Zeile wird jetzt aus den TATSAECHLICH verwendeten Reihen gebaut und waechst
+automatisch mit. **Merksatz:** eine fest getippte Aufzaehlung neben einer
+berechneten Liste laeuft frueher oder spaeter auseinander - immer aus derselben
+Quelle erzeugen.

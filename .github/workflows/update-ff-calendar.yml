@@ -4293,7 +4293,11 @@ jobs:
             const label=latest[1]>0.15?"RISK-OFF":latest[1]<-0.15?"RISK-ON":"NEUTRAL";
             const out={date:latest[0],value:latest[1],label:label,percentile:pct,
                        components:parts.map(p=>p.name),history:hist.slice(-800),
-                       method:"Mean z-score of 20-day changes in VIX, Gold, AUD/USD and USD/JPY (positive = risk aversion)"};
+                       // Die Methode nennt die TATSAECHLICH einbezogenen Reihen, nicht
+                       // die Wunschliste: VIX faellt heraus, solange seine Reihe zu
+                       // kurz ist, und kommt automatisch dazu, sobald sie reicht. Eine
+                       // feste Aufzaehlung waere sonst still falsch.
+                       method:"Mean z-score of 20-day changes in "+parts.map(p=>p.name).join(", ")+" (positive = risk aversion)"};
             fs.writeFileSync("risk_index.json",JSON.stringify(out,null,1));
             console.log("risk_index.json: date="+out.date+" value="+out.value+" label="+out.label+" pct="+out.percentile+" history="+out.history.length+"d components="+JSON.stringify(used));
           '
@@ -4315,38 +4319,120 @@ jobs:
       # jeder neuen Quelle in diesem Projekt (Bond-Yields, Rate Probabilities,
       # ...) muss der erste echte workflow_dispatch-Lauf per Job-Log
       # verifiziert werden, danach ggf. den Query iterativ anpassen.
-      - name: Fetch financial news headlines -> news_data.json
+      # ── FINANZ-SCHLAGZEILEN (news_data.json) ──────────────────────────
+      # Quellen sind RSS-Feeds - frei, ohne Schluessel, ohne Kontingent. Der
+      # frueher genutzte Marketaux-Zugang brauchte einen API-Key, den es nie
+      # gab; die Karte blieb dadurch dauerhaft leer.
+      #
+      # Drei Klassen, die auch die Wichtigkeit bestimmen:
+      #   3 = Primaerquelle (Notenbank selbst: Fed, EZB, BoE, BoJ)
+      #   2 = etabliertes Wirtschaftsmedium (CNBC, MarketWatch, Yahoo Finance)
+      #   1 = gezielte Suche (Google News) fuer Aussagen einzelner Haeuser
+      #       wie JPMorgan, Goldman Sachs, Morgan Stanley
+      - name: Fetch financial news headlines (RSS, no key) -> news_data.json
         continue-on-error: true
-        env:
-          MARKETAUX_API_KEY: ${{ secrets.MARKETAUX_API_KEY }}
         run: |
-          rm -f news_marketaux.json
-          if [ -n "$MARKETAUX_API_KEY" ]; then
-            Q='(Fed OR "Federal Reserve" OR Powell OR ECB OR "Bank of England" OR "Bank of Japan" OR "Reserve Bank" OR "interest rate" OR inflation OR "central bank" OR Hormuz OR OPEC OR oil OR gold OR silver OR bitcoin OR crypto OR "S&P 500" OR Nasdaq OR "stock market")'
-            Q_ENC=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$Q")
-            curl -sL --max-time 20 "https://api.marketaux.com/v1/news/all?api_token=${MARKETAUX_API_KEY}&language=en&limit=20&sort=published_desc&search=${Q_ENC}" -o news_marketaux.json || true
-            echo "[debug] marketaux response: $(wc -c < news_marketaux.json 2>/dev/null || echo 0) bytes"
-            head -c 300 news_marketaux.json 2>/dev/null; echo
-          else
-            echo "[debug] MARKETAUX_API_KEY not set - news_data.json stays empty (see workflow comment to enable)"
-          fi
-          node -e '
-            const fs=require("fs");
-            let heads=[];
-            try{
-              const j=JSON.parse(fs.readFileSync("news_marketaux.json","utf8"));
-              const arr=Array.isArray(j&&j.data)?j.data:[];
-              heads=arr.map(a=>({
-                title:String(a.title||"").trim(),
-                url:String(a.url||""),
-                source:String(a.source||""),
-                publishedAt:String(a.published_at||""),
-              })).filter(h=>h.title&&h.url);
-            }catch(e){console.log("[debug] news parse: "+e.message);}
-            fs.writeFileSync("news_data.json",JSON.stringify({updated:new Date().toISOString(),headlines:heads},null,1));
-            console.log("news_data.json: "+heads.length+" headlines");
-          '
-          rm -f news_marketaux.json
+          rm -f news_rss_*.xml
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          hole(){ # $1=Datei $2=URL
+            curl -sSL --http1.1 --compressed --connect-timeout 12 --max-time 30 -A "$UA" \
+              -w "[debug] news: $1 http=%{http_code} size=%{size_download}\n" -o "$1" "$2" || echo "[debug] news: curl exit $? fuer $1"
+          }
+          hole news_rss_fed.xml   "https://www.federalreserve.gov/feeds/press_all.xml"
+          hole news_rss_ecb.xml   "https://www.ecb.europa.eu/rss/press.html"
+          hole news_rss_boe.xml   "https://www.bankofengland.co.uk/boeapps/rss/feeds.aspx?feed=News"
+          hole news_rss_cnbce.xml "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=20910258"
+          hole news_rss_cnbcf.xml "https://search.cnbc.com/rs/search/combinedcgi?partnerId=wrss01&id=10000664"
+          hole news_rss_mw.xml    "https://feeds.content.dowjones.io/public/rss/mw_topstories"
+          hole news_rss_yf.xml    "https://finance.yahoo.com/news/rssindex"
+          hole news_rss_banks.xml "https://news.google.com/rss/search?q=%28JPMorgan+OR+%22Goldman+Sachs%22+OR+%22Morgan+Stanley%22+OR+%22Bank+of+America%22+OR+Citigroup%29+%28outlook+OR+forecast+OR+economy+OR+rates+OR+recession%29+when%3A14d&hl=en-US&gl=US&ceid=US%3Aen"
+          hole news_rss_macro.xml "https://news.google.com/rss/search?q=%28inflation+OR+%22interest+rates%22+OR+%22central+bank%22+OR+payrolls+OR+GDP+OR+tariffs%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
+          cat > news_parse.js <<'NEWSJS'
+          const fs=require("fs");
+          // Datei -> [Quellenname, Klasse]
+          const QUELLEN={
+            "news_rss_fed.xml":["Federal Reserve",3],
+            "news_rss_ecb.xml":["ECB",3],
+            "news_rss_boe.xml":["Bank of England",3],
+            "news_rss_cnbce.xml":["CNBC Economy",2],
+            "news_rss_cnbcf.xml":["CNBC Finance",2],
+            "news_rss_mw.xml":["MarketWatch",2],
+            "news_rss_yf.xml":["Yahoo Finance",2],
+            "news_rss_banks.xml":["Bank research",1],
+            "news_rss_macro.xml":["Macro wire",1]
+          };
+          // Themen, die den Score-Assets dieser App entsprechen - jeder Treffer
+          // erhoeht die Wichtigkeit. Bewusst eine feste, nachlesbare Liste
+          // statt einer freien Bewertung.
+          const SCHWER=["rate decision","interest rate","rate cut","rate hike","fomc","inflation","cpi",
+            "payrolls","nonfarm","unemployment","recession","gdp","tariff","stimulus","default",
+            "central bank","quantitative","yield curve","credit","bailout","emergency"];
+          const ASSETS=["dollar","euro","yen","pound","sterling","franc","gold","silver","oil","crude",
+            "bitcoin","nasdaq","s&p","dax","treasury","bond","equities","stocks"];
+          const ent=t=>String(t).replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1")
+            .replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"')
+            .replace(/&#39;/g,"'").replace(/&apos;/g,"'").replace(/&amp;/g,"&")
+            .replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+          const _reCache={};
+          function wortTreffer(text,wort){
+            if(!_reCache[wort]){
+              const esc=wort.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+              // Optionales Plural-s: "interest rate" soll auch "interest rates"
+              // treffen, ohne dass "gold" in "Goldman" anschlaegt.
+              _reCache[wort]=new RegExp("(^|[^a-z0-9])"+esc+"s?([^a-z0-9]|$)","i");
+            }
+            return _reCache[wort].test(text);
+          }
+          const alle=[];
+          Object.keys(QUELLEN).forEach(f=>{
+            let xml="";try{xml=fs.readFileSync(f,"utf8");}catch(e){return;}
+            const [name,klasse]=QUELLEN[f];
+            // RSS <item> und Atom <entry> gleichermassen
+            const bloecke=[...xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/g)].map(m=>m[0]);
+            let n=0;
+            bloecke.forEach(b=>{
+              const t=ent((b.match(/<title[^>]*>([\s\S]*?)<\/title>/)||[])[1]||"");
+              let u=(b.match(/<link[^>]*>([\s\S]*?)<\/link>/)||[])[1]||"";
+              // Atom: selbstschliessendes <link href="..."/> - Anfuehrungszeichen
+              // koennen einfach ODER doppelt sein.
+              if(!u||/^\s*$/.test(u)){const m=b.match(/<link[^>]*href=["']([^"']+)["']/);if(m)u=m[1];}
+              u=ent(u);
+              const dRoh=(b.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated|dc:date)>/)||[])[1]||"";
+              const ts=Date.parse(ent(dRoh));
+              if(!t||!u||!isFinite(ts))return;   // ohne Titel, Link oder echtes Datum: nicht aufnehmen
+              const tl=t.toLowerCase();
+              // ⚠ Wortgrenzen statt includes: "Goldman Sachs" enthaelt "gold"
+              // und wurde sonst als Gold-Bezug gewertet (im Test aufgefallen).
+              const treffer=SCHWER.filter(k=>wortTreffer(tl,k));
+              const bezug=ASSETS.filter(k=>wortTreffer(tl,k));
+              // Wichtigkeit: Quellenklasse + gedeckelte Themen- und Bezugstreffer.
+              const w=klasse*2+Math.min(4,treffer.length*2)+Math.min(2,bezug.length);
+              alle.push({t,u,s:name,k:klasse,d:new Date(ts).toISOString(),w,
+                tags:[...new Set(treffer.concat(bezug))].slice(0,4)});
+              n++;
+            });
+            console.log("[debug] news: "+f+" -> "+n+" Eintraege ("+name+")");
+          });
+          if(!alle.length){console.log("[debug] news: keine Eintraege - nichts geschrieben");process.exit(0);}
+          let out={};
+          try{const d=JSON.parse(fs.readFileSync("news_data.json","utf8"));if(d&&typeof d==="object")out=d;}catch(e){}
+          const map={};
+          ((out.headlines)||[]).forEach(h=>{if(h&&h.u)map[h.u]=h;});
+          alle.forEach(h=>{map[h.u]=h;});
+          const grenze=Date.now()-35*864e5;
+          const liste=Object.values(map)
+            .filter(h=>{const ts=Date.parse(h.d);return isFinite(ts)&&ts>=grenze;})
+            .sort((a,b)=>Date.parse(b.d)-Date.parse(a.d))
+            .slice(0,600);
+          out.headlines=liste;
+          out.updated=new Date().toISOString();
+          out.sources=Object.values(QUELLEN).map(q=>q[0]);
+          fs.writeFileSync("news_data.json",JSON.stringify(out,null,1));
+          const heute=liste.filter(h=>Date.parse(h.d)>Date.now()-864e5).length;
+          console.log("[debug] news: "+liste.length+" Schlagzeilen gesamt, "+heute+" aus den letzten 24h");
+          NEWSJS
+          node news_parse.js
+          rm -f news_rss_*.xml news_parse.js
 
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json te_pages.json tepage_*.html invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt news_marketaux.json

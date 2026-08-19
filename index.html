@@ -1980,6 +1980,23 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
 .histp-noevt{color:var(--t3);font-size:11px;padding:2px 2px 1px 54px}
+.hl-tabs{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap}
+.hl-tab{background:var(--bg2);border:1px solid var(--bd);color:var(--t2);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.hl-tab.on{background:var(--bg5);border-color:var(--bd2);color:var(--t0)}
+.hl-cnt{font-family:var(--ff-num);font-size:10px;color:var(--t3);background:var(--bg0);border-radius:999px;padding:0 5px;line-height:1.5}
+.hl-tab.on .hl-cnt{color:var(--t1)}
+.hl-row{display:flex;gap:8px;align-items:flex-start;padding:6px 2px;border-bottom:1px solid var(--bd);text-decoration:none}
+.hl-row:last-child{border-bottom:none}
+.hl-rank{flex:0 0 34px;font-family:var(--ff-num);font-size:9px;font-weight:700;letter-spacing:.04em;text-align:center;border-radius:var(--rss);padding:2px 0;margin-top:1px}
+.hl-hi{color:#fff;background:var(--red)}
+.hl-mid{color:var(--t0);background:var(--bg5);border:1px solid var(--bd2)}
+.hl-lo{color:var(--t3);background:var(--bg2);border:1px solid var(--bd)}
+.hl-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.hl-title{color:var(--t1);font-size:12px;line-height:1.4}
+.hl-row:hover .hl-title{color:var(--blue)}
+.hl-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:10px;color:var(--t3)}
+.hl-src{font-weight:600;color:var(--t2)}
+.hl-tag{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:0 4px;font-size:9.5px;color:var(--t3)}
 .aaii-lead{color:var(--t2);font-size:12px;line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);border-radius:var(--rs);padding:9px 11px}
 .aaii-src{color:var(--blue);font-weight:600;white-space:nowrap}
 .aaii-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-top:10px}
@@ -2244,18 +2261,19 @@ body.dash-edit-mode .motivation-editbar{display:flex}
      Karte dabei unter eine noch lesbare Groesse faellt. */
   /* Nur diese geben nach: 0 1 auto = darf schrumpfen, waechst aber NIE
      (Wachsen war die Ursache der frueheren weissen Luecken). */
+  /* ⚠ Nutzer-Wunsch 2026-08-19: der KOMPLETTE Inhalt jeder Karte muss
+     sichtbar sein. Keine Karte gibt mehr Hoehe ab (flex:0 0 auto), und keine
+     Liste scrollt mehr in sich. Die gemeinsame Spaltenhoehe richtet sich
+     stattdessen nach der LAENGSTEN Spalte (siehe equalizeDashColumns) - die
+     kuerzeren bekommen den Ueberschuss ueber ihre dw-grow-Karte. */
   .dash-zone-left>.dw.dw-shrink,.dash-zone-center>.dw.dw-shrink,
   .dash-zone-right>.dw.dw-shrink,.dash-zone-right2>.dw.dw-shrink{
-    flex:0 1 auto;min-height:150px;display:flex;flex-direction:column}
-  .dw.dw-shrink>.dw-body{flex:1;min-height:0;display:flex;flex-direction:column}
-  /* ⚠ KEIN justify-content:space-between (Nutzer-Korrektur, zweite Runde):
-     das verteilte den Restplatz zwar gleichmaessig, machte daraus aber viele
-     kleine Luecken statt einer grossen - der Eindruck blieb derselbe. Die
-     Liste faengt oben an und SCROLLT, wenn sie nicht hineinpasst. */
+    flex:0 0 auto;display:flex;flex-direction:column}
+  .dw.dw-shrink>.dw-body{display:flex;flex-direction:column}
   .dw.dw-shrink>.dw-body>.rank-list,.dw.dw-shrink>.dw-body>.hie-list,
   .dw.dw-shrink>.dw-body>.perf-list,.dw.dw-shrink>.dw-body>.wl-table,
   .dw.dw-shrink>.dw-body>.carry-list,.dw.dw-shrink>.dw-body>.esi-list{
-    flex:1;min-height:0;overflow-y:auto}
+    overflow:visible}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -2929,12 +2947,12 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-384 - AAII hat jetzt echte Daten und eine Altersgrenze. Der einmalige Backfill hat 520 Wochen der von AAII veroeffentlichten Reihe geladen (2016-03 bis 2026-03). Der Livelauf zeigte dann zwei Dinge. Erstens war der Parser der Wochenseite kaputt: die Seite ist erreichbar (http 200, 20 KB) und fuehrt die aktuelle Woche, aber zwischen den Feldern steht jeweils der Langzeitmittelwert - "Bullish 34.7% Avg 37.5% Neutral 27.4%" - und ein Muster, das zwischen den Labels keine Ziffern erlaubt, findet dadurch gar nichts. Jedes Label wird jetzt EINZELN gesucht; gegen den echten Seitentext aus dem Job-Log geprueft, liefert 2026-08-12 mit 34,7 / 27,4 / 37,9 und Spread -3,2pp. Zweitens, und wichtiger: die veroeffentlichte Historien-Datei endete im Maerz, waehrend die Live-Seite August fuehrte - die Karte haette einen fuenf Monate alten Wert als aktuelle Lesung angezeigt UND gescort. Neue Altersgrenze AAII_STALE_DAYS von 21 Tagen, also drei verpasste woechentliche Veroeffentlichungen: der Wert bleibt sichtbar, traegt aber 0 bei, und die Karte sagt ausdruecklich, wie alt der Stand ist und dass die Luecke NICHT gefuellt wird. Derselbe Gedanke wie IND_STALE_CYCLES bei den Indikatoren. Gemessen: 21 Tage zaehlen noch, 22 nicht mehr; ein fuenf Monate alter Extremwert traegt 0 statt 0,5.">
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-385 - Drei Punkte. (1) Schlagzeilen-Karte funktioniert jetzt wirklich: der alte Zugang brauchte einen Marketaux-API-Schluessel, den es nie gab, deshalb war die Karte dauerhaft leer. Quellen sind jetzt freie RSS-Feeds ohne Schluessel - Fed, EZB und Bank of England direkt, dazu CNBC, MarketWatch und Yahoo Finance, plus eine gezielte Suche nach Aussagen einzelner Haeuser wie JPMorgan, Goldman Sachs oder Morgan Stanley. Die Karte hat drei Zeitfenster (Today, Week, Month) mit Anzahl je Fenster und sortiert INNERHALB des Fensters nach Wichtigkeit. Die Wichtigkeit ist keine freie Bewertung, sondern eine nachlesbare Rechnung: Quellenklasse mal zwei (Notenbank 3, Wirtschaftsmedium 2, Suche 1) plus gedeckelte Treffer auf einer festen Themenliste plus gedeckelte Treffer auf den hier gelisteten Maerkten; als HIGH/MED/LOW sichtbar. Zwei Parser-Fehler im Test gefunden und behoben: Atom-Links mit einfachen Anfuehrungszeichen wurden nicht erkannt, und "Goldman Sachs" wurde als Gold-Bezug gewertet - Stichworte treffen jetzt nur an Wortgrenzen, mit optionalem Plural-s. Ohne echtes Datum wird ein Eintrag verworfen. (2) Dashboard: der komplette Inhalt jeder Karte ist sichtbar, nichts scrollt mehr in sich. Die gemeinsame Spaltenhoehe richtet sich jetzt nach der LAENGSTEN Spalte statt nach der kuerzesten - vorher wurde auf die kuerzeste angeglichen und der Rest zusammengedrueckt, genau dadurch entstanden die Innen-Scroller. Gemessen ueber vier Breiten: 0 Innen-Scroller, 0 ueberlaufende Karten, 0 Ueberlappungen, alle Spalten exakt gleich hoch. (3) Risk-Index: die Methodenzeile nannte vier Reihen, obwohl nur drei einbezogen waren - VIX faellt heraus, solange seine eigene Reihe zu kurz ist. Sie nennt jetzt die tatsaechlich verwendeten und waechst automatisch mit.">
     <span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-384</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-385</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -14156,7 +14174,7 @@ const W_TYPES=[
   {type:'watchlist',label:'Watchlist',sub:'Tracked pairs, name + score + bias only'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
   {type:'motivation',label:'Focus • Believe • Do',sub:'Decorative motivational card — no data'},
-  {type:'headlines',label:'Headlines',sub:'Latest financial news headlines (Fed speeches, geopolitics, index outlook, ...) — display-only, no score impact'},
+  {type:'headlines',label:'Headlines',sub:'Economic news from free RSS feeds — central banks, market media and bank research. Day/week/month, ranked by importance. Display-only, no score impact'},
   {type:'perf_ranking',label:'Performance Ranking',sub:'Actual price performance over 1D/1W/1M/YTD — what the market did, next to what the score says'},
   {type:'carry_ranking',label:'Carry Ranking',sub:'Policy-rate differential per FX pair — which pairs pay to hold long, which cost'},
   {type:'corr_warn',label:'Correlation Check',sub:'How correlated your watchlist pairs really are — spots positions that are secretly one'},
@@ -14952,27 +14970,46 @@ function renderDash(){
       }
       content=wlBody+addRow;
     }else if(w.type==='headlines'){
-      // Nutzer-Wunsch 2026-08-06: eigene Karte ganz rechts mit den neusten
-      // Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick, ...).
-      // Reine Anzeige, kein Score-Einfluss - siehe fetchNewsData() weiter
-      // oben. Ohne konfigurierten MARKETAUX_API_KEY (Workflow-Secret) bleibt
-      // news_data.json leer/fehlt -> ehrlicher Leerzustand statt erfundener
-      // Schlagzeilen (Grundsatz "nie schaetzen").
-      const heads=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines.slice(0,12):[];
-      // Leerzustand mit echtem Nutzen statt einer nackten Zeile (Nutzer-Wunsch
-      // 2026-08-14 "keine weissen Luecken"): ohne MARKETAUX_API_KEY gibt es
-      // schlicht keine Schlagzeilen - dann wird ERKLAERT, wie man sie
-      // einschaltet, statt eine leere Flaeche zu zeigen. Bewusst KEINE
-      // erfundenen Schlagzeilen (Grundsatz "nie schaetzen").
-      content=heads.length===0?`<div class="dw-empty" style="text-align:left;line-height:1.55">
-          ${NEWS_DATA?'No headlines came back from the news feed on the last run — it retries every hour.'
-            :'The news feed isn\'t switched on yet. It needs a free Marketaux API key, stored as the repository secret <b>MARKETAUX_API_KEY</b> — the hourly workflow picks it up from there and fills this card with Fed, central-bank, oil and index headlines.'}
-        </div>`:
-        heads.map(h=>`<a class="hl-row" href="${safeUrl(h.url)}" target="_blank" rel="noopener">
-          <span class="hl-title">${escH(h.title||'')}</span>
-          <span class="hl-meta"><span class="hl-src">${escH(h.source||'')}</span>${h.publishedAt?`<span class="hl-time">${escH(relTime(h.publishedAt))}</span>`:''}</span>
-        </a>`).join('');
-    }else if(w.type==='motivation'){
+      // Wirtschafts-Schlagzeilen aus RSS-Feeds (frei, ohne Schluessel):
+      // Notenbanken direkt (Fed/EZB/BoE), etablierte Wirtschaftsmedien und
+      // eine gezielte Suche nach Aussagen einzelner Haeuser (JPMorgan,
+      // Goldman Sachs, Morgan Stanley ...). Der frueher genutzte
+      // Marketaux-Zugang brauchte einen API-Key, den es nie gab - die Karte
+      // blieb dadurch dauerhaft leer.
+      //
+      // Drei Zeitfenster (Tag/Woche/Monat), innerhalb des Fensters nach
+      // WICHTIGKEIT sortiert. Die Wichtigkeit ist keine freie Bewertung,
+      // sondern eine nachlesbare Rechnung (siehe newsWeightNote): Quellenklasse
+      // mal zwei, plus gedeckelte Treffer auf einer festen Themenliste, plus
+      // gedeckelte Treffer auf den in dieser App gelisteten Maerkten.
+      const alleH=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+      const fenster={day:1,week:7,month:30}[newsRange]||1;
+      const grenze=Date.now()-fenster*864e5;
+      const heads=alleH.filter(h=>{const ts=Date.parse(h&&h.d);return isFinite(ts)&&ts>=grenze;})
+        .sort((x,y)=>(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+      const tabs=[['day','Today'],['week','Week'],['month','Month']];
+      const bar=`<div class="hl-tabs">${tabs.map(([k,l])=>{
+        const n=alleH.filter(h=>{const ts=Date.parse(h&&h.d);
+          return isFinite(ts)&&ts>=Date.now()-({day:1,week:7,month:30}[k])*864e5;}).length;
+        return`<button class="hl-tab${newsRange===k?' on':''}" onclick="setNewsRange('${k}')">${l}${n?`<span class="hl-cnt">${n}</span>`:''}</button>`;
+      }).join('')}</div>`;
+      // Wichtigkeit als drei Stufen sichtbar machen - die Rohzahl waere ohne
+      // Erklaerung wertlos, die Stufe ist auf einen Blick lesbar.
+      const stufe=v=>v>=8?['hl-hi','HIGH']:v>=5?['hl-mid','MED']:['hl-lo','LOW'];
+      const liste=heads.length?heads.map(h=>{
+        const [cls,lbl]=stufe(+h.w||0);
+        const tags=(Array.isArray(h.tags)?h.tags:[]).slice(0,3)
+          .map(t=>`<span class="hl-tag">${escH(t)}</span>`).join('');
+        return`<a class="hl-row" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${escH((h.t||'')+' — '+(h.s||''))}">
+          <span class="hl-rank ${cls}" title="Importance ${(+h.w||0)} — source class x2 + topic hits + market hits">${lbl}</span>
+          <span class="hl-main"><span class="hl-title">${escH(h.t||'')}</span>
+            <span class="hl-meta"><span class="hl-src">${escH(h.s||'')}</span>${h.d?`<span class="hl-time">${escH(relTime(h.d))}</span>`:''}${tags}</span></span>
+        </a>`;}).join('')
+        :`<div class="dw-empty" style="text-align:left;line-height:1.55">${
+          alleH.length?`Nothing in this window yet — try <b>Week</b> or <b>Month</b>.`
+            :`No headlines yet. They are pulled from free RSS feeds (Fed, ECB, Bank of England, CNBC, MarketWatch, Yahoo Finance and a targeted search for bank research) by the hourly workflow — no API key needed. Nothing is invented in the meantime.`}</div>`;
+      content=bar+liste;
+    }else if(w.type==='motivation'){    }else if(w.type==='motivation'){
       // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
       // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
       // fette blaue Woerter untereinander statt eines echten Bilds (bleibt
@@ -15243,23 +15280,22 @@ function equalizeDashColumns(){
   zones.forEach(z=>{z.style.height='';});                 // vor dem Messen zuruecksetzen
   // Einspaltig gestapelt (<1100px): dort gibt es keine Spalten anzugleichen.
   if(zones[1].getBoundingClientRect().top>zones[0].getBoundingClientRect().top+4)return;
+  // ⚠ Nutzer-Wunsch 2026-08-19: der KOMPLETTE Inhalt jeder Karte muss
+  // sichtbar sein, nichts darf in einem Innen-Scroller verschwinden. Die
+  // gemeinsame Hoehe ist deshalb die GROESSTE natuerliche Spaltenhoehe, nicht
+  // mehr die kleinste. Vorher wurde auf die kuerzeste Spalte angeglichen und
+  // der Rest zusammengedrueckt - genau dadurch entstanden die Innen-Scroller.
+  // Die kuerzeren Spalten bekommen den Ueberschuss ueber die dw-grow-Karte
+  // (space-between auf ihrer Liste), es bleibt also keine weisse Luecke.
   const nat=zones.map(z=>z.getBoundingClientRect().height);
-  const need=zones.map(z=>{
-    const kids=[...z.children];let px=0;
-    kids.forEach(c=>{px+=c.classList.contains('dw-shrink')?DASH_SHRINK_MIN_H:c.getBoundingClientRect().height;});
-    return px;
-  });
-  let target=Math.max(DASH_COL_MIN_H,Math.min(...nat),...need);
+  let target=Math.max(DASH_COL_MIN_H,...nat);
   const setH=v=>zones.forEach(z=>{z.style.height=v+'px';});
   const ueberlauf=()=>Math.max(...zones.map(z=>z.scrollHeight-z.clientHeight));
   setH(target);
   // ⚠ NACHMESSEN. Eine Hoehe, die der Inhalt nicht einhalten kann, laesst ihn
-  // in die untere Kartenreihe laufen - genau der gemeldete Ueberlapp. Die
-  // Rechnung oben schaetzt das Minimum aus DASH_SHRINK_MIN_H; liegt sie
-  // daneben (Kopfzeile hoeher als gedacht, Karte nicht schrumpfbar), korrigiert
-  // dieser Durchgang. Bleibt danach immer noch etwas ueber, wird die Hoehe
-  // ganz zurueckgenommen: ungleich lange Spalten sind haesslich, ueberlappende
-  // sind kaputt.
+  // in die untere Kartenreihe laufen - der frueher gemeldete Ueberlapp.
+  // Bleibt trotz Korrektur etwas ueber, wird die Hoehe ganz zurueckgenommen:
+  // ungleich lange Spalten sind haesslich, ueberlappende sind kaputt.
   let ueber=ueberlauf();
   if(ueber>1){
     setH(target+Math.ceil(ueber));
@@ -18249,6 +18285,10 @@ let sentSub='retail',sentSym='',pcAsset='';
 let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
 let pcRange=1,pcCustomFrom='',pcCustomTo='';
 let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
+// Zeitfenster der Headlines-Karte: day | week | month. Reine
+// Lese-Auswahl wie pcAsset - bewusst nicht persistiert, kein Sync noetig.
+let newsRange='day';
+function setNewsRange(r){newsRange=r;renderDash();}
 // AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
 // vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).
 let aaiiRange=12,aaiiCustomFrom='',aaiiCustomTo='';
