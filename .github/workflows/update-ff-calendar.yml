@@ -2882,8 +2882,20 @@ jobs:
           // Entschieden wird NICHT nach dem huebschesten Treffer, sondern nach
           // der Summenprobe unten - die drei Anteile MUESSEN 100 ergeben.
           const kand=[];
-          const holen=(re,quelle)=>{const m=txt.match(re);if(m)kand.push({bull:num(m[1]),neutral:num(m[2]),bear:num(m[3]),quelle});};
-          holen(/Bullish[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%[^0-9%]{0,60}Neutral[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%[^0-9%]{0,60}Bearish[^0-9%]{0,40}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\s*%/i,"text");
+          // ⚠ Jedes Label EINZELN suchen, nicht in einem kombinierten Muster.
+          // Live gemessen (2026-08-19) steht auf der Seite zwischen den
+          // Feldern jeweils der Langzeitmittelwert:
+          //   "Bullish 34.7% Avg 37.5% Neutral 27.4% Avg 31.0% Bearish 37.9%"
+          // Ein Muster, das zwischen den Labels keine Ziffern erlaubt, findet
+          // dadurch gar nichts - genau daran ist der erste Livelauf gescheitert
+          // (http=200, 20 KB, trotzdem "Kandidaten: []"). Der jeweils ERSTE
+          // Prozentwert nach dem Label ist der gesuchte; das "Avg" danach
+          // liegt hinter der Fundstelle und stoert nicht mehr.
+          const einzeln=lbl=>{
+            const m=txt.match(new RegExp(lbl+"[^0-9]{0,20}([0-9]{1,2}(?:[.,][0-9]{1,2})?)\\s*%","i"));
+            return m?num(m[1]):null;
+          };
+          kand.push({bull:einzeln("Bullish"),neutral:einzeln("Neutral"),bear:einzeln("Bearish"),quelle:"labels"});
           const j=raw.match(/"?bullish"?\s*[:=]\s*"?([0-9.]+)"?[\s\S]{0,200}?"?neutral"?\s*[:=]\s*"?([0-9.]+)"?[\s\S]{0,200}?"?bearish"?\s*[:=]\s*"?([0-9.]+)"?/i);
           if(j){let b=num(j[1]),n=num(j[2]),r=num(j[3]);
             if(b!=null&&b<=1&&n!=null&&n<=1&&r!=null&&r<=1){b*=100;n*=100;r*=100;}

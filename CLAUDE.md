@@ -6628,3 +6628,84 @@ Gewicht, alle uebrigen ausdruecklich ohne Score-Wirkung samt Begruendung.
 Zwei Darstellungsfehler dabei gefunden und behoben: das letzte X-Achsen-Label
 war abgeschnitten (erstes/letztes jetzt buendig verankert statt mittig), und
 die beiden Legendenpunkte im Spread-Chart waren farblich kaum zu unterscheiden.
+
+### AAII-Historie: einmaliger Backfill der echten Wochenreihe (2026-08-16)
+
+Nutzer-Rueckfrage "ich sehe noch nix, die Historie ist doch verfuegbar" - zu
+Recht: der Live-Schritt holt nur die AKTUELLE Woche, die Karte waere also
+monatelang praktisch leer geblieben. AAII veroeffentlicht die komplette
+Wochenreihe seit Juli 1987 als Datei; der neue Schritt **"Backfill AAII survey
+history"** laedt sie einmalig.
+
+**⚠ Aus dieser Sandbox ist aaii.com NICHT erreichbar** (Proxy-403,
+Org-Policy - nicht wiederholen). Wie bei jeder neuen Quelle in diesem Projekt
+laeuft die Verifikation ueber `workflow_dispatch` + Job-Log, nicht ueber einen
+Fetch von hier.
+
+**Selbstbegrenzend:** ab `AAII_MIN_HIST`=60 vorhandenen Wochen ist der Schritt
+ein sofortiger No-Op und laedt gar nichts mehr. Es ist ein Backfill, kein
+wiederkehrender Grossabruf. Bereits vom Live-Schritt geholte Wochen gewinnen
+beim Zusammenfuehren.
+
+**Nichts wird geschaetzt:** jede Zeile braucht ein echtes Datum, und die drei
+Anteile muessen 100 ergeben (Toleranz 98,5-101,5) - sonst wird sie verworfen.
+Gegen synthetische Dateien geprueft: tab-getrennt 80/80 Wochen, HTML-Tabelle
+40/40, eine Zeile mit Summe 120 korrekt aussortiert, ohne brauchbare Reihe
+wird nichts geschrieben.
+
+**Drei Formate, drei Fallen - alle geloest:**
+1. **XLSX ist ein ZIP.** Wird per `unzip -p` aus `xl/worksheets/sheet1.xml`
+   plus `xl/sharedStrings.xml` gelesen (Zellen mit `t="s"` sind Verweise in
+   die Zeichenkettentabelle, keine Werte).
+2. **HTML-Tabellen stehen oft komplett in EINER Zeile.** Ohne Normalisierung
+   von `<tr>`/`</tr>` zu echten Umbruechen findet die Zeilenschleife genau
+   einen Datensatz. Gemessen: 0 statt 40 Wochen.
+3. **Ein Datum wie "Jan 02, 2025" enthaelt selbst ein Komma.** Ein
+   kombiniertes Trennmuster (`\t|,|;|...`) schneidet mitten hindurch. Die
+   Trennstrategien laufen deshalb NACHEINANDER: erst HTML-Zellen, dann
+   Tabulator, dann Semikolon, dann Komma - die erste, die einen gueltigen
+   Datensatz liefert, gewinnt.
+
+**Merksatz:** bei einer neuen Datei-Quelle nie ein einzelnes kombiniertes
+Trennmuster verwenden. Datumsformate enthalten selbst Trennzeichen; mehrere
+Strategien nacheinander zu probieren ist robuster und kostet nichts.
+
+### ⚠ AAII live: Parser-Fehler und Altersgrenze (Livelauf 2026-08-19)
+
+Erster echter Livelauf per `workflow_dispatch`. Zwei Befunde, beide behoben:
+
+**1. Der Parser der Wochenseite fand nichts, obwohl die Seite da war.**
+Job-Log: `http=200 size=20043`, trotzdem `Kandidaten: []`. Die
+Fehlerdiagnose gab das Textfenster aus und zeigte warum:
+
+```
+Week ending August 12, 2026
+Bullish 34.7% Avg 37.5% Neutral 27.4% Avg 31.0% Bearish 37.9% Avg 31.5%
+```
+
+Zwischen den Feldern steht jeweils der LANGZEITMITTELWERT. Ein kombiniertes
+Muster, das zwischen den Labels keine Ziffern erlaubt (`[^0-9%]{0,60}`),
+scheitert daran zwangslaeufig. Jetzt wird **jedes Label einzeln** gesucht -
+der erste Prozentwert nach dem Label ist der gesuchte, das "Avg" liegt
+dahinter und stoert nicht. Gegen den echten Seitentext aus dem Log geprueft.
+
+**Merksatz:** ein kombiniertes Muster ueber mehrere Felder bricht, sobald die
+Quelle zwischen ihnen irgendetwas mit Ziffern einfuegt. Label-fuer-Label
+suchen ist robuster; die Summenprobe schuetzt weiterhin vor Fehlgriffen.
+
+**2. Die veroeffentlichte Historien-Datei haengt Monate hinterher.**
+Der Backfill lieferte 520 Wochen, aber die juengste war **2026-03-19**,
+waehrend die Live-Seite bereits den 12.08. fuehrte. Ohne Gegenmassnahme haette
+die Karte einen fuenf Monate alten Wert als aktuelle Lesung angezeigt UND
+gescort.
+
+**`AAII_STALE_DAYS`=21** (drei verpasste woechentliche Veroeffentlichungen):
+ein aelterer Stand bleibt sichtbar, traegt aber **0** bei, und die Karte nennt
+ausdruecklich das Datum und dass die Luecke NICHT gefuellt wird. Derselbe
+Gedanke wie `IND_STALE_CYCLES` bei den Indikatoren. Gemessen: 21 Tage zaehlen
+noch, 22 nicht mehr; ein fuenf Monate alter Extremwert traegt 0 statt 0,5.
+
+**Merksatz:** bei jeder Quelle mit fester Veroeffentlichungsfrequenz gehoert
+eine Altersgrenze dazu, sobald Historie und Live-Stand aus VERSCHIEDENEN
+Endpunkten kommen - die beiden koennen beliebig weit auseinanderlaufen, und
+der aeltere gewinnt sonst still.
