@@ -1431,40 +1431,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .dw-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.55}
 .dw-add{font-size:11px;padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:var(--ff-num);letter-spacing:.5px;text-transform:uppercase}
-/* Motivations-Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz): drei fette
-   blaue Woerter untereinander, mittig, mit genug Eigenhoehe um die
-   markierte Luecke rechts im Dashboard sichtbar zu fuellen.
-   Nutzer-Korrektur (selber Tag): Karte soll "komplett weiss sein mit nur
-   dem Text, keine Ueberschrift" + "mehr special markiert, krasse
-   Schriftart" - Kartenkopf entfaellt komplett (hdrHtml-Ausnahme wie
-   der Globus-Karte), Rahmen weg (reines weisses Feld statt normaler
-   Karten-Optik), Schatten bleibt als einziger Abhebe-Effekt gegen den
-   Marmor-Hintergrund. Schriftart: Systemstack aus fetten "Poster"-
-   Groteskschriften (Impact/Arial Black - auf praktisch jedem Geraet ohne
-   Nachladen verfuegbar, bleibt offline-tauglich) statt der App-weiten
-   Schriftart, plus deutlich groesser/kursiv fuer mehr Wucht. Der innere
-   Inhalts-Wrapper heisst bewusst *-body (nicht mehr .dw-motivation), um
-   nicht denselben Klassennamen wie der aeussere Karten-Wrapper
-   (.dw.dw-motivation, aus dw-${w.type}) zu tragen. */
-/* Nutzer-Foto 2026-08-03 (eingezeichnete Hoehen-Linie ueber die Karten
-   dieser Reihe): die feste min-height:260px liess die Karte deutlich
-   tiefer enden als ihre Nachbarn (Volatility Leaders/Assets Strength/
-   Market Sentiment) - min-height entfernt (Hoehe folgt jetzt nur noch dem
-   tatsaechlichen Inhalt + moderatem Padding statt einer willkuerlich
-   grossen Mindesthoehe), Woerter/Abstand etwas kompakter (38px/22px Gap ->
-   32px/16px) - Karte damit spuerbar kuerzer, bleibt aber weiterhin deutlich
-   groesser/auffaelliger als normaler Kartentext. */
-.dw.dw-motivation{background:#fff;border-color:transparent}
-.dw-motivation-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px 0}
-.dw-motivation-word{font-family:Impact,'Arial Narrow Bold','Arial Black',sans-serif!important;font-size:32px;font-weight:900;font-style:italic;color:var(--blue);letter-spacing:3px;text-transform:uppercase;text-align:center}
-/* Move/Umbenennen/Loeschen bleiben moeglich (kein anderer Weg dazu, siehe
-   delWidget()/renameWidget()/mvWidget() - nur ueber genau diese Buttons
-   erreichbar), aber ohne die normale .dw-hdr-Kopfzeile (die haette wieder
-   eine sichtbare Ueberschrift bedeutet): eigene, nur im Bearbeitungsmodus
-   sichtbare Leiste. */
-.motivation-editbar{display:none;justify-content:flex-end;margin-bottom:4px}
-body.dash-edit-mode .motivation-editbar{display:flex}
-.motivation-editbar .dw-btns{position:static;transform:none;background:none;padding:0}
 .dw-nav{padding:1px 4px;font-size:9px;line-height:1.4}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px;padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2365,11 +2331,15 @@ body.dense-mode .dash-status-in{padding:4px 10px}
      Karte dabei unter eine noch lesbare Groesse faellt. */
   /* Nur diese geben nach: 0 1 auto = darf schrumpfen, waechst aber NIE
      (Wachsen war die Ursache der frueheren weissen Luecken). */
-  /* ⚠ Nutzer-Wunsch 2026-08-19: der KOMPLETTE Inhalt jeder Karte muss
-     sichtbar sein. Keine Karte gibt mehr Hoehe ab (flex:0 0 auto), und keine
-     Liste scrollt mehr in sich. Die gemeinsame Spaltenhoehe richtet sich
-     stattdessen nach der LAENGSTEN Spalte (siehe equalizeDashColumns) - die
-     kuerzeren bekommen den Ueberschuss ueber ihre dw-grow-Karte. */
+  /* Nutzer-Wunsch 2026-08-19: der komplette Inhalt einer Karte soll sichtbar
+     sein - keine Karte gibt Hoehe ab. Nutzer-Korrektur 2026-08-20: das gilt
+     NICHT fuer die wenigen extrem langen Karten. Gemessen war die rechte
+     Aussenspalte 1576px hoch (Schlagzeilen 587 + Kalender 428 + Surprise 390
+     + Sentiment 171), waehrend die uebrigen bei 900 bis 1100 lagen - die
+     Angleichung an die laengste Spalte streckte dadurch ALLES. Deshalb
+     deckelt --dw-cap die Liste einer langen Karte auf mittlere Hoehe, der
+     Rest wird darin scrollbar. Karten, die von sich aus kuerzer sind,
+     merken davon nichts. */
   .dash-zone-left>.dw.dw-shrink,.dash-zone-center>.dw.dw-shrink,
   .dash-zone-right>.dw.dw-shrink,.dash-zone-right2>.dw.dw-shrink{
     flex:0 0 auto;display:flex;flex-direction:column}
@@ -2378,6 +2348,22 @@ body.dense-mode .dash-status-in{padding:4px 10px}
   .dw.dw-shrink>.dw-body>.perf-list,.dw.dw-shrink>.dw-body>.wl-table,
   .dw.dw-shrink>.dw-body>.carry-list,.dw.dw-shrink>.dw-body>.esi-list{
     overflow:visible}
+  .dw.dw-cap>.dw-body{display:flex;flex-direction:column;min-height:0}
+  .dw.dw-cap>.dw-body>.rank-list,.dw.dw-cap>.dw-body>.hie-list,
+  .dw.dw-cap>.dw-body>.perf-list,.dw.dw-cap>.dw-body>.wl-table,
+  .dw.dw-cap>.dw-body>.carry-list,.dw.dw-cap>.dw-body>.esi-list,
+  .dw.dw-cap>.dw-body>.nb-list,.dw.dw-cap>.dw-body>.mv-list,
+  .dw.dw-cap>.dw-body>.hl-list{
+    max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
+  /* Hoehe je Kartentyp - gemessen, nicht geraten: die Schlagzeilen tragen
+     ueber der Liste noch Umschalter, Leitthema, Druck-Streifen und Chips und
+     duerfen darum etwas mehr; die drei Karten der unteren Reihe liegen
+     bewusst dicht beieinander, damit die Reihe insgesamt mittellang bleibt
+     statt sich an der laengsten auszurichten. */
+  .dw.dw-cap.dw-headlines{--dw-cap:330px}
+  .dw.dw-cap.dw-mini_calendar{--dw-cap:215px}
+  .dw.dw-cap.dw-notification{--dw-cap:230px}
+  .dw.dw-cap.dw-movers_fx{--dw-cap:230px}
   .dw-sub{font-size:12.5px}
   .sym-row{padding:8px 11px}
   .sym-name{font-size:17px}
@@ -3051,11 +3037,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-394 - Drei weitere Auswertungen, alle aus Daten, die die App laengst fuehrt. SURPRISE-INDEX MIT VERLAUF: jede Waehrungszeile hat jetzt eine 90-Tage-Kurve neben dem Wert - bisher stand dort nur der Momentanwert, die eigentliche Frage ist aber, ob eine Volkswirtschaft gerade besser oder schlechter liefert als vor Wochen. Rueckgerechnet aus denselben aufgezeichneten Releases und mit derselben Alters-Gewichtung wie der Live-Wert, keine zweite Formel. TERMINSTRUKTUR im Rate-Probabilities-Tab: der eingepreiste Zinspfad aller sechs Notenbanken nebeneinander statt einzeln je Waehrung - ein Waehrungspaar ist eine Wette auf die DIFFERENZ zweier Pfade, und wo zwei Linien auseinanderlaufen, weitet sich der Zinsabstand. Als Treppe gezeichnet, weil ein Leitzins bis zur naechsten Sitzung gilt; eine Gerade dazwischen waere eine erfundene Zwischenstufe. KORRELATIONS-REGIME im Matrix-Tab: die Matrix zeigt r als eine Zahl ueber 60 Tage, hier laeuft es rollierend ueber die Zeit. Gemessen an EUR/GBP: 773 Fenster seit September 2023, aktuell +0,88, aber eine Spanne von 0,45 ueber den Zeitraum - eine Absicherung, die auf dem aktuellen Wert aufbaut, hoert also auf zu funktionieren, ohne dass einer der beiden Maerkte etwas Ungewoehnliches tut."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-395 - Untere Dashboard-Reihe aufgeraeumt und lange Karten auf mittlere Hoehe gedeckelt. Die reine Deko-Karte ist weg; der Kalender ist aus der vierten Spalte in die untere Reihe gezogen, die damit drei Karten desselben Charakters traegt (naechste Termine, groesste Bewegungen, neue Meldungen) - und die vierte Spalte verliert die 428 Pixel, mit denen sie zuvor die Hoehe aller vier Spalten bestimmte. Neu ist ein Deckel fuer Karten, deren Laenge nicht feststeht, sondern davon abhaengt, was gerade anliegt: Benachrichtigungen und Schlagzeilen scrollen ihre Liste jetzt in mittlerer Hoehe, waehrend Umschalter, Filter und Fusszeilen stehen bleiben. Es faellt keine Zeile weg, sie ist nur durch Scrollen erreichbar. Gemessen: untere Reihe 428 auf 370 Pixel, Spaltenhoehe 1156 auf 1129 - und eine einzelne Karte mit gerade vielen Meldungen kann das Dashboard nicht mehr in die Laenge ziehen."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-394</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-395</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -8535,7 +8521,6 @@ function mkWidgets(){return[
   {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:10},
   {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:11},
   {id:uid(),type:'notification',title:'Notifications',order:12},
-  {id:uid(),type:'motivation',title:'Focus • Believe • Do',order:13},
 ];}
 
 // ══ UNDO/REDO ═══════════════════════════════════════════════════════
@@ -8794,6 +8779,13 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // Umsortierung bleibt sonst unangetastet - nur diese eine, durch den
 // Zonenwechsel noetige Korrektur).
 //
+// 2026-08-20 (Nutzer-Wunsch "entfern die Focus/Believe/Do-Karte"): die rein
+// dekorative `motivation`-Karte aus DASH_V15 ist wieder weg und der Kalender
+// aus der vierten Spalte in die untere Reihe gezogen. Bewusst OHNE
+// DASH_V-Bump: DASH_DROP wirkt unabhaengig von dashV, und die Zone kommt bei
+// jedem Render frisch aus ZONE_OF_TYPE. Ein Bump haette hier nur die eigenen
+// Umsortierungen der Nutzer zurueckgesetzt, ohne etwas zu bewirken.
+//
 // ⚠️ Root-Cause-Fix fuer "Watchlist-Karte war ploetzlich spurlos weg"
 // (Nutzer-Bugreport 2026-08-04, per Foto): die alte "bereits migriert"-
 // Abkuerzung (dashV>=DASH_V -> sofortiges return) sprang bisher komplett
@@ -8814,7 +8806,7 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // Ensure-Block, sonst kaeme ein absichtlich entferntes Widget bei jedem
 // Boot wieder zurueck (siehe delWidget()).
 const DASH_V=21;
-const DASH_DEFAULTS=[['watchlist','Watchlist'],['corr_warn','Correlation Check'],['risk_sentiment','Risk Sentiment'],['perf_ranking','Performance Ranking'],['ccy_ranking','Currency Strength'],['carry_ranking','Carry Ranking'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['surprise_index','Surprise Index'],['headlines','Headlines'],['mini_calendar','Economic Calendar'],['movers_fx','Biggest Movers FX'],['notification','Notifications'],['motivation','Focus • Believe • Do']];
+const DASH_DEFAULTS=[['watchlist','Watchlist'],['corr_warn','Correlation Check'],['risk_sentiment','Risk Sentiment'],['perf_ranking','Performance Ranking'],['ccy_ranking','Currency Strength'],['carry_ranking','Carry Ranking'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['surprise_index','Surprise Index'],['headlines','Headlines'],['mini_calendar','Economic Calendar'],['movers_fx','Biggest Movers FX'],['notification','Notifications']];
 // Globale Reihenfolge; renderDash sortiert danach und verteilt erst dann auf
 // die Zonen - der Rang bestimmt also auch die Reihenfolge INNERHALB einer
 // Spalte. Bloecke entsprechen den Zonen (siehe ZONE_OF_TYPE-Kommentar).
@@ -8823,12 +8815,15 @@ const DASH_RANK={
   risk_sentiment:2,perf_ranking:3,
   ccy_ranking:4,carry_ranking:5,vol_leaders:6,
   sentiment_snapshot:7,surprise_index:8,headlines:9,mini_calendar:10,
-  movers_fx:11,notification:12,motivation:13,
+  movers_fx:11,notification:12,
   fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if(!Array.isArray(dashRemovedTypes))dashRemovedTypes=[];
-  const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock','score_changes','globe','market_watch']);
+  // 'motivation' 2026-08-20 auf Nutzer-Wunsch entfernt (rein dekorative Karte
+  // ohne Datenquelle) - ueber DASH_DROP verschwindet sie auch bei allen, die
+  // sie schon im gespeicherten Layout haben.
+  const DASH_DROP=new Set(['fx_bias','asset_heatmap','live_data','daily_bias','key_insights','session_clock','score_changes','globe','market_watch','motivation']);
   widgets=widgets.filter(w=>!DASH_DROP.has(w.type));
   if((dashV||0)<DASH_V){
     const wlw=widgets.find(w=>w.type==='watchlist');
@@ -14385,7 +14380,6 @@ const W_TYPES=[
   {type:'fx_bias',label:'FX Bias & Other Assets',sub:'FX majors + commodities, indices & crypto, sorted by score'},
   {type:'watchlist',label:'Watchlist',sub:'Tracked pairs, name + score + bias only'},
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
-  {type:'motivation',label:'Focus • Believe • Do',sub:'Decorative motivational card — no data'},
   {type:'headlines',label:'Headlines',sub:'Economic news from free RSS feeds — central banks, market media and bank research. Day/week/month, ranked by importance. Display-only, no score impact'},
   {type:'perf_ranking',label:'Performance Ranking',sub:'Actual price performance over 1D/1W/1M/YTD — what the market did, next to what the score says'},
   {type:'carry_ranking',label:'Carry Ranking',sub:'Policy-rate differential per FX pair — which pairs pay to hold long, which cost'},
@@ -14739,12 +14733,20 @@ function toggleIndEditMode(){
 // 2026-08-07 komplett entfernt wurde ("entfern oben die Zeile mit den Assets
 // und den taeglichen Veraenderungen") - die Preise/Tagesveraenderungen stehen
 // ohnehin in der Majors-Schiene und im Performance-Ranking.
+//
+// Untere Reihe, Stand 2026-08-20 (Nutzer-Wunsch "entfern die Karte und ordne
+// die anderen so an, dass sie sich besser einfuegen"): die reine Deko-Karte
+// ist weg, dafuer ist der Kalender aus der vierten Spalte heruntergezogen.
+// Das hat zwei Gruende - die untere Reihe traegt damit drei Karten desselben
+// Charakters ("was passiert gerade": naechste Termine, groesste Bewegungen,
+// neue Meldungen) statt zwei plus Fuellsel, und die vierte Spalte verliert
+// ihre 428 Pixel, mit denen sie zuvor die Hoehe aller vier Spalten bestimmte.
 const ZONE_OF_TYPE={
   watchlist:'left',corr_warn:'left',
   risk_sentiment:'center',perf_ranking:'center',
   ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
-  sentiment_snapshot:'right2',surprise_index:'right2',headlines:'right2',mini_calendar:'right2',
-  movers_fx:'bottom',notification:'bottom',motivation:'bottom'};
+  sentiment_snapshot:'right2',surprise_index:'right2',headlines:'right2',
+  mini_calendar:'bottom',movers_fx:'bottom',notification:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
@@ -15259,21 +15261,6 @@ function renderDash(){
       // festen Themenliste und auf den hier gelisteten Maerkten; echte
       // Notenbank-Beschluesse hoch, deren Verwaltungsmeldungen runter.
       content=newsCardHtml();
-    }else if(w.type==='motivation'){
-      // Rein dekorative Karte (Nutzer-Wunsch 2026-08-03, Foto-Referenz mit
-      // eingezeichneter Luecke rechts im Dashboard) - keine Datenquelle, drei
-      // fette blaue Woerter untereinander statt eines echten Bilds (bleibt
-      // dadurch theme-faehig und braucht keine Bilddatei). Klasse
-      // dw-motivation-body statt dw-motivation (Kollision mit dem aeusseren
-      // Karten-Wrapper .dw.dw-motivation vermeiden, siehe CSS-Kommentar).
-      // Kein dw-hdr (siehe hdrHtml-Ausnahme oben, "keine Ueberschrift") -
-      // Move/Umbenennen/Loeschen bleiben trotzdem erreichbar, nur in eine
-      // eigene, ausserhalb des Bearbeitungsmodus unsichtbare Leiste verlegt.
-      content=`<div class="motivation-editbar">${btnsHtml}</div><div class="dw-motivation-body">
-        <span class="dw-motivation-word">FOCUS</span>
-        <span class="dw-motivation-word">BELIEVE</span>
-        <span class="dw-motivation-word">DO</span>
-      </div>`;
     }else if(w.type==='pairs_editor'){
       // Shows all pairs across all categories with add/remove/move-category
       const addBtn=`<button class="btn g dw-add" onclick="openAddPair()">＋ Add Pair</button>`;
@@ -15333,9 +15320,12 @@ function renderDash(){
           <span class="mover-delta" style="color:${col}">${m.changePct>0?'▲ +':'▼ '}${Math.abs(m.changePct).toFixed(2)}%</span>
         </div>`;
       };
+      // Die Zeilen liegen in einer eigenen Huelle (.mv-list), damit die
+      // Deckelung langer Karten (.dw-cap) nur sie scrollen laesst und die
+      // Aktualisierungs-Zeile darueber stehen bleibt.
       content=`<div class="movers-upd">🕐 ${updTxt} · refreshes every 10 min</div>`+((gainers.length||losers.length)?
-        `<div class="mover-group-hdr">📈 Gainers</div>${gainers.length?gainers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
-        `<div class="mover-group-hdr">📉 Losers</div>${losers.length?losers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`
+        `<div class="mv-list"><div class="mover-group-hdr">📈 Gainers</div>${gainers.length?gainers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
+        `<div class="mover-group-hdr">📉 Losers</div>${losers.length?losers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}</div>`
         :`<div class="dw-empty">No price history yet - fills in once price_data.json has at least 2 days of data for these pairs.</div>`);
     }else if(w.type==='asset_heatmap'){
       // Sortiert nach symScoreCmp statt roh, damit die Reihenfolge zum
@@ -15391,7 +15381,15 @@ function renderDash(){
           <span class="nb-dir ${dirCls}">${dirLbl}</span>
         </div>`;
       }).join('');
-      content=(popups+evtRows)||`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">No new notifications right now.</div>`;
+      // ⚠ Nutzer-Wunsch 2026-08-20: die Karte darf NICHT beliebig lang werden.
+      // Wie viele Meldungen anstehen, haengt allein davon ab, was gerade los
+      // ist (veraltete Indikatoren, ausstehende Werte, COT-Erinnerung, jedes
+      // eingetroffene Event) - auf einem Geraet mit vielen offenen Punkten
+      // wuchs sie ueber die gesamte Spaltenhoehe. Alles liegt deshalb in
+      // .nb-list und wird ueber .dw-cap auf mittlere Hoehe gedeckelt; der
+      // Rest bleibt durch Scrollen erreichbar, es faellt nichts weg.
+      content=(popups+evtRows)?`<div class="nb-list">${popups+evtRows}</div>`
+        :`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">No new notifications right now.</div>`;
     }else if(w.type==='live_data'){
       // Nur echte, bereits vorhandene Zeitstempel (Nutzer-Wunsch 2026-07-25:
       // kein erfundenes "Real-Time"/Latenz-Versprechen - der Client fetcht nie
@@ -15435,7 +15433,7 @@ function renderDash(){
     // ebenfalls kartenkopflos, hat ihre Ueberschrift auf Nutzer-Wunsch
     // 2026-08-07 aber wieder - die Tabellen-Optik der Zeilen bleibt davon
     // unberuehrt.
-    const hdrHtml=w.type==='motivation'?'':`<div class="dw-hdr">
+    const hdrHtml=`<div class="dw-hdr">
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${w.type==='notification'?`<span class="dw-hdlink" onclick="window.open('https://www.forexfactory.com/calendar','_blank','noopener')">View FF</span>`:''}
@@ -15478,6 +15476,23 @@ function renderDash(){
       const m=h.match(/class="dw dw-([a-z_0-9]+)/);
       return (m&&DASH_SHRINKABLE.includes(m[1]))
         ? h.replace('class="dw dw-','class="dw dw-shrink dw-') : h;
+    });
+  });
+  // ⚠ Nutzer-Wunsch 2026-08-20: "Karten die extrem lang sind lass sie mittel
+  // lang und mach das man den Rest durch scrollen sieht". Betroffen sind die
+  // Karten, deren Laenge NICHT feststeht, sondern davon abhaengt, was gerade
+  // anliegt - Benachrichtigungen (jede veraltete Reihe, jeder ausstehende
+  // Wert, jedes eingetroffene Event ist eine Zeile) und Schlagzeilen. Sie
+  // bekommen .dw-cap; die Hoehe je Typ steht als --dw-cap in der CSS, damit
+  // hier keine Pixelwerte in den Markup-String gebaut werden. Gedeckelt wird
+  // nur die LISTE - Filter, Umschalter und Fusszeilen bleiben stehen, und es
+  // faellt keine Zeile weg, sie ist nur durch Scrollen erreichbar.
+  const DASH_CAPPED=['notification','headlines','mini_calendar','movers_fx'];
+  ['left','center','right','right2','bottom'].forEach(z=>{
+    zones[z]=zones[z].map(h=>{
+      const m=h.match(/class="dw (?:dw-shrink )?dw-([a-z_0-9]+)/);
+      return (m&&DASH_CAPPED.includes(m[1]))
+        ? h.replace('class="dw ','class="dw dw-cap ') : h;
     });
   });
   // Zonen zusammensetzen - Majors-Sidebar (frueher ein eigenstaendiges
@@ -15535,8 +15550,13 @@ function equalizeDashColumns(){
   // gemeinsame Hoehe ist deshalb die GROESSTE natuerliche Spaltenhoehe, nicht
   // mehr die kleinste. Vorher wurde auf die kuerzeste Spalte angeglichen und
   // der Rest zusammengedrueckt - genau dadurch entstanden die Innen-Scroller.
-  // Die kuerzeren Spalten bekommen den Ueberschuss ueber die dw-grow-Karte
-  // (space-between auf ihrer Liste), es bleibt also keine weisse Luecke.
+  //
+  // ⚠ Praezisierung 2026-08-20: der Satz gilt fuer Karten mit FESTEM Inhalt.
+  // Karten, deren Laenge davon abhaengt, was gerade anliegt (Schlagzeilen,
+  // Benachrichtigungen), tragen jetzt .dw-cap und scrollen ihre Liste in
+  // mittlerer Hoehe - sonst bestimmt eine einzelne Karte mit gerade vielen
+  // Zeilen die Hoehe ALLER vier Spalten. Ihre Deckelung wirkt VOR dieser
+  // Messung, sie geht hier also schon mit ihrer gedeckelten Hoehe ein.
   const nat=zones.map(z=>z.getBoundingClientRect().height);
   let target=Math.max(DASH_COL_MIN_H,...nat);
   const setH=v=>zones.forEach(z=>{z.style.height=v+'px';});
@@ -19176,7 +19196,11 @@ function newsCardHtml(){
     ? `<button class="hl-expand" onclick="toggleNewsExpand()">${newsExpanded
         ?'Show top '+NEWS_TOP_N+(rest>0?' &nbsp;·&nbsp; '+rest+' more in the News tab':'')
         :'Show '+Math.min(rest,NEWS_MAX_N-NEWS_TOP_N)+' more'}</button>`:'';
-  return topic+bar+druck+attn+html+mehr+fuss;
+  // Nur die ZEILEN liegen in .hl-list: Fenster-Umschalter, Leitthema,
+  // Nachrichten-Druck, Aufmerksamkeits-Chips, der Mehr-Knopf und die
+  // Fusszeile bleiben beim Deckeln (.dw-cap) stehen - sonst muesste man
+  // scrollen, um an die Filter zu kommen.
+  return topic+bar+druck+attn+`<div class="hl-list">${html}</div>`+mehr+fuss;
 }
 // AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
 // vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).

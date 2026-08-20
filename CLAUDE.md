@@ -7015,3 +7015,58 @@ man die Normierung nachbaut - das waere ein Blick in die Zukunft.
 Rueckrechnung die rohen US-Signale und Gold laeuft verkehrt herum (im Test
 genau so aufgetreten). `check/score.js` prueft das Vorzeichen jetzt gegen
 `effDeriveRules`.
+
+### ⚠ Dashboard: Karten mit VARIABLER Laenge gehoeren gedeckelt (2026-08-20)
+
+Nutzer-Wunsch: "ordne die anderen so an das sie sich besser einfuegen und
+verlaenger sie nicht unnoetig - Benachrichtigungen und andere Karten die
+extrem lang sind lass sie mittel lang und mach das man den Rest durch
+scrollen sieht".
+
+Drei Aenderungen, alle gemessen statt geschaetzt:
+
+1. **Die reine Deko-Karte ist weg** (`motivation`): aus `DASH_DEFAULTS`,
+   `mkWidgets()`, `ZONE_OF_TYPE`, `DASH_RANK`, dem Widget-Katalog, dem
+   Render-Zweig und der CSS - und in `DASH_DROP`, damit sie auch bei allen
+   verschwindet, die sie im gespeicherten Layout haben. **Kein `DASH_V`-Bump
+   noetig**: `DASH_DROP` wirkt unabhaengig von `dashV`, und die Zone kommt
+   aus `ZONE_OF_TYPE` (wird nicht gespeichert). Ein Bump haette hier nur
+   eigene Umsortierungen der Nutzer zurueckgesetzt.
+2. **Der Kalender ist aus der vierten Spalte in die untere Reihe gezogen.**
+   Zwei Gruende: die untere Reihe traegt damit drei Karten desselben
+   Charakters ("was passiert gerade") statt zwei plus Fuellsel, und die
+   vierte Spalte verliert die 428 Pixel, mit denen sie zuvor die Hoehe
+   ALLER vier Spalten bestimmte (`equalizeDashColumns` gleicht auf die
+   LAENGSTE Spalte an).
+3. **`.dw-cap`**: die Liste einer langen Karte wird bei `--dw-cap`
+   gedeckelt und scrollt darin. Angewendet in `renderDash()` ueber
+   `DASH_CAPPED` (String-Replace auf dem fertigen Karten-HTML, dasselbe
+   Muster wie `DASH_SHRINKABLE`), die Hoehe je Typ steht als `--dw-cap` in
+   der CSS - so landen keine Pixelwerte im Markup-String.
+
+**⚠ Gedeckelt wird die LISTE, nie der Kartenkoerper.** Sonst muss man
+scrollen, um an Umschalter, Filter oder die Fusszeile zu kommen. Karten mit
+flachem Koerper haben dafuer eigens eine Huelle bekommen: `.mv-list`
+(Movers), `.nb-list` (Benachrichtigungen), `.hl-list` (nur die
+Schlagzeilen-ZEILEN - Fenster-Umschalter, Leitthema, Druck-Streifen, Chips,
+Mehr-Knopf und Fusszeile bleiben stehen). Bei einer neuen gedeckelten Karte
+zuerst pruefen, ob ihr Koerper eine solche Huelle hat.
+
+**Welche Karten:** die, deren Laenge NICHT feststeht, sondern davon
+abhaengt, was gerade anliegt - `notification` (jede veraltete Reihe, jeder
+ausstehende Wert, jedes eingetroffene Event ist eine Zeile) und
+`headlines`. Dazu die drei der unteren Reihe, damit sie sich nicht an der
+laengsten ausrichtet. Karten mit fester Zeilenzahl brauchen keinen Deckel.
+
+**Nur ab 1100px** (die Regeln stehen im bestehenden `@media`-Block).
+Darunter stapelt das Dashboard einspaltig und die Seite scrollt ohnehin -
+ein Innen-Scroller waere dort eine Touch-Falle.
+
+Gemessen (1440px): untere Reihe 428 -> 335 Pixel, Spaltenhoehe 1156 ->
+1129, `check/dashboard.js` weiterhin ohne Ueberlappung und ohne
+Zonen-Ueberlauf.
+
+**Merksatz:** `equalizeDashColumns()` gleicht auf die LAENGSTE Spalte an -
+eine einzige Karte, die gerade viele Zeilen fuehrt, zieht damit das ganze
+Dashboard in die Laenge. Bei JEDER neuen Karte, deren Zeilenzahl von der
+Datenlage abhaengt statt fest zu sein, gleich `DASH_CAPPED` mitpflegen.
