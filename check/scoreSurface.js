@@ -19,7 +19,18 @@ const WURZELN = [
   'pairScore', 'symTrackedCount', 'symOwnZ', 'symStrength10',
   'applyIndDataFeed', 'applyBondDataFeed', 'applyCotDataFeed', 'applySentimentFeed',
   'syncIndicatorBiases', 'applyTrendModel', 'recomputeRubricAutoBias',
-  'deriveMacroBiasAll', 'recomputeRiskCorr', 'sentEval'
+  'deriveMacroBiasAll', 'recomputeRiskCorr', 'sentEval',
+  // ⚠ Blinder Fleck, gefunden am 2026-08-20: eine Funktion, die die MENGE der
+  // Indikatoren aendert, verschiebt JEDEN angezeigten Score - ohne dass eine
+  // einzige Score-FORMEL angefasst wird. `symScoreCmp` teilt durch
+  // `symTrackedCount`, also wirkt jeder hinzugefuegte oder entfernte
+  // Indikator direkt auf die aufgezeichnete Reihe. Konkret: `addSurveyInds`
+  // hat fuenf Umfragen bei ALLEN Assets angelegt, obwohl es sie nur fuer je
+  // eine Waehrung gibt - sechs Waehrungen trugen dadurch je fuenf
+  // Karteileichen im Divisor. Die Bereinigung verschob BTC von 3,8 auf 3,4.
+  // Die Struktur-Migrationen gehoeren deshalb in die Score-Oberflaeche.
+  'addSurveyInds', 'migrateRubInds', 'moveYieldIndsToInflation',
+  'migrateRiskEnvRub', 'stripGeopoliticsRub', 'mkRubs'
 ];
 const TIEFE = 2;
 // Reine Darstellung/Bequemlichkeit - aendert nie einen Score-WERT.

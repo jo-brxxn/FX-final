@@ -7070,3 +7070,82 @@ Zonen-Ueberlauf.
 eine einzige Karte, die gerade viele Zeilen fuehrt, zieht damit das ganze
 Dashboard in die Laenge. Bei JEDER neuen Karte, deren Zeilenzahl von der
 Datenlage abhaengt statt fest zu sein, gleich `DASH_CAPPED` mitpflegen.
+
+### Fehleranalyse der Neuerungen vom 16.-20.08. (Nutzer-Auftrag 2026-08-20)
+
+Drei Durchgaenge mit VERSCHIEDENEN Methoden statt dreimal derselbe Blick:
+statisch gegen die bekannten Fehlerklassen dieses Projekts, zur Laufzeit gegen
+unabhaengig nachgerechnete Sollwerte, und gegen fehlende/unsinnige Daten.
+Vier echte Fehler.
+
+**1. Umfrage-Indikatoren an Waehrungen ohne Quelle.** `addSurveyInds` legte
+die fuenf neuen Reihen bei ALLEN Assets an, obwohl im Workflow jede auf genau
+eine Waehrung gegated ist (ZEW/Ifo auf EUR, NFIB/Michigan/Leading Index auf
+USD). Gemessen: GBP, CHF, JPY, CAD, AUD, NZD trugen je FUENF Indikatoren, die
+per Konstruktion nie einen Wert bekommen - und `symTrackedCount` zaehlt jeden
+im Divisor von `symScoreCmp` (Test: 32 -> 31, sobald einer entfernt wird).
+Genau die doppelte Bestrafung, die beim Thema Altersgrenze schon einmal
+aufgeschrieben wurde. Jetzt waehrungsgenau ueber `effLinkCcy(sym)`, und
+unberuehrte Karteileichen werden entfernt - eine mit Bias, Notiz oder Wert
+bleibt stehen, das ist eine getroffene Entscheidung.
+
+**⚠ Beim Fix selbst in die naechste Falle getreten:** der erste Wurf nutzte
+`macroCcyFor(sym.id)`, das die ID in `syms` nachschlaegt. `addSurveyInds`
+laeuft aber aus `migrateRubInds` waehrend `loadState()` - also BEVOR `syms`
+zugewiesen ist. Die Absicherung `typeof syms!=='undefined'` dort hilft NICHT:
+bei einer `let`-Variablen in der temporalen Todeszone WIRFT schon `typeof`
+einen ReferenceError, statt 'undefined' zu liefern. Der komplette Boot stand
+("Cannot access 'syms' before initialization"). `effLinkCcy(sym)` arbeitet
+rein auf dem uebergebenen Objekt und ist sicher.
+
+**2. Zwei tote Zeitraum-Filter.** `timeRangeCustomHtml` baut den Handlernamen
+als STRING zusammen (`"<setFnName>Custom"`). Eine Suche nach dem fertigen
+Namen findet deshalb nichts und die Funktion sieht tot aus.
+`setIndHistRangeCustom` wurde beim Aufraeumen am 14.08. genau deshalb
+geloescht - obwohl der CLAUDE.md-Eintrag desselben Tages vor dieser Falle
+warnt. `setAaiiRangeCustom` wurde nie angelegt. Beide Male liess sich
+"Custom" waehlen, die Datumsfelder erschienen, und die Eingabe tat still
+nichts.
+
+**3. Der Surprise-Index widersprach sich selbst.** In derselben Zeile endete
+die Kurve bei CHF auf -0,204, waehrend die Zahl daneben -0,428 zeigte.
+Ursache: `esiForCcy` verwirft einen Indikator, sobald sein AKTUELLER Release
+keinen Forecast fuehrt; `esiSeries` wich stattdessen auf den letzten Release
+MIT Forecast aus und speiste dadurch 7 Reihen statt 5. Massgeblich ist die
+Live-Zahl - die Kurve richtet sich jetzt nach ihr. Ueber alle acht Waehrungen
+gemessen: Abweichung 0.
+
+**4. Das Schlagzeilen-Archiv versprach 35 Tage und hielt drei.** Haltezeit
+35 Tage, Deckel aber 600 Eintraege - bei gemessenen ~200 Schlagzeilen/Tag war
+der Bestand nach drei Tagen voll. "Week" und "Month" zeigten dasselbe wie
+"Today", die Zaehler an den Knoepfen standen auf demselben Wert. Alles
+vollstaendig zu halten waere die falsche Antwort (7000 Eintraege, 2,5 MB bei
+JEDEM Seitenaufruf). Jetzt gestaffelt wie ein Archiv - 3 Tage vollstaendig,
+bis 10 Tage ab MED, bis 35 Tage ab HIGH: 945 Eintraege, 0,34 MB, volle 35
+Tage. Die Staffelung steht im Info-Text, sonst wundert man sich ueber
+duennere alte Tage.
+
+**Der Waechter hat drei der vier Faelle mitgelernt** (Merksatz "eine neue
+Konvention gehoert als PRUEFUNG nach check/, nicht als Absatz hierher"):
+- `check/structure.js` loest jetzt JEDEN Handlernamen aus inline-Handlern auf
+  und kennt die zusammengesetzten `*Custom`-Namen. ⚠ Kommentarzeilen muessen
+  ausgenommen werden - zwei Kommentare ERKLAEREN das Muster `onclick="fn(...)"`
+  und lieferten sonst einen Fehlalarm auf "fn".
+- `check/scoreSurface.js` zaehlt die Struktur-Migrationen zur Score-Oberflaeche.
+  Eine Funktion, die die MENGE der Indikatoren aendert, verschiebt jeden
+  angezeigten Score, ohne eine einzige Formel anzufassen - der Bump-Zwang fuer
+  `SCORE_MODEL_VERSION` griff dort vorher nicht.
+
+**⚠ Zwei Messfehler im eigenen Pruefwerkzeug**, beide meldeten faelschlich
+"bestanden": (1) die Reihen-Funktionen liefern `[datum,wert]`-Tupel, mein
+erster Test las `.d`/`.v` und bekam ueberall `undefined`; (2) `renderAaiiCard`
+erwartet `D.aaii` mit `bull/neutral/bear` - ich uebergab eine erfundene
+Struktur und traf immer den Leerzustand, drei "bestandene" Randfaelle hatten
+nichts geprueft. **Bei jedem Randfall-Test zuerst nachweisen, dass er den Code
+ueberhaupt erreicht** (hier: Laenge des Ergebnisses gegen den Leerzustand).
+
+**Offen, weil Nutzer-Entscheidung:** `CORE_PAIRS` gruppiert seit dem 20.08.
+`['ZEW Economic Sentiment','Ifo Business Climate']` - beide zaehlen dadurch
+halb. Das ist derselbe Gedanke, den der Nutzer bei NFP+ADP ausdruecklich
+ZURUECKGEWIESEN hat ("bewusst getrennte Indikatoren mit je voller ±1-Wirkung").
+Nicht eigenmaechtig geaendert.

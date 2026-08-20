@@ -4707,7 +4707,35 @@ jobs:
               return proQuelle[k]<=MAX_JE_QUELLE;
             });
             liste.sort((a,b)=>Date.parse(b.d)-Date.parse(a.d));
-            liste=liste.slice(0,600);
+            // Gestaffelte Aufbewahrung statt eines flachen Deckels.
+            // ⚠ Der frühere flache Deckel von 600 stand im Widerspruch zur
+            // Haltezeit von 35 Tagen: gemessen kommen rund 200 Schlagzeilen
+            // pro Tag herein, der Bestand war damit nach DREI Tagen voll.
+            // Die Karte bot "Week" und "Month" an, konnte darin aber nie
+            // mehr zeigen als in "Today" - die Zähler an den Knöpfen standen
+            // auf demselben Wert und die beiden Fenster waren funktionslos.
+            // Alles 35 Tage lang vollständig zu halten wäre die falsche
+            // Antwort: das wären rund 7000 Einträge und 2,5 MB, die der
+            // Browser bei JEDEM Seitenaufruf lädt.
+            // Deshalb: die letzten VOLL_TAGE Tage vollständig (dort will man
+            // auch die kleinen Meldungen sehen), alles Ältere nur noch ab
+            // Wichtigkeit MED. Gemessen sind das rund 17 statt 200 Einträge
+            // pro Tag - 35 Tage kosten damit etwa 0,2 statt 2,5 MB.
+            // Je aelter, desto strenger - wie ein Archiv. Gemessen am echten
+            // Tagesmix (200 Schlagzeilen/Tag, davon 35 ab MED und 2 ab HIGH)
+            // deckt das die vollen 35 Tage ab und kostet rund 0,3 statt
+            // 2,5 MB. MAX_GESAMT ist nur die Notbremse, nicht die Regel.
+            const STUFEN=[[3,0],[10,2.5],[35,5]], MAX_GESAMT=2500;
+            const jetzt=Date.now();
+            liste=liste.filter(h=>{
+              const ts=Date.parse(h.d);
+              if(!isFinite(ts))return false;
+              const alter=(jetzt-ts)/864e5;
+              for(const [tage,minW] of STUFEN)
+                if(alter<=tage)return (h.w||0)>=minW;
+              return false;
+            });
+            liste=liste.slice(0,MAX_GESAMT);
             out.headlines=liste;
             out.updated=new Date().toISOString();
             // Nur Quellen ausweisen, die tatsaechlich etwas geliefert haben - eine

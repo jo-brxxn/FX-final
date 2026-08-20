@@ -20,8 +20,50 @@ for(let i=0;i+40<L.length;i++){
   if(seen.has(key)){blockDup={zeileA:seen.get(key)+1,zeileB:i+1};break;}
   seen.set(key,i);
 }
+// Drittes Netz: JEDER Name, der in einem inline-Handler steht, muss auch als
+// Funktion existieren. node --check findet das nie - der Handler ist fuer den
+// Parser nur ein Attributwert, der Fehler faellt erst beim Klick auf.
+// Besonders heimtueckisch sind ZUSAMMENGESETZTE Namen: timeRangeCustomHtml
+// baut "<setFnName>Custom" als String. Eine Suche nach dem fertigen Namen
+// findet nichts, die Funktion sieht tot aus - so sind setIndHistRangeCustom
+// (beim Aufraeumen geloescht) und setAaiiRangeCustom (nie angelegt) verloren
+// gegangen. Beide Male liess sich "Custom" waehlen, die Datumsfelder kamen,
+// und die Eingabe tat still nichts.
+const def=new Set([...h.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]));
+for(const m of h.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g)) def.add(m[1]);
+// Methodenaufrufe auf einem Objekt/Ereignis sind keine globalen Funktionen.
+const METHODEN=/[.\]]\s*$/;
+const EINGEBAUT=new Set(['alert','confirm','prompt','Number','String','Boolean','Date','Math','JSON','Object','Array','Set','Map','RegExp','parseInt','parseFloat','isNaN','encodeURIComponent','decodeURIComponent','setTimeout','requestAnimationFrame','fetch','open','if','for','while','return','typeof','function','catch','switch']);
+const fehlend=new Set();
+// ⚠ Kommentarzeilen ausschliessen: an zwei Stellen ERKLAERT ein Kommentar das
+// Muster onclick="fn('${x.id}')" - ohne diesen Filter meldet der Waechter
+// "fn" als fehlende Funktion und wird dadurch unglaubwuerdig.
+const inKommentar=idx=>{
+  const zeile=h.slice(h.lastIndexOf('\n',idx)+1, h.indexOf('\n',idx));
+  return /^\s*(\/\/|\*|\/\*)/.test(zeile);
+};
+const HANDLER=/\bon(?:click|change|input|toggle|submit|keydown|keyup|focus|blur|pointerdown|pointerup|pointerleave|pointercancel|contextmenu|mouseenter|mouseleave|error|load)\s*=\s*(["'`])([\s\S]*?)\1/g;
+for(const m of h.matchAll(HANDLER)){
+  if(inKommentar(m.index)) continue;
+  for(const c of m[2].matchAll(/([A-Za-z_$][\w$]*)\s*\(/g)){
+    const vor=m[2].slice(0,c.index);
+    if(METHODEN.test(vor)) continue;              // obj.methode(...)
+    if(EINGEBAUT.has(c[1])||def.has(c[1])) continue;
+    if(/^[A-Z]/.test(c[1])) continue;             // Konstruktor/Konstante
+    fehlend.add(c[1]);
+  }
+}
+// Zusammengesetzte Handlernamen: Praefix aus dem Aufruf + fester Suffix.
+for(const m of h.matchAll(/timeRange(?:Bar|Custom)Html\(([\s\S]{0,200}?)\)/g)){
+  for(const q of m[1].matchAll(/['"](set[A-Za-z_$][\w$]*)['"]/g)){
+    const basis=q[1].replace(/Custom$/,'');
+    if(!def.has(basis)) fehlend.add(basis);
+    if(!def.has(basis+'Custom')) fehlend.add(basis+'Custom');
+  }
+}
 const befunde=[];
 if(doppelt.length) befunde.push('doppelte ids: '+doppelt.map(([k,v])=>k+' x'+v).join(', '));
 if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeileA+' und '+blockDup.zeileB);
+if(fehlend.size) befunde.push('Handler ohne Funktion: '+[...fehlend].join(', '));
 if(befunde.length){console.log('STRUKTURFEHLER:\n  '+befunde.join('\n  '));process.exit(1);}
-console.log('Struktur ok: keine doppelten ids, kein wiederholter Block');
+console.log('Struktur ok: keine doppelten ids, kein wiederholter Block, '+def.size+' Funktionen, alle Handler aufloesbar');
