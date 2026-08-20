@@ -163,8 +163,39 @@ const LOKAL_ERLAUBT = /(cloud|updated|seen|pending|cache|migrat|_v\d|intro|help|
 const altHtmlFuerKeys = indexGeaendert ? git(`show ${BASE}:index.html`) : '';
 const neueKeys = [...new Set([...diffText.matchAll(/^\+.*localStorage\.setItem\(\s*['"](fxpro_[\w]+)['"]/gm)]
   .map(m => m[1]))].filter(k => !LOKAL_ERLAUBT.test(k) && !altHtmlFuerKeys.includes(k));
+// ⚠ Frueher wurde nur geprueft, ob die Namen "cloudPush"/"cloudPull"
+// irgendwo im Diff-Text vorkommen. Das ist ein Fehlalarm-Generator: wer
+// mitten in die Funktion schreibt, aendert deren Namenszeile nicht mit.
+// Jetzt wird der KOERPER beider Funktionen aus dem aktuellen index.html
+// geholt und geprueft, ob die aus dem Schluessel gelesene Variable dort
+// wirklich auftaucht.
+function fnKoerper(quelle, name) {
+  const i = quelle.indexOf('function ' + name + '(');
+  if (i < 0) return '';
+  let tiefe = 0, start = quelle.indexOf('{', i);
+  if (start < 0) return '';
+  for (let j = start; j < quelle.length; j++) {
+    if (quelle[j] === '{') tiefe++;
+    else if (quelle[j] === '}') { tiefe--; if (!tiefe) return quelle.slice(start, j + 1); }
+  }
+  return '';
+}
+function varsFuerKey(quelle, key) {
+  const re = new RegExp('(?:let|const|var)\\s+(\\w+)\\s*=[^;\\n]*localStorage\\.getItem\\(\\s*[\'"]' + key + '[\'"]', 'g');
+  const out = [];
+  let m; while ((m = re.exec(quelle))) out.push(m[1]);
+  return out;
+}
 if (neueKeys.length) {
-  const fehlt = ['cloudPush', 'cloudPull'].filter(fn => !diffText.includes(fn));
+  const jetztHtml = fs.existsSync('index.html') ? fs.readFileSync('index.html', 'utf8') : '';
+  const push = fnKoerper(jetztHtml, 'cloudPush'), pull = fnKoerper(jetztHtml, 'cloudPull');
+  const fehlt = [];
+  neueKeys.forEach(k => {
+    const vs = varsFuerKey(jetztHtml, k);
+    const drin = (koerper) => koerper && (koerper.includes(k) || vs.some(v => new RegExp('\\b' + v + '\\b').test(koerper)));
+    if (!drin(push)) fehlt.push('cloudPush');
+    if (!drin(pull)) fehlt.push('cloudPull');
+  });
   if (fehlt.length)
     fail('Neuer persistierter Zustand ohne Sync',
       `Neue Schluessel: ${neueKeys.join(', ')}. Im selben Commit fehlt: ${fehlt.join(' und ')}. ` +

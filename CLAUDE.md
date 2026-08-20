@@ -6949,3 +6949,39 @@ die rechte Spalte ("... ahead of...Yahoo Personal ..."). Der Grid-Abstand von
 14px Abstand und `minmax(0,1fr)` fuer die Titelspalte. Geprueft wird das
 seither mit einem Rechteck-Vergleich Titel gegen Meta-Block (Soll: 0
 Ueberschneidungen) - bei kuenftigen Aenderungen an der Zeile mitlaufen lassen.
+
+### Terminal-Griffe: Statuszeile, Sitzungen, Tastatur, Dichte (2026-08-20)
+
+- **Statuszeile** ueber dem Dashboard (`renderDashStatus`, aufgerufen aus
+  `renderDash` direkt vor `equalizeDashColumns`): staerkste/schwaechste
+  Waehrung, Risiko-Regime, naechster High-Impact-Termin, Leitthema. JEDER
+  Wert kommt aus einer bestehenden Funktion (`symScoreCmp`, `riskOnOffState`,
+  `calEvts`, `NEWS_DATA.topic`) - nichts zusaetzlich gerechnet.
+- **Sitzungs-Streifen** (`FX_SESSIONS`, UTC-Kernzeiten). ⚠ Sommerzeit ist
+  bewusst NICHT modelliert - London und New York verschieben sich dadurch um
+  eine Stunde. Das steht im Tooltip, statt eine Zeitzonendatenbank
+  nachzubauen. Ueberlappung wird eigens markiert (tiefste Liquiditaet).
+- **Tastatur** (`KEY_TABS`, Akkord "g" + Buchstabe): greift nur, wenn kein
+  Eingabefeld fokussiert ist UND kein Modal offen ist (`keyNavAktiv`) -
+  sonst schluckt es Escape/Enter der Fenster.
+- **Dichte-Schalter** (`denseMode`): eigener Schalter fuer die Dashboard-
+  Karten, unabhaengig vom Kompakt-Regler der Indikator-Zeilen. Vier Ecken
+  angebunden.
+
+### ⚠ Der Waechter darf nicht am Diff-Text haengen (2026-08-20)
+
+Regel 6 (neuer persistierter Zustand) hat bei `fxpro_dense` FALSCH
+angeschlagen: sie prueft, ob die Woerter "cloudPush"/"cloudPull" im Diff
+vorkommen. Wer mitten in eine Funktion schreibt, aendert deren Namenszeile
+aber nicht mit - der Fehlalarm war garantiert.
+
+Jetzt holt die Regel den KOERPER beider Funktionen aus dem aktuellen
+`index.html` (Klammer-Zaehlung), sucht die Variable, die aus dem neuen
+Schluessel gelesen wird (`let X=localStorage.getItem('fxpro_...')`), und
+prueft, ob diese Variable in beiden Koerpern vorkommt. Gegenprobe gefahren:
+Anbindung an `cloudPull` entfernt -> Regel meldet genau `cloudPull`,
+wiederhergestellt -> gruen.
+
+**Merksatz:** ein Waechter, der auf Diff-TEXT prueft statt auf den Zustand
+des Codes, erzeugt Fehlalarme und verleitet dazu, ihn zu umgehen. Wo sich
+die Eigenschaft am fertigen Code pruefen laesst, dort pruefen.
