@@ -2057,6 +2057,12 @@ body.dense-mode .dw-hdr{margin-bottom:8px}
 body.dense-mode .dash-layout{gap:9px}
 body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 body.dense-mode .dash-status-in{padding:4px 10px}
+/* ⚠ Die Kurve darf die Zeile nicht sprengen: mit 64px lief die Karte auf
+   dem kleinen Desktop 11px ueber (Layout-Waechter). Jetzt schmaler UND
+   schrumpfbar, und der Balken daneben darf ebenfalls schrumpfen. */
+.esi-spark{width:44px;height:16px;flex:0 1 44px;min-width:0;margin:0 5px}
+.esi-spark-empty{width:44px;height:16px;flex:0 1 44px;min-width:0;margin:0 5px;display:inline-block}
+.esi-wrap{min-width:0}
 .dash-status{margin:0 0 10px}
 .dash-status-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   background:rgba(8,13,21,.5);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 12px;
@@ -3045,11 +3051,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-393 - Drei Terminal-Griffe ergaenzt. Eine STATUSZEILE ueber dem Dashboard fasst den Tag in einer Zeile zusammen: staerkste und schwaechste Waehrung, Risiko-Regime, naechster High-Impact-Termin und das Leitthema der Nachrichten - jeder Wert aus einer bereits bestehenden Funktion, nichts zusaetzlich gerechnet. Rechts daneben ein SITZUNGS-STREIFEN mit Sydney, Tokio, London und New York; die gerade offenen sind hervorgehoben, und wenn zwei gleichzeitig laufen, erscheint eine Ueberlappungs-Marke - bei FX ist genau das die tiefste Liquiditaet des Tages. Sommerzeit wird bewusst nicht modelliert und das steht im Tooltip, statt eine Zeitzonendatenbank nachzubauen. TASTATUR-NAVIGATION nach vim-Muster: "g" gefolgt von einem Buchstaben springt auf einen Tab (g d Dashboard, g n News, g e Edge, g c Kalender ...), "?" zeigt die Liste, "/" bleibt die Suche. Greift nie in einem Eingabefeld und nie bei offenem Fenster. Dazu ein DICHTE-SCHALTER in den Einstellungen, der alle Dashboard-Karten enger setzt - der bestehende Kompakt-Regler wirkt nur auf Indikator-Zeilen."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-394 - Drei weitere Auswertungen, alle aus Daten, die die App laengst fuehrt. SURPRISE-INDEX MIT VERLAUF: jede Waehrungszeile hat jetzt eine 90-Tage-Kurve neben dem Wert - bisher stand dort nur der Momentanwert, die eigentliche Frage ist aber, ob eine Volkswirtschaft gerade besser oder schlechter liefert als vor Wochen. Rueckgerechnet aus denselben aufgezeichneten Releases und mit derselben Alters-Gewichtung wie der Live-Wert, keine zweite Formel. TERMINSTRUKTUR im Rate-Probabilities-Tab: der eingepreiste Zinspfad aller sechs Notenbanken nebeneinander statt einzeln je Waehrung - ein Waehrungspaar ist eine Wette auf die DIFFERENZ zweier Pfade, und wo zwei Linien auseinanderlaufen, weitet sich der Zinsabstand. Als Treppe gezeichnet, weil ein Leitzins bis zur naechsten Sitzung gilt; eine Gerade dazwischen waere eine erfundene Zwischenstufe. KORRELATIONS-REGIME im Matrix-Tab: die Matrix zeigt r als eine Zahl ueber 60 Tage, hier laeuft es rollierend ueber die Zeit. Gemessen an EUR/GBP: 773 Fenster seit September 2023, aktuell +0,88, aber eine Spanne von 0,45 ueber den Zeitraum - eine Absicherung, die auf dem aktuellen Wert aufbaut, hoert also auf zu funktionieren, ohne dass einer der beiden Maerkte etwas Ungewoehnliches tut."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-393</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-394</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -14962,6 +14968,68 @@ function esiForCcy(ccy){
   if(n<3||wsum<=0)return null;
   return{val:vsum/wsum,n,newest};
 }
+// Verlauf des Surprise-Index. Bisher zeigte die Karte nur den Momentanwert -
+// die interessante Frage ist aber, ob eine Volkswirtschaft gerade BESSER
+// oder SCHLECHTER liefert als noch vor Wochen. Rueckgerechnet aus denselben
+// aufgezeichneten Releases wie der Edge-Tab, mit derselben Alters-Gewichtung
+// wie esiForCcy - keine zweite Formel.
+const ESI_SERIE_TAGE=90;
+function esiSeries(ccy){
+  const sym=syms.find(s=>s.id===ccy);
+  if(!sym)return[];
+  // Je Indikator: Historie + eigene Streuung (aus derselben Funktion wie live)
+  const reihen=[];
+  (sym.rubrics||[]).forEach(rub=>{
+    if(!IND_AUTO_RUBS.includes(rub.name))return;
+    (rub.indicators||[]).forEach(ind=>{
+      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
+      const r=ind.research||{};
+      if(r.bond||r.cot||r.sent)return;
+      const sd=indSurpriseSigma(ind);
+      if(sd==null||!(sd>0))return;
+      const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+      const pts=h.filter(e=>Array.isArray(e)&&e[0]&&e[1]!=null&&e[1]!==''&&e[2]!=null&&e[2]!=='')
+        .map(e=>{
+          const a=parseNumLike(e[1]),f=parseNumLike(e[2]);
+          if(a==null||f==null)return null;
+          let z=(a-f)/sd;
+          if(LOWER_IS_BETTER_RE.test(ind.name||''))z=-z;
+          return{d:String(e[0]).slice(0,10),z:Math.max(-3,Math.min(3,z))};
+        }).filter(Boolean).sort((x,y)=>x.d.localeCompare(y.d));
+      if(pts.length)reihen.push(pts);
+    });
+  });
+  if(reihen.length<3)return[];
+  const out=[];
+  const heute=new Date();
+  for(let i=ESI_SERIE_TAGE-1;i>=0;i--){
+    const t=new Date(heute.getTime()-i*864e5),d=t.toISOString().slice(0,10);
+    let wsum=0,vsum=0,n=0;
+    reihen.forEach(pts=>{
+      // letzter Release bis zu diesem Tag
+      let p=null;
+      for(let j=pts.length-1;j>=0;j--){if(pts[j].d<=d){p=pts[j];break;}}
+      if(!p)return;
+      const age=(new Date(d)-new Date(p.d))/864e5;
+      if(!isFinite(age)||age<0||age>270)return;
+      const w=Math.pow(0.5,age/ESI_HALFLIFE_D);
+      wsum+=w;vsum+=w*p.z;n++;
+    });
+    if(n>=3&&wsum>0)out.push([d,Math.round(vsum/wsum*1000)/1000]);
+  }
+  return out;
+}
+// Kompakte Linie fuer die Zeile in der Karte - zeigt Richtung, keine Achse.
+function esiSpark(serie,farbe){
+  if(!serie||serie.length<4)return'<span class="esi-spark-empty" title="Not enough recorded releases yet for a path"></span>';
+  const W=44,H=16,v=serie.map(e=>e[1]);
+  const lo=Math.min(...v),hi=Math.max(...v),sp=(hi-lo)||1;
+  const pts=serie.map((e,i)=>`${(i*W/(serie.length-1)).toFixed(1)},${(H-2-(e[1]-lo)/sp*(H-4)).toFixed(1)}`).join(' ');
+  const nulllinie=(lo<0&&hi>0)?`<line x1="0" y1="${(H-2-(0-lo)/sp*(H-4)).toFixed(1)}" x2="${W}" y2="${(H-2-(0-lo)/sp*(H-4)).toFixed(1)}" stroke="var(--bd2)" stroke-dasharray="2,2"/>`:'';
+  const delta=serie[serie.length-1][1]-serie[0][1];
+  return`<svg class="esi-spark" viewBox="0 0 ${W} ${H}" title="${escH('Path over the last '+serie.length+' days: '+(delta>0?'+':'')+delta.toFixed(2)+' sigma')}">${nulllinie}
+    <polyline points="${pts}" fill="none" stroke="${farbe}" stroke-width="1.4"/></svg>`;
+}
 function esiCardHtml(){
   const rows=FX.map(c=>{const e=esiForCcy(c);return e?{c,...e}:null;}).filter(Boolean)
     .sort((a,b)=>b.val-a.val);
@@ -14980,6 +15048,7 @@ function esiCardHtml(){
     return`<div class="perf-row${duenn?' esi-thin':''}" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}${duenn?` · thin basis: fewer than ${ESI_THIN_N} indicators, read with care`:''}">
       <span class="perf-name" style="flex:0 0 62px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
       <span class="perf-barwrap esi-wrap"><span class="esi-zero"></span><span class="perf-bar esi-bar" style="left:${r.val>=0?50:50-Math.abs(r.val)/max*50}%;width:${(Math.abs(r.val)/max*50).toFixed(1)}%;background:${col}"></span></span>
+      ${esiSpark(esiSeries(r.c),col)}
       <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
     </div>`;}).join('');
   const thin=rows.filter(r=>r.n<ESI_THIN_N);
@@ -17067,6 +17136,73 @@ function corrHeatColor(r){
   const a=(0.08+Math.abs(r)*0.55).toFixed(2);
   return(r>=0?'rgba(var(--blue-rgb),':'rgba(var(--red-rgb),')+a+')';
 }
+// ── Korrelations-Regime ──────────────────────────────────────────────────
+// Die Matrix zeigt r ueber 60 Tage als EINE Zahl. Interessanter ist, WANN
+// sich r aendert: ein Korrelationsbruch ist ein Handelsanlass, ein stabiles
+// r ist nur Hintergrund. Rollierendes 30-Tage-r ueber die letzten 12 Monate.
+let corrA='EUR',corrB='GBP',corrWin=30;
+function setCorrA(v){corrA=v;renderMatrix();}
+function setCorrB(v){corrB=v;renderMatrix();}
+function setCorrWin(v){corrWin=+v||30;renderMatrix();}
+function logReturns(serie){
+  const out=[];
+  for(let i=1;i<serie.length;i++){
+    const a=serie[i-1][1],b=serie[i][1];
+    if(a>0&&b>0)out.push([serie[i][0],Math.log(b/a)]);
+  }
+  return out;
+}
+function pearson(a,b){
+  const n=a.length;if(n<3)return null;
+  const ma=a.reduce((x,y)=>x+y,0)/n,mb=b.reduce((x,y)=>x+y,0)/n;
+  let sa=0,sb=0,sab=0;
+  for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;sa+=da*da;sb+=db*db;sab+=da*db;}
+  return(sa>0&&sb>0)?sab/Math.sqrt(sa*sb):null;
+}
+function corrRegimeSeries(idA,idB,fenster){
+  const pa=priceSeriesFor(idA),pb=priceSeriesFor(idB);
+  if(!pa||!pb)return[];
+  const ra=logReturns(pa),rb=logReturns(pb);
+  const mb={};rb.forEach(e=>{mb[e[0]]=e[1];});
+  const paare=ra.filter(e=>mb[e[0]]!=null).map(e=>[e[0],e[1],mb[e[0]]]);
+  if(paare.length<fenster+5)return[];
+  const out=[];
+  for(let i=fenster;i<paare.length;i++){
+    const teil=paare.slice(i-fenster,i);
+    const r=pearson(teil.map(x=>x[1]),teil.map(x=>x[2]));
+    if(r!=null)out.push([paare[i][0],Math.round(r*1000)/1000]);
+  }
+  return out;
+}
+function corrRegimeCardHtml(){
+  const ids=syms.map(x=>x.id);
+  const sel=(cur,fn)=>`<select class="btn" onchange="${fn}(this.value)" style="cursor:pointer">${
+    ids.map(id=>`<option value="${escH(id)}"${id===cur?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('')}</select>`;
+  const win=[20,30,60].map(w=>`<button class="hl-tab${corrWin===w?' on':''}" onclick="setCorrWin(${w})">${w}d</button>`).join('');
+  const kopf=`<div class="mx-card-title"><span>Correlation regime${iBtn('corrregime')}</span>
+    <small>${sel(corrA,'setCorrA')} vs ${sel(corrB,'setCorrB')} ${win}</small></div>`;
+  const serie=corrRegimeSeries(corrA,corrB,corrWin);
+  if(serie.length<20)return`<div class="mx-card" style="margin-top:12px">${kopf}
+    <div class="dw-empty" style="text-align:left">Only ${serie.length} rolling windows available for ${escH(corrA)} and ${escH(corrB)} — the price series need at least ${corrWin+25} common trading days.</div></div>`;
+  const zeige=serie.slice(-260);
+  const W=780,H=190,padL=34,padR=14,padT=14,padB=22;
+  const x=i=>padL+i*(W-padL-padR)/Math.max(1,zeige.length-1);
+  const y=v=>padT+(1-v)/2*(H-padT-padB);
+  const pts=zeige.map((e,i)=>`${x(i).toFixed(1)},${y(e[1]).toFixed(1)}`).join(' ');
+  const jetzt=zeige[zeige.length-1][1];
+  const werte=zeige.map(e=>e[1]);
+  const spanne=Math.max(...werte)-Math.min(...werte);
+  const linien=[1,0.5,0,-0.5,-1].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="${v===0?'var(--bd2)':'var(--bd)'}"${v===0?'':' stroke-dasharray="2,4"'}/>
+    <text x="2" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${v>0?'+':''}${v.toFixed(1)}</text>`).join('');
+  const col=jetzt>0.3?'var(--blue)':jetzt<-0.3?'var(--red)':'var(--t2)';
+  return`<div class="mx-card" style="margin-top:12px">${kopf}
+    <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:340px;height:auto">
+      ${linien}<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.9"/>
+      <text x="${W-padR}" y="${(y(jetzt)-5).toFixed(1)}" font-size="10" font-weight="700" fill="${col}" text-anchor="end" font-family="var(--ff-num)">${jetzt>0?'+':''}${jetzt.toFixed(2)}</text>
+    </svg></div>
+    <div class="edge-note">Rolling ${corrWin}-day Pearson r of daily log returns, ${zeige.length} windows shown (${escH(zeige[0][0])} to ${escH(zeige[zeige.length-1][0])}). The range over this period is ${spanne.toFixed(2)} — a wide range means the relationship between these two is not stable, and a hedge or a correlated pair of positions built on the current number can stop working without either market doing anything unusual.</div>
+  </div>`;
+}
 function renderCorrCard(){
   const maps={};
   const ids=trendAssets().filter(id=>{const m=assetReturnMap(id);if(m)maps[id]=m;return!!m;});
@@ -17146,7 +17282,8 @@ function renderMatrix(){
     <div class="mx-card-title"><span>${icn('flame',15)} Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>
-  ${renderCorrCard()}`;
+  ${renderCorrCard()}
+  ${corrRegimeCardHtml()}`;
 }
 // ══ SCORE TRENDS (Verlaufs-Kategorie) ══════════════════════════════
 // Pro FX-Waehrung der taegliche Score-Verlauf (aus scoreHist): ein Chart fuer
@@ -20031,6 +20168,16 @@ function renderSeasonality(){
   attachChartHovers(el);
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
+SENT_INFO.termstruct=['Implied policy path',
+  `<p><b>What it is:</b> for each central bank, the rate the futures market prices after each of its next meetings — the same numbers the probability cards above are built from, drawn side by side instead of one currency at a time.</p>
+   <p><b>Why side by side:</b> a currency pair is a bet on the DIFFERENCE between two policy paths. Where two lines diverge, the rate gap is expected to widen; where they converge, it narrows. That is the cleanest available explanation for a medium-horizon FX move.</p>
+   <p><b>Why steps and not lines:</b> a policy rate holds until the next meeting. Drawing a straight line between two meetings would invent a path that does not exist.</p>
+   <p><b>Limits:</b> this is what the market prices today, not a forecast of what will happen — it moves every day, and it has been wrong for long stretches. Banks whose futures curve is not freely available are simply absent.</p>`];
+SENT_INFO.corrregime=['Correlation regime',
+  `<p><b>What it is:</b> the rolling correlation of two assets' daily log returns, drawn over time. The matrix above gives a single number for the last 60 days; this shows how that number got there.</p>
+   <p><b>Why it matters more than the level:</b> a correlation of +0.8 that has held for a year and a correlation of +0.8 that was −0.2 six weeks ago are completely different situations. A hedge or a pair of correlated positions built on the current number stops working when the regime shifts — and the shift is visible here before it shows up in the single number.</p>
+   <p><b>How to read it:</b> the stated range is the difference between the highest and lowest reading in the window shown. A wide range means the relationship is unstable. Flat stretches near zero mean the two markets are simply not related right now.</p>
+   <p><b>Limits:</b> a shorter window reacts faster but is noisier; 20 days of returns can produce a large correlation by chance alone. Nothing here is scored.</p>`];
 SENT_INFO.realrate=['Real policy rate',
   `<p><b>What it is:</b> the policy rate minus headline CPI. Both numbers are the ones already shown on the asset pages — nothing is recomputed here, and no inflation figure is estimated to fill a gap.</p>
    <p><b>Why it matters:</b> the Carry tab above ranks pairs by the NOMINAL gap. But two currencies paying 4% are not equally attractive if one has 2% inflation and the other 6% — the first pays you 2% in real terms, the second takes 2% away. Real rates are what long-horizon capital actually chases.</p>
@@ -20455,6 +20602,68 @@ function scrollRateProbTo(idx,animate){
   track.style.transition=animate?'transform .5s cubic-bezier(.2,.7,.3,1)':'none';
   track.style.transform=`translateX(-${targetX.toFixed(1)}px)`;
 }
+// Terminstruktur: der eingepreiste Zinspfad je Notenbank ueber die naechsten
+// Sitzungen. Die Werte liegen fertig in rate_probabilities.json (rateAfter je
+// Sitzung) - bisher wurden sie nur je Waehrung EINZELN gezeigt. Nebeneinander
+// gelegt ist die DIFFERENZ zweier Pfade die sauberste Erklaerung fuer eine
+// Paarbewegung, die es gibt.
+const TERM_FARBEN={USD:'#3b82f6',EUR:'#7b7fae',GBP:'#e35d5d',JPY:'#64748b',
+  CHF:'#4fa3c7',CAD:'#c78b4f',AUD:'#5fa87a',NZD:'#a05fa8'};
+function termStructureData(){
+  const out=[];
+  (typeof RATEPROB_CCYS!=='undefined'?RATEPROB_CCYS:['USD']).forEach(c=>{
+    const cd=RATE_PROB_DATA&&(RATE_PROB_DATA[c]||(c==='USD'&&RATE_PROB_DATA.currentRate!=null?RATE_PROB_DATA:null));
+    const m=cd&&Array.isArray(cd.meetings)?cd.meetings.filter(x=>x&&x.date&&typeof x.rateAfter==='number'):[];
+    if(m.length<2)return;
+    const start=typeof cd.currentRate==='number'?cd.currentRate
+      :(typeof m[0].rateBefore==='number'?m[0].rateBefore:null);
+    if(start==null)return;
+    out.push({c,start,punkte:m.slice(0,8).map(x=>({d:x.date,lbl:x.label||x.date,r:x.rateAfter}))});
+  });
+  return out;
+}
+function termStructureCardHtml(){
+  const daten=termStructureData();
+  if(daten.length<2)return'';
+  // Gemeinsame Zeitachse: alle Sitzungstermine aller Banken, sortiert.
+  const termine=[...new Set(daten.flatMap(d=>d.punkte.map(p=>p.d)))].sort();
+  const W=780,H=250,padL=44,padR=64,padT=18,padB=34;
+  const alle=daten.flatMap(d=>[d.start,...d.punkte.map(p=>p.r)]);
+  const lo=Math.min(...alle),hi=Math.max(...alle),sp=(hi-lo)||1;
+  const x=i=>padL+i*(W-padL-padR)/Math.max(1,termine.length);
+  const y=v=>padT+(hi-v)/sp*(H-padT-padB);
+  const linien=daten.map(d=>{
+    const farbe=TERM_FARBEN[d.c]||'var(--t2)';
+    // Startpunkt heute, dann Treppe ueber die Sitzungen - der Zins gilt
+    // jeweils BIS zur naechsten Sitzung, deshalb Stufen statt Geraden.
+    // Treppe: waagerecht bis zum Sitzungstermin auf dem alten Satz, dort
+    // senkrecht auf den neuen. Der Zins gilt jeweils BIS zur naechsten
+    // Sitzung - eine Gerade dazwischen waere eine Interpolation, die es
+    // in der Sache nicht gibt.
+    let cur=d.start;
+    const pts=[[x(0),y(cur)]];
+    d.punkte.forEach(p=>{
+      const i=termine.indexOf(p.d)+1;
+      pts.push([x(i),y(cur)]);
+      cur=p.r;
+      pts.push([x(i),y(cur)]);
+    });
+    pts.push([x(termine.length),y(cur)]);
+    const letzte={r:cur};
+    return`<polyline points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${farbe}" stroke-width="1.9"/>
+      <text x="${(W-padR+4).toFixed(1)}" y="${(y(letzte.r)+3).toFixed(1)}" font-size="10" font-weight="700" fill="${farbe}" font-family="var(--ff-num)">${escH(d.c)}</text>`;
+  }).join('');
+  const achse=termine.map((t,i)=>`<text x="${x(i+1).toFixed(1)}" y="${H-14}" font-size="8.5" fill="var(--t3)" text-anchor="middle" font-family="var(--ff-num)">${escH(t.slice(5))}</text>`).join('');
+  const yLabels=[hi,(hi+lo)/2,lo].map(v=>`<text x="4" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${v.toFixed(2)}%</text>`).join('');
+  return`<div class="cot-card" style="margin-top:12px">
+    <div class="cot-card-title">Implied policy path${iBtn('termstruct')}
+      <small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">What the futures market prices for each central bank over its next meetings &mdash; the same numbers shown per currency above, laid side by side</small></div>
+    <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:360px;height:auto">
+      ${yLabels}${achse}${linien}
+    </svg></div>
+    <div class="edge-note">Each line steps at that bank's own meeting dates, so the steps do not line up — that is the point. Where two lines diverge, the rate gap between those two currencies is expected to widen; where they converge, it narrows. Derived from the same futures curve as the probability cards, not from a separate source.</div>
+  </div>`;
+}
 function renderRateProb(){
   const el=document.getElementById('rateBody');if(!el)return;
   // Waehrungs-Umschalter (Nutzer-Wunsch 2026-07-25: "auch fuer die anderen
@@ -20520,7 +20729,7 @@ function renderRateProb(){
       <div class="rateprob-pillbar">${pills}</div>
       <div style="padding:0 14px 4px">${rangeBar}</div>
       ${rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount)}
-    </div>`;
+    </div>`+termStructureCardHtml();
   attachChartHovers(el);
   scrollRateProbTo(rateProbFocus,false);
 }

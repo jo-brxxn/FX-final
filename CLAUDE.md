@@ -6985,3 +6985,33 @@ wiederhergestellt -> gruen.
 **Merksatz:** ein Waechter, der auf Diff-TEXT prueft statt auf den Zustand
 des Codes, erzeugt Fehlalarme und verleitet dazu, ihn zu umgehen. Wo sich
 die Eigenschaft am fertigen Code pruefen laesst, dort pruefen.
+
+### Drei Auswertungen aus vorhandenen Daten (2026-08-20)
+
+- **Surprise-Index mit Verlauf** (`esiSeries`, 90 Tage): rueckgerechnet aus
+  `chartHist` mit derselben Alters-Gewichtung wie `esiForCcy` - keine zweite
+  Formel. Sparkline je Waehrungszeile. ⚠ Der Layout-Waechter hat den ersten
+  Anlauf gestoppt (64px Kurve liess die Karte auf dem kleinen Desktop 11px
+  ueberlaufen) - jetzt 44px und schrumpfbar.
+- **Terminstruktur** (`termStructureCardHtml`, Rate-Probabilities-Tab): der
+  eingepreiste Zinspfad aller Notenbanken nebeneinander. Als TREPPE
+  gezeichnet: ein Leitzins gilt bis zur naechsten Sitzung, eine Gerade
+  dazwischen waere eine erfundene Zwischenstufe.
+- **Korrelations-Regime** (`corrRegimeSeries`, Matrix-Tab): rollierendes r
+  ueber die Zeit statt einer Zahl. Gemessen EUR/GBP: 773 Fenster seit
+  2023-09, aktuell +0,88, Spanne 0,45 ueber den Zeitraum.
+
+### ⚠ Edge-Tab: die Rueckrechnung ist NICHT der Live-Score
+
+`edgeScoreSeries` bildet die KLASSISCHE Gewichtung ab. Die Normierung des
+Modus `normalized` haengt an `indMarketWeight` und `indDecayWeight` - beide
+messen etwas, das es fuer einen vergangenen Tag nicht rekonstruierbar gibt
+(die Marktrelevanz wuerde die Zukunft des jeweiligen Tages mitbenutzen).
+Das steht in der Karte und im Info-Text. Bei kuenftigen Aenderungen am
+Score-Modell nicht versuchen, die Rueckrechnung "genauer" zu machen, indem
+man die Normierung nachbaut - das waere ein Blick in die Zukunft.
+
+**⚠ Non-FX braucht die same/inverse-Umrechnung.** Ohne sie summiert die
+Rueckrechnung die rohen US-Signale und Gold laeuft verkehrt herum (im Test
+genau so aufgetreten). `check/score.js` prueft das Vorzeichen jetzt gegen
+`effDeriveRules`.
