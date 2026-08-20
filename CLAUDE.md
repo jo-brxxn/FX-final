@@ -6923,3 +6923,29 @@ Volltextsuche, Asset- und Quellenfilter.
 haeufigsten produziert - bei Notenbanken ist das Verwaltung, nicht
 Geldpolitik. Ein gezaehltes Signal (wie viele andere berichten mit) ist
 robuster als jede zugewiesene Stufe.
+
+### Schlagzeilen-Karte Runde 2: zaehlen statt nur auflisten (2026-08-20)
+
+Nutzer: "verbesser noch die News Karte auf dem Dashboard mehr". Vier
+Ergaenzungen, alle aus reinem Zaehlen der vorhandenen Meldungen - nichts
+gedeutet, keine neue Quelle:
+
+- **Nachrichten-Druck** (`newsPressureHtml`): eine Saeule je Stunde im
+  Tagesfenster, je Tag in Woche/Monat. Ein Ausschlag heisst, dass gerade
+  etwas passiert. Der Streifen wird aus dem Fenster-Pool OHNE Asset- und
+  Themenfilter gebaut - sonst filtert er sich selbst weg.
+- **Aufmerksamkeits-Chips** (`newsAttentionHtml`): die fuenf meistgenannten
+  Assets im Fenster mit Anzahl, jeder klickbar als Filter. Zeigt auf einen
+  Blick, woran der Nachrichtenfluss haengt (gemessen: USD 30, CAD 8, BTC 7).
+- **Leitthema als Filter**: die Themenzeile ist jetzt ein Knopf. Gefiltert
+  wird auf das erste Wort des Labels (`newsTopicWord`), also genau das Wort,
+  dessen Haeufigkeit die Zeile ausweist.
+- **NEW-Marke** fuer Meldungen der letzten Stunde, Fusszeile mit Feed-Alter
+  und Archivgroesse plus Sprung in den News-Tab.
+
+**⚠ Layout-Falle dabei:** bei zweizeiligen Titeln stiess die Auslassung an
+die rechte Spalte ("... ahead of...Yahoo Personal ..."). Der Grid-Abstand von
+9px reichte nicht, wenn BEIDE Spalten ihre Breite voll ausschoepfen. Jetzt
+14px Abstand und `minmax(0,1fr)` fuer die Titelspalte. Geprueft wird das
+seither mit einem Rechteck-Vergleich Titel gegen Meta-Block (Soll: 0
+Ueberschneidungen) - bei kuenftigen Aenderungen an der Zeile mitlaufen lassen.

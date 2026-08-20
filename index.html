@@ -1979,11 +1979,34 @@ body.dash-edit-mode .motivation-editbar{display:flex}
    an der Zeile, nach derselben Konvention wie die Score-Karten (siehe
    CLAUDE.md "kalmes Design statt Farbflut"), statt als graue Box in einer
    eigenen Zeile. */
-.hl-topic{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--t3);
+.hl-topic{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;width:100%;text-align:left;
+  font-size:11px;color:var(--t3);cursor:pointer;
   background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);
   border-radius:var(--rs);padding:5px 9px;margin-bottom:8px}
+@media (hover:hover){.hl-topic:hover{border-color:var(--bd2);border-left-color:var(--blue)}}
+.hl-topic.on{background:var(--bg5);border-color:var(--bd2);border-left-color:var(--blue)}
 .hl-topic b{color:var(--t0);font-size:12px;font-weight:700}
 .hl-topic-n{font-family:var(--ff-num);color:var(--t3)}
+.hl-topic-x{margin-left:auto;color:var(--blue);font-weight:700}
+/* Nachrichten-Druck: eine Saeule je Stunde (Tag) bzw. je Tag (Woche/Monat).
+   Reines Zaehlen - ein Ausschlag heisst, dass gerade etwas passiert. */
+.hl-pressure{display:flex;align-items:flex-end;gap:1px;height:15px;margin:0 0 7px;padding:0 1px}
+.hl-pb{flex:1;min-width:2px;background:var(--blue);border-radius:1px 1px 0 0}
+.hl-attention{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.hl-att{display:inline-flex;align-items:center;gap:4px;background:none;border:1px solid var(--bd);
+  color:var(--t2);border-radius:var(--rss);padding:1px 6px;font-family:var(--ff-num);
+  font-size:10px;font-weight:700;cursor:pointer}
+.hl-att span{color:var(--t3);font-weight:400}
+.hl-att.on{border-color:var(--blue);color:var(--blue)}
+.hl-att.on span{color:var(--blue)}
+@media (hover:hover){.hl-att:hover{border-color:var(--bd2);color:var(--t0)}}
+.hl-fresh{font-family:var(--ff-num);font-size:8.5px;font-weight:700;letter-spacing:.04em;
+  color:var(--blue);border:1px solid var(--blue);border-radius:var(--rss);padding:0 3px}
+.hl-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;
+  padding-top:6px;border-top:1px solid var(--bd);font-size:10px;color:var(--t3);font-family:var(--ff-num)}
+.hl-foot-link{display:inline-flex;align-items:center;gap:2px;background:none;border:none;
+  color:var(--t2);font-size:10px;font-family:var(--ff-num);cursor:pointer;padding:0}
+@media (hover:hover){.hl-foot-link:hover{color:var(--blue)}}
 .hl-tabs{display:flex;gap:5px;margin-bottom:7px;flex-wrap:wrap;align-items:center}
 .hl-tab{background:var(--bg2);border:1px solid var(--bd);color:var(--t2);border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px}
 .hl-tab.on{background:var(--bg5);border-color:var(--bd2);color:var(--t0)}
@@ -1995,7 +2018,7 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .hl-day{font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--t3);text-transform:uppercase;
   padding:9px 0 3px;border-bottom:1px solid var(--bd);margin-bottom:2px}
 .hl-day:first-child{padding-top:0}
-.hl-row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;
+.hl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;
   padding:5px 6px 5px 7px;border-left:3px solid transparent;border-bottom:1px solid var(--bd);
   text-decoration:none;color:inherit}
 .hl-row:last-child{border-bottom:none}
@@ -2010,9 +2033,9 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .hl-row.lv-hi .hl-title{color:var(--t0);font-weight:600}
 @media(hover:hover){.hl-row:hover .hl-title{color:var(--blue)}}
 .hl-side{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;
-  max-width:92px;font-size:10px;color:var(--t3)}
+  max-width:88px;font-size:10px;color:var(--t3);text-align:right}
 .hl-side-r{display:flex;align-items:center;gap:4px}
-.hl-src{font-weight:600;color:var(--t2);max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hl-src{font-weight:600;color:var(--t2);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hl-time{font-family:var(--ff-num)}
 .hl-ass{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--t2);
   border:1px solid var(--bd2);border-radius:var(--rss);padding:0 4px}
@@ -2983,11 +3006,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-389 - Die Schlagzeilen-Karte komplett ueberarbeitet, Daten- wie Anzeigeseite. DATEN: Die Rangfolge war unbrauchbar - 80 Prozent aller Meldungen galten als LOW, und alle sechs HIGH-Meldungen waren Notenbank-Verwaltungskram wie "Fed bittet um Kommentare zu einem Regel-Vorschlag", weil allein die Quellenklasse zaehlte. Hauptsignal ist jetzt, wie viele UNABHAENGIGE Haeuser dieselbe Meldung bringen; echte Beschluesse und Reden werden angehoben, Verwaltungsmeldungen abgewertet. Dieselbe Meldung aus mehreren Haeusern wird zu EINER Zeile gebuendelt, die uebrigen Quellen stecken hinter dem Plus-Zeichen - von 27 Meldungen eines Tages drehten sich 11 um dieselbe Sache. 164 von 297 Titeln trugen einen Verlags-Anhang wie "- ABC News - Breaking News, Latest News and Videos"; der wird jetzt exakt ueber das source-Tag des Feeds abgeschnitten und der Verlag stattdessen als Quelle angezeigt, statt aller 205 Suchtreffer als "Macro wire". Rohe HTML-Codes werden vollstaendig aufgeloest. MarketWatch laeuft auf dem Wirtschafts-Feed statt auf Topstories, Bloomberg und Reuters kamen dazu, Lebenshilfe-Meldungen fliegen raus. Jede Schlagzeile bekommt die betroffenen Assets zugeordnet, und eine Zeile nennt das Leitthema des Tages samt Zaehlung. ANZEIGE: Die Karte war 3112 Pixel hoch bei 91 bis 123 Pixel je Eintrag - jetzt rund 45 Pixel je Zeile, Wichtigkeit als linker Randstreifen statt grauer Box, Tages-Trenner im Wochen- und Monatsfenster, standardmaessig die acht wichtigsten mit Aufklapper. Dazu ein Watchlist-Filter, eine Ungelesen-Markierung, Schlagzeilen je Asset auf der Detailseite mit Hinweis auf Score-Flips desselben Tages, ein Zaehler an jeder Kalenderzeile und ein eigener Insights-Tab "News" mit Volltextsuche, Asset- und Quellenfilter."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-390 - Die Schlagzeilen-Karte kann jetzt mehr als nur auflisten. Ein Nachrichten-Druck-Streifen zeigt als Saeulen, wie viele Meldungen je Stunde (Tagesfenster) bzw. je Tag (Woche/Monat) hereinkamen - ein Ausschlag heisst, dass gerade etwas passiert, gezaehlt und nicht gedeutet. Darunter eine Zeile mit den fuenf Maerkten, an denen der Nachrichtenfluss gerade haengt (USD 30, CAD 8, BTC 7 ...), jeder Chip klickbar als Filter. Die Leitthema-Zeile ist jetzt selbst ein Filter: ein Klick zeigt nur noch die Meldungen zu diesem Thema. Meldungen der letzten Stunde tragen eine NEW-Marke. Eine Fusszeile nennt, wann der Feed zuletzt lief und wie gross das Archiv ist, und springt in den News-Tab. Ausserdem ein Layout-Fehler behoben: bei zweizeiligen Titeln stiess die Auslassung an die Quelle rechts ("... ahead of...Yahoo Personal ..."), der Spaltenabstand war zu knapp."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-389</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-390</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -18313,11 +18336,13 @@ let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
 // Zeitfenster der Karte: day | week | month. Reine Lese-Auswahl wie pcAsset -
 // bewusst nicht persistiert, kein Sync noetig. Ebenso der Watchlist-Filter,
 // der Aufklapp-Zustand und die geoeffneten Quellenlisten.
-let newsRange='day',newsWatchOnly=false,newsExpanded=false;
+let newsRange='day',newsWatchOnly=false,newsExpanded=false,newsAssetSel='ALL',newsTopicOnly=false;
 let newsOpenSrc={};
-function setNewsRange(r){newsRange=r;newsExpanded=false;renderDash();}
+function setNewsRange(r){newsRange=r;newsExpanded=false;newsTopicOnly=false;renderDash();}
 function toggleNewsWatch(){newsWatchOnly=!newsWatchOnly;newsExpanded=false;renderDash();}
 function toggleNewsExpand(){newsExpanded=!newsExpanded;renderDash();}
+function setNewsAsset(id){newsAssetSel=(newsAssetSel===id?'ALL':id);newsExpanded=false;renderDash();}
+function toggleNewsTopic(){newsTopicOnly=!newsTopicOnly;newsExpanded=false;renderDash();}
 function toggleNewsSrc(u){newsOpenSrc[u]=!newsOpenSrc[u];renderDash();}
 // Wie viele Zeilen ohne Aufklappen sichtbar sind.
 const NEWS_TOP_N=8,NEWS_MAX_N=40;
@@ -18353,7 +18378,7 @@ function newsIsNew(h){return !!(newsSeenTs&&h&&h.d&&h.d>newsSeenTs);}
 // Alle Schlagzeilen, bereits nach dem gewaehlten Fenster und dem
 // Watchlist-Filter beschnitten. EINE Quelle fuer Karte und News-Tab, damit
 // beide nie unterschiedlich filtern.
-function newsPool(range,watchOnly){
+function newsPool(range,watchOnly,assetSel,themaAn){
   const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
   const tage={day:1,week:7,month:30}[range]||1;
   const grenze=Date.now()-tage*864e5;
@@ -18362,7 +18387,53 @@ function newsPool(range,watchOnly){
     const w=newsWatchAssets();
     l=l.filter(h=>Array.isArray(h.a)&&h.a.some(id=>w.has(id)));
   }
+  if(assetSel&&assetSel!=='ALL')l=l.filter(h=>Array.isArray(h.a)&&h.a.indexOf(assetSel)>=0);
+  if(themaAn){
+    const leit=newsTopicWord();
+    if(leit)l=l.filter(h=>schluesselWortTreffer(h.t,leit));
+  }
   return l.sort((x,y)=>(y.w||0)-(x.w||0)||Date.parse(y.d)-Date.parse(x.d));
+}
+// Das Leitwort des Tages-Themas (erstes Wort des vom Workflow gelieferten
+// Labels) - danach filtert der Klick auf die Themenzeile.
+function newsTopicWord(){
+  const th=NEWS_DATA&&NEWS_DATA.topic;
+  return th&&th.label?String(th.label).split(' · ')[0].toLowerCase():'';
+}
+function schluesselWortTreffer(t,w){
+  if(!w)return true;
+  return new RegExp('(^|[^a-z0-9])'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'s?([^a-z0-9]|$)','i').test(String(t||''));
+}
+// Nachrichten-Druck: wie viele Meldungen je Stunde (Tagesfenster) bzw. je Tag
+// (Woche/Monat). Reines Zaehlen - ein Ausschlag heisst, dass gerade etwas
+// passiert, ohne dass irgendetwas interpretiert wird.
+function newsPressureHtml(liste){
+  const tag=newsRange==='day';
+  const n=tag?24:(newsRange==='week'?7:30);
+  const schritt=tag?36e5:864e5;
+  const jetzt=Date.now(),eimer=new Array(n).fill(0);
+  liste.forEach(h=>{
+    const ts=Date.parse(h.d);if(!isFinite(ts))return;
+    const i=n-1-Math.floor((jetzt-ts)/schritt);
+    if(i>=0&&i<n)eimer[i]++;
+  });
+  const max=Math.max(1,...eimer);
+  const bars=eimer.map((v,i)=>{
+    const hoch=Math.max(v?2:1,Math.round(v/max*14));
+    const wann=tag?((n-1-i)===0?'last hour':(n-1-i)+'h ago'):((n-1-i)===0?'today':(n-1-i)+'d ago');
+    return`<span class="hl-pb" style="height:${hoch}px;opacity:${v?0.35+0.65*v/max:0.14}" title="${escH(v+' headline'+(v===1?'':'s')+' · '+wann)}"></span>`;
+  }).join('');
+  return`<div class="hl-pressure" title="${escH('Headline volume per '+(tag?'hour over the last 24h':'day')+' - counted, not interpreted')}">${bars}</div>`;
+}
+// Woran der Nachrichtenfluss gerade haengt: die fuenf meistgenannten Assets
+// im aktuellen Fenster, klickbar als Filter.
+function newsAttentionHtml(liste){
+  const z={};
+  liste.forEach(h=>(Array.isArray(h.a)?h.a:[]).forEach(id=>{z[id]=(z[id]||0)+1;}));
+  const top=Object.keys(z).sort((a,b)=>z[b]-z[a]||a.localeCompare(b)).slice(0,5);
+  if(!top.length)return'';
+  const chip=(id,n)=>`<button class="hl-att${newsAssetSel===id?' on':''}" onclick="setNewsAsset('${escJH(id)}')" title="${escH(n+' headline'+(n===1?'':'s')+' mentioning '+(COT_NAME[id]||id))}">${escH(id)}<span>${n}</span></button>`;
+  return`<div class="hl-attention">${newsAssetSel!=='ALL'?`<button class="hl-att on" onclick="setNewsAsset('ALL')" title="Clear the asset filter">All ✕</button>`:''}${top.map(id=>chip(id,z[id])).join('')}</div>`;
 }
 // Eine Zeile. Titel einzeilig mit Auslassung, rechts Quelle/Zeit/Assets,
 // Wichtigkeit als linker Randstreifen. Bei mehreren Haeusern haengt darunter
@@ -18371,7 +18442,9 @@ function newsRowHtml(h){
   const [cls]=newsLevel(h.w);
   const ass=(Array.isArray(h.a)?h.a:[]).slice(0,2)
     .map(id=>`<span class="hl-ass">${escH(id)}</span>`).join('');
-  const neu=newsIsNew(h)?`<span class="hl-dot" title="New since you last marked the headlines as read"></span>`:'';
+  const frisch=h.d&&(Date.now()-Date.parse(h.d))<36e5;
+  const neu=(frisch?`<span class="hl-fresh" title="Arrived within the last hour">NEW</span>`:'')
+    +(newsIsNew(h)?`<span class="hl-dot" title="New since you last marked the headlines as read"></span>`:'');
   const andere=(Array.isArray(h.o)?h.o:[]);
   const mehr=(h.n>1&&andere.length)
     ? `<button class="hl-more" onclick="event.preventDefault();event.stopPropagation();toggleNewsSrc('${escJH(h.u)}')" title="${escH(h.n+' outlets reported this')}">+${andere.length}</button>`:'';
@@ -18514,9 +18587,12 @@ function renderNewsTab(){
 }
 function newsCardHtml(){
   const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
-  let heads=newsPool(newsRange,newsWatchOnly);
+  // Fenster-Pool OHNE Asset-/Themenfilter: daraus kommen Nachrichten-Druck
+  // und Aufmerksamkeits-Chips, sonst wuerden sie sich selbst wegfiltern.
+  const fenster=newsPool(newsRange,newsWatchOnly);
+  let heads=newsPool(newsRange,newsWatchOnly,newsAssetSel,newsTopicOnly);
   const tabs=[['day','Today'],['week','Week'],['month','Month']];
-  const zaehl=k=>newsPool(k,newsWatchOnly).length;
+  const zaehl=k=>newsPool(k,newsWatchOnly,newsAssetSel,false).length;
   const neuN=heads.filter(newsIsNew).length;
   const bar=`<div class="hl-tabs">${tabs.map(([k,l])=>
       `<button class="hl-tab${newsRange===k?' on':''}" onclick="setNewsRange('${k}')">${l}<span class="hl-cnt">${zaehl(k)}</span></button>`).join('')}
@@ -18526,11 +18602,19 @@ function newsCardHtml(){
   // geschaetzt) und wird nur im Tagesfenster gezeigt, weil es genau darauf
   // gerechnet ist.
   const th=NEWS_DATA&&NEWS_DATA.topic;
-  const topic=(th&&th.label&&newsRange==='day'&&!newsWatchOnly)
-    ? `<div class="hl-topic" title="${escH('The most frequent subject word across market-relevant headlines of the last 24h, plus the two words that most often appear with it. '+th.n+' of '+th.total+' headlines contain it.')}">Leading topic <b>${escH(th.label)}</b><span class="hl-topic-n">${th.n}/${th.total}</span></div>`:'';
+  const topic=(th&&th.label&&newsRange==='day')
+    ? `<button class="hl-topic${newsTopicOnly?' on':''}" onclick="toggleNewsTopic()" title="${escH('The most frequent subject word across market-relevant headlines of the last 24h, plus the two words that most often appear with it. '+th.n+' of '+th.total+' headlines contain it. Click to show only those.')}">Leading topic <b>${escH(th.label)}</b><span class="hl-topic-n">${th.n}/${th.total}</span>${newsTopicOnly?'<span class="hl-topic-x">✕</span>':''}</button>`:'';
+  const druck=fenster.length?newsPressureHtml(fenster):'';
+  const attn=newsAttentionHtml(fenster);
+  // Fusszeile: wann der Feed zuletzt lief und der Sprung in den vollen Tab.
+  const upd=(NEWS_DATA&&NEWS_DATA.updated)?relTime(NEWS_DATA.updated):'';
+  const fuss=`<div class="hl-foot"><span>${upd?escH('Updated '+upd):''}${alle.length?escH((upd?' · ':'')+alle.length+' in archive'):''}</span>
+    <button class="hl-foot-link" onclick="showTab('news')">Open News tab ${icn('chevronRight',10)}</button></div>`;
   if(!heads.length){
-    return topic+bar+`<div class="dw-empty" style="text-align:left;line-height:1.55">${
-      newsWatchOnly?`Nothing in this window touches your Watchlist — switch the star off or try <b>Week</b>.`
+    return topic+bar+attn+`<div class="dw-empty" style="text-align:left;line-height:1.55">${
+      newsAssetSel!=='ALL'?`Nothing for <b>${escH(newsAssetSel)}</b> in this window.`
+      :newsTopicOnly?`Nothing matches the leading topic in this window.`
+      :newsWatchOnly?`Nothing in this window touches your Watchlist — switch the star off or try <b>Week</b>.`
       :alle.length?`Nothing in this window yet — try <b>Week</b> or <b>Month</b>.`
       :`No headlines yet. They are pulled from free RSS feeds (Fed, ECB, Bank of England, CNBC, MarketWatch, Bloomberg, Yahoo Finance, Reuters and a targeted search for bank research) by the hourly workflow — no API key needed. Nothing is invented in the meantime.`}</div>`;
   }
@@ -18559,7 +18643,7 @@ function newsCardHtml(){
     ? `<button class="hl-expand" onclick="toggleNewsExpand()">${newsExpanded
         ?'Show top '+NEWS_TOP_N+(rest>0?' &nbsp;·&nbsp; '+rest+' more in the News tab':'')
         :'Show '+Math.min(rest,NEWS_MAX_N-NEWS_TOP_N)+' more'}</button>`:'';
-  return topic+bar+html+mehr;
+  return topic+bar+druck+attn+html+mehr+fuss;
 }
 // AAII erscheint nur EINMAL pro Woche - ein 1-Monats-Fenster zeigte gerade
 // vier Punkte. Default deshalb 1 Jahr (rund 52 Punkte).
