@@ -3024,11 +3024,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-391 - Neuer Insights-Tab "Edge": traegt der Score ueberhaupt? Aus bis zu drei Jahren aufgezeichneter Releases (Actual UND Forecast je Indikator) wird der Score fuer jeden vergangenen Tag zurueckgerechnet - mit denselben Funktionen wie der Live-Score, nicht mit einer zweiten Formel - und gegen die tatsaechliche Kursentwicklung ueber 1, 5 und 20 Handelstage gestellt. Gemessen an rund 1.000 Tagen je Asset. Fuer USD ist das Ergebnis sauber geordnet: das unterste Score-Band liegt nach fuenf Tagen bei -0,04 Prozent, das oberste bei +0,12. Fuer andere Assets ist es das nicht, und die Karte sagt das genauso deutlich. Eine zweite Tabelle zeigt je Indikator die Trefferquote nach einem Beat oder Miss (USD Core CPI 76 Prozent auf 21 Faellen, Core PCE 33 Prozent auf 12) - damit ist erstmals sichtbar, welche der Indikatoren wirklich Information tragen. Eine dritte Karte zeigt die Verteilung des tatsaechlich aufgezeichneten Live-Scores. Baender mit weniger als zehn Beobachtungen zeigen ihre Anzahl statt einer Zahl, und die Rueckrechnung bildet ausdruecklich nur die klassische Gewichtung ab - die Normierung haengt an Groessen, die es fuer vergangene Tage nicht gibt. Ein Fehler dabei gefunden und behoben: bei Non-FX-Assets fehlte die same/inverse-Umrechnung, wodurch Gold ein umgedrehtes Ergebnis zeigte."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-392 - Fuenf neue Umfrage-Indikatoren und zwei neue Zins-Auswertungen. ZEW Economic Sentiment und Ifo Business Climate (EUR) sowie NFIB Small Business Optimism, Michigan-Inflationserwartung und CB Leading Index (USD) stehen jetzt als echte Indikatoren in den Karten - sie lagen alle schon im Kalender, hatten aber keinen Weg in die Daten. ZEW und Ifo zaehlen als Halbgewichts-Paar, weil beide dieselbe deutsche Wirtschaftsstimmung messen. Sentix fuehrt die Quelle nicht, das wird nicht ersetzt. Dabei ein Altlast-Fehler gefunden: eine Entfernungsregel loeschte "Inflation Expectations" direkt nach dem Anlegen wieder - sie stammte aus der Zeit, als es dafuer keine Quelle gab. Neu im Carry-Tab: eine Realzins-Tabelle (Leitzins minus Inflation je Waehrung, GBP +0,85 Prozent bis NZD -1,85) und der Zinsdifferenz-Verlauf gegen den Kurs, umschaltbar zwischen 2 und 10 Jahren - laufen die beiden Linien auseinander, bewegt sich das Paar gerade an etwas anderem als am Zinsabstand. SCORE_MODEL_VERSION auf 5, weil die neuen Indikatoren den Score aendern."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-391</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-392</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -4112,7 +4112,9 @@ const BOND_HALF_PT=new Set(['2Y Bond Yield','10Y Bond Yield']);
 // "CPI m/m" existiert nicht als eigener Indikator (nur als Zweit-Link im
 // CPI-Indikator), und NFP + ADP bleiben bewusst getrennte Indikatoren mit
 // je voller +/-1-Score-Wirkung.
-const CORE_PAIRS=[['CPI (Headline)','Core CPI'],['PPI','Core PPI'],['PCE','Core PCE']];
+// ZEW und Ifo messen beide deutsche Wirtschaftsstimmung - zwei volle Punkte
+// fuers selbe Thema waeren eine Doppelzaehlung, genau wie bei CPI+Core CPI.
+const CORE_PAIRS=[['CPI (Headline)','Core CPI'],['PPI','Core PPI'],['PCE','Core PCE'],['ZEW Economic Sentiment','Ifo Business Climate']];
 function indIsCorePaired(ind,rub){
   const base=stripPeriodSuffix(ind.name).base;
   const inds=(rub&&rub.indicators)||[];
@@ -5367,7 +5369,7 @@ function symScoreCmp(sym){
 // V4 (2026-08-19): AAII bekam eine Altersgrenze (AAII_STALE_DAYS) - eine
 // Wochenumfrage, die drei Veroeffentlichungen verpasst hat, zaehlt nicht
 // mehr. Das aendert den Score-Beitrag und damit die Zusammensetzung.
-const SCORE_MODEL_VERSION=4;
+const SCORE_MODEL_VERSION=5;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -6529,6 +6531,15 @@ const IND_EVENT_MATCHERS={
     {EUR:/^consumer confidence(\s+flash)?$/},
     [/consumer confidence/,/consumer sentiment/,/consumer climate/]
   ),
+  // Umfragen (2026-08-20). ZEW fuehrt der Kalender doppelt - als Eurozone-
+  // Aggregat und als "German ZEW ..."; nach der bestehenden Regel gewinnt
+  // das Aggregat, das German-Praefix bleibt draussen. Ifo gibt es nur
+  // deutsch, das ist die Natur der Reihe.
+  'ZEW Economic Sentiment':(n,c)=>c==='EUR'&&/zew economic sentiment/.test((n||'').toLowerCase())&&!/^german|current conditions/.test((n||'').toLowerCase()),
+  'Ifo Business Climate':(n,c)=>c==='EUR'&&/ifo business climate/.test((n||'').toLowerCase()),
+  'NFIB Small Business Optimism':(n,c)=>c==='USD'&&/nfib|small business/.test((n||'').toLowerCase()),
+  'Inflation Expectations':(n,c)=>c==='USD'&&/inflation expectation/.test((n||'').toLowerCase())&&!/5|long/.test((n||'').toLowerCase()),
+  'Leading Index':(n,c)=>c==='USD'&&/leading (economic )?index/.test((n||'').toLowerCase()),
 };
 // "Economic Growth" gehoerte hier bisher NICHT dazu, obwohl GDP Growth QoQ /
 // Manufacturing PMI / Services PMI / Retail Sales / Consumer Confidence
@@ -7553,10 +7564,10 @@ function applyIndResearch(sym){
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CB Tone','Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
-  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])},
+  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate','NFIB Small Business Optimism','Leading Index'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
 ];}
 // Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
@@ -7642,7 +7653,11 @@ function ensureRiskEnvLast(){
 // werden nicht mehr gescort (Quellen aus GitHub-Actions-IPs geblockt), nur
 // noch im Sentiment-Tab gezeigt. Gescort werden 'Crypto Fear & Greed'
 // (BTC) und 'VIX (Volatility)' (SP500/NAS), per SENT_MAP eingesetzt.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['Inflation Expectations','ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
+// ⚠ 'Inflation Expectations' stand hier bis 2026-08-20, weil es damals
+// keine Quelle dafuer gab. Seit die Michigan-Reihe ueber TradingView
+// ankommt, ist es ein echter Indikator - die Entfernungsregel haette ihn
+// direkt nach dem Anlegen wieder geloescht (im Test genau so passiert).
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -7726,10 +7741,36 @@ function cleanDeriveRules(sym){
   if(!sym||!sym.deriveRules)return;
   Object.keys(sym.deriveRules).forEach(k=>{if(!MACRO_DERIVE_RUBS.includes(k))delete sym.deriveRules[k];});
 }
+// Am 2026-08-20 dazugekommene Umfrage-Indikatoren. Bestandsnutzer haben sie
+// noch nicht in ihren Karten - ohne dieses Nachtragen blieben sie fuer immer
+// unsichtbar, weil mkRubs() nur bei einem FRISCHEN Profil laeuft. Muster wie
+// bei moveYieldIndsToInflation: idempotent, ergaenzt nur Fehlendes, ruehrt
+// bestehende Indikatoren (Bias, Notizen, Historie) nicht an.
+const NEUE_UMFRAGEN_2026_08={
+  'Economic Growth':['ZEW Economic Sentiment','Ifo Business Climate','NFIB Small Business Optimism','Leading Index'],
+  'Inflation':['Inflation Expectations']
+};
+function addSurveyInds(rubrics){
+  Object.keys(NEUE_UMFRAGEN_2026_08).forEach(rn=>{
+    const rub=rubrics.find(r=>r&&r.name===rn);
+    if(!rub||!Array.isArray(rub.indicators))return;
+    NEUE_UMFRAGEN_2026_08[rn].forEach(nm=>{
+      if(rub.indicators.some(i=>stripPeriodSuffix(i.name).base===nm))return;
+      const ni={id:uid(),name:nm,bias:'neu',imp:false,date:'',interval:'',points:[]};
+      // Inflationserwartung gehoert vor die Renditen, nicht ans Ende der
+      // Karte - dort stehen die drei Bond-Zeilen als Block zusammen.
+      if(nm==='Inflation Expectations'){
+        const i=rub.indicators.findIndex(x=>/Bond Yield|Spread/.test(x.name));
+        i>=0?rub.indicators.splice(i,0,ni):rub.indicators.push(ni);
+      }else rub.indicators.push(ni);
+    });
+  });
+}
 function migrateRubInds(rubrics,sym){
   stripGeopoliticsRub(rubrics);
   migrateRiskEnvRub(rubrics,sym);
   moveYieldIndsToInflation(rubrics);
+  addSurveyInds(rubrics);
   cleanDeriveRules(sym);
   rubrics.forEach(rub=>{
     if(!rub.indicators)return;
@@ -7822,7 +7863,7 @@ function migrateRubInds(rubrics,sym){
   if(sym){delete sym.cbStance;delete sym.cbNextMove;}
   if(!rubrics.find(r=>r.name==='Economic Growth')){
     const idx=rubrics.findIndex(r=>r.name==='Labour Market');
-    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence'])};
+    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate','NFIB Small Business Optimism','Leading Index'])};
     idx>=0?rubrics.splice(idx+1,0,ni):rubrics.push(ni);
   }
 }
@@ -8570,7 +8611,7 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -19868,6 +19909,14 @@ function renderSeasonality(){
   attachChartHovers(el);
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
+SENT_INFO.realrate=['Real policy rate',
+  `<p><b>What it is:</b> the policy rate minus headline CPI. Both numbers are the ones already shown on the asset pages — nothing is recomputed here, and no inflation figure is estimated to fill a gap.</p>
+   <p><b>Why it matters:</b> the Carry tab above ranks pairs by the NOMINAL gap. But two currencies paying 4% are not equally attractive if one has 2% inflation and the other 6% — the first pays you 2% in real terms, the second takes 2% away. Real rates are what long-horizon capital actually chases.</p>
+   <p><b>Limits:</b> headline CPI is backward-looking and noisy month to month; a real rate built from it moves for reasons that have nothing to do with the central bank. It is a level, not a signal, and it is not part of the score.</p>`];
+SENT_INFO.spread=['Rate differential vs price',
+  `<p><b>What it is:</b> the 2-year (or 10-year) government yield of the base currency minus that of the quote currency, drawn against the pair itself. Both series are the ones the app already collects daily.</p>
+   <p><b>How to read it:</b> the pair and the differential usually move together — short-dated yields are the market's own view of where the two central banks are heading. When they <b>diverge</b>, something else is driving the pair (risk flows, positioning, politics), and that is worth knowing before taking a macro trade.</p>
+   <p><b>Limits:</b> the two axes are scaled independently, so the vertical distance between the lines means nothing — only the SHAPE does. The history is as long as the collected bond series, which is shorter than the price history.</p>`];
 SENT_INFO.edge=['Edge (does the score lead the price?)',
   `<p><b>What this is:</b> the score is only worth something if it leads the price. This tab measures that on <b>recorded</b> data — no simulation, no assumed fills, no estimated values.</p>
    <p><b>How the reconstruction works:</b> every indicator carries up to three years of releases with both an actual and a forecast (<i>chartHist</i>). For each past day the last known beat/miss of every indicator is summed with the same weights the live score uses — the same functions, not a second formula. A release counts until the next one arrives, at most 120 days. Days with fewer than three active indicators are skipped.</p>
@@ -20687,6 +20736,44 @@ function rateInfo(ccy){
   if(best&&(!c||best.date>c.date||best.rate!==c.rate)){cache[ccy]={rate:best.rate,date:best.date};saveRateCache(cache);}
   return best;
 }
+// ── Realzins: Leitzins minus Headline-Inflation ──────────────────────────
+// Eine der meistbeachteten FX-Kennzahlen und bisher nirgends in der App:
+// der Carry-Tab rechnet rein NOMINAL. Beide Zahlen liegen laengst vor -
+// rateInfo() (Leitzins) und der CPI-Indikator der Inflation-Karte.
+function realRateInfo(id){
+  const r=rateInfo(id);
+  if(!r||typeof r.rate!=='number')return null;
+  const sym=syms.find(x=>x.id===id);
+  if(!sym)return null;
+  const rub=(sym.rubrics||[]).find(x=>x.name==='Inflation');
+  const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base==='CPI (Headline)');
+  const roh=ind&&ind.research&&ind.research.actual;
+  const cpi=roh!=null&&roh!==''?parseFloat(String(roh).replace(/[^0-9.\-]/g,'')):NaN;
+  if(!isFinite(cpi))return null;
+  return{nominal:r.rate,cpi,real:Math.round((r.rate-cpi)*100)/100,
+    rateDate:r.date,cpiDate:(ind.research&&ind.research.date)||''};
+}
+// Zinsdifferenz-Verlauf: 2Y-Renditespread zweier Waehrungen ueber Zeit.
+// Die Bond-Reihen liegen seit Monaten da, wurden aber nur als Momentaufnahme
+// im Score verwendet.
+function yieldSpreadSeries(baseId,quoteId,laufzeit){
+  const key=(laufzeit||'2Y')==='10Y'?'10Y Bond Yield':'2Y Bond Yield';
+  const g=id=>{
+    const b=BOND_DATA_FEED&&BOND_DATA_FEED[id]&&BOND_DATA_FEED[id][key];
+    const h=b&&b.series;
+    if(!Array.isArray(h)||!h.length)return null;
+    const m={};h.forEach(e=>{
+      if(!Array.isArray(e))return;
+      const d=String(e[0]||'').slice(0,10),v=parseFloat(e[1]);
+      if(d&&isFinite(v))m[d]=v;
+    });
+    return m;
+  };
+  const a=g(baseId),b2=g(quoteId);
+  if(!a||!b2)return[];
+  return Object.keys(a).filter(d=>b2[d]!=null).sort()
+    .map(d=>[d,Math.round((a[d]-b2[d])*1000)/1000]);
+}
 function carryRows(){
   return ALL_PAIRS.map(p=>{
     const[b,q]=p.split('/');
@@ -20715,6 +20802,86 @@ function carryRowHTML(r,rank,max){
       <div class="carry-rates">${r.base} ${r.rb.toFixed(2)}%  ·  ${r.quote} ${r.rq.toFixed(2)}%  →  ${r.long?('long '+r.base+' / short '+r.quote):('long '+r.quote+' / short '+r.base)}</div>
     </div>
   </div>`;
+}
+// Realzins-Tabelle: nominal, Inflation, real - je Waehrung, nach Realzins
+// sortiert. Waehrungen ohne aktuellen CPI-Wert erscheinen nicht, statt mit
+// einer geschaetzten Inflation zu rechnen.
+let realRateSort='real';
+function setRealRateSort(v){realRateSort=v;renderCarry();}
+function realRateTableHtml(){
+  const rows=FX.map(id=>{const r=realRateInfo(id);return r?Object.assign({id},r):null;}).filter(Boolean);
+  if(rows.length<2)return'';
+  rows.sort((a,b)=>realRateSort==='nominal'?b.nominal-a.nominal:b.real-a.real);
+  const col=v=>v>0?'act-good':v<0?'act-bad':'';
+  return`<div class="cot-card" style="margin-top:12px">
+    <div class="cot-card-title">Real policy rate${iBtn('realrate')}
+      <span style="margin-left:auto;display:flex;gap:5px">
+        <button class="hl-tab${realRateSort==='real'?' on':''}" onclick="setRealRateSort('real')">by real</button>
+        <button class="hl-tab${realRateSort==='nominal'?' on':''}" onclick="setRealRateSort('nominal')">by nominal</button></span>
+      <small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Policy rate minus headline CPI &mdash; both values are the ones already shown on the asset pages, nothing recomputed</small></div>
+    <table class="edge-tbl"><thead><tr><th>Currency</th><th>Policy</th><th>CPI</th><th>Real</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td class="edge-b">${escH(COT_NAME[r.id]||r.id)}</td>
+      <td>${r.nominal.toFixed(2)}%</td><td>${r.cpi.toFixed(1)}%</td>
+      <td class="${col(r.real)}"><b>${r.real>0?'+':''}${r.real.toFixed(2)}%</b></td></tr>`).join('')}
+    </tbody></table>
+    <div class="edge-note">${FX.length-rows.length>0?(FX.length-rows.length)+' currencies are missing because no current headline CPI value has arrived for them. ':''}A positive real rate means the central bank is paying more than inflation takes away — the classic argument for a currency, and the reason two currencies with the same nominal rate are not equally attractive.</div>
+  </div>`;
+}
+// Zinsdifferenz gegen den Kurs. Zeigt, ob eine Paarbewegung vom Zinsabstand
+// getragen wird oder ihm zuwiderlaeuft.
+let spreadPair='EUR/USD',spreadTenor='2Y';
+function setSpreadPair(v){spreadPair=v;renderCarry();}
+function setSpreadTenor(v){spreadTenor=v;renderCarry();}
+function spreadCardHtml(){
+  const [b,q]=spreadPair.split('/');
+  const serie=yieldSpreadSeries(b,q,spreadTenor);
+  const paare=ALL_PAIRS.filter(p=>{const[x,y]=p.split('/');return FX.includes(x)&&FX.includes(y);});
+  const sel=`<select class="btn" onchange="setSpreadPair(this.value)" style="cursor:pointer">${
+    paare.map(p=>`<option value="${escH(p)}"${p===spreadPair?' selected':''}>${escH(p)}</option>`).join('')}</select>`;
+  const ten=['2Y','10Y'].map(t=>`<button class="hl-tab${spreadTenor===t?' on':''}" onclick="setSpreadTenor('${t}')">${t}</button>`).join('');
+  const kopf=`<div class="cot-card-title">Rate differential vs price${iBtn('spread')}
+      <span style="margin-left:auto;display:flex;gap:5px;align-items:center">${sel}${ten}</span></div>`;
+  if(serie.length<10)return`<div class="cot-card" style="margin-top:12px">${kopf}
+    <div class="dw-empty" style="text-align:left">Only ${serie.length} common days of ${escH(spreadTenor)} yield history for ${escH(b)} and ${escH(q)} — too few to draw. The series grows by one point per trading day.</div></div>`;
+  const px=resolvePairPriceSeries(b,q);
+  const chart=spreadChart(serie,px,b,q);
+  return`<div class="cot-card" style="margin-top:12px">${kopf}${chart}
+    <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:var(--blue)"></span>${escH(b+' − '+q+' '+spreadTenor+' yield')}</span>
+      <span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span></div>
+    <div class="edge-note">${serie.length} common trading days. When the two lines diverge, the pair is moving on something other than the rate gap.</div>
+  </div>`;
+}
+function spreadChart(serie,px,b,q){
+  const W=760,H=210,padL=42,padR=52,padT=16,padB=22;
+  const vals=serie.map(e=>e[1]);
+  const lo=Math.min(...vals),hi=Math.max(...vals),sp=(hi-lo)||1;
+  const x=i=>padL+i*(W-padL-padR)/Math.max(1,serie.length-1);
+  const y=v=>padT+(hi-v)/sp*(H-padT-padB);
+  const line=serie.map((e,i)=>`${x(i).toFixed(1)},${y(e[1]).toFixed(1)}`).join(' ');
+  // Preis auf dieselben Tage beschneiden - sonst laufen die Achsen auseinander
+  let preis='';
+  if(px&&px.length){
+    const m={};px.forEach(e=>{m[String(e[0]).slice(0,10)]=e[1];});
+    const pv=serie.map(e=>m[e[0]]).map(v=>typeof v==='number'?v:null);
+    const gueltig=pv.filter(v=>v!=null);
+    if(gueltig.length>=10){
+      const plo=Math.min(...gueltig),phi=Math.max(...gueltig),psp=(phi-plo)||1;
+      const py=v=>padT+(phi-v)/psp*(H-padT-padB);
+      const pts=[];pv.forEach((v,i)=>{if(v!=null)pts.push(`${x(i).toFixed(1)},${py(v).toFixed(1)}`);});
+      preis=`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--t0)" stroke-width="1.6" stroke-dasharray="6,4" opacity=".75"/>`
+        +`<text x="${W-padR+4}" y="${padT+8}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${phi.toFixed(4)}</text>`
+        +`<text x="${W-padR+4}" y="${H-padB}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${plo.toFixed(4)}</text>`;
+    }
+  }
+  const null0=(lo<0&&hi>0)?`<line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-dasharray="3,3"/>`:'';
+  return`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:340px;height:auto">
+    ${null0}${preis}
+    <polyline points="${line}" fill="none" stroke="var(--blue)" stroke-width="2"/>
+    <text x="2" y="${padT+8}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${hi.toFixed(2)}</text>
+    <text x="2" y="${H-padB}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${lo.toFixed(2)}</text>
+    <text x="${padL}" y="${H-4}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${escH(serie[0][0])}</text>
+    <text x="${W-padR}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="end" font-family="var(--ff-num)">${escH(serie[serie.length-1][0])}</text>
+  </svg></div>`;
 }
 function renderCarry(){
   const el=document.getElementById('carryBody');if(!el)return;
@@ -20750,7 +20917,8 @@ function renderCarry(){
   const list=all.map((r,i)=>({r,rank:i+1}))
     .filter(({r})=>!term||r.pair.toUpperCase().includes(term)||r.pair.toUpperCase().replace('/','').includes(term.replace('/',''))||r.base===term||r.quote===term)
     .map(({r,rank})=>carryRowHTML(r,rank,max)).join('');
-  el.innerHTML=list?`<div class="carry-list">${list}</div>`:'<div style="font-size:13px;color:var(--t3);padding:10px">No matching pair.</div>';
+  el.innerHTML=(list?`<div class="carry-list">${list}</div>`:'<div style="font-size:13px;color:var(--t3);padding:10px">No matching pair.</div>')
+    +realRateTableHtml()+spreadCardHtml();
 }
 function updateStat(){
   const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
