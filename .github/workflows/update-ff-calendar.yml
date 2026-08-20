@@ -1382,6 +1382,27 @@ jobs:
               // Confidence") - NICHT die University-of-Michigan-"Consumer
               // Sentiment"-Reihe (anderer Indikator!).
               {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="USD"&&/consumer confidence/.test(t)&&!/sentiment|michigan|expectation|change/.test(t)},
+              // ── Umfragen (2026-08-20) ────────────────────────────────
+              // ⚠ ZEW und Ifo bilden bewusst ein Halbgewichts-Paar in der App
+              // (CORE_PAIRS): beide messen deutsche Wirtschaftsstimmung, drei
+              // volle Punkte fuer dasselbe Thema waeren eine Dreifachzaehlung.
+              // ZEW fuehrt TradingView sowohl als EU-Aggregat als auch als
+              // deutsche Reihe - nach der bestehenden Regel gewinnt das
+              // Aggregat, deshalb das German-Praefix ausgeschlossen.
+              {ind:"ZEW Economic Sentiment",period:null,test:(t,c)=>c==="EUR"&&/zew economic sentiment/.test(t)&&!/^german|current conditions/.test(t)},
+              // Ifo gibt es NUR fuer Deutschland - kein Eurozone-Aggregat.
+              // Das ist keine Luecke, sondern die Natur der Reihe; die App
+              // weist es als deutschen Index aus.
+              {ind:"Ifo Business Climate",period:null,test:(t,c)=>c==="EUR"&&/ifo business climate/.test(t)},
+              // Sentix misst ANLEGER-Stimmung fuer die ganze Eurozone - ein
+              // anderes Ding als die beiden Unternehmens-/Analystenumfragen
+              // oben, daher volles Gewicht.
+              {ind:"Sentix Investor Confidence",period:null,test:(t,c)=>c==="EUR"&&/sentix/.test(t)},
+              {ind:"NFIB Small Business Optimism",period:null,test:(t,c)=>c==="USD"&&/nfib|small business optimism/.test(t)},
+              // Inflationserwartung der Verbraucher - eigenes Fed-Argument,
+              // gehoert in die Inflation-Karte, nicht zur Stimmungsumfrage.
+              {ind:"Inflation Expectations",period:null,test:(t,c)=>c==="USD"&&/michigan/.test(t)&&/inflation expectation/.test(t)&&!/5|long/.test(t)},
+              {ind:"Leading Index",period:null,test:(t,c)=>c==="USD"&&/leading (economic )?index/.test(t)},
               // NZD: ausdruecklich die Westpac-Reihe (nicht ANZ-Roy Morgan).
               {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="NZD"&&/westpac/.test(t)&&/consumer/.test(t)},
               // Uebrige Waehrungen: jeweils ihr landesuebliches Stimmungsmass
