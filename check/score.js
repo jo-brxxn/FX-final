@@ -110,6 +110,33 @@ const MODE = process.argv[2] || 'normalized';
       Object.keys(soll).forEach(d=>{if(!flips[d])add('Flip-Tag in scoreHist nicht gemeldet',{sym:id,tag:d});});
     });
   }
+  // ── G3) Edge-Rueckrechnung ─────────────────────────────────────
+  // edgeScoreSeries rechnet den Score fuer VERGANGENE Tage zurueck. Sie darf
+  // dabei nichts erfinden: jeder Punkt muss endlich sein, das Datum muss in
+  // der Vergangenheit liegen, und bei Non-FX-Assets MUSS die same/inverse-
+  // Regel angewendet sein - ohne sie lief die Reihe fuer Gold verkehrt herum
+  // (im Test aufgefallen).
+  if(typeof edgeScoreSeries==='function'){
+    const heute=todayStr();
+    syms.slice(0,6).forEach(sym=>{
+      let reihe=[];try{reihe=edgeScoreSeries(sym);}catch(e){add('edgeScoreSeries wirft',{sym:sym.id,e:String(e)});return;}
+      reihe.forEach(([d,v,aktiv])=>{
+        if(!isFinite(v))add('Edge-Punkt nicht endlich',{sym:sym.id,tag:d,v:String(v)});
+        if(d>heute)add('Edge-Punkt in der Zukunft',{sym:sym.id,tag:d});
+        if(!(aktiv>=3))add('Edge-Punkt mit zu wenig aktiven Indikatoren',{sym:sym.id,tag:d,aktiv});
+      });
+      // Vorzeichen-Regel: bei Non-FX muss jede beruecksichtigte Rubrik eine
+      // hinterlegte same/inverse-Regel haben.
+      if(isNonFx(sym.id)&&typeof edgeIndHistories==='function'){
+        const reg=effDeriveRules(sym);
+        edgeIndHistories(sym).forEach(r=>{
+          const soll=reg[r.rub.name]==='inverse'?-1:reg[r.rub.name]==='same'?1:null;
+          if(soll===null)add('Edge nutzt Rubrik ohne Ableitungsregel',{sym:sym.id,rub:r.rub.name});
+          else if(r.vz!==soll)add('Edge-Vorzeichen weicht von deriveRules ab',{sym:sym.id,rub:r.rub.name,ist:r.vz,soll});
+        });
+      }
+    });
+  }
   // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});

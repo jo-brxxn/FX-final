@@ -2051,6 +2051,24 @@ body.dash-edit-mode .motivation-editbar{display:flex}
 .news-card-n{font-family:var(--ff-num);font-size:11px;color:var(--t3)}
 .news-card-body .hl-row{padding-left:0;border-left-width:2px;padding-right:0}
 .hl-flip{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--blue);border:1px solid var(--blue);border-radius:var(--rss);padding:0 4px;white-space:nowrap}
+.edge-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+.edge-tbl th{text-align:right;color:var(--t3);font-size:10px;font-weight:600;padding:0 6px 4px;border-bottom:1px solid var(--bd)}
+.edge-tbl th:first-child{text-align:left}
+.edge-tbl td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--bd);font-family:var(--ff-num)}
+.edge-tbl tr:last-child td{border-bottom:none}
+.edge-b{text-align:left!important;color:var(--t1);font-weight:600}
+.edge-n{color:var(--t3)}
+.edge-thin td{opacity:.5}
+.edge-thin-t{color:var(--t3);font-size:10px}
+.edge-note{color:var(--t3);font-size:10.5px;line-height:1.5;margin-top:8px;padding-top:7px;border-top:1px solid var(--bd)}
+.edge-verdict{font-size:12px;line-height:1.55;color:var(--t2);background:var(--bg2);border:1px solid var(--bd);
+  border-left:3px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;margin-top:8px}
+.edge-verdict.ok{border-left-color:var(--green)}
+.edge-verdict.bad{border-left-color:var(--red)}
+.edge-verdict b{color:var(--t0)}
+.edge-dist-row{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;padding:3px 0;font-size:11.5px}
+.edge-dist-bar{height:9px;background:var(--bg2);border-radius:2px;overflow:hidden}
+.edge-dist-bar i{display:block;height:100%;background:var(--blue);opacity:.75}
 .news-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
 .news-q{flex:1 1 220px;min-width:160px;background:var(--bg2);border:1px solid var(--bd);color:var(--t0);border-radius:var(--rs);padding:5px 9px;font-size:12px}
 .news-tools select{background:var(--bg2);border:1px solid var(--bd);color:var(--t1);border-radius:var(--rs);padding:5px 8px;font-size:12px}
@@ -3006,11 +3024,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-390 - Die Schlagzeilen-Karte kann jetzt mehr als nur auflisten. Ein Nachrichten-Druck-Streifen zeigt als Saeulen, wie viele Meldungen je Stunde (Tagesfenster) bzw. je Tag (Woche/Monat) hereinkamen - ein Ausschlag heisst, dass gerade etwas passiert, gezaehlt und nicht gedeutet. Darunter eine Zeile mit den fuenf Maerkten, an denen der Nachrichtenfluss gerade haengt (USD 30, CAD 8, BTC 7 ...), jeder Chip klickbar als Filter. Die Leitthema-Zeile ist jetzt selbst ein Filter: ein Klick zeigt nur noch die Meldungen zu diesem Thema. Meldungen der letzten Stunde tragen eine NEW-Marke. Eine Fusszeile nennt, wann der Feed zuletzt lief und wie gross das Archiv ist, und springt in den News-Tab. Ausserdem ein Layout-Fehler behoben: bei zweizeiligen Titeln stiess die Auslassung an die Quelle rechts ("... ahead of...Yahoo Personal ..."), der Spaltenabstand war zu knapp."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-391 - Neuer Insights-Tab "Edge": traegt der Score ueberhaupt? Aus bis zu drei Jahren aufgezeichneter Releases (Actual UND Forecast je Indikator) wird der Score fuer jeden vergangenen Tag zurueckgerechnet - mit denselben Funktionen wie der Live-Score, nicht mit einer zweiten Formel - und gegen die tatsaechliche Kursentwicklung ueber 1, 5 und 20 Handelstage gestellt. Gemessen an rund 1.000 Tagen je Asset. Fuer USD ist das Ergebnis sauber geordnet: das unterste Score-Band liegt nach fuenf Tagen bei -0,04 Prozent, das oberste bei +0,12. Fuer andere Assets ist es das nicht, und die Karte sagt das genauso deutlich. Eine zweite Tabelle zeigt je Indikator die Trefferquote nach einem Beat oder Miss (USD Core CPI 76 Prozent auf 21 Faellen, Core PCE 33 Prozent auf 12) - damit ist erstmals sichtbar, welche der Indikatoren wirklich Information tragen. Eine dritte Karte zeigt die Verteilung des tatsaechlich aufgezeichneten Live-Scores. Baender mit weniger als zehn Beobachtungen zeigen ihre Anzahl statt einer Zahl, und die Rueckrechnung bildet ausdruecklich nur die klassische Gewichtung ab - die Normierung haengt an Groessen, die es fuer vergangene Tage nicht gibt. Ein Fehler dabei gefunden und behoben: bei Non-FX-Assets fehlte die same/inverse-Umrechnung, wodurch Gold ein umgedrehtes Ergebnis zeigte."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-390</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-391</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3083,6 +3101,13 @@ function introLogin(){
   <div id="sentBody"></div>
 </div>
 <!-- PAGE: SEASONALITY -->
+<div class="pc" id="pgEdge" style="display:none">
+  <div style="margin-bottom:11px">
+    <div style="font-size:16px;font-weight:700;color:var(--t0)">Edge</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:1px;font-family:var(--ff-num)">Does the score actually lead the price? Measured on recorded releases only</div>
+  </div>
+  <div id="edgeBody"></div>
+</div>
 <div class="pc" id="pgNews" style="display:none">
   <div style="margin-bottom:11px">
     <div style="font-size:16px;font-weight:700;color:var(--t0)">News</div>
@@ -18509,6 +18534,214 @@ function newsAssetSectionHtml(sym){
     <div class="news-card-body">${zeilen}</div>
   </div>`;
 }
+// ══ EDGE: traegt der Score ueberhaupt? ═══════════════════════════════════
+// Alles hier rechnet AUSSCHLIESSLICH auf bereits aufgezeichneten Werten:
+// ind.chartHist (bis 3 Jahre [Datum, Actual, Forecast] je Indikator),
+// price_data (Tagesschluss) und scoreHist. Nichts wird geschaetzt, und wo
+// die Stichprobe zu duenn ist, wird die Zahl NICHT gezeigt, sondern die
+// Stichprobengroesse.
+//
+// ⚠ Die Rueckrechnung nutzt bewusst die ECHTEN Bausteine des Score-Modells
+// (researchBias, indIsHalfWeight, biasScore) statt einer zweiten Formel -
+// sonst waere es die naechste Auspraegung der Dual-Source-Fehlerklasse.
+// Sie bildet die KLASSISCHE Gewichtung ab; die Normierung des Modus
+// "normalized" haengt an Groessen (Marktrelevanz, Decay), die es fuer
+// vergangene Tage nicht rekonstruierbar gibt. Das steht so auch in der
+// Karte, damit niemand die Zahl fuer den Live-Score haelt.
+const EDGE_MIN_N=10;                       // darunter wird nichts behauptet
+const EDGE_HORIZONTE=[1,5,20];
+// Alle Indikatoren eines Assets, die eine verwertbare Historie haben.
+function edgeIndHistories(sym){
+  const out=[];
+  // ⚠ Bei Non-FX-Assets sind die Makro-Karten von einer Waehrung GESPIEGELT
+  // (deriveMacroBiasAll). Ohne dieselbe same/inverse-Umrechnung wie dort
+  // summiert die Rueckrechnung die ROHEN US-Signale und liefert fuer Gold
+  // ein umgedrehtes Ergebnis - im Test genau so aufgetreten. Karten ohne
+  // hinterlegte Regel bleiben aussen vor, statt eine Richtung anzunehmen.
+  const regeln=isNonFx(sym.id)?effDeriveRules(sym):null;
+  (sym.rubrics||[]).forEach(rub=>{
+    if(!IND_AUTO_RUBS.includes(rub.name))return;
+    let vz=1;
+    if(regeln){
+      const r=regeln[rub.name];
+      if(r==='inverse')vz=-1; else if(r==='same')vz=1; else return;
+    }
+    (rub.indicators||[]).forEach(ind=>{
+      const h=ind.chartHist;
+      if(!Array.isArray(h)||h.length<2)return;
+      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
+      const punkte=h.filter(e=>Array.isArray(e)&&e[0]&&e[1]!=null&&e[1]!==''&&e[2]!=null&&e[2]!=='')
+        .map(e=>({d:String(e[0]).slice(0,10),a:e[1],f:e[2]}))
+        .sort((x,y)=>x.d.localeCompare(y.d));
+      if(punkte.length<2)return;
+      out.push({ind,rub,punkte,vz,gewicht:indIsHalfWeight(ind,rub)?0.5:1});
+    });
+  });
+  return out;
+}
+// Rueckgerechnete Score-Reihe: je Datum die Summe der zuletzt bekannten
+// Beat/Miss-Signale. Ein Release zaehlt, bis das naechste kommt - laenger
+// als EDGE_MAX_ALTER Tage aber nicht mehr (sinngemaess wie IND_STALE_CYCLES,
+// nur ohne die Zyklus-Rechnung, die je Indikator eine eigene Historie
+// braeuchte).
+const EDGE_MAX_ALTER=120;
+function edgeScoreSeries(sym){
+  const reihen=edgeIndHistories(sym);
+  if(!reihen.length)return[];
+  const daten=[...new Set(reihen.flatMap(r=>r.punkte.map(p=>p.d)))].sort();
+  if(daten.length<3)return[];
+  const von=daten[0],bis=todayStr();
+  const out=[];
+  const zeiger=reihen.map(()=>-1);
+  // Tageweise durch den Zeitraum, Zeiger je Reihe nachziehen.
+  for(let t=new Date(von);t<=new Date(bis);t.setDate(t.getDate()+1)){
+    const d=t.toISOString().slice(0,10);
+    let summe=0,aktiv=0;
+    reihen.forEach((r,i)=>{
+      while(zeiger[i]+1<r.punkte.length&&r.punkte[zeiger[i]+1].d<=d)zeiger[i]++;
+      if(zeiger[i]<0)return;
+      const p=r.punkte[zeiger[i]];
+      if((new Date(d)-new Date(p.d))/864e5>EDGE_MAX_ALTER)return;
+      const b=researchBias(stripPeriodSuffix(r.ind.name).base,p.a,p.f,null);
+      if(b==='neu')return;
+      summe+=biasScore(b)*r.gewicht*(r.vz||1); aktiv++;
+    });
+    if(aktiv>=3)out.push([d,Math.round(summe*100)/100,aktiv]);
+  }
+  return out;
+}
+// Vorlaufrendite: wie sich der Kurs NACH dem Tag entwickelt hat.
+function edgeForwardReturns(symId,serie){
+  const px=priceSeriesFor(symId);
+  if(!px||px.length<40)return null;
+  const idx={},arr=px.map(e=>e[0]);
+  px.forEach((e,i)=>{idx[e[0]]=i;});
+  const rows=[];
+  serie.forEach(([d,sc])=>{
+    let i=idx[d];
+    if(i===undefined){                      // Wochenende: naechster Handelstag
+      const j=arr.findIndex(x=>x>=d); if(j<0)return; i=j;
+    }
+    const p0=px[i][1]; if(!p0)return;
+    const r={sc};
+    EDGE_HORIZONTE.forEach(n=>{
+      const q=px[i+n]; r['r'+n]=(q&&q[1])?((q[1]/p0-1)*100):null;
+    });
+    if(EDGE_HORIZONTE.some(n=>r['r'+n]!=null))rows.push(r);
+  });
+  return rows;
+}
+const EDGE_BUCKETS=[[-99,-3,'≤ −3'],[-3,-1,'−3 … −1'],[-1,1,'−1 … +1'],[1,3,'+1 … +3'],[3,99,'≥ +3']];
+function edgeBucketStats(rows){
+  return EDGE_BUCKETS.map(([lo,hi,lbl])=>{
+    const teil=rows.filter(r=>r.sc>=lo&&r.sc<hi||(hi===99&&r.sc>=lo));
+    const z={lbl,n:teil.length};
+    EDGE_HORIZONTE.forEach(h=>{
+      const v=teil.map(r=>r['r'+h]).filter(x=>x!=null);
+      z['r'+h]=v.length>=EDGE_MIN_N?v.reduce((a,b)=>a+b,0)/v.length:null;
+      z['n'+h]=v.length;
+      if(h===5)z.tref=v.length>=EDGE_MIN_N?v.filter(x=>x>0).length/v.length*100:null;
+    });
+    return z;
+  });
+}
+// Trefferquote je Indikator: nach einem Beat/Miss - lief der Kurs in die
+// erwartete Richtung? Nur Indikatoren mit genug Beobachtungen.
+function edgeIndicatorStats(sym){
+  const px=priceSeriesFor(sym.id); if(!px||px.length<40)return[];
+  const idx={};px.forEach((e,i)=>{idx[e[0]]=i;});
+  const arr=px.map(e=>e[0]);
+  return edgeIndHistories(sym).map(r=>{
+    let treffer=0,n=0,summe=0;
+    r.punkte.forEach(p=>{
+      const b=researchBias(stripPeriodSuffix(r.ind.name).base,p.a,p.f,null);
+      if(b==='neu')return;
+      let i=idx[p.d]; if(i===undefined){const j=arr.findIndex(x=>x>=p.d);if(j<0)return;i=j;}
+      const p0=px[i][1],q=px[i+5];
+      if(!p0||!q||!q[1])return;
+      const ret=(q[1]/p0-1)*100, erwartet=(b==='bull'?1:-1)*(r.vz||1);
+      n++; summe+=ret*erwartet; if(ret*erwartet>0)treffer++;
+    });
+    return{name:ind_kurz(r.ind),n,quote:n?treffer/n*100:null,schnitt:n?summe/n:null};
+  }).filter(x=>x.n>=EDGE_MIN_N).sort((a,b)=>b.quote-a.quote);
+}
+function ind_kurz(ind){return ind.displayName||stripPeriodSuffix(ind.name).base;}
+// ── Edge-Tab: Darstellung ────────────────────────────────────────────────
+let edgeAsset='USD';
+function setEdgeAsset(v){edgeAsset=v||'USD';renderEdge();}
+const edgeFmt=(v,d)=>v==null?'–':(v>0?'+':'')+v.toFixed(d===undefined?2:d);
+function renderEdge(){
+  const el=document.getElementById('edgeBody');if(!el)return;
+  const sym=syms.find(x=>x.id===edgeAsset)||syms[0];
+  if(!sym){el.innerHTML='<div class="dw-empty">No assets.</div>';return;}
+  const filter=assetFilterSelect(syms.map(x=>x.id),edgeAsset,'setEdgeAsset','',
+    'Which asset to test',id=>COT_NAME[id]||id);
+  const serie=edgeScoreSeries(sym);
+  const rows=serie.length?edgeForwardReturns(sym.id,serie):null;
+  const kopf=`<div style="margin-bottom:10px">${filter}</div>`;
+  if(!rows||rows.length<EDGE_MIN_N){
+    el.innerHTML=kopf+`<div class="cot-card"><div class="cot-card-title">Signal test${iBtn('edge')}</div>
+      <div class="dw-empty" style="text-align:left;line-height:1.55">Not enough recorded history for ${escH(COT_NAME[sym.id]||sym.id)} yet.
+      ${serie.length?`The reconstructed score covers <b>${serie.length}</b> days, but only <b>${rows?rows.length:0}</b> of them line up with a price series long enough to measure a forward return.`
+        :`No indicator of this asset carries a release history with both an actual and a forecast — the reconstruction needs both.`}
+      Nothing is estimated to fill the gap.</div></div>`;
+    return;
+  }
+  const st=edgeBucketStats(rows);
+  const zeile=z=>`<tr${z.n<EDGE_MIN_N?' class="edge-thin"':''}>
+    <td class="edge-b">${escH(z.lbl)}</td><td class="edge-n">${z.n}</td>
+    ${EDGE_HORIZONTE.map(h=>`<td class="${z['r'+h]==null?'':(z['r'+h]>0?'act-good':'act-bad')}">${z['r'+h]==null?`<span class="edge-thin-t" title="${escH('only '+z['n'+h]+' observations - below the '+EDGE_MIN_N+' needed')}">n=${z['n'+h]}</span>`:edgeFmt(z['r'+h])+'%'}</td>`).join('')}
+    <td>${z.tref==null?'–':z.tref.toFixed(0)+'%'}</td></tr>`;
+  // Gesamtaussage: laeuft der Score in die richtige Richtung? Spearman-artig
+  // ueber die Bucket-Mittelwerte, aber ehrlich als das benannt, was es ist:
+  // eine Richtungspruefung, kein Signifikanztest.
+  const gueltig=st.filter(z=>z.r5!=null);
+  let urteil='';
+  if(gueltig.length>=3){
+    const erst=gueltig[0],letzt=gueltig[gueltig.length-1];
+    const spanne=letzt.r5-erst.r5;
+    urteil=`<div class="edge-verdict ${spanne>0.15?'ok':spanne<-0.15?'bad':'flat'}">
+      Over 5 days the lowest bucket averages <b>${edgeFmt(erst.r5)}%</b> and the highest <b>${edgeFmt(letzt.r5)}%</b> —
+      a spread of <b>${edgeFmt(spanne)} pp</b> in ${spanne>0.15?'the direction the score implies':spanne<-0.15?'the OPPOSITE direction to what the score implies':'no clear direction'}.
+      This is a direction check on ${rows.length} recorded days, not a significance test.</div>`;
+  }
+  const indSt=edgeIndicatorStats(sym);
+  const indTbl=indSt.length?`<table class="edge-tbl"><thead><tr><th>Indicator</th><th>n</th><th>Hit rate 5d</th><th>Ø return · direction</th></tr></thead><tbody>
+    ${indSt.map(x=>`<tr><td class="edge-b">${escH(x.name)}</td><td class="edge-n">${x.n}</td>
+      <td class="${x.quote>=55?'act-good':x.quote<=45?'act-bad':''}">${x.quote.toFixed(0)}%</td>
+      <td class="${x.schnitt>0?'act-good':'act-bad'}">${edgeFmt(x.schnitt)}%</td></tr>`).join('')}
+    </tbody></table>`
+    :`<div class="dw-empty" style="text-align:left">No indicator of this asset has ${EDGE_MIN_N} or more releases with both an actual and a forecast plus a matching price window.</div>`;
+  // Verteilung der TATSAECHLICH aufgezeichneten Live-Scores
+  const hist=(scoreHist&&scoreHist[sym.id])||[];
+  const werte=hist.map(e=>e[1]).filter(v=>typeof v==='number');
+  const bands=EDGE_BUCKETS.map(([lo,hi,lbl])=>({lbl,n:werte.filter(v=>v>=lo&&(hi===99?true:v<hi)).length}));
+  const maxB=Math.max(1,...bands.map(b=>b.n));
+  const verteilung=werte.length?`<div class="edge-dist">${bands.map(b=>`
+      <div class="edge-dist-row"><span class="edge-b">${escH(b.lbl)}</span>
+        <span class="edge-dist-bar"><i style="width:${Math.round(b.n/maxB*100)}%"></i></span>
+        <span class="edge-n">${b.n}</span></div>`).join('')}
+    <div class="edge-note">${werte.length} recorded days since ${escH(hist[0][0])}. This is the LIVE score, not the reconstruction above.</div></div>`
+    :`<div class="dw-empty" style="text-align:left">No live score history recorded yet.</div>`;
+  el.innerHTML=kopf+`
+  <div class="cot-card">
+    <div class="cot-card-title">Signal test — ${escH(COT_NAME[sym.id]||sym.id)}${iBtn('edge')}
+      <small style="width:100%;font-weight:400;color:var(--t3);font-size:11px">Reconstructed from ${serie.length} days of recorded releases · classic weighting · ${rows.length} days with a measurable forward return</small></div>
+    ${urteil}
+    <table class="edge-tbl"><thead><tr><th>Score</th><th>days</th>${EDGE_HORIZONTE.map(h=>`<th>Ø ${h}d</th>`).join('')}<th>Hit 5d</th></tr></thead>
+      <tbody>${st.map(zeile).join('')}</tbody></table>
+    <div class="edge-note">Buckets with fewer than ${EDGE_MIN_N} observations show their count instead of a number — a mean from three days is noise, not a result.</div>
+  </div>
+  <div class="cot-card" style="margin-top:10px">
+    <div class="cot-card-title">Which indicator carries information?</div>
+    ${indTbl}
+    <div class="edge-note">After a beat or miss: did the price move in the implied direction over the next five trading days? Sorted by hit rate, ${EDGE_MIN_N} observations minimum.</div>
+  </div>
+  <div class="cot-card" style="margin-top:10px">
+    <div class="cot-card-title">Distribution of the live score</div>
+    ${verteilung}
+  </div>`;
+}
 // ── News-Tab ──────────────────────────────────────────────────────────────
 // Volle Historie (bis 35 Tage), Volltextsuche, Asset- und Quellenfilter.
 // Zeitraum ueber den app-weiten TIME_RANGES-Helfer, kein eigener Filter
@@ -19635,6 +19868,14 @@ function renderSeasonality(){
   attachChartHovers(el);
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
+SENT_INFO.edge=['Edge (does the score lead the price?)',
+  `<p><b>What this is:</b> the score is only worth something if it leads the price. This tab measures that on <b>recorded</b> data — no simulation, no assumed fills, no estimated values.</p>
+   <p><b>How the reconstruction works:</b> every indicator carries up to three years of releases with both an actual and a forecast (<i>chartHist</i>). For each past day the last known beat/miss of every indicator is summed with the same weights the live score uses — the same functions, not a second formula. A release counts until the next one arrives, at most 120 days. Days with fewer than three active indicators are skipped.</p>
+   <p><b>What it deliberately does NOT do:</b> the reconstruction uses the <b>classic</b> weighting only. The normalised mode multiplies by measured surprise size, age decay and market impact — quantities that cannot be rebuilt for a past day without rewriting history. So the number here is not the live score, and the card says so.</p>
+   <p><b>How to read the table:</b> each row is a score band; the columns are the <b>average</b> price change over the next 1, 5 and 20 trading days. If the score carries information, the bottom row should be clearly worse than the top row. A band with fewer than 10 observations shows its count instead of a mean — an average from three days is noise, not a result.</p>
+   <p><b>The verdict line</b> compares the lowest and highest band over five days. It is a direction check, not a significance test — with a few dozen observations per band it can flip on a single outlier, and it says so.</p>
+   <p><b>Per indicator:</b> after a beat or miss, did the price move in the implied direction within five trading days? A hit rate near 50% means that indicator carried no directional information for this asset in the recorded window. That is a finding, not a defect.</p>
+   <p><b>The distribution</b> at the bottom is the LIVE score as it was actually recorded day by day — useful to see whether an asset ever leaves the neutral band at all, which is a calibration question rather than a signal.</p>`];
 SENT_INFO.news=['Headlines (free RSS feeds, no key)',
   `<p><b>Where it comes from:</b> central banks directly (Federal Reserve, ECB, Bank of England), established market media (CNBC, MarketWatch, Bloomberg, Yahoo Finance) and a targeted search for Reuters and for what the big houses are saying (JPMorgan, Goldman Sachs, Morgan Stanley, Bank of America, Citigroup). All free RSS, no API key, no quota.</p>
    <p><b>How the ranking works — it is counted, not judged:</b> the main signal is how many <b>independent outlets</b> carried the same story (2 outlets, 4 outlets…). On top of that come capped hits on a fixed topic list and on the markets listed in this app. A real central-bank decision or speech is lifted; their administrative notices (comment requests, surveys, facility frameworks) are pushed down — without that, a note like "Fed requests comment on a proposal" outranked everything that actually moved a market.</p>
@@ -20113,14 +20354,14 @@ function renderRateProb(){
   scrollRateProbTo(rateProbFocus,false);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={news:'pgNews',dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
 // zusammenmachen, Non-FX unter FX anreihen") - die 'cur'-Seite zeigt jetzt
 // immer ALLE SB_CATS-Kategorien (FX zuerst, dann Crypto/Metals/Energy/
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
-const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','news','carry','pairs','watch','cal','notes'];
+const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   // Label 2026-08-03 von 'FX' auf 'Assets' umbenannt (Nutzer-Wunsch, per Foto):
@@ -20139,6 +20380,7 @@ const TABS={
   data:{label:'Data',tab:'data'},
   rate:{label:'Rate Probabilities',tab:'rate'},
   news:{label:'News',tab:'news'},
+  edge:{label:'Edge',tab:'edge'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   // Eigener Tab statt eines Eintrags im Insights-Stapel (Nutzer-Wunsch
@@ -20189,6 +20431,15 @@ function loadTabStacks(){
     // 'rate', dann der stapelweite Rueckfall - ein einzelner Anker reicht
     // laut dem Bugreport von 2026-07-20 nicht, weil Bestandsnutzer ihre
     // Stapel umsortiert haben koennen.
+    if(!tabStacks.some(st=>st.members&&st.members.includes('edge'))){
+      const insE=tabStacks.find(st=>st.members&&st.members.includes('news'));
+      if(insE){const i=insE.members.indexOf('news');insE.members.splice(i+1,0,'edge');}
+      else{
+        const anyE=tabStacks.find(st=>st.members&&(st.members.includes('cot')||st.members.includes('data')||st.members.includes('trends')));
+        if(anyE)anyE.members.push('edge');
+      }
+      try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
+    }
     if(!tabStacks.some(st=>st.members&&st.members.includes('news'))){
       const insN=tabStacks.find(st=>st.members&&st.members.includes('rate'));
       if(insN){const i=insN.members.indexOf('rate');insN.members.splice(i+1,0,'news');}
@@ -20200,7 +20451,7 @@ function loadTabStacks(){
     }
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','rate','news','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -20374,6 +20625,7 @@ function showTab(tab,btn,fxMode){
   else if(tab==='sent'){renderSentiment();autoFetchSentiment();}
   else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
   else if(tab==='news'){renderNewsTab();}
+  else if(tab==='edge'){renderEdge();}
   else if(tab==='data')renderDataTab();
   else if(tab==='rate'){renderRateProb();autoFetchRateProb();}
   else if(tab==='carry')renderCarry();
