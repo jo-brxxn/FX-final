@@ -2498,6 +2498,27 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
      Ueberlauf-Garantie, keine Schutzmassnahme - die Spaltenzahl gehoert an
      den Breakpoint, die Breite an fr-Anteile. */
   #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"left center" "right right2" "bottom bottom";gap:9px;align-items:start}
+  /* ⚠ ECHTER FUND 2026-08-21: bis hierher trug NUR .dash-zone-bottom ein
+     grid-area. Die anderen vier Zonen lagen per Auto-Platzierung im Raster
+     und landeten beim Vierspalter zufaellig genau dort, wo die
+     grid-template-areas es beschreiben - die Vorlage war also reine
+     Dokumentation ohne Wirkung. Aufgefallen erst, als eine NEUE Vorlage
+     (drei Spalten, right2 unter right) wirkungslos blieb und die Zeilen
+     stattdessen beide auf 685px aufgingen. Jede Zone bekommt ihren Bereich
+     jetzt ausdruecklich zugewiesen, damit grid-template-areas tatsaechlich
+     steuert, was es zu beschreiben vorgibt.
+     MERKSATZ: grid-template-areas allein platziert nichts - ohne
+     grid-area am Kind ist die Vorlage ein Kommentar. */
+  /* align-self ausdruecklich am Kind: die Zonen wurden trotz
+     align-items:start am Raster auf die volle Zeilenhoehe gezogen
+     (gemessen 685px, obwohl die hoechste Karte darin 305px hoch ist) -
+     zusammen mit justify-content:space-between riss das die Karten
+     innerhalb der Zone auseinander. */
+  .dash-zone-left,.dash-zone-center,.dash-zone-right,.dash-zone-right2{align-self:start}
+  .dash-zone-left{grid-area:left}
+  .dash-zone-center{grid-area:center}
+  .dash-zone-right{grid-area:right}
+  .dash-zone-right2{grid-area:right2}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
@@ -2530,7 +2551,12 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
      Hoehe, das Minimum war identisch zum Maximum und der Deckel wirkungslos.
      Die gemeinsame Hoehe setzt jetzt ausschliesslich equalizeDashColumns()
      als explizite height je Zone. */
-  #dashWidgets.dash-layout{align-items:start}
+  /* align-CONTENT zusaetzlich zu align-items: ohne das verteilt das Raster
+     freien Platz gleichmaessig auf die Zeilen (Voreinstellung stretch) -
+     gemessen zwei 685px-Zeilen, obwohl die hoechste Karte der zweiten nur
+     553px braucht. align-items steuert nur die Karte INNERHALB ihrer Zeile,
+     nicht die Hoehe der Zeile selbst. */
+  #dashWidgets.dash-layout{align-items:start;align-content:start}
   /* ⚠ Die Zonen MUESSEN Flex-Spalten sein. Vorher waren sie Bloecke mit
      align-content:start - eine per JS gesetzte Hoehe konnte der Inhalt dort
      gar nicht einhalten, er lief einfach heraus und ueberlappte die untere
@@ -2589,6 +2615,12 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   .dw.dw-cap>.dw-body>.hl-list{
     max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
   .dw.dw-cap.dw-headlines{--dw-cap:545px}
+  /* Im schlanken Tages-Dashboard duerfen die langen Listen flacher sein -
+     dort zaehlt "passt auf einen Bildschirm" mehr als Vollstaendigkeit,
+     die volle Liste ist einen Klick entfernt im News-Tab. Die Karte
+     scrollt innerhalb ihres Rahmens weiter (bestehendes --dw-cap-Muster),
+     es geht also nichts verloren. */
+  body.dash-lean .dw.dw-cap.dw-headlines{--dw-cap:300px}
   /* Auf breiten Schirmen werden die Karten flacher, die rechte Aussenspalte
      traegt aber nur zwei - der Rest sammelte sich dort als 85px-Spalt.
      Statt Luft zeigen die Schlagzeilen dann einfach ein paar Zeilen mehr. */
@@ -2636,6 +2668,21 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    werden muss. Der fruehere zweite Breakpoint bei 1400px ist ersatzlos
    entfallen: sein EINZIGER Unterschied waren hoehere px-Untergrenzen
    (260/260/232/464) - also genau das, was den Ueberlauf verursacht hat. */
+/* Drei Spalten als Zwischenstufe (Nutzer-Wunsch 2026-08-21: "zwei
+   nebeneinander ist ein bisschen wenig" - auf dem iPad mit 1194px blieben
+   nach Sidebar und Padding rund 995px, das traegt drei Spalten von je etwa
+   310px bequem). Bewusst OHNE zeilenueberspannende Bereiche: eine Zone,
+   die zwei Zeilen ueberspannt, zieht beide auf ihre volle Hoehe hoch -
+   gemessen wurden dadurch zwei 685px-Zeilen, obwohl die hoechste Karte
+   darin nur 305px braucht, also rund 350px verschenkter Platz. Jede Zone
+   belegt jetzt genau eine Zelle. */
+@media(min-width:1160px){
+  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 bottom bottom"}
+  /* Im schlanken Dashboard ist die untere Zone leer (Kalender und Meldungen
+     stehen in Spalte 2 und 3, siehe ZONE_LEAN) - die Schlagzeilen bekommen
+     die zweite Zeile dann ganz. */
+  body.dash-lean #dashWidgets.dash-layout{grid-template-areas:"left center right" "right2 right2 right2"}
+}
 @media(min-width:1320px){
   #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom"}
 }
@@ -3272,11 +3319,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-408 - Vier Nutzer-Meldungen. (1) Ein Tab-Stapel (z.B. Insights) blieb dauerhaft aufgeklappt und hervorgehoben, weil showTab() expandedStack nur SETZTE, wenn der neue Tab in einem Stapel liegt - der else-Zweig fehlte. Gilt jetzt gleichermassen fuer die Dashboard-Liste. (2) Der Schutz 'erster Klick verstellt nur die Leiste' griff mit Maus nie: pointerenter klappt schon beim Hinbewegen aus, dadurch war nav-collapsed zum Klickzeitpunkt laengst weg. Es wird jetzt der ZUSTANDSWECHSEL gemerkt statt des Zustands. (3) Gegenrichtung ergaenzt: ist die Leiste ausgeklappt, klappt der erste Klick im Inhalt sie nur ein, erst der zweite bedient den Inhalt (unterhalb 760px bewusst aus, dort ist die Leiste ohnehin schmal). (4) Abstaende auf der Assets-Seite vereinheitlicht: sie waren 11/11/9/0/22px, im Raster zusaetzlich 24px senkrecht gegen 36px waagerecht, und die News-Karte hatte gar keinen Abstand nach oben (weder .masonry ein margin-bottom noch .rub-card ein margin-top). Jetzt ein einziger Wert --gap-block."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-409 - Schlankes Tages-Dashboard. Das gewachsene Dashboard war 14 Karten und 2685px hoch, auf einem iPad 3,4 Bildschirme Scrollen - ein Dashboard, durch das man scrollen muss, ist per Definition keines mehr. Neu daneben: ein zweites Dashboard "Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-408</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-409</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -8742,7 +8789,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){syncActiveDashboard();return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,dashboards,activeDashId,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){syncActiveDashboard();return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,dashboards,activeDashId,dashSeedV,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -8802,7 +8849,7 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();ensureDashboards(d.dashboards,d.activeDashId);migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();dashSeedV=d.dashSeedV||0;ensureDashboards(d.dashboards,d.activeDashId);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -8860,7 +8907,7 @@ let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={}
 // direkt lesen/schreiben, nicht angefasst werden muessen. Synchronisiert
 // wird nur an einer Stelle (syncActiveDashboard(), aufgerufen von snap() -
 // dem Kern-Speicherpunkt fuer Save/Undo/Cloud-Sync, siehe CLAUDE.md).
-let dashboards=[],activeDashId=null;
+let dashboards=[],activeDashId=null,dashSeedV=0;
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -9015,6 +9062,44 @@ function syncActiveDashboard(){
 // wird aus dem bisherigen Einzel-Dashboard automatisch ein erster benannter
 // Eintrag "Dashboard" erzeugt. Kein Datenverlust, keine sichtbare Aenderung
 // fuer Bestandsnutzer, die das Feature nicht anfassen.
+// ── SCHLANKES TAGES-DASHBOARD ────────────────────────────────────────
+// Nutzer-Kriterium 2026-08-21, woertlich: "Es sollen die Dinge bleiben die
+// sich taeglich veraendern, grossen Einfluss haben und wichtig sind direkt
+// zu sehen und im Blick zu haben." Anlass: das gewachsene Dashboard war
+// 14 Karten und 2685px hoch - auf einem iPad 3,4 Bildschirme Scrollen.
+// Ein Dashboard, durch das man scrollen muss, ist per Definition keines
+// mehr (Stephen Few, Information Dashboard Design - dieselbe Quelle, die
+// schon die Typo-Skala begruendet): "auf einen Blick" setzt voraus, dass
+// alles gleichzeitig sichtbar ist.
+//
+// Jede Karte gegen die drei Merkmale geprueft. BEHALTEN:
+//   watchlist       eigene Paare, aendern sich taeglich
+//   risk_sentiment  Risikoregime, taeglich, steuert die Gesamtrichtung
+//   ccy_ranking     Kernsignal der App
+//   headlines       laufend neu, hoher Einfluss
+//   mini_calendar   die heutigen Termine bewegen den Markt
+//   notification    genau die Kategorie "im Blick behalten"
+// (Die Majors-Karte ist fest die erste Karte der linken Zone, kein Widget.)
+//
+// RAUS, weil in einem eigenen Tab vollstaendig vorhanden UND entweder
+// traege oder nachschlagbar statt ueberwachungsbeduerftig:
+//   corr_warn (Korrelation bewegt sich ueber Wochen)  -> Matrix
+//   carry_ranking (aendert sich erst bei Zinsschritten) -> Carry
+//   perf_ranking, vol_leaders, movers_fx              -> Trends
+//   sentiment_snapshot                                -> Sentiment
+//   surprise_index                                    -> Edge
+const DAILY_KEEP=['watchlist','risk_sentiment','ccy_ranking','headlines','mini_calendar','notification'];
+function mkDailyWidgets(){
+  return DASH_DEFAULTS.filter(([t])=>DAILY_KEEP.includes(t))
+    .map(([type,title])=>({id:uid(),type,title,order:DASH_RANK[type]??50}));
+}
+// ⚠ Die ausgelassenen Typen MUESSEN in dashRemovedTypes stehen - sonst
+// legt migrateDash() sie beim naechsten Start ueber DASH_DEFAULTS wieder an
+// und das schlanke Dashboard fuellt sich von selbst wieder auf.
+function dailyDropTypes(){return DASH_DEFAULTS.map(([t])=>t).filter(t=>!DAILY_KEEP.includes(t));}
+// Einmalige Aussaat. Ueber die Version statt ueber "gibt es schon ein
+// Taeglich?": sonst kaeme es nach dem Loeschen beim naechsten Laden zurueck.
+const DASH_SEED_V=1;
 function ensureDashboards(savedDashboards,savedActiveId){
   if(Array.isArray(savedDashboards)&&savedDashboards.length){
     dashboards=savedDashboards;
@@ -9025,6 +9110,18 @@ function ensureDashboards(savedDashboards,savedActiveId){
   }else{
     dashboards=[{id:uid(),name:'Dashboard',widgets,dashRemovedTypes}];
     activeDashId=dashboards[0].id;
+  }
+  if((dashSeedV||0)<DASH_SEED_V){
+    dashSeedV=DASH_SEED_V;
+    // Das bisherige Dashboard behaelt ALLES und heisst kuenftig "Alles" -
+    // aber nur, wenn es noch den automatisch vergebenen Namen traegt; einen
+    // selbst gewaehlten Namen ueberschreiben waere uebergriffig.
+    if(dashboards[0].name==='Dashboard')dashboards[0].name='Alles';
+    const id=uid();
+    dashboards.push({id,name:'Taeglich',builtin:'daily',widgets:mkDailyWidgets(),dashRemovedTypes:dailyDropTypes()});
+    activeDashId=id;
+    const ad=dashboards.find(x=>x.id===id);
+    widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
   }
 }
 function switchDashboard(id){
@@ -9173,6 +9270,7 @@ function loadState(){
       // kommt aus dem (ggf. aelteren) gespeicherten Stand.
       dashV=d.dashV||0;
       dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];
+      dashSeedV=d.dashSeedV||0;
       ensureDashboards(d.dashboards,d.activeDashId);
       migrateDash();
       sbOrder=d.sbOrder||{};
@@ -14878,7 +14976,19 @@ const ZONE_OF_TYPE={
   ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
   sentiment_snapshot:'center',surprise_index:'right2',headlines:'right2',
   mini_calendar:'bottom',movers_fx:'bottom',notification:'bottom'};
-function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
+// Im schlanken Tages-Dashboard liegen andere Karten - mit der normalen
+// Zuordnung landete alles Kurze in Spalte 2/3 und alles Lange in Spalte 1:
+// gemessen 685px gegen 330px, also eine grosse sichtbare Luecke unter den
+// kurzen Spalten. Diese Verteilung gleicht die drei Spalten aus
+// (685 / 665 / 640), statt Kalender und Meldungen in eine eigene Zeile
+// darunter zu schieben.
+const ZONE_LEAN={watchlist:'left',risk_sentiment:'center',mini_calendar:'center',
+  ccy_ranking:'right',notification:'right',headlines:'right2'};
+function isLeanDash(){const d=dashboards&&dashboards.find(x=>x.id===activeDashId);return !!(d&&d.builtin==='daily');}
+function dashZoneOf(type){
+  if(isLeanDash()&&ZONE_LEAN[type])return ZONE_LEAN[type];
+  return ZONE_OF_TYPE[type]||'bottom';
+}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
 // die .order-Werte der beiden Zonen-Nachbarn, ruehrt die globale Reihenfolge
 // sonst nicht an. Ersetzt die alte Variante, die stur im gesamten
@@ -15201,6 +15311,10 @@ function renderDash(){
   beginRenderPass();
   updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
+  // Kennzeichnet das schlanke Tages-Dashboard, damit die langen Listen dort
+  // flacher gedeckelt werden koennen (siehe body.dash-lean in der CSS).
+  const _ad=dashboards.find(x=>x.id===activeDashId);
+  document.body.classList.toggle('dash-lean',!!(_ad&&_ad.builtin==='daily'));
   // Scroll-Position sichern: el.innerHTML unten ersetzt ALLE Widgets komplett
   // (auch das gerade angeklickte, z.B. der Risk-Environment-Regler). Zwei
   // Ursachen fuer den gemeldeten Sprung nach oben/unten (Nutzer-Bugreport

@@ -1335,3 +1335,59 @@ eine Skala. Bei einer neuen Karte/einem neuen Block IMMER `--gap-block`
 verwenden statt einen Wert zu waehlen, der "ungefaehr passt" - genau so
 sind die fuenf verschiedenen Werte entstanden.
 
+## ⚠ SCHLANKES TAGES-DASHBOARD (2026-08-21)
+
+Nutzer-Frage: "Wie wuerden Profis das Dashboard gestalten? Nur zwei Karten
+nebeneinander finde ich wenig. Manche Informationen brauche ich nicht
+taeglich, die kann ich in den Kategorien nachschauen."
+
+**Der Befund, der die Richtung vorgab:** 14 Karten, 2685px hoch - auf einem
+1194px-iPad **3,4 Bildschirme Scrollen**. Ein Dashboard, durch das man
+scrollen muss, ist per Definition keines mehr (Stephen Few, *Information
+Dashboard Design* - dieselbe Quelle, die schon die Typo-Skala begruendet):
+"auf einen Blick" setzt voraus, dass alles gleichzeitig sichtbar ist. Die
+Headlines-Karte allein war 776px, also fast ein ganzer Bildschirm fuer
+etwas, das einen eigenen Tab hat.
+
+**Auswahlkriterium (woertlich vom Nutzer, auf Rueckfrage):** "Es sollen die
+Dinge bleiben die sich taeglich veraendern, grossen Einfluss haben und
+wichtig sind direkt zu sehen und im Blick zu haben." Danach wurde jede
+Karte einzeln geprueft - siehe die Begruendung je Karte im Kommentar bei
+`DAILY_KEEP`. Der Leitsatz dahinter: **was einen eigenen Tab hat, gehoert
+aufs Dashboard nur als Ausnahme-Meldung, nicht als vollstaendige Kopie**;
+und was sich nur alle paar Wochen bewegt (Korrelation, Carry), ist zum
+Nachschlagen da, nicht zum Ueberwachen.
+
+**Umsetzung ueber die Mehrfach-Dashboard-Funktion statt destruktiv:** ein
+zweites Dashboard `builtin:'daily'` namens "Taeglich" wird einmalig
+ausgesaet und aktiv gesetzt, das bisherige bleibt unveraendert als "Alles"
+erhalten. Ergebnis 7 Karten, 1427px. Aussaat ueber `DASH_SEED_V`/`dashSeedV`
+und NICHT ueber "gibt es schon ein Taeglich?" - sonst kaeme es nach dem
+Loeschen beim naechsten Laden zurueck.
+
+**⚠ Zwei Layout-Fallen, die dabei aufgeflogen sind:**
+
+1. **`grid-template-areas` war nie wirksam.** Nur `.dash-zone-bottom` trug
+   ein `grid-area`; die vier anderen Zonen lagen per Auto-Platzierung und
+   trafen den in der Vorlage beschriebenen Ort beim Vierspalter nur
+   ZUFAELLIG. Aufgefallen erst, als eine neue Vorlage (drei Spalten)
+   wirkungslos blieb. **Merksatz: `grid-template-areas` platziert nichts -
+   ohne `grid-area` am Kind ist die Vorlage ein Kommentar.**
+2. **Zeilenueberspannende Bereiche ziehen beide Zeilen hoch.** Eine Zone
+   ueber zwei Zeilen (`"left center right" "left center right2"`) machte
+   aus 305px-Karten 685px-Zeilen - rund 350px verschenkt. Jede Zone belegt
+   jetzt genau eine Zelle.
+
+**Zonen-Verteilung ist im schlanken Dashboard eine andere** (`ZONE_LEAN`,
+greift ueber `isLeanDash()` in `dashZoneOf()`): mit der normalen Zuordnung
+sammelte sich alles Lange in Spalte 1 und alles Kurze in Spalte 2/3 -
+gemessen 685 gegen 330px, also eine grosse sichtbare Luecke. Jetzt
+685/665/640, die Schlagzeilen bekommen die zweite Zeile ganz.
+**Merksatz:** eine feste Typ→Zone-Tabelle taugt nur fuer EINE
+Kartenzusammenstellung; aendert sich die Auswahl, muss die Verteilung
+mitgedacht werden, sonst entstehen tote Flaechen.
+
+**Drei-Spalten-Stufe ab 1160px** ergaenzt (vorher sprang das Raster von
+zwei direkt auf vier) - auf dem iPad des Nutzers bleiben nach Sidebar und
+Padding rund 995px, das traegt drei Spalten von je etwa 310px bequem.
+
