@@ -41,6 +41,36 @@ const KARTEN_SEL='.dw,.cot-card,.rub-card,.tr-card,.ov-card,.pov-card,.aaii-kpi,
         if(document.body.scrollWidth>document.body.clientWidth+2)
           out.push(tab+': Seite waechst ueber den Viewport hinaus ('+document.body.scrollWidth+'>'+document.body.clientWidth+')');
 
+        // ── 0b. GEOMETRISCH: keine Karte darf rechts/links aus dem
+        // Inhaltsbereich herausragen.
+        // ⚠ Warum das zusaetzlich zu 0. noetig ist: scrollWidth waechst NUR,
+        // wenn der Ueberlauf auch scrollbar ist. Ragt ein Element heraus und
+        // wird von einem overflow:hidden-Vorfahren ABGESCHNITTEN, bleibt
+        // scrollWidth === clientWidth - Punkt 0 (und der gleichartige Test in
+        // layout.js) meldet dann gruen, obwohl sichtbar Inhalt fehlt.
+        // Genau so ist der Fehler vom 2026-08-21 durchgerutscht: die
+        // px-Mindestbreiten des 4-Spalten-Dashboard-Rasters summierten sich
+        // auf 1102px, der Breakpoint rechnete aber ohne die Nav-Sidebar -
+        // die rechte Spalte stand bis zu 179px ueber dem Rand (kaputt bei
+        // 1100-1279 und 1400-1419), und KEIN Waechter hat es gesehen, weil
+        // der Ueberschuss sauber weggeclippt wurde. Hier wird deshalb die
+        // echte Kante gemessen statt der Scrollbreite.
+        const pa=document.getElementById('pageArea');
+        if(pa){
+          const pcs=getComputedStyle(pa),pr=pa.getBoundingClientRect();
+          const innenL=pr.left+parseFloat(pcs.paddingLeft||0);
+          const innenR=pr.right-parseFloat(pcs.paddingRight||0);
+          document.querySelectorAll(KARTEN_SEL).forEach(k=>{
+            if(!k.offsetParent)return;
+            const r=k.getBoundingClientRect();
+            if(r.width<=0)return;
+            if(r.right>innenR+2)
+              out.push(tab+': Karte ('+String(k.className).slice(0,30)+') steht '+Math.round(r.right-innenR)+'px ueber den rechten Rand des Inhaltsbereichs hinaus - keine Luecke zum Rand');
+            if(r.left<innenL-2)
+              out.push(tab+': Karte ('+String(k.className).slice(0,30)+') steht '+Math.round(innenL-r.left)+'px ueber den linken Rand des Inhaltsbereichs hinaus');
+          });
+        }
+
         // ── 1. Kartenrand: Kein Karten-Kind darf breiter sein als die
         // Karte selbst, AUSSER die Karte (oder ein Nachfahre) ist bewusst
         // horizontal scrollbar (etabliertes Muster "zu breiter Inhalt
@@ -111,6 +141,25 @@ const KARTEN_SEL='.dw,.cot-card,.rub-card,.tr-card,.ov-card,.pov-card,.aaii-kpi,
           const ue=e.scrollWidth-e.clientWidth;
           if(ue>2&&e.clientWidth>0)
             out.push(tab+': "'+t.slice(0,18)+'" laeuft '+ue+'px ueber sein eigenes Element hinaus (nur '+e.clientWidth+'px breit)');
+        });
+
+        // ── 5. Auf NULL gequetschter Text (Nutzer-Wunsch 2026-08-21:
+        // "Elemente, die abgekuerzt werden, sollen voll ausgeschrieben
+        // werden"). Der Extremfall davon ist ein flexibles Element, dessen
+        // Nachbarn alle flex-shrink:0 sind - es traegt die gesamte Platznot
+        // allein und faellt auf 0px zusammen, der Text verschwindet
+        // vollstaendig. Gemessen am 2026-08-21 an .wl-name: 0px fuer 60px
+        // Text, in der Watchlist-Karte war nur noch das Ellipsis-Zeichen zu
+        // sehen. ⚠ Punkt 4 findet das NICHT, weil dort clientWidth>0
+        // verlangt wird - genau der schlimmste Fall war dadurch
+        // ausgeschlossen.
+        document.querySelectorAll(KARTEN_SEL+' *').forEach(e=>{
+          if(e.children.length)return;
+          const t=(e.textContent||'').trim();if(!t)return;
+          const cs=getComputedStyle(e);
+          if(cs.display==='none'||cs.visibility==='hidden'||cs.opacity==='0')return;
+          if(e.clientWidth===0&&e.scrollWidth>2&&e.getBoundingClientRect().height>0)
+            out.push(tab+': "'+t.slice(0,18)+'" ist auf 0px zusammengequetscht (braucht '+e.scrollWidth+'px) - Text vollstaendig unsichtbar');
         });
         return out;
       },{tab,KARTEN_SEL});

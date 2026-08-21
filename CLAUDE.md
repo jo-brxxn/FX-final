@@ -1209,3 +1209,86 @@ kommt ausschliesslich in zitierenden Kommentaren vor). Ergebnis gegengeprueft:
 ob es ein ECHTER Score-Bezug ist, bevor man SCORE_MODEL_VERSION bumpt -
 ein unnoetiger Bump schadet genauso wie ein vergessener, nur in die andere
 Richtung.
+
+## ⚠ VIER FUNDE AUS EINEM NUTZER-FOTO (2026-08-21)
+
+Nutzer schickte einen iPad-Screenshot (1194px) mit gelben und schwarzen
+Markierungen und verwies ausdruecklich auf die 95%-Regel. Farben wurden
+vorab per `AskUserQuestion` geklaert (Chrome #2b3038, Karten #eef0f3, alle
+abgeschnittenen Texte) - die Bugs selbst waren explizit beauftragt.
+
+**1. Sidebar wurde nie dunkel (gelb markiert) - Kaskaden-Fehler.**
+`.hdr,#navSidebar{background:#14171c}` stand VOR der eigentlichen
+`#navSidebar`-Regel, die ihrerseits nochmal `background:var(--bg1)` setzte.
+Beide haben genau EINEN id-Selektor, also gleiche Spezifitaet - die
+SPAETERE gewinnt. Die Kopfzeile (`.hdr`) wurde dunkel, weil ihre
+Basis-Regel oberhalb steht; die Sidebar blieb hell. Die Farbe lebt jetzt in
+`--chrome-bg` und wird an genau einer Stelle je Element gesetzt.
+**Merksatz:** bei einem gescopten Farb-Override IMMER pruefen, ob das Ziel
+weiter unten dieselbe Eigenschaft nochmal setzt - gleiche Spezifitaet
+entscheidet allein ueber die Reihenfolge im File.
+
+**2. Karten ohne Luecke zum rechten Rand (schwarz markiert) - px-Mindest-
+breiten im Raster.** `#dashWidgets.dash-layout` hatte
+`minmax(285px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(360px,2fr)`
+= 1075px + 3x9px Luecke = **1102px Mindestbreite**. Ein Grid-Item kann unter
+seine minmax-Untergrenze nicht schrumpfen, das Raster war also immer
+mindestens 1102px breit. Der Breakpoint `min-width:1100px` rechnete mit der
+vollen FENSTERbreite - seit dem Sidebar-Umbau belegt die Sidebar aber
+56-230px und `.pc` weitere 44px. Gemessen: **-179px bei 1100, -99px bei
+1180, -85px bei 1194** (Geraet des Nutzers), sauber erst ab 1280; zweites
+kaputtes Band **1400-1419** aus derselben Ursache im 1400er-Breakpoint.
+Fix: `minmax(0,...)` statt px-Untergrenzen (das Raster kann strukturell nie
+breiter werden als sein Container) plus Spaltenzahl am Platz (vier Spalten
+ab 1320px, darunter zwei). Der 1400er-Breakpoint ist ersatzlos entfallen -
+sein einziger Unterschied waren hoehere px-Untergrenzen.
+**Merksatz:** eine px-Untergrenze in `grid-template-columns` ist eine
+Ueberlauf-GARANTIE, keine Schutzmassnahme. Spaltenzahl gehoert an den
+Breakpoint, Breite an `fr`-Anteile. Und: **jede Media Query, die vor dem
+Sidebar-Umbau geschrieben wurde, rechnet zu gross** - die Sidebar war
+frueher waagerecht und kostete keine Breite.
+
+**Container Queries waeren die saubere Loesung - gehen hier aber NICHT.**
+`container-type:inline-size` impliziert `contain:layout`, und damit wird
+das Element zum Containing Block fuer `position:fixed`-Nachfahren. In
+`#pageArea` liegen `#mPriceAlert`, `#mResNote` (beide `.ov`-Modals) und
+`#dashAurora` - die waeren dadurch aus dem Viewport-Bezug gefallen. Vor
+einem kuenftigen Container-Query-Versuch also zuerst auf
+`position:fixed`-Nachfahren pruefen.
+
+**3. Abgeschnittene Texte (schwarz eingekreist).** Ueber alle 17 Tabs und
+8 Breiten gemessen und behoben: Watchlist-Paarnamen, Set-up-Paarnamen,
+Kalender-Terminnamen, Nachrichtenquellen, Indikatornamen, Dashboard-
+Ereignisnamen, schmale Zahlenspalten. Zwei Muster, bewusst getrennt:
+*Fliesstext* (Termine, Indikatoren, Ereignisse) bricht jetzt UM
+(`overflow-wrap:anywhere`) statt zu kuerzen - Umbruch kann strukturell nie
+ueber den Kartenrand laufen, mehr Breite schon. *Namen, die nicht umbrechen
+duerfen* (Waehrungspaare wie `CAD/CHF` - ein Umbruch am Schraegstrich waere
+unlesbar) bekommen stattdessen eine echte Mindestbreite in ihrer
+Grid-Spalte.
+**Der schlimmste Einzelfall:** `.wl-name` war auf **0px** zusammengefallen,
+vom Paarnamen war nur das Ellipsis-Zeichen uebrig. Ursache: in einer
+Flex-Zeile waren Flaggen, Kursaenderung, Score und Knopf ALLE
+`flex-shrink:0` - der Name war das einzige flexible Element und trug die
+gesamte Platznot allein. **Merksatz: in einer Flex-Zeile, deren uebrige
+Kinder `flex-shrink:0` sind, braucht das flexible Element zwingend eine
+Mindestbreite - sonst wird es auf null gequetscht.**
+
+**4. Warum KEIN Waechter das gefunden hat - und was jetzt anders ist.**
+`cards.js` und `layout.js` pruefen Ueberlauf ueber `scrollWidth >
+clientWidth`. Diese Groesse waechst aber NUR, wenn der Ueberlauf auch
+scrollbar ist: wird das herausragende Element von einem
+`overflow:hidden`-Vorfahren sauber weggeclippt, bleibt `scrollWidth ===
+clientWidth` und beide melden gruen - bei einem 179px-Ueberlauf. `cards.js`
+misst deshalb jetzt zusaetzlich die **echte Geometrie** (Kartenkante gegen
+die Content-Box von `#pageArea`) und erkennt **auf 0px gequetschten Text**.
+Gegenprobe gegen den Stand VOR dem Fix gefahren: der neue Waechter meldet
+dort 3 Befunde mit exakt den gemessenen 99px bei 1180 - ein Waechter, der
+den echten Verstoss nicht rot meldet, ist wertlos.
+**Merksatz:** `scrollWidth` misst SCROLLBAREN Ueberlauf, nicht sichtbaren.
+Fuer "steht etwas ueber der Kante?" immer `getBoundingClientRect()` gegen
+die Kante des Containers vergleichen. Und beim Schreiben eines Suchlaufs
+nie `clientWidth > 0` verlangen - genau der Extremfall (auf null
+gequetscht) faellt sonst heraus, das ist mir in dieser Sitzung selbst
+passiert.
+

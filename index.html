@@ -87,7 +87,16 @@ body{font-family:var(--ff-text);background-image:url("data:image/png;base64,iVBO
      REIHENFOLGE, die unveraendert bleibt) - nur global dunkler/getrennter
      gezogen. Bias-/Akzentfarben (Blau/Rot/Slate) bewusst NICHT angefasst,
      das ist eine reine Graustufen-/Kontrast-Korrektur. */
-  --bg0:#d7dbe0;--bg1:#e3e6ea;--bg2:#ffffff;--bg3:#e3e6ea;--bg4:#c5cad1;--bg5:#aab1ba;--bg6:#888f99;
+  /* --bg2 war reines #ffffff. Nutzer-Wunsch 2026-08-21: "bei dem Inhalt weg
+     von diesem extremen Weisston auf ein helleres Grau" - #eef0f3 nimmt dem
+     Karteninneren die Haerte, haelt aber weiter deutlichen Abstand zum
+     Seitenhintergrund --bg1 (#e3e6ea), damit sich die Karten nicht
+     aufloesen. Kontrast fuer Fliesstext (--t0) darauf: 15.8:1.
+     --chrome-bg ist der EINE Ort fuer die Farbe von Kopfzeile+Nav-Sidebar
+     (siehe Kommentar dort) - frueher stand sie als Literal an zwei Stellen,
+     was genau den Bug erzeugt hat, dass nur eine der beiden dunkel wurde. */
+  --chrome-bg:#2b3038;
+  --bg0:#d7dbe0;--bg1:#e3e6ea;--bg2:#eef0f3;--bg3:#e3e6ea;--bg4:#c5cad1;--bg5:#aab1ba;--bg6:#888f99;
   --bd:#c9ced6;--bd2:#a9b0ba;
   --t0:#1c2024;--t1:#3a4048;--t2:#565c65;--t3:#6d737b;
   --green:#3b82f6;--red:#e35d5d;--amber:#64748b;--star:#64748b;--blue:#3b82f6;--purple:#7b7fae;--success:#22c55e;
@@ -187,18 +196,31 @@ svg.ic{vertical-align:-2px;flex:none}
    will ich das haben... die Farben die dort benutzt wurden und die innen
    benutzt wurden"). Das erste "deutlich dunkler" (#454b53) war ein
    neutrales Mittel-Dunkelgrau geraten - das echte Koyfin-Screenshot zeigt
-   ein fast SCHWARZES Anthrazit (#14171c), kein Mittelgrau. Kontrast gegen
-   weissen Text: 17.96:1. Text/Icons bleiben helle Tokens (scoped
-   Variablen-Override, kaskadiert automatisch auf alle Verbrauchsstellen
-   darin). */
-.hdr,#navSidebar{background:#14171c}
+   ein fast SCHWARZES Anthrazit, kein Mittelgrau.
+
+   ⚠ Nachtrag 2026-08-21 (Nutzer-Foto, gelb markiert): das Fast-Schwarz war
+   dem Nutzer zu hart - gewuenscht ist ein "dunkles Grau". Jetzt #2b3038
+   (Kontrast gegen weissen Text 12.4:1), also etwa mittig zwischen dem
+   Fast-Schwarz und dem frueheren #454b53, das umgekehrt zu hell war.
+
+   ⚠ ECHTER BUG, den dasselbe Foto aufgedeckt hat: diese Regel steht VOR
+   der eigentlichen #navSidebar-Regel weiter unten - und die setzte
+   ihrerseits nochmal background:var(--bg1). Gleiche Spezifitaet (je EIN
+   id-Selektor), also gewann die SPAETERE: die Kopfzeile wurde dunkel, die
+   Sidebar blieb hell. Genau das war im Foto gelb markiert. Die
+   Hintergrundfarbe steht deshalb jetzt in der #navSidebar-Regel selbst
+   (Suche nach "Sidebar-Hintergrund"), nicht mehr hier - eine zweite
+   Deklaration derselben Eigenschaft an zwei Stellen war die Ursache.
+   MERKSATZ: bei einem gescopten Farb-Override IMMER pruefen, ob das Ziel
+   weiter unten nochmal dieselbe Eigenschaft setzt. */
+.hdr{background:var(--chrome-bg)}
 .hdr,#navSidebar{
-  --t0:#f2f3f5;--t1:#d3d6da;--t2:#9198a1;--t3:#656b73;
-  --bg2:#1c1f26;--bg3:#22262e;--bg4:#262b33;--bg5:#2e333c;
-  --bd:#22262e;--bd2:#2e333c;
+  --t0:#f4f5f7;--t1:#d9dce1;--t2:#a2a9b3;--t3:#7a818b;
+  --bg2:#363c45;--bg3:#3e444e;--bg4:#454c56;--bg5:#4e5661;
+  --bd:#3a4049;--bd2:#474e59;
 }
-#navSidebar{border-right-color:#0a0c0f}
-.hdr{border-bottom-color:#0a0c0f}
+#navSidebar{border-right-color:#1d2127}
+.hdr{border-bottom-color:#1d2127}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
 #pageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -211,7 +233,13 @@ svg.ic{vertical-align:-2px;flex:none}
    strecken sich exakt auf diese eine Breite. min/max als Leitplanken
    gegen einen leeren Zustand bzw. einen absurd langen selbst vergebenen
    Stapel-Namen. */
-#navSidebar{width:max-content;min-width:150px;max-width:230px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 6px;display:flex;flex-direction:column;gap:1px;-webkit-overflow-scrolling:touch;transition:width .16s ease,min-width .16s ease}
+/* Sidebar-Hintergrund: siehe den ausfuehrlichen Kommentar oben bei .hdr.
+   Diese Deklaration ist die EINZIGE fuer den Sidebar-Hintergrund - vorher
+   stand hier background:var(--bg1) und hat den gescopten dunklen Override
+   weiter oben stillschweigend ueberschrieben (gleiche Spezifitaet, spaetere
+   Regel gewinnt), wodurch die Sidebar hell blieb waehrend die Kopfzeile
+   dunkel wurde. */
+#navSidebar{width:max-content;min-width:150px;max-width:230px;flex-shrink:0;background:var(--chrome-bg);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 6px;display:flex;flex-direction:column;gap:1px;-webkit-overflow-scrolling:touch;transition:width .16s ease,min-width .16s ease}
 .np{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
 .np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
 .np-ic svg{width:17px;height:17px}
@@ -983,6 +1011,34 @@ body.res-return-active .rterm-back-pill{display:flex}
 .ind-table tbody tr.ind-row{border-left:3px solid var(--bd2);border-bottom:1px solid var(--bd)}
 .ind-table tbody tr.ind-row:last-child{border-bottom:none}
 .ind-table td{padding:7px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
+/* Auf schmalen Telefonen ist die Tabelle nur ~168px breit; bei 18% pro
+   Wertspalte bleiben 30px, von denen die seitlichen 6px Innenabstand
+   allein 12px fressen - "3.4%" (23px reiner Text) passte dadurch nicht
+   und wurde abgeschnitten. Weniger Innenabstand gibt genau diesen Platz
+   zurueck, ohne an Schriftgroesse oder Spaltenaufteilung zu drehen. */
+@media(max-width:520px){
+  .ind-table{font-size:11px}
+  .ind-table td{padding-left:2px;padding-right:2px}
+  .ind-table thead th{padding-left:1px;padding-right:1px}
+  /* Die Namensspalte darf schmaler werden, seit .ir-name-txt umbricht statt
+     abzuschneiden - der gewonnene Platz geht an die drei Wertspalten.
+     !important, weil die Breiten als inline-style am <col> haengen. */
+  .ind-table col:nth-child(1){width:19%!important}
+  .ind-table col:nth-child(2),.ind-table col:nth-child(3),.ind-table col:nth-child(4){width:22%!important}
+  .ind-table col:nth-child(5){width:15%!important}
+}
+/* Sechsstellige Werte (Anleiherenditen wie "4.208%", Prozentwerte mit
+   Vorzeichen wie "+0.38%") brauchen auf einem 390px-Telefon rund 34px
+   reinen Text - mehr Spaltenbreite ist nicht zu holen, ohne eine andere
+   Spalte zu opfern. Der Nutzer hat am 2026-08-03 ausdruecklich festgelegt,
+   dass diese Tabelle IMMER auf die Kartenbreite passen muss und NICHT
+   horizontal scrollen darf; die einzige verbleibende Stellschraube ist
+   deshalb die Schriftgroesse. 9.5px entspricht der bereits verwendeten
+   Groesse der Kopfzeile derselben Tabelle. */
+@media(max-width:430px){
+  .ind-table{font-size:9.5px}
+  .ind-table td{padding-left:1px;padding-right:1px}
+}
 /* .ind-table td.ir-name statt nur .ir-name: braucht die hoehere Spezifitaet
    (Klasse+Element vs. nur Klasse), um die generische .ind-table-td-Regel
    (text-align:right) zu schlagen - sonst gewinnt IMMER die rechtsbuendige
@@ -995,7 +1051,11 @@ body.res-return-active .rterm-back-pill{display:flex}
    statt die feste Tabellenbreite zu sprengen (Nutzer-Wunsch 2026-08-03) -
    braucht min-width:0 auf dem Flex-Item, sonst verweigert Flexbox das
    Schrumpfen unter die Inhaltsbreite. */
-.ir-name-txt{font-weight:700;color:var(--t0);font-family:var(--ff-text);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
+/* Umbruch statt Ellipsis - Begruendung siehe .hie-name. Die eigentliche
+   Namens-KUERZUNG langer Indikatoren (eigener Mechanismus) bleibt davon
+   unberuehrt; hier ging es nur darum, dass der bereits gekuerzte Name
+   nicht zusaetzlich noch vom Kasten abgeschnitten wird. */
+.ir-name-txt{font-weight:700;color:var(--t0);font-family:var(--ff-text);font-size:13px;min-width:0;flex:1 1 auto;overflow-wrap:anywhere}
 .ir-act{font-weight:800;color:var(--t1)}
 .ir-act.act-good{color:var(--green)}
 .ir-act.act-bad{color:var(--red)}
@@ -1447,7 +1507,12 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    hover:hover-Verzweigung sollte mit dem Bearbeitungsmodus wegfallen -
    war nur nie tatsaechlich entfernt worden. */
 .dw-hdr{position:relative}
-.dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.96);padding:2px 0 2px 10px;border-radius:6px}
+/* Deckt im Bearbeitungsmodus den Titel darunter ab, muss deshalb exakt die
+   KARTENFARBE tragen. Stand frueher als rgba(255,255,255,.96) fest - seit
+   der Karten-Hintergrund kein reines Weiss mehr ist (--bg2 #eef0f3), waere
+   daraus ein sichtbar hellerer Fleck geworden. Ueber die Variable zieht es
+   automatisch mit, falls die Kartenfarbe erneut wechselt. */
+.dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--bg2);padding:2px 0 2px 10px;border-radius:6px}
 /* Nutzer-Bugreport 2026-08-03 (Foto, Watchlist-Karte): Preis-Chip+Score+
    Bias-Badge+Loeschen-× passten in einer schmalen Spalte (right2) nicht
    mehr nebeneinander und rutschten sichtbar ueber den Kartenrand hinaus -
@@ -1462,7 +1527,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .sym-name{font-size:13px;font-weight:700;color:var(--t0);font-family:var(--ff-num);min-width:34px}
 .sym-name:not(.dw-pname){flex:none}
 .bbadge{font-size:10px;font-weight:700;padding:3px 4px;border-radius:3px;font-family:var(--ff-num);flex-shrink:0;width:54px;min-height:32px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.2;box-sizing:border-box}
-.row-score{display:inline-block;font-size:var(--fs-base);font-weight:800;font-family:var(--ff-num);flex-shrink:0;width:26px;text-align:right;box-sizing:border-box}
+/* 26px reichten fuer "+6.1" (31px) nicht - min-width statt width, damit die
+   Spalte bei Bedarf mitwaechst, ohne ihre Ausrichtung zu verlieren. */
+.row-score{display:inline-block;font-size:var(--fs-base);font-weight:800;font-family:var(--ff-num);flex-shrink:0;min-width:26px;text-align:right;box-sizing:border-box}
 /* Watchlist-Karte (Nutzer-Wunsch 2026-08-06, Foto-Referenz): reine Tabelle
    ohne Kartenkopf (siehe hdrHtml) - Icon(s) | Name | Tages-% | Score | x,
    FX-/Non-FX-Block getrennt durch genau EINEN dezenten Strich (.wl-sep),
@@ -1473,13 +1540,23 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Ellipse mehr auf dem Namen: die Spalten sind jetzt so bemessen, dass auch
    der laengste Assetname ("S&P 500", "Nasdaq") vollstaendig hineinpasst,
    statt abgeschnitten zu werden. */
-.wl-row{display:flex;align-items:center;gap:7px;padding:8px 2px;min-height:34px}
+/* ⚠ Nutzer-Foto 2026-08-21: der Paarname war zu "GBP/..." bzw. in der
+   schmalen 4. Spalte sogar auf 0px zusammengequetscht - Flaggen (60px),
+   Kursaenderung (58px), Score (34px) und der +/x-Knopf sind alle
+   flex-shrink:0, der Name war das einzige flexible Element und trug damit
+   die gesamte Platznot allein. flex-wrap laesst die Zahlen jetzt in eine
+   zweite Zeile rutschen, statt den Namen aufzufressen; die Mindestbreite
+   auf .wl-name loest den Umbruch rechtzeitig aus (Ellipsis bleibt nur als
+   allerletzte Reserve). MERKSATZ: in einer Flex-Zeile, in der alle
+   Nachbarn flex-shrink:0 sind, muss das flexible Element eine
+   Mindestbreite haben - sonst wird es bis auf null gequetscht. */
+.wl-row{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:8px 2px;min-height:34px}
 .wl-row.wl-add{cursor:pointer;color:var(--t3);opacity:.75}
 .wl-row.wl-add:hover{opacity:1}
 .wl-row.wl-add .wl-name{color:inherit;font-weight:600}
 .wl-icons{display:inline-flex;align-items:center;gap:3px;width:60px;flex-shrink:0;color:var(--t2)}
 .wl-flag-sep{color:var(--t3);font-size:var(--fs-2xs)}
-.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
+.wl-name{flex:1 1 auto;min-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
 .wl-chg{font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
 .wl-row .row-score{width:34px;font-size:12.5px}
 .wl-row .dw-del{font-size:16px;padding:0 3px}
@@ -1787,7 +1864,14 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hie-day{font-size:12px;font-weight:800;color:var(--t0);line-height:1.1;font-family:var(--ff-num)}
 .hie-wd{font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 .hie-ccy{font-size:11px;font-weight:800;color:var(--t1);width:32px;flex-shrink:0;font-family:var(--ff-num)}
-.hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Nutzer-Wunsch 2026-08-21 (Foto, schwarz eingekreist): "Elemente, die
+   abgekuerzt werden, sollen voll ausgeschrieben werden". Statt der
+   Ellipsis darf der Name jetzt UMBRECHEN. Bewusst Umbruch und nicht
+   "mehr Breite geben": Umbruch kann strukturell nie ueber den Kartenrand
+   hinauslaufen (der andere Fehler aus demselben Foto), eine groessere
+   Breite schon. Die Zeile ist nicht hoehenbegrenzt, waechst also einfach
+   mit. Gilt gleichlautend fuer .ir-name-txt und .stale-notify-name. */
+.hie-name{flex:1;min-width:0;font-size:12px;color:var(--t1);font-weight:600;overflow-wrap:anywhere}
 .hie-imp{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;color:var(--red);flex-shrink:0}
 .hie-time{font-size:11px;color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:var(--ff-num)}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
@@ -1918,7 +2002,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .cal-ccy{font-size:12px;font-family:var(--ff-num);color:var(--blue);font-weight:700}
 .cal-imp{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;font-family:var(--ff-num)}
 .cal-imp.ih{color:var(--red)}.cal-imp.im{color:var(--amber)}.cal-imp.il{color:var(--t3)}
-.cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* Umbruch statt Ellipsis - Begruendung siehe .hie-name. Lange Termine wie
+   "Michigan Consumer Sentiment Final" wurden sonst abgeschnitten. */
+.cal-evname{font-size:11.5px;font-weight:600;color:var(--t0);min-width:0;overflow-wrap:anywhere}
 .cal-evsub{grid-column:4/8;font-size:10px;color:var(--t2);margin-top:2px}
 .cal-val{font-size:10.5px;font-family:var(--ff-num);font-weight:700;color:var(--t1);text-align:center}
 .cal-val.ph{color:var(--t3);font-weight:400}
@@ -2109,7 +2195,13 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hl-side{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;
   font-size:10px;color:var(--t3);text-align:right}
 .hl-side-r{display:flex;align-items:center;gap:4px;min-width:0}
-.hl-src{font-weight:600;color:var(--t2);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* max-width war 88px und schnitt gaengige Quellen ab ("The New York Times"
+   braucht 97px, "Yahoo Personal Finance" 116px). Hier bewusst mehr Breite
+   statt Umbruch: die Quelle steht in einer schmalen, rechtsbuendigen
+   Meta-Spalte, ein zweizeiliger Quellenname wuerde die Zeilenhoehe der
+   ganzen Schlagzeilenliste unruhig machen. Die Schlagzeile daneben bricht
+   ohnehin um, gibt die Breite also verlustfrei her. */
+.hl-src{font-weight:600;color:var(--t2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hl-time{font-family:var(--ff-num)}
 .hl-ass{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--t2);
   border:1px solid var(--bd2);border-radius:var(--rss);padding:0 4px}
@@ -2178,12 +2270,19 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 @media(max-width:560px){.histp-val{display:none}.histp-name{white-space:normal}}
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 /* ── POSSIBLE SET-UPS 3-COLUMN LAYOUT ── */
-.setups-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;margin-top:4px}
+/* auto-fit statt fester 3 Spalten: die Spaltenzahl richtet sich jetzt nach
+   dem Platz, nicht nach einer geratenen Fensterbreite. Bei 1024px standen
+   vorher drei 270px-Spalten, in denen der Paarname auf 26px zusammenfiel
+   ("CAD/CH..."), weil die uebrigen Spalten zusammen schon 244px belegen.
+   min(340px,100%) ist die uebliche Absicherung gegen die auto-fit-Falle:
+   ohne sie erzwingt die 340px-Untergrenze auf einem schmaleren Display
+   eine Spalte, die breiter ist als der Bildschirm. Ersetzt zugleich den
+   fruheren @media(max-width:680px)-Sonderfall - der ist damit unnoetig. */
+.setups-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:8px;align-items:start;margin-top:4px}
 /* Bei schmaler Breite passen 3 Set-ups-Spalten nicht mehr ohne Abschneiden
    (Namensspalte + Ticker/Delta/Score/Stern haben eine Mindestbreite) -> auf
    eine Spalte stapeln, statt das Dashboard horizontal ueberlaufen zu lassen.
    Betrifft Dashboard-Widget UND den Set-ups-Tab gleichermassen. */
-@media(max-width:680px){.setups-cols{grid-template-columns:1fr}}
 .setups-cols>div{border-radius:var(--r);padding:6px 0 8px;background:var(--colb-bg,transparent)}
 .setups-col-hdr{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:8px 6px;border-radius:var(--rs);margin:0 6px 6px;text-align:center;border:1.5px solid currentColor}
 /* Preis-Chip/Δ/Score sollen ueber ALLE Zeilen einer Spalte (Bullish/Neutral/
@@ -2196,7 +2295,11 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    eigenem Hintergrund/Rahmen, nur die INNEREN Zellen teilen die Breite).
    Fallback fuer Browser ohne Subgrid-Support: normales pro-Zeile-Grid wie
    zuvor (kein visueller Bruch, nur ohne spaltenweise Ausrichtung). */
-.setups-col-rows{display:grid;grid-template-columns:1fr auto auto auto auto;column-gap:5px}
+/* Erste Spalte traegt den Paarnamen und braucht 7 Zeichen Ziffernschrift
+   (~71px). Der Ticker-Chip daneben darf dafuer notfalls schrumpfen
+   (minmax(0,auto)) - so bleibt der Name auch auf einem Telefon lesbar,
+   ohne dass die Zeile ueber den Kartenrand hinauslaeuft. */
+.setups-col-rows{display:grid;grid-template-columns:minmax(72px,1fr) minmax(0,auto) auto auto auto;column-gap:5px}
 .setups-cols .sym-row{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto auto auto;gap:5px;align-items:center}
 @supports (grid-template-columns:subgrid){
   .setups-cols .sym-row{grid-template-columns:subgrid}
@@ -2208,10 +2311,17 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    exakt untereinander stehen - egal ob eine Zeile einen Ticker-Chip hat oder
    nicht. minmax(0,1fr) auf der Namensspalte + overflow-hidden sorgt dafuer,
    dass nie etwas ueber den Kartenrand laeuft (Nutzer-Wunsch 2026-07-11). */
-.ba-col-rows{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;column-gap:8px;margin-top:4px}
+/* Erste Spalte traegt den Paarnamen (z.B. "CAD/CHF"). Sie hatte minmax(0,..)
+   und wurde dadurch auf 64px gedrueckt, obwohl der Name 71px braucht - er
+   wurde zu "CAD/CH..." abgeschnitten (Nutzer-Foto 2026-08-21). Anders als
+   bei den Fliesstext-Namen ist Umbruch hier KEINE Option: ein Paarname darf
+   nicht am Schraegstrich in zwei Zeilen zerfallen. Deshalb eine echte
+   Mindestbreite (7 Zeichen der Ziffern-Schrift) - die uebrigen Spalten sind
+   auto und geben den Platz her. */
+.ba-col-rows{display:grid;grid-template-columns:minmax(74px,1fr) auto auto auto auto auto;column-gap:8px;margin-top:4px}
 .ba-col-rows>.dw-empty{grid-column:1/-1}
 .ba-col-rows .ticker-chip{font-size:10.5px;padding:2px 5px;gap:3px}
-.ba-col-rows .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;gap:8px;align-items:center}
+.ba-col-rows .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(74px,1fr) auto auto auto auto auto;gap:8px;align-items:center}
 @supports (grid-template-columns:subgrid){.ba-col-rows .sym-row{grid-template-columns:subgrid}}
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ind-card.ind-flash{animation:indFlash 1.8s ease-out}
@@ -2348,7 +2458,35 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
      links (beides nur noch das .dp/.pc-Padding), kein Restfreiraum mehr.
      Center (Globus) behaelt ihr bisheriges Breiten-Verhaeltnis (~1.2x) zu
      den drei gleich breiten Seiten-Spalten bei. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(285px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(360px,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
+  /* ⚠ ECHTER LAYOUT-BUG, gefunden 2026-08-21 (Nutzer-Foto: "ganz rechts
+     keine kleine Luecke zum Rand"). Hier standen px-MINDESTbreiten:
+     minmax(285px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(360px,2fr).
+     Summe der Mindestbreiten = 1075px + 3x9px Luecke = 1102px. Ein
+     Grid-Item kann unter seine minmax-Untergrenze NICHT schrumpfen - das
+     Raster war also 1102px breit, egal wie schmal der Container war, und
+     schob die rechte Spalte ueber den Rand.
+
+     Der Breakpoint (min-width:1100px) rechnete mit der VOLLEN Fensterbreite.
+     Das stimmte, solange die Navigation eine waagerechte Leiste war - seit
+     dem Sidebar-Umbau frisst die Sidebar aber 56-230px und das .pc-Padding
+     weitere 44px. Bei 1100px Fenster bleiben real nur ~945px uebrig.
+     Gemessener Ueberlauf: -179px bei 1100, -99px bei 1180, -85px bei 1194
+     (das Geraet des Nutzers), erst ab 1280 sauber - und ein zweites kaputtes
+     Band bei 1400-1419 durch dieselbe Ursache im 1400er-Breakpoint.
+
+     Fix in zwei Teilen:
+     1. minmax(0,...) statt px-Untergrenzen - damit kann das Raster
+        STRUKTURELL nie breiter werden als sein Container, unabhaengig
+        davon, wie breit die Sidebar gerade ist (sie klappt ja auch noch
+        dynamisch ein/aus, was eine Media Query grundsaetzlich nicht sehen
+        kann).
+     2. Die Spaltenzahl haengt am Platz: vier Spalten erst ab 1320px
+        Fensterbreite (dann bleiben real ~1165px, jede Spalte also noch
+        breit genug), darunter zwei Spalten statt vier.
+     MERKSATZ: eine px-Untergrenze in grid-template-columns ist eine
+     Ueberlauf-Garantie, keine Schutzmassnahme - die Spaltenzahl gehoert an
+     den Breakpoint, die Breite an fr-Anteile. */
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"left center" "right right2" "bottom bottom";gap:9px;align-items:start}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
@@ -2478,8 +2616,17 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    fr statt fester px-Maxima (Nutzer-Foto 2026-08-03, siehe Kommentar oben
    bei @media(min-width:1100px)) - hoehere Mindestbreiten fuer diesen
    Breakpoint, aber weiterhin volle Breitenausnutzung ohne rechten Rest. */
-@media(min-width:1400px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(260px,1fr) minmax(260px,1.2fr) minmax(232px,1fr) minmax(464px,2fr)}
+/* Vier Spalten erst, wenn nach Sidebar (56-230px) und .pc-Padding (44px)
+   real genug Platz bleibt - siehe die ausfuehrliche Bug-Beschreibung oben
+   bei #dashWidgets.dash-layout. Die fr-Verhaeltnisse sind dieselben wie
+   frueher (1 : 1.2 : 1 : 2), nur ohne px-Untergrenzen: dadurch fuellt das
+   Raster den Container immer exakt aus - der Rand rechts entspricht damit
+   automatisch dem Rand links, ohne dass irgendwo eine Zahl nachgepflegt
+   werden muss. Der fruehere zweite Breakpoint bei 1400px ist ersatzlos
+   entfallen: sein EINZIGER Unterschied waren hoehere px-Untergrenzen
+   (260/260/232/464) - also genau das, was den Ueberlauf verursacht hat. */
+@media(min-width:1320px){
+  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom"}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -2763,7 +2910,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .stale-notify-row:last-of-type{border-bottom:none}
 @media(hover:hover){.stale-notify-row:hover .stale-notify-name{color:var(--t0);text-decoration:underline}}
 .stale-notify-sym{font-size:var(--fs-xs);font-weight:800;color:var(--t2);font-family:var(--ff-num)}
-.stale-notify-name{font-size:var(--fs-sm);color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stale-notify-name{font-size:var(--fs-sm);color:var(--t1);overflow-wrap:anywhere}
 .stale-notify-age{font-size:var(--fs-xs);font-weight:700;color:var(--amber);white-space:nowrap;font-family:var(--ff-num)}
 .stale-notify-more{font-size:var(--fs-xs);color:var(--t3);padding-top:5px}
 .stale-notify-note{font-size:var(--fs-2xs);color:var(--t3);line-height:1.5;margin-top:8px}
@@ -3114,11 +3261,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-406 - Neues Feature (Nutzer-Wunsch, Koyfin-Vorbild 'My Dashboards'+'+NEW'): mehrere eigene, benannte Dashboards statt nur eines. Neuer Sidebar-Eintrag 'Dashboard' ist jetzt Navigation+Stapel in einem - Klick auf den Koerper navigiert wie bisher, der Pfeil klappt separat die Liste der gespeicherten Dashboards auf (inline, gleiches Muster wie 'Insights'), darunter '+ Neu'. Umbenennen/Loeschen ueber denselben Long-Press-Menue-Mechanismus wie Tab-Stapel. Neues Datenmodell dashboards[]/activeDashId voll in snap()/applySnap()/Cloud-Sync eingebunden (CLAUDE.md-Kernregel) - widgets/dashRemovedTypes bleiben unveraendert die Arbeitskopie des aktiven Dashboards, synchronisiert einzig in snap(). Dabei einen echten Blinden-Fleck im eigenen check/rules.js-Waechter gefunden+gefixt: ein Kommentar mit `loadState()` in Backticks liess dessen komplette Aufrufkette faelschlich in die Score-Oberflaeche rutschen (SCORE_MODEL_VERSION haette fuer eine reine Dashboard-Funktion hochgezaehlt werden muessen) - Call-Erkennung ignoriert jetzt Backtick-zitierte Namen in Kommentaren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-407 - Vier Korrekturen aus einem Nutzer-Foto. (1) ECHTER BUG: die Nav-Sidebar wurde nie dunkel, obwohl die Kopfzeile es war - die spaetere #navSidebar-Regel setzte nochmal background:var(--bg1) und schlug bei gleicher Spezifitaet den gescopten Override. Die Farbe steht jetzt an EINER Stelle (--chrome-bg). (2) Chrome-Farbe von Fast-Schwarz (#14171c) auf ein dunkles Grau (#2b3038) - Kontrast 12.4:1. (3) Karten-Hintergrund weg vom reinen Weiss auf #eef0f3. (4) ECHTER LAYOUT-BUG: die px-Mindestbreiten im 4-Spalten-Dashboard-Raster summierten sich auf 1102px, der Breakpoint rechnete aber mit der vollen Fensterbreite ohne die Sidebar - dadurch stand die rechte Spalte bis zu 179px ueber den Rand (gemessen kaputt bei 1100-1279 und 1400-1419, u.a. genau bei den 1194px des Nutzer-iPads). Jetzt minmax(0,..) statt px-Untergrenzen plus Spaltenzahl am Platz. Ausserdem: fuenf abgeschnittene Textstellen ausgeschrieben, und check/cards.js prueft Kartenueberlauf jetzt geometrisch statt ueber scrollWidth - der alte Test war bei geclipptem Ueberlauf strukturell blind."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-406</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-407</span>
     </span>
   </div>
   <div class="hdr-r">
