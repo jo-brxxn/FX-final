@@ -1144,3 +1144,68 @@ kann mehrere unabhaengige Aenderungswuensche gleichzeitig zeigen (hier:
 Farben + Interaktion + neues Feature) - IMMER in einzelne Fragen zerlegen
 statt den Umfang aus dem Bild selbst zu erraten, auch wenn "so will ich
 das haben" pauschal klingt.
+
+## ⚠ MEHRERE EIGENE DASHBOARDS (2026-08-21)
+
+Neues Feature, direkte Folge der Klaerung oben (Koyfin-Vorbild "My
+Dashboards" + "+NEW"). Nach zwei weiteren `AskUserQuestion`-Fragen bestaetigt:
+Liste **inline unter dem 'Dashboard'-Sidebar-Eintrag** (wie der bestehende
+"Insights"-Stapel), Umbenennen/Loeschen ueber den **bestehenden Long-Press-
+Mechanismus** (den die Tab-Stapel bereits fuer ihr eigenes Rename/Dissolve-
+Menue nutzen - `tabPressStart`/`openTabMenu`, neuer `kind:'dashitem'`).
+
+**UI:** `dash` ist jetzt ein Hybrid aus Navigations-Tab und Stapel (`dashBtnHtml`,
+≈ Zeile 20759 ff.): Klick auf den Knopf-Koerper navigiert wie bisher
+(`onTabClick`), der separate Pfeil (`toggleDashExpand`, `stopPropagation`)
+klappt NUR die Liste auf/zu - kein `stackOf('dash')`-Eintrag in `tabStacks`,
+eigener Zweig ganz am Anfang von `renderTabBar()`s `TAB_ORDER`-Schleife.
+`showTab('dash')` klappt die Liste automatisch auf (`expandedDash=true`),
+gleiches Koyfin-Muster wie beim aktiven Tab-Stapel.
+
+**Datenmodell (CLAUDE.md-Kernregel "persistierter State MUSS in den
+Cross-Device-Sync"):** `dashboards:[{id,name,widgets,dashRemovedTypes}]` +
+`activeDashId` sind neue Top-Level-Felder in `snap()`/`applySnap()` -
+dadurch automatisch in Undo, lokalem Save UND Cloud-Sync (kein manuelles
+`cloudPush`/`cloudPull`-Wiring noetig, da `cloudPush` sein Objekt aus
+`JSON.parse(snap())` baut und `cloudPull` unconditional durch `applySnap()`
+laeuft - beides bereits bestehende Aufrufketten).
+
+**Bewusst NICHT die ~40 bestehenden Stellen angefasst, die `widgets`/
+`dashRemovedTypes` direkt lesen/schreiben** (Widget hinzufuegen/entfernen/
+umbenennen/verschieben, `migrateDash`, `renderDash`, ...): diese beiden
+Globals bleiben unveraendert die Arbeitskopie des AKTIVEN Dashboards.
+`dashboards[]` ist die Quelle der Wahrheit, aber synchronisiert wird nur an
+EINER Stelle - `syncActiveDashboard()`, aufgerufen ganz am Anfang von
+`snap()` (dem gemeinsamen Kern-Speicherpunkt fuer Save/Undo/Cloud-Push).
+`switchDashboard`/`createDashboard`/`deleteDashboard` laden dafuer beim
+Wechsel die Ziel-Widgets in dieselben Globals und rufen `migrateDash()`
+erneut auf (damit auch ein lange nicht geoeffnetes Dashboard nachtraeglich
+neue Default-Karten bekommt). **Merksatz fuer aehnliche "mehrere benannte
+Varianten eines bestehenden Einzel-State"-Wuensche:** dieses Muster (Quelle
+der Wahrheit als Array + die bestehenden Globals als Arbeitskopie + EIN
+Sync-Punkt in `snap()`) spart massiv Aenderungsflaeche gegenueber dem
+Durchfaedeln aller Mutationsstellen - immer zuerst pruefen, ob der State
+tatsaechlich nur an einer zentralen Stelle (hier `snap()`) zusammenlaeuft,
+bevor man jede einzelne Mutationsfunktion anfasst.
+
+**⚠ Dabei einen echten Blinden Fleck im eigenen `check/rules.js`/
+`scoreSurface.js`-Waechter gefunden:** `addSurveyInds` (eine WURZEL der
+Score-Oberflaeche) hat einen Kommentar mit `` `loadState()` `` in Backticks
+(Markdown-Code-Span, der durchgehende Kommentarstil dieser Codebasis). Die
+naive Aufruf-Erkennung (`NAME(`-Regex ueber den rohen Funktionskoerper,
+OHNE Kommentare zu entfernen) las das als echten Aufruf - dadurch rutschte
+`loadState()`s komplette Aufrufkette (`migrateDash`, `mkWidgets`,
+`recomputeAuto`, `applyRubOrder`, ... 13 Funktionen) faelschlich in die
+Score-Oberflaeche, obwohl keine davon die Score-FORMEL betrifft. Ohne Fix
+haette `ensureDashboards` (die neue Funktion dieses Features) fuer
+`SCORE_MODEL_VERSION` bumpen muessen - ein Bump, der die History/Trends/
+Staerke-Note ALLER Nutzer entwertet haette, obwohl sich an der Rechnung
+nichts geaendert hat. Fix in `scoreSurface.js`: ein `NAME(`-Treffer zaehlt
+nicht als Aufruf, wenn ihm unmittelbar ein Backtick vorausgeht (echte
+Aufrufe sehen in dieser Codebasis nie so aus - Backtick-vor-Funktionsname
+kommt ausschliesslich in zitierenden Kommentaren vor). Ergebnis gegengeprueft:
+13 Funktionen fielen sauber aus der Oberflaeche, keine neuen kamen hinzu.
+**Merksatz:** bei jedem kuenftigen Falsch-Alarm von `rules.js` erst pruefen,
+ob es ein ECHTER Score-Bezug ist, bevor man SCORE_MODEL_VERSION bumpt -
+ein unnoetiger Bump schadet genauso wie ein vergessener, nur in die andere
+Richtung.

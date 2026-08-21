@@ -3114,11 +3114,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-405 - Kopfzeile/Sidebar naeher an Koyfins echtem Referenzfoto: das vorherige Mittel-Dunkelgrau (#454b53, geraten) durch das tatsaechliche fast-schwarze Anthrazit (#14171c) ersetzt, per Screenshot-Vergleich gegen die Koyfin-Referenz verifiziert (Kontrast 17.96:1 gegen weissen Text). Dashboard-Widgets (.dw) bewusst OHNE Koyfin-Kopfleisten-Hintergrund gelassen - das war schon am 2026-07-25 als expliziter Nutzer-Wunsch entschieden ('Keine Ueberschrift einfach so'), keine neue Iteration noetig, .rub-card/.cot-card haben die Kopfleiste bereits."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-406 - Neues Feature (Nutzer-Wunsch, Koyfin-Vorbild 'My Dashboards'+'+NEW'): mehrere eigene, benannte Dashboards statt nur eines. Neuer Sidebar-Eintrag 'Dashboard' ist jetzt Navigation+Stapel in einem - Klick auf den Koerper navigiert wie bisher, der Pfeil klappt separat die Liste der gespeicherten Dashboards auf (inline, gleiches Muster wie 'Insights'), darunter '+ Neu'. Umbenennen/Loeschen ueber denselben Long-Press-Menue-Mechanismus wie Tab-Stapel. Neues Datenmodell dashboards[]/activeDashId voll in snap()/applySnap()/Cloud-Sync eingebunden (CLAUDE.md-Kernregel) - widgets/dashRemovedTypes bleiben unveraendert die Arbeitskopie des aktiven Dashboards, synchronisiert einzig in snap(). Dabei einen echten Blinden-Fleck im eigenen check/rules.js-Waechter gefunden+gefixt: ein Kommentar mit `loadState()` in Backticks liess dessen komplette Aufrufkette faelschlich in die Score-Oberflaeche rutschen (SCORE_MODEL_VERSION haette fuer eine reine Dashboard-Funktion hochgezaehlt werden muessen) - Call-Erkennung ignoriert jetzt Backtick-zitierte Namen in Kommentaren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-405</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-406</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -8584,7 +8584,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){syncActiveDashboard();return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,dashboards,activeDashId,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -8644,7 +8644,7 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();ensureDashboards(d.dashboards,d.activeDashId);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -8695,6 +8695,14 @@ setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automat
 
 // ══ STATE ═══════════════════════════════════════════════════════════
 let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
+// Mehrere eigene, benannte Dashboards (Nutzer-Wunsch 2026-08-21, Koyfin-
+// Vorbild "My Dashboards" + "+NEW"). dashboards[] ist die Quelle der
+// Wahrheit; widgets/dashRemovedTypes bleiben unveraendert die Arbeitskopie
+// des AKTIVEN Dashboards, damit die ~40 bestehenden Stellen, die widgets
+// direkt lesen/schreiben, nicht angefasst werden muessen. Synchronisiert
+// wird nur an einer Stelle (syncActiveDashboard(), aufgerufen von snap() -
+// dem Kern-Speicherpunkt fuer Save/Undo/Cloud-Sync, siehe CLAUDE.md).
+let dashboards=[],activeDashId=null;
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -8833,6 +8841,85 @@ const DASH_RANK={
   headlines:7,sentiment_snapshot:8,surprise_index:9,mini_calendar:10,
   movers_fx:11,notification:12,
   fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
+// Schreibt die aktuell geladenen widgets/dashRemovedTypes zurueck in den
+// dashboards-Eintrag des aktiven Dashboards. Einziger Aufrufort ist
+// snap() - damit sehen Save/Undo/Cloud-Sync immer den frischen Stand,
+// egal welche der vielen Widget-Mutationsstellen (Karte hinzufuegen/
+// entfernen/umbenennen/verschieben) zuletzt gelaufen ist.
+function syncActiveDashboard(){
+  const ad=dashboards&&dashboards.find(x=>x.id===activeDashId);
+  if(ad){ad.widgets=widgets;ad.dashRemovedTypes=dashRemovedTypes;}
+}
+// Nach dem Setzen von widgets/dashRemovedTypes (Legacy-Top-Level-Feld,
+// weiterhin der Fallback fuer alte Exporte/Cloud-Staende ohne dashboards[])
+// aufrufen. Existiert ein gespeichertes dashboards[], wird dessen aktiver
+// Eintrag geladen (ueberschreibt widgets/dashRemovedTypes damit) - sonst
+// wird aus dem bisherigen Einzel-Dashboard automatisch ein erster benannter
+// Eintrag "Dashboard" erzeugt. Kein Datenverlust, keine sichtbare Aenderung
+// fuer Bestandsnutzer, die das Feature nicht anfassen.
+function ensureDashboards(savedDashboards,savedActiveId){
+  if(Array.isArray(savedDashboards)&&savedDashboards.length){
+    dashboards=savedDashboards;
+    activeDashId=savedActiveId&&dashboards.some(x=>x.id===savedActiveId)?savedActiveId:dashboards[0].id;
+    const ad=dashboards.find(x=>x.id===activeDashId);
+    widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
+    dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
+  }else{
+    dashboards=[{id:uid(),name:'Dashboard',widgets,dashRemovedTypes}];
+    activeDashId=dashboards[0].id;
+  }
+}
+function switchDashboard(id){
+  if(id===activeDashId||!dashboards.some(x=>x.id===id))return;
+  syncActiveDashboard();
+  activeDashId=id;
+  const ad=dashboards.find(x=>x.id===id);
+  widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
+  dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
+  migrateDash();
+  pushU();save();
+  if(curPage==='dash')renderDash();
+  renderTabBar();
+}
+function createDashboard(){
+  pushU();
+  syncActiveDashboard();
+  const id=uid(),n=dashboards.length+1;
+  dashboards.push({id,name:'Dashboard '+n,widgets:mkWidgets(),dashRemovedTypes:[]});
+  activeDashId=id;
+  const ad=dashboards.find(x=>x.id===id);
+  widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
+  migrateDash();
+  save();
+  if(curPage==='dash')renderDash();
+  renderTabBar();
+}
+function renameDashboard(id){
+  const d=dashboards.find(x=>x.id===id);if(!d)return;
+  const name=prompt('Dashboard umbenennen:',d.name);
+  if(!name||!name.trim())return;
+  pushU();
+  d.name=name.trim();
+  if(id===activeDashId)syncActiveDashboard();
+  save();renderTabBar();
+}
+function deleteDashboard(id){
+  if(dashboards.length<=1)return;
+  const d=dashboards.find(x=>x.id===id);if(!d)return;
+  if(!confirm('"'+d.name+'" wirklich loeschen?'))return;
+  pushU();
+  const wasActive=id===activeDashId;
+  dashboards=dashboards.filter(x=>x.id!==id);
+  if(wasActive){
+    activeDashId=dashboards[0].id;
+    const ad=dashboards[0];
+    widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
+    dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
+    migrateDash();
+    if(curPage==='dash')renderDash();
+  }
+  save();renderTabBar();
+}
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
   if(!Array.isArray(dashRemovedTypes))dashRemovedTypes=[];
@@ -8928,6 +9015,7 @@ function loadState(){
       // kommt aus dem (ggf. aelteren) gespeicherten Stand.
       dashV=d.dashV||0;
       dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];
+      ensureDashboards(d.dashboards,d.activeDashId);
       migrateDash();
       sbOrder=d.sbOrder||{};
       catOrder=d.catOrder||[];
@@ -8942,6 +9030,7 @@ function loadState(){
       return;}
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  ensureDashboards(null,null);
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -20650,6 +20739,10 @@ const TABS={
 const TABSTACKS_KEY='fxpro_tabstacks';
 let tabStacks=[];           // [{id,name,members:[tabId,...]}]
 let expandedStack=null;     // id des gerade ausgeklappten Stapels
+// Mehrere eigene Dashboards (siehe dashboards[]/activeDashId oben): ob die
+// Liste unter dem "Dashboard"-Sidebar-Eintrag gerade aufgeklappt ist -
+// rein lokaler UI-Zustand, genau wie expandedStack nicht persistiert.
+let expandedDash=false;
 let activeTabId='dash';     // aktuell aktive Kategorie
 function loadTabStacks(){
   try{const s=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(s)){tabStacks=s;
@@ -20751,6 +20844,41 @@ function tabBtnHtml(id,sub){
   const on=activeTabId===id;
   return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" title="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
 }
+// Mehrere eigene Dashboards (Nutzer-Wunsch 2026-08-21, Koyfin-Vorbild "My
+// Dashboards" + "+NEW"): der "Dashboard"-Eintrag ist ein Hybrid aus
+// normalem Navigations-Tab (Klick auf den Koerper navigiert wie bisher zu
+// 'dash') UND Stapel (der Pfeil klappt separat die Liste der gespeicherten
+// Dashboards auf/zu, gleiches Inline-Muster wie "Insights"). Deshalb kein
+// stackOf('dash')-Eintrag in tabStacks - eigener Code-Pfad in renderTabBar().
+function dashBtnHtml(){
+  const on=activeTabId==='dash';
+  return`<button class="np np-stack${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" title="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">${expandedDash?'▾':'▸'}</span></button>`;
+}
+function toggleDashExpand(e){
+  if(e){e.stopPropagation();e.preventDefault();}
+  expandedDash=!expandedDash;
+  renderTabBar();
+}
+// Umbenennen/Loeschen ueber dasselbe Long-Press-Menue-Muster wie Tab-Stapel
+// (tabPressStart/openTabMenu, kind:'dashitem') - kein neuer Mechanismus.
+function dashItemBtnHtml(d){
+  const on=activeDashId===d.id;
+  return`<button class="np np-sub${on?' on':''}" onpointerdown="tabPressStart(event,'dashitem','${d.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onDashItemClick(event,'${d.id}')" title="${escH(d.name)}">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">${escH(d.name)}</span></button>`;
+}
+function dashNewBtnHtml(){
+  return`<button class="np np-sub" onclick="onDashNewClick()" title="Neues Dashboard">${npIconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>')}<span class="np-lbl">+ Neu</span></button>`;
+}
+function onDashItemClick(e,id){
+  if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
+  const wasOnDash=curPage==='dash';
+  switchDashboard(id);
+  if(!wasOnDash)selectTab('dash');
+}
+function onDashNewClick(){
+  const wasOnDash=curPage==='dash';
+  createDashboard();
+  if(!wasOnDash)selectTab('dash');
+}
 // Stapel (z.B. "Insights") klappen sich INLINE unterhalb ihres Buttons auf
 // (Nutzer-Wunsch 2026-08-21: "die Kategorien in kleinerer Schriftgroesse
 // dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
@@ -20760,6 +20888,14 @@ function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   let html='';const done=new Set();
   TAB_ORDER.forEach(id=>{
+    if(id==='dash'){
+      html+=dashBtnHtml();
+      if(expandedDash){
+        html+=dashboards.map(dashItemBtnHtml).join('');
+        html+=dashNewBtnHtml();
+      }
+      return;
+    }
     const st=stackOf(id);
     if(st){
       if(done.has(st.id))return;done.add(st.id);
@@ -20810,6 +20946,9 @@ function openTabMenu(kind,id,x,y){
     tabStacks.forEach(s=>{if(!s.members.includes(id))items.push({lbl:'➕ '+s.name,fn:()=>addTabToStack(id,s.id)});});
     items.push({lbl:'✨ New Stack…',fn:()=>{const name=prompt('Name of the new stack:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
     if(cur)items.push({lbl:'✖ Remove from "'+cur.name+'"',fn:()=>removeTabFromStack(id)});
+  }else if(kind==='dashitem'){
+    items.push({lbl:'✎ Rename…',fn:()=>renameDashboard(id)});
+    if(dashboards.length>1)items.push({lbl:'✖ Delete',fn:()=>deleteDashboard(id)});
   }else{
     const s=tabStacks.find(x=>x.id===id);if(!s)return;
     items.push({lbl:'✎ Rename…',fn:()=>{const name=prompt('Rename stack:',s.name);if(name&&name.trim()){s.name=name.trim();saveTabStacks();renderTabBar();}}});
@@ -20858,6 +20997,7 @@ function showTab(tab,btn,fxMode){
   // Muster: die aktive Sektion bleibt sichtbar), egal ueber welchen Weg
   // (Klick, Suche, Tastenkuerzel) der Tab-Wechsel ausgeloest wurde.
   const _st=stackOf(activeTabId);if(_st)expandedStack=_st.id;
+  if(tab==='dash')expandedDash=true;
   renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"

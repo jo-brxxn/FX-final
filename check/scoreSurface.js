@@ -77,9 +77,20 @@ function ableiten(datei) {
     const naechste = [];
     rand.forEach(n => {
       const koerper = fn[n]; if (!koerper) return;
-      // Aufrufe: NAME(
+      // Aufrufe: NAME( - aber NICHT, wenn ein Backtick unmittelbar davor
+      // steht. Diese Codebasis zitiert Funktionsnamen in Kommentaren
+      // durchgehend als `funcName()` (Markdown-Code-Span) - echte Aufrufe
+      // sehen nie so aus. Ohne diesen Ausschluss reisst ein einzelner
+      // Kommentar wie "waehrend `loadState()`" IN EINER Wurzel-Funktion
+      // (addSurveyInds) die komplette Dashboard-Migration (loadState ->
+      // migrateDash/ensureDashboards) in die Score-Oberflaeche, obwohl
+      // beide nichts mit der Score-Formel zu tun haben - gefunden 2026-08-21
+      // beim Hinzufuegen der Mehrfach-Dashboards (echter Falsch-Alarm:
+      // SCORE_MODEL_VERSION haette fuer eine reine UI-Funktion hochgezaehlt
+      // werden muessen).
       [...koerper.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].forEach(x => {
         const c = x[1];
+        if (koerper[x.index - 1] === '`') return;
         if (IGNORIEREN.has(c) || !fn[c] || funktionsMenge.has(c)) return;
         funktionsMenge.add(c); naechste.push(c);
       });
