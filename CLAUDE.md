@@ -7249,3 +7249,139 @@ echten Meldungen gefuellt, nicht mit Luft.
 **Merksatz:** eine Ueberlappung, die man SIEHT, muss nicht als Ueberlappung
 MESSBAR sein. Wer nur Rechtecke vergleicht, uebersieht ueberlaufenden Text
 vollstaendig - beide Pruefungen gehoeren zusammen.
+
+## ⚠ KONTRAST-UEBERARBEITUNG: "die Webseite ist zu weiss" (Nutzer-Wunsch 2026-08-21, per /goal)
+
+Nutzer-Auftrag: Webseite wirkt insgesamt sehr weiss, auf Windows noch
+schwaecher/kontrastaermer als auf dem Testgeraet gesehen. Konkret genannt:
+Insights/Edge mit starkem Schwarz oder duennem Grau, teils zu kleine
+Schrift; Karten sollen eine leichte Umrandung bekommen; Zwischen-
+ueberschriften deutlicher; Ueberschriften-Hierarchie ueberall korrekt;
+mehr starke graue Linien im Hintergrund statt nur der einen.
+
+**Nachgemessen statt geraten (WCAG-Kontrastformel), bevor irgendetwas
+geaendert wurde:**
+| Paar | vorher | Bedeutung |
+|---|---|---|
+| Kartenrand (--bd) gegen weisse Karte | 1.31:1 | praktisch unsichtbar |
+| Karte (--bg2) gegen Seite (--bg0) | 1.14:1 | kaum unterscheidbar |
+| Sekundaertext (--t3) gegen weisse Karte | 3.39:1 | faellt AA-Text (<4.5) |
+
+Erklaert auch den Windows-Effekt: bei Unterschieden von 1.05-1.31:1 reicht
+schon ein anderes Gamma-/Farbprofil, um die Trennung ganz verschwinden zu
+lassen - keine Rendering-Eigenart, sondern eine Palette, die von Haus aus
+zu eng um Weiss geclustert war.
+
+### Token-Ueberarbeitung (`:root`, ≈ Zeile 38)
+
+Neue Werte, alle nachgerechnet gegen den tatsaechlichen Verwendungs-
+Hintergrund:
+- `--bg0`/`--bg1`/`--bg3`/`--bg4`/`--bg5`/`--bg6` global dunkler gezogen
+  (Skala bleibt MONOTON - bg0 hellste, bg6 dunkelste, jede bestehende
+  Verbrauchsstelle haengt nur an der Reihenfolge).
+- `--bd`/`--bd2`: 1.97:1 / 2.71:1 gegen weisse Karte (sichtbar, aber
+  bewusst "leicht" wie gewuenscht, kein schwarzer Rahmen).
+- `--t1`/`--t2`/`--t3`: klar gestufte Rampe 10.5 / 6.7 / 4.8 : 1 gegen
+  Karte - alle AA-fest fuer Fliesstext.
+- `--shadow-card`/`--shadow-pop` Alpha leicht angehoben (Karten brauchen
+  neben dem jetzt sichtbaren Rand noch eigene Tiefe).
+- **Bias-/Statusfarben (Blau/Rot/Slate/Success) bewusst NICHT angefasst** -
+  reine Graustufen-/Kontrast-Korrektur, keine Neu-Interpretation der
+  Score-Farbsprache. Farbige Zahlen (z.B. "+2.35%" in Blau auf einem
+  getoenten Chip) liegen teils unter 4.5:1, bleiben aber durch den
+  Farbunterschied zum Grauton visuell klar erkennbar - anders als blasses
+  Grau-auf-Grau, das buchstaeblich verschwindet. Aendern der Bias-Hex-Werte
+  waere eine viel groessere, hier nicht angefragte Entscheidung (die Farbe
+  IST die Bull/Bear-Sprache der ganzen App).
+
+### Zwei app-weite Text-Idiome gefixt (je 13x im File)
+
+Beide wurden per `grep -c` als exaktes wiederkehrendes Textmuster gefunden,
+nicht einzeln geraten:
+- **Card-Untertitel** (`font-weight:400;color:var(--t3);font-size:11px`,
+  z.B. "Reconstructed from N days..." im Edge-Tab, "source: ... · updated"
+  bei Rate Probabilities, AAII-Wochendatum): sitzt auf dem DUNKLEREN
+  Kartenkopf-Verlauf (`--bg4`→`--bg3`), nicht auf der Karte selbst - dort
+  ist `--t3` nur 2.9:1, faellt also trotz des globalen Tokens noch durch.
+  Auf `--t2` umgestellt (`font-weight:500` fuer minimal mehr Praesenz).
+- **Tab-Untertitel** (`font-size:12px;color:var(--t3);margin-top:1px`,
+  z.B. "Does the score actually lead the price?" unter jedem Insights-Tab-
+  Titel): sitzt DIREKT auf der Seite (Marmor-Hintergrund), dort war
+  `--t3` nur 3.44:1. Auf `--t2` umgestellt - fixt die Untertitelzeile in
+  JEDEM der 17 Tabs auf einen Schlag.
+
+### 20 Eyebrow-Label-Klassen unter der eigenen 10px-Skalenuntergrenze
+
+Die App hat eine dokumentierte 7-Stufen-Typoskala (`--fs-hero` bis
+`--fs-2xs`=10px, siehe Abschnitt weiter oben). 20 Klassen (u.a.
+`.res-lib-sec`, `.cmp-filter-lbl`, `.mx-rank-head`, `.rterm-tl-date`,
+`.hl-more`, `.cal-news-btn`) lagen bei 8.5-9.5px - UNTER der eigenen
+dokumentierten Untergrenze, kombiniert mit `--t3`. Alle auf 10px (bzw.
+8.5→9.5px als kleinster Zwischenschritt) angehoben + `--t3`→`--t2`. Das
+sind durchweg GROSSBUCHSTABEN-Zwischenueberschriften/Sektions-Label -
+genau der "Zwischenueberschriften deutlicher machen"-Wunsch.
+
+### Edge-Tab komplett von Off-Scale-Groessen befreit
+
+`.edge-tbl` (11.5px→`--fs-sm`), `.edge-note` (10.5px→`--fs-xs`, `--t3`→
+`--t2`), `.edge-dist-row` (11.5px→`--fs-sm`), `.aaii-tbl` (11.5px→
+`--fs-sm`), `.hl-expand` (10.5px→`--fs-xs`, `--t3`→`--t2`). 11.5px/10.5px
+waren nie ein gueltiger Skalenschritt - Off-Scale-Werte entstehen typischer-
+weise, wenn beim Bauen einer neuen Karte "kurz mal" ein Zwischenwert
+eingetippt wird, statt eine der sieben Variablen zu nehmen.
+
+### Zwei Karten-Titel auf Fliesstextgroesse
+
+`.cmp-title` (Compare-Tab) und `.mx-card-title` (Matrix-Tab) standen bei
+13px = exakt `--fs-base` (Fliesstext) - obwohl sie strukturell identisch
+zu `.cot-card-title` sind (gleicher Verlauf, gleiches Padding, gleicher
+Rahmen), das app-weit bei 15px (`--fs-md`, "bewusst groesser als der
+Fliesstext") liegt. Angeglichen. Kein neuer Fall der historisch
+dokumentierten Kartentitel-Regression (Titel < Fliesstext) - hier war
+Titel = Fliesstext, aber ebenso ein Bruch mit der eigenen Konvention.
+
+### Hintergrund: 8 zusaetzliche Linien statt der einen
+
+`body{background-image:...}` (≈ Zeile 21) bekam vor der Marmor-PNG acht
+zusaetzliche `linear-gradient`-Haarlinien in variierenden Winkeln (128°,
+35°, 162°, 73°, 15°, 100°, 145°, 50°) und Staerken (2 kraeftiger in
+`--t1`-Ton, Rest in `--bd2`/mittlerem Grau, Alpha 0.07-0.16) - dieselbe
+Technik, die der Intro-Screen (`#introOv`) bereits seit laengerem fuer
+seine Risslinien nutzt (siehe Zeile ≈2439), hier nur wiederverwendet statt
+neu erfunden. Bewusst CSS-Gradienten statt die Marmor-PNG neu zu generieren
+- die PNG-Regenerierung ist laut fruehren Session-Eintraegen fehleranfaellig
+(Periodizitaet, Banding, siehe Marmor-v1-v5-Historie oben), waehrend
+CSS-Gradienten deterministisch und ohne Regressionsrisiko sind. **Wichtig
+erkannt beim Verifizieren:** auf kartendichten Seiten (Dashboard) ist der
+Grossteil der Flaeche von opaken weissen Karten bedeckt - die Linien sind
+dort nur in den ~9px-Zwischenraeumen sichtbar. Auf kartenaermeren Seiten
+(z.B. eine leere Assets-Uebersicht) sind sie klar sichtbar. Das ist so
+gewollt (Karten muessen lesbar bleiben, koennen nicht durchscheinend sein) -
+"mehr Linien im Hintergrund" heisst hier zwangslaeufig "mehr Linien DORT,
+wo Hintergrund sichtbar ist", nicht "durch die Karten hindurch".
+
+### Verifikationsmethode: alpha-korrekte Kontrastmessung, kein Rechteck-Raten
+
+Ein erster automatisierter Sweep (naive `getComputedStyle().color` gegen
+den ersten nicht-transparenten Vorfahren-Hintergrund) meldete faelschlich
+ueber 1000 "Kontrastverstoesse" - fast alle waren Messfehler: (1) getoente
+Chips/Badges (z.B. `.ticker-chip-pct`, "getoenter Chip"-Muster) setzen
+Text UND Hintergrund oft in derselben Bias-Farbe, aber der Hintergrund nur
+bei 8-15% Alpha - ein Script, das die rgba() OHNE Alpha-Kompositierung
+gegen den darunterliegenden Layer liest, haelt das faelschlich fuer
+"Farbe gegen dieselbe Farbe" (Ratio 1.0). Fix: echte rueckwaerts-
+kompositierte Kette (Body → Karte → Chip-Tint → Text-Alpha) statt der
+rohen rgba-Werte. (2) `.cot-card`/`.dw` nutzen `background:linear-
+gradient(...)`, was `getComputedStyle().backgroundColor` als transparent
+liest - das Script lief dadurch am Kartenhintergrund vorbei zur Seite
+dahinter durch. Nach dem Alpha-Fix blieben nur noch die bereits oben
+behandelten echten Faelle (Card-/Tab-Untertitel-Idiom, Eyebrow-Labels)
+plus die bewusst unangetasteten Bias-Farben.
+
+**Merksatz:** bei jeder kuenftigen automatisierten Kontrastpruefung IMMER
+(a) Alpha-Kanaele echt kompositieren, nie roh vergleichen, und (b)
+`background-image`-Gradienten mitbedenken, nicht nur `background-color` -
+sonst produziert das Werkzeug selbst das Rauschen, das es eigentlich
+aufdecken soll (dieselbe Lehre wie bei den frueheren Dashboard-
+Ueberlappungs-Pruefungen: ein Test, der eine Ebene nicht sieht, kann in
+genau dieser Ebene keinen Fehler finden).
