@@ -87,7 +87,7 @@ body{font-family:var(--ff-text);background-image:url("data:image/png;base64,iVBO
      REIHENFOLGE, die unveraendert bleibt) - nur global dunkler/getrennter
      gezogen. Bias-/Akzentfarben (Blau/Rot/Slate) bewusst NICHT angefasst,
      das ist eine reine Graustufen-/Kontrast-Korrektur. */
-  --bg0:#d7dbe0;--bg1:#e3e6ea;--bg2:#ffffff;--bg3:#d7dbe0;--bg4:#c5cad1;--bg5:#aab1ba;--bg6:#888f99;
+  --bg0:#d7dbe0;--bg1:#e3e6ea;--bg2:#ffffff;--bg3:#e3e6ea;--bg4:#c5cad1;--bg5:#aab1ba;--bg6:#888f99;
   --bd:#c9ced6;--bd2:#a9b0ba;
   --t0:#1c2024;--t1:#3a4048;--t2:#565c65;--t3:#6d737b;
   --green:#3b82f6;--red:#e35d5d;--amber:#64748b;--star:#64748b;--blue:#3b82f6;--purple:#7b7fae;--success:#22c55e;
@@ -101,27 +101,31 @@ body{font-family:var(--ff-text);background-image:url("data:image/png;base64,iVBO
   --shadow-pop:0 8px 28px rgba(20,23,26,.22);
 }
 /* ── LAYOUT ── */
-/* Header als 3-Spalten/2-Zeilen-Grid statt Flex (Referenz-Foto, Nutzer-
-   Korrektur 2026-07-25 "der Banner ist ueber den Buttons"): der linke Block
-   (Logo/FX-Summe/Saved) spannt beide Zeilen, der LIVE-Banner sitzt in
-   Zeile 1 auf Logo-Hoehe, die Button-Leiste in Zeile 2 darunter - genau wie
-   im Foto. Flex konnte das nicht, dort lagen Banner und Buttons zwangs-
-   laeufig in derselben Zeile. */
-.hdr{background:transparent;padding:6px 14px 4px;flex-shrink:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px}
-/* Logo bestimmt die Hoehe von Zeile 1 - dadurch sitzt der darin zentrierte
-   Banner exakt auf Logo-Hoehe. Statuszeile (FX-Summe/Saved) liegt in
-   Zeile 2 auf derselben Hoehe wie die Button-Leiste, genau wie im Foto. */
-.hdr-sub{grid-column:1/3;grid-row:2;min-width:0}
+/* Kopfzeile komplett in EINER Reihe (Nutzer-Wunsch 2026-08-21 per /goal:
+   "pack alle Elemente in der oberen Leiste in eine Zeile nichts
+   untereinander, dadurch wird sie schmaler") - Logo, Suchfeld (Koyfin-
+   Referenz: links, breit), Status-Cluster (Saved/Live/Version) und die
+   Button-Leiste liegen als vier Flex-Kinder nebeneinander. Ersetzt das
+   vorherige 2-Zeilen-Grid (Statuszeile mit Bull/Bear-Zaehler + eigener
+   Saved-Zeile darunter) - beide sind jetzt weg bzw. umgezogen. */
+.hdr{background:var(--bg1);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;align-items:center;gap:14px}
 /* Logo wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): "FX" kraeftig/gross
    in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
    einheitlich eingefaerbten Wortmarke. */
-.logo{grid-column:1;grid-row:1;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
 .logo-fx{font-weight:900;color:var(--t0);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
-.logo-s{font-size:11px;line-height:1.25;color:var(--t3);font-weight:600;font-family:var(--ff-num);margin-top:0}
-.saved{font-size:11px;line-height:1.25;color:var(--success);font-family:var(--ff-num);margin-top:1px}
-.net-status{font-size:11px;line-height:1.25;color:var(--amber);font-family:var(--ff-num);margin-top:1px}
-.hdr-r{grid-column:3;grid-row:2;justify-self:end;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+/* Suchfeld links neben dem Logo (Koyfin-Referenz-Screenshot, Nutzer-Wunsch
+   2026-08-21) statt eines Icon-Buttons rechts - oeffnet beim Klick weiterhin
+   dasselbe #mSearch-Modal, nur die Einstiegsstelle ist jetzt prominent und
+   links. */
+.hdr-search{flex:1;min-width:0;max-width:480px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
+@media (hover:hover){.hdr-search:hover{border-color:var(--bd2);color:var(--t1)}}
+.hdr-search-lbl{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ff-text)}
+.hdr-status{flex-shrink:1;min-width:0;display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
+.saved{flex-shrink:0;font-size:11px;color:var(--success);font-family:var(--ff-num)}
+.net-status{flex-shrink:0;font-size:11px;color:var(--amber);font-family:var(--ff-num)}
+.hdr-r{flex-shrink:0;margin-left:auto;display:flex;gap:5px;align-items:center}
 /* Referenz-Mockup 2026-08-03: Header-Buttons wirken dort wie ein reiner
    Icon+Label-Streifen ohne sichtbare Pille (kein Rahmen/Hintergrund im
    Ruhezustand) - nur .hdr-r-Buttons betroffen, .btn bleibt ueberall sonst
@@ -147,15 +151,9 @@ body{font-family:var(--ff-text);background-image:url("data:image/png;base64,iVBO
 /* Einheitliches Inline-SVG-Icon-Set (statt Emojis): erbt currentColor,
    sitzt optisch auf der Textlinie der Buttons. */
 svg.ic{vertical-align:-2px;flex:none}
-/* Kleines Dropdown-Menue im Header (Data: Export/Import/Backups) */
-.hdr-menu-wrap{position:relative;display:inline-block}
-.hdr-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:5px;z-index:300;min-width:176px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:2px}
-.hdr-menu button{display:flex;align-items:center;gap:9px;background:transparent;border:none;color:var(--t1);padding:8px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:600;text-align:left;width:100%;font-family:inherit}
-@media (hover:hover){.hdr-menu button:hover{background:var(--bg4)}}
-.hdr-menu button:active{background:var(--bg4)}
 /* Bias-Picker-Popover (Long-Press-Ersatz fuer die ▲/◆/▼-Buttons, Nutzer-
    Wunsch 2026-07-22) - erscheint am Druckpunkt statt zentriert, gleiches
-   position:fixed+body-append-Muster wie .hdr-menu. */
+   position:fixed+body-append-Muster wie .tab-menu. */
 .bias-picker{position:fixed;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:6px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:4px;min-width:150px}
 .bias-picker-lbl{font-size:10.5px;font-weight:700;color:var(--t3);padding:2px 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bias-picker-opts{display:flex;flex-direction:column;gap:2px}
@@ -184,25 +182,36 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-/* ── DUNKLE CHROME: Kopfzeile + Nav-Sidebar (Koyfin-Referenz, Nutzer-Wunsch
-   2026-08-21 "schwarz aussenrum, weiss innendrin, Kategorien links
-   untereinander") ── Die Umsetzung ueberschreibt NUR die Palette-Variablen
-   innerhalb von .hdr/#navSidebar (CSS Custom Properties kaskadieren) - jede
-   der rund 200 Stellen, die bereits var(--t0)/var(--bg3)/... nutzt, faerbt
-   sich dadurch automatisch um, ohne dass jede einzeln angefasst werden
-   muss. Content-Bereich (#pageArea) bleibt bewusst UNVERAENDERT hell mit
-   Marmor-Hintergrund - nur die Aussenhuelle wird dunkel. */
-.hdr,#navSidebar{
-  --bg0:#10131a;--bg1:#151922;--bg2:#1a1f29;--bg3:#212733;--bg4:#2a3140;--bg5:#343c4d;--bg6:#454f63;
-  --bd:#262d3a;--bd2:#363f4f;
-  --t0:#f2f4f7;--t1:#d4d9e1;--t2:#98a1b0;--t3:#69707f;
-}
-.hdr{background:var(--bg1);border-bottom:1px solid var(--bd)}
+/* ── KOPFZEILE + NAV-SIDEBAR: derselbe Graustufe wie die Karten-Hintergrund-
+   farbe bei Assets (Nutzer-Korrektur 2026-08-21, nach der zunaechst dunklen
+   Koyfin-Umsetzung: "die dunkel eingefaerbte Spalte links und die Zeile
+   oben soll in dem gleichen Grauton sein wie bei Assets die Hintergrund-
+   farbe der Karten"). Die Karten dort (`.rub-card`) nutzten bis eben genau
+   den Wert #d7dbe0 - der wird hier direkt uebernommen. Damit derselbe Ton
+   nicht gleichzeitig als Karten-Hintergrund im Inhalt UND als Chrome-Farbe
+   auftaucht (Nutzer-Wunsch im selben Atemzug: "tausch dann auch ueberall
+   im Inhalt wo dieses Grau verwendet die Farbe aus durch ein helleres
+   Grau"), wurde `--bg3` (die Variable hinter `.rub-card`) weiter oben auf
+   #e3e6ea angehoben - der alte #d7dbe0-Wert lebt jetzt NUR noch hier,
+   fest verdrahtet statt ueber die (jetzt hellere) Variable. Text/Icons
+   bleiben normale helle-Theme-Tokens (kein Weiss-auf-Dunkel mehr noetig). */
+.hdr,#navSidebar{background:#d7dbe0}
+#navSidebar{border-right-color:#b9bfc8}
+.hdr{border-bottom-color:#b9bfc8}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
 #pageArea{flex:1;display:flex;flex-direction:column;min-height:0}
-#navSidebar{width:200px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:1px;-webkit-overflow-scrolling:touch}
-.np{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
+/* Breite passt sich dem laengsten Kategorie-Namen an statt eines fixen
+   Werts (Nutzer-Wunsch 2026-08-21: "so breit dass man alle Kategorien
+   lesen kann, dann ein kleiner Abstand, dann hoert es auf - kein Platz
+   verschwenden") - width:max-content auf dem Flex-Container + width:100%
+   auf jedem .np-Kind ist das Standardmuster dafuer: der Container sizet
+   sich auf die intrinsische Breite des breitesten Kindes, alle anderen
+   strecken sich exakt auf diese eine Breite. min/max als Leitplanken
+   gegen einen leeren Zustand bzw. einen absurd langen selbst vergebenen
+   Stapel-Namen. */
+#navSidebar{width:max-content;min-width:150px;max-width:230px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 6px;display:flex;flex-direction:column;gap:1px;-webkit-overflow-scrolling:touch;transition:width .16s ease,min-width .16s ease}
+.np{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
 .np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
 .np-ic svg{width:17px;height:17px}
 .np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
@@ -212,12 +221,30 @@ svg.ic{vertical-align:-2px;flex:none}
 .np-arrow{font-size:9px;opacity:.7;margin-left:auto;flex-shrink:0}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
+/* Stapel-Mitglieder (Nutzer-Wunsch 2026-08-21: "in kleinerer Schriftgroesse
+   dadrunter oeffnen, eingeschoben") - kleinerer Text, eingerueckt, duennere
+   Icons, ohne eigenen linken Farbrand (der bleibt dem Stapel-Button und dem
+   aktiven Mitglied vorbehalten, sonst zwei Randfarben nebeneinander). */
+.np.np-sub{font-size:11.5px;font-weight:600;padding:6px 9px 6px 22px}
+.np.np-sub .np-ic{width:13px;height:13px}
+.np.np-sub .np-ic svg{width:13px;height:13px}
+.np.np-sub.on{border-left-color:var(--blue)}
 @media(max-width:760px){
-  #navSidebar{width:56px;padding:10px 4px}
+  #navSidebar{width:56px;min-width:56px;padding:10px 4px}
   .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
   .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
+  .np.np-sub{padding:7px 0}
   .np-lbl{display:none}
 }
+/* Auto-Einklapp-Zustand (Nutzer-Wunsch 2026-08-21): dieselben Icon-only-
+   Regeln wie auf Mobil, aber per JS-Klasse ausgeloest (siehe
+   pageArea-Scroll/Pointerdown-Listener) statt per Breite - #navSidebar
+   klappt so auch auf breiten Screens ein, sobald rechts interagiert wird. */
+#navSidebar.nav-collapsed{width:56px;min-width:56px;padding:10px 4px}
+#navSidebar.nav-collapsed .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
+#navSidebar.nav-collapsed .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
+#navSidebar.nav-collapsed .np.np-sub{padding:7px 0}
+#navSidebar.nav-collapsed .np-lbl{display:none}
 .tab-menu{position:fixed;z-index:100001;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
 .tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--ff-text)}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
@@ -458,8 +485,19 @@ body.compact-view .rub-summary{display:block}
 /* Mobiler Header kompakter (Nutzer-Wunsch 2026-07-16) - Avatar/Name sind
    jetzt app-weit klein/namenlos (siehe .profile-circle/.profile-name oben),
    hier bleibt nur noch der engere Innenabstand als Mobil-Sonderfall. */
-.hdr{padding:5px 10px 4px;gap:5px}
-.profile-btn{margin-left:2px}}
+.hdr{padding:6px 10px;gap:8px}
+.profile-btn{margin-left:2px}
+/* Alles bleibt in EINER Reihe (Nutzer-Wunsch 2026-08-21) - Suchfeld auf
+   ein reines Icon zusammenschrumpfen und Saved/Offline-Text ausblenden
+   (LIVE/Version bleibt sichtbar), statt umzubrechen. */
+.hdr-search{max-width:none;flex:0 0 auto;padding:7px}
+.hdr-search-lbl{display:none}
+.saved,.net-status{display:none}
+/* Ganz schmal (Handy): nur der blinkende Punkt bleibt sichtbar, der Rest
+   (LIVE/Uhr/Versionsname) bleibt per title-Tooltip erreichbar - sonst
+   wurde der Text mitten im Wort abgeschnitten. */
+.hlb-lbl,.hlb-clock,.hlb-sep,.hlb-name{display:none}
+}
 /* Today's-Movers-Dashboard-Karte */
 .mover-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);margin-bottom:6px;cursor:pointer;transition:border-color .12s}
 @media(hover:hover){.mover-row:hover{border-color:rgba(var(--blue-rgb),.5)}}
@@ -2175,23 +2213,6 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .ba-col-rows .sym-row{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto auto auto;gap:8px;align-items:center}
 @supports (grid-template-columns:subgrid){.ba-col-rows .sym-row{grid-template-columns:subgrid}}
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* ── INBOX / POSTFACH ── */
-.inbox-btn{position:relative}
-.inbox-badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px;line-height:1;animation:pulse-badge 1.4s ease-in-out infinite}
-.inbox-empty{color:var(--t3);font-size:12px;padding:14px 0;font-family:var(--ff-num);line-height:1.6}
-/* ── INBOX SCORE NOTIFICATIONS ── */
-.nb-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--bg2);cursor:pointer;transition:background .12s,border-color .12s}@media (hover:hover){.nb-row:hover{background:var(--bg3);border-color:var(--bd2)}}
-.nb-day-hdr{font-size:12px;font-weight:800;color:var(--t1);padding:6px 9px;margin:11px 0 7px;background:var(--bg4);border-bottom:1px solid var(--bd);border-radius:6px;font-family:var(--ff-num);letter-spacing:.5px;text-transform:uppercase}
-.nb-day-hdr:first-child{margin-top:0}
-.nb-day-hdr.nb-day-today{background:rgba(239,107,120,.18);color:#e35d5d;border-bottom-color:rgba(239,107,120,.4)}
-.nb-ccy{font-family:var(--ff-num);font-weight:800;font-size:13px;color:var(--t0);background:var(--bg4);border-radius:7px;padding:5px 8px;flex-shrink:0;min-width:40px;text-align:center}
-.nb-main{flex:1;min-width:0}
-.nb-name{font-size:13px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nb-rub{color:var(--t3);font-weight:500;font-size:11px}
-.nb-sub{font-size:11px;color:var(--t3);font-family:var(--ff-num);margin-top:2px}
-.nb-dir{font-size:11px;font-weight:700;flex-shrink:0;font-family:var(--ff-num)}
-.nb-dir.nb-bull{color:var(--blue)}.nb-dir.nb-bear{color:var(--red)}.nb-dir.nb-neu{color:var(--amber)}
-.nb-del{background:none;border:none;color:var(--t3);cursor:pointer;font-size:17px;line-height:1;padding:0 2px;flex-shrink:0;transition:color .12s}@media (hover:hover){.nb-del:hover{color:var(--red)}}
 .ind-card.ind-flash{animation:indFlash 1.8s ease-out}
 @keyframes indFlash{0%,40%{box-shadow:0 0 0 2px var(--blue),0 0 16px rgba(var(--blue-rgb),.55);background:rgba(var(--blue-rgb),.10)}100%{box-shadow:none;background:transparent}}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
@@ -2204,8 +2225,6 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
 .modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
-.modal.inbox-modal{max-width:min(1300px,94vw)}
-#inboxList{max-height:65vh;overflow-y:auto}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px}
 .dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
@@ -2230,11 +2249,11 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 @keyframes lockshake{10%,90%{transform:translateX(-6px)}20%,80%{transform:translateX(6px)}30%,50%,70%{transform:translateX(-9px)}40%,60%{transform:translateX(9px)}}
 /* ── DESKTOP / TABLET (iPad+, PC) ── */
 @media(min-width:760px){
-  .hdr{padding:8px 22px 6px}
+  .hdr{padding:8px 22px}
   .logo{font-size:20px}
-  .logo-s,.saved{font-size:13px}
+  .saved{font-size:13px}
   .btn{font-size:13px;padding:6px 12px}
-  #navSidebar{width:216px;padding:14px 10px}
+  #navSidebar{padding:14px 8px}
   .np{font-size:13.5px;padding:9px 11px}
   /* Foto-Referenz 2026-08-02: einzeilige Watchlist braucht mehr Breite,
      sonst wird die Sparkline auf 0 zusammengedrueckt. Alt: width:90px; */
@@ -2268,9 +2287,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   .dw-nav{font-size:12px;padding:3px 6px}
   .modal{max-width:min(720px,94vw);padding:20px}
   .modal h3{font-size:17px}
-  .modal.inbox-modal{max-width:min(1300px,94vw)}
-  #inboxList{max-height:72vh}
-  .lock-logo{font-size:28px}
+    .lock-logo{font-size:28px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
   .lock-key{width:68px;height:68px;font-size:25px}
   /* ── CALENDAR TABLE: TABLET ── */
@@ -2287,9 +2304,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 }
 /* ── WIDE DESKTOP / iPad LANDSCAPE ── */
 @media(min-width:1100px){
-  .modal.inbox-modal{max-width:min(1300px,94vw)}
-  #inboxList{max-height:78vh}
-  .dp{max-width:none}
+    .dp{max-width:none}
   /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
      auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
      bleibt oben und wird NICHT gestreckt. */
@@ -2624,7 +2639,7 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
    Alarm-Zaehler bzw. die Undo/Redo-Pfeile (per Playwright bei 1366px
    gesehen). So kann er nie etwas verdecken - er bekommt einfach den Platz,
    der zwischen beiden Bloecken uebrig ist. */
-.hdr-livebanner{grid-column:2/-1;grid-row:1;justify-self:center;min-width:0;max-width:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;pointer-events:none;overflow:hidden;font-family:var(--ff-num)}
+.hdr-livebanner{flex-shrink:0;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;font-family:var(--ff-num)}
 .hlb-name{overflow:hidden;text-overflow:ellipsis}
 .hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
@@ -2633,22 +2648,14 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .hlb-clock{font-size:11px;font-weight:700;color:var(--t1)}
 .hlb-sep{color:var(--t3);opacity:.5}
 .hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
-/* Schmale Screens: Buttons neben den Logo-Block (Zeile 1), Banner darunter
-   ueber die volle Breite - sonst waere die Button-Leiste dort zu eng. */
-/* Unter 1080px: die Button-Spalte (.hdr-r) und die Statuszeile (.hdr-sub)
-   brauchen weiterhin je eine eigene volle Zeile, sonst quetscht es den
-   Logo-/Statustext mehrzeilig zusammen (per Playwright bei 820px und 390px
-   gesehen). Logo + Live-Banner bleiben aber (Nutzer-Foto 2026-08-04: "in
-   eine Zeile") IMMER zusammen in Zeile 1 - dafuer reicht eine 2-Spalten-
-   Aufteilung (Logo links, Banner rechts daneben), der Squeeze-Grund von
-   oben betraf nur hdr-sub/hdr-r, nicht Logo/Banner. Grenze bewusst 1080px,
-   damit sie unter dem 1100px-Breakpoint des Dashboard-Grids liegt. */
+/* Mittelbreite Screens: Suchfeld darf schrumpfen, Status-Cluster (Saved/
+   Live/Version) faellt als erstes weg, bevor irgendetwas umbricht - alles
+   bleibt in EINER Reihe (Nutzer-Wunsch 2026-08-21). */
 @media(max-width:1079px){
-  .hdr{grid-template-columns:auto minmax(0,1fr)}
-  .logo{grid-column:1;grid-row:1;justify-self:start}
-  .hdr-livebanner{grid-column:2;grid-row:1;justify-self:center}
-  .hdr-sub{grid-column:1/-1;grid-row:2}
-  .hdr-r{grid-column:1/-1;grid-row:3;justify-self:start;margin-top:3px}
+  .hdr-search{max-width:260px}
+}
+@media(max-width:900px){
+  .net-status{display:none}
 }
 /* ── Paar-Overview (Set-ups -> Klick auf einen Paarnamen) ─────────────── */
 .pov-wrap{animation:fadeIn .18s ease}
@@ -3099,28 +3106,26 @@ function introLogin(){
 
 <div class="hdr">
   <div class="logo"><span class="logo-fx">FX</span><span class="logo-rest">Analyst Pro</span></div>
-  <div class="hdr-sub">
-    <div class="logo-s" id="statLine"><span class="skel" style="width:172px"></span></div>
-    <div class="saved" id="saveBadge">✓ Auto-saved</div>
-    <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
+  <div class="hdr-search" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)">
+    <svg class="ic ic-search" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="hdr-search-lbl">Search assets, indicators, events &amp; tabs...</span>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-401 - Koyfin-Referenz umgesetzt (Nutzer-Wunsch per /goal, drei Screenshots als Vorbild): dunkle Aussenhuelle (Kopfzeile + neue Nav-Sidebar), helle Marmor-Karten bleiben innen unveraendert. Groesster Teil: horizontale Tab-Leiste komplett durch eine vertikale Sidebar links ersetzt (App-Shell-Umbau: .hdr bleibt oben durchgehend, darunter #navSidebar+#pageArea nebeneinander) - Kategorien stehen jetzt untereinander mit Icon je Tab, aktiver Eintrag ueber blauen Rand+Icon hervorgehoben, 'Insights'-Stapel oeffnet als Flyout RECHTS neben dem Button statt darunter. Dunkle Farbgebung ausschliesslich ueber gescopte CSS-Variablen-Ueberschreibung auf .hdr/#navSidebar (keine der ~200 bestehenden var(--t0)/var(--bg3)-Stellen einzeln angefasst). Auf schmalen Bildschirmen (<760px) klappt die Sidebar auf eine reine 56px-Icon-Leiste zusammen (Nutzer-Entscheid), Labels per title-Tooltip weiter erreichbar. Bias-Farben (Blau/Rot) unveraendert, Kartenrand-Wert aus V400 (1.58:1) unveraendert - nur die Chrome-Ebene ist neu."><span class="hlb-dot"></span></span>
-    <span class="hlb-lbl">LIVE</span>
-    <span class="hlb-clock" id="hlbClock">--:--:--</span>
-    <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-401</span>
+  <div class="hdr-status">
+    <span class="saved" id="saveBadge">✓ Auto-saved</span>
+    <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-402 - Kopfzeile+Sidebar komplett ueberarbeitet (Nutzer-Wunsch per /goal, Punktliste). Kopfzeile: Inbox (Button/Modal/gesamter Postfach-Code inkl. State in snap()/applySnap()) vollstaendig entfernt; 'Data' (Export/Import/Backups) aus dem Header in die Einstellungen verschoben (bisheriges Cloud-Sync-Modal heisst jetzt 'Settings', Data steht dort als erste Zeile); Suche sitzt jetzt links als breites Suchfeld (Koyfin-Referenz) statt Icon-Button rechts; Bull/Bear/Neutral-Zaehlzeile unter dem Logo raus (updateStat() entfernt); 'Saved' steht jetzt direkt neben LIVE/Version; alles in EINER Reihe statt 2-Zeilen-Grid. Sidebar: Breite passt sich per width:max-content dem laengsten Label an (kein Platz mehr verschwendet); 'Insights' klappt jetzt INLINE (kleinere Schrift, eingerueckt) statt als Flyout auf; Sidebar klappt automatisch auf Icon-Breite ein, sobald im Inhalt gescrollt/getippt wird, und wieder aus bei Beruehrung. Farbe: Kopfzeile+Sidebar sind jetzt derselbe Grauton wie die Rubrik-Karten bei Assets (#d7dbe0, vorher dunkles Navy) - dieser Ton lebt jetzt NUR noch dort, --bg3 (Kartenhintergrund im Inhalt) wurde dafuer auf ein helleres Grau angehoben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+      <span class="hlb-lbl">LIVE</span>
+      <span class="hlb-clock" id="hlbClock">--:--:--</span>
+      <span class="hlb-sep">·</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-402</span>
+    </span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
     <button class="btn" id="redoBtn" onclick="doRedo()" disabled title="Forward (Redo)">→</button>
-    <button class="btn" onclick="openSearchM()" title="Search assets, indicators, events & tabs (shortcut: /)"><svg class="ic ic-search" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="btn-lbl"> Search</span></button>
-    <div class="hdr-menu-wrap">
-      <button class="btn" onclick="toggleDataMenu(event)" title="Data: export, import & local backups"><svg class="ic ic-database" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><span class="btn-lbl"> Data</span></button>
-    </div>
     <input type="file" id="impFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn" onclick="openHelpM()" title="How the scoring works"><svg class="ic ic-help" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="btn-lbl"> Help</span></button>
-    <button class="btn inbox-btn" id="inboxBtn" onclick="openInboxM()" title="Inbox"><svg class="ic ic-bell" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="btn-lbl"> Inbox</span><span class="inbox-badge" id="inboxBadge" style="display:none">!</span></button>
-    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Cloud sync">
+    <button class="profile-btn" id="profileBtn" onclick="openCloudM()" title="Settings & cloud sync">
       <span class="profile-circle" id="profileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
       <span class="profile-name" id="profileName">Sync</span>
     </button>
@@ -3250,11 +3255,11 @@ function introLogin(){
   <div id="watchBody"></div>
 </div>
 
-<!-- MODAL: Preis-Alerts (Level ueber-/unterschritten -> Inbox + Telegram) -->
+<!-- MODAL: Preis-Alerts (Level ueber-/unterschritten -> Telegram) -->
 <div class="ov" id="mPriceAlert" style="display:none" onclick="if(event.target===this)closeM('mPriceAlert')">
   <div class="modal" style="max-width:430px">
     <h3>Price Alerts</h3>
-    <div class="help-p" style="margin-bottom:10px">Get a message when a pair or asset crosses a level. Checked against the hourly price feed — in the app (Inbox) and via Telegram (same setup as event alerts). An alert fires once and stays in the list until you delete it.</div>
+    <div class="help-p" style="margin-bottom:10px">Get a message when a pair or asset crosses a level. Checked against the hourly price feed via Telegram (same setup as event alerts). An alert fires once and shows "fired" in the list until you delete it.</div>
     <div style="display:flex;flex-direction:column;gap:7px">
       <select class="btn" id="paTarget" style="cursor:pointer"></select>
       <div style="display:flex;gap:7px">
@@ -3550,18 +3555,22 @@ function introLogin(){
     <div class="m-btns"><button class="btn" onclick="closeM('mIndLink')">Cancel</button><button class="btn" onclick="resetIndLink()">Default</button><button class="btn g" onclick="saveIndLink()">Save</button></div>
   </div>
 </div>
-<!-- MODAL: Inbox -->
-<div class="ov" id="mInbox" style="display:none">
-  <div class="modal inbox-modal">
-    <h3>📥 Inbox</h3>
-    <div id="inboxList"></div>
-    <div class="m-btns" style="margin-top:10px"><button class="btn r" onclick="clearInbox()">Clear All</button><button class="btn" onclick="closeM('mInbox')">Close</button></div>
-  </div>
-</div>
 <!-- MODAL: Cloud Sync -->
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
-    <h3>☁ Cloud Synchronization</h3>
+    <h3>⚙ Settings</h3>
+    <!-- Export/Import/Backups: bis 2026-08-21 ein eigenes Header-Dropdown
+         ("Data"), Nutzer-Wunsch per /goal ("pack data in die
+         Einstellungen") - jetzt hier als erste Zeile, gleiches Muster wie
+         jede andere Einstellungs-Zeile in diesem Modal. -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--t2)">Data<br><span style="font-size:10.5px;color:var(--t3)">export, import & local backups</span></span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" onclick="exportData()">Export JSON</button>
+        <button class="btn" onclick="document.getElementById('impFile').click()">Import JSON</button>
+        <button class="btn" onclick="openBackupM()">Backups</button>
+      </div>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
       <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
       <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
@@ -3606,6 +3615,7 @@ function introLogin(){
       <span style="font-size:12px;color:var(--t2)">All animations at once</span>
       <button class="btn" id="allAnimToggleBtn" onclick="toggleAllAnim()">Turn all off</button>
     </div>
+    <h3 style="font-size:13px;margin:14px 0 10px">☁ Cloud Sync</h3>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
@@ -5778,7 +5788,7 @@ function toggleCalHighOnly(){
   cloudAutoSync();
   updCalHighBtn();
   renderCalendar();
-  renderInbox();
+  
   if(curPage==='dash')renderDash();
   if(curPage==='cur')renderDetail();
 }
@@ -6045,37 +6055,6 @@ function isEvtJustReleased(ev){
   const cur=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
   return cur>=ev.time;
 }
-// Erzeugt eine "Event ist gerade erschienen"-Benachrichtigung fürs Postfach
-// (kind:'evt') - zeigt Name, Waehrung(en) und Actual/Forecast/Previous.
-// Gleiches Muster wie mkScoreNotif, aber ohne Symbol-/Rubrik-Bezug (ein
-// Kalender-Event kann mehrere Waehrungen betreffen, z.B. CNY-Feiertage).
-function mkEventNotif(ev){
-  return{
-    id:uid(),kind:'evt',
-    key:evtDismissKey(ev),
-    symId:ev.currencies||'',currencies:ev.currencies||'',
-    label:ev.name||'',
-    bias:indBiasFromEvent(ev),
-    actual:ev.actual!=null?ev.actual:null,forecast:ev.forecast!=null?ev.forecast:null,previous:ev.previous!=null?ev.previous:null,
-    date:ev.date,time:ev.time||'',
-    ts:Date.now()
-  };
-}
-// Legt für jedes gerade erschienene High-Impact-Event (isEvtJustReleased)
-// einmalig eine Postfach-Nachricht an - entdoppelt über denselben stabilen
-// Schlüssel (evtDismissKey) wie die Event-Alarme, damit ein Release nicht
-// bei jedem Kalender-Reload erneut gemeldet wird.
-function syncEvtNotifs(){
-  let changed=false;
-  calEvts.forEach(ev=>{
-    if(!isEvtJustReleased(ev))return;
-    const k=evtDismissKey(ev);
-    const dup=inbox.find(m=>m.kind==='evt'&&m.key===k);
-    if(!dup){inbox.unshift(mkEventNotif(ev));changed=true;}
-  });
-  return changed;
-}
-
 // ── NEWS PROCESSING / POSTFACH ──────────────────────────────────────
 // Kopiert fällige (heute/vergangene) Events ins Postfach. Events bleiben
 // zusätzlich noch CAL_PAST_DAYS Tage lang im Kalender (und damit auch beim
@@ -6101,7 +6080,6 @@ let calCcyFilter=localStorage.getItem('fxpro_cal_ccy')||'ALL';
 // vergangene Tage starten immer eingeklappt).
 const calOpenDays=new Set();
 function processCalEvts(){
-  const today=todayStr();
   let changed=false;
   // Score-relevante Events (CPI, NFP, Zinsentscheid, GDP, PMI ...) immer als
   // High-Impact einstufen, auch wenn die Quelle nur "Medium" liefert.
@@ -6111,20 +6089,6 @@ function processCalEvts(){
   const before=calEvts.length;
   calEvts=calEvts.filter(ev=>daysUntil(ev.date)>=-CAL_PAST_DAYS);
   if(calEvts.length!==before)changed=true;
-  // Postfach kennt die Nachrichtenarten 'score' (Indikator-Update), 'price'
-  // (Preis-Alert) und 'evt' (Kalender-Event ist gerade erschienen, ersetzt
-  // das fruehere rote/gruene Ausrufezeichen-System, siehe mkEventNotif/
-  // syncEvtNotifs) - keine losen Kalender-Kopien ohne kind mehr. Hier nur
-  // noch alte Benachrichtigungen ausräumen, deren Release länger als
-  // INBOX_NOTIF_DAYS her ist.
-  const beforeInbox=inbox.length;
-  inbox=inbox.filter(m=>{
-    if(m.kind!=='score'&&m.kind!=='price'&&m.kind!=='evt')return false;
-    if(m.date&&daysUntil(m.date)<-INBOX_NOTIF_DAYS)return false;
-    return true;
-  });
-  if(inbox.length!==beforeInbox)changed=true;
-  if(syncEvtNotifs())changed=true;
   // Ausgeloeste Event-Alarme raeumen sich 1 Tag nach ihrer Faelligkeit selbst
   // aus der Historie (siehe pruneEventAlerts) - hier zusaetzlich zum Boot/
   // Cloud-Pull, damit eine lange offene Sitzung sie nicht endlos anzeigt.
@@ -6134,9 +6098,6 @@ function processCalEvts(){
   // Wenn sich hier Indikator-Bias aendert, muss auch die Rubrik-Karte neu
   // eingestuft werden (score-abhaengige Karten-Bias, siehe recomputeAuto).
   if(syncIndicatorBiases()){changed=true;recomputeAuto();}
-  if(syncIndNotifs())changed=true;
-  // Sicherheitskappe: höchstens 60 Benachrichtigungen behalten (neueste zuerst).
-  if(inbox.length>60){inbox=inbox.slice(0,60);changed=true;}
   return changed;
 }
 // Events für ein Symbol - inkl. Währungs-News bei Nicht-FX-Assets (verbundene
@@ -7092,26 +7053,6 @@ function applyResearchToCal(){
 // Rohstoffe/Krypto/Indizes (NONFX_IDS) zeigen die Actual/Forecast/Previous-
 // Werte zwar ebenfalls an (sie nutzen die USD-Events), aber ihr Bias wird
 // NICHT automatisch verändert - das bleibt manuell (siehe resetNonFxIndBias).
-// Benachrichtigungen werden über den persistenten notifKey je Indikator
-// entdoppelt: Ein Release wird nur EINMAL gemeldet (auch über Reloads hinweg),
-// neue Releases - oder solche, die seit der letzten Sitzung dazukamen - lösen
-// dagegen eine Meldung aus. Dadurch braucht es keinen Boot-Schalter, der
-// (fälschlich) auch frische, noch ungesehene Releases unterdrücken würde.
-// Erzeugt eine "Indikator wurde aktualisiert"-Benachrichtigung fürs Postfach.
-// Die Richtung (bull/bear/neu) ergibt sich aus dem Beat/Miss des Releases.
-function mkScoreNotif(symId,rub,ind,ev){
-  return{
-    id:uid(),kind:'score',
-    symId,currencies:symId,
-    base:stripPeriodSuffix(ind.name).base,
-    label:ind.displayName||ind.name,
-    rubName:rub.name,
-    bias:ev?indBiasFromEvent(ev):ind.bias,
-    actual:ev?ev.actual:null,forecast:ev?ev.forecast:null,previous:ev?ev.previous:null,
-    date:ev?ev.date:todayStr(),time:ev?ev.time:'',
-    ts:Date.now()
-  };
-}
 // Momentum-Trend wird JETZT IMMER berechnet (nicht nur ohne Forecast), wirkt
 // aber je nach Forecast-Verfuegbarkeit unterschiedlich stark auf den Score:
 // - Kein Forecast: der Trend ERSETZT das Bias komplett (ind.bias = Trend-
@@ -7178,48 +7119,6 @@ function syncIndicatorBiases(){
           }
         }
         if(applyTrendModel(ind,noForecast,newRelease,evSig))changed=true;
-      });
-    });
-  });
-  return changed;
-}
-// Postfach-Benachrichtigungen: für JEDEN FX-Indikator (über ALLE Rubriken -
-// also auch Economic Growth mit Consumer Confidence/PMI/GDP/Retail Sales, nicht
-// nur die Auto-Bias-Rubriken), sobald ein Kalender-Release mit Actual-Wert
-// vorliegt, dessen STABILER Schlüssel (Name+Datum+Währung, unabhängig von der
-// bei jedem FF-Reload wechselnden ev.id) sich vom zuletzt gemerkten notifKey
-// unterscheidet. Indikatoren ohne Kalender-Matcher (Bonds, COT, Geopolitik)
-// liefern findIndEvent=null und werden automatisch übersprungen. Die
-// Dublettensperre (gleicher Indikator+Release-Tag) und der persistente
-// notifKey verhindern, dass dasselbe Release mehrfach gemeldet wird.
-function syncIndNotifs(){
-  let changed=false;
-  syms.forEach(c=>{
-    if(isNonFx(c.id))return;
-    (c.rubrics||[]).forEach(rub=>{
-      if(!rub.indicators)return;
-      rub.indicators.forEach(ind=>{
-        // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben volle
-        // Exklusivitaet gegenueber dem Kalender-Pfad (siehe Dual-Source-Fix,
-        // CLAUDE.md) - sonst koennte hier ein falsch zugeordnetes Kalender-
-        // Event (z.B. ein Landesrelease unter der falschen Waehrung) eine
-        // irrefuehrende Postfach-Meldung mit falschem Wert erzeugen
-        // (Bugreport 2026-07-20, EUR PPI). Synthetisches Event aus
-        // ind.research statt findIndEvent() - gleiches Muster wie in
-        // symScoreDrivingEventsByDate() - damit feed-abgedeckte Indikatoren
-        // weiterhin (korrekte) Release-Benachrichtigungen bekommen, statt sie
-        // komplett zu verlieren.
-        const r=ind.research;
-        const ev=(r&&r.feed)
-          ?{name:ind.name,date:r.date,time:'',currencies:c.id,actual:r.actual,forecast:r.forecast,previous:r.previous}
-          :findIndEvent(c.id,ind.name);
-        if(!ev||!ev.actual)return;
-        const k=evtDismissKey(ev);
-        if(ind.notifKey===k)return;
-        const base=stripPeriodSuffix(ind.name).base;
-        const dup=inbox.find(m=>m.kind==='score'&&m.symId===c.id&&m.base===base&&m.date===ev.date);
-        if(!dup){inbox.unshift(mkScoreNotif(c.id,rub,ind,ev));changed=true;}
-        ind.notifKey=k;changed=true;
       });
     });
   });
@@ -8684,7 +8583,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,inbox,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -8744,7 +8643,7 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];inbox=d.inbox||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -8752,8 +8651,8 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||
 // einen Undo/Redo-Klick als eigene Nutzeraktion (Nutzer-Bugreport 2026-07-27,
 // gleiche Bug-Klasse wie toggleMwSym/die Notes-Funktionen).
 function markUserEditTs(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
-function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
-function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();updInboxBadge();}
+function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();}
+function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ LOKALE BACKUPS ══════════════════════════════════════════════════
@@ -8787,14 +8686,14 @@ function restoreLocalBackup(i){
     if(!confirm('Restore state from '+new Date(b.ts).toLocaleString('en-GB')+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
     pushU();applySnap(b.data);
     if(b.rerd!==undefined){riskEnvRemindDismissed=b.rerd;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',b.rerd);}catch(e){}}
-    processCalEvts();save();renderSidebar();rerender();updUB();updInboxBadge();
+    processCalEvts();save();renderSidebar();rerender();updUB();
     closeM('mBackup');
   }catch(e){alert('Error while restoring: '+e.message);}
 }
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],inbox=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
+let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -9029,7 +8928,6 @@ function loadState(){
       dashV=d.dashV||0;
       dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];
       migrateDash();
-      inbox=pruneInbox(d.inbox||[]);
       sbOrder=d.sbOrder||{};
       catOrder=d.catOrder||[];
       rateWatchCustom=d.rateWatchCustom||{};
@@ -9042,7 +8940,7 @@ function loadState(){
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];inbox=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -9064,7 +8962,7 @@ function adoptExternalState(){
     // Cloud sind (dessen 1.5s-Push laeuft evtl. noch) - das geteilte
     // localStorage-Flag weiss es am besten.
     _userEditedSinceSync=localStorage.getItem('fxpro_user_pending')==='1';
-    renderSidebar();rerender();updateStat();updUB();updInboxBadge();
+    renderSidebar();rerender();updUB();
   }catch(e){}
 }
 function save(){
@@ -9152,7 +9050,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();updInboxBadge();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -9218,38 +9116,6 @@ function updProfile(){
     c.textContent=ini;c.classList.add('ini');
   }
 }
-// Kleines Header-Dropdown "Data" (Export/Import/Backups zusammengefasst,
-// statt drei gleichrangiger Header-Buttons). Schliesst bei Klick daneben.
-// Wird - wie das Stack-Tab-Menue (openStackMenu) - dynamisch an document.body
-// gehaengt statt als statisches Kind von .hdr zu leben: .hdr hat
-// backdrop-filter, das erzeugt einen eigenen Stacking-Context und faengt
-// jedes z-index darin ein. Ragt das Menue (3 Zeilen) auf kompaktem Mobil-
-// Header ueber die Kopfzeile in die .tabbar-Leiste hinein (die ebenfalls
-// backdrop-filter hat und als spaeteres Geschwisterelement im DOM darueber
-// gemalt wird), verschwand die mittlere Zeile optisch dahinter (Nutzer-
-// Bugreport 2026-07-19, Screenshot: "Import JSON" unlesbar/verdeckt). Fix:
-// wie .tab-menu per position:fixed + document.body.appendChild rendern,
-// dann kann keine spaetere Geschwister-Stacking-Context mehr darueber malen.
-function toggleDataMenu(ev){
-  ev.stopPropagation();
-  const existing=document.getElementById('dataMenu');
-  if(existing){closeDataMenu();return;}
-  const btn=ev.currentTarget;
-  const r=btn.getBoundingClientRect();
-  const m=document.createElement('div');
-  m.className='hdr-menu';m.id='dataMenu';
-  m.innerHTML=`<button onclick="closeDataMenu();exportData()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export JSON</button>
-    <button onclick="closeDataMenu();document.getElementById('impFile').click()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import JSON</button>
-    <button onclick="closeDataMenu();openBackupM()"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Backups</button>`;
-  document.body.appendChild(m);
-  const mw=Math.max(176,m.offsetWidth);
-  m.style.position='fixed';
-  m.style.left=Math.max(8,Math.min(r.right-mw,window.innerWidth-mw-8))+'px';
-  m.style.top=(r.bottom+6)+'px';
-  m.style.zIndex='100001';
-  setTimeout(()=>document.addEventListener('pointerdown',dataMenuOutside,true),0);
-}
-function dataMenuOutside(e){const m=document.getElementById('dataMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.hdr-menu-wrap')))closeDataMenu();}
 // ── Globale Suche (Nutzer-Wunsch 2026-07-16): ein Feld fuer Assets,
 // Indikatoren, Kalender-Events und Tabs. "/" oeffnet sie, Pfeiltasten +
 // Enter navigieren, Klick springt direkt an die Stelle.
@@ -9386,10 +9252,6 @@ document.addEventListener('keydown',e=>{
     if(p){e.preventDefault();showTab('watch');const el=document.getElementById('pgWatch');if(el)el.scrollTop=0;}
   }
 });
-function closeDataMenu(){
-  const m=document.getElementById('dataMenu');if(m)m.remove();
-  document.removeEventListener('pointerdown',dataMenuOutside,true);
-}
 // Gibt true/false zurueck (Erfolg/Misserfolg), damit z.B. der
 // Online-Reconnect-Handler (siehe unten) einen fehlgeschlagenen Push
 // automatisch nochmal versuchen kann.
@@ -9582,7 +9444,7 @@ async function cloudPull(manual,forceOverwrite){
       }else{
         markUserSynced();
       }
-      renderSidebar();rerender();updateStat();updUB();updInboxBadge();
+      renderSidebar();rerender();updUB();
       if(manual)setCloudStatus('✓ Downloaded: '+new Date(cloudUpdated).toLocaleString());
     }else if(manual){
       setCloudStatus('Already up to date.');
@@ -9622,7 +9484,7 @@ document.addEventListener('click',ev=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mInbox','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -9848,7 +9710,7 @@ function renderDetail(){
   syncSidebarScores();
   setTimeout(syncSidebarScores,0);
   animChanges();
-  updateStat();
+  
 }
 
 // ── KARTEN-GRID (gleich hohe Zeilen) ──
@@ -12777,14 +12639,6 @@ function removeCustomEvtAlert(){
   save();closeM('mEvtAlertCustom');rerender();
 }
 
-// ── INBOX / POSTFACH ─────────────────────────────────────────────────
-// Nachrichten loeschen sich nach 2 Tagen selbst (Alter ueber den
-// Empfangs-Zeitstempel `ts`, nicht ueber das Event-Datum).
-const INBOX_TTL_MS=2*86400000;
-function pruneInbox(arr){
-  const cutoff=Date.now()-INBOX_TTL_MS;
-  return(arr||[]).filter(n=>!n.ts||n.ts>=cutoff);
-}
 // ── EVENT-ALARME (Telegram) ─────────────────────────────────────────
 // Ausgeloeste Alarme raeumen sich 1 Tag nach ihrer Faelligkeit (fireAt)
 // automatisch aus der Historie, damit die Liste nicht endlos waechst (der
@@ -12803,8 +12657,9 @@ function pruneEventAlerts(arr){
 // laeuft wie bei den Event-Alarmen SERVERSEITIG (event-alerts.yml liest
 // priceAlerts aus fx_sync + price_data.json von main und dedupliziert ueber
 // fx_alert_log). Der Browser prueft zusaetzlich bei jedem Preis-Refresh und
-// legt beim Ueberschreiten eine Inbox-Nachricht ab (a.notified verhindert
-// Wiederholung; der Alarm bleibt sichtbar in der Liste, bis er geloescht wird).
+// markiert den Alarm beim Ueberschreiten als ausgeloest (a.notified
+// verhindert Wiederholung; der Alarm bleibt sichtbar in der Liste, bis er
+// geloescht wird).
 function currentPriceOf(target){
   if(String(target).includes('/')){
     const[b,q]=target.split('/');
@@ -12845,7 +12700,7 @@ function createPriceAlert(){
 function delPriceAlert(id){pushU();priceAlerts=priceAlerts.filter(a=>a.id!==id);save();renderPriceAlertList();}
 function renderPriceAlertList(){
   const el=document.getElementById('paList');if(!el)return;
-  if(!(priceAlerts||[]).length){el.innerHTML=`<div class="inbox-empty" style="padding:10px">No price alerts yet.</div>`;return;}
+  if(!(priceAlerts||[]).length){el.innerHTML=`<div class="dw-empty" style="padding:10px">No price alerts yet.</div>`;return;}
   el.innerHTML=priceAlerts.map(a=>{
     const p=currentPriceOf(a.target);
     const fired=!!a.notified;
@@ -12868,98 +12723,10 @@ function checkPriceAlerts(){
     const crossed=a.dir==='above'?p>=a.level:p<=a.level;
     if(!crossed)return;
     a.notified=true;a.notifiedAt=Date.now();
-    inbox.unshift({id:uid(),kind:'price',symId:a.target,currencies:a.target,base:'',
-      label:`Price ${a.dir==='above'?'rose above':'fell below'} ${a.level}`,
-      rubName:'Price alert',bias:a.dir==='above'?'bull':'bear',
-      actual:fmtPriceTick(p),forecast:null,previous:null,date:todayStr(),time:'',ts:Date.now()});
     changed=true;
   });
-  if(changed){save();updInboxBadge();}
+  if(changed)save();
   return changed;
-}
-function updInboxBadge(){
-  const before=inbox.length;
-  inbox=pruneInbox(inbox);
-  if(inbox.length!==before)save();
-  const b=document.getElementById('inboxBadge');if(!b)return;
-  b.style.display=inbox.length?'flex':'none';
-}
-function openInboxM(){renderInbox();openM('mInbox');}
-// Das Postfach zeigt jetzt Score-Update-Benachrichtigungen: ein Indikator
-// hat einen neuen Wert bekommen, der den Score bewegt. Klick -> direkt zum
-// Indikator bei der jeweiligen Währung.
-// Gruppiert nach Tag (das Event-Datum der Meldung, sonst der Empfangstag),
-// aelteste Tage oben, neueste ganz unten - der heutige Tag wird rot
-// hervorgehoben.
-function renderInbox(){
-  const el=document.getElementById('inboxList');if(!el)return;
-  const before=inbox.length;
-  inbox=pruneInbox(inbox);
-  if(inbox.length!==before)save();
-  if(!inbox.length){el.innerHTML=`<div class="inbox-empty">No messages yet. You'll get a message here whenever a new release changes a currency's score or a high-impact event is released.</div>`;return;}
-  const todayStr=new Date().toISOString().slice(0,10);
-  const sorted=[...inbox].sort((a,b)=>(a.ts||0)-(b.ts||0));
-  const dayKey=n=>n.date||(n.ts?new Date(n.ts).toISOString().slice(0,10):'');
-  const byDate={};
-  sorted.forEach(n=>{(byDate[dayKey(n)]=byDate[dayKey(n)]||[]).push(n);});
-  const dates=Object.keys(byDate).sort((a,b)=>a.localeCompare(b));
-  el.innerHTML=dates.map(d=>{
-    const rows=byDate[d].map(n=>{
-      const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
-      const dirLbl=n.bias==='bull'?'▲ Bullish':n.bias==='bear'?'▼ Bearish':'◆ Neutral';
-      const af=[n.actual!=null&&n.actual!==''?'A '+escH(n.actual):null,n.forecast!=null&&n.forecast!==''?'F '+escH(n.forecast):null,n.previous!=null&&n.previous!==''?'P '+escH(n.previous):null].filter(Boolean).join('  ·  ');
-      const when=n.time?escH(n.time):'';
-      return`<div class="nb-row" onclick="gotoIndicatorByNotif('${n.id}')" title="Open ${escH(n.symId)} · ${escH(n.label)}">
-        <span class="nb-ccy">${escH(n.symId)}</span>
-        <div class="nb-main">
-          <div class="nb-name">${escH(n.label)}${n.rubName?`<span class="nb-rub"> · ${escH(n.rubName)}</span>`:''}</div>
-          <div class="nb-sub">${af}${af&&when?'  ·  ':''}${when}</div>
-        </div>
-        <span class="nb-dir ${dirCls}">${dirLbl}</span>
-        <button class="nb-del" onclick="event.stopPropagation();delInboxItem('${n.id}')" title="Dismiss">×</button>
-      </div>`;
-    }).join('');
-    const isToday=d===todayStr;
-    return`<div class="nb-day-hdr${isToday?' nb-day-today':''}">${d?escH(fmtDayHdr(d)):'Unknown date'}</div>${rows}`;
-  }).join('');
-}
-// Navigiert vom Postfach direkt zum betroffenen Indikator: Währung öffnen,
-// zugehörige Rubrik aufklappen und die Indikator-Karte kurz hervorheben.
-function gotoIndicatorByNotif(id){
-  const n=inbox.find(x=>x.id===id);if(!n)return;
-  closeM('mInbox');
-  // Preis-Alert-Nachrichten haben kein Indikator-Ziel - zur Set-ups-Seite
-  // (dort leben die Paar-Preise und das Preis-Alert-Modal).
-  if(n.kind==='price'){showTab('pairs');return;}
-  const sym=syms.find(s=>s.id===n.symId);
-  if(sym){const rub=(sym.rubrics||[]).find(r=>r.name===n.rubName);if(rub&&rub.collapsed){rub.collapsed=false;save();}}
-  gotoSym(n.symId);
-  setTimeout(()=>{
-    const d=document.getElementById('detail');if(!d)return;
-    const card=[...d.querySelectorAll('.ind-row')].find(el=>el.dataset.indbase===n.base);
-    if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.classList.add('ind-flash');setTimeout(()=>card.classList.remove('ind-flash'),1800);}
-  },150);
-}
-function delInboxItem(id){
-  pushU();
-  inbox=inbox.filter(m=>m.id!==id);
-  save();
-  renderInbox();
-  updInboxBadge();
-  renderSidebar();
-  rerender();
-}
-// Leert das Postfach vollständig (Clear All).
-function clearInbox(){
-  if(!inbox.length)return;
-  if(!confirm('Clear all messages from the inbox?'))return;
-  pushU();
-  inbox=[];
-  save();
-  renderInbox();
-  updInboxBadge();
-  renderSidebar();
-  rerender();
 }
 // Holt Events von FF (this+next week) für ein 10-Tage-Fenster.
 // Forex Factory bietet keine offizielle API/keinen API-Key an - der Feed unter
@@ -13111,11 +12878,11 @@ async function fetchFF(silent,btnEl){
       }
     });
     // Bestehende Events (auch außerhalb des 10-Tage-Fensters, bereits
-    // vergangene und solche, die schon ins Postfach gewandert sind) auf neu
-    // verfügbare "Actual"-Werte prüfen und nachtragen, ohne das Event selbst
-    // neu anzulegen (Notizen/Edits bleiben erhalten). Als Abgleich-Pool dient
-    // das bereits mit den Live-Daten zusammengeführte evts-Set.
-    [...calEvts,...inbox].forEach(e=>{
+    // vergangene) auf neu verfügbare "Actual"-Werte prüfen und nachtragen,
+    // ohne das Event selbst neu anzulegen (Notizen/Edits bleiben erhalten).
+    // Als Abgleich-Pool dient das bereits mit den Live-Daten
+    // zusammengeführte evts-Set.
+    calEvts.forEach(e=>{
       const match=evts.find(ev=>{
         if(!ev.date)return false;
         if(ev.impact!=='High'&&ev.impact!=='Medium')return false;
@@ -13139,7 +12906,7 @@ async function fetchFF(silent,btnEl){
     updFFLastUpd();
     applyResearchToCal();
     processCalEvts();
-    save();renderSidebar();rerender();renderInbox();updInboxBadge();
+    save();renderSidebar();rerender();
     if(!silent){
       alert('✓ '+added+' new high/medium-impact event(s) loaded for the last '+FF_PAST_DAYS+' and next '+FF_WINDOW_DAYS+' days.\n✓ '+actualsAdded+' "Actual" value(s) added or filled in.'+(revisionsUpdated?'\n✓ '+revisionsUpdated+' "Previous" value(s) revised.':''));
     }
@@ -15483,36 +15250,18 @@ function renderDash(){
     }else if(w.type==='notification'){
       // Sammelt die frueher als eigene schwebende Banner ueber dem Grid
       // gezeigten Popups (COT/Risk-Env-Erinnerung, Nutzer-Wunsch 2026-07-25:
-      // "mach die Pop ups wie zB cot in die notifications rein") UND jetzt
-      // zusaetzlich die "Event ist gerade erschienen"-Meldungen (kind:'evt',
-      // siehe mkEventNotif/syncEvtNotifs) - ersetzt das fruehere rote/gruene
-      // Ausrufezeichen-System (Nutzer-Wunsch 2026-08-03: "kein Hinweisen mehr
-      // per Ausrufezeichen, stattdessen eine Notification sobald das Event
-      // eingetroffen ist"). Der "View FF"-Link im Kartenkopf (hdrHtml weiter
-      // unten) fuehrt direkt zum Forex-Factory-Kalender.
+      // "mach die Pop ups wie zB cot in die notifications rein"). Der
+      // "View FF"-Link im Kartenkopf (hdrHtml weiter unten) fuehrt direkt
+      // zum Forex-Factory-Kalender.
       const popups=cloudNotConnectedNoticeHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
-      const evtNotifs=[...inbox].filter(m=>m.kind==='evt').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,6);
-      const evtRows=evtNotifs.map(n=>{
-        const dirCls=n.bias==='bull'?'nb-bull':n.bias==='bear'?'nb-bear':'nb-neu';
-        const dirLbl=n.bias==='bull'?'▲':n.bias==='bear'?'▼':'◆';
-        const af=[n.actual!=null&&n.actual!==''?'A '+escH(n.actual):null,n.forecast!=null&&n.forecast!==''?'F '+escH(n.forecast):null,n.previous!=null&&n.previous!==''?'P '+escH(n.previous):null].filter(Boolean).join('  ·  ');
-        return`<div class="nb-row" style="cursor:default">
-          <span class="nb-ccy">${escH(n.currencies||'')}</span>
-          <div class="nb-main">
-            <div class="nb-name">${escH(n.label)}</div>
-            <div class="nb-sub">${af}</div>
-          </div>
-          <span class="nb-dir ${dirCls}">${dirLbl}</span>
-        </div>`;
-      }).join('');
       // ⚠ Nutzer-Wunsch 2026-08-20: die Karte darf NICHT beliebig lang werden.
       // Wie viele Meldungen anstehen, haengt allein davon ab, was gerade los
-      // ist (veraltete Indikatoren, ausstehende Werte, COT-Erinnerung, jedes
-      // eingetroffene Event) - auf einem Geraet mit vielen offenen Punkten
-      // wuchs sie ueber die gesamte Spaltenhoehe. Alles liegt deshalb in
-      // .nb-list und wird ueber .dw-cap auf mittlere Hoehe gedeckelt; der
-      // Rest bleibt durch Scrollen erreichbar, es faellt nichts weg.
-      content=(popups+evtRows)?`<div class="nb-list">${popups+evtRows}</div>`
+      // ist (veraltete Indikatoren, ausstehende Werte, COT-Erinnerung) - auf
+      // einem Geraet mit vielen offenen Punkten wuchs sie ueber die gesamte
+      // Spaltenhoehe. Alles liegt deshalb in .nb-list und wird ueber .dw-cap
+      // auf mittlere Hoehe gedeckelt; der Rest bleibt durch Scrollen
+      // erreichbar, es faellt nichts weg.
+      content=popups?`<div class="nb-list">${popups}</div>`
         :`<div class="dw-empty" style="padding:6px 2px;line-height:1.7">No new notifications right now.</div>`;
     }else if(w.type==='live_data'){
       // Nur echte, bereits vorhandene Zeitstempel (Nutzer-Wunsch 2026-07-25:
@@ -20982,11 +20731,16 @@ const TAB_ICONS={
 };
 const TAB_ICON_STACK='<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>';
 function npIconSvg(d){return`<span class="np-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;}
-function tabBtnHtml(id,member){
+function tabBtnHtml(id,sub){
   const d=TABS[id];if(!d)return'';
   const on=activeTabId===id;
-  return`<button class="np${member?' np-member':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" title="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
+  return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" title="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
 }
+// Stapel (z.B. "Insights") klappen sich INLINE unterhalb ihres Buttons auf
+// (Nutzer-Wunsch 2026-08-21: "die Kategorien in kleinerer Schriftgroesse
+// dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
+// Mitglieder-Buttons (.np-sub) sind einfach die naechsten Elemente im
+// Sidebar-Fluss, kleinere Schrift + Einzug per CSS.
 function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   let html='';const done=new Set();
@@ -20995,11 +20749,8 @@ function renderTabBar(){
     if(st){
       if(done.has(st.id))return;done.add(st.id);
       const open=expandedStack===st.id,hasActive=st.members.includes(activeTabId);
-      // Mitglieder-Tabs erscheinen NICHT inline in der Sidebar, sondern als
-      // Flyout-Menu NEBEN dem Stack-Button (openStackMenu, User-Wunsch
-      // 2026-07-07 - Positionierung 2026-08-21 von "unter dem Button" auf
-      // "rechts daneben" umgestellt, passend zur jetzt vertikalen Leiste).
       html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" title="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">${open?'▾':'▸'}</span></button>`;
+      if(open)html+=st.members.map(mid=>tabBtnHtml(mid,true)).join('');
     }else{
       html+=tabBtnHtml(id,false);
     }
@@ -21015,41 +20766,8 @@ function tabPressEnd(){if(_tabPressTimer){clearTimeout(_tabPressTimer);_tabPress
 function onTabClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}selectTab(id);}
 function onStackClick(e,id){
   if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
-  if(expandedStack===id){closeTabMenu();return;}
-  openStackMenu(id,e.currentTarget);
-}
-// Kategorien eines Stack-Tabs (z.B. "Insights") als Dropdown UNTER dem
-// Button oeffnen. Schliesst sich beim Auswaehlen einer Kategorie, beim
-// erneuten Tippen auf den Stack und beim Klick irgendwo anders
-// (tabMenuOutside-Mechanik, geteilt mit dem Langdruck-Menue).
-function openStackMenu(id,btn){
-  const r=btn.getBoundingClientRect(); // VOR closeTabMenu/renderTabBar lesen - danach ist der Button-Knoten ersetzt
-  closeTabMenu();
-  const st=tabStacks.find(x=>x.id===id);if(!st)return;
-  expandedStack=id;renderTabBar();
-  const m=document.createElement('div');m.className='tab-menu';m.id='tabMenu';
-  m.innerHTML=st.members.map(mid=>{
-    const d=TABS[mid];if(!d)return'';
-    return`<button class="tab-menu-item" data-mid="${mid}" style="${activeTabId===mid?'background:var(--bg4);color:var(--t0);font-weight:700':''}">${escH(d.label)}</button>`;
-  }).join('');
-  document.body.appendChild(m);
-  const mw=Math.max(185,m.offsetWidth);
-  // Seit der vertikalen Sidebar (2026-08-21) oeffnet das Flyout RECHTS neben
-  // dem Stack-Button statt darunter - passend zu einer Nav-Leiste am
-  // linken Rand. Faellt zurueck auf "unter dem Button", falls rechts kein
-  // Platz mehr ist (schmale Bildschirme mit eingeklappter Icon-Sidebar).
-  const spaceRight=window.innerWidth-r.right-8;
-  if(spaceRight>=mw){
-    m.style.left=(r.right+4)+'px';
-    m.style.top=Math.max(8,Math.min(r.top,window.innerHeight-m.offsetHeight-8))+'px';
-    m.style.transformOrigin='0 50%';
-  }else{
-    m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
-    m.style.top=(r.bottom+4)+'px';
-    m.style.transformOrigin='0 0';
-  }
-  m.querySelectorAll('.tab-menu-item').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();const mid=b.getAttribute('data-mid');closeTabMenu();selectTab(mid);};});
-  setTimeout(()=>document.addEventListener('pointerdown',tabMenuOutside,true),0);
+  expandedStack=(expandedStack===id)?null:id;
+  renderTabBar();
 }
 function createStack(name){const id=uid();tabStacks.push({id,name,members:[]});saveTabStacks();return id;}
 function addTabToStack(tabId,stackId){
@@ -21067,14 +20785,8 @@ function dissolveStack(stackId){tabStacks=tabStacks.filter(s=>s.id!==stackId);if
 function closeTabMenu(){
   const m=document.getElementById('tabMenu');if(m)m.remove();
   document.removeEventListener('pointerdown',tabMenuOutside,true);
-  // Offenen Stack-Pfeil (▾) zuruecksetzen, wenn das Dropdown zugeht.
-  if(expandedStack){expandedStack=null;renderTabBar();}
 }
-// Klick auf einen Stack-Button NICHT hier schliessen - das macht
-// onStackClick selbst (Toggle bzw. Wechsel auf den anderen Stack); sonst
-// wuerde pointerdown das Menue schliessen und der Click es sofort wieder
-// oeffnen.
-function tabMenuOutside(e){const m=document.getElementById('tabMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.tp-stack')))closeTabMenu();}
+function tabMenuOutside(e){const m=document.getElementById('tabMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.np-stack')))closeTabMenu();}
 function openTabMenu(kind,id,x,y){
   closeTabMenu();
   const items=[];
@@ -21127,6 +20839,10 @@ function showTab(tab,btn,fxMode){
   }
   curPage=tab;
   activeTabId=tabIdFor(tab,tab==='cur'?curFxMode:fxMode);
+  // Der Stapel des gerade aktiven Tabs klappt automatisch auf (Koyfin-
+  // Muster: die aktive Sektion bleibt sichtbar), egal ueber welchen Weg
+  // (Klick, Suche, Tastenkuerzel) der Tab-Wechsel ausgeloest wurde.
+  const _st=stackOf(activeTabId);if(_st)expandedStack=_st.id;
   renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
@@ -21393,12 +21109,6 @@ function renderCarry(){
     .map(({r,rank})=>carryRowHTML(r,rank,max)).join('');
   el.innerHTML=(list?`<div class="carry-list">${list}</div>`:'<div style="font-size:13px;color:var(--t3);padding:10px">No matching pair.</div>')
     +realRateTableHtml()+spreadCardHtml();
-}
-function updateStat(){
-  const bull=syms.filter(s=>FX.includes(s.id)&&s.bias==='bull').length;
-  const bear=syms.filter(s=>FX.includes(s.id)&&s.bias==='bear').length;
-  const el=document.getElementById('statLine');
-  if(el)el.textContent=`FX: ${bull}▲ Bull · ${bear}▼ Bear · ${FX.length-bull-bear}◆ Neutral`;
 }
 
 // ══ HILFE-MODAL & ERSTSTART-GUIDE ═══════════════════════════════════
@@ -21686,7 +21396,7 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updateStat();updUB();updInboxBadge();updProfile();startHdrLiveClock();updIntroHud();
+renderDash();updUB();updProfile();startHdrLiveClock();updIntroHud();
 maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
@@ -21819,11 +21529,29 @@ window.addEventListener('online',()=>{
 window.addEventListener('offline',updNetStatus);
 updNetStatus();
 
+// Nav-Sidebar klappt automatisch auf Icon-Breite ein, sobald im Inhalt
+// rechts interagiert wird (Scrollen, Tippen/Klicken) - und wieder aus,
+// sobald die Sidebar selbst benutzt wird (Nutzer-Wunsch 2026-08-21).
+// Reine Desktop-Bequemlichkeit: unter der 760px-Grenze ist die Sidebar
+// ohnehin dauerhaft auf Icon-Breite (siehe CSS), die Klasse dort also
+// wirkungslos, aber harmlos.
+(function(){
+  const pageArea=document.getElementById('pageArea');
+  const nav=document.getElementById('navSidebar');
+  if(!pageArea||!nav)return;
+  const collapse=()=>nav.classList.add('nav-collapsed');
+  const expand=()=>nav.classList.remove('nav-collapsed');
+  pageArea.addEventListener('scroll',collapse,{capture:true,passive:true});
+  pageArea.addEventListener('pointerdown',collapse,{passive:true});
+  nav.addEventListener('pointerenter',expand);
+  nav.addEventListener('focusin',expand);
+})();
+
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
 setInterval(()=>{
   bootFetchScoreFeeds();
   if(processCalEvts()){
-    save();renderSidebar();rerender();updInboxBadge();
+    save();renderSidebar();rerender();
   }
   autoFetchFF();
   autoFetchNewsData();

@@ -922,3 +922,85 @@ durch) - nur `.hdr`/`#navSidebar` sind jetzt opak dunkel und verdecken ihn
 dort. Bias-Farben (Blau=bullish/Rot=bearish) und der Kartenrand-Wert aus
 der Kontrast-Korrektur (V400, 1.58:1) sind unveraendert - reine
 Navigations-/Chrome-Aenderung, keine neue Kontrast-Iteration.
+
+## ⚠ NAVIGATION/HEADER V2: Feinschliff nach dem ersten Koyfin-Umbau (2026-08-21)
+
+Direkt im Anschluss an die dunkle Koyfin-Sidebar kam eine lange, konkrete
+Punktliste vom Nutzer per `/goal` - Kernaenderungen, die bei kuenftigen
+Aufgaben zu beachten sind:
+
+**Inbox komplett entfernt** (nicht nur ausgeblendet): Button, Badge,
+Modal, UND der komplette Postfach-Code - `mkEventNotif`/`syncEvtNotifs`,
+`mkScoreNotif`/`syncIndNotifs`, `pruneInbox`, `updInboxBadge`, `openInboxM`,
+`renderInbox`, `gotoIndicatorByNotif`, `delInboxItem`, `clearInbox`, das
+`inbox`-Array aus `snap()`/`applySnap()`/beiden Initialisierungen/
+`cloudPull`. **Wichtig fuer kuenftige "entfern X komplett"-Auftraege:** so
+ein Feature ist oft an mehr Stellen verdrahtet als der sichtbare Button -
+IMMER nach dem Datenfeld selbst suchen (hier: `inbox`), nicht nur nach dem
+UI-Einstiegspunkt. Zwei Nachbar-Features blieben bewusst stehen, weil nicht
+explizit genannt: `eventAlerts`/`priceAlerts` (Alarm-KONFIGURATION, feuert
+weiterhin serverseitig per Telegram) und das Dashboard-"notification"-
+Widget (zeigt weiterhin COT/Stale/Awaiting-Popups, nur der `inbox`-
+gespeiste `evtRows`-Teil ist raus, da er nach der Inbox-Entfernung ohnehin
+nie mehr etwas liefern konnte).
+
+**Kopfzeile jetzt EINE Reihe** (`display:flex` statt 2-Zeilen-Grid): Logo
+→ `.hdr-search` (breites Suchfeld links, Koyfin-Referenz, oeffnet weiter
+dasselbe `#mSearch`-Modal) → `.hdr-status` (Saved + Live-Banner, direkt
+nebeneinander) → `.hdr-r` (Undo/Redo/Help/Settings, `margin-left:auto`
+haelt sie rechts). Die Bull/Bear/Neutral-Zaehlzeile (`updateStat()`,
+`#statLine`) ist ersatzlos raus. "Data" (Export/Import/Backups) ist kein
+eigenes Header-Dropdown mehr, sondern die erste Zeile im vormaligen
+"☁ Cloud Synchronization"-Modal (`#mCloud`), das jetzt schlicht
+"⚙ Settings" heisst - Cloud-Sync ist darin nur noch EIN Abschnitt
+(eigene `<h3>☁ Cloud Sync</h3>`-Zwischenueberschrift). Bei kuenftigen neuen
+Einstellungen: hier rein, nicht wieder einen eigenen Header-Button bauen.
+
+**Sidebar-Breite passt sich dem Inhalt an** statt eines festen Werts:
+`#navSidebar{width:max-content;min-width:150px;max-width:230px}` +
+`.np{width:100%}` auf den Kindern - der Container sizet sich auf die
+intrinsische Breite des breitesten Labels, alle anderen strecken sich
+exakt darauf. Standardmuster fuer "Spalte so breit wie noetig, nicht
+mehr" - bei kuenftigen aehnlichen Wuenschen (Sidebar, Dropdown-Breite)
+zuerst pruefen, ob dieses Muster reicht, bevor ein fester Pixelwert
+geraten wird.
+
+**"Insights" (und jeder andere Tab-Stapel) klappt jetzt INLINE auf**,
+nicht mehr als Flyout: `renderTabBar()` haengt bei offenem Stapel die
+Mitglieder-Buttons (`.np-sub`, kleinere Schrift, eingerueckt) direkt nach
+dem Stapel-Button in denselben Sidebar-Fluss. `openStackMenu()` (das
+frueher ein `document.body`-Flyout baute) ist komplett entfernt -
+`onStackClick()` toggelt nur noch `expandedStack` + `renderTabBar()`.
+`showTab()` klappt den Stapel des jeweils aktiven Tabs automatisch auf
+(egal ueber welchen Weg navigiert wurde - Klick, Suche, Tastenkuerzel),
+damit die aktive Sektion immer sichtbar bleibt (Koyfin-Muster).
+
+**Sidebar klappt automatisch auf Icon-Breite ein**, sobald im Inhalt
+(`#pageArea`) gescrollt oder getippt/geklickt wird - und wieder aus, sobald
+die Sidebar selbst beruehrt wird (`pointerenter`/`focusin`). Klasse
+`.nav-collapsed` auf `#navSidebar` nutzt dieselben CSS-Regeln wie die
+Mobil-Icon-Leiste (<760px), nur durch JS statt durch eine Media Query
+ausgeloest - bei kuenftigen "Icon-only bei Bedarf"-Wuenschen dieses Muster
+wiederverwenden statt eine dritte Regel-Kopie zu bauen.
+
+**⚠ Kopfzeile/Sidebar sind NICHT mehr dunkel** - direkte Korrektur der
+V401-Entscheidung, nachdem der Nutzer das Ergebnis gesehen hatte: "die
+dunkel eingefaerbte Spalte links und die Zeile oben soll in dem gleichen
+Grauton sein wie bei Assets die Hintergrundfarbe der Karten". Diese Karten
+(`.rub-card`) nutzten `--bg3` = `#d7dbe0` - genau dieser Wert ist jetzt
+FEST (nicht ueber die Variable) der Hintergrund von `.hdr`/`#navSidebar`.
+Weil derselbe Ton nicht gleichzeitig als Kartenfarbe im Inhalt UND als
+Chrome-Farbe auftauchen soll ("tausch dann auch ueberall im Inhalt wo
+dieses Grau verwendet die Farbe aus durch ein helleres Grau"), wurde die
+`--bg3`-VARIABLE selbst auf `#e3e6ea` (= `--bg1`) anghoben - das faerbt
+automatisch alle ~60 Verbrauchsstellen (Buttons, `.rub-card`, Badges) im
+Inhalt heller, ohne dass jede einzeln angefasst werden musste. Text/Icons
+in Kopfzeile/Sidebar sind wieder normale helle-Theme-Tokens (kein
+Weiss-auf-Dunkel-Override mehr noetig).
+
+**Merksatz fuer den naechsten Farbwunsch dieser Art:** wenn ein Nutzer
+"derselbe Grauton wie bei X" sagt, IMMER zuerst den echten Hex-Wert an X
+nachschlagen (hier: `.rub-card{background:var(--bg3)}` → `#d7dbe0`) statt
+zu schaetzen - der Unterschied zwischen "ungefaehr passend" und "exakt
+derselbe Wert" ist bei einem expliziten Farbabgleich-Wunsch genau der
+Punkt der Anfrage.
