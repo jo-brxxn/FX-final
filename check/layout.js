@@ -5,7 +5,13 @@ const { chromium } = require(PW);
 (async () => {
   const browser = await chromium.launch();
   const findings = [];
-  const TABS = ['dash','fx','matrix','cot','trends','sent','seas','data','rate','compare','watch','notes','cal','research','setups'];
+  // ⚠ Muss exakt PAGE_IDS aus index.html spiegeln (17 Tabs). Frueher standen
+  // hier veraltete/falsche Ids ('fx','matrix','compare','setups','research')
+  // - showTab() schluckt eine unbekannte Id per try/catch stillschweigend,
+  // der Test lief also mehrfach auf dem letzten GUELTIGEN Tab statt auf den
+  // gemeinten Tabs. Gefunden, nachdem ein echter Page-Overflow auf 'rate'
+  // trotz gruenem Lauf durchgerutscht war (siehe Fix unten, Punkt 1).
+  const TABS = ['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
   const VIEWPORTS = [[1920,1080,'wide'],[1440,900,'desktop'],[1180,820,'small-desktop'],[820,1180,'tablet'],[390,844,'mobile']];
 
   for (const [w,h,vpName] of VIEWPORTS) {
@@ -20,9 +26,23 @@ const { chromium } = require(PW);
       await page.waitForTimeout(300);
       const res = await page.evaluate(({tab,vpName}) => {
         const out = [];
-        // 1. horizontal page overflow
-        if (document.documentElement.scrollWidth > document.documentElement.clientWidth + 2)
-          out.push(`${vpName}/${tab}: PAGE scrolls horizontally (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`);
+        // 1. horizontal page overflow. ⚠ body ist position:fixed (App-Design,
+        // verhindert Bounce-Scroll) - dadurch traegt ein zu breites Kind NIE
+        // zu document.documentElement.scrollWidth bei, dieser Wert bleibt
+        // IMMER gleich der Viewport-Breite, ganz gleich wie sehr der Inhalt
+        // ueberlaeuft. Ein echter Fund (Rate-Probabilities-Seite lief nach
+        // dem App-Shell-Umbau 2026-08-21 111px ueber den Viewport hinaus,
+        // Ursache: #pageArea/.pc als Flex-Kinder ohne min-width:0) blieb
+        // dadurch von diesem Check unbemerkt gruen. body/#pageArea/.app-shell
+        // muessen stattdessen direkt gemessen werden.
+        if (document.body.scrollWidth > document.body.clientWidth + 2)
+          out.push(`${vpName}/${tab}: BODY scrolls horizontally (${document.body.scrollWidth} > ${document.body.clientWidth})`);
+        const shell = document.querySelector('.app-shell');
+        if (shell && shell.scrollWidth > shell.clientWidth + 2)
+          out.push(`${vpName}/${tab}: APP-SHELL scrolls horizontally (${shell.scrollWidth} > ${shell.clientWidth})`);
+        const pa = document.getElementById('pageArea');
+        if (pa && pa.scrollWidth > pa.clientWidth + 2)
+          out.push(`${vpName}/${tab}: PAGE-AREA scrolls horizontally (${pa.scrollWidth} > ${pa.clientWidth})`);
 
         // 2. content overflowing its card (project rule: must scroll INSIDE, not spill)
         document.querySelectorAll('.dw, .cot-card, .rub-card, .tr-card').forEach(card => {

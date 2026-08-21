@@ -201,7 +201,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .hdr{border-bottom-color:#33383e}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
-#pageArea{flex:1;display:flex;flex-direction:column;min-height:0}
+#pageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
 /* Breite passt sich dem laengsten Kategorie-Namen an statt eines fixen
    Werts (Nutzer-Wunsch 2026-08-21: "so breit dass man alle Kategorien
    lesen kann, dann ein kleiner Abstand, dann hoert es auf - kein Platz
@@ -250,7 +250,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--ff-text)}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 /* ── BODY ── */
-.body{display:flex;flex:1;min-height:0}
+.body{display:flex;flex:1;min-height:0;min-width:0}
 /* KEIN backdrop-filter und KEIN -webkit-overflow-scrolling:touch auf .sb:
    beides zusammen brach auf iOS das Scrollen der Assets-Leiste, sobald
    daneben #detail neu aufgebaut wurde (Asset-Wechsel) - der Repaint wirft
@@ -1251,7 +1251,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .ind-data-body.ind-data-reveal{animation:indDataReveal .18s ease-out both}
 @media(prefers-reduced-motion:reduce){.ind-data-body.ind-data-reveal{animation:none}}
 /* ── FULL PAGE ── */
-.pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;min-width:0;-webkit-overflow-scrolling:touch}
 /* ── PAIRS ── */
 .pcc{background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:10px}
 .pcc-hdr{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--bg2);border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid var(--bd)}
@@ -3114,11 +3114,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-403 - Kopfzeile+Sidebar-Grau auf Nutzer-Wunsch 'deutlich dunkler' gemacht: #454b53, ein neutrales dunkles Grau (bewusst kein Blau-/Navy-Stich) statt des zuvor an die Assets-Kartenfarbe angeglichenen hellen #d7dbe0. Kontrast gegen weissen Text nachgerechnet: 8.8:1. Text/Icons darin wieder auf helle Tokens umgestellt (gescopte Variablen-Ueberschreibung wie beim ersten Koyfin-Umbau). Vorherige Aenderungen (Inbox entfernt, Data in Settings, Suche links, Kein Bull/Bear-Zaehler, Saved neben Live, eine Kopfzeilen-Reihe, auto-breite/auto-einklappende/inline-aufklappende Sidebar) bleiben unveraendert - reine Farbkorrektur."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-404 - Vier Nachbesserungen (Nutzer-Wunsch per /goal). (1) Sidebar-Klick beim Ein-/Ausklappen navigiert nicht mehr gleichzeitig - ein Klick auf die eingeklappte Sidebar klappt sie nur aus, ein zweiter Klick navigiert erst danach (Capture-Listener auf #navSidebar). (2) Echter Layout-Bug gefunden+gefixt: #pageArea/.pc/.body fehlte min-width:0 als Flex-Kinder, wodurch breiter Chart-Inhalt (Rate Probabilities) die ganze Seite ueber den Viewport hinaus wachsen liess und dadurch den rechten Karten-Randabstand auffraß - das war die Ursache fuer 'Karten haben rechts keine Luecke'. (3) Neue Waechter-Pruefung check/cards.js: Text/Elemente duerfen nie den Kartenrand verlassen, jetzt auf allen 17 Tabs statt nur Dashboard, plus Seiten-Ebene-Check (faengt genau Fund 2). check/layout.js gefixt: veraltete Tab-Ids UND ein blinder Fleck (document.documentElement sieht keinen Overflow, weil body position:fixed ist). (4) Der neue Waechter fand direkt einen echten Fund: EUR/CAD-Endpunkt-Labels im Implied-Policy-Path-Chart ueberlappten sich bei nah beieinander liegenden Zinspfaden - Mindestabstand-Logik ergaenzt (gleiches Muster wie beim Rate-Probabilities-Chart)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-403</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-404</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -20491,7 +20491,7 @@ function termStructureCardHtml(){
   const lo=Math.min(...alle),hi=Math.max(...alle),sp=(hi-lo)||1;
   const x=i=>padL+i*(W-padL-padR)/Math.max(1,termine.length);
   const y=v=>padT+(hi-v)/sp*(H-padT-padB);
-  const linien=daten.map(d=>{
+  const kurven=daten.map(d=>{
     const farbe=TERM_FARBEN[d.c]||'var(--t2)';
     // Startpunkt heute, dann Treppe ueber die Sitzungen - der Zins gilt
     // jeweils BIS zur naechsten Sitzung, deshalb Stufen statt Geraden.
@@ -20508,10 +20508,24 @@ function termStructureCardHtml(){
       pts.push([x(i),y(cur)]);
     });
     pts.push([x(termine.length),y(cur)]);
-    const letzte={r:cur};
-    return`<polyline points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${farbe}" stroke-width="1.9"/>
-      <text x="${(W-padR+4).toFixed(1)}" y="${(y(letzte.r)+3).toFixed(1)}" font-size="10" font-weight="700" fill="${farbe}" font-family="var(--ff-num)">${escH(d.c)}</text>`;
-  }).join('');
+    return{c:d.c,farbe,pts,labelY:y(cur)};
+  });
+  // Endpunkt-Label-Kollision (CLAUDE.md-Grundsatz "Elemente duerfen sich nie
+  // so ueberlappen, dass etwas unlesbar wird"): liegen zwei Notenbanken beim
+  // letzten Termin nah beieinander (hier: EUR/CAD um 2026-08-21 fast gleich),
+  // landen ihre Endpunkt-Labels sonst uebereinander. Nach y sortieren und
+  // von oben nach unten einen Mindestabstand erzwingen - gleiches Muster wie
+  // beim Rate-Probabilities-Mehrlinien-Chart (siehe CLAUDE.md).
+  const MIN_LABEL_GAP=12;
+  const sortiert=[...kurven].sort((a,b)=>a.labelY-b.labelY);
+  for(let i=1;i<sortiert.length;i++){
+    const min=sortiert[i-1].labelY+MIN_LABEL_GAP;
+    if(sortiert[i].labelY<min)sortiert[i].labelY=min;
+  }
+  const linien=kurven.map(d=>
+    `<polyline points="${d.pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${d.farbe}" stroke-width="1.9"/>
+      <text x="${(W-padR+4).toFixed(1)}" y="${(d.labelY+3).toFixed(1)}" font-size="10" font-weight="700" fill="${d.farbe}" font-family="var(--ff-num)">${escH(d.c)}</text>`
+  ).join('');
   const achse=termine.map((t,i)=>`<text x="${x(i+1).toFixed(1)}" y="${H-14}" font-size="8.5" fill="var(--t3)" text-anchor="middle" font-family="var(--ff-num)">${escH(t.slice(5))}</text>`).join('');
   const yLabels=[hi,(hi+lo)/2,lo].map(v=>`<text x="4" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${v.toFixed(2)}%</text>`).join('');
   return`<div class="cot-card" style="margin-top:12px">
@@ -21546,6 +21560,20 @@ updNetStatus();
   pageArea.addEventListener('pointerdown',collapse,{passive:true});
   nav.addEventListener('pointerenter',expand);
   nav.addEventListener('focusin',expand);
+  // Ein Klick, der die eingeklappte Leiste wieder ausklappt, darf NICHT
+  // gleichzeitig den darunterliegenden Tab-Button aktivieren (Nutzer-Wunsch
+  // 2026-08-21: "wenn man diese Leiste ein- oder ausklappt, klickt man
+  // nicht direkt auf etwas, sondern es veraendert sich nur die Leiste").
+  // Capture-Phase auf #navSidebar faengt den Klick ab, BEVOR er den
+  // eigentlichen Button erreicht - pointerenter hat zwar meist schon vorher
+  // ausgeklappt, aber bei Touch/Trackpad (kein echtes Hover-Vorher) oder
+  // einem sehr schnellen Klick greift dieser Fallback zusaetzlich.
+  nav.addEventListener('click',ev=>{
+    if(nav.classList.contains('nav-collapsed')){
+      ev.preventDefault();ev.stopPropagation();
+      expand();
+    }
+  },true);
 })();
 
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)

@@ -1020,3 +1020,78 @@ Zwischenergebnis sieht und nachjustiert - das ist normales iteratives
 Feinjustieren, kein Widerspruch zur vorherigen Entscheidung. Immer den
 NEUESTEN expliziten Wunsch umsetzen, nicht die aeltere Begruendung
 verteidigen.
+
+## ⚠ WAECHTER: check/cards.js + zwei echte Layout-Funde (2026-08-21)
+
+Nutzer-Wunsch per `/goal`: (1) Sidebar-Klick beim Ein-/Ausklappen darf
+nicht gleichzeitig navigieren, (2) Performance-Check, (3) Karten sollen
+rechts denselben Abstand haben wie links, (4) "stell durch eine NEUE
+REGEL sicher, dass Text oder andere Elemente zu keiner Zeit den Rand der
+Karte verlassen".
+
+**Sidebar-Klick-Fix:** `pointerenter`/`focusin` klappt die Sidebar zwar
+meist schon VOR einem Klick aus (Hover kommt zeitlich zuerst) - bei Touch/
+Trackpad ohne echtes Vor-Hover oder einem sehr schnellen Klick reicht das
+nicht. Fix: ein Capture-Phase-Click-Listener auf `#navSidebar` faengt den
+Klick ab, SOLANGE `.nav-collapsed` gesetzt ist (`preventDefault`+
+`stopPropagation`, bevor der Button-eigene `onclick` greift) und klappt
+nur aus - navigiert nicht. Ein zweiter Klick (Sidebar jetzt ausgeklappt)
+navigiert normal. Getestet per `dispatchEvent('click')` ohne vorheriges
+Hover-Event (simuliert genau den Touch-Fall).
+
+**⚠ Echter Layout-Bug gefunden, der Ursache fuer "Karten haben rechts
+keine Luecke" war:** `#pageArea{display:flex;flex-direction:column}` und
+`.pc`/`.body` (ihre Flex-Kinder) hatten kein `min-width:0`. Flex-Items
+haben per Default `min-width:auto` (= "nie kleiner als der Content-
+Minimalbreite") - ein breiter Chart (Rate-Probabilities-Track, inline-
+block mit voller intrinsischer Breite) zwang dadurch `.pc`, `#pageArea`
+UND `.app-shell` ueber den Viewport hinaus, obwohl der Chart selbst brav
+in einem `overflow:hidden`-Viewport sass. Die ganze SEITE wurde dadurch
+111px breiter als der Viewport und horizontal scrollbar - der rechte
+Karten-Randabstand war schlicht nicht mehr sichtbar, weil man ihn erst
+nach dem Wegscrollen gesehen haette. Fix: `min-width:0` auf `#pageArea`,
+`.pc` UND `.body`. **Merksatz: bei JEDEM neuen `display:flex`-Container in
+dieser App - ob Zeile oder Spalte - IMMER pruefen, ob seine Kinder
+`min-width:0` (bzw. bei `flex-direction:row` `min-height:0`) brauchen,
+sobald sie selbst wieder Inhalt mit intrinsischer Breite enthalten
+koennten (Charts, lange Tabellen, `white-space:nowrap`).**
+
+**⚠ Der bestehende `layout.js`-Waechter hatte genau diesen Bug NICHT
+gefunden, obwohl er "Seiten-Ueberlauf" bereits prueft** - zwei eigene
+Bugs im Waechter selbst:
+1. Er maß `document.documentElement.scrollWidth`. `body` ist in dieser
+   App `position:fixed` (verhindert iOS-Bounce-Scroll) - dadurch traegt
+   KEIN Kind jemals zu `documentElement`s Scroll-Groesse bei, ganz gleich
+   wie sehr es ueberlaeuft. Fix: direkt `document.body`/`.app-shell`/
+   `#pageArea` messen.
+2. Seine `TABS`-Liste hatte veraltete/falsche Ids (`fx` statt `cur`,
+   `matrix` statt `mx`, `compare` statt `cmp`, `setups` statt `pairs`,
+   ein nicht existierendes `research`) UND liess `edge`/`news`/`carry`
+   komplett aus. `showTab()` schluckt eine unbekannte Id per try/catch
+   still - der Test lief dadurch mehrfach auf dem zuletzt gueltigen Tab
+   statt auf den gemeinten. **Merksatz: die Tab-Id-Liste in JEDEM
+   `check/*.js` muss exakt `PAGE_IDS` aus `index.html` spiegeln - bei
+   einer neuen Kategorie dort IMMER auch alle `check/*.js`-Dateien mit
+   einer eigenen Tab-Liste durchgehen.**
+
+**Neuer Waechter `check/cards.js`:** generalisiert `dashboard.js`s
+bewaehrte Logik (Kartenrand-Ueberlauf, Text-vs-Text-Ueberlappung mit
+Scroll-Clip-Ausschluss, Text-vs-eigenes-Element-Ueberlauf) von "nur
+`#dashWidgets .dw` auf dem Dashboard-Tab" auf ALLE 17 Tabs und ein
+breiteres Karten-Klassen-Set, PLUS eine neue Seiten-Ebene-Pruefung (Punkt
+0, faengt genau den obigen Fund). Beim ersten echten Lauf sofort einen
+zweiten, unabhaengigen Fund geliefert: EUR/CAD-Endpunkt-Labels im
+"Implied policy path"-Chart (`termStructureCardHtml()`) ueberlappten sich,
+wenn die eingepreisten Zinspfade zweier Notenbanken nah beieinander
+liegen - keine Mindestabstand-Logik vorhanden. Gefixt nach demselben
+Muster wie beim Rate-Probabilities-Mehrlinien-Chart (siehe Grundsatz oben
+"Elemente duerfen sich NIEMALS so ueberlappen"): Endpunkt-Y-Werte sortieren,
+von oben nach unten einen Mindestabstand (12px) erzwingen.
+
+**Performance-Check (Playwright):** DOMContentLoaded ~320ms, alle 17 Tab-
+Wechsel unter 220ms (meist <100ms), 20 aufeinanderfolgende Scroll-Events
+(Sidebar-Auto-Einklapp-Listener) in 29ms ohne spuerbares Ruckeln, JS-Heap
+17/30 MB - unauffaellig. Die einzigen Konsolen-Fehler waren
+`ERR_TUNNEL_CONNECTION_FAILED` fuer externe FF-Kalender-Fetches - das ist
+die dokumentierte Netzwerk-Einschraenkung dieser Sandbox (siehe "Daten &
+Workflow" oben), kein echter Bug.

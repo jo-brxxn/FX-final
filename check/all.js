@@ -27,6 +27,7 @@ const PRUEFUNGEN = [
   { n: 'runtime',   d: 'alle Tabs, Modals und Zustaende ohne JS-Fehler',         f: 'check/runtime.js',   args: [],           browser: true },
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
+  { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
 ];
 
 function serverErreichbar() {
