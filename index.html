@@ -184,14 +184,40 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-.tabbar{background:transparent;border-bottom:1px solid var(--bd);padding:0 14px;flex-shrink:0;display:flex;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
-.tp{padding:7px 12px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:13px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:var(--ff-text)}
-.tp.on{color:var(--t0);font-weight:800;border-bottom-color:var(--t0)}@media (hover:hover){.tp:hover:not(.on){color:var(--t1)}}
-.tp.tp-member{font-size:12px}
-.tp.tp-stack{font-weight:700}
-.tp-arrow{font-size:9px;opacity:.75;margin-left:3px}
-.tp.tp-stack.has-active{color:var(--green)}
-.tp.tp-stack.open{color:var(--blue)}
+/* ── DUNKLE CHROME: Kopfzeile + Nav-Sidebar (Koyfin-Referenz, Nutzer-Wunsch
+   2026-08-21 "schwarz aussenrum, weiss innendrin, Kategorien links
+   untereinander") ── Die Umsetzung ueberschreibt NUR die Palette-Variablen
+   innerhalb von .hdr/#navSidebar (CSS Custom Properties kaskadieren) - jede
+   der rund 200 Stellen, die bereits var(--t0)/var(--bg3)/... nutzt, faerbt
+   sich dadurch automatisch um, ohne dass jede einzeln angefasst werden
+   muss. Content-Bereich (#pageArea) bleibt bewusst UNVERAENDERT hell mit
+   Marmor-Hintergrund - nur die Aussenhuelle wird dunkel. */
+.hdr,#navSidebar{
+  --bg0:#10131a;--bg1:#151922;--bg2:#1a1f29;--bg3:#212733;--bg4:#2a3140;--bg5:#343c4d;--bg6:#454f63;
+  --bd:#262d3a;--bd2:#363f4f;
+  --t0:#f2f4f7;--t1:#d4d9e1;--t2:#98a1b0;--t3:#69707f;
+}
+.hdr{background:var(--bg1);border-bottom:1px solid var(--bd)}
+/* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
+.app-shell{flex:1;display:flex;min-height:0}
+#pageArea{flex:1;display:flex;flex-direction:column;min-height:0}
+#navSidebar{width:200px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 8px;display:flex;flex-direction:column;gap:1px;-webkit-overflow-scrolling:touch}
+.np{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
+.np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
+.np-ic svg{width:17px;height:17px}
+.np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
+.np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
+.np.on .np-ic{color:var(--blue)}
+@media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
+.np-arrow{font-size:9px;opacity:.7;margin-left:auto;flex-shrink:0}
+.np.np-stack.has-active:not(.on){color:var(--t1)}
+.np.np-stack.open{background:var(--bg2)}
+@media(max-width:760px){
+  #navSidebar{width:56px;padding:10px 4px}
+  .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
+  .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
+  .np-lbl{display:none}
+}
 .tab-menu{position:fixed;z-index:100001;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
 .tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--ff-text)}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
@@ -2208,8 +2234,8 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   .logo{font-size:20px}
   .logo-s,.saved{font-size:13px}
   .btn{font-size:13px;padding:6px 12px}
-  .tabbar{padding:0 22px}
-  .tp{font-size:14px;padding:8px 16px}
+  #navSidebar{width:216px;padding:14px 10px}
+  .np{font-size:13.5px;padding:9px 11px}
   /* Foto-Referenz 2026-08-02: einzeilige Watchlist braucht mehr Breite,
      sonst wird die Sparkline auf 0 zusammengedrueckt. Alt: width:90px; */
   .sb{width:158px}
@@ -3078,11 +3104,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-400 - Nutzer-Korrektur zur Kontrast-Ueberarbeitung ('einfach eine Menge Grau drauf gepackt, schau bei Experten wie man das richtig macht'): Recherche bei Radix Colors/Vercel/Refactoring UI bestaetigt zwei konkrete Fehler der Vorversion. (1) Die acht dekorativen Diagonal-Linien im Seitenhintergrund sind komplett wieder raus - Textur hinter dichten Zahlen-Karten wird von jeder gefundenen Quelle abgelehnt, nicht nur abgeschwaecht. (2) Der Kartenrand war mit 1.97:1 zu kraeftig fuer 'leicht' (Anti-Pattern: jeder Karte denselben starken Rand zu geben, Hierarchie soll primaer ueber Typografie laufen) - auf 1.58:1 zurueckgenommen, der Schatten traegt jetzt einen groesseren Teil der Kartentrennung. Die Text-Idiom-/Off-Scale-/Titel-Fixes aus V399 bleiben (echte Lesbarkeits-Bugs, keine Geschmacksfrage). Dem zweiten Teil der Meldung ('Schrift geht über Karten drüber') per Playwright/Screenshot auf allen drei gemeldeten Verdachtsstellen (COT/Seasonality/Rate Probabilities, mehrere Breiten) nachgegangen: kein neuer Ueberlapp gefunden - die betroffenen Diagramme nutzen das app-weit etablierte, dokumentierte Muster 'zu breiter Karteninhalt wird INNERHALB der Karte horizontal scrollbar', keine neue Regression."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-401 - Koyfin-Referenz umgesetzt (Nutzer-Wunsch per /goal, drei Screenshots als Vorbild): dunkle Aussenhuelle (Kopfzeile + neue Nav-Sidebar), helle Marmor-Karten bleiben innen unveraendert. Groesster Teil: horizontale Tab-Leiste komplett durch eine vertikale Sidebar links ersetzt (App-Shell-Umbau: .hdr bleibt oben durchgehend, darunter #navSidebar+#pageArea nebeneinander) - Kategorien stehen jetzt untereinander mit Icon je Tab, aktiver Eintrag ueber blauen Rand+Icon hervorgehoben, 'Insights'-Stapel oeffnet als Flyout RECHTS neben dem Button statt darunter. Dunkle Farbgebung ausschliesslich ueber gescopte CSS-Variablen-Ueberschreibung auf .hdr/#navSidebar (keine der ~200 bestehenden var(--t0)/var(--bg3)-Stellen einzeln angefasst). Auf schmalen Bildschirmen (<760px) klappt die Sidebar auf eine reine 56px-Icon-Leiste zusammen (Nutzer-Entscheid), Labels per title-Tooltip weiter erreichbar. Bias-Farben (Blau/Rot) unveraendert, Kartenrand-Wert aus V400 (1.58:1) unveraendert - nur die Chrome-Ebene ist neu."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-400</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-401</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3101,7 +3127,9 @@ function introLogin(){
   </div>
 </div>
 
-<div class="tabbar" id="tabbar"></div>
+<div class="app-shell">
+<nav id="navSidebar"></nav>
+<div id="pageArea">
 
 <!-- PAGE: CURRENCIES -->
 <div class="body" id="pgCur" style="display:none">
@@ -3334,6 +3362,9 @@ function introLogin(){
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
   <div class="dash-layout" id="dashWidgets"></div>
+</div>
+
+</div>
 </div>
 
 <!-- MODAL: Add Symbol -->
@@ -20927,23 +20958,48 @@ function saveTabStacks(){
 function stackOf(tabId){return tabStacks.find(s=>s.members.includes(tabId));}
 function tabIdFor(tab,fxMode){return tab==='cur'?'fx':tab;}
 function selectTab(id){const d=TABS[id];if(!d)return;showTab(d.tab,null,d.mode);}
+// Icon je Kategorie fuer die Nav-Sidebar (Koyfin-Referenz, Nutzer-Wunsch
+// 2026-08-21). Feather/Lucide-Stroke-Stil, identisch zu den Icons im
+// Header (stroke-width 1.75, currentColor) - keine neue Bibliothek.
+const TAB_ICONS={
+  dash:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  fx:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/>',
+  cmp:'<rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/>',
+  mx:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
+  trends:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
+  cot:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  sent:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  seas:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  data:'<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
+  rate:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>',
+  edge:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  carry:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  pairs:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  watch:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  notes:'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+};
+const TAB_ICON_STACK='<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>';
+function npIconSvg(d){return`<span class="np-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;}
 function tabBtnHtml(id,member){
   const d=TABS[id];if(!d)return'';
   const on=activeTabId===id;
-  return`<button class="tp${member?' tp-member':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')">${escH(d.label)}</button>`;
+  return`<button class="np${member?' np-member':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" title="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
 }
 function renderTabBar(){
-  const bar=document.getElementById('tabbar');if(!bar)return;
+  const bar=document.getElementById('navSidebar');if(!bar)return;
   let html='';const done=new Set();
   TAB_ORDER.forEach(id=>{
     const st=stackOf(id);
     if(st){
       if(done.has(st.id))return;done.add(st.id);
       const open=expandedStack===st.id,hasActive=st.members.includes(activeTabId);
-      // Mitglieder-Tabs erscheinen NICHT mehr inline daneben in der Leiste,
-      // sondern als Dropdown UNTER dem Stack-Button (openStackMenu,
-      // User-Wunsch 2026-07-07).
-      html+=`<button class="tp tp-stack${open?' open':''}${hasActive?' has-active':''}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')">${escH(st.name)}<span class="tp-arrow">${open?'▾':'▸'}</span></button>`;
+      // Mitglieder-Tabs erscheinen NICHT inline in der Sidebar, sondern als
+      // Flyout-Menu NEBEN dem Stack-Button (openStackMenu, User-Wunsch
+      // 2026-07-07 - Positionierung 2026-08-21 von "unter dem Button" auf
+      // "rechts daneben" umgestellt, passend zur jetzt vertikalen Leiste).
+      html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" title="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">${open?'▾':'▸'}</span></button>`;
     }else{
       html+=tabBtnHtml(id,false);
     }
@@ -20978,11 +21034,20 @@ function openStackMenu(id,btn){
   }).join('');
   document.body.appendChild(m);
   const mw=Math.max(185,m.offsetWidth);
-  m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
-  m.style.top=(r.bottom+4)+'px';
-  // Waechst von der oberen linken Ecke aus - dort, wo es an den Stack-Button
-  // andockt, statt vom Kartenzentrum wie ein Modal.
-  m.style.transformOrigin='0 0';
+  // Seit der vertikalen Sidebar (2026-08-21) oeffnet das Flyout RECHTS neben
+  // dem Stack-Button statt darunter - passend zu einer Nav-Leiste am
+  // linken Rand. Faellt zurueck auf "unter dem Button", falls rechts kein
+  // Platz mehr ist (schmale Bildschirme mit eingeklappter Icon-Sidebar).
+  const spaceRight=window.innerWidth-r.right-8;
+  if(spaceRight>=mw){
+    m.style.left=(r.right+4)+'px';
+    m.style.top=Math.max(8,Math.min(r.top,window.innerHeight-m.offsetHeight-8))+'px';
+    m.style.transformOrigin='0 50%';
+  }else{
+    m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-mw-8))+'px';
+    m.style.top=(r.bottom+4)+'px';
+    m.style.transformOrigin='0 0';
+  }
   m.querySelectorAll('.tab-menu-item').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();const mid=b.getAttribute('data-mid');closeTabMenu();selectTab(mid);};});
   setTimeout(()=>document.addEventListener('pointerdown',tabMenuOutside,true),0);
 }

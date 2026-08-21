@@ -871,3 +871,54 @@ git-Helfer statt zu schlucken. Bei jedem neuen Pruefskript daran denken:
 ein Waechter, der bei einem eigenen Fehler "gruen" meldet, ist schlimmer
 als keiner.
 
+
+## ⚠ NAVIGATION: dunkle Koyfin-Sidebar statt horizontaler Tab-Leiste (2026-08-21)
+
+Nutzer-Wunsch per `/goal`, mit drei Koyfin.com-Screenshots als Referenz
+(WebFetch war fuer praktisch jede externe Domain in dieser Umgebung
+`EGRESS_BLOCKED` - org-weite Netzwerk-Policy, kein CLI/MCP-Problem; der
+Nutzer hat die Screenshots stattdessen direkt in den Chat geschickt).
+Wörtlich: "schwarz aussenrum machen, innendrin weiss, den Marmor-Look im
+Hintergrund beibehalten, Kategorien links untereinander".
+
+**Umsetzung:** die horizontale `.tabbar` ist komplett durch eine vertikale
+`#navSidebar` ersetzt (App-Shell-Umbau: `.hdr` bleibt oben durchgehend,
+darunter liegen `#navSidebar` und `#pageArea` als Flex-Row nebeneinander -
+alle 17 `pgXxx`-Seiten stecken jetzt in `#pageArea` statt direkt in
+`<body>`). Icon je Tab (`TAB_ICONS`, Feather/Lucide-Stroke-Stil), aktiver
+Eintrag ueber blauen linken Rand + blaues Icon + fette weisse Schrift.
+
+**⚠ Dunkle Farbgebung NUR ueber gescopte CSS-Variablen-Ueberschreibung**,
+nicht durch Anfassen einzelner Stellen: `.hdr,#navSidebar{--bg0:...;--t0:...;
+...}` ueberschreibt die Palette-Variablen NUR innerhalb dieses Teilbaums -
+jede der rund 200 Stellen, die bereits `var(--t0)`/`var(--bg3)`/... nutzt,
+faerbt sich dadurch automatisch um. Ohne dieses Muster haette jede Buchse
+(Buttons, Icons, Logo, Live-Banner, Profil-Avatar) einzeln anfasst werden
+muessen. **Bei kuenftigen dunklen/hellen Teilbereichen zuerst pruefen, ob
+ein solcher gescopter Variablen-Override reicht**, bevor Einzelstellen
+angefasst werden.
+
+Der bestehende Tab-Stack-Mechanismus (`tabStacks`, drag-to-reorder,
+`openStackMenu` als Flyout) ist FUNKTIONAL unveraendert geblieben - nur
+`renderTabBar()` zielt jetzt auf `#navSidebar` statt `#tabbar` und baut
+`.np`-Buttons (Icon+Label) statt `.tp`-Buttons, und `openStackMenu()`
+oeffnet das Flyout jetzt RECHTS neben dem Stack-Button statt darunter
+(mit Ruecksprung auf "darunter", wenn rechts kein Platz mehr ist) - passt
+zu einer vertikalen statt horizontalen Leiste. `.tab-menu`/`.tab-menu-item`
+selbst bleiben bewusst HELL (werden per `document.body.appendChild()`
+ausserhalb von `#navSidebar` gerendert, erben die dunklen Variablen also
+nicht) - ein helles Flyout ueber einer dunklen Sidebar-Kante ist auch bei
+Koyfin selbst das uebliche Muster, kein Fehler.
+
+**Mobile (<760px, Nutzer-Entscheid):** Sidebar wird zu einer reinen 56px-
+Icon-Leiste (`.np-lbl{display:none}`), Labels bleiben nur noch als
+`title`-Tooltip erreichbar. Bewusst NICHT gewaehlt: Hamburger-Drawer oder
+Bottom-Nav (beide waeren groesserer Umbau bzw. zusaetzliche zweite
+Nav-Struktur).
+
+**Marmor-Hintergrund bleibt unveraendert** im Content-Bereich (`#pageArea`
+setzt keinen eigenen Hintergrund, `body{background-image}` scheint weiter
+durch) - nur `.hdr`/`#navSidebar` sind jetzt opak dunkel und verdecken ihn
+dort. Bias-Farben (Blau=bullish/Rot=bearish) und der Kartenrand-Wert aus
+der Kontrast-Korrektur (V400, 1.58:1) sind unveraendert - reine
+Navigations-/Chrome-Aenderung, keine neue Kontrast-Iteration.
