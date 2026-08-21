@@ -6541,3 +6541,73 @@ sonst produziert das Werkzeug selbst das Rauschen, das es eigentlich
 aufdecken soll (dieselbe Lehre wie bei den frueheren Dashboard-
 Ueberlappungs-Pruefungen: ein Test, der eine Ebene nicht sieht, kann in
 genau dieser Ebene keinen Fehler finden).
+
+### ⚠ Nutzer-Korrektur direkt im Anschluss: "einfach eine Menge Grau drauf gepackt" (2026-08-21)
+
+Nutzer, nach dem Ansehen von V399: "Du hast jetzt einfach eine Menge Grau
+drauf gepackt schau mal im Internet bei Experten wie man sowas richtig
+macht teilweise geht auch Schrift über Karten drüber und so." Zwei
+getrennte Ansprüche: ein Urteil über den GESTALTERISCHEN Ansatz (nicht nur
+"mehr Kontrast", sondern "wie machen es Profis") und ein konkreter
+Bugreport (Text läuft über Kartenränder).
+
+**Recherche statt Vermutung** (WebSearch gegen Radix Colors, Vercel
+Design-Tokens, Refactoring UI - alle drei unabhängig, alle drei bestätigen
+dieselben zwei Punkte):
+1. **Jeder Karte denselben kräftigen Rand zu geben ist ein benannter
+   Anti-Pattern.** Refactoring UI wörtlich: "if you're already using
+   different background colors... you might not need the border." Hierarchie
+   soll primär über Typografie/Gewicht/Abstand laufen, Farbe/Rand ist die
+   LETZTE, leiseste Ebene - nicht das Hauptwerkzeug.
+2. **Dekorative Textur/Linien hinter dichten Zahlen-Tabellen wird
+   einhellig abgelehnt**, nicht nur "abgeschwächt" - bei Finanz-/Dashboard-
+   UIs (Bloomberg-Terminal-Philosophie eingeschlossen) gilt jede nicht-
+   funktionale visuelle Neuerung als Risiko für Lesbarkeit.
+3. Radix' 12-Stufen-Grau-Modell und Vercels tatsächliche Tokens (Canvas
+   `#ffffff` → dezente Fläche `#fafafa` → Rand `#ebebeb`) arbeiten mit
+   VIELEN kleinen Schritten, nicht mit einem grossen Sprung.
+
+**Fix (V400), gezielt nur die zwei falschen Entscheidungen zurückgenommen,
+die echten Lesbarkeits-Fixes aus V399 (Text-Idiome, Off-Scale-Groessen,
+Karten-Titel-Konsistenz - siehe Eintrag oben) blieben unangetastet, das
+waren nachweisbare WCAG-Bugs, keine Geschmacksfrage:**
+- **Die acht diagonalen Hintergrund-Linien sind komplett wieder raus**
+  (`body{background-image}` wieder nur die Marmor-Textur). Der urspüngliche
+  Wunsch "mehr starke graue Linien im Hintergrund" wird dadurch NICHT
+  erfuellt - das war nach der Recherche die falsche Uebersetzung des
+  eigentlichen Wunsches (mehr Ausdruck/Kontrast insgesamt), nicht die
+  richtige.
+- **`--bd` von 1.97:1 auf 1.58:1 zurueckgenommen** (`#b3b9c2`→`#c9ced6`),
+  `--bd2` von 2.71:1 auf 2.19:1 (`#969ea9`→`#a9b0ba`) - wirklich "leicht"
+  wie im urspruenglichen Wunsch, nicht kastig. Der Schatten (`--shadow-card`,
+  aus V399 bereits leicht kraeftiger) traegt jetzt einen groesseren Teil der
+  Kartentrennung, statt dass der Rand allein dafuer sorgt.
+- **`--bg0`/`--bg2`-Sprung (1.39:1) bewusst NICHT weiter verkleinert** - das
+  war der Fix fuer eine echte 1.14:1-Unsichtbarkeit, kein Geschmacks-Sprung;
+  die Recherche kritisiert die Zahl der Stufen zwischen Rand/Karte, nicht
+  diesen einen Basiswert.
+
+**Dem Bugreport "Schrift über Karten drüber" per Playwright/Screenshot
+nachgegangen, nicht nur behauptet geloest.** `overlap_scan.js` (Scratchpad,
+alle 17 Tabs × 5 Breiten, mit derselben Scroll-/Clip-Ausschluss-Logik wie
+`check/dashboard.js`) meldete 20 Reste. Direkter Screenshot-Vergleich an
+den drei konkretesten Verdachtsstellen (COT@820px, Seasonality@390px,
+Rate Probabilities@1194px) zeigt **keinen neuen Ueberlapp** - alle drei
+sind das bereits dokumentierte, app-weite Muster "zu breiter Karteninhalt
+wird INNERHALB der Karte horizontal scrollbar" (`overflow-x:auto` am
+Card-Container, siehe Grundsatz "Karten-Inhalt darf nie ueber den
+Kartenrand hinausgehen" oben) - bei Seasonality@390px reisst der Text
+("May", "67%") exakt an der Kante ab, weil die Karte per Default un-
+gescrollt startet, aber `scrollWidth`/`clientWidth` bestaetigen: die Karte
+IST scrollbar, der Rest ist per Wisch/Scroll erreichbar. Dasselbe Muster
+zeigt auch die COT-"Details & weekly change"-Tabelle (Spalte "NET P..."
+an der Kante abgeschnitten) - konsistent, nicht neu.
+
+**Merksatz:** ein geometrischer Scan (Element X ragt ueber Element Y hinaus)
+kann eine ABSICHTLICH scrollbare Flaeche nicht von einer kaputten
+unterscheiden - beide sehen strukturell gleich aus (Inhalt breiter als
+Container). Nur `scrollWidth>clientWidth` UND `overflow-x:auto` zusammen
+beweisen "das ist Scroll, kein Bug"; ein reiner Bounding-Box-Vergleich
+braucht danach IMMER noch einen echten Screenshot an der flaggierten
+Stelle, bevor er als "Fund" gilt - die drei Stichproben hier waren alle
+falsch-positiv.
