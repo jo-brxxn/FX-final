@@ -717,6 +717,14 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   beschriebene Bugfixes ohne Interpretationsspielraum sind hiervon nicht
   automatisch ausgenommen, im Zweifel lieber einmal zu viel nachfragen als
   ungefragt loslegen.
+  **⚠️ Verschärfung 2026-08-21 (Nutzer-Wunsch, nach der als "einfach eine
+  Menge Grau drauf gepackt" kritisierten Kontrast-Aktion):** vor JEDER
+  Änderung muss ich zu 95 % sicher sein, dass ich die Anfrage vollständig
+  und richtig verstanden habe — bei Design-/Geschmacksentscheidungen
+  ausdrücklich eingeschlossen, nicht nur bei funktionalen Änderungen.
+  Solange diese Sicherheit nicht erreicht ist, so lange nachfragen (per
+  `AskUserQuestion`, mit konkreten Optionen/Beispielen/Referenzen statt
+  offener Fragen), bis sie erreicht ist — dann erst anfangen.
 - **VERSION-CHECK/LIVE-Banner (Stand 2026-07-25, Nutzer-Korrektur):** steht
   jetzt NICHT mehr in einer eigenen Zeile über dem Header, sondern zentriert
   IN derselben Zeile wie das Logo (`.hdr-livebanner`, `id="verBanner"`,
