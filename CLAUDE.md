@@ -1292,3 +1292,46 @@ nie `clientWidth > 0` verlangen - genau der Extremfall (auf null
 gequetscht) faellt sonst heraus, das ist mir in dieser Sitzung selbst
 passiert.
 
+## ⚠ NAVIGATION V3 + ABSTANDS-SKALA (2026-08-21)
+
+Vier Nutzer-Meldungen, alle bestaetigt und gefixt.
+
+**1. Ein Tab-Stapel blieb dauerhaft ausgewaehlt.** `showTab()` hatte
+`const _st=stackOf(activeTabId); if(_st)expandedStack=_st.id;` - **ohne
+else-Zweig**. Wer "Insights" oeffnete und danach auf "Assets" wechselte,
+liess `expandedStack` auf dem alten Wert stehen; der Stapel blieb
+aufgeklappt und hervorgehoben. Jetzt `expandedStack=_st?_st.id:null`, und
+`expandedDash=(tab==='dash')` nach demselben Muster. **Merksatz:** ein
+`if(x)y=...` ohne else ist bei EXKLUSIVEN Zustaenden (genau einer darf offen
+sein) fast immer ein Fehler - der alte Zustand ueberlebt still.
+
+**2. "Erster Klick verstellt nur die Leiste" griff mit Maus nie.** Die
+Regel prueft im click-Handler, ob die Leiste GERADE `nav-collapsed` ist.
+Mit Maus feuert aber vorher `pointerenter` und klappt aus - zum
+Klickzeitpunkt ist die Klasse weg, die Bedingung falsch, der Klick
+navigiert sofort. Nur bei Touch (kein Hover) funktionierte es, weshalb es
+beim Bau als "getestet" durchging. Jetzt wird der ZUSTANDSWECHSEL gemerkt
+(`ebenAusgeklappt`), nicht der Zustand abgefragt; `pointerleave` verwirft
+das Merkmal wieder, damit ein spaeterer Klick auf die laengst offene
+Leiste normal navigiert. **Merksatz:** wenn Hover denselben Zustand
+aendert, den ein Klick-Handler abfragt, ist die Abfrage zum Klickzeitpunkt
+grundsaetzlich wertlos - den Uebergang festhalten, nicht den Zustand. Und:
+eine Interaktionsregel IMMER mit echtem `hover()` vor `click()` testen,
+nicht nur mit `dispatchEvent('click')`.
+
+**3. Gegenrichtung ergaenzt (Nutzer-Wunsch):** ist die Leiste ausgeklappt,
+klappt der erste Klick im Inhalt sie nur ein - erst der zweite bedient den
+Inhalt. Bewusst nur oberhalb 760px: darunter ist die Leiste per Media
+Query dauerhaft schmal OHNE die Klasse zu tragen, dort wuerde sonst jeder
+erste Tipper im Inhalt geschluckt.
+
+**4. Abstands-Skala `--gap-block` (12px).** Auf der Assets-Seite standen
+untereinander **11 / 11 / 9 / 0 / 22px**, im Raster zusaetzlich 24px
+senkrecht gegen 36px waagerecht. Der Nullwert: `.masonry` hatte kein
+`margin-bottom` und `.rub-card` kein `margin-top`, die News-Karte klebte
+dadurch direkt am Raster. Alle Stellen ziehen jetzt aus einer Variablen.
+**Merksatz:** Abstaende gehoeren wie die Schriftgroessen (`--fs-*`) auf
+eine Skala. Bei einer neuen Karte/einem neuen Block IMMER `--gap-block`
+verwenden statt einen Wert zu waehlen, der "ungefaehr passt" - genau so
+sind die fuenf verschiedenen Werte entstanden.
+

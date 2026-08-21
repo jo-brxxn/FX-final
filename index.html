@@ -95,6 +95,17 @@ body{font-family:var(--ff-text);background-image:url("data:image/png;base64,iVBO
      --chrome-bg ist der EINE Ort fuer die Farbe von Kopfzeile+Nav-Sidebar
      (siehe Kommentar dort) - frueher stand sie als Literal an zwei Stellen,
      was genau den Bug erzeugt hat, dass nur eine der beiden dunkel wurde. */
+  /* EIN Abstandswert fuer den senkrechten Rhythmus einer Inhaltsseite.
+     Auf der Assets-Seite standen vorher fuenf verschiedene Werte
+     untereinander - gemessen 11 / 11 / 9 / 0 / 22px, dazu im Raster 24px
+     senkrecht gegen 36px waagerecht (Nutzer 2026-08-21: "die Abstaende
+     zwischen den Karten sind teilweise unterschiedlich gross ... und die
+     News-Karte hat teilweise gar keinen Abstand nach oben"). Der Nullwert
+     entstand, weil .masonry kein margin-bottom hatte und .rub-card kein
+     margin-top - die News-Karte klebte dadurch direkt am Raster.
+     MERKSATZ: Abstaende gehoeren wie die Schriftgroessen auf eine Skala,
+     nicht je Stelle einzeln geraten. */
+  --gap-block:12px;
   --chrome-bg:#2b3038;
   --bg0:#d7dbe0;--bg1:#e3e6ea;--bg2:#eef0f3;--bg3:#e3e6ea;--bg4:#c5cad1;--bg5:#aab1ba;--bg6:#888f99;
   --bd:#c9ced6;--bd2:#a9b0ba;
@@ -595,7 +606,7 @@ body.compact-view .rub-summary{display:block}
    grenzen sich nur durch eine duenne Kontur ab, keine Elevation. Alt:
    border:1px solid var(--bd2);border-left:4px solid #2c4f7c;border-radius:
    var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18); */
-.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:16px;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#e9edf1}
@@ -626,7 +637,7 @@ body.compact-view .rub-summary{display:block}
    mehr - das Referenzbild zeigt 6 einzeln umrandete Karten direkt nebenein-
    ander, ohne gemeinsamen Aussenrahmen/Titel. Alt: background:var(--bg2);
    border:3px solid var(--bd);border-radius:var(--rs);padding:9px; */
-.ov-card{margin-bottom:9px}
+.ov-card{margin-bottom:var(--gap-block)}
 .ov-card-title{font-size:17px;font-weight:800;color:var(--t0);letter-spacing:.3px;text-transform:uppercase;margin-bottom:9px;font-family:var(--ff-num)}
 .ov-grid{display:grid;grid-template-columns:repeat(var(--ovcols,3),1fr);gap:8px;align-items:stretch}
 .ov-summary{font-size:14px;line-height:1.6;color:var(--t1);white-space:pre-wrap;flex:1}
@@ -2082,7 +2093,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    sich die Breite gleichmaessig (flex:1), Luecken links/rechts bleiben dadurch gleich
    gross egal wie viele Spalten gerade da sind. */
 /* ── COLLAPSIBLE EVENT SECTION (DETAIL PAGE) ── */
-.evt-section{margin-bottom:11px}
+.evt-section{margin-bottom:var(--gap-block)}
 .evt-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--t1);font-family:var(--ff-num);letter-spacing:.5px;user-select:none;transition:border-color .12s}@media (hover:hover){.evt-toggle:hover{border-color:var(--bd2)}}
 .evt-toggle.open{border-radius:var(--rs) var(--rs) 0 0;border-bottom:none}
 .evt-tog-arrow{margin-left:auto;color:var(--t3);font-size:11px;transition:transform .15s;flex-shrink:0}
@@ -2419,7 +2430,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   /* Gleich hohe Karten-Zeilen: kleinere Karten strecken ihren Hintergrund
      auf die Höhe der größten Karte der Zeile - der Inhalt (Indikatoren)
      bleibt oben und wird NICHT gestreckt. */
-  .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:24px 36px;align-items:stretch}
+  .masonry{display:grid;grid-template-columns:repeat(var(--mcols,2),1fr);gap:var(--gap-block);margin-bottom:var(--gap-block);align-items:stretch}
   .masonry .rub-card{margin-bottom:0}
   .masonry .rub-card.collapsed{align-self:start}
   /* Radial-Layout (Nutzer-Wunsch 2026-07-27, ersetzt das vorherige
@@ -3261,11 +3272,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-407 - Vier Korrekturen aus einem Nutzer-Foto. (1) ECHTER BUG: die Nav-Sidebar wurde nie dunkel, obwohl die Kopfzeile es war - die spaetere #navSidebar-Regel setzte nochmal background:var(--bg1) und schlug bei gleicher Spezifitaet den gescopten Override. Die Farbe steht jetzt an EINER Stelle (--chrome-bg). (2) Chrome-Farbe von Fast-Schwarz (#14171c) auf ein dunkles Grau (#2b3038) - Kontrast 12.4:1. (3) Karten-Hintergrund weg vom reinen Weiss auf #eef0f3. (4) ECHTER LAYOUT-BUG: die px-Mindestbreiten im 4-Spalten-Dashboard-Raster summierten sich auf 1102px, der Breakpoint rechnete aber mit der vollen Fensterbreite ohne die Sidebar - dadurch stand die rechte Spalte bis zu 179px ueber den Rand (gemessen kaputt bei 1100-1279 und 1400-1419, u.a. genau bei den 1194px des Nutzer-iPads). Jetzt minmax(0,..) statt px-Untergrenzen plus Spaltenzahl am Platz. Ausserdem: fuenf abgeschnittene Textstellen ausgeschrieben, und check/cards.js prueft Kartenueberlauf jetzt geometrisch statt ueber scrollWidth - der alte Test war bei geclipptem Ueberlauf strukturell blind."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-408 - Vier Nutzer-Meldungen. (1) Ein Tab-Stapel (z.B. Insights) blieb dauerhaft aufgeklappt und hervorgehoben, weil showTab() expandedStack nur SETZTE, wenn der neue Tab in einem Stapel liegt - der else-Zweig fehlte. Gilt jetzt gleichermassen fuer die Dashboard-Liste. (2) Der Schutz 'erster Klick verstellt nur die Leiste' griff mit Maus nie: pointerenter klappt schon beim Hinbewegen aus, dadurch war nav-collapsed zum Klickzeitpunkt laengst weg. Es wird jetzt der ZUSTANDSWECHSEL gemerkt statt des Zustands. (3) Gegenrichtung ergaenzt: ist die Leiste ausgeklappt, klappt der erste Klick im Inhalt sie nur ein, erst der zweite bedient den Inhalt (unterhalb 760px bewusst aus, dort ist die Leiste ohnehin schmal). (4) Abstaende auf der Assets-Seite vereinheitlicht: sie waren 11/11/9/0/22px, im Raster zusaetzlich 24px senkrecht gegen 36px waagerecht, und die News-Karte hatte gar keinen Abstand nach oben (weder .masonry ein margin-bottom noch .rub-card ein margin-top). Jetzt ein einziger Wert --gap-block."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-407</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-408</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -9922,7 +9933,7 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:11px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
       <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
@@ -10056,7 +10067,7 @@ function renderSpecTab(c){
   return`${renderOverviewCard(rubs)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   ${newsAssetSectionHtml(c)}
-  <button onclick="addRub()" class="btn g" style="width:100%;margin-top:6px;padding:8px">＋ Add Rubric</button>`;}
+  <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;}
 
 function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
@@ -21143,8 +21154,15 @@ function showTab(tab,btn,fxMode){
   // Der Stapel des gerade aktiven Tabs klappt automatisch auf (Koyfin-
   // Muster: die aktive Sektion bleibt sichtbar), egal ueber welchen Weg
   // (Klick, Suche, Tastenkuerzel) der Tab-Wechsel ausgeloest wurde.
-  const _st=stackOf(activeTabId);if(_st)expandedStack=_st.id;
-  if(tab==='dash')expandedDash=true;
+  // Der Stapel des aktiven Tabs klappt auf - und jeder ANDERE zu.
+  // ⚠ Vorher fehlte der else-Zweig: wer "Insights" oeffnete und danach auf
+  // "Assets" wechselte, sah den Stapel weiter aufgeklappt und hervorgehoben,
+  // weil expandedStack schlicht nie zurueckgesetzt wurde (Nutzer 2026-08-21:
+  // "wenn ich einmal auf Insights druecke, bleibt sie die ganze Zeit
+  // ausgewaehlt, obwohl ich danach auf etwas anderes druecke").
+  const _st=stackOf(activeTabId);expandedStack=_st?_st.id:null;
+  // Dieselbe Logik fuer die Dashboard-Liste.
+  expandedDash=(tab==='dash');
   renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
@@ -21841,24 +21859,48 @@ updNetStatus();
   const pageArea=document.getElementById('pageArea');
   const nav=document.getElementById('navSidebar');
   if(!pageArea||!nav)return;
-  const collapse=()=>nav.classList.add('nav-collapsed');
-  const expand=()=>nav.classList.remove('nav-collapsed');
+  // Der erste Klick verstellt nur die Leiste, erst der zweite wirkt
+  // (Nutzer-Wunsch 2026-08-21, beide Richtungen):
+  //   eingeklappte Leiste angeklickt  -> nur ausklappen, NICHT navigieren
+  //   Inhalt bei ausgeklappter Leiste -> nur einklappen, NICHT ausloesen
+  //
+  // ⚠ Warum die vorherige Fassung nicht funktioniert hat: sie prueft im
+  // click-Handler, ob die Leiste GERADE eingeklappt ist. Mit Maus feuert
+  // aber 'pointerenter' schon beim Hinbewegen und klappt aus - beim
+  // eigentlichen Klick ist 'nav-collapsed' laengst weg, die Bedingung also
+  // falsch, und der Klick navigierte sofort. Deshalb wird jetzt gemerkt,
+  // ob der Zustand SOEBEN durch die Annaeherung gewechselt hat, statt den
+  // Zustand zum Klickzeitpunkt zu befragen.
+  let ebenAusgeklappt=false,ebenEingeklappt=false;
+  const collapse=()=>{nav.classList.add('nav-collapsed');ebenAusgeklappt=false;};
+  const expand=()=>{
+    if(!nav.classList.contains('nav-collapsed'))return;
+    nav.classList.remove('nav-collapsed');ebenAusgeklappt=true;
+  };
+  // Nur wenn die Leiste ueberhaupt breit sein KANN. Unter 760px ist sie per
+  // Media Query dauerhaft auf Icon-Breite, ohne die Klasse zu tragen - ohne
+  // diese Grenze wuerde dort jeder erste Tipper im Inhalt geschluckt.
+  const breiteLeiste=()=>window.innerWidth>=760;
   pageArea.addEventListener('scroll',collapse,{capture:true,passive:true});
-  pageArea.addEventListener('pointerdown',collapse,{passive:true});
+  pageArea.addEventListener('pointerdown',()=>{
+    if(breiteLeiste()&&!nav.classList.contains('nav-collapsed'))ebenEingeklappt=true;
+    collapse();
+  },{capture:true,passive:true});
+  // Den durch dieses Einklappen ausgeloesten Klick schlucken - der Inhalt
+  // wird erst mit dem naechsten Klick bedient.
+  pageArea.addEventListener('click',ev=>{
+    if(ebenEingeklappt){ebenEingeklappt=false;ev.preventDefault();ev.stopPropagation();}
+  },true);
   nav.addEventListener('pointerenter',expand);
   nav.addEventListener('focusin',expand);
-  // Ein Klick, der die eingeklappte Leiste wieder ausklappt, darf NICHT
-  // gleichzeitig den darunterliegenden Tab-Button aktivieren (Nutzer-Wunsch
-  // 2026-08-21: "wenn man diese Leiste ein- oder ausklappt, klickt man
-  // nicht direkt auf etwas, sondern es veraendert sich nur die Leiste").
-  // Capture-Phase auf #navSidebar faengt den Klick ab, BEVOR er den
-  // eigentlichen Button erreicht - pointerenter hat zwar meist schon vorher
-  // ausgeklappt, aber bei Touch/Trackpad (kein echtes Hover-Vorher) oder
-  // einem sehr schnellen Klick greift dieser Fallback zusaetzlich.
+  // Verlaesst der Zeiger die Leiste wieder, ohne geklickt zu haben, ist das
+  // Ausklappen "verbraucht" - beim naechsten Hinkommen ist sie ja schon
+  // offen und ein Klick soll dann normal navigieren.
+  nav.addEventListener('pointerleave',()=>{ebenAusgeklappt=false;});
   nav.addEventListener('click',ev=>{
-    if(nav.classList.contains('nav-collapsed')){
+    if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();
-      expand();
+      expand();ebenAusgeklappt=false;
     }
   },true);
 })();
