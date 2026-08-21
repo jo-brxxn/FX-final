@@ -2925,8 +2925,8 @@
     ],
     [
      "2025-11-25",
-     "0.2%",
-     "0.4%"
+     "-0.1%",
+     "0.3%"
     ],
     [
      "2025-12-16",
@@ -5626,7 +5626,7 @@
     ],
     [
      "2025-12-16",
-     "3.7%",
+     "3.5%",
      null
     ],
     [
@@ -7381,12 +7381,12 @@
    "source": "tv"
   },
   "GDP Growth QoQ": {
-   "actual": "0.3%",
-   "forecast": "0.5%",
-   "previous": "0.5%",
-   "date": "2026-08-16",
-   "event": "GDP Growth Rate QoQ Prel",
-   "period": "q/q",
+   "actual": "0.30%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-08-21",
+   "event": "GDP Growth QoQ (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-03-09",
@@ -7405,7 +7405,6 @@
      "0.3%"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2023-09-07",
@@ -7574,10 +7573,10 @@
    ]
   },
   "Services Inflation": {
-   "actual": "1%",
+   "actual": "1.20%",
    "forecast": null,
-   "previous": null,
-   "date": "2026-08-14",
+   "previous": "1.10%",
+   "date": "2026-08-21",
    "event": "Services Inflation (CPI services) (Trading Economics)",
    "source": "tepage"
   },
@@ -7585,7 +7584,7 @@
    "actual": "68460K",
    "forecast": null,
    "previous": "68820K",
-   "date": "2026-06-30",
+   "date": "2026-08-21",
    "event": "Employed Persons (Trading Economics)",
    "source": "tepage"
   },
@@ -7593,7 +7592,7 @@
    "actual": "794K",
    "forecast": null,
    "previous": "786K",
-   "date": "2026-06-30",
+   "date": "2026-08-21",
    "event": "Job Vacancies (Trading Economics)",
    "source": "tepage"
   }
@@ -10125,78 +10124,12 @@
    "source": "tv"
   },
   "NFP / Employment Change": {
-   "actual": "0.1%",
-   "forecast": "0.1%",
-   "previous": "0.1%",
-   "date": "2026-08-14",
-   "event": "Employment Change QoQ Prel",
-   "period": null,
-   "history": [
-    [
-     "2026-03-06",
-     "0.7%"
-    ],
-    [
-     "2026-05-13",
-     "0.5%"
-    ],
-    [
-     "2026-06-05",
-     "0.1%"
-    ],
-    [
-     "2026-08-14",
-     "0.1%"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2025-08-14",
-     "0.1%",
-     "0.1%"
-    ],
-    [
-     "2025-09-05",
-     "0.1%",
-     "0.1%"
-    ],
-    [
-     "2025-11-14",
-     "0.5%",
-     null
-    ],
-    [
-     "2025-12-05",
-     "0.6%",
-     "0.5%"
-    ],
-    [
-     "2026-02-13",
-     "0.7%",
-     "0.6%"
-    ],
-    [
-     "2026-03-06",
-     "0.7%",
-     "0.7%"
-    ],
-    [
-     "2026-05-13",
-     "0.5%",
-     "0.5%"
-    ],
-    [
-     "2026-06-05",
-     "0.1%",
-     "0.1%"
-    ],
-    [
-     "2026-08-14",
-     "0.1%",
-     "0.1%"
-    ]
-   ],
-   "source": "tv"
+   "actual": "0.10%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-08-21",
+   "event": "Employed Persons (Trading Economics)",
+   "source": "tepage"
   },
   "Retail Sales": {
    "actual": "-0.3%",
@@ -11326,12 +11259,12 @@
    "source": "tv"
   },
   "Manufacturing PMI": {
-   "actual": "53.2",
-   "forecast": "55",
-   "previous": "54.3",
-   "date": "2026-08-03",
-   "event": "procure.ch Manufacturing PMI",
-   "period": null,
+   "actual": "53.20",
+   "forecast": null,
+   "previous": "54.30",
+   "date": "2026-08-21",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-05-04",
@@ -11531,9 +11464,7 @@
      "53.2",
      "55"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "53.20"
+   ]
   },
   "Unemployment Rate": {
    "actual": "3%",
@@ -11956,7 +11887,7 @@
    "actual": "0.30%",
    "forecast": null,
    "previous": null,
-   "date": "2026-07-31",
+   "date": "2026-08-21",
    "event": "Core CPI (Trading Economics)",
    "source": "tepage"
   },
@@ -11964,7 +11895,7 @@
    "actual": "2.10%",
    "forecast": null,
    "previous": null,
-   "date": "2026-08-13",
+   "date": "2026-08-21",
    "event": "PPI (Trading Economics)",
    "source": "tepage"
   },
@@ -11972,7 +11903,7 @@
    "actual": "63.90",
    "forecast": null,
    "previous": "59.80",
-   "date": "2026-08-03",
+   "date": "2026-08-21",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -13695,12 +13626,12 @@
    "source": "tv"
   },
   "Services PMI": {
-   "actual": "55.1",
-   "forecast": "55.5",
-   "previous": "56.2",
-   "date": "2026-08-07",
-   "event": "Ivey PMI s.a",
-   "period": null,
+   "actual": "49.10",
+   "forecast": null,
+   "previous": "47.10",
+   "date": "2026-08-21",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-05-06",
@@ -13785,9 +13716,7 @@
      "55.1",
      "55.5"
     ]
-   ],
-   "source": "tv",
-   "revisedFrom": "49.10"
+   ]
   },
   "GDP Growth QoQ": {
    "actual": "0%",
@@ -13882,7 +13811,7 @@
    "actual": "53.50",
    "forecast": null,
    "previous": "53",
-   "date": "2026-08-04",
+   "date": "2026-08-21",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage"
   }
@@ -15006,19 +14935,18 @@
    "source": "tv"
   },
   "Services PMI": {
-   "actual": "52.9",
+   "actual": "52.90",
    "forecast": null,
-   "previous": "53.6",
-   "date": "2026-08-20",
-   "event": "S&P Global Services PMI Flash",
-   "period": null,
+   "previous": "53.60",
+   "date": "2026-08-21",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-08-20",
      "52.9"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2026-08-20",
@@ -15028,19 +14956,18 @@
    ]
   },
   "Manufacturing PMI": {
-   "actual": "52",
+   "actual": "52.0",
    "forecast": null,
-   "previous": "52",
-   "date": "2026-08-20",
-   "event": "S&P Global Manufacturing PMI Flash",
-   "period": null,
+   "previous": null,
+   "date": "2026-08-21",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage",
    "history": [
     [
      "2026-08-20",
      "52"
     ]
    ],
-   "source": "tv",
    "historyFull": [
     [
      "2026-08-20",
@@ -15142,7 +15069,7 @@
    "actual": "6%",
    "forecast": null,
    "previous": null,
-   "date": "2026-08-04",
+   "date": "2026-08-21",
    "event": "Household Spending (Trading Economics)",
    "source": "tepage"
   },
@@ -15150,7 +15077,7 @@
    "actual": "3.6%",
    "forecast": "3.7%",
    "previous": null,
-   "date": "2026-07-29",
+   "date": "2026-08-21",
    "event": "Core CPI (Trading Economics)",
    "source": "tepage"
   }
