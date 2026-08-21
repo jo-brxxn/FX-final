@@ -182,22 +182,23 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-/* ── KOPFZEILE + NAV-SIDEBAR: derselbe Graustufe wie die Karten-Hintergrund-
-   farbe bei Assets (Nutzer-Korrektur 2026-08-21, nach der zunaechst dunklen
-   Koyfin-Umsetzung: "die dunkel eingefaerbte Spalte links und die Zeile
-   oben soll in dem gleichen Grauton sein wie bei Assets die Hintergrund-
-   farbe der Karten"). Die Karten dort (`.rub-card`) nutzten bis eben genau
-   den Wert #d7dbe0 - der wird hier direkt uebernommen. Damit derselbe Ton
-   nicht gleichzeitig als Karten-Hintergrund im Inhalt UND als Chrome-Farbe
-   auftaucht (Nutzer-Wunsch im selben Atemzug: "tausch dann auch ueberall
-   im Inhalt wo dieses Grau verwendet die Farbe aus durch ein helleres
-   Grau"), wurde `--bg3` (die Variable hinter `.rub-card`) weiter oben auf
-   #e3e6ea angehoben - der alte #d7dbe0-Wert lebt jetzt NUR noch hier,
-   fest verdrahtet statt ueber die (jetzt hellere) Variable. Text/Icons
-   bleiben normale helle-Theme-Tokens (kein Weiss-auf-Dunkel mehr noetig). */
-.hdr,#navSidebar{background:#d7dbe0}
-#navSidebar{border-right-color:#b9bfc8}
-.hdr{border-bottom-color:#b9bfc8}
+/* ── KOPFZEILE + NAV-SIDEBAR: deutlich dunkleres Grau (Nutzer-Korrektur
+   2026-08-21, direkt im Anschluss an die vorherige helle #d7dbe0-Angleichung
+   an die Assets-Kartenfarbe: "mach das grau aussenrum deutlich dunkler").
+   Bewusst neutrales dunkles GRAU (kein Blau-/Navy-Stich) statt eines
+   erneuten Rueckfalls auf die fruehere Koyfin-Nachtfarbe - passend zum
+   woertlichen "grau", nicht "schwarz" dieses Mal. Kontrast gegen weissen
+   Text nachgerechnet: 8.8:1 (weit ueber AA). Text/Icons darin daher wieder
+   auf helle Tokens umgestellt (scoped Variablen-Override, kaskadiert auf
+   alle ~200 var(--t0)/var(--bg3)-Stellen darin automatisch). */
+.hdr,#navSidebar{background:#454b53}
+.hdr,#navSidebar{
+  --t0:#f5f6f7;--t1:#dde0e3;--t2:#aab0b6;--t3:#7c8288;
+  --bg2:#525960;--bg3:#5c636b;--bg4:#666e76;--bg5:#767e86;
+  --bd:#5c636b;--bd2:#6d747c;
+}
+#navSidebar{border-right-color:#33383e}
+.hdr{border-bottom-color:#33383e}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
 #pageArea{flex:1;display:flex;flex-direction:column;min-height:0}
@@ -3113,11 +3114,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-402 - Kopfzeile+Sidebar komplett ueberarbeitet (Nutzer-Wunsch per /goal, Punktliste). Kopfzeile: Inbox (Button/Modal/gesamter Postfach-Code inkl. State in snap()/applySnap()) vollstaendig entfernt; 'Data' (Export/Import/Backups) aus dem Header in die Einstellungen verschoben (bisheriges Cloud-Sync-Modal heisst jetzt 'Settings', Data steht dort als erste Zeile); Suche sitzt jetzt links als breites Suchfeld (Koyfin-Referenz) statt Icon-Button rechts; Bull/Bear/Neutral-Zaehlzeile unter dem Logo raus (updateStat() entfernt); 'Saved' steht jetzt direkt neben LIVE/Version; alles in EINER Reihe statt 2-Zeilen-Grid. Sidebar: Breite passt sich per width:max-content dem laengsten Label an (kein Platz mehr verschwendet); 'Insights' klappt jetzt INLINE (kleinere Schrift, eingerueckt) statt als Flyout auf; Sidebar klappt automatisch auf Icon-Breite ein, sobald im Inhalt gescrollt/getippt wird, und wieder aus bei Beruehrung. Farbe: Kopfzeile+Sidebar sind jetzt derselbe Grauton wie die Rubrik-Karten bei Assets (#d7dbe0, vorher dunkles Navy) - dieser Ton lebt jetzt NUR noch dort, --bg3 (Kartenhintergrund im Inhalt) wurde dafuer auf ein helleres Grau angehoben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-403 - Kopfzeile+Sidebar-Grau auf Nutzer-Wunsch 'deutlich dunkler' gemacht: #454b53, ein neutrales dunkles Grau (bewusst kein Blau-/Navy-Stich) statt des zuvor an die Assets-Kartenfarbe angeglichenen hellen #d7dbe0. Kontrast gegen weissen Text nachgerechnet: 8.8:1. Text/Icons darin wieder auf helle Tokens umgestellt (gescopte Variablen-Ueberschreibung wie beim ersten Koyfin-Umbau). Vorherige Aenderungen (Inbox entfernt, Data in Settings, Suche links, Kein Bull/Bear-Zaehler, Saved neben Live, eine Kopfzeilen-Reihe, auto-breite/auto-einklappende/inline-aufklappende Sidebar) bleiben unveraendert - reine Farbkorrektur."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-402</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-403</span>
     </span>
   </div>
   <div class="hdr-r">

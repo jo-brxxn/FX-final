@@ -1004,3 +1004,19 @@ nachschlagen (hier: `.rub-card{background:var(--bg3)}` → `#d7dbe0`) statt
 zu schaetzen - der Unterschied zwischen "ungefaehr passend" und "exakt
 derselbe Wert" ist bei einem expliziten Farbabgleich-Wunsch genau der
 Punkt der Anfrage.
+
+**⚠ Nachtrag Minuten spaeter (2026-08-21): "mach das grau aussenrum
+deutlich dunkler".** Die eben beschriebene helle #d7dbe0-Angleichung war
+also nur ein Zwischenschritt - der Nutzer wollte die Chrome-Flaeche
+insgesamt kraeftiger abgesetzt sehen, nicht heller. Jetzt `#454b53`, ein
+bewusst NEUTRALES dunkles Grau (kein Blau-/Navy-Stich wie beim ersten
+Koyfin-Anlauf - der Nutzer sagte diesmal "grau", nicht "schwarz"). Text/
+Icons in `.hdr`/`#navSidebar` sind dafuer wieder auf helle Tokens
+umgestellt (`--t0` bis `--t3`, plus `--bg2`-`--bg5`/`--bd`/`--bd2` fuer
+Buttons/Suchfeld/Profil-Kreis darin), Kontrast gegen Weiss nachgerechnet:
+8.8:1. **Merksatz:** Farbentscheidungen bei einem laufenden `/goal` koennen
+sich innerhalb derselben Sitzung mehrfach aendern, wenn der Nutzer das
+Zwischenergebnis sieht und nachjustiert - das ist normales iteratives
+Feinjustieren, kein Widerspruch zur vorherigen Entscheidung. Immer den
+NEUESTEN expliziten Wunsch umsetzen, nicht die aeltere Begruendung
+verteidigen.
