@@ -1095,3 +1095,52 @@ Wechsel unter 220ms (meist <100ms), 20 aufeinanderfolgende Scroll-Events
 `ERR_TUNNEL_CONNECTION_FAILED` fuer externe FF-Kalender-Fetches - das ist
 die dokumentierte Netzwerk-Einschraenkung dieser Sandbox (siehe "Daten &
 Workflow" oben), kein echter Bug.
+
+## ⚠ KOYFIN-FARBABGLEICH V2 + Klaerung per AskUserQuestion (2026-08-21)
+
+Nutzer schickte ein zweites, deutlich detaillierteres Koyfin-Screenshot
+(Laptop-Mockup: dunkle Kopfzeile+Sidebar mit "DASHBOARDS"-Abschnitt +
+"+NEW"-Button + benannter "My Dashboards"-Liste, 4 weisse Panels mit
+Kopfleisten-Toolbar-Icons) mit "so will ich das haben... frag mich so
+lange bis du dir komplett sicher bist wie es die Regel sagst" - explizite
+Berufung auf die 95%-Sicherheits-Regel. Der Screenshot buendelte mind. 4
+Aenderungen unterschiedlichen Umfangs (Panel-Design, Drag/Resize/Close,
+Chart-Zeichenwerkzeuge, Mehrfach-Dashboards) - deshalb 4 gezielte Fragen
+per `AskUserQuestion` statt zu raten. Ergebnis, **bindend fuer diese und
+kuenftige Sitzungen zu diesem Thema**:
+- Umfang: **alle 17 Tabs**, nicht nur Dashboard.
+- Tiefe: **nur Design/Farben** ("Mir geht es nur um das seiten leisten
+  design und generell die Farben die dort benutzt wurden und die innen
+  benutzt wurden") - AUSDRUECKLICH KEIN Drag/Resize/Schliessen(×) fuer
+  Karten.
+- Chart-Werkzeuge: **keine** neuen Zeichen-/Annotations-Icons.
+- Mehrere Dashboards: **ja, neues Feature** - mehrere eigene benannte
+  Dashboards wie Koyfins "My Dashboards" + "+NEW".
+
+**Farb-Ergebnis:** die Chrome-Farbe (siehe Abschnitt "NAVIGATION/HEADER
+V2" oben) ist am ECHTEN zweiten Referenzfoto nochmal nachgemessen worden -
+das dort sichtbare Anthrazit ist NAHEZU SCHWARZ, deutlich dunkler als das
+zuvor "geratene" `#454b53`. Jetzt `#14171c` (Kontrast 17.96:1 gegen
+Weiss), per Playwright-Screenshot (Dashboard- und Assets-Tab, 1440px)
+gegen die Referenz verifiziert - Kopfzeile/Sidebar/aktiver-Nav-Eintrag
+sehen dem Foto jetzt sehr nah.
+
+**⚠ `.dw` (Dashboard-Widgets) BEWUSST OHNE Koyfin-Kopfleisten-Hintergrund
+gelassen - keine neue Iteration noetig.** `.rub-card`/`.cot-card` haben
+bereits eine helle Kopfleiste (`--bg3`/`--bg4`-Gradient, siehe
+`.rub-hdr`/`.cot-card-title`) und entsprechen damit strukturell schon
+Koyfins Panel-Kopf. `.dw` hat das NICHT - aber das ist keine Luecke,
+sondern eine bereits am 2026-07-25 explizit getroffene Nutzer-Entscheidung
+("Keine Ueberschrift einfach so", siehe Code-Kommentar bei `.dw-hdr` in
+`index.html`, "Minimaler Kartenkopf wie im Referenz-Foto"): der
+Dashboard-Kartenkopf ist bewusst ein minimaler Kleinbuchstaben-Titel ohne
+eigenen Hintergrundblock. **Bei einem kuenftigen "Karten sehen nicht
+einheitlich aus"-Einwand zu `.dw` zuerst diese Entscheidung nachschlagen,
+bevor sie neu aufgerollt wird** - dieselbe Vorsicht wie beim "Glow"-Punkt
+im Abschnitt "wiederkehrende UI-Bausteine" oben.
+
+**Merksatz zur 95%-Regel bei Bildreferenzen:** ein einzelner Screenshot
+kann mehrere unabhaengige Aenderungswuensche gleichzeitig zeigen (hier:
+Farben + Interaktion + neues Feature) - IMMER in einzelne Fragen zerlegen
+statt den Umfang aus dem Bild selbst zu erraten, auch wenn "so will ich
+das haben" pauschal klingt.

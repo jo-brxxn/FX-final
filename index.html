@@ -182,23 +182,23 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
-/* ── KOPFZEILE + NAV-SIDEBAR: deutlich dunkleres Grau (Nutzer-Korrektur
-   2026-08-21, direkt im Anschluss an die vorherige helle #d7dbe0-Angleichung
-   an die Assets-Kartenfarbe: "mach das grau aussenrum deutlich dunkler").
-   Bewusst neutrales dunkles GRAU (kein Blau-/Navy-Stich) statt eines
-   erneuten Rueckfalls auf die fruehere Koyfin-Nachtfarbe - passend zum
-   woertlichen "grau", nicht "schwarz" dieses Mal. Kontrast gegen weissen
-   Text nachgerechnet: 8.8:1 (weit ueber AA). Text/Icons darin daher wieder
-   auf helle Tokens umgestellt (scoped Variablen-Override, kaskadiert auf
-   alle ~200 var(--t0)/var(--bg3)-Stellen darin automatisch). */
-.hdr,#navSidebar{background:#454b53}
+/* ── KOPFZEILE + NAV-SIDEBAR: naeher an Koyfins echtem Referenzfoto
+   (Nutzer 2026-08-21, zweite Runde: "schau dir nochmal das Bild an, so
+   will ich das haben... die Farben die dort benutzt wurden und die innen
+   benutzt wurden"). Das erste "deutlich dunkler" (#454b53) war ein
+   neutrales Mittel-Dunkelgrau geraten - das echte Koyfin-Screenshot zeigt
+   ein fast SCHWARZES Anthrazit (#14171c), kein Mittelgrau. Kontrast gegen
+   weissen Text: 17.96:1. Text/Icons bleiben helle Tokens (scoped
+   Variablen-Override, kaskadiert automatisch auf alle Verbrauchsstellen
+   darin). */
+.hdr,#navSidebar{background:#14171c}
 .hdr,#navSidebar{
-  --t0:#f5f6f7;--t1:#dde0e3;--t2:#aab0b6;--t3:#7c8288;
-  --bg2:#525960;--bg3:#5c636b;--bg4:#666e76;--bg5:#767e86;
-  --bd:#5c636b;--bd2:#6d747c;
+  --t0:#f2f3f5;--t1:#d3d6da;--t2:#9198a1;--t3:#656b73;
+  --bg2:#1c1f26;--bg3:#22262e;--bg4:#262b33;--bg5:#2e333c;
+  --bd:#22262e;--bd2:#2e333c;
 }
-#navSidebar{border-right-color:#33383e}
-.hdr{border-bottom-color:#33383e}
+#navSidebar{border-right-color:#0a0c0f}
+.hdr{border-bottom-color:#0a0c0f}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
 #pageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -3114,11 +3114,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-404 - Vier Nachbesserungen (Nutzer-Wunsch per /goal). (1) Sidebar-Klick beim Ein-/Ausklappen navigiert nicht mehr gleichzeitig - ein Klick auf die eingeklappte Sidebar klappt sie nur aus, ein zweiter Klick navigiert erst danach (Capture-Listener auf #navSidebar). (2) Echter Layout-Bug gefunden+gefixt: #pageArea/.pc/.body fehlte min-width:0 als Flex-Kinder, wodurch breiter Chart-Inhalt (Rate Probabilities) die ganze Seite ueber den Viewport hinaus wachsen liess und dadurch den rechten Karten-Randabstand auffraß - das war die Ursache fuer 'Karten haben rechts keine Luecke'. (3) Neue Waechter-Pruefung check/cards.js: Text/Elemente duerfen nie den Kartenrand verlassen, jetzt auf allen 17 Tabs statt nur Dashboard, plus Seiten-Ebene-Check (faengt genau Fund 2). check/layout.js gefixt: veraltete Tab-Ids UND ein blinder Fleck (document.documentElement sieht keinen Overflow, weil body position:fixed ist). (4) Der neue Waechter fand direkt einen echten Fund: EUR/CAD-Endpunkt-Labels im Implied-Policy-Path-Chart ueberlappten sich bei nah beieinander liegenden Zinspfaden - Mindestabstand-Logik ergaenzt (gleiches Muster wie beim Rate-Probabilities-Chart)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-405 - Kopfzeile/Sidebar naeher an Koyfins echtem Referenzfoto: das vorherige Mittel-Dunkelgrau (#454b53, geraten) durch das tatsaechliche fast-schwarze Anthrazit (#14171c) ersetzt, per Screenshot-Vergleich gegen die Koyfin-Referenz verifiziert (Kontrast 17.96:1 gegen weissen Text). Dashboard-Widgets (.dw) bewusst OHNE Koyfin-Kopfleisten-Hintergrund gelassen - das war schon am 2026-07-25 als expliziter Nutzer-Wunsch entschieden ('Keine Ueberschrift einfach so'), keine neue Iteration noetig, .rub-card/.cot-card haben die Kopfleiste bereits."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-404</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-405</span>
     </span>
   </div>
   <div class="hdr-r">
