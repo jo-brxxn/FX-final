@@ -1,5 +1,5 @@
 {
- "updated": "2026-08-21T19:26:21.770Z",
+ "updated": "2026-08-21T20:20:13.857Z",
  "headlines": [
   {
    "t": "Morgan Stanley resets Nvidia stock forecast ahead of earnings",
@@ -917,14 +917,7 @@
    "s": "Bloomberg",
    "k": 2,
    "d": "2026-08-21T13:45:00.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "Reuters",
-     "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPeVJRUTVFVzFGV1dITUg0YmRpcFBpN18wZGdmTVgwdU1oWU5xU3dWaWhzWUtONDdWWElvbnpmTHhGLXJDcDBSczdnTnZKVFo0T2hMWEpydGhIOG9rT3g5NW1fWk5nZXBKOFRRbG4yWldPZXc3ak9XTEhqRzVyUTF0X3VNZXo3NVMyenJndGhpTkQ2ZXFzalRYUXZCX0E4SGFQU21LWFpCTmxkMlBWUmx5bG11WlRNM2ZPNnlMSkdn?oc=5"
-    }
-   ],
-   "w": 2,
+   "w": 0,
    "a": [],
    "tg": []
   },
@@ -2170,18 +2163,6 @@
    "tg": []
   },
   {
-   "t": "Bitcoin and ethereum prices today, Thursday, August 20, 2026: Crypto prices surge after President Trump pushes for Clarity Act",
-   "u": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-thursday-august-20-2026-crypto-prices-surge-after-president-trump-pushes-for-clarity-act-154014757.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-20T15:40:14.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
    "t": "Interactive Brokers Group (IBKR) Delivers Exceptional Growth at Scale",
    "u": "https://finance.yahoo.com/markets/stocks/articles/interactive-brokers-group-ibkr-delivers-153751054.html",
    "s": "Insider Monkey",
@@ -3399,6 +3380,30 @@
    "tg": []
   },
   {
+   "t": "SanDisk’s Long-Term Financial Outlook Is Turning Heads on Wall Street",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/sandisk-long-term-financial-outlook-113002735.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-20T11:30:02.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Babcock & Wilcox (BW): This Legacy Power Company Just Found Its AI Gold Rush",
+   "u": "https://finance.yahoo.com/technology/ai/articles/babcock-wilcox-bw-legacy-power-112731323.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-20T11:27:31.000Z",
+   "w": 1,
+   "a": [
+    "GOLD"
+   ],
+   "tg": []
+  },
+  {
    "t": "Morgan Stanley is out with its gold price outlook for 2027",
    "u": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNWjZWcDRYQXN5Wl9FclVuVzBpbk9aZlExQnF3VmRnenZtYWk5NkJKRlBraGhhTkNPX3poRUVVUkxzUlQzeXQ4Rk5xRzJGUzY2cjFWeG5pZElwY3FkVGRRTlpEdUlRQ0Rta1VFeUZNN3M3MU9WVmUwN0k5ODJxeUlJakQwaEZ4Z1RLdGI1VnNUYTc1THBHY0NLd2VnZV9TNktCMW9FNVNqbFN0blE2dVNVc3JFVDQ?oc=5",
    "s": "Investing.com",
@@ -3408,6 +3413,16 @@
    "a": [
     "GOLD"
    ],
+   "tg": []
+  },
+  {
+   "t": "US homeowners to get major tax break under Trump’s reported new plan: ‘Make America Wealthy Again.’ Could you benefit?",
+   "u": "https://finance.yahoo.com/economy/policy/articles/us-homeowners-major-tax-break-112500114.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-20T11:25:00.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3421,15 +3436,86 @@
    "tg": []
   },
   {
+   "t": "Should you really get long-term care insurance in America? Here’s what the numbers actually say",
+   "u": "https://finance.yahoo.com/healthcare/articles/really-long-term-care-insurance-111000395.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-20T11:10:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Bitcoin, crypto shares climb after Trump pushes Clarity Act",
+   "u": "https://finance.yahoo.com/news/bitcoin-crypto-shares-climb-trump-110846182.html",
+   "s": "Reuters",
+   "k": 2,
+   "d": "2026-08-20T11:08:46.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "Yahoo Personal Finance",
+     "u": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-thursday-august-20-2026-crypto-prices-surge-after-president-trump-pushes-for-clarity-act-154014757.html"
+    }
+   ],
+   "w": 3,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Crypto shares climb after Treasury's doubled buybacks boost risk assets",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/bitcoin-crypto-shares-climb-trump-110846906.html",
+   "s": "Reuters",
+   "k": 2,
+   "d": "2026-08-20T11:08:46.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
    "t": "Bank of America warns Kevin Warsh’s Fed strategy ‘works like a tax on the economy’ — how to protect your money",
-   "u": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOcmlBRFpQalNTZlFvUVF6UWVMbjVGd2hoY0FvNkdvNE04cndEZnpneDl3aDUtUFRMM2dXRklNNHB6aWJUdXBtX3lKY1N2ckhCNDhxbUdvZE1uOEhNYXhkX1BHUHQtbHB3OHN6Yk9KVDF4VkNpRmxJQkhTM1g5TVhpc2pUUE5TVUVNY1RIaE5sR3phaFh0MFlMa3Uydw?oc=5",
-   "s": "Yahoo Finance",
-   "k": 1,
+   "u": "https://finance.yahoo.com/economy/policy/articles/bank-america-warns-kevin-warsh-110500512.html",
+   "s": "Moneywise",
+   "k": 2,
    "d": "2026-08-20T11:05:00.000Z",
-   "w": 1,
+   "n": 2,
+   "o": [
+    {
+     "s": "Yahoo Finance",
+     "u": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOcmlBRFpQalNTZlFvUVF6UWVMbjVGd2hoY0FvNkdvNE04cndEZnpneDl3aDUtUFRMM2dXRklNNHB6aWJUdXBtX3lKY1N2ckhCNDhxbUdvZE1uOEhNYXhkX1BHUHQtbHB3OHN6Yk9KVDF4VkNpRmxJQkhTM1g5TVhpc2pUUE5TVUVNY1RIaE5sR3phaFh0MFlMa3Uydw?oc=5"
+    }
+   ],
+   "w": 3,
    "a": [
     "USD"
    ],
+   "tg": []
+  },
+  {
+   "t": "Inside i-80 Gold’s (IAUX) High-Stakes Race To Grow Production",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/inside-80-gold-iaux-high-110130817.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-20T11:01:30.000Z",
+   "w": 1,
+   "a": [
+    "GOLD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Turn Bristol-Myers Squibb into an Income Machine with This Options Play",
+   "u": "https://finance.yahoo.com/markets/options/articles/turn-bristol-myers-squibb-income-110002020.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-20T11:00:02.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3453,6 +3539,26 @@
    "tg": []
   },
   {
+   "t": "3 Harvard dropouts just hit a $21B valuation with a chip they say beats Nvidia's best. Should NVDA investors worry?",
+   "u": "https://finance.yahoo.com/technology/ai/articles/3-harvard-dropouts-just-hit-110000286.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-20T11:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "XPO upgraded by S&P, just one notch below investment-grade",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/xpo-upgraded-p-just-one-110000130.html",
+   "s": "FreightWaves",
+   "k": 2,
+   "d": "2026-08-20T11:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "German economy hampered by depleted rivers, Bundesbank says",
    "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOSlUycEM2UjlZLWl6TDNyQnh5WS1BU0NmMTFSME05Und0cEFodlNGSHB0VHdQdUFtbHo5QXl4RGNBeHJGemNFd19TLW5YSWtqRjRFUmZnU291T1hHaUNKN1BZREVBNVZXU3BJTktDaTNoVldRVV9TWVVBY21GU1dKb3pPUGhFc0xuX0k4SVlGUzAteU4wb1FyMW1nV2UwV25tUWdXSGhB?oc=5",
    "s": "Reuters",
@@ -3462,6 +3568,88 @@
    "a": [
     "EUR"
    ],
+   "tg": []
+  },
+  {
+   "t": "HYPE Jumps +23% as CFTC Pathway Raises Hyperliquid US Market Hopes",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/hype-jumps-23-cftc-pathway-104231942.html",
+   "s": "Coinspeaker",
+   "k": 2,
+   "d": "2026-08-20T10:42:31.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Google Is Up 10% This Year. This 2X ETF Has Returned 8%. Here’s the Decay Math That Explains the Difference",
+   "u": "https://finance.yahoo.com/markets/options/articles/google-10-2x-etf-returned-104007869.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-20T10:40:07.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Prediction: This Will Be Palantir's Stock Price at the End of 2026",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/prediction-palantirs-stock-price-end-104000212.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-20T10:40:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "R1 drills down on AI prior authorizations with Humata buy",
+   "u": "https://finance.yahoo.com/healthcare/articles/r1-drills-down-ai-prior-103946661.html",
+   "s": "Healthcare Dive",
+   "k": 2,
+   "d": "2026-08-20T10:39:46.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Stocks Slip Before the Open as Bond Rout Resumes; Walmart Sinks After Earnings",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/stocks-slip-open-bond-rout-103859903.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-20T10:38:59.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Upwork (UPWK) Posts A Profit Beat, But Cuts Its Growth Outlook",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/upwork-upwk-posts-profit-beat-103703891.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-20T10:37:03.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "If a Stock Market Crash Is Coming, These 2 Growth Stocks Might Be Worth Selling",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/stock-market-crash-coming-2-103500459.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-20T10:35:00.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Dave Ramsey exposes the one group of Americans who score big by filing Social Security at 62 — is this you?",
+   "u": "https://finance.yahoo.com/economy/policy/articles/dave-ramsey-exposes-one-group-103500552.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-20T10:35:00.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3475,6 +3663,26 @@
     "USD",
     "GBP"
    ],
+   "tg": []
+  },
+  {
+   "t": "Teens targeted for scams",
+   "u": "https://finance.yahoo.com/markets/currencies/articles/teens-targeted-scams-103200086.html",
+   "s": "Payments Dive",
+   "k": 2,
+   "d": "2026-08-20T10:32:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Texas CFOs reckon with the rise of ‘shadow finance’",
+   "u": "https://finance.yahoo.com/technology/ai/articles/texas-cfos-reckon-rise-shadow-103138697.html",
+   "s": "CFO.com",
+   "k": 2,
+   "d": "2026-08-20T10:31:38.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3501,6 +3709,18 @@
     "rate hike",
     "inflation"
    ]
+  },
+  {
+   "t": "Gains in AI company stakes juice second-quarter earnings for S&P 500",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/gains-in-ai-company-stakes-juice-second-quarter-earnings-for-sp-500-100419261.html",
+   "s": "Reuters",
+   "k": 2,
+   "d": "2026-08-20T10:04:19.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
   },
   {
    "t": "Mortgage and refinance interest rates today, Thursday, August 20, 2026: Small changes, but a big move up on the 5/1 ARM",
@@ -4812,26 +5032,6 @@
    "tg": []
   },
   {
-   "t": "Analog Devices (ADI)’s Strong Forecast Points to Continued AI-Driven Growth",
-   "u": "https://finance.yahoo.com/technology/ai/articles/analog-devices-adi-strong-forecast-215723786.html",
-   "s": "Insider Monkey",
-   "k": 2,
-   "d": "2026-08-19T21:57:23.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Broadcom (AVGO) Is Down More Than 20%—Why TD Cowen Still Sees 27% Upside",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/broadcom-avgo-down-more-20-214954022.html",
-   "s": "Insider Monkey",
-   "k": 2,
-   "d": "2026-08-19T21:49:54.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Bessent Becomes Most Interventionist Treasury Chief in Decades",
    "u": "https://www.bloomberg.com/news/articles/2026-08-19/bessent-becomes-most-interventionist-treasury-chief-in-decades",
    "s": "Bloomberg",
@@ -4866,16 +5066,6 @@
    "tg": [
     "interest rate"
    ]
-  },
-  {
-   "t": "Pony AI Is Scaling Robotaxis Fast—Can the Stock Reach BofA’s $17 Target?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/pony-ai-scaling-robotaxis-fast-212425636.html",
-   "s": "Insider Monkey",
-   "k": 2,
-   "d": "2026-08-19T21:24:25.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "U.S. Eyes Lower Tariffs on Metals and Autos in Canada Trade Deal",
@@ -6600,18 +6790,6 @@
    "tg": []
   },
   {
-   "t": "London stocks gain as gold miners shine",
-   "u": "https://news.google.com/rss/articles/CBMirAFBVV95cUxOLTBoNEs0YWdiZnRmc1BhZG5hMWVHN2dNQ0h6YTRqekdHY0wxR0FCeTlQWTNmNFlURks1Zm9HT3prTExrYmJYWFZtN29GZ2tQMlg1dGh0RFAwLTA0TzFzRW5yMWJUMnVIVFVrMmhZUDcwWVdsWHRlRV9ybkRST2VlYkMyOUhZTTk5Q3FUeDNEdWprajZEYUxybVFHdHV1b0paOXZFcUR1bFljM2ds?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-19T16:12:00.000Z",
-   "w": 1,
-   "a": [
-    "GOLD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Gold prices today, Wednesday, August 19, 2026: Gold strengthens ahead of FOMC minutes release",
    "u": "https://finance.yahoo.com/personal-finance/investing/article/gold-prices-today-wednesday-august-19-2026-gold-strengthens-ahead-of-fomc-minutes-release-161123813.html",
    "s": "Yahoo Personal Finance",
@@ -7671,13 +7849,7 @@
    "n": 2,
    "w": 2,
    "a": [],
-   "tg": [],
-   "o": [
-    {
-     "s": "Verdict",
-     "u": "https://finance.yahoo.com/technology/articles/marvell-gives-google-buy-12-092457278.html"
-    }
-   ]
+   "tg": []
   },
   {
    "t": "VB vs ISCB: Which Small-Cap ETF Offers Better Value?",
@@ -7975,7 +8147,17 @@
    "a": [
     "SP500"
    ],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Barchart",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/mccormick-company-stock-outlook-wall-112828754.html"
+    },
+    {
+     "s": "Barchart",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/wall-street-bullish-bearish-state-113404791.html"
+    }
+   ]
   },
   {
    "t": "What Will Watson Do Wednesday?",
@@ -7985,18 +8167,6 @@
    "d": "2026-08-19T11:38:37.000Z",
    "w": 0,
    "a": [],
-   "tg": []
-  },
-  {
-   "t": "German finance ministry links high borrowing costs to security overhaul",
-   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNLWxkZEFaYU9iUkQ4OThLcFVKVGhCQzF0bi1vX3dqSFpocFdETU9sQWpaUVozN0tBZU5xeVJNR3ZfT01za3hmWFBUUmtXVXI4TjE5b3R3SVVKUllMSHhtUWpKc3dVeWZvLTVmODFCWk52QXE0ZXplZk1rNjhfUjhwaEpTTUlzRWpZb2xIWWNOM3ZzRkpvblZNWGtfdUotWVNxUkhDUVBwRHJJQUpCQkoxOXc0Q0NPV2c?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-19T11:34:56.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
    "tg": []
   },
   {
@@ -8029,7 +8199,13 @@
    "a": [
     "SP500"
    ],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Barchart",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/wall-street-analysts-marriott-international-111316334.html"
+    }
+   ]
   },
   {
    "t": "Dave Ramseys explains 3 serious retirement mistakes Americans make after 55. How many are you making?",
@@ -8222,10 +8398,6 @@
     {
      "s": "Yahoo Personal Finance",
      "u": "https://finance.yahoo.com/personal-finance/mortgages/article/mortgage-rates-dropped-last-week-despite-heightened-bond-market-volatility-mortgage-and-refinance-interest-rates-today-thursday-august-20-2026-100000272.html"
-    },
-    {
-     "s": "Yahoo Personal Finance",
-     "u": "https://finance.yahoo.com/personal-finance/mortgages/article/mortgage-and-refinance-interest-rates-today-friday-august-21-2026-rates-stand-on-high-ground-despite-bond-market-buybacks-100000222.html"
     }
    ],
    "w": 1.5,
@@ -8641,18 +8813,6 @@
    "tg": []
   },
   {
-   "t": "ECB's Rehn says wage growth remains moderate, no second-round effects",
-   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOLTlMeHNtM2dyeFBscjU3Nkh2STQ3S2xNQ2RhUE9mX0E0bkN1Vm1zSnRnZnpUT21MX184M2tRUzZ4ZWozdkxCSVZOa1dlSXdQTEVLRTBVRVRZTmkzMnRUSVJ2ek5VT0dBWmVoeklIaGRrV18tNlV0ZW84bnhUOVBuTWxIQ3dUSHZGeWVybVY0a1RSelZoRE00MmE2S0J3ZUp0bnZmbHZxMXlXMG1FRTNxRTFDd3RycjQ?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-19T07:17:43.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
    "t": "Elon Musk Says Goldman Sachs’ $1.8 Trillion Space Economy Forecast Is Too Low: ‘It Will Be Much Bigger’",
    "u": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxPT1hQRnRVX2tCTHdNTnpjNWhiUG9FYzFYTnpPMW9zWXZzLU83cV9SckFISktYQVNSV1ltemhWXzlvWnkwTWhieXdJX3poU25hRUU0Z3ZHbWtrUHNESjQxRVBjZjNDSXFEUXpaTVM3V0tlVUlZb1VvM1dNdjhkb2F0WFJJbm1RaTQ1ZEVTRG9kWUdfMG5Rb0xfbDAzWWFhRDZkM0dEMUdfSzV0QzNTb1U1TXh6TndkTmZpNGFZUl9rMWRXdko1MHBYMEgxUi1nbjh2R2djTC1yem4tOThKV3JjOFVIUQ?oc=5",
    "s": "Benzinga",
@@ -8963,10 +9123,6 @@
     {
      "s": "marketscreener.com",
      "u": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNSjBxSUJSVVBhSmJlVFoxR1lYWlhmSGFYTFFWSGt5OVhIdHZQN1Q0eFh2TEZlN3ZYdXVjS3NYVlQwRzN0cWs0RXg2SHVqalhCOHBhNHVPUTYzU0RDQkhjZXBNVGFGZW5ZSWt0RFhsb05wYUU1dldaejNuZC1MR0RUSTdJV29CNUlSZHNWaEFOMkhIR3R2a3JMXw?oc=5"
-    },
-    {
-     "s": "marketscreener.com",
-     "u": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNaDNVeHpfM3pZUzZ4aTZENllwR3Rsc015QjRGTG5IOVQwTlFtVzJMekxFLTY3d21VZUlGTUtVemVhR2piREpIRm9YMElnemtrdjVWTFBPUGxhNldZbzVocGgweFl0WDI5MGFkVjhEaGFQdGlPV0E5cFNaR19iVVRMYU1PbUhrd0Q3N0NjUXZoVllNaVBENXg5aA?oc=5"
     }
    ],
    "w": 0,
@@ -9137,22 +9293,18 @@
    "s": "Financial Times",
    "k": 1,
    "d": "2026-08-18T22:58:00.000Z",
-   "n": 4,
+   "n": 3,
    "o": [
     {
      "s": "NBC News",
      "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOZ0JmNE9BTlRBeUhlOURZanBDcTVvb1Z0VEc1elUtblkwMU9PS0JqREVqb2xNRnVGOThwUlZ4VGRtRV9PcURZSjZxZlJ6UU5zakJHa1A0OWU0WGVQMzQ4OW9raHBXcnlsV01ldGFRaEtJaWx4TFV0NF8xcEZHXy1fV1dEWmk5dw?oc=5"
     },
     {
-     "s": "Reuters",
-     "u": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQT190OW5VSmgxa3lud1N6Zm9zbUxGUXpMMEEyRXc4R0M5S3RNMld4YXh4ZjRxc2lNcm9TQ0JOcXVjY0tVYnBveHN6RWcwcXZ3dkxoajNzV3VXNFl1TGFvV1dIaTJUT05vQ1pnRmpkRlFRWmxvUzF2X2d0RUg3STRBQmZWaGVWenhtdzVsS1NtdTJ6b0NyUVk2UUwwNFRfam5DWUp4dEcydUtRQQ?oc=5"
-    },
-    {
      "s": "CNN",
      "u": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1DTWFxTENXVl9Gdk1vNWJneTVmeXZsSjltWjBPM2ZRWlR2djhQY1RNVGkyblVTY1M1Uy14dmZxYm13VHU3bUtoSUJkbGRzZmg0cGhOeWMwVTNjVWxkU3pveW1oT3dWSWZJc0ln?oc=5"
     }
    ],
-   "w": 8.5,
+   "w": 6.5,
    "a": [
     "CAD"
    ],
@@ -9737,256 +9889,6 @@
    "tg": []
   },
   {
-   "t": "This Stock Popped, Then Dropped on Its Big Plans for the Tesla Semi Truck",
-   "u": "https://www.barrons.com/articles/einride-stock-price-tesla-semi-truck-c4e436e9?siteid=yhoof2&yptr=yahoo",
-   "s": "Barrons.com",
-   "k": 2,
-   "d": "2026-08-18T20:20:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Slim Chickens Franchisee Intends to Refile Fraud Charges as EEOC Sues Operator for Racial Harassment",
-   "u": "https://finance.yahoo.com/small-business/articles/slim-chickens-franchisee-intends-refile-201500238.html",
-   "s": "Franchise Times",
-   "k": 2,
-   "d": "2026-08-18T20:15:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "How SpaceX’s $60 Billion Cursor Acquisition Bolsters Musk’s AI Ambitions",
-   "u": "https://www.barrons.com/articles/spacex-stock-price-ai-musk-cursor-e773d2aa?siteid=yhoof2&yptr=yahoo",
-   "s": "Barrons.com",
-   "k": 2,
-   "d": "2026-08-18T20:14:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Cheesecake Factory President Sells $3.5M Stock After 81% Rally -- Should Investors Beware?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/cheesecake-factory-president-sells-3-201358243.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-18T20:13:58.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "AMLX Stock Soars as Amylyx GLP-1 Drug Succeeds in Late-Stage Trial",
-   "u": "https://finance.yahoo.com/healthcare/articles/amlx-stock-soars-amylyx-glp-201019873.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T20:10:19.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "How to weigh your bank’s mortgage offers — and why you get so many",
-   "u": "https://finance.yahoo.com/real-estate/articles/weigh-bank-mortgage-offers-why-200531676.html",
-   "s": "Bankrate",
-   "k": 2,
-   "d": "2026-08-18T20:05:31.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Tesla Plans Cybercab Launch As Soon As This Month: Report",
-   "u": "https://www.investors.com/news/tesla-cybercab-robotaxi-waymo-zoox/?src=A00220&yptr=yahoo",
-   "s": "Investor's Business Daily",
-   "k": 2,
-   "d": "2026-08-18T20:02:22.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Why Salesforce Stock Rallied Today",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/why-salesforce-stock-rallied-today-195712338.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-18T19:57:12.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "🔎 Under the Radar: XTI Aerospace Stock Slides on CEO Resignation",
-   "u": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-08-18-2026/card/-under-the-radar-xti-aerospace-stock-slides-on-ceo-resignation-1wsoU8Cx6Hi0WOib7UNm?siteid=yhoof2&yptr=yahoo",
-   "s": "The Wall Street Journal",
-   "k": 2,
-   "d": "2026-08-18T19:54:01.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "1 Hidden Options Level That Can Change How a Stock Trades",
-   "u": "https://finance.yahoo.com/markets/options/articles/1-hidden-options-level-change-195048285.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:50:48.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Which Short-Term Bond ETF Is the Better Buy: Vanguard's BSV or iShares' ISTB?",
-   "u": "https://finance.yahoo.com/markets/options/articles/short-term-bond-etf-better-194819408.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-18T19:48:19.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Nobody Warned Retiree That Going Back to Work Part-Time Would Claw Back $11,000 From Social Security",
-   "u": "https://finance.yahoo.com/healthcare/articles/nobody-warned-retiree-going-back-194816453.html",
-   "s": "24/7 Wall St.",
-   "k": 2,
-   "d": "2026-08-18T19:48:16.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Global Government Bond Yields Hit Multiyear Highs",
-   "u": "https://www.wsj.com/finance/investing/global-government-bond-yields-hit-multiyear-highs-2b47888a?siteid=yhoof2&yptr=yahoo",
-   "s": "The Wall Street Journal",
-   "k": 2,
-   "d": "2026-08-18T19:45:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Dollar Edges Higher as Stocks Slide",
-   "u": "https://finance.yahoo.com/markets/currencies/articles/dollar-edges-higher-stocks-slide-194358133.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:43:58.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Treasury Yields Are at Their Highest Since 2007. Here Are the 4 Retirement Numbers That Just Got Better and the 3 That Got Worse.",
-   "u": "https://finance.yahoo.com/markets/options/articles/treasury-yields-highest-since-2007-194310940.html",
-   "s": "24/7 Wall St.",
-   "k": 2,
-   "d": "2026-08-18T19:43:10.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "BlackRock updates its Bitcoin outlook after historic selloff",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/blackrock-updates-bitcoin-outlook-historic-194247130.html",
-   "s": "TheStreet",
-   "k": 2,
-   "d": "2026-08-18T19:42:47.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Anthropic Just Gave This Bitcoin Miner a Contract Bigger Than the Whole Company",
-   "u": "https://finance.yahoo.com/technology/ai/articles/anthropic-just-gave-bitcoin-miner-194144085.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:41:44.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
-   "t": "SCHD’s 27% Year Is Embarrassing Every Growth ETF in Your Portfolio",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/schd-27-embarrassing-every-growth-194017966.html",
-   "s": "24/7 Wall St.",
-   "k": 2,
-   "d": "2026-08-18T19:40:17.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Demand for banking talent is high as Klarna looks for CFO",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/klarna-announces-exec-departures-lowers-193707265.html",
-   "s": "American Banker",
-   "k": 2,
-   "d": "2026-08-18T19:37:07.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "What to Know as Guggenheim Ups Its Price Target on MongoDB Stock",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/know-guggenheim-ups-price-target-193553962.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:35:53.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "CEO Lip-Bu Tan Just Bought Another 105,000 Shares of Intel Stock",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/ceo-lip-bu-tan-just-193301586.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:33:01.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Crude Prices Gain on Reduced Middle Eastern Oil Supplies",
-   "u": "https://finance.yahoo.com/energy/articles/crude-prices-gain-reduced-middle-193053515.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:30:53.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Forecasts for Hot US Temperatures Lift Nat-Gas Prices",
-   "u": "https://finance.yahoo.com/markets/commodities/articles/forecasts-hot-us-temperatures-lift-192954261.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-18T19:29:54.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "U.S. Bank Business Altitude Connect review: Strong travel rewards, limited perks",
-   "u": "https://finance.yahoo.com/personal-finance/credit-cards/review/us-bank-business-altitude-connect-visa-signature-192717265.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-18T19:27:17.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Meet the Dividend King Stock That Yields More Than Quadruple the S&P 500. Here's Why It's a Buy in August.",
    "u": "https://finance.yahoo.com/markets/stocks/articles/meet-dividend-king-stock-yields-190400242.html",
    "s": "Motley Fool",
@@ -10254,20 +10156,6 @@
    ]
   },
   {
-   "t": "Why Goldman Sachs Thinks the Fed Won't Be Hiking Interest Rates in September",
-   "u": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPdm1LcUYwcGFBci1zeUY5eEZrek5PSUNkb2EyTUVjcnRWSXlXVjJINWZVZVNCS2NVUWlpQXg2SzItbWNUNzFVeUdjV1EzVEZuNmFlSWkxMVBGTkdsR1M3X3dxeWhhcWFtaFJlTWpMU0F3YU1HTXZoc1lBT2VlekZNcms5NUpQbk51TE1uUjQ5R1RhSDdT?oc=5",
-   "s": "Moomoo",
-   "k": 1,
-   "d": "2026-08-17T13:16:18.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
    "t": "Canada's July annual inflation accelerates to 3% as gasoline rebounds",
    "u": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNTG5YMWhMdXdoTXlxNnhCajl1V0pXWWI5UEdRRWJzTjNRMVVVbUtrUHZ4RXNKWWotUXlpQXZaX2dldDR1MXQtNU9aZGJRc2pQQXV0M2NpSWsxOHpwMW1yR0pxVjVfQURkVmxjeHI3cE5kNUVCRUk3R2FaWVlZLXBWb05KakFDZnRqenAycGJWM1JVaWluaFFXSzhrTWF4eGZ6UnM5blRzUllQZXVXVEoxZGx3?oc=5",
    "s": "Reuters",
@@ -10314,6 +10202,20 @@
    ],
    "tg": [
     "inflation"
+   ]
+  },
+  {
+   "t": "Why Goldman Sachs Thinks the Fed Won't Be Hiking Interest Rates in September",
+   "u": "https://news.google.com/rss/articles/CBMilAFBVV95cUxPdm1LcUYwcGFBci1zeUY5eEZrek5PSUNkb2EyTUVjcnRWSXlXVjJINWZVZVNCS2NVUWlpQXg2SzItbWNUNzFVeUdjV1EzVEZuNmFlSWkxMVBGTkdsR1M3X3dxeWhhcWFtaFJlTWpMU0F3YU1HTXZoc1lBT2VlekZNcms5NUpQbk51TE1uUjQ5R1RhSDdT?oc=5",
+   "s": "Moomoo",
+   "k": 1,
+   "d": "2026-08-17T11:33:00.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "interest rate"
    ]
   },
   {
@@ -10716,7 +10618,6 @@
   "24/7 Wall St.",
   "ABC News",
   "Al Jazeera",
-  "American Banker",
   "Associated Press",
   "Axios",
   "BBC",
@@ -10738,11 +10639,13 @@
   "CBS News",
   "CCN",
   "CFO Dive",
+  "CFO.com",
   "CNBC",
   "CNBC Economy",
   "CNBC Finance",
   "Cato Institute",
   "CoinDesk",
+  "Coinspeaker",
   "CryptoProwl",
   "ECB",
   "EnergyNow.com",
@@ -10760,10 +10663,10 @@
   "Forbes",
   "Fortune",
   "Fox Business",
-  "Franchise Times",
   "FreightWaves",
   "Goldman Sachs",
   "Grocery Dive",
+  "Healthcare Dive",
   "IPO-Edge.com",
   "Insider Monkey",
   "International Accounting…",
@@ -10842,6 +10745,6 @@
  "topic": {
   "label": "Bitcoin · Rally · Surge",
   "n": 10,
-  "total": 75
+  "total": 73
  }
 }
