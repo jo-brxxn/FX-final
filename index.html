@@ -2022,28 +2022,12 @@ body.dense-mode .dw{padding:9px 10px;margin-bottom:6px}
 body.dense-mode .dw-hdr{margin-bottom:8px}
 body.dense-mode .dash-layout{gap:9px}
 body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
-body.dense-mode .dash-status-in{padding:4px 10px}
 /* ⚠ Die Kurve darf die Zeile nicht sprengen: mit 64px lief die Karte auf
    dem kleinen Desktop 11px ueber (Layout-Waechter). Jetzt schmaler UND
    schrumpfbar, und der Balken daneben darf ebenfalls schrumpfen. */
 .esi-spark{width:44px;height:16px;flex:0 1 44px;min-width:0;margin:0 5px}
 .esi-spark-empty{width:44px;height:16px;flex:0 1 44px;min-width:0;margin:0 5px;display:inline-block}
 .esi-wrap{min-width:0}
-.dash-status{margin:0 0 10px}
-.dash-status-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  background:rgba(8,13,21,.5);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 12px;
-  font-size:11.5px;color:var(--t2);font-family:var(--ff-num)}
-.dst-item{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
-.dst-l{color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
-.dst-item b{color:var(--t0);font-weight:700}
-.dst-sub{color:var(--t3);font-size:10px}
-.ses-strip{display:flex;align-items:center;gap:3px;margin-left:auto}
-.ses-chip{font-size:9.5px;font-weight:700;letter-spacing:.03em;color:var(--t3);
-  border:1px solid var(--bd);border-radius:var(--rss);padding:1px 5px}
-.ses-chip.on{color:var(--blue);border-color:var(--blue)}
-.ses-lap{font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);
-  border-radius:var(--rss);padding:1px 5px;margin-left:3px}
-@media(max-width:760px){.dash-status-in{font-size:11px;gap:10px;padding:5px 9px}.ses-strip{margin-left:0}}
 .edge-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
 .edge-tbl th{text-align:right;color:var(--t3);font-size:10px;font-weight:600;padding:0 6px 4px;border-bottom:1px solid var(--bd)}
 .edge-tbl th:first-child{text-align:left}
@@ -2348,6 +2332,21 @@ body.dense-mode .dash-status-in{padding:4px 10px}
   .dw.dw-shrink>.dw-body>.perf-list,.dw.dw-shrink>.dw-body>.wl-table,
   .dw.dw-shrink>.dw-body>.carry-list,.dw.dw-shrink>.dw-body>.esi-list{
     overflow:visible}
+  /* ── RESTDIFFERENZ AUF DIE KARTEN-ABSTAENDE ────────────────────────
+     Nutzer-Bugreport 2026-08-21 (Screenshot mit gelber Markierung): unter
+     den kuerzeren Spalten klaffte eine grosse leere Flaeche - gemessen bei
+     1440px 263px in der Mitte.
+     Erster Versuch war, die letzte Karte den Rest fuellen zu lassen. Das
+     sieht aussen richtig aus, verschiebt die Luecke aber nur nach INNEN:
+     gemessen 284px Luft innerhalb der gestreckten Liste, weil eine Liste mit
+     15 Zeilen nun einmal nicht mehr Zeilen hat.
+     Der ehrliche Weg ist, die Spalten inhaltlich gleich lang zu machen -
+     Market Sentiment steht deshalb jetzt in der Mitte, und die Schlagzeilen
+     duerfen mehr zeigen. Damit liegen alle vier Spalten innerhalb von rund
+     50px. Genau dieser Rest verteilt sich hier auf die Abstaende ZWISCHEN
+     den Karten, wo er als Layout-Luft liest und nicht als Loch. */
+  .dash-zone-left,.dash-zone-center,.dash-zone-right,.dash-zone-right2{
+    justify-content:space-between}
   .dw.dw-cap>.dw-body{display:flex;flex-direction:column;min-height:0}
   .dw.dw-cap>.dw-body>.rank-list,.dw.dw-cap>.dw-body>.hie-list,
   .dw.dw-cap>.dw-body>.perf-list,.dw.dw-cap>.dw-body>.wl-table,
@@ -2355,12 +2354,11 @@ body.dense-mode .dash-status-in{padding:4px 10px}
   .dw.dw-cap>.dw-body>.nb-list,.dw.dw-cap>.dw-body>.mv-list,
   .dw.dw-cap>.dw-body>.hl-list{
     max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
-  /* Hoehe je Kartentyp - gemessen, nicht geraten: die Schlagzeilen tragen
-     ueber der Liste noch Umschalter, Leitthema, Druck-Streifen und Chips und
-     duerfen darum etwas mehr; die drei Karten der unteren Reihe liegen
-     bewusst dicht beieinander, damit die Reihe insgesamt mittellang bleibt
-     statt sich an der laengsten auszurichten. */
-  .dw.dw-cap.dw-headlines{--dw-cap:330px}
+  .dw.dw-cap.dw-headlines{--dw-cap:415px}
+  /* Auf breiten Schirmen werden die Karten flacher, die rechte Aussenspalte
+     traegt aber nur zwei - der Rest sammelte sich dort als 85px-Spalt.
+     Statt Luft zeigen die Schlagzeilen dann einfach ein paar Zeilen mehr. */
+  @media(min-width:1500px){.dw.dw-cap.dw-headlines{--dw-cap:495px}}
   .dw.dw-cap.dw-mini_calendar{--dw-cap:215px}
   .dw.dw-cap.dw-notification{--dw-cap:230px}
   .dw.dw-cap.dw-movers_fx{--dw-cap:230px}
@@ -3037,11 +3035,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-396 - Fehleranalyse aller Neuerungen der letzten vier Tage, in drei Durchgaengen: statisch gegen die bekannten Fehlerklassen, zur Laufzeit gegen unabhaengig nachgerechnete Sollwerte, und gegen fehlende oder unsinnige Daten. Vier echte Fehler gefunden. UMFRAGEN AN DER FALSCHEN WAEHRUNG: die fuenf neuen Reihen wurden bei ALLEN Assets angelegt, obwohl jede nur fuer genau eine Waehrung existiert - GBP, CHF, JPY, CAD, AUD und NZD trugen je fuenf Indikatoren, die per Konstruktion nie einen Wert bekommen, und jeder zaehlte im Score-Divisor mit. Die betroffenen Waehrungen wurden dadurch doppelt bestraft. Jetzt waehrungsgenau, bestehende Karteileichen werden entfernt (unberuehrte, versteht sich). ZWEI TOTE ZEITRAUM-FILTER: 'Custom' im Indikator-Verlauf und in der AAII-Karte warf still einen Fehler - der Handlername wird als Text zusammengesetzt, deshalb sieht die Funktion tot aus und eine von beiden war beim Aufraeumen geloescht worden. SURPRISE-INDEX WIDERSPRACH SICH SELBST: die Kurve endete bei CHF auf -0,204, die Zahl direkt daneben stand auf -0,428, weil beide verschieden entschieden, welcher Indikator zaehlt. Jetzt ueber alle acht Waehrungen exakt deckungsgleich. SCHLAGZEILEN-ARCHIV VERSPRACH 35 TAGE UND HIELT DREI: der Deckel von 600 war nach drei Tagen voll, 'Week' und 'Month' zeigten dasselbe wie 'Today'. Jetzt gestaffelt - die letzten drei Tage vollstaendig, danach nur noch das Relevante; das deckt die vollen 35 Tage ab und kostet 0,34 statt 2,5 MB. Der Waechter lernt drei der vier Faelle mit: Handlernamen werden jetzt geprueft, und Funktionen, die die MENGE der Indikatoren aendern, gelten als score-relevant."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-397 - Dashboard nach Screenshot-Bugreport aufgeraeumt. LUECKEN WEG: unter den kuerzeren Spalten klaffte eine leere Flaeche, gemessen bis 334px in der Mitte. Ursache war, dass alle Spalten an die laengste angeglichen werden, die Karten darin aber nicht mitwachsen. Ein erster Versuch, die letzte Karte den Rest fuellen zu lassen, sah aussen richtig aus und schob die Luecke nur nach innen (gemessen 284px Luft in der gestreckten Liste) - eine Liste mit 15 Zeilen hat nun einmal nicht mehr Zeilen. Der ehrliche Weg war, die Spalten inhaltlich gleich lang zu machen: Market Sentiment steht jetzt in der Mitte, die Schlagzeilen zeigen mehr. Alle vier Spalten liegen dadurch innerhalb von 47px, und dieser Rest verteilt sich auf die Abstaende ZWISCHEN den Karten, wo er als Layout-Luft liest. Groesster Zwischenraum ueber alle Breiten jetzt 34px statt 334px. SCHLAGZEILEN GROSS UND OBEN RECHTS: die Karte steht an erster Stelle der rechten Aussenspalte und zeigt 12 statt 8 Meldungen, auf breiten Schirmen noch ein paar mehr. Dabei kam heraus, dass ihr Hoehen-Deckel gar nicht griff - die Regel war beim Umbau versehentlich mitgeloescht worden, die Karte wuchs unbegrenzt mit ihrem Inhalt. STATUSZEILE ENTFERNT: die graue Leiste ueber dem Dashboard ist weg, samt Sitzungs-Streifen; jeder Wert darin stand ohnehin in einer der Karten."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-396</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-397</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -3292,7 +3290,6 @@ function introLogin(){
     <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
   </div>
-  <div class="dash-status" id="dashStatus"></div>
   <div class="dash-layout" id="dashWidgets"></div>
 </div>
 
@@ -8560,9 +8557,9 @@ function mkWidgets(){return[
   {id:uid(),type:'ccy_ranking',title:'Currency Strength',order:4},
   {id:uid(),type:'carry_ranking',title:'Carry Ranking',order:5},
   {id:uid(),type:'vol_leaders',title:'Volatility Leaders',order:6},
-  {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:7},
-  {id:uid(),type:'surprise_index',title:'Surprise Index',order:8},
-  {id:uid(),type:'headlines',title:'Headlines',order:9},
+  {id:uid(),type:'headlines',title:'Headlines',order:7},
+  {id:uid(),type:'sentiment_snapshot',title:'Market Sentiment',order:8},
+  {id:uid(),type:'surprise_index',title:'Surprise Index',order:9},
   {id:uid(),type:'mini_calendar',title:'Economic Calendar',order:10},
   {id:uid(),type:'movers_fx',title:'Biggest Movers FX',order:11},
   {id:uid(),type:'notification',title:'Notifications',order:12},
@@ -8850,8 +8847,8 @@ let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
 // BEWUSST per delWidget() geloescht hat - genau diese ueberspringt der
 // Ensure-Block, sonst kaeme ein absichtlich entferntes Widget bei jedem
 // Boot wieder zurueck (siehe delWidget()).
-const DASH_V=21;
-const DASH_DEFAULTS=[['watchlist','Watchlist'],['corr_warn','Correlation Check'],['risk_sentiment','Risk Sentiment'],['perf_ranking','Performance Ranking'],['ccy_ranking','Currency Strength'],['carry_ranking','Carry Ranking'],['vol_leaders','Volatility Leaders'],['sentiment_snapshot','Market Sentiment'],['surprise_index','Surprise Index'],['headlines','Headlines'],['mini_calendar','Economic Calendar'],['movers_fx','Biggest Movers FX'],['notification','Notifications']];
+const DASH_V=22;
+const DASH_DEFAULTS=[['watchlist','Watchlist'],['corr_warn','Correlation Check'],['risk_sentiment','Risk Sentiment'],['perf_ranking','Performance Ranking'],['ccy_ranking','Currency Strength'],['carry_ranking','Carry Ranking'],['vol_leaders','Volatility Leaders'],['headlines','Headlines'],['sentiment_snapshot','Market Sentiment'],['surprise_index','Surprise Index'],['mini_calendar','Economic Calendar'],['movers_fx','Biggest Movers FX'],['notification','Notifications']];
 // Globale Reihenfolge; renderDash sortiert danach und verteilt erst dann auf
 // die Zonen - der Rang bestimmt also auch die Reihenfolge INNERHALB einer
 // Spalte. Bloecke entsprechen den Zonen (siehe ZONE_OF_TYPE-Kommentar).
@@ -8859,7 +8856,7 @@ const DASH_RANK={
   watchlist:0,corr_warn:1,
   risk_sentiment:2,perf_ranking:3,
   ccy_ranking:4,carry_ranking:5,vol_leaders:6,
-  sentiment_snapshot:7,surprise_index:8,headlines:9,mini_calendar:10,
+  headlines:7,sentiment_snapshot:8,surprise_index:9,mini_calendar:10,
   movers_fx:11,notification:12,
   fx_bias:14,asset_heatmap:15,live_data:16,pairs_editor:17};
 function migrateDash(){
@@ -14790,7 +14787,7 @@ const ZONE_OF_TYPE={
   watchlist:'left',corr_warn:'left',
   risk_sentiment:'center',perf_ranking:'center',
   ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
-  sentiment_snapshot:'right2',surprise_index:'right2',headlines:'right2',
+  sentiment_snapshot:'center',surprise_index:'right2',headlines:'right2',
   mini_calendar:'bottom',movers_fx:'bottom',notification:'bottom'};
 function dashZoneOf(type){return ZONE_OF_TYPE[type]||'bottom';}
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
@@ -15558,7 +15555,7 @@ function renderDash(){
     <div class="dash-zone-bottom">${zones.bottom.join('')}</div>
   `;
   if(_dashScroll)_dashScroll.scrollTop=_scrollY;
-  renderDashStatus();equalizeDashColumns();
+  equalizeDashColumns();
   requestAnimationFrame(scrollCalsToNow);
   startGlobes();
   attachChartHovers(el);
@@ -18700,7 +18697,7 @@ function setNewsAsset(id){newsAssetSel=(newsAssetSel===id?'ALL':id);newsExpanded
 function toggleNewsTopic(){newsTopicOnly=!newsTopicOnly;newsExpanded=false;renderDash();}
 function toggleNewsSrc(u){newsOpenSrc[u]=!newsOpenSrc[u];renderDash();}
 // Wie viele Zeilen ohne Aufklappen sichtbar sind.
-const NEWS_TOP_N=8,NEWS_MAX_N=40;
+const NEWS_TOP_N=12,NEWS_MAX_N=40;
 // Wichtigkeitsstufen. ⚠ Die Zahl kommt aus dem Workflow (siehe dort
 // "gewicht") und ist dort nachlesbar zusammengesetzt; hier wird sie nur in
 // drei Stufen uebersetzt. Die Schwellen sind an der echten Verteilung
@@ -18862,60 +18859,6 @@ function newsAssetSectionHtml(sym){
     <div class="rub-hdr"><span class="rub-name-static">Headlines</span>
       <span class="news-card-n">${newsForAsset(sym.id).length}</span></div>
     <div class="news-card-body">${zeilen}</div>
-  </div>`;
-}
-// ══ STATUSZEILE + SITZUNGEN ══════════════════════════════════════════════
-// Was auf einem Terminal die Statuszeile ist: das Bild des Tages in einer
-// Zeile, statt es sich aus sieben Karten zusammensuchen zu muessen. JEDER
-// Wert kommt aus einer bereits bestehenden Funktion - hier wird nichts
-// zusaetzlich gerechnet.
-//
-// FX-Sitzungen in UTC. Bewusst die handelsuebliche Kernzeit, nicht die
-// Boersenoeffnungszeit einzelner Plaetze - fuer FX zaehlt, wann die Liquiditaet
-// der Region tatsaechlich da ist. Sommerzeit wird NICHT modelliert: London und
-// New York verschieben sich dadurch um eine Stunde, das ist bekannt und steht
-// im Titel, statt eine Zeitzonendatenbank nachzubauen.
-const FX_SESSIONS=[
-  {k:'SYD',n:'Sydney',von:21,bis:6},
-  {k:'TYO',n:'Tokyo',von:23,bis:8},
-  {k:'LDN',n:'London',von:7,bis:16},
-  {k:'NY',n:'New York',von:12,bis:21}
-];
-function sessionAktiv(s,std){return s.von<s.bis?(std>=s.von&&std<s.bis):(std>=s.von||std<s.bis);}
-function sessionStripHtml(){
-  const jetzt=new Date(),std=jetzt.getUTCHours()+jetzt.getUTCMinutes()/60;
-  const aktiv=FX_SESSIONS.filter(x=>sessionAktiv(x,std));
-  const ueberlappung=aktiv.length>1;
-  const chips=FX_SESSIONS.map(x=>{
-    const an=sessionAktiv(x,std);
-    // Wie lange noch bzw. wie lange bis zum Start - in vollen Stunden.
-    const bisEnde=an?((x.bis-std+24)%24):((x.von-std+24)%24);
-    const t=`${x.n} ${String(x.von).padStart(2,'0')}:00-${String(x.bis).padStart(2,'0')}:00 UTC · ${an?'closes in':'opens in'} ${bisEnde.toFixed(1)}h · daylight saving is not modelled`;
-    return`<span class="ses-chip${an?' on':''}" title="${escH(t)}">${escH(x.k)}</span>`;
-  }).join('');
-  return`<span class="ses-strip" title="FX trading sessions in UTC">${chips}${
-    ueberlappung?`<span class="ses-lap" title="${escH(aktiv.map(a=>a.n).join(' + ')+' are open at the same time - the deepest liquidity of the day')}">overlap</span>`:''}</span>`;
-}
-function renderDashStatus(){
-  const el=document.getElementById('dashStatus');if(!el)return;
-  // Staerkste und schwaechste Waehrung - dieselbe Zahl wie das Ranking-Widget
-  const rang=FX.map(id=>{const sy=syms.find(x=>x.id===id);return sy?{id,v:symScoreCmp(sy),b:sy.bias}:null;})
-    .filter(Boolean).sort((a,b)=>b.v-a.v);
-  const stark=rang[0],schwach=rang[rang.length-1];
-  const risk=riskOnOffState();
-  // Naechster High-Impact-Termin
-  const kommend=(calEvts||[]).filter(ev=>ev&&ev.date&&!isEvtPast(ev)&&evtImpact(ev)==='high')
-    .sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):a.date.localeCompare(b.date))[0];
-  const th=NEWS_DATA&&NEWS_DATA.topic;
-  const feld=(lbl,inhalt,tip)=>`<span class="dst-item"${tip?` title="${escH(tip)}"`:''}><span class="dst-l">${lbl}</span>${inhalt}</span>`;
-  const pill=(id,v)=>`<b style="color:${BC[scoreBias(v)]}">${escH(id)} ${v>0?'+':''}${v.toFixed(1)}</b>`;
-  el.innerHTML=`<div class="dash-status-in">
-    ${stark?feld('Strongest',pill(stark.id,stark.v),'Highest comparison score across the eight FX majors - the same number the Currency Strength card shows'):''}
-    ${schwach?feld('Weakest',pill(schwach.id,schwach.v),'Lowest comparison score across the eight FX majors'):''}
-    ${feld('Risk',`<b style="color:${risk.col}">${escH(risk.lbl)}</b>`,'Same read the Risk Sentiment card uses')}
-    ${kommend?feld('Next',`<b>${escH((kommend.currencies||'')+' '+(kommend.name||''))}</b><span class="dst-sub">${escH(fmtDayHdr?fmtDayHdr(kommend.date):kommend.date)}${kommend.time?' '+escH(kommend.time):''}</span>`,'Next high-impact calendar event'):feld('Next','<b>—</b>','No upcoming high-impact event in the calendar window')}
-    ${th&&th.label?feld('Topic',`<b>${escH(th.label)}</b><span class="dst-sub">${th.n}/${th.total}</span>`,'Leading news topic of the last 24h'):''}
-    ${sessionStripHtml()}
   </div>`;
 }
 // ══ EDGE: traegt der Score ueberhaupt? ═══════════════════════════════════

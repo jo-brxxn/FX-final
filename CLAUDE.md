@@ -7149,3 +7149,54 @@ ueberhaupt erreicht** (hier: Laenge des Ergebnisses gegen den Leerzustand).
 halb. Das ist derselbe Gedanke, den der Nutzer bei NFP+ADP ausdruecklich
 ZURUECKGEWIESEN hat ("bewusst getrennte Indikatoren mit je voller ±1-Wirkung").
 Nicht eigenmaechtig geaendert.
+
+### Dashboard-Luecken, Schlagzeilen nach oben, Statuszeile raus (Nutzer-Bugreport 2026-08-21, per Screenshot)
+
+Nutzer markierte per gelber Zeichnung eine grosse leere Flaeche unter den
+kuerzeren Dashboard-Spalten. Dazu: Schlagzeilen groesser und ganz oben
+rechts ("die ist wichtig"), und die Leiste oben weg.
+
+**Die Luecke, gemessen:** Mitte 334px, links 152px, rechts 136px (bei
+1194px Breite). `equalizeDashColumns()` gleicht alle Zonen an die LAENGSTE
+an, die Karten darin standen aber auf `flex:0 0 auto` und wuchsen nicht mit -
+der Rest der Zone blieb schlicht leer.
+
+**⚠ Der naheliegende Fix ist falsch.** Die letzte Karte den Rest fuellen zu
+lassen sieht aussen richtig aus und verschiebt die Luecke nur nach INNEN:
+gemessen 284px Luft innerhalb der gestreckten Liste. Eine Liste mit 15
+Zeilen hat nun einmal nicht mehr Zeilen - Strecken erzeugt Leerraum, nur an
+einer anderen Stelle. **Bei jedem "fuellt die Karte?"-Fix deshalb IMMER die
+Restluecke INNERHALB der Liste mitmessen** (letztes sichtbares Kind gegen
+Listen-Unterkante), nicht nur die Karte gegen die Zone.
+
+**Was funktioniert hat:** die Spalten inhaltlich gleich lang machen. Natuerliche
+Hoehen vorher 1079/927/1126/1182 - Market Sentiment von der rechten
+Aussenspalte in die Mitte verschoben und die Schlagzeilen vergroessert,
+danach 1079/1107/1126/1087, also alle innerhalb von 47px. Genau dieser Rest
+verteilt sich ueber `justify-content:space-between` auf die Abstaende
+ZWISCHEN den Karten, wo er als Layout-Luft liest. Groesster Zwischenraum
+ueber alle Breiten: 34px statt 334px.
+
+**Ein zweiter Versuch, der zurueckgerollt wurde:** gedeckelte Karten (die
+per Definition mehr Inhalt haben als Platz) den Rest aufnehmen zu lassen.
+Das kehrt sich um - die Karte waechst unbegrenzt, wird selbst zur laengsten
+Spalte und zwingt alle anderen auseinander (Abstaende sprangen von 34 auf
+93px). `equalizeDashColumns` leitet die Hoehe aus dem Inhalt ab; eine Karte,
+die sich nach dieser Hoehe richtet, ist ein Henne-Ei-Problem.
+
+**⚠ Dabei aufgefallen: der `--dw-cap`-Deckel griff gar nicht mehr.** Beim
+Umbau hatte ein Bereichs-Replace die Regel `max-height:var(--dw-cap)`
+mitgeloescht - die Variablen-Definitionen blieben stehen, sahen also
+plausibel aus, aber `getComputedStyle` lieferte `max-height:none` und die
+Schlagzeilen-Karte wuchs unbegrenzt (786px statt 666px). Gefunden nur, weil
+die gemessene Kartenhoehe nicht auf die Deckel-Aenderung reagierte.
+**Merksatz:** wenn eine CSS-Variable gesetzt ist, heisst das nicht, dass die
+Regel existiert, die sie benutzt - bei "die Aenderung wirkt nicht" immer den
+COMPUTED-Wert der Eigenschaft pruefen, nicht die Variable.
+
+**Statuszeile (`renderDashStatus`) komplett entfernt**, samt
+`sessionStripHtml`/`FX_SESSIONS`/CSS - erst am 20.08. gebaut, jeder Wert
+darin (staerkste/schwaechste Waehrung, Risiko-Regime, naechster Termin,
+Leitthema) steht ohnehin in einer der Karten.
+
+`DASH_V` auf 22, damit Bestandsnutzer die neue Anordnung bekommen.
