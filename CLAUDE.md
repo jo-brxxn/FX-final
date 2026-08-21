@@ -7200,3 +7200,52 @@ darin (staerkste/schwaechste Waehrung, Risiko-Regime, naechster Termin,
 Leitthema) steht ohnehin in einer der Karten.
 
 `DASH_V` auf 22, damit Bestandsnutzer die neue Anordnung bekommen.
+
+### Schlagzeilen-Karte doppelt so breit + zwei Ueberlappungs-Fehler (2026-08-21)
+
+Nutzer: "Headlines Karte doppelt so breit". Die rechte Aussenspalte steht
+jetzt auf `2fr` (statt `1fr`), gemessen auf jeder Breite exakt das Doppelte
+einer Standardspalte: 399/200, 527/263, 588/294, 711/356.
+
+**⚠ Die Grid-Definition steht ZWEIMAL.** Ein zweiter `@media(min-width:1400px)`
+setzt `grid-template-columns` erneut - wer nur die erste aendert, sieht die
+Wirkung unterhalb von 1400px und wundert sich, dass daruber alles gleich
+bleibt. Beide anpassen.
+
+**Breiter heisst kuerzer:** die Titel brauchen weniger Zeilen, die Karte
+schrumpfte von 774 auf 644px und in der Spalte klaffte wieder ein Spalt von
+128px. Deshalb `NEWS_TOP_N` 12 -> 16 und der Deckel hoch - der Platz wird mit
+echten Meldungen gefuellt, nicht mit Luft.
+
+**Zwei echte Fehler dabei gefunden, beide schon vorher vorhanden:**
+
+1. **`.hl-side` hatte `max-width:88px`, sein Inhalt wurde 114px breit.**
+   Quelle UND Zeit stehen NEBENEINANDER (`.hl-side-r`); bei
+   `align-items:flex-end` wandert der Ueberschuss nach LINKS - die Quelle
+   ragte 22px aus ihrem eigenen Container und lag 8px ueber dem Titel. Auf
+   JEDER Bildschirmbreite, seit dem Bau der Karte. Die Grid-Spalte ist ohnehin
+   `auto`; begrenzt wird jetzt nur noch die Quelle selbst (Auslassung).
+2. **`.wl-name` war auf 7px gequetscht**, der Text "CAD/CHF" lief quer ueber
+   die Prozentspalte. Es hatte `min-width:0` und `white-space:nowrap`, aber
+   kein `overflow:hidden`/`text-overflow:ellipsis`. Ausgeloest durch die
+   schmalere linke Spalte (240px), die ich fuer die breiten Schlagzeilen
+   gemacht hatte - zurueck auf 285px UND Ellipse als Absicherung.
+
+**Der Waechter (`check/dashboard.js`) lernt beide Klassen mit:**
+- **ueberlappender Text INNERHALB einer Karte** - bisher wurden nur Karten
+  gegeneinander geprueft. ⚠ Zwei Filter sind dabei Pflicht, sonst ist der
+  Waechter voller Fehlalarme: unsichtbare Elemente ausschliessen (die
+  Bedien-Buttons des Bearbeitungsmodus liegen per `position:absolute` ueber
+  dem Titel und haben `opacity:0`), und durch einen scrollenden Vorfahren
+  GECLIPPTE Teile ausschliessen (sonst meldet er jede Zeile, die unter dem
+  Fussbereich einer scrollbaren Liste weiterlaeuft). Ohne die Filter: 44
+  Treffer, davon 0 echt.
+- **Text, der sichtbar ueber sein eigenes Element hinauslaeuft**
+  (`scrollWidth > clientWidth` bei `overflow:visible`). **Das findet kein
+  Rechteck-Vergleich** - das Element bleibt klein, nur die Schrift steht
+  heraus. Genau so war der Watchlist-Fall in jeder Kollisionsmessung
+  unsichtbar und im Screenshot sofort zu sehen.
+
+**Merksatz:** eine Ueberlappung, die man SIEHT, muss nicht als Ueberlappung
+MESSBAR sein. Wer nur Rechtecke vergleicht, uebersieht ueberlaufenden Text
+vollstaendig - beide Pruefungen gehoeren zusammen.

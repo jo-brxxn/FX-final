@@ -1379,7 +1379,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .wl-row.wl-add .wl-name{color:inherit;font-weight:600}
 .wl-icons{display:inline-flex;align-items:center;gap:3px;width:60px;flex-shrink:0;color:var(--t2)}
 .wl-flag-sep{color:var(--t3);font-size:var(--fs-2xs)}
-.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
+.wl-name{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:var(--fs-base);color:var(--t0)}
 .wl-chg{font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:700;width:58px;text-align:right;flex-shrink:0}
 .wl-row .row-score{width:34px;font-size:12.5px}
 .wl-row .dw-del{font-size:16px;padding:0 3px}
@@ -1998,9 +1998,17 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .hl-row.lv-hi .hl-title{color:var(--t0);font-weight:600}
 @media(hover:hover){.hl-row:hover .hl-title{color:var(--blue)}}
+/* ⚠ KEIN max-width auf .hl-side. Der Kasten stand auf 88px, sein Inhalt ist
+   aber Quelle UND Zeit NEBENEINANDER (.hl-side-r) und wird damit rund 114px
+   breit. Bei align-items:flex-end wandert der Ueberschuss nach LINKS - die
+   Quelle ragte 22px aus ihrem eigenen Container heraus und lag ueber dem
+   Titel (gemessen 8px Ueberlappung bei "Yahoo Finance Singapore", auf JEDER
+   Bildschirmbreite). Die Grid-Spalte ist ohnehin `auto` und passt sich an;
+   begrenzt wird nur die Quelle selbst, die dann sauber mit Auslassung
+   abschneidet. */
 .hl-side{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;
-  max-width:88px;font-size:10px;color:var(--t3);text-align:right}
-.hl-side-r{display:flex;align-items:center;gap:4px}
+  font-size:10px;color:var(--t3);text-align:right}
+.hl-side-r{display:flex;align-items:center;gap:4px;min-width:0}
 .hl-src{font-weight:600;color:var(--t2);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hl-time{font-family:var(--ff-num)}
 .hl-ass{font-family:var(--ff-num);font-size:9.5px;font-weight:700;color:var(--t2);
@@ -2263,7 +2271,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
      links (beides nur noch das .dp/.pc-Padding), kein Restfreiraum mehr.
      Center (Globus) behaelt ihr bisheriges Breiten-Verhaeltnis (~1.2x) zu
      den drei gleich breiten Seiten-Spalten bei. */
-  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(300px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(200px,1fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
+  #dashWidgets.dash-layout{display:grid;grid-template-columns:minmax(285px,1fr) minmax(230px,1.2fr) minmax(200px,1fr) minmax(360px,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom";gap:9px;align-items:start}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
@@ -2354,11 +2362,11 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   .dw.dw-cap>.dw-body>.nb-list,.dw.dw-cap>.dw-body>.mv-list,
   .dw.dw-cap>.dw-body>.hl-list{
     max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
-  .dw.dw-cap.dw-headlines{--dw-cap:415px}
+  .dw.dw-cap.dw-headlines{--dw-cap:545px}
   /* Auf breiten Schirmen werden die Karten flacher, die rechte Aussenspalte
      traegt aber nur zwei - der Rest sammelte sich dort als 85px-Spalt.
      Statt Luft zeigen die Schlagzeilen dann einfach ein paar Zeilen mehr. */
-  @media(min-width:1500px){.dw.dw-cap.dw-headlines{--dw-cap:495px}}
+  @media(min-width:1500px){.dw.dw-cap.dw-headlines{--dw-cap:560px}}
   .dw.dw-cap.dw-mini_calendar{--dw-cap:215px}
   .dw.dw-cap.dw-notification{--dw-cap:230px}
   .dw.dw-cap.dw-movers_fx{--dw-cap:230px}
@@ -2394,7 +2402,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    bei @media(min-width:1100px)) - hoehere Mindestbreiten fuer diesen
    Breakpoint, aber weiterhin volle Breitenausnutzung ohne rechten Rest. */
 @media(min-width:1400px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(320px,1fr) minmax(260px,1.2fr) minmax(232px,1fr) minmax(232px,1fr)}
+  #dashWidgets.dash-layout{grid-template-columns:minmax(260px,1fr) minmax(260px,1.2fr) minmax(232px,1fr) minmax(464px,2fr)}
 }
 /* ── ULTRA-WIDE ── */
 @media(min-width:1600px){
@@ -3035,11 +3043,11 @@ function introLogin(){
     <div class="saved" id="saveBadge">✓ Auto-saved</div>
     <div class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</div>
   </div>
-  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-397 - Dashboard nach Screenshot-Bugreport aufgeraeumt. LUECKEN WEG: unter den kuerzeren Spalten klaffte eine leere Flaeche, gemessen bis 334px in der Mitte. Ursache war, dass alle Spalten an die laengste angeglichen werden, die Karten darin aber nicht mitwachsen. Ein erster Versuch, die letzte Karte den Rest fuellen zu lassen, sah aussen richtig aus und schob die Luecke nur nach innen (gemessen 284px Luft in der gestreckten Liste) - eine Liste mit 15 Zeilen hat nun einmal nicht mehr Zeilen. Der ehrliche Weg war, die Spalten inhaltlich gleich lang zu machen: Market Sentiment steht jetzt in der Mitte, die Schlagzeilen zeigen mehr. Alle vier Spalten liegen dadurch innerhalb von 47px, und dieser Rest verteilt sich auf die Abstaende ZWISCHEN den Karten, wo er als Layout-Luft liest. Groesster Zwischenraum ueber alle Breiten jetzt 34px statt 334px. SCHLAGZEILEN GROSS UND OBEN RECHTS: die Karte steht an erster Stelle der rechten Aussenspalte und zeigt 12 statt 8 Meldungen, auf breiten Schirmen noch ein paar mehr. Dabei kam heraus, dass ihr Hoehen-Deckel gar nicht griff - die Regel war beim Umbau versehentlich mitgeloescht worden, die Karte wuchs unbegrenzt mit ihrem Inhalt. STATUSZEILE ENTFERNT: die graue Leiste ueber dem Dashboard ist weg, samt Sitzungs-Streifen; jeder Wert darin stand ohnehin in einer der Karten."><span class="hlb-dot"></span></span>
+  <div class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-398 - Schlagzeilen-Karte doppelt so breit. Die rechte Aussenspalte nimmt jetzt zwei Spaltenbreiten (2fr), gemessen auf jeder Bildschirmbreite exakt das Doppelte einer Standardspalte: 399 gegen 200 Pixel, 527 gegen 263, 711 gegen 356. Breiter heisst kuerzer - die Titel brauchen weniger Zeilen -, deshalb zeigt die Karte 16 statt 12 Meldungen und die Spalte bleibt buendig; ohne das klaffte in ihr wieder ein Spalt von 128 Pixeln. ZWEI ECHTE FEHLER DABEI GEFUNDEN, beide waren vorher schon da: Der Quellen-Kasten einer Schlagzeile stand auf 88 Pixeln, sein Inhalt (Quelle UND Zeit nebeneinander) wurde aber 114 Pixel breit und ragte nach LINKS ueber den Titel - 8 Pixel Ueberlappung, auf jeder Breite, seit dem Bau der Karte. Und in der Watchlist war der Paarname auf 7 Pixel gequetscht, waehrend der Text quer ueber die Prozentspalte lief. Der Waechter lernt beide Klassen mit und findet sie ab jetzt selbst: ueberlappenden Text INNERHALB einer Karte (bisher wurden nur Karten gegeneinander geprueft) und Text, der sichtbar ueber sein eigenes Element hinauslaeuft - Letzteres findet kein Rechteck-Vergleich, weil das Element klein bleibt und nur die Schrift heraussteht."><span class="hlb-dot"></span></span>
     <span class="hlb-lbl">LIVE</span>
     <span class="hlb-clock" id="hlbClock">--:--:--</span>
     <span class="hlb-sep">·</span>
-    <span class="hlb-name" id="hlbName">VERSION-CHECK-397</span>
+    <span class="hlb-name" id="hlbName">VERSION-CHECK-398</span>
   </div>
   <div class="hdr-r">
     <button class="btn" id="undoBtn" onclick="doUndo()" disabled title="Back (Undo)">←</button>
@@ -18697,7 +18705,7 @@ function setNewsAsset(id){newsAssetSel=(newsAssetSel===id?'ALL':id);newsExpanded
 function toggleNewsTopic(){newsTopicOnly=!newsTopicOnly;newsExpanded=false;renderDash();}
 function toggleNewsSrc(u){newsOpenSrc[u]=!newsOpenSrc[u];renderDash();}
 // Wie viele Zeilen ohne Aufklappen sichtbar sind.
-const NEWS_TOP_N=12,NEWS_MAX_N=40;
+const NEWS_TOP_N=16,NEWS_MAX_N=40;
 // Wichtigkeitsstufen. ⚠ Die Zahl kommt aus dem Workflow (siehe dort
 // "gewicht") und ist dort nachlesbar zusammengesetzt; hier wird sie nur in
 // drei Stufen uebersetzt. Die Schwellen sind an der echten Verteilung
