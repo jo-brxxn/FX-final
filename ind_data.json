@@ -1531,8 +1531,8 @@
     ],
     [
      "2025-07-24",
-     "-1.1%",
-     "-1.1%"
+     "1.6%",
+     null
     ],
     [
      "2025-08-22",
@@ -4822,7 +4822,7 @@
     [
      "2025-08-15",
      "0.5%",
-     "0.4%"
+     "0.5%"
     ],
     [
      "2025-09-16",
@@ -9425,28 +9425,6 @@
     ]
    ]
   },
-  "Services PMI": {
-   "actual": "52.3",
-   "forecast": null,
-   "previous": "51.2",
-   "date": "2026-08-21",
-   "event": "S&P Global Services PMI Flash",
-   "period": null,
-   "history": [
-    [
-     "2026-08-21",
-     "52.3"
-    ]
-   ],
-   "source": "tv",
-   "historyFull": [
-    [
-     "2026-08-21",
-     "52.3",
-     null
-    ]
-   ]
-  },
   "Manufacturing PMI": {
    "actual": "55.1",
    "forecast": "55.1",
@@ -9466,6 +9444,28 @@
      "2026-08-21",
      "55.1",
      "55.1"
+    ]
+   ]
+  },
+  "Services PMI": {
+   "actual": "52.3",
+   "forecast": null,
+   "previous": "51.2",
+   "date": "2026-08-21",
+   "event": "S&P Global Services PMI Flash",
+   "period": null,
+   "history": [
+    [
+     "2026-08-21",
+     "52.3"
+    ]
+   ],
+   "source": "tv",
+   "historyFull": [
+    [
+     "2026-08-21",
+     "52.3",
+     null
     ]
    ]
   },
@@ -12043,8 +12043,8 @@
    "historyFull": [
     [
      "2025-08-14",
-     "0.7%",
-     "0.6%"
+     "0.1%",
+     "0.1%"
     ],
     [
      "2025-09-05",
