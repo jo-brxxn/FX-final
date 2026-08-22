@@ -28,6 +28,12 @@ async function seite(ctx){
   return p;
 }
 const ZIEL='#navSidebar .np[title="Calendar"]';
+// Punkt im INHALT, rechts neben der Leiste - deren Breite haengt vom
+// laengsten Label ab und darf hier nicht geraten werden.
+const inhaltPunkt=p=>p.evaluate(()=>{
+  const r=document.getElementById('navSidebar').getBoundingClientRect();
+  return {x:Math.round(r.right+30),y:700};
+});
 const zustand=p=>p.evaluate(()=>({page:curPage,
   collapsed:document.getElementById('navSidebar').classList.contains('nav-collapsed')}));
 
@@ -42,7 +48,7 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     const p=await seite(ctx);
     // Im Inhalt tippen: neutrale Stelle im Innenabstand, damit der Tipper
     // nicht zufaellig einen Link in einer Karte trifft.
-    await p.touchscreen.tap(168,700);
+    const tp=await inhaltPunkt(p);await p.touchscreen.tap(tp.x,tp.y);
     await p.waitForTimeout(300);
     const a1=await zustand(p);
     pruefe(a1.collapsed,'Touch: Tippen im Inhalt klappt die Leiste nicht ein');
@@ -81,19 +87,20 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
   {
     const ctx=await b.newContext({viewport:{width:1194,height:834}});
     const p=await seite(ctx);
-    await p.mouse.click(168,700);await p.waitForTimeout(300);
+    const mp=await inhaltPunkt(p);await p.mouse.click(mp.x,mp.y);await p.waitForTimeout(300);
     const c1=await zustand(p);
     pruefe(c1.collapsed,'Maus: Klick im Inhalt klappt die Leiste nicht ein');
 
     // ⚠ Mit echtem hover() VOR dem Klick - genau das unterscheidet den
     // Maus-Pfad vom Touch-Pfad und hat den ersten Fehler verdeckt.
-    const el=await p.$(ZIEL);
-    await el.hover();await p.waitForTimeout(150);await el.click();await p.waitForTimeout(400);
+    // Selektor statt Element-Handle: die Leiste wird zwischendurch neu
+    // aufgebaut, ein festgehaltener Handle waere dann nicht mehr im DOM.
+    await p.hover(ZIEL);await p.waitForTimeout(150);await p.click(ZIEL);await p.waitForTimeout(400);
     const c2=await zustand(p);
     pruefe(c2.page===c1.page,REGEL+' - Maus: der erste Klick auf die eingeklappte Leiste hat schon navigiert (nach "'+c2.page+'")');
     pruefe(!c2.collapsed,'Maus: der erste Klick hat die Leiste nicht ausgeklappt');
 
-    await el.click();await p.waitForTimeout(400);
+    await p.click(ZIEL);await p.waitForTimeout(400);
     const c3=await zustand(p);
     pruefe(c3.page!=='dash','Maus: der zweite Klick navigiert nicht (haengt auf "'+c3.page+'")');
 
@@ -103,7 +110,7 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     await p.mouse.move(600,400);await p.waitForTimeout(200);
     await p.evaluate(()=>{document.getElementById('navSidebar').classList.remove('nav-collapsed');});
     await p.mouse.move(60,400);await p.waitForTimeout(250);
-    const el2=await p.$(ZIEL);await el2.click();await p.waitForTimeout(400);
+    await p.click(ZIEL);await p.waitForTimeout(400);
     const d1=await zustand(p);
     pruefe(d1.page!=='dash','Maus: bei bereits offener Leiste wurde der Klick faelschlich geschluckt');
     await ctx.close();

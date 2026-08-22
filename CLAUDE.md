@@ -1470,3 +1470,55 @@ beschriebenen Fehler.
 ein weiterer Absatz in dieser Datei die falsche Antwort - sie gehoert als
 ausfuehrbare Pruefung nach `check/`.
 
+## ⚠ NAVIGATIONS-ANIMATIONEN (2026-08-21)
+
+Nutzer-Wunsch: Seitenleiste und Insights-Kategorie sollen beim Ein-/Ausklappen
+animiert sein, "damit das Ganze cleaner aussieht" - plus die Aufforderung,
+selbst zu pruefen, welche der neu gebauten Funktionen ebenfalls eine
+Animation brauchen. Umgesetzt sind drei Bewegungen, alle kurz (0,13-0,26s)
+und ohne Verzoegerung, damit sich die Bedienung nicht zaeh anfuehlt:
+
+1. **Akkordeon** fuer Tab-Stapel UND die Dashboard-Liste (`.np-sub-wrap`),
+   Pfeil dreht sich statt Zeichentausch (▸/▾ → `rotate(90deg)`).
+2. **Beschriftungen** der Leiste blenden beim Ein-/Ausklappen weich aus,
+   statt per `display:none` zu verschwinden.
+3. **Dashboard-Wechsel** blendet den Inhalt ein - bewusst dieselbe
+   `page-fade-in`, die schon der Tabwechsel nutzt, statt eines zweiten
+   Musters (`fadeDash()`).
+
+**⚠ Die Struktur-Aenderung, ohne die nichts davon moeglich war:** die
+Stapel-Mitglieder wurden bisher nur gerendert, WENN der Stapel offen war -
+`renderTabBar()` baut die Leiste per `innerHTML` neu. Ein frisch erzeugtes
+Element hat keinen Vorher-Zustand und animiert deshalb NIE. Die Mitglieder
+stehen jetzt dauerhaft im DOM; nur die Klasse `.open` am Wrapper steuert sie,
+und `syncNavExpanded()` schaltet beim Auf-/Zuklappen ausschliesslich diese
+Klasse um, ohne neu zu bauen. `renderTabBar()` baut weiterhin mit dem
+richtigen Zustand auf - beim Tabwechsel also bewusst ohne Animation, dort
+aendert sich ohnehin die ganze Leiste.
+**Merksatz:** eine CSS-Transition ist unmoeglich, solange das Element bei
+jeder Zustandsaenderung neu erzeugt wird. Erst Zustand von Aufbau trennen,
+dann animieren.
+
+**⚠ Zwei Fallen, die dabei zugeschlagen haben:**
+1. **`overflow:hidden` entfernt ein Element NICHT aus der intrinsischen
+   Breite.** `#navSidebar` ist `width:max-content`; die jetzt dauerhaft
+   vorhandenen Mitglieder-Labels ("Rate Probabilities") zogen die Leiste
+   permanent auf ihre Breite auf - gemessen so weit, dass ein Klick neben
+   der ersten Karte schon auf der Leiste landete und die
+   Einklapp-Automatik nicht mehr ausgeloest wurde (`check/nav.js` hat genau
+   das rot gemeldet). Der zugeklappte Wrapper braucht deshalb `max-width:0`.
+2. **Vor dem Messen der Zielhoehe muss `.open` bereits gesetzt sein.** Im
+   zugeklappten Zustand ist der Wrapper 0 breit, jede Zeile bricht um und
+   `scrollHeight` liefert einen viel zu grossen Wert.
+
+`syncNavExpanded()` setzt die **exakt gemessene** Zielhoehe als Inline-Wert;
+der CSS-Wert ist nur Rueckfall fuer Zustaende ohne Umschalten. Mit einem
+pauschalen Deckel (520px gegen 285px echten Inhalt) war die sichtbare
+Bewegung nach rund 90ms vorbei, weil die Kurve vorzeitig am Deckel ankam -
+gemessen laeuft sie jetzt ueber die vollen ~240ms in beide Richtungen.
+
+**Beide Nutzer-Schalter sind angebunden:** `body.no-ui-anim` (Animations-
+Schalter in den Einstellungen) und `prefers-reduced-motion` - dieselbe
+Pflicht wie bei der Gleiter/Boost-Sequenz, die genau daran schon einmal
+gescheitert ist.
+

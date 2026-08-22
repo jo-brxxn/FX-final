@@ -258,7 +258,41 @@ svg.ic{vertical-align:-2px;flex:none}
 .np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
 .np.on .np-ic{color:var(--blue)}
 @media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
-.np-arrow{font-size:9px;opacity:.7;margin-left:auto;flex-shrink:0}
+/* ── ANIMATION Nav-Leiste (Nutzer-Wunsch 2026-08-21: "damit das Ganze
+   cleaner aussieht"). Drei Bewegungen, alle bewusst kurz und ohne
+   Verzoegerung, damit die Bedienung sich nicht zaeh anfuehlt:
+   1. Pfeil dreht sich statt das Zeichen zu tauschen
+   2. Stapel/Dashboard-Liste klappt als Akkordeon auf und zu
+   3. Beschriftungen blenden beim Ein-/Ausklappen der Leiste weich aus
+   Alle drei haengen am bestehenden Nutzer-Schalter (body.no-ui-anim) UND an
+   prefers-reduced-motion - siehe die Sammelregel weiter unten. */
+.np-arrow{font-size:9px;opacity:.7;margin-left:auto;flex-shrink:0;transition:transform .2s cubic-bezier(.4,0,.2,1)}
+.np-stack.open>.np-arrow{transform:rotate(90deg)}
+/* max-height statt height: die Mitgliederzahl steht erst zur Laufzeit fest,
+   und ein grosszuegiger Deckel animiert zuverlaessiger als ein in JS
+   gemessener Wert (der bei jedem Renderdurchlauf neu stimmen muesste).
+   Der Wert hier ist nur der Rueckfall fuer Zustaende, die ohne Umschalten
+   entstehen (erster Aufbau, Tabwechsel) - beim tatsaechlichen Auf-/Zuklappen
+   setzt syncNavExpanded() die exakt gemessene Zielhoehe als Inline-Wert,
+   damit die Beschleunigungskurve ueber die volle Strecke laeuft statt
+   vorzeitig am Deckel anzukommen. */
+/* visibility gehoert mit in den Uebergang: die Mitglieder stehen jetzt
+   dauerhaft im DOM, waeren im zugeklappten Zustand also weiterhin per Tab
+   erreichbar und fuer Screenreader sichtbar. Als diskrete Eigenschaft
+   schaltet visibility beim OEFFNEN sofort auf sichtbar und beim SCHLIESSEN
+   erst am Ende des Uebergangs - genau das gewuenschte Verhalten. */
+/* ⚠ max-width:0 im zugeklappten Zustand ist Pflicht, nicht Kosmetik:
+   #navSidebar ist width:max-content, und die jetzt dauerhaft vorhandenen
+   Mitglieder-Labels ("Rate Probabilities") wuerden die Leiste sonst
+   permanent auf ihre Breite aufziehen - gemessen wurde die Leiste dadurch
+   so breit, dass ein Klick neben der ersten Karte schon auf der Leiste
+   landete. overflow:hidden allein genuegt nicht, die intrinsische Breite
+   zaehlt trotzdem. Beim Oeffnen springt max-width sofort auf none, damit
+   waehrend des Aufklappens nichts waagerecht beschnitten wird. */
+.np-sub-wrap{display:flex;flex-direction:column;gap:1px;overflow:hidden;
+  max-height:0;max-width:0;opacity:0;visibility:hidden;
+  transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .16s ease,visibility .26s}
+.np-sub-wrap.open{max-height:520px;max-width:none;opacity:1;visibility:visible}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
 /* Stapel-Mitglieder (Nutzer-Wunsch 2026-08-21: "in kleinerer Schriftgroesse
@@ -269,12 +303,17 @@ svg.ic{vertical-align:-2px;flex:none}
 .np.np-sub .np-ic{width:13px;height:13px}
 .np.np-sub .np-ic svg{width:13px;height:13px}
 .np.np-sub.on{border-left-color:var(--blue)}
+/* Beim Einklappen verschwindet die Beschriftung nicht schlagartig
+   (display:none laesst sich nicht animieren), sondern faehrt zusammen und
+   blendet aus - dadurch wirkt die Breitenaenderung der Leiste zusammen-
+   haengend statt ruckartig. */
+.np-lbl,.np-arrow{transition:opacity .13s ease,max-width .2s cubic-bezier(.4,0,.2,1)}
 @media(max-width:760px){
   #navSidebar{width:56px;min-width:56px;padding:10px 4px}
   .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
   .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
   .np.np-sub{padding:7px 0}
-  .np-lbl{display:none}
+  .np-lbl,.np-arrow{opacity:0;max-width:0;overflow:hidden}
 }
 /* Auto-Einklapp-Zustand (Nutzer-Wunsch 2026-08-21): dieselben Icon-only-
    Regeln wie auf Mobil, aber per JS-Klasse ausgeloest (siehe
@@ -284,7 +323,14 @@ svg.ic{vertical-align:-2px;flex:none}
 #navSidebar.nav-collapsed .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
 #navSidebar.nav-collapsed .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
 #navSidebar.nav-collapsed .np.np-sub{padding:7px 0}
-#navSidebar.nav-collapsed .np-lbl{display:none}
+#navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow{opacity:0;max-width:0;overflow:hidden}
+/* Beide Nutzer-Schalter respektieren: der Animations-Schalter aus den
+   Einstellungen und die Systemeinstellung "Bewegung reduzieren". */
+body.no-ui-anim .np-sub-wrap,body.no-ui-anim .np-arrow,body.no-ui-anim .np-lbl,
+body.no-ui-anim #navSidebar{transition:none}
+@media(prefers-reduced-motion:reduce){
+  .np-sub-wrap,.np-arrow,.np-lbl,#navSidebar{transition:none}
+}
 .tab-menu{position:fixed;z-index:100001;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);padding:5px;min-width:185px;display:flex;flex-direction:column;gap:2px}
 .tab-menu-item{text-align:left;background:transparent;border:none;color:var(--t1);font-size:13px;padding:9px 11px;border-radius:7px;cursor:pointer;white-space:nowrap;font-family:var(--ff-text)}
 @media (hover:hover){.tab-menu-item:hover{background:var(--bg4);color:var(--t0)}}
@@ -3333,11 +3379,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-411 - Die Regel 'erster Klick verstellt nur die Leiste' griff auf dem iPad nicht: bei Touch lautet die Ereignisfolge pointerenter -> pointerdown -> pointerup -> POINTERLEAVE -> click. Das pointerleave setzte das Merkmal zurueck, BEVOR der Klick-Handler es lesen konnte - der erste Tipper klappte also aus UND oeffnete die Kategorie. Mit Maus feuert pointerleave erst beim Wegbewegen, deshalb war es dort nicht zu sehen. Das Zuruecksetzen gilt jetzt nur noch fuer pointerType==="mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-412 - Animationen fuer die Navigation (Nutzer-Wunsch: damit es cleaner aussieht). (1) Tab-Stapel und Dashboard-Liste klappen als Akkordeon auf und zu, statt schlagartig zu erscheinen; der Pfeil dreht sich, statt das Zeichen zu tauschen. (2) Beim Ein-/Ausklappen der Seitenleiste fahren die Beschriftungen weich zusammen, statt per display:none zu verschwinden - dadurch wirkt die Breitenaenderung zusammenhaengend. (3) Der Wechsel zwischen Dashboards blendet den Inhalt ein statt hart umzuspringen (dieselbe Einblendung wie beim Tabwechsel, kein zweites Muster). Damit ein Uebergang ueberhaupt laufen kann, stehen die Stapel-Mitglieder jetzt DAUERHAFT im DOM - ein per innerHTML frisch erzeugtes Element hat keinen Vorher-Zustand und animiert nie; umgeschaltet wird nur noch die Klasse. Dabei ein Nebeneffekt gefunden und geloest: die dauerhaft vorhandenen Labels haetten die Leiste ueber width:max-content permanent aufgezogen, weshalb der zugeklappte Wrapper max-width:0 braucht. Alle drei Animationen haengen am bestehenden Animations-Schalter UND an prefers-reduced-motion."mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-411</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-412</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -9138,6 +9184,18 @@ function ensureDashboards(savedDashboards,savedActiveId){
     widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
   }
 }
+// Beim Wechsel zwischen Dashboards tauscht renderDash() den kompletten
+// Karteninhalt aus - ohne Uebergang springt das hart um. Wiederverwendung
+// der bestehenden Seiten-Einblendung (dieselbe, die auch beim Tabwechsel
+// laeuft), damit es sich wie ein Seitenwechsel anfuehlt und kein zweites
+// Animationsmuster entsteht. Haengt am selben Nutzer-Schalter wie diese.
+function fadeDash(){
+  if(!uiAnimEnabled)return;
+  const el=document.getElementById('pgDash');if(!el)return;
+  el.classList.remove('page-fade-in');
+  void el.offsetWidth;                 // Reflow, sonst startet sie nicht neu
+  el.classList.add('page-fade-in');
+}
 function switchDashboard(id){
   if(id===activeDashId||!dashboards.some(x=>x.id===id))return;
   syncActiveDashboard();
@@ -9147,7 +9205,7 @@ function switchDashboard(id){
   dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
   migrateDash();
   pushU();save();
-  if(curPage==='dash')renderDash();
+  if(curPage==='dash'){renderDash();fadeDash();}
   renderTabBar();
 }
 function createDashboard(){
@@ -9160,7 +9218,7 @@ function createDashboard(){
   widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
   migrateDash();
   save();
-  if(curPage==='dash')renderDash();
+  if(curPage==='dash'){renderDash();fadeDash();}
   renderTabBar();
 }
 function renameDashboard(id){
@@ -9185,7 +9243,7 @@ function deleteDashboard(id){
     widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
     dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
     migrateDash();
-    if(curPage==='dash')renderDash();
+    if(curPage==='dash'){renderDash();fadeDash();}
   }
   save();renderTabBar();
 }
@@ -21152,12 +21210,34 @@ function tabBtnHtml(id,sub){
 // stackOf('dash')-Eintrag in tabStacks - eigener Code-Pfad in renderTabBar().
 function dashBtnHtml(){
   const on=activeTabId==='dash';
-  return`<button class="np np-stack${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" title="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">${expandedDash?'▾':'▸'}</span></button>`;
+  return`<button class="np np-stack np-dash${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" title="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">▸</span></button>`;
 }
 function toggleDashExpand(e){
   if(e){e.stopPropagation();e.preventDefault();}
   expandedDash=!expandedDash;
-  renderTabBar();
+  syncNavExpanded();
+}
+// Schaltet NUR die .open-Klassen an der bestehenden Leiste um, statt sie neu
+// zu bauen - ein Neuaufbau wuerde jeden Uebergang verschlucken. renderTabBar()
+// selbst baut weiterhin mit dem richtigen Zustand auf (beim Tabwechsel also
+// bewusst ohne Animation, dort aendert sich ohnehin die ganze Leiste).
+function syncNavExpanded(){
+  const bar=document.getElementById('navSidebar');if(!bar)return;
+  bar.querySelectorAll('.np-stack[data-stack]').forEach(b=>b.classList.toggle('open',b.dataset.stack===expandedStack));
+  const db=bar.querySelector('.np-dash');if(db)db.classList.toggle('open',expandedDash);
+  bar.querySelectorAll('.np-sub-wrap').forEach(w=>{
+    const soll=w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack);
+    if(soll){
+      // Erst .open setzen (hebt max-width:0 auf), DANN messen: im
+      // zugeklappten Zustand ist der Wrapper 0 breit, jede Zeile wuerde
+      // umbrechen und scrollHeight einen viel zu grossen Wert liefern.
+      w.classList.add('open');
+      w.style.maxHeight=w.scrollHeight+'px';
+    }else{
+      w.classList.remove('open');
+      w.style.maxHeight='';
+    }
+  });
 }
 // Umbenennen/Loeschen ueber dasselbe Long-Press-Menue-Muster wie Tab-Stapel
 // (tabPressStart/openTabMenu, kind:'dashitem') - kein neuer Mechanismus.
@@ -21190,18 +21270,21 @@ function renderTabBar(){
   TAB_ORDER.forEach(id=>{
     if(id==='dash'){
       html+=dashBtnHtml();
-      if(expandedDash){
-        html+=dashboards.map(dashItemBtnHtml).join('');
-        html+=dashNewBtnHtml();
-      }
+      html+=`<div class="np-sub-wrap${expandedDash?' open':''}" data-dash="1">`+
+        dashboards.map(dashItemBtnHtml).join('')+dashNewBtnHtml()+`</div>`;
       return;
     }
     const st=stackOf(id);
     if(st){
       if(done.has(st.id))return;done.add(st.id);
       const open=expandedStack===st.id,hasActive=st.members.includes(activeTabId);
-      html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" title="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">${open?'▾':'▸'}</span></button>`;
-      if(open)html+=st.members.map(mid=>tabBtnHtml(mid,true)).join('');
+      html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" data-stack="${st.id}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" title="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">▸</span></button>`;
+      // ⚠ Die Mitglieder stehen IMMER im DOM, auch im zugeklappten Zustand -
+      // nur die Klasse .open am Wrapper steuert sie. Nur so kann der
+      // Uebergang ueberhaupt laufen: ein per innerHTML frisch erzeugtes
+      // Element hat keinen Vorher-Zustand und animiert deshalb nie.
+      html+=`<div class="np-sub-wrap${open?' open':''}" data-stack="${st.id}">`+
+        st.members.map(mid=>tabBtnHtml(mid,true)).join('')+`</div>`;
     }else{
       html+=tabBtnHtml(id,false);
     }
@@ -21218,7 +21301,7 @@ function onTabClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefaul
 function onStackClick(e,id){
   if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
   expandedStack=(expandedStack===id)?null:id;
-  renderTabBar();
+  syncNavExpanded();
 }
 function createStack(name){const id=uid();tabStacks.push({id,name,members:[]});saveTabStacks();return id;}
 function addTabToStack(tabId,stackId){
