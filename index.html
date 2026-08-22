@@ -2605,8 +2605,22 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
      duerfen mehr zeigen. Damit liegen alle vier Spalten innerhalb von rund
      50px. Genau dieser Rest verteilt sich hier auf die Abstaende ZWISCHEN
      den Karten, wo er als Layout-Luft liest und nicht als Loch. */
+  /* ⚠ Hier stand justify-content:space-between - der Rest einer kuerzeren
+     Spalte wurde damit auf die Abstaende ZWISCHEN ihren Karten verteilt.
+     Das ging auf, solange alle vier Spalten innerhalb von rund 50px lagen
+     (siehe Begruendung oben). Sobald eine Spalte deutlich hoeher wird -
+     z.B. eine gefuellte Watchlist mit acht Paaren, oder die andere
+     Kartenauswahl des schlanken Tages-Dashboards - klafft in den kurzen
+     Spalten ein Loch von mehreren hundert Pixeln mitten im Dashboard
+     (Nutzer-Foto 2026-08-21, gelb markiert: gemessen 380px zwischen der
+     oberen und der unteren Karte).
+     flex-start sammelt die Karten oben; der Rest landet unten am Spaltenende,
+     wo keine Karte mehr steht und er nicht als Loch liest. Das ist zugleich
+     die schon dokumentierte Nutzer-Entscheidung vom 2026-08-08: "Karten
+     sollen gleich abschliessen, ohne dass eine gestreckt aussieht, nur um
+     die Luecke zu schliessen" (CLAUDE.md, "NICHTS wird gestreckt"). */
   .dash-zone-left,.dash-zone-center,.dash-zone-right,.dash-zone-right2{
-    justify-content:space-between}
+    justify-content:flex-start}
   .dw.dw-cap>.dw-body{display:flex;flex-direction:column;min-height:0}
   .dw.dw-cap>.dw-body>.rank-list,.dw.dw-cap>.dw-body>.hie-list,
   .dw.dw-cap>.dw-body>.perf-list,.dw.dw-cap>.dw-body>.wl-table,
@@ -3319,11 +3333,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-409 - Schlankes Tages-Dashboard. Das gewachsene Dashboard war 14 Karten und 2685px hoch, auf einem iPad 3,4 Bildschirme Scrollen - ein Dashboard, durch das man scrollen muss, ist per Definition keines mehr. Neu daneben: ein zweites Dashboard "Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-410 - Grosses Loch mitten im Dashboard geschlossen (Nutzer-Foto, gelb markiert). Die Dashboard-Spalten hatten justify-content:space-between - der Hoehenrest einer kuerzeren Spalte wurde damit auf die Abstaende ZWISCHEN ihren Karten verteilt. Das ging auf, solange alle Spalten aehnlich hoch waren; sobald eine deutlich hoeher wird (gefuellte Watchlist mit acht Paaren, oder die andere Kartenauswahl des schlanken Dashboards), klaffte in den kurzen Spalten eine Luecke von mehreren hundert Pixeln. Jetzt flex-start: die Karten sammeln sich oben, der Rest landet unten am Spaltenende, wo keine Karte mehr steht. Gemessen mit gefuellter Watchlist: Abstaende innerhalb aller Spalten jetzt einheitlich 9px. Entspricht zugleich der bereits dokumentierten Nutzer-Entscheidung vom 2026-08-08, dass nichts gestreckt wird, nur um eine Luecke zu fuellen. Ausserdem hat der Waechter beim selben Lauf einen zweiten, unabhaengigen Fund gemeldet: im Fed-Funds-Chart ueberlappten sich zwei Sitzungstermine ("16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-409</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-410</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -20642,13 +20656,27 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   // damit sie auch bei zusammengedrueckter Slotbreite nicht ueberlappen; die
   // Historie-Labels werden bei schmalem Slot zusaetzlich ausgeduennt.
   const histStep=rateProbSlot<40?3:(rateProbSlot<58?2:1);
+  // ⚠ Die Ausduennung oben galt nur fuer die HISTORIE. Die Sitzungstermine
+  // rechts wurden immer in voller Groesse gezeichnet - bei schmalem Slot
+  // ueberlappten sie sich dadurch trotz des kurzen Datumsformats (gefunden
+  // von check/cards.js am 2026-08-21: "16 SEP" und "28 OCT" ueberlappten
+  // sich um 2px bei einer Slotbreite von 34px, waehrend das Label rund
+  // 36px breit ist). Ein Termin darf nicht einfach weggelassen werden -
+  // er ist der eigentliche Inhalt des Charts - deshalb schrumpft stattdessen
+  // die Schrift mit der verfuegbaren Slotbreite. Erst wenn selbst die
+  // kleinste Stufe nicht mehr reicht, wird jeder zweite Termin ausgelassen.
+  const mtgFs=Math.max(7.5,Math.min(10.5,rateProbSlot/4.2));
+  const mtgStep=rateProbSlot<26?2:1;
   const xlab=pts.map((p,i)=>{
-    let txt,col,weight;
+    let txt,col,weight,fs=10.5;
     if(i===todayIdx){txt='Today';col='var(--t0)';weight=800;}
-    else if(i>todayIdx){const{day,mo}=fmtDate(p.date);txt=day+' '+mo;col='var(--red)';weight=700;}
-    else if(i<pastCount){const{day,mo}=fmtDate(p.date);txt='✓ '+day+' '+mo;col='var(--t3)';weight=600;}
+    else if(i>todayIdx){
+      if((i-todayIdx-1)%mtgStep!==0)return'';
+      const{day,mo}=fmtDate(p.date);txt=day+' '+mo;col='var(--red)';weight=700;fs=mtgFs;
+    }
+    else if(i<pastCount){const{day,mo}=fmtDate(p.date);txt='✓ '+day+' '+mo;col='var(--t3)';weight=600;fs=mtgFs;}
     else{const histPos=todayIdx-1-i;if(histPos%histStep!==0)return'';txt=p.label;col='var(--t3)';weight=600;}
-    return`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:10.5px;font-weight:${weight};fill:${col}">${escH(txt)}</text>`;
+    return`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:${fs.toFixed(1)}px;font-weight:${weight};fill:${col}">${escH(txt)}</text>`;
   }).join('');
   // Senkrechte Markierung am HEUTIGEN Punkt - macht auf einen Blick sichtbar,
   // wo im Chart man steht (Grenze Historie->Prognose), Nutzer-Wunsch 2026-07-25.

@@ -1391,3 +1391,45 @@ mitgedacht werden, sonst entstehen tote Flaechen.
 zwei direkt auf vier) - auf dem iPad des Nutzers bleiben nach Sidebar und
 Padding rund 995px, das traegt drei Spalten von je etwa 310px bequem.
 
+## ⚠ LOCH IM DASHBOARD: justify-content:space-between (2026-08-21)
+
+Nutzer-Foto, gelb markiert: mitten im Dashboard klaffte zwischen der oberen
+und der unteren Kartenreihe eine Luecke von mehreren hundert Pixeln.
+
+**Ursache:** `.dash-zone-*` trug `justify-content:space-between`. Der
+Hoehenrest einer kuerzeren Spalte wurde damit auf die Abstaende ZWISCHEN
+ihren Karten verteilt. Das war bewusst so gebaut und ging auf, solange alle
+vier Spalten innerhalb von rund 50px lagen (der alte Kommentar an der Stelle
+begruendet das ausdruecklich). Sobald aber EINE Spalte deutlich hoeher wird -
+eine gefuellte Watchlist mit acht Paaren, oder schlicht die andere
+Kartenauswahl des schlanken Tages-Dashboards - verteilt sich ein Rest von
+mehreren hundert Pixeln auf zwei Karten, und aus "Layout-Luft" wird ein Loch.
+
+**Fix:** `justify-content:flex-start`. Die Karten sammeln sich oben, der Rest
+landet unten am Spaltenende, wo keine Karte mehr steht und er als normale
+Spalten-Raggedness liest. Gemessen mit gefuellter Watchlist: Abstaende
+innerhalb aller Spalten jetzt einheitlich 9px statt bis zu 380px.
+
+Das ist zugleich genau die schon dokumentierte Entscheidung vom 2026-08-08
+("Karten sollen gleich abschliessen, ohne dass eine gestreckt aussieht, nur
+um die Luecke zu schliessen", siehe "NICHTS wird gestreckt" weiter oben) -
+`space-between` war ein Rueckfall dahinter.
+
+**Merksatz:** eine Layout-Regel, die einen Hoehenrest "unsichtbar" verteilt,
+haelt nur so lange, wie der Rest klein ist. Sie ist damit an eine
+Karten-Zusammenstellung gebunden, nicht an das Layout - und bricht, sobald
+sich die Zusammenstellung aendert. Rest lieber sichtbar ans Ende legen, wo
+er nicht stoert, als ihn zwischen Inhalte zu verteilen.
+
+**Zweiter, unabhaengiger Fund im selben Lauf** (`check/cards.js`): im
+Fed-Funds-Chart der Rate-Seite ueberlappten sich zwei Sitzungstermine
+("16 SEP" / "28 OCT") um 2px. Die Achsen-Ausduennung (`histStep`) galt nur
+fuer die HISTORIE; die Termine wurden immer in voller Groesse gezeichnet und
+brauchten bei 34px Slotbreite rund 36px. Ein Termin darf nicht weggelassen
+werden - er ist der Inhalt des Charts - deshalb skaliert jetzt die
+Schriftgroesse mit der Slotbreite (7,5-10,5px), und erst unterhalb 26px
+Slotbreite wird zusaetzlich jeder zweite Termin ausgelassen. Der Fund kam
+rein datenbedingt hoch (neue Sitzungstermine aus dem stuendlichen Feed) -
+ein gutes Beispiel dafuer, warum die Waechter bei JEDEM Push laufen und
+nicht nur nach UI-Aenderungen.
+
