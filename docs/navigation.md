@@ -736,23 +736,56 @@ solange es `true` ist; zurueckgesetzt bei `pointerleave` UND `focusout`
 Auto-Einklapp-Automatik wuerde nie wieder greifen). Das `scroll`-Event selbst
 bleibt unangetastet - der Inhalt scrollt weiter ungebremst.
 
-**5. Anheft-Knopf von der Klick-Schluck-Regel ausgenommen.** Direkte Folge-
-Meldung: "ich kann die Leiste oeffnen, aber sie schliesst sich gleich
-wieder." Ursache: die bestehende "erster Klick verstellt nur die Leiste"-
-Regel (siehe "SIDEBAR-KLICKREGEL" oben) schluckt JEDEN ersten Klick nach
-einem Hover-Aufklappen per `stopPropagation()` in der Capture-Phase auf
-`nav` - auch den auf den Pin-Knopf. Der Knopf reagierte dadurch beim ersten
-Klick scheinbar gar nicht (kein Toggle), nur die normale Auto-Einklapp-
-Automatik lief unbeeinflusst weiter - genau das las sich wie "oeffnet sich
-und schliesst sich gleich wieder". Die Schluck-Regel ist fuer NAVIGATION
-gedacht (ungewollter Tab-Wechsel durch einen Klick, der eigentlich nur dem
-Aufklappen galt) - ein reiner Umschalter wie "Anheften" hat dieses Risiko
-nicht und ist jetzt per `ev.target.closest('.nav-pin-btn')`-Fruehausstieg
-davon ausgenommen. Mit Playwright gegengeprueft: Pin wirkt jetzt beim
-allerersten Klick nach Hover, normale Tabs behalten weiter die Zwei-Klick-
-Regel (erster Klick haelt nur offen, zweiter navigiert).
-**Merksatz:** eine "erster Klick zaehlt nicht"-Regel, die pauschal auf einen
-ganzen Container gelegt wird, trifft auch Buttons, fuer die sie nie gedacht
-war - bei neuen Buttons in einem so geschuetzten Container immer pruefen, ob
-sie tatsaechlich navigieren (Regel gilt) oder nur umschalten (Regel muss
-explizit ausgenommen werden).
+**5. Anheft-Knopf von der Klick-Schluck-Regel ausgenommen (⚠ ÜBERHOLT, siehe
+unten).** Direkte Folge-Meldung: "ich kann die Leiste oeffnen, aber sie
+schliesst sich gleich wieder." Ursache damals: die "erster Klick verstellt
+nur die Leiste"-Regel (siehe "SIDEBAR-KLICKREGEL" oben) schluckte JEDEN
+ersten Klick nach einem Hover-Aufklappen per `stopPropagation()` in der
+Capture-Phase auf `nav` - auch den auf den Pin-Knopf. Der Knopf reagierte
+dadurch beim ersten Klick scheinbar gar nicht (kein Toggle), nur die normale
+Auto-Einklapp-Automatik lief unbeeinflusst weiter. Fix damals: der Pin-Knopf
+wurde per `ev.target.closest('.nav-pin-btn')`-Fruehausstieg von der Regel
+ausgenommen. **Kurz danach hat eine parallel laufende zweite Sitzung
+dieselbe Nutzer-Meldung root-cause-naeher geloest** (die Anheften-Funktion
+komplett entfernt, stattdessen die Klickregel geraeteabhaengig gemacht:
+PC/Maus navigiert der erste Klick sofort, da Hover die Leiste dort ohnehin
+schon vorher oeffnet - `hatMausHover`, `matchMedia('(hover:hover) and
+(pointer:fine)')`). Beim Zusammenfuehren beider Sitzungen wurde diese
+Loesung uebernommen, der Anheft-Knopf existiert seither nicht mehr - Punkt 5
+hier nur noch als Fund-Historie stehen gelassen.
+**Merksatz (bleibt gueltig):** eine "erster Klick zaehlt nicht"-Regel, die
+pauschal auf einen ganzen Container gelegt wird, trifft auch Buttons, fuer
+die sie nie gedacht war - bei neuen Buttons in einem so geschuetzten
+Container immer pruefen, ob sie tatsaechlich navigieren (Regel gilt) oder
+nur umschalten (Regel muss explizit ausgenommen werden).
+
+**6. `overNav` selbst in dieselbe Touch-Falle getappt wie `ebenAusgeklappt`
+vorher.** Nutzer-Meldung (nach Punkt 4, spezifisch aufs iPad bezogen): "wenn
+ich auf die Leiste druecke, damit sie sich ausklappt, klappt sie sich ganz
+kurz aus, aber direkt wieder rein, da das System denkt ich habe den Inhalt
+beruehrt, obwohl es immer noch das Scrollen ist." Der `overNav`-Fix aus
+Punkt 4 setzte `overNav=false` bei `pointerleave` **unbedingt**, also auch
+bei Touch - dort feuert `pointerleave` aber schon VOR dem Klick
+(`pointerenter -> pointerdown -> pointerup -> pointerleave -> click`, exakt
+dieselbe Ereignisfolge, die `ebenAusgeklappt` schon einmal hereingelegt hat,
+siehe "SIDEBAR-KLICKREGEL" oben). Der Schutz war beim Antippen der Leiste
+also schon wieder weg, BEVOR das naechste Momentum-Scroll-Nachbeben
+ankam - `collapse()` griff sofort erneut durch, die Leiste klappte "kurz
+aus, dann sofort wieder zu". Fix: `overNav` wird bei `pointerleave` jetzt
+nur noch fuer die Maus zurueckgesetzt (`if(!ev.pointerType||
+ev.pointerType==='mouse')`, identischer Guard wie bei `ebenAusgeklappt`);
+fuer Touch/Stift stattdessen bei `pageArea`s eigenem `pointerdown` -
+zeigerunabhaengig der zuverlaessigste Punkt, an dem der Zeiger nachweislich
+im INHALT und nicht mehr auf der Leiste ist. Verifiziert, indem die exakte
+Touch-Ereignisfolge manuell per `dispatchEvent` nachgebaut und ein
+Scroll-Nachbeben genau in die Luecke zwischen `pointerleave` und `click`
+gelegt wurde - blieb offen.
+**Merksatz:** JEDER neue Zustand, der bei `pointerenter`/`pointerleave` auf
+der Leiste gesetzt/zurueckgesetzt wird, braucht denselben Maus-only-Guard
+wie `ebenAusgeklappt` - die Touch-Ereignisfolge dieser App ist an dieser
+Stelle mittlerweile dreimal zur Falle geworden (Klickregel selbst, dann
+`overNav` unten in Punkt 4, jetzt hier noch einmal). Ein synthetischer
+`page.tap()`-Test in Playwright reproduziert dieses Zeitfenster NICHT
+zuverlaessig (deckt sich mit der bereits dokumentierten Erfahrung bei der
+urspruenglichen Klickregel) - fuer diese Klasse Bug reicht nur ein manuell
+per `dispatchEvent` nachgebauter, exakter Ereignis-Zeitplan.
