@@ -258,6 +258,16 @@ svg.ic{vertical-align:-2px;flex:none}
 .np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
 .np.on .np-ic{color:var(--blue)}
 @media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
+/* ── ANHEFTEN (Nutzer-Wunsch 2026-08-22): schaltet die Auto-Einklapp-
+   Automatik weiter unten (siehe navPinned/toggleNavPinned) ab, die Leiste
+   bleibt dauerhaft ausgeklappt. Bewusst OHNE .np.on-Look (blauer Rand +
+   Hintergrund) - das ist die Optik fuer "aktive Route" und wuerde hier den
+   Eindruck erwecken, "Anheften" sei selbst eine navigierbare Seite. Nur das
+   Icon faerbt sich im angehefteten Zustand blau. */
+.nav-pin-btn{opacity:.8}
+.nav-pin-btn:hover{opacity:1}
+.nav-pin-btn.on{opacity:1}
+.nav-pin-btn.on .np-ic{color:var(--blue)}
 /* ── ANIMATION Nav-Leiste (Nutzer-Wunsch 2026-08-21: "damit das Ganze
    cleaner aussieht"). Drei Bewegungen, alle bewusst kurz und ohne
    Verzoegerung, damit die Bedienung sich nicht zaeh anfuehlt:
@@ -295,6 +305,20 @@ svg.ic{vertical-align:-2px;flex:none}
 .np-sub-wrap.open{max-height:520px;opacity:1;visibility:visible}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
+/* "+ Neu" (neues Dashboard anlegen) nur sichtbar, solange body.dash-edit-mode
+   gesetzt ist (Nutzer-Wunsch 2026-08-22) - dieselbe Konvention wie
+   .dash-edit-bar/.dw-btns (siehe dashEditPressStart weiter unten), statt
+   eines neuen Mechanismus. */
+.np-dashnew{display:none}
+body.dash-edit-mode .np-dashnew{display:flex}
+/* ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) statt der verzoegerten
+   Browser-title-Tooltips: nur in der eingeklappten Icon-Leiste noetig, im
+   ausgeklappten Zustand steht das Label ja schon da. */
+#navTooltip{position:fixed;z-index:100002;background:var(--bg2);color:var(--t0);
+  border:1px solid var(--bd);border-radius:var(--rss);box-shadow:var(--shadow-pop);
+  padding:5px 10px;font-size:12.5px;font-weight:600;font-family:var(--ff-text);
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .1s ease}
+#navTooltip.show{opacity:1}
 /* Stapel-Mitglieder (Nutzer-Wunsch 2026-08-21: "in kleinerer Schriftgroesse
    dadrunter oeffnen, eingeschoben") - kleinerer Text, eingerueckt, duennere
    Icons, ohne eigenen linken Farbrand (der bleibt dem Stapel-Button und dem
@@ -313,7 +337,12 @@ svg.ic{vertical-align:-2px;flex:none}
   .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
   .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
   .np.np-sub{padding:7px 0}
-  .np-lbl,.np-arrow{opacity:0;max-width:0;overflow:hidden}
+  /* margin-left:0 noetig: .np-arrow traegt sonst weiterhin margin-left:auto
+     und frisst damit den freien Flex-Platz, obwohl es selbst 0 breit ist -
+     das verschiebt Icon+Label bei Stapel-/Dashboard-Buttons 15px nach links
+     gegenueber normalen Tabs ohne Pfeil (Nutzer-Meldung 2026-08-22, per
+     Playwright nachgemessen: -15px bei .np-stack, 0px ueberall sonst). */
+  .np-lbl,.np-arrow{opacity:0;max-width:0;overflow:hidden;margin-left:0}
 }
 /* Auto-Einklapp-Zustand (Nutzer-Wunsch 2026-08-21): dieselben Icon-only-
    Regeln wie auf Mobil, aber per JS-Klasse ausgeloest (siehe
@@ -323,7 +352,10 @@ svg.ic{vertical-align:-2px;flex:none}
 #navSidebar.nav-collapsed .np{padding:9px 0;justify-content:center;gap:0;border-left-width:0;border-radius:var(--rss)}
 #navSidebar.nav-collapsed .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
 #navSidebar.nav-collapsed .np.np-sub{padding:7px 0}
-#navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow{opacity:0;max-width:0;overflow:hidden}
+/* Gleicher margin-left:0-Fix wie bei der Mobil-Icon-Leiste oben (siehe
+   dortiger Kommentar) - dieselbe Ursache tritt hier nochmal separat auf,
+   weil die Icon-Leiste per JS-Klasse statt per Media Query ausgeloest wird. */
+#navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow{opacity:0;max-width:0;overflow:hidden;margin-left:0}
 /* ⚠ In der Icon-Leiste werden Untereintraege GAR NICHT gezeigt - auch wenn
    der Stapel bzw. die Dashboard-Liste logisch aufgeklappt ist (Nutzer-Foto
    2026-08-22, gelb markiert). Ohne diese Regel stand zwischen dem
@@ -3395,11 +3427,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-413 - Zwei Punkte aus dem Nutzer-Foto (gelb markiert). (1) Die Leistenbreite springt nicht mehr: bisher wuchs sie beim Aufklappen von Insights, weil erst dann der lange Name "Rate Probabilities" mitzaehlte. Die Untereintraege zaehlen jetzt IMMER zur Breite, die Leiste ist dadurch konstant 171px statt zwischen 155 und 171 zu springen. (2) Gleichmaessige Symbol-Abstaende in der eingeklappten Icon-Leiste: dort blieb die Dashboard-Liste aufgeklappt und schob einen 83px hohen Block mit drei kaum unterscheidbaren Icons zwischen zwei Symbole, waehrend alle uebrigen 36px auseinander lagen. In der Icon-Leiste werden Untereintraege jetzt gar nicht mehr gezeigt - ohne Beschriftung tragen sie ohnehin keine Information. Gemessen jetzt durchgehend 36px. Dabei die Ursache gefunden, warum die CSS-Regel dafuer zunaechst wirkungslos blieb: syncNavExpanded() setzt eine Inline-Hoehe, und Inline-Stile schlagen jeden Selektor - in der Icon-Leiste wird sie deshalb abgeraeumt."mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-414 - Vier Themen aus einer Nutzer-Anfrage. (1) Symbol-Ausrichtung in der eingeklappten Icon-Leiste korrigiert: Stapel-Icons (Dashboard, Insights) standen 15px nach links verschoben, weil der unsichtbare Pfeil (.np-arrow) weiterhin margin-left:auto trug und dadurch den freien Flex-Platz fraß, obwohl er selbst 0 Pixel breit war - per Playwright nachgemessen und bestaetigt, jetzt margin-left:0 im eingeklappten Zustand. (2) Halte-Zeit fuer den Dashboard-Bearbeitungsmodus von 5 auf 2 Sekunden verkuerzt (nur dashEditMode, der separate 5s-Timer fuer den Indikator-Bearbeitungsmodus ist unveraendert). (3) Der + Neu-Knopf im Dashboard-Stapel der Sidebar ist jetzt nur noch sichtbar, solange der Dashboard-Bearbeitungsmodus aktiv ist, statt dauerhaft dazustehen. (4) Nach einer Recherche zu anderen Klapp-Seitenleisten drei neue Funktionen: manuelles Anheften der Sidebar per Pin-Knopf (schaltet die Auto-Einklapp-Automatik ab, geraeteuebergreifend gespeichert), eigene schnell erscheinende Tooltips in der Icon-Leiste statt der verzoegerten Browser-Standardtooltips (data-tip/aria-label statt title). Die gemeldete fehlende Klappanimation beim Dashboard-Stapel bestand bei Pruefung nicht - Insights und Dashboard animierten bereits identisch, kein Codefix noetig dafuer."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-413</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-414</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3643,7 +3675,7 @@ function introLogin(){
        dashEditPressStart() weiter unten (Nutzer-Wunsch 2026-07-25: "komm
        weg von diesem Karten Design... ich will einen Bearbeitungsmodus der
        aktiviert wird wenn man laenger 5 Sekunden auf den Bildschirm
-       drueckt"). -->
+       drueckt"; Halte-Zeit 2026-08-22 auf 2 Sekunden verkuerzt). -->
   <div class="dash-edit-bar">
     <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
     <button class="btn g" onclick="addWidget()" style="font-size:11.5px;padding:4px 10px">＋ Widget</button>
@@ -9477,14 +9509,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.navPinned!==undefined){navPinned=!!_imp.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -9721,7 +9753,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -9843,6 +9875,7 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.denseMode!==undefined){denseMode=!!cd.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}
+      if(!prefPending&&cd.navPinned!==undefined){navPinned=!!cd.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
       if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
@@ -14956,7 +14989,8 @@ function dashMajorsHtml(){
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
 }
-// Bearbeitungsmodus per 5s-Long-Press (Nutzer-Wunsch 2026-07-25): "komm weg
+// Bearbeitungsmodus per Long-Press (2s, Nutzer-Wunsch 2026-08-22, urspruenglich
+// 5s - Nutzer-Wunsch 2026-07-25): "komm weg
 // von diesem Karten Design wo oben rechts immer die hoch runter Pfeile und
 // das x steht... ich will einen Bearbeitungsmodus der aktiviert wird wenn
 // man laenger 5 Sekunden auf den Bildschirm drueckt. Dann duerfen diese
@@ -14972,7 +15006,7 @@ function dashEditPressStart(ev){
   if(ev.button!==undefined&&ev.button!==0)return;
   if(_dashEditTimer)clearTimeout(_dashEditTimer);
   _dashEditStart={x:ev.clientX,y:ev.clientY};
-  _dashEditTimer=setTimeout(()=>{_dashEditTimer=null;toggleDashEditMode();},5000);
+  _dashEditTimer=setTimeout(()=>{_dashEditTimer=null;toggleDashEditMode();},2000);
 }
 function dashEditPressMove(ev){
   if(!_dashEditTimer||!_dashEditStart)return;
@@ -14982,12 +15016,19 @@ function dashEditPressEnd(){if(_dashEditTimer){clearTimeout(_dashEditTimer);_das
 function toggleDashEditMode(){
   dashEditMode=!dashEditMode;
   document.body.classList.toggle('dash-edit-mode',dashEditMode);
+  // Der Sidebar-"+ Neu"-Knopf im Dashboard-Stapel ist nur im Bearbeitungs-
+  // modus sichtbar (.np-dashnew) - dessen Sichtbarkeitswechsel kann die
+  // gemessene Inline-Hoehe der bereits offenen Liste veraendern, deshalb
+  // hier neu messen statt nur die CSS-Klasse zu setzen.
+  syncNavExpanded();
   if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
 }
-// Gleiches 5s-Long-Press-Muster fuer die Indikator-Tabelle auf FX/Non-FX-
+// Gleiches Long-Press-Muster fuer die Indikator-Tabelle auf FX/Non-FX-
 // Detailseiten (tech-design-Skill 2026-07-28, Nutzer-Wunsch): Verschieben/
 // Loeschen einer Indikator-Zeile ist nur im Bearbeitungsmodus sichtbar,
-// Bias-Long-Press und der (i)-Info-Button bleiben davon unberuehrt.
+// Bias-Long-Press und der (i)-Info-Button bleiben davon unberuehrt. Eigener
+// 5s-Timer, bewusst unveraendert - der 2026-08-22-Wunsch bezog sich nur auf
+// den Dashboard-Bearbeitungsmodus direkt darueber.
 let indEditMode=false,_indEditTimer=null,_indEditStart=null;
 function indEditPressStart(ev){
   if(ev.button!==undefined&&ev.button!==0)return;
@@ -21216,7 +21257,7 @@ function npIconSvg(d){return`<span class="np-ic"><svg viewBox="0 0 24 24" fill="
 function tabBtnHtml(id,sub){
   const d=TABS[id];if(!d)return'';
   const on=activeTabId===id;
-  return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" title="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
+  return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" data-tip="${escH(d.label)}" aria-label="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
 }
 // Mehrere eigene Dashboards (Nutzer-Wunsch 2026-08-21, Koyfin-Vorbild "My
 // Dashboards" + "+NEW"): der "Dashboard"-Eintrag ist ein Hybrid aus
@@ -21226,7 +21267,7 @@ function tabBtnHtml(id,sub){
 // stackOf('dash')-Eintrag in tabStacks - eigener Code-Pfad in renderTabBar().
 function dashBtnHtml(){
   const on=activeTabId==='dash';
-  return`<button class="np np-stack np-dash${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" title="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">▸</span></button>`;
+  return`<button class="np np-stack np-dash${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" data-tip="Dashboard" aria-label="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">▸</span></button>`;
 }
 function toggleDashExpand(e){
   if(e){e.stopPropagation();e.preventDefault();}
@@ -21265,10 +21306,13 @@ function syncNavExpanded(){
 // (tabPressStart/openTabMenu, kind:'dashitem') - kein neuer Mechanismus.
 function dashItemBtnHtml(d){
   const on=activeDashId===d.id;
-  return`<button class="np np-sub${on?' on':''}" onpointerdown="tabPressStart(event,'dashitem','${d.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onDashItemClick(event,'${d.id}')" title="${escH(d.name)}">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">${escH(d.name)}</span></button>`;
+  return`<button class="np np-sub${on?' on':''}" onpointerdown="tabPressStart(event,'dashitem','${d.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onDashItemClick(event,'${d.id}')" data-tip="${escH(d.name)}" aria-label="${escH(d.name)}">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">${escH(d.name)}</span></button>`;
 }
+// Nur sichtbar im Dashboard-Bearbeitungsmodus (.np-dashnew, Nutzer-Wunsch
+// 2026-08-22: "nur eine Kategorie hinzufuegen kann, wenn man sich in
+// Bearbeitung befindet") - vorher war der Knopf immer da.
 function dashNewBtnHtml(){
-  return`<button class="np np-sub" onclick="onDashNewClick()" title="Neues Dashboard">${npIconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>')}<span class="np-lbl">+ Neu</span></button>`;
+  return`<button class="np np-sub np-dashnew" onclick="onDashNewClick()" data-tip="Neues Dashboard" aria-label="Neues Dashboard">${npIconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>')}<span class="np-lbl">+ Neu</span></button>`;
 }
 function onDashItemClick(e,id){
   if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
@@ -21286,9 +21330,17 @@ function onDashNewClick(){
 // dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
 // Mitglieder-Buttons (.np-sub) sind einfach die naechsten Elemente im
 // Sidebar-Fluss, kleinere Schrift + Einzug per CSS.
+// Anheft-Knopf ganz oben in der Leiste, ausserhalb von TAB_ORDER - kein Tab,
+// navigiert nirgendwohin. Icon = einfache Stecknadel (Kreis+Stiel), faerbt
+// sich per .nav-pin-btn.on blau statt der .np.on-Aktiv-Route-Optik zu
+// verwenden (siehe CSS-Kommentar dort).
+function navPinBtnHtml(){
+  const tip=navPinned?'Anheften lösen':'Leiste anheften';
+  return`<button class="np nav-pin-btn${navPinned?' on':''}" onclick="toggleNavPinned()" data-tip="${tip}" aria-label="${tip}">${npIconSvg('<circle cx="12" cy="9" r="4"/><line x1="12" y1="13" x2="12" y2="21"/>')}<span class="np-lbl">${navPinned?'Angeheftet':'Anheften'}</span></button>`;
+}
 function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
-  let html='';const done=new Set();
+  let html=navPinBtnHtml();const done=new Set();
   TAB_ORDER.forEach(id=>{
     if(id==='dash'){
       html+=dashBtnHtml();
@@ -21300,7 +21352,7 @@ function renderTabBar(){
     if(st){
       if(done.has(st.id))return;done.add(st.id);
       const open=expandedStack===st.id,hasActive=st.members.includes(activeTabId);
-      html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" data-stack="${st.id}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" title="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">▸</span></button>`;
+      html+=`<button class="np np-stack${open?' open':''}${hasActive?' has-active':''}" data-stack="${st.id}" onpointerdown="tabPressStart(event,'stack','${st.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${st.id}')" data-tip="${escH(st.name)}" aria-label="${escH(st.name)}">${npIconSvg(TAB_ICON_STACK)}<span class="np-lbl">${escH(st.name)}</span><span class="np-arrow">▸</span></button>`;
       // ⚠ Die Mitglieder stehen IMMER im DOM, auch im zugeklappten Zustand -
       // nur die Klasse .open am Wrapper steuert sie. Nur so kann der
       // Uebergang ueberhaupt laufen: ein per innerHTML frisch erzeugtes
@@ -21721,6 +21773,36 @@ function togglePinEnabled(){
     const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
   }
 }
+// Seitenleiste dauerhaft offen halten (Nutzer-Wunsch 2026-08-22, Recherche
+// zu anderen Klapp-Seitenleisten: dort gibt es meist ein manuelles Anheften
+// statt reiner Auto-Einklapp-Automatik). navPinned!==pinEnabled oben - das
+// ist die PIN-CODE-Sperre, hier geht es um die Sidebar. Liegt wie pinEnabled
+// ausserhalb von snap()/Undo, volle Vier-Punkte-Anbindung noetig. Die
+// eigentliche Wirkung (Auto-Einklappen unterdruecken) steckt in der
+// Sidebar-IIFE weiter unten (collapse() prueft navPinned).
+let navPinned=localStorage.getItem('fxpro_nav_pinned')==='1';
+function applyNavPinned(){
+  const nav=document.getElementById('navSidebar');if(!nav)return;
+  if(navPinned)nav.classList.remove('nav-collapsed');
+  syncNavExpanded();
+}
+function updNavPinBtn(){
+  const b=document.querySelector('#navSidebar .nav-pin-btn');if(!b)return;
+  b.classList.toggle('on',navPinned);
+  const tip=navPinned?'Anheften lösen':'Leiste anheften';
+  const lbl=b.querySelector('.np-lbl');if(lbl)lbl.textContent=navPinned?'Angeheftet':'Anheften';
+  b.setAttribute('data-tip',tip);b.setAttribute('aria-label',tip);
+}
+function toggleNavPinned(){
+  navPinned=!navPinned;
+  try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}
+  localStorage.setItem('fxpro_updated',new Date().toISOString());
+  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+  markPrefEdit();
+  cloudAutoSync();
+  applyNavPinned();
+  updNavPinBtn();
+}
 // Nutzer-Wunsch 2026-08-04 ("genau wie den Code aktivieren/deaktivieren
 // koennen, direkt unter dem Code"): identisches An/Aus-Muster wie
 // pinEnabled direkt darueber - liegt bewusst ausserhalb von snap()/Undo
@@ -22120,6 +22202,7 @@ updNetStatus();
   // Zustand zum Klickzeitpunkt zu befragen.
   let ebenAusgeklappt=false,ebenEingeklappt=false;
   const collapse=()=>{
+    if(navPinned)return;   // manuell angeheftet - Auto-Einklappen bleibt aus
     nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
     syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
   };
@@ -22164,6 +22247,52 @@ updNetStatus();
       expand();ebenAusgeklappt=false;
     }
   },true);
+})();
+
+// ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) ──────────────────────────
+// Ersetzt die verzoegerten/uneinheitlichen Browser-title-Tooltips in der
+// eingeklappten Icon-Leiste durch ein eigenes, schneller erscheinendes
+// Element im App-Design. Die Buttons tragen dafuer data-tip statt title
+// (title haette den nativen Tooltip zusaetzlich ausgeloest) - aria-label
+// haelt die Bedienbarkeit fuer Screenreader unabhaengig davon aufrecht. Nur
+// in der Icon-Leiste noetig: im ausgeklappten Zustand steht das Label schon
+// als Text da, ein Tooltip waere dort nur Redundanz.
+(function(){
+  const nav=document.getElementById('navSidebar');if(!nav)return;
+  let tip=null,showTimer=null;
+  function ensureTip(){
+    if(!tip){tip=document.createElement('div');tip.id='navTooltip';document.body.appendChild(tip);}
+    return tip;
+  }
+  function iconOnly(){return nav.classList.contains('nav-collapsed')||window.innerWidth<760;}
+  function hide(){
+    if(showTimer){clearTimeout(showTimer);showTimer=null;}
+    if(tip)tip.classList.remove('show');
+  }
+  nav.addEventListener('pointerover',ev=>{
+    const btn=ev.target.closest('.np');
+    if(!btn){hide();return;}
+    if(!iconOnly()){hide();return;}
+    const text=btn.getAttribute('data-tip');if(!text){hide();return;}
+    if(showTimer)clearTimeout(showTimer);
+    showTimer=setTimeout(()=>{
+      const t=ensureTip();
+      t.textContent=text;
+      t.classList.add('show');
+      const r=btn.getBoundingClientRect(),tw=t.offsetWidth,th=t.offsetHeight;
+      let left=r.right+8,top=r.top+r.height/2-th/2;
+      if(left+tw>window.innerWidth-4)left=Math.max(4,r.left-tw-8);
+      top=Math.max(4,Math.min(top,window.innerHeight-th-4));
+      t.style.left=left+'px';t.style.top=top+'px';
+    },300);
+  });
+  nav.addEventListener('pointerout',ev=>{
+    const to=ev.relatedTarget&&ev.relatedTarget.closest?ev.relatedTarget.closest('.np'):null;
+    const from=ev.target.closest&&ev.target.closest('.np');
+    if(from&&from!==to)hide();
+  });
+  nav.addEventListener('click',hide,true);
+  nav.addEventListener('pointerleave',hide);
 })();
 
 // Tagwechsel-Check + tägliches Forex-Factory-Update (falls Seite lange offen bleibt)
