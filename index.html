@@ -281,18 +281,18 @@ svg.ic{vertical-align:-2px;flex:none}
    erreichbar und fuer Screenreader sichtbar. Als diskrete Eigenschaft
    schaltet visibility beim OEFFNEN sofort auf sichtbar und beim SCHLIESSEN
    erst am Ende des Uebergangs - genau das gewuenschte Verhalten. */
-/* ⚠ max-width:0 im zugeklappten Zustand ist Pflicht, nicht Kosmetik:
-   #navSidebar ist width:max-content, und die jetzt dauerhaft vorhandenen
-   Mitglieder-Labels ("Rate Probabilities") wuerden die Leiste sonst
-   permanent auf ihre Breite aufziehen - gemessen wurde die Leiste dadurch
-   so breit, dass ein Klick neben der ersten Karte schon auf der Leiste
-   landete. overflow:hidden allein genuegt nicht, die intrinsische Breite
-   zaehlt trotzdem. Beim Oeffnen springt max-width sofort auf none, damit
-   waehrend des Aufklappens nichts waagerecht beschnitten wird. */
+/* ⚠ BEWUSST OHNE max-width-Begrenzung (Nutzer-Wunsch 2026-08-22: "ich will
+   nicht, dass sich die Breite aendert, sondern dass sie von Anfang an so
+   breit ist"). Weil #navSidebar width:max-content ist, zaehlen die
+   Mitglieder-Labels dadurch IMMER zur Breite mit - auch zugeklappt. Die
+   Leiste ist damit konstant so breit wie ihr laengster Eintrag
+   ("Rate Probabilities"), statt beim Aufklappen von Insights zu springen.
+   Ein frueherer Versuch mit max-width:0 sparte zwar 16px, liess die Leiste
+   aber genau dieses Springen machen. */
 .np-sub-wrap{display:flex;flex-direction:column;gap:1px;overflow:hidden;
-  max-height:0;max-width:0;opacity:0;visibility:hidden;
+  max-height:0;opacity:0;visibility:hidden;
   transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .16s ease,visibility .26s}
-.np-sub-wrap.open{max-height:520px;max-width:none;opacity:1;visibility:visible}
+.np-sub-wrap.open{max-height:520px;opacity:1;visibility:visible}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
 /* Stapel-Mitglieder (Nutzer-Wunsch 2026-08-21: "in kleinerer Schriftgroesse
@@ -324,6 +324,22 @@ svg.ic{vertical-align:-2px;flex:none}
 #navSidebar.nav-collapsed .np.on{border-left-width:0;box-shadow:inset 3px 0 0 var(--blue)}
 #navSidebar.nav-collapsed .np.np-sub{padding:7px 0}
 #navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow{opacity:0;max-width:0;overflow:hidden}
+/* ⚠ In der Icon-Leiste werden Untereintraege GAR NICHT gezeigt - auch wenn
+   der Stapel bzw. die Dashboard-Liste logisch aufgeklappt ist (Nutzer-Foto
+   2026-08-22, gelb markiert). Ohne diese Regel stand zwischen dem
+   Dashboard-Symbol und dem naechsten Symbol ein 83px hoher Block mit drei
+   kaum unterscheidbaren Icons ("Alles", "Taeglich", "+ Neu"), waehrend alle
+   uebrigen Symbole gleichmaessig 36px auseinander lagen - genau die
+   ungleichen Abstaende aus dem Foto. Ein Untereintrag ohne Beschriftung
+   traegt ohnehin keine Information: zwei Dashboards sehen als blosses Icon
+   identisch aus.
+   Damit stehen in der Icon-Leiste ausschliesslich die Hauptkategorien, alle
+   im selben Rhythmus. */
+#navSidebar.nav-collapsed .np-sub-wrap{max-height:0;opacity:0;visibility:hidden}
+/* Der aufgeklappte Stapel bekommt in der Icon-Leiste auch keinen eigenen
+   Hintergrund mehr - sonst saehe ein aktives Symbol anders aus als das
+   daneben, obwohl beide dasselbe bedeuten. */
+#navSidebar.nav-collapsed .np.np-stack.open:not(.on){background:transparent}
 /* Beide Nutzer-Schalter respektieren: der Animations-Schalter aus den
    Einstellungen und die Systemeinstellung "Bewegung reduzieren". */
 body.no-ui-anim .np-sub-wrap,body.no-ui-anim .np-arrow,body.no-ui-anim .np-lbl,
@@ -3379,11 +3395,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-412 - Animationen fuer die Navigation (Nutzer-Wunsch: damit es cleaner aussieht). (1) Tab-Stapel und Dashboard-Liste klappen als Akkordeon auf und zu, statt schlagartig zu erscheinen; der Pfeil dreht sich, statt das Zeichen zu tauschen. (2) Beim Ein-/Ausklappen der Seitenleiste fahren die Beschriftungen weich zusammen, statt per display:none zu verschwinden - dadurch wirkt die Breitenaenderung zusammenhaengend. (3) Der Wechsel zwischen Dashboards blendet den Inhalt ein statt hart umzuspringen (dieselbe Einblendung wie beim Tabwechsel, kein zweites Muster). Damit ein Uebergang ueberhaupt laufen kann, stehen die Stapel-Mitglieder jetzt DAUERHAFT im DOM - ein per innerHTML frisch erzeugtes Element hat keinen Vorher-Zustand und animiert nie; umgeschaltet wird nur noch die Klasse. Dabei ein Nebeneffekt gefunden und geloest: die dauerhaft vorhandenen Labels haetten die Leiste ueber width:max-content permanent aufgezogen, weshalb der zugeklappte Wrapper max-width:0 braucht. Alle drei Animationen haengen am bestehenden Animations-Schalter UND an prefers-reduced-motion."mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-413 - Zwei Punkte aus dem Nutzer-Foto (gelb markiert). (1) Die Leistenbreite springt nicht mehr: bisher wuchs sie beim Aufklappen von Insights, weil erst dann der lange Name "Rate Probabilities" mitzaehlte. Die Untereintraege zaehlen jetzt IMMER zur Breite, die Leiste ist dadurch konstant 171px statt zwischen 155 und 171 zu springen. (2) Gleichmaessige Symbol-Abstaende in der eingeklappten Icon-Leiste: dort blieb die Dashboard-Liste aufgeklappt und schob einen 83px hohen Block mit drei kaum unterscheidbaren Icons zwischen zwei Symbole, waehrend alle uebrigen 36px auseinander lagen. In der Icon-Leiste werden Untereintraege jetzt gar nicht mehr gezeigt - ohne Beschriftung tragen sie ohnehin keine Information. Gemessen jetzt durchgehend 36px. Dabei die Ursache gefunden, warum die CSS-Regel dafuer zunaechst wirkungslos blieb: syncNavExpanded() setzt eine Inline-Hoehe, und Inline-Stile schlagen jeden Selektor - in der Icon-Leiste wird sie deshalb abgeraeumt."mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-412</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-413</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -21225,16 +21241,22 @@ function syncNavExpanded(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   bar.querySelectorAll('.np-stack[data-stack]').forEach(b=>b.classList.toggle('open',b.dataset.stack===expandedStack));
   const db=bar.querySelector('.np-dash');if(db)db.classList.toggle('open',expandedDash);
+  // ⚠ In der Icon-Leiste NIE eine Inline-Hoehe setzen: sie wuerde die
+  // CSS-Regel schlagen, die Untereintraege dort ausblendet (Inline-Stile
+  // gewinnen gegen jeden Selektor). Genau so blieb die Dashboard-Liste in
+  // der eingeklappten Leiste als 83px-Block stehen und riss die sonst
+  // gleichmaessigen Symbol-Abstaende auf.
+  const iconLeiste=bar.classList.contains('nav-collapsed')||window.innerWidth<760;
   bar.querySelectorAll('.np-sub-wrap').forEach(w=>{
-    const soll=w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack);
+    const soll=!iconLeiste&&(w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack));
+    w.classList.toggle('open',w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack));
+    if(iconLeiste){w.style.maxHeight='';return;}
     if(soll){
       // Erst .open setzen (hebt max-width:0 auf), DANN messen: im
       // zugeklappten Zustand ist der Wrapper 0 breit, jede Zeile wuerde
       // umbrechen und scrollHeight einen viel zu grossen Wert liefern.
-      w.classList.add('open');
       w.style.maxHeight=w.scrollHeight+'px';
     }else{
-      w.classList.remove('open');
       w.style.maxHeight='';
     }
   });
@@ -22097,10 +22119,14 @@ updNetStatus();
   // ob der Zustand SOEBEN durch die Annaeherung gewechselt hat, statt den
   // Zustand zum Klickzeitpunkt zu befragen.
   let ebenAusgeklappt=false,ebenEingeklappt=false;
-  const collapse=()=>{nav.classList.add('nav-collapsed');ebenAusgeklappt=false;};
+  const collapse=()=>{
+    nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
+    syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
+  };
   const expand=()=>{
     if(!nav.classList.contains('nav-collapsed'))return;
     nav.classList.remove('nav-collapsed');ebenAusgeklappt=true;
+    syncNavExpanded();   // stellt die Hoehen der offenen Listen wieder her
   };
   // Nur wenn die Leiste ueberhaupt breit sein KANN. Unter 760px ist sie per
   // Media Query dauerhaft auf Icon-Breite, ohne die Klasse zu tragen - ohne

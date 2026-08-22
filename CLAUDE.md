@@ -1522,3 +1522,38 @@ Schalter in den Einstellungen) und `prefers-reduced-motion` - dieselbe
 Pflicht wie bei der Gleiter/Boost-Sequenz, die genau daran schon einmal
 gescheitert ist.
 
+## ⚠ NAV-LEISTE: konstante Breite + gleichmaessige Icon-Abstaende (2026-08-22)
+
+Nutzer-Foto, zwei gelbe Markierungen.
+
+**1. Die Leistenbreite sprang beim Aufklappen von Insights** (155 → 171px),
+weil der lange Mitgliedsname "Rate Probabilities" erst dann zur
+`width:max-content`-Berechnung beitrug. Woertlich: "Ich will nicht, dass sich
+die Breite aendert, sondern dass sie von Anfang an so breit ist." Das
+`max-width:0` am zugeklappten Wrapper (einen Tag zuvor eingebaut, um 16px zu
+sparen) ist deshalb wieder RAUS - die Untereintraege zaehlen jetzt immer mit,
+die Leiste ist konstant 171px. **Merksatz:** eine Leiste, die sich beim
+Bedienen selbst verbreitert, verschiebt den gesamten Inhalt daneben - ein
+paar gesparte Pixel sind das nie wert.
+
+**2. Ungleiche Symbol-Abstaende in der eingeklappten Icon-Leiste.** Dort blieb
+die Dashboard-Liste logisch aufgeklappt und schob einen 83px hohen Block mit
+drei kaum unterscheidbaren Icons ("Alles", "Taeglich", "+ Neu") zwischen zwei
+Hauptsymbole, waehrend alle uebrigen sauber 36px auseinander lagen. In der
+Icon-Leiste werden Untereintraege jetzt gar nicht mehr angezeigt - ein
+Untereintrag ohne Beschriftung traegt ohnehin keine Information, zwei
+Dashboards sehen als blosses Icon identisch aus. Gemessen jetzt durchgehend
+36px ueber alle sieben Symbole.
+
+**⚠ Warum die CSS-Regel dafuer zunaechst wirkungslos blieb:**
+`syncNavExpanded()` setzt die gemessene Zielhoehe als **Inline-Stil** - und
+Inline-Stile schlagen jeden Selektor, auch einen mit id. Die Regel
+`#navSidebar.nav-collapsed .np-sub-wrap{max-height:0}` war damit chancenlos,
+sobald der Nutzer vorher einmal auf- oder zugeklappt hatte. In der Icon-Leiste
+raeumt `syncNavExpanded()` die Inline-Hoehe deshalb ab, statt sie zu setzen;
+`collapse()`/`expand()` rufen die Funktion mit auf, damit der Wechsel in
+beide Richtungen greift.
+**Merksatz:** wer eine Groesse in JS als Inline-Stil setzt, muss JEDEN
+Zustand mitbedienen, in dem CSS sie eigentlich ueberschreiben wollte -
+Spezifitaet hilft dort nicht weiter.
+
