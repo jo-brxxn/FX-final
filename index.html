@@ -3426,11 +3426,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-419 - Zusammenfuehrung zweier parallel laufender Sitzungen. Diese Sitzung: Ruecbau der Mehrfach-Dashboard-Funktion (Dashboard ist wieder eine einzelne, feste Kategorie ohne Stapel-Optik/Ausklapp-Pfeil/Unterliste, zeigt wieder die volle Kartenauswahl; das schlanke &quot;Taeglich&quot;-Dashboard ist geloescht, restoreAlltimeDashboard() migriert Bestandsnutzer gezielt auf die vollstaendige Auswahl statt auf einen evtl. gerade aktiven reduzierten Stand). Parallele Sitzung (uebernommen): die Anheften-Funktion der Sidebar ist wieder entfernt, stattdessen navigiert am PC (Maus mit Hover) der erste Klick auf einen Sidebar-Eintrag sofort statt nur auszuklappen, waehrend Touch-Geraete beim bewaehrten Zwei-Klick-Mechanismus bleiben (matchMedia hover:hover+pointer:fine); ausserdem Settings-Modal aufgeraeumt (gruppierte echte Umschalter statt Text-Buttons) und jeder Bias-Flip-Telegram-Alert bekommt jetzt eine Ursachen-Zeile."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-420 - Bugfix: auf dem iPad (und anderen Touch-Geraeten) klappte die Leiste beim Antippen ganz kurz aus, schloss sich aber sofort wieder, wenn der Inhalt gerade noch per Momentum-Scrolling nachlief. Ursache: overNav wurde bei pointerleave IMMER zurueckgesetzt, auch bei Touch - dort feuert pointerleave aber schon VOR dem eigentlichen Klick (pointerenter -&gt; pointerdown -&gt; pointerup -&gt; pointerleave -&gt; click), der Schutz war also schon wieder weg, bevor das naechste Scroll-Nachbeben ankam, und collapse() griff sofort erneut durch. Fix: overNav wird bei pointerleave jetzt nur noch fuer die Maus zurueckgesetzt (wie ebenAusgeklappt es schon war), fuer Touch/Stift stattdessen erst beim naechsten echten pointerdown IM INHALT (#pageArea) - dort ist der Zeiger zweifelsfrei nicht mehr auf der Leiste. Mit manuell nachgebauter exakter Touch-Ereignisfolge inkl. Scroll-Nachbeben mitten in der Luecke verifiziert."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-419</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-420</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -22081,6 +22081,11 @@ updNetStatus();
   pageArea.addEventListener('scroll',collapse,{capture:true,passive:true});
   pageArea.addEventListener('pointerdown',()=>{
     if(breiteLeiste()&&!nav.classList.contains('nav-collapsed'))ebenEingeklappt=true;
+    // Der Zeiger beruehrt hier definitiv den INHALT, nicht mehr die Leiste -
+    // unabhaengig von der Zeigerart der zuverlaessigste Punkt, um overNav
+    // zurueckzusetzen (siehe ausfuehrliche Begruendung bei der
+    // pointerleave-Behandlung weiter unten).
+    overNav=false;
     collapse();
   },{capture:true,passive:true});
   // Den durch dieses Einklappen ausgeloesten Klick schlucken - der Inhalt
@@ -22094,16 +22099,26 @@ updNetStatus();
   // das Ausklappen "verbraucht" - beim naechsten Hinkommen ist sie ja schon
   // offen und ein Klick soll dann normal navigieren.
   //
-  // ⚠ NUR fuer die Maus. Bei Touch ist die Ereignisfolge eine andere:
-  // pointerenter -> pointerdown -> pointerup -> POINTERLEAVE -> click.
-  // Der Finger "verlaesst" das Element also immer, bevor der click kommt -
-  // ein Zuruecksetzen hier haette das Merkmal jedes Mal geloescht, bevor der
-  // Klick-Handler es ueberhaupt lesen kann. Genau daran ist die Regel auf
-  // dem iPad gescheitert (Nutzer-Meldung 2026-08-21: erster Tipper klappt
-  // aus UND oeffnet die Kategorie), waehrend sie mit Maus funktionierte.
+  // ⚠ NUR fuer die Maus - sowohl bei ebenAusgeklappt (siehe Kommentar dort
+  // unveraendert) ALS AUCH bei overNav. Bei Touch ist die Ereignisfolge eine
+  // andere: pointerenter -> pointerdown -> pointerup -> POINTERLEAVE -> click.
+  // Der Finger "verlaesst" das Element also immer, bevor der click kommt.
+  // ⚠ Genau dieselbe Falle ist overNav zunaechst getappt (Nutzer-Meldung
+  // 2026-08-22, "am iPad klappt die Leiste beim Antippen ganz kurz aus,
+  // schliesst sich aber sofort wieder, wenn der Inhalt noch nachscrollt"):
+  // ein unbedingtes overNav=false hier loeschte den Schutz auf dem iPad
+  // schon VOR dem eigentlichen Tap, ein Scroll-Nachbeben direkt danach
+  // (Momentum-Scrolling laeuft auf dem iPad typischerweise noch lange
+  // weiter) fand overNav also faelschlich schon wieder false vor und liess
+  // collapse() sofort erneut durch. Fuer Touch/Stift bleibt overNav jetzt
+  // gesetzt, bis der Zeiger tatsaechlich im INHALT ankommt (siehe
+  // pageArea-pointerdown oben) - genau der vom Nutzer gewuenschte Zustand
+  // ("offen bleiben, bis der naechste Klick im Inhalt kommt").
   nav.addEventListener('pointerleave',ev=>{
-    overNav=false;   // ab jetzt darf ein Scroll im Inhalt wieder einklappen
-    if(!ev.pointerType||ev.pointerType==='mouse')ebenAusgeklappt=false;
+    if(!ev.pointerType||ev.pointerType==='mouse'){
+      overNav=false;
+      ebenAusgeklappt=false;
+    }
   });
   // Ohne dieses Zuruecksetzen wuerde per Tab-Taste ausgeloestes overNav nach
   // dem Weiterspringen des Fokus dauerhaft haengen bleiben (kein pointerleave
