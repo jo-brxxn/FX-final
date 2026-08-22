@@ -1433,3 +1433,40 @@ rein datenbedingt hoch (neue Sitzungstermine aus dem stuendlichen Feed) -
 ein gutes Beispiel dafuer, warum die Waechter bei JEDEM Push laufen und
 nicht nur nach UI-Aenderungen.
 
+## ⚠ SIDEBAR-KLICKREGEL: zweimal am TEST gescheitert, nicht an der Logik (2026-08-21)
+
+Die Regel "der erste Klick verstellt nur die Leiste, erst der zweite wirkt"
+ist ZWEIMAL beim Nutzer angekommen, obwohl sie beide Male als geprueft galt.
+Beide Male war die Logik richtig gedacht und die TESTMETHODE falsch:
+
+1. **Erster Anlauf, mit `dispatchEvent('click')` geprueft.** Damit feuert
+   kein `pointerenter`. Mit echter Maus klappt `pointerenter` die Leiste
+   aber schon beim Hinbewegen aus - zum Klickzeitpunkt war `nav-collapsed`
+   also weg, die Abfrage falsch, der Klick navigierte sofort.
+2. **Zweiter Anlauf, mit `hover()+click()` geprueft** (Maus damit korrekt) -
+   aber auf dem iPad lautet die Ereignisfolge
+   **`pointerenter` → `pointerdown` → `pointerup` → `pointerleave` → `click`**.
+   Der Finger "verlaesst" das Element also IMMER vor dem Klick. Das
+   `pointerleave`, das bei der Maus sinnvoll das verbrauchte Ausklappen
+   zuruecksetzt, loeschte bei Touch das Merkmal, bevor der Klick-Handler es
+   lesen konnte. Deshalb navigierte der erste Tipper weiterhin.
+   Fix: das Zuruecksetzen gilt nur noch fuer `ev.pointerType==='mouse'`.
+
+**Merksatz:** eine Interaktionsregel IMMER mit der Eingabeart testen, die
+der Nutzer tatsaechlich benutzt. `dispatchEvent` laesst die Pointer-Events
+ganz aus, `hover()+click()` deckt nur die Maus ab. Bei Touch kommt
+`pointerleave` VOR dem `click` - jeder Handler, der sich auf einen dort
+zurueckgesetzten Zustand verlaesst, sieht ihn nie.
+
+**Neuer Waechter `check/nav.js`** (11. Pruefung): faehrt die Regel in beiden
+Richtungen gegen BEIDE Zeigerarten - Touch ueber
+`newContext({hasTouch:true})`+`tap()`, Maus mit echtem `hover()` vor dem
+Klick - plus die Gegenprobe, dass ein Klick bei bereits offener Leiste NICHT
+geschluckt wird, und dass ein Tab-Stapel nicht ausgewaehlt bleibt. Gegen den
+Stand VOR dem Fix gegengeprueft: meldet dort genau den vom Nutzer
+beschriebenen Fehler.
+
+**Merksatz zum Waechter selbst:** wenn dieselbe Regel zweimal bricht, ist
+ein weiterer Absatz in dieser Datei die falsche Antwort - sie gehoert als
+ausfuehrbare Pruefung nach `check/`.
+

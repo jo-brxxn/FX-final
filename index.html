@@ -3333,11 +3333,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-410 - Grosses Loch mitten im Dashboard geschlossen (Nutzer-Foto, gelb markiert). Die Dashboard-Spalten hatten justify-content:space-between - der Hoehenrest einer kuerzeren Spalte wurde damit auf die Abstaende ZWISCHEN ihren Karten verteilt. Das ging auf, solange alle Spalten aehnlich hoch waren; sobald eine deutlich hoeher wird (gefuellte Watchlist mit acht Paaren, oder die andere Kartenauswahl des schlanken Dashboards), klaffte in den kurzen Spalten eine Luecke von mehreren hundert Pixeln. Jetzt flex-start: die Karten sammeln sich oben, der Rest landet unten am Spaltenende, wo keine Karte mehr steht. Gemessen mit gefuellter Watchlist: Abstaende innerhalb aller Spalten jetzt einheitlich 9px. Entspricht zugleich der bereits dokumentierten Nutzer-Entscheidung vom 2026-08-08, dass nichts gestreckt wird, nur um eine Luecke zu fuellen. Ausserdem hat der Waechter beim selben Lauf einen zweiten, unabhaengigen Fund gemeldet: im Fed-Funds-Chart ueberlappten sich zwei Sitzungstermine ("16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-411 - Die Regel 'erster Klick verstellt nur die Leiste' griff auf dem iPad nicht: bei Touch lautet die Ereignisfolge pointerenter -> pointerdown -> pointerup -> POINTERLEAVE -> click. Das pointerleave setzte das Merkmal zurueck, BEVOR der Klick-Handler es lesen konnte - der erste Tipper klappte also aus UND oeffnete die Kategorie. Mit Maus feuert pointerleave erst beim Wegbewegen, deshalb war es dort nicht zu sehen. Das Zuruecksetzen gilt jetzt nur noch fuer pointerType==="mouse". Neuer Waechter check/nav.js prueft die Regel ab sofort gegen BEIDE Zeigerarten (Maus mit echtem hover davor, Touch ueber hasTouch/tap) - beide bisherigen Fehlversuche waren Testmethoden-Fehler, nicht Logikfehler."16 SEP" / "28 OCT") um 2px, weil die Ausduennung der Achsenbeschriftung nur fuer die Historie galt und nicht fuer die Termine. Die Terminschrift skaliert jetzt mit der Slotbreite."Taeglich" mit nur den Karten, die sich taeglich aendern, grossen Einfluss haben und im Blick bleiben muessen (Majors, Watchlist, Risk Sentiment, Currency Strength, Headlines, Kalender, Notifications). Das bisherige bleibt vollstaendig als "Alles" erhalten, umschaltbar ueber die Sidebar-Liste. Ergebnis 7 Karten, 1379px. Dazu eine 3-Spalten-Stufe ab 1160px (vorher sprang es von 2 direkt auf 4). ECHTER FUND dabei: die grid-template-areas des Dashboards waren nie wirksam - nur .dash-zone-bottom trug ein grid-area, die vier anderen Zonen lagen per Auto-Platzierung und trafen den beschriebenen Ort beim Vierspalter nur zufaellig. Jede neue Vorlage waere wirkungslos geblieben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-410</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-411</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -22035,10 +22035,20 @@ updNetStatus();
   },true);
   nav.addEventListener('pointerenter',expand);
   nav.addEventListener('focusin',expand);
-  // Verlaesst der Zeiger die Leiste wieder, ohne geklickt zu haben, ist das
-  // Ausklappen "verbraucht" - beim naechsten Hinkommen ist sie ja schon
+  // Verlaesst der MAUSzeiger die Leiste wieder, ohne geklickt zu haben, ist
+  // das Ausklappen "verbraucht" - beim naechsten Hinkommen ist sie ja schon
   // offen und ein Klick soll dann normal navigieren.
-  nav.addEventListener('pointerleave',()=>{ebenAusgeklappt=false;});
+  //
+  // ⚠ NUR fuer die Maus. Bei Touch ist die Ereignisfolge eine andere:
+  // pointerenter -> pointerdown -> pointerup -> POINTERLEAVE -> click.
+  // Der Finger "verlaesst" das Element also immer, bevor der click kommt -
+  // ein Zuruecksetzen hier haette das Merkmal jedes Mal geloescht, bevor der
+  // Klick-Handler es ueberhaupt lesen kann. Genau daran ist die Regel auf
+  // dem iPad gescheitert (Nutzer-Meldung 2026-08-21: erster Tipper klappt
+  // aus UND oeffnet die Kategorie), waehrend sie mit Maus funktionierte.
+  nav.addEventListener('pointerleave',ev=>{
+    if(!ev.pointerType||ev.pointerType==='mouse')ebenAusgeklappt=false;
+  });
   nav.addEventListener('click',ev=>{
     if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();

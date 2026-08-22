@@ -28,6 +28,7 @@ const PRUEFUNGEN = [
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
+  { n: 'nav',       d: 'Sidebar-Klickregel, mit Maus UND mit Touch',          f: 'check/nav.js',       args: [],           browser: true },
 ];
 
 function serverErreichbar() {
