@@ -3427,11 +3427,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-414 - Vier Themen aus einer Nutzer-Anfrage. (1) Symbol-Ausrichtung in der eingeklappten Icon-Leiste korrigiert: Stapel-Icons (Dashboard, Insights) standen 15px nach links verschoben, weil der unsichtbare Pfeil (.np-arrow) weiterhin margin-left:auto trug und dadurch den freien Flex-Platz fraß, obwohl er selbst 0 Pixel breit war - per Playwright nachgemessen und bestaetigt, jetzt margin-left:0 im eingeklappten Zustand. (2) Halte-Zeit fuer den Dashboard-Bearbeitungsmodus von 5 auf 2 Sekunden verkuerzt (nur dashEditMode, der separate 5s-Timer fuer den Indikator-Bearbeitungsmodus ist unveraendert). (3) Der + Neu-Knopf im Dashboard-Stapel der Sidebar ist jetzt nur noch sichtbar, solange der Dashboard-Bearbeitungsmodus aktiv ist, statt dauerhaft dazustehen. (4) Nach einer Recherche zu anderen Klapp-Seitenleisten drei neue Funktionen: manuelles Anheften der Sidebar per Pin-Knopf (schaltet die Auto-Einklapp-Automatik ab, geraeteuebergreifend gespeichert), eigene schnell erscheinende Tooltips in der Icon-Leiste statt der verzoegerten Browser-Standardtooltips (data-tip/aria-label statt title). Die gemeldete fehlende Klappanimation beim Dashboard-Stapel bestand bei Pruefung nicht - Insights und Dashboard animierten bereits identisch, kein Codefix noetig dafuer."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-415 - Bugfix: die Seitenleiste liess sich nicht ausklappen, waehrend der Inhalt noch nachscrollte (Momentum-/Traegheits-Scrolling bei Trackpad/Maus). Ursache: der scroll-Listener auf #pageArea feuerte waehrend des Nachlaufs mehrfach nach und rief jedes Mal collapse() erneut auf, obwohl der Zeiger laengst auf der Leiste stand - die gerade per pointerenter geoeffnete Leiste klappte dadurch sofort wieder zu. Fix: ein overNav-Merker wird bei pointerenter/focusin gesetzt und unterdrueckt collapse(), solange der Zeiger auf der Leiste ruht - zurueckgesetzt bei pointerleave UND focusout (sonst bliebe er nach Tastatur-Fokuswechsel dauerhaft haengen). Das Scroll-Event selbst wird nicht angefasst, der Inhalt scrollt weiter ungebremst - nur die daran haengende Einklapp-Aktion wird unterdrueckt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-414</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-415</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -22200,9 +22200,18 @@ updNetStatus();
   // falsch, und der Klick navigierte sofort. Deshalb wird jetzt gemerkt,
   // ob der Zustand SOEBEN durch die Annaeherung gewechselt hat, statt den
   // Zustand zum Klickzeitpunkt zu befragen.
-  let ebenAusgeklappt=false,ebenEingeklappt=false;
+  // ⚠ overNav (Nutzer-Wunsch 2026-08-22): "kann die Leiste nicht ausklappen,
+  // wenn der Inhalt sich noch bewegt (z.B. nach dem Scrollen)". Ursache: der
+  // scroll-Listener auf #pageArea feuert bei Momentum-/Traegheits-Scrolling
+  // (Trackpad, manche Maeuse) noch WEITERE Male nach, waehrend der Zeiger
+  // laengst auf der Leiste steht - jedes dieser Nachbeben rief collapse()
+  // erneut auf und klappte die gerade per pointerenter geoeffnete Leiste
+  // sofort wieder zu. Der Inhalt soll dabei ungebremst weiterscrollen (das
+  // Scroll-Event selbst wird nicht angefasst) - nur die Einklapp-Aktion, die
+  // daran haengt, wird unterdrueckt, solange der Zeiger auf der Leiste ruht.
+  let ebenAusgeklappt=false,ebenEingeklappt=false,overNav=false;
   const collapse=()=>{
-    if(navPinned)return;   // manuell angeheftet - Auto-Einklappen bleibt aus
+    if(navPinned||overNav)return;
     nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
     syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
   };
@@ -22225,8 +22234,8 @@ updNetStatus();
   pageArea.addEventListener('click',ev=>{
     if(ebenEingeklappt){ebenEingeklappt=false;ev.preventDefault();ev.stopPropagation();}
   },true);
-  nav.addEventListener('pointerenter',expand);
-  nav.addEventListener('focusin',expand);
+  nav.addEventListener('pointerenter',()=>{overNav=true;expand();});
+  nav.addEventListener('focusin',()=>{overNav=true;expand();});
   // Verlaesst der MAUSzeiger die Leiste wieder, ohne geklickt zu haben, ist
   // das Ausklappen "verbraucht" - beim naechsten Hinkommen ist sie ja schon
   // offen und ein Klick soll dann normal navigieren.
@@ -22239,8 +22248,14 @@ updNetStatus();
   // dem iPad gescheitert (Nutzer-Meldung 2026-08-21: erster Tipper klappt
   // aus UND oeffnet die Kategorie), waehrend sie mit Maus funktionierte.
   nav.addEventListener('pointerleave',ev=>{
+    overNav=false;   // ab jetzt darf ein Scroll im Inhalt wieder einklappen
     if(!ev.pointerType||ev.pointerType==='mouse')ebenAusgeklappt=false;
   });
+  // Ohne dieses Zuruecksetzen wuerde per Tab-Taste ausgeloestes overNav nach
+  // dem Weiterspringen des Fokus dauerhaft haengen bleiben (kein pointerleave
+  // ohne Maus/Touch) und die Leiste liesse sich nie wieder automatisch
+  // einklappen.
+  nav.addEventListener('focusout',()=>{overNav=false;});
   nav.addEventListener('click',ev=>{
     if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();
