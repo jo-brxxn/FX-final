@@ -258,16 +258,6 @@ svg.ic{vertical-align:-2px;flex:none}
 .np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
 .np.on .np-ic{color:var(--blue)}
 @media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
-/* ── ANHEFTEN (Nutzer-Wunsch 2026-08-22): schaltet die Auto-Einklapp-
-   Automatik weiter unten (siehe navPinned/toggleNavPinned) ab, die Leiste
-   bleibt dauerhaft ausgeklappt. Bewusst OHNE .np.on-Look (blauer Rand +
-   Hintergrund) - das ist die Optik fuer "aktive Route" und wuerde hier den
-   Eindruck erwecken, "Anheften" sei selbst eine navigierbare Seite. Nur das
-   Icon faerbt sich im angehefteten Zustand blau. */
-.nav-pin-btn{opacity:.8}
-.nav-pin-btn:hover{opacity:1}
-.nav-pin-btn.on{opacity:1}
-.nav-pin-btn.on .np-ic{color:var(--blue)}
 /* ── ANIMATION Nav-Leiste (Nutzer-Wunsch 2026-08-21: "damit das Ganze
    cleaner aussieht"). Drei Bewegungen, alle bewusst kurz und ohne
    Verzoegerung, damit die Bedienung sich nicht zaeh anfuehlt:
@@ -3427,11 +3417,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-415 - Bugfix: die Seitenleiste liess sich nicht ausklappen, waehrend der Inhalt noch nachscrollte (Momentum-/Traegheits-Scrolling bei Trackpad/Maus). Ursache: der scroll-Listener auf #pageArea feuerte waehrend des Nachlaufs mehrfach nach und rief jedes Mal collapse() erneut auf, obwohl der Zeiger laengst auf der Leiste stand - die gerade per pointerenter geoeffnete Leiste klappte dadurch sofort wieder zu. Fix: ein overNav-Merker wird bei pointerenter/focusin gesetzt und unterdrueckt collapse(), solange der Zeiger auf der Leiste ruht - zurueckgesetzt bei pointerleave UND focusout (sonst bliebe er nach Tastatur-Fokuswechsel dauerhaft haengen). Das Scroll-Event selbst wird nicht angefasst, der Inhalt scrollt weiter ungebremst - nur die daran haengende Einklapp-Aktion wird unterdrueckt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-416 - Anheften-Funktion der Seitenleiste komplett entfernt (Button, navPinned-State, alle vier Sync-Stellen cloudPush/cloudPull/Export/Import, localStorage-Key) - PIN-Code-Sperre (pinEnabled) ist unveraendert. Sidebar-Klickregel jetzt geraeteabhaengig: am PC (Maus mit Hover, matchMedia hover:hover+pointer:fine) navigiert der erste Klick sofort, an iPad/Handy (kein Hover) bleibt der bestehende Zwei-Klick-Mechanismus (erster Klick klappt nur aus)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-415</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-416</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -9509,14 +9499,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.navPinned!==undefined){navPinned=!!_imp.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -9753,7 +9743,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -9875,7 +9865,6 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.denseMode!==undefined){denseMode=!!cd.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}
-      if(!prefPending&&cd.navPinned!==undefined){navPinned=!!cd.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
       if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
@@ -21330,17 +21319,9 @@ function onDashNewClick(){
 // dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
 // Mitglieder-Buttons (.np-sub) sind einfach die naechsten Elemente im
 // Sidebar-Fluss, kleinere Schrift + Einzug per CSS.
-// Anheft-Knopf ganz oben in der Leiste, ausserhalb von TAB_ORDER - kein Tab,
-// navigiert nirgendwohin. Icon = einfache Stecknadel (Kreis+Stiel), faerbt
-// sich per .nav-pin-btn.on blau statt der .np.on-Aktiv-Route-Optik zu
-// verwenden (siehe CSS-Kommentar dort).
-function navPinBtnHtml(){
-  const tip=navPinned?'Anheften lösen':'Leiste anheften';
-  return`<button class="np nav-pin-btn${navPinned?' on':''}" onclick="toggleNavPinned()" data-tip="${tip}" aria-label="${tip}">${npIconSvg('<circle cx="12" cy="9" r="4"/><line x1="12" y1="13" x2="12" y2="21"/>')}<span class="np-lbl">${navPinned?'Angeheftet':'Anheften'}</span></button>`;
-}
 function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
-  let html=navPinBtnHtml();const done=new Set();
+  let html='';const done=new Set();
   TAB_ORDER.forEach(id=>{
     if(id==='dash'){
       html+=dashBtnHtml();
@@ -21773,36 +21754,6 @@ function togglePinEnabled(){
     const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
   }
 }
-// Seitenleiste dauerhaft offen halten (Nutzer-Wunsch 2026-08-22, Recherche
-// zu anderen Klapp-Seitenleisten: dort gibt es meist ein manuelles Anheften
-// statt reiner Auto-Einklapp-Automatik). navPinned!==pinEnabled oben - das
-// ist die PIN-CODE-Sperre, hier geht es um die Sidebar. Liegt wie pinEnabled
-// ausserhalb von snap()/Undo, volle Vier-Punkte-Anbindung noetig. Die
-// eigentliche Wirkung (Auto-Einklappen unterdruecken) steckt in der
-// Sidebar-IIFE weiter unten (collapse() prueft navPinned).
-let navPinned=localStorage.getItem('fxpro_nav_pinned')==='1';
-function applyNavPinned(){
-  const nav=document.getElementById('navSidebar');if(!nav)return;
-  if(navPinned)nav.classList.remove('nav-collapsed');
-  syncNavExpanded();
-}
-function updNavPinBtn(){
-  const b=document.querySelector('#navSidebar .nav-pin-btn');if(!b)return;
-  b.classList.toggle('on',navPinned);
-  const tip=navPinned?'Anheften lösen':'Leiste anheften';
-  const lbl=b.querySelector('.np-lbl');if(lbl)lbl.textContent=navPinned?'Angeheftet':'Anheften';
-  b.setAttribute('data-tip',tip);b.setAttribute('aria-label',tip);
-}
-function toggleNavPinned(){
-  navPinned=!navPinned;
-  try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  applyNavPinned();
-  updNavPinBtn();
-}
 // Nutzer-Wunsch 2026-08-04 ("genau wie den Code aktivieren/deaktivieren
 // koennen, direkt unter dem Code"): identisches An/Aus-Muster wie
 // pinEnabled direkt darueber - liegt bewusst ausserhalb von snap()/Undo
@@ -22210,8 +22161,20 @@ updNetStatus();
   // Scroll-Event selbst wird nicht angefasst) - nur die Einklapp-Aktion, die
   // daran haengt, wird unterdrueckt, solange der Zeiger auf der Leiste ruht.
   let ebenAusgeklappt=false,ebenEingeklappt=false,overNav=false;
+  // Nutzer-Wunsch 2026-08-22: am PC (Maus+Hover) soll der erste Klick sofort
+  // navigieren - kein "verlorener" Klick nur zum Ausklappen, weil Hover die
+  // Leiste dort ohnehin schon vorher oeffnet. Am iPad/Handy (kein Hover)
+  // bleibt der bestehende Zwei-Klick-Schluck-Mechanismus unveraendert, da
+  // dort kein Vor-Hover existiert. (hover:hover)and(pointer:fine) statt
+  // pointer:coarse/ontouchstart, weil beide bei Touch-Displays mit
+  // angeschlossener Maus falsch-positiv/negativ waeren - diese Kombination
+  // ist die empfohlene Pruefung fuer "es gibt einen praezisen Zeiger, der
+  // auch hovern kann". Bewusst als einmalige Konstante (kein Live-Listener
+  // auf Geraetewechsel) - Maus an-/absteckend am iPad zur Laufzeit ist ein
+  // vernachlaessigbarer Randfall.
+  const hatMausHover=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const collapse=()=>{
-    if(navPinned||overNav)return;
+    if(overNav)return;
     nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
     syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
   };
@@ -22257,6 +22220,7 @@ updNetStatus();
   // einklappen.
   nav.addEventListener('focusout',()=>{overNav=false;});
   nav.addEventListener('click',ev=>{
+    if(hatMausHover)return;   // PC: erster Klick navigiert sofort, kein Schlucken
     if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();
       expand();ebenAusgeklappt=false;
