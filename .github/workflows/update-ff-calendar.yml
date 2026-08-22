@@ -2708,7 +2708,16 @@ jobs:
             // Snapshot, keine historische Abfrage) - waechst ab jetzt organisch;
             // der einmalige Bestand aus der Git-Historie der Datei wurde separat
             // rekonstruiert (echte vergangene Snapshots, kein Schaetzen).
-            if(out.retail&&out.retail.length){
+            // Wochenend-Gate (Nutzer-Bugreport 2026-08-22): FX-Maerkte sind Sa/So
+            // geschlossen, Myfxbook liefert an diesen Tagen trotzdem eine Antwort -
+            // meist denselben (stale) Freitags-Snapshot. Ohne Gate schrieb dieser
+            // Block jeden Kalendertag einen "neuen" Punkt in retailHistory, ~83%
+            // davon byte-identisch zum Vortag (empirisch an sentiment_data.json
+            // geprueft) - kuenstlich flache Wochenend-Plateaus in Long/Short-
+            // Historie und Net-Positioning-Chart. Gleiches Muster wie das
+            // bestehende DOW-Gate beim Pro-Asset-Put/Call-Schritt weiter unten.
+            const retailDow=new Date(today+"T00:00:00Z").getUTCDay();  // 0=So,6=Sa
+            if(out.retail&&out.retail.length&&retailDow!==0&&retailDow!==6){
               const rh=out.retailHistory&&typeof out.retailHistory==="object"?out.retailHistory:{};
               out.retail.forEach(r=>{
                 if(!r||!r.sym||!isFinite(+r.long))return;
@@ -2718,6 +2727,8 @@ jobs:
                 rh[r.sym]=s.slice(-1100);
               });
               out.retailHistory=rh;
+            }else if(out.retail&&out.retail.length){
+              log.push("retailHistory:weekend-skip(dow="+retailDow+")");
             }
             out.updated=new Date().toISOString();
             fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));

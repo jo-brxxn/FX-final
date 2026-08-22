@@ -3417,11 +3417,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-416 - Anheften-Funktion der Seitenleiste komplett entfernt (Button, navPinned-State, alle vier Sync-Stellen cloudPush/cloudPull/Export/Import, localStorage-Key) - PIN-Code-Sperre (pinEnabled) ist unveraendert. Sidebar-Klickregel jetzt geraeteabhaengig: am PC (Maus mit Hover, matchMedia hover:hover+pointer:fine) navigiert der erste Klick sofort, an iPad/Handy (kein Hover) bleibt der bestehende Zwei-Klick-Mechanismus (erster Klick klappt nur aus)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-417 - Drei Bugfixes: (1) Bias-Flip-Telegram-Alerts werden waehrend eines classic/normalized-Score-Modus-Wechsels unterdrueckt (_suppressBiasFlipAlerts) - vorher konnte der reine Modus-Wechsel selbst einen Flip ohne echte neue Daten und ohne Begruendung ausloesen. (2) Ein Praeferenz-Toggle (z.B. Telegram aus) wird beim Verlassen/Verstecken der Seite sofort gepusht statt den 1,5s-Auto-Sync-Debounce abzuwarten - der Timer konnte beim schnellen Schliessen verfallen, wodurch die Cloud den alten Stand behielt und die serverseitigen Telegram-Workflows (fail-open) weitersendeten. (3) Stock-Fear-&amp;-Greed-Karte im Sentiment-Tab hatte als einzige der Sentiment-Karten keinen Quellenlink - jetzt ergaenzt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-416</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-417</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4679,7 +4679,16 @@ function setScoreMode(m){
   scoreMode=n;
   invalidateNormCache();invalidateCmpCache();
   saveScoreMode();
-  recomputeAuto();save();rerender();updScoreModeBtn();
+  // Nutzer-Bugreport 2026-08-22: ein Telegram-Bias-Flip-Alert kam ohne jede
+  // erklaerende "Driven by"-Zeile an - Ursache war teils, dass der Flip gar
+  // nicht von neuen Marktdaten kam, sondern vom classic/normalized-Wechsel
+  // hier selbst (der Faktor aendert symScore genug, um die +/-3-Schwelle zu
+  // kreuzen). recomputeAllSymBiases() unterschied das bisher nicht von einem
+  // echten Flip - _suppressBiasFlipAlerts haelt lastNotifBias synchron, ohne
+  // einen Alert einzureihen, waehrend genau dieser Recompute laeuft.
+  _suppressBiasFlipAlerts=true;
+  try{recomputeAuto();}finally{_suppressBiasFlipAlerts=false;}
+  save();rerender();updScoreModeBtn();
 }
 function toggleScoreMode(){setScoreMode(scoreMode==='normalized'?'classic':'normalized');}
 function updScoreModeBtn(){
@@ -11201,14 +11210,20 @@ function triggerFlipGlow(symId){
   _flipGlowIds.add(symId);
   setTimeout(()=>{_flipGlowIds.delete(symId);renderSidebar();},1500);
 }
+// Siehe setScoreMode(): waehrend eines classic/normalized-Wechsels gesetzt,
+// damit ein dadurch ausgeloester Bias-Flip lastNotifBias synchron haelt,
+// aber keinen Telegram-Alert/Glow ohne echte neue Daten ausloest.
+let _suppressBiasFlipAlerts=false;
 function recomputeAllSymBiases(){
   syms.forEach(s=>{
     s.bias=scoreBias(symScore(s));
     // Erstlauf (Feld existiert noch nicht): nur initialisieren, nicht melden.
     if(s.lastNotifBias===undefined){s.lastNotifBias=s.bias;return;}
     if(s.lastNotifBias!==s.bias){
-      queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
-      triggerFlipGlow(s.id);
+      if(!_suppressBiasFlipAlerts){
+        queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
+        triggerFlipGlow(s.id);
+      }
       s.lastNotifBias=s.bias;
     }
   });
@@ -20197,8 +20212,8 @@ function renderFearGreedCards(D){
   const sfFilteredSet=new Set(sfFiltered);
   const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
   html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
-    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
-    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score.</div>`);
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span><div style="color:var(--t3);font-size:11px;margin-top:6px">Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
+    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score. Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div>`);
   html+=`</div>`;
   return html;
 }
@@ -21909,6 +21924,20 @@ document.addEventListener('keydown',e=>{
 // timer used to kick users out of whatever they were typing.
 function flushAndSave(){
   save();
+  // Nutzer-Bugreport 2026-08-22 ("Telegram kommt trotz Aus-Schalter"):
+  // cloudAutoSync() debounced jeden Auto-Push um 1,5s. Wird die App/der Tab
+  // in genau diesem Fenster geschlossen oder in den Hintergrund gelegt (der
+  // naheliegendste Ablauf: Schalter umlegen, App sofort zuklappen), verfaellt
+  // der Timer ungenutzt - die Aenderung erreicht die Cloud nie, und die
+  // serverseitigen Workflows (event-alerts/morning-report/weekly-report)
+  // lesen bewusst fail-open weiter den alten (falschen) Stand. Beim
+  // tatsaechlichen Verstecken/Verlassen der Seite deshalb den Debounce
+  // ueberspringen und sofort pushen, statt auf den Timer zu warten.
+  if(_cloudPushTimer){
+    clearTimeout(_cloudPushTimer);
+    _cloudPushTimer=null;
+    cloudPush(false);
+  }
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAndSave();});
 window.addEventListener('pagehide',flushAndSave);
