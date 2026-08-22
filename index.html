@@ -305,12 +305,6 @@ svg.ic{vertical-align:-2px;flex:none}
 .np-sub-wrap.open{max-height:520px;opacity:1;visibility:visible}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
-/* "+ Neu" (neues Dashboard anlegen) nur sichtbar, solange body.dash-edit-mode
-   gesetzt ist (Nutzer-Wunsch 2026-08-22) - dieselbe Konvention wie
-   .dash-edit-bar/.dw-btns (siehe dashEditPressStart weiter unten), statt
-   eines neuen Mechanismus. */
-.np-dashnew{display:none}
-body.dash-edit-mode .np-dashnew{display:flex}
 /* ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) statt der verzoegerten
    Browser-title-Tooltips: nur in der eingeklappten Icon-Leiste noetig, im
    ausgeklappten Zustand steht das Label ja schon da. */
@@ -2723,12 +2717,6 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
   .dw.dw-cap>.dw-body>.hl-list{
     max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
   .dw.dw-cap.dw-headlines{--dw-cap:545px}
-  /* Im schlanken Tages-Dashboard duerfen die langen Listen flacher sein -
-     dort zaehlt "passt auf einen Bildschirm" mehr als Vollstaendigkeit,
-     die volle Liste ist einen Klick entfernt im News-Tab. Die Karte
-     scrollt innerhalb ihres Rahmens weiter (bestehendes --dw-cap-Muster),
-     es geht also nichts verloren. */
-  body.dash-lean .dw.dw-cap.dw-headlines{--dw-cap:300px}
   /* Auf breiten Schirmen werden die Karten flacher, die rechte Aussenspalte
      traegt aber nur zwei - der Rest sammelte sich dort als 85px-Spalt.
      Statt Luft zeigen die Schlagzeilen dann einfach ein paar Zeilen mehr. */
@@ -2786,10 +2774,6 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    belegt jetzt genau eine Zelle. */
 @media(min-width:1160px){
   #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 bottom bottom"}
-  /* Im schlanken Dashboard ist die untere Zone leer (Kalender und Meldungen
-     stehen in Spalte 2 und 3, siehe ZONE_LEAN) - die Schlagzeilen bekommen
-     die zweite Zeile dann ganz. */
-  body.dash-lean #dashWidgets.dash-layout{grid-template-areas:"left center right" "right2 right2 right2"}
 }
 @media(min-width:1320px){
   #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom"}
@@ -3427,11 +3411,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-415 - Bugfix: die Seitenleiste liess sich nicht ausklappen, waehrend der Inhalt noch nachscrollte (Momentum-/Traegheits-Scrolling bei Trackpad/Maus). Ursache: der scroll-Listener auf #pageArea feuerte waehrend des Nachlaufs mehrfach nach und rief jedes Mal collapse() erneut auf, obwohl der Zeiger laengst auf der Leiste stand - die gerade per pointerenter geoeffnete Leiste klappte dadurch sofort wieder zu. Fix: ein overNav-Merker wird bei pointerenter/focusin gesetzt und unterdrueckt collapse(), solange der Zeiger auf der Leiste ruht - zurueckgesetzt bei pointerleave UND focusout (sonst bliebe er nach Tastatur-Fokuswechsel dauerhaft haengen). Das Scroll-Event selbst wird nicht angefasst, der Inhalt scrollt weiter ungebremst - nur die daran haengende Einklapp-Aktion wird unterdrueckt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-416 - Zwei Themen. (1) Ruecbau der Mehrfach-Dashboard-Funktion (Nutzer-Wunsch): Dashboard ist wieder eine einzelne, feste Kategorie ohne Stapel-Optik/Ausklapp-Pfeil/Unterliste, zeigt wieder die volle vorherige Kartenauswahl. Das schlanke "Taeglich"-Dashboard ist geloescht. Bestandsnutzer, die gerade "Taeglich" aktiv hatten, bekommen beim naechsten Laden gezielt die urspruengliche vollstaendige Kartenauswahl zurueck (nicht einfach den zuletzt aktiven, moeglicherweise reduzierten Stand) - restoreAlltimeDashboard() sucht dafuer explizit den Nicht-"Taeglich"-Eintrag aus dem alten dashboards[]. (2) Bugfix: der allererste Klick auf den Anheft-Knopf direkt nach einem Hover-Aufklappen wurde von der bestehenden "erster Klick verstellt nur die Leiste"-Schluck-Regel stillschweigend verschluckt (die eigentlich nur ungewollte TAB-Navigation verhindern soll) - der Knopf reagierte dadurch scheinbar gar nicht, die Leiste blieb einfach der normalen Auto-Einklapp-Automatik ausgesetzt. Der Anheft-Knopf ist jetzt von dieser Regel ausgenommen und wirkt immer sofort, normale Navigations-Tabs behalten die Zwei-Klick-Regel unveraendert (per Playwright gegengeprueft)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-415</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-416</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -8897,7 +8881,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){syncActiveDashboard();return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,dashboards,activeDashId,dashSeedV,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -8957,7 +8941,7 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();dashSeedV=d.dashSeedV||0;ensureDashboards(d.dashboards,d.activeDashId);migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -9008,14 +8992,6 @@ setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automat
 
 // ══ STATE ═══════════════════════════════════════════════════════════
 let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
-// Mehrere eigene, benannte Dashboards (Nutzer-Wunsch 2026-08-21, Koyfin-
-// Vorbild "My Dashboards" + "+NEW"). dashboards[] ist die Quelle der
-// Wahrheit; widgets/dashRemovedTypes bleiben unveraendert die Arbeitskopie
-// des AKTIVEN Dashboards, damit die ~40 bestehenden Stellen, die widgets
-// direkt lesen/schreiben, nicht angefasst werden muessen. Synchronisiert
-// wird nur an einer Stelle (syncActiveDashboard(), aufgerufen von snap() -
-// dem Kern-Speicherpunkt fuer Save/Undo/Cloud-Sync, siehe CLAUDE.md).
-let dashboards=[],activeDashId=null,dashSeedV=0;
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -9159,141 +9135,26 @@ const DASH_RANK={
 // snap() - damit sehen Save/Undo/Cloud-Sync immer den frischen Stand,
 // egal welche der vielen Widget-Mutationsstellen (Karte hinzufuegen/
 // entfernen/umbenennen/verschieben) zuletzt gelaufen ist.
-function syncActiveDashboard(){
-  const ad=dashboards&&dashboards.find(x=>x.id===activeDashId);
-  if(ad){ad.widgets=widgets;ad.dashRemovedTypes=dashRemovedTypes;}
-}
-// Nach dem Setzen von widgets/dashRemovedTypes (Legacy-Top-Level-Feld,
-// weiterhin der Fallback fuer alte Exporte/Cloud-Staende ohne dashboards[])
-// aufrufen. Existiert ein gespeichertes dashboards[], wird dessen aktiver
-// Eintrag geladen (ueberschreibt widgets/dashRemovedTypes damit) - sonst
-// wird aus dem bisherigen Einzel-Dashboard automatisch ein erster benannter
-// Eintrag "Dashboard" erzeugt. Kein Datenverlust, keine sichtbare Aenderung
-// fuer Bestandsnutzer, die das Feature nicht anfassen.
-// ── SCHLANKES TAGES-DASHBOARD ────────────────────────────────────────
-// Nutzer-Kriterium 2026-08-21, woertlich: "Es sollen die Dinge bleiben die
-// sich taeglich veraendern, grossen Einfluss haben und wichtig sind direkt
-// zu sehen und im Blick zu haben." Anlass: das gewachsene Dashboard war
-// 14 Karten und 2685px hoch - auf einem iPad 3,4 Bildschirme Scrollen.
-// Ein Dashboard, durch das man scrollen muss, ist per Definition keines
-// mehr (Stephen Few, Information Dashboard Design - dieselbe Quelle, die
-// schon die Typo-Skala begruendet): "auf einen Blick" setzt voraus, dass
-// alles gleichzeitig sichtbar ist.
-//
-// Jede Karte gegen die drei Merkmale geprueft. BEHALTEN:
-//   watchlist       eigene Paare, aendern sich taeglich
-//   risk_sentiment  Risikoregime, taeglich, steuert die Gesamtrichtung
-//   ccy_ranking     Kernsignal der App
-//   headlines       laufend neu, hoher Einfluss
-//   mini_calendar   die heutigen Termine bewegen den Markt
-//   notification    genau die Kategorie "im Blick behalten"
-// (Die Majors-Karte ist fest die erste Karte der linken Zone, kein Widget.)
-//
-// RAUS, weil in einem eigenen Tab vollstaendig vorhanden UND entweder
-// traege oder nachschlagbar statt ueberwachungsbeduerftig:
-//   corr_warn (Korrelation bewegt sich ueber Wochen)  -> Matrix
-//   carry_ranking (aendert sich erst bei Zinsschritten) -> Carry
-//   perf_ranking, vol_leaders, movers_fx              -> Trends
-//   sentiment_snapshot                                -> Sentiment
-//   surprise_index                                    -> Edge
-const DAILY_KEEP=['watchlist','risk_sentiment','ccy_ranking','headlines','mini_calendar','notification'];
-function mkDailyWidgets(){
-  return DASH_DEFAULTS.filter(([t])=>DAILY_KEEP.includes(t))
-    .map(([type,title])=>({id:uid(),type,title,order:DASH_RANK[type]??50}));
-}
-// ⚠ Die ausgelassenen Typen MUESSEN in dashRemovedTypes stehen - sonst
-// legt migrateDash() sie beim naechsten Start ueber DASH_DEFAULTS wieder an
-// und das schlanke Dashboard fuellt sich von selbst wieder auf.
-function dailyDropTypes(){return DASH_DEFAULTS.map(([t])=>t).filter(t=>!DAILY_KEEP.includes(t));}
-// Einmalige Aussaat. Ueber die Version statt ueber "gibt es schon ein
-// Taeglich?": sonst kaeme es nach dem Loeschen beim naechsten Laden zurueck.
-const DASH_SEED_V=1;
-function ensureDashboards(savedDashboards,savedActiveId){
-  if(Array.isArray(savedDashboards)&&savedDashboards.length){
-    dashboards=savedDashboards;
-    activeDashId=savedActiveId&&dashboards.some(x=>x.id===savedActiveId)?savedActiveId:dashboards[0].id;
-    const ad=dashboards.find(x=>x.id===activeDashId);
-    widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
-    dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
-  }else{
-    dashboards=[{id:uid(),name:'Dashboard',widgets,dashRemovedTypes}];
-    activeDashId=dashboards[0].id;
-  }
-  if((dashSeedV||0)<DASH_SEED_V){
-    dashSeedV=DASH_SEED_V;
-    // Das bisherige Dashboard behaelt ALLES und heisst kuenftig "Alles" -
-    // aber nur, wenn es noch den automatisch vergebenen Namen traegt; einen
-    // selbst gewaehlten Namen ueberschreiben waere uebergriffig.
-    if(dashboards[0].name==='Dashboard')dashboards[0].name='Alles';
-    const id=uid();
-    dashboards.push({id,name:'Taeglich',builtin:'daily',widgets:mkDailyWidgets(),dashRemovedTypes:dailyDropTypes()});
-    activeDashId=id;
-    const ad=dashboards.find(x=>x.id===id);
-    widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
-  }
-}
-// Beim Wechsel zwischen Dashboards tauscht renderDash() den kompletten
-// Karteninhalt aus - ohne Uebergang springt das hart um. Wiederverwendung
-// der bestehenden Seiten-Einblendung (dieselbe, die auch beim Tabwechsel
-// laeuft), damit es sich wie ein Seitenwechsel anfuehlt und kein zweites
-// Animationsmuster entsteht. Haengt am selben Nutzer-Schalter wie diese.
-function fadeDash(){
-  if(!uiAnimEnabled)return;
-  const el=document.getElementById('pgDash');if(!el)return;
-  el.classList.remove('page-fade-in');
-  void el.offsetWidth;                 // Reflow, sonst startet sie nicht neu
-  el.classList.add('page-fade-in');
-}
-function switchDashboard(id){
-  if(id===activeDashId||!dashboards.some(x=>x.id===id))return;
-  syncActiveDashboard();
-  activeDashId=id;
-  const ad=dashboards.find(x=>x.id===id);
-  widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
-  dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
-  migrateDash();
-  pushU();save();
-  if(curPage==='dash'){renderDash();fadeDash();}
-  renderTabBar();
-}
-function createDashboard(){
-  pushU();
-  syncActiveDashboard();
-  const id=uid(),n=dashboards.length+1;
-  dashboards.push({id,name:'Dashboard '+n,widgets:mkWidgets(),dashRemovedTypes:[]});
-  activeDashId=id;
-  const ad=dashboards.find(x=>x.id===id);
-  widgets=ad.widgets;dashRemovedTypes=ad.dashRemovedTypes;
-  migrateDash();
-  save();
-  if(curPage==='dash'){renderDash();fadeDash();}
-  renderTabBar();
-}
-function renameDashboard(id){
-  const d=dashboards.find(x=>x.id===id);if(!d)return;
-  const name=prompt('Dashboard umbenennen:',d.name);
-  if(!name||!name.trim())return;
-  pushU();
-  d.name=name.trim();
-  if(id===activeDashId)syncActiveDashboard();
-  save();renderTabBar();
-}
-function deleteDashboard(id){
-  if(dashboards.length<=1)return;
-  const d=dashboards.find(x=>x.id===id);if(!d)return;
-  if(!confirm('"'+d.name+'" wirklich loeschen?'))return;
-  pushU();
-  const wasActive=id===activeDashId;
-  dashboards=dashboards.filter(x=>x.id!==id);
-  if(wasActive){
-    activeDashId=dashboards[0].id;
-    const ad=dashboards[0];
-    widgets=Array.isArray(ad.widgets)?ad.widgets:mkWidgets();
-    dashRemovedTypes=Array.isArray(ad.dashRemovedTypes)?ad.dashRemovedTypes:[];
-    migrateDash();
-    if(curPage==='dash'){renderDash();fadeDash();}
-  }
-  save();renderTabBar();
+// ⚠ Rueckbau der Mehrfach-Dashboard-Funktion (Nutzer-Wunsch 2026-08-22):
+// "mach daraus nur noch eine Kategorie... in der wie vorher alles zu sehen
+// ist, die taegliche Vorlage bitte loeschen". Dashboard ist wieder eine
+// einzelne, feste Sammlung - widgets/dashRemovedTypes sind wieder der
+// alleinige State dafuer (kein dashboards[]/activeDashId-Wrapper mehr).
+// Bestandsnutzer koennen beim Wegfall dieser Funktion gerade das schlanke
+// "Taeglich"-Dashboard aktiv gehabt haben - dessen reduzierte Kartenauswahl
+// waere sonst faelschlich der neue Einzel-Stand. Deshalb hier gezielt die
+// NICHT-builtin:'daily'-Dashboard (= die urspruengliche "Alles"-Sammlung)
+// aus einem noch gespeicherten dashboards[] herausgesucht und deren
+// widgets/dashRemovedTypes uebernommen, statt einfach den zuletzt aktiven
+// (evtl. taeglichen) Stand zu behalten. Bei Stand ohne dashboards[]
+// (Bestandsnutzer, die das Feature nie gesehen haben, oder nach dieser
+// Migration) passiert nichts - widgets/dashRemovedTypes sind schon korrekt
+// aus dem Top-Level-Feld geladen.
+function restoreAlltimeDashboard(savedDashboards){
+  if(!Array.isArray(savedDashboards)||!savedDashboards.length)return;
+  const alle=savedDashboards.find(x=>x.builtin!=='daily')||savedDashboards[0];
+  if(Array.isArray(alle.widgets))widgets=alle.widgets;
+  if(Array.isArray(alle.dashRemovedTypes))dashRemovedTypes=alle.dashRemovedTypes;
 }
 function migrateDash(){
   if(!Array.isArray(widgets))widgets=mkWidgets();
@@ -9390,8 +9251,7 @@ function loadState(){
       // kommt aus dem (ggf. aelteren) gespeicherten Stand.
       dashV=d.dashV||0;
       dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];
-      dashSeedV=d.dashSeedV||0;
-      ensureDashboards(d.dashboards,d.activeDashId);
+      restoreAlltimeDashboard(d.dashboards);
       migrateDash();
       sbOrder=d.sbOrder||{};
       catOrder=d.catOrder||[];
@@ -9406,7 +9266,6 @@ function loadState(){
       return;}
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
-  ensureDashboards(null,null);
   syms.forEach(addMacroRub);applyRubOrder();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
@@ -15016,11 +14875,6 @@ function dashEditPressEnd(){if(_dashEditTimer){clearTimeout(_dashEditTimer);_das
 function toggleDashEditMode(){
   dashEditMode=!dashEditMode;
   document.body.classList.toggle('dash-edit-mode',dashEditMode);
-  // Der Sidebar-"+ Neu"-Knopf im Dashboard-Stapel ist nur im Bearbeitungs-
-  // modus sichtbar (.np-dashnew) - dessen Sichtbarkeitswechsel kann die
-  // gemessene Inline-Hoehe der bereits offenen Liste veraendern, deshalb
-  // hier neu messen statt nur die CSS-Klasse zu setzen.
-  syncNavExpanded();
   if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
 }
 // Gleiches Long-Press-Muster fuer die Indikator-Tabelle auf FX/Non-FX-
@@ -15105,17 +14959,7 @@ const ZONE_OF_TYPE={
   ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
   sentiment_snapshot:'center',surprise_index:'right2',headlines:'right2',
   mini_calendar:'bottom',movers_fx:'bottom',notification:'bottom'};
-// Im schlanken Tages-Dashboard liegen andere Karten - mit der normalen
-// Zuordnung landete alles Kurze in Spalte 2/3 und alles Lange in Spalte 1:
-// gemessen 685px gegen 330px, also eine grosse sichtbare Luecke unter den
-// kurzen Spalten. Diese Verteilung gleicht die drei Spalten aus
-// (685 / 665 / 640), statt Kalender und Meldungen in eine eigene Zeile
-// darunter zu schieben.
-const ZONE_LEAN={watchlist:'left',risk_sentiment:'center',mini_calendar:'center',
-  ccy_ranking:'right',notification:'right',headlines:'right2'};
-function isLeanDash(){const d=dashboards&&dashboards.find(x=>x.id===activeDashId);return !!(d&&d.builtin==='daily');}
 function dashZoneOf(type){
-  if(isLeanDash()&&ZONE_LEAN[type])return ZONE_LEAN[type];
   return ZONE_OF_TYPE[type]||'bottom';
 }
 // Verschiebt ein Widget innerhalb SEINER Zone (nicht global) - tauscht nur
@@ -15440,10 +15284,6 @@ function renderDash(){
   beginRenderPass();
   updateAuroraColors();
   const el=document.getElementById('dashWidgets');if(!el)return;
-  // Kennzeichnet das schlanke Tages-Dashboard, damit die langen Listen dort
-  // flacher gedeckelt werden koennen (siehe body.dash-lean in der CSS).
-  const _ad=dashboards.find(x=>x.id===activeDashId);
-  document.body.classList.toggle('dash-lean',!!(_ad&&_ad.builtin==='daily'));
   // Scroll-Position sichern: el.innerHTML unten ersetzt ALLE Widgets komplett
   // (auch das gerade angeklickte, z.B. der Risk-Environment-Regler). Zwei
   // Ursachen fuer den gemeldeten Sprung nach oben/unten (Nutzer-Bugreport
@@ -21154,10 +20994,6 @@ const TABS={
 const TABSTACKS_KEY='fxpro_tabstacks';
 let tabStacks=[];           // [{id,name,members:[tabId,...]}]
 let expandedStack=null;     // id des gerade ausgeklappten Stapels
-// Mehrere eigene Dashboards (siehe dashboards[]/activeDashId oben): ob die
-// Liste unter dem "Dashboard"-Sidebar-Eintrag gerade aufgeklappt ist -
-// rein lokaler UI-Zustand, genau wie expandedStack nicht persistiert.
-let expandedDash=false;
 let activeTabId='dash';     // aktuell aktive Kategorie
 function loadTabStacks(){
   try{const s=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(s)){tabStacks=s;
@@ -21259,21 +21095,6 @@ function tabBtnHtml(id,sub){
   const on=activeTabId===id;
   return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" data-tip="${escH(d.label)}" aria-label="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
 }
-// Mehrere eigene Dashboards (Nutzer-Wunsch 2026-08-21, Koyfin-Vorbild "My
-// Dashboards" + "+NEW"): der "Dashboard"-Eintrag ist ein Hybrid aus
-// normalem Navigations-Tab (Klick auf den Koerper navigiert wie bisher zu
-// 'dash') UND Stapel (der Pfeil klappt separat die Liste der gespeicherten
-// Dashboards auf/zu, gleiches Inline-Muster wie "Insights"). Deshalb kein
-// stackOf('dash')-Eintrag in tabStacks - eigener Code-Pfad in renderTabBar().
-function dashBtnHtml(){
-  const on=activeTabId==='dash';
-  return`<button class="np np-stack np-dash${expandedDash?' open':''}${on?' on has-active':''}" onclick="onTabClick(event,'dash')" data-tip="Dashboard" aria-label="Dashboard">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">Dashboard</span><span class="np-arrow" onclick="toggleDashExpand(event)">▸</span></button>`;
-}
-function toggleDashExpand(e){
-  if(e){e.stopPropagation();e.preventDefault();}
-  expandedDash=!expandedDash;
-  syncNavExpanded();
-}
 // Schaltet NUR die .open-Klassen an der bestehenden Leiste um, statt sie neu
 // zu bauen - ein Neuaufbau wuerde jeden Uebergang verschlucken. renderTabBar()
 // selbst baut weiterhin mit dem richtigen Zustand auf (beim Tabwechsel also
@@ -21281,16 +21102,13 @@ function toggleDashExpand(e){
 function syncNavExpanded(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   bar.querySelectorAll('.np-stack[data-stack]').forEach(b=>b.classList.toggle('open',b.dataset.stack===expandedStack));
-  const db=bar.querySelector('.np-dash');if(db)db.classList.toggle('open',expandedDash);
   // ⚠ In der Icon-Leiste NIE eine Inline-Hoehe setzen: sie wuerde die
   // CSS-Regel schlagen, die Untereintraege dort ausblendet (Inline-Stile
-  // gewinnen gegen jeden Selektor). Genau so blieb die Dashboard-Liste in
-  // der eingeklappten Leiste als 83px-Block stehen und riss die sonst
-  // gleichmaessigen Symbol-Abstaende auf.
+  // gewinnen gegen jeden Selektor).
   const iconLeiste=bar.classList.contains('nav-collapsed')||window.innerWidth<760;
   bar.querySelectorAll('.np-sub-wrap').forEach(w=>{
-    const soll=!iconLeiste&&(w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack));
-    w.classList.toggle('open',w.dataset.dash?expandedDash:(w.dataset.stack===expandedStack));
+    const soll=!iconLeiste&&w.dataset.stack===expandedStack;
+    w.classList.toggle('open',w.dataset.stack===expandedStack);
     if(iconLeiste){w.style.maxHeight='';return;}
     if(soll){
       // Erst .open setzen (hebt max-width:0 auf), DANN messen: im
@@ -21301,29 +21119,6 @@ function syncNavExpanded(){
       w.style.maxHeight='';
     }
   });
-}
-// Umbenennen/Loeschen ueber dasselbe Long-Press-Menue-Muster wie Tab-Stapel
-// (tabPressStart/openTabMenu, kind:'dashitem') - kein neuer Mechanismus.
-function dashItemBtnHtml(d){
-  const on=activeDashId===d.id;
-  return`<button class="np np-sub${on?' on':''}" onpointerdown="tabPressStart(event,'dashitem','${d.id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onDashItemClick(event,'${d.id}')" data-tip="${escH(d.name)}" aria-label="${escH(d.name)}">${npIconSvg(TAB_ICONS.dash)}<span class="np-lbl">${escH(d.name)}</span></button>`;
-}
-// Nur sichtbar im Dashboard-Bearbeitungsmodus (.np-dashnew, Nutzer-Wunsch
-// 2026-08-22: "nur eine Kategorie hinzufuegen kann, wenn man sich in
-// Bearbeitung befindet") - vorher war der Knopf immer da.
-function dashNewBtnHtml(){
-  return`<button class="np np-sub np-dashnew" onclick="onDashNewClick()" data-tip="Neues Dashboard" aria-label="Neues Dashboard">${npIconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>')}<span class="np-lbl">+ Neu</span></button>`;
-}
-function onDashItemClick(e,id){
-  if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
-  const wasOnDash=curPage==='dash';
-  switchDashboard(id);
-  if(!wasOnDash)selectTab('dash');
-}
-function onDashNewClick(){
-  const wasOnDash=curPage==='dash';
-  createDashboard();
-  if(!wasOnDash)selectTab('dash');
 }
 // Stapel (z.B. "Insights") klappen sich INLINE unterhalb ihres Buttons auf
 // (Nutzer-Wunsch 2026-08-21: "die Kategorien in kleinerer Schriftgroesse
@@ -21342,12 +21137,6 @@ function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   let html=navPinBtnHtml();const done=new Set();
   TAB_ORDER.forEach(id=>{
-    if(id==='dash'){
-      html+=dashBtnHtml();
-      html+=`<div class="np-sub-wrap${expandedDash?' open':''}" data-dash="1">`+
-        dashboards.map(dashItemBtnHtml).join('')+dashNewBtnHtml()+`</div>`;
-      return;
-    }
     const st=stackOf(id);
     if(st){
       if(done.has(st.id))return;done.add(st.id);
@@ -21403,9 +21192,6 @@ function openTabMenu(kind,id,x,y){
     tabStacks.forEach(s=>{if(!s.members.includes(id))items.push({lbl:'➕ '+s.name,fn:()=>addTabToStack(id,s.id)});});
     items.push({lbl:'✨ New Stack…',fn:()=>{const name=prompt('Name of the new stack:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
     if(cur)items.push({lbl:'✖ Remove from "'+cur.name+'"',fn:()=>removeTabFromStack(id)});
-  }else if(kind==='dashitem'){
-    items.push({lbl:'✎ Rename…',fn:()=>renameDashboard(id)});
-    if(dashboards.length>1)items.push({lbl:'✖ Delete',fn:()=>deleteDashboard(id)});
   }else{
     const s=tabStacks.find(x=>x.id===id);if(!s)return;
     items.push({lbl:'✎ Rename…',fn:()=>{const name=prompt('Rename stack:',s.name);if(name&&name.trim()){s.name=name.trim();saveTabStacks();renderTabBar();}}});
@@ -21460,8 +21246,6 @@ function showTab(tab,btn,fxMode){
   // "wenn ich einmal auf Insights druecke, bleibt sie die ganze Zeit
   // ausgewaehlt, obwohl ich danach auf etwas anderes druecke").
   const _st=stackOf(activeTabId);expandedStack=_st?_st.id:null;
-  // Dieselbe Logik fuer die Dashboard-Liste.
-  expandedDash=(tab==='dash');
   renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
@@ -22257,6 +22041,16 @@ updNetStatus();
   // einklappen.
   nav.addEventListener('focusout',()=>{overNav=false;});
   nav.addEventListener('click',ev=>{
+    // ⚠ Der Anheft-Knopf ist kein Navigations-Tab (bei dem ein versehentlicher
+    // erster Klick zu einer ungewollten Seitennavigation fuehren koennte,
+    // wofuer diese Schluck-Regel gedacht ist) - er ist ein reiner Umschalter
+    // und soll deshalb IMMER sofort wirken, auch direkt nach dem Aufklappen.
+    // Ohne diese Ausnahme verschluckte der allererste Klick auf "Anheften"
+    // nach jedem Hover-Aufklappen lautlos - kein Toggle, der Nutzer sah nur
+    // die normale Auto-Einklapp-Automatik weiterlaufen (Nutzer-Meldung
+    // 2026-08-22: "ich kann die Leiste oeffnen, aber sie schliesst sich
+    // gleich wieder").
+    if(ev.target.closest('.nav-pin-btn'))return;
     if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();
       expand();ebenAusgeklappt=false;

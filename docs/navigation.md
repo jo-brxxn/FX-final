@@ -318,6 +318,30 @@ Durchfaedeln aller Mutationsstellen - immer zuerst pruefen, ob der State
 tatsaechlich nur an einer zentralen Stelle (hier `snap()`) zusammenlaeuft,
 bevor man jede einzelne Mutationsfunktion anfasst.
 
+**⚠ RUECKGAENGIG GEMACHT (Nutzer-Wunsch 2026-08-22):** "mach aus dem
+Dashboard-Stapel keinen Stapel mehr, sondern einfach eine Kategorie, in der
+wie vorher alles zu sehen ist - die taegliche Vorlage bitte loeschen."
+Dashboard ist wieder ein normaler, einzelner Sidebar-Tab wie jeder andere
+(`tabBtnHtml('dash',false)`, kein `.np-stack`, kein Pfeil, kein Long-Press-
+Rename/Delete-Menue mehr - long-press bietet jetzt das normale "zu Stapel
+hinzufuegen"). `dashboards[]`/`activeDashId`/`dashSeedV` sowie
+`switchDashboard`/`createDashboard`/`renameDashboard`/`deleteDashboard`/
+`ensureDashboards`/`syncActiveDashboard`/`fadeDash`/das schlanke
+"Taeglich"-Dashboard (`DAILY_KEEP`/`mkDailyWidgets`/`dailyDropTypes`/
+`ZONE_LEAN`/`isLeanDash`/`body.dash-lean`) sind komplett entfernt -
+`widgets`/`dashRemovedTypes` sind wieder der alleinige, direkte State dafuer,
+genau wie vor diesem Feature. **Migration:** `restoreAlltimeDashboard()`
+(ersetzt `ensureDashboards()` in `loadState()` UND `applySnap()`) sucht in
+einem noch gespeicherten alten `dashboards[]`-Array gezielt den
+NICHT-`builtin:'daily'`-Eintrag (= die urspruengliche "Alles"-Sammlung) und
+uebernimmt dessen `widgets`/`dashRemovedTypes` - bewusst NICHT einfach den
+zuletzt aktiven Stand, da ein Nutzer beim Wegfall des Features gerade
+"Taeglich" aktiv gehabt haben kann und sonst dessen reduzierte Kartenauswahl
+faelschlich zum neuen Dauerzustand geworden waere. Mit Playwright gegen ein
+kunstlich altes `dashboards[]`-Objekt (aktiv=Taeglich) fuer beide
+Migrationspfade verifiziert: volle 13-Karten-Auswahl kommt zurueck, nicht
+die reduzierte.
+
 ## ⚠ VIER FUNDE AUS EINEM NUTZER-FOTO
 
 Nutzer schickte einen iPad-Screenshot (1194px) mit gelben und schwarzen
@@ -665,3 +689,70 @@ beide Richtungen greift.
 **Merksatz:** wer eine Groesse in JS als Inline-Stil setzt, muss JEDEN
 Zustand mitbedienen, in dem CSS sie eigentlich ueberschreiben wollte -
 Spezifitaet hilft dort nicht weiter.
+
+## ⚠ ICON-AUSRICHTUNG, ANHEFTEN, EIGENE TOOLTIPS, SCROLL-GEGEN-HOVER
+
+Mehrere Nutzer-Meldungen ueber zwei Sitzungen, alle die eingeklappte
+Icon-Leiste betreffend.
+
+**1. Stapel-Icons 15px nach links verschoben.** `.np-arrow` (der unsichtbare
+▸-Pfeil bei Stapel-/Dashboard-Buttons) trug weiterhin `margin-left:auto`,
+obwohl er im eingeklappten Zustand `max-width:0`/`opacity:0` hatte - ein
+Auto-Margin frisst den freien Flex-Platz aber auch bei 0 Breite und schob
+Icon+Label nach links. Per Playwright nachgemessen: -15px bei allen
+`.np-stack`-Buttons, 0px ueberall sonst. Fix: `margin-left:0` zusaetzlich in
+beiden Icon-Leiste-Regeln (Mobil-Media-Query UND `.nav-collapsed`).
+
+**2. Anheften (`navPinned`).** Recherche zu anderen Klapp-Seitenleisten
+(VS Code, Slack, Linear) ergab: die reine Hover-Automatik ohne manuellen
+Pin ist unueblich. Neuer Pin-Knopf ganz oben in der Leiste (`navPinBtnHtml()`,
+ausserhalb von `TAB_ORDER`) schaltet `navPinned` um - `collapse()` in der
+Auto-Einklapp-IIFE prueft das zuerst und tut sonst nichts. Volle
+Vier-Ecken-Anbindung (`fxpro_nav_pinned`) wie `pinEnabled`/`denseMode` -
+**Achtung, Namenskollision vermeiden:** `pinEnabled` ist die PIN-CODE-Sperre,
+`navPinned` das Sidebar-Anheften, komplett getrennte Features.
+
+**3. Eigene Tooltips.** `title`-Attribute auf allen `.np`-Buttons durch
+`data-tip`/`aria-label` ersetzt (title haette den langsamen, uneinheitlichen
+Browser-Tooltip zusaetzlich ausgeloest). Eigenes `#navTooltip`-Element,
+delegierte `pointerover`/`pointerout` auf `#navSidebar`, nur aktiv wenn
+`nav-collapsed` ODER Viewport <760px. **Eingeschraenkte Wirkung:** auf breiten
+Bildschirmen greift der Tooltip in der Praxis kaum, weil `pointerenter` auf
+`nav` die Leiste sofort komplett aufklappt (Punkt "Sidebar klappt automatisch
+auf" oben) - das Label steht dann eh als Text da, bevor der Tooltip (300ms
+Verzoegerung) ueberhaupt erscheinen koennte. Nur bei Viewports <760px (dort
+bleibt die Leiste dauerhaft Icon-only, keine Hover-Automatik) tatsaechlich
+sichtbar - mit Playwright bestaetigt (0px Sidebar-Breite waehrend
+Tooltip-Anzeige).
+
+**4. `overNav`-Merker gegen Scroll-Nachbeben.** Nutzer-Meldung: "kann die
+Leiste nicht ausklappen, wenn der Inhalt sich noch bewegt". Ursache: der
+`scroll`-Listener auf `#pageArea` feuert bei Momentum-/Traegheits-Scrolling
+(Trackpad) noch mehrfach nach, waehrend der Zeiger laengst auf der Leiste
+ruht - jedes Nachbeben rief `collapse()` erneut auf. Fix: `overNav` wird bei
+`pointerenter`/`focusin` auf der Leiste gesetzt und unterdrueckt `collapse()`,
+solange es `true` ist; zurueckgesetzt bei `pointerleave` UND `focusout`
+(sonst bliebe es nach Tastatur-Fokuswechsel dauerhaft haengen und die
+Auto-Einklapp-Automatik wuerde nie wieder greifen). Das `scroll`-Event selbst
+bleibt unangetastet - der Inhalt scrollt weiter ungebremst.
+
+**5. Anheft-Knopf von der Klick-Schluck-Regel ausgenommen.** Direkte Folge-
+Meldung: "ich kann die Leiste oeffnen, aber sie schliesst sich gleich
+wieder." Ursache: die bestehende "erster Klick verstellt nur die Leiste"-
+Regel (siehe "SIDEBAR-KLICKREGEL" oben) schluckt JEDEN ersten Klick nach
+einem Hover-Aufklappen per `stopPropagation()` in der Capture-Phase auf
+`nav` - auch den auf den Pin-Knopf. Der Knopf reagierte dadurch beim ersten
+Klick scheinbar gar nicht (kein Toggle), nur die normale Auto-Einklapp-
+Automatik lief unbeeinflusst weiter - genau das las sich wie "oeffnet sich
+und schliesst sich gleich wieder". Die Schluck-Regel ist fuer NAVIGATION
+gedacht (ungewollter Tab-Wechsel durch einen Klick, der eigentlich nur dem
+Aufklappen galt) - ein reiner Umschalter wie "Anheften" hat dieses Risiko
+nicht und ist jetzt per `ev.target.closest('.nav-pin-btn')`-Fruehausstieg
+davon ausgenommen. Mit Playwright gegengeprueft: Pin wirkt jetzt beim
+allerersten Klick nach Hover, normale Tabs behalten weiter die Zwei-Klick-
+Regel (erster Klick haelt nur offen, zweiter navigiert).
+**Merksatz:** eine "erster Klick zaehlt nicht"-Regel, die pauschal auf einen
+ganzen Container gelegt wird, trifft auch Buttons, fuer die sie nie gedacht
+war - bei neuen Buttons in einem so geschuetzten Container immer pruefen, ob
+sie tatsaechlich navigieren (Regel gilt) oder nur umschalten (Regel muss
+explizit ausgenommen werden).
