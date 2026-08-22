@@ -143,15 +143,28 @@ wfDateien.forEach(f => {
 // Bewusst grob: lieber einmal zu oft nachfragen als eine Groesse ungeprueft
 // lassen. Wer wirklich nichts zu pruefen hat, erweitert check/score.js um
 // eine Zeile, die genau das festhaelt.
-const neueScoreFn = [...diffText.matchAll(/^\+.*\bfunction\s+(\w*(?:Score|Bias|Weight|Norm|Strength)\w*)\s*\(/gm)]
+const neueScoreFnKandidaten = [...diffText.matchAll(/^\+.*\bfunction\s+(\w*(?:Score|Bias|Weight|Norm|Strength)\w*)\s*\(/gm)]
   .map(m => m[1]);
-if (neueScoreFn.length) {
-  const checkBeruehrt = geaendert.some(f => f.startsWith('check/'));
-  if (!checkBeruehrt)
-    fail('Neue Score-Groesse ohne Pruefung',
-      `Neu eingefuehrt: ${[...new Set(neueScoreFn)].join(', ')}. ` +
-      `In diesem Commit wurde aber keine Datei unter check/ angefasst. ` +
-      `Eine neue Score-Groesse ohne Pruefung ist ein blinder Fleck - check/score.js erweitern.`);
+if (neueScoreFnKandidaten.length) {
+  // Nur wirklich NEUE Funktionen zaehlen - eine bestehende EIN-ZEILEN-Funktion
+  // erzeugt beim Bearbeiten (Edit ersetzt die ganze Zeile, git zeigt sie als
+  // "-"+"+" desselben "function name(") eine "+"-Zeile, die wie eine neue
+  // Funktion aussieht, obwohl nur ihr Koerper geaendert wurde. Ohne diesen
+  // Filter meldet Regel 5 bei JEDER Aenderung an einer bestehenden
+  // score-benannten Funktion faelschlich "neu eingefuehrt" (Fehlalarm-Fund
+  // 2026-08-22, ausgeloest durch setRubBias - dieselbe Klasse Fehlalarm wie
+  // scoreSurface.js' Backtick-Fund, siehe docs/score-model.md).
+  const altHtmlFuerFn = indexGeaendert ? git(`show ${BASE}:index.html`) : '';
+  const neueScoreFn = [...new Set(neueScoreFnKandidaten)]
+    .filter(n => !new RegExp('function\\s+' + n + '\\s*\\(').test(altHtmlFuerFn));
+  if (neueScoreFn.length) {
+    const checkBeruehrt = geaendert.some(f => f.startsWith('check/'));
+    if (!checkBeruehrt)
+      fail('Neue Score-Groesse ohne Pruefung',
+        `Neu eingefuehrt: ${neueScoreFn.join(', ')}. ` +
+        `In diesem Commit wurde aber keine Datei unter check/ angefasst. ` +
+        `Eine neue Score-Groesse ohne Pruefung ist ein blinder Fleck - check/score.js erweitern.`);
+  }
 }
 
 // ── Regel 6: neuer persistierter Zustand -> alle vier Ecken anbinden ──

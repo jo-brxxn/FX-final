@@ -12,10 +12,17 @@ const URL=process.env.CHECK_URL||'http://127.0.0.1:8935/index.html';
 //      POINTERLEAVE -> click. Das pointerleave loeschte das Merkmal, bevor
 //      der Klick-Handler es lesen konnte.
 // Beide Male war nicht die Logik das Problem, sondern die Testmethode.
-// Deshalb prueft dieser Waechter BEIDE Zeigerarten gegen dasselbe Verhalten.
+// Deshalb prueft dieser Waechter BEIDE Zeigerarten - aber seit dem
+// Nutzer-Wunsch 2026-08-22 bewusst gegen UNTERSCHIEDLICHES Verhalten: am PC
+// (Maus mit Hover) navigiert der erste Klick sofort (kein verlorener Klick
+// nur zum Ausklappen - Hover oeffnet die Leiste dort ja schon vorher), am
+// iPad/Handy (kein Hover) bleibt der bestehende Zwei-Klick-Mechanismus.
+// Playwright-Kontexte ohne hasTouch melden matchMedia('(hover:hover) and
+// (pointer:fine)') wie ein echter Desktop mit Maus.
 const {chromium}=require(PW);
 
 const REGEL='Erster Klick verstellt nur die Leiste, erst der zweite wirkt';
+const REGEL_MAUS='PC/Maus: der erste Klick soll sofort navigieren (kein Zwei-Klick-Mechanismus)';
 
 async function seite(ctx){
   const p=await ctx.newPage();
@@ -95,17 +102,15 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     pruefe(c1.collapsed,'Maus: Klick im Inhalt klappt die Leiste nicht ein');
 
     // ⚠ Mit echtem hover() VOR dem Klick - genau das unterscheidet den
-    // Maus-Pfad vom Touch-Pfad und hat den ersten Fehler verdeckt.
+    // Maus-Pfad vom Touch-Pfad. Anders als beim Touch-Block oben soll der
+    // erste Klick hier SOFORT navigieren (Nutzer-Wunsch 2026-08-22) - kein
+    // Zwei-Klick-Mechanismus am PC.
     // Selektor statt Element-Handle: die Leiste wird zwischendurch neu
     // aufgebaut, ein festgehaltener Handle waere dann nicht mehr im DOM.
     await p.hover(ZIEL);await p.waitForTimeout(150);await p.click(ZIEL);await p.waitForTimeout(400);
     const c2=await zustand(p);
-    pruefe(c2.page===c1.page,REGEL+' - Maus: der erste Klick auf die eingeklappte Leiste hat schon navigiert (nach "'+c2.page+'")');
+    pruefe(c2.page==='cal',REGEL_MAUS+' - der erste Klick hat NICHT sofort navigiert (blieb auf "'+c2.page+'")');
     pruefe(!c2.collapsed,'Maus: der erste Klick hat die Leiste nicht ausgeklappt');
-
-    await p.click(ZIEL);await p.waitForTimeout(400);
-    const c3=await zustand(p);
-    pruefe(c3.page!=='dash','Maus: der zweite Klick navigiert nicht (haengt auf "'+c3.page+'")');
 
     // D: Leiste war schon offen und wurde NICHT gerade erst ausgeklappt -
     // dann muss ein Klick sofort navigieren, nichts darf geschluckt werden.

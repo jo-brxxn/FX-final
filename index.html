@@ -258,16 +258,6 @@ svg.ic{vertical-align:-2px;flex:none}
 .np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
 .np.on .np-ic{color:var(--blue)}
 @media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
-/* ── ANHEFTEN (Nutzer-Wunsch 2026-08-22): schaltet die Auto-Einklapp-
-   Automatik weiter unten (siehe navPinned/toggleNavPinned) ab, die Leiste
-   bleibt dauerhaft ausgeklappt. Bewusst OHNE .np.on-Look (blauer Rand +
-   Hintergrund) - das ist die Optik fuer "aktive Route" und wuerde hier den
-   Eindruck erwecken, "Anheften" sei selbst eine navigierbare Seite. Nur das
-   Icon faerbt sich im angehefteten Zustand blau. */
-.nav-pin-btn{opacity:.8}
-.nav-pin-btn:hover{opacity:1}
-.nav-pin-btn.on{opacity:1}
-.nav-pin-btn.on .np-ic{color:var(--blue)}
 /* ── ANIMATION Nav-Leiste (Nutzer-Wunsch 2026-08-21: "damit das Ganze
    cleaner aussieht"). Drei Bewegungen, alle bewusst kurz und ohne
    Verzoegerung, damit die Bedienung sich nicht zaeh anfuehlt:
@@ -2441,6 +2431,31 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:26px}}
+/* ── SETTINGS-SCHALTERZEILEN (Nutzer-Wunsch 2026-08-22: aufgeraeumt,
+   schmaler, echte Umschalter statt Text-Buttons). .set-row ersetzt den
+   zuvor 9x wortgleich kopierten Inline-Style, .set-sec gruppiert die
+   Zeilen thematisch (Data/Security/Score/Animation/Layout/Notifications).
+   #mCloud .modal ist schmaler als der Standard-720px-Modal-Rahmen -
+   ID-Selektor gewinnt bewusst gegen die 720px-Regel und deren
+   Desktop-Media-Query-Variante, statt beide anzufassen. */
+#mCloud .modal{max-width:min(420px,94vw)}
+.set-sec{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);margin:16px 0 6px;padding:0 2px}
+.set-sec:first-child{margin-top:2px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;margin-bottom:6px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
+.set-row-txt{font-size:var(--fs-sm);color:var(--t2);display:flex;flex-direction:column;gap:2px}
+.set-row-sub{font-size:var(--fs-2xs);color:var(--t3);font-weight:400}
+/* Eigener Checkbox-Slider statt natives Aussehen: .tgl-track ist das
+   sichtbare Element (Track+Knopf per ::after), die echte Checkbox liegt
+   unsichtbar (opacity:0) darueber und traegt weiter Klick/Tastatur/
+   Screenreader-Semantik. */
+.tgl{position:relative;display:inline-flex;flex-shrink:0;width:38px;height:22px}
+.tgl input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.tgl-track{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--bd2);border-radius:999px;transition:background .15s,border-color .15s;pointer-events:none}
+.tgl-track::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.tgl input:checked+.tgl-track{background:var(--blue);border-color:var(--blue)}
+.tgl input:checked+.tgl-track::after{transform:translateX(16px)}
+.tgl input:focus-visible+.tgl-track{outline:2px solid var(--blue);outline-offset:2px}
+body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
 /* ── LOCK SCREEN ── */
 .lock-ov{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
 .lock-box{display:flex;flex-direction:column;align-items:center;gap:22px;padding:20px}
@@ -3411,11 +3426,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-416 - Zwei Themen. (1) Ruecbau der Mehrfach-Dashboard-Funktion (Nutzer-Wunsch): Dashboard ist wieder eine einzelne, feste Kategorie ohne Stapel-Optik/Ausklapp-Pfeil/Unterliste, zeigt wieder die volle vorherige Kartenauswahl. Das schlanke "Taeglich"-Dashboard ist geloescht. Bestandsnutzer, die gerade "Taeglich" aktiv hatten, bekommen beim naechsten Laden gezielt die urspruengliche vollstaendige Kartenauswahl zurueck (nicht einfach den zuletzt aktiven, moeglicherweise reduzierten Stand) - restoreAlltimeDashboard() sucht dafuer explizit den Nicht-"Taeglich"-Eintrag aus dem alten dashboards[]. (2) Bugfix: der allererste Klick auf den Anheft-Knopf direkt nach einem Hover-Aufklappen wurde von der bestehenden "erster Klick verstellt nur die Leiste"-Schluck-Regel stillschweigend verschluckt (die eigentlich nur ungewollte TAB-Navigation verhindern soll) - der Knopf reagierte dadurch scheinbar gar nicht, die Leiste blieb einfach der normalen Auto-Einklapp-Automatik ausgesetzt. Der Anheft-Knopf ist jetzt von dieser Regel ausgenommen und wirkt immer sofort, normale Navigations-Tabs behalten die Zwei-Klick-Regel unveraendert (per Playwright gegengeprueft)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-419 - Zusammenfuehrung zweier parallel laufender Sitzungen. Diese Sitzung: Ruecbau der Mehrfach-Dashboard-Funktion (Dashboard ist wieder eine einzelne, feste Kategorie ohne Stapel-Optik/Ausklapp-Pfeil/Unterliste, zeigt wieder die volle Kartenauswahl; das schlanke &quot;Taeglich&quot;-Dashboard ist geloescht, restoreAlltimeDashboard() migriert Bestandsnutzer gezielt auf die vollstaendige Auswahl statt auf einen evtl. gerade aktiven reduzierten Stand). Parallele Sitzung (uebernommen): die Anheften-Funktion der Sidebar ist wieder entfernt, stattdessen navigiert am PC (Maus mit Hover) der erste Klick auf einen Sidebar-Eintrag sofort statt nur auszuklappen, waehrend Touch-Geraete beim bewaehrten Zwei-Klick-Mechanismus bleiben (matchMedia hover:hover+pointer:fine); ausserdem Settings-Modal aufgeraeumt (gruppierte echte Umschalter statt Text-Buttons) und jeder Bias-Flip-Telegram-Alert bekommt jetzt eine Ursachen-Zeile."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-416</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-419</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3859,59 +3874,65 @@ function introLogin(){
     <h3>⚙ Settings</h3>
     <!-- Export/Import/Backups: bis 2026-08-21 ein eigenes Header-Dropdown
          ("Data"), Nutzer-Wunsch per /goal ("pack data in die
-         Einstellungen") - jetzt hier als erste Zeile, gleiches Muster wie
-         jede andere Einstellungs-Zeile in diesem Modal. -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);flex-wrap:wrap">
-      <span style="font-size:12px;color:var(--t2)">Data<br><span style="font-size:10.5px;color:var(--t3)">export, import & local backups</span></span>
+         Einstellungen") - jetzt hier als erste Zeile, gleiches .set-row-
+         Muster wie jede andere Einstellungs-Zeile in diesem Modal. -->
+    <div class="set-sec">Data</div>
+    <div class="set-row" style="flex-wrap:wrap">
+      <span class="set-row-txt">Export, import &amp; local backups</span>
       <div style="display:flex;gap:6px">
-        <button class="btn" onclick="exportData()">Export JSON</button>
-        <button class="btn" onclick="document.getElementById('impFile').click()">Import JSON</button>
+        <button class="btn" onclick="exportData()">Export</button>
+        <button class="btn" onclick="document.getElementById('impFile').click()">Import</button>
         <button class="btn" onclick="openBackupM()">Backups</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">PIN lock (code screen on open)</span>
-      <button class="btn" id="pinToggleBtn" onclick="togglePinEnabled()">Disable PIN</button>
+    <div class="set-sec">Security</div>
+    <div class="set-row">
+      <span class="set-row-txt">PIN lock<span class="set-row-sub">code screen on open</span></span>
+      <label class="tgl"><input type="checkbox" id="pinToggleBtn" onchange="togglePinEnabled()"><span class="tgl-track"></span></label>
     </div>
     <!-- Score-Gewichtung (Nutzer-Wunsch 2026-08-07): bewusst als SCHALTER
          neben den anderen Praeferenzen, nicht als stiller Umbau. "classic"
          bleibt Standard und rechnet bitgenau wie bisher; "normalized" legt
          die Gewichtung nach Ueberraschungsgroesse, Aktualitaet und gemessener
          Marktreaktion darueber. Jederzeit zurueckschaltbar. -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Score weighting<br><span style="font-size:10.5px;color:var(--t3)">normalized = size of surprise, freshness &amp; market impact</span></span>
-      <button class="btn" id="scoreModeBtn" onclick="toggleScoreMode()">Weighting: classic</button>
+    <div class="set-sec">Score</div>
+    <div class="set-row">
+      <span class="set-row-txt">Normalized weighting<span class="set-row-sub">size of surprise, freshness &amp; market impact</span></span>
+      <label class="tgl"><input type="checkbox" id="scoreModeBtn" onchange="toggleScoreMode()"><span class="tgl-track"></span></label>
     </div>
     <!-- Nutzer-Wunsch 2026-08-04: "genau wie den Code aktivieren und
          deaktivieren koennen, direkt unter dem Code" - gleiche Zeile/Stil
-         wie der PIN-Toggle direkt darueber, exakt dasselbe An/Aus-Muster. -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Intro animation (globe + boost launch on load)</span>
-      <button class="btn" id="introAnimToggleBtn" onclick="toggleIntroAnimEnabled()">Disable Animation</button>
+         wie der PIN-Toggle, exakt dasselbe An/Aus-Muster. -->
+    <div class="set-sec">Animation</div>
+    <div class="set-row">
+      <span class="set-row-txt">Intro<span class="set-row-sub">globe + boost launch on load</span></span>
+      <label class="tgl"><input type="checkbox" id="introAnimToggleBtn" onchange="toggleIntroAnimEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Asset symbols<br><span style="font-size:10.5px;color:var(--t3)">waving flags, dripping oil, shifting metal sheen</span></span>
-      <button class="btn" id="assetAnimToggleBtn" onclick="toggleAssetAnimEnabled()">Disable Animation</button>
+    <div class="set-row">
+      <span class="set-row-txt">Asset symbols<span class="set-row-sub">waving flags, dripping oil, shifting metal sheen</span></span>
+      <label class="tgl"><input type="checkbox" id="assetAnimToggleBtn" onchange="toggleAssetAnimEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Interface<br><span style="font-size:10.5px;color:var(--t3)">button icons and hover reactions</span></span>
-      <button class="btn" id="uiAnimToggleBtn" onclick="toggleUiAnimEnabled()">Disable Animation</button>
+    <div class="set-row">
+      <span class="set-row-txt">Interface<span class="set-row-sub">button icons and hover reactions</span></span>
+      <label class="tgl"><input type="checkbox" id="uiAnimToggleBtn" onchange="toggleUiAnimEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Density<br><span style="font-size:10.5px;color:var(--t3)">tighter cards, more on one screen</span></span>
-      <button class="btn" id="denseToggleBtn" onclick="toggleDenseMode()">Dense</button>
+    <div class="set-row">
+      <span class="set-row-txt">Data<span class="set-row-sub">bars grow in, cards fade in on tab change</span></span>
+      <label class="tgl"><input type="checkbox" id="dataAnimToggleBtn" onchange="toggleDataAnimEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Data<br><span style="font-size:10.5px;color:var(--t3)">bars grow in, cards fade in on tab change</span></span>
-      <button class="btn" id="dataAnimToggleBtn" onclick="toggleDataAnimEnabled()">Disable Animation</button>
+    <div class="set-row">
+      <span class="set-row-txt">All at once</span>
+      <label class="tgl"><input type="checkbox" id="allAnimToggleBtn" onchange="toggleAllAnim()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">Telegram messages<br><span style="font-size:10.5px;color:var(--t3)">event &amp; price alerts, score flips, morning and weekly report</span></span>
-      <button class="btn" id="telegramToggleBtn" onclick="toggleTelegramEnabled()">Disable</button>
+    <div class="set-sec">Layout</div>
+    <div class="set-row">
+      <span class="set-row-txt">Dense<span class="set-row-sub">tighter cards, more on one screen</span></span>
+      <label class="tgl"><input type="checkbox" id="denseToggleBtn" onchange="toggleDenseMode()"><span class="tgl-track"></span></label>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">
-      <span style="font-size:12px;color:var(--t2)">All animations at once</span>
-      <button class="btn" id="allAnimToggleBtn" onclick="toggleAllAnim()">Turn all off</button>
+    <div class="set-sec">Notifications</div>
+    <div class="set-row">
+      <span class="set-row-txt">Telegram messages<span class="set-row-sub">event &amp; price alerts, score flips, morning and weekly report</span></span>
+      <label class="tgl"><input type="checkbox" id="telegramToggleBtn" onchange="toggleTelegramEnabled()"><span class="tgl-track"></span></label>
     </div>
     <h3 style="font-size:13px;margin:14px 0 10px">☁ Cloud Sync</h3>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
@@ -4673,12 +4694,21 @@ function setScoreMode(m){
   scoreMode=n;
   invalidateNormCache();invalidateCmpCache();
   saveScoreMode();
-  recomputeAuto();save();rerender();updScoreModeBtn();
+  // Nutzer-Bugreport 2026-08-22: ein Telegram-Bias-Flip-Alert kam ohne jede
+  // erklaerende "Driven by"-Zeile an - Ursache war teils, dass der Flip gar
+  // nicht von neuen Marktdaten kam, sondern vom classic/normalized-Wechsel
+  // hier selbst (der Faktor aendert symScore genug, um die +/-3-Schwelle zu
+  // kreuzen). recomputeAllSymBiases() unterschied das bisher nicht von einem
+  // echten Flip - _suppressBiasFlipAlerts haelt lastNotifBias synchron, ohne
+  // einen Alert einzureihen, waehrend genau dieser Recompute laeuft.
+  _suppressBiasFlipAlerts=true;
+  try{recomputeAuto();}finally{_suppressBiasFlipAlerts=false;}
+  save();rerender();updScoreModeBtn();
 }
 function toggleScoreMode(){setScoreMode(scoreMode==='normalized'?'classic':'normalized');}
 function updScoreModeBtn(){
   const b=document.getElementById('scoreModeBtn');
-  if(b)b.textContent=scoreMode==='normalized'?'Weighting: normalized':'Weighting: classic';
+  if(b)b.checked=scoreMode==='normalized';
 }
 
 // ══ SCORE-V2: NORMIERUNGS-EBENE (Nutzer-Wunsch 2026-08-07) ═══════════════
@@ -8949,8 +8979,8 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||
 // einen Undo/Redo-Klick als eigene Nutzeraktion (Nutzer-Bugreport 2026-07-27,
 // gleiche Bug-Klasse wie toggleMwSym/die Notes-Funktionen).
 function markUserEditTs(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
-function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());applySnap(uStack.pop());save();renderSidebar();rerender();updUB();}
-function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());applySnap(rStack.pop());save();renderSidebar();rerender();updUB();}
+function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());_flipCauseTag='undo';applySnap(uStack.pop());_flipCauseTag=null;save();renderSidebar();rerender();updUB();}
+function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());_flipCauseTag='undo';applySnap(rStack.pop());_flipCauseTag=null;save();renderSidebar();rerender();updUB();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
 
 // ══ LOKALE BACKUPS ══════════════════════════════════════════════════
@@ -8982,7 +9012,7 @@ function restoreLocalBackup(i){
     const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
     const b=bs[i];if(!b)return;
     if(!confirm('Restore state from '+new Date(b.ts).toLocaleString('en-GB')+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
-    pushU();applySnap(b.data);
+    pushU();_flipCauseTag='backup';applySnap(b.data);_flipCauseTag=null;
     if(b.rerd!==undefined){riskEnvRemindDismissed=b.rerd;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',b.rerd);}catch(e){}}
     processCalEvts();save();renderSidebar();rerender();updUB();
     closeM('mBackup');
@@ -9277,7 +9307,7 @@ function loadState(){
 function adoptExternalState(){
   try{
     const s=localStorage.getItem(SK);if(!s)return;
-    applySnap(s);
+    _flipCauseTag='sync';applySnap(s);_flipCauseTag=null;
     try{riskEnvRemindDismissed=localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';renderRiskEnvRemind();}catch(e){}
     try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
     compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);applyCompactView();
@@ -9368,14 +9398,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.navPinned!==undefined){navPinned=!!_imp.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -9612,7 +9642,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.navPinned=navPinned;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -9703,7 +9733,7 @@ async function cloudPull(manual,forceOverwrite){
       // WICHTIG: vor pushU() lesen - pushU() setzt das Flag selbst.
       const prefPending=!forceOverwrite&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
-      pushU();applySnap(JSON.stringify(cd));
+      pushU();_flipCauseTag='sync';applySnap(JSON.stringify(cd));_flipCauseTag=null;
       // prefPending muss VOR diesen beiden Zeilen ausgewertet sein (ist es,
       // siehe oben) - tabStacks fehlte der Schutz bisher
       // (Nutzer-Bugreport 2026-07-27), obwohl seine Save-Funktion
@@ -9734,7 +9764,6 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.denseMode!==undefined){denseMode=!!cd.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}
-      if(!prefPending&&cd.navPinned!==undefined){navPinned=!!cd.navPinned;try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}applyNavPinned();updNavPinBtn();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
       if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
@@ -10474,7 +10503,7 @@ function rubAutoDerived(sym,rub){
   const rule=effDeriveRules(sym)[rub.name];
   return rule==='same'||rule==='inverse';
 }
-function setRubBias(ri,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This card\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function setRubBias(ri,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This card\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const r=getRub(ri);if(!r)return;r.bias=b;r._biasScore=rubScore(r);syncMacroRub(ri);_flipCauseTag='manual';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 // ── BIAS-PICKER (ersetzt die ▲/◆/▼-Buttons, Nutzer-Wunsch 2026-07-22) ──
 // Long-Press auf eine Rubrik-Karte, einen Indikator, eine Notes-Kategorie
 // oder einen Notes-Eintrag öffnet dieses kleine Popover statt der vorher
@@ -10536,7 +10565,7 @@ function closeBiasPicker(){
   _biasPickerApply=null;
 }
 function biasPickerOutside(e){const m=document.getElementById('biasPicker');if(m&&!m.contains(e.target))closeBiasPicker();}
-function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);_flipCauseTag='star';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
 // ── Risk-Sentiment-Regler (Dashboard, Nutzer-Wunsch 2026-07-13) ──
 // "Risk Correlation" wird automatisch ueber recomputeRiskCorr() gesetzt (fuer
@@ -10571,11 +10600,11 @@ function setRiskEnvLevel(lv){
   pushU();
   riskEnvLevel=lv;
   logRiskCorrChanges();
-  recomputeAuto();save();renderSidebar();rerender();
+  _flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderSidebar();rerender();
 }
 function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';}
 function setRiskEnvDir(id,dir){
-  pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;logRiskCorrChanges();recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
+  pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;logRiskCorrChanges();_flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
 function openRiskEnvCfgM(){renderRiskEnvCfgM();renderRiskEnvLists();openM('mRiskEnvCfg');}
 // ── Gespeicherte Risk-Szenarien (Nutzer-Wunsch 2026-07-13 abends) ──
@@ -10600,7 +10629,7 @@ function applyRiskEnvList(id){
   pushU();
   riskEnvCfg={...(l.cfg||{})};
   logRiskCorrChanges();
-  recomputeAuto();save();renderRiskEnvCfgM();renderSidebar();rerender();
+  _flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderRiskEnvCfgM();renderSidebar();rerender();
 }
 function renderRiskEnvLists(){
   const el=document.getElementById('mRiskEnvLists');if(!el)return;
@@ -10693,7 +10722,7 @@ function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAut
   // in Ruhe; sobald sich Actual/Forecast/Previous wirklich aendern (neuer
   // Wert), verfaellt die manuelle Wahl von selbst (Nutzer-Wunsch 2026-07-22).
   const _r=ind.research||{};ind._manualPin=indBiasInputSig(_r.actual,_r.forecast,_r.previous,_r.date);
-  const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+  const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);_flipCauseTag='manual';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
 //    Rubrik umsortiert werden, wird dieselbe Reihenfolge (per Name
@@ -10734,12 +10763,12 @@ function syncMacroIndAddRemove(ri,action,name){
     }
   });
 }
-function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+function delInd(ri,ii){const r=getRub(ri);const ind=r&&r.indicators&&r.indicators[ii];if(!confirm(`Really delete "${ind?ind.name:'this indicator'}"?`))return;pushU();r.indicators.splice(ii,1);if(ind)syncMacroIndAddRemove(ri,'del',ind.name);syncMacroRub(ri);_flipCauseTag='structure';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function mvInd(ri,ii,d){const r=getRub(ri);if(!r||!r.indicators)return;pushU();mvArr(r.indicators,ii,d);syncIndOrderGlobal(ri);syncMacroRub(ri);save();renderDetail();}
 function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
-  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:''});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);recomputeAuto();save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+  r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:''});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);_flipCauseTag='structure';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 
 // ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
 function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
@@ -10934,7 +10963,7 @@ function assetCfgApply(){
   if(cs&&isNonFx(cs.id))pullMacroFromCcy(cs);
   if(selId)syncAssetGroup(selId);
   if(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)applyIndDataFeed();
-  recomputeAuto();save();renderSidebar();renderAssetCfgBody();renderDetail();
+  _flipCauseTag='assetcfg';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderAssetCfgBody();renderDetail();
   if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();
 }
 function setAssetLinkCcy(v){const c=getSym();if(!c)return;pushU();c.linkCcy=(v==='__none__')?null:v;assetCfgApply();}
@@ -11035,12 +11064,48 @@ function flipCauseLines(sym,max,newB){
 // Treiber IN die Flip-Richtung zeigt, ist "Driven by" eine wahre Aussage.
 // Zeigen alle dagegen, hat der Wechsel eine andere Ursache (aeltere Werte,
 // Gewichtung) - dann wird das auch nicht behauptet.
+// Nutzer-Wunsch 2026-08-22 ("es gibt keine unendliche Anzahl an Gruenden -
+// jeder Grund soll aufgeschrieben werden"): flipCauseLines() deckt nur den
+// Fall "ein Kalender-Event von HEUTE treibt den Flip" ab (Beat/Miss). Jede
+// andere Mutationsfunktion, die recomputeAuto() aufrufen und dadurch einen
+// Flip ausloesen kann, setzt VOR diesem Aufruf hier ihre eigene Ursache -
+// dieselbe abschliessende Liste wie die tatsaechlichen Aufrufstellen von
+// recomputeAuto() (siehe grep danach: manuelle Bias-/Wichtig-Aenderung,
+// Risk-Environment, Indikatorliste, Asset-Konfiguration, COT/Sentiment-Feed,
+// Cloud-Sync). Wird NUR als Fallback gelesen, wenn flipCauseLines() nichts
+// findet - ein echtes "Driven by"-Event bleibt immer die bessere, konkretere
+// Erklaerung. Von der jeweiligen Mutationsfunktion direkt vor recomputeAuto()
+// gesetzt und direkt danach wieder auf null geraeumt (synchron, kein await
+// dazwischen) - ein veralteter Wert kann dadurch nie in einen fremden,
+// spaeteren Durchlauf durchsickern.
+let _flipCauseTag=null;
+const FLIP_CAUSE_TXT={
+  manual:'Cause: bias set manually.',
+  star:'Cause: ★ importance flag changed.',
+  riskenv:'Cause: risk-environment setting changed.',
+  structure:'Cause: indicator list changed (added/removed).',
+  assetcfg:'Cause: asset configuration changed.',
+  cot:'Cause: new COT data.',
+  sentiment:'Cause: new sentiment data (put/call, AAII, retail, ...).',
+  bond:'Cause: new bond/yield data.',
+  sync:'Cause: state adopted from another tab/device (sync).',
+  backup:'Cause: local backup restored.',
+  undo:'Cause: undo/redo.'
+};
 function flipCauseBlock(sym,newB){
   const lines=flipCauseLines(sym,3,newB);
-  if(!lines.length)return'';
-  const pfeil=newB==='bull'?'▲':newB==='bear'?'▼':null;
-  const passt=pfeil&&lines.some(l=>l.indexOf(pfeil)===0);
-  return'\n\n'+(passt?'Driven by:':'Latest score drivers:')+'\n'+lines.join('\n');
+  if(lines.length){
+    const pfeil=newB==='bull'?'▲':newB==='bear'?'▼':null;
+    const passt=pfeil&&lines.some(l=>l.indexOf(pfeil)===0);
+    return'\n\n'+(passt?'Driven by:':'Latest score drivers:')+'\n'+lines.join('\n');
+  }
+  if(_flipCauseTag&&FLIP_CAUSE_TXT[_flipCauseTag])return'\n\n'+FLIP_CAUSE_TXT[_flipCauseTag];
+  // Letzter Rueckfall: kein einzelnes Kalender-Event UND kein bekannter Tag -
+  // typischerweise Decay/Marktrelevanz-Neugewichtung (normalisierter Modus)
+  // oder ein Indikator, der gerade OUT OF DATE gefallen ist (beides ohne
+  // eigenes "neues" Ereignis). Auch das wird benannt statt weggelassen.
+  return'\n\nCause: no single new release found - likely indicator ageing (OUT OF DATE)'
+    +(scoreMode==='normalized'?' or normalization reweighting.':'.');
 }
 function queueScoreFlipAlert(sym,oldB,newB){
   // Deterministische ID (Symbol+Wechsel+Tag): erkennen zwei Geraete denselben
@@ -11071,14 +11136,20 @@ function triggerFlipGlow(symId){
   _flipGlowIds.add(symId);
   setTimeout(()=>{_flipGlowIds.delete(symId);renderSidebar();},1500);
 }
+// Siehe setScoreMode(): waehrend eines classic/normalized-Wechsels gesetzt,
+// damit ein dadurch ausgeloester Bias-Flip lastNotifBias synchron haelt,
+// aber keinen Telegram-Alert/Glow ohne echte neue Daten ausloest.
+let _suppressBiasFlipAlerts=false;
 function recomputeAllSymBiases(){
   syms.forEach(s=>{
     s.bias=scoreBias(symScore(s));
     // Erstlauf (Feld existiert noch nicht): nur initialisieren, nicht melden.
     if(s.lastNotifBias===undefined){s.lastNotifBias=s.bias;return;}
     if(s.lastNotifBias!==s.bias){
-      queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
-      triggerFlipGlow(s.id);
+      if(!_suppressBiasFlipAlerts){
+        queueScoreFlipAlert(s,s.lastNotifBias,s.bias);
+        triggerFlipGlow(s.id);
+      }
       s.lastNotifBias=s.bias;
     }
   });
@@ -17970,7 +18041,7 @@ async function fetchCotData(){
 }
 function autoFetchCot(){
   fetchCotData().then(()=>{
-    if(applyCotDataFeed()){recomputeAuto();save();renderSidebar();}
+    if(applyCotDataFeed()){_flipCauseTag='cot';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
     rerender();
   });
 }
@@ -18049,7 +18120,7 @@ async function cotManualRefresh(){
     cotRefreshNote=COT_DATA?'✓ Updated from stored data (live CFTC fetch unavailable)':'⚠ Refresh failed';
   }
   cotRefreshing=false;
-  if(applyCotDataFeed()){recomputeAuto();save();renderSidebar();}
+  if(applyCotDataFeed()){_flipCauseTag='cot';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
   renderCot();
 }
 
@@ -18474,7 +18545,7 @@ function fetchSentimentData(){
 }
 function autoFetchSentiment(){
   fetchSentimentData().then(()=>{
-    if(applySentimentFeed()){recomputeAuto();save();renderSidebar();}
+    if(applySentimentFeed()){_flipCauseTag='sentiment';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
     rerender();
   });
 }
@@ -20048,8 +20119,8 @@ function renderFearGreedCards(D){
   const sfFilteredSet=new Set(sfFiltered);
   const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
   html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
-    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
-    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score.</div>`);
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span><div style="color:var(--t3);font-size:11px;margin-top:6px">Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
+    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score. Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div>`);
   html+=`</div>`;
   return html;
 }
@@ -21125,17 +21196,9 @@ function syncNavExpanded(){
 // dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
 // Mitglieder-Buttons (.np-sub) sind einfach die naechsten Elemente im
 // Sidebar-Fluss, kleinere Schrift + Einzug per CSS.
-// Anheft-Knopf ganz oben in der Leiste, ausserhalb von TAB_ORDER - kein Tab,
-// navigiert nirgendwohin. Icon = einfache Stecknadel (Kreis+Stiel), faerbt
-// sich per .nav-pin-btn.on blau statt der .np.on-Aktiv-Route-Optik zu
-// verwenden (siehe CSS-Kommentar dort).
-function navPinBtnHtml(){
-  const tip=navPinned?'Anheften lösen':'Leiste anheften';
-  return`<button class="np nav-pin-btn${navPinned?' on':''}" onclick="toggleNavPinned()" data-tip="${tip}" aria-label="${tip}">${npIconSvg('<circle cx="12" cy="9" r="4"/><line x1="12" y1="13" x2="12" y2="21"/>')}<span class="np-lbl">${navPinned?'Angeheftet':'Anheften'}</span></button>`;
-}
 function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
-  let html=navPinBtnHtml();const done=new Set();
+  let html='';const done=new Set();
   TAB_ORDER.forEach(id=>{
     const st=stackOf(id);
     if(st){
@@ -21541,7 +21604,7 @@ const LOCK_HASH='9552e277ebcc7fa191292c6e900d94dfe6e837d8abf76a2da927d4530d2c8f6
 // index.html, direkt nach #lockScreen) liest denselben localStorage-Schluessel,
 // damit der Sperrbildschirm bei deaktivierter PIN gar nicht erst aufblitzt.
 let pinEnabled=localStorage.getItem('fxpro_pin_enabled')!=='0';
-function updPinToggleBtn(){const btn=document.getElementById('pinToggleBtn');if(btn)btn.textContent=pinEnabled?'Disable PIN':'Enable PIN';}
+function updPinToggleBtn(){const btn=document.getElementById('pinToggleBtn');if(btn)btn.checked=pinEnabled;}
 function togglePinEnabled(){
   pinEnabled=!pinEnabled;
   try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}
@@ -21557,36 +21620,6 @@ function togglePinEnabled(){
     const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
   }
 }
-// Seitenleiste dauerhaft offen halten (Nutzer-Wunsch 2026-08-22, Recherche
-// zu anderen Klapp-Seitenleisten: dort gibt es meist ein manuelles Anheften
-// statt reiner Auto-Einklapp-Automatik). navPinned!==pinEnabled oben - das
-// ist die PIN-CODE-Sperre, hier geht es um die Sidebar. Liegt wie pinEnabled
-// ausserhalb von snap()/Undo, volle Vier-Punkte-Anbindung noetig. Die
-// eigentliche Wirkung (Auto-Einklappen unterdruecken) steckt in der
-// Sidebar-IIFE weiter unten (collapse() prueft navPinned).
-let navPinned=localStorage.getItem('fxpro_nav_pinned')==='1';
-function applyNavPinned(){
-  const nav=document.getElementById('navSidebar');if(!nav)return;
-  if(navPinned)nav.classList.remove('nav-collapsed');
-  syncNavExpanded();
-}
-function updNavPinBtn(){
-  const b=document.querySelector('#navSidebar .nav-pin-btn');if(!b)return;
-  b.classList.toggle('on',navPinned);
-  const tip=navPinned?'Anheften lösen':'Leiste anheften';
-  const lbl=b.querySelector('.np-lbl');if(lbl)lbl.textContent=navPinned?'Angeheftet':'Anheften';
-  b.setAttribute('data-tip',tip);b.setAttribute('aria-label',tip);
-}
-function toggleNavPinned(){
-  navPinned=!navPinned;
-  try{localStorage.setItem('fxpro_nav_pinned',navPinned?'1':'0');}catch(e){}
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  applyNavPinned();
-  updNavPinBtn();
-}
 // Nutzer-Wunsch 2026-08-04 ("genau wie den Code aktivieren/deaktivieren
 // koennen, direkt unter dem Code"): identisches An/Aus-Muster wie
 // pinEnabled direkt darueber - liegt bewusst ausserhalb von snap()/Undo
@@ -21596,7 +21629,7 @@ function toggleNavPinned(){
 // Skriptblock hier, kann also nicht auf diese spaeter deklarierte Variable
 // zugreifen - liest denselben localStorage-Key stattdessen direkt).
 let introAnimEnabled=localStorage.getItem('fxpro_intro_anim_enabled')!=='0';
-function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimToggleBtn');if(btn)btn.textContent=introAnimEnabled?'Disable Animation':'Enable Animation';}
+function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimToggleBtn');if(btn)btn.checked=introAnimEnabled;}
 // Dauerbewegung der Asset-Symbole (wehende Flaggen, tropfendes Oel, ...).
 // Liegt wie pinEnabled/introAnimEnabled bewusst AUSSERHALB von snap()/Undo:
 // eine Anzeige-Praeferenz gehoert nicht in den Undo-Stapel. Damit sie
@@ -21605,7 +21638,7 @@ function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimTog
 // Export/Import (siehe CLAUDE.md, "WICHTIGSTE REGEL").
 let assetAnimEnabled=localStorage.getItem('fxpro_asset_anim_enabled')!=='0';
 function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);}
-function updAssetAnimToggleBtn(){const b=document.getElementById('assetAnimToggleBtn');if(b)b.textContent=assetAnimEnabled?'Disable Animation':'Enable Animation';}
+function updAssetAnimToggleBtn(){const b=document.getElementById('assetAnimToggleBtn');if(b)b.checked=assetAnimEnabled;}
 function toggleAssetAnimEnabled(){
   assetAnimEnabled=!assetAnimEnabled;
   try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}
@@ -21628,7 +21661,7 @@ function applyDataAnim(){document.body.classList.toggle('no-data-anim',!dataAnim
 // von snap()/Undo und ist deshalb an allen vier Ecken angebunden.
 let denseMode=localStorage.getItem('fxpro_dense')==='1';
 function applyDenseMode(){document.body.classList.toggle('dense-mode',denseMode);}
-function updDenseToggleBtn(){const b=document.getElementById('denseToggleBtn');if(b)b.textContent=denseMode?'Comfortable':'Dense';}
+function updDenseToggleBtn(){const b=document.getElementById('denseToggleBtn');if(b)b.checked=!!denseMode;}
 function toggleDenseMode(){
   denseMode=!denseMode;
   try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}
@@ -21638,8 +21671,8 @@ function toggleDenseMode(){
   applyDenseMode();updDenseToggleBtn();
   if(curPage==='dash')renderDash();
 }
-function updUiAnimToggleBtn(){const b=document.getElementById('uiAnimToggleBtn');if(b)b.textContent=uiAnimEnabled?'Disable Animation':'Enable Animation';}
-function updDataAnimToggleBtn(){const b=document.getElementById('dataAnimToggleBtn');if(b)b.textContent=dataAnimEnabled?'Disable Animation':'Enable Animation';}
+function updUiAnimToggleBtn(){const b=document.getElementById('uiAnimToggleBtn');if(b)b.checked=uiAnimEnabled;}
+function updDataAnimToggleBtn(){const b=document.getElementById('dataAnimToggleBtn');if(b)b.checked=dataAnimEnabled;}
 function toggleUiAnimEnabled(){
   uiAnimEnabled=!uiAnimEnabled;
   try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}
@@ -21656,7 +21689,7 @@ function toggleDataAnimEnabled(){
 }
 // "Alles aus" soll ein Klick sein, nicht vier.
 function allAnimOn(){return introAnimEnabled||assetAnimEnabled||uiAnimEnabled||dataAnimEnabled;}
-function updAllAnimToggleBtn(){const b=document.getElementById('allAnimToggleBtn');if(b)b.textContent=allAnimOn()?'Turn all off':'Turn all on';}
+function updAllAnimToggleBtn(){const b=document.getElementById('allAnimToggleBtn');if(b)b.checked=allAnimOn();}
 function toggleAllAnim(){
   const to=!allAnimOn();
   if(introAnimEnabled!==to)toggleIntroAnimEnabled();
@@ -21672,7 +21705,7 @@ function toggleAllAnim(){
 // wenn dieses gerade geschlossen ist. Ein rein clientseitiges Unterdruecken
 // waere wirkungslos, sobald ein anderes Geraet Alarme einreiht.
 let telegramEnabled=localStorage.getItem('fxpro_telegram_enabled')!=='0';
-function updTelegramToggleBtn(){const b=document.getElementById('telegramToggleBtn');if(b)b.textContent=telegramEnabled?'Disable':'Enable';}
+function updTelegramToggleBtn(){const b=document.getElementById('telegramToggleBtn');if(b)b.checked=telegramEnabled;}
 function toggleTelegramEnabled(){
   telegramEnabled=!telegramEnabled;
   try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}
@@ -21742,6 +21775,20 @@ document.addEventListener('keydown',e=>{
 // timer used to kick users out of whatever they were typing.
 function flushAndSave(){
   save();
+  // Nutzer-Bugreport 2026-08-22 ("Telegram kommt trotz Aus-Schalter"):
+  // cloudAutoSync() debounced jeden Auto-Push um 1,5s. Wird die App/der Tab
+  // in genau diesem Fenster geschlossen oder in den Hintergrund gelegt (der
+  // naheliegendste Ablauf: Schalter umlegen, App sofort zuklappen), verfaellt
+  // der Timer ungenutzt - die Aenderung erreicht die Cloud nie, und die
+  // serverseitigen Workflows (event-alerts/morning-report/weekly-report)
+  // lesen bewusst fail-open weiter den alten (falschen) Stand. Beim
+  // tatsaechlichen Verstecken/Verlassen der Seite deshalb den Debounce
+  // ueberspringen und sofort pushen, statt auf den Timer zu warten.
+  if(_cloudPushTimer){
+    clearTimeout(_cloudPushTimer);
+    _cloudPushTimer=null;
+    cloudPush(false);
+  }
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushAndSave();});
 window.addEventListener('pagehide',flushAndSave);
@@ -21873,7 +21920,18 @@ async function bootFetchScoreFeeds(){
     fetchSentimentData().then(()=>{try{return applySentimentFeed();}catch(e){return false;}}),
     fetchScoreHistServer().then(()=>{try{return applyScoreHistServerFeed();}catch(e){return false;}})
   ]);
-  if(results.some(Boolean)){recomputeAuto();save();renderSidebar();}
+  if(results.some(Boolean)){
+    // Flip-Ursache fuer den seltenen Fall, dass flipCauseLines() kein
+    // heutiges Kalender-Event findet: ind_data hat die konkreteste
+    // Erklaerung (bleibt ungetaggt, flipCauseLines() greift dann), sonst
+    // je nachdem, welcher der anderen drei Feeds tatsaechlich etwas
+    // geliefert hat.
+    const[indCh,bondCh,cotCh,sentCh]=results;
+    if(!indCh)_flipCauseTag=bondCh?'bond':cotCh?'cot':sentCh?'sentiment':null;
+    recomputeAuto();
+    _flipCauseTag=null;
+    save();renderSidebar();
+  }
   _lastFeedTs=Date.now();   // speist die "Last update"-Anzeige der Metazeile
   rerender();
 }
@@ -21994,8 +22052,20 @@ updNetStatus();
   // Scroll-Event selbst wird nicht angefasst) - nur die Einklapp-Aktion, die
   // daran haengt, wird unterdrueckt, solange der Zeiger auf der Leiste ruht.
   let ebenAusgeklappt=false,ebenEingeklappt=false,overNav=false;
+  // Nutzer-Wunsch 2026-08-22: am PC (Maus+Hover) soll der erste Klick sofort
+  // navigieren - kein "verlorener" Klick nur zum Ausklappen, weil Hover die
+  // Leiste dort ohnehin schon vorher oeffnet. Am iPad/Handy (kein Hover)
+  // bleibt der bestehende Zwei-Klick-Schluck-Mechanismus unveraendert, da
+  // dort kein Vor-Hover existiert. (hover:hover)and(pointer:fine) statt
+  // pointer:coarse/ontouchstart, weil beide bei Touch-Displays mit
+  // angeschlossener Maus falsch-positiv/negativ waeren - diese Kombination
+  // ist die empfohlene Pruefung fuer "es gibt einen praezisen Zeiger, der
+  // auch hovern kann". Bewusst als einmalige Konstante (kein Live-Listener
+  // auf Geraetewechsel) - Maus an-/absteckend am iPad zur Laufzeit ist ein
+  // vernachlaessigbarer Randfall.
+  const hatMausHover=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const collapse=()=>{
-    if(navPinned||overNav)return;
+    if(overNav)return;
     nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
     syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
   };
@@ -22041,16 +22111,7 @@ updNetStatus();
   // einklappen.
   nav.addEventListener('focusout',()=>{overNav=false;});
   nav.addEventListener('click',ev=>{
-    // ⚠ Der Anheft-Knopf ist kein Navigations-Tab (bei dem ein versehentlicher
-    // erster Klick zu einer ungewollten Seitennavigation fuehren koennte,
-    // wofuer diese Schluck-Regel gedacht ist) - er ist ein reiner Umschalter
-    // und soll deshalb IMMER sofort wirken, auch direkt nach dem Aufklappen.
-    // Ohne diese Ausnahme verschluckte der allererste Klick auf "Anheften"
-    // nach jedem Hover-Aufklappen lautlos - kein Toggle, der Nutzer sah nur
-    // die normale Auto-Einklapp-Automatik weiterlaufen (Nutzer-Meldung
-    // 2026-08-22: "ich kann die Leiste oeffnen, aber sie schliesst sich
-    // gleich wieder").
-    if(ev.target.closest('.nav-pin-btn'))return;
+    if(hatMausHover)return;   // PC: erster Klick navigiert sofort, kein Schlucken
     if(nav.classList.contains('nav-collapsed')||ebenAusgeklappt){
       ev.preventDefault();ev.stopPropagation();
       expand();ebenAusgeklappt=false;
