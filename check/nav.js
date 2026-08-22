@@ -27,7 +27,10 @@ async function seite(ctx){
   await p.waitForTimeout(600);
   return p;
 }
-const ZIEL='#navSidebar .np[title="Calendar"]';
+// data-tip statt title (Nutzer-Wunsch 2026-08-22: eigene Tooltips statt der
+// verzoegerten Browser-title-Tooltips - die .np-Buttons tragen den Namen
+// seither in data-tip/aria-label, title gibt es dort nicht mehr).
+const ZIEL='#navSidebar .np[data-tip="Calendar"]';
 // Punkt im INHALT, rechts neben der Leiste - deren Breite haengt vom
 // laengsten Label ab und darf hier nicht geraten werden.
 const inhaltPunkt=p=>p.evaluate(()=>{
