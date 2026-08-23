@@ -6792,3 +6792,44 @@ unbemerkt live gegangen - `node --check` und der Syntax-Waechter sehen so etwas
 nicht.
 
 `node check/all.js` komplett gruen (12 Waechter).
+
+---
+
+## 2026-08-23 — Assets als Stapel in der Navigationsleiste (VERSION-CHECK-436)
+
+Umbau nach Nutzer-Wunsch, Details in `docs/navigation.md`. Drei Punkte, die
+beim Bauen nicht offensichtlich waren:
+
+**1. Die Bias-Farben waren auf der Leiste unlesbar.** Vor dem ersten Rendern
+gemessen: `BC.bull`/`BC.bear`/`BC.neu` kommen auf dem Chrome-Grund `#2A3757`
+auf **1,98 / 1,94 / 1,89** — der Text waere praktisch unsichtbar gewesen.
+`BC_NAV` mit aufgehellten Toenen derselben Familie liegt auf allen drei
+Leisten-Untergruenden ueber 4,3:1.
+
+**2. `check/nav.js` hat eine echte Annahme-Verletzung gemeldet.** Pruefung E
+benutzte `fx` als Beispiel fuer "ein Tab ausserhalb jedes Stapels" - genau das
+stimmt seit diesem Umbau nicht mehr. Der Test wurde **verschaerft** statt
+entschaerft: er waehlt jetzt einen nachweislich stapelfreien Tab, prueft
+gezielt den zuvor geoeffneten Stapel UND dass ueberhaupt keiner offen bleibt,
+und bekommt mit E2 eine Gegenprobe (der Assets-Stapel MUSS auf der
+Assets-Seite offen sein und Assets enthalten). Ohne E2 koennte eine spaetere
+Verschaerfung von E den Stapel dauerhaft zuklappen, ohne dass es auffaellt.
+
+**3. Aenderungsflaeche klein gehalten.** Das Zielelement behaelt die id
+`sidebar` und die Zeilen `class="ab"`/`data-sym` - dadurch laufen
+`updateSidebarSelection()`, die Score-Auffrischung und alle ~35
+`renderSidebar()`-Aufrufer unveraendert weiter. Nur die Darstellung und die
+CSS-Spezifitaet aendern sich.
+
+**Geprueft** (10 Pruefungen, 0 Abweichungen): alte Spalte weg und `#sidebar`
+haengt in der Navigationsleiste; alle **16** Assets im Stapel, 5 Kategorien;
+jede Zeile hat Name/Score/Pfeil und der Score stimmt mit `symScoreCmp`; die
+Farbe im DOM entspricht `navBiasCol` und ist **nirgends** eine der alten
+dunklen `BC`-Farben; Klick navigiert und markiert genau einen Eintrag; der
+Stapel klappt auf der Assets-Seite auf und auf anderen Seiten zu;
+Bearbeitungsmodus aus = 0 Knoepfe, an = 42 Sortierknoepfe + Add + Done;
+Sortieren wirkt und die DOM-Reihenfolge folgt dem Zustand; die aufgeklappte
+Hoehe (558px) schneidet nichts ab. Dazu Screenshot-Sichtpruefung.
+
+Tote Reste der alten Spalte entfernt: `.sb`, `.sb-lbl`, `.ab-move`, `.ab-del`,
+`.add-sym`, `sbReorderId`, `sbCatReorder`, `sbCatClick`.

@@ -125,17 +125,53 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
   }
 
   // ── E: ein Tab-Stapel darf nicht ausgewaehlt bleiben ────────────────
+  // ⚠ Der Test zielte frueher auf 'fx' als "Tab ausserhalb jedes Stapels".
+  // Seit 2026-08-23 ist 'fx' (Assets) SELBST ein Stapel - dass er beim
+  // Wechsel dorthin aufklappt, ist gewollt und kein Fehler. Es wird jetzt
+  // ein Tab gewaehlt, der nachweislich in keinem Stapel steckt, und
+  // GEZIELT geprueft, dass genau der zuvor geoeffnete Stapel wieder zu ist.
+  // Das ist strenger als vorher: es faellt auch dann auf, wenn irgendein
+  // anderer Stapel offen bleibt.
   {
     const ctx=await b.newContext({viewport:{width:1194,height:834}});
     const p=await seite(ctx);
-    await p.evaluate(()=>{const st=tabStacks[0];if(st)onStackClick(null,st.id);});
-    await p.waitForTimeout(250);
+    const vorbereitung=await p.evaluate(()=>{
+      const st=tabStacks[0];if(!st)return null;
+      onStackClick(null,st.id);
+      // Ein Tab, der weder Assets noch Mitglied irgendeines Stapels ist.
+      const drin=new Set(tabStacks.flatMap(s=>s.members));
+      const frei=TAB_ORDER.find(id=>id!=='fx'&&!drin.has(id));
+      return{stackId:st.id,frei};
+    });
+    if(vorbereitung&&vorbereitung.frei){
+      await p.waitForTimeout(250);
+      const offenVorher=await p.evaluate(id=>!!document.querySelector(`#navSidebar .np-stack.open[data-stack="${id}"]`),vorbereitung.stackId);
+      pruefe(offenVorher,'Der Teststapel liess sich gar nicht erst aufklappen - Pruefung E waere wirkungslos');
+      await p.evaluate(id=>{selectTab(id);},vorbereitung.frei);
+      await p.waitForTimeout(350);
+      const e1=await p.evaluate(id=>({
+        offen:!!document.querySelector(`#navSidebar .np-stack.open[data-stack="${id}"]`),
+        aktiv:!!document.querySelector(`#navSidebar .np-stack.has-active[data-stack="${id}"]`),
+        irgendeinerOffen:!!document.querySelector('#navSidebar .np-stack.open'),
+      }),vorbereitung.stackId);
+      pruefe(!e1.offen,'Ein Tab-Stapel bleibt aufgeklappt, obwohl ein Tab ausserhalb gewaehlt wurde');
+      pruefe(!e1.aktiv,'Ein Tab-Stapel bleibt hervorgehoben, obwohl ein Tab ausserhalb gewaehlt wurde');
+      pruefe(!e1.irgendeinerOffen,'Irgendein Stapel bleibt aufgeklappt, obwohl ein stapelfreier Tab gewaehlt wurde');
+    }
+    // ── E2: der Assets-Stapel klappt beim Wechsel dorthin AUF ──────────
+    // Gegenprobe zu E: die Regel oben darf nicht dazu fuehren, dass der
+    // aktive Stapel zuklappt - sonst waere die Asset-Liste nach jedem
+    // Seitenwechsel verschwunden.
     await p.evaluate(()=>{selectTab('fx');});
     await p.waitForTimeout(350);
-    const e1=await p.evaluate(()=>({offen:!!document.querySelector('#navSidebar .np-stack.open'),
-      aktiv:!!document.querySelector('#navSidebar .np-stack.has-active')}));
-    pruefe(!e1.offen,'Ein Tab-Stapel bleibt aufgeklappt, obwohl ein Tab ausserhalb gewaehlt wurde');
-    pruefe(!e1.aktiv,'Ein Tab-Stapel bleibt hervorgehoben, obwohl ein Tab ausserhalb gewaehlt wurde');
+    const e2=await p.evaluate(()=>({
+      offen:!!document.querySelector('#navSidebar .np-stack.np-assetstack.open'),
+      aktiv:!!document.querySelector('#navSidebar .np-stack.np-assetstack.has-active'),
+      assets:document.querySelectorAll('#sidebar .ab.np-asset').length,
+    }));
+    pruefe(e2.offen,'Der Assets-Stapel klappt beim Wechsel auf die Assets-Seite nicht auf');
+    pruefe(e2.aktiv,'Der Assets-Stapel wird auf der Assets-Seite nicht hervorgehoben');
+    pruefe(e2.assets>0,'Im Assets-Stapel steht kein einziges Asset');
     await ctx.close();
   }
 

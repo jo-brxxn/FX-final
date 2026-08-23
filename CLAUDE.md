@@ -68,3 +68,11 @@ dokumentieren als auslassen. Faustregel für WOHIN:
 ## Sprache
 
 **Antworten auf Deutsch.**
+
+## Berichte gehoeren in den Chat
+
+**Keine Artifact-/Befund-Dateien fuer Analysen und Berichte** (Nutzer-Wunsch
+2026-08-23: *"warum schickst du mir so eine Befund datei. Das kannst du auch
+einfach als Chat Nachricht machen"*). Auch ein umfangreicher Befund mit
+Tabellen und Messwerten wird als Chat-Antwort geschrieben, nicht als eigene
+Seite verlinkt. Artifacts nur, wenn der Nutzer ausdruecklich danach fragt.

@@ -986,3 +986,86 @@ kein stetiger Verlauf.
   Markierung liest man aus der Achse einen lückenlosen Verlauf, den es nie gab.
   (Konkret fehlen 19.03.2026–12.08.2026 zwanzig Umfragen, weil AAIIs
   veröffentlichte Historien-Datei der eigenen Live-Seite monatelang nachhing.)
+
+## Assets sind ein Stapel in der Navigationsleiste (2026-08-23)
+
+Nutzer-Wunsch: *„mach aus der Kategorie Assets einen Stapel und pack bitte auch
+mit bias Farben die ganzen Assets darein also die verschwinden dann aus der
+Kategorie"*. Die eigene 138px-Spalte (`.sb#sidebar`) auf der Assets-Seite ist
+**weg** — die Detailansicht bekommt die volle Breite. Die Assets hängen als
+Stapel-Inhalt unter dem Navigationseintrag „Assets".
+
+Nach `AskUserQuestion` festgelegt: **Name in Bias-Farbe + Score + Richtungspfeil**
+(keine Sparkline, dafür ist die Leiste zu schmal), **Kategorie-Zwischen­über­schriften
+bleiben** (FX / Crypto / Metals / Energy / Indices), und Hinzufügen/Umsortieren/
+Löschen erscheinen **nur im Bearbeitungsmodus**.
+
+### ⚠ Bias-Farben auf der dunklen Leiste
+
+`BC` (`bull:#0B5FCC`, `bear:#C50F1A`, `neu:#55617A`) ist für **helle** Flächen
+gebaut. Auf dem Chrome-Grund `#2A3757` liegen diese Werte bei **1,5–2,0:1** —
+praktisch unlesbar. Dafür gibt es `BC_NAV` + `navBiasCol(bias)` mit aufgehellten
+Tönen derselben Farbfamilie:
+
+| | Farbe | Grund | Hover | offener Stapel |
+|---|---|---|---|---|
+| bull | `#8FC7FF` | 6,61 | 5,32 | 6,12 |
+| bear | `#FF8F88` | 5,35 | 4,31 | 4,96 |
+| neu | `#B4C0D6` | 6,42 | 5,17 | 5,95 |
+
+`navBiasCol` bildet `sbull`/`sbear` auf die Farbe ihrer Grundrichtung ab —
+`BC` kennt die beiden gar nicht und hätte `undefined` geliefert.
+**Wer hier eine Farbe ergänzt, misst sie gegen alle drei Untergründe.**
+
+### Warum kein Eintrag in `tabStacks`
+
+Der Stapel benutzt bewusst **denselben Mechanismus** wie die echten Tab-Stapel
+(`expandedStack`, `.np-sub-wrap`, die Höhenmessung in `syncNavExpanded()`),
+steht aber **nicht** in `tabStacks` — die id ist die Konstante
+`ASSET_STACK_ID = '__assets'`. Folge: `openTabMenu()` findet sie nicht und bietet
+kein Umbenennen/Auflösen für eine Systemkategorie an, und
+`addTabToStack`/`dissolveStack` können sie nie versehentlich anfassen.
+Zwei Stellen kennen sie explizit:
+- `renderTabBar()` — eigener Zweig für `id==='fx'` vor dem `stackOf`-Lookup.
+- `showTab()` — `expandedStack = (activeTabId==='fx') ? ASSET_STACK_ID : …`
+
+### Warum das Zielelement weiter `id="sidebar"` heißt
+
+`renderSidebar()` schreibt nach wie vor in ein Element mit dieser id — es wird
+nur an anderer Stelle erzeugt (von `renderTabBar()`). Dadurch bleiben
+**`updateSidebarSelection()`, die Score-Auffrischung und alle ~35
+`renderSidebar()`-Aufrufer unverändert**. Die Asset-Zeilen behalten aus demselben
+Grund `class="ab"` und `data-sym`. Die generischen `.ab`-Regeln sind aber für die
+helle Spalte gebaut (u. a. `var(--bg5)`, das der Chrome-Scope **nicht**
+überschreibt — das wäre eine weiße Zeile auf Navy), deshalb überschreiben
+`#navSidebar .ab…`-Regeln sie mit höherer Spezifität.
+
+Zwei Reihenfolge-Regeln:
+- `renderTabBar()` ruft am **Ende** `renderSidebar()` — das Zielelement entsteht
+  ja erst in diesem Aufruf.
+- `renderSidebar()` ruft am Ende `syncNavExpanded()`. Die aufgeklappte Höhe steht
+  als **Inline-Wert** und muss nach jeder Inhaltsänderung neu gemessen werden,
+  sonst schneidet sie ab (z. B. sobald der Bearbeitungsmodus zwei Knöpfe ergänzt).
+
+### Bearbeitungsmodus
+
+`sbEditMode` (Boolean, bewusst **nicht** persistiert — temporärer Zustand wie der
+Dashboard-Bearbeitungsmodus, kein Nutzer-Inhalt). Ein langer Druck auf den
+Assets-Kopf **oder** auf ein Asset schaltet ihn ein, „Done" wieder aus. Erst dann
+erscheinen ▲▼ je Asset und je Kategorie, × bei eigenen Symbolen und „Add symbol".
+Ein Klick auf ein Asset navigiert auch im Bearbeitungsmodus ganz normal und
+**lässt den Modus an**, damit sich mehrere Einträge hintereinander sortieren
+lassen. Ersetzt die früheren Einzel-Zustände `sbReorderId`/`sbCatReorder` (bei
+denen man für jeden Eintrag neu drücken musste); sie sind samt `sbCatClick` und
+den toten CSS-Regeln `.sb`/`.sb-lbl`/`.ab-move`/`.ab-del`/`.add-sym` entfernt.
+
+### Was `check/nav.js` jetzt prüft
+
+Prüfung **E** zielte früher auf `fx` als „Tab außerhalb jedes Stapels" — seit
+diesem Umbau ist `fx` selbst einer, und dass er aufklappt, ist gewollt. Sie wählt
+jetzt einen Tab, der **nachweislich** in keinem Stapel steckt, und prüft gezielt,
+dass genau der zuvor geöffnete Stapel wieder zu ist **und** dass überhaupt keiner
+offen bleibt — strenger als vorher. Neu dazu **E2** als Gegenprobe: der
+Assets-Stapel klappt beim Wechsel auf die Assets-Seite auf, wird hervorgehoben und
+enthält mindestens ein Asset. Ohne E2 könnte eine spätere Verschärfung von E den
+Stapel dauerhaft zuklappen, ohne dass es auffällt.

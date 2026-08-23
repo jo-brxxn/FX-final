@@ -322,6 +322,48 @@ svg.ic{vertical-align:-2px;flex:none}
   max-height:0;opacity:0;visibility:hidden;
   transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .16s ease,visibility .26s}
 .np-sub-wrap.open{max-height:520px;opacity:1;visibility:visible}
+/* ── ASSETS-STAPEL (Nutzer-Wunsch 2026-08-23) ────────────────────────
+   Die Asset-Liste sass frueher als eigene 138px-Spalte auf der
+   Assets-Seite (.sb). Jetzt haengt sie als Stapel-Inhalt in der dunklen
+   Navigationsleiste. Die generischen .ab-Regeln weiter unten sind fuer
+   die HELLE Spalte gebaut (u.a. var(--bg5), das der Chrome-Scope NICHT
+   ueberschreibt - das waere eine weisse Zeile auf Navy). Deshalb hier
+   eigene Regeln mit hoeherer Spezifitaet (#navSidebar .ab schlaegt .ab). */
+#navSidebar .np-sub-wrap.np-assets.open{max-height:none}
+#navSidebar .np-cat{display:flex;align-items:center;gap:6px;
+  padding:9px 9px 3px 30px;font:600 9.5px/1.3 var(--ff-num);letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--t3);user-select:none}
+#navSidebar .np-cat-l{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#navSidebar .np-cat-mv{display:flex;gap:3px;flex:none}
+#navSidebar .np-asset-wrap{position:relative;display:flex;align-items:center;gap:4px}
+#navSidebar .ab.np-asset{display:flex;align-items:center;gap:8px;flex:1;min-width:0;
+  width:auto;padding:6px 9px 6px 30px;text-align:left;background:transparent;
+  border:none;border-left:3px solid transparent;border-radius:0 var(--rss) var(--rss) 0;
+  box-shadow:none;font-family:var(--ff-text);cursor:pointer;transition:background .13s,border-color .13s}
+#navSidebar .ab.np-asset .an{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:12.5px;font-weight:700}
+#navSidebar .ab.np-asset .sb-score{flex:none;font:700 11.5px/1 var(--ff-num);
+  font-variant-numeric:tabular-nums}
+#navSidebar .ab.np-asset .av{flex:none;font-size:9.5px;width:9px;text-align:center}
+@media (hover:hover){#navSidebar .ab.np-asset:hover:not(.on){background:var(--bg4)}}
+/* Ausgewaehltes Asset: Grund UND linker Balken in seiner eigenen Bias-Farbe -
+   dieselbe Sprache wie der aktive Tab darueber, nur eingefaerbt. */
+#navSidebar .ab.np-asset.on{background:var(--bg4);border-left-color:var(--biascol)}
+#navSidebar .np-mv{flex:none;width:17px;height:17px;display:flex;align-items:center;
+  justify-content:center;padding:0;border:1px solid var(--bd2);border-radius:3px;
+  background:var(--bg3);color:var(--t1);font-size:9px;line-height:1;cursor:pointer}
+#navSidebar .np-mv:disabled{opacity:.3;cursor:default}
+#navSidebar .np-mv.del{color:#FF8F88;border-color:rgba(255,143,136,.45)}
+@media (hover:hover){#navSidebar .np-mv:not(:disabled):hover{background:var(--bg4);color:var(--t0)}}
+#navSidebar .np-asset-edit{display:flex;gap:3px;flex:none;padding-right:6px}
+#navSidebar .np-cat.edit{color:var(--t2)}
+#navSidebar .np-addsym,#navSidebar .np-editdone{padding-left:30px;font-size:12px;color:var(--t2)}
+#navSidebar .np-addsym .np-ic,#navSidebar .np-editdone .np-ic{font-size:14px;font-weight:700}
+#navSidebar .np-editdone{color:var(--accent)}
+/* In der Icon-Leiste sind die Assets ausgeblendet (Regel weiter unten fuer
+   .np-sub-wrap) - der Einzug von 30px waere dort ohnehin falsch. */
+#navSidebar.nav-collapsed .np-cat{display:none}
+#navSidebar.nav-collapsed .ab.np-asset{padding:7px 0;justify-content:center}
 .np.np-stack.has-active:not(.on){color:var(--t1)}
 .np.np-stack.open{background:var(--bg2)}
 /* ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) statt der verzoegerten
@@ -412,12 +454,7 @@ body.no-ui-anim #navSidebar{transition:none}
    Sidebar-/Viewport-Kante (0px horizontales Padding) - kleiner Abstand
    ergaenzt, nur links (rechts trennt ohnehin schon border-right zum
    Hauptinhalt). */
-.sb{width:138px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0 4px 7px}
-@media(max-width:760px){.sb{width:120px}}
-.sb-lbl{font-size:10px;color:var(--t2);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:var(--ff-num);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
-.sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.18);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
-.ab-move.cat{position:static;width:18px;height:16px}
 .ab-wrap{position:relative}
 .ab{display:block;position:relative;width:100%;background:transparent;border:none;border-left:2px solid transparent;padding:7px 3px 7px 5px;cursor:pointer;text-align:center;transition:all .12s}@media (hover:hover){.ab:hover:not(.on){background:var(--bg2)}}.ab.on{background:var(--bg5);box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
 .ab .an{font-size:11px;font-weight:700;color:var(--t2);font-family:var(--ff-num)}.ab.on .an{color:var(--t0)}
@@ -476,12 +513,6 @@ body.no-ui-anim #navSidebar{transition:none}
 /* Dritter Blob nur noch leicht dunkler als die Hauptfarbe (weniger Abweichung,
    Nutzer-Wunsch 2026-07-23 - frueher deutlich dunkler). */
 .aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%}
-.ab-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;opacity:0;padding:0;line-height:1;transition:opacity .12s}@media (hover:hover){.ab-wrap:hover .ab-del{opacity:.5}}@media (hover:hover){.ab-del:hover{opacity:1!important}}
-.ab-wrap.reorder .ab{box-shadow:inset 0 0 0 1px var(--blue);background:var(--bg3)}
-.ab-move{position:absolute;right:2px;width:16px;height:16px;background:var(--blue);color:#fff;border:none;border-radius:3px;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;z-index:2}
-.ab-move.up{top:2px}.ab-move.down{bottom:2px}
-.ab-move:disabled{opacity:.25;cursor:default}
-.add-sym{display:block;width:100%;background:transparent;border:none;border-top:1px solid var(--bd);padding:8px 3px;cursor:pointer;text-align:center;color:var(--t3);font-size:17px;transition:all .12s;margin-top:3px}@media (hover:hover){.add-sym:hover{color:var(--blue);background:var(--bg2)}}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px}
@@ -2619,7 +2650,6 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .np{font-size:13.5px;padding:9px 11px}
   /* Foto-Referenz 2026-08-02: einzeilige Watchlist braucht mehr Breite,
      sonst wird die Sparkline auf 0 zusammengedrueckt. Alt: width:90px; */
-  .sb{width:158px}
   .sb-lbl{font-size:10px}
   .ab .an,.ab .av{font-size:13px}
   .add-sym{font-size:19px}
@@ -3580,11 +3610,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-435 - Vier Dinge. (1) CARRY IN DEN TRENDS: die Paar-Linie im Trends-Tab rechnete Basis minus Kurswaehrung OHNE den Carry und wich damit von dem Paar-Score ab, den Set-ups, Watchlist und Score-Fenster zeigen. Sie rechnet ihn jetzt mit - und rueckwirkend fuer jeden Tag mit dem Leitzins, der AN DEM TAG galt (datierte Beschluss-Historie aus ind_data.json, 12-25 Beschluesse je Waehrung zurueck bis 2023). Vor dem aeltesten bekannten Beschluss gibt es keinen Carry statt eines geschaetzten. (2) LEITZINSEN WAREN VERALTET: rateInfo() kannte den Live-Feed gar nicht und nahm den kuratierten Recherche-Stand - alle acht Saetze lagen daneben oder auf einer aelteren Quelle (EUR 2,00 statt 2,40, JPY 0,75 statt 1,00, NZD 2,25 statt 2,50, USD 3,625 statt 3,75). Fuenf von 35 Paar-Scores verschieben sich dadurch um 0,5. Die Symbol-Scores bleiben nachweislich unveraendert. (3) ACTUAL-FARBE FOLGT DER KARTEN-EINSTELLUNG: steht eine Makro-Karte bei einem verknuepften Asset auf Bearish (invers), war der Indikator-Bias laengst gedreht, die Farbe des Actual-Werts aber nicht - ein heisser CPI stand bei GOLD gruen da, waehrend GOLDs eigener Bias bearish war. Gilt fuer Indikator-Tabelle, Asset-Kalender, History und Compare; der allgemeine Kalender bleibt die reine Datenrichtung. (4) AAII: neue Ansicht Weekly bars (gestapelte Wochensaeulen mit Prozentwert je Segment, darunter der Bullish-Verlauf), Erklaerung komplett neu mit Begriffs-Glossar, und die Luecke in der AAII-Reihe (20 fehlende Wochen zwischen 19.03. und 12.08.2026) ist jetzt in beiden Grafiken markiert statt stillschweigend ueberzeichnet. Ausserdem stand unter dem Lesebadge Long-run average +6.5pp, so they are not symmetric around zero - beides falsch; die Schwellen SIND symmetrisch, und der Mittelwert steht jetzt aus den eigenen 520 Wochen da. Neuer Waechter check/scorediff.js rechnet vor jedem Push jeden Score gegen origin/main nach."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-436 - Die Assets sind aus ihrer eigenen 138px-Spalte auf der Assets-Seite in die Navigationsleiste gewandert und haengen dort als aufklappbarer Stapel unter Assets (Nutzer-Wunsch 2026-08-23). Jeder Eintrag: Name in seiner Bias-Farbe, Score, Richtungspfeil; die Kategorie-Zwischenueberschriften (FX, Crypto, Metals, Energy, Indices) bleiben erhalten. Die Detailansicht bekommt dadurch die volle Breite. Hinzufuegen, Umsortieren und Loeschen erscheinen NUR im Bearbeitungsmodus - langer Druck auf den Assets-Kopf oder auf ein Asset schaltet ihn ein, Done wieder aus; vorher hatte jeder Eintrag seinen eigenen Reorder-Zustand. WICHTIG fuer spaetere Aenderungen: die Bias-Farben BC sind fuer helle Flaechen gebaut und kamen auf der dunklen Leiste auf 1,5-2,0:1, also praktisch unlesbar - dafuer gibt es jetzt BC_NAV/navBiasCol mit aufgehellten Toenen, gemessen ueber 4,3:1 auf allen drei Leisten-Untergruenden. Der Stapel benutzt bewusst denselben Mechanismus wie die echten Tab-Stapel (expandedStack, np-sub-wrap, Hoehenmessung in syncNavExpanded), steht aber NICHT in tabStacks, damit ihn Umbenennen/Aufloesen nie anfassen koennen. Das Zielelement behaelt die id sidebar, dadurch laufen updateSidebarSelection, die Score-Auffrischung und die 35 renderSidebar-Aufrufer unveraendert weiter. Tote Regeln und Zustaende der alten Spalte (.sb, .sb-lbl, .ab-move, .ab-del, .add-sym, sbReorderId, sbCatReorder, sbCatClick) sind entfernt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-435</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-436</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3605,7 +3635,12 @@ function introLogin(){
 
 <!-- PAGE: CURRENCIES -->
 <div class="body" id="pgCur" style="display:none">
-  <div class="sb" id="sidebar"></div>
+  <!-- Die frueher hier stehende 138px-Assetspalte (.sb#sidebar) ist in die
+       Navigationsleiste gewandert und haengt jetzt als aufklappbarer Stapel
+       unter "Assets" (Nutzer-Wunsch 2026-08-23). Die Detailansicht bekommt
+       dadurch die volle Breite. renderSidebar() fuellt weiterhin ein Element
+       mit der id "sidebar" - es wird nur an anderer Stelle erzeugt
+       (renderTabBar), damit die ~35 Aufrufer unveraendert bleiben. -->
   <div class="detail" id="detail" onpointerdown="indEditPressStart(event)" onpointermove="indEditPressMove(event)" onpointerup="indEditPressEnd()" onpointercancel="indEditPressEnd()" onpointerleave="indEditPressEnd()"></div>
 </div>
 <!-- PAGE: COMPARE -->
@@ -4199,6 +4234,15 @@ function introLogin(){
 // und auf Nutzer-Wunsch wieder verworfen - falls sie je zurueckkommen soll:
 // bull #1d4ed8, bear #b23a3a, neu #475569.
 const BC={bull:'#0B5FCC',bear:'#C50F1A',neu:'#55617A'};
+// Dieselben Bedeutungen, aber fuer den DUNKLEN Chrome-Hintergrund der
+// Navigationsleiste (#2A3757). Die BC-Werte oben sind fuer helle Flaechen
+// gebaut und kommen dort auf 1,5-2,0:1 - praktisch unlesbar (gemessen
+// 2026-08-23, bevor der Assets-Stapel gebaut wurde). Diese hier liegen auf
+// allen drei Leisten-Untergruenden (Grund, Hover, offener Stapel) ueber
+// 4,3:1. Gleiche Farbtoene, nur aufgehellt - die Bedeutung bleibt lesbar.
+const BC_NAV={bull:'#8FC7FF',bear:'#FF8F88',neu:'#B4C0D6'};
+// sbull/sbear teilen die Farbe ihrer Grundrichtung.
+function navBiasCol(b){return b==='sbull'?BC_NAV.bull:b==='sbear'?BC_NAV.bear:(BC_NAV[b]||BC_NAV.neu);}
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -10290,29 +10334,29 @@ function moveSbCat(catL,d){
 }
 // Lang-Druck (Touch & Maus) auf ein Symbol blendet ▲/▼-Buttons zum
 // Verschieben innerhalb seiner Kategorie ein.
-let sbReorderId=null,_sbPressTimer=null,_sbSuppressClick=false;
+let _sbPressTimer=null,_sbCatPressTimer=null,_sbSuppressClick=false;
+// Langer Druck auf ein Asset schaltet den Bearbeitungsmodus fuer die GANZE
+// Liste ein (vorher: nur dieses eine Asset bekam ▲▼). Verlassen wird er ueber
+// "Done" - so lassen sich mehrere Eintraege hintereinander verschieben,
+// statt fuer jeden neu drueckenzu muessen.
 function sbPressStart(id){
   clearTimeout(_sbPressTimer);
-  _sbPressTimer=setTimeout(()=>{sbReorderId=id;sbCatReorder=null;_sbSuppressClick=true;renderSidebar();},450);
+  _sbPressTimer=setTimeout(()=>{sbEditMode=true;_sbSuppressClick=true;renderSidebar();},450);
 }
 function sbPressEnd(){clearTimeout(_sbPressTimer);_sbPressTimer=null;}
 function sbClick(id){
   if(_sbSuppressClick){_sbSuppressClick=false;return;}
-  const was=sbReorderId;
-  sbReorderId=null;
-  // Reorder-Modus verlassen: hier ist ein voller Render noetig, um die
-  // eingeblendeten ▲▼-Buttons wieder zu entfernen. Ansonsten (normaler
-  // Asset-Wechsel) laeuft die Auswahl ueber selSym() als reiner
-  // Klassen-Wechsel, ohne die Leiste neu aufzubauen (Scroll-Fix, s.o.).
-  if(was){renderSidebar();if(was===id)return;}
+  // Auch im Bearbeitungsmodus navigiert ein Klick ganz normal - der Modus
+  // bleibt dabei an, damit man mehrere Eintraege nacheinander sortieren kann.
+  if(curPage!=='cur')showTab('cur',null,'fx');
   selSym(id);
 }
 // Lang-Druck auf eine KATEGORIE-Überschrift blendet ▲/▼-Buttons ein, mit denen
 // die gesamte Kategorie (inkl. aller Assets) verschoben werden kann.
-let sbCatReorder=null,_sbCatPressTimer=null;
+
 function sbCatPressStart(catL){
   clearTimeout(_sbCatPressTimer);
-  _sbCatPressTimer=setTimeout(()=>{sbCatReorder=catL;sbReorderId=null;renderSidebar();},450);
+  _sbCatPressTimer=setTimeout(()=>{sbEditMode=true;renderSidebar();},450);
 }
 function sbCatPressEnd(){clearTimeout(_sbCatPressTimer);_sbCatPressTimer=null;}
 // Waehrend die Leiste scrollt, keinen Langdruck werten: sonst feuert der
@@ -10320,11 +10364,9 @@ function sbCatPressEnd(){clearTimeout(_sbCatPressTimer);_sbCatPressTimer=null;}
 // kommt auf iOS nicht immer rechtzeitig) mitten in der Bewegung einen
 // vollen renderSidebar - Scroll bricht ab und der Reorder-Modus geht
 // ungewollt auf.
-(()=>{const sb=document.getElementById('sidebar');if(sb)sb.addEventListener('scroll',()=>{sbPressEnd();sbCatPressEnd();},{passive:true});})();
-function sbCatClick(catL){
-  // Tippen auf die Überschrift im Reorder-Modus beendet ihn wieder.
-  if(sbCatReorder===catL){sbCatReorder=null;renderSidebar();}
-}
+// Waehrend die Leiste scrollt, keinen Langdruck werten (siehe Kommentar oben).
+// Der Scroll-Container ist seit dem Umzug in den Stapel #navSidebar selbst.
+(()=>{const sb=document.getElementById('navSidebar');if(sb)sb.addEventListener('scroll',()=>{sbPressEnd();sbCatPressEnd();},{passive:true});})();
 // Mini-Score-Verlauf (Sparkline) fuer die Sidebar: letzte ~14 Tage aus
 // scoreHist, keine Achsen/Labels - reine Momentum-Optik neben der Score-Zahl.
 // Faellt bei <2 Punkten Historie einfach weg (kein leeres/kaputtes SVG).
@@ -10360,47 +10402,70 @@ function indSparklineSvg(ind,col){
   }).join(' ');
   return`<svg class="ir-spark" width="${w}" height="${ht}" viewBox="0 0 ${w} ${ht}"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/></svg>`;
 }
+// Baut die Asset-Liste - seit 2026-08-23 NICHT mehr in eine eigene Spalte auf
+// der Assets-Seite, sondern in den aufgeklappten "Assets"-Stapel der
+// Navigationsleiste. Das Ziel-Element traegt weiterhin die id "sidebar",
+// damit updateSidebarSelection(), die Score-Auffrischung und die ~35
+// renderSidebar()-Aufrufer unveraendert weiterlaufen.
+//
+// ⚠ Hinzufuegen/Umsortieren/Loeschen erscheinen NUR im Bearbeitungsmodus
+// (sbEditMode, Nutzer-Wunsch 2026-08-23: "das kommt erst in der
+// Bearbeitungsfunktion"). Ohne ihn ist die Liste reine Navigation.
 function renderSidebar(){
+  const _sbEl=document.getElementById('sidebar');
+  if(!_sbEl)return;                 // Stapel noch nicht gezeichnet
   beginRenderPass();
   const customCatIds=customIds.map(c=>c.id);
-  // FX und Non-FX sind seit 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch) -
-  // ALLE SB_CATS-Kategorien erscheinen hier zusammen, FX zuerst (siehe
-  // SB_CATS-Reihenfolge), Non-FX-Kategorien direkt darunter.
   const allCats=computeSbCats();
-  const catMovable=allCats.length>1;
+  const bearb=!!sbEditMode;
   let html=allCats.map((cat,ci)=>{
     const ids=getSbIds(cat).filter(id=>syms.find(s=>s.id===id));
-    const catRe=sbCatReorder===cat.l;
+    if(!ids.length)return'';
     return`
-    <div class="sb-lbl${catRe?' cat-reorder':''}"${catMovable?` onpointerdown="sbCatPressStart('${cat.l}')" onpointerup="sbCatPressEnd()" onpointerleave="sbCatPressEnd()" onpointercancel="sbCatPressEnd()" onclick="sbCatClick('${cat.l}')" style="cursor:pointer"`:''}>
-      <span>${cat.l}</span>
-      ${catRe?`<span class="sb-cat-moves">
-        <button class="ab-move cat" onclick="event.stopPropagation();moveSbCat('${cat.l}',-1)" ${ci===0?'disabled':''} title="Move category up">▲</button>
-        <button class="ab-move cat" onclick="event.stopPropagation();moveSbCat('${cat.l}',1)" ${ci===allCats.length-1?'disabled':''} title="Move category down">▼</button>
+    <div class="np-cat${bearb?' edit':''}">
+      <span class="np-cat-l">${escH(cat.l)}</span>
+      ${bearb&&allCats.length>1?`<span class="np-cat-mv">
+        <button class="np-mv" onclick="event.stopPropagation();moveSbCat('${escJs(cat.l)}',-1)" ${ci===0?'disabled':''} aria-label="Kategorie nach oben">▲</button>
+        <button class="np-mv" onclick="event.stopPropagation();moveSbCat('${escJs(cat.l)}',1)" ${ci===allCats.length-1?'disabled':''} aria-label="Kategorie nach unten">▼</button>
       </span>`:''}
     </div>
     ${ids.map((id,idx)=>{
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
-      const reorder=sbReorderId===id;
-      return`<div class="ab-wrap${reorder?' reorder':''}">
-        <button data-sym="${id}" class="ab${on?' on':''} ${glowClass(c.bias)}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="${_flipGlowIds.has(c.id)?`--flipcol:${BC[c.bias]}`:''}" onclick="sbClick('${id}')" onpointerdown="sbPressStart('${id}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()">
-          <div class="an" data-bv="${c.bias}" style="color:${BC[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}${(()=>{const sc=symScoreCmp(c);return`<div class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div>`;})()}<div class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${BC[c.bias]}">${c.bias==='bull'?'▲':c.bias==='bear'?'▼':'◆'}</div>
+      const col=navBiasCol(c.bias);
+      const sc=symScoreCmp(c);
+      const pfeil=(c.bias==='bull'||c.bias==='sbull')?'▲':(c.bias==='bear'||c.bias==='sbear')?'▼':'◆';
+      return`<div class="np-asset-wrap">
+        <button data-sym="${id}" class="np ab np-asset${on?' on':''}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="--biascol:${col}${_flipGlowIds.has(c.id)?`;--flipcol:${col}`:''}" onclick="sbClick('${escJs(id)}')" onpointerdown="sbPressStart('${escJs(id)}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()" data-tip="${escH(c.name)} ${sc>0?'+':''}${sc}" aria-label="${escH(c.name)}">
+          <span class="an np-lbl" data-bv="${c.bias}" style="color:${col}">${escH(c.name)}</span>
+          <span class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${col}">${sc>0?'+':''}${sc}</span>
+          <span class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${col}">${pfeil}</span>
         </button>
-        ${reorder?`<button class="ab-move up" onclick="moveSbSym('${cat.l}','${id}',-1)" ${idx===0?'disabled':''} title="Move up">▲</button>
-        <button class="ab-move down" onclick="moveSbSym('${cat.l}','${id}',1)" ${idx===ids.length-1?'disabled':''} title="Move down">▼</button>`:''}
-        ${isCustom&&!reorder?`<button class="ab-del" onclick="openDelSym('${id}')" title="Remove">×</button>`:''}
+        ${bearb?`<span class="np-asset-edit">
+          <button class="np-mv" onclick="event.stopPropagation();moveSbSym('${escJs(cat.l)}','${escJs(id)}',-1)" ${idx===0?'disabled':''} aria-label="Nach oben">▲</button>
+          <button class="np-mv" onclick="event.stopPropagation();moveSbSym('${escJs(cat.l)}','${escJs(id)}',1)" ${idx===ids.length-1?'disabled':''} aria-label="Nach unten">▼</button>
+          ${isCustom?`<button class="np-mv del" onclick="event.stopPropagation();openDelSym('${escJs(id)}')" aria-label="Entfernen">×</button>`:''}
+        </span>`:''}
       </div>`;}).join('')}`;}).join('');
-  html+=`<button class="add-sym" onclick="openM('mAddSym')" title="Add symbol">＋</button>`;
-  // Scroll-Position erhalten: #sidebar ist selbst der Scroll-Container, und
-  // innerHTML-Ersatz klemmt scrollTop sonst auf 0 - jeder Asset-Wechsel (und
-  // der Flip-Glow-Re-Render 1,5s danach) warf die Leiste an den Anfang
-  // zurueck ("kann nicht mehr vernuenftig scrollen").
-  const _sbEl=document.getElementById('sidebar');
-  const _sbSt=_sbEl.scrollTop;
+  // ⚠ Nur im Bearbeitungsmodus (und wenn gar kein Asset da ist, sonst kaeme
+  // man nie wieder an ein neues heran).
+  if(bearb||!syms.length){
+    html+=`<button class="np np-addsym" onclick="openM('mAddSym')" data-tip="Symbol hinzufuegen" aria-label="Symbol hinzufuegen"><span class="np-ic">＋</span><span class="np-lbl">Add symbol</span></button>`;
+  }
+  if(bearb){
+    html+=`<button class="np np-editdone" onclick="setSbEdit(false)" data-tip="Fertig" aria-label="Bearbeiten beenden"><span class="np-ic">✓</span><span class="np-lbl">Done</span></button>`;
+  }
   _sbEl.innerHTML=html;
-  _sbEl.scrollTop=_sbSt;
+  // Die Hoehe des aufgeklappten Stapels wird als Inline-Wert gesetzt und
+  // muss nach JEDER Inhaltsaenderung neu gemessen werden - sonst bleibt sie
+  // auf dem alten Stand und schneidet die Liste ab (z.B. sobald der
+  // Bearbeitungsmodus zwei Knoepfe ergaenzt).
+  if(typeof syncNavExpanded==='function')syncNavExpanded();
 }
+// Bearbeitungsmodus der Asset-Liste. Bewusst NICHT persistiert: es ist ein
+// temporaerer Zustand wie der Dashboard-Bearbeitungsmodus, kein Nutzer-Inhalt.
+let sbEditMode=false;
+function setSbEdit(v){sbEditMode=!!v;renderSidebar();}
 
 // ══ DETAIL ═════════════════════════════════════════════════════════
 function renderDetail(){
@@ -22013,10 +22078,28 @@ function syncNavExpanded(){
 // dadrunter oeffnen, eingeschoben") - kein schwebendes Flyout mehr. Die
 // Mitglieder-Buttons (.np-sub) sind einfach die naechsten Elemente im
 // Sidebar-Fluss, kleinere Schrift + Einzug per CSS.
+// Der "Assets"-Eintrag ist kein normaler Tab mehr, sondern ein Stapel, dessen
+// Mitglieder die Assets selbst sind (Nutzer-Wunsch 2026-08-23). Er benutzt
+// bewusst denselben Mechanismus wie die echten Tab-Stapel - dieselbe
+// .np-sub-wrap, dasselbe expandedStack, dieselbe Hoehenmessung in
+// syncNavExpanded() - nur die Mitglieder zeichnet renderSidebar().
+// Die id steht NICHT in tabStacks: dadurch greift openTabMenu() nicht
+// (kein "Umbenennen"/"Aufloesen" fuer eine Systemkategorie) und
+// addTabToStack/dissolveStack koennen sie nie versehentlich anfassen.
+const ASSET_STACK_ID='__assets';
 function renderTabBar(){
   const bar=document.getElementById('navSidebar');if(!bar)return;
   let html='';const done=new Set();
   TAB_ORDER.forEach(id=>{
+    if(id==='fx'){
+      const open=expandedStack===ASSET_STACK_ID,hasActive=activeTabId==='fx';
+      html+=`<button class="np np-stack np-assetstack${open?' open':''}${hasActive?' has-active':''}" data-stack="${ASSET_STACK_ID}" onpointerdown="tabPressStart(event,'assets','${ASSET_STACK_ID}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onStackClick(event,'${ASSET_STACK_ID}')" data-tip="Assets" aria-label="Assets">${npIconSvg(TAB_ICONS.fx)}<span class="np-lbl">Assets</span><span class="np-arrow">▸</span></button>`;
+      // Leer erzeugt, gefuellt von renderSidebar() - die id bleibt "sidebar",
+      // damit updateSidebarSelection() und die Score-Auffrischung unveraendert
+      // weiterlaufen.
+      html+=`<div class="np-sub-wrap np-assets${open?' open':''}" data-stack="${ASSET_STACK_ID}" id="sidebar"></div>`;
+      return;
+    }
     const st=stackOf(id);
     if(st){
       if(done.has(st.id))return;done.add(st.id);
@@ -22033,6 +22116,10 @@ function renderTabBar(){
     }
   });
   bar.innerHTML=html;
+  // Der Assets-Stapel bekommt seine Mitglieder erst hier - das Zielelement
+  // entsteht ja gerade eben. renderSidebar() ruft am Ende syncNavExpanded(),
+  // damit die gemessene Hoehe zum neuen Inhalt passt.
+  renderSidebar();
 }
 let _tabPressTimer=null,_tabPressed=false;
 function tabPressStart(e,kind,id){
@@ -22065,6 +22152,12 @@ function closeTabMenu(){
 }
 function tabMenuOutside(e){const m=document.getElementById('tabMenu');if(m&&!m.contains(e.target)&&!(e.target.closest&&e.target.closest('.np-stack')))closeTabMenu();}
 function openTabMenu(kind,id,x,y){
+  // Der Assets-Stapel ist keine frei benennbare Sammlung, sondern die
+  // Asset-Liste selbst - ein langer Druck darauf oeffnet deshalb nicht das
+  // Umbenennen/Aufloesen-Menue, sondern schaltet den Bearbeitungsmodus der
+  // Liste um (Nutzer-Wunsch 2026-08-23: Hinzufuegen/Sortieren/Loeschen
+  // "kommt erst in der Bearbeitungsfunktion").
+  if(kind==='assets'){setSbEdit(!sbEditMode);return;}
   closeTabMenu();
   const items=[];
   if(kind==='tab'){
@@ -22125,7 +22218,11 @@ function showTab(tab,btn,fxMode){
   // weil expandedStack schlicht nie zurueckgesetzt wurde (Nutzer 2026-08-21:
   // "wenn ich einmal auf Insights druecke, bleibt sie die ganze Zeit
   // ausgewaehlt, obwohl ich danach auf etwas anderes druecke").
-  const _st=stackOf(activeTabId);expandedStack=_st?_st.id:null;
+  // Der Assets-Stapel ist kein tabStacks-Eintrag, deshalb ein eigener Zweig -
+  // er soll sich beim Wechsel auf die Assets-Seite genauso aufklappen wie
+  // jeder echte Stapel bei seinem aktiven Tab.
+  const _st=stackOf(activeTabId);
+  expandedStack=(activeTabId==='fx')?ASSET_STACK_ID:(_st?_st.id:null);
   renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
