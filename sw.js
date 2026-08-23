@@ -7,11 +7,11 @@
 //
 // CACHE_VERSION bei groesseren Aenderungen an der App-Shell erhoehen,
 // damit alte Caches automatisch aufgeraeumt werden.
-// v3 (2026-08-23): manifest.json hat eine neue theme_color bekommen. Das
-// Manifest laeuft ueber den Cache-First-Zweig unten, wuerde also weiter aus
-// dem alten Cache kommen - erst der Versions-Bump erzwingt ein frisches
-// Einspielen der App-Shell.
-const CACHE_VERSION = 'fxpro-v3';
+// v4 (2026-08-23): Umstellung auf das dunkle Design - manifest.json hat
+// erneut eine neue theme_color. Das Manifest laeuft ueber den
+// Cache-First-Zweig unten, wuerde also weiter aus dem alten Cache kommen;
+// erst der Versions-Bump erzwingt ein frisches Einspielen der App-Shell.
+const CACHE_VERSION = 'fxpro-v4';
 const APP_SHELL = [
   './',
   './index.html',
