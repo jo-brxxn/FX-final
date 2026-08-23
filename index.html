@@ -25,14 +25,14 @@
      plausibelsten Regler zu raten.
      Muss zu --chrome-bg (:root) und "theme_color" in manifest.json passen -
      eine CSS-Variable ist hier nicht nutzbar, daher drei Literale. -->
-<meta name="theme-color" content="#080f1c">
+<meta name="theme-color" content="#080F1A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at 16% -12%,rgba(34,211,238,.075),transparent 60%),radial-gradient(1000px 620px at 88% 6%,rgba(79,155,255,.06),transparent 62%);background-size:cover;background-position:center center;background-repeat:no-repeat;background-color:var(--bg0);background-blend-mode:normal;color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at 16% -12%,rgba(34,211,238,.075),transparent 60%),radial-gradient(1000px 620px at 88% 6%,rgba(79,155,255,.06),transparent 62%);background-size:cover;background-position:center center;background-repeat:no-repeat;background-color:var(--bg0);background-blend-mode:normal;color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* Frueherer Nutzer-Wunsch war "ueberall Arial" - umgesetzt als globales
    !important. Das hat allerdings ALLE 200 Monospace-Deklarationen der App
    mit ueberschrieben, die Zahlen waren dadurch nie dicktengleich.
@@ -119,29 +119,29 @@ body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at
      margin-top - die News-Karte klebte dadurch direkt am Raster.
      MERKSATZ: Abstaende gehoeren wie die Schriftgroessen auf eine Skala,
      nicht je Stelle einzeln geraten. */
-  --gap-block:12px;
-  --chrome-bg:#080f1c;
-  --bg0:#0c1424;--bg1:#111c31;--bg2:#16233c;--bg3:#111c31;--bg4:#1e2f4d;--bg5:#2a3f63;--bg6:#3b5480;
-  --bd:#22334f;--bd2:#2e4468;
-  --t0:#e9f0fa;--t1:#c5d2e4;--t2:#a3b4cc;--t3:#8195b2;
-  --green:#4f9bff;--red:#ff6b6b;--amber:#8fa3bd;--star:#8fa3bd;--blue:#4f9bff;--purple:#9b8fd4;--success:#34d399;
-  --green-rgb:79,155,255;--red-rgb:255,107,107;--amber-rgb:143,163,189;
-  --star-rgb:143,163,189;--blue-rgb:79,155,255;--purple-rgb:155,143,212;--success-rgb:52,211,153;--t3-rgb:129,149,178;
+  --gap-block:14px;
+  --chrome-bg:#080F1A;
+  --bg0:#070C14;--bg1:#13213A;--bg2:#101B2D;--bg3:#13213A;--bg4:#162640;--bg5:#1A2D49;--bg6:#21385C;
+  --bd:rgba(120,160,210,.16);--bd2:rgba(120,170,230,.28);
+  --t0:#E8F0FA;--t1:#C1D0E0;--t2:#9AAEC5;--t3:#6F829B;
+  --green:#38BDF8;--red:#FF6B6B;--amber:#8FA3BC;--star:#8FA3BC;--blue:#38BDF8;--purple:#9b8fd4;--success:#34d399;--live:#FF5F6D;
+  --green-rgb:56,189,248;--red-rgb:255,107,107;--amber-rgb:143,163,188;
+  --star-rgb:143,163,188;--blue-rgb:56,189,248;--purple-rgb:155,143,212;--success-rgb:52,211,153;--t3-rgb:111,130,155;
   /* Etwas straffere Radien (Terminal-Optik statt "weich&luxurioes"). */
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
      aktiver Tab, Fokusring, ausgewaehlter Filter. NIE fuer einen Datenwert -
      sonst konkurriert es mit Blau=bullish und die Score-Farbe wird mehrdeutig. */
-  --accent:#22d3ee;--accent-rgb:34,211,238;
+  --accent:#35C7E8;--accent-rgb:53,199,232;
   /* Akzentfarbe je Makro-Kategorie: gibt der Seite Farbe, ohne Blau/Rot zu
      stoeren (nur als schmale Kante/Punkt, nie als Zahlenfarbe). Hues liegen
      absichtlich weg von Blau und Rot. */
   --a-infl:#e0a33c;--a-rate:#a07ce0;--a-lab:#35b3a0;
   --a-grow:#e08a4c;--a-cot:#4bb3d4;--a-risk:#d46ba8;
-  --r:12px;--rs:10px;--rss:6px;
+  --r:12px;--rs:8px;--rss:6px;
   /* Schatten leicht kraeftiger (war rein dekorativ zu schwach, um neben dem
      jetzt sichtbaren Rand noch eigene Tiefe beizutragen). */
-  --shadow-card:0 2px 10px rgba(0,0,0,.40);
-  --shadow-pop:0 10px 34px rgba(0,0,0,.58);
+  --shadow-card:0 1px 3px rgba(0,0,0,.30);
+  --shadow-pop:0 8px 24px rgba(0,0,0,.46);
 }
 /* ── LAYOUT ── */
 /* Kopfzeile komplett in EINER Reihe (Nutzer-Wunsch 2026-08-21 per /goal:
@@ -1502,7 +1502,7 @@ body.res-return-active .rterm-back-pill{display:flex}
    liest sich eine Karte dadurch als erhabene Flaeche statt als blosser
    Farbfleck - der Effekt aus der Nutzer-Vorlage (2026-08-23), aber sehr
    zurueckhaltend dosiert (4.5% Weiss), damit er nicht als Rahmen wirkt. */
-.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:9px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -1568,7 +1568,7 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    Tabellenziffern, Beschriftungen das niedrigste Gewicht in Grossbuchstaben. */
 :root{
   --fs-hero:30px;   /* eine Leitzahl pro Karte, hoechstens */
-  --fs-xl:22px;     /* grosse Kennzahl */
+  --fs-xl:24px;     /* grosse Kennzahl */
   --fs-lg:17px;     /* hervorgehobener Wert */
   --fs-md:15px;     /* KARTENTITEL - bewusst groesser als der Fliesstext */
   --fs-base:13px;   /* Fliesstext, Zeilenname */
@@ -3011,9 +3011,9 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .hdr-livebanner{flex-shrink:0;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;font-family:var(--ff-num)}
 .hlb-name{overflow:hidden;text-overflow:ellipsis}
 .hlb-dot-wrap{width:13px;height:13px;border-radius:50%;border:1.4px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:hlbBlink 1.4s ease-in-out infinite}
+.hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--live);animation:hlbBlink 1.4s ease-in-out infinite}
 @keyframes hlbBlink{0%,100%{opacity:1}50%{opacity:.2}}
-.hlb-lbl{font-size:11px;font-weight:800;letter-spacing:1.3px;color:var(--red)}
+.hlb-lbl{font-size:11px;font-weight:800;letter-spacing:1.3px;color:var(--live)}
 .hlb-clock{font-size:11px;font-weight:700;color:var(--t1)}
 .hlb-sep{color:var(--t3);opacity:.5}
 .hlb-name{font-size:10.5px;font-weight:600;color:var(--t3);letter-spacing:.3px}
@@ -3482,11 +3482,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-426 - Overview der Assets-Seite zeigt jetzt auch die Kursperformance (1D/1W/1M/YTD) als schmale Kennzahlenleiste. Bisher stand dort nur der Score - was der Kurs tatsaechlich gemacht hat, musste man sich auf dem Dashboard suchen. Nutzt dieselbe Rechnung wie die Performance-Ranking-Karte (perfReturn), damit die Zahlen nicht auseinanderlaufen; fehlt die Preisreihe, steht dort \u2013 statt eines geschaetzten Werts."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-427 - Das vom Nutzer vorgegebene Design-System ist jetzt verbindlich umgesetzt: Flaechen (App #070C14, Karte #101B2D, Sidebar #080F1A), Raender als rgba, Text-, Semantik- und Akzentfarben exakt nach Vorgabe, Radien 12/8/6px, flache Schatten statt kraeftiger, Widget-Abstand 14px und Kartenpolster 16px, Zeilenhoehe 1.4 und Hauptkennzahlen auf 24px. Neu: --live als eigener Rotton fuer den blinkenden LIVE-Punkt, damit er nicht als Bias-Signal gelesen wird."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-426</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-427</span>
     </span>
   </div>
   <div class="hdr-r">

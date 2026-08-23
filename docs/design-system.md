@@ -122,34 +122,66 @@ gerade dran gearbeitet wird):
   `.dw` zuerst diese Entscheidung nachschlagen, bevor sie neu aufgerollt
   wird — dieselbe Vorsicht wie beim "Glow"-Punkt oben.
 
-## Farbwelt: dunkles Terminal (Nutzer-Vorlage 2026-08-23)
+## Design-System (Nutzer-Vorgabe 2026-08-23) — verbindlich
 
-Die App steht auf **tiefem Marineblau**, nicht mehr auf Hellgrau. Vorlage war
-ein vom Nutzer geschicktes Finanz-Dashboard; der Seitenaufbau wurde bewusst
-NICHT davon übernommen, nur die Farbwelt und einzelne Element-Ideen.
+Der Nutzer hat ein vollständiges System vorgegeben. **Farben, Abstände und
+Radien werden nicht mehr frei erfunden** — immer diese Werte verwenden.
 
-**Die Grauskala liest sich auf Dunkel umgekehrt — aber die Ordnung bleibt.**
-`--bg2` (Karte) ist die *hellste* Fläche, `--bg0` (Seite) die dunkelste.
-`--bg4/5/6` gehen deshalb **heller** statt dunkler. Der Merksatz dahinter ist
-unverändert: sie bedeuten „ein Schritt weiter weg von der Karte" — auf Hell
-hieß das dunkler, auf Dunkel heller. Jede Verbrauchsstelle, die nur an der
-Reihenfolge hängt (Farbverläufe, Badges, Hover), stimmt dadurch weiter.
+### Flächen
+| Rolle | Wert | Token |
+|---|---|---|
+| App-Hintergrund | `#070C14` | `--bg0` |
+| Sidebar + Header | `#080F1A` | `--chrome-bg` |
+| Primary card | `#101B2D` | `--bg2` |
+| Secondary surface | `#13213A` | `--bg1` / `--bg3` |
+| Inner surface | `#162640` | `--bg4` |
+| Hover | `#1A2D49` | `--bg5` |
 
-**`--accent` (Cyan `#22d3ee`) ist ausschließlich Interaktion.** Aktiver Tab,
-ausgewählter Filter, Fokus. NIE ein Datenwert — Blau ist im ganzen Rest der App
-die Bias-Farbe „bullish", und ein Cyan daneben würde die Zahlenfarbe
-mehrdeutig machen.
+⚠ Dadurch ist `--bg1` **heller** als `--bg2` — in der hellen Palette war es
+umgekehrt. Das ist gewollt: `--bg2` ist die äußere Karte, `--bg1`/`--bg3` sind
+die Flächen *darin* (z. B. `.ranl-card` in `.ranl-wrap`).
 
-**`--a-infl` / `--a-rate` / `--a-lab` / `--a-grow` / `--a-cot` / `--a-risk`** sind
-Akzentfarben je Makro-Kategorie. Nur als schmale Kante oder Punkt einsetzen,
-nie als Zahlenfarbe. Ihre Farbtöne liegen absichtlich weg von Blau und Rot.
+### Ränder
+`--bd` = `rgba(120,160,210,.16)`, `--bd2` = `rgba(120,170,230,.28)`,
+aktiv/Fokus = `--accent` `#35C7E8`.
 
-**Kontrast wird nachgerechnet, nicht geschätzt.** Beim Umstieg musste `--t3`
-angepasst werden, weil die hellere Karte den Kontrast sonst unter AA gedrückt
-hätte. Aktuell gegen die Karte: Text 5.2–10.3:1, Blau 5.6:1, Rot 5.6:1,
-Slate 6.1:1 — alle AA-fest.
+### Text
+`--t0` `#E8F0FA` (Primary) · `--t2` `#9AAEC5` (Secondary) · `--t3` `#6F829B`
+(Muted). `--t1` `#C1D0E0` ist der **einzige interpolierte** Wert — die Vorgabe
+nennt drei Stufen, die App braucht vier.
 
-**`theme-color` (Meta), `manifest.json` und `--chrome-bg` müssen denselben Wert
-tragen.** Drei Literale, eine Farbe. Bei Änderung zusätzlich `CACHE_VERSION`
-in `sw.js` erhöhen, sonst liefert der Service Worker das alte Manifest weiter
-(Cache-First-Zweig).
+### Semantik
+Bullish `--green`/`--blue` `#38BDF8` · Bearish `--red` `#FF6B6B` ·
+Neutral `--amber`/`--star` `#8FA3BC` · Live `--live` `#FF5F6D`.
+
+`--live` ist bewusst ein **anderes** Rot als bearish: der blinkende Punkt in
+der Kopfzeile darf nicht als Bias-Signal gelesen werden.
+
+Cyan/Blau **sparsam** einsetzen. Die Oberfläche bleibt überwiegend dunkelblau.
+`--accent` ist ausschließlich Interaktion (aktiver Tab, ausgewählter Filter,
+Fokus), nie ein Datenwert.
+
+### Abstände — 4px-Raster
+4 / 8 / 12 / 16 / 20 / 24 / 32px. Widget-Abstand `--gap-block` = **14px**,
+Kartenpolster **16px**, größere Sektionsabstände 20–24px.
+**Keine großen Leerflächen** — die Oberfläche bleibt informationsdicht.
+
+### Karten
+Radius `--r` **12px**, kleine Bedienelemente `--rs` **8px** / `--rss` **6px**.
+1px Rand, **keine schweren Schatten** (`--shadow-card` = `0 1px 3px rgba(0,0,0,.30)`).
+Keine „Box in Box"-Verschachtelung.
+
+### Typografie
+Seitentitel 28–32px (`--fs-hero` 30px) · Widget-Titel 16–18px (`--fs-lg` 17px) ·
+Hauptkennzahlen 24–32px (`--fs-xl` 24px) · Fließtext 13–14px (`--fs-base` 13px) ·
+Beschriftungen 11–12px (`--fs-sm`/`--fs-xs`). Zeilenhöhe ~1.4.
+Finanzwerte mit Tabellenziffern (`font-variant-numeric:tabular-nums`).
+
+### Kategorie-Akzente
+`--a-infl` / `--a-rate` / `--a-lab` / `--a-grow` / `--a-cot` / `--a-risk` nur als
+schmale Kante oder Punkt, nie als Zahlenfarbe.
+
+### Drei Literale, eine Farbe
+`theme-color` (Meta), `manifest.json` und `--chrome-bg` müssen denselben Wert
+tragen. Bei Änderung zusätzlich `CACHE_VERSION` in `sw.js` erhöhen, sonst
+liefert der Service Worker das alte Manifest weiter (Cache-First-Zweig).
