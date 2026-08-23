@@ -1,6 +1,18 @@
 {
- "updated": "2026-08-23T08:24:04.918Z",
+ "updated": "2026-08-23T09:22:35.020Z",
  "headlines": [
+  {
+   "t": "Goldman Sachs Says Global Oil Demand Takes Big Hit, Sees Risks to Price Forecast",
+   "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPN3Y1MVB3RUk0OFhpLWdlR1I2YlQwc21jQWRFdnNBakh3SGhVZ2ZPZU1rNVZwNWxBMHpOcHZIRjBNalZNXzMya2xraFN6cDNCYlBKUVp0TDFockxGbThyMmhEWWZJNTdkcUxIb2ttQnZCZk1pNnVrUWgwWWMyLXpxYWlodFdnVUpqZWdaUVFESy1RY1lDLVZ5a2JjS1pKZk5tWEZ5U1BqWl9ydVNPOFRv?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-08-23T07:42:46.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
   {
    "t": "Trump says Canada wants 'benefits' of being US state as Carney says countries in trade war",
    "u": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9OZHM4OFo4OEhvRE5iUmpOSi15U2NqaEQ0OGFWazktZkRIVXVHVkMwbnE4eHBJYXIxNlk2bjlmYkZvaDRzM3R3TnQ1VlBBaF82RUVWSWxOTVUtUQ?oc=5",
@@ -232,20 +244,6 @@
    "tg": []
   },
   {
-   "t": "U.S.-Canada trade talks collapse, massive tariffs to take effect",
-   "u": "https://news.google.com/rss/articles/CBMieEFVX3lxTE83dC01N3QxR0MtazY3UjJEMUlZdjVNV3NqR3NsSGxLczhqSEdhQzJkZXdzcUdUdUxMUXdWU001QXg0ZGdjWFdGXzF0Uk1zSEFMbWttVnFGN0h1U1FLWnZLdkEzYW9aNlg0UWt1NG5PZ2JoZWdNNFRLcQ?oc=5",
-   "s": "Axios",
-   "k": 1,
-   "d": "2026-08-22T21:15:47.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "The Gas Turbine Shortage Just Became AI’s Biggest Constraint",
    "u": "https://finance.yahoo.com/energy/articles/gas-turbine-shortage-just-became-210000180.html",
    "s": "Oilprice.com",
@@ -303,12 +301,19 @@
    "s": "AP News",
    "k": 1,
    "d": "2026-08-22T20:37:00.000Z",
-   "w": 2.5,
+   "w": 4.5,
    "a": [
     "CAD"
    ],
    "tg": [
     "tariff"
+   ],
+   "n": 2,
+   "o": [
+    {
+     "s": "PBS",
+     "u": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNeDhTNEVjU2E1NmRZXzlGd2owZTlBN253eS16MVFMVEI1bkxLX3VlR1hiRFhudFRzSTBXTF8xTS1RVlhnMkVub0ZTcHRWQU82UGxIbGVIYWxDNEU0bG9lemc5ZVpSWUdYYVpIZFNnSjVTclJTdG8yMFhBekZJWTVDSlgxTFNsQ3lUYjZtNm1kbjE2UTFQcjE4SFJoVU1SeGZqRFo4RHVBVjl2NlYyaVd4OC1pQ1g5clFhb0HSAb8BQVVfeXFMT1hVblRvQXVPX1BFSFNPU0pRaWhoTkc3ckhLbHdkUWtrOG9hM3FxU2RndW9fT0xzbURDcFY3ekFJaGlrOTdsY1JlMmFTYUJjem4tc3lKeXZXTHBlTTZiTktRTVhLWDdfbkUxaFl3WG5UcGJmR1I0Q25DU1ZMRDVBTUZXcnN6OXRrdUVYdGpCN3lUek1mQ0RacDIxdENuOW8xUkE5WUdFU1ZVRm0yeWwtVzUzWFhMcTZPZUYyR2NkTnM?oc=5"
+    }
    ]
   },
   {
@@ -984,6 +989,20 @@
    "tg": []
   },
   {
+   "t": "U.S.-Canada trade talks collapse, massive tariffs to take effect",
+   "u": "https://news.google.com/rss/articles/CBMieEFVX3lxTE83dC01N3QxR0MtazY3UjJEMUlZdjVNV3NqR3NsSGxLczhqSEdhQzJkZXdzcUdUdUxMUXdWU001QXg0ZGdjWFdGXzF0Uk1zSEFMbWttVnFGN0h1U1FLWnZLdkEzYW9aNlg0UWt1NG5PZ2JoZWdNNFRLcQ?oc=5",
+   "s": "Axios",
+   "k": 1,
+   "d": "2026-08-22T16:18:27.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
    "t": "Oppenheimer has a blunt Nvidia stock message ahead of earnings",
    "u": "https://finance.yahoo.com/markets/stocks/articles/oppenheimer-blunt-nvidia-stock-message-161700429.html",
    "s": "TheStreet",
@@ -1488,6 +1507,20 @@
    "w": 0,
    "a": [],
    "tg": []
+  },
+  {
+   "t": "As U.S.-Canada trade talks collapse, Carney says retaliatory tariffs will start Sept. 8",
+   "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPTmI2WjhqdHFkMnFON0xaNV9FWW13YUxwZ2h3YXlmdEpBUDItcEhydkVhYWhIOE4yeEdDQ2VQLWQyT0ZzUEdfV05Walh1OFAtU1V0aDFWUjNfSlYzUTdfSHZ6RmdXV0RxYkhCV04xOVBtX1EzTWdXZFF0VVNpaXVZdXR1Ql81Z2tSQXRDNFpnaVVfY2pmRF9BaTlldFYtT2di0gGmAUFVX3lxTE0zYXVjeXpjdXJMZDl3Rl9lUDVNSmU1Z0ZNcmtlSEZxVzRaQzNpdWdIZ0dCT05fTElGMUdtVUdWc2V0YzJGbFNWMk01ZHV4MUtfSmtRZF9HM0JkNFZWa3JUS1pNY3FFb21YZjZCblhGSWxMa1JZY0hRSjJ2b2ZrRXBqY1Y2Ukt3RUFlcnZPRGVlYjc5eGtXai1CMVlEN0RZS2ZKNWF2eHc?oc=5",
+   "s": "CNBC",
+   "k": 1,
+   "d": "2026-08-22T13:57:48.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
   },
   {
    "t": "Rocket Lab Trades at 59 Times Revenue With Neutron Still Unflown",
@@ -1995,6 +2028,26 @@
    "tg": []
   },
   {
+   "t": "A stolen wallet gives thieves access to your identity and finances — here's what to do before the damage spreads",
+   "u": "https://finance.yahoo.com/markets/articles/stolen-wallet-gives-thieves-access-100000938.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-22T10:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Couple finds $5 on the ground and wins $400,000 after buying a lottery ticket – what experts say they should do next",
+   "u": "https://finance.yahoo.com/markets/articles/couple-finds-5-ground-wins-094500405.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-22T09:45:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "Fed holds interest rates steady as inflation hits 3-year high",
    "u": "https://news.google.com/rss/articles/CBMinwFBVV95cUxObE9meWdub2FOS2dVY0pKYUxReEZrZGJhMnIyNG9JTEJpZlhISXFXMlZGZk1kSjRPWlRPejV6aTdXSHZnWWFkeHBvZVEydk9Sa1dLallzVGtIenB2OV9yR2daTDNrb2psQW5uZ2JSYnlOMUxmYzExZ1NBT1V3OGVlaERaZ1pPaVYwTDUyNVJCR1lJUkpoRFhhMzJha09TOVXSAaQBQVVfeXFMUGc0WHV5TzVaUnlTZjZ2Y1h3RHdSSnc0LWZoTzF3Uzk4WFkyQVByY1kxNkNoeDREX3Z6TDRSOUsyMmFvbHBGUWNlWUlXZGxJZFN6RFB5NWREWWtlRXUyMXJyUUlMTXo0cmh4NlpfT1pMUklyOGJLb1F5SDdteTItMzl5NVQybXk5U2ZQWkRGYmhnU0dJZ2hoTEFjb3FLaktRcjZNbDc?oc=5",
    "s": "ABC News",
@@ -2020,6 +2073,40 @@
    "tg": []
   },
   {
+   "t": "Nike Now Yields More Than Coca-Cola. Is the Turnaround Finally Priced In?",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/nike-now-yields-more-coca-083500633.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-22T08:35:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Every S&P 500 Index Fund Owner Holds More Nvidia Than Apple",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/every-p-500-index-fund-083201590.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-22T08:32:01.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "High Roller Technologies Eyes Prediction Markets Launch With Crypto.com Partnership",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/high-roller-technologies-eyes-prediction-070156198.html",
+   "s": "MarketBeat",
+   "k": 2,
+   "d": "2026-08-22T07:01:56.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
    "t": "Why Switzerland Keeps Voting on Everything",
    "u": "https://www.bloomberg.com/news/articles/2026-08-22/why-switzerland-keeps-voting-on-everything",
    "s": "Bloomberg",
@@ -2028,6 +2115,50 @@
    "w": 1,
    "a": [
     "CHF"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Our FirstCash Holdings Stock Pick is up 61%. We Still Like the Growth Story.",
+   "u": "https://www.barrons.com/articles/firstcash-holdings-stock-pick-up-60-percent-still-like-growth-story-9de6ea1a?siteid=yhoof2&yptr=yahoo",
+   "s": "Barrons.com",
+   "k": 2,
+   "d": "2026-08-22T06:09:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Developer Evergrande Is Gone. China’s Property Crisis Isn’t.",
+   "u": "https://www.barrons.com/articles/developer-evergrande-china-property-crisis-cc9920ea?siteid=yhoof2&yptr=yahoo",
+   "s": "Barrons.com",
+   "k": 2,
+   "d": "2026-08-22T06:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "OceanaGold to Buy Ausgold for $549M, Adding Katanning Gold Project",
+   "u": "https://finance.yahoo.com/markets/commodities/articles/oceanagold-buy-ausgold-549m-adding-050152142.html",
+   "s": "MarketBeat",
+   "k": 2,
+   "d": "2026-08-22T05:01:52.000Z",
+   "w": 1,
+   "a": [
+    "GOLD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "The AI Spending Boom Is Outrunning Wall Street Estimates",
+   "u": "https://www.barrons.com/articles/ai-spending-capex-vertiv-western-digital-coreweave-arista-8c3cf5b3?siteid=yhoof2&yptr=yahoo",
+   "s": "Barrons.com",
+   "k": 2,
+   "d": "2026-08-22T05:00:00.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
    ],
    "tg": []
   },
@@ -2110,37 +2241,6 @@
    "tg": []
   },
   {
-   "t": "Google Is Getting Paid in Marvell Stock Warrants for Buying Marvell's Chips",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/google-getting-paid-marvell-stock-034701817.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-22T03:47:01.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "US and Canada fall deeper into a trade war with new tariffs as talks collapse and blame is spread",
-   "u": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPTFZQdTRIMXVabHVfUTNldG4yeGlBSWlHNTFsNUt4WktQeHBuT1RzUUxVT3NZMTQ4ampFeFMtQVhVUDN4bXZXVWlzWXY5LTBEVTI1d29obi03ZGd2dTB6WG0zRGtsa3llaHhtVlVnRjFKYW4tOGpubG1qSWp6NWZfNG5WUVlpeGdjc0s0ck5GM0F3eWs?oc=5",
-   "s": "AP News",
-   "k": 1,
-   "d": "2026-08-22T03:43:36.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "The New York Times",
-     "u": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNMXJicWNvNlVhUFZsYjd3QXBXbnQ1MzRGYXNCM2tkUnhLWFVaNnVxYjR4dThzMEpyUVQ3SjJOcUNKYm8xR0NGMG80d3gzdW95OUxSb3dZXzI2NWpoZEpYamxIQ2dQajFvMi1udTNjYmpVQVIxWkhGazRrYy1tTTQ1c3hmVDBoVHNmbXd3QmZ0TXpIeEZ6dUpjZm1n?oc=5"
-    }
-   ],
-   "w": 4.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "U.S. Says Canada Has Declined a Trade Deal to Stave Off Tariffs",
    "u": "https://news.google.com/rss/articles/CBMilgFBVV95cUxQZmZWeHppU0pMR2NiSEVtVmNWemRsMXAybUs4b2lCVHFYMXVaTWZ5UkstdktFSkhma0NsRTB1QWdUdWVETmNRRGo1LWRsWTFYZ2N0UFJLVzFiUnpkeFJXSDVZaUxlM3FWOFU1MGJmaGxHaW0wcnFhdm9jczF5M3djUnQwOS1RZWFHUTE5M0RtMlRQLWUxM0E?oc=5",
    "s": "The New York Times",
@@ -2153,16 +2253,6 @@
    "tg": [
     "tariff"
    ]
-  },
-  {
-   "t": "Which Aerospace & Defense ETF Is a Better Buy: Big Bets or Broad Exposure?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/aerospace-defense-etf-better-buy-033201625.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-22T03:32:01.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Nikki Haley Warns Social Security Could 'Go Bankrupt' in 5 Years as US Debt Surges Past $40 Trillion: 'Past a Crisis Situation'",
@@ -3253,18 +3343,6 @@
    "w": 1,
    "a": [
     "BTC"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Goldman Sachs Says Global Oil Demand Takes Big Hit, Sees Risks to Price Forecast",
-   "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPN3Y1MVB3RUk0OFhpLWdlR1I2YlQwc21jQWRFdnNBakh3SGhVZ2ZPZU1rNVZwNWxBMHpOcHZIRjBNalZNXzMya2xraFN6cDNCYlBKUVp0TDFockxGbThyMmhEWWZJNTdkcUxIb2ttQnZCZk1pNnVrUWgwWWMyLXpxYWlodFdnVUpqZWdaUVFESy1RY1lDLVZ5a2JjS1pKZk5tWEZ5U1BqWl9ydVNPOFRv?oc=5",
-   "s": "EnergyNow.com",
-   "k": 1,
-   "d": "2026-08-21T19:41:21.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
    ],
    "tg": []
   },
@@ -4386,8 +4464,12 @@
    "n": 3,
    "o": [
     {
-     "s": "CNBC",
-     "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPTmI2WjhqdHFkMnFON0xaNV9FWW13YUxwZ2h3YXlmdEpBUDItcEhydkVhYWhIOE4yeEdDQ2VQLWQyT0ZzUEdfV05Walh1OFAtU1V0aDFWUjNfSlYzUTdfSHZ6RmdXV0RxYkhCV04xOVBtX1EzTWdXZFF0VVNpaXVZdXR1Ql81Z2tSQXRDNFpnaVVfY2pmRF9BaTlldFYtT2di0gGmAUFVX3lxTE0zYXVjeXpjdXJMZDl3Rl9lUDVNSmU1Z0ZNcmtlSEZxVzRaQzNpdWdIZ0dCT05fTElGMUdtVUdWc2V0YzJGbFNWMk01ZHV4MUtfSmtRZF9HM0JkNFZWa3JUS1pNY3FFb21YZjZCblhGSWxMa1JZY0hRSjJ2b2ZrRXBqY1Y2Ukt3RUFlcnZPRGVlYjc5eGtXai1CMVlEN0RZS2ZKNWF2eHc?oc=5"
+     "s": "The New York Times",
+     "u": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNMXJicWNvNlVhUFZsYjd3QXBXbnQ1MzRGYXNCM2tkUnhLWFVaNnVxYjR4dThzMEpyUVQ3SjJOcUNKYm8xR0NGMG80d3gzdW95OUxSb3dZXzI2NWpoZEpYamxIQ2dQajFvMi1udTNjYmpVQVIxWkhGazRrYy1tTTQ1c3hmVDBoVHNmbXd3QmZ0TXpIeEZ6dUpjZm1n?oc=5"
+    },
+    {
+     "s": "AP News",
+     "u": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPTFZQdTRIMXVabHVfUTNldG4yeGlBSWlHNTFsNUt4WktQeHBuT1RzUUxVT3NZMTQ4ampFeFMtQVhVUDN4bXZXVWlzWXY5LTBEVTI1d29obi03ZGd2dTB6WG0zRGtsa3llaHhtVlVnRjFKYW4tOGpubG1qSWp6NWZfNG5WUVlpeGdjc0s0ck5GM0F3eWs?oc=5"
     }
    ],
    "w": 6.5,
@@ -9434,107 +9516,6 @@
    "tg": []
   },
   {
-   "t": "After Moderna stock surge of 177% on cancer drug breakthrough, here's what Wall Street thinks happens next",
-   "u": "https://finance.yahoo.com/healthcare/article/after-moderna-stock-surge-of-177-on-cancer-drug-breakthrough-heres-what-wall-street-thinks-happens-next-091040601.html",
-   "s": "Yahoo Finance",
-   "k": 2,
-   "d": "2026-08-20T09:10:40.000Z",
-   "w": 1,
-   "a": [
-    "SP500"
-   ],
-   "tg": []
-  },
-  {
-   "t": "China Sentences Evergrande Founder Hui to Life in Prison",
-   "u": "https://www.bloomberg.com/news/videos/2026-08-20/china-sentences-evergrande-founder-hui-to-life-video",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-20T09:08:23.000Z",
-   "n": 2,
-   "w": 2,
-   "a": [],
-   "tg": [],
-   "o": [
-    {
-     "s": "Reuters",
-     "u": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOdnR1a0dyTTViSTRJLWQyWnN0dkhwTzhmeko0dE01RUgxMkVuVmZCVzhjUlIyNlZXcUxWRUFvZFVOZk9LYVctT1FwUnh1UEE3QzB6OFRiT0g0YnI3aFpGaVpLaTlQaDJlMURRYlFuTjFmYThXSUFQUEV3SkV4SkFCRkJPNTBfOXh0MEJRVUh4LXRSanZMRjVnY0ZpTm94M0dBSEc4TFlIOUVCZnZTb2VERWZiaw?oc=5"
-    }
-   ]
-  },
-  {
-   "t": "Bank of America sends message on Capital One stock",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/bank-america-sends-message-capital-090300253.html",
-   "s": "TheStreet",
-   "k": 2,
-   "d": "2026-08-20T09:03:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "We're 63 With $1.5 Million in IRAs and $4,500 Monthly Social Security. How Much Can We Spend in Retirement?",
-   "u": "https://finance.yahoo.com/news/were-63-1-5-million-130000528.html",
-   "s": "SmartAsset",
-   "k": 2,
-   "d": "2026-08-20T09:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "The bond market is signaling trouble ahead. This is why you should pay attention",
-   "u": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPYVU5NU1oMWNLU0YtVDgtUU41QjBOYjdISkZvSnlFU0dZVGdmZXJXT25DWXlXMHdGMVpIUldKZld0TXVzS1dyS2RibV9yTjdfWEFVZHpJaWxOdmxfOFBRS01BWVRucnBVeVEtaDBjWTN4Qm9ZR095M0t3cWdPTC1mMS00Y2FVN0VXOU9v?oc=5",
-   "s": "NPR",
-   "k": 1,
-   "d": "2026-08-20T09:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Bitcoin Roars Past $70,000 as Yields Sink, Trump Sparks Optimism",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/bitcoin-roars-past-70000-as-yields-sink-trump-sparks-optimism-083507532.html",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-20T08:35:07.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
-   "t": "JD Sports Shares Tumble After Profit Guidance Cut",
-   "u": "https://www.wsj.com/business/retail/jd-sports-shares-tumble-after-profit-guidance-cut-bf9b8cbd?siteid=yhoof2&yptr=yahoo",
-   "s": "The Wall Street Journal",
-   "k": 2,
-   "d": "2026-08-20T08:35:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Panoro to acquire stake in Côte d’Ivoire’s Block CI-27 from DNO",
-   "u": "https://finance.yahoo.com/energy/articles/panoro-acquire-stake-c-te-083205141.html",
-   "s": "Offshore Technology",
-   "k": 2,
-   "d": "2026-08-20T08:32:05.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Maya Protocol Hacked for $1.7M as CACAO Crashes 89% and Trading Is Halted",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/maya-protocol-hacked-1-7m-082515109.html",
-   "s": "CCN",
-   "k": 2,
-   "d": "2026-08-20T08:25:15.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Gold steadies as inflation concerns balance hopes of lower real rates",
    "u": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOLU5SbW83YlNIMHBDMFcyVktfRVNKTEFMYWg2VDc3Wkk1eHU4dHA2WmRYVGdaamE3S0tfYXhjQmF4N1pFUms1ZTdILTRETHhNVlJraUdrNkZZVnNNTXNoSm9pZkptSjBFRXpTWDE4SlN3WmFhY2xpUm5iVnd4NkIzQmltVFFiWWVzN1VTbEtLUE94TThSWVdhWEoxRksxLTVjMVRpSdIBqgFBVV95cUxQanVEcEVBbFc1TjJlQTBWNkxBY1RhdHI4REVmeUNaRGx0dFRxMWYydHJYa0NYcFhSYTNULUdYRUY0NklNS3RUTGw5R3Z3bTFPa2NlTHprb0JoZ29SZXBrS2dvSENxVXlfUFpLVm9WNGJDWV83a2VRdzQ1bWZ1ZFNhbk1jcFYyaTh1dE45d2J4dlc2UDVBd0xjYm0wUjdOVXg2UkF2U05QMlllZw?oc=5",
    "s": "CNBC",
@@ -9896,6 +9877,12 @@
    ],
    "tg": [
     "inflation"
+   ],
+   "o": [
+    {
+     "s": "The Guardian",
+     "u": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPRGE5RGFuOHBlV1NBOER4NFJnN2NkVWFMYTVOYXQ2YjFjNmlGWUxRTFpZbGRrVDJ6cVBMQ1VxX2RCcUpDVzZfbVk1ME10RGJHeThldTNDYUpGQ1pnd1gyTFdpZVRDY296Z3F6NnBXbjROUDRkdUVKbmFEXzBYLTFDQjl2cnNFSnUxd1NkN3B2LTlvVzZWNDJTMQ?oc=5"
+    }
    ]
   },
   {
@@ -10355,20 +10342,6 @@
    ]
   },
   {
-   "t": "Canada braces for 50 percent US tariffs amid last-minute talks",
-   "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxONW9JWllXSHFsckk0bGRvdTNVWnBBdE5XdWk4TTNTX29RcmQzZHJNMERRRGRkUE50eHFhUGdCSHFNLUFKOXpaZzBublNGamo2eXVDU0pueGJZU2NiNnk1QlFNRXFzd3d1Zm92V2lRMkRnQWs5djg1RlA3UE1RUkx2c2xwRjZNdw?oc=5",
-   "s": "The Hill",
-   "k": 1,
-   "d": "2026-08-18T21:32:00.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "Stock Market Today, Aug. 18: CoreWeave Falls as Debt-Financing Concerns and Capital Spending Pressures Rise With Interest Rates",
    "u": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-aug-18-212429924.html",
    "s": "Motley Fool",
@@ -10478,6 +10451,27 @@
    ],
    "tg": [
     "inflation"
+   ]
+  },
+  {
+   "t": "U.S., Canada in last-minute talks to head off steep new U.S. tariffs",
+   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQRlZBMlQyUTFIcTBzX2VqS1VuangwQVpiS0FfNTdmUTRjZ08zc2hOMWotS0hCSzVFTzM2RTNYXzdjTGwwbWJsWm5pb2JtZnZIOU1vbHdnOHEwVHBBeC1OcDBTTTNrS0F5amRBRmdkbWF1RFlheGhfNm1fMEhjUXlRdFdwQ0k?oc=5",
+   "s": "CBS News",
+   "k": 1,
+   "d": "2026-08-18T11:28:00.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "The Hill",
+     "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxONW9JWllXSHFsckk0bGRvdTNVWnBBdE5XdWk4TTNTX29RcmQzZHJNMERRRGRkUE50eHFhUGdCSHFNLUFKOXpaZzBublNGamo2eXVDU0pueGJZU2NiNnk1QlFNRXFzd3d1Zm92V2lRMkRnQWs5djg1RlA3UE1RUkx2c2xwRjZNdw?oc=5"
+    }
+   ],
+   "w": 4.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
    ]
   },
   {
@@ -11148,7 +11142,6 @@
   "SNB's Tschudin says",
   "Scripps News",
   "Seeking Alpha",
-  "SmartAsset",
   "South China Morning Post",
   "Spectrum News",
   "Supply Chain Dive",
@@ -11184,7 +11177,7 @@
  ],
  "topic": {
   "label": "Canada · Tariffs · Trade",
-  "n": 23,
-  "total": 59
+  "n": 24,
+  "total": 60
  }
 }
