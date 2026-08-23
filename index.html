@@ -1086,7 +1086,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 body.res-return-active .rterm-back-pill{display:flex}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
-.ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
+.ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:var(--gap-block)}
 .ranl-title{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:10px}
 .ranl-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .ranl-quickbtn{display:flex;align-items:center;gap:5px;font-size:11.5px;padding:6px 10px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer}
@@ -3440,11 +3440,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-422 - Nachbesserung zu 421: die helle Systemleiste oben (Uhrzeit/WLAN/Akku) in der Home-Screen-App ist jetzt wirklich dunkel. 421 hatte den falschen Regler erwischt (status-bar-style black-translucent + eingefaerbte Safe-Area) - Screenshots davor und danach waren pixelgleich #d7dbe0. Nachgemessen: genau der theme-color-Wert. Der steht jetzt auf --chrome-bg (#2b3038), also der Farbe von Kopfzeile und Sidebar; manifest.json (stand auf einem dritten Wert, #0d1117) angeglichen, die wirkungslosen 421-Aenderungen wieder entfernt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-423 - Assets-Detailseite: neue &quot;Bias &amp; Notes&quot;-Karte pro Asset - Quick Links zu 7 Insights-Unterseiten (Seasonality/Trends/COT/Sentiment/Data/Rate Probabilities/News) mit automatisch vorgewaehltem Asset, plus aufklappbare eigene Bias+Notizen je Rubrik-Kategorie (unabhaengig vom automatischen Score). Eine rote Zurueck-Pille auf der Zielseite fuehrt direkt wieder zu genau diesem Asset zurueck. Nutzt dieselben Daten/Funktionen wie das bestehende Research-Terminal (das unveraendert bleibt) - keine zweite Speicherform."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-422</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-423</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4505,7 +4505,11 @@ const ICONS={
   // Research-Terminal (Nutzer-Wunsch 2026-08-04): Ein-/Ausklapp-Pfeil fuer
   // die Sidebar (kein Emoji) - dieselbe Pfeilspitze wird per CSS-Klasse
   // gespiegelt, statt ein zweites chevronLeft-Icon zu pflegen.
-  chevronRight:'<polyline points="9 18 15 12 9 6"/>'
+  chevronRight:'<polyline points="9 18 15 12 9 6"/>',
+  // Fuer die Assets-Quick-Links (Nutzer-Wunsch 2026-08-23) - identischer Pfad
+  // wie TAB_ICONS.news, nur hier auch ueber icn() aufrufbar (die
+  // Tab-Leiste nutzt einen eigenen, nicht mit ICONS geteilten Renderpfad).
+  news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>'
 };
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
@@ -8697,6 +8701,11 @@ let researchTreeOpen={},researchTreeSel=null;
 // unuebersichtlich). resTreeCollapsed klappt die Sidebar auf einen
 // schmalen Pfeil-Streifen ein.
 let researchFocusAsset=null,researchTopOpen=null,resTreeCollapsed=false,_resReturnActive=false;
+// Ziel der roten Zurueck-Pille (Nutzer-Wunsch 2026-08-23): null = zurueck ins
+// Research-Terminal (alter, alleiniger Fall), sonst eine Asset-ID = zurueck
+// auf die Assets-Detailseite dieses Assets (neuer Quick-Links-Weg von dort,
+// siehe assetQuickGo). Rein transienter Navigations-Zustand, kein Sync noetig.
+let _quickReturnAssetId=null;
 function researchToggleNode(id){researchTreeOpen[id]=!researchTreeOpen[id];renderResearch();}
 function researchSelectLeaf(id){researchTreeSel=id;renderResearch();}
 // Klick auf einen Asset-Ordner: klappt wie jeder andere Knoten auf/zu UND
@@ -10186,6 +10195,7 @@ function goToRubCard(ri){
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
   return`${renderOverviewCard(rubs)}
+  ${assetAnalysisHtml(c)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   ${newsAssetSectionHtml(c)}
   <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;}
@@ -14166,15 +14176,45 @@ function researchShortcutGo(tabId){
     else if(tabId==='data')setDataAsset(id);
     else if(tabId==='carry'){const q=document.getElementById('carrySearch');if(q)q.value=id;}
   }
-  _resReturnActive=true;
+  _resReturnActive=true;_quickReturnAssetId=null;
   document.body.classList.add('res-return-active');
+  setBackPillTitle('Back to the Research Terminal');
   showTab(tabId);
   if(tabId==='carry'){const q=document.getElementById('carrySearch');if(q&&id){q.value=id;renderCarry();}}
 }
+// Gemeinsamer Zurueck-Handler der roten Pille (Nutzer-Wunsch 2026-08-23):
+// je nachdem, von wo der Quick-Link ausgeloest wurde, geht es zurueck ins
+// Research-Terminal (_quickReturnAssetId leer, alter Weg) oder direkt auf
+// die Assets-Detailseite des jeweiligen Assets (assetQuickGo).
 function researchBackFromShortcut(){
   _resReturnActive=false;
   document.body.classList.remove('res-return-active');
-  showTab('notes');
+  if(_quickReturnAssetId){const id=_quickReturnAssetId;_quickReturnAssetId=null;gotoSym(id);}
+  else showTab('notes');
+}
+function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(el)el.title=t;}
+// Assets-Detailseite (Nutzer-Wunsch 2026-08-23): dieselben Insights-
+// Unterseiten-Shortcuts wie im Research-Terminal (researchShortcutGo),
+// aber vom aktuell offenen Asset aus statt von einem separaten Fokus-
+// Asset - und die Zurueck-Pille fuehrt zu GENAU diesem Asset zurueck statt
+// ins Research-Terminal.
+const ASSET_QUICK_LINKS=[
+  ['seas','clock','Seasonality'],['trends','trendUp','Trends'],['cot','bars','COT'],
+  ['sent','zap','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
+  ['news','news','News'],
+];
+function assetQuickGo(tabId){
+  const c=getSym();if(!c)return;
+  const id=c.id;
+  if(tabId==='seas')setSeasAsset(id);
+  else if(tabId==='trends')setTrendsFilter(id);
+  else if(tabId==='cot')pickCotFilter(id);
+  else if(tabId==='data')setDataAsset(id);
+  else if(tabId==='news')setNewsAsset(id);
+  _resReturnActive=true;_quickReturnAssetId=id;
+  document.body.classList.add('res-return-active');
+  setBackPillTitle(`Back to ${c.name}`);
+  showTab(tabId);
 }
 // FX bekommt die Landesflagge (FX_FLAG, wie im Asset-Seitentitel) - fuer
 // Non-FX (Indices/Commodities/Crypto/Stocks) gibt es dort bewusst kein
@@ -14264,7 +14304,11 @@ function researchAnalysisFor(assetId,rubName){
 }
 function researchToggleAnOpen(assetId,rubName){
   researchAnOpen[researchAnKey(assetId,rubName)]=!researchAnOpen[researchAnKey(assetId,rubName)];
-  renderResearch();
+  // Dieselben Karten (researchAnalysis-Daten) erscheinen jetzt an zwei
+  // Stellen - Research-Terminal UND Assets-Detailseite (Nutzer-Wunsch
+  // 2026-08-23, siehe assetAnalysisHtml) - neu rendern, wo man gerade ist,
+  // statt hart auf renderResearch() zu verdrahten.
+  if(curPage==='cur')renderDetail();else renderResearch();
 }
 function researchSetAnBias(assetId,rubName,bias){
   pushU();
@@ -14272,7 +14316,8 @@ function researchSetAnBias(assetId,rubName,bias){
   if(!researchAnalysis[assetId][rubName])researchAnalysis[assetId][rubName]={bias:null,text:''};
   const cur=researchAnalysis[assetId][rubName];
   cur.bias=cur.bias===bias?null:bias; // erneuter Klick auf denselben Wert setzt zurueck auf "nicht eingeordnet"
-  save();renderResearch();
+  save();
+  if(curPage==='cur')renderDetail();else renderResearch();
 }
 function researchSetAnText(assetId,rubName,text){
   if(!researchAnalysis[assetId])researchAnalysis[assetId]={};
@@ -14293,25 +14338,49 @@ function researchAnalysisPanelHtml(assetId){
   ];
   const quickHtml=`<div class="ranl-quick">${quick.map(([ic,lbl,fn])=>`<button class="ranl-quickbtn" onclick="${fn}">${icn(ic,13)} ${escH(lbl)}</button>`).join('')}</div>`;
   const rubs=sym.rubrics||[];
-  const cards=rubs.map(rub=>{
-    const a=researchAnalysisFor(assetId,rub.name);
-    const open=!!researchAnOpen[researchAnKey(assetId,rub.name)];
-    const sc=rubScore(rub);
-    const appBco=BC[rub.bias];
-    return`<div class="ranl-card">
-      <div class="ranl-hd" onclick="researchToggleAnOpen('${escJH(assetId)}','${escJH(rub.name)}')">
-        <button class="ranl-tog">${open?'▾':'▸'}</button>
-        <span class="ranl-nm">${escH(rub.name)}</span>
-        <span class="ranl-appscore" style="color:${appBco}" title="App score (automatic)">${sc>0?'+':''}${sc} ${BL[rub.bias]}</span>
-        <span class="ranl-bias" onclick="event.stopPropagation()">
-          ${[['bull','▲'],['neu','◆'],['bear','▼']].map(([b,ic])=>`<button class="ranl-bbtn ${b}${a.bias===b?' on':''}" onclick="researchSetAnBias('${escJH(assetId)}','${escJH(rub.name)}','${b}')" title="Your own view: ${b}">${ic}</button>`).join('')}
-        </span>
-      </div>
-      ${open?`<div class="ranl-body"><textarea class="ranl-tx" placeholder="Your own arguments..." oninput="ar(this);researchSetAnText('${escJH(assetId)}','${escJH(rub.name)}',this.value)" onblur="save()">${escH(a.text||'')}</textarea></div>`:''}
-    </div>`;
-  }).join('')||`<div class="dw-empty">No categories on this asset yet.</div>`;
+  const cards=rubs.map(rub=>researchAnCardHtml(assetId,rub)).join('')||`<div class="dw-empty">No categories on this asset yet.</div>`;
   return`<div class="ranl-wrap">
     <div class="ranl-title">${escH(sym.name)} — Analysis</div>
+    ${quickHtml}
+    <div class="ranl-cards">${cards}</div>
+  </div>`;
+}
+// Eine einzelne aufklappbare Bias+Notizen-Karte (Nutzer-Wunsch 2026-08-23:
+// aus researchAnalysisPanelHtml herausgezogen, damit sie sich die
+// Assets-Detailseite (assetAnalysisHtml) und das Research-Terminal ohne
+// Doppelpflege teilen - identische Daten (researchAnalysis), identisches
+// Markup, nur die umgebende Karte/Quick-Links unterscheiden sich.
+function researchAnCardHtml(assetId,rub){
+  const a=researchAnalysisFor(assetId,rub.name);
+  const open=!!researchAnOpen[researchAnKey(assetId,rub.name)];
+  const sc=rubScore(rub);
+  const appBco=BC[rub.bias];
+  return`<div class="ranl-card">
+    <div class="ranl-hd" onclick="researchToggleAnOpen('${escJH(assetId)}','${escJH(rub.name)}')">
+      <button class="ranl-tog">${open?'▾':'▸'}</button>
+      <span class="ranl-nm">${escH(rub.name)}</span>
+      <span class="ranl-appscore" style="color:${appBco}" title="App score (automatic)">${sc>0?'+':''}${sc} ${BL[rub.bias]}</span>
+      <span class="ranl-bias" onclick="event.stopPropagation()">
+        ${[['bull','▲'],['neu','◆'],['bear','▼']].map(([b,ic])=>`<button class="ranl-bbtn ${b}${a.bias===b?' on':''}" onclick="researchSetAnBias('${escJH(assetId)}','${escJH(rub.name)}','${b}')" title="Your own view: ${b}">${ic}</button>`).join('')}
+      </span>
+    </div>
+    ${open?`<div class="ranl-body"><textarea class="ranl-tx" placeholder="Your own arguments..." oninput="ar(this);researchSetAnText('${escJH(assetId)}','${escJH(rub.name)}',this.value)" onblur="save()">${escH(a.text||'')}</textarea></div>`:''}
+  </div>`;
+}
+// Assets-Detailseite: Quick Links zu den Insights-Unterseiten (mit
+// automatisch vorgewaehltem Asset, siehe assetQuickGo) + dieselben
+// Bias+Notizen-Karten wie im Research-Terminal, direkt auf der Assets-Seite
+// (Nutzer-Wunsch 2026-08-23: "eine Stelle statt verteilt auf Insights").
+// Bewusst kein eigener Titel wie "AssetName — Analysis" (die Assets-Seite
+// zeigt den Namen schon prominent im Kopf) und nur die 7 Kategorien, die
+// sich sinnvoll auf ein einzelnes Asset vorfiltern lassen (Compare/Matrix/
+// Edge/Carry bleiben aussen vor - eher Werkzeuge als Analyse pro Asset).
+function assetAnalysisHtml(c){
+  const quickHtml=`<div class="ranl-quick">${ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>`<button class="ranl-quickbtn" onclick="assetQuickGo('${tab}')">${icn(ic,13)} ${escH(lbl)}</button>`).join('')}</div>`;
+  const rubs=c.rubrics||[];
+  const cards=rubs.map(rub=>researchAnCardHtml(c.id,rub)).join('')||`<div class="dw-empty">No categories on this asset yet.</div>`;
+  return`<div class="ranl-wrap">
+    <div class="ranl-title">Bias &amp; Notes</div>
     ${quickHtml}
     <div class="ranl-cards">${cards}</div>
   </div>`;
@@ -21334,7 +21403,11 @@ function showTab(tab,btn,fxMode){
   // verschwindet automatisch, sobald der Nutzer tatsaechlich zurueck im
   // Research-Terminal ankommt - egal ob ueber die Back-Pille selbst oder
   // ueber die normale Tab-Leiste.
-  if(tab==='notes'&&_resReturnActive){_resReturnActive=false;document.body.classList.remove('res-return-active');}
+  if(tab==='notes'&&_resReturnActive&&!_quickReturnAssetId){_resReturnActive=false;document.body.classList.remove('res-return-active');}
+  // Gleiches fuer den Assets-Rueckweg (assetQuickGo): sobald man - egal wie,
+  // auch per normaler Tab-Leiste statt der Pille - wieder auf 'cur' landet,
+  // hat die Pille ihren Zweck erfuellt.
+  if(tab==='cur'&&_resReturnActive&&_quickReturnAssetId){_resReturnActive=false;_quickReturnAssetId=null;document.body.classList.remove('res-return-active');}
   if(tab==='dash'){_globeLon=GLOBE_HOME_LON;renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='cmp')renderCompare();
