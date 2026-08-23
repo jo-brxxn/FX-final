@@ -790,27 +790,43 @@ zuverlaessig (deckt sich mit der bereits dokumentierten Erfahrung bei der
 urspruenglichen Klickregel) - fuer diese Klasse Bug reicht nur ein manuell
 per `dispatchEvent` nachgebauter, exakter Ereignis-Zeitplan.
 
-## Assets-Detailseite: vier Sektionen (Nutzer-Ziel 2026-08-23)
+## Assets-Detailseite: eine Spalte + Schnellzugriffszeile (2026-08-23)
 
-Die Seite lag vorher als eine einzige Spalte vor — gemessen 2654px bei 950px
-Viewport, davon 1553px allein die sechs Rubrik-Detailkarten. Jetzt vier
-Sektionen über `curSub`: **Overview / Macro / News / Notes**.
+Ein zwischenzeitlicher Umbau auf vier Sektionen (Overview/Macro/News/Notes)
+wurde auf Nutzer-Wunsch **zurückgenommen**: die Seite zeigt wieder alle Karten
+in *einer* Spalte. Wer das erneut anfasst, sollte das wissen — die
+Sektions-Aufteilung war bereits da und ist bewusst wieder raus.
 
-- **Overview** — Kursperformance (1D/1W/1M/YTD), die sechs Score-Kacheln und
-  die eigene Bias-Einordnung. Passt ohne Scrollen auf einen Bildschirm.
-- **Macro** — die Rubrik-Detailkarten mit den Indikator-Tabellen.
-- **News** / **Notes** — je die bestehende Ansicht.
+Reihenfolge in `renderSpecTab`:
+Schnellzugriffszeile → Kursperformance → Score-Kacheln → Bias & Notes →
+Rubrik-Detailkarten → News → „Add Rubric".
 
-**Die Schnellzugriffe stehen in der Sektionsleiste, nicht in einer Karte.**
-`ASSET_QUICK_LINKS` (7 Analyseseiten, jeweils mit vorgewähltem Asset über
-`assetQuickGo`) sind dadurch in *jeder* Sektion erreichbar. Bewusst nur an
-dieser einen Stelle — sonst gäbe es zwei Wege zum selben Ziel.
+### Die Schnellzugriffszeile (`assetQuickRowHtml`)
+Links `ASSET_QUICK_LINKS` (7 Analyseseiten, jeweils mit vorgewähltem Asset über
+`assetQuickGo`), rechts der **Notes**-Umschalter. Die Zeile steht in *beiden*
+Ansichten, damit die Sprünge überall erreichbar sind. Bewusst nur an dieser
+einen Stelle — nicht zusätzlich in der Bias-&-Notes-Karte.
 
-Von der Zielseite führt die rote Zurück-Pille direkt zu genau diesem Asset
-zurück (`_quickReturnAssetId`); ohne gesetzte Asset-ID geht sie wie bisher ins
-Research-Terminal.
+Von der Zielseite führt die rote Zurück-Pille zu genau diesem Asset zurück
+(`_quickReturnAssetId`); ohne gesetzte Asset-ID geht sie ins Research-Terminal.
 
-**Kursperformance kommt aus `perfReturn()`** — derselben Rechnung wie die
-Performance-Ranking-Karte, damit dieselbe Zahl nicht an zwei Stellen
-unterschiedlich herauskommt. Fehlt die Reihe, liefert sie `null` und die Zelle
-zeigt „–" statt eines hochgerechneten Werts.
+### Notes-Ansicht (`curSub === 'notes'`)
+Ordner links, Notizen rechts — **dieselbe Datenbasis und derselbe Renderer wie
+im Research-Terminal** (`researchNotesFolderOptions` / `researchNotesPanelHtml`),
+kein zweiter Nachbau, keine zweite Speicherform. Ordner hängen unter der
+Wurzel `asset:<id>:gen`.
+
+⚠ Darunter steht weiterhin die ältere Bullish/Bearish-Tabelle
+(`renderNotesSubTab`). Sie trägt Nutzerinhalte und wäre sonst nicht mehr
+erreichbar — nicht „aufräumen", ohne vorher zu fragen.
+
+⚠ `rerenderNotesHost()` statt `renderResearch()`: die Ordner- und
+Notizfunktionen werden jetzt von *zwei* Seiten benutzt. Ein fester
+`renderResearch()`-Aufruf würde von der Assets-Seite auf die Research-Seite
+springen. Bei neuen Notiz-Aktionen ebenfalls `rerenderNotesHost()` verwenden.
+
+### Bekannte Eigenheit beim Testen
+Der erste Klick im Inhaltsbereich direkt nach einem Seitenwechsel wird vom
+Einklapp-Schutz der Navigationsleiste (`ebenEingeklappt`) absichtlich
+geschluckt. In Playwright-Tests deshalb zweimal klicken — sonst sieht es wie
+ein Fehler aus, ist aber gewolltes Verhalten.
