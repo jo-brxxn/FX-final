@@ -2455,6 +2455,17 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .aaii-tbl td{padding:3px 6px;border-bottom:1px solid var(--bd)}
 .aaii-tbl td:first-child{color:var(--t1);font-weight:600;white-space:nowrap;width:130px}
 .aaii-note{color:var(--t3);font-size:11px;line-height:1.5;margin-top:8px}
+.histp-range{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.histp-rbtn{border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);font:700 11.5px/1 var(--ff-text);padding:7px 13px;cursor:pointer}
+.histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+@media(hover:hover){.histp-rbtn:hover{border-color:var(--accent);color:var(--accent)}.histp-rbtn.on:hover{color:#FFFFFF}}
+.histp-week{margin-bottom:14px}
+.histp-weekhdr{display:flex;align-items:center;gap:9px;padding:6px 2px 7px;border-bottom:1px solid var(--bd2);margin-bottom:7px}
+.histp-weeklbl{font:800 12px/1 var(--ff-text);color:var(--t1);letter-spacing:.02em}
+.histp-weeknet{font:800 12px/1 var(--ff-num)}
+.histp-weekcnt{margin-left:auto;font:600 10.5px/1 var(--ff-text);color:var(--t3)}
+.histp-weekempty{font:400 11.5px/1.4 var(--ff-text);color:var(--t3);padding:4px 2px 8px}
+.histp-delta{font:800 11.5px/1 var(--ff-num);margin-left:auto;margin-right:7px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
@@ -3531,11 +3542,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-430 - Assets aufgeraeumt: Karte Bias-und-Notes, die Meta-Felder Last update/Data quality/Source, beide Kursanzeigen (Ticker-Chip am Namen UND die PRICE-Zeile) und der Notes-Knopf neben den Einstellungen sind raus; der Einstellungs-Dialog oeffnet ohne Animation. Bias-Farben deutlich satter (Blau #0B5FCC, Rot #C50F1A) - gegen die dunkelste helle Flaeche nachgerechnet, damit sie AA halten. Die Schnellzugriffe sind jetzt acht beschriftete Buttons in einem gleichspaltigen Raster, das die Zeile immer exakt bis rechts fuellt, inklusive neuem Kalender-Eintrag. Rechts daneben eine Notes-Karte, die bis zu drei angepinnte Notizen direkt zeigt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-431 - History ueberarbeitet: breiteres Fenster, Gruppierung nach Wochen mit Netto-Veraenderung je Woche, Tages-Delta an jedem Tag und ein Zeitregler (1W/2W/1M/2M/3M) statt der festen 10 Tage. Damit wirklich JEDE Score-Bewegung belegt ist, werden automatische Ursachen (COT-Update, Anleihedaten, Risk-Umfeld, Sync, Undo, ...) jetzt beim Auftreten mitprotokolliert - vorher waren sie nur fluechtig bekannt und die History zeigte an solchen Tagen nur \"No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-430</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-431</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3817,7 +3828,7 @@ function introLogin(){
 </div>
 <!-- MODAL: History -->
 <div class="ov" id="mHist" style="display:none">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:min(900px,94vw)">
     <h3 id="mHistTitle">History</h3>
     <div id="histBody"></div>
     <div class="m-btns"><button class="btn g" onclick="closeM('mHist')">Done</button></div>
@@ -6583,6 +6594,21 @@ const indDetailsOpen={};
 // in dieselbe Bias-Farbe wie überall sonst (BC) übersetzt. Tage ohne Event
 // bleiben leer/grau statt fälschlich "neutral" zu zeigen.
 const HIST_DAYS=10;
+// Zeitregler des History-Fensters (Nutzer-Wunsch 2026-08-23).
+const HIST_RANGES=[['1W',7],['2W',14],['1M',30],['2M',60],['3M',90]];
+const HIST_MAX_RANGE=90;
+let histRange=30,_histSymId=null;
+function setHistRange(d){
+  histRange=+d||30;
+  const el=document.getElementById('histBody');
+  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
+}
+// Wochenanfang (Montag) eines Datums - Grundlage der Wochen-Gruppierung.
+function histWeekStart(dateStr){
+  const d=new Date(dateStr+'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));
+  return d.toISOString().slice(0,10);
+}
 // Score-treibende Events pro Tag = GENAU die Events, die die echten
 // Indikator-Karten tatsaechlich bepreisen - ein Eintrag pro Indikator, aus
 // GENAU DER Quelle, die auch den Live-Score dieses Indikators treibt. Ein
@@ -6804,7 +6830,7 @@ function renderSymHistory(id){
 function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
-  const days=symHistoryDays(id,HIST_DAYS).slice().reverse(); // neueste zuerst
+  const days=symHistoryDays(id,histRange).slice().reverse(); // neueste zuerst
   // Manuelle Score-Aenderungen dieses Symbols nach Datum gruppieren (neueste
   // zuerst innerhalb des Tages), damit sie neben den Events erscheinen.
   const logByDate={};
@@ -6819,7 +6845,7 @@ function renderSymHistoryPanel(id){
   const histMap={},histOld={};
   (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);});
   const liveScore=sym?symScoreCmp(sym):0; // Fallback fuer "heute", falls recordScoreHist() diese Sitzung noch nicht lief
-  const rows=days.map(d=>{
+  const dayCards=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
     const manual=(logByDate[d.date]||[]).slice().sort((a,b)=>String(b.t).localeCompare(String(a.t)));
     const isToday=d.date===today;
@@ -6866,32 +6892,83 @@ function renderSymHistoryPanel(id){
       const col=dl>0?BC.bull:dl<0?BC.bear:BC.neu;
       const arr=dl>0?'▲':dl<0?'▼':'◆';
       const tm=new Date(m.t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
-      const desc=m.kind==='bias'
+      const desc=m.kind==='auto'
+        ?`<b>${escH(m.txt||'automatic update')}</b>`
+        :m.kind==='bias'
         ?`${escH(m.ind)}: ${BLAB[m.from]||escH(m.from)} → <b>${BLAB[m.to]||escH(m.to)}</b>`
         :`${escH(m.ind)}: ${escH(m.from||'')} → <b>${escH(m.to||'')}</b>`;
       return`<div class="histp-evt" style="background:rgba(var(--purple-rgb),.06)">
         <span class="histp-time">${escH(tm)}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
-        <span class="histp-name" title="Manual change (you)">✏️ ${desc}</span>
-        <span class="histp-val"><span class="histp-fc">you</span></span>
+        <span class="histp-name" title="${m.kind==='auto'?'Automatic update recorded when it happened':'Manual change (you)'}">${m.kind==='auto'?icn('refresh',12):'✏️'} ${desc}</span>
+        <span class="histp-val"><span class="histp-fc">${m.kind==='auto'?'auto':'you'}</span></span>
         <span class="histp-eff" style="color:${col};border-color:${col}">${(dl>0?'+':'')+(Math.round(dl*10)/10)}</span>
       </div>`;
     }).join('');
-    const nothing=(!evs.length&&!manual.length)?`<div class="histp-noevt">No score-driving events</div>`:'';
-    return`<div class="histp-day${isToday?' histp-today':''}">
-      <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span><span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
+    // Tagesveraenderung gegen den zuletzt aufgezeichneten Wert davor - das
+    // ist die Zahl, die ueberhaupt erst begruendungsbeduerftig ist.
+    let prevScore=null;
+    for(let k=days.indexOf(d)+1;k<days.length;k++){const p=histMap[days[k].date];if(p!=null){prevScore=p;break;}}
+    const delta=(dayScore!=null&&prevScore!=null&&!altesModell)?Math.round((dayScore-prevScore)*10)/10:null;
+    const dCol=delta==null?'var(--t3)':delta>0?BC.bull:delta<0?BC.bear:'var(--t3)';
+    const dTxt=delta==null?'':(delta>0?'+':'')+delta;
+    // "Alles begruendet": bewegt sich der Score, ohne dass ein Release, eine
+    // manuelle Aenderung ODER eine aufgezeichnete automatische Ursache
+    // vorliegt, wird genau das gesagt - statt einer erfundenen Erklaerung.
+    const nothing=(!evs.length&&!manual.length)
+      ?(delta
+        ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release and no recorded cause for this day.</div>`
+        :`<div class="histp-noevt">No change.</div>`)
+      :'';
+    const has=!!(evs.length||manual.length||delta);
+    return{date:d.date,score:dayScore,has,html:`<div class="histp-day${isToday?' histp-today':''}">
+      <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
+        ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
+        <span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
       ${evHtml}${manHtml}${nothing}
+    </div>`};
+  });
+  // ── Nach Wochen gruppieren (Montag-Start) ──
+  // Tage ohne jede Bewegung werden innerhalb einer Woche uebersprungen -
+  // ueber 90 Tage waeren sonst 90 leere Zeilen zu scrollen. Die Woche selbst
+  // bleibt sichtbar und nennt ihre Netto-Veraenderung.
+  const weeks=[];
+  dayCards.forEach(dc=>{
+    const ws=histWeekStart(dc.date);
+    let w=weeks.find(x=>x.start===ws);
+    if(!w){w={start:ws,cards:[]};weeks.push(w);}
+    w.cards.push(dc);
+  });
+  const rows=weeks.map(w=>{
+    const scored=w.cards.filter(c=>c.score!=null);
+    const first=scored.length?scored[scored.length-1].score:null;   // Wochenanfang (Liste ist neueste zuerst)
+    const last=scored.length?scored[0].score:null;
+    const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
+    const nCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
+    const end=dateAddStr(w.start,6);
+    const shown=w.cards.filter(c=>c.has);
+    const body=shown.length?shown.map(c=>c.html).join('')
+      :`<div class="histp-weekempty">No score-driving events this week.</div>`;
+    return`<div class="histp-week">
+      <div class="histp-weekhdr">
+        <span class="histp-weeklbl">${escH(fmtDayHdr(w.start))} – ${escH(fmtDayHdr(end))}</span>
+        ${net!=null?`<span class="histp-weeknet" style="color:${nCol}">${(net>0?'+':'')+net}</span>`:''}
+        <span class="histp-weekcnt">${shown.length} ${shown.length===1?'day':'days'}</span>
+      </div>${body}
     </div>`;
   }).join('');
   // Fussnote nur, wenn tatsaechlich ein Tag aus einem frueheren Modell dabei
   // ist - sonst gar kein Hinweis (kein Rauschen im Normalfall).
   const tageAltesModell=days.filter(d=>histMap[d.date]!=null&&histOld[d.date]).length;
   const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
-  return`<div class="histp">${rows}${fuss}</div>`;
+  const bar=`<div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
+    `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>`;
+  return`<div class="histp">${bar}${rows}${fuss}</div>`;
 }
 function openHistModal(id){
   const c=syms.find(s=>s.id===id);if(!c)return;
-  const t=document.getElementById('mHistTitle');if(t)t.textContent=c.name+` – History (${HIST_DAYS}D)`;
+  _histSymId=id;
+  const t=document.getElementById('mHistTitle');if(t)t.textContent=c.name+' – History';
   const el=document.getElementById('histBody');if(el)el.innerHTML=renderSymHistoryPanel(id);
   openM('mHist');
 }
@@ -9017,9 +9094,11 @@ function markPrefEdit(){_userEditedSinceSync=true;try{localStorage.setItem('fxpr
 let scoreLog=[];
 function pruneScoreLog(log){
   if(!Array.isArray(log))return[];
-  // Nur die letzten HIST_DAYS+2 Tage behalten (Panel zeigt HIST_DAYS), Deckel 400.
-  const cut=dateAddStr(todayStr(),-(HIST_DAYS+2));
-  return log.filter(x=>x&&x.t&&String(x.t).slice(0,10)>=cut).slice(-400);
+  // Muss den laengsten Zeitregler-Bereich abdecken (HIST_MAX_RANGE), nicht
+  // mehr nur die 10 Tage der alten Panel-Ansicht. Deckel entsprechend hoeher,
+  // aber bewusst gedeckelt: scoreLog haengt im Cross-Device-Sync.
+  const cut=dateAddStr(todayStr(),-(HIST_MAX_RANGE+2));
+  return log.filter(x=>x&&x.t&&String(x.t).slice(0,10)>=cut).slice(-900);
 }
 function logScoreChange(symId,e){
   if(!symId)return;
@@ -12254,7 +12333,26 @@ function stampRubOwners(){
     try{Object.defineProperty(r,'_symId',{value:s.id,writable:true,enumerable:false,configurable:true});}catch(e){}
   }));
 }
-function recomputeAuto(){stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();}
+function recomputeAuto(){
+  const before=_flipCauseTag?_scoreSnapForLog():null;
+  stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();
+  if(before)_logAutoScoreShifts(before);
+}
+function _scoreSnapForLog(){
+  const m={};try{(syms||[]).forEach(sy=>{m[sy.id]=symScoreCmp(sy);});}catch(e){}
+  return m;
+}
+function _logAutoScoreShifts(before){
+  const txt=FLIP_CAUSE_TXT[_flipCauseTag];
+  if(!txt)return;                    // ohne bekannte Ursache wird nichts behauptet
+  try{
+    (syms||[]).forEach(sy=>{
+      const a=before[sy.id],b=symScoreCmp(sy);
+      if(a==null||b==null||Math.abs(b-a)<0.05)return;
+      logScoreChange(sy.id,{kind:'auto',cause:_flipCauseTag,txt:txt.replace(/^Cause: /,''),delta:Math.round((b-a)*10)/10});
+    });
+  }catch(e){}
+}
 
 // Auto-sort the 28 FX cross pairs into "Possible Set-ups" (one currency
 // bullish, the other bearish) or "No Direction" (neutral pair bias).

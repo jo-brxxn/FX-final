@@ -137,6 +137,44 @@ const MODE = process.argv[2] || 'normalized';
       }
     });
   }
+  // ── H2) Aufzeichnung automatischer Score-Ursachen ──────────────
+  // _logAutoScoreShifts() schreibt die Ursache einer automatischen
+  // Score-Bewegung ins scoreLog, damit die History sie rueckblickend nennen
+  // kann. Zwei Eigenschaften muessen halten, sonst behauptet die History
+  // etwas Falsches:
+  //   1. Ohne echte Score-Aenderung wird NICHTS geschrieben (keine erfundenen
+  //      Gruende an Tagen, an denen sich nichts bewegt hat).
+  //   2. Mit echter Aenderung wird genau ein Eintrag je betroffenem Symbol
+  //      geschrieben, und das protokollierte Delta stimmt mit der wirklichen
+  //      Score-Differenz ueberein.
+  if(typeof _logAutoScoreShifts==='function'&&typeof _scoreSnapForLog==='function'){
+    const zaehle=()=>(typeof scoreLog!=='undefined'?scoreLog:[]).filter(x=>x&&x.kind==='auto').length;
+    const vorher=zaehle();
+    _flipCauseTag='riskenv';
+    _logAutoScoreShifts(_scoreSnapForLog());           // nichts veraendert
+    if(zaehle()!==vorher)add('Ursache ohne Score-Aenderung protokolliert',{vorher,nachher:zaehle()});
+    // Jetzt mit echter Aenderung
+    const sym=syms[0],ind=sym&&sym.rubrics&&sym.rubrics[0]&&sym.rubrics[0].indicators&&sym.rubrics[0].indicators[0];
+    if(ind){
+      const snap=_scoreSnapForLog(),alt=ind.bias,vorScore=symScoreCmp(sym);
+      ind.bias=(alt==='bull')?'bear':'bull';
+      const nachScore=symScoreCmp(sym);
+      _logAutoScoreShifts(snap);
+      const neue=(typeof scoreLog!=='undefined'?scoreLog:[]).filter(x=>x&&x.kind==='auto'&&x.sym===sym.id);
+      const letzter=neue[neue.length-1];
+      if(Math.abs(nachScore-vorScore)>=0.05){
+        if(!letzter)add('Score-Aenderung ohne protokollierte Ursache',{sym:sym.id});
+        else{
+          if(!letzter.txt)add('Ursachen-Eintrag ohne Text',{sym:sym.id,e:letzter});
+          const soll=Math.round((nachScore-vorScore)*10)/10;
+          if(Math.abs((+letzter.delta||0)-soll)>0.051)
+            add('Protokolliertes Delta weicht ab',{sym:sym.id,ist:letzter.delta,soll});
+        }
+      }
+      ind.bias=alt;                                     // Zustand zuruecksetzen
+    }
+    _flipCauseTag=null;
+  }
   // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});
