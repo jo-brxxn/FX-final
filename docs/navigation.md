@@ -830,3 +830,46 @@ Der erste Klick im Inhaltsbereich direkt nach einem Seitenwechsel wird vom
 Einklapp-Schutz der Navigationsleiste (`ebenEingeklappt`) absichtlich
 geschluckt. In Playwright-Tests deshalb zweimal klicken — sonst sieht es wie
 ein Fehler aus, ist aber gewolltes Verhalten.
+
+## Notizen: Pins, Assets-Karte und Watchlist (2026-08-23)
+
+Pro Asset lassen sich **bis zu 3 Notizen anpinnen** (`ASSET_PIN_MAX`). Der Pin
+hängt als Feld `n.pin` am Notiz-Objekt — genau wie `n.fav` — und liegt damit
+**automatisch im Cross-Device-Sync**, ohne zweite Speicherform.
+
+Sichtbar sind die Pins an zwei Stellen, beide aus derselben Quelle
+(`assetPinnedNotes`):
+- **Assets-Seite**: die Notes-Karte rechts in der Schnellzugriffszeile
+  (`assetNotesCardHtml`). Ohne Pins steht dort ein Platzhalter.
+- **Watchlist**: `watchAssetNotesHtml` zeigt je beteiligtem Asset einen Block.
+  Bei einem FX-Paar sind das **beide Seiten** (USD/CAD → USD und CAD),
+  bei einem Non-FX-Eintrag das Asset selbst (`watchInvolvedAssets`).
+
+Über „＋ Note" in der Watchlist legt man eine Notiz **für das jeweilige Asset**
+an (`newResNoteForAsset`) — sie landet am Asset selbst, nicht am Paar. Ist noch
+ein Pin-Platz frei, wird sie direkt angepinnt: sonst hätte man eine Notiz genau
+dort angelegt, wo sie danach nicht auftaucht.
+
+⚠ `rerenderNotesHost()` kennt jetzt drei Ziele (Assets / Watchlist /
+Research-Terminal). Bei neuen Notiz-Aktionen immer diese Funktion nutzen, nie
+`renderResearch()` fest verdrahten.
+
+## History (2026-08-23)
+
+Zeitregler `HIST_RANGES` (1W/2W/1M/2M/3M), Gruppierung nach Wochen ab Montag,
+je Tag das Delta gegen den zuletzt aufgezeichneten Wert.
+
+**Automatische Score-Ursachen werden beim Auftreten protokolliert**
+(`_logAutoScoreShifts`, ausgelöst in `recomputeAuto`). Vorher war die Ursache
+nur flüchtig bekannt (`_flipCauseTag`) — die Telegram-Nachricht konnte sie
+nennen, die History nicht.
+
+Zwei Eigenschaften sind bewusst so und werden von `check/score.js` geprüft:
+- Der Score-Schnappschuss wird **nur** gezogen, wenn eine Ursache gesetzt ist.
+  `recomputeAuto()` läuft sehr oft; sonst wäre das Dauerlast.
+- Ohne echte Score-Änderung wird **nichts** geschrieben. Wo eine Bewegung nicht
+  belegbar ist, sagt die History das ausdrücklich, statt einen Grund zu
+  erfinden.
+
+`pruneScoreLog` hält `HIST_MAX_RANGE+2` Tage — gedeckelt, weil `scoreLog` im
+Cross-Device-Sync hängt.

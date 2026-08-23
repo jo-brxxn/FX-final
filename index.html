@@ -3172,6 +3172,20 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .wt-m-l{display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t2);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-m-v{display:block;font-size:13px;font-weight:700;color:var(--t0);font-family:var(--ff-num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-note{width:100%;margin-top:9px;background:var(--bg0);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:12.5px;padding:7px 10px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.5;min-height:36px}
+.wt-pins{display:flex;flex-direction:column;gap:7px;margin:9px 0 4px}
+.wt-pinasset{border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg1);overflow:hidden}
+.wt-pinhd{display:flex;align-items:center;gap:8px;padding:6px 9px;border-bottom:1px solid var(--bd)}
+.wt-pinid{font:800 11.5px/1 var(--ff-text);color:var(--t1);cursor:pointer}
+@media(hover:hover){.wt-pinid:hover{color:var(--accent)}}
+.wt-pincnt{font:600 10px/1 var(--ff-num);color:var(--t3)}
+.wt-pinadd{margin-left:auto;border:1px solid var(--bd2);background:none;color:var(--t2);border-radius:var(--rss);font:700 10.5px/1 var(--ff-text);padding:4px 8px;cursor:pointer}
+@media(hover:hover){.wt-pinadd:hover{color:var(--accent);border-color:var(--accent)}}
+.wt-pin{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;width:100%;padding:6px 9px;border:none;border-bottom:1px solid var(--bd);background:none;cursor:pointer}
+.wt-pin:last-child{border-bottom:none}
+@media(hover:hover){.wt-pin:hover{background:var(--bg4)}}
+.wt-pin-ti{font:700 11.5px/1.3 var(--ff-text);color:var(--t0);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-pin-tx{font:400 10.5px/1.35 var(--ff-text);color:var(--t3);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-pin-empty{padding:7px 9px;font:400 10.5px/1.4 var(--ff-text);color:var(--t3)}
 .wt-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .wt-note::placeholder{color:var(--t3)}
 .wt-empty{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px 18px;text-align:center}
@@ -3542,11 +3556,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-431 - History ueberarbeitet: breiteres Fenster, Gruppierung nach Wochen mit Netto-Veraenderung je Woche, Tages-Delta an jedem Tag und ein Zeitregler (1W/2W/1M/2M/3M) statt der festen 10 Tage. Damit wirklich JEDE Score-Bewegung belegt ist, werden automatische Ursachen (COT-Update, Anleihedaten, Risk-Umfeld, Sync, Undo, ...) jetzt beim Auftreten mitprotokolliert - vorher waren sie nur fluechtig bekannt und die History zeigte an solchen Tagen nur \"No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-432 - Notizen sind jetzt mit der Watchlist verbunden: pro Asset lassen sich bis zu drei Notizen anpinnen, die sowohl in der Notes-Karte auf der Assets-Seite als auch in der Watchlist stehen. Bei einem Paar erscheinen BEIDE Seiten (USD/CAD zeigt USD und CAD) mit je einem Plus-Note-Knopf; eine dort angelegte Notiz landet am Asset selbst und wird - solange ein Pin-Platz frei ist - direkt angepinnt."No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-431</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-432</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -13002,10 +13016,53 @@ function watchRowHtml(p){
       ${watchMetric('COT '+(cotId||''),cm?cm.longPct.toFixed(0)+'% long':'–',cm?(cm.longPct>=60?BC.bull:cm.longPct<=40?BC.bear:'var(--t3)'):'var(--t3)','Share of speculative positions that are long')}
       ${watchMetric('Next event',evTxt,evCol,ev?`${ev.currencies||''} ${ev.name||''} · ${ev.date} ${ev.time||''}`:'No upcoming event for either side')}
     </div>
+    ${watchAssetNotesHtml(name)}
     <textarea class="wt-note" data-pid="${escH(p.id)}" placeholder="Notes on ${escH(title)} — your plan, the level you are waiting for, why you are watching it..."
       oninput="ar(this);watchSetNote('${escJH(p.id)}',this.value)"
       onchange="markUserEditTs();watchSetNote('${escJH(p.id)}',this.value);save()">${escH(p.notes||'')}</textarea>
   </div>`;
+}
+// Welche Assets stecken in dieser Watchlist-Zeile? Bei einem FX-Paar beide
+// Seiten (USD/CAD -> USD und CAD), bei einem Non-FX-Eintrag das Asset selbst.
+function watchInvolvedAssets(name){
+  if(isPureFxPair(name)){
+    const l=pairLegs(name);
+    return l?[l.bId,l.qId].filter(Boolean):[];
+  }
+  const a=nonFxLegAssetId(name);
+  return a?[a]:[];
+}
+// Aus der Watchlist angelegte Notizen werden - solange Platz ist - direkt
+// angepinnt. Sonst haette man eine Notiz genau an der Stelle angelegt, an der
+// sie danach nicht auftaucht.
+let _resAutoPin=null;
+function newResNoteForAsset(assetId){
+  newResNoteIn(assetId,'');
+  _resAutoPin=(assetPinnedNotes(assetId).length<ASSET_PIN_MAX)?assetId:null;
+}
+// Die angepinnten Notizen je beteiligtem Asset - dieselbe Quelle wie die
+// Notes-Karte auf der Assets-Seite (assetPinnedNotes), kein zweiter Nachbau.
+function watchAssetNotesHtml(name){
+  const ids=watchInvolvedAssets(name);
+  if(!ids.length)return'';
+  return`<div class="wt-pins">${ids.map(id=>{
+    const sym=syms.find(x=>x.id===id);
+    const pins=assetPinnedNotes(id);
+    const total=resNotes().filter(n=>n&&n.asset===id).length;
+    const rows=pins.length
+      ? pins.map(n=>`<button class="wt-pin" onclick="event.stopPropagation();openResNote('${escJH(n.id)}')">
+          <span class="wt-pin-ti">${escH(n.title||'Untitled note')}</span>
+          ${n.body?`<span class="wt-pin-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,80))}</span>`:''}
+        </button>`).join('')
+      : `<div class="wt-pin-empty">Nothing pinned for ${escH(id)} yet.</div>`;
+    return`<div class="wt-pinasset">
+      <div class="wt-pinhd">
+        <span class="wt-pinid" onclick="event.stopPropagation();gotoSym('${escJH(id)}')" title="Open ${escH(sym?sym.name:id)}">${escH(sym?sym.name:id)}</span>
+        <span class="wt-pincnt">${pins.length}/${ASSET_PIN_MAX} pinned${total?' · '+total+' total':''}</span>
+        <button class="wt-pinadd" onclick="event.stopPropagation();newResNoteForAsset('${escJH(id)}')" title="Add a note for ${escH(sym?sym.name:id)} — it is stored on the asset itself">＋ Note</button>
+      </div>${rows}
+    </div>`;
+  }).join('')}</div>`;
 }
 function watchSetNote(id,val){
   const p=pairs.find(x=>x.id===id);
@@ -14559,7 +14616,11 @@ function researchSidebarHtml(){
 // Rendert die Ansicht neu, in der man GERADE ist: dieselben Notiz- und
 // Ordnerfunktionen werden jetzt vom Research-Terminal UND von der
 // Assets-Seite benutzt.
-function rerenderNotesHost(){if(curPage==='cur')renderDetail();else renderResearch();}
+function rerenderNotesHost(){
+  if(curPage==='cur')renderDetail();
+  else if(curPage==='watch')renderWatchlistTab();   // Notizen stehen jetzt auch dort
+  else renderResearch();
+}
 function renderResearch(){
   const wrap=document.getElementById('resWrap');if(!wrap)return;
   // Sidebar bildet die linke Spalte ueber die VOLLE Hoehe (Karten-Reihe +
@@ -15027,8 +15088,10 @@ function saveResNote(){
     const n=resNotes().find(x=>x.id===_resEditId);
     if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fid=fid;n.asset=asset;n.fav=fav;n.up=now;n.dir=_resDir||null;n.evt=(document.getElementById('resNEvt')||{}).value||null;}
   }else{
-    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,ts:now,up:now,dir:_resDir||null,evt:(document.getElementById('resNEvt')||{}).value||null});
+    if(_resAutoPin&&asset===_resAutoPin&&assetPinnedNotes(asset).length<ASSET_PIN_MAX)var _pinNeu=true;
+    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,pin:!!_pinNeu,ts:now,up:now,dir:_resDir||null,evt:(document.getElementById('resNEvt')||{}).value||null});
   }
+  _resAutoPin=null;
   save();closeM('mResNote');rerenderNotesHost();
 }
 function delResNote(){
