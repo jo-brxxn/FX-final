@@ -2465,6 +2465,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-weeknet{font:800 12px/1 var(--ff-num)}
 .histp-weekcnt{margin-left:auto;font:600 10.5px/1 var(--ff-text);color:var(--t3)}
 .histp-weekempty{font:400 11.5px/1.4 var(--ff-text);color:var(--t3);padding:4px 2px 8px}
+.histp-brk{font:600 11px/1.4 var(--ff-text);color:var(--t2);padding:4px 2px 2px 22px}
 .histp-delta{font:800 11.5px/1 var(--ff-num);margin-left:auto;margin-right:7px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
@@ -3556,11 +3557,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-432 - Notizen sind jetzt mit der Watchlist verbunden: pro Asset lassen sich bis zu drei Notizen anpinnen, die sowohl in der Notes-Karte auf der Assets-Seite als auch in der Watchlist stehen. Bei einem Paar erscheinen BEIDE Seiten (USD/CAD zeigt USD und CAD) mit je einem Plus-Note-Knopf; eine dort angelegte Notiz landet am Asset selbst und wird - solange ein Pin-Platz frei ist - direkt angepinnt."No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-433 - History beantwortet jetzt auch das Warum an Tagen ohne Release: scoreHist speichert je Tag nicht nur den Gesamtscore, sondern auch die Werte fuer Inflation, Labour Market und Economic Growth. Daraus wird die Tagesbewegung diesen Karten zugeordnet (Card changes). Bewegt sich der Score, ohne dass eine dieser drei Karten sich geaendert hat, wird das ausdruecklich gesagt - dann stammt die Bewegung aus Interest Rates, COT Data oder Risk Environment, die nicht je Tag aufgezeichnet werden, oder aus dem Fairness-Faktor. Die Aufschluesselung erscheint auch an Tagen MIT Events, weil die dort gelisteten Beitraege den heutigen Beitrag des Indikators zeigen und nicht die Veraenderung jenes Tages."No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-432</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-433</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6856,8 +6857,11 @@ function renderSymHistoryPanel(id){
   // Vortage auf +2,4/+3/+3,1 - alle aus dem Modell VOR dem Bias-Fix). Der
   // Wert wird deshalb weiterhin gezeigt (er ist echt aufgezeichnet), aber
   // gedaempft und mit Begruendung - nicht geloescht und nicht umgerechnet.
-  const histMap={},histOld={};
-  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);});
+  const histMap={},histOld={},histRub={};
+  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];});
+  // Nur diese drei Karten werden je Tag mitaufgezeichnet (siehe
+  // recordScoreHist) - Interest Rates, COT Data und Risk Environment nicht.
+  const HIST_RUB_NAMES=['Inflation','Labour Market','Economic Growth'];
   const liveScore=sym?symScoreCmp(sym):0; // Fallback fuer "heute", falls recordScoreHist() diese Sitzung noch nicht lief
   const dayCards=days.map(d=>{
     const evs=d.events; // von symHistoryDays() bereits auf score-treibende Events gefiltert
@@ -6921,17 +6925,36 @@ function renderSymHistoryPanel(id){
     }).join('');
     // Tagesveraenderung gegen den zuletzt aufgezeichneten Wert davor - das
     // ist die Zahl, die ueberhaupt erst begruendungsbeduerftig ist.
-    let prevScore=null;
-    for(let k=days.indexOf(d)+1;k<days.length;k++){const p=histMap[days[k].date];if(p!=null){prevScore=p;break;}}
+    let prevScore=null,prevDate=null;
+    for(let k=days.indexOf(d)+1;k<days.length;k++){const p=histMap[days[k].date];if(p!=null){prevScore=p;prevDate=days[k].date;break;}}
     const delta=(dayScore!=null&&prevScore!=null&&!altesModell)?Math.round((dayScore-prevScore)*10)/10:null;
     const dCol=delta==null?'var(--t3)':delta>0?BC.bull:delta<0?BC.bear:'var(--t3)';
     const dTxt=delta==null?'':(delta>0?'+':'')+delta;
-    // "Alles begruendet": bewegt sich der Score, ohne dass ein Release, eine
-    // manuelle Aenderung ODER eine aufgezeichnete automatische Ursache
-    // vorliegt, wird genau das gesagt - statt einer erfundenen Erklaerung.
+    // Woher kam die Bewegung? Aus den je Tag aufgezeichneten Rubrikwerten
+    // laesst sich das fuer Inflation/Labour Market/Economic Growth exakt
+    // ablesen. Was uebrig bleibt, stammt aus den nicht aufgezeichneten Karten
+    // (Interest Rates, COT Data, Risk Environment) oder aus dem
+    // Fairness-Faktor - das wird auch so benannt und NICHT einer Karte
+    // zugeschrieben, die es gar nicht war.
+    const parts=[];
+    if(prevDate&&histRub[d.date]&&histRub[prevDate]){
+      HIST_RUB_NAMES.forEach((nm,i)=>{
+        const a=histRub[prevDate][i],b=histRub[d.date][i];
+        if(a==null||b==null)return;
+        const dd=Math.round((b-a)*10)/10;
+        if(dd)parts.push(`${nm} ${(dd>0?'+':'')+dd}`);
+      });
+    }
+    const brkTxt=parts.length?`Card changes: ${parts.join(' · ')}`:'';
+    const brk=(delta&&brkTxt)?`<div class="histp-brk">${escH(brkTxt)}</div>`:'';
+    // "Alles begruendet": bewegt sich der Score ohne Release, ohne manuelle
+    // Aenderung und ohne aufgezeichnete automatische Ursache, wird genau
+    // gesagt, was noch bekannt ist - statt einer erfundenen Erklaerung.
     const nothing=(!evs.length&&!manual.length)
       ?(delta
-        ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release and no recorded cause for this day.</div>`
+        ?(parts.length
+          ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release; the change sits in the cards listed below.</div>`
+          :`<div class="histp-noevt">Score moved ${dTxt} — no dated release, and Inflation / Labour Market / Economic Growth are unchanged. It therefore comes from Interest Rates, COT Data or Risk Environment (these are not recorded per day) or from the fairness factor.</div>`)
         :`<div class="histp-noevt">No change.</div>`)
       :'';
     const has=!!(evs.length||manual.length||delta);
@@ -6939,7 +6962,7 @@ function renderSymHistoryPanel(id){
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
         ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
         <span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
-      ${evHtml}${manHtml}${nothing}
+      ${evHtml}${manHtml}${nothing}${brk}
     </div>`};
   });
   // ── Nach Wochen gruppieren (Montag-Start) ──
