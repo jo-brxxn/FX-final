@@ -60,8 +60,8 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      straffer/praeziser gezogen (kleinere Radien, engere Schatten) statt der
      vorherigen "weich&luxurioes"-Rundungen - passt zum jetzt gewuenschten
      technischeren, weniger "kuschligen" Eindruck.
-     Bias-/Akzentfarben: Bullish-Blau (#25619D, = --blue/--green) und
-     Bearish-Rot (#B33633) unveraendert (keine warmen/gelben Toene). Die
+     Bias-/Akzentfarben: Bullish-Blau (#0B5FCC, = --blue/--green) und
+     Bearish-Rot (#C50F1A) unveraendert (keine warmen/gelben Toene). Die
      bisherige GOLD-Neutralfarbe (--amber/--star) war Teil des "gelblichen"
      Problems - ersetzt durch ein kuehles Blaugrau (Slate), bleibt trotzdem
      als eigener, von Blau/Rot unterscheidbarer dritter Ton erkennbar.
@@ -124,9 +124,9 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   --bg0:#E9EAF6;--bg1:#F2F3F9;--bg2:#FFFFFF;--bg3:#F2F3F9;--bg4:#EAECF4;--bg5:#DDE1EC;--bg6:#CBD1E0;
   --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
   --t0:#141B2E;--t1:#33405C;--t2:#5A6885;--t3:#57637B;
-  --green:#25619D;--red:#B33633;--amber:#55617A;--star:#55617A;--blue:#25619D;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
-  --green-rgb:37,97,157;--red-rgb:179,54,51;--amber-rgb:85,97,122;
-  --star-rgb:85,97,122;--blue-rgb:37,97,157;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
+  --green:#0B5FCC;--red:#C50F1A;--amber:#55617A;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
+  --green-rgb:11,95,204;--red-rgb:197,15,26;--amber-rgb:85,97,122;
+  --star-rgb:85,97,122;--blue-rgb:11,95,204;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
   /* Etwas straffere Radien (Terminal-Optik statt "weich&luxurioes"). */
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
      aktiver Tab, Fokusring, ausgewaehlter Filter. NIE fuer einen Datenwert -
@@ -203,8 +203,8 @@ svg.ic{vertical-align:-2px;flex:none}
 .bias-picker-opt{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--bd2);color:var(--t1);padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:700;text-align:left;width:100%;font-family:inherit}
 @media (hover:hover){.bias-picker-opt:hover{background:var(--bg4)}}
 .bias-picker-opt:active{background:var(--bg4)}
-.bias-picker-opt.cur.bb{border-color:var(--green);background:rgba(var(--green-rgb),.12);color:var(--green)}
-.bias-picker-opt.cur.br{border-color:var(--red);background:rgba(var(--red-rgb),.12);color:var(--red)}
+.bias-picker-opt.cur.bb{border-color:var(--green);background:rgba(var(--green-rgb),.18);color:var(--green)}
+.bias-picker-opt.cur.br{border-color:var(--red);background:rgba(var(--red-rgb),.18);color:var(--red)}
 .bias-picker-opt.cur.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
 /* Nutzer-Wunsch 2026-08-02 (Grau-/Schwarz-Regler): aktiver Zustand fuer
@@ -226,7 +226,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .btn:disabled{opacity:.22;cursor:default}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
-.btn.active{background:rgba(var(--red-rgb),.12);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
+.btn.active{background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
 /* ── KOPFZEILE + NAV-SIDEBAR: naeher an Koyfins echtem Referenzfoto
    (Nutzer 2026-08-21, zweite Runde: "schau dir nochmal das Bild an, so
    will ich das haben... die Farben die dort benutzt wurden und die innen
@@ -415,7 +415,7 @@ body.no-ui-anim #navSidebar{transition:none}
 .sb{width:138px;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;padding:4px 0 4px 7px}
 @media(max-width:760px){.sb{width:120px}}
 .sb-lbl{font-size:10px;color:var(--t2);letter-spacing:2px;padding:7px 5px 3px;font-weight:600;font-family:var(--ff-num);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:4px}
-.sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.12);border-radius:4px}
+.sb-lbl.cat-reorder{background:rgba(var(--blue-rgb),.18);border-radius:4px}
 .sb-cat-moves{display:flex;gap:2px;flex:none}
 .ab-move.cat{position:static;width:18px;height:16px}
 .ab-wrap{position:relative}
@@ -603,14 +603,14 @@ body.no-ui-anim #navSidebar{transition:none}
 .nt-mv:disabled{opacity:.3;cursor:default}
 @media(hover:hover){.nt-mv:not(:disabled):hover{color:var(--ntc)}}
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
-.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}.cfg-gear.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.14);color:var(--blue)}
+.cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}.cfg-gear.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.18);color:var(--blue)}
 /* Kompaktansicht-Schalter (neben dem History-Button): rutscht wie ein
    Ein/Aus-Schiebeschalter von links nach rechts. Etwas breiter als der
    Zahnrad-/History-Button, gleiche Hoehe. */
 .compact-sw{flex:none;width:52px;height:34px;border-radius:17px;background:var(--bg2);border:1px solid var(--bd);cursor:pointer;position:relative;outline:none;padding:0;transition:background .15s,border-color .15s}
 @media (hover:hover){.compact-sw:hover{border-color:rgba(var(--blue-rgb),.5)}}
 .compact-sw .knob{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--t3);transition:transform .18s cubic-bezier(.2,.7,.3,1),background .15s}
-.compact-sw.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue)}
+.compact-sw.on{background:rgba(var(--blue-rgb),.18);border-color:var(--blue)}
 .compact-sw.on .knob{transform:translateX(18px);background:var(--blue)}
 /* Nutzer-Korrektur 2026-08-04 (Foto): der Kompakt-Regler ist jetzt ein
    echter Ein/Aus-Schalter fuer BEIDE Summary-Arten - in der im Foto
@@ -680,7 +680,7 @@ body.compact-view .rub-summary{display:block}
 .acfg-hint{font-size:11px;color:var(--t3);margin:2px 0 8px;line-height:1.5}
 .acfg-syncgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
 .acfg-syncbtn{display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);color:var(--t1);font-size:12px;cursor:pointer;text-align:left}
-.acfg-syncbtn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.14);color:var(--t0)}
+.acfg-syncbtn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.18);color:var(--t0)}
 .acfg-rubrow{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bd)}
 .acfg-rubname{flex:1;min-width:0;font-size:13px;color:var(--t0)}
 .acfg-seg{display:flex;gap:0;border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;flex:none}
@@ -855,7 +855,7 @@ body.compact-view .rub-summary{display:block}
 .res-lib-sec{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--t2);font-weight:700;font-family:var(--ff-num);margin:11px 0 5px;padding-top:8px;border-top:1px solid var(--bd)}
 .res-libitem{display:flex;align-items:center;gap:7px;width:100%;background:transparent;border:none;border-left:2px solid transparent;color:var(--t2);padding:5px 6px;border-radius:var(--rss);cursor:pointer;font-size:12.5px;text-align:left;transition:background .12s,color .12s}
 @media (hover:hover){.res-libitem:hover{background:var(--bg4);color:var(--t0)}}
-.res-libitem.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--blue)}
+.res-libitem.on{background:rgba(var(--blue-rgb),.18);border-left-color:var(--blue);color:var(--blue)}
 .res-libitem.res-fav.on{background:rgba(var(--star-rgb),.12);border-left-color:var(--star);color:var(--star)}
 .res-li-ic{display:inline-flex;align-items:center;flex-shrink:0;opacity:.8;font-size:11px}
 .res-li-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -931,7 +931,7 @@ body.compact-view .rub-summary{display:block}
 .res-mode-toggle{display:flex;gap:6px;margin-bottom:12px}
 .res-mode-btn{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;transition:all .12s}
 @media (hover:hover){.res-mode-btn:hover{color:var(--t0);border-color:var(--bd2)}}
-.res-mode-btn.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue);color:var(--blue)}
+.res-mode-btn.on{background:rgba(var(--blue-rgb),.18);border-color:var(--blue);color:var(--blue)}
 .resf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .resf-tile{display:flex;flex-direction:column;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:22px 12px;cursor:pointer;transition:border-color .12s,background .12s}
 @media (hover:hover){.resf-tile:hover{border-color:var(--blue);background:var(--bg4)}}
@@ -947,7 +947,7 @@ body.compact-view .rub-summary{display:block}
 @media(max-width:900px){.resf-asset-list{position:static}}
 .resf-asset-row{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:none;border-left:2px solid transparent;color:var(--t2);padding:7px 8px;border-radius:var(--rss);cursor:pointer;font-size:12.5px;text-align:left}
 @media (hover:hover){.resf-asset-row:hover{background:var(--bg4);color:var(--t0)}}
-.resf-asset-row.on{background:rgba(var(--blue-rgb),.12);border-left-color:var(--blue);color:var(--t0)}
+.resf-asset-row.on{background:rgba(var(--blue-rgb),.18);border-left-color:var(--blue);color:var(--t0)}
 .resf-asset-nm{flex:1;min-width:0;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .resf-asset-sc{font-size:11px;font-family:var(--ff-num);font-weight:700}
 .resf-empty-detail{background:var(--bg3);border:1px dashed var(--bd2);border-radius:var(--r);padding:30px 14px;text-align:center;color:var(--t3);font-size:12.5px}
@@ -1031,7 +1031,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rtree-panel{flex:2 1 480px;min-width:280px}
 .rtree-row{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;border-radius:var(--rs);font-size:13px;color:var(--t1);user-select:none}
 @media(hover:hover){.rtree-row:hover{background:var(--bg3)}}
-.rtree-row.on{background:rgba(var(--blue-rgb),.12);color:var(--blue)}
+.rtree-row.on{background:rgba(var(--blue-rgb),.18);color:var(--blue)}
 .rtree-toggle{width:12px;flex:0 0 auto;color:var(--t3);font-size:10px;text-align:center}
 .rtree-ic{flex:0 0 auto;display:flex;color:var(--t2)}
 .rtree-row.on .rtree-ic{color:var(--blue)}
@@ -1090,7 +1090,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-tl-item.past{opacity:.6}
 .rterm-tl-date{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t2);display:flex;align-items:center;justify-content:space-between;gap:6px}
 .rterm-tl-bell{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.rterm-tl-bell.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.5);background:rgba(var(--blue-rgb),.12)}
+.rterm-tl-bell.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.5);background:rgba(var(--blue-rgb),.18)}
 @media(hover:hover){.rterm-tl-bell:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .rterm-tl-name{font-size:12px;font-weight:600;color:var(--t1);margin:1px 0}
 .rterm-tl-vals{font-size:10.5px;color:var(--t2);font-family:var(--ff-num)}
@@ -1126,11 +1126,31 @@ body.res-return-active .rterm-back-pill{display:flex}
   --accent:#3FA9CC;--live:#FF6B63;--success:#34D399;
   color:var(--t0);
 }
-.aqr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)}
-.aqr-links{display:flex;gap:4px;flex-wrap:wrap}
-.aqr-notes{margin-left:auto;display:flex;align-items:center;gap:6px;font:700 12px/1 var(--ff-text);padding:7px 12px;border-radius:var(--rs);border:1px solid #35456B;background:#2C3A5E;color:#B4C2DC;cursor:pointer}
-.aqr-notes.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
-@media(hover:hover){.aqr-notes:hover{background:#35456B;color:#FFFFFF}.aqr-notes.on:hover{background:var(--accent)}}
+/* Schnellzugriffe + Notes-Karte. Das 4-Spalten-Raster mit gleich breiten
+   Spalten sorgt dafuer, dass die Buttons die Zeile immer exakt bis zum
+   rechten Rand fuellen; align-items:stretch zieht sie auf die Hoehe der
+   Notes-Karte, damit rechts daneben keine Leerflaeche entsteht. */
+.aqr{display:grid;grid-template-columns:1fr 300px;gap:var(--gap-block);align-items:stretch;margin-bottom:var(--gap-block)}
+.aqr-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.aql{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;min-height:42px;border:1px solid #35456B;background:#2C3A5E;color:#C3D0E6;border-radius:var(--rs);font:700 12px/1.2 var(--ff-text);cursor:pointer;min-width:0}
+.aql span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aql svg{flex:none}
+@media(hover:hover){.aql:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
+.aqn{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card)}
+.aqn-hd{display:flex;align-items:center;gap:7px;padding:9px 11px;border-bottom:1px solid var(--bd);color:var(--t2)}
+.aqn-t{font:700 12px/1 var(--ff-text);color:var(--t1)}
+.aqn-cnt{font:700 10.5px/1 var(--ff-num);color:var(--t3);margin-left:2px}
+.aqn-open{margin-left:auto;border:1px solid var(--bd2);background:none;color:var(--t2);border-radius:var(--rss);font:700 10.5px/1 var(--ff-text);padding:5px 9px;cursor:pointer}
+.aqn-open.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
+@media(hover:hover){.aqn-open:hover{color:var(--accent);border-color:var(--accent)}.aqn-open.on:hover{color:#FFFFFF}}
+.aqn-list{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+.aqn-n{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;padding:7px 11px;border:none;border-bottom:1px solid var(--bd);background:none;cursor:pointer;width:100%}
+.aqn-n:last-child{border-bottom:none}
+@media(hover:hover){.aqn-n:hover{background:var(--bg4)}}
+.aqn-n-ti{font:700 12px/1.3 var(--ff-text);color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.aqn-n-tx{font:400 11px/1.35 var(--ff-text);color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.aqn-empty{padding:11px;font:400 11px/1.45 var(--ff-text);color:var(--t3)}
+@media(max-width:900px){.aqr{grid-template-columns:1fr}.aqr-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Notes-Ansicht: Ordner links, Notizen rechts. */
 .anf{display:grid;grid-template-columns:214px 1fr;gap:var(--gap-block);align-items:start;margin-bottom:var(--gap-block)}
 .anf-side{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:2px}
@@ -1353,11 +1373,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#25619D;font-family:var(--ff-num)}
-.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#B33633;font-family:var(--ff-num)}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#0B5FCC;font-family:var(--ff-num)}
+.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#C50F1A;font-family:var(--ff-num)}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#3F7FBB,#25619D);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#9B2F2D,#B33633);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#2E7BE0,#0B5FCC);min-width:0;transition:width .3s}
+.cot-bar-short{background:linear-gradient(90deg,#A50D16,#C50F1A);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -1381,7 +1401,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .rateprob-pill.realized{color:var(--t3);background:var(--bg2)}
 .rateprob-pill.realized.on{border-color:var(--blue);color:var(--blue)}
 .rateprob-pill.future{color:var(--red)}
-.rateprob-pill.future.on{border-color:var(--red);background:rgba(var(--red-rgb),.14);color:var(--red)}
+.rateprob-pill.future.on{border-color:var(--red);background:rgba(var(--red-rgb),.18);color:var(--red)}
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
 .rateprob-ccybar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
@@ -1413,11 +1433,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:14px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#25619D;font-weight:700}
+.cot-tbl td.cot-c-long{color:#0B5FCC;font-weight:700}
 .cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
 .cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
 @media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
-.cot-tbl td.cot-c-short{color:#B33633;font-weight:700}
+.cot-tbl td.cot-c-short{color:#C50F1A;font-weight:700}
 /* COT control bar (countdown + refresh) */
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cot-cd-box{display:flex;flex-direction:column;gap:1px}
@@ -1427,7 +1447,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cot-note{font-size:12px;color:var(--t3);font-family:var(--ff-num)}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-refresh:hover{border-color:#25619D;color:var(--t0)}}
+@media (hover:hover){.cot-refresh:hover{border-color:#0B5FCC;color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
 .cot-refresh-ic{display:inline-block;font-size:15px;line-height:1}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
@@ -1448,9 +1468,9 @@ body.res-return-active .rterm-back-pill{display:flex}
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
-.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.12);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.18);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
-.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#25619D}
+.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#0B5FCC}
 .cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
 .cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
@@ -1765,8 +1785,8 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .note-dir{font-size:11px;font-weight:800;margin-left:6px}
 .note-dir.nd-bull{color:var(--green)}.note-dir.nd-bear{color:var(--red)}
 .note-out{font-size:10px;font-weight:800;margin-left:6px;padding:1px 5px;border-radius:999px;font-family:var(--ff-num);white-space:nowrap}
-.no-hit{color:var(--green);background:rgba(var(--blue-rgb),.12)}
-.no-miss{color:var(--red);background:rgba(var(--red-rgb),.12)}
+.no-hit{color:var(--green);background:rgba(var(--blue-rgb),.18)}
+.no-miss{color:var(--red);background:rgba(var(--red-rgb),.18)}
 .no-flat{color:var(--t3);background:var(--bg3)}
 .no-pend{color:var(--t3);background:var(--bg3)}
 .note-evt{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
@@ -1856,11 +1876,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
-.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#25619D;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
+.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#0B5FCC;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
 /* Zweiter, kleinerer/schwaecherer Partikel kurz hinter dem Kopf (siehe
    scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
    einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
-.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#3F7FBB;box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
+.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#2E7BE0;box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
 /* Der 0→16px AUSSEN wachsende Ring war bei eng stehenden Karten unsichtbar,
    weil er in den Bereich der Nachbarkarte hineinwuchs und von deren (spaeter
    gezeichnetem) Hintergrund verdeckt wurde (Nutzer-Bugreport 2026-07-27).
@@ -2496,7 +2516,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 @supports (grid-template-columns:subgrid){.ba-col-rows .sym-row{grid-template-columns:subgrid}}
 .ba-col-rows .sym-row .sym-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ind-card.ind-flash{animation:indFlash 1.8s ease-out}
-@keyframes indFlash{0%,40%{box-shadow:0 0 0 2px var(--blue),0 0 16px rgba(var(--blue-rgb),.55);background:rgba(var(--blue-rgb),.10)}100%{box-shadow:none;background:transparent}}
+@keyframes indFlash{0%,40%{box-shadow:0 0 0 2px var(--blue),0 0 16px rgba(var(--blue-rgb),.55);background:rgba(var(--blue-rgb),.18)}100%{box-shadow:none;background:transparent}}
 .ev-form{background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);padding:11px;margin-top:8px}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:7px}
@@ -3010,6 +3030,9 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 @keyframes biasFlip{0%{transform:rotateX(85deg);opacity:.2}100%{transform:rotateX(0);opacity:1}}
 .bias-flip{animation:biasFlip .4s ease;display:inline-block}
 /* ── MODAL-ÜBERGANG (Ein-/Ausblenden) ── */
+/* Einstellungs-Dialoge oeffnen ohne Animation (Nutzer-Wunsch 2026-08-23).
+   Bewusst nur diese, nicht alle Modals. */
+#mAssetCfg,#mAssetCfg .modal,#mCfg,#mCfg .modal,#mSettings,#mSettings .modal{animation:none !important}
 @keyframes ovFadeIn{0%{opacity:0}100%{opacity:1}}
 @keyframes modalPopIn{0%{opacity:0;transform:scale(.94) translateY(6px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 /* Popover-Eintritt (Bias-Picker, Tab-Stack-Menue): waechst vom Trigger-Punkt
@@ -3508,11 +3531,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-429 - Assets-Seite: die Sektions-Aufteilung ist auf Nutzer-Wunsch wieder raus, alle Karten stehen wieder in EINER Spalte. Darueber nur noch eine Zeile mit den sieben Schnellzugriffen auf die Analyseseiten, rechts daneben ein Notes-Umschalter. Notes zeigt jetzt Ordner wie im Research-Terminal (gleiche Daten, gleicher Renderer, keine zweite Speicherform); die aeltere Bullish/Bearish-Tabelle bleibt bewusst darunter stehen, weil sie Nutzerinhalte traegt. Notiz- und Ordneraktionen rendern jetzt dort neu, wo man gerade ist, statt fest auf die Research-Seite zu springen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-430 - Assets aufgeraeumt: Karte Bias-und-Notes, die Meta-Felder Last update/Data quality/Source, beide Kursanzeigen (Ticker-Chip am Namen UND die PRICE-Zeile) und der Notes-Knopf neben den Einstellungen sind raus; der Einstellungs-Dialog oeffnet ohne Animation. Bias-Farben deutlich satter (Blau #0B5FCC, Rot #C50F1A) - gegen die dunkelste helle Flaeche nachgerechnet, damit sie AA halten. Die Schnellzugriffe sind jetzt acht beschriftete Buttons in einem gleichspaltigen Raster, das die Zeile immer exakt bis rechts fuellt, inklusive neuem Kalender-Eintrag. Rechts daneben eine Notes-Karte, die bis zu drei angepinnte Notizen direkt zeigt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-429</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-430</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4126,7 +4149,7 @@ function introLogin(){
 // (Nutzer-Wunsch 2026-08-09). Eine dunklere Zweitfassung war kurz probiert
 // und auf Nutzer-Wunsch wieder verworfen - falls sie je zurueckkommen soll:
 // bull #1d4ed8, bear #b23a3a, neu #475569.
-const BC={bull:'#25619D',bear:'#B33633',neu:'#55617A'};
+const BC={bull:'#0B5FCC',bear:'#C50F1A',neu:'#55617A'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -4577,6 +4600,7 @@ const ICONS={
   // Fuer die Assets-Quick-Links (Nutzer-Wunsch 2026-08-23) - identischer Pfad
   // wie TAB_ICONS.news, nur hier auch ueber icn() aufrufbar (die
   // Tab-Leiste nutzt einen eigenen, nicht mit ICONS geteilten Renderpfad).
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>'
 };
 function icn(name,size){
@@ -4597,7 +4621,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // recomputeRiskCorr) - hier ueberall defensiv mitbehandelt, da bClass/
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#25619D20':(b==='bear'||b==='sbear')?'#B3363320':'#55617A20';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#0B5FCC20':(b==='bear'||b==='sbear')?'#C50F1A20':'#55617A20';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
@@ -10126,13 +10150,12 @@ function renderDetail(){
   const dmetaControls=`<div class="dmeta-controls">
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
-    <div class="dmeta-ctrl"><button class="dmeta-icon-btn${curSub==='notes'?' on':''}" onclick="setSub(curSub==='notes'?'specific':'notes')" title="${curSub==='notes'?'Back to Macro':'Notes'}">${icn('note',13)}</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
-      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}${isNonFx(c.id)?` ${tickerChipHtml(assetTickerInfo(c.id))}`:''}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${symEvts.length?`<div class="evt-section">
@@ -10271,14 +10294,51 @@ function goToRubCard(ri){
 // (ASSET_QUICK_LINKS, jeweils mit vorgewaehltem Asset). Sie standen vorher
 // nur in der Bias-&-Notes-Karte und waren damit nur in einer Sektion
 // erreichbar - hier sind sie IMMER sichtbar, egal wo man gerade ist.
-// Eine Zeile ueber den Karten: links die Schnellzugriffe auf die
-// Analyseseiten (jeweils mit vorgewaehltem Asset), rechts der Notes-Umschalter.
-function assetQuickRowHtml(){
+// Zeile ueber den Karten: links die beschrifteten Schnellzugriffe auf die
+// Analyseseiten (jeweils mit vorgewaehltem Asset), rechts die Notes-Karte.
+// Die Buttons liegen in einem 4-spaltigen Raster mit gleich breiten Spalten -
+// dadurch fuellen sie die Zeile IMMER exakt bis zum rechten Rand, egal wie
+// breit das Fenster ist (Nutzer-Wunsch 2026-08-23).
+function assetQuickRowHtml(c){
   const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>
-    `<button class="asec-link" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,13)}</button>`).join('');
+    `<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('');
+  return`<div class="aqr"><div class="aqr-links">${links}</div>${assetNotesCardHtml(c)}</div>`;
+}
+// Hoechstens so viele Notizen darf man pro Asset anpinnen.
+const ASSET_PIN_MAX=3;
+// Angepinnte Notizen eines Assets, neueste zuerst. Der Pin haengt als Feld
+// am Notiz-Objekt (wie n.fav) und liegt damit automatisch im bestehenden
+// Cross-Device-Sync - keine zweite Speicherform noetig.
+function assetPinnedNotes(assetId){
+  return resNotes().filter(n=>n&&n.asset===assetId&&n.pin)
+    .sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')))
+    .slice(0,ASSET_PIN_MAX);
+}
+function togResPin(id){
+  const n=resNotes().find(x=>x.id===id);if(!n)return;
+  if(!n.pin&&assetPinnedNotes(n.asset).length>=ASSET_PIN_MAX){
+    alert('At most '+ASSET_PIN_MAX+' notes can be pinned per asset — unpin one first.');return;
+  }
+  pushU();n.pin=!n.pin;n.up=new Date().toISOString();save();rerenderNotesHost();
+}
+// Die Notes-Karte: laenglich nach unten, zeigt die angepinnten Notizen direkt.
+// Ohne Pins steht dort ein Platzhalter statt einer leeren Flaeche.
+function assetNotesCardHtml(c){
+  const pins=assetPinnedNotes(c.id);
   const on=curSub==='notes';
-  return`<div class="aqr"><div class="aqr-links">${links}</div>
-    <button class="aqr-notes${on?' on':''}" onclick="setSub('${on?'specific':'notes'}')" title="${on?'Back to the cards':'Notes and folders for this asset'}">${icn('folder',13)} Notes</button></div>`;
+  const body=pins.length
+    ? pins.map(n=>`<button class="aqn-n" onclick="openResNote('${escJH(n.id)}')">
+        <span class="aqn-n-ti">${escH(n.title||'Untitled note')}</span>
+        ${n.body?`<span class="aqn-n-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,72))}</span>`:''}
+      </button>`).join('')
+    : `<div class="aqn-empty">No pinned notes yet.<br>Pin up to ${ASSET_PIN_MAX} in the Notes view — they then show up here and in the watchlist.</div>`;
+  return`<div class="aqn">
+    <div class="aqn-hd">${icn('note',13)}<span class="aqn-t">Notes</span>
+      <span class="aqn-cnt">${pins.length}/${ASSET_PIN_MAX}</span>
+      <button class="aqn-open${on?' on':''}" onclick="setSub('${on?'specific':'notes'}')">${on?'Close':'Open'}</button>
+    </div>
+    <div class="aqn-list">${body}</div>
+  </div>`;
 }
 // Ausgewaehlter Ordner in der Notes-Ansicht. null = die "General Notes"-Wurzel.
 // Rein transienter Navigationszustand (wie researchTreeSel), nicht persistiert.
@@ -10314,11 +10374,9 @@ function renderSpecTab(c){
   // Notes: Ordner + Notizen wie im Research-Terminal. Die aeltere
   // Bullish/Bearish-Tabelle (renderNotesSubTab) bleibt bewusst DARUNTER
   // stehen - sie traegt Nutzerinhalte und waere sonst nicht mehr erreichbar.
-  if(curSub==='notes')return assetQuickRowHtml()+assetNotesFoldersHtml(c)+renderNotesSubTab(c);
-  return`${assetQuickRowHtml()}
-  ${assetPerfStripHtml(c)}
+  if(curSub==='notes')return assetQuickRowHtml(c)+assetNotesFoldersHtml(c)+renderNotesSubTab(c);
+  return`${assetQuickRowHtml(c)}
   ${renderOverviewCard(rubs)}
-  ${assetAnalysisHtml(c)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
   ${newsAssetSectionHtml(c)}
   <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;
@@ -14343,7 +14401,7 @@ function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(
 const ASSET_QUICK_LINKS=[
   ['seas','clock','Seasonality'],['trends','trendUp','Trends'],['cot','bars','COT'],
   ['sent','zap','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
-  ['news','news','News'],
+  ['news','news','News'],['cal','calendar','Calendar'],
 ];
 function assetQuickGo(tabId){
   const c=getSym();if(!c)return;
@@ -14589,6 +14647,7 @@ function researchNotesPanelHtml(assetId,fid){
         ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
       </div>
       <div class="res-note-side">
+        <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="Pin to the asset page (max ${ASSET_PIN_MAX}) — also shows in the watchlist">${icn('pin',14)}</button>
         <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">${icn('star',15)}</button>
         <div class="res-note-dt">${dp.time}</div>
       </div>
@@ -14663,6 +14722,7 @@ function renderResearchNotes(){
       </div>
       <div class="res-note-side">
         <div class="res-note-fold">${escH(resFolderName(n.fid))}</div>
+        <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="Pin to the asset page (max ${ASSET_PIN_MAX}) — also shows in the watchlist">${icn('pin',14)}</button>
         <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">${icn('star',15)}</button>
         <div class="res-note-dt">${dp.time}</div>
       </div>
@@ -15042,7 +15102,7 @@ function renderRiskEnvRemind(){if(document.getElementById('dashWidgets'))renderD
 // dauerhaft sein") - document.body.style.background wird dadurch von
 // nirgends mehr gesetzt, der CSS-Marmor-Hintergrund bleibt also permanent
 // sichtbar, unabhaengig vom Risk-Sentiment.
-const AURORA_NEU='#25619D';
+const AURORA_NEU='#0B5FCC';
 function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
   host.style.removeProperty('--aurora-c');
@@ -15117,9 +15177,11 @@ function symSourceLabel(c){
   return{lbl:list.length>1?'MULTI':list[0],list};
 }
 function detailMetaHtml(c,nextLbl,extraControlsHtml){
-  const dq=symDataQuality(c),src=symSourceLabel(c);
-  const dqCol=dq.lvl==='HIGH'?'var(--success)':dq.lvl==='MEDIUM'?'var(--amber)':dq.lvl==='LOW'?'var(--red)':'var(--t3)';
-  const upd=_lastFeedTs?new Date(_lastFeedTs).toLocaleTimeString([],{hour12:false}):'–';
+  // "Last update", "Data quality" und "Source" sind auf Nutzer-Wunsch aus der
+  // Leiste geflogen (2026-08-23) - es bleibt nur "Next event". symDataQuality()
+  // und symSourceLabel() rechnen die Werte weiterhin, werden aber aktuell
+  // nirgends aufgerufen; sie stehen fuer den Fall bereit, dass die Angaben
+  // zurueckkommen sollen.
   const mi=(lbl,val,title)=>`<div class="dmeta-i"${title?` title="${escH(title)}"`:''}><div class="dmeta-l">${lbl}</div><div class="dmeta-v">${val}</div></div>`;
   // extraControlsHtml (Nutzer-Foto 2026-08-04): History/Settings/Kompakt-
   // Regler haengen sich hier ganz rechts an die Leiste an (siehe Aufrufer
@@ -15127,9 +15189,6 @@ function detailMetaHtml(c,nextLbl,extraControlsHtml){
   // Argument (falls je von woanders aufgerufen) unveraendert funktioniert.
   return`<div class="dmeta">
     ${mi('Next event',escH(nextLbl),'Next high-impact calendar event for this asset')}
-    ${mi('Last update',escH(upd),_lastFeedTs?'Last successful live-feed refresh in this session':'No live-feed refresh completed yet in this session')}
-    ${mi('Data quality',`<span style="color:${dqCol}">◆ ${dq.lvl}</span>`,`${dq.live} of ${dq.tot} auto-priced indicators are fed live (${dq.pct}%). HIGH ≥ 80%, MEDIUM ≥ 50%, otherwise LOW.`)}
-    ${mi('Source',escH(src.lbl),src.list.length?src.list.join(' · '):'No live source yet')}
     ${extraControlsHtml||''}
   </div>`;
 }
@@ -16779,8 +16838,8 @@ function globeSkeleton(size,uid){
     <circle cx="2.75" cy="11.6" r="1" fill="#55617A"/>
     <circle cx="-2.75" cy="11.6" r="1" fill="#55617A"/>
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
-    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#B33633"/>
-    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#B33633"/>
+    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#C50F1A"/>
+    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#C50F1A"/>
   </g>`;
   // data-id-Gruppe (wie echte Marker-<g>s) sorgt dafuer, dass
   // globeOnPointerDown() einen Klick/Tap aufs Flugzeug NICHT als Drag-Start
@@ -18475,7 +18534,7 @@ function cotMetrics(s){
   const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'#25619D':v<0?'#B33633':'var(--t3)';}
+function cotColor(v){return v>0?'#0B5FCC':v<0?'#C50F1A':'var(--t3)';}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -18841,7 +18900,7 @@ function sentGauge(val,lo,hi,unit,maxW,key){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#25619D')}${arc(P*0.75,P*0.55,'#3F7FBB')}${arc(P*0.55,P*0.45,'#55617A')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#B33633')}
+    ${arc(P,P*0.75,'#0B5FCC')}${arc(P*0.75,P*0.55,'#2E7BE0')}${arc(P*0.55,P*0.45,'#55617A')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#C50F1A')}
     <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
       <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
@@ -18922,7 +18981,7 @@ function sentSpark(series,lo,hi,loTh,hiTh){
     <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="1.75" stroke-linejoin="round"/>
     <circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(+last[1]).toFixed(1)}" r="3.2" fill="var(--blue)"/>
   </svg>`;
-  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#25619D';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
+  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#0B5FCC';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
   return chartHoverWrap(svg,hpts);
 }
 // ── Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14): Balken = Actual,
@@ -19095,8 +19154,8 @@ const SENT_INFO={
      <p><b>Who answers, and where:</b> AAII's own members — U.S. <b>private</b> investors, not banks, funds or analysts. They vote voluntarily in an online poll on aaii.com; the week runs Thursday to Wednesday and the result is published on <b>Thursday</b>. Two things follow from that design: participation is <b>self-selected</b> (whoever feels like voting, votes), and the number of responses varies from week to week. So single weeks are noisy — the smoothed line in the chart is the more reliable read.</p>
      <p><b>Why it matters:</b> it is the classic gauge of the <b>retail mood in U.S. equities</b>, and it is read <b>contrarian</b>. The logic is simple: if almost everyone is already bullish, most of them have already bought — there is little buying power left, and disappointments hit a market that is fully invested. If almost everyone is bearish, the selling has largely happened. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
      <p><b>What is measured here:</b> the <b>spread</b> = bullish % minus bearish %, in percentage points. The individual shares jump around a lot and "neutral" distorts them; the spread is the standard summary. The long-run average is about <b>+6.5pp</b> (roughly 37.5% bullish against 31.0% bearish) — the survey leans mildly optimistic by construction, which is why the thresholds are not symmetric around zero:</p>
-     <ul><li><b style="color:${'#25619D'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#B33633'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
+     <ul><li><b style="color:${'#0B5FCC'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#C50F1A'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
      <li>In between — normal range, no signal.</li></ul>
      <p><b>Which assets it affects here:</b> only <b>S&amp;P 500</b> and <b>Nasdaq</b>, with half weight, and only at the extremes — the same rule every other sentiment gauge in this app follows. The survey asks explicitly about the <b>stock market</b>, so that is where it is applied.</p>
      <p><b>Why not FX, gold or crypto:</b> it would be tempting to treat extreme equity pessimism as a general risk-off signal and credit the dollar, the yen, the franc or gold for it. That step is an <b>interpretation, not a measurement</b> — the respondents were never asked about currencies. This app does not turn one market's survey into another market's score. Read it as background for the general risk climate, but it does not move any FX, metals or crypto score.</p>
@@ -19105,24 +19164,24 @@ const SENT_INFO={
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
-     <ul><li><b style="color:${'#B33633'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
-     <li><b style="color:${'#25619D'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
+     <ul><li><b style="color:${'#C50F1A'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
+     <li><b style="color:${'#0B5FCC'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
      <li><b style="color:${'#55617A'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
      <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
-     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#25619D'}">bullish</b>.</li>
-     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#B33633'}">bearish</b>.</li>
+     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#0B5FCC'}">bullish</b>.</li>
+     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#C50F1A'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
      <p><b>How to read the chart:</b> the stepped line is the daily ratio. The blue-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Net Options Flow (Call−Put)/(Call+Put)',
     `<p><b>What it is:</b> the net balance between call and put volume on a given day, computed directly from the raw end-of-day option volumes as <b>(total call volume − total put volume) ÷ (total call volume + total put volume)</b>. This is cleanly scaled between <b>−1.0</b> (only puts traded) and <b>+1.0</b> (only calls traded); <b>0</b> means calls and puts balanced.</p>
      <p><b>How to read it here:</b> each bar is one day (lightly smoothed with a 5-day average to cut single-day noise).</p>
-     <ul><li><b style="color:${'#25619D'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
-     <li><b style="color:${'#B33633'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
+     <ul><li><b style="color:${'#0B5FCC'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
+     <li><b style="color:${'#C50F1A'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
      <p>It is a direct, normalized read of who is leaning where in the options market, so it builds up one point per trading day as the underlying put/call series fills in.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (starts fresh per asset).</p>`],
   feargreed:['Fear & Greed / VIX',
@@ -20697,7 +20756,7 @@ SENT_INFO.news=['Headlines (free RSS feeds, no key)',
    <p><b>Limits:</b> the archive reaches back 35 days, but not evenly: the last 3 days are kept in depth, up to 10 days back only what rates MED or higher, and beyond that only HIGH. Holding all 35 days in full would be roughly 7000 headlines and 2.5 MB that your browser reloads on every visit — the older an item, the less likely you look for the small stuff. So an older day legitimately shows fewer entries than today. A single prolific feed is also capped, so its bulk output never crowds out the rest. A headline is never scored — this is context, not a signal. Where a headline lands on a day your score flipped, that is shown as a coincidence on the asset page, not as a cause.</p>`];
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
-   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#25619D">Blue up-bars</b> = the month was positive on average; <b style="color:#B33633">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#0B5FCC">Blue up-bars</b> = the month was positive on average; <b style="color:#C50F1A">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20) ═══════════════════
@@ -21116,7 +21175,7 @@ function scrollRateProbTo(idx,animate){
 // Sitzung) - bisher wurden sie nur je Waehrung EINZELN gezeigt. Nebeneinander
 // gelegt ist die DIFFERENZ zweier Pfade die sauberste Erklaerung fuer eine
 // Paarbewegung, die es gibt.
-const TERM_FARBEN={USD:'#25619D',EUR:'#9b8fd4',GBP:'#B33633',JPY:'#55617A',
+const TERM_FARBEN={USD:'#0B5FCC',EUR:'#9b8fd4',GBP:'#C50F1A',JPY:'#55617A',
   CHF:'#4fa3c7',CAD:'#c78b4f',AUD:'#5fa87a',NZD:'#a05fa8'};
 function termStructureData(){
   const out=[];
@@ -21386,6 +21445,7 @@ const TAB_ICONS={
   seas:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
   data:'<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>',
   rate:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>',
   edge:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   carry:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
