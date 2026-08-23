@@ -1108,6 +1108,14 @@ body.res-return-active .rterm-back-pill{display:flex}
    moeglichst wenig von der Hoehe frisst, die wir gerade eingespart haben.
    Rechts die Schnellzugriffe als reine Icon-Knoepfe: sieben beschriftete
    Pillen haetten die Leiste umbrechen lassen, der Titel traegt den Namen. */
+/* Kennzahlenleiste der Overview: eine Zeile, vier Zellen, Trennlinien statt
+   vier einzelner Karten - so kostet die Kursperformance nur ~46px Hoehe. */
+.aperf{display:flex;align-items:stretch;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+.aperf-t{display:flex;align-items:center;padding:0 14px;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:var(--t3);border-right:1px solid var(--bd);flex:none}
+.aperf-c{flex:1 1 0;min-width:0;padding:7px 14px;border-right:1px solid var(--bd)}
+.aperf-c:last-child{border-right:none}
+.aperf-l{font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--t3);text-transform:uppercase}
+.aperf-v{font-size:14px;font-weight:700;margin-top:2px;font-family:var(--ff-num)}
 .asec-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--bd);margin-bottom:var(--gap-block)}
 .asec-tabs{display:flex;gap:2px}
 .asec-tab{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 13px;font:600 12.5px/1 var(--ff-text);color:var(--t2);cursor:pointer;border-radius:0}
@@ -3474,11 +3482,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-425 - Assets-Seite als Kommandozentrale: vier Sektionen (Overview/Macro/News/Notes) statt einer endlosen Spalte. Nachgemessen sank die Uebersicht von 2654px auf 898px - sie passt jetzt ohne Scrollen auf einen Bildschirm (Viewport 950px); die sechs Rubrik-Detailkarten mit den Indikator-Tabellen (allein 1553px) liegen einen Klick entfernt unter Macro. Die sieben Schnellzugriffe auf die Analyseseiten stehen jetzt in der Sektionsleiste und sind damit in JEDER Sektion erreichbar statt nur in der Bias-und-Notes-Karte. Ausserdem: aktiver Tab und ausgewaehlte Filter tragen das Cyan aus der Vorlage, Karten bekommen eine hauchduenne Glaskante."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-426 - Overview der Assets-Seite zeigt jetzt auch die Kursperformance (1D/1W/1M/YTD) als schmale Kennzahlenleiste. Bisher stand dort nur der Score - was der Kurs tatsaechlich gemacht hat, musste man sich auf dem Dashboard suchen. Nutzt dieselbe Rechnung wie die Performance-Ranking-Karte (perfReturn), damit die Zahlen nicht auseinanderlaufen; fehlt die Preisreihe, steht dort \u2013 statt eines geschaetzten Werts."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-425</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-426</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -10256,12 +10264,30 @@ function renderSpecTab(c){
   }else if(curSub==='notes'){
     body=renderNotesSubTab(c);
   }else{
-    // Overview: die Score-Kacheln (Was sagt die App?) direkt ueber der
-    // eigenen Einordnung (Was sagst DU?) - zusammen die Zusammenfassung
-    // des Assets, ohne die langen Indikator-Tabellen darunter.
-    body=`${renderOverviewCard(rubs)}${assetAnalysisHtml(c)}`;
+    // Overview: was der Markt tat (Kursperformance) ueber dem, was die App
+    // sagt (Score-Kacheln), ueber dem, was DU sagst (eigene Einordnung).
+    // Die langen Indikator-Tabellen bleiben in "Macro".
+    body=`${assetPerfStripHtml(c)}${renderOverviewCard(rubs)}${assetAnalysisHtml(c)}`;
   }
   return assetSectionNavHtml()+body;
+}
+// Kursperformance des Assets ueber die vier Standardfenster. Die Assets-Seite
+// zeigte bisher NUR den Score - was der Kurs tatsaechlich gemacht hat, musste
+// man sich auf dem Dashboard suchen.
+// Nutzt bewusst perfReturn(), exakt dieselbe Rechnung wie die
+// Performance-Ranking-Karte, damit dieselbe Zahl nicht an zwei Stellen
+// unterschiedlich herauskommen kann. perfReturn liefert null, wenn die
+// Preisreihe fehlt oder kuerzer als das Fenster ist - dann steht hier "–"
+// und NICHT etwa ein hochgerechneter Wert (Projekt-Grundsatz: nie schaetzen).
+function assetPerfStripHtml(c){
+  const cells=PERF_WINDOWS.map(([lbl,days])=>{
+    const r=perfReturn(c.id,days);
+    const val=r?`${r.pct>0?'+':''}${r.pct.toFixed(2)}%`:'–';
+    const col=!r?'var(--t3)':r.pct>0.001?'var(--green)':r.pct<-0.001?'var(--red)':'var(--t2)';
+    const tip=r?`${lbl}: ${r.from} → ${r.to}`:`No price history covering ${lbl} yet`;
+    return`<div class="aperf-c" title="${escH(tip)}"><div class="aperf-l">${escH(lbl)}</div><div class="aperf-v" style="color:${col}">${escH(val)}</div></div>`;
+  }).join('');
+  return`<div class="aperf"><span class="aperf-t">PRICE</span>${cells}</div>`;
 }
 
 function renderRub(rub,ri,total){

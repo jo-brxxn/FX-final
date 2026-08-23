@@ -121,3 +121,35 @@ gerade dran gearbeitet wird):
   `.dw-hdr`). Bei einem "Karten sehen nicht einheitlich aus"-Einwand zu
   `.dw` zuerst diese Entscheidung nachschlagen, bevor sie neu aufgerollt
   wird — dieselbe Vorsicht wie beim "Glow"-Punkt oben.
+
+## Farbwelt: dunkles Terminal (Nutzer-Vorlage 2026-08-23)
+
+Die App steht auf **tiefem Marineblau**, nicht mehr auf Hellgrau. Vorlage war
+ein vom Nutzer geschicktes Finanz-Dashboard; der Seitenaufbau wurde bewusst
+NICHT davon übernommen, nur die Farbwelt und einzelne Element-Ideen.
+
+**Die Grauskala liest sich auf Dunkel umgekehrt — aber die Ordnung bleibt.**
+`--bg2` (Karte) ist die *hellste* Fläche, `--bg0` (Seite) die dunkelste.
+`--bg4/5/6` gehen deshalb **heller** statt dunkler. Der Merksatz dahinter ist
+unverändert: sie bedeuten „ein Schritt weiter weg von der Karte" — auf Hell
+hieß das dunkler, auf Dunkel heller. Jede Verbrauchsstelle, die nur an der
+Reihenfolge hängt (Farbverläufe, Badges, Hover), stimmt dadurch weiter.
+
+**`--accent` (Cyan `#22d3ee`) ist ausschließlich Interaktion.** Aktiver Tab,
+ausgewählter Filter, Fokus. NIE ein Datenwert — Blau ist im ganzen Rest der App
+die Bias-Farbe „bullish", und ein Cyan daneben würde die Zahlenfarbe
+mehrdeutig machen.
+
+**`--a-infl` / `--a-rate` / `--a-lab` / `--a-grow` / `--a-cot` / `--a-risk`** sind
+Akzentfarben je Makro-Kategorie. Nur als schmale Kante oder Punkt einsetzen,
+nie als Zahlenfarbe. Ihre Farbtöne liegen absichtlich weg von Blau und Rot.
+
+**Kontrast wird nachgerechnet, nicht geschätzt.** Beim Umstieg musste `--t3`
+angepasst werden, weil die hellere Karte den Kontrast sonst unter AA gedrückt
+hätte. Aktuell gegen die Karte: Text 5.2–10.3:1, Blau 5.6:1, Rot 5.6:1,
+Slate 6.1:1 — alle AA-fest.
+
+**`theme-color` (Meta), `manifest.json` und `--chrome-bg` müssen denselben Wert
+tragen.** Drei Literale, eine Farbe. Bei Änderung zusätzlich `CACHE_VERSION`
+in `sw.js` erhöhen, sonst liefert der Service Worker das alte Manifest weiter
+(Cache-First-Zweig).

@@ -789,3 +789,28 @@ Stelle mittlerweile dreimal zur Falle geworden (Klickregel selbst, dann
 zuverlaessig (deckt sich mit der bereits dokumentierten Erfahrung bei der
 urspruenglichen Klickregel) - fuer diese Klasse Bug reicht nur ein manuell
 per `dispatchEvent` nachgebauter, exakter Ereignis-Zeitplan.
+
+## Assets-Detailseite: vier Sektionen (Nutzer-Ziel 2026-08-23)
+
+Die Seite lag vorher als eine einzige Spalte vor — gemessen 2654px bei 950px
+Viewport, davon 1553px allein die sechs Rubrik-Detailkarten. Jetzt vier
+Sektionen über `curSub`: **Overview / Macro / News / Notes**.
+
+- **Overview** — Kursperformance (1D/1W/1M/YTD), die sechs Score-Kacheln und
+  die eigene Bias-Einordnung. Passt ohne Scrollen auf einen Bildschirm.
+- **Macro** — die Rubrik-Detailkarten mit den Indikator-Tabellen.
+- **News** / **Notes** — je die bestehende Ansicht.
+
+**Die Schnellzugriffe stehen in der Sektionsleiste, nicht in einer Karte.**
+`ASSET_QUICK_LINKS` (7 Analyseseiten, jeweils mit vorgewähltem Asset über
+`assetQuickGo`) sind dadurch in *jeder* Sektion erreichbar. Bewusst nur an
+dieser einen Stelle — sonst gäbe es zwei Wege zum selben Ziel.
+
+Von der Zielseite führt die rote Zurück-Pille direkt zu genau diesem Asset
+zurück (`_quickReturnAssetId`); ohne gesetzte Asset-ID geht sie wie bisher ins
+Research-Terminal.
+
+**Kursperformance kommt aus `perfReturn()`** — derselben Rechnung wie die
+Performance-Ranking-Karte, damit dieselbe Zahl nicht an zwei Stellen
+unterschiedlich herauskommt. Fehlt die Reihe, liefert sie `null` und die Zelle
+zeigt „–" statt eines hochgerechneten Werts.
