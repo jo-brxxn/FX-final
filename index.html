@@ -210,7 +210,9 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Nutzer-Wunsch 2026-08-02 (Grau-/Schwarz-Regler): aktiver Zustand fuer
    Toggle-Buttons im .btn-Stil (bisher nutzten .on-Toggles im Projekt immer
    eigene Klassen wie .bo.on - diese ist die erste generische .btn.on). */
-.btn.on{background:rgba(var(--blue-rgb),.14);border-color:var(--blue);color:var(--blue)}
+/* Ausgewaehlter Filter/Zeitraum (1D/1W/1M/YTD, Full/Half/None, ...) ebenfalls
+   in Cyan - reine Auswahl, kein Datenwert. Siehe Kommentar bei .np.on. */
+.btn.on{background:rgba(var(--accent-rgb),.14);border-color:var(--accent);color:var(--accent)}
 /* Micro-interactions: Buttons federn beim Druecken leicht ein, wichtige
    Karten heben sich beim Hover minimal an - macht die Oberflaeche insgesamt
    "fester"/hochwertiger, ohne die Bedienung zu veraendern. */
@@ -278,8 +280,12 @@ svg.ic{vertical-align:-2px;flex:none}
 .np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
 .np-ic svg{width:17px;height:17px}
 .np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
-.np.on{color:var(--t0);font-weight:800;border-left-color:var(--blue);background:var(--bg3)}
-.np.on .np-ic{color:var(--blue)}
+/* Aktiver Tab traegt seit dem dunklen Design das Cyan (--accent) statt Blau
+   (Nutzer-Vorlage 2026-08-23). Blau ist im ganzen Rest der App die
+   Bias-Farbe "bullish" - es als Auswahl-Markierung zu verwenden macht die
+   Zahlenfarbe mehrdeutig. Cyan ist ausschliesslich Interaktion. */
+.np.on{color:var(--t0);font-weight:800;border-left-color:var(--accent);background:var(--bg3)}
+.np.on .np-ic{color:var(--accent)}
 @media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
 /* ── ANIMATION Nav-Leiste (Nutzer-Wunsch 2026-08-21: "damit das Ganze
    cleaner aussieht"). Drei Bewegungen, alle bewusst kurz und ohne
@@ -707,7 +713,7 @@ body.compact-view .rub-summary{display:block}
    grenzen sich nur durch eine duenne Kontur ab, keine Elevation. Alt:
    border:1px solid var(--bd2);border-left:4px solid #2c4f7c;border-radius:
    var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18); */
-.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:#e9edf1}
@@ -1095,6 +1101,21 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 body.res-return-active .rterm-back-pill{display:flex}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
+/* ── Sektions-Navigation der Assets-Seite ──
+   Schmale Leiste statt einer weiteren Karte: der aktive Eintrag bekommt nur
+   einen Cyan-Unterstrich (dieselbe Interaktionsfarbe wie die Haupt-Tableiste
+   links, siehe .np.on) - kein Kasten, kein Hintergrund, damit die Leiste
+   moeglichst wenig von der Hoehe frisst, die wir gerade eingespart haben.
+   Rechts die Schnellzugriffe als reine Icon-Knoepfe: sieben beschriftete
+   Pillen haetten die Leiste umbrechen lassen, der Titel traegt den Namen. */
+.asec-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--bd);margin-bottom:var(--gap-block)}
+.asec-tabs{display:flex;gap:2px}
+.asec-tab{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 13px;font:600 12.5px/1 var(--ff-text);color:var(--t2);cursor:pointer;border-radius:0}
+@media(hover:hover){.asec-tab:hover{color:var(--t0)}}
+.asec-tab.on{color:var(--t0);font-weight:800;border-bottom-color:var(--accent)}
+.asec-links{display:flex;gap:4px;margin-left:auto;padding-bottom:5px}
+.asec-link{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);cursor:pointer}
+@media(hover:hover){.asec-link:hover{color:var(--accent);border-color:var(--accent)}}
 .ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:var(--gap-block)}
 .ranl-title{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:10px}
 .ranl-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
@@ -1469,7 +1490,11 @@ body.res-return-active .rterm-back-pill{display:flex}
    Animation), damit es sich nicht wieder wie das bereits verworfene
    "Video-Game"-Design anfuehlt (siehe CLAUDE.md-Historie der vorherigen
    Professionalitaets-Audits), nur spuerbar mehr Tiefe/Politur. */
-.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:9px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
+/* Glaskante: hauchduenner heller Streifen an der Oberkante. Auf Dunkel
+   liest sich eine Karte dadurch als erhabene Flaeche statt als blosser
+   Farbfleck - der Effekt aus der Nutzer-Vorlage (2026-08-23), aber sehr
+   zurueckhaltend dosiert (4.5% Weiss), damit er nicht als Rahmen wirkt. */
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:9px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -3449,11 +3474,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-424 - Dunkles Design (Nutzer-Vorlage 2026-08-23): die App steht jetzt auf tiefem Marineblau statt Hellgrau. Karte ist die hellste Flaeche, Seite die dunkelste, bg4/5/6 gehen entsprechend heller statt dunkler - die Reihenfolge der Grauskala bleibt damit intakt. Bias-Bedeutung unveraendert (Blau=bullish, Rot=bearish), nur fuer den dunklen Grund aufgehellt und gegen die Karte auf AA nachgerechnet. Die 157 KB grosse helle Marmor-Textur im Hintergrund ist raus (ergab unter dunklen Panels keinen Sinn) und durch zwei sehr schwache Cyan/Blau-Schleier ersetzt. Neu: --accent (Cyan) nur fuer Interaktion, plus sechs Kategorie-Akzentfarben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-425 - Assets-Seite als Kommandozentrale: vier Sektionen (Overview/Macro/News/Notes) statt einer endlosen Spalte. Nachgemessen sank die Uebersicht von 2654px auf 898px - sie passt jetzt ohne Scrollen auf einen Bildschirm (Viewport 950px); die sechs Rubrik-Detailkarten mit den Indikator-Tabellen (allein 1553px) liegen einen Klick entfernt unter Macro. Die sieben Schnellzugriffe auf die Analyseseiten stehen jetzt in der Sektionsleiste und sind damit in JEDER Sektion erreichbar statt nur in der Bias-und-Notes-Karte. Ausserdem: aktiver Tab und ausgewaehlte Filter tragen das Cyan aus der Vorlage, Karten bekommen eine hauchduenne Glaskante."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-424</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-425</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -9847,7 +9872,7 @@ function cloudAutoSync(){
 }
 
 // ══ CURRENT STATE ══════════════════════════════════════════════════
-let selId='USD',curSub='specific',curPage='dash',curFxMode='fx';
+let selId='USD',curSub='overview',curPage='dash',curFxMode='fx';
 function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
@@ -10067,7 +10092,7 @@ function renderDetail(){
   const dmetaControls=`<div class="dmeta-controls">
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
-    <div class="dmeta-ctrl"><button class="dmeta-icon-btn${curSub==='notes'?' on':''}" onclick="setSub(curSub==='notes'?'specific':'notes')" title="${curSub==='notes'?'Back to Macro':'Notes'}">${icn('note',13)}</button></div>
+    <div class="dmeta-ctrl"><button class="dmeta-icon-btn${curSub==='notes'?' on':''}" onclick="setSub(curSub==='notes'?'overview':'notes')" title="${curSub==='notes'?'Back to Macro':'Notes'}">${icn('note',13)}</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
@@ -10083,7 +10108,7 @@ function renderDetail(){
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
-    ${curSub==='specific'?renderSpecTab(c):renderNotesSubTab(c)}
+    ${renderSpecTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
   attachChartHovers(document.getElementById('detail'));
@@ -10201,13 +10226,43 @@ function goToRubCard(ri){
   needsExpand?setTimeout(run,30):run();
 }
 // ── SPECIFIC TAB ──
+// ── SEKTIONEN DER ASSETS-SEITE (Nutzer-Ziel 2026-08-23) ─────────────
+// Vorher stand alles untereinander auf EINER Seite: Score-Kacheln,
+// Bias & Notes, die sechs Rubrik-Detailkarten mit ihren Indikator-Tabellen
+// und die News-Karte. Nachgemessen waren das 2654px bei 950px Viewport -
+// fast drei Bildschirmhoehen, davon 1553px (59%) allein die Rubrik-Karten.
+// Jetzt vier Sektionen: die Uebersicht passt auf einen Bildschirm, die
+// Tabellen liegen einen Klick entfernt unter "Macro".
+// Rechts in derselben Leiste die Schnellzugriffe auf die Analyseseiten
+// (ASSET_QUICK_LINKS, jeweils mit vorgewaehltem Asset). Sie standen vorher
+// nur in der Bias-&-Notes-Karte und waren damit nur in einer Sektion
+// erreichbar - hier sind sie IMMER sichtbar, egal wo man gerade ist.
+const ASSET_SECTIONS=[['overview','Overview'],['macro','Macro'],['news','News'],['notes','Notes']];
+function assetSectionNavHtml(){
+  const tabs=ASSET_SECTIONS.map(([id,lbl])=>
+    `<button class="asec-tab${curSub===id?' on':''}" onclick="setSub('${id}')">${escH(lbl)}</button>`).join('');
+  const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>
+    `<button class="asec-link" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,13)}</button>`).join('');
+  return`<div class="asec-nav"><div class="asec-tabs">${tabs}</div><div class="asec-links">${links}</div></div>`;
+}
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
-  return`${renderOverviewCard(rubs)}
-  ${assetAnalysisHtml(c)}
-  ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
-  ${newsAssetSectionHtml(c)}
-  <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;}
+  let body;
+  if(curSub==='macro'){
+    body=`${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
+      <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;
+  }else if(curSub==='news'){
+    body=newsAssetSectionHtml(c);
+  }else if(curSub==='notes'){
+    body=renderNotesSubTab(c);
+  }else{
+    // Overview: die Score-Kacheln (Was sagt die App?) direkt ueber der
+    // eigenen Einordnung (Was sagst DU?) - zusammen die Zusammenfassung
+    // des Assets, ohne die langen Indikator-Tabellen darunter.
+    body=`${renderOverviewCard(rubs)}${assetAnalysisHtml(c)}`;
+  }
+  return assetSectionNavHtml()+body;
+}
 
 function renderRub(rub,ri,total){
   const bco=bCol(rub.bias);
@@ -10475,7 +10530,7 @@ function updateSidebarSelection(){
     b.classList.toggle('on',active&&b.dataset.sym===selId);
   });
 }
-function selSym(id){selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
+function selSym(id){selId=id;curSub='overview';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite (FX und Non-FX sind seit 2026-08-03 EIN gemeinsamer Tab -
 // Nutzer-Wunsch "Non-FX unter FX anreihen", siehe TABS/renderSidebar).
@@ -14384,13 +14439,15 @@ function researchAnCardHtml(assetId,rub){
 // zeigt den Namen schon prominent im Kopf) und nur die 7 Kategorien, die
 // sich sinnvoll auf ein einzelnes Asset vorfiltern lassen (Compare/Matrix/
 // Edge/Carry bleiben aussen vor - eher Werkzeuge als Analyse pro Asset).
+// Die Schnellzugriffe standen frueher HIER in der Karte. Sie sind in die
+// Sektions-Navigation gewandert (assetSectionNavHtml), damit sie in jeder
+// Sektion erreichbar sind statt nur in dieser einen - bewusst nicht an
+// beiden Stellen, sonst gaebe es zwei Wege zum selben Ziel.
 function assetAnalysisHtml(c){
-  const quickHtml=`<div class="ranl-quick">${ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>`<button class="ranl-quickbtn" onclick="assetQuickGo('${tab}')">${icn(ic,13)} ${escH(lbl)}</button>`).join('')}</div>`;
   const rubs=c.rubrics||[];
   const cards=rubs.map(rub=>researchAnCardHtml(c.id,rub)).join('')||`<div class="dw-empty">No categories on this asset yet.</div>`;
   return`<div class="ranl-wrap">
     <div class="ranl-title">Bias &amp; Notes</div>
-    ${quickHtml}
     <div class="ranl-cards">${cards}</div>
   </div>`;
 }
