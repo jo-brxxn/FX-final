@@ -331,24 +331,31 @@ svg.ic{vertical-align:-2px;flex:none}
    eigene Regeln mit hoeherer Spezifitaet (#navSidebar .ab schlaegt .ab). */
 #navSidebar .np-sub-wrap.np-assets.open{max-height:none}
 #navSidebar .np-cat{display:flex;align-items:center;gap:6px;
-  padding:9px 9px 3px 30px;font:600 9.5px/1.3 var(--ff-num);letter-spacing:1.6px;
+  padding:9px 9px 3px 16px;font:600 9.5px/1.3 var(--ff-num);letter-spacing:1.6px;
   text-transform:uppercase;color:var(--t3);user-select:none}
 #navSidebar .np-cat-l{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #navSidebar .np-cat-mv{display:flex;gap:3px;flex:none}
 #navSidebar .np-asset-wrap{position:relative;display:flex;align-items:center;gap:4px}
-#navSidebar .ab.np-asset{display:flex;align-items:center;gap:8px;flex:1;min-width:0;
-  width:auto;padding:6px 9px 6px 30px;text-align:left;background:transparent;
+/* Normale Leisten-Farben, KEINE Bias-Faerbung (Nutzer-Wunsch 2026-08-23).
+   Die Zeile verhaelt sich damit genau wie jeder andere Navigationseintrag:
+   ruhig als Text, hervorgehoben nur, wenn sie ausgewaehlt ist. */
+#navSidebar .ab.np-asset{display:flex;align-items:center;gap:9px;flex:1;min-width:0;
+  width:auto;padding:5px 9px 5px 16px;text-align:left;background:transparent;
   border:none;border-left:3px solid transparent;border-radius:0 var(--rss) var(--rss) 0;
-  box-shadow:none;font-family:var(--ff-text);cursor:pointer;transition:background .13s,border-color .13s}
+  box-shadow:none;font-family:var(--ff-text);cursor:pointer;
+  transition:background .13s,border-color .13s,color .13s;color:var(--t2)}
 #navSidebar .ab.np-asset .an{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;font-size:12.5px;font-weight:700}
-#navSidebar .ab.np-asset .sb-score{flex:none;font:700 11.5px/1 var(--ff-num);
-  font-variant-numeric:tabular-nums}
-#navSidebar .ab.np-asset .av{flex:none;font-size:9.5px;width:9px;text-align:center}
-@media (hover:hover){#navSidebar .ab.np-asset:hover:not(.on){background:var(--bg4)}}
-/* Ausgewaehltes Asset: Grund UND linker Balken in seiner eigenen Bias-Farbe -
-   dieselbe Sprache wie der aktive Tab darueber, nur eingefaerbt. */
-#navSidebar .ab.np-asset.on{background:var(--bg4);border-left-color:var(--biascol)}
+  white-space:nowrap;font-size:12.5px;font-weight:700;color:inherit}
+#navSidebar .np-glyph{flex:none;display:inline-flex;align-items:center;justify-content:center;
+  color:var(--t3);transition:color .13s}
+#navSidebar .np-glyph svg{display:block}
+@media (hover:hover){#navSidebar .ab.np-asset:hover:not(.on){background:var(--bg2);color:var(--t0)}
+  #navSidebar .ab.np-asset:hover:not(.on) .np-glyph{color:var(--t1)}}
+/* Ausgewaehltes Asset exakt wie ein aktiver Tab: Cyan-Balken links, hellerer
+   Grund, kraeftigerer Text - Cyan ist in der App ausschliesslich Interaktion
+   und kollidiert deshalb nicht mit den Bias-Farben im Inhalt. */
+#navSidebar .ab.np-asset.on{background:var(--bg3);border-left-color:var(--accent);color:var(--t0);font-weight:800}
+#navSidebar .ab.np-asset.on .np-glyph{color:var(--accent)}
 #navSidebar .np-mv{flex:none;width:17px;height:17px;display:flex;align-items:center;
   justify-content:center;padding:0;border:1px solid var(--bd2);border-radius:3px;
   background:var(--bg3);color:var(--t1);font-size:9px;line-height:1;cursor:pointer}
@@ -357,7 +364,7 @@ svg.ic{vertical-align:-2px;flex:none}
 @media (hover:hover){#navSidebar .np-mv:not(:disabled):hover{background:var(--bg4);color:var(--t0)}}
 #navSidebar .np-asset-edit{display:flex;gap:3px;flex:none;padding-right:6px}
 #navSidebar .np-cat.edit{color:var(--t2)}
-#navSidebar .np-addsym,#navSidebar .np-editdone{padding-left:30px;font-size:12px;color:var(--t2)}
+#navSidebar .np-addsym,#navSidebar .np-editdone{padding-left:16px;font-size:12px;color:var(--t2)}
 #navSidebar .np-addsym .np-ic,#navSidebar .np-editdone .np-ic{font-size:14px;font-weight:700}
 #navSidebar .np-editdone{color:var(--accent)}
 /* In der Icon-Leiste sind die Assets ausgeblendet (Regel weiter unten fuer
@@ -3610,11 +3617,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-436 - Die Assets sind aus ihrer eigenen 138px-Spalte auf der Assets-Seite in die Navigationsleiste gewandert und haengen dort als aufklappbarer Stapel unter Assets (Nutzer-Wunsch 2026-08-23). Jeder Eintrag: Name in seiner Bias-Farbe, Score, Richtungspfeil; die Kategorie-Zwischenueberschriften (FX, Crypto, Metals, Energy, Indices) bleiben erhalten. Die Detailansicht bekommt dadurch die volle Breite. Hinzufuegen, Umsortieren und Loeschen erscheinen NUR im Bearbeitungsmodus - langer Druck auf den Assets-Kopf oder auf ein Asset schaltet ihn ein, Done wieder aus; vorher hatte jeder Eintrag seinen eigenen Reorder-Zustand. WICHTIG fuer spaetere Aenderungen: die Bias-Farben BC sind fuer helle Flaechen gebaut und kamen auf der dunklen Leiste auf 1,5-2,0:1, also praktisch unlesbar - dafuer gibt es jetzt BC_NAV/navBiasCol mit aufgehellten Toenen, gemessen ueber 4,3:1 auf allen drei Leisten-Untergruenden. Der Stapel benutzt bewusst denselben Mechanismus wie die echten Tab-Stapel (expandedStack, np-sub-wrap, Hoehenmessung in syncNavExpanded), steht aber NICHT in tabStacks, damit ihn Umbenennen/Aufloesen nie anfassen koennen. Das Zielelement behaelt die id sidebar, dadurch laufen updateSidebarSelection, die Score-Auffrischung und die 35 renderSidebar-Aufrufer unveraendert weiter. Tote Regeln und Zustaende der alten Spalte (.sb, .sb-lbl, .ab-move, .ab-del, .add-sym, sbReorderId, sbCatReorder, sbCatClick) sind entfernt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-437 - Die Asset-Zeilen im Assets-Stapel zeigen jetzt NUR noch den Namen, davor ein einfarbiges Icon: Score und Richtungspfeil sind raus, der Score steht weiter im Tooltip. Die Icons sind ein eigener, bewusst reduzierter Satz (AI_GLYPHS/assetGlyphHtml) - der farbige, animierte Satz AI_FLAGS/AI_SYMBOLS bleibt unangetastet und steht weiter im Asset-Kopf und auf der Dashboard-Karte. WARUM EIN ZWEITER SATZ UND NICHT DER ALTE OHNE FARBEN: die Flaggen bestehen aus farbigen Flaechen; zwingt man sie auf eine Farbe, wird aus den USA ein gefuelltes Rechteck und aus Japan dasselbe - genau die Unterscheidbarkeit geht verloren. Jede Flagge ist deshalb neu als GEOMETRIE gezeichnet (Sternenfeld plus Streifen, Sternenkreis, Union-Jack-Kreuze, Schweizerkreuz, Sonnenscheibe, Ahornblatt, Kreuz des Suedens), dazu Barrenstapel fuer Gold, ein einzelner Barren fuer Silber, Tropfen fuer Oel, Muenze fuer BTC und ein Kursverlauf fuer alle Indizes. Alles in currentColor, keine Verlaeufe, keine Animation. ⚠ Bei 17px ist eine SVG-Einheit nur ~0,7px breit: Linien duenner als etwa 1,8 Einheiten fallen unter ein Geraetepixel - die erste Fassung mit 5 USD-Streifen und 11 EU-Sternen war bei 15px nur noch ein Fleck und wurde vergroebert. Die Kategorien (FX, Crypto ...) sind ausserhalb des Bearbeitungsmodus komplett unsichtbar - weder Ueberschrift noch Abstand, eine durchgehende Liste. Intern existiert die Gruppierung weiter, sie steuert nur noch Reihenfolge und Sortieren. Im Bearbeitungsmodus kommen die Ueberschriften zurueck, sonst waere nicht erkennbar, WAS die Pfeile dort verschieben. Und die Liste faerbt NICHT mehr nach Bias, sondern in den normalen Leisten-Farben (Nutzer-Wunsch): ausgewaehlt sieht sie aus wie ein aktiver Tab, mit Cyan-Balken links. Damit entfallen BC_NAV/navBiasCol wieder, und der Score-Sync hat fuer die Leiste gar nichts mehr zu tun."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-436</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-437</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4234,15 +4241,13 @@ function introLogin(){
 // und auf Nutzer-Wunsch wieder verworfen - falls sie je zurueckkommen soll:
 // bull #1d4ed8, bear #b23a3a, neu #475569.
 const BC={bull:'#0B5FCC',bear:'#C50F1A',neu:'#55617A'};
-// Dieselben Bedeutungen, aber fuer den DUNKLEN Chrome-Hintergrund der
-// Navigationsleiste (#2A3757). Die BC-Werte oben sind fuer helle Flaechen
-// gebaut und kommen dort auf 1,5-2,0:1 - praktisch unlesbar (gemessen
-// 2026-08-23, bevor der Assets-Stapel gebaut wurde). Diese hier liegen auf
-// allen drei Leisten-Untergruenden (Grund, Hover, offener Stapel) ueber
-// 4,3:1. Gleiche Farbtoene, nur aufgehellt - die Bedeutung bleibt lesbar.
-const BC_NAV={bull:'#8FC7FF',bear:'#FF8F88',neu:'#B4C0D6'};
-// sbull/sbear teilen die Farbe ihrer Grundrichtung.
-function navBiasCol(b){return b==='sbull'?BC_NAV.bull:b==='sbear'?BC_NAV.bear:(BC_NAV[b]||BC_NAV.neu);}
+// ⚠ BC ist fuer HELLE Flaechen gebaut. Auf dem Chrome-Grund der
+// Navigationsleiste (#2A3757) kommen die drei Werte auf 1,98 / 1,94 / 1,89 -
+// praktisch unlesbar (gemessen 2026-08-23). Die Asset-Liste dort faerbt
+// deshalb NICHT nach Bias, sondern in den normalen Leisten-Textfarben
+// (Nutzer-Wunsch 2026-08-23: "ich will alles in normalem Farben nicht in
+// bias Farbe"). Wer dort doch je eine Bias-Farbe einsetzen will, misst sie
+// vorher gegen Grund, Hover UND offenen Stapel.
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -4453,6 +4458,94 @@ function aiIndex(accent) {
     <circle class="ai-tick-dot" cx="29.6" cy="6.6" r="1.5" fill="${accent}"/>`;
 }
 const AI_INDEX_ACCENT = { SP500: '#4FA3F7', NAS: '#7C7CF0', DAX: '#F0C24F', GER100: '#F0C24F' };
+
+// ── EINFARBIGER ICON-SATZ (Nutzer-Wunsch 2026-08-23) ───────────────────────
+// "mach davor die Flagge aber ohne Farben also eine Art icon aber schon die
+// richtige Form und nicht animiert und bei Gold und dem Rest auch gleich".
+//
+// Der farbige Satz oben (AI_FLAGS/AI_SYMBOLS) bleibt unangetastet - er steht
+// weiter im Asset-Kopf und auf der Dashboard-Karte. Dieser hier ist ein
+// ZWEITER, bewusst reduzierter Satz fuer die Navigationsleiste.
+//
+// ⚠ WARUM NICHT EINFACH DIE FARBEN AUS DEM BESTEHENDEN SATZ ZIEHEN: die
+// Flaggen bestehen aus farbigen Flaechen. Zwingt man sie auf eine Farbe,
+// wird aus den USA ein gefuelltes Rechteck und aus Japan dasselbe - genau
+// die Unterscheidbarkeit geht verloren, die den Sinn ausmacht. Deshalb ist
+// jede Flagge hier neu als GEOMETRIE gezeichnet: die Anordnung, die sie
+// erkennbar macht (Sternenfeld + Streifen, Sternenkreis, Union-Jack-Kreuze,
+// Schweizerkreuz, Sonnenscheibe ...), in einer einzigen Farbe.
+//
+// Alles zeichnet in currentColor - die Zeile setzt die Farbe, das Icon folgt.
+// Keine Verlaeufe, keine Animation, kein Glanz.
+// ⚠ Bei 17px Hoehe ist eine SVG-Einheit nur ~0,7px breit. Jede Linie duenner
+// als etwa 1,8 Einheiten faellt damit unter ein Geraetepixel, und feine
+// Details werden zu Rauschen statt zu Form. Alles hier ist deshalb bewusst
+// grob gezeichnet - wenige, dicke Elemente statt einer originalgetreuen
+// Flagge. Die erste Fassung hatte 5 Streifen fuer USD und 11 Sterne fuer EUR;
+// bei 15px war davon nur noch ein Fleck uebrig.
+const AI_GLYPH_FRAME = '<rect x="1.6" y="2.6" width="32.8" height="18.8" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".42"/>';
+// Sternenkreis (EU) und Punktreihen (AU/NZ) als kleine Scheiben.
+const _gPunkte = pts => pts.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r || 1}" fill="currentColor"/>`).join('');
+const AI_GLYPHS = {
+  // Sternenfeld links oben + Streifen rechts und darunter.
+  USD: AI_GLYPH_FRAME
+    + '<rect x="4" y="5" width="12.6" height="8" rx=".8" fill="currentColor" opacity=".9"/>'
+    + '<g stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".85">'
+    + '<path d="M19.4 7h12.4M19.4 11h12.4M5.2 16.8h26.6"/></g>',
+  // Sternenkreis.
+  EUR: AI_GLYPH_FRAME + _gPunkte([[18, 5.4], [23.6, 7.7], [25.9, 12], [23.6, 16.3], [18, 18.6], [12.4, 16.3], [10.1, 12], [12.4, 7.7]].map(p => [p[0], p[1], 1.35])),
+  // Union Jack: Diagonalen plus Kreuz.
+  GBP: AI_GLYPH_FRAME
+    + '<g stroke="currentColor" stroke-linecap="round" opacity=".85">'
+    + '<path d="M3.4 4.2 32.6 19.8M32.6 4.2 3.4 19.8" stroke-width="1.9"/>'
+    + '<path d="M18 3.4v17.2M2.6 12h30.8" stroke-width="3.4"/></g>',
+  // Schweizerkreuz.
+  CHF: AI_GLYPH_FRAME + '<path d="M15.6 6.4h4.8v3.2h3.2v4.8h-3.2v3.2h-4.8v-3.2h-3.2V9.6h3.2Z" fill="currentColor"/>',
+  // Sonnenscheibe.
+  JPY: AI_GLYPH_FRAME + '<circle cx="18" cy="12" r="5.4" fill="currentColor"/>',
+  // Zwei Randbalken, Ahornblatt in der Mitte.
+  CAD: AI_GLYPH_FRAME
+    + '<g fill="currentColor" opacity=".85"><rect x="1.4" y="2.4" width="7.6" height="19.2" rx="2.4"/><rect x="27" y="2.4" width="7.6" height="19.2" rx="2.4"/></g>'
+    + '<path d="M18 5.2 20.3 9.8 23.9 8.9 22.4 12.4 25.6 13.9 21.9 15.4 22.6 18.2 18.9 17.5 19.2 20.6h-2.4l.3-3.1-3.7.7.7-2.8-3.7-1.5 3.2-1.5-1.5-3.5 3.6.9Z" fill="currentColor"/>',
+  // Kleines Unionsfeld oben links, Kreuz des Suedens rechts.
+  AUD: AI_GLYPH_FRAME
+    + '<rect x="4" y="5" width="12" height="7.6" rx=".8" fill="currentColor" opacity=".55"/>'
+    + _gPunkte([[9.4, 17.4, 1.9], [26.8, 7.4, 1.5], [30.4, 12.4, 1.5], [25.2, 14.6, 1.5], [28.6, 18, 1.5]]),
+  // Unionsfeld plus vier Sterne.
+  NZD: AI_GLYPH_FRAME
+    + '<rect x="4" y="5" width="12" height="7.6" rx=".8" fill="currentColor" opacity=".55"/>'
+    + _gPunkte([[27.4, 6.8, 1.7], [31, 12.4, 1.7], [24.4, 13, 1.7], [28.2, 18.2, 1.7]]),
+  // Barrenstapel - zwei unten, einer oben.
+  GOLD: '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">'
+    + '<path d="M4.6 14.2h11.2l1.6 5.6H3Z"/><path d="M20.2 14.2h11.2l1.6 5.6H18.6Z"/>'
+    + '<path d="M12.4 7.6h11.2l1.6 5.6H10.8Z"/></g>',
+  // Ein einzelner Barren - so bleibt Silber von Gold unterscheidbar.
+  SILVER: '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">'
+    + '<path d="M10.4 9.4h15.2l2.4 8.6H8Z"/><path d="M12.6 13.4h13.4" stroke-width="1.1" opacity=".6"/></g>',
+  // Tropfen.
+  OIL: '<path d="M18 3.2c4.8 6 7.7 9.8 7.7 13.1a7.7 7.7 0 0 1-15.4 0c0-3.3 2.9-7.1 7.7-13.1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'
+    + '<path d="M14.6 16.4a3.4 3.4 0 0 0 2.2 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".55"/>',
+  // Muenze mit Bitcoin-Zeichen.
+  BTC: '<circle cx="18" cy="12" r="8.8" fill="none" stroke="currentColor" stroke-width="1.9"/>'
+    + '<path d="M15 7.8h4.2c2.1 0 3.3 1 3.3 2.5 0 1-.6 1.7-1.6 2 1.3.3 2.1 1.1 2.1 2.4 0 1.7-1.4 2.6-3.6 2.6H15Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>'
+    + '<path d="M17.2 5.4v2.6M20.2 5.4v2.6M17.2 16.6v2.6M20.2 16.6v2.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+  ETH: '<path d="M18 3 26.2 12 18 16.6 9.8 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>'
+    + '<path d="M9.8 13.8 18 21l8.2-7.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
+};
+// Indizes teilen sich wie im farbigen Satz EINE Zeichnung - eine eigene
+// Metapher je Index waere Bedeutung, die es nicht gibt.
+const AI_GLYPH_INDEX = '<rect x="2.8" y="3.2" width="30.4" height="17.6" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".42"/>'
+  + '<path d="M6.8 16.6 12.4 11.8 17.6 14 23 8.6 29.2 6.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+  + '<circle cx="29.2" cy="6.4" r="1.9" fill="currentColor"/>';
+// Ein einfarbiges Icon. `size` ist die HOEHE in px, Breite 3:2 wie beim
+// farbigen Satz - dadurch bleiben Flaggen und Symbole gleich gross.
+function assetGlyphHtml(id, size) {
+  const d = AI_GLYPHS[id] || (AI_INDEX_ACCENT[id] ? AI_GLYPH_INDEX : null);
+  if (!d) return '';
+  const h = size || 17, w = Math.round(h * 1.5 * 10) / 10;
+  return `<span class="np-glyph" style="width:${w}px;height:${h}px" aria-hidden="true">`
+    + `<svg viewBox="0 0 36 24" width="${w}" height="${h}">${d}</svg></span>`;
+}
 
 // ── Definitions-Block: wird EINMAL in den Body geschrieben ──────────────────
 function aiDefsSvg() {
@@ -5940,45 +6033,11 @@ function syncSidebarScores(){
       el.setAttribute('data-sv',String(sc));
     });
   }
-  const sb=document.getElementById('sidebar');
-  if(!sb)return;
-  sb.querySelectorAll('.ab').forEach(btn=>{
-    const id=btn.getAttribute('data-sym');
-    if(!id)return;
-    const sym=syms.find(x=>x.id===id);
-    if(!sym)return;
-    const sc=symScoreCmp(sym);
-    const el=btn.querySelector('.sb-score');
-    if(el){
-      const txt=(sc>0?'+':'')+sc;
-      if(el.textContent!==txt)el.textContent=txt;
-      const col=BC[sym.bias];
-      if(el.style.color!==col)el.style.color=col;
-      if(el.getAttribute('data-sv')!==String(sc))el.setAttribute('data-sv',String(sc));
-    }
-    const nm=btn.querySelector('.an');
-    if(nm&&nm.getAttribute('data-bv')!==sym.bias){
-      nm.setAttribute('data-bv',sym.bias);
-      nm.style.color=BC[sym.bias];
-    }
-    // ⚠ Der Pfeil MUSS hier mit. Solange der Name neutral gefaerbt war,
-    // fiel es nicht auf; seit er die Bias-Farbe traegt (2026-08-09), stand
-    // sonst ein roter ▼ neben einem blauen Namen - gemessen: Name
-    // rgb(79,155,255), Pfeil rgb(255,107,107) nach demselben Sync-Lauf.
-    // Genau die widerspruechliche Faerbung, gegen die dieser Sync
-    // ueberhaupt gebaut wurde.
-    const av=btn.querySelector('.av');
-    if(av&&av.getAttribute('data-bv')!==sym.bias){
-      av.setAttribute('data-bv',sym.bias);
-      av.style.color=BC[sym.bias];
-      av.textContent=sym.bias==='bull'?'▲':sym.bias==='bear'?'▼':'◆';
-    }
-    const want=glowClass(sym.bias);
-    if(want&&!btn.classList.contains(want)){
-      btn.classList.remove('glow-bull','glow-bear','glow-neu','glow-sbull','glow-sbear');
-      btn.classList.add(want);
-    }
-  });
+  // Die Asset-Liste in der Navigationsleiste braucht hier nichts mehr:
+  // seit 2026-08-23 stehen dort NUR Namen, in den normalen Leisten-Farben.
+  // Es gibt also weder eine Score-Zahl noch eine Bias-Faerbung, die
+  // nachgezogen werden muesste - nur die Auswahl, und die haengt an
+  // updateSidebarSelection().
 }
 function fxRefCount(){
   if(_fxRefCountCache!==null)return _fxRefCountCache;
@@ -10418,35 +10477,41 @@ function renderSidebar(){
   const customCatIds=customIds.map(c=>c.id);
   const allCats=computeSbCats();
   const bearb=!!sbEditMode;
+  // Die Kategorien (FX, Crypto, ...) sind ausserhalb des Bearbeitungsmodus
+  // komplett unsichtbar (Nutzer-Wunsch 2026-08-23): weder Ueberschrift noch
+  // Abstand - eine durchgehende Liste. Die Gruppierung existiert intern
+  // weiter, sie steuert nur noch die Reihenfolge und das Sortieren.
+  // Im Bearbeitungsmodus kommen die Ueberschriften zurueck, sonst waere
+  // nicht erkennbar, WAS die ▲▼ dort verschieben.
   let html=allCats.map((cat,ci)=>{
     const ids=getSbIds(cat).filter(id=>syms.find(s=>s.id===id));
     if(!ids.length)return'';
-    return`
-    <div class="np-cat${bearb?' edit':''}">
+    const kopf=bearb?`
+    <div class="np-cat">
       <span class="np-cat-l">${escH(cat.l)}</span>
-      ${bearb&&allCats.length>1?`<span class="np-cat-mv">
+      ${allCats.length>1?`<span class="np-cat-mv">
         <button class="np-mv" onclick="event.stopPropagation();moveSbCat('${escJs(cat.l)}',-1)" ${ci===0?'disabled':''} aria-label="Kategorie nach oben">▲</button>
         <button class="np-mv" onclick="event.stopPropagation();moveSbCat('${escJs(cat.l)}',1)" ${ci===allCats.length-1?'disabled':''} aria-label="Kategorie nach unten">▼</button>
       </span>`:''}
-    </div>
-    ${ids.map((id,idx)=>{
+    </div>`:'';
+    return kopf+ids.map((id,idx)=>{
       const c=syms.find(d=>d.id===id);const on=selId===id&&curPage==='cur';
       const isCustom=customCatIds.includes(id);
-      const col=navBiasCol(c.bias);
       const sc=symScoreCmp(c);
-      const pfeil=(c.bias==='bull'||c.bias==='sbull')?'▲':(c.bias==='bear'||c.bias==='sbear')?'▼':'◆';
+      // Keine Bias-Farbe, kein Glow-Rand: die Zeile sieht aus wie jeder
+      // andere Eintrag der Leiste. Der Score steht weiter im Tooltip -
+      // dort stoert er nicht und bleibt trotzdem erreichbar.
       return`<div class="np-asset-wrap">
-        <button data-sym="${id}" class="np ab np-asset${on?' on':''}${_flipGlowIds.has(c.id)?' flip-glow':''}" style="--biascol:${col}${_flipGlowIds.has(c.id)?`;--flipcol:${col}`:''}" onclick="sbClick('${escJs(id)}')" onpointerdown="sbPressStart('${escJs(id)}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()" data-tip="${escH(c.name)} ${sc>0?'+':''}${sc}" aria-label="${escH(c.name)}">
-          <span class="an np-lbl" data-bv="${c.bias}" style="color:${col}">${escH(c.name)}</span>
-          <span class="sb-score${_flipGlowIds.has(c.id)?' flip-pulse':''}" data-anim-score="sb-${c.id}" data-sv="${sc}" style="color:${col}">${sc>0?'+':''}${sc}</span>
-          <span class="av" data-anim-bias="sb-${c.id}" data-bv="${c.bias}" style="color:${col}">${pfeil}</span>
+        <button data-sym="${id}" class="np ab np-asset${on?' on':''}" onclick="sbClick('${escJs(id)}')" onpointerdown="sbPressStart('${escJs(id)}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()" data-tip="${escH(c.name)} ${sc>0?'+':''}${sc}" aria-label="${escH(c.name)}">
+          ${assetGlyphHtml(id,17)}
+          <span class="an np-lbl">${escH(c.name)}</span>
         </button>
         ${bearb?`<span class="np-asset-edit">
           <button class="np-mv" onclick="event.stopPropagation();moveSbSym('${escJs(cat.l)}','${escJs(id)}',-1)" ${idx===0?'disabled':''} aria-label="Nach oben">▲</button>
           <button class="np-mv" onclick="event.stopPropagation();moveSbSym('${escJs(cat.l)}','${escJs(id)}',1)" ${idx===ids.length-1?'disabled':''} aria-label="Nach unten">▼</button>
           ${isCustom?`<button class="np-mv del" onclick="event.stopPropagation();openDelSym('${escJs(id)}')" aria-label="Entfernen">×</button>`:''}
         </span>`:''}
-      </div>`;}).join('')}`;}).join('');
+      </div>`;}).join('');}).join('');
   // ⚠ Nur im Bearbeitungsmodus (und wenn gar kein Asset da ist, sonst kaeme
   // man nie wieder an ein neues heran).
   if(bearb||!syms.length){

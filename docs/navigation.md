@@ -1000,22 +1000,59 @@ Nach `AskUserQuestion` festgelegt: **Name in Bias-Farbe + Score + Richtungspfeil
 bleiben** (FX / Crypto / Metals / Energy / Indices), und Hinzufügen/Umsortieren/
 Löschen erscheinen **nur im Bearbeitungsmodus**.
 
-### ⚠ Bias-Farben auf der dunklen Leiste
+### Nur Namen, ein einfarbiges Icon davor, keine Bias-Farben
 
-`BC` (`bull:#0B5FCC`, `bear:#C50F1A`, `neu:#55617A`) ist für **helle** Flächen
-gebaut. Auf dem Chrome-Grund `#2A3757` liegen diese Werte bei **1,5–2,0:1** —
-praktisch unlesbar. Dafür gibt es `BC_NAV` + `navBiasCol(bias)` mit aufgehellten
-Tönen derselben Farbfamilie:
+Nach zwei Korrekturrunden (Nutzer, 2026-08-23) sieht eine Zeile so aus:
+**Icon + Name**, sonst nichts. Score und Richtungspfeil sind raus — der Score
+steht weiter im Tooltip (`data-tip`), und `check/display.js` prüft ihn genau
+dort statt im sichtbaren Text.
 
-| | Farbe | Grund | Hover | offener Stapel |
-|---|---|---|---|---|
-| bull | `#8FC7FF` | 6,61 | 5,32 | 6,12 |
-| bear | `#FF8F88` | 5,35 | 4,31 | 4,96 |
-| neu | `#B4C0D6` | 6,42 | 5,17 | 5,95 |
+⚠ **Die Liste färbt NICHT nach Bias.** Alle Zeilen tragen `--t2`, die
+ausgewählte `--t0` mit Cyan-Balken links — also exakt das Verhalten eines
+aktiven Tabs. Cyan ist in der App ausschließlich Interaktion und kollidiert
+deshalb nicht mit den Bias-Farben im Inhalt. `check/display.js` prüft
+zusätzlich, dass in der Leiste **kein** `data-bv` mehr steht, damit die
+Färbung nicht durch die Hintertür zurückkommt.
 
-`navBiasCol` bildet `sbull`/`sbear` auf die Farbe ihrer Grundrichtung ab —
-`BC` kennt die beiden gar nicht und hätte `undefined` geliefert.
-**Wer hier eine Farbe ergänzt, misst sie gegen alle drei Untergründe.**
+Der Grund, warum das überhaupt eine Frage war: `BC` (`#0B5FCC` / `#C50F1A` /
+`#55617A`) ist für **helle** Flächen gebaut und kommt auf dem Chrome-Grund
+`#2A3757` auf **1,98 / 1,94 / 1,89** — praktisch unlesbar. Wer dort je doch
+eine Bias-Farbe einsetzen will, misst sie vorher gegen Grund, Hover **und**
+offenen Stapel.
+
+### Der einfarbige Icon-Satz (`AI_GLYPHS` / `assetGlyphHtml`)
+
+Ein **zweiter**, bewusst reduzierter Satz. Der farbige, animierte
+(`AI_FLAGS` / `AI_SYMBOLS` / `assetIconHtml`) bleibt unangetastet und steht
+weiter im Asset-Kopf und auf der Dashboard-Karte.
+
+⚠ **Warum nicht einfach dem alten Satz die Farbe nehmen:** die Flaggen bestehen
+aus farbigen *Flächen*. Zwingt man sie auf eine Farbe, wird aus den USA ein
+gefülltes Rechteck und aus Japan dasselbe — genau die Unterscheidbarkeit geht
+verloren, die den Sinn ausmacht. Jede Flagge ist deshalb neu als **Geometrie**
+gezeichnet: Sternenfeld + Streifen, Sternenkreis, Union-Jack-Kreuze,
+Schweizerkreuz, Sonnenscheibe, Ahornblatt zwischen zwei Randbalken, Kreuz des
+Südens. Dazu Barrenstapel für Gold, ein **einzelner** Barren für Silber (so
+bleiben die beiden unterscheidbar), Tropfen für Öl, Münze für BTC und ein
+Kursverlauf für alle Indizes — die teilen sich wie im farbigen Satz eine
+Zeichnung, eine eigene Metapher je Index wäre Bedeutung, die es nicht gibt.
+
+Alles in `currentColor`, keine Verläufe, keine Animation, keine `url(#…)`.
+
+⚠ **Zeichengröße beachten:** bei 17px Höhe ist eine SVG-Einheit des 36×24-
+Viewports nur ~0,7px breit. Jede Linie dünner als etwa **1,8 Einheiten** fällt
+unter ein Gerätepixel, und feine Details werden zu Rauschen statt zu Form. Die
+erste Fassung hatte 5 Streifen für USD und 11 Sterne für EUR — bei 15px war
+davon nur noch ein Fleck übrig. Wer ein Icon ergänzt: wenige, dicke Elemente,
+und danach mit einem 3×-Screenshot gegenprüfen.
+
+### Keine Kategorien in der Liste
+
+Außerhalb des Bearbeitungsmodus ist von den Kategorien **nichts** zu sehen —
+weder Überschrift noch Abstand, eine durchgehende Liste (Nutzer-Wunsch, zweite
+Korrektur). Die Gruppierung existiert intern weiter und steuert nur noch
+Reihenfolge und Sortieren. **Im Bearbeitungsmodus kommen die Überschriften
+zurück**, sonst wäre nicht erkennbar, *was* die ▲▼ dort verschieben.
 
 ### Warum kein Eintrag in `tabStacks`
 

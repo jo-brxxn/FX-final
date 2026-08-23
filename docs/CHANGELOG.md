@@ -6833,3 +6833,55 @@ Hoehe (558px) schneidet nichts ab. Dazu Screenshot-Sichtpruefung.
 
 Tote Reste der alten Spalte entfernt: `.sb`, `.sb-lbl`, `.ab-move`, `.ab-del`,
 `.add-sym`, `sbReorderId`, `sbCatReorder`, `sbCatClick`.
+
+---
+
+## 2026-08-23 — Asset-Zeilen: nur Namen, einfarbige Icons, keine Bias-Farben (VERSION-CHECK-437)
+
+Drei Nutzer-Korrekturen am Tag zuvor gebauten Stapel, in dieser Reihenfolge:
+
+1. *"mach die Asset Namen doch nur die Namen und mach davor die Flagge aber
+   ohne Farben also eine Art icon aber schon die richtige Form und nicht
+   animiert"* + *"entfern die Kategorien ... mach einfach wenn eine neue
+   Kategorie anfaengt ganz bischen mehr Abstand nach unten"*
+2. *"Also ich will alles in normalem Farben nicht in bias Farbe"*
+3. *"Keine Abstaende zwischen den Kategorien"*
+
+Endstand: Icon + Name, sonst nichts; normale Leisten-Farben; eine
+durchgehende Liste ohne jede Gruppentrennung. Details in
+`docs/navigation.md`.
+
+**Der Icon-Satz ist neu gezeichnet, nicht entfaerbt.** Die vorhandenen
+Flaggen bestehen aus farbigen Flaechen - auf eine Farbe gezwungen werden USA
+und Japan zum selben gefuellten Rechteck. Jede Flagge ist deshalb als
+GEOMETRIE neu gebaut. Beim ersten Wurf zu fein: bei 15px Hoehe ist eine
+SVG-Einheit nur ~0,6px breit, 5 USD-Streifen und 11 EU-Sterne wurden zu einem
+Fleck. Nach dem 3x-Screenshot vergroebert (3 Streifen, 8 Sterne, dickere
+Striche) und auf 17px vergroessert.
+
+**Zwei Waechter haben angeschlagen, beide zu Recht:**
+
+- `check/display.js` las den Score aus dem sichtbaren Zeilentext - den es
+  jetzt nicht mehr gibt. Die Pruefung wurde nicht entfernt, sondern **an die
+  Stelle verschoben, an der die Zahl wirklich steht** (der Tooltip
+  `data-tip`), und um eine Gegenprobe ergaenzt: in der Navigationsleiste darf
+  **kein** `data-bv` mehr stehen, damit die Bias-Faerbung nicht durch die
+  Hintertuer zurueckkommt.
+- Beim Umbau von Runde 1 auf Runde 2 fiel ein **latenter Fehler** auf, den
+  nur ein eigener Test gefunden hat: der Score-Sync (laeuft nach JEDEM
+  `renderDetail`, ohne Neuaufbau der Leiste) schrieb `nm.style.color=BC[...]`
+  - also die DUNKLEN Farbwerte. Nach der ERSTEN Bias-Aenderung im Betrieb
+  waere der Name damit wieder auf 1,9:1 gelandet, obwohl er beim ersten
+  Rendern korrekt aussah. Mit dem Wegfall der Bias-Faerbung hat der Sync fuer
+  die Leiste jetzt ueberhaupt nichts mehr zu tun.
+
+**Geprueft** (0 Abweichungen): 16 Assets; jede Zeile hat Name + Icon und
+**kein** `.sb-score`/`.av` mehr; jedes Icon ist einfarbig (keine einzige
+Farbangabe ausser `currentColor`), nicht animiert, ohne Verlauf/Referenz und
+nicht leer; **alle** nicht ausgewaehlten Zeilen haben exakt EINE gemeinsame
+Farbe (`rgb(148,163,192)`), die ausgewaehlte hebt sich ab und hat einen
+Balken; ein Bias-Wechsel faerbt nichts mehr um; **alle Zeilenabstaende sind
+gemessen gleich** (1px, keine Kategorie-Luecke); die Reihenfolge folgt
+weiterhin der Kategorie-Sortierung; im Bearbeitungsmodus kommen die 5
+Ueberschriften und 42 Sortierknoepfe zurueck. Dazu 3x-Screenshot aller 16
+Icons auf dem Chrome-Grund. `node check/all.js` gruen (12 Waechter).

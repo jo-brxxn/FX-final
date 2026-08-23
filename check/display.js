@@ -18,17 +18,30 @@ const MODE=process.argv[2]||'normalized';
   const num=t=>{const s=String(t).replace(/[\s\u00a0]+/g,' ').trim();
     const m=s.match(/([+-]?\d+(?:[.,]\d+)?)\s*[\u25b2\u25bc\u25c6]?\s*$/);
     return m?parseFloat(m[1].replace(',','.')):null;};
-  // 1) Sidebar: button.ab[data-sym]
+  // 1) Asset-Liste in der Navigationsleiste.
+  // ⚠ Seit 2026-08-23 steht dort NUR noch der Name (Nutzer-Wunsch "nur die
+  // Namen") - die Score-Zahl ist raus. Der Score bleibt aber erreichbar: er
+  // steht im Tooltip der Zeile (data-tip). Geprueft wird deshalb DORT, nicht
+  // mehr im sichtbaren Text. Die Pruefung bleibt damit vollstaendig - sie
+  // wandert nur an die Stelle, an der die Zahl jetzt wirklich steht.
   showTab('fx');
   let n=0;
   document.querySelectorAll('button.ab[data-sym]').forEach(btn=>{
     const id=btn.getAttribute('data-sym'); if(soll[id]==null)return; n++;
-    const v=num(btn.innerText);
-    if(v==null||Math.abs(v-soll[id])>0.051)F.push({ort:'Sidebar',id,angezeigt:v,soll:soll[id],txt:btn.innerText.replace(/\n/g,'|')});
-    // Pfeil/Farbe gegen Vorzeichen
-    const bv=(btn.querySelector('.an')||{}).getAttribute&&btn.querySelector('.an').getAttribute('data-bv');
+    const imNav=!!btn.closest('#navSidebar');
+    const quelle=imNav?(btn.getAttribute('data-tip')||''):btn.innerText;
+    const v=num(quelle);
+    if(v==null||Math.abs(v-soll[id])>0.051)F.push({ort:imNav?'Nav-Tooltip':'Sidebar',id,angezeigt:v,soll:soll[id],txt:String(quelle).replace(/\n/g,'|')});
+    // Die Zeile in der Navigationsleiste faerbt bewusst NICHT nach Bias
+    // (Nutzer-Wunsch 2026-08-23) - eine data-bv-Markierung darf dort also
+    // gar nicht mehr stehen, sonst kaeme die Faerbung durch die Hintertuer
+    // zurueck. Ausserhalb der Leiste gilt die alte Pruefung weiter.
+    const an=btn.querySelector('.an');
+    const bv=an&&an.getAttribute('data-bv');
     const sym=syms.find(s=>s.id===id);
-    if(bv&&sym&&bv!==sym.bias)F.push({ort:'Sidebar-Bias',id,dom:bv,soll:sym.bias});
+    if(imNav){
+      if(bv)F.push({ort:'Nav-Bias',id,dom:bv,hinweis:'Die Nav-Liste soll neutral bleiben'});
+    }else if(bv&&sym&&bv!==sym.bias)F.push({ort:'Sidebar-Bias',id,dom:bv,soll:sym.bias});
   });
   ok.sidebar=n;
   // 2) Asset-Kopf: Score-Badge im Detailbereich
