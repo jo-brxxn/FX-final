@@ -175,6 +175,105 @@ const MODE = process.argv[2] || 'normalized';
     }
     _flipCauseTag=null;
   }
+  // ── H3) Zerlegung der Tagesveraenderung in der History ─────────
+  // histDeltaParts() begruendet, WOHER die Tagesveraenderung eines Scores
+  // kommt. Die eine Eigenschaft, die dabei halten MUSS: die angezeigten
+  // Teile ergeben in Summe exakt die angezeigte Tagesveraenderung. Vorher
+  // stand dort ein roher Kartenwert neben einem mit symCmpFactor skalierten
+  // Gesamtwert - die Zeile behauptete eine Rechnung, die nicht aufging
+  // (Nutzer-Bugreport 2026-08-23 "Ergibt keinen sinn").
+  if(typeof histDeltaParts==='function'){
+    const NAMEN=['Inflation','Labour Market','Economic Growth'];
+    // Baut einen aufgezeichneten Tag genau so, wie recordScoreHist() ihn
+    // schreibt - inklusive derselben Rundungen, denn die sind die einzige
+    // Quelle des Restbetrags.
+    const tag=(datum,rubs,rest,cmp)=>{
+      const rr=rubs.map(v=>Math.round(v*10)/10);
+      const raw=roundSc(rr.reduce((a,b)=>a+b,0)+rest);
+      const c=Math.round(cmp*100)/100;
+      return{d:datum,rub:rr,raw:raw,cmp:c,tot:Math.round(raw*c*10)/10};
+    };
+    const lauf=(A,B)=>{
+      const hm={},hr={},hc={},hraw={};
+      [A,B].forEach(t=>{hm[t.d]=t.tot;hr[t.d]=t.rub;hc[t.d]=t.cmp;hraw[t.d]=t.raw;});
+      const delta=Math.round((B.tot-A.tot)*10)/10;
+      const parts=histDeltaParts(B.d,A.d,delta,hm,hr,hc,hraw,NAMEN);
+      return{delta,parts,summe:Math.round(parts.reduce((a,p)=>a+p.v,0)*10)/10};
+    };
+    // 1) Nur eine Karte bewegt sich, Faktor 1 -> genau ein Teil, exakt so gross
+    {
+      const r=lauf(tag('2026-01-01',[2,1,0],0,1),tag('2026-01-02',[1,1,0],0,1));
+      if(r.parts.length!==1||r.parts[0].name!=='Inflation'||r.parts[0].v!==-1)
+        add('Zerlegung: einzelne Kartenaenderung falsch',r);
+      if(r.summe!==r.delta)add('Zerlegung: Summe != Delta (1 Karte)',r);
+    }
+    // 2) Nur die nicht aufgezeichneten Karten bewegen sich -> "Other cards"
+    {
+      const r=lauf(tag('2026-01-01',[2,1,0],2,1),tag('2026-01-02',[2,1,0],0.5,1));
+      const oc=r.parts.filter(p=>p.name==='Other cards');
+      if(oc.length!==1||oc[0].v!==-1.5)add('Zerlegung: Other cards falsch',r);
+      if(r.summe!==r.delta)add('Zerlegung: Summe != Delta (Other cards)',r);
+    }
+    // 3) Nur der Fairness-Faktor bewegt sich -> nur dieser Teil
+    {
+      const r=lauf(tag('2026-01-01',[2,1,0],0,1),tag('2026-01-02',[2,1,0],0,1.2));
+      const cf=r.parts.filter(p=>p.name==='Comparability factor');
+      if(!cf.length)add('Zerlegung: Faktoraenderung nicht ausgewiesen',r);
+      if(r.parts.some(p=>p.name!=='Comparability factor'&&p.name!=='Rounding'))
+        add('Zerlegung: Faktoraenderung faelschlich einer Karte zugeschrieben',r);
+      if(r.summe!==r.delta)add('Zerlegung: Summe != Delta (Faktor)',r);
+    }
+    // 4) Altdaten ohne Faktor/Rohwert -> GAR KEINE Zerlegung (nichts erfinden)
+    {
+      const A=tag('2026-01-01',[2,1,0],0,1),B=tag('2026-01-02',[1,1,0],0,1);
+      const hm={},hr={},hc={},hraw={};
+      [A,B].forEach(t=>{hm[t.d]=t.tot;hr[t.d]=t.rub;hc[t.d]=null;hraw[t.d]=null;});
+      const p=histDeltaParts(B.d,A.d,Math.round((B.tot-A.tot)*10)/10,hm,hr,hc,hraw,NAMEN);
+      if(p.length)add('Zerlegung: Altdaten wurden trotzdem zerlegt',{parts:p});
+    }
+    // 5) Ohne Tagesveraenderung gibt es nichts zu begruenden
+    {
+      const A=tag('2026-01-01',[2,1,0],0,1);
+      const hm={},hr={},hc={},hraw={};hm[A.d]=A.tot;hr[A.d]=A.rub;hc[A.d]=A.cmp;hraw[A.d]=A.raw;
+      if(histDeltaParts(A.d,A.d,0,hm,hr,hc,hraw,NAMEN).length)add('Zerlegung ohne Delta erzeugt Teile',{});
+    }
+    // 6) Zufallstest: ueber viele Kombinationen muss IMMER gelten -
+    //    entweder keine Zerlegung, oder die Teile ergeben exakt das Delta.
+    let n=0,schief=0,bsp=null,leer=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+    for(let i=0;i<3000;i++){
+      const A=tag('2026-01-01',[rnd(-4,4),rnd(-4,4),rnd(-4,4)],rnd(-3,3),rnd(.5,2));
+      const B=tag('2026-01-02',[rnd(-4,4),rnd(-4,4),rnd(-4,4)],rnd(-3,3),rnd(.5,2));
+      const r=lauf(A,B);
+      if(!r.delta)continue;
+      n++;
+      if(!r.parts.length){leer++;continue;}
+      if(r.summe!==r.delta){schief++;if(!bsp)bsp={A,B,delta:r.delta,summe:r.summe,parts:r.parts};}
+    }
+    if(schief)add('Zerlegung: Teile ergeben nicht das Delta',{faelle:schief,von:n,bsp});
+    ok.zerlegungGeprueft={faelle:n,ohneZerlegung:leer};
+    // 7) Gegen ECHTE aufgezeichnete Historie: kein einziger Tag darf eine
+    //    Zerlegung zeigen, die nicht aufgeht.
+    let echt=0,echtSchief=0,echtBsp=null;
+    Object.keys(scoreHist||{}).forEach(sid=>{
+      const arr=scoreHist[sid]||[];
+      const hm={},hr={},hc={},hraw={};
+      arr.forEach(e=>{hm[e[0]]=e[1];hr[e[0]]=[e[2],e[3],e[4]];
+        hc[e[0]]=(e[7]!=null&&isFinite(e[7])&&+e[7]>0)?+e[7]:null;
+        hraw[e[0]]=(e[8]!=null&&isFinite(e[8]))?+e[8]:null;});
+      for(let i=1;i<arr.length;i++){
+        const dv=Math.round((arr[i][1]-arr[i-1][1])*10)/10;
+        if(!dv)continue;
+        const p=histDeltaParts(arr[i][0],arr[i-1][0],dv,hm,hr,hc,hraw,NAMEN);
+        if(!p.length)continue;
+        echt++;
+        const su=Math.round(p.reduce((a,x)=>a+x.v,0)*10)/10;
+        if(su!==dv){echtSchief++;if(!echtBsp)echtBsp={sym:sid,tag:arr[i][0],delta:dv,summe:su,parts:p};}
+      }
+    });
+    if(echtSchief)add('Zerlegung echter Historie geht nicht auf',{faelle:echtSchief,von:echt,bsp:echtBsp});
+    ok.zerlegungEchteTage=echt;
+  }
   // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});

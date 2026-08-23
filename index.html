@@ -2465,7 +2465,10 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-weeknet{font:800 12px/1 var(--ff-num)}
 .histp-weekcnt{margin-left:auto;font:600 10.5px/1 var(--ff-text);color:var(--t3)}
 .histp-weekempty{font:400 11.5px/1.4 var(--ff-text);color:var(--t3);padding:4px 2px 8px}
-.histp-brk{font:600 11px/1.4 var(--ff-text);color:var(--t2);padding:4px 2px 2px 22px}
+.histp-brk{display:flex;flex-wrap:wrap;gap:5px;padding:4px 2px 3px 22px}
+.histp-brk-i{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:var(--rss);padding:3px 7px;background:var(--bg1)}
+.histp-brk-n{font:600 10.5px/1 var(--ff-text);color:var(--t2)}
+.histp-brk-v{font:800 10.5px/1 var(--ff-num)}
 .histp-delta{font:800 11.5px/1 var(--ff-num);margin-left:auto;margin-right:7px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
@@ -3557,11 +3560,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-433 - History beantwortet jetzt auch das Warum an Tagen ohne Release: scoreHist speichert je Tag nicht nur den Gesamtscore, sondern auch die Werte fuer Inflation, Labour Market und Economic Growth. Daraus wird die Tagesbewegung diesen Karten zugeordnet (Card changes). Bewegt sich der Score, ohne dass eine dieser drei Karten sich geaendert hat, wird das ausdruecklich gesagt - dann stammt die Bewegung aus Interest Rates, COT Data oder Risk Environment, die nicht je Tag aufgezeichnet werden, oder aus dem Fairness-Faktor. Die Aufschluesselung erscheint auch an Tagen MIT Events, weil die dort gelisteten Beitraege den heutigen Beitrag des Indikators zeigen und nicht die Veraenderung jenes Tages."No score-driving events\". Wo eine Bewegung nicht belegbar ist, steht das ausdruecklich da, statt einen Grund zu erfinden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-434 - Die Aufschluesselung der Tagesbewegung in der History geht jetzt auf. Vorher standen dort rohe Kartenwerte neben einem mit dem Fairness-Faktor skalierten Gesamtscore - zwei verschiedene Massstaebe nebeneinander, die Summe passte nie zur Kopfzeile. scoreHist speichert je Tag zusaetzlich den Fairness-Faktor und den Rohscore; damit zerfaellt die Tagesbewegung exakt in Inflation, Labour Market, Economic Growth, 'Other cards' (Interest Rates/COT/Risk, die nicht je Karte aufgezeichnet werden), den Comparability factor und einen ausgewiesenen Rundungsrest. Die Teile ergeben immer exakt die angezeigte Tagesveraenderung; geprueft in check/score.js an 3000 Zufallsfaellen und an der echten Historie. Tage, die vor dieser Version aufgezeichnet wurden, tragen Faktor und Rohscore nicht und bekommen deshalb GAR KEINE Aufschluesselung statt einer erfundenen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-433</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-434</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6842,6 +6845,51 @@ function renderSymHistory(id){
 // den vergangenen Tagen selbst nichts geaendert hatte - Trends-Chart und Score-
 // History zeigten dadurch unterschiedliche vergangene Werte. Jetzt beide aus
 // derselben scoreHist gespeist, also immer exakt deckungsgleich.
+// Zerlegt die Tagesveraenderung des ANGEZEIGTEN Scores exakt in ihre Ursachen.
+//
+// Der angezeigte Score ist tot = roh * cmp (cmp = symCmpFactor, der
+// Fairness-Faktor gegen die durchschnittliche Indikatorzahl der FX-Majors).
+// Damit gilt algebraisch exakt:
+//
+//   tot_h - tot_v = cmp_h*(roh_h - roh_v)  +  roh_v*(cmp_h - cmp_v)
+//                   \_____ Kartenanteil ___/    \__ Faktoranteil __/
+//
+// Der Kartenanteil zerfaellt weiter in die drei je Tag aufgezeichneten
+// Karten (Inflation, Labour Market, Economic Growth) und den Rest ("Other
+// cards" = Interest Rates, COT Data, Risk Environment, die NICHT je Tag
+// gespeichert werden). Weil alle gespeicherten Zahlen auf 0,1 bzw. 0,01
+// gerundet sind, bleibt ein kleiner Rest uebrig; der wird als "Rounding"
+// ausgewiesen, damit die angezeigten Teile IMMER exakt die angezeigte
+// Tagesveraenderung ergeben. Ist der Rest zu gross (> 0,35), stimmen die
+// Daten nicht zusammen und es wird gar keine Zerlegung gezeigt - lieber
+// nichts als eine Rechnung, die nicht aufgeht.
+const HIST_BRK_MAX_REST=0.35;
+function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,names){
+  if(!delta||!prevDate)return[];
+  const cN=histCmp[date],cP=histCmp[prevDate];
+  const rawN=histRaw[date],rawP=histRaw[prevDate];
+  const rN=histRub[date],rP=histRub[prevDate];
+  if(cN==null||cP==null||rawN==null||rawP==null||!rN||!rP)return[];
+  const parts=[];
+  let sumN=0,sumP=0,vollstaendig=true;
+  names.forEach((nm,i)=>{
+    if(rN[i]==null||rP[i]==null){vollstaendig=false;return;}
+    sumN+=rN[i];sumP+=rP[i];
+    const v=Math.round((rN[i]-rP[i])*cN*10)/10;
+    if(v)parts.push({name:nm,v:v,tip:nm+' moved from '+rP[i]+' to '+rN[i]+' (card score), which is '+(v>0?'+':'')+v+' on the comparable scale'});
+  });
+  if(vollstaendig){
+    const v=Math.round(((rawN-sumN)-(rawP-sumP))*cN*10)/10;
+    if(v)parts.push({name:'Other cards',v:v,tip:'Interest Rates, COT Data and Risk Environment together — these are not stored per card per day, so they are shown as one figure'});
+  }
+  const vF=Math.round(rawP*(cN-cP)*10)/10;
+  if(vF)parts.push({name:'Comparability factor',v:vF,tip:'The score is scaled by the average indicator count of the FX majors so assets with fewer indicators stay comparable. This factor moved from '+cP+' to '+cN+'.'});
+  if(!parts.length)return[];
+  const rest=Math.round((delta-parts.reduce((a,p)=>a+p.v,0))*10)/10;
+  if(Math.abs(rest)>HIST_BRK_MAX_REST)return[];
+  if(rest)parts.push({name:'Rounding',v:rest,tip:'Recorded values are stored rounded, so a small remainder is left over. It is shown here so the parts add up exactly.'});
+  return parts;
+}
 function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
@@ -6857,8 +6905,15 @@ function renderSymHistoryPanel(id){
   // Vortage auf +2,4/+3/+3,1 - alle aus dem Modell VOR dem Bias-Fix). Der
   // Wert wird deshalb weiterhin gezeigt (er ist echt aufgezeichnet), aber
   // gedaempft und mit Begruendung - nicht geloescht und nicht umgerechnet.
-  const histMap={},histOld={},histRub={};
-  (scoreHist[id]||[]).forEach(e=>{histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];});
+  const histMap={},histOld={},histRub={},histCmp={},histRaw={};
+  (scoreHist[id]||[]).forEach(e=>{
+    histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];
+    // Nur Eintraege ab 2026-08-23 tragen Faktor und Rohscore. Aeltere sind
+    // NICHT zerlegbar - fuer sie wird darum auch keine Zerlegung gezeigt,
+    // statt eine zu erfinden, die nicht aufgeht.
+    histCmp[e[0]]=(e[7]!=null&&isFinite(e[7])&&+e[7]>0)?+e[7]:null;
+    histRaw[e[0]]=(e[8]!=null&&isFinite(e[8]))?+e[8]:null;
+  });
   // Nur diese drei Karten werden je Tag mitaufgezeichnet (siehe
   // recordScoreHist) - Interest Rates, COT Data und Risk Environment nicht.
   const HIST_RUB_NAMES=['Inflation','Labour Market','Economic Growth'];
@@ -6936,25 +6991,17 @@ function renderSymHistoryPanel(id){
     // (Interest Rates, COT Data, Risk Environment) oder aus dem
     // Fairness-Faktor - das wird auch so benannt und NICHT einer Karte
     // zugeschrieben, die es gar nicht war.
-    const parts=[];
-    if(prevDate&&histRub[d.date]&&histRub[prevDate]){
-      HIST_RUB_NAMES.forEach((nm,i)=>{
-        const a=histRub[prevDate][i],b=histRub[d.date][i];
-        if(a==null||b==null)return;
-        const dd=Math.round((b-a)*10)/10;
-        if(dd)parts.push(`${nm} ${(dd>0?'+':'')+dd}`);
-      });
-    }
-    const brkTxt=parts.length?`Card changes: ${parts.join(' · ')}`:'';
-    const brk=(delta&&brkTxt)?`<div class="histp-brk">${escH(brkTxt)}</div>`:'';
+    const parts=histDeltaParts(d.date,prevDate,delta,histMap,histRub,histCmp,histRaw,HIST_RUB_NAMES);
+    const brk=parts.length?`<div class="histp-brk">${parts.map(p=>
+      `<span class="histp-brk-i" title="${escH(p.tip)}"><span class="histp-brk-n">${escH(p.name)}</span><span class="histp-brk-v" style="color:${p.v>0?BC.bull:p.v<0?BC.bear:'var(--t3)'}">${(p.v>0?'+':'')+p.v}</span></span>`).join('')}</div>`:'';
     // "Alles begruendet": bewegt sich der Score ohne Release, ohne manuelle
     // Aenderung und ohne aufgezeichnete automatische Ursache, wird genau
     // gesagt, was noch bekannt ist - statt einer erfundenen Erklaerung.
     const nothing=(!evs.length&&!manual.length)
       ?(delta
         ?(parts.length
-          ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release; the change sits in the cards listed below.</div>`
-          :`<div class="histp-noevt">Score moved ${dTxt} — no dated release, and Inflation / Labour Market / Economic Growth are unchanged. It therefore comes from Interest Rates, COT Data or Risk Environment (these are not recorded per day) or from the fairness factor.</div>`)
+          ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release. It breaks down as follows (the parts add up to ${dTxt}):</div>`
+          :`<div class="histp-noevt">Score moved ${dTxt} — no dated release, and this day was recorded before the breakdown existed, so it cannot be attributed to individual cards.</div>`)
         :`<div class="histp-noevt">No change.</div>`)
       :'';
     const has=!!(evs.length||manual.length||delta);
@@ -17637,6 +17684,13 @@ function recordScoreHist(){
   trendAssets().forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym)return;
     const tot=symScoreCmp(sym);
+    // 8. und 9. Feld (ab 2026-08-23): der Fairness-Faktor und der ROHE
+    // Summenscore dieses Tages. Ohne sie ist die Tagesveraenderung nicht
+    // zerlegbar: tot ist mit symCmpFactor skaliert, die Rubrikwerte darunter
+    // sind es NICHT. Genau diese Mischung stand vorher nebeneinander in der
+    // History und ging nicht auf (Nutzer-Bugreport 2026-08-23 "Ergibt keinen
+    // sinn": Kopfzeile -0,8, Kartenzeile in Summe -1,4).
+    const cmp=symCmpFactor(sym),raw=symScore(sym);
     const inf=rubScoreByName(sym,'Inflation'),lab=rubScoreByName(sym,'Labour Market'),gro=rubScoreByName(sym,'Economic Growth');
     const arr=scoreHist[id]||(scoreHist[id]=[]);
     const last=arr[arr.length-1];
@@ -17646,9 +17700,9 @@ function recordScoreHist(){
     // ist. Aeltere Eintraege haben das Feld nicht und gelten damit
     // automatisch als "anderes Modell" - genau richtig, denn sie sind es.
     const tag=SCORE_MODEL_TAG();
-    const e=[t,tot,inf,lab,gro,sym.bias,tag];
+    const e=[t,tot,inf,lab,gro,sym.bias,tag,cmp,raw];
     if(last&&last[0]===t){
-      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias||last[6]!==tag){arr[arr.length-1]=e;changed=true;}
+      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias||last[6]!==tag||last[7]!==cmp||last[8]!==raw){arr[arr.length-1]=e;changed=true;}
     }else{arr.push(e);changed=true;}
     // 1100 Tage (~3 Jahre) statt vorher 95 (~3 Monate) - "maximale Historie"
     // (Nutzer-Wunsch 2026-07-20), angelehnt an den 3-Jahres-Horizont, den

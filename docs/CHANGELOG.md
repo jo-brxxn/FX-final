@@ -6611,3 +6611,63 @@ beweisen "das ist Scroll, kein Bug"; ein reiner Bounding-Box-Vergleich
 braucht danach IMMER noch einen echten Screenshot an der flaggierten
 Stelle, bevor er als "Fund" gilt - die drei Stichproben hier waren alle
 falsch-positiv.
+
+---
+
+## 2026-08-23 — History: Aufschluesselung der Tagesbewegung (VERSION-CHECK-434)
+
+**Bugreport:** "Ergibt keinen sinn." Die in VERSION-CHECK-433 eingefuehrte
+Zeile "Card changes" nannte fuer AUD `Inflation -0.1 · Labour Market -0.3 ·
+Economic Growth -1` (Summe -1,4), waehrend die Kopfzeile desselben Tages
+"Score moved -0.8" sagte.
+
+**Ursache — zwei Skalen nebeneinander.** Der angezeigte Score ist
+`symScoreCmp = symScore * symCmpFactor` (Fairness-Faktor gegen die
+durchschnittliche Indikatorzahl der FX-Majors). Die je Tag aufgezeichneten
+Kartenwerte kommen dagegen aus `rubScoreByName` und sind **roh**. Nebeneinander
+gestellt behaupteten sie eine Summe, die es nie geben konnte. Zusaetzlich
+waren nur 3 der 6 Karten aufgezeichnet, sodass auch bei gleicher Skala ein
+unbenannter Rest geblieben waere.
+
+**Was NICHT ging:** die Kartenwerte nachtraeglich hochskalieren. `symCmpFactor`
+haengt von der Zahl nicht-veralteter Indikatoren am jeweiligen Tag ab — die
+war nirgends gespeichert und ist rueckblickend nicht rekonstruierbar.
+
+**Fix:** `recordScoreHist` schreibt zwei zusaetzliche Felder je Tag — `e[7]` =
+`symCmpFactor`, `e[8]` = `symScore` (roh). Damit zerfaellt die Tagesbewegung
+exakt:
+
+```
+tot_h - tot_v = cmp_h*(roh_h - roh_v)  +  roh_v*(cmp_h - cmp_v)
+```
+
+`histDeltaParts()` gibt daraus die Teile aus: die drei aufgezeichneten Karten
+(jeweils mit `cmp_h` auf die Anzeigeskala gebracht), `Other cards` (Interest
+Rates/COT/Risk als eine Zahl, weil sie nicht je Karte gespeichert sind),
+`Comparability factor` und einen ausgewiesenen `Rounding`-Rest. Die
+Rundungsfehler der Kartenwerte kuerzen sich im Kartenanteil algebraisch weg;
+uebrig bleibt nur die 0,1-Rundung des Gesamtwerts, und genau die steht als
+`Rounding` da — statt die Zeile still nicht aufgehen zu lassen.
+
+Tage aus der Zeit davor tragen `e[7]`/`e[8]` nicht und bekommen **gar keine**
+Aufschluesselung. Ebenso, wenn der Rest > 0,35 waere (`HIST_BRK_MAX_REST`).
+
+**Geprueft (Nutzer-Wunsch 2026-08-23: "Bitte alle Aenderungen die du machst
+ueberpruef das gruendlich und mach mehrere Tests"):**
+- `check/score.js` Block H3, dauerhaft: 5 gezielte Faelle (einzelne Karte /
+  nur nicht-aufgezeichnete Karten / nur Faktoraenderung / Altdaten ohne Felder
+  / kein Delta), **3000 Zufallsfaelle** mit denselben Rundungen wie im
+  Recorder, und ein Lauf ueber die **echte** aufgezeichnete Historie. Ergebnis:
+  2986 Faelle mit Delta, 0 ohne Zerlegung, 0 Abweichungen.
+- Ende-zu-Ende im Browser (Scratchpad, `t_hist2.js`): 4 Szenarien mit echten
+  Symbolen, echtem `recomputeAuto()`/`recordScoreHist()` und aus dem **DOM
+  gelesenen** Zahlen — 2 Karten gleichzeitig (Teile `-0.9 / -0.9 / Rounding
+  -0.1` gegen Delta `-1.9`), nur eine nicht-aufgezeichnete Karte (`Other cards
+  +1`), gemischt ueber alle Rubriken (`-1 / +1 / +2 / +1` gegen `+3`) und "gar
+  nichts veraendert" (kein Delta, keine Teile). Alle vier: Summe der
+  angezeigten Teile == angezeigtes Delta.
+- `node check/all.js` komplett gruen (11 Waechter).
+
+**Nebenbefund:** das `title` des VERSION-CHECK-Banners enthielt aus 433 ein
+unmaskiertes `"` mitten im Attribut — das Attribut endete dort vorzeitig. Mit
+korrigiert.

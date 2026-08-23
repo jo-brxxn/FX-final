@@ -873,3 +873,39 @@ Zwei Eigenschaften sind bewusst so und werden von `check/score.js` geprüft:
 
 `pruneScoreLog` hält `HIST_MAX_RANGE+2` Tage — gedeckelt, weil `scoreLog` im
 Cross-Device-Sync hängt.
+
+### Aufschlüsselung der Tagesbewegung (`histDeltaParts`)
+
+⚠ **Der angezeigte Score und die Kartenwerte liegen NICHT auf derselben
+Skala.** `symScoreCmp = symScore * symCmpFactor` — der Gesamtwert trägt den
+Fairness-Faktor, `rubScore` trägt ihn nicht. Rohe Kartenwerte neben den
+Gesamtscore zu stellen ergibt deshalb eine Summe, die nie zur Kopfzeile passt
+(Nutzer-Bugreport 2026-08-23 „Ergibt keinen sinn": Kopfzeile −0,8,
+Kartenzeile in Summe −1,4). **Wer hier etwas ändert, muss jede Zahl auf die
+Skala des angezeigten Scores bringen.**
+
+Damit die Zerlegung überhaupt möglich ist, speichert `recordScoreHist` je Tag
+zwei zusätzliche Felder: `e[7]` = `symCmpFactor`, `e[8]` = `symScore` (roh).
+Der Eintrag ist damit `[Datum, Gesamt, Infl, Labour, Growth, Bias, Modell-Tag,
+Faktor, Rohscore]`. Die Rechnung ist algebraisch exakt:
+
+```
+tot_h − tot_v = cmp_h·(roh_h − roh_v)  +  roh_v·(cmp_h − cmp_v)
+                └── Kartenanteil ──┘      └── Faktoranteil ──┘
+```
+
+Angezeigte Teile: die drei aufgezeichneten Karten, `Other cards` (Interest
+Rates / COT Data / Risk Environment — die werden nicht je Karte je Tag
+gespeichert), `Comparability factor` und ein ausgewiesener `Rounding`-Rest.
+Die Rundungsfehler der Kartenwerte kürzen sich im Kartenanteil exakt weg; übrig
+bleibt nur die 0,1-Rundung des Gesamtwerts.
+
+Zwei Regeln, beide von `check/score.js` (Block H3) geprüft:
+- **Die angezeigten Teile ergeben immer exakt die angezeigte
+  Tagesveränderung.** Bleibt ein Rest > `HIST_BRK_MAX_REST` (0,35), wird
+  **gar keine** Zerlegung gezeigt — lieber nichts als eine Rechnung, die nicht
+  aufgeht.
+- **Tage ohne `e[7]`/`e[8]` (vor VERSION-CHECK-434 aufgezeichnet) bekommen
+  keine Zerlegung.** Der Faktor ist nachträglich nicht rekonstruierbar; er
+  hängt von der damaligen Zahl nicht-veralteter Indikatoren ab, und die ist
+  nirgends gespeichert.
