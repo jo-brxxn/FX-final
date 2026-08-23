@@ -1,6 +1,6 @@
 {
  "date": "2026-08-23",
- "value": 0.191,
+ "value": 0.189,
  "label": "RISK-OFF",
  "percentile": 65,
  "components": [
@@ -3207,7 +3207,7 @@
   ],
   [
    "2026-08-23",
-   0.191
+   0.189
   ]
  ],
  "method": "Mean z-score of 20-day changes in Gold, AUDUSD, USDJPY (positive = risk aversion)"
