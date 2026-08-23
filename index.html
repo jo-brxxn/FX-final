@@ -25,14 +25,14 @@
      plausibelsten Regler zu raten.
      Muss zu --chrome-bg (:root) und "theme_color" in manifest.json passen -
      eine CSS-Variable ist hier nicht nutzbar, daher drei Literale. -->
-<meta name="theme-color" content="#080F1A">
+<meta name="theme-color" content="#212C49">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="FX Analyst">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
-body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at 16% -12%,rgba(34,211,238,.075),transparent 60%),radial-gradient(1000px 620px at 88% 6%,rgba(79,155,255,.06),transparent 62%);background-size:cover;background-position:center center;background-repeat:no-repeat;background-color:var(--bg0);background-blend-mode:normal;color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
+body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,39,70,.035),transparent 260px);background-size:cover;background-position:center center;background-repeat:no-repeat;background-color:var(--bg0);background-blend-mode:normal;color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
 /* Frueherer Nutzer-Wunsch war "ueberall Arial" - umgesetzt als globales
    !important. Das hat allerdings ALLE 200 Monospace-Deklarationen der App
    mit ueberschrieben, die Zahlen waren dadurch nie dicktengleich.
@@ -60,8 +60,8 @@ body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at
      straffer/praeziser gezogen (kleinere Radien, engere Schatten) statt der
      vorherigen "weich&luxurioes"-Rundungen - passt zum jetzt gewuenschten
      technischeren, weniger "kuschligen" Eindruck.
-     Bias-/Akzentfarben: Bullish-Blau (#4f9bff, = --blue/--green) und
-     Bearish-Rot (#ff6b6b) unveraendert (keine warmen/gelben Toene). Die
+     Bias-/Akzentfarben: Bullish-Blau (#25619D, = --blue/--green) und
+     Bearish-Rot (#B33633) unveraendert (keine warmen/gelben Toene). Die
      bisherige GOLD-Neutralfarbe (--amber/--star) war Teil des "gelblichen"
      Problems - ersetzt durch ein kuehles Blaugrau (Slate), bleibt trotzdem
      als eigener, von Blau/Rot unterscheidbarer dritter Ton erkennbar.
@@ -120,28 +120,28 @@ body{font-family:var(--ff-text);background-image:radial-gradient(1200px 720px at
      MERKSATZ: Abstaende gehoeren wie die Schriftgroessen auf eine Skala,
      nicht je Stelle einzeln geraten. */
   --gap-block:14px;
-  --chrome-bg:#080F1A;
-  --bg0:#070C14;--bg1:#13213A;--bg2:#101B2D;--bg3:#13213A;--bg4:#162640;--bg5:#1A2D49;--bg6:#21385C;
-  --bd:rgba(120,160,210,.16);--bd2:rgba(120,170,230,.28);
-  --t0:#E8F0FA;--t1:#C1D0E0;--t2:#9AAEC5;--t3:#6F829B;
-  --green:#38BDF8;--red:#FF6B6B;--amber:#8FA3BC;--star:#8FA3BC;--blue:#38BDF8;--purple:#9b8fd4;--success:#34d399;--live:#FF5F6D;
-  --green-rgb:56,189,248;--red-rgb:255,107,107;--amber-rgb:143,163,188;
-  --star-rgb:143,163,188;--blue-rgb:56,189,248;--purple-rgb:155,143,212;--success-rgb:52,211,153;--t3-rgb:111,130,155;
+  --chrome-bg:#212C49;
+  --bg0:#E9EAF6;--bg1:#F2F3F9;--bg2:#FFFFFF;--bg3:#F2F3F9;--bg4:#EAECF4;--bg5:#DDE1EC;--bg6:#CBD1E0;
+  --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
+  --t0:#141B2E;--t1:#33405C;--t2:#5A6885;--t3:#57637B;
+  --green:#25619D;--red:#B33633;--amber:#55617A;--star:#55617A;--blue:#25619D;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
+  --green-rgb:37,97,157;--red-rgb:179,54,51;--amber-rgb:85,97,122;
+  --star-rgb:85,97,122;--blue-rgb:37,97,157;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
   /* Etwas straffere Radien (Terminal-Optik statt "weich&luxurioes"). */
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
      aktiver Tab, Fokusring, ausgewaehlter Filter. NIE fuer einen Datenwert -
      sonst konkurriert es mit Blau=bullish und die Score-Farbe wird mehrdeutig. */
-  --accent:#35C7E8;--accent-rgb:53,199,232;
+  --accent:#2E8FB0;--accent-rgb:46,143,176;
   /* Akzentfarbe je Makro-Kategorie: gibt der Seite Farbe, ohne Blau/Rot zu
      stoeren (nur als schmale Kante/Punkt, nie als Zahlenfarbe). Hues liegen
      absichtlich weg von Blau und Rot. */
-  --a-infl:#e0a33c;--a-rate:#a07ce0;--a-lab:#35b3a0;
-  --a-grow:#e08a4c;--a-cot:#4bb3d4;--a-risk:#d46ba8;
+  --a-infl:#B5791C;--a-rate:#7250B8;--a-lab:#1A8477;
+  --a-grow:#BE6320;--a-cot:#1F7F9E;--a-risk:#A94578;
   --r:12px;--rs:8px;--rss:6px;
   /* Schatten leicht kraeftiger (war rein dekorativ zu schwach, um neben dem
      jetzt sichtbaren Rand noch eigene Tiefe beizutragen). */
-  --shadow-card:0 1px 3px rgba(0,0,0,.30);
-  --shadow-pop:0 8px 24px rgba(0,0,0,.46);
+  --shadow-card:0 1px 3px rgba(20,27,46,.09);
+  --shadow-pop:0 8px 24px rgba(20,27,46,.16);
 }
 /* ── LAYOUT ── */
 /* Kopfzeile komplett in EINER Reihe (Nutzer-Wunsch 2026-08-21 per /goal:
@@ -1116,14 +1116,24 @@ body.res-return-active .rterm-back-pill{display:flex}
 .aperf-c:last-child{border-right:none}
 .aperf-l{font-size:9.5px;font-weight:700;letter-spacing:.05em;color:var(--t3);text-transform:uppercase}
 .aperf-v{font-size:14px;font-weight:700;margin-top:2px;font-family:var(--ff-num)}
+/* Kopfzeile und Nav-Sidebar bleiben dunkelblau, waehrend der Inhalt hell
+   ist (Nutzer-Entscheid 2026-08-23). Die Textstufen und Flaechen werden
+   darin umgedreht; color explizit, siehe Kommentar im Aenderungsskript. */
+.hdr,#navSidebar{
+  --t0:#F2F5FC;--t1:#CBD5E8;--t2:#94A3C0;--t3:#93A1BE;
+  --bg1:#2A3757;--bg2:#2A3757;--bg3:#2E3C5E;--bg4:#35456B;
+  --bd:rgba(160,190,235,.16);--bd2:rgba(160,190,235,.26);
+  --accent:#3FA9CC;--live:#FF6B63;--success:#34D399;
+  color:var(--t0);
+}
 .asec-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--bd);margin-bottom:var(--gap-block)}
 .asec-tabs{display:flex;gap:2px}
 .asec-tab{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:8px 13px;font:600 12.5px/1 var(--ff-text);color:var(--t2);cursor:pointer;border-radius:0}
 @media(hover:hover){.asec-tab:hover{color:var(--t0)}}
 .asec-tab.on{color:var(--t0);font-weight:800;border-bottom-color:var(--accent)}
 .asec-links{display:flex;gap:4px;margin-left:auto;padding-bottom:5px}
-.asec-link{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);cursor:pointer}
-@media(hover:hover){.asec-link:hover{color:var(--accent);border-color:var(--accent)}}
+.asec-link{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid #35456B;background:#2C3A5E;color:#B4C2DC;border-radius:var(--rss);cursor:pointer}
+@media(hover:hover){.asec-link:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
 .ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:var(--gap-block)}
 .ranl-title{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:10px}
 .ranl-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
@@ -1327,11 +1337,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#4f9bff;font-family:var(--ff-num)}
-.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#ff6b6b;font-family:var(--ff-num)}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#25619D;font-family:var(--ff-num)}
+.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#B33633;font-family:var(--ff-num)}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#6ea8f0,#4f9bff);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#d8525f,#ff6b6b);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,#3F7FBB,#25619D);min-width:0;transition:width .3s}
+.cot-bar-short{background:linear-gradient(90deg,#9B2F2D,#B33633);min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -1387,11 +1397,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:14px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#4f9bff;font-weight:700}
+.cot-tbl td.cot-c-long{color:#25619D;font-weight:700}
 .cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
 .cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
 @media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
-.cot-tbl td.cot-c-short{color:#ff6b6b;font-weight:700}
+.cot-tbl td.cot-c-short{color:#B33633;font-weight:700}
 /* COT control bar (countdown + refresh) */
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cot-cd-box{display:flex;flex-direction:column;gap:1px}
@@ -1401,7 +1411,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cot-note{font-size:12px;color:var(--t3);font-family:var(--ff-num)}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-refresh:hover{border-color:#4f9bff;color:var(--t0)}}
+@media (hover:hover){.cot-refresh:hover{border-color:#25619D;color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
 .cot-refresh-ic{display:inline-block;font-size:15px;line-height:1}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
@@ -1424,7 +1434,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
 .cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.12);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
-.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#5b9bd8}
+.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#25619D}
 .cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
 .cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
@@ -1830,11 +1840,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
-.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#4f9bff;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
+.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#25619D;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
 /* Zweiter, kleinerer/schwaecherer Partikel kurz hinter dem Kopf (siehe
    scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
    einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
-.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#6ea8f0;box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
+.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#3F7FBB;box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
 /* Der 0→16px AUSSEN wachsende Ring war bei eng stehenden Karten unsichtbar,
    weil er in den Bereich der Nachbarkarte hineinwuchs und von deren (spaeter
    gezeichnetem) Hintergrund verdeckt wurde (Nutzer-Bugreport 2026-07-27).
@@ -3482,11 +3492,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-427 - Das vom Nutzer vorgegebene Design-System ist jetzt verbindlich umgesetzt: Flaechen (App #070C14, Karte #101B2D, Sidebar #080F1A), Raender als rgba, Text-, Semantik- und Akzentfarben exakt nach Vorgabe, Radien 12/8/6px, flache Schatten statt kraeftiger, Widget-Abstand 14px und Kartenpolster 16px, Zeilenhoehe 1.4 und Hauptkennzahlen auf 24px. Neu: --live als eigener Rotton fuer den blinkenden LIVE-Punkt, damit er nicht als Bias-Signal gelesen wird."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-428 - Helles Design nach neuer Nutzer-Vorlage: weisse Karten auf hellgrauer Seite (#E9EAF6), Kopfzeile und Nav-Sidebar bleiben dunkelblau (#212C49), Schnellzugriffe dunkelblau eine Spur heller. Alle Textfarben gegen die DUNKELSTE helle Flaeche nachgerechnet, nicht nur gegen Weiss - dabei fielen Blau, Rot, Neutral und Success zunaechst durch. Ausserdem 45 fest eingetragene Hex-Werte aus dem Dunkelmodus mitgezogen, die eine reine Token-Aenderung nicht erfasst haette, darunter die Beschriftung in gefuellten Balken (dort war dunkler Text auf inzwischen dunklen Balken)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-427</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-428</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4100,7 +4110,7 @@ function introLogin(){
 // (Nutzer-Wunsch 2026-08-09). Eine dunklere Zweitfassung war kurz probiert
 // und auf Nutzer-Wunsch wieder verworfen - falls sie je zurueckkommen soll:
 // bull #1d4ed8, bear #b23a3a, neu #475569.
-const BC={bull:'#4f9bff',bear:'#ff6b6b',neu:'#8fa3bd'};
+const BC={bull:'#25619D',bear:'#B33633',neu:'#55617A'};
 const BL={bull:'▲ BULLISH',bear:'▼ BEARISH',neu:'◆ NEUTRAL'};
 const FX=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 // Landesflaggen fuer den Asset-Seiten-Titel (tech-design-Skill 2026-07-28,
@@ -4571,7 +4581,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // recomputeRiskCorr) - hier ueberall defensiv mitbehandelt, da bClass/
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#4f9bff20':(b==='bear'||b==='sbear')?'#ff6b6b20':'#8fa3bd20';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#25619D20':(b==='bear'||b==='sbear')?'#B3363320':'#55617A20';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
@@ -10526,7 +10536,7 @@ function renderNoteRub(rub,ri,total){
     </div>
     <div class="rub-body">
       ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#8fa3bd40':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
+        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#55617A40':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
           <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
           <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
           <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
@@ -14982,7 +14992,7 @@ function renderRiskEnvRemind(){if(document.getElementById('dashWidgets'))renderD
 // dauerhaft sein") - document.body.style.background wird dadurch von
 // nirgends mehr gesetzt, der CSS-Marmor-Hintergrund bleibt also permanent
 // sichtbar, unabhaengig vom Risk-Sentiment.
-const AURORA_NEU='#5b9bd8';
+const AURORA_NEU='#25619D';
 function updateAuroraColors(){
   const host=document.getElementById('dashAurora');if(!host)return;
   host.style.removeProperty('--aurora-c');
@@ -16716,11 +16726,11 @@ function globeSkeleton(size,uid){
     <path d="M0,-12 L2.2,-2 L11,3 L11,5.5 L2.5,2 L2.5,7 L6,11 L6,12.5 L0,9.5 L-6,12.5 L-6,11 L-2.5,7 L-2.5,2 L-11,5.5 L-11,3 L-2.2,-2 Z" fill="#04101c" stroke="#dff4ff" stroke-width="1.2" stroke-linejoin="round"/>
     <rect x="1.7" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
     <rect x="-3.8" y="5.4" width="2.1" height="6.2" rx="1" fill="#04101c" stroke="#8fd3ee" stroke-width=".6"/>
-    <circle cx="2.75" cy="11.6" r="1" fill="#8fa3bd"/>
-    <circle cx="-2.75" cy="11.6" r="1" fill="#8fa3bd"/>
+    <circle cx="2.75" cy="11.6" r="1" fill="#55617A"/>
+    <circle cx="-2.75" cy="11.6" r="1" fill="#55617A"/>
     <ellipse cx="0" cy="-4.5" rx="1.4" ry="2.8" fill="#5fd0ff" opacity=".8"/>
-    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#ff6b6b"/>
-    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#ff6b6b"/>
+    <circle class="globe-jet-light" cx="11.5" cy="4.2" r="1" fill="#B33633"/>
+    <circle class="globe-jet-light" cx="-11.5" cy="4.2" r="1" fill="#B33633"/>
   </g>`;
   // data-id-Gruppe (wie echte Marker-<g>s) sorgt dafuer, dass
   // globeOnPointerDown() einen Klick/Tap aufs Flugzeug NICHT als Drag-Start
@@ -18415,7 +18425,7 @@ function cotMetrics(s){
   const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'#4f9bff':v<0?'#ff6b6b':'var(--t3)';}
+function cotColor(v){return v>0?'#25619D':v<0?'#B33633':'var(--t3)';}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -18781,7 +18791,7 @@ function sentGauge(val,lo,hi,unit,maxW,key){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#4f9bff')}${arc(P*0.75,P*0.55,'#6ea8f0')}${arc(P*0.55,P*0.45,'#8fa3bd')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#ff6b6b')}
+    ${arc(P,P*0.75,'#25619D')}${arc(P*0.75,P*0.55,'#3F7FBB')}${arc(P*0.55,P*0.45,'#55617A')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#B33633')}
     <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
       <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
@@ -18862,7 +18872,7 @@ function sentSpark(series,lo,hi,loTh,hiTh){
     <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="1.75" stroke-linejoin="round"/>
     <circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(+last[1]).toFixed(1)}" r="3.2" fill="var(--blue)"/>
   </svg>`;
-  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#4f9bff';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
+  const hpts=pts.map((e,i)=>{const v=Math.round(+e[1]*100)/100;const col=hiTh!=null&&v>=hiTh?BC.bear:loTh!=null&&v<=loTh?BC.bull:'#25619D';return{fx:xOf(i)/W,fy:yOf(+e[1])/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v}</b>`};});
   return chartHoverWrap(svg,hpts);
 }
 // ── Indikator-Verlaufschart (Nutzer-Wunsch 2026-07-14): Balken = Actual,
@@ -19035,8 +19045,8 @@ const SENT_INFO={
      <p><b>Who answers, and where:</b> AAII's own members — U.S. <b>private</b> investors, not banks, funds or analysts. They vote voluntarily in an online poll on aaii.com; the week runs Thursday to Wednesday and the result is published on <b>Thursday</b>. Two things follow from that design: participation is <b>self-selected</b> (whoever feels like voting, votes), and the number of responses varies from week to week. So single weeks are noisy — the smoothed line in the chart is the more reliable read.</p>
      <p><b>Why it matters:</b> it is the classic gauge of the <b>retail mood in U.S. equities</b>, and it is read <b>contrarian</b>. The logic is simple: if almost everyone is already bullish, most of them have already bought — there is little buying power left, and disappointments hit a market that is fully invested. If almost everyone is bearish, the selling has largely happened. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
      <p><b>What is measured here:</b> the <b>spread</b> = bullish % minus bearish %, in percentage points. The individual shares jump around a lot and "neutral" distorts them; the spread is the standard summary. The long-run average is about <b>+6.5pp</b> (roughly 37.5% bullish against 31.0% bearish) — the survey leans mildly optimistic by construction, which is why the thresholds are not symmetric around zero:</p>
-     <ul><li><b style="color:${'#4f9bff'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#ff6b6b'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
+     <ul><li><b style="color:${'#25619D'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#B33633'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
      <li>In between — normal range, no signal.</li></ul>
      <p><b>Which assets it affects here:</b> only <b>S&amp;P 500</b> and <b>Nasdaq</b>, with half weight, and only at the extremes — the same rule every other sentiment gauge in this app follows. The survey asks explicitly about the <b>stock market</b>, so that is where it is applied.</p>
      <p><b>Why not FX, gold or crypto:</b> it would be tempting to treat extreme equity pessimism as a general risk-off signal and credit the dollar, the yen, the franc or gold for it. That step is an <b>interpretation, not a measurement</b> — the respondents were never asked about currencies. This app does not turn one market's survey into another market's score. Read it as background for the general risk climate, but it does not move any FX, metals or crypto score.</p>
@@ -19045,24 +19055,24 @@ const SENT_INFO={
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
-     <ul><li><b style="color:${'#ff6b6b'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
-     <li><b style="color:${'#4f9bff'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#8fa3bd'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
+     <ul><li><b style="color:${'#B33633'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
+     <li><b style="color:${'#25619D'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
+     <li><b style="color:${'#55617A'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
      <p><b>Pick a single market</b> in the filter above (instead of "All symbols") to switch to its full <b>history</b>: net positioning (long%−short%) over time next to the actual price, plus the long/short split as a day-by-day bar. Builds up one real day at a time — no history can be backfilled beyond what was already recorded, since the source only ever reports the current snapshot.</p>`],
   putcall:['Put-Call Ratio',
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
-     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#4f9bff'}">bullish</b>.</li>
-     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#ff6b6b'}">bearish</b>.</li>
+     <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#25619D'}">bullish</b>.</li>
+     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#B33633'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
      <p><b>How to read the chart:</b> the stepped line is the daily ratio. The blue-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Net Options Flow (Call−Put)/(Call+Put)',
     `<p><b>What it is:</b> the net balance between call and put volume on a given day, computed directly from the raw end-of-day option volumes as <b>(total call volume − total put volume) ÷ (total call volume + total put volume)</b>. This is cleanly scaled between <b>−1.0</b> (only puts traded) and <b>+1.0</b> (only calls traded); <b>0</b> means calls and puts balanced.</p>
      <p><b>How to read it here:</b> each bar is one day (lightly smoothed with a 5-day average to cut single-day noise).</p>
-     <ul><li><b style="color:${'#4f9bff'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
-     <li><b style="color:${'#ff6b6b'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
+     <ul><li><b style="color:${'#25619D'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
+     <li><b style="color:${'#B33633'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
      <p>It is a direct, normalized read of who is leaning where in the options market, so it builds up one point per trading day as the underlying put/call series fills in.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (starts fresh per asset).</p>`],
   feargreed:['Fear & Greed / VIX',
@@ -19757,8 +19767,8 @@ function renderRetailBars(D){
     return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
       <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:12px;color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
       <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
-        <div style="width:${L}%;background:${BC.bull};display:flex;align-items:center;justify-content:flex-start;padding:0 6px;font-size:11px;font-weight:700;color:#04222f;min-width:0" title="${L}% of retail traders are long">${L>=12?L+'%':''}</div>
-        <div style="width:${S}%;background:${BC.bear};display:flex;align-items:center;justify-content:flex-end;padding:0 6px;font-size:11px;font-weight:700;color:#3a0d0d;min-width:0" title="${S}% of retail traders are short">${S>=12?S+'%':''}</div>
+        <div style="width:${L}%;background:${BC.bull};display:flex;align-items:center;justify-content:flex-start;padding:0 6px;font-size:11px;font-weight:700;color:#FFFFFF;min-width:0" title="${L}% of retail traders are long">${L>=12?L+'%':''}</div>
+        <div style="width:${S}%;background:${BC.bear};display:flex;align-items:center;justify-content:flex-end;padding:0 6px;font-size:11px;font-weight:700;color:#FFFFFF;min-width:0" title="${S}% of retail traders are short">${S>=12?S+'%':''}</div>
       </div>
     </div>`;
   }).join('');
@@ -20637,7 +20647,7 @@ SENT_INFO.news=['Headlines (free RSS feeds, no key)',
    <p><b>Limits:</b> the archive reaches back 35 days, but not evenly: the last 3 days are kept in depth, up to 10 days back only what rates MED or higher, and beyond that only HIGH. Holding all 35 days in full would be roughly 7000 headlines and 2.5 MB that your browser reloads on every visit — the older an item, the less likely you look for the small stuff. So an older day legitimately shows fewer entries than today. A single prolific feed is also capped, so its bulk output never crowds out the rest. A headline is never scored — this is context, not a signal. Where a headline lands on a day your score flipped, that is shown as a coincidence on the asset page, not as a cause.</p>`];
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
-   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#4f9bff">Blue up-bars</b> = the month was positive on average; <b style="color:#ff6b6b">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#25619D">Blue up-bars</b> = the month was positive on average; <b style="color:#B33633">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20) ═══════════════════
@@ -21056,7 +21066,7 @@ function scrollRateProbTo(idx,animate){
 // Sitzung) - bisher wurden sie nur je Waehrung EINZELN gezeigt. Nebeneinander
 // gelegt ist die DIFFERENZ zweier Pfade die sauberste Erklaerung fuer eine
 // Paarbewegung, die es gibt.
-const TERM_FARBEN={USD:'#4f9bff',EUR:'#9b8fd4',GBP:'#ff6b6b',JPY:'#8fa3bd',
+const TERM_FARBEN={USD:'#25619D',EUR:'#9b8fd4',GBP:'#B33633',JPY:'#55617A',
   CHF:'#4fa3c7',CAD:'#c78b4f',AUD:'#5fa87a',NZD:'#a05fa8'};
 function termStructureData(){
   const out=[];

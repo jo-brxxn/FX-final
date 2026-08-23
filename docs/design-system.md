@@ -124,62 +124,64 @@ gerade dran gearbeitet wird):
 
 ## Design-System (Nutzer-Vorgabe 2026-08-23) — verbindlich
 
-Der Nutzer hat ein vollständiges System vorgegeben. **Farben, Abstände und
-Radien werden nicht mehr frei erfunden** — immer diese Werte verwenden.
+Hell, nach einer vom Nutzer geschickten Vorlage. **Farben, Abstände und Radien
+werden nicht frei erfunden** — immer diese Werte verwenden.
 
 ### Flächen
 | Rolle | Wert | Token |
 |---|---|---|
-| App-Hintergrund | `#070C14` | `--bg0` |
-| Sidebar + Header | `#080F1A` | `--chrome-bg` |
-| Primary card | `#101B2D` | `--bg2` |
-| Secondary surface | `#13213A` | `--bg1` / `--bg3` |
-| Inner surface | `#162640` | `--bg4` |
-| Hover | `#1A2D49` | `--bg5` |
+| Seite | `#E9EAF6` | `--bg0` |
+| Karte | `#FFFFFF` | `--bg2` |
+| Fläche in der Karte | `#F2F3F9` | `--bg1` / `--bg3` |
+| Hover | `#EAECF4` | `--bg4` |
+| Auswahl / Betonung | `#DDE1EC` | `--bg5` |
+| Kopfzeile + Nav-Sidebar | `#212C49` | `--chrome-bg` |
+| Schnellzugriffe | `#2C3A5E` | fest in `.asec-link` |
 
-⚠ Dadurch ist `--bg1` **heller** als `--bg2` — in der hellen Palette war es
-umgekehrt. Das ist gewollt: `--bg2` ist die äußere Karte, `--bg1`/`--bg3` sind
-die Flächen *darin* (z. B. `.ranl-card` in `.ranl-wrap`).
+Kopfzeile und Sidebar bleiben **dunkel**, während der Inhalt hell ist
+(Nutzer-Entscheid). Die Schnellzugriffe sind dunkelblau, aber eine Spur
+heller als Kopfzeile/Sidebar.
 
-### Ränder
-`--bd` = `rgba(120,160,210,.16)`, `--bd2` = `rgba(120,170,230,.28)`,
-aktiv/Fokus = `--accent` `#35C7E8`.
+⚠ **In `.hdr` und `#navSidebar` werden die Textstufen umgedreht.** Dort MUSS
+`color` explizit gesetzt werden: geerbt wird der *berechnete* Wert von `body`
+(dunkel auf hell), nicht die var-Referenz — sonst steht dunkler Text auf
+dunklem Grund.
 
-### Text
-`--t0` `#E8F0FA` (Primary) · `--t2` `#9AAEC5` (Secondary) · `--t3` `#6F829B`
-(Muted). `--t1` `#C1D0E0` ist der **einzige interpolierte** Wert — die Vorgabe
-nennt drei Stufen, die App braucht vier.
+### Text und Semantik
+`--t0` `#141B2E` · `--t1` `#33405C` · `--t2` `#5A6885` · `--t3` `#57637B`
+Bullish `#25619D` · Bearish `#B33633` · Neutral `#55617A` ·
+Live `#D93A34` · Success `#137036` · Akzent `--accent` `#2E8FB0`.
 
-### Semantik
-Bullish `--green`/`--blue` `#38BDF8` · Bearish `--red` `#FF6B6B` ·
-Neutral `--amber`/`--star` `#8FA3BC` · Live `--live` `#FF5F6D`.
+### Kontrast wird nachgerechnet, nicht geschätzt
+**Gegen die dunkelste helle Fläche (`--bg5`) prüfen, nicht nur gegen Weiß.**
+Beim Umstieg fielen sonst Blau (4,27:1), Rot (3,89:1), Neutral (4,38:1) und
+Success (4,20:1) durch — auf Weiß hatten alle vier bestanden. Aktuell liegen
+alle Textfarben bei ≥ 4,6:1 gegen jede Fläche.
 
-`--live` ist bewusst ein **anderes** Rot als bearish: der blinkende Punkt in
-der Kopfzeile darf nicht als Bias-Signal gelesen werden.
+Prüfung: `scan_contrast.mjs` läuft über alle 16 Tabs und meldet jeden
+Blattknoten mit Text unter AA gegen seinen *tatsächlichen* Hintergrund.
 
-Cyan/Blau **sparsam** einsetzen. Die Oberfläche bleibt überwiegend dunkelblau.
-`--accent` ist ausschließlich Interaktion (aktiver Tab, ausgewählter Filter,
-Fokus), nie ein Datenwert.
+### Farbliterale im Code
+Ein Palettenwechsel über die Tokens erfasst **nicht** die fest eingetragenen
+Hex-Werte (SVG-Verläufe, `cotColor`, `bRC`, Balkenbeschriftungen). Beim
+letzten Wechsel waren das 43 Stellen. Immer mitsuchen.
 
-### Abstände — 4px-Raster
-4 / 8 / 12 / 16 / 20 / 24 / 32px. Widget-Abstand `--gap-block` = **14px**,
-Kartenpolster **16px**, größere Sektionsabstände 20–24px.
-**Keine großen Leerflächen** — die Oberfläche bleibt informationsdicht.
+Besonders heikel: Beschriftung **in** gefüllten Balken. Im dunklen Design
+waren die Balken hell und trugen dunklen Text; hell ist es umgekehrt.
 
-### Karten
-Radius `--r` **12px**, kleine Bedienelemente `--rs` **8px** / `--rss` **6px**.
-1px Rand, **keine schweren Schatten** (`--shadow-card` = `0 1px 3px rgba(0,0,0,.30)`).
-Keine „Box in Box"-Verschachtelung.
-
-### Typografie
-Seitentitel 28–32px (`--fs-hero` 30px) · Widget-Titel 16–18px (`--fs-lg` 17px) ·
-Hauptkennzahlen 24–32px (`--fs-xl` 24px) · Fließtext 13–14px (`--fs-base` 13px) ·
-Beschriftungen 11–12px (`--fs-sm`/`--fs-xs`). Zeilenhöhe ~1.4.
-Finanzwerte mit Tabellenziffern (`font-variant-numeric:tabular-nums`).
+### Abstände, Karten, Typografie
+4px-Raster (4/8/12/16/20/24/32). `--gap-block` **14px**, Kartenpolster
+**16px**, keine großen Leerflächen.
+Radius `--r` **12px**, kleine Bedienelemente `--rs` **8px** / `--rss` **6px**,
+1px Rand, keine schweren Schatten (`0 1px 3px rgba(20,27,46,.09)`).
+Seitentitel 28–32px · Widget-Titel 16–18px · Hauptkennzahlen 24–32px ·
+Fließtext 13–14px · Beschriftungen 11–12px · Zeilenhöhe ~1.4 ·
+Finanzwerte mit `tabular-nums`.
 
 ### Kategorie-Akzente
-`--a-infl` / `--a-rate` / `--a-lab` / `--a-grow` / `--a-cot` / `--a-risk` nur als
-schmale Kante oder Punkt, nie als Zahlenfarbe.
+`--a-infl` `#B5791C` · `--a-rate` `#7250B8` · `--a-lab` `#1A8477` ·
+`--a-grow` `#BE6320` · `--a-cot` `#1F7F9E` · `--a-risk` `#A94578` —
+nur als schmale Kante oder Punkt, nie als Zahlenfarbe.
 
 ### Drei Literale, eine Farbe
 `theme-color` (Meta), `manifest.json` und `--chrome-bg` müssen denselben Wert
