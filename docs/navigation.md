@@ -909,3 +909,80 @@ Zwei Regeln, beide von `check/score.js` (Block H3) geprüft:
   keine Zerlegung.** Der Faktor ist nachträglich nicht rekonstruierbar; er
   hängt von der damaligen Zahl nicht-veralteter Indikatoren ab, und die ist
   nirgends gespeichert.
+
+## Trends: Paar-Score enthält den Carry (2026-08-23)
+
+`renderTrendsPair` rechnete `be[1] − qe[1]` — Basis minus Kurswährung **ohne**
+`pairCarryAdj`. Überall sonst rechnet `pairScore()` mit Carry. Die Trends-Linie
+zeigte damit eine andere Zahl als Set-ups, Watchlist und Score-Fenster.
+
+**Rückwirkend ist der Carry exakt rekonstruierbar**, und deshalb wird er es
+auch: `ind_data.json` führt je Währung die datierte Beschluss-Historie der
+Zentralbank (`Central Bank Rate` → `historyFull`, 12–25 Beschlüsse zurück bis
+2023). Ein Leitzins ist eine Treppenfunktion — er gilt vom Beschlusstag bis zum
+nächsten Beschluss. `rateAtDate(ccy, datum)` bildet genau das ab,
+`pairCarryAdjAt(base, quote, datum)` daraus den Carry jenes Tages.
+
+Drei Regeln, alle von `check/scorediff.js` bzw. den Session-Tests gedeckt:
+- **`carryStufe(diff)` ist die EINE Staffel.** `pairCarryAdj` (heute) und
+  `pairCarryAdjAt` (Historie) rufen beide sie auf — sie können nicht
+  auseinanderlaufen.
+- **`pairCarryAdjAt` liefert `null`, nicht `0`**, wenn für eine Seite an dem Tag
+  kein Zins bekannt ist. Der Aufrufer muss „kein Carry" von „Carry unbekannt"
+  unterscheiden können; die Karte weist die Zahl solcher Tage aus.
+- **Vor dem ältesten bekannten Beschluss wird nicht hochgerechnet.** Der heutige
+  Zins wird nicht rückwärts fortgeschrieben (Grundsatz: nie schätzen).
+
+⚠ **`rateInfo()` MUSS dieselbe Quelle sehen wie `rateAtDate()`**, sonst rechnet
+der heutige Punkt der Trends-Linie mit einem anderen Carry als der Paar-Score.
+`rateInfo` kannte den Live-Feed vorher gar nicht und nahm den kuratierten
+Recherche-Stand — **alle acht Leitzinsen lagen daneben** (EUR 2,00 statt 2,40 %,
+JPY 0,75 statt 1,00 %, NZD 2,25 statt 2,50 %, USD 3,625 statt 3,75 %). Der
+Research-Eintrag gewinnt jetzt nur noch, wenn er das jüngere Datum trägt.
+
+## Actual-Farbe folgt der Karten-Einstellung (2026-08-23)
+
+In den Asset-Einstellungen lässt sich je Makro-Karte einstellen, ob starke Daten
+der verknüpften Währung für dieses Asset **Bullish** (`same`) oder **Bearish**
+(`inverse`) sind. `deriveMacroBiasAll()` drehte Karten- und Indikator-Bias
+korrekt um — die **Farbe des Actual-Werts** kannte die Einstellung aber nicht.
+Bei GOLD mit Inflation auf „Bearish" stand ein heißer CPI grün da, während
+GOLDs eigener Bias für denselben Indikator bearish war.
+
+`actualColor(ev, assetId)` nimmt jetzt einen **optionalen** Asset-Kontext.
+`actualColorRaw(ev)` ist die unveränderte Rohrichtung.
+
+⚠ **Nur ANZEIGE-Aufrufer bekommen den Kontext** — Indikator-Tabelle,
+Asset-Kalender, History-Panel, Compare-Matrix. Die **bias-ableitenden** Aufrufer
+(`indBiasFromEvent`, `researchBias`) und `surpriseIndex` bekommen ihn **nicht**:
+dort dreht bereits `deriveMacroBiasAll()`, ein zweites Drehen würde die Umkehr
+doppelt anwenden. Wer hier etwas ergänzt, muss diese Trennung halten.
+
+Weitere Grenzen, alle getestet: FX-Währungen werden nie gedreht; COT Data und
+Risk Environment werden nie gedreht (asset-eigene Daten, nicht in
+`MACRO_DERIVE_RUBS`); ohne `assetId` bleibt immer die Rohrichtung (der
+allgemeine Kalender hat kein Asset, dessen Einstellung gelten könnte);
+synthetische Events mit `ev.bias` werden nicht gedreht (deren Richtung IST
+schon der fertige `ind.bias`). Der Score ändert sich dadurch **nicht** — die
+Farbe ist reine Anzeige.
+
+## AAII: Ansicht „Weekly bars" (2026-08-23)
+
+Sechste Ansicht: gestapelte Wochensäulen mit dem Prozentwert in jedem Segment,
+darunter der Bullish-Verlauf als eigene Linie. Säulen statt Fläche mit Absicht —
+die Umfrage erscheint **einmal pro Woche**, das sind einzelne Messpunkte und
+kein stetiger Verlauf.
+
+- **Beschriftung in drei Stufen** nach Säulenbreite: ≥30px → `35.5%`, ≥17px →
+  `36` (gerundet), darunter gar nichts. Lieber keine Zahl als eine, die über die
+  Nachbarsäule läuft.
+- **`setAaiiView('bars')` wählt den Zeitraum datengetrieben** (`aaiiBarsRange()`:
+  engster Zeitraum mit ≥10 Umfragewochen), nicht fest. Grund: die AAII-Reihe hat
+  eine echte Lücke, ein fester „3 Monate" hätte dort **zwei** Säulen gezeigt.
+- ⚠ **Lücken werden in der Zeichnung markiert**, nicht nur im Text: gestrichelter
+  Bruch mit „N missing", beide Randwochen bekommen ein Pflicht-Datum in
+  Signalfarbe, und die Bullish-Linie wird an der Lücke **unterbrochen** statt
+  durchgezogen. Die Säulen sitzen in gleichem Abstand nebeneinander — ohne
+  Markierung liest man aus der Achse einen lückenlosen Verlauf, den es nie gab.
+  (Konkret fehlen 19.03.2026–12.08.2026 zwanzig Umfragen, weil AAIIs
+  veröffentlichte Historien-Datei der eigenen Live-Seite monatelang nachhing.)

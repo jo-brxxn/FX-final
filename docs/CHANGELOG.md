@@ -6671,3 +6671,124 @@ ueberpruef das gruendlich und mach mehrere Tests"):**
 **Nebenbefund:** das `title` des VERSION-CHECK-Banners enthielt aus 433 ein
 unmaskiertes `"` mitten im Attribut — das Attribut endete dort vorzeitig. Mit
 korrigiert.
+
+---
+
+## 2026-08-23 — Carry in den Trends, Actual-Farben, AAII-Saeulen (VERSION-CHECK-435)
+
+### Bugreport 1: "Bei Trends ist der Carry bei den Scores von den Paaren nicht eingepreist"
+
+Stimmte. `renderTrendsPair` rechnete `be[1]-qe[1]` ohne `pairCarryAdj`, waehrend
+`pairScore()` ihn ueberall sonst mitrechnet. Rueckwirkend geloest ueber die
+datierte Beschluss-Historie der Zentralbanken aus `ind_data.json` (12-25
+Beschluesse je Waehrung zurueck bis 2023, die Score-Historie beginnt erst
+2026-07-20 - also vollstaendig abgedeckt). Details in `docs/navigation.md`.
+
+**Nebenfund, groesser als der gemeldete Bug:** `rateInfo()` kannte den
+Live-Feed gar nicht. Es las den kuratierten Recherche-Stand und den
+Kalender - **alle acht Leitzinsen** waren dadurch veraltet oder aus einer
+aelteren Quelle:
+
+| | vorher | jetzt | Quelle vorher/jetzt |
+|---|---|---|---|
+| USD | 3,625% | 3,75% | research (Korridormitte) / feed |
+| EUR | 2,00% | **2,40%** | research 2026-04-30 / feed 2026-07-23 |
+| JPY | 0,75% | **1,00%** | research 2026-04-28 / feed 2026-07-31 |
+| NZD | 2,25% | **2,50%** | research 2026-05-27 / feed 2026-07-08 |
+| GBP/CHF/CAD/AUD | unveraendert | unveraendert | nur Quellenwechsel |
+
+Fuenf von 35 Paar-Carrys drehten dadurch eine Stufe (EUR/USD −1 → −0,5,
+USD/CAD +0,5 → +1, EUR/GBP −1 → −0,5, GBP/NZD +1 → +0,5, CAD/JPY +1 → +0,5),
+fuenf Paar-Scores verschieben sich um 0,5.
+
+### Bugreport 2: Actual-Farbe ignorierte die Karten-Einstellung
+
+Bestaetigt und behoben - siehe `docs/navigation.md`. Der Score bleibt
+unberuehrt, es ist reine Anzeige.
+
+### AAII: neue Ansicht + Erklaerung neu
+
+Sechste Ansicht "Weekly bars" nach Nutzer-Referenzbild. Erklaerung hinter dem
+i-Knopf komplett neu geschrieben mit Begriffs-Glossar (Bullish/Neutral/Bearish/
+Spread/pp/8-Wochen-Schnitt/Perzentil/Kapitulation-Sorglosigkeit) und einer
+Beschreibung aller sechs Ansichten.
+
+**Zwei falsche Schriftzuege mitkorrigiert.** Unter dem Lesebadge stand
+*"Thresholds ±20pp. Long-run average +6.5pp, so they are not symmetric around
+zero."* - beide Haelften falsch: die Schwellen SIND exakt symmetrisch um 0, und
+die 520 hier aufgezeichneten Wochen (ab 2016-04-07) ergeben einen Mittelwert
+von **+0,8pp**, nicht +6,5. Steht jetzt aus den eigenen Daten da und kann nie
+wieder veralten. Derselbe Satz stand auch im Info-Text.
+
+**Datenluecke sichtbar gemacht:** zwischen 2026-03-19 und 2026-08-12 fehlen
+**20 Umfragewochen**, weil AAIIs veroeffentlichte Historien-Datei der eigenen
+Live-Seite monatelang nachhing (dasselbe Problem, das 2026-08-19 zur
+`AAII_STALE_DAYS`-Grenze gefuehrt hat). Die Saeulen sitzen in gleichem Abstand
+nebeneinander - ohne Markierung las man aus der Achse einen lueckenlosen
+Verlauf von Maerz bis August, den es nie gab.
+
+### Neuer Waechter: `check/scorediff.js`
+
+`rules.js` verlangte einen SCORE_MODEL_VERSION-Bump, weil `pairCarryAdj` und
+`actualColor` im Diff standen. **Ein Bump waere hier falsch gewesen:**
+`SCORE_MODEL_TAG` markiert damit die gesamte aufgezeichnete Historie als "aus
+einem frueheren Modell", und die enthaelt ausschliesslich SYMBOL-Scores - die
+sich nachweislich nicht geaendert haben.
+
+Statt das zu behaupten, wird es jetzt nachgerechnet: `scorediff.js` rendert
+`origin/main` und den Arbeitsbaum im selben Browser mit denselben Daten und
+vergleicht jede Zahl.
+
+```
+  Symbol-Score (cmp)           0 von  16 veraendert
+  Symbol-Score (roh)           0 von  16 veraendert
+  Karten-Score                 0 von  96 veraendert
+  Staerke 1-10                 0 von  16 veraendert
+  Carry je Paar                5 von  35 veraendert
+  Paar-Score                   5 von  35 veraendert
+```
+
+`rules.js` liest das Ergebnis und laesst den Bump nur dann entfallen. Fehlt es
+(z.B. `--static`) oder ist es aelter als `index.html`, gilt die strenge Regel -
+fail-closed. Die Regel ist damit **strenger** als vorher: bisher konnte man die
+Nummer hochzaehlen, ohne dass sich etwas aendert, und niemand rechnete nach.
+
+### Geprueft
+
+Nutzer-Vorgabe steht: *"Bitte alle Aenderungen die du machst ueberpruef das
+gruendlich und mach mehrere Tests."*
+
+**Carry** (8 Pruefungen, 0 Abweichungen): Zinshistorie fuer alle 8 Waehrungen
+vorhanden (12-25 Beschluesse); `rateAtDate` trifft jeden Beschlusstag exakt und
+liefert am Vortag noch den alten Stand; vor dem aeltesten Beschluss `null`
+statt einer geratenen Zahl; `carryStufe` an allen 11 Staffelgrenzen exakt;
+`pairCarryAdj == pairCarryAdjAt(heute)` fuer **alle 28** FX-Paare;
+Antisymmetrie `Carry(A/B) == -Carry(B/A)` fuer alle 56 geordneten Paare; der
+heutige Punkt der Trends-Linie == `pairScore()` fuer alle 28 Paare; Panel
+rendert mit Hinweistext.
+
+**Actual-Farbe** (9 Pruefungen, 0 Abweichungen): `same` laesst die Rohrichtung,
+`inverse` dreht sie exakt, `off` laesst sie; ohne Asset-Kontext immer die
+Rohrichtung; Farbe und `ind.bias` widersprechen sich nicht mehr; Score stabil
+ueber alle drei Einstellungen (3,4 → 3,4 → 3,4); FX-Waehrungen nie gedreht;
+Nicht-Makro-Karten nie gedreht; **aus dem DOM gelesen**: 3 Farben drehen beim
+Umschalten, 0 bleiben faelschlich stehen.
+
+**AAII** (6 Ansichten × 5 Zeitraeume = 30 Renderlaeufe ohne Fehler): 96
+Segmente = 32 Wochen × 3; alle Saeulen exakt gleich hoch (stapelt auf 100%);
+jedes Bullish-Segment gegen den Datenwert geprueft (32/32); die drei
+Beschriftungsstufen einzeln nachgewiesen (6M → 12 Dezimalwerte, 1J → 64
+gerundete, MAX → keine); Luecken-Hinweis erscheint mit korrekter Wochenzahl;
+Mittelwert und Anteil im Schwellensatz gegen die Rohdaten nachgerechnet;
+Glossar auf 7 Pflichtbegriffe geprueft; Screenshots von Karte und Info-Modal
+gesichtet.
+
+**Eigener Fehler, vom eigenen Test gefunden:** `invalidateRateStepCache()`
+wollte eine `const` neu zuweisen und warf still in einem `try/catch` von
+`fetchIndData`. Folge: der Zinsstufen-Cache blieb auf dem `null` vom Boot
+stehen, `rateSteps()` lieferte fuer alle acht Waehrungen `null` und der Carry
+waere komplett ausgefallen. Ohne die Ende-zu-Ende-Pruefung waere das
+unbemerkt live gegangen - `node --check` und der Syntax-Waechter sehen so etwas
+nicht.
+
+`node check/all.js` komplett gruen (12 Waechter).

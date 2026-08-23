@@ -43,6 +43,7 @@ Nutzer angekommen ist.
 | `syntax.js` | JS aller `<script>`-Bloecke, jede Workflow-YAML, jeder `run`-Block per `bash -n` | nein |
 | `rules.js` | Versions-Bumps und Workflow-Ausgaben (siehe unten) | nein |
 | `structure.js` | doppelte `id`s, woertlich wiederholte HTML-Bloecke | nein |
+| `scorediff.js` | rechnet JEDEN Score (Symbol, Karte, Staerke, Carry, Paar) des Arbeitsbaums gegen `origin/main` nach - selber Browser, selbe Daten. Liefert `rules.js` die Tatsachengrundlage fuer die SCORE_MODEL_VERSION-Regel | ja |
 | `score.js` | Additivitaet der Rechenkette, Drift je geoeffnetem Asset, `_symId` nach Boot/`save`/`applySnap`, jeder Bias gegen seine Rohdaten, Karten-Badges, Idempotenz aller vier Feeds, Aufzeichnung automatischer Score-Ursachen, Aufschluesselung der Tagesbewegung in der History | ja |
 | `display.js` | angezeigte Scores in Sidebar, Asset-Kopf und Score-Fenster gegen den Sollwert | ja |
 | `runtime.js` | alle Tabs, Modals und Zustaende ohne JS-Fehler | ja |
@@ -96,3 +97,32 @@ angefasst wurden.
 - **Nie `clientWidth > 0` als Vorbedingung in einem Text-Suchlauf.** Ein auf null gequetschtes Element ist der SCHLIMMSTE Fall, nicht der uninteressanteste - genau er faellt durch diese Bedingung heraus (`cards.js` Punkt 5 fangt ihn getrennt ab).
 - **Nie `document.documentElement.scrollWidth`/`clientWidth` fuer Seiten-Ueberlauf pruefen** - `body` ist in dieser App `position:fixed` (verhindert iOS-Bounce-Scroll), dadurch traegt kein Kind jemals zu `documentElement`s Scroll-Groesse bei, ganz gleich wie sehr es ueberlaeuft. Stattdessen `document.body.scrollWidth`/`clientWidth` (oder direkt den konkreten Container wie `.app-shell`/`#pageArea`) messen. Gefunden, nachdem `layout.js` einen echten 111px-Ueberlauf auf der Rate-Probabilities-Seite durchgelassen hatte.
 - **`scoreSurface.js`s Aufruf-Erkennung scannt den rohen Funktionskoerper OHNE Kommentare zu entfernen.** Diese Codebasis zitiert Funktionsnamen in Kommentaren durchgehend als `` `funcName()` `` (Backtick-Code-Span) - ohne Ausschluss liest die `NAME(`-Regex das als echten Aufruf. Gefunden 2026-08-21: ein Kommentar in `addSurveyInds` (Score-Wurzel) mit `` `loadState()` `` zog dessen komplette, score-fremde Aufrufkette (13 Funktionen, u.a. `migrateDash`/`recomputeAuto`) in die Score-Oberflaeche - ein neuer Fund haette faelschlich `SCORE_MODEL_VERSION` verlangt. Fix: ein `NAME(`-Treffer zaehlt nicht, wenn ihm direkt ein Backtick vorausgeht.
+
+
+## SCORE_MODEL_VERSION: Verdacht gegen Nachweis (2026-08-23)
+
+`rules.js` verlangt einen Bump, sobald eine Funktion der abgeleiteten
+Score-Flaeche im Diff auftaucht. Das ist ein **Verdacht**, kein Beweis - die
+Flaeche enthaelt auch Funktionen, die nur den PAAR-Score beruehren, und
+Signatur-Aenderungen, die gar nichts rechnen.
+
+`scorediff.js` rechnet deshalb nach: es rendert den Stand von `origin/main`
+und den Arbeitsbaum im selben Browser mit denselben `*.json`-Daten (verglichen
+wird die RECHNUNG, nicht der Datenstand - sonst faende der Vergleich nur den
+stuendlichen Bot-Commit) und stellt jede Zahl gegenueber. Das Ergebnis landet
+in `check/.scorediff.json` (gitignored), `rules.js` liest es.
+
+- **Symbol-Score unveraendert** -> kein Bump noetig. Ein Bump waere hier sogar
+  schaedlich: `SCORE_MODEL_TAG` markiert damit die gesamte aufgezeichnete
+  Historie als "aus einem frueheren Modell", obwohl sie es nicht ist.
+  Nur der SYMBOL-Score liegt in `scoreHist` - History, Trends und die
+  Staerke-Note vergleichen ausschliesslich den.
+- **Symbol-Score veraendert** -> Bump Pflicht, und die Meldung nennt jetzt die
+  Zahl der betroffenen Stellen.
+- **Kein Ergebnis vorhanden** (z.B. `--static`, oder aelter als `index.html`)
+  -> es gilt die strenge Regel. Fail-closed, nie fail-open.
+
+Anlass: der Carry-Fix vom 2026-08-23 fasste `pairCarryAdj`/`actualColor` an
+(beide in der Flaeche), liess aber 0 von 16 Symbol-Scores, 0 von 96
+Karten-Scores und 0 von 16 Staerke-Noten unveraendert. Veraendert haben sich
+nur 5 von 35 Paar-Scores - und die stehen nirgends in `scoreHist`.

@@ -2455,6 +2455,25 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .aaii-tbl td{padding:3px 6px;border-bottom:1px solid var(--bd)}
 .aaii-tbl td:first-child{color:var(--t1);font-weight:600;white-space:nowrap;width:130px}
 .aaii-note{color:var(--t3);font-size:11px;line-height:1.5;margin-top:8px}
+/* Das Info-Modal traegt laengere, gegliederte Erklaerungen (AAII-Neufassung
+   2026-08-23). Ohne diese Regeln kaemen h4/dl/dt/dd dort komplett ungestylt
+   an - der Reset entfernt die Browser-Vorgaben. */
+#sentInfoBody h4{font-size:12.5px;font-weight:800;color:var(--t0);margin:15px 0 5px;letter-spacing:.2px}
+#sentInfoBody h4:first-child{margin-top:0}
+#sentInfoBody p{margin-bottom:9px}
+#sentInfoBody ul{margin:0 0 9px;padding-left:17px}
+#sentInfoBody li{margin-bottom:3px}
+#sentInfoBody dl{margin:0 0 10px}
+#sentInfoBody dt{color:var(--t0);font-weight:700;margin-top:8px}
+#sentInfoBody dt:first-child{margin-top:0}
+#sentInfoBody dd{margin:1px 0 0;color:var(--t2)}
+.aaii-hint{color:var(--t3);font-size:11px;line-height:1.5;margin-bottom:5px}
+.aaii-gap{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--purple);border-radius:var(--rs);padding:7px 10px;margin-bottom:7px;color:var(--t2);font-size:11px;line-height:1.5}
+.aaii-gloss{margin-top:10px;border-top:1px solid var(--bd);padding-top:9px}
+.aaii-gloss summary{cursor:pointer;color:var(--t2);font-size:12px;font-weight:600}
+.aaii-gloss dl{margin:8px 0 0;font-size:11.5px;line-height:1.55}
+.aaii-gloss dt{color:var(--t1);font-weight:700;margin-top:7px}
+.aaii-gloss dd{margin:1px 0 0;color:var(--t2)}
 .histp-range{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
 .histp-rbtn{border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);font:700 11.5px/1 var(--ff-text);padding:7px 13px;cursor:pointer}
 .histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
@@ -2471,6 +2490,7 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-brk-v{font:800 10.5px/1 var(--ff-num)}
 .histp-delta{font:800 11.5px/1 var(--ff-num);margin-left:auto;margin-right:7px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
+.tr-carrynote{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--accent);border-radius:var(--rs);padding:8px 11px;margin-bottom:9px;color:var(--t2);font-size:11.5px;line-height:1.5}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
 @media(max-width:560px){.histp-val{display:none}.histp-name{white-space:normal}}
@@ -3560,11 +3580,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-434 - Die Aufschluesselung der Tagesbewegung in der History geht jetzt auf. Vorher standen dort rohe Kartenwerte neben einem mit dem Fairness-Faktor skalierten Gesamtscore - zwei verschiedene Massstaebe nebeneinander, die Summe passte nie zur Kopfzeile. scoreHist speichert je Tag zusaetzlich den Fairness-Faktor und den Rohscore; damit zerfaellt die Tagesbewegung exakt in Inflation, Labour Market, Economic Growth, 'Other cards' (Interest Rates/COT/Risk, die nicht je Karte aufgezeichnet werden), den Comparability factor und einen ausgewiesenen Rundungsrest. Die Teile ergeben immer exakt die angezeigte Tagesveraenderung; geprueft in check/score.js an 3000 Zufallsfaellen und an der echten Historie. Tage, die vor dieser Version aufgezeichnet wurden, tragen Faktor und Rohscore nicht und bekommen deshalb GAR KEINE Aufschluesselung statt einer erfundenen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-435 - Vier Dinge. (1) CARRY IN DEN TRENDS: die Paar-Linie im Trends-Tab rechnete Basis minus Kurswaehrung OHNE den Carry und wich damit von dem Paar-Score ab, den Set-ups, Watchlist und Score-Fenster zeigen. Sie rechnet ihn jetzt mit - und rueckwirkend fuer jeden Tag mit dem Leitzins, der AN DEM TAG galt (datierte Beschluss-Historie aus ind_data.json, 12-25 Beschluesse je Waehrung zurueck bis 2023). Vor dem aeltesten bekannten Beschluss gibt es keinen Carry statt eines geschaetzten. (2) LEITZINSEN WAREN VERALTET: rateInfo() kannte den Live-Feed gar nicht und nahm den kuratierten Recherche-Stand - alle acht Saetze lagen daneben oder auf einer aelteren Quelle (EUR 2,00 statt 2,40, JPY 0,75 statt 1,00, NZD 2,25 statt 2,50, USD 3,625 statt 3,75). Fuenf von 35 Paar-Scores verschieben sich dadurch um 0,5. Die Symbol-Scores bleiben nachweislich unveraendert. (3) ACTUAL-FARBE FOLGT DER KARTEN-EINSTELLUNG: steht eine Makro-Karte bei einem verknuepften Asset auf Bearish (invers), war der Indikator-Bias laengst gedreht, die Farbe des Actual-Werts aber nicht - ein heisser CPI stand bei GOLD gruen da, waehrend GOLDs eigener Bias bearish war. Gilt fuer Indikator-Tabelle, Asset-Kalender, History und Compare; der allgemeine Kalender bleibt die reine Datenrichtung. (4) AAII: neue Ansicht Weekly bars (gestapelte Wochensaeulen mit Prozentwert je Segment, darunter der Bullish-Verlauf), Erklaerung komplett neu mit Begriffs-Glossar, und die Luecke in der AAII-Reihe (20 fehlende Wochen zwischen 19.03. und 12.08.2026) ist jetzt in beiden Grafiken markiert statt stillschweigend ueberzeichnet. Ausserdem stand unter dem Lesebadge Long-run average +6.5pp, so they are not symmetric around zero - beides falsch; die Schwellen SIND symmetrisch, und der Mittelwert steht jetzt aus den eigenen 520 Wochen da. Neuer Waechter check/scorediff.js rechnet vor jedem Push jeden Score gegen origin/main nach."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-434</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-435</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3913,7 +3933,7 @@ function introLogin(){
 </div>
 <!-- MODAL: Sentiment-Info (i-Buttons im Sentiment-Tab) -->
 <div class="ov" id="mSentInfo" style="display:none">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:560px">
     <h3 id="sentInfoTitle">Info</h3>
     <div id="sentInfoBody" style="font-size:12.5px;line-height:1.6"></div>
     <div class="m-btns"><button class="btn g" onclick="closeM('mSentInfo')">Got it</button></div>
@@ -5703,13 +5723,69 @@ function flipRankRows(root,before){
 // bewusst NUR auf Paar-/Set-ups-Ebene (nicht als Indikator pro Waehrung),
 // weil Carry ein Paar-Konzept ist - Basis vs. Kurswaehrung, nicht Basis vs.
 // FX-Durchschnitt.
+// Die Staffel selbst - EINE Stelle, damit der Carry von heute und der
+// rueckwirkend berechnete Carry der Historie nie auseinanderlaufen koennen.
+function carryStufe(diff){
+  if(diff==null||!isFinite(diff))return 0;
+  return diff>=1.5?1:diff>=0.5?0.5:diff<=-1.5?-1:diff<=-0.5?-0.5:0;
+}
 function pairCarryAdj(pairName){
   const parts=(pairName||'').split('/');
   if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return 0;
   const rb=rateInfo(parts[0]),rq=rateInfo(parts[1]);
   if(!rb||!rq)return 0;
-  const d=rb.rate-rq.rate;
-  return d>=1.5?1:d>=0.5?0.5:d<=-1.5?-1:d<=-0.5?-0.5:0;
+  return carryStufe(rb.rate-rq.rate);
+}
+// ── Leitzins an einem VERGANGENEN Tag ────────────────────────────────
+// Anlass (Nutzer-Bugreport 2026-08-23): "Bei Trends ist der Carry bei den
+// Scores von den Paaren nicht eingepreist korrigier das und auch die
+// Historie rueckwirkend." Die Trends-Paar-Linie rechnete Basis minus
+// Kurswaehrung OHNE pairCarryAdj und wich damit vom Paar-Score ab, den
+// jede andere Seite der App zeigt.
+//
+// Rueckwirkend geht das EXAKT, weil ind_data.json je Waehrung die datierte
+// Beschluss-Historie der Zentralbank mitliefert (historyFull des Indikators
+// "Central Bank Rate"). Ein Leitzins ist eine Treppenfunktion: er gilt vom
+// Beschlusstag bis zum naechsten Beschluss. Genau das bildet die Funktion ab.
+//
+// ⚠ Vor dem AELTESTEN bekannten Beschluss wird NICHT hochgerechnet und der
+// heutige Zins NICHT rueckwaerts fortgeschrieben - dann gibt es fuer diesen
+// Tag schlicht keinen Carry (Projekt-Grundsatz: nie schaetzen). Die
+// Trends-Karte weist das aus, statt es zu verschweigen.
+const _rateStufenCache={};
+function rateSteps(ccy){
+  if(_rateStufenCache[ccy]!==undefined)return _rateStufenCache[ccy];
+  let out=null;
+  const f=(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)?IND_DATA_FEED[ccy]:null;
+  const h=f&&f['Central Bank Rate']&&f['Central Bank Rate'].historyFull;
+  if(Array.isArray(h)){
+    // parsePolicyRate statt parseNumLike: die Fed nennt einen KORRIDOR
+    // ("3.50%-3.75%"), daraus muss die Mitte werden - parseNumLike wuerde
+    // die Untergrenze nehmen und den Carry damit um 0,125 verzerren.
+    const pts=h.map(e=>[String((e&&e[0])||'').slice(0,10),parsePolicyRate(e&&e[1])])
+      .filter(p=>p[0]&&p[1]!=null&&isFinite(p[1]))
+      .sort((a,b)=>a[0].localeCompare(b[0]));
+    if(pts.length)out=pts;
+  }
+  _rateStufenCache[ccy]=out;
+  return out;
+}
+function invalidateRateStepCache(){Object.keys(_rateStufenCache).forEach(k=>delete _rateStufenCache[k]);}
+function rateAtDate(ccy,datum){
+  const pts=rateSteps(ccy);
+  if(!pts)return null;
+  let v=null;
+  for(let i=0;i<pts.length;i++){if(pts[i][0]<=datum)v=pts[i][1];else break;}
+  return v;   // null = der Tag liegt VOR dem aeltesten bekannten Beschluss
+}
+// Carry eines Paars an einem vergangenen Tag. null (nicht 0!), wenn fuer
+// eine der beiden Seiten an dem Tag kein Zins bekannt ist - der Aufrufer
+// muss den Unterschied zwischen "kein Carry" und "Carry unbekannt" sehen.
+function pairCarryAdjAt(baseId,quoteId,datum){
+  if(!FX.includes(baseId)||!FX.includes(quoteId))return 0;
+  const rb=rateAtDate(baseId,datum),rq=rateAtDate(quoteId,datum);
+  if(rb==null||rq==null)return null;
+  return carryStufe(rb-rq);
 }
 // ── Faire Vergleichsbasis zwischen Symbolen ─────────────────────────
 // Symbole tracken unterschiedlich viele wertbare Indikatoren (USD z.B.
@@ -6081,7 +6157,44 @@ function parseNumLike(s){
   }
   return v;
 }
-function actualColor(ev){
+// Steht die Karte dieses Indikators bei DIESEM Asset auf "Bearish"?
+//
+// Anlass (Nutzer-Wunsch 2026-08-23): in den Asset-Einstellungen laesst sich
+// je Makro-Karte einstellen, ob starke Daten der verknuepften Waehrung fuer
+// dieses Asset Bullish oder Bearish sind (setAssetDeriveRule, same/inverse).
+// deriveMacroBiasAll() dreht daraufhin Karten- und Indikator-Bias korrekt um -
+// die ACTUAL-FARBE kannte diese Einstellung aber nicht und faerbte weiter rein
+// nach "actual gegen forecast". Bei GOLD mit Inflation auf "Bearish" stand ein
+// heisser CPI-Wert damit gruen da, waehrend GOLDs eigener Bias fuer denselben
+// Indikator bearish war.
+//
+// Gilt NUR fuer die vier echten Makro-Karten (MACRO_DERIVE_RUBS) und nur fuer
+// Nicht-FX-Assets mit verknuepfter Waehrung - COT Data und Risk Environment
+// sind asset-eigene Daten und werden nie gespiegelt.
+function actualColorInverted(assetId,indName){
+  if(!assetId||!indName)return false;
+  const sym=syms.find(s=>s.id===assetId);
+  if(!sym||!isNonFx(sym.id)||!macroCcyFor(sym.id))return false;
+  const base=stripPeriodSuffix(indName).base;
+  const rub=(sym.rubrics||[]).find(r=>MACRO_DERIVE_RUBS.includes(r.name)
+    &&(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base||i.displayName===indName));
+  if(!rub)return false;
+  return effDeriveRules(sym)[rub.name]==='inverse';
+}
+// assetId ist optional. Ohne ihn (Haupt-Kalender, waehrungsweite Auswertungen)
+// bleibt die Farbe die reine Datenrichtung - dort gibt es kein Asset, dessen
+// Einstellung gelten koennte.
+function actualColor(ev,assetId){
+  const roh=actualColorRaw(ev);
+  if(!roh||!assetId)return roh;
+  // ev.bias tragen die synthetischen COT-/Sentiment-Events: deren Richtung IST
+  // bereits der fertig berechnete ind.bias des Assets. Ein zweites Drehen wuerde
+  // die Umkehr doppelt anwenden.
+  if(ev&&ev.bias)return roh;
+  if(!actualColorInverted(assetId,ev&&ev.name))return roh;
+  return roh==='act-good'?'act-bad':'act-good';
+}
+function actualColorRaw(ev){
   // Explizite Bias-Vorgabe (COT/Sentiment-Synthetic-Events aus
   // symScoreDrivingEventsByDate: deren Richtung ist Schwellen-/Vorzeichen-
   // basiert, nicht "Actual vs Forecast" - kann hier nicht numerisch
@@ -6132,7 +6245,7 @@ function calRowHtml(ev,opts){
   const imp=evtImpact(ev);
   const ic=imp==='high'?'ih':imp==='medium'?'im':'il';
   const impLbl=imp==='high'?'High':imp==='medium'?'Medium':'Low';
-  const ac=actualColor(ev);
+  const ac=actualColor(ev,opts.symId);
   const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
   const isToday=ev.date===todayStr();
   const isPast=isEvtPast(ev);
@@ -6191,7 +6304,7 @@ function calTableHtml(evts,opts){
   // ID-Präfix, damit Haupt- und Mini-Kalender keine doppelten Element-IDs
   // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
   const pfx=opts.idPrefix||'';
-  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact});
+  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact,symId:opts.symId});
   // Dünne rote "Jetzt"-Linie mit aktueller Uhrzeit (linksbündig). Wird in der
   // heutigen Tagesgruppe zwischen vergangenen und anstehenden Events eingefügt.
   const nowMarker=`<div class="cal-now-line" title="Aktuelle Uhrzeit"><span class="cal-now-time">${nowHM()}</span><span class="cal-now-rule"></span></div>`;
@@ -6942,7 +7055,7 @@ function renderSymHistoryPanel(id){
       // fuer diesen Indikator steht.
       const eff=ev.sc!=null?fmtHistEff(ev.sc):(b==='bull'?'+1':b==='bear'?'-1':'0');
       const effTip=ev.sc!=null&&ev.sc===0?histZeroReason(ev):'Contribution of this release to the current score';
-      const ac=actualColor(ev);
+      const ac=actualColor(ev,id);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
       // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
       // den 15-Tage-Vergleichswert fuer die Bias-Berechnung (s.o.), wird aber
@@ -10326,7 +10439,7 @@ function renderDetail(){
         ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
+      ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true,symId:getSym().id}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
     </div>`:''}
     ${renderSpecTab(c)}
   </div>`;
@@ -10655,7 +10768,7 @@ function renderIndRow(ind,ri,ii,rub,total){
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
   let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',detailBody='';
   if(ev){
-    const ac=actualColor(ev);
+    const ac=actualColor(ev,getSym().id);
     const cs=indResearchSource(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base)||(ind.research&&ind.research.source);
     const ilKey1=indLinkKey(macroCcyFor(getSym().id),stripPeriodSuffix(ind.name).base);
     const fb1=cs||'https://www.forexfactory.com/calendar';
@@ -10666,7 +10779,7 @@ function renderIndRow(ind,ri,ii,rub,total){
     detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>`;
   }else if(ind.research){
     const r=ind.research;
-    const ac=r.bond?r.bondColor:(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const ac=r.bond?r.bondColor:(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},getSym().id);
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
@@ -13784,7 +13897,7 @@ let IND_DATA_FEED=null;
 async function fetchIndData(){
   try{
     const res=await fetch(DATA_BASE+'ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
-    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))IND_DATA_FEED=d;}
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){IND_DATA_FEED=d;invalidateRateStepCache();}}
   }catch(e){}
 }
 // Kuratierter Quellen-Link (i.d.R. investing.com) eines Indikators aus der
@@ -17532,11 +17645,11 @@ function cmpCellData(symId,rubName,baseName){
   // CLAUDE.md) - sonst konnte hier ein falsch zugeordnetes Kalender-Event
   // einen falschen Wert im Compare-Tab zeigen (Bugreport 2026-07-20, EUR PPI).
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(symId,ind.name);
-  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev),name:ind.name,badge};
+  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev,symId),name:ind.name,badge};
   if(ind.research){
     const r=ind.research;
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
-    const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous});
+    const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},symId);
     return{a:A.val,f:F.val,p:P.val,color,name:ind.name,badge};
   }
   return{a:null,f:null,p:null,color:'',name:ind.name,badge};
@@ -18492,10 +18605,17 @@ function renderTrendsPair(el){
   const base=PAIR_CODE_TO_ID[parts[0]]||parts[0],quote=PAIR_CODE_TO_ID[parts[1]]||parts[1];
   if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Please choose a pair with two different assets.</div>';return;}
   const baseArr=scoreHist[base]||[],quoteMap={};(scoreHist[quote]||[]).forEach(e=>quoteMap[e[0]]=e);
-  const diffArr=[];
+  // Der Paar-Score ist ueberall in der App Basis minus Kurswaehrung PLUS
+  // Carry (pairScore()). Die Trends-Linie liess den Carry frueher weg und
+  // zeigte deshalb eine andere Zahl als Set-ups, Watchlist und Score-Fenster
+  // (Nutzer-Bugreport 2026-08-23). Der Carry wird je Tag mit dem Leitzins
+  // berechnet, der AN DEM TAG galt - nicht mit dem heutigen.
+  const diffArr=[];let ohneCarry=0,mitCarry=0;
   baseArr.forEach(be=>{
     const qe=quoteMap[be[0]];if(!qe)return;
-    diffArr.push([be[0],Math.round((be[1]-qe[1])*10)/10,Math.round((be[2]-qe[2])*10)/10,Math.round((be[3]-qe[3])*10)/10,Math.round((be[4]-qe[4])*10)/10]);
+    const ca=pairCarryAdjAt(base,quote,be[0]);
+    if(FX.includes(base)&&FX.includes(quote)){if(ca==null)ohneCarry++;else mitCarry++;}
+    diffArr.push([be[0],Math.round((be[1]-qe[1]+(ca||0))*10)/10,Math.round((be[2]-qe[2])*10)/10,Math.round((be[3]-qe[3])*10)/10,Math.round((be[4]-qe[4])*10)/10,ca]);
   });
   if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No shared history data for ${escH(pairKey)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
   trendsEphemeral={};trendsEphemeral[pairKey]=diffArr;
@@ -18506,9 +18626,20 @@ function renderTrendsPair(el){
   const dates=filterDatesByRange(diffArr.map(e=>e[0]),trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   let html=rangeBar;
+  // Was der Carry an diesem Paar GERADE beitraegt, offen ausweisen - sonst
+  // ist der Unterschied zwischen "Basis minus Kurswaehrung" und der
+  // gezeichneten Linie nicht nachvollziehbar.
+  if(FX.includes(base)&&FX.includes(quote)){
+    const rb=rateAtDate(base,todayStr()),rq=rateAtDate(quote,todayStr());
+    const jetzt=pairCarryAdjAt(base,quote,todayStr());
+    if(rb!=null&&rq!=null){
+      const d=Math.round((rb-rq)*100)/100;
+      html+=`<div class="tr-carrynote">Carry is part of this line, exactly as in Set-ups and the pair score: <b>${escH(parts[0])} ${rb}%</b> − <b>${escH(parts[1])} ${rq}%</b> = <b>${(d>0?'+':'')+d} pp</b> → score effect <b>${(jetzt>0?'+':'')+jetzt}</b>. Each past day uses the policy rate that was in force <i>on that day</i>, not today's.${ohneCarry?` <b>${ohneCarry} of ${ohneCarry+mitCarry} days</b> lie before the oldest recorded rate decision — those carry no adjustment rather than a guessed one.`:''}</div>`;
+    }
+  }
   {
     const scoreMap={},biasMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
-    html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency)',biasMap);
+    html+=scoreVsPriceCard(dates,scoreMap,14,colorOverride,resolvePairPriceSeries(base,quote),'Pair Score vs Price (Base − Quote Currency + Carry)',biasMap);
   }
   if(FX.includes(base)&&FX.includes(quote)){
     html+=scoreTrendCard([pairKey],dates,2,7,'Inflation Difference',colorOverride)+
@@ -19387,17 +19518,45 @@ function sentReadBadge(ev){
 // ── Info-Texte fuer die "i"-Buttons (ausfuehrlich, einfach verstaendlich) ──
 const SENT_INFO={
   aaii:['AAII Investor Sentiment Survey',
-    `<p><b>What it is:</b> a weekly poll asking private investors one single question — <i>"In which direction do you feel the stock market will be in the next six months?"</i> — with exactly three possible answers: <b>bullish</b>, <b>neutral</b>, <b>bearish</b>. The three shares always add up to 100%.</p>
-     <p><b>Who runs it:</b> the <b>American Association of Individual Investors</b> (AAII), a non-profit investor-education organisation founded in 1978 and based in Chicago. It sells no products and manages no money — the survey is a member service, not a sell-side forecast. It has run continuously since <b>July 1987</b>, which makes it one of the longest unbroken sentiment series in finance.</p>
-     <p><b>Who answers, and where:</b> AAII's own members — U.S. <b>private</b> investors, not banks, funds or analysts. They vote voluntarily in an online poll on aaii.com; the week runs Thursday to Wednesday and the result is published on <b>Thursday</b>. Two things follow from that design: participation is <b>self-selected</b> (whoever feels like voting, votes), and the number of responses varies from week to week. So single weeks are noisy — the smoothed line in the chart is the more reliable read.</p>
-     <p><b>Why it matters:</b> it is the classic gauge of the <b>retail mood in U.S. equities</b>, and it is read <b>contrarian</b>. The logic is simple: if almost everyone is already bullish, most of them have already bought — there is little buying power left, and disappointments hit a market that is fully invested. If almost everyone is bearish, the selling has largely happened. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
-     <p><b>What is measured here:</b> the <b>spread</b> = bullish % minus bearish %, in percentage points. The individual shares jump around a lot and "neutral" distorts them; the spread is the standard summary. The long-run average is about <b>+6.5pp</b> (roughly 37.5% bullish against 31.0% bearish) — the survey leans mildly optimistic by construction, which is why the thresholds are not symmetric around zero:</p>
-     <ul><li><b style="color:${'#0B5FCC'}">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
-     <li><b style="color:${'#C50F1A'}">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
-     <li>In between — normal range, no signal.</li></ul>
-     <p><b>Which assets it affects here:</b> only <b>S&amp;P 500</b> and <b>Nasdaq</b>, with half weight, and only at the extremes — the same rule every other sentiment gauge in this app follows. The survey asks explicitly about the <b>stock market</b>, so that is where it is applied.</p>
-     <p><b>Why not FX, gold or crypto:</b> it would be tempting to treat extreme equity pessimism as a general risk-off signal and credit the dollar, the yen, the franc or gold for it. That step is an <b>interpretation, not a measurement</b> — the respondents were never asked about currencies. This app does not turn one market's survey into another market's score. Read it as background for the general risk climate, but it does not move any FX, metals or crypto score.</p>
-     <p><b>How to read the chart:</b> the thin grey line is the raw weekly spread, the thick line is the ${'8'}-week average that filters the weekly noise. The shaded bands and dashed lines mark the two extreme zones. Hover any point to see the full bullish/neutral/bearish split for that week. Since the survey publishes once a week, a one-month window would show only four points — the default range is therefore one year.</p>`],
+    `<p><b>In one sentence:</b> once a week, ordinary American private investors are asked whether they expect the U.S. stock market to be higher or lower in six months, and this card shows how the three possible answers have been split week by week.</p>
+
+     <h4>Who is being asked</h4>
+     <p>The <b>American Association of Individual Investors</b> (AAII) is a non-profit investor-education organisation, founded 1978, based in Chicago. It sells no products and manages no money, so the survey is a member service rather than a sell-side forecast. It has run without interruption since <b>July 1987</b> — one of the longest unbroken sentiment series in finance.</p>
+     <p>The respondents are AAII's own members: U.S. <b>private</b> investors, not banks, funds or analysts. They vote voluntarily in an online poll on aaii.com. The survey week runs <b>Thursday to Wednesday</b> and the result is published on <b>Thursday</b>. Two consequences follow from that design, and both matter when you read it: participation is <b>self-selected</b> (whoever feels like voting, votes), and the number of responses varies from week to week. Single weeks are therefore noisy — the smoothed line is the more reliable read.</p>
+
+     <h4>What every term on this card means</h4>
+     <dl class="aaii-dl">
+       <dt>Bullish</dt><dd>Share of respondents who expect the stock market to be <b>higher</b> in six months.</dd>
+       <dt>Neutral</dt><dd>Share who expect it to be <b>roughly unchanged</b>. This is a real answer option, not a residual — that is why bullish and bearish alone do not add to 100%.</dd>
+       <dt>Bearish</dt><dd>Share who expect it to be <b>lower</b>. Bullish + neutral + bearish always equals 100%.</dd>
+       <dt>Spread</dt><dd><b>Bullish % minus bearish %</b>, in percentage points (pp). The standard one-number summary: the individual shares jump around a lot and the neutral camp distorts them, the spread does not. <b>+15pp</b> means fifteen percentage points more bulls than bears.</dd>
+       <dt>pp (percentage points)</dt><dd>The unit of a difference between two percentages. From 30% to 35% is <b>+5pp</b>, not "+5%".</dd>
+       <dt>${'8'}-week average</dt><dd>The spread smoothed over the last ${'8'} surveys. Filters out the weekly noise from the varying, self-selected turnout.</dd>
+       <dt>Percentile of own history</dt><dd>Where today's spread sits within every week recorded here. <b>90.</b> means only 10% of all recorded weeks were more optimistic.</dd>
+       <dt>Since last extreme</dt><dd>How many weeks ago the spread last left the ±20pp band.</dd>
+       <dt>Capitulation / complacency</dt><dd>The names of the two extremes. <b>Capitulation</b> = the bears have taken over, the selling has largely happened. <b>Complacency</b> = the bulls have taken over, the buying has largely happened.</dd>
+     </dl>
+
+     <h4>Why it is read backwards</h4>
+     <p>This is the classic gauge of the <b>retail mood in U.S. equities</b>, and like every other sentiment measure in this app it is read <b>contrarian</b>. The logic is mechanical, not psychological: if almost everyone is already bullish, most of them have already bought — there is little buying power left in reserve, and a disappointment hits a market that is fully invested. If almost everyone is bearish, the people who wanted out are already out. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
+     <ul><li><b style="color:#0B5FCC">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
+     <li><b style="color:#C50F1A">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
+     <li>In between — normal range, no signal at all.</li></ul>
+     <p>The thresholds are <b>symmetric</b> at ±20pp. The card states the average and the share of weeks inside the band from the data actually recorded here, so that number can never go stale.</p>
+
+     <h4>The six views</h4>
+     <dl class="aaii-dl">
+       <dt>Spread</dt><dd>The single summary number over time: thin grey line = raw weekly spread, thick line = ${'8'}-week average, shaded bands = the two extreme zones.</dd>
+       <dt>Shares</dt><dd>All three camps as three separate lines. Use it when you want to know <i>which</i> camp moved — a falling spread can mean bulls left or bears arrived, and those are different things.</dd>
+       <dt>Weekly bars</dt><dd>Each week as its own column stacked to 100%, with the bullish and bearish share printed inside, and the bullish share repeated below as a plain line. Columns rather than an area on purpose: the survey publishes <b>once a week</b>, so these are individual measurements, not a continuous curve.</dd>
+       <dt>100% stacked</dt><dd>The same split as a filled area — better for seeing the slow drift of the three camps over a long window.</dd>
+       <dt>Distribution</dt><dd>How often each spread level has occurred across all recorded weeks, with today marked. Answers "is this reading actually unusual?".</dd>
+       <dt>vs S&amp;P 500</dt><dd>Spread against the index price. Read it for divergences: a market grinding higher while the spread collapses means the crowd does not believe the move.</dd>
+     </dl>
+
+     <h4>Which assets it moves here</h4>
+     <p>Only <b>S&amp;P 500</b> and <b>Nasdaq</b>, at half weight, and only at the extremes — the same rule every sentiment gauge in this app follows. A reading older than ${'21'} days stops counting altogether: the survey is weekly, so a stale value has missed at least three publications and is no longer a current reading. It stays visible, it just no longer scores.</p>
+     <p><b>Why not FX, gold or crypto:</b> it would be tempting to treat extreme equity pessimism as a general risk-off signal and credit the dollar, the yen, the franc or gold for it. That step is an <b>interpretation, not a measurement</b> — the respondents were never asked about currencies or metals. This app does not turn one market's survey into another market's score. Read it as background for the general risk climate; it does not move any FX, metals or crypto score.</p>`],
   retail:['Retail Sentiment (Crowd Positioning)',
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
@@ -19972,7 +20131,34 @@ let aaiiRange=12,aaiiCustomFrom='',aaiiCustomTo='';
 // Ansicht der AAII-Karte: spread | shares | stack | dist | price.
 // Reine Lese-Auswahl wie pcAsset/seasAsset - bewusst nicht persistiert.
 let aaiiView='spread';
-function setAaiiView(v){aaiiView=v;renderSentiment();}
+function setAaiiView(v){
+  // Die Saeulenansicht existiert, um EINZELNE Wochen zu lesen - auf dem
+  // Standardzeitraum (1 Jahr) sind die Saeulen dafuer zu schmal. Beim
+  // Umschalten wird deshalb einmalig ein Zeitraum gewaehlt, der genug, aber
+  // nicht zu viele Saeulen ergibt.
+  //
+  // ⚠ Der Zeitraum wird an den VORHANDENEN Wochen gemessen, nicht fest
+  // gesetzt: die AAII-Historie hat eine echte Luecke (19.03.2026 bis
+  // 12.08.2026, weil die von AAII veroeffentlichte Historien-Datei der
+  // Live-Seite monatelang hinterherhing). Ein fester "3 Monate" haette dort
+  // ganze ZWEI Saeulen gezeigt.
+  if(v==='bars'&&aaiiView!=='bars'&&aaiiRange!=='CUSTOM')aaiiRange=aaiiBarsRange();
+  aaiiView=v;renderSentiment();
+}
+// Engster Zeitraum aus TIME_RANGES, der mindestens 10 Umfragewochen enthaelt;
+// sonst der weiteste verfuegbare.
+function aaiiBarsRange(){
+  const a=SENTIMENT_DATA&&SENTIMENT_DATA.aaii;
+  const h=(a&&Array.isArray(a.history))?a.history.filter(e=>Array.isArray(e)&&e.length>=4).map(e=>e[0]):[];
+  if(!h.length)return 3;
+  const kandidaten=TIME_RANGES.map(r=>r[0]).filter(v=>v!=='CUSTOM');
+  let bester='MAX';
+  kandidaten.slice().sort((x,y)=>(x==='MAX'?1e9:+x)-(y==='MAX'?1e9:+y)).forEach(v=>{
+    if(bester!=='MAX')return;
+    if(filterDatesByRange(h,v,'','').length>=10)bester=v;
+  });
+  return bester;
+}
 function setAaiiRange(r){aaiiRange=(r==='MAX'||r==='CUSTOM')?r:+r;if(r!=='CUSTOM'){aaiiCustomFrom='';aaiiCustomTo='';}renderSentiment();}
 // Wird nur als String gebaut (timeRangeCustomHtml) - siehe Merksatz bei
 // setIndHistRangeCustom. Fehlte seit dem Bau der AAII-Karte: "Custom" liess
@@ -20498,6 +20684,97 @@ function renderAaiiCard(D){
       +chartHoverWrap(svg,pts);
   }
 
+  // ── Ansicht 3b: gestapelte SAEULEN mit beschrifteten Segmenten ───────
+  // Nutzer-Wunsch 2026-08-23 (mit Referenzbild): dieselbe Aufteilung wie die
+  // Flaechenansicht, aber als einzelne Wochensaeulen mit dem Prozentwert IN
+  // jedem Segment - dazu darunter der Bullish-Verlauf als Linie mit Werten.
+  // Der Unterschied zur Flaechenansicht ist nicht kosmetisch: eine Flaeche
+  // suggeriert einen stetigen Verlauf, die Umfrage erscheint aber genau
+  // einmal pro Woche. Saeulen zeigen, dass es EINZELNE Messpunkte sind.
+  function ansichtSaeulen(){
+    if(reihe.length<2)return zuWenig;
+    const n=reihe.length;
+    const HB=260,HL=132;                       // Saeulen- und Linienbereich
+    const bPadT=30,bPadB=52;                   // oben Platz fuer die Bearish-Zahl
+    const y=v=>bPadT+(100-v)*(HB-bPadT-bPadB)/100;
+    const spalte=(W-padL-padR)/n;
+    const bw=Math.max(4,Math.min(58,spalte*0.78));
+    const xM=i=>padL+spalte*(i+0.5);           // Saeulenmitte
+    // Beschriftung in drei Stufen, damit sie nie ueber die Nachbarsaeule
+    // laeuft: breit -> "35.5%", schmal -> "36" (gerundet, ohne Zeichen),
+    // sehr schmal -> gar nichts. Lieber keine Zahl als eine unlesbare.
+    const stufe=bw>=30?2:bw>=17?1:0;
+    const zeigLbl=stufe>0;
+    const fs=bw>=44?11.5:bw>=30?10:9;
+    const saeulen=reihe.map((e,i)=>{
+      const bu=+e[1],ne=+e[2],be=+e[3];
+      const x=(xM(i)-bw/2);
+      const rect=(v0,v1,col)=>`<rect x="${x.toFixed(1)}" y="${y(v1).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,y(v0)-y(v1)).toFixed(1)}" fill="${col}"/>`;
+      const txt=(v,mitte,col)=>zeigLbl?`<text x="${xM(i).toFixed(1)}" y="${(y(mitte)+fs*0.36).toFixed(1)}" fill="${col}" font-size="${fs}" font-weight="700" text-anchor="middle">${stufe===2?v.toFixed(1)+'%':Math.round(v)}</text>`:'';
+      return rect(0,bu,BC.bull)+rect(bu,bu+ne,'var(--t3)')+rect(bu+ne,100,BC.bear)
+        +txt(bu,bu/2,'#FFFFFF')+txt(be,bu+ne+be/2,'#FFFFFF');
+    }).join('');
+    const gitter=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".45"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('');
+    // ⚠ Fehlende Wochen MUESSEN in der Zeichnung stehen, nicht nur im Text
+    // darueber. Die Saeulen sitzen in gleichem Abstand nebeneinander - ohne
+    // Markierung liest man aus der Achse einen lueckenlosen Verlauf, den es
+    // nie gab (die AAII-Reihe hat eine echte Luecke vom 19.03. bis 12.08.2026,
+    // weil die veroeffentlichte Historien-Datei der Live-Seite nachhing).
+    const luecken=[];
+    for(let i=1;i<n;i++){
+      const w=Math.round((Date.parse(reihe[i][0])-Date.parse(reihe[i-1][0]))/6048e5);
+      if(w>1)luecken.push({i,fehlt:w-1,von:reihe[i-1][0],bis:reihe[i][0]});
+    }
+    const bruch=luecken.map(g=>{
+      const x=padL+spalte*g.i;
+      return`<line x1="${x.toFixed(1)}" y1="${bPadT-8}" x2="${x.toFixed(1)}" y2="${(HB-bPadB).toFixed(1)}" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,4"/>`
+        +`<text x="${x.toFixed(1)}" y="${bPadT-13}" fill="var(--purple)" font-size="10" font-weight="700" text-anchor="middle">${g.fehlt} missing</text>`;
+    }).join('');
+    // Datumsachse: schraeg gestellt wie im Referenzbild, damit auch bei
+    // vielen Wochen jede zweite/dritte Beschriftung lesbar bleibt.
+    const schritt=Math.max(1,Math.ceil(n/9));
+    // Die beiden Wochen unmittelbar an einer Luecke bekommen IMMER ein Datum,
+    // egal wo der regelmaessige Schritt gerade steht - sonst ist der Sprung
+    // aus der Achse nicht ablesbar.
+    const pflicht=new Set();luecken.forEach(g=>{pflicht.add(g.i-1);pflicht.add(g.i);});
+    const achseS=reihe.map((e,i)=>(i%schritt&&!pflicht.has(i))?'':`<text x="${xM(i).toFixed(1)}" y="${HB-bPadB+18}" fill="${pflicht.has(i)?'var(--purple)':'var(--t3)'}" font-size="10" font-weight="${pflicht.has(i)?'700':'400'}" text-anchor="end" transform="rotate(-38 ${xM(i).toFixed(1)} ${HB-bPadB+18})">${pcXLabel(e[0])}</text>`).join('');
+    const svgS=`<svg viewBox="0 0 ${W} ${HB}" width="100%" preserveAspectRatio="none" style="display:block;height:${HB}px">${gitter}${saeulen}${bruch}${achseS}</svg>`;
+    const tip=(e,i)=>`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
+      +`<br><span style="color:var(--t3)">Neutral</span> ${(+e[2]).toFixed(1)}%`
+      +`<br><span style="color:${BC.bear}">Bearish</span> ${(+e[3]).toFixed(1)}%`
+      +`<br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`;
+    const ptsS=reihe.map((e,i)=>({fx:xM(i)/W,fy:y((+e[1])/2)/HB,tip:tip(e,i)}));
+    // ── Der Bullish-Anteil noch einmal als reiner Verlauf ──
+    const bu=reihe.map(e=>+e[1]);
+    const lo=Math.max(0,Math.min(...bu)-6),hi=Math.min(100,Math.max(...bu)+8);
+    const yL=v=>18+(hi-v)*(HL-18-24)/((hi-lo)||1);
+    // An einer Luecke wird die Linie unterbrochen statt durchgezogen: eine
+    // durchgehende Linie ueber 20 fehlende Wochen behauptet einen Verlauf,
+    // der nie gemessen wurde.
+    const lueckeVor=new Set(luecken.map(g=>g.i));
+    const stuecke=[];let akt=[];
+    bu.forEach((v,i)=>{if(lueckeVor.has(i)&&akt.length){stuecke.push(akt);akt=[];}akt.push(xM(i).toFixed(1)+','+yL(v).toFixed(1));});
+    if(akt.length)stuecke.push(akt);
+    const pfad=stuecke.map(st=>`<polyline points="${st.join(' ')}" fill="none" stroke="${BC.bull}" stroke-width="2.2" stroke-linejoin="round"/>`).join('')
+      +luecken.map(g=>{const x=padL+spalte*g.i;return`<line x1="${x.toFixed(1)}" y1="12" x2="${x.toFixed(1)}" y2="${HL-24}" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,4"/>`;}).join('');
+    const punkte=bu.map((v,i)=>`<circle cx="${xM(i).toFixed(1)}" cy="${yL(v).toFixed(1)}" r="2.6" fill="${BC.bull}"/>`
+      +(i%schritt?'':`<text x="${xM(i).toFixed(1)}" y="${(yL(v)-7).toFixed(1)}" fill="${BC.bull}" font-size="10" font-weight="700" text-anchor="middle">${v.toFixed(1)}%</text>`)).join('');
+    const svgL=`<svg viewBox="0 0 ${W} ${HL}" width="100%" preserveAspectRatio="none" style="display:block;height:${HL}px">${pfad}${punkte}</svg>`;
+    const ptsL=bu.map((v,i)=>({fx:xM(i)/W,fy:yL(v)/HL,tip:tip(reihe[i],i)}));
+    // ⚠ Luecken NICHT verschweigen. Die Saeulen stehen in gleichem Abstand
+    // nebeneinander - fehlt dazwischen eine Woche, sieht man das sonst nicht
+    // und liest einen luecken losen Verlauf, den es nicht gab.
+    const fehlend=luecken.reduce((a,g)=>a+g.fehlt,0);
+    const groesste=luecken.slice().sort((a,b)=>b.fehlt-a.fehlt)[0];
+    const lueckeHinweis=fehlend?`<div class="aaii-gap"><b>${fehlend} ${fehlend===1?'week is':'weeks are'} missing</b> inside this range, marked by the dashed breaks in the chart. Largest stretch: <b>${escH(groesste.von)}</b> to <b>${escH(groesste.bis)}</b> (${groesste.fehlt} ${groesste.fehlt===1?'survey':'surveys'}). AAII's published history file ran behind its own live page for a while; nothing is filled in for those weeks.</div>`:'';
+    return legende([['Bullish',BC.bull],['Neutral','var(--t3)'],['Bearish',BC.bear]])
+      +lueckeHinweis
+      +`<div class="aaii-hint">Every column is <b>one weekly survey</b>, stacked to 100%: bullish at the bottom, neutral in the middle, bearish on top. The numbers inside are that week's bullish and bearish shares.${stufe===1?' The columns are too narrow for the decimal here, so the shares are rounded — hover for the exact split.':stufe===0?' The range is too wide to label every column — hover a column for its exact split.':''}</div>`
+      +chartHoverWrap(svgS,ptsS)
+      +`<div class="aaii-hint" style="margin-top:9px">Bullish share on its own, so the trend is visible without the other two camps moving the baseline.</div>`
+      +chartHoverWrap(svgL,ptsL);
+  }
+
   // ── Ansicht 4: Verteilung des Spreads, heutiger Wert markiert ────────
   function ansichtVerteilung(){
     if(spAll.length<8)return`<div style="color:var(--t3);font-size:12px;padding:14px 0">Needs at least 8 recorded weeks to show a distribution — ${spAll.length} so far.</div>`;
@@ -20559,14 +20836,21 @@ function renderAaiiCard(D){
       +chartHoverWrap(svg,pts);
   }
 
-  const ANSICHTEN=[['spread','Spread'],['shares','Shares'],['stack','100% stacked'],['dist','Distribution'],['price','vs S&P 500']];
+  const ANSICHTEN=[['spread','Spread'],['shares','Shares'],['bars','Weekly bars'],['stack','100% stacked'],['dist','Distribution'],['price','vs S&P 500']];
   const umschalter=`<div class="stabs aaii-views">${ANSICHTEN.map(([k,l])=>`<button class="st${aaiiView===k?' on':''}" onclick="setAaiiView('${k}')">${escH(l)}</button>`).join('')}</div>`;
-  const inhalt=aaiiView==='shares'?ansichtAnteile():aaiiView==='stack'?ansichtStapel()
+  const inhalt=aaiiView==='shares'?ansichtAnteile():aaiiView==='bars'?ansichtSaeulen():aaiiView==='stack'?ansichtStapel()
     :aaiiView==='dist'?ansichtVerteilung():aaiiView==='price'?ansichtPreis():ansichtSpread();
 
   // ── Kennzahlen ──────────────────────────────────────────────────────
   const glAll=aaiiSmooth(spAll,AAII_SMOOTH_W);
   const glJetzt=glAll.length?glAll[glAll.length-1]:null;
+  // GEMESSEN statt behauptet: bis 2026-08-23 stand unter dem Lesebadge
+  // "Long-run average +6.5pp, so they are not symmetric around zero" - beides
+  // falsch. Die ±20 sind exakt symmetrisch, und die hier vorliegenden Wochen
+  // ergeben einen anderen Mittelwert als die zitierte Zahl seit 1987. Steht
+  // jetzt aus den eigenen Daten da und kann damit nie wieder veralten.
+  const mittel=spAll.length?spAll.reduce((a,b)=>a+b,0)/spAll.length:null;
+  const innerhalb=spAll.length?spAll.filter(v=>Math.abs(v)<20).length/spAll.length*100:null;
   const rang=spAll.length?spAll.filter(v=>v<=spread).length/spAll.length*100:null;
   let seitExtrem=null;
   for(let i=spAll.length-1;i>=0;i--){if(Math.abs(spAll[i])>=20){seitExtrem=spAll.length-1-i;break;}}
@@ -20615,7 +20899,7 @@ function renderAaiiCard(D){
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 12px">
         <div style="flex:2;min-width:260px">${balken}</div>
         <div style="flex:1;min-width:200px">${sentReadBadge(ev)}${ev&&ev.stale?`<div style="color:var(--amber);font-size:11px;margin-top:5px;line-height:1.45">The latest week AAII has published here is <b>${escH(a.date)}</b>. Newer weeks will appear automatically as they are published — nothing is filled in for the gap.</div>`:''}
-          <div style="color:var(--t3);font-size:11px;margin-top:5px">Thresholds ±20pp. Long-run average +6.5pp, so they are not symmetric around zero.</div></div>
+          <div style="color:var(--t3);font-size:11px;margin-top:5px">Thresholds <b>±20pp</b>, symmetric around zero. Measured on the ${spAll.length} weeks recorded here the spread averages <b>${mittel!=null?(mittel>0?'+':'')+mittel.toFixed(1):'–'}pp</b> and stays inside ±20 about <b>${innerhalb!=null?innerhalb.toFixed(0):'–'}%</b> of the time.</div></div>
       </div>
       ${umschalter}${rangeBar}${inhalt}${wirkung}
     </div></div>`;
@@ -21917,10 +22201,25 @@ function saveRateCache(c){try{localStorage.setItem(CARRY_CACHE_KEY,JSON.stringif
 // Cache zurueck - es gewinnt immer der Wert mit dem juengsten Datum.
 function rateInfo(ccy){
   let best=null;
+  // Der LIVE-Feed zuerst: ind_data.json fuehrt je Waehrung die datierte
+  // Beschluss-Historie der Zentralbank. Sie war bisher nicht als
+  // Zinsquelle angeschlossen, obwohl sie die aktuellste ist - EUR stand
+  // dadurch noch auf 2,00% (kuratierter Stand 2026-04-30), waehrend der
+  // Feed laengst 2,40% vom 2026-07-23 fuehrte. Ausserdem MUSS rateInfo()
+  // dieselbe Quelle sehen wie rateAtDate(), sonst rechnet der heutige
+  // Punkt der Trends-Linie mit einem anderen Carry als der Paar-Score.
+  const stufen=rateSteps(ccy);
+  if(stufen&&stufen.length){
+    const letzte=stufen[stufen.length-1];
+    best={rate:letzte[1],date:letzte[0],src:'feed'};
+  }
   const res=IND_RESEARCH_DATA[ccy];
   if(res&&res.entries){
     const e=res.entries.find(x=>x.indicator==='Central Bank Rate'&&x.actual);
-    if(e){const v=parsePolicyRate(e.actual);if(v!=null)best={rate:v,date:e.releaseDate||'',src:'research'};}
+    // Nur nehmen, wenn er JUENGER ist als das bisher Beste - vorher hat der
+    // statische Research-Eintrag den Feed bedingungslos ueberschrieben.
+    if(e){const v=parsePolicyRate(e.actual);const d=e.releaseDate||'';
+      if(v!=null&&(!best||d>=best.date))best={rate:v,date:d,src:'research'};}
   }
   const ev=findIndEvent(ccy,'Central Bank Rate');
   if(ev&&ev.actual){const v=parsePolicyRate(ev.actual);if(v!=null){const d=(ev.date||'').slice(0,10);if(!best||d>=best.date)best={rate:v,date:d,src:'calendar'};}}

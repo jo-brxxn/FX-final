@@ -78,15 +78,45 @@ const flaeche = require('./scoreSurface.js').ableiten('index.html');
 const SCORE_FN = flaeche.funktionen.map(n => 'function ' + n)
   .concat(flaeche.konstanten.map(n => n + '='));
 const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s));
+// Das Beruehren einer Funktion der Score-Flaeche ist ein VERDACHT, kein
+// Beweis. Ob sich die Rechnung wirklich geaendert hat, weiss nur, wer
+// nachrechnet - genau das tut check/scorediff.js (rendert Basis und
+// Arbeitsbaum mit denselben Daten und vergleicht jede Zahl). Liegt dessen
+// Ergebnis vor und sagt es "Symbol-Score unveraendert", waere ein Bump sogar
+// SCHAEDLICH: er markiert die gesamte aufgezeichnete Historie als "aus einem
+// frueheren Modell", obwohl sie es nicht ist (Anlass 2026-08-23: der
+// Carry-Fix fasste pairCarryAdj/actualColor an, liess aber 0 von 16
+// Symbol-Scores und 0 von 96 Karten-Scores unveraendert).
+//
+// Fail-closed: fehlt das Ergebnis oder ist es aelter als der Arbeitsbaum,
+// gilt weiter die strenge Regel.
+function scorediffErgebnis() {
+  try {
+    const p = __dirname + '/.scorediff.json';
+    if (!fs.existsSync(p)) return null;
+    const o = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (o.status !== 'ok' || o.basis !== BASE) return null;
+    // Aelter als index.html? Dann bezieht es sich auf einen anderen Stand.
+    if (fs.statSync(p).mtimeMs < fs.statSync('index.html').mtimeMs) return null;
+    return o;
+  } catch (e) { return null; }
+}
 if (formelBeruehrt.length) {
   const jetzt = wert(/const SCORE_MODEL_VERSION=(\d+)/);
   const vorher = wertIn(git(`show ${BASE}:index.html`), /const SCORE_MODEL_VERSION=(\d+)/);
+  const nachgerechnet = scorediffErgebnis();
   if (jetzt == null) fail('SCORE_MODEL_VERSION', 'Konstante nicht gefunden.');
+  else if (nachgerechnet && nachgerechnet.symbolUnveraendert) {
+    console.log('[rules] SCORE_MODEL_VERSION: Bump nicht noetig - check/scorediff.js hat nachgerechnet, ' +
+      'der Symbol-Score ist an keiner Stelle veraendert (' + formelBeruehrt.length + ' Funktion(en) der Score-Flaeche im Diff).');
+  }
   else if (vorher != null && Number(jetzt) <= Number(vorher))
     fail('SCORE_MODEL_VERSION',
       `Die Score-Formel wurde angefasst (${formelBeruehrt.slice(0, 4).join(', ')}` +
       `${formelBeruehrt.length > 4 ? ', ...' : ''}), aber SCORE_MODEL_VERSION steht weiter auf ${jetzt}. ` +
-      `Ohne Bump vergleichen History, Trends und die Staerke-Note still zwei verschiedene Rechnungen.`);
+      `Ohne Bump vergleichen History, Trends und die Staerke-Note still zwei verschiedene Rechnungen.` +
+      (nachgerechnet ? ` check/scorediff.js hat nachgerechnet: der Symbol-Score hat sich an ${nachgerechnet.symbolGeaendert} Stellen geaendert.`
+                     : ` (Kein Ergebnis von check/scorediff.js - mit "node check/all.js" laeuft es automatisch mit und rechnet nach.)`));
 }
 
 // ── Regel 3: Formulierungs-Logik geaendert -> SUMMARY_ENGINE_VERSION hoch ──
