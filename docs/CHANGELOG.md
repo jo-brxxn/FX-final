@@ -6973,3 +6973,40 @@ der gedrueckten Zeile UND des Done-Knopfs gegen die tatsaechliche
 ERSTEN Testfassung haette einen falschen Fehlalarm geliefert); Klick auf
 Done fuehrt `sbEditMode` nachweislich auf `false` zurueck. `node check/all.js`
 komplett gruen (12 Waechter).
+
+## 2026-08-24 — Kategorien im Assets-Stapel zurueck, app-weit leicht kursiv (VERSION-CHECK-440)
+
+Nutzer-Wunsch: *"Füg doch wieder die Kategorien hinzu aber füg überall bei
+so Kategorien ein das das leicht kursiv geschrieben ist."* Kehrt die
+Entfernung vom Vortag (VERSION-CHECK-437/438, "Keine Abstaende zwischen den
+Kategorien") wieder um - dritter Zustandswechsel in Folge, Chronologie jetzt
+in `docs/navigation.md` festgehalten, damit niemand das nochmal hin- und
+herbaut.
+
+**Kategorien wieder dauerhaft sichtbar.** FX/Crypto/Metals/Energy/Indices
+stehen jetzt immer da, nicht mehr nur im Bearbeitungsmodus. Nur die
+zugehoerigen ▲▼-Sortierknoepfe (fuer ganze Kategorien) bleiben
+Bearbeitungsmodus-exklusiv. Die Gruppierung selbst (`computeSbCats`) war in
+allen drei bisherigen Zustaenden unveraendert vorhanden - nur ihre
+Sichtbarkeit als Ueberschrift wurde bewegt.
+
+**Kursivierung systematisch, nicht pauschal.** "überall bei so Kategorien"
+war als Regel zu verstehen, nicht als einzelne Klasse - im Code gesucht nach
+ALLEN Labels mit exakt derselben Rolle wie `.np-cat-l` (eine Liste in
+benannte Gruppen aufteilen), nicht nach jedem uppercase-Mikrolabel (davon
+gibt es 60+, darunter Tabellenkoepfe und Formularlabel, die eine andere
+Aufgabe haben). Gefunden und kursiv gemacht: `.search-grp` (Sucher-Modal:
+Assets/Indicators/Events/Tabs), `.mover-group-hdr` (Dashboard:
+Gainers/Losers), `.res-lib-sec` (Research-Bibliothek: Topics/Assets).
+Bewusst NICHT angefasst: `.res-flbl` (Formularlabel im Notiz-Dialog),
+Tabellenkoepfe, einzelne Seitenueberschriften - andere Rolle, keine
+Listen-Gruppierung.
+
+**Geprueft:** alle 5 Kategorien ausserhalb des Bearbeitungsmodus im DOM und
+in der Sortier-Reihenfolge geprueft; `font-style:italic` an allen vier
+Stellen per `getComputedStyle` bestaetigt; Sortierknoepfe aus (0) / an (5)
+im Bearbeitungsmodus-Wechsel; Regressionscheck der Aufklapp-Animation vom
+Vortag (Frame-fuer-Frame, 6 -> 574px ueber mehrere Zwischenwerte, nicht nur
+ein Sprung) - der neue Header-HTML-Block haette denselben Zwischenzustands-
+Fehler reproduzieren koennen, tut es nicht. `node check/all.js` komplett
+gruen (12 Waechter).

@@ -1046,13 +1046,50 @@ erste Fassung hatte 5 Streifen für USD und 11 Sterne für EUR — bei 15px war
 davon nur noch ein Fleck übrig. Wer ein Icon ergänzt: wenige, dicke Elemente,
 und danach mit einem 3×-Screenshot gegenprüfen.
 
-### Keine Kategorien in der Liste
+### Kategorien: aus, dann wieder an (Chronologie, damit niemand das nochmal hin- und herbaut)
 
-Außerhalb des Bearbeitungsmodus ist von den Kategorien **nichts** zu sehen —
-weder Überschrift noch Abstand, eine durchgehende Liste (Nutzer-Wunsch, zweite
-Korrektur). Die Gruppierung existiert intern weiter und steuert nur noch
-Reihenfolge und Sortieren. **Im Bearbeitungsmodus kommen die Überschriften
-zurück**, sonst wäre nicht erkennbar, *was* die ▲▼ dort verschieben.
+Drei Zustände nacheinander, jeweils expliziter Nutzer-Wunsch:
+
+1. **Erst immer sichtbar mit Trenn-Abstand** (Ausgangsbau des Stapels).
+2. **Dann ganz weg** — *„Keine Abstände zwischen den Kategorien"*: weder
+   Überschrift noch Abstand außerhalb des Bearbeitungsmodus, eine
+   durchgehende Liste. Im Bearbeitungsmodus kamen sie zurück, sonst wäre
+   nicht erkennbar gewesen, *was* die ▲▼ dort verschieben.
+3. **Jetzt wieder dauerhaft sichtbar** (2026-08-24) — *„Füg doch wieder die
+   Kategorien hinzu"*: die Überschriften stehen wieder immer da, mit ihrem
+   natürlichen Innenabstand (`padding`) als Trennung — kein separates
+   `.grp`-Margin mehr nötig, die Überschrift selbst erzeugt den Abstand.
+   **Nur** die `.np-cat-mv`-Sortierknöpfe (▲▼ für ganze Kategorien) bleiben
+   Bearbeitungsmodus-exklusiv, wie jede andere Bearbeitungssteuerung hier.
+
+Die Gruppierung selbst (`computeSbCats`/`getSbIds`) war in **allen drei**
+Zuständen unverändert vorhanden — sie steuert immer Reihenfolge und
+Sortieren; nur ihre *Sichtbarkeit als Überschrift* wurde hin- und
+herbewegt.
+
+### Leicht kursive Kategorie-Labels (2026-08-24)
+
+Nutzer-Wunsch: *„füg überall bei so Kategorien ein das das leicht kursiv
+geschrieben ist"*. `font-style:italic` gilt jetzt für **jedes** Label, das
+eine Liste in benannte Gruppen aufteilt — dieselbe Rolle wie `.np-cat-l`:
+
+| Klasse | Wo | Gruppiert |
+|---|---|---|
+| `.np-cat-l` | Assets-Stapel | FX / Crypto / Metals / Energy / Indices |
+| `.search-grp` | Sucher-Modal | Assets / Indicators / Events / Tabs |
+| `.mover-group-hdr` | Dashboard-Widget | Gainers / Losers |
+| `.res-lib-sec` | Research-Bibliothek | Topics / Assets |
+
+⚠ **Bewusst nicht app-weit auf jedes `text-transform:uppercase`-Label
+übertragen** (davon gibt es über 60 im Code). Tabellenköpfe
+(`.ind-table thead th`, `.cot-tbl thead th`, `.cal-col-hdr`, …),
+Formularlabel (`.res-flbl` — „Topic", „Asset", „Tags" im Notiz-Formular)
+und einzelne Seiten-/Abschnittsüberschriften (`.res-lib-hd`, `.carry-sec`,
+`.set-sec`, …) erfüllen eine andere Aufgabe — sie beschriften eine
+Spalte/ein Feld/einen Abschnitt, gruppieren aber keine Liste. Nur Labels mit
+exakt der `.np-cat-l`-Rolle bekommen die Kursivierung. Wer ein neues
+Gruppierungslabel baut, das eine Liste ähnlich aufteilt: hier eintragen und
+`font-style:italic` ergänzen, statt eine neue Konvention zu erfinden.
 
 ### Warum kein Eintrag in `tabStacks`
 
