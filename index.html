@@ -3700,11 +3700,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-441 - Die optische Box fuer Indikatoren, die sich das Score-Gewicht teilen (CPI+Core CPI, PPI+Core PPI, PCE+Core PCE, ZEW+Ifo, Net Bullish+Net Bearish Positioning, 2Y/10Y/Spread-Renditen), war fuer die Tabellen-Darstellung nur als Kommentar/IND_PAIR_GROUPS-Konstante dokumentiert, aber nie tatsaechlich umgesetzt - renderIndsTable() zeichnete jede Zeile unabhaengig. Neue Funktion indPairGroupPositions() erkennt direkt benachbarte Mitglieder derselben Gruppe (nur wenn ein Partner wirklich in der Liste UND direkt daneben steht) und markiert sie als .ind-pair-row mit .ind-pair-first/-mid/-last; CSS zeichnet daraus eine gemeinsam umrandete Box (Hintergrundton + Rand oben/unten, kein Innen-Divider zwischen den Mitgliedern) - Bias, Score und Stichpunkte bleiben pro Zeile komplett unangetastet."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-442 - Zwei Nutzer-Wuensche. (1) Die Asset-Filter-Dropdowns (COT/Retail, Put/Call, Seasonality, Edge, Trends, Data-Linking - assetFilterSelect()/groupedAssetOptions()) bekommen jetzt ganz oben eine 'Watchlist'-Optgroup mit allen gerade einzeln beobachteten Nicht-FX-Assets (Gold/Silber/Oel/BTC/Indizes - watchlistedAssetIds()); FX-Waehrungen bleiben aussen vor, da sie nie einzeln beobachtet werden, nur als Teil eines Paars. Rein von isWatched() abgeleitet, kein eigener Zustand - ein Asset wandert automatisch rein/raus. (2) Die Neutral-Spalte bei Set-ups sortiert jetzt nach Score absteigend statt nach Betrag - konsistent mit Bullish/Bearish, die auch beide streng nach Score sortieren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-441</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-442</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4787,14 +4787,20 @@ const SB_CATS=[
 // z.B. Seasonality - dort ist immer genau ein Asset aktiv).
 function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
   const avail=new Set(ids);
+  const optHtml=id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`;
+  // Watchlist-Gruppe ganz oben, vor den normalen SB_CATS-Kategorien (Nutzer-
+  // Wunsch 2026-08-24) - siehe watchlistedAssetIds(). Ein Asset kann dadurch
+  // doppelt im Dropdown stehen (hier UND in seiner regulaeren Kategorie
+  // weiter unten), das ist gewollt (Schnellzugriff, wie eine Favoriten-Zeile).
+  const wl=watchlistedAssetIds(ids);
+  const wlGroup=wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'';
   const groups=SB_CATS.map(cat=>{
     const items=cat.ids.filter(id=>avail.has(id));
     if(!items.length)return'';
-    const opts=items.map(id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`).join('');
-    return`<optgroup label="${escH(cat.l)}">${opts}</optgroup>`;
+    return`<optgroup label="${escH(cat.l)}">${items.map(optHtml).join('')}</optgroup>`;
   }).join('');
   const head=allLabel?`<option value=""${selected?'':' selected'}>${allLabel}</option>`:'';
-  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${groups}</select></div>`;
+  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${wlGroup}${groups}</select></div>`;
 }
 
 // ══ HELPERS ════════════════════════════════════════════════════════
@@ -13351,6 +13357,19 @@ function isWatched(name){
   const c=pairCats.find(x=>x.name==='Watchlist');
   return !!(c&&pairs.some(p=>p.name===name&&p.catId===c.id));
 }
+// Nicht-FX-Asset-IDs aus `ids`, die gerade einzeln in der Watchlist stehen -
+// fuer die "Watchlist"-Gruppe ganz oben in den Asset-Filtern (COT/Retail,
+// Put/Call, Seasonality, Trends, Edge, ... - siehe assetFilterSelect() und
+// groupedAssetOptions()). FX-Waehrungen (USD, EUR, ...) werden nie einzeln
+// beobachtet, nur als Teil eines Paars (z.B. EUR/USD) - sie blieben deshalb
+// bewusst aussen vor (Nutzer-Entscheid 2026-08-24), sonst stuende z.B. USD
+// durch fast jedes beobachtete Paar praktisch immer in der Watchlist-Gruppe.
+// Kein eigener persistenter Zustand noetig: rein abgeleitet aus isWatched(),
+// wandert ein Asset dadurch automatisch rein/raus, sobald sich die Watchlist
+// aendert (dasselbe "Watchlist als einzige Wahrheit"-Prinzip wie oben).
+function watchlistedAssetIds(ids){
+  return ids.filter(id=>!FX.includes(id)&&isWatched(watchPairNameForAsset(id)));
+}
 // An-/Abschalten. Beim Abschalten wird der Watchlist-Eintrag entfernt - ausser
 // er ist der EINZIGE Eintrag dieses Paares: dann wandert er stattdessen in die
 // erste Nicht-Watchlist-Kategorie. Sonst wuerde ein Klick auf den Stern das
@@ -13648,7 +13667,12 @@ function renderPairs(){
   }
   const bull=shown.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
   const bear=shown.filter(it=>it.bias==='bear').sort((a,b)=>a.score-b.score);
-  const neu=shown.filter(it=>it.bias==='neu').sort((a,b)=>Math.abs(b.score)-Math.abs(a.score));
+  // Nutzer-Wunsch 2026-08-24: nach Score absteigend, nicht nach Betrag -
+  // vorher stand der am staerksten negative Ausreisser ganz oben neben dem
+  // staerksten positiven, jetzt steigt die Spalte von "am ehesten bullish"
+  // zu "am ehesten bearish" durch (konsistent mit Bullish/Bearish-Spalten,
+  // die auch beide streng nach Score sortieren, nicht nach Betrag).
+  const neu=shown.filter(it=>it.bias==='neu').sort((a,b)=>b.score-a.score);
   el.innerHTML=filterBar+`<div class="setups-cols">
     ${col('▲ Bullish',BC.bull,bull)}
     ${col('◆ Neutral',BC.neu,neu)}
@@ -18553,13 +18577,18 @@ function biasLineSegments(pts,halo){
 // Group label per asset class (assetCls) for the subdivided filter dropdowns.
 const CLS_LABELS={fx:'Currencies',index:'Indices',metal:'Commodities',energy:'Commodities',crypto:'Crypto',stock:'Stocks'};
 function groupedAssetOptions(ids,selected){
+  const optHtml=id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`;
+  // Watchlist-Gruppe ganz oben, siehe watchlistedAssetIds()/assetFilterSelect
+  // (derselbe Aufbau, dieser Helfer liefert nur die <optgroup>s ohne <select>).
+  const wl=watchlistedAssetIds(ids);
+  const wlHtml=wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'';
   const groups=[];const byLbl={};
   ids.forEach(id=>{
     const lbl=CLS_LABELS[assetCls(id)]||'Other';
     if(!byLbl[lbl]){byLbl[lbl]=[];groups.push(lbl);}
     byLbl[lbl].push(id);
   });
-  return groups.map(lbl=>`<optgroup label="${escH(lbl)}">`+byLbl[lbl].map(id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('')+`</optgroup>`).join('');
+  return wlHtml+groups.map(lbl=>`<optgroup label="${escH(lbl)}">`+byLbl[lbl].map(optHtml).join('')+`</optgroup>`).join('');
 }
 // Generischer Zeitraum-Filter fuer Zeitreihen-Diagramme (Nutzer-Wunsch
 // 2026-07-20: "ueberall wo es Diagramme gibt" 1Y/2Y/.../Monate/Custom, UND

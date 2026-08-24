@@ -7062,3 +7062,58 @@ benachbart) bleiben ebenfalls ungruppiert. Screenshot der Inflation-Rubrik
 zeigt die drei Core-Paar-Boxen und die Bond-Yield-Box visuell klar von der
 alleinstehenden Zeile "Inflation Expectations" abgesetzt. `node
 check/all.js` komplett gruen.
+
+## 2026-08-24 — Watchlist-Gruppe in Asset-Filtern + Set-ups Neutral-Spalte nach Score (VERSION-CHECK-442)
+
+**Nutzer-Wunsch (woertlich):** "Ich will das in Asset filtern eine neue
+Kategorie drinne isr die Watchlist heißt alle Assets die in der Watchlist
+sind solle da automatisch immer hinein und raus gemacht werden und die
+Kategorie soll im Filter ganz oben stehen. Und bei top set ups die Spalte
+neutral bitte nach Score absteigend sortieren." Rueckfrage per
+`AskUserQuestion` noetig, da "Asset filtern" auf mehrere Stellen im Code
+passen konnte (Assets-Stapel in der Sidebar, `assetFilterSelect()`-Dropdowns
+bei COT/Put-Call/Seasonality/Edge, Waehrungs-Chips bei Set-ups/Compare) -
+Nutzer-Antwort: gemeint sind die Dropdown-Filter bei COT/Retail/Trends usw.
+Zweite Rueckfrage zu FX-Waehrungen (die Watchlist fuehrt nur Paare/Nicht-FX-
+Assets, keine einzelnen Waehrungen) - Antwort: nur Nicht-FX-Assets sollen in
+der neuen Gruppe erscheinen, FX-Waehrungen bleiben aussen vor.
+
+**Teil 1 - Watchlist-Gruppe in den Asset-Filtern.** Zwei parallele Helfer
+bauen diese Dropdowns quer durchs Projekt: `assetFilterSelect()` (volles
+`<select>`, genutzt bei COT/Retail, Put/Call, Net Options Flow, Seasonality,
+Edge, Data-Linking) und `groupedAssetOptions()` (nur die `<optgroup>`s ohne
+umgebendes `<select>`, genutzt bei Trends). Neue gemeinsame Funktion
+`watchlistedAssetIds(ids)` filtert aus einer gegebenen Asset-ID-Liste die
+Nicht-FX-Assets heraus, die gerade per `isWatched(watchPairNameForAsset(id))`
+einzeln in der Watchlist stehen (Gold/Silber/Oel/BTC/ETH/Indizes - dieselbe
+Ableitung, die schon an anderen Stellen "Watchlist als einzige Wahrheit"
+nutzt). FX-Waehrungen (USD, EUR, ...) werden nie einzeln beobachtet, nur als
+Teil eines Paars (z.B. EUR/USD) - sie bleiben deshalb bewusst aussen vor,
+sonst stuende USD durch fast jedes beobachtete Paar praktisch immer in
+dieser Gruppe. Beide Helfer stellen jetzt eine `optgroup label="Watchlist"`
+VOR die normalen SB_CATS-/Klassen-Gruppen (FX/Crypto/Metals/Energy/
+Indices/...) - ein beobachtetes Asset taucht dadurch bewusst doppelt auf
+(einmal in der Watchlist-Gruppe oben, einmal in seiner regulaeren Kategorie
+weiter unten, wie eine Favoriten-Zeile). Kein neuer persistenter Zustand:
+rein aus `isWatched()` abgeleitet, ein Asset wandert automatisch rein/raus,
+sobald es zur Watchlist hinzugefuegt oder entfernt wird.
+
+**Teil 2 - Set-ups Neutral-Spalte nach Score.** `renderPairs()` sortierte die
+drei Spalten Bullish/Neutral/Bearish bisher unterschiedlich: Bullish streng
+nach Score absteigend, Bearish nach Score aufsteigend (am staerksten
+bearish zuerst), Neutral aber nach `Math.abs(score)` absteigend - der am
+staerksten negative Ausreisser stand dadurch neben dem staerksten positiven
+ganz oben, was nicht "nach Score sortiert" liest. Jetzt schlicht
+`(a,b)=>b.score-a.score` wie bei Bullish - die Spalte steigt jetzt
+gleichmaessig von "am ehesten bullish" zu "am ehesten bearish" durch.
+
+**Geprueft (Playwright):** `assetFilterSelect(COT_SYMS, ...)` zeigt vor dem
+Beobachten von Gold/BTC keine Watchlist-Gruppe, danach eine mit genau Gold
+und BTC (nicht EUR/USD trotz beobachtetem Paar), an erster Position vor
+allen anderen Optgroups; nach dem Entfernen verschwindet die Gruppe wieder.
+`groupedAssetOptions(trendAssets())` (Trends) ebenso geprueft. Fuer die
+Neutral-Sortierung vier kuenstliche Paare mit Scores -3/+5/+0.5/-7 in eine
+echte Set-ups-Kategorie gehaengt, `renderPairs()` echt aufgerufen und die
+DOM-Reihenfolge der Namen in der Neutral-Spalte gelesen - Ergebnis
+CCC/DDD(+5) → EEE/FFF(+0.5) → AAA/BBB(-3) → GGG/HHH(-7), exakt Score
+absteigend. `node check/all.js` komplett gruen.
