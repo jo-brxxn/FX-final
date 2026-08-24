@@ -81,8 +81,33 @@ Node-Skript via `node --check` prüfen (plus `bash -n` s.o.).
 
 ## IMMER auch auf `main` pushen (Nutzer-Wunsch 2026-07-26, nach einem Vorfall)
 
-`main` ist der Branch, den GitHub Pages live auf jo-brxxn.github.io
-deployed. Der Session-Dev-Branch (Name wechselt je Task/Session, z. B.
+**⚠ Korrektur 2026-08-24 (vorheriger Absatz nannte nur GitHub Pages als
+Live-Deploy — das war unvollstaendig/irrefuehrend):** `main` speist ZWEI
+Adressen, nicht nur eine:
+
+- **Die eigentliche Produktionsadresse ist ein Cloudflare Worker**
+  (`fx-final.jonathan-fa5.workers.dev`), hinter Cloudflare Access — dort
+  kommt zuerst eine E-Mail-Code-Abfrage, danach die App. Das ist die, die
+  der Nutzer tatsaechlich benutzt/verlinkt.
+- **`jo-brxxn.github.io/FX-final/`** (GitHub Pages) ist ein zweiter,
+  UNGESCHUETZTER Mirror, der automatisch und garantiert direkt aus `main`
+  ausgeliefert wird — ohne Build-Schritt, jeder Push ist sofort live.
+- Wie/ob der Cloudflare Worker selbst bei einem `main`-Push automatisch
+  neu deployt, ist aus diesem Repo NICHT ersichtlich — es liegt weder
+  `wrangler.toml` noch eine `CNAME`-Datei hier. Nicht raten, im
+  Cloudflare-Dashboard nachsehen (Workers & Pages → `fx-final` →
+  Deployments), falls das fuer eine Aufgabe relevant wird.
+- **Die zehn Daten-JSONs laufen bei BEIDEN Adressen ausserhalb dieses
+  Deploy-Mechanismus:** `index.html` (Abschnitt `DATA_BASE`, bei
+  `const SK='fxpro_v1'`) holt sie zur Laufzeit per anonymem
+  Browser-`fetch()` direkt von `raw.githubusercontent.com` — auf jeder
+  Herkunft ausser `github.io`/`localhost`. Voraussetzung dafuer: das
+  Repo muss OEFFENTLICH bleiben, sonst liefert der Raw-Endpunkt 404 und
+  die App (auch die Worker-Version) bleibt leer, obwohl der Worker selbst
+  weiterlaeuft. Details: `docs/CHANGELOG.md`, "Wo die App tatsaechlich
+  liegt".
+
+Der Session-Dev-Branch (Name wechselt je Task/Session, z. B.
 `claude/new-session-...`) ist NICHT das, was der Nutzer auf der echten
 Webseite sieht. Vorfall 2026-07-26: eine ganze Feature-Session
 (Retail-Sentiment-Historie) wurde nur auf den Dev-Branch gepusht —

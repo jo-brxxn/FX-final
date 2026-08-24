@@ -48,8 +48,10 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Werts. Policy-Details: `docs/data-sources.md`.
 5. **`node check/all.js` vor jedem Push** (bzw. `--static` für den schnellen
    Teil ohne Browser). Details: `check/README.md`.
-6. **Immer auch auf `main` pushen** (das ist der von GitHub Pages live
-   deployte Branch, nicht der Session-Dev-Branch). Details: `docs/workflow.md`.
+6. **Immer auch auf `main` pushen** (das ist der Branch, der die
+   Produktivadresse — ein Cloudflare Worker hinter Cloudflare Access,
+   NICHT primär GitHub Pages — sowie den ungeschützten GitHub-Pages-Mirror
+   speist; nicht der Session-Dev-Branch). Details: `docs/workflow.md`.
 
 ## Meta-Grundsatz: wo eine neue Regel hingehört
 
