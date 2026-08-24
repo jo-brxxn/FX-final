@@ -7117,3 +7117,48 @@ echte Set-ups-Kategorie gehaengt, `renderPairs()` echt aufgerufen und die
 DOM-Reihenfolge der Namen in der Neutral-Spalte gelesen - Ergebnis
 CCC/DDD(+5) → EEE/FFF(+0.5) → AAA/BBB(-3) → GGG/HHH(-7), exakt Score
 absteigend. `node check/all.js` komplett gruen.
+
+## 2026-08-24 — Nachtrag: Watchlist-Gruppe fehlte bei Retail Sentiment + Trends Pair-Modus (VERSION-CHECK-443)
+
+**Nutzer-Bugreport (per Screenshot, Retail-Sentiment-Filter offen):** "Was
+für Aufgaben laufen gerade noch und guck die Kategorie isr nicht da."
+
+**Ursache:** VERSION-CHECK-442 hatte die Watchlist-Optgroup nur in den zwei
+gemeinsamen Helfern eingebaut, die die meisten Asset-Filter im Projekt
+teilen (`assetFilterSelect()` fuer COT/Put-Call/Net-Options-Flow/
+Seasonality/Edge/Data-Linking, `groupedAssetOptions()` fuer den Trends-
+Haupt-Filter `trendsCcySel`). Zwei Filter haben aber eine EIGENE, paar-
+basierte Dropdown-Logik, weil ihre Optionen keine einzelnen Asset-IDs sind,
+sondern PAARE: `sentFilterBar()` bei Retail Sentiment (Broker-Symbole wie
+"EURUSD", eigene Gruppierung FX Pairs/Other Assets, siehe Kommentar dort:
+"passt nicht 1:1 in SB_CATS") und der `trendsPairSel`-Select im Trends-Paar-
+Modus (`ALL_PAIRS`/`FX_PAIRS`). Diese beiden hatte ich beim ersten Durchgang
+uebersehen, weil sie strukturell nichts mit den beiden bearbeiteten Helfern
+teilen - `grep "optgroup label="` haette sie sofort gezeigt, das haette ich
+vor der ersten Umsetzung schon machen sollen statt erst jetzt.
+
+**Fix.** `sentFilterBar()`: neue Funktion `sentSymWatched(sym)` uebersetzt
+ein Broker-Symbol zurueck (Nicht-FX ueber `SENT_NONFX_PRICE_ID` + 
+`watchPairNameForAsset()`, FX-Paare durch Slash-Einfuegen bei sym.slice(0,3)+
+'/'+sym.slice(3)) und prueft `isWatched()`; die Watchlist-Gruppe steht jetzt
+ganz oben vor "FX Pairs"/"Other Assets". `trendsPairSel`: baut die Optionen
+jetzt bei JEDEM `renderTrends()`-Aufruf neu (vorher einmalig gecacht via
+`dataset.opts`, was die Watchlist-Gruppe nach dem ersten Aufbau nie mehr
+aktualisiert haette) und filtert `ALL_PAIRS` direkt mit `isWatched()` in eine
+eigene Watchlist-Gruppe vor "FX Pairs"/"Other Assets".
+
+**Bewusster Unterschied zu VERSION-CHECK-442:** bei diesen zwei paar-
+basierten Filtern zaehlt ein beobachtetes FX-Paar selbst (z.B. EUR/USD),
+nicht nur Nicht-FX-Assets - anders als bei den Einzel-Asset-Filtern (COT/
+Trends-Hauptfilter/...), wo FX-Waehrungen bewusst ausgenommen sind, weil
+sonst z.B. USD durch fast jedes beobachtete Paar staendig in der Gruppe
+stuende. Hier ist die Einheit ohnehin schon das Paar - ein konkretes Paar in
+der Watchlist ist eine gezielte Auswahl, das "USD ueberall"-Problem besteht
+strukturell nicht.
+
+**Geprueft (Playwright):** `sentFilterBar()` zeigt vor dem Beobachten keine
+Watchlist-Gruppe, nach dem Beobachten von EUR/USD und Gold eine mit genau
+"EURUSD" und "XAUUSD" ganz oben, verschwindet nach dem Entfernen wieder.
+`trendsPairSel` (Trends im Paar-Modus) zeigt nach dem Beobachten von GBP/JPY
+eine Watchlist-Gruppe mit "GBP/JPY" ganz oben vor "FX Pairs", verschwindet
+nach dem Entfernen wieder. `node check/all.js` komplett gruen.

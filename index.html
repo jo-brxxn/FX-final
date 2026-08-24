@@ -3700,11 +3700,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-442 - Zwei Nutzer-Wuensche. (1) Die Asset-Filter-Dropdowns (COT/Retail, Put/Call, Seasonality, Edge, Trends, Data-Linking - assetFilterSelect()/groupedAssetOptions()) bekommen jetzt ganz oben eine 'Watchlist'-Optgroup mit allen gerade einzeln beobachteten Nicht-FX-Assets (Gold/Silber/Oel/BTC/Indizes - watchlistedAssetIds()); FX-Waehrungen bleiben aussen vor, da sie nie einzeln beobachtet werden, nur als Teil eines Paars. Rein von isWatched() abgeleitet, kein eigener Zustand - ein Asset wandert automatisch rein/raus. (2) Die Neutral-Spalte bei Set-ups sortiert jetzt nach Score absteigend statt nach Betrag - konsistent mit Bullish/Bearish, die auch beide streng nach Score sortieren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-443 - Nachtrag zu VERSION-CHECK-442: die Watchlist-Optgroup fehlte noch bei zwei Filtern, die NICHT den gemeinsamen assetFilterSelect()/groupedAssetOptions()-Helfer nutzen, sondern eigene, paar-basierte Dropdown-Bauer haben - sentFilterBar() (Retail Sentiment) und der Paar-Modus-Select bei Trends (trendsPairSel). Beide zeigen jetzt ebenfalls ganz oben eine Watchlist-Gruppe; hier zaehlt (anders als bei den Einzel-Asset-Filtern) auch ein beobachtetes FX-Paar selbst (z.B. EUR/USD), nicht nur Nicht-FX-Assets - die Einheit ist hier ohnehin schon das Paar, das 'USD ueberall'-Problem der Einzel-Waehrungs-Filter besteht hier nicht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-442</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-443</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -18834,11 +18834,18 @@ function renderTrends(){
   if(pairWrap)pairWrap.style.display=trendsFilter==='PAIR'?'flex':'none';
   if(trendsFilter==='PAIR'){
     const pairSel=document.getElementById('trendsPairSel');
-    if(pairSel&&!pairSel.dataset.opts){
+    if(pairSel){
+      // Watchlist-Gruppe ganz oben (Nutzer-Wunsch 2026-08-24) - anders als bei
+      // sentFilterBar()/assetFilterSelect() nicht gecached (dataset.opts),
+      // weil sich die Watchlist waehrend der Sitzung aendern kann und die
+      // Gruppe sonst nach dem ersten Aufbau stehen bliebe.
       const otherPairs=ALL_PAIRS.filter(p=>!FX_PAIRS.includes(p));
-      const opts=`<optgroup label="FX Pairs">`+FX_PAIRS.map(p=>`<option value="${p}">${p}</option>`).join('')+`</optgroup>`+
-                  `<optgroup label="Other Assets">`+otherPairs.map(p=>`<option value="${p}">${p}</option>`).join('')+`</optgroup>`;
-      pairSel.innerHTML=opts;pairSel.dataset.opts='1';
+      const wl=ALL_PAIRS.filter(isWatched);
+      const optHtml=p=>`<option value="${p}"${trendsPairSel===p?' selected':''}>${p}</option>`;
+      const opts=(wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'')+
+                  `<optgroup label="FX Pairs">`+FX_PAIRS.map(optHtml).join('')+`</optgroup>`+
+                  `<optgroup label="Other Assets">`+otherPairs.map(optHtml).join('')+`</optgroup>`;
+      if(pairSel.innerHTML!==opts)pairSel.innerHTML=opts;
     }
     if(pairSel)pairSel.value=trendsPairSel;
     renderTrendsPair(el);
@@ -20501,12 +20508,24 @@ function sentSymLabel(sym){
   if(sym&&sym.length===6)return sym.slice(0,3)+'/'+sym.slice(3);
   return sym||'';
 }
+// Steht dieses Broker-Symbol (z.B. "EURUSD", "XAUUSD") in der Watchlist?
+// Anders als bei den Einzel-Asset-Filtern (watchlistedAssetIds - dort zaehlt
+// nur der Nicht-FX-Teil, siehe Kommentar dort) ist hier die Einheit direkt
+// das PAAR - "USD steht in fast jedem Paar" ist hier kein Problem, weil ein
+// konkretes Paar (EUR/USD) beobachtet werden muss, nicht nur eine Waehrung.
+function sentSymWatched(sym){
+  const id=SENT_NONFX_PRICE_ID[sym];
+  if(id)return isWatched(watchPairNameForAsset(id));
+  return sym&&sym.length===6&&isWatched(sym.slice(0,3)+'/'+sym.slice(3));
+}
 function sentFilterBar(){
   const set=new Set();
   (SENTIMENT_DATA&&SENTIMENT_DATA.retail||[]).forEach(r=>{if(r&&r.sym)set.add(r.sym);});
   const ids=[...set].sort();
   const grp=(label,arr)=>arr.length?`<optgroup label="${escH(label)}">${arr.map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`).join('')}</optgroup>`:'';
-  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
+  // Watchlist-Gruppe ganz oben (Nutzer-Wunsch 2026-08-24, siehe assetFilterSelect/
+  // groupedAssetOptions fuer dasselbe Muster bei den Einzel-Asset-Filtern).
+  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',ids.filter(sentSymWatched))}${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
   return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
