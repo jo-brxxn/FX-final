@@ -7162,3 +7162,132 @@ Watchlist-Gruppe, nach dem Beobachten von EUR/USD und Gold eine mit genau
 `trendsPairSel` (Trends im Paar-Modus) zeigt nach dem Beobachten von GBP/JPY
 eine Watchlist-Gruppe mit "GBP/JPY" ganz oben vor "FX Pairs", verschwindet
 nach dem Entfernen wieder. `node check/all.js` komplett gruen.
+
+## 2026-08-24 — Neue Asset-Kategorie "Yields" + Quicklink-Audit (VERSION-CHECK-444, SCORE_MODEL_VERSION 7)
+
+**Nutzer-Wunsch (woertlich):** "Füg bitte yields als neue Asset Kategorie
+hinzu. Mach auch schon die Assets darein. Zur jeder Währung ein yield also
+zB US-Yield, NZ-Yield usw also wie bei TradingView nur halt ohne die Jahres
+Zahl und mit yield dahinter. Als Icon verwende ein bond oder yield Symbol
+kombiniert mit dem Flaggen Icon. Verbinde die yields schonmal direkt mit
+der Währung und mach interest Rates bullish, Inflation bullish,
+labourmarket bullish, Economic Groth bullish und risk Sentiment wenn das
+auf Full oder half steht ist das auch bullish. Die quicklinks führen dann
+auch einfach zu den Daten wo dann die verknüpfte währung ausgewählt ist.
+Und generell bei den quicklinks wenn man die vonden Assets benutzt ist
+teilweise nicht schon die Währung ausgewählt Check das nochmal ob das
+überall so ist."
+
+**Rueckfrage vorab (AskUserQuestion):** "Asset filtern" aus einer fruehreren
+Anfrage im selben Tag hatte sich als der `assetFilterSelect()`-Dropdown
+(COT/Retail/Trends) herausgestellt, nicht der Assets-Stapel - fuer DIESE
+Anfrage war "Asset Kategorie" dagegen eindeutig der Assets-Stapel selbst
+(explizit "Kategorie" + "Assets darein"), keine Rueckfrage noetig. Vor der
+Umsetzung aber ausgiebig recherchiert statt geraten: `git log -S
+"ind-pair-group"`-artige Recherche zeigte, dass `linkCcy`/`MACRO_DERIVE_
+RULES`/`RISK_ENV_DEFAULT_DIR` (das bestehende Gold/DAX/GER100-Ableitungs-
+System) bereits GENAU die gewuenschte Automatik bereitstellen - kein neues
+Score-System noetig, nur neue Eintraege im bestehenden.
+
+**Die 8 neuen Assets.** Ein Asset pro FX-Major, ids `USYIELD/DEYIELD/
+GBYIELD/CHYIELD/JPYIELD/CAYIELD/AUYIELD/NZYIELD`, Namen `US Yield/DE Yield/
+GB Yield/CH Yield/JP Yield/CA Yield/AU Yield/NZ Yield` (TradingView-Bond-
+Ticker-Konvention ohne die Laufzeitzahl - `DE10Y` -> "DE Yield"). EUR
+bekommt bewusst "DE Yield" statt "EU Yield": `bond_data.json` fuehrt fuer
+EUR den deutschen 10Y-Bund als Eurozone-Referenzwert (Quelle: investing.com/
+germany-10-year-bond-yield) - "EU Yield" waere ein Aggregat vorgetaeuscht,
+das in den Daten gar nicht existiert. Jedes Asset bekommt via `linkCcy`
+seine Waehrung UND den vollen `mkRubs()`-Rubrik-Satz wie jedes andere Asset
+(Inflation/Interest Rates/Labour Market/Economic Growth/COT Data/Risk
+Environment) - dieselbe Struktur wie GOLD/DAX/GER100, kein Spezialfall.
+
+**"Verbinde die yields direkt mit der Waehrung" + die vier Bullish-Regeln.**
+`linkCcy` allein zieht ueber die BESTEHENDE Maschinerie automatisch: (a) die
+echten 10Y/2Y/Spread-Werte im Inflation-Kartenblock (`applyBondDataFeed()`
+liest ueber `macroCcyFor(id)`, exakt dieselbe Funktion, die jede Waehrung
+selbst nutzt), (b) die Makro-Kartentexte/Zusammenfassungen (`syncMacroRub`/
+`pullMacroFromCcy`). Fuer die vier Bullish-Regeln (Interest Rates/Inflation/
+Labour Market/Economic Growth) neue `MACRO_DERIVE_RULES`-Eintraege je Yield-
+Asset mit allen vier Rubriken auf `'same'` - starke Daten (heisse Inflation,
+robuster Arbeitsmarkt, hawkishe Zinserwartung, starkes Wachstum) gelten fuer
+ein Yield-Asset als bullish, genau wie fuer die Waehrung selbst. Fuer "Risk
+Sentiment Full/Half = bullish" reichte ein neuer `RISK_ENV_DEFAULT_DIR`-
+Eintrag `'bullish'` je Asset - 'bullish' bedeutet in diesem bereits
+bestehenden System exakt das: der Regler wird bei Half/Full als bullisch
+verbucht (Definition siehe `RISK_ENV_DIRS`), bei None ohne Wirkung.
+
+**Icon.** `AI_GLYPHS` (Sidebar, einfarbig) und `AI_SYMBOLS` (grosser
+animierter Kopf-Icon-Satz) bekommen je 8 neue Eintraege: die BESTEHENDE
+Waehrungs-Zeichnung wird als Ganzes per `transform="scale(.78)"` verkleinert
+(Ursprung oben links, dadurch bleibt sie am Eck verankert) - das gibt unten
+rechts Platz fuer ein neues Anleihe-Abzeichen (Ticket-Umriss mit zwei
+Linien, im Sidebar-Satz in `currentColor`, im grossen Satz in einer festen
+dunklen Farbe mit weissen Linien, da der Flaggenhintergrund dort stark
+wechselt und ein reines Konturzeichen auf hellen Flaggen wie CHF kaum
+sichtbar waere). Keine einzige bestehende Flaggen-Pfad-Koordinate wurde
+dafuer angefasst - deutlich weniger fehleranfaellig als jede Flagge einzeln
+in ein Eck-Layout umzuzeichnen.
+
+**Quicklinks zeigen die verknuepfte Waehrung.** `assetQuickGo()` loest fuer
+Yield-Assets (`assetCls(id)==='yield'`) bei den fuenf "eigene Daten"-Zielen
+(Seasonality/Trends/COT/Data/News) auf `macroCcyFor(id)` auf, weil diese
+Systeme unter z.B. "USYIELD" keine eigenen Eintraege kennen (kein COT-
+Kontrakt, keine Preishistorie) - anders als GOLD/BTC/DAX, die dort echte
+eigene Daten haben und weiter mit ihrer eigenen ID verlinken.
+
+**Nebenbefund 1 - Quicklink-Audit (Nutzer-Wunsch: "Check das nochmal ob das
+ueberall so ist").** Von den 8 `ASSET_QUICK_LINKS` waren `sent`/`rate`/`cal`
+bei JEDEM Asset (nicht nur den neuen Yields) nie vorgefiltert - sie fielen
+in `assetQuickGo()` auf `showTab(tabId)` ohne jede Auswahl zurueck, weil sie
+im if/else schlicht fehlten. Fix betrifft alle Assets gleichermassen:
+`rate`/`cal` rufen jetzt `setRateProbCcy`/`setCalCcyFilter` mit
+`macroCcyFor(id)` auf (fuer eine FX-Waehrung identisch mit sich selbst, fuer
+GOLD z.B. weiterhin USD), `sent` wechselt zusaetzlich auf den Put/Call-
+Unterreiter und setzt `pcAsset`.
+
+**Nebenbefund 2 - Karten-Zusammenfassungen zeigten die ID statt des
+Namens.** Beim Testen fiel auf, dass generierte Kartentexte "for USYIELD"
+statt "for US Yield" sagten. Ursache: 8 Stellen in der Zusammenfassungs-
+Engine (`assetVerdictClause`, `noSignalFallback`, `summarizeGeneric`, die
+Risk-Environment-Saetze) bauten `for ${sym.id}` statt `for ${sym.name}` -
+bei FX/GOLD/BTC unsichtbar (id === Name), bei GER100 bereits leise falsch
+("for GER100" statt "for GER 100"), bei den neuen Yields (id sehr
+verschieden vom Namen) deutlich sichtbar. Alle 8 Stellen auf `sym.name`
+korrigiert.
+
+**Cross-Device-Sync fuer bereits gespeicherten Zustand.** `loadState()` (der
+normale Boot-Pfad) merged fehlende `DEF`-Eintraege schon lange automatisch
+in gespeicherte `syms` (`DEF.map(def => saved-Version || {...def})`) - neue
+eingebaute Assets erscheinen dadurch von selbst bei jedem Reload. `applySnap()`
+(der gemeinsame Trichter fuer Cloud-Sync/Undo-Redo/Import laut CLAUDE.md-
+Grundsatz) hatte diesen Mechanismus aber NICHT - ein alter Snapshot (anderes
+Cloud-Geraet, ein Undo ueber die Einfuehrung hinweg) haette die neuen Assets
+dort stillschweigend wieder entfernt. Neue Funktion `ensureBuiltinSyms()`
+schliesst diese Luecke (nur echt fehlende `DEF`-ids werden ergaenzt, nichts
+an vorhandenen/vom Nutzer veraenderten Symbolen angefasst).
+
+**SCORE_MODEL_VERSION 6 -> 7.** `isNonFx()` bekam die neue Klasse `'yield'` -
+`check/rules.js` flaggte das automatisch als Score-Formel-Aenderung, `check/
+scorediff.js` zaehlte 72 geaenderte Stellen. Wichtig fuer kuenftiges
+Nachvollziehen: das ist KEINE Formel-Aenderung fuer ein bestehendes Asset -
+alle 72 Stellen sind die neuen Yield-Assets selbst (die vorher schlicht
+nicht existierten). Trotzdem gebumpt, siehe Merksatz in `docs/score-
+model.md`.
+
+**Geprueft (Playwright, mehrere Durchgaenge):** alle 8 Yield-Assets in
+`syms`/`computeSbCats()`/`getSbIds()` vorhanden, `assetCls`/`isNonFx`/
+`CLS_CAT` korrekt; Icons liefern SVG ohne Fehler (Sidebar-Glyph + grosser
+Kopf-Icon, Screenshot bestaetigt: verkleinerte Flagge + Anleihe-Abzeichen
+klar erkennbar bei allen 8); `effDeriveRules`/`rubAutoDerived` liefern
+ueberall `'same'`; `RISK_ENV_DEFAULT_DIR`/`riskEnvDirOf` liefern `'bullish'`;
+echter 10Y-Bond-Yield-Wert im Inflation-Kartenblock bestaetigt (4,736% fuer
+USYIELD, identisch mit `bond_data.json`); `symScoreCmp` wirft fuer keins der
+8 einen Fehler. Alle 8 Quicklinks fuer US Yield geprueft (sieben davon
+korrekt auf "USD" vorgefiltert, Sentiment korrekt auf Put/Call+USD) UND als
+Regressionscheck bei GOLD (die 5 "eigenen Daten"-Ziele bleiben auf "GOLD"
+selbst, die 3 reparierten zeigen jetzt "USD"). Migrations-Test: echten
+gespeicherten Snapshot genommen, die 8 Yield-Assets simuliert entfernt (wie
+ein Nutzer VOR diesem Feature), einmal per echtem Seiten-Reload
+(`loadState()`) und einmal per direktem `applySnap()`-Aufruf (Cloud/Undo-
+Pfad) - beide Male kamen alle 8 automatisch zurueck. `node check/all.js`
+komplett gruen (inkl. `rules` nach dem SCORE_MODEL_VERSION-Bump).

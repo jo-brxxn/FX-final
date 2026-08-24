@@ -3700,11 +3700,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-443 - Nachtrag zu VERSION-CHECK-442: die Watchlist-Optgroup fehlte noch bei zwei Filtern, die NICHT den gemeinsamen assetFilterSelect()/groupedAssetOptions()-Helfer nutzen, sondern eigene, paar-basierte Dropdown-Bauer haben - sentFilterBar() (Retail Sentiment) und der Paar-Modus-Select bei Trends (trendsPairSel). Beide zeigen jetzt ebenfalls ganz oben eine Watchlist-Gruppe; hier zaehlt (anders als bei den Einzel-Asset-Filtern) auch ein beobachtetes FX-Paar selbst (z.B. EUR/USD), nicht nur Nicht-FX-Assets - die Einheit ist hier ohnehin schon das Paar, das 'USD ueberall'-Problem der Einzel-Waehrungs-Filter besteht hier nicht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-444 - Neue Asset-Kategorie 'Yields': ein Asset pro FX-Major (US/DE/GB/CH/JP/CA/AU/NZ Yield, benannt wie TradingView-Bond-Ticker ohne die Laufzeitzahl), per linkCcy direkt mit seiner Waehrung verbunden - dadurch automatisch echte 10Y/2Y/Spread-Werte (bond_data.json), Bias-Ableitung ueber alle vier Makro-Rubriken (Inflation/Interest Rates/Labour Market/Economic Growth = 'same' = bullish bei starken Daten) und Risk Correlation (Risk-Sentiment-Regler Half/Full = bullish). Icon: bestehende Flagge auf 78% verkleinert + eigenes Anleihe-Abzeichen (Ticket-Umriss) im freien Eck, in beiden Icon-Systemen (Sidebar-Glyphen UND grosse animierte Kopf-Icons). Die 8 Quicklinks (Seasonality/Trends/COT/Data/News) leiten fuer diese Assets auf ihre verknuepfte Waehrung um, da sie dort keine eigenen Daten haben. Nebenbefund beim Testen behoben: 3 der 8 Quicklinks (Sentiment/Rate Probabilities/Calendar) waren bei JEDEM Asset nie vorgefiltert - jetzt ueberall korrekt. Ausserdem: Kartenzusammenfassungen zeigten faelschlich die interne Asset-ID statt des Anzeigenamens (z.B. 'for USYIELD' statt 'for US Yield', betraf auch GER100 vorher). SCORE_MODEL_VERSION 6 -> 7 (neue Asset-Klasse 'yield' in isNonFx())."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-443</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-444</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4466,6 +4466,14 @@ const AI_FLAGS = {
     `<path d="${aiStars([[29.5, 5.6, 1.5], [32.4, 12.6, 1.5], [26.6, 16.6, 1.5], [24.4, 9.8, 1.5]])}" fill="#C8102E"/>`,
 };
 
+// Yields-Kategorie (Nutzer-Wunsch 2026-08-24): Zuordnung Yield-Asset-ID ->
+// zugrundeliegende Waehrung. Treibt sowohl die Icon-Zusammensetzung hier
+// (AI_SYMBOLS/AI_GLYPHS unten) als auch linkCcy/MACRO_DERIVE_RULES/
+// RISK_ENV_DEFAULT_DIR bei den DEF-Eintraegen weiter unten - eine einzige
+// Quelle statt derselben 8 Paare mehrfach von Hand zu wiederholen. Vor
+// AI_SYMBOLS platziert, weil dessen Aufbau unten am Modul-Ladezeitpunkt
+// bereits darauf zugreift (const ist sonst noch nicht initialisiert - TDZ).
+const YIELD_CCY={USYIELD:'USD',DEYIELD:'EUR',GBYIELD:'GBP',CHYIELD:'CHF',JPYIELD:'JPY',CAYIELD:'CAD',AUYIELD:'AUD',NZYIELD:'NZD'};
 /* Non-FX: keine Flaggen, sondern das Material/Instrument selbst.
    Jedes bekommt eine EIGENE, zum Motiv passende Dauerbewegung statt eines
    generischen Pulsierens - genau das war der Nutzer-Wunsch ("das Oel Symbol
@@ -4528,6 +4536,19 @@ const AI_SYMBOLS = {
              M17.2,16.9 h1.5 v2.6 h-1.5Z M19.6,16.9 h1.5 v2.6 h-1.5Z" fill="#fff"/>
     <g clip-path="url(#aiCoinClip)"><path class="ai-sheen-el" d="M-2,22 L6,2 L10,2 L2,22Z" fill="#fff" opacity=".38"/></g>`,
 };
+// Yields-Kategorie, grosser animierter Icon-Satz (Asset-Kopfzeile, Research-
+// Terminal-Sidebar, ...): dieselbe Verkleinern-plus-Abzeichen-Idee wie bei
+// AI_GLYPHS oben, hier per <use> auf die bereits registrierte Flaggen-<symbol>
+// der zugrundeliegenden Waehrung (kein eigenes Wehen noetig/gewuenscht - ein
+// zusaetzliches Abzeichen soll ruhig stehen, nicht mitwehen). Badge in einer
+// festen dunklen Farbe statt currentColor, da der Hintergrund hier (anders als
+// bei AI_GLYPHS) je nach Flagge stark wechselt und ein reines Konturzeichen
+// auf hellen Flaggen (z.B. CHF) kaum sichtbar waere.
+const AI_BOND_BADGE = '<circle cx="29.6" cy="18" r="6.2" fill="#1B2431"/><circle cx="29.6" cy="18" r="6.2" fill="none" stroke="#fff" stroke-width=".7" opacity=".35"/>'
+  + '<path d="M26.4 16.4h6.4M26.4 19.6h4.4" stroke="#fff" stroke-width="1.25" stroke-linecap="round"/>';
+Object.keys(YIELD_CCY).forEach(id=>{
+  AI_SYMBOLS[id]=`<use href="#ai-${YIELD_CCY[id]}" transform="scale(.78)"/>`+AI_BOND_BADGE;
+});
 
 // Indizes teilen sich dieselbe Zeichnung (Kursverlauf im Rahmen), nur der
 // Akzentton unterscheidet sie - eine eigene Metapher je Index waere
@@ -4615,6 +4636,20 @@ const AI_GLYPHS = {
   ETH: '<path d="M18 3 26.2 12 18 16.6 9.8 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>'
     + '<path d="M9.8 13.8 18 21l8.2-7.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>',
 };
+// Yields-Kategorie (Nutzer-Wunsch 2026-08-24: "Als Icon verwende ein bond
+// oder yield Symbol kombiniert mit dem Flaggen Icon"): statt jede Flagge per
+// Hand in ein Eck-Layout umzuzeichnen (fehleranfaellig, siehe Kommentar oben
+// zur Koordinaten-Feinarbeit), wird die BESTEHENDE Waehrungs-Zeichnung als
+// Ganzes auf 78% verkleinert (Ursprung oben links, dadurch bleibt sie am
+// Rahmen-Eck verankert) - das gibt unten rechts Platz fuer ein eigenes
+// Anleihe-Abzeichen (Ticket-Umriss mit zwei Linien), ohne eine einzige
+// bestehende Pfad-Koordinate anzufassen. YIELD_CCY (siehe DEF weiter unten)
+// ist die Zuordnung Yield-Asset-ID -> zugrundeliegende Waehrung.
+const AI_GLYPH_BOND_BADGE = '<rect x="25.4" y="14.2" width="9.6" height="8.6" rx="1.7" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+  + '<path d="M27.5 16.9h5.4M27.5 19.5h3.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity=".85"/>';
+Object.keys(YIELD_CCY).forEach(id=>{
+  AI_GLYPHS[id]=`<g transform="scale(.78)">${AI_GLYPHS[YIELD_CCY[id]]}</g>`+AI_GLYPH_BOND_BADGE;
+});
 // Indizes teilen sich wie im farbigen Satz EINE Zeichnung - eine eigene
 // Metapher je Index waere Bedeutung, die es nicht gibt.
 const AI_GLYPH_INDEX = '<rect x="2.8" y="3.2" width="30.4" height="17.6" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".42"/>'
@@ -4777,7 +4812,11 @@ const SB_CATS=[
   {l:'Crypto',ids:['BTC']},
   {l:'Metals',ids:['GOLD','SILVER']},
   {l:'Energy',ids:['OIL']},
-  {l:'Indices',ids:['SP500','NAS','DAX','GER100']}
+  {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
+  // Nutzer-Wunsch 2026-08-24: "Fueg bitte yields als neue Asset Kategorie
+  // hinzu... Mach auch schon die Assets darein" - ein Yield-Asset pro FX-
+  // Major, in derselben Reihenfolge wie SB_CATS.FX (siehe YIELD_CCY).
+  {l:'Yields',ids:Object.keys(YIELD_CCY)}
 ];
 // ── Gemeinsamer Asset-Filter-Dropdown, EIN Muster fuer alle Tabs mit
 // Asset-Auswahl (COT, Put/Call, Net Options Flow, Seasonality): Optionen
@@ -6203,7 +6242,7 @@ function symScoreCmp(sym){
 // V4 (2026-08-19): AAII bekam eine Altersgrenze (AAII_STALE_DAYS) - eine
 // Wochenumfrage, die drei Veroeffentlichungen verpasst hat, zaehlt nicht
 // mehr. Das aendert den Score-Beitrag und damit die Zusammensetzung.
-const SCORE_MODEL_VERSION=6;
+const SCORE_MODEL_VERSION=7;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -6629,7 +6668,7 @@ const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','DAX','GER100'];
 // eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
 // Hinzufügen gewählten Kategorie (customIds[].cls).
 function assetCls(id){return ASSET_CLASS[id]||(customIds.find(c=>c.id===id)||{}).cls;}
-function isNonFx(id){return['crypto','metal','energy','index','stock'].includes(assetCls(id));}
+function isNonFx(id){return['crypto','metal','energy','index','stock','yield'].includes(assetCls(id));}
 // USD + alle USD-getriebenen Assets (inkl. selbst hinzugefügter Krypto/
 // Metall/Energie/Index-Symbole) teilen sich die Makro-Rubrik-Summaries.
 // Symbole, die sich die Makro-Rubrik-Summaries teilen: eine Währung + alle
@@ -8810,7 +8849,8 @@ function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));
 const CB_MAP={USD:'the Fed (Federal Reserve)',EUR:'the ECB (European Central Bank)',GBP:'the BoE (Bank of England)',CHF:'the SNB (Swiss National Bank)',JPY:'the BoJ (Bank of Japan)',CAD:'the BoC (Bank of Canada)',AUD:'the RBA (Reserve Bank of Australia)',NZD:'the RBNZ (Reserve Bank of New Zealand)'};
 function cbName(id){return CB_MAP[id]||'the Fed (Federal Reserve)';}
 function cbDat(id){return cbName(id).replace(/^die /,'der ');}
-const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',DAX:'index',GER100:'index'};
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',DAX:'index',GER100:'index',
+  USYIELD:'yield',DEYIELD:'yield',GBYIELD:'yield',CHYIELD:'yield',JPYIELD:'yield',CAYIELD:'yield',AUYIELD:'yield',NZYIELD:'yield'};
 
 // ── Info texts for the 5 standard rubrics (Specific tab) ──
 function enrichRubrics(id,rubrics,name){
@@ -8911,6 +8951,51 @@ const DEF=[
     genBull:mkR(['Broader German large-/mid-cap exposure than the DAX 40','ECB easing cycle supports equity valuations'],'bull'),
     genBear:mkR(['High dependency on global/China demand and trade cycle','Energy-cost sensitivity of German industry'],'bear'),
     rubrics:mkRubs(),noteRubs:[],notes:''},
+  // Yields-Kategorie (Nutzer-Wunsch 2026-08-24): ein Yield-Asset pro FX-
+  // Major, benannt wie bei TradingView (Landescode statt Waehrungscode, ohne
+  // die "10"-Laufzeitangabe, mit "Yield" dahinter - z.B. TradingViews
+  // "DE10Y" wird hier "DE Yield"). linkCcy verbindet jedes Asset direkt mit
+  // seiner Waehrung: darueber laufen automatisch (a) die echten 10Y/2Y/
+  // Spread-Werte im Inflation-Kartenblock (macroCcyFor -> bond_data.json,
+  // dieselbe applyBondDataFeed()-Logik wie bei jeder Waehrung selbst), (b)
+  // die Bias-Ableitung ueber MACRO_DERIVE_RULES (alle vier Makro-Rubriken
+  // 'same' - siehe Kommentar dort) und (c) Risk Correlation ueber
+  // RISK_ENV_DEFAULT_DIR. EUR zeigt bewusst als "DE Yield": bond_data.json
+  // fuehrt fuer EUR den deutschen 10Y-Bund als Eurozone-Referenzwert
+  // (investing.com/rates-bonds/germany-10-year-bond-yield), "EU Yield" waere
+  // ein Aggregat vorgetaeuscht, das es in den Daten gar nicht gibt.
+  {id:'USYIELD',name:'US Yield',full:'US 10-Year Treasury Yield',bias:'neu',linkCcy:'USD',
+    genBull:mkR(['Persistent fiscal deficits keep Treasury issuance elevated – more supply pressures yields higher','Growing term premium as markets demand more compensation for long-duration US debt'],'bull'),
+    genBear:mkR(['Flight-to-quality demand in global risk-off phases keeps Treasuries structurally bid','Fed rate cuts pull the front end lower and can drag the 10Y down with it'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'DEYIELD',name:'DE Yield',full:'Germany 10-Year Bund Yield (EUR benchmark)',bias:'neu',linkCcy:'EUR',
+    genBull:mkR(['ECB historically further behind the tightening curve than the Fed','Rising Bund supply as EU fiscal rules loosen for defense/infrastructure spending'],'bull'),
+    genBear:mkR(['Germany\'s AAA rating and safe-haven status inside the Eurozone keep structural demand high','Weak Eurozone growth momentum caps how far yields can run'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'GBYIELD',name:'GB Yield',full:'UK 10-Year Gilt Yield',bias:'neu',linkCcy:'GBP',
+    genBull:mkR(['UK inflation has structurally run hotter than G10 peers, keeping gilt yields elevated','Heavy gilt issuance to fund the budget deficit pressures yields higher'],'bull'),
+    genBear:mkR(['BoE rate cuts as inflation cools pull gilt yields down','Safe-haven demand in global risk-off phases'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'CHYIELD',name:'CH Yield',full:'Switzerland 10-Year Bond Yield',bias:'neu',linkCcy:'CHF',
+    genBull:mkR(['SNB has less room to cut further given already very low policy rates'],'bull'),
+    genBear:mkR(['Switzerland\'s safe-haven status keeps structural demand for Swiss bonds high','SNB has historically kept rates near or below zero'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'JPYIELD',name:'JP Yield',full:'Japan 10-Year JGB Yield',bias:'neu',linkCcy:'JPY',
+    genBull:mkR(['BoJ policy normalization after decades of ultra-low rates is a structural upward driver','Yield Curve Control unwind removes an artificial cap on JGB yields'],'bull'),
+    genBear:mkR(['BoJ remains the most dovish major central bank by a wide margin','Deep structural deflationary pressures keep Japanese yields the lowest in G10'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'CAYIELD',name:'CA Yield',full:'Canada 10-Year Bond Yield',bias:'neu',linkCcy:'CAD',
+    genBull:mkR(['BoC tends to move in step with the Fed given deep economic integration – yields track US Treasuries closely'],'bull'),
+    genBear:mkR(['Heavy household debt makes the BoC more sensitive to cutting on growth wobbles'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'AUYIELD',name:'AU Yield',full:'Australia 10-Year Bond Yield',bias:'neu',linkCcy:'AUD',
+    genBull:mkR(['Commodity-exporter economy with structurally higher trend growth/inflation than G7 peers','RBA has historically held rates higher than most G10 peers'],'bull'),
+    genBear:mkR(['China-linked growth slowdowns quickly pull RBA rate expectations – and yields – lower'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
+  {id:'NZYIELD',name:'NZ Yield',full:'New Zealand 10-Year Bond Yield',bias:'neu',linkCcy:'NZD',
+    genBull:mkR(['RBNZ has historically run one of the highest policy rates in G10, keeping yields elevated'],'bull'),
+    genBear:mkR(['Small, open economy – RBNZ cuts aggressively and early when growth slows'],'bear'),
+    rubrics:mkRubs(),noteRubs:[],notes:''},
 ];
 
 // ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
@@ -8937,6 +9022,16 @@ const MACRO_DERIVE_RULES={
   SP500:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'same','Economic Growth':'same'},
   NAS:{Inflation:'inverse','Interest Rates':'inverse','Labour Market':'same','Economic Growth':'same'},
 };
+// Yields-Kategorie (Nutzer-Wunsch 2026-08-24, woertlich: "mach interest
+// rates bullish, inflation bullish, labourmarket bullish, economic groth
+// bullish") - alle vier Makro-Rubriken 'same': starke Daten (heisse
+// Inflation, robuster Arbeitsmarkt, hawkishe Zinserwartung, starkes
+// Wachstum) gelten fuer ein Yield-Asset als bullish, exakt wie fuer die
+// zugrundeliegende Waehrung selbst - ein Yield-Asset IST im Kern die
+// Zinserwartung dieser Waehrung.
+Object.keys(YIELD_CCY).forEach(id=>{
+  MACRO_DERIVE_RULES[id]={Inflation:'same','Interest Rates':'same','Labour Market':'same','Economic Growth':'same'};
+});
 function invertBias(b){return b==='bull'?'bear':b==='bear'?'bull':'neu';}
 // Effektive Auto-Bias-Regeln eines Assets: explizit gesetzte sym.deriveRules,
 // sonst die Vorgabe für die eingebauten Assets, sonst keine (alles manuell).
@@ -9077,6 +9172,11 @@ const RISK_ENV_DEFAULT_DIR={
   USD:'bullish',EUR:'bearish',GBP:'bearish',CHF:'bullish',JPY:'bullish',CAD:'bearish',AUD:'bearish',NZD:'bearish',
   BTC:'bearish',GOLD:'bullish',SILVER:'bearish',OIL:'bearish',SP500:'bearish',NAS:'bearish',
 };
+// Yields-Kategorie (Nutzer-Wunsch 2026-08-24, woertlich: "risk Sentiment
+// wenn das auf Full oder half steht ist das auch bullish") - 'bullish' heisst
+// in diesem System exakt das: der Regler-Wert wird bei Half/Full als
+// bullisch verbucht, bei None ohne Wirkung (siehe RISK_ENV_DIRS oben).
+Object.keys(YIELD_CCY).forEach(id=>{RISK_ENV_DEFAULT_DIR[id]='bullish';});
 // Migration (Nutzer-Wunsch 2026-07-13 abends): alte Werte 'normal'/'inverse'/
 // 'none' aus riskEnvCfg auf die neuen, semantisch korrigierten Namen heben -
 // 'normal' war "bullish bei Risk-On" = jetzt 'bearish' (Risk-Asset), 'inverse'
@@ -9554,7 +9654,23 @@ function sanitizeSnapIds(d){
   }
   return d;
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+// Neue eingebaute Assets (z.B. die Yields-Kategorie, VERSION-CHECK-444)
+// muessen auch bei einem bereits gespeicherten Snapshot automatisch
+// dazukommen. loadState() (der normale Boot-Pfad) macht das schon lange
+// ueber ein DEF.map(...find...)-Merge (siehe dort) - applySnap() (laut
+// CLAUDE.md-Grundsatz der EINE gemeinsame Trichter fuer Cloud-Sync/Undo-
+// Redo/Import) uebernahm syms bisher aber 1:1 aus dem Snapshot, ohne DEF je
+// wieder anzusehen. Ein Snapshot von VOR dieser Funktion (ein aelteres
+// Cloud-Geraet, ein Undo/Redo ueber die Einfuehrung hinweg) haette die neuen
+// Assets dadurch wieder entfernt. Nur ECHT FEHLENDE DEF-Eintraege (per id)
+// werden ergaenzt - nichts an vorhandenen/vom Nutzer veraenderten Symbolen
+// wird angefasst.
+function ensureBuiltinSyms(){
+  if(!Array.isArray(syms))return;
+  const have=new Set(syms.map(s=>s&&s.id));
+  DEF.forEach(d=>{if(!have.has(d.id))syms.push({...d});});
+}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureBuiltinSyms();(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -10427,7 +10543,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
-const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices',stock:'Stocks'};
+const CLS_CAT={fx:'FX',crypto:'Crypto',metal:'Metals',energy:'Energy',index:'Indices',stock:'Stocks',yield:'Yields'};
 // Berechnet die Sidebar-Kategorien (Standard-Kategorien + ggf. eigene
 // Symbole unter ihrer gewählten Kategorie bzw. "Custom").
 function computeSbCats(){
@@ -12193,8 +12309,8 @@ function summarizeGeneric(sym,rub){
     // er selbst neutral ist - sonst wuerde ein manuell gepinnter Bias
     // ("bullish") dem "kein Signal"-Satz widersprechen.
     return rub.bias==='neu'
-      ?`The ${topic} picture for ${sym.id} is currently neutral, with no indicator currently sending a clear signal.`
-      :`The ${topic} picture for ${sym.id} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
+      ?`The ${topic} picture for ${sym.name} is currently neutral, with no indicator currently sending a clear signal.`
+      :`The ${topic} picture for ${sym.name} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
   }
   // Erwartungs-Verdikt: nur ueber Eintraege mit echtem Forecast-Vergleich.
   const beats=infos.filter(i=>i.verdict==='beat').length;
@@ -12263,7 +12379,7 @@ function summarizeGeneric(sym,rub){
     else context.push(fam);
   });
   const subj=anchorClause?`the ${topic} picture`:`The ${topic} picture`;
-  let out=`${anchorClause}${subj} for ${sym.id} is currently ${trendWord}${expClause}`;
+  let out=`${anchorClause}${subj} for ${sym.name} is currently ${trendWord}${expClause}`;
   // "driven mainly by" liest sich nur sinnvoll, wenn die Treiber wirklich
   // eine MINDERHEIT der Familien sind (z.B. 2 von 5 bei der Inflation-Karte).
   // Haben fast alle Familien eine echte Forecast-Ueberraschung (haeufig bei
@@ -12398,7 +12514,7 @@ function assetVerdictClause(sym,rub,topic,drivers){
     // durch das bestehende deriveMacroBiasAll() (selbe same/inverse-Regel)
     // asset-angepasst - ein zweites Anwenden wuerde doppelt invertieren.
     const word=assetBiasWord(sign);
-    return word?`On balance, that makes the ${topic} data ${word} for ${sym.id}`:'';
+    return word?`On balance, that makes the ${topic} data ${word} for ${sym.name}`:'';
   }
   const neg=drivers.filter(d=>d.sign<0),pos=drivers.filter(d=>d.sign>0);
   if(!neg.length&&!pos.length)return'';
@@ -12411,7 +12527,7 @@ function assetVerdictClause(sym,rub,topic,drivers){
   const clauses=[];
   if(neg.length)clauses.push(`${list(neg.map(d=>d.label))} lean${isPlural(neg)?'':'s'} ${negWord}`);
   if(pos.length)clauses.push(`${list(pos.map(d=>d.label))} lean${isPlural(pos)?'':'s'} ${posWord}`);
-  return`On balance the read is mixed for ${sym.id} — ${clauses.join(', while ')}`;
+  return`On balance the read is mixed for ${sym.name} — ${clauses.join(', while ')}`;
 }
 const HOTCOLD_WORDS={pos:'hotter than expected','partly-pos':'partly hotter than expected',neutral:'in line with expectations','partly-neg':'partly softer than expected',neg:'softer than expected',mixed:'mixed'};
 // Trend-basierter Fallback fuer PMIs/Retail Sales OHNE Forecast (Nutzer-
@@ -12471,8 +12587,8 @@ function noSignalFallback(sym,rub){
   const topic=(rub.name||'this card').toLowerCase();
   const biasWord=rub.bias==='bull'?'bullish':rub.bias==='bear'?'bearish':'neutral';
   return rub.bias==='neu'
-    ?`The ${topic} picture for ${sym.id} is currently neutral, with no indicator currently sending a clear signal.`
-    :`The ${topic} picture for ${sym.id} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
+    ?`The ${topic} picture for ${sym.name} is currently neutral, with no indicator currently sending a clear signal.`
+    :`The ${topic} picture for ${sym.name} is currently marked ${biasWord}, though no individual indicator is currently sending a clear signal.`;
 }
 function summarizeInflation(sym,rub){
   const headline=findIndByBase(rub,'CPI (Headline)'),core=findIndByBase(rub,'Core CPI');
@@ -12710,7 +12826,7 @@ function summarizeCot(sym,rub){
 function summarizeRiskEnv(sym,rub){
   const levelWord=riskEnvLevel>=2?'a full risk-off environment':riskEnvLevel>=1?'a half risk-off environment':'a calm, low-risk environment';
   const dir=riskEnvDirOf(sym.id);
-  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.id}`:dir==='bullish'?`bullish for ${sym.id}`:`bearish for ${sym.id}`;
+  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.name}`:dir==='bullish'?`bullish for ${sym.name}`:`bearish for ${sym.name}`;
   let sentence=`Risk sentiment is currently ${levelWord}, ${effect}.`;
   // "Geopolitics" gibt es nur noch bei FX-Waehrungen (Nutzer-Wunsch 2026-07-21:
   // "Sag einfach das political uncertainty bullish oder bearish für die
@@ -12719,7 +12835,7 @@ function summarizeRiskEnv(sym,rub){
   // Badge-Text-Widerspruch strukturell, da beide Saetze rein additiv jeweils
   // ihr EIGENES Signal beschreiben, keiner behauptet ein Gesamt-Fazit).
   const geo=findIndByBase(rub,'Geopolitics');
-  if(geo&&(geo.bias==='bull'||geo.bias==='bear'))sentence+=` Political uncertainty is currently ${geo.bias==='bull'?'bullish':'bearish'} for ${sym.id}.`;
+  if(geo&&(geo.bias==='bull'||geo.bias==='bear'))sentence+=` Political uncertainty is currently ${geo.bias==='bull'?'bullish':'bearish'} for ${sym.name}.`;
   return sentence;
 }
 const RUB_SUMMARIZERS={
@@ -15034,11 +15150,32 @@ const ASSET_QUICK_LINKS=[
 function assetQuickGo(tabId){
   const c=getSym();if(!c)return;
   const id=c.id;
-  if(tabId==='seas')setSeasAsset(id);
-  else if(tabId==='trends')setTrendsFilter(id);
-  else if(tabId==='cot')pickCotFilter(id);
-  else if(tabId==='data')setDataAsset(id);
-  else if(tabId==='news')setNewsAsset(id);
+  // Die Yields-Kategorie hat in diesen fuenf Datensystemen keine eigenen
+  // Eintraege (kein COT-Kontrakt, keine Preis-/Seasonality-Historie, keine
+  // eigenen News/Kalender-Events unter "US Yield" etc.) - anders als GOLD/
+  // BTC/DAX, die dort echte eigene Daten haben und deshalb weiter mit ihrer
+  // eigenen ID verlinken. Fuer Yields zeigt der Klick stattdessen die Daten
+  // der verknuepften Waehrung (Nutzer-Wunsch 2026-08-24: "die quicklinks
+  // fuehren dann auch einfach zu den Daten wo dann die verknuepfte Waehrung
+  // ausgewaehlt ist").
+  const dataId=assetCls(id)==='yield'?macroCcyFor(id):id;
+  if(tabId==='seas')setSeasAsset(dataId);
+  else if(tabId==='trends')setTrendsFilter(dataId);
+  else if(tabId==='cot')pickCotFilter(dataId);
+  else if(tabId==='data')setDataAsset(dataId);
+  else if(tabId==='news')setNewsAsset(dataId);
+  // Nutzer-Audit 2026-08-24 ("Check das nochmal ob das ueberall so ist"):
+  // drei der acht Schnellzugriffe waren bisher gar nicht vorgefiltert -
+  // Sentiment/Rate Probabilities/Calendar fielen einfach auf showTab(tabId)
+  // ohne jede Auswahl zurueck. Alle drei sind ohnehin reine Waehrungs-
+  // Konzepte (Zinserwartung, Kalender-Events sind an Waehrungen geknuepft,
+  // nicht an einzelne Assets) - macroCcyFor(id) loest fuer eine FX-Waehrung
+  // auf sich selbst auf, fuer jedes verknuepfte Nicht-FX-Asset (Gold/Indizes/
+  // Yields/...) auf seine Waehrung, exakt wie es researchTimelineHtml schon
+  // fuer die Research-Terminal-Timeline macht.
+  else if(tabId==='rate')setRateProbCcy(macroCcyFor(id));
+  else if(tabId==='cal')setCalCcyFilter(macroCcyFor(id));
+  else if(tabId==='sent'){setSentSub('putcall');setPcAsset(macroCcyFor(id));}
   _resReturnActive=true;_quickReturnAssetId=id;
   document.body.classList.add('res-return-active');
   setBackPillTitle(`Back to ${c.name}`);
@@ -18964,7 +19101,8 @@ let cotRefreshing=false;
 let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
 const COT_SYMS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
-const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq'};
+const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq',
+  USYIELD:'US Yield',DEYIELD:'DE Yield',GBYIELD:'GB Yield',CHYIELD:'CH Yield',JPYIELD:'JP Yield',CAYIELD:'CA Yield',AUYIELD:'AU Yield',NZYIELD:'NZ Yield'};
 // Lokaler Cache der zuletzt gesehenen Historie. Die stuendlich geschriebene
 // cot_data.json kann (z.B. direkt nach diesem Feature-Rollout, oder wenn der
 // Cron-Job mal ausfaellt) noch keine/weniger Historie enthalten als bereits

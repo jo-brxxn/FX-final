@@ -1075,7 +1075,7 @@ eine Liste in benannte Gruppen aufteilt — dieselbe Rolle wie `.np-cat-l`:
 
 | Klasse | Wo | Gruppiert |
 |---|---|---|
-| `.np-cat-l` | Assets-Stapel | FX / Crypto / Metals / Energy / Indices |
+| `.np-cat-l` | Assets-Stapel | FX / Crypto / Metals / Energy / Indices / Yields |
 | `.search-grp` | Sucher-Modal | Assets / Indicators / Events / Tabs |
 | `.mover-group-hdr` | Dashboard-Widget | Gainers / Losers |
 | `.res-lib-sec` | Research-Bibliothek | Topics / Assets |
@@ -1090,6 +1090,67 @@ Spalte/ein Feld/einen Abschnitt, gruppieren aber keine Liste. Nur Labels mit
 exakt der `.np-cat-l`-Rolle bekommen die Kursivierung. Wer ein neues
 Gruppierungslabel baut, das eine Liste ähnlich aufteilt: hier eintragen und
 `font-style:italic` ergänzen, statt eine neue Konvention zu erfinden.
+
+### Neue Kategorie „Yields" (2026-08-24)
+
+Nutzer-Wunsch: *„Füg bitte yields als neue Asset Kategorie hinzu. Mach auch
+schon die Assets darein."* Ein Asset pro FX-Major (`US/DE/GB/CH/JP/CA/AU/NZ
+Yield`, ids z.B. `USYIELD`), benannt wie TradingViews Bond-Ticker, nur ohne
+die Laufzeitzahl und mit „Yield" statt der Ziffer dahinter (`DE10Y` →
+„DE Yield"). EUR bekommt bewusst „DE Yield" statt „EU Yield": `bond_data.json`
+führt für EUR den deutschen 10Y-Bund als Eurozone-Referenz (Quelle:
+investing.com/germany-10-year-bond-yield) — „EU Yield" würde ein Aggregat
+vortäuschen, das in den Daten nicht existiert.
+
+**Kein neues Daten-/Score-System** — jedes Yield-Asset ist ein ganz normales,
+per `linkCcy` an seine Währung gebundenes Asset, exakt wie GOLD/DAX/GER100
+das schon vorher waren (siehe `docs/score-model.md` „6 → 7"-Eintrag für die
+Score-Seite). `linkCcy` allein zieht darüber automatisch die echten
+10Y/2Y/Spread-Werte, die Makro-Kartentexte und die COT-/Preishistorie-Leere
+(kein COT-Kontrakt für eine Rendite) nach — nichts davon ist Yields-
+spezifischer Code.
+
+**Icon:** `AI_GLYPHS`/`AI_SYMBOLS` bekommen die 8 Yield-ids als
+`scale(.78)`-verkleinerte Kopie der bestehenden Währungs-Flagge plus ein
+eigenes Anleihe-Abzeichen (Ticket-Umriss, zwei Linien) im frei werdenden
+Eck unten rechts — keine einzige bestehende Flaggen-Koordinate wurde dafür
+angefasst, nur die ganze Zeichnung als Gruppe transformiert.
+
+**Quicklinks zeigen die verknüpfte Währung, nicht die Yield-ID selbst:**
+`assetQuickGo()` löst für `assetCls(id)==='yield'` bei den fünf "eigene
+Daten"-Zielen (Seasonality/Trends/COT/Data/News) auf `macroCcyFor(id)` auf,
+weil diese Systeme unter `USYIELD` keine eigenen Einträge kennen (anders als
+GOLD/BTC/DAX, die dort echte eigene Daten haben und weiter mit ihrer eigenen
+ID verlinken).
+
+**Nebenbefund beim Testen — Quicklink-Audit:** *„generell bei den quicklinks
+wenn man die von den Assets benutzt ist teilweise nicht schon die Währung
+ausgewählt"*. Stimmte: von den 8 `ASSET_QUICK_LINKS` waren `sent`/`rate`/
+`cal` bei JEDEM Asset (nicht nur Yields) nie vorgefiltert — sie fielen auf
+`showTab(tabId)` ohne jede Auswahl zurück. Fix betrifft alle Assets
+gleichermaßen: `rate`/`cal` rufen jetzt `setRateProbCcy`/`setCalCcyFilter`
+mit `macroCcyFor(id)` auf (für eine FX-Währung identisch mit sich selbst),
+`sent` wechselt zusätzlich auf den Put/Call-Unterreiter und setzt `pcAsset`.
+
+**Nebenbefund beim Testen — Karten-Zusammenfassungen zeigten die ID:**
+mehrere Text-Bausteine in der Zusammenfassungs-Engine (`assetVerdictClause`,
+`noSignalFallback`, `summarizeGeneric`, die Risk-Environment-Sätze) bauten
+`for ${sym.id}` statt `for ${sym.name}` — bei FX/GOLD/BTC unsichtbar (id ==
+Name), bei GER100 leise falsch (“for GER100” statt „for GER 100”), bei den
+neuen Yields deutlich sichtbar (“for USYIELD”). Alle 8 Stellen auf
+`sym.name` korrigiert.
+
+**Cross-Device-Sync für bereits gespeicherten Zustand:** `loadState()` (der
+normale Boot-Pfad) merged fehlende `DEF`-Einträge schon lange automatisch in
+gespeicherte `syms` (`DEF.map(def => saved-Version || {...def})`) — neue
+eingebaute Assets erscheinen dadurch von selbst bei jedem Reload, auch ohne
+eigene Sync-Logik. `applySnap()` (der gemeinsame Trichter für Cloud-Sync/
+Undo-Redo/Import) hatte diesen Mechanismus aber NICHT — ein alter Snapshot
+hätte die neuen Assets dort stillschweigend wieder entfernt. Neue Funktion
+`ensureBuiltinSyms()` schließt diese Lücke (nur echt fehlende `DEF`-ids
+werden ergänzt, nichts an vorhandenen/vom Nutzer veränderten Symbolen
+angefasst) — beide Pfade getestet (simulierter Reload mit entfernten Yields,
+direkter `applySnap()`-Aufruf mit entferntem Snapshot).
 
 ### Warum kein Eintrag in `tabStacks`
 

@@ -232,3 +232,21 @@ Aufrufe sehen in dieser Codebasis nie so aus). **Merksatz:** bei jedem
 kuenftigen Falsch-Alarm von `rules.js` erst pruefen, ob es ein ECHTER
 Score-Bezug ist, bevor man `SCORE_MODEL_VERSION` bumpt - ein unnoetiger
 Bump schadet genauso wie ein vergessener, nur in die andere Richtung.
+
+**6 → 7 (2026-08-24, neue Yields-Asset-Kategorie):** `isNonFx()` bekam eine
+neue Klasse (`'yield'`) fuer die 8 neuen Yield-Assets (siehe `docs/
+navigation.md` fuer die Assets-Stapel-Seite dieser Aenderung) -
+`check/rules.js` flaggte das automatisch als Score-Formel-Aenderung
+(`isNonFx` ist Teil der Ableitungs-Kette `rubAutoDerived`/
+`deriveMacroBiasAll`), `check/scorediff.js` zaehlte 72 geaenderte Stellen.
+**Wichtig fuer kuenftiges Nachvollziehen:** das ist KEINE Formel-Aenderung
+fuer irgendein BESTEHENDES Asset - `isNonFx('USD')`/`isNonFx('GOLD')` etc.
+liefern exakt wie vorher `false`/`true`, die 72 Stellen sind ausschliesslich
+die neu hinzugekommenen Yield-Assets selbst (die vorher schlicht nicht
+existierten, also auch keine "alte Rechnung" hatten, mit der man sie
+verwechseln koennte). Trotzdem gebumpt, weil `rules.js` als Waechter hier
+bewusst konservativ ist (siehe Merksatz oben) und ein neuer, echter
+Eintrag in der Ableitungs-Kette (`MACRO_DERIVE_RULES`/`RISK_ENV_DEFAULT_DIR`
+je 8 neue Eintraege) grundsaetzlich score-relevant genug ist, um im Zweifel
+zu bumpen statt zu riskieren, dass eine kuenftige echte Aenderung an
+`isNonFx()` faelschlich als "schon mal genehmigt" durchgewunken wird.
