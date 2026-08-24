@@ -187,3 +187,43 @@ nur als schmale Kante oder Punkt, nie als Zahlenfarbe.
 `theme-color` (Meta), `manifest.json` und `--chrome-bg` müssen denselben Wert
 tragen. Bei Änderung zusätzlich `CACHE_VERSION` in `sw.js` erhöhen, sonst
 liefert der Service Worker das alte Manifest weiter (Cache-First-Zweig).
+
+### Kopfzeile: tiefes Blau als EINE Akzentfarbe (Nutzer-Wunsch 2026-08-23)
+
+FX-Logo, Profil-Kreis (immer, nicht nur mit Sync-Initialen) und die aktive
+Tab-/Asset-Markierung in der Navigationsleiste tragen alle `var(--blue)`
+(`#0B5FCC`) — bewusst **eine** Variable, nicht drei separate Literale.
+
+⚠ Kehrt eine frühere, dokumentierte Entscheidung um: die Auswahl-Markierung
+in `.hdr`/`#navSidebar` war absichtlich **Cyan** (`--accent`), nicht Blau,
+damit sie nicht mit der bullish-Bias-Farbe kollidiert (Blau ist sonst
+überall die Farbe für „bullish"). Der Nutzer wollte das jetzt ausdrücklich
+so — Wert selbst gesetzt, nicht spekuliert. Umgesetzt über eine **gescopte**
+Variable, nicht durch Ändern von `BC` oder `--blue` selbst:
+
+```css
+.hdr,#navSidebar{ --accent:var(--blue); /* … */ }
+```
+
+Das trifft **nur** `.np.on` (aktiver Tab) und `#navSidebar .ab.np-asset.on`
+(aktive Asset-Zeile im Stapel) — beides referenziert `var(--accent)` und
+liegt innerhalb dieser beiden Container. Bias-Farben im **Inhalt** (Karten,
+Score-Zahlen, Actual-Werte) bleiben unberührt: die laufen über `BC`/root
+`--accent`, nicht über diese gescopte Variable.
+
+**Kontrast bewusst niedriger als sonst gefordert:** `#0B5FCC` auf dem
+Header-Grund `#2A3757` liegt nur bei ~2:1 (gegen die hellere Hover-Fläche
+`--bg4` sogar ~1,6:1) — deutlich unter der AA-Regel weiter oben in diesem
+Dokument. Das ist hier **kein Fehler**: eine Auswahl-Markierung ist kein
+Fließtext, die AA-Kontrastregel gilt für Text gegen seinen Hintergrund. Der
+Effekt kommt aus dem Sättigungs-/Farbton-Unterschied (kräftiges Sattblau auf
+gedecktem Blaugrau), nicht aus Helligkeitskontrast — geprüft per Screenshot,
+nicht nur per Zahl.
+
+Suchleiste + Status-Cluster, gleicher Anlass: `.hdr-search` ist jetzt fest
+`320px` (vorher `flex:1;max-width:480px` — wuchs auf den gesamten freien
+Platz). `.hdr-status` (Saved/Offline/LIVE/VERSION-CHECK) bekam `flex:1` +
+`justify-content:center` und zentriert sich dadurch im so frei gewordenen
+Platz. Bleibt ein echtes Flex-Kind im normalen Fluss — **keine** absolute
+Positionierung, das führte früher auf schmalen Screens zu Überlappungen mit
+Undo/Redo bzw. dem Alarm-Zähler.

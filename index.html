@@ -156,16 +156,31 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
    in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
    einheitlich eingefaerbten Wortmarke. */
 .logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
-.logo-fx{font-weight:900;color:var(--t0);font-size:1.15em;letter-spacing:.5px}
+/* "FX" tritt in einem tiefen, kraeftigen Blau hervor (Nutzer-Wunsch
+   2026-08-23) - derselbe Farbton wie der Profil-Kreis und die aktive
+   Tab-/Asset-Markierung (siehe --blue-Wiederverwendung unten), damit die
+   Kopfzeile EINE konsistente Akzentfarbe hat statt mehrerer Blautoene. */
+.logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
 .logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 /* Suchfeld links neben dem Logo (Koyfin-Referenz-Screenshot, Nutzer-Wunsch
    2026-08-21) statt eines Icon-Buttons rechts - oeffnet beim Klick weiterhin
    dasselbe #mSearch-Modal, nur die Einstiegsstelle ist jetzt prominent und
-   links. */
-.hdr-search{flex:1;min-width:0;max-width:480px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
+   links.
+   Schmaler + nicht mehr wachsend (Nutzer-Wunsch 2026-08-23: "mach die
+   suchleiste schmaler") - vorher flex:1 mit max-width:480px, das Suchfeld
+   hat sich also den gesamten freien Platz zwischen Logo und Status-Cluster
+   genommen. Jetzt eine feste, kleinere Breite; den frei werdenden Platz
+   bekommt .hdr-status (siehe dort), das LIVE/VERSION-CHECK darin zentriert. */
+.hdr-search{flex:0 1 320px;min-width:0;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
 @media (hover:hover){.hdr-search:hover{border-color:var(--bd2);color:var(--t1)}}
 .hdr-search-lbl{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ff-text)}
-.hdr-status{flex-shrink:1;min-width:0;display:flex;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
+/* flex:1 statt flex-shrink:1 - der Cluster (Saved/Offline/LIVE/VERSION-
+   CHECK) waechst jetzt in den durch das schmalere Suchfeld frei gewordenen
+   Platz und wird darin zentriert (Nutzer-Wunsch 2026-08-23: "zentrier das
+   live und den versioncheck"). Bleibt dabei ein echtes Flex-Kind im
+   normalen Fluss - siehe Kommentar bei .hdr-livebanner weiter unten, warum
+   NICHT absolut positioniert wird (Ueberlapp-Risiko auf schmalen Screens). */
+.hdr-status{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;white-space:nowrap}
 .saved{flex-shrink:0;font-size:11px;color:var(--success);font-family:var(--ff-num)}
 .net-status{flex-shrink:0;font-size:11px;color:var(--amber);font-family:var(--ff-num)}
 .hdr-r{flex-shrink:0;margin-left:auto;display:flex;gap:5px;align-items:center}
@@ -184,12 +199,20 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
    @media(max-width:760px)-Sonderregel fuer Kreis/Name ist dadurch
    ueberfluessig geworden und entfernt. */
 .profile-btn{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+/* Kreis durchgehend im tiefen Blau (Nutzer-Wunsch 2026-08-23), nicht mehr
+   nur wenn Initialen bekannt sind - vorher war der Grundzustand (kein Sync
+   eingerichtet, nur das Personen-Icon) neutralgrau (--bg5). color:#fff
+   sorgt dafuer, dass sowohl das SVG-Icon (stroke="currentColor") als auch
+   spaeter eingesetzte Initialen (.ini, direkt darunter) auf dem Blau lesbar
+   bleiben. */
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{display:none}
 /* Initialen im Profil-Kreis (statt generischem Personen-Icon), sobald ein
-   Sync-Name bekannt ist - siehe updProfile(). */
-.profile-circle.ini{font-size:13px;font-weight:800;letter-spacing:.5px;color:#fff;background:var(--blue)}
+   Sync-Name bekannt ist - siehe updProfile(). Hintergrund erbt jetzt von
+   .profile-circle oben (dieselbe Blau-Flaeche), hier nur noch die
+   Text-spezifischen Eigenschaften. */
+.profile-circle.ini{font-size:13px;font-weight:800;letter-spacing:.5px}
 .profile-circle svg{width:16px;height:16px}
 /* Einheitliches Inline-SVG-Icon-Set (statt Emojis): erbt currentColor,
    sitzt optisch auf der Textlinie der Buttons. */
@@ -1161,7 +1184,18 @@ body.res-return-active .rterm-back-pill{display:flex}
   --t0:#F2F5FC;--t1:#CBD5E8;--t2:#94A3C0;--t3:#93A1BE;
   --bg1:#2A3757;--bg2:#2A3757;--bg3:#2E3C5E;--bg4:#35456B;
   --bd:rgba(160,190,235,.16);--bd2:rgba(160,190,235,.26);
-  --accent:#3FA9CC;--live:#FF6B63;--success:#34D399;
+  /* War Cyan (#3FA9CC), extra bewusst NICHT Blau gewaehlt (siehe alte
+     Fassung dieses Kommentars/Git-Historie): Blau ist im ganzen Rest der
+     App die Bias-Farbe "bullish", und als Auswahl-Markierung verwendet
+     machte das die Zahlenfarbe mehrdeutig. Nutzer-Wunsch 2026-08-23 kehrt
+     das ausdruecklich um ("die Auswahl-Hervorhebung auch in diesem
+     dunkelblau") - --accent ist NUR innerhalb von .hdr/#navSidebar
+     ueberschrieben (aktiver Tab .np.on, aktive Asset-Zeile
+     #navSidebar .ab.np-asset.on, Done-Knopf), Bias-Farben im Inhalt bleiben
+     unberuehrt, da dort weiter der root --accent (#2E8FB0) bzw. BC gilt.
+     var(--blue) statt eines neuen Literals - derselbe Ton wie FX-Logo und
+     Profil-Kreis, EINE Akzentfarbe statt mehrerer. */
+  --accent:var(--blue);--live:#FF6B63;--success:#34D399;
   color:var(--t0);
 }
 /* Schnellzugriffe + Notes-Karte. Das 4-Spalten-Raster mit gleich breiten
@@ -3617,11 +3651,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-437 - Die Asset-Zeilen im Assets-Stapel zeigen jetzt NUR noch den Namen, davor ein einfarbiges Icon: Score und Richtungspfeil sind raus, der Score steht weiter im Tooltip. Die Icons sind ein eigener, bewusst reduzierter Satz (AI_GLYPHS/assetGlyphHtml) - der farbige, animierte Satz AI_FLAGS/AI_SYMBOLS bleibt unangetastet und steht weiter im Asset-Kopf und auf der Dashboard-Karte. WARUM EIN ZWEITER SATZ UND NICHT DER ALTE OHNE FARBEN: die Flaggen bestehen aus farbigen Flaechen; zwingt man sie auf eine Farbe, wird aus den USA ein gefuelltes Rechteck und aus Japan dasselbe - genau die Unterscheidbarkeit geht verloren. Jede Flagge ist deshalb neu als GEOMETRIE gezeichnet (Sternenfeld plus Streifen, Sternenkreis, Union-Jack-Kreuze, Schweizerkreuz, Sonnenscheibe, Ahornblatt, Kreuz des Suedens), dazu Barrenstapel fuer Gold, ein einzelner Barren fuer Silber, Tropfen fuer Oel, Muenze fuer BTC und ein Kursverlauf fuer alle Indizes. Alles in currentColor, keine Verlaeufe, keine Animation. ⚠ Bei 17px ist eine SVG-Einheit nur ~0,7px breit: Linien duenner als etwa 1,8 Einheiten fallen unter ein Geraetepixel - die erste Fassung mit 5 USD-Streifen und 11 EU-Sternen war bei 15px nur noch ein Fleck und wurde vergroebert. Die Kategorien (FX, Crypto ...) sind ausserhalb des Bearbeitungsmodus komplett unsichtbar - weder Ueberschrift noch Abstand, eine durchgehende Liste. Intern existiert die Gruppierung weiter, sie steuert nur noch Reihenfolge und Sortieren. Im Bearbeitungsmodus kommen die Ueberschriften zurueck, sonst waere nicht erkennbar, WAS die Pfeile dort verschieben. Und die Liste faerbt NICHT mehr nach Bias, sondern in den normalen Leisten-Farben (Nutzer-Wunsch): ausgewaehlt sieht sie aus wie ein aktiver Tab, mit Cyan-Balken links. Damit entfallen BC_NAV/navBiasCol wieder, und der Score-Sync hat fuer die Leiste gar nichts mehr zu tun."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-438 - Kopfzeile: vier Nutzer-Wuensche. (1) FX-Logo, Profil-Kreis und die aktive Tab-/Asset-Markierung in der Navigationsleiste tragen jetzt dieselbe tiefe, kraeftige Blau-Flaeche (var(--blue), #0B5FCC) statt vorher drei verschiedener Toene (t0-weiss fuers Logo, --bg5-Grau fuer den Kreis ohne Initialen, Cyan-Accent fuer die Auswahl). Der Profil-Kreis ist jetzt IMMER blau, nicht mehr nur wenn Sync-Initialen bekannt sind. Die Auswahl-Hervorhebung (aktiver Tab UND aktive Asset-Zeile im Stapel) bekommt ihr Blau ueber eine gescopte --accent-Ueberschreibung NUR innerhalb von .hdr/#navSidebar (var(--accent):var(--blue)) - Bias-Farben im Inhalt bleiben unberuehrt, dort gilt weiter der root-Accent bzw. BC. Kehrt damit eine fruehere, dokumentierte Entscheidung um (Cyan statt Blau, um Verwechslung mit der bullish-Bias-Farbe zu vermeiden) - jetzt ausdruecklicher Nutzer-Wunsch. (2) Die Suchleiste ist schmaler (vorher flex:1 mit max-width 480px, jetzt eine feste Breite von 320px, kein Wachsen mehr). (3) Der dadurch frei werdende Platz geht an den Saved/LIVE/VERSION-CHECK-Cluster, der jetzt darin zentriert ist (.hdr-status bekam flex:1 und justify-content:center) - bleibt dabei ein echtes Flex-Kind im normalen Fluss, keine absolute Positionierung (Ueberlapp-Risiko auf schmalen Screens, siehe aeltere Kommentare).""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-437</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-438</span>
     </span>
   </div>
   <div class="hdr-r">

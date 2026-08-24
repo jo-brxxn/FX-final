@@ -6885,3 +6885,52 @@ gemessen gleich** (1px, keine Kategorie-Luecke); die Reihenfolge folgt
 weiterhin der Kategorie-Sortierung; im Bearbeitungsmodus kommen die 5
 Ueberschriften und 42 Sortierknoepfe zurueck. Dazu 3x-Screenshot aller 16
 Icons auf dem Chrome-Grund. `node check/all.js` gruen (12 Waechter).
+
+## 2026-08-23 — Kopfzeile: tiefes Blau, schmalere Suche, zentriertes Live/Version (VERSION-CHECK-438)
+
+Nutzer-Wunsch: *„heb das FX in fx Analyst pro in einem tiefen kräftigen
+dunklem blau heraus und mach auch den Kreis mit den Initialen oben rechts in
+der Farbe und mach die suchleiste schmaler und zentrier das live und den
+versioncheck. Und wenn man eine Kategorie auswählt wird die ja so
+hervorgehoben mach das auch in diesem dunkelblau"*.
+
+**Vier Änderungen, eine Variable.** FX-Logo, Profil-Kreis (jetzt immer blau,
+nicht nur mit Sync-Initialen — vorher `--bg5`-Grau im Ruhezustand) und die
+Auswahl-Markierung (aktiver Tab + aktive Asset-Zeile im neuen Stapel) tragen
+alle `var(--blue)` (`#0B5FCC`). Die Auswahl-Markierung läuft über eine
+gescopte `--accent`-Überschreibung (`.hdr,#navSidebar{--accent:var(--blue)}`),
+nicht über eine neue Klasse — trifft dadurch automatisch beide Stellen
+(`.np.on`, `#navSidebar .ab.np-asset.on`), ohne dass Bias-Farben im Inhalt
+betroffen sind.
+
+⚠ **Kehrt eine dokumentierte Vorentscheidung um.** Die Markierung war
+bewusst Cyan, nicht Blau — Kommentar im Code seit dem dunklen Redesign:
+„Blau ist im ganzen Rest der App die Bias-Farbe bullish, es als
+Auswahl-Markierung zu verwenden macht die Zahlenfarbe mehrdeutig." Nutzer hat
+das jetzt ausdrücklich so gewollt; Kommentar in `index.html` und
+`docs/design-system.md` aktualisiert, damit die nächste Session weiß, dass
+das eine bewusste Umkehr ist, kein übersehener Grundsatz.
+
+**Kontrast unterhalb der sonst geforderten AA-Schwelle, absichtlich.**
+`#0B5FCC` auf dem Header-Grund `#2A3757` misst nur ~2:1 (gegen `--bg4` sogar
+~1,6:1) — das Dokument verlangt sonst ≥4,5:1 für Text. Hier gilt das nicht:
+eine Auswahl-Markierung (Balken + Kreisfläche) ist kein Fließtext, und der
+Effekt kommt aus Sättigung/Farbton, nicht aus Helligkeit — per Screenshot
+geprüft (sichtbar deutlich abgesetzt), nicht nur per Zahl behauptet.
+
+**Suchleiste + Live/Version-Cluster:** `.hdr-search` von `flex:1;max-width
+480px` auf feste `320px` verkleinert; `.hdr-status` bekam `flex:1` +
+`justify-content:center` und zentriert sich im so frei werdenden Platz.
+Bleibt echtes Flex-Kind — keine absolute Positionierung, das führte laut
+älterem Kommentar auf schmalen Screens zu Überlappungen mit Undo/Redo bzw.
+dem Alarm-Zähler.
+
+**Geprüft:** Kontrast/Farbwerte gemessen (Python, sRGB-Luminanz) statt
+geschätzt; Playwright-Probe bestätigt `getComputedStyle` an allen vier
+Stellen (`.logo-fx`, `#profileCircle`, `.np.on`-Rand/-Icon,
+`#navSidebar .ab.np-asset.on`-Rand) exakt `rgb(11, 95, 204)`; Screenshots von
+Kopfzeile (1440px und 1600px) und Navigationsleiste (Dashboard aktiv, Assets
+mit ausgewähltem USD) — Logo, Kreis und beide Auswahl-Zustände sichtbar
+deutlich abgesetzt, Suchleiste sichtbar schmaler, Live/Version-Cluster
+sichtbar mittiger als vorher. `node check/all.js` komplett grün (12 Wächter,
+inkl. `scorediff` — keine Score-Funktion angefasst, reines CSS).
