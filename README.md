@@ -2,8 +2,24 @@
 
 Single-file web app (`index.html`) for discretionary FX / macro analysis: per-currency
 indicator scoring, COT, sentiment, seasonality, rate probabilities and more. Data JSONs
-are produced hourly by the GitHub Actions workflow `.github/workflows/update-ff-calendar.yml`
-and served via GitHub Pages.
+are produced hourly by the GitHub Actions workflow `.github/workflows/update-ff-calendar.yml`.
+
+**Live deploy is a Cloudflare Worker** (`fx-final.jonathan-fa5.workers.dev`, behind
+Cloudflare Access) — **not** GitHub Pages. `jo-brxxn.github.io/FX-final/` exists as an
+unprotected secondary mirror, served straight from `main`. `index.html` tells the two
+apart at runtime (`DATA_BASE` in `index.html`, `const SK='fxpro_v1'` section): on
+`github.io`/`localhost` it fetches the data JSONs same-origin (relative path); on every
+other hostname — including the Worker — it fetches them from
+`raw.githubusercontent.com` directly, since the Worker serves a static snapshot instead
+of rebuilding on every hourly data push.
+
+**⚠ This means the data JSONs must stay world-readable via GitHub's raw endpoint.** If
+the repo is made private, `raw.githubusercontent.com` starts rejecting the browser's
+anonymous fetch and the Worker-hosted app goes blank (no calendar, no indicators, no
+prices) even though the Worker itself keeps running — it just has no code path to fetch
+authenticated data from a private repo without embedding a token in client-side JS
+(which would defeat the point of making it private). Full writeup:
+`docs/CHANGELOG.md`, "Wo die App tatsaechlich liegt".
 
 ## How Claude communicates with the user (IMPORTANT)
 
