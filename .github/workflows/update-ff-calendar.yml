@@ -1398,11 +1398,12 @@ jobs:
               // anderes Ding als die beiden Unternehmens-/Analystenumfragen
               // oben, daher volles Gewicht.
               {ind:"Sentix Investor Confidence",period:null,test:(t,c)=>c==="EUR"&&/sentix/.test(t)},
-              {ind:"NFIB Small Business Optimism",period:null,test:(t,c)=>c==="USD"&&/nfib|small business optimism/.test(t)},
+              // NFIB Small Business Optimism und Leading Index (beide USD)
+              // auf Nutzer-Wunsch 2026-08-24 entfernt - App-seitig siehe
+              // RUB_IND_REMOVE in index.html.
               // Inflationserwartung der Verbraucher - eigenes Fed-Argument,
               // gehoert in die Inflation-Karte, nicht zur Stimmungsumfrage.
               {ind:"Inflation Expectations",period:null,test:(t,c)=>c==="USD"&&/michigan/.test(t)&&/inflation expectation/.test(t)&&!/5|long/.test(t)},
-              {ind:"Leading Index",period:null,test:(t,c)=>c==="USD"&&/leading (economic )?index/.test(t)},
               // NZD: ausdruecklich die Westpac-Reihe (nicht ANZ-Roy Morgan).
               {ind:"Consumer Confidence",period:null,test:(t,c)=>c==="NZD"&&/westpac/.test(t)&&/consumer/.test(t)},
               // Uebrige Waehrungen: jeweils ihr landesuebliches Stimmungsmass

@@ -7291,3 +7291,55 @@ ein Nutzer VOR diesem Feature), einmal per echtem Seiten-Reload
 (`loadState()`) und einmal per direktem `applySnap()`-Aufruf (Cloud/Undo-
 Pfad) - beide Male kamen alle 8 automatisch zurueck. `node check/all.js`
 komplett gruen (inkl. `rules` nach dem SCORE_MODEL_VERSION-Bump).
+
+## 2026-08-24 — Zwei Indikatoren entfernt (NFIB, Leading Index) + applySnap()-Migrationsluecke geschlossen (VERSION-CHECK-445, SCORE_MODEL_VERSION 8)
+
+**Nutzer-Wunsch (woertlich):** "entfern überall die indikatoren Leading
+Index und NFIB Small Business Optimism und sag mir als du diese
+indikatoren hinzugefügt hast waren das nur die zwei oder noch mehr? und
+entfern alles zu den indikatoren also auch den score impact alles."
+
+**Antwort auf die Rueckfrage:** beide wurden am 2026-08-20 zusammen mit DREI
+weiteren Umfrage-Indikatoren in einer Sammelaktion eingefuehrt
+(`NEUE_UMFRAGEN_2026_08`): ZEW Economic Sentiment (EUR), Ifo Business
+Climate (EUR) und Inflation Expectations (USD). Diese drei wurden NICHT mit
+entfernt - nur die zwei ausdruecklich genannten.
+
+**"Ueberall" bedeutete sechs Fundstellen in `index.html` plus zwei im
+Workflow:** (1) `mkRubs()` - die Vorlage fuer ein frisches Profil, (2) eine
+identische Kopie davon als Fallback, falls einer bestehenden Karte die
+komplette Economic-Growth-Rubrik fehlt, (3) `NEUE_UMFRAGEN_2026_08` - die
+Migration, die sie bei jedem Laden fuer USD nachtraegt, waere sie sonst bei
+jedem Reload wieder aufgetaucht, (4) der Kalender-Event-Matcher (`IND_EVENT_
+MATCHERS`-artige Map), der echte FF-Kalendertitel diesen Indikatoren
+zuordnet - jetzt toter Verweis, entfernt, (5) neuer `RUB_IND_REMOVE
+['Economic Growth']`-Eintrag fuer die AKTIVE Bereinigung bereits gespeicherter
+Profile. Im Workflow (`update-ff-calendar.yml`) zwei Matcher-Zeilen, die
+`ind_data.json` mit Werten fuer diese Indikatoren befuellt haetten.
+
+**Nebenbefund - `applySnap()` hatte dieselbe Migrations-Luecke wie
+`ensureBuiltinSyms()` in VERSION-CHECK-444.** `loadState()` (normaler
+Boot-Pfad) ruft ueber `addMacroRub()` die VOLLE `migrateRubInds()` auf -
+inklusive des `RUB_IND_REMOVE`-Filters. `applySnap()` (der gemeinsame
+Trichter fuer Cloud-Sync/Undo-Redo/Import) rief bisher nur ein von Hand
+abgeschriebenes TEILSTUECK auf (`stripGeopoliticsRub`/`migrateRiskEnvRub`/
+`moveYieldIndsToInflation`/`addSurveyInds`/`cleanDeriveRules`, OHNE den
+`RUB_IND_REMOVE`/Rename/Dedup-Schlussteil). Ein alter Cloud-Snapshot oder
+ein Undo ueber die Entfernung hinweg haette die beiden Indikatoren (und
+grundsaetzlich JEDEN kuenftigen `RUB_IND_REMOVE`-Eintrag) also nie bereinigt
+bekommen. Fix: `applySnap()` ruft jetzt direkt `migrateRubInds(sy.rubrics,sy)`
+pro Symbol auf statt der Teilkopie - dieselbe Korrektur wie bei
+`ensureBuiltinSyms()`, nur fuer Indikator- statt Symbol-Vollstaendigkeit.
+
+**SCORE_MODEL_VERSION 7 → 8** - siehe `docs/score-model.md`, diesmal ECHT
+score-relevant (21 geaenderte Stellen laut `scorediff.js`), da sich die
+Indikatorenzahl in USDs Economic-Growth-Karte aendert und das (Modus
+`normalized`) auch die Staerke-Note anderer Waehrungen mitverschiebt.
+
+**Geprueft (Playwright):** kein Symbol (FX oder Yield) fuehrt die beiden
+Indikatoren noch in seiner Economic-Growth-Karte; `mkRubs()` baut sie nicht
+mehr; ZEW/Ifo/Inflation Expectations unangetastet bestaetigt. Migrations-
+Test: die zwei Indikatoren kuenstlich in USDs gespeicherte Karte
+zurueckgeschrieben (wie ein alter Snapshot sie noch haette) und per
+direktem `applySnap()`-Aufruf entfernt - vorher vorhanden, nachher weg.
+`node check/all.js` komplett gruen (inkl. `rules` nach beiden Versions-Bumps).

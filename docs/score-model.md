@@ -250,3 +250,11 @@ Eintrag in der Ableitungs-Kette (`MACRO_DERIVE_RULES`/`RISK_ENV_DEFAULT_DIR`
 je 8 neue Eintraege) grundsaetzlich score-relevant genug ist, um im Zweifel
 zu bumpen statt zu riskieren, dass eine kuenftige echte Aenderung an
 `isNonFx()` faelschlich als "schon mal genehmigt" durchgewunken wird.
+
+**7 → 8 (2026-08-24, zwei Indikatoren entfernt):** `NFIB Small Business
+Optimism` und `Leading Index` (beide USD, Economic-Growth-Karte) auf
+Nutzer-Wunsch entfernt (`RUB_IND_REMOVE['Economic Growth']`). Diesmal
+ECHT score-relevant, anders als der 6→7-Fall oben: `check/scorediff.js`
+zaehlte 21 geaenderte Stellen - die Indikatorenzahl in USDs Economic-Growth-
+Karte sinkt, das wirkt sich (Modus `normalized`) auch auf die vergleichende
+Staerke-Note ANDERER Waehrungen aus, nicht nur auf USD selbst.

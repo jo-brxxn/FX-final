@@ -3700,11 +3700,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-444 - Neue Asset-Kategorie 'Yields': ein Asset pro FX-Major (US/DE/GB/CH/JP/CA/AU/NZ Yield, benannt wie TradingView-Bond-Ticker ohne die Laufzeitzahl), per linkCcy direkt mit seiner Waehrung verbunden - dadurch automatisch echte 10Y/2Y/Spread-Werte (bond_data.json), Bias-Ableitung ueber alle vier Makro-Rubriken (Inflation/Interest Rates/Labour Market/Economic Growth = 'same' = bullish bei starken Daten) und Risk Correlation (Risk-Sentiment-Regler Half/Full = bullish). Icon: bestehende Flagge auf 78% verkleinert + eigenes Anleihe-Abzeichen (Ticket-Umriss) im freien Eck, in beiden Icon-Systemen (Sidebar-Glyphen UND grosse animierte Kopf-Icons). Die 8 Quicklinks (Seasonality/Trends/COT/Data/News) leiten fuer diese Assets auf ihre verknuepfte Waehrung um, da sie dort keine eigenen Daten haben. Nebenbefund beim Testen behoben: 3 der 8 Quicklinks (Sentiment/Rate Probabilities/Calendar) waren bei JEDEM Asset nie vorgefiltert - jetzt ueberall korrekt. Ausserdem: Kartenzusammenfassungen zeigten faelschlich die interne Asset-ID statt des Anzeigenamens (z.B. 'for USYIELD' statt 'for US Yield', betraf auch GER100 vorher). SCORE_MODEL_VERSION 6 -> 7 (neue Asset-Klasse 'yield' in isNonFx())."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-445 - Zwei Indikatoren auf Nutzer-Wunsch entfernt: 'NFIB Small Business Optimism' und 'Leading Index' (beide USD, Economic-Growth-Karte) - raus aus mkRubs()/der Fallback-Vorlage/NEUE_UMFRAGEN_2026_08 (keine Neuanlage mehr) UND per neuem RUB_IND_REMOVE-Eintrag aktiv aus bereits gespeicherten Profilen entfernt (ueber loadState() UND applySnap(), letzteres rief bisher nur ein unvollstaendiges Teilstueck von migrateRubInds() auf - jetzt die volle Funktion, behebt dieselbe Bug-Klasse wie ensureBuiltinSyms() in VERSION-CHECK-444). Workflow-seitige Kalender-Matcher fuer beide entfernt. ZEW/Ifo/Inflation Expectations (Teil derselben urspruenglichen 5er-Umfragegruppe) blieben unangetastet. SCORE_MODEL_VERSION 7 -> 8 (Economic-Growth-Indikatorenzahl geaendert, wirkt sich auf die normalisierte Staerke-Note aus)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-444</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-445</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6242,7 +6242,7 @@ function symScoreCmp(sym){
 // V4 (2026-08-19): AAII bekam eine Altersgrenze (AAII_STALE_DAYS) - eine
 // Wochenumfrage, die drei Veroeffentlichungen verpasst hat, zaehlt nicht
 // mehr. Das aendert den Score-Beitrag und damit die Zusammensetzung.
-const SCORE_MODEL_VERSION=7;
+const SCORE_MODEL_VERSION=8;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -7530,9 +7530,7 @@ const IND_EVENT_MATCHERS={
   // deutsch, das ist die Natur der Reihe.
   'ZEW Economic Sentiment':(n,c)=>c==='EUR'&&/zew economic sentiment/.test((n||'').toLowerCase())&&!/^german|current conditions/.test((n||'').toLowerCase()),
   'Ifo Business Climate':(n,c)=>c==='EUR'&&/ifo business climate/.test((n||'').toLowerCase()),
-  'NFIB Small Business Optimism':(n,c)=>c==='USD'&&/nfib|small business/.test((n||'').toLowerCase()),
   'Inflation Expectations':(n,c)=>c==='USD'&&/inflation expectation/.test((n||'').toLowerCase())&&!/5|long/.test((n||'').toLowerCase()),
-  'Leading Index':(n,c)=>c==='USD'&&/leading (economic )?index/.test((n||'').toLowerCase()),
 };
 // "Economic Growth" gehoerte hier bisher NICHT dazu, obwohl GDP Growth QoQ /
 // Manufacturing PMI / Services PMI / Retail Sales / Consumer Confidence
@@ -8498,7 +8496,7 @@ function mkRubs(){return[
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CB Tone','Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
-  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate','NFIB Small Business Optimism','Leading Index'])},
+  {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
 ];}
 // Globale, für alle Symbole gleiche Rubrik-Reihenfolge. Wird beim
@@ -8588,7 +8586,11 @@ function ensureRiskEnvLast(){
 // keine Quelle dafuer gab. Seit die Michigan-Reihe ueber TradingView
 // ankommt, ist es ein echter Indikator - die Entfernungsregel haette ihn
 // direkt nach dem Anlegen wieder geloescht (im Test genau so passiert).
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
+// Economic Growth: NFIB Small Business Optimism + Leading Index auf
+// Nutzer-Wunsch 2026-08-24 entfernt (siehe NEUE_UMFRAGEN_2026_08-Kommentar) -
+// aktive Bereinigung noetig, weil migrateRubInds() sie sonst aus bereits
+// gespeicherten Profilen (vor diesem Datum) nie herausnehmen wuerde.
+const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'Economic Growth':['NFIB Small Business Optimism','Leading Index'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -8689,9 +8691,13 @@ function cleanDeriveRules(sym){
 // entfernt wurde). Damit wurden genau die Waehrungen ohne eigene Umfragereihe
 // doppelt bestraft: kein Signal UND ein zu grosser Divisor. Exakt der
 // Merksatz, der beim Thema Altersgrenze schon einmal aufgeschrieben wurde.
+// NFIB Small Business Optimism und Leading Index (urspruenglich Teil dieser
+// Fuenfergruppe, USD-gegated) auf Nutzer-Wunsch 2026-08-24 wieder entfernt -
+// siehe RUB_IND_REMOVE weiter unten fuer die aktive Bereinigung bereits
+// gespeicherter Profile. ZEW/Ifo/Inflation Expectations blieben unangetastet
+// (nicht Teil der Anfrage).
 const NEUE_UMFRAGEN_2026_08={
-  'Economic Growth':[['ZEW Economic Sentiment','EUR'],['Ifo Business Climate','EUR'],
-                     ['NFIB Small Business Optimism','USD'],['Leading Index','USD']],
+  'Economic Growth':[['ZEW Economic Sentiment','EUR'],['Ifo Business Climate','EUR']],
   'Inflation':[['Inflation Expectations','USD']]
 };
 // Alle Namen flach - fuer die Bereinigung unten.
@@ -8839,7 +8845,7 @@ function migrateRubInds(rubrics,sym){
   if(sym){delete sym.cbStance;delete sym.cbNextMove;}
   if(!rubrics.find(r=>r.name==='Economic Growth')){
     const idx=rubrics.findIndex(r=>r.name==='Labour Market');
-    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate','NFIB Small Business Optimism','Leading Index'])};
+    const ni={id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])};
     idx>=0?rubrics.splice(idx+1,0,ni):rubrics.push(ni);
   }
 }
@@ -9670,7 +9676,16 @@ function ensureBuiltinSyms(){
   const have=new Set(syms.map(s=>s&&s.id));
   DEF.forEach(d=>{if(!have.has(d.id))syms.push({...d});});
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureBuiltinSyms();(syms||[]).forEach(sy=>{stripGeopoliticsRub(sy.rubrics);migrateRiskEnvRub(sy.rubrics,sy);moveYieldIndsToInflation(sy.rubrics);addSurveyInds(sy.rubrics,sy);cleanDeriveRules(sy);});pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureBuiltinSyms();
+  // War bisher ein von migrateRubInds() abgeschriebenes Teilstueck (nur die
+  // fuenf Sub-Funktionen, OHNE den RUB_IND_REMOVE/Rename/Dedup-Schlussteil) -
+  // loadState() (der normale Boot-Pfad) ruft dagegen ueber addMacroRub() die
+  // VOLLE migrateRubInds() auf. Ein Snapshot von VOR einer Indikator-Entfernung
+  // (z.B. NFIB Small Business Optimism/Leading Index, Nutzer-Wunsch 2026-08-24)
+  // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
+  // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
+  (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
