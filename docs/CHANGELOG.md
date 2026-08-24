@@ -7010,3 +7010,55 @@ Vortag (Frame-fuer-Frame, 6 -> 574px ueber mehrere Zwischenwerte, nicht nur
 ein Sprung) - der neue Header-HTML-Block haette denselben Zwischenzustands-
 Fehler reproduzieren koennen, tut es nicht. `node check/all.js` komplett
 gruen (12 Waechter).
+
+## 2026-08-24 — Halbgewicht-Indikatoren wieder als Box dargestellt (VERSION-CHECK-441)
+
+**Nutzer-Wunsch (woertlich):** "Ich habe ja paar Indikatoren also welche die
+zusammengehören und sich das Gewicht teilen das war auch früher optisch
+dargestellt mach das wieder."
+
+**Befund vor dem Fix:** In `index.html` existierten `CORE_PAIRS` (halbiert
+das Score-Gewicht bei CPI/Core CPI, PPI/Core PPI, PCE/Core PCE, ZEW/Ifo) und
+`IND_PAIR_GROUPS` (dieselben Paare plus Net Bullish/Net Bearish Positioning
+und die Anleiherenditen-Gruppe 2Y/10Y/Spread) bereits als Konstanten -
+umgeben von mehreren Kommentarbloecken, die eine "gemeinsam umrandete
+.ind-pair-group"-Box beschrieben. Diese Box war aber **nie tatsaechlich
+implementiert**: `git log -S "ind-pair-group"` zeigt nur einen einzigen
+Commit, der ausschliesslich Kommentartext hinzufuegte, keine CSS-Klasse und
+keine Wrapping-Logik. `renderIndsTable()`/`renderIndRow()` (die aktuelle
+Tabellen-Darstellung seit dem Kartenumbau vom 2026-07-28) zeichneten jede
+Zeile vollkommen unabhaengig - die Box war reine Absichtserklaerung, kein
+Code. Der Nutzer erinnerte sich richtig, dass es das mal gab (vermutlich aus
+der alten Karten-Darstellung, dort aber ebenfalls nicht mehr im Code
+auffindbar) - der Fehler lag darin, dass die Absicht beim Tabellen-Umbau nie
+umgesetzt wurde.
+
+**Fix:** Neue Funktion `indPairGroupPositions(inds)` (vor `renderIndsTable`)
+scannt die tatsaechlich in einer Rubrik vorhandenen Indikatoren auf
+**direkt benachbarte** Laeufe derselben `IND_PAIR_GROUPS`-Gruppe und liefert
+pro Index `null`/`'first'`/`'mid'`/`'last'`. Nur Laeufe mit mindestens zwei
+Mitgliedern zaehlen (steht z.B. nur CPI ohne Core CPI in der Liste, oder
+stehen beide, aber nicht direkt nebeneinander, bleibt die Zeile ungruppiert
+- genau das bestehende Kriterium aus `indIsCorePaired`). `renderIndRow()`
+bekommt die Position als Parameter und setzt bei Treffer die Klassen
+`ind-pair-row ind-pair-first/-mid/-last` auf die `<tr>`. CSS zeichnet daraus
+eine Box: gemeinsamer Hintergrundton (`var(--bg5)`) ueber alle
+Gruppenmitglieder, kein `border-bottom` zwischen den Mitgliedern (kein
+Innen-Divider), dafuer ein kraeftigerer Rand oben an der ersten und unten an
+der letzten Zeile (`var(--bd2)` statt des normalen `var(--bd)`). Bias, Score
+und Stichpunkte jedes einzelnen Indikators bleiben komplett unangetastet -
+nur die Umrandung ist neu.
+
+**Geprueft (Playwright):** `indPairGroupPositions()` liefert fuer USD/
+Inflation exakt die erwarteten Positionen (CPI+Core CPI, PPI+Core PPI,
+PCE+Core PCE je first/last; Inflation Expectations ohne Partner bleibt
+`null`; 2Y/10Y/Spread first/mid/last); die erzeugten DOM-Klassen stimmen
+1:1 damit ueberein; `getComputedStyle` bestaetigt `border-top`/
+`border-bottom` an erster/letzter Zeile und den gemeinsamen Hintergrund;
+Net Bullish/Net Bearish Positioning (USD-COT-Rubrik) wird korrekt gruppiert.
+Negativfaelle explizit gegengeprueft: CPI ohne Core CPI in der Liste bleibt
+ungruppiert, CPI und Core CPI mit einem Indikator dazwischen (nicht direkt
+benachbart) bleiben ebenfalls ungruppiert. Screenshot der Inflation-Rubrik
+zeigt die drei Core-Paar-Boxen und die Bond-Yield-Box visuell klar von der
+alleinstehenden Zeile "Inflation Expectations" abgesetzt. `node
+check/all.js` komplett gruen.

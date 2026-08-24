@@ -1304,6 +1304,17 @@ body.res-return-active .rterm-back-pill{display:flex}
 .ind-table thead th.iht-trend{text-align:center}
 .ind-table tbody tr.ind-row{border-left:3px solid var(--bd2);border-bottom:1px solid var(--bd)}
 .ind-table tbody tr.ind-row:last-child{border-bottom:none}
+/* .ind-pair-row (IND_PAIR_GROUPS, siehe indPairGroupPositions weiter unten):
+   Indikatoren, die sich das Score-Gewicht teilen (CPI+Core CPI, 2Y/10Y/
+   Spread, ...) bekommen eine gemeinsam umrandete Box statt einzelner
+   Trennlinien - Bias/Score/Stichpunkte bleiben pro Zeile unangetastet, nur
+   die Umrandung zeigt die Zusammengehoerigkeit. Kein Innen-Divider zwischen
+   den Mitgliedern (border-bottom entfaellt bis zur letzten Zeile), Box-Rand
+   oben/unten etwas kraeftiger als der normale Zeilen-Trenner. */
+.ind-table tbody tr.ind-pair-row{background:var(--bg5)}
+.ind-table tbody tr.ind-pair-row:not(.ind-pair-last){border-bottom:none}
+.ind-table tbody tr.ind-pair-first{border-top:1px solid var(--bd2)}
+.ind-table tbody tr.ind-pair-last{border-bottom:1px solid var(--bd2)}
 .ind-table td{padding:7px 6px;text-align:right;color:var(--t1);vertical-align:middle;white-space:nowrap}
 /* Auf schmalen Telefonen ist die Tabelle nur ~168px breit; bei 18% pro
    Wertspalte bleiben 30px, von denen die seitlichen 6px Innenabstand
@@ -3689,11 +3700,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-440 - Zwei Nutzer-Wuensche zum Assets-Stapel. (1) Die Kategorie-Ueberschriften (FX, Crypto, Metals, Energy, Indices) sind wieder IMMER sichtbar, nicht mehr nur im Bearbeitungsmodus - kehrt die Entfernung vom 2026-08-23 um. Nur die zugehoerigen ▲▼-Sortierknoepfe bleiben Bearbeitungsmodus-exklusiv, wie jede andere Bearbeitungssteuerung. (2) Kategorie-Gruppierungslabel sind jetzt app-weit leicht kursiv (font-style:italic): .np-cat-l im Assets-Stapel, .search-grp im Sucher-Modal (Assets/Indicators/Events/Tabs), .mover-group-hdr im Dashboard-Gainers/Losers-Widget, .res-lib-sec in der Research-Bibliothek (Topics/Assets). Bewusst NUR auf Labels, die eine LISTE in benannte Gruppen aufteilen - dieselbe Rolle wie die Assets-Kategorien - nicht auf Tabellenkoepfe, Formularlabel oder einzelne Seitenueberschriften, die eine andere Aufgabe haben.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-441 - Die optische Box fuer Indikatoren, die sich das Score-Gewicht teilen (CPI+Core CPI, PPI+Core PPI, PCE+Core PCE, ZEW+Ifo, Net Bullish+Net Bearish Positioning, 2Y/10Y/Spread-Renditen), war fuer die Tabellen-Darstellung nur als Kommentar/IND_PAIR_GROUPS-Konstante dokumentiert, aber nie tatsaechlich umgesetzt - renderIndsTable() zeichnete jede Zeile unabhaengig. Neue Funktion indPairGroupPositions() erkennt direkt benachbarte Mitglieder derselben Gruppe (nur wenn ein Partner wirklich in der Liste UND direkt daneben steht) und markiert sie als .ind-pair-row mit .ind-pair-first/-mid/-last; CSS zeichnet daraus eine gemeinsam umrandete Box (Hintergrundton + Rand oben/unten, kein Innen-Divider zwischen den Mitgliedern) - Bias, Score und Stichpunkte bleiben pro Zeile komplett unangetastet."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-440</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-441</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -10946,22 +10957,18 @@ function renderRub(rub,ri,total){
   </div>`;}
 
 
-// Paare, die nur optisch (eine gemeinsam umrandete .ind-pair-group) gruppiert
-// werden - zusätzlich zu den CORE_PAIRS (die auch die Score-Gewichtung
-// halbieren). Net Bullish/Net Bearish Positioning zählen ohnehin nie in den
-// Score (COT_IND_NOSCORE), werden aber genauso wie CPI/Core CPI nebeneinander
-// in einer Box dargestellt - mit weiterhin komplett eigenem Bias & eigenen
-// Stichpunkten je Indikator.
-// Indikatoren, die optisch zu EINER gemeinsam umrandeten .ind-pair-group
-// zusammengefasst werden - zusätzlich zu den CORE_PAIRS. Eine Gruppe kann auch
-// mehr als zwei Mitglieder haben (z.B. die Anleiherenditen 2Y + 10Y + Spread).
-// Bias, Score und Stichpunkte bleiben pro Indikator komplett eigenständig.
+// Paare/Gruppen, die in der Indikator-Tabelle optisch gemeinsam umrandet
+// werden (.ind-pair-row, siehe indPairGroupPositions() in renderIndsTable) -
+// zusaetzlich zu den CORE_PAIRS (die auch die Score-Gewichtung halbieren).
+// Net Bullish/Net Bearish Positioning zaehlen ohnehin nie in den Score
+// (COT_IND_NOSCORE), werden aber genauso wie CPI/Core CPI in einer Box
+// dargestellt. Eine Gruppe kann mehr als zwei Mitglieder haben (2Y/10Y/
+// Spread). Bias, Score und Stichpunkte bleiben pro Indikator unangetastet -
+// nur bei direkt benachbarten Zeilen wirkt die Box (Nutzer-Wunsch 2026-08-24:
+// "die zusammengehören und sich das Gewicht teilen das war auch früher
+// optisch dargestellt mach das wieder" - die Box war zwar dokumentiert,
+// aber beim Umbau auf die Tabellen-Darstellung nie tatsaechlich umgesetzt).
 const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning'],['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']];
-// Gruppiert direkt benachbarte Indikatoren, die zur SELBEN IND_PAIR_GROUPS-Gruppe
-// gehören (z.B. CPI + Core CPI oder 2Y/10Y/Spread), in eine gemeinsam umrandete
-// .ind-pair-group. Score und Bias jedes Indikators bleiben dabei komplett
-// unangetastet – renderInd() wird unverändert pro Indikator aufgerufen, nur das
-// Wrapping ändert sich.
 // Tabellen-Darstellung 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28
 // "änder die Tabellen Darstellung genau wie auf dem Bild") - ersetzt die
 // vorherige Karten-pro-Indikator-Darstellung. Kopfzeile INDICATOR/ACTUAL/
@@ -10976,10 +10983,31 @@ const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Pos
 // die Historien-Grafik (indHistChart(), lazy befuellt beim ersten Aufklappen -
 // dasselbe Muster wie das fruehere <details class="ind-data"> vor dem
 // Tabellen-Umbau, siehe onIndDetailsToggle()/indDetailsOpen weiter unten).
+// Liefert pro Index in inds entweder null (kein Gruppen-Partner direkt
+// daneben) oder 'first'/'mid'/'last' - die Position innerhalb eines Laufs
+// direkt benachbarter Indikatoren derselben IND_PAIR_GROUPS-Gruppe. Nur
+// Laeufe mit mindestens 2 Mitgliedern zaehlen (sonst kein Partner da, siehe
+// indIsCorePaired). renderIndsTable nutzt das fuer die .ind-pair-row-Box.
+function indPairGroupPositions(inds){
+  const bases=inds.map(i=>stripPeriodSuffix(i.name).base);
+  const groupOf=b=>IND_PAIR_GROUPS.find(g=>g.includes(b));
+  const pos=new Array(inds.length).fill(null);
+  let i=0;
+  while(i<inds.length){
+    const g=groupOf(bases[i]);
+    if(!g){i++;continue;}
+    let j=i;
+    while(j+1<inds.length&&groupOf(bases[j+1])===g)j++;
+    if(j>i)for(let k=i;k<=j;k++)pos[k]=k===i?'first':k===j?'last':'mid';
+    i=j+1;
+  }
+  return pos;
+}
 function renderIndsTable(rub,ri){
   const inds=rub.indicators||[];
   const total=inds.length;
-  const rows=inds.map((ind,ii)=>renderIndRow(ind,ri,ii,rub,total)).join('');
+  const pairPos=indPairGroupPositions(inds);
+  const rows=inds.map((ind,ii)=>renderIndRow(ind,ri,ii,rub,total,pairPos[ii])).join('');
   // Feste Spaltenbreiten (colgroup + table-layout:fixed) statt einer
   // Mindestbreite mit Scrollcontainer (Nutzer-Wunsch 2026-08-03: die Tabelle
   // darf nicht mehr horizontal wegscrollbar sein, sie muss immer auf die
@@ -11000,7 +11028,7 @@ function renderIndsTable(rub,ri){
 // renderInd() uebernommen (ev-Kalenderpfad vs. ind.research-Feedpfad, inkl.
 // der Dual-Source-Exklusivitaet - siehe CLAUDE.md "EUR-Score flippte..." -
 // und der Revisions-Faerbung).
-function renderIndRow(ind,ri,ii,rub,total){
+function renderIndRow(ind,ri,ii,rub,total,pairPos){
   const bco=bCol(ind.bias);
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
   let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',detailBody='';
@@ -11051,7 +11079,8 @@ function renderIndRow(ind,ri,ii,rub,total){
   // schon veraltet, sonst staenden zwei Marken mit derselben Aussage.
   const awEv=stale?null:indAwaitingEvent(getSym().id,ind);
   const awaitBadge=awEv?`<span class="ir-await" title="${escH(awEv.name)} was due on ${escH(awEv.date)}, but no source has delivered a value yet. Nothing is estimated - the figures shown are still the last confirmed ones${(ind.research&&ind.research.date)?` from ${escH(ind.research.date)}`:''}.">AWAITING VALUE</span>`:'';
-  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
+  const pairCls=pairPos?` ind-pair-row ind-pair-${pairPos}`:'';
+  const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}${pairCls}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
     <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}${staleBadge}${awaitBadge}
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
