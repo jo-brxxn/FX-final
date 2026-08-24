@@ -7343,3 +7343,76 @@ Test: die zwei Indikatoren kuenstlich in USDs gespeicherte Karte
 zurueckgeschrieben (wie ein alter Snapshot sie noch haette) und per
 direktem `applySnap()`-Aufruf entfernt - vorher vorhanden, nachher weg.
 `node check/all.js` komplett gruen (inkl. `rules` nach beiden Versions-Bumps).
+
+## 2026-08-24 — Mehrfach-Waehrungsfilter bei COT/Retail/Trends + Score-Zahl im Assets-Stapel (VERSION-CHECK-446)
+
+**Nutzer-Wunsch 1 (woertlich):** "bei set ups gibt es den filter nach
+einzelnen währungen und all und fx ich will das du die optionen auch bei
+anderen grafiken ergänzt wo so ein filter sinn macht auch wenn es schon ein
+einezelen paar filter gibt und mach bitte da noch einen filter button hin
+ähnlich wie fx einmal non fx und yields."
+
+**Praezisierung per Rueckfrage.** Erste AskUserQuestion-Runde schlug COT +
+Retail Sentiment vor (Balken-Listen mit allen Assets gleichzeitig) - Antwort
+korrigierte das Verstaendnis: bei Retail Sentiment zeigt der UNGEFILTERTE
+Zustand bereits viele Assets, der bestehende Einzel-Dropdown schraenkt aber
+IMMER auf genau eins ein (mit mehr Detail, aber nur eine Ansicht). Der neue
+Filter soll die Luecke dazwischen fuellen: MEHRERE gewaehlte Assets
+gleichzeitig sehen (nur der aktuelle Tag, keine Einzel-Historie - akzeptiert
+als Kompromiss). Zweite Runde bestaetigte "ergaenzen, nicht ersetzen".
+
+**Wo umgesetzt (nach diesem Kriterium durchsucht):** COT (`renderCot` -
+Balken+Tabelle fuer alle COT_SYMS), Retail Sentiment (`renderRetailBars` -
+Balken fuer alle Myfxbook-Paare) und Trends (`renderTrends` im "All assets"/
+"FX only"-Modus - mehrere ueberlagerte Linien). NICHT umgesetzt: Put/Call
+Ratio, Net Options Flow, Seasonality, Edge (alle vier zeigen strukturell
+IMMER nur eine Linie/Tabelle, markt-weit oder fuer genau ein Asset - kein
+"mehrere gleichzeitig"-Zustand existiert dort, den man erweitern koennte).
+Compare hat bereits sein eigenes vollwertiges Mehrfach-Chip-System - kein
+Aenderungsbedarf, Yields tauchen dort automatisch unter "Assets" auf
+(isNonFx() schliesst die Kategorie seit VERSION-CHECK-444 ein).
+
+**Zwei neue Helfer** (`multiAssetFilterBarHtml`/`applyMultiAssetFilter`)
+fuer COT und Trends, deren Listen bereits direkt einzelne Asset-IDs fuehren.
+Retail Sentiment bekam eine EIGENE Variante (`sentMultiFilterBarHtml`/
+`sentItemMatchesMulti`): die Listeneintraege dort sind Broker-PAARE
+("EURUSD"), ein "USD"-Chip muss also jedes Paar treffen, das USD als eines
+seiner beiden Beine fuehrt - eine andere Filterlogik als "ID exakt gleich".
+Alle drei nutzen dieselbe `.cmp-filter`/`.cmp-chip`/`.cmp-quick`-Optik wie
+Set-ups/Compare, keine neue CSS. Bewusst NICHT persistiert/cross-device-
+synced - dieselbe Behandlung wie die schon bestehenden Einzel-Filter dieser
+Seiten (`cotFilter`/`sentSym`/`pcAsset`/`trendsFilter` sind ebenfalls reiner
+Browse-Zustand, anders als der persistierte Set-ups-Filter).
+
+**Set-ups selbst** bekam die zwei neuen Quick-Buttons "Non-FX"/"Yields"
+neben dem bestehenden "FX" (alle drei + Waehrungs-Chips schliessen sich
+gegenseitig aus, wie "FX"/Chips es vorher schon taten) - inklusive
+Cross-Device-Sync (`data.setupNonFxOnly`/`data.setupYieldsOnly`, an beiden
+bestehenden Sync-Stellen ergaenzt, plus Restore-Pfad).
+
+**Nebenbefund: Trends kannte die Yields-Kategorie noch gar nicht.**
+`trendAssets()` war eine harte Liste (`[...FX,'GOLD','SILVER','OIL','BTC',
+'SP500','NAS','DAX']`) ohne die 8 neuen Yield-Assets - fuer den neuen
+Filter ergaenzt, gleichzeitig auch je eine `TREND_COLORS`-Linienfarbe
+(dieselbe wie die zugrundeliegende Waehrung).
+
+**Nutzer-Wunsch 2 (separate Anfrage, woertlich):** "im asset stapel direkt
+neben dem asset namen bitte ergänz der kurz einfach noch kurz den score
+also nur die zahl und nicht in bias farbe." Neue `.np-score`-Zeile
+(`var(--t3)`, kein `BC[bias]`) direkt in der Assets-Stapel-Zeile, zusaetzlich
+zum bisherigen Tooltip (der weiterhin den vollen "Name + Score"-Text
+traegt). Bewusst gedaempft, damit die Zeile (die sonst keine Bias-Farbe
+traegt, siehe `renderSidebar`-Kommentar) nicht durch die Score-Zahl allein
+eine Farb-Konnotation bekommt. In `#navSidebar.nav-collapsed` (Icon-Leiste)
+wie `.np-lbl` ausgeblendet.
+
+**Geprueft (Playwright):** Sidebar-Score-Text stimmt exakt mit `symScoreCmp`
+ueberein, Farbe ist `var(--t3)` (kein Bias-Rot/Blau). Set-ups "Yields"-
+Filter zeigt exakt die 8 Yield-Zeilen, "Non-FX" keine reinen FX-Paare. COT-
+Mehrfachfilter (USD+EUR) zeigt exakt diese zwei, COT "Non-FX"-Scope zeigt
+keine Waehrungen. Retail Sentiment "JPY"-Filter zeigt alle 7 JPY-Kreuze
+(nicht nur USDJPY - Musterkorrektur nach einem ersten falschen Test-
+Assertion), "Non-FX"-Scope zeigt exakt die 6 non-FX-Symbole. Trends-
+Mehrfachfilter (USD+EUR) zeigt in ALLEN VIER Chart-Karten (Total/Inflation/
+Labour/Growth) konsistent genau USD+EUR; `trendAssets()` enthaelt jetzt
+alle 8 Yield-IDs. `node check/all.js` komplett gruen.

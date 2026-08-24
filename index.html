@@ -303,6 +303,14 @@ svg.ic{vertical-align:-2px;flex:none}
 .np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
 .np-ic svg{width:17px;height:17px}
 .np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
+/* Score-Zahl im Assets-Stapel direkt neben dem Namen (Nutzer-Wunsch
+   2026-08-24: "ergänz der kurz einfach noch kurz den score also nur die
+   zahl und nicht in bias farbe") - bewusst gedaempft/neutral (var(--t3)),
+   nicht in BC[bias] gefaerbt: die Zeile traegt sonst keine Bias-Farbe
+   (siehe Kommentar bei renderSidebar "keine Bias-Farbe, kein Glow-Rand"),
+   das soll die Zahl nicht im Alleingang durchbrechen. Der volle Score
+   (mit Vorzeichen) stand vorher nur im Tooltip (data-tip). */
+.np-score{flex:none;font-size:10.5px;font-weight:700;color:var(--t3);font-family:var(--ff-num)}
 /* Aktiver Tab traegt seit dem dunklen Design das Cyan (--accent) statt Blau
    (Nutzer-Vorlage 2026-08-23). Blau ist im ganzen Rest der App die
    Bias-Farbe "bullish" - es als Auswahl-Markierung zu verwenden macht die
@@ -471,7 +479,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Gleicher margin-left:0-Fix wie bei der Mobil-Icon-Leiste oben (siehe
    dortiger Kommentar) - dieselbe Ursache tritt hier nochmal separat auf,
    weil die Icon-Leiste per JS-Klasse statt per Media Query ausgeloest wird. */
-#navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow{opacity:0;max-width:0;overflow:hidden;margin-left:0}
+#navSidebar.nav-collapsed .np-lbl,#navSidebar.nav-collapsed .np-arrow,#navSidebar.nav-collapsed .np-score{opacity:0;max-width:0;overflow:hidden;margin-left:0}
 /* ⚠ In der Icon-Leiste werden Untereintraege GAR NICHT gezeigt - auch wenn
    der Stapel bzw. die Dashboard-Liste logisch aufgeklappt ist (Nutzer-Foto
    2026-08-22, gelb markiert). Ohne diese Regel stand zwischen dem
@@ -3700,11 +3708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-445 - Zwei Indikatoren auf Nutzer-Wunsch entfernt: 'NFIB Small Business Optimism' und 'Leading Index' (beide USD, Economic-Growth-Karte) - raus aus mkRubs()/der Fallback-Vorlage/NEUE_UMFRAGEN_2026_08 (keine Neuanlage mehr) UND per neuem RUB_IND_REMOVE-Eintrag aktiv aus bereits gespeicherten Profilen entfernt (ueber loadState() UND applySnap(), letzteres rief bisher nur ein unvollstaendiges Teilstueck von migrateRubInds() auf - jetzt die volle Funktion, behebt dieselbe Bug-Klasse wie ensureBuiltinSyms() in VERSION-CHECK-444). Workflow-seitige Kalender-Matcher fuer beide entfernt. ZEW/Ifo/Inflation Expectations (Teil derselben urspruenglichen 5er-Umfragegruppe) blieben unangetastet. SCORE_MODEL_VERSION 7 -> 8 (Economic-Growth-Indikatorenzahl geaendert, wirkt sich auf die normalisierte Staerke-Note aus)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-446 - Zwei Nutzer-Wuensche. (1) Mehrfach-Waehrungsfilter (Chips + All/FX/Non-FX/Yields, wie bei Set-ups) ERGAENZEND zum bestehenden Einzel-Dropdown bei COT, Retail Sentiment und Trends - zeigt mehrere gewaehlte Assets gleichzeitig als Liste statt nur alle oder genau eins; Set-ups selbst bekam die zwei neuen Non-FX/Yields-Quick-Buttons dazu. Trends kennt die Yields-Kategorie jetzt ueberhaupt erst (trendAssets()). (2) Assets-Stapel zeigt die Score-Zahl jetzt direkt neben dem Namen (.np-score, bewusst gedaempft/neutral gefaerbt, keine Bias-Farbe) statt nur im Tooltip."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-445</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-446</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4840,6 +4848,53 @@ function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
   }).join('');
   const head=allLabel?`<option value=""${selected?'':' selected'}>${allLabel}</option>`:'';
   return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${wlGroup}${groups}</select></div>`;
+}
+// ── Mehrfach-Waehrungsfilter (Chips + All/FX/Non-FX/Yields), ERGAENZEND zum
+// Einzel-Dropdown oben (Nutzer-Wunsch 2026-08-24: "bei set ups gibt es den
+// filter nach einzelnen waehrungen und all und fx ich will das du die
+// optionen auch bei anderen grafiken ergaenzt ... auch wenn es schon ein
+// einzelnen [Asset-]Filter gibt" - Praezisierung per Rueckfrage: die Chips
+// sollen MEHRERE gewaehlte Assets gleichzeitig als Liste zeigen, waehrend
+// der bestehende Dropdown weiter auf GENAU EIN Asset (mit mehr Detail)
+// einschraenkt - beide Filter bleiben unabhaengig nebeneinander bestehen).
+// Dieselbe .cmp-filter/.cmp-chip/.cmp-quick-Optik wie bei Set-ups/Compare,
+// keine neue CSS noetig. `avail` bestimmt, welche Chips/Gruppenknoepfe
+// ueberhaupt erscheinen - eine leere Gruppe (z.B. "Yields" auf einer Seite
+// ohne Yield-Assets) wird nicht gezeigt.
+// Bewusst NICHT persistiert/cross-device-synced: dieselbe Behandlung wie die
+// schon bestehenden Einzel-Filter dieser Seiten (cotFilter/sentSym/pcAsset/
+// trendsFilter sind ebenfalls reiner, nicht gespeicherter Browse-Zustand -
+// anders als der PERSISTIERTE Set-ups-Filter, der eine Nutzer-Praeferenz ist,
+// keine momentane Ansicht).
+function multiAssetFilterBarHtml(avail,ccyFilter,scope,toggleFn,scopeFn,clearFn){
+  const availSet=new Set(avail);
+  const chip=c=>`<button class="cmp-chip${ccyFilter.includes(c)?' on':''}" onclick="${toggleFn}('${c}')">${c}</button>`;
+  const ccyChips=FX.filter(c=>availSet.has(c)).map(chip).join('');
+  if(!ccyChips)return'';
+  const hasNonFx=avail.some(id=>!FX.includes(id)&&assetCls(id)!=='yield');
+  const hasYield=avail.some(id=>assetCls(id)==='yield');
+  const active=ccyFilter.length>0||!!scope;
+  return`<div class="cmp-filter" style="margin:8px 0">
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Show several at once</span>${ccyChips}</div>
+    <div class="cmp-filter-grp">
+      <button class="cmp-quick${active?'':' on'}" onclick="${clearFn}()" title="Clear this filter">All</button>
+      <button class="cmp-quick${scope==='fx'?' on':''}" onclick="${scopeFn}('fx')">FX</button>
+      ${hasNonFx?`<button class="cmp-quick${scope==='nonfx'?' on':''}" onclick="${scopeFn}('nonfx')">Non-FX</button>`:''}
+      ${hasYield?`<button class="cmp-quick${scope==='yields'?' on':''}" onclick="${scopeFn}('yields')">Yields</button>`:''}
+    </div>
+  </div>`;
+}
+// Wendet den obigen Mehrfachfilter auf eine Liste an - `idOf` liest die
+// Asset-ID aus einem Listeneintrag (unterschiedliche Form je Seite: COT/
+// Retail-Sentiment-Zeilen haben ihre ID direkt, Trends-IDs sind selbst
+// schon die ID). Chips gewinnen, wenn beide gesetzt sind (kann bei den
+// Klick-Handlern unten aber ohnehin nicht gleichzeitig vorkommen).
+function applyMultiAssetFilter(list,idOf,ccyFilter,scope){
+  if(ccyFilter.length)return list.filter(x=>ccyFilter.includes(idOf(x)));
+  if(scope==='fx')return list.filter(x=>FX.includes(idOf(x)));
+  if(scope==='nonfx')return list.filter(x=>{const id=idOf(x);return!FX.includes(id)&&assetCls(id)!=='yield';});
+  if(scope==='yields')return list.filter(x=>assetCls(idOf(x))==='yield');
+  return list;
 }
 
 // ══ HELPERS ════════════════════════════════════════════════════════
@@ -10112,7 +10167,7 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
@@ -10356,7 +10411,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -10495,6 +10550,8 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending){
         if(Array.isArray(cd.setupCcyFilter)){setupCcyFilter=cd.setupCcyFilter.filter(c=>FX.includes(c));try{localStorage.setItem('fxpro_setup_ccy',JSON.stringify(setupCcyFilter));}catch(e){}}
         if(cd.setupFxOnly!==undefined){setupFxOnly=cd.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}
+        if(cd.setupNonFxOnly!==undefined){setupNonFxOnly=cd.setupNonFxOnly;try{localStorage.setItem('fxpro_setup_nonfxonly',setupNonFxOnly?'1':'0');}catch(e){}}
+        if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
         if(Array.isArray(cd.cmpCols)){cmpCols=cd.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}
@@ -10754,12 +10811,18 @@ function renderSidebar(){
       const isCustom=customCatIds.includes(id);
       const sc=symScoreCmp(c);
       // Keine Bias-Farbe, kein Glow-Rand: die Zeile sieht aus wie jeder
-      // andere Eintrag der Leiste. Der Score steht weiter im Tooltip -
-      // dort stoert er nicht und bleibt trotzdem erreichbar.
+      // andere Eintrag der Leiste. Die Score-ZAHL selbst steht seit
+      // VERSION-CHECK-446 zusaetzlich zum Tooltip auch direkt in der Zeile
+      // (Nutzer-Wunsch: "ergänz der kurz einfach noch kurz den score also
+      // nur die zahl und nicht in bias farbe") - bewusst gedaempft/neutral
+      // (.np-score, var(--t3)), damit die Zeile weiterhin keine Bias-Farbe
+      // traegt.
+      const scTxt=`${sc>0?'+':''}${sc}`;
       return`<div class="np-asset-wrap">
-        <button data-sym="${id}" class="np ab np-asset${on?' on':''}" onclick="sbClick('${escJs(id)}')" onpointerdown="sbPressStart('${escJs(id)}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()" data-tip="${escH(c.name)} ${sc>0?'+':''}${sc}" aria-label="${escH(c.name)}">
+        <button data-sym="${id}" class="np ab np-asset${on?' on':''}" onclick="sbClick('${escJs(id)}')" onpointerdown="sbPressStart('${escJs(id)}')" onpointerup="sbPressEnd()" onpointerleave="sbPressEnd()" onpointercancel="sbPressEnd()" data-tip="${escH(c.name)} ${escH(scTxt)}" aria-label="${escH(c.name)} ${escH(scTxt)}">
           ${assetGlyphHtml(id,17)}
           <span class="an np-lbl">${escH(c.name)}</span>
+          <span class="np-score">${escH(scTxt)}</span>
         </button>
         ${bearb?`<span class="np-asset-edit">
           <button class="np-mv" onclick="event.stopPropagation();moveSbSym('${escJs(cat.l)}','${escJs(id)}',-1)" ${idx===0?'disabled':''} aria-label="Nach oben">▲</button>
@@ -13039,22 +13102,50 @@ function syncSetupFilterPref(){
 // (Nutzer-Wunsch 2026-07-20: vorher liefen beide als UND-Verknuepfung
 // nebeneinander, was verwirrend war) - Klick auf einen Waehrungs-Chip
 // deaktiviert "FX", Klick auf "FX" leert die Waehrungs-Chips.
+// Alle drei Quick-Scopes (FX/Non-FX/Yields) und die Waehrungs-Chips
+// schliessen sich gegenseitig aus - Klick auf einen loescht die anderen.
+function clearSetupQuickScopes(){
+  if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}
+  if(setupNonFxOnly){setupNonFxOnly=false;localStorage.setItem('fxpro_setup_nonfxonly','0');}
+  if(setupYieldsOnly){setupYieldsOnly=false;localStorage.setItem('fxpro_setup_yieldsonly','0');}
+}
 function toggleSetupCcy(c){
   const i=setupCcyFilter.indexOf(c);
   if(i>=0)setupCcyFilter.splice(i,1);
-  else{setupCcyFilter.push(c);if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}}
+  else{setupCcyFilter.push(c);clearSetupQuickScopes();}
   saveSetupCcy();syncSetupFilterPref();renderPairs();
 }
-function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();if(setupFxOnly){setupFxOnly=false;localStorage.setItem('fxpro_setup_fxonly','0');}syncSetupFilterPref();renderPairs();}
+function clearSetupCcy(){setupCcyFilter=[];saveSetupCcy();clearSetupQuickScopes();syncSetupFilterPref();renderPairs();}
 // Nutzer-Wunsch 2026-07-17: eigener Quick-Filter "FX" neben "All" - blendet
 // Non-FX-Assets (Gold, Oel, BTC, Indizes, Einzelaktien) UND Kreuz-Paare mit
 // einem Non-FX-Bein (z.B. XAU/USD) aus, zeigt nur reine Waehrungspaare.
 // Schliesst sich mit den Waehrungs-Chips gegenseitig aus (siehe oben).
 let setupFxOnly=localStorage.getItem('fxpro_setup_fxonly')==='1';
 function toggleSetupFxOnly(){
-  setupFxOnly=!setupFxOnly;
+  const was=setupFxOnly;clearSetupQuickScopes();setupFxOnly=!was;
   localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');
   if(setupFxOnly&&setupCcyFilter.length){setupCcyFilter=[];saveSetupCcy();}
+  syncSetupFilterPref();
+  renderPairs();
+}
+// Zwei weitere Quick-Scopes neben "FX" (Nutzer-Wunsch 2026-08-24: "mach
+// bitte da noch einen filter button hin ähnlich wie fx einmal non fx und
+// yields"). "Non-FX" zeigt nur Nicht-FX-Assets + Kreuz-Paare mit einem
+// Nicht-FX-Bein (die Umkehrung von "FX"), "Yields" nur die Yields-
+// Asset-Kategorie.
+let setupNonFxOnly=localStorage.getItem('fxpro_setup_nonfxonly')==='1';
+function toggleSetupNonFxOnly(){
+  const was=setupNonFxOnly;clearSetupQuickScopes();setupNonFxOnly=!was;
+  localStorage.setItem('fxpro_setup_nonfxonly',setupNonFxOnly?'1':'0');
+  if(setupNonFxOnly&&setupCcyFilter.length){setupCcyFilter=[];saveSetupCcy();}
+  syncSetupFilterPref();
+  renderPairs();
+}
+let setupYieldsOnly=localStorage.getItem('fxpro_setup_yieldsonly')==='1';
+function toggleSetupYieldsOnly(){
+  const was=setupYieldsOnly;clearSetupQuickScopes();setupYieldsOnly=!was;
+  localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');
+  if(setupYieldsOnly&&setupCcyFilter.length){setupCcyFilter=[];saveSetupCcy();}
   syncSetupFilterPref();
   renderPairs();
 }
@@ -13745,6 +13836,8 @@ function renderPairs(){
     <div class="cmp-filter-grp">
       <button class="cmp-quick${active?'':' on'}" onclick="clearSetupCcy()" title="Show all pairs &amp; assets">All</button>
       <button class="cmp-quick${setupFxOnly?' on':''}" onclick="toggleSetupFxOnly()" title="Only FX currency pairs - hides Gold/Oil/BTC/indices/stocks and any cross pairs with them">FX</button>
+      <button class="cmp-quick${setupNonFxOnly?' on':''}" onclick="toggleSetupNonFxOnly()" title="Only non-FX assets (Gold/Oil/BTC/indices/Yields/...) and cross pairs with a non-FX leg">Non-FX</button>
+      <button class="cmp-quick${setupYieldsOnly?' on':''}" onclick="toggleSetupYieldsOnly()" title="Only the Yields asset category">Yields</button>
     </div>
   </div>`;
   if(items.length===0){
@@ -13756,6 +13849,8 @@ function renderPairs(){
   // Bein) - beide Filter sind UND-verknuepft kombinierbar.
   let shown=active?items.filter(it=>it.kind==='pair'&&pairHasCcy(it.name,setupCcyFilter)):items;
   if(setupFxOnly)shown=shown.filter(it=>it.kind==='pair'&&isPureFxPair(it.name));
+  if(setupNonFxOnly)shown=shown.filter(it=>it.kind==='asset'||(it.kind==='pair'&&!isPureFxPair(it.name)));
+  if(setupYieldsOnly)shown=shown.filter(it=>it.kind==='asset'&&assetCls(it.id)==='yield');
   // Zins-Differenz (Carry) je FX-Paar: Leitzins Basis minus Kurswaehrung.
   // Positiv = Carry beguenstigt die Long-Seite des Paars. Zaehlt ueber
   // pairCarryAdj() direkt in den Paar-Score (nur auf Set-ups-/Paar-Ebene,
@@ -13792,7 +13887,7 @@ function renderPairs(){
     ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
   </div>`;
   if(shown.length===0){
-    const why=[active?setupCcyFilter.join(', '):'',setupFxOnly?'FX-only':''].filter(Boolean).join(' · ');
+    const why=[active?setupCcyFilter.join(', '):'',setupFxOnly?'FX-only':'',setupNonFxOnly?'Non-FX-only':'',setupYieldsOnly?'Yields-only':''].filter(Boolean).join(' · ');
     el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:var(--ff-num)">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
     return;
   }
@@ -18211,7 +18306,10 @@ function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name=
 // Non-FX-Assets (Gold, Silber, Oel, BTC, Indizes) - in stabiler Reihenfolge.
 function trendAssets(){
   const present=new Set(syms.map(s=>s.id));
-  return [...FX,'GOLD','SILVER','OIL','BTC','SP500','NAS','DAX'].filter(id=>present.has(id));
+  // Yields-Kategorie ergaenzt (Nutzer-Wunsch 2026-08-24) - vorher hier gar
+  // nicht auswaehlbar, obwohl jedes Yield-Asset ganz normal einen
+  // scoreHist-Verlauf hat wie jedes andere Asset.
+  return [...FX,'GOLD','SILVER','OIL','BTC','SP500','NAS','DAX',...Object.keys(YIELD_CCY)].filter(id=>present.has(id));
 }
 // Taeglicher Score-Schnappschuss je FX-Waehrung. Pro Tag ein Eintrag:
 // [Datum, Gesamt-Score, Inflation, Labour Market, Economic Growth]. Wird beim
@@ -18678,6 +18776,10 @@ function renderMatrix(){
 // Lightness/Saettigung ueber alle 14 Werte, nur der Hue unterscheidet -
 // wirkt als zusammenhaengende Palette statt als bunte Ansammlung.
 const TREND_COLORS={USD:'#7c9cba',EUR:'#c9a26a',GBP:'#7fa88a',JPY:'#b97e7e',CHF:'#9788ad',CAD:'#6fa3a3',AUD:'#b5a571',NZD:'#bd8aa0',GOLD:'#c2a869',SILVER:'#98a0ab',OIL:'#957f6c',BTC:'#6f9aa8',SP500:'#a17690',NAS:'#8482ab'};
+// Yields-Kategorie: dieselbe Linienfarbe wie die zugrundeliegende Waehrung
+// (US Yield teilt sich USDs Farbton usw.) - die Legende unterscheidet ueber
+// den Text ohnehin, eine achte eigene Farbfamilie waere hier kein Mehrwert.
+Object.keys(YIELD_CCY).forEach(id=>{TREND_COLORS[id]=TREND_COLORS[YIELD_CCY[id]];});
 // Score-Verlauf in Bias-Farben statt einer einzelnen festen Linienfarbe
 // (Nutzer-Wunsch 2026-07-19): pts=[{x,y,bias}], ein <polyline>-Segment je
 // zusammenhaengendem gleich-Bias-Abschnitt (sbull/sbear zaehlen farblich wie
@@ -18777,6 +18879,14 @@ function setTrendsRangeCustom(from,to){if(from!==null)trendsCustomFrom=from||nul
 // grow with every pair the user has ever tried.
 let trendsPairSel='EUR/USD';
 let trendsEphemeral={};
+// Mehrfach-Waehrungsfilter, ERGAENZEND zum bestehenden Einzel-Dropdown
+// (trendsFilter) - wirkt nur im Listen-Modus ("All assets"/"FX only", wo
+// ohnehin schon mehrere Linien gleichzeitig gezeichnet werden), nicht wenn
+// der Dropdown auf genau ein Asset eingeschraenkt ist.
+let trendsCcyFilter=[],trendsScope='';
+function toggleTrendsCcy(c){const i=trendsCcyFilter.indexOf(c);if(i>=0)trendsCcyFilter.splice(i,1);else{trendsCcyFilter.push(c);trendsScope='';}renderTrends();}
+function setTrendsScope(s){trendsScope=trendsScope===s?'':s;trendsCcyFilter=[];renderTrends();}
+function clearTrendsCcyFilter(){trendsCcyFilter=[];trendsScope='';renderTrends();}
 function setTrendsFilter(v){trendsFilter=v||'ALL';renderTrends();}
 function toggleTrendsPairMode(){setTrendsFilter(trendsFilter==='PAIR'?'ALL':'PAIR');}
 function setTrendsPair(v){trendsPairSel=v;renderTrends();}
@@ -19006,8 +19116,14 @@ function renderTrends(){
   // Total Score: ALL assets. Macro cards (Inflation/Labour/Growth) only for
   // currencies - for non-FX assets these scores aren't derived from data
   // (they'd be constantly 0).
-  const totalIds=trendsFilter==='ALL'?assets:trendsFilter==='FX'?assets.filter(id=>FX.includes(id)):[trendsFilter];
-  const macroIds=(trendsFilter==='ALL'||trendsFilter==='FX')?assets.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
+  // "Listen-Modus" = mehrere Linien gleichzeitig ("All assets"/"FX only") -
+  // nur dort greift der zusaetzliche Mehrfach-Waehrungsfilter (chips/scope);
+  // ein auf genau EIN Asset eingeschraenkter Dropdown bleibt unangetastet.
+  const trendsListMode=trendsFilter==='ALL'||trendsFilter==='FX';
+  let totalIds=trendsFilter==='ALL'?assets:trendsFilter==='FX'?assets.filter(id=>FX.includes(id)):[trendsFilter];
+  if(trendsListMode)totalIds=applyMultiAssetFilter(totalIds,id=>id,trendsCcyFilter,trendsScope);
+  const macroIds=trendsListMode?totalIds.filter(id=>FX.includes(id)):(FX.includes(trendsFilter)?[trendsFilter]:[]);
+  const trendsMultiBar=trendsListMode?multiAssetFilterBarHtml(trendsFilter==='FX'?assets.filter(id=>FX.includes(id)):assets,trendsCcyFilter,trendsScope,'toggleTrendsCcy','setTrendsScope','clearTrendsCcyFilter'):'';
   // Once filtered down to a single asset, color the line by its current bias
   // instead of the fixed per-currency identity color (only makes sense for
   // one line at a time - with "All assets"/"FX only" the colors need to stay
@@ -19017,8 +19133,8 @@ function renderTrends(){
   const dset=new Set();
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const allDates=[...dset].sort();
-  if(!allDates.length){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow.</div>';return;}
-  const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
+  if(!allDates.length){el.innerHTML=trendsMultiBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet for the current selection. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow, or adjust the filter above.</div>';return;}
+  const rangeBar=trendsMultiBar+`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
   const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   // Hinweis, wenn im gewaehlten Zeitraum Punkte aus einem FRUEHEREN
@@ -19112,6 +19228,13 @@ function renderTrendsPair(el){
 // (Stand Dienstag, Veroeffentlichung Freitag).
 let COT_DATA=null;
 let cotFilter=null;            // null = full overview (all), otherwise a symbol id
+// Mehrfach-Waehrungsfilter, ERGAENZEND zum obigen Einzel-Dropdown (siehe
+// multiAssetFilterBarHtml) - wirkt nur, solange cotFilter leer ist (der
+// Dropdown auf genau ein Asset hat weiter Vorrang, unveraendertes Verhalten).
+let cotCcyFilter=[],cotScope='';
+function toggleCotCcy(c){const i=cotCcyFilter.indexOf(c);if(i>=0)cotCcyFilter.splice(i,1);else{cotCcyFilter.push(c);cotScope='';}renderCot();}
+function setCotScope(s){cotScope=cotScope===s?'':s;cotCcyFilter=[];renderCot();}
+function clearCotCcyFilter(){cotCcyFilter=[];cotScope='';renderCot();}
 let cotRefreshing=false;
 let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
@@ -20049,6 +20172,44 @@ function openSentInfoM(key){
 }
 const iBtn=key=>`<button class="rinfo" style="vertical-align:middle;margin-left:6px" onclick="openSentInfoM('${key}')" title="What is this? How to read it">i</button>`;
 let sentSub='retail',sentSym='',pcAsset='';
+// Mehrfach-Waehrungsfilter fuer Retail Sentiment, ERGAENZEND zum
+// bestehenden Einzel-Dropdown (sentSym) - siehe sentMultiFilterBarHtml().
+// Eigene Logik statt des generischen multiAssetFilterBarHtml()/
+// applyMultiAssetFilter(): die Listeneintraege hier sind Broker-PAARE
+// ("EURUSD"), keine einzelnen Asset-IDs - "USD" muss also jedes Paar
+// treffen, das USD als eines seiner beiden Beine fuehrt.
+let sentCcyFilter=[],sentScope='';
+function toggleSentCcy(c){const i=sentCcyFilter.indexOf(c);if(i>=0)sentCcyFilter.splice(i,1);else{sentCcyFilter.push(c);sentScope='';}renderSentiment();}
+function setSentScope(s){sentScope=sentScope===s?'':s;sentCcyFilter=[];renderSentiment();}
+function clearSentCcyFilter(){sentCcyFilter=[];sentScope='';renderSentiment();}
+function sentMultiFilterBarHtml(ids){
+  const ccysPresent=new Set();
+  ids.forEach(s=>{if(SENT_NONFX_SYMS.has(s))return;if(s&&s.length===6){ccysPresent.add(s.slice(0,3));ccysPresent.add(s.slice(3));}});
+  const chip=c=>`<button class="cmp-chip${sentCcyFilter.includes(c)?' on':''}" onclick="toggleSentCcy('${c}')">${c}</button>`;
+  const ccyChips=FX.filter(c=>ccysPresent.has(c)).map(chip).join('');
+  if(!ccyChips)return'';
+  const hasNonFx=ids.some(s=>SENT_NONFX_SYMS.has(s));
+  const active=sentCcyFilter.length>0||!!sentScope;
+  return`<div class="cmp-filter" style="margin:2px 0 10px">
+    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Show several at once</span>${ccyChips}</div>
+    <div class="cmp-filter-grp">
+      <button class="cmp-quick${active?'':' on'}" onclick="clearSentCcyFilter()" title="Clear this filter">All</button>
+      <button class="cmp-quick${sentScope==='fx'?' on':''}" onclick="setSentScope('fx')">FX</button>
+      ${hasNonFx?`<button class="cmp-quick${sentScope==='nonfx'?' on':''}" onclick="setSentScope('nonfx')">Non-FX</button>`:''}
+    </div>
+  </div>`;
+}
+function sentItemMatchesMulti(sym){
+  const isNonFxSym=SENT_NONFX_SYMS.has(sym);
+  if(sentScope==='fx')return!isNonFxSym;
+  if(sentScope==='nonfx')return isNonFxSym;
+  if(sentCcyFilter.length){
+    if(isNonFxSym){const id=SENT_NONFX_PRICE_ID[sym];return!!id&&sentCcyFilter.includes(macroCcyFor(id));}
+    if(sym&&sym.length===6)return sentCcyFilter.includes(sym.slice(0,3))||sentCcyFilter.includes(sym.slice(3));
+    return false;
+  }
+  return true;
+}
 // Zeitraum-Filter fuer die Retail-Sentiment-Historie (erscheint, sobald im
 // Retail-Sentiment-Filter ein einzelnes Symbol statt "All symbols" gewaehlt
 // ist) - Default 'MAX' wie ueberall sonst (Nutzer-Wunsch "maximale Historie").
@@ -20753,9 +20914,14 @@ function renderRetailBars(D){
   const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
   const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
   if(sentSym)return renderRetailHistory(D,sentSym,hdr);
-  const list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
+  let list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
     return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:12.5px;line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
+  }
+  const multiBar=sentMultiFilterBarHtml(list.map(r=>r.sym));
+  if(sentCcyFilter.length||sentScope)list=list.filter(r=>sentItemMatchesMulti(r.sym));
+  if(!list.length){
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${multiBar}<div style="color:var(--t3);font-size:12.5px;padding:8px 0">No symbols match this filter. Adjust or clear it above.</div></div></div>`;
   }
   const rows=list.map(r=>{
     const L=Math.round(r.long),S=100-L;
@@ -20773,7 +20939,7 @@ function renderRetailBars(D){
     </div>`;
   }).join('');
   const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
-  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${legend}${rows}</div></div>`;
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${multiBar}${legend}${rows}</div></div>`;
 }
 // ── Retail Sentiment History: Net Positioning (Long%-Short%) vs. Preis +
 // darunter der Long/Short-Verlauf als 100%-Stacked-Bar (Nutzer-Wunsch
@@ -21447,8 +21613,9 @@ function renderCot(){
   const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
   const avail=allRows.map(r=>r.id);
   if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
-  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','All assets','Filter by a single asset',null);
-  const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):allRows;
+  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','All assets','Filter by a single asset',null)
+    +(cotFilter?'':multiAssetFilterBarHtml(avail,cotCcyFilter,cotScope,'toggleCotCcy','setCotScope','clearCotCcyFilter'));
+  const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):applyMultiAssetFilter(allRows,r=>r.id,cotCcyFilter,cotScope);
   if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
   // Ab 80% auf einer Seite gilt die Positionierung als "crowded": extrem
   // einseitige Spekulanten-Positionierung erhoeht das Risiko scharfer

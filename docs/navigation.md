@@ -1152,6 +1152,18 @@ werden ergänzt, nichts an vorhandenen/vom Nutzer veränderten Symbolen
 angefasst) — beide Pfade getestet (simulierter Reload mit entfernten Yields,
 direkter `applySnap()`-Aufruf mit entferntem Snapshot).
 
+### Score-Zahl direkt in der Zeile (2026-08-24)
+
+Nutzer-Wunsch: *„im asset stapel direkt neben dem asset namen bitte ergänz
+der kurz einfach noch kurz den score also nur die zahl und nicht in bias
+farbe"*. Neue `.np-score`-Spanne direkt nach `.np-lbl` (Name), gedämpft in
+`var(--t3)` — bewusst **keine** `BC[bias]`-Färbung, weil die Zeile sonst
+komplett bias-farb-frei ist (siehe `renderSidebar`-Kommentar „Keine
+Bias-Farbe, kein Glow-Rand"). Der Tooltip (`data-tip`) trug den Score schon
+vorher, bleibt unverändert erhalten — die Zeile zeigt ihn jetzt zusätzlich
+sichtbar. In der eingeklappten Icon-Leiste (`.nav-collapsed`) ausgeblendet,
+im selben Zug wie `.np-lbl`/`.np-arrow`.
+
 ### Warum kein Eintrag in `tabStacks`
 
 Der Stapel benutzt bewusst **denselben Mechanismus** wie die echten Tab-Stapel
