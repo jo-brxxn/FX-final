@@ -1096,6 +1096,70 @@ lassen. Ersetzt die früheren Einzel-Zustände `sbReorderId`/`sbCatReorder` (bei
 denen man für jeden Eintrag neu drücken musste); sie sind samt `sbCatClick` und
 den toten CSS-Regeln `.sb`/`.sb-lbl`/`.ab-move`/`.ab-del`/`.add-sym` entfernt.
 
+### Drei Fehler im aufgeklappten Stapel (2026-08-24)
+
+Nutzer-Bugreport: *„wenn man den ausklappt ist da keine Animation und man
+kommt schnell in den Bearbeitungsmodus aber den sieht man nicht richtig und
+man kommt nicht mehr raus."* Alle drei hingen zusammen — beide Wurzeln lagen
+im selben CSS-Mechanismus (`.np-sub-wrap` in `#navSidebar`).
+
+**1. Keine Aufklapp-Animation.** `#navSidebar .np-sub-wrap.np-assets.open
+{max-height:none}` sollte die generische `520px`-Basisdeckelung für den
+langen Assets-Stapel aufheben. `syncNavExpanded()` liest dafür
+`w.scrollHeight`, um danach die exakte Pixelhöhe inline zu setzen — und genau
+dieses Lesen **zwingt den Browser, den Stil vorher synchron aufzulösen**. In
+exakt diesem Zwischenzustand (Klasse `.open` schon gesetzt, Inline-Wert noch
+nicht) griff diese `none`-Regel. Von `none` lässt sich nicht zu einem
+Pixelwert animieren — der Übergang sprang seither ohne jede Animation direkt
+auf die Endgröße. Andere Stapel (z. B. „Insights") waren nicht betroffen: für
+sie greift im selben Zwischenzustand nur die generische `520px`-Regel, und
+zwischen zwei numerischen Werten kann der Browser sehr wohl interpolieren.
+**Fix:** die `none`-Regel ist ersatzlos entfernt — unnötig, denn
+`syncNavExpanded()` setzt nach *jedem* `renderSidebar()`-Aufruf ohnehin eine
+exakte Inline-Höhe, die die `520px`-Deckelung automatisch schlägt.
+
+**2. Bearbeitungsmodus unsichtbar/unerreichbar.** `.np-sub-wrap` hatte kein
+`flex-shrink:0`. `#navSidebar` ist selbst ein Flex-Container mit begrenzter
+Höhe — ohne diese Eigenschaft wurde der aufgeklappte Assets-Stapel von den
+Nachbar-Einträgen (Dashboard, Insights, …) **zusammengedrückt**, statt dass
+die Leiste selbst scrollt (sie ist `overflow-y:auto`). Gemessen: der Wrapper
+hatte `max-height` **und** `scrollHeight` korrekt auf `669px` im
+Bearbeitungsmodus, wurde aber trotzdem nur `568px` hoch gerendert — die
+fehlenden 101px waren exakt der „Done"-Knopf, lautlos abgeschnitten durch das
+eigene `overflow:hidden`. **Fix:** `flex-shrink:0` auf `.np-sub-wrap` — die
+Navigationsleiste scrollt jetzt korrekt, sobald der Bearbeitungsmodus mehr
+Platz braucht, statt Inhalt unsichtbar zu verlieren
+(`navSidebarScrollHeight` wich danach messbar von `clientHeight` ab, vorher
+waren beide identisch — der Beweis, dass vorher nie echter Überlauf
+entstand, weil alles hineingequetscht wurde).
+
+**3. `scrollIntoView()` traf den falschen Vorfahren.** Für die dritte
+Verbesserung — die gedrückte Zeile beim Einstieg in den Bearbeitungsmodus
+automatisch ins Sichtfeld holen — lag der naheliegende Ansatz
+`row.scrollIntoView({block:'nearest'})` nahe. Per Playwright nachgestellt:
+das griff **nicht** `#navSidebar` (das einzige für den Nutzer sichtbare
+`overflow-y:auto`), sondern `.np-sub-wrap`/`#sidebar` selbst — das trägt
+`overflow:hidden` für die Aufklapp-Animation, und `overflow:hidden` zählt für
+`scrollIntoView()` als gültiges Scroll-Ziel, obwohl es für den Nutzer gar
+keinen Scrollbalken hat. Der Aufruf verschob lautlos dessen **internen**
+`scrollTop`, während die tatsächlich sichtbare Navigationsleiste
+unverändert blieb — die Zeile blieb weiterhin verdeckt.
+**Fix:** eine eigene Funktion `scrollIntoNav(el)`, die explizit gegen
+`#navSidebar` rechnet (Vergleich der `getBoundingClientRect()`-Werte gegen
+die Leiste selbst, nicht gegen `0`/`clientHeight`), statt sich auf die
+Vorfahren-Suche des Browsers zu verlassen. Wird zweimal aufgerufen — sofort
+und nochmal nach 300ms, weil der Wrapper beim Wechsel in den
+Bearbeitungsmodus über denselben `max-height`-Übergang wächst und die Zeile
+sich dabei verschiebt.
+
+⚠ **Merksatz für künftige `.np-sub-wrap`-Änderungen:** jede Sonderregel, die
+den generischen `.open`-Zustand überschreibt (Farbe, Deckelung, Höhe, …),
+kann `syncNavExpanded()`s `scrollHeight`-Lesen mitten in einem
+Zwischenzustand erwischen. Vor jeder solchen Änderung mit Playwright prüfen,
+ob der Übergang noch **animiert** (Frame-für-Frame-Messung wie im
+Scratchpad-Test, nicht nur der Endzustand) — ein Snap-to-final sieht in
+einem einzelnen Screenshot identisch aus wie eine erfolgreiche Animation.
+
 ### Was `check/nav.js` jetzt prüft
 
 Prüfung **E** zielte früher auf `fx` als „Tab außerhalb jedes Stapels" — seit

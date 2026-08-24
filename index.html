@@ -341,7 +341,17 @@ svg.ic{vertical-align:-2px;flex:none}
    ("Rate Probabilities"), statt beim Aufklappen von Insights zu springen.
    Ein frueherer Versuch mit max-width:0 sparte zwar 16px, liess die Leiste
    aber genau dieses Springen machen. */
-.np-sub-wrap{display:flex;flex-direction:column;gap:1px;overflow:hidden;
+/* flex-shrink:0 ist Pflicht: #navSidebar ist selbst ein Flex-Container mit
+   begrenzter Hoehe. Ohne das wird ein langer, aufgeklappter Stapel (allen
+   voran Assets mit 16+ Zeilen plus Bearbeitungsmodus-Knoepfen) von den
+   Nachbar-Buttons (Dashboard, Insights, ...) einfach ZUSAMMENGEDRUECKT statt
+   dass die Leiste selbst scrollt (sie ist overflow-y:auto) - gemessen
+   Nutzer-Bugreport 2026-08-24: der Wrapper hatte max-height UND scrollHeight
+   korrekt auf 669px, wurde aber trotzdem nur 568px hoch gerendert, wodurch
+   der "Done"-Knopf des Bearbeitungsmodus lautlos abgeschnitten war - "man
+   kommt schnell in den Bearbeitungsmodus aber den sieht man nicht richtig
+   und man kommt nicht mehr raus". */
+.np-sub-wrap{display:flex;flex-direction:column;flex-shrink:0;gap:1px;overflow:hidden;
   max-height:0;opacity:0;visibility:hidden;
   transition:max-height .26s cubic-bezier(.4,0,.2,1),opacity .16s ease,visibility .26s}
 .np-sub-wrap.open{max-height:520px;opacity:1;visibility:visible}
@@ -351,8 +361,22 @@ svg.ic{vertical-align:-2px;flex:none}
    Navigationsleiste. Die generischen .ab-Regeln weiter unten sind fuer
    die HELLE Spalte gebaut (u.a. var(--bg5), das der Chrome-Scope NICHT
    ueberschreibt - das waere eine weisse Zeile auf Navy). Deshalb hier
-   eigene Regeln mit hoeherer Spezifitaet (#navSidebar .ab schlaegt .ab). */
-#navSidebar .np-sub-wrap.np-assets.open{max-height:none}
+   eigene Regeln mit hoeherer Spezifitaet (#navSidebar .ab schlaegt .ab).
+
+   ⚠ HIER STAND FRUEHER "max-height:none", damit die Basisregel oben
+   (max-height:520px im offenen Zustand) den langen Assets-Stapel nicht
+   deckelt. Das hat aber die Aufklapp-ANIMATION zerstoert: syncNavExpanded()
+   liest w.scrollHeight, um danach die exakte Pixel-Hoehe inline zu setzen -
+   und genau dieses scrollHeight-Lesen zwingt den Browser, den Stil VORHER
+   synchron aufzuloesen. In diesem Moment (die Klasse .open ist schon da,
+   der Inline-Wert noch nicht) greift ausgerechnet diese "none"-Regel, und
+   "none" laesst sich nicht zu einem Pixelwert animieren - der Uebergang
+   sprang seither ohne jede Animation direkt auf die Endgroesse (Nutzer-
+   Bugreport 2026-08-24: "wenn man den ausklappt ist da keine Animation").
+   Der Deckel ist inzwischen unnoetig: syncNavExpanded() setzt nach JEDEM
+   renderSidebar()-Aufruf ohnehin eine exakte Inline-Hoehe (schlaegt die
+   520px automatisch), und flex-shrink:0 oben verhindert zusaetzlich, dass
+   die Leiste den Stapel zusammendrueckt. */
 #navSidebar .np-cat{display:flex;align-items:center;gap:6px;
   padding:9px 9px 3px 16px;font:600 9.5px/1.3 var(--ff-num);letter-spacing:1.6px;
   text-transform:uppercase;color:var(--t3);user-select:none}
@@ -3651,11 +3675,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-438 - Kopfzeile: vier Nutzer-Wuensche. (1) FX-Logo, Profil-Kreis und die aktive Tab-/Asset-Markierung in der Navigationsleiste tragen jetzt dieselbe tiefe, kraeftige Blau-Flaeche (var(--blue), #0B5FCC) statt vorher drei verschiedener Toene (t0-weiss fuers Logo, --bg5-Grau fuer den Kreis ohne Initialen, Cyan-Accent fuer die Auswahl). Der Profil-Kreis ist jetzt IMMER blau, nicht mehr nur wenn Sync-Initialen bekannt sind. Die Auswahl-Hervorhebung (aktiver Tab UND aktive Asset-Zeile im Stapel) bekommt ihr Blau ueber eine gescopte --accent-Ueberschreibung NUR innerhalb von .hdr/#navSidebar (var(--accent):var(--blue)) - Bias-Farben im Inhalt bleiben unberuehrt, dort gilt weiter der root-Accent bzw. BC. Kehrt damit eine fruehere, dokumentierte Entscheidung um (Cyan statt Blau, um Verwechslung mit der bullish-Bias-Farbe zu vermeiden) - jetzt ausdruecklicher Nutzer-Wunsch. (2) Die Suchleiste ist schmaler (vorher flex:1 mit max-width 480px, jetzt eine feste Breite von 320px, kein Wachsen mehr). (3) Der dadurch frei werdende Platz geht an den Saved/LIVE/VERSION-CHECK-Cluster, der jetzt darin zentriert ist (.hdr-status bekam flex:1 und justify-content:center) - bleibt dabei ein echtes Flex-Kind im normalen Fluss, keine absolute Positionierung (Ueberlapp-Risiko auf schmalen Screens, siehe aeltere Kommentare).""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-439 - Drei Bugs im aufgeklappten Assets-Stapel behoben. (1) KEINE ANIMATION beim Aufklappen: die Regel #navSidebar .np-sub-wrap.np-assets.open{max-height:none} sollte die 520px-Basisdeckelung fuer den langen Stapel aufheben, hat aber die Uebergangsanimation zerstoert - syncNavExpanded() liest w.scrollHeight, was den Browser zwingt, den Stil VORHER synchron aufzuloesen, und in genau diesem Moment (Klasse .open schon da, Inline-Wert noch nicht) griff diese none-Regel; von none laesst sich nicht zu einem Pixelwert animieren, der Uebergang sprang seither direkt auf die Endgroesse. Regel entfernt - unnoetig, denn syncNavExpanded() setzt ohnehin nach jedem Render eine exakte Inline-Hoehe. (2) BEARBEITUNGSMODUS UNSICHTBAR/UNERREICHBAR: .np-sub-wrap hatte kein flex-shrink:0, wurde von den Nachbar-Tabs in der Navigationsleiste (die selbst ein Flex-Container mit begrenzter Hoehe ist) beim Aufklappen einfach ZUSAMMENGEDRUECKT statt dass die Leiste selbst scrollt - gemessen: der Wrapper hatte max-height UND scrollHeight korrekt auf 669px, wurde aber trotzdem nur 568px hoch gerendert, der Done-Knopf lautlos abgeschnitten. flex-shrink:0 ergaenzt - die Navigationsleiste (overflow-y:auto) scrollt jetzt korrekt, sobald der Bearbeitungsmodus mehr Platz braucht, statt Inhalt unsichtbar zu verlieren. (3) Beim Long-Press auf eine Zeile scrollt sie jetzt automatisch ins Sichtfeld - NICHT ueber row.scrollIntoView() (das griff nachweislich den FALSCHEN Vorfahren: .np-sub-wrap selbst hat overflow:hidden fuer die Aufklapp-Animation und zaehlt damit fuer scrollIntoView als gueltiges, aber fuer den Nutzer unsichtbares Scroll-Ziel - der Aufruf verschob lautlos dessen internen scrollTop, waehrend die eigentlich sichtbare Navigationsleiste unveraendert blieb), sondern ueber die neue Funktion scrollIntoNav(), die explizit gegen #navSidebar rechnet.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-438</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-439</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -10432,9 +10456,45 @@ let _sbPressTimer=null,_sbCatPressTimer=null,_sbSuppressClick=false;
 // Liste ein (vorher: nur dieses eine Asset bekam ▲▼). Verlassen wird er ueber
 // "Done" - so lassen sich mehrere Eintraege hintereinander verschieben,
 // statt fuer jeden neu drueckenzu muessen.
+// Scrollt EXPLIZIT die Navigationsleiste (#navSidebar, overflow-y:auto) so,
+// dass das Element sichtbar wird - bewusst NICHT el.scrollIntoView(), das hat
+// hier tatsaechlich den FALSCHEN Vorfahren erwischt: der naechste Vorfahre
+// mit einem overflow ungleich "visible" ist #sidebar/.np-sub-wrap selbst
+// (overflow:hidden, fuer die Aufklapp-Animation - siehe Kommentar dort), und
+// overflow:hidden zaehlt fuer scrollIntoView() als gueltiges Scroll-Ziel,
+// obwohl es fuer den Nutzer gar keinen Scrollbalken hat. Ergebnis: der
+// Aufruf verschob unsichtbar den internen scrollTop des Wrappers, waehrend
+// #navSidebar (das echte, sichtbare overflow-y:auto) unveraendert blieb -
+// gemessen per Playwright, nachgestellt am Bugreport.
+function scrollIntoNav(el){
+  const nav=document.getElementById('navSidebar');
+  if(!nav||!el)return;
+  const nr=nav.getBoundingClientRect(),er=el.getBoundingClientRect();
+  if(er.top<nr.top)nav.scrollTop-=(nr.top-er.top)+8;
+  else if(er.bottom>nr.bottom)nav.scrollTop+=(er.bottom-nr.bottom)+8;
+}
 function sbPressStart(id){
   clearTimeout(_sbPressTimer);
-  _sbPressTimer=setTimeout(()=>{sbEditMode=true;_sbSuppressClick=true;renderSidebar();},450);
+  _sbPressTimer=setTimeout(()=>{
+    sbEditMode=true;_sbSuppressClick=true;renderSidebar();
+    // Die gedrueckte Zeile ins Sichtfeld scrollen - sonst wirkt der
+    // Bearbeitungsmodus unsichtbar, wenn die Zeile ausserhalb des gerade
+    // sichtbaren Ausschnitts der Navigationsleiste liegt (Nutzer-Bugreport
+    // 2026-08-24: "man kommt schnell in den Bearbeitungsmodus aber den
+    // sieht man nicht richtig"). #sidebar statt eines CSS-Attributselektors,
+    // um bei Sonderzeichen in der id nichts falsch zu escapen.
+    const row=[...document.querySelectorAll('#sidebar [data-sym]')].find(x=>x.getAttribute('data-sym')===id);
+    if(row){
+      scrollIntoNav(row);
+      // War der Stapel schon offen (Normalfall: man ist bereits auf der
+      // Assets-Seite), waechst der Wrapper beim Wechsel in den
+      // Bearbeitungsmodus per max-height-Uebergang (260ms) auf seine neue,
+      // groessere Hoehe. Direkt nach renderSidebar() gemessen, kann die
+      // Zeile deshalb noch nicht an ihrer endgueltigen Position stehen -
+      // nach der Animation deshalb nochmal nachjustieren.
+      setTimeout(()=>scrollIntoNav(row),300);
+    }
+  },450);
 }
 function sbPressEnd(){clearTimeout(_sbPressTimer);_sbPressTimer=null;}
 function sbClick(id){

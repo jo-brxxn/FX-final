@@ -6934,3 +6934,42 @@ mit ausgewähltem USD) — Logo, Kreis und beide Auswahl-Zustände sichtbar
 deutlich abgesetzt, Suchleiste sichtbar schmaler, Live/Version-Cluster
 sichtbar mittiger als vorher. `node check/all.js` komplett grün (12 Wächter,
 inkl. `scorediff` — keine Score-Funktion angefasst, reines CSS).
+
+## 2026-08-24 — Assets-Stapel: Animation, Bearbeitungsmodus sichtbar/erreichbar (VERSION-CHECK-439)
+
+Nutzer-Bugreport: *„wenn man den ausklappt ist da keine Animation und man
+kommt schnell in den Bearbeitungsmodus aber den sieht man nicht richtig und
+man kommt nicht mehr raus."* Drei Fixes, alle im selben CSS-Mechanismus
+verwurzelt. Vollstaendige technische Herleitung in `docs/navigation.md`
+("Drei Fehler im aufgeklappten Stapel").
+
+**1. Keine Animation:** `#navSidebar .np-sub-wrap.np-assets.open{max-height:
+none}` liess sich nicht zu einem Pixelwert animieren, und `syncNavExpanded()`s
+`scrollHeight`-Lesen zwang den Browser, genau diesen Zwischenzustand synchron
+aufzuloesen - die Animation sprang seither direkt auf die Endgroesse.
+Ersatzlos entfernt, da `syncNavExpanded()` ohnehin nach jedem Render die
+exakte Hoehe inline setzt.
+
+**2. Bearbeitungsmodus verschwand:** `.np-sub-wrap` hatte kein
+`flex-shrink:0` - die Navigationsleiste (selbst ein Flex-Container) hat den
+aufgeklappten Stapel bei zu wenig Platz einfach ZUSAMMENGEDRUECKT statt
+selbst zu scrollen. Gemessen: `max-height` und `scrollHeight` korrekt auf
+669px, tatsaechliche Rendergroesse aber nur 568px - der "Done"-Knopf war
+genau um die fehlenden 101px lautlos abgeschnitten.
+
+**3. Auto-Scroll traf den falschen Container:** die naheliegende Loesung
+`row.scrollIntoView({block:'nearest'})` griff nachweislich `.np-sub-wrap`
+selbst (das `overflow:hidden` fuer die Animation traegt), nicht die
+tatsaechlich sichtbare `#navSidebar` - der Aufruf verschob lautlos einen
+internen, fuer den Nutzer nicht existenten Scroll-Offset. Neue Funktion
+`scrollIntoNav()` rechnet explizit gegen `#navSidebar`.
+
+**Geprueft, jeweils am eigentlichen Mechanismus, nicht nur am Endzustand:**
+Frame-fuer-Frame-Messung der Aufklapp-Animation (0 -> 112 -> 313 -> 420 ->
+447px ueber ~160ms, statt sofortigem Sprung); Long-Press per echtem
+Playwright-Mausereignis (nicht nur Funktionsaufruf) mit Positionsvergleich
+der gedrueckten Zeile UND des Done-Knopfs gegen die tatsaechliche
+`#navSidebar`-Bounding-Box (nicht gegen 0/clientHeight, dieser Fehler in der
+ERSTEN Testfassung haette einen falschen Fehlalarm geliefert); Klick auf
+Done fuehrt `sbEditMode` nachweislich auf `false` zurueck. `node check/all.js`
+komplett gruen (12 Waechter).
