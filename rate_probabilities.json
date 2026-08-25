@@ -695,7 +695,7 @@
     [
      [
       "2026-09-16",
-      11
+      10
      ],
      [
       "2026-10-28",
@@ -703,7 +703,7 @@
      ],
      [
       "2026-12-09",
-      11
+      10
      ]
     ]
    ]
@@ -715,22 +715,22 @@
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
     "rateBefore": 3.63,
-    "rateAfter": 3.74,
-    "deltaBp": 11
+    "rateAfter": 3.73,
+    "deltaBp": 10
    },
    {
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
-    "rateBefore": 3.74,
-    "rateAfter": 3.8,
+    "rateBefore": 3.73,
+    "rateAfter": 3.79,
     "deltaBp": 6
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.8,
-    "rateAfter": 3.91,
-    "deltaBp": 11
+    "rateBefore": 3.79,
+    "rateAfter": 3.89,
+    "deltaBp": 10
    }
   ],
   "pastMeeting": {
@@ -1945,7 +1945,7 @@
     [
      [
       "2026-09-17",
-      33
+      32
      ],
      [
       "2026-11-05",
@@ -1966,22 +1966,22 @@
     "label": "Sep 17, 2026",
     "rateBefore": 3.73,
     "rateAfter": 4.06,
-    "deltaBp": 33,
+    "deltaBp": 32,
     "approx": true
    },
    {
     "date": "2026-11-05",
     "label": "Nov 5, 2026",
     "rateBefore": 4.06,
-    "rateAfter": 4.08,
+    "rateAfter": 4.07,
     "deltaBp": 2,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 4.08,
-    "rateAfter": 4.23,
+    "rateBefore": 4.07,
+    "rateAfter": 4.22,
     "deltaBp": 15,
     "approx": true
    }
@@ -2567,11 +2567,11 @@
      ],
      [
       "2026-10-28",
-      10
+      9
      ],
      [
       "2026-12-09",
-      10
+      9
      ]
     ]
    ]
@@ -2591,16 +2591,16 @@
     "date": "2026-10-28",
     "label": "Oct 28, 2026",
     "rateBefore": 2.33,
-    "rateAfter": 2.43,
-    "deltaBp": 10,
+    "rateAfter": 2.42,
+    "deltaBp": 9,
     "approx": true
    },
    {
     "date": "2026-12-09",
     "label": "Dec 9, 2026",
-    "rateBefore": 2.43,
-    "rateAfter": 2.53,
-    "deltaBp": 10,
+    "rateBefore": 2.42,
+    "rateAfter": 2.51,
+    "deltaBp": 9,
     "approx": true
    }
   ],
