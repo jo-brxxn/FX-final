@@ -318,6 +318,41 @@ meldete korrekt 0). Die Meldung faengt den Fall also im Zeitfenster, sie
 ist keine rueckwirkende Buchhaltung. Bei JEDER neuen Regel, die ein Event
 ohne Actual verwirft, hier mitpruefen.
 
+## Live-Status der acht Hintergrund-Feeds (`DATA_LIVE_OK`, 2026-08-25)
+
+Bugreport: nach dem Privat-Stellen des GitHub-Repos luden Risk Sentiment und
+Performance Ranking keine Daten mehr. Ursache: **alle zehn Live-Daten-JSONs**
+laufen ausserhalb jedes Deploy-Mechanismus per anonymem `fetch()` direkt von
+`raw.githubusercontent.com` (siehe `DATA_BASE`-Kommentar vor `const
+DATA_BASE=...` in `index.html`) - das erfordert ein OEFFENTLICHES Repo, sonst
+404. Details zur Produktionsadresse (Cloudflare Worker, nicht GitHub Pages):
+`docs/workflow.md`.
+
+Nutzer-Wunsch danach: "immer aktuelle Daten, nie veraltete" - bisher fiel ein
+fehlgeschlagener Fetch komplett unter den Tisch, die App zeigte kommentarlos
+den letzten synchronisierten Wert weiter. Jetzt trackt `DATA_LIVE_OK` (Objekt
+bei `DATA_BASE`) fuer alle acht Quellen (`ind`/`bond`/`cot`/`sentiment`/
+`price`/`news`/`risk`/`calendar`), ob der letzte Abruf DIESER Sitzung
+erfolgreich war. `dataFeedStaleNotifyHtml()` zeigt bei mindestens einer
+fehlgeschlagenen Quelle eine Dashboard-Notification-Karte (gleiches
+`.stale-notify-card`-Muster wie `staleNotifyHtml()`/`awaitingNotifyHtml()`).
+**Ersetzt bewusst KEINEN Wert** (Nutzer-Entscheidung: Warnung zusaetzlich,
+nicht statt des alten Werts) - Cross-Device-Sync bleibt die einzige Quelle
+ausserhalb der aktuellen Session, die alte Zahl ist echt, nur nicht mehr
+live bestaetigt.
+
+COT und Kalender haben je einen ZWEITEN, vom Repo unabhaengigen Live-Weg
+(CFTC-Direktabruf bzw. FF-Live-Proxys) - `DATA_LIVE_OK.cot`/`.calendar`
+spiegeln deshalb den finalen Erfolg NACH beiden Versuchen, nicht nur den
+ersten DATA_BASE-Fetch.
+
+**Ungeloest:** ein privates Repo bleibt damit weiterhin kaputt fuer diese
+zehn JSONs - die Warnung macht es nur sichtbar, behebt es nicht. Echte
+Loesung waere ein serverseitiger Proxy im Cloudflare Worker (der haelt einen
+GitHub-Token als Secret und kann private Repos lesen) statt des anonymen
+Client-Fetches - der Worker-Code liegt aber NICHT in diesem Repo (siehe
+`docs/workflow.md`), kann also nicht von hier aus umgesetzt werden.
+
 ## ⚠️ EUR-PMI-Kalendermatcher: "Final" nicht vergessen
 
 `IND_EVENT_MATCHERS['Manufacturing PMI'/'Services PMI']` hat fuer EUR ein

@@ -7416,3 +7416,64 @@ Assertion), "Non-FX"-Scope zeigt exakt die 6 non-FX-Symbole. Trends-
 Mehrfachfilter (USD+EUR) zeigt in ALLEN VIER Chart-Karten (Total/Inflation/
 Labour/Growth) konsistent genau USD+EUR; `trendAssets()` enthaelt jetzt
 alle 8 Yield-IDs. `node check/all.js` komplett gruen.
+
+## Live-Site-Bugreport: privates Repo blockiert alle zehn Daten-JSONs (2026-08-25)
+
+Bugreport: "beim risk sentiment und beim performance ranking laden die
+daten nicht" auf der Live-Seite. Lokale Reproduktion (Playwright, identischer
+Code + identische Daten) zeigte BEIDE Widgets fehlerfrei mit aktuellen
+Werten - der Bug lag also nicht im Code oder den Daten selbst.
+
+**Diagnoseweg:** Konnte die Live-URL nicht direkt oeffnen (Sandbox blockt
+`jo-brxxn.github.io` per Proxy-403). Ueber die GitHub-Actions-API geprueft:
+der `pages-build-deployment`-Workflow hatte seit 2026-08-10 keinen neuen
+Lauf mehr, obwohl taeglich weiter auf `main` gepusht wurde - zunaechst als
+moegliche Ursache vermutet (GitHub Pages liefert bei privaten Repos auf dem
+Free-Plan 404). Nutzer stellte klar: **die echte Produktionsadresse ist gar
+nicht GitHub Pages**, sondern ein Cloudflare Worker
+(`fx-final.jonathan-fa5.workers.dev`) - GitHub Pages ist nur ein zweiter,
+ungeschuetzter Mirror. `docs/workflow.md` war an dieser Stelle veraltet/
+irrefuehrend und wurde korrigiert (Details dort).
+
+**Tatsaechliche Ursache:** unabhaengig vom Hosting laufen alle zehn
+Live-Daten-JSONs (`ind_data.json` etc.) per anonymem `fetch()` direkt von
+`raw.githubusercontent.com` - eingebaut, weil Cloudflare Pages' kostenloser
+Plan nur 500 Builds/Monat erlaubt, der stuendliche Daten-Workflow aber ~720
+Pushes/Monat erzeugt (Kommentar vor `DATA_BASE` in `index.html`). Ein
+privates Repo blockiert diesen Raw-Endpunkt mit 404 - der Worker selbst
+lief die ganze Zeit weiter, nur eben ohne Daten. Bestaetigt durch den
+Nutzer: "hab github repo eben auf privat gestellt".
+
+**Nutzer-Wunsch danach:** "ich will immer aktuelle daten nie veraltete also
+mach bei den anderen daten wenn das passiert auch ein platzhalter hin" -
+per `AskUserQuestion` geklaert, ob der alte (noch synchronisierte) Wert
+komplett ersetzt oder nur zusaetzlich markiert werden soll → **zusaetzliche
+Warnung** (Empfehlung, vom Nutzer bestaetigt), alter Wert bleibt sichtbar.
+
+**Umsetzung (VERSION-CHECK-447):** neues `DATA_LIVE_OK`-Objekt (bei
+`DATA_BASE` in `index.html`) trackt fuer alle acht Hintergrund-Feeds (`ind`/
+`bond`/`cot`/`sentiment`/`price`/`news`/`risk`/`calendar`), ob der letzte
+Abruf dieser Sitzung erfolgreich war - jede der acht Fetch-Funktionen setzt
+das Flag jetzt explizit (vorher stille `catch(e){}`-Bloecke ohne jede
+Spur). COT und Kalender haben je einen zweiten, repo-unabhaengigen
+Live-Weg (CFTC direkt bzw. FF-Live-Proxys) - ihr Flag spiegelt den finalen
+Erfolg NACH beiden Versuchen. Neue Funktion `dataFeedStaleNotifyHtml()`
+zeigt bei mindestens einer fehlgeschlagenen Quelle eine Dashboard-
+Notification-Karte, im selben `.stale-notify-card`-Muster wie die
+bestehenden `staleNotifyHtml()`/`awaitingNotifyHtml()` (in dieselbe
+`popups`-Kette der `notification`-Widget-Karte eingehaengt). Details:
+`docs/data-sources.md`.
+
+**Bewusst NICHT geloest:** ein privates Repo bleibt weiterhin kaputt fuer
+diese zehn JSONs - die neue Warnung macht es nur sichtbar. Die echte Loesung
+(serverseitiger Proxy im Cloudflare Worker mit einem GitHub-Token als
+Secret) liegt ausserhalb dieses Repos (der Worker-Code ist hier nicht
+vorhanden) und wurde dem Nutzer als naechster Schritt erklaert, nicht
+umgesetzt.
+
+**Geprueft (Playwright):** lokal laden alle acht Feeds erfolgreich
+(`DATA_LIVE_OK` komplett `true`), keine Warnkarte. Nach manuellem Setzen von
+`DATA_LIVE_OK.risk=false`/`DATA_LIVE_OK.price=false` erscheint sofort "Live
+data unavailable: Prices, Risk index" in der Notifications-Karte, an
+korrekter Position vor den bestehenden Veraltet-/Awaiting-Meldungen, ohne
+Seitenfehler. `node check/all.js` komplett gruen.

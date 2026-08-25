@@ -3708,11 +3708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-446 - Zwei Nutzer-Wuensche. (1) Mehrfach-Waehrungsfilter (Chips + All/FX/Non-FX/Yields, wie bei Set-ups) ERGAENZEND zum bestehenden Einzel-Dropdown bei COT, Retail Sentiment und Trends - zeigt mehrere gewaehlte Assets gleichzeitig als Liste statt nur alle oder genau eins; Set-ups selbst bekam die zwei neuen Non-FX/Yields-Quick-Buttons dazu. Trends kennt die Yields-Kategorie jetzt ueberhaupt erst (trendAssets()). (2) Assets-Stapel zeigt die Score-Zahl jetzt direkt neben dem Namen (.np-score, bewusst gedaempft/neutral gefaerbt, keine Bias-Farbe) statt nur im Tooltip."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-447 - Private-Repo-Bugreport: alle zehn Live-Daten-JSONs laufen per anonymem Fetch auf raw.githubusercontent.com, was ein privates Repo mit 404 blockiert. Neue DATA_LIVE_OK-Statusverfolgung fuer alle acht Feeds (ind/bond/cot/sentiment/price/news/risk/calendar) plus dataFeedStaleNotifyHtml() als neue Dashboard-Notification-Karte (gleiches Muster wie die bestehende Veraltet-Meldung) - zeigt sichtbar an, wenn der letzte Live-Abruf einer Quelle fehlgeschlagen ist, ohne den zuletzt synchronisierten Wert zu ersetzen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-446</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-447</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4796,6 +4796,18 @@ const SK='fxpro_v1';
 const DATA_BASE=(location.hostname==='jo-brxxn.github.io'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
   ?''
   :'https://raw.githubusercontent.com/jo-brxxn/FX-final/main/';
+
+// Live-Status der acht Hintergrund-Datenfeeds, die alle ueber DATA_BASE
+// laufen (Nutzer-Wunsch 2026-08-25: "immer aktuelle Daten, nie veraltete" -
+// bisher fiel ein fehlgeschlagener Fetch, z.B. weil raw.githubusercontent.com
+// bei privatem Repo 404 liefert, komplett unter den Tisch: die App zeigte
+// kommentarlos den letzten synchronisierten Wert weiter, ohne dass sichtbar
+// war, dass er nicht mehr live bestaetigt ist). true=letzter Abruf dieser
+// Sitzung erfolgreich, false=fehlgeschlagen, undefined=noch kein Versuch
+// beendet (dann keine Warnung, sonst Fehlalarm waehrend des ersten Ladens).
+// Ersetzt NIRGENDS einen Wert - siehe dataFeedStaleNotifyHtml().
+const DATA_LIVE_OK={};
+const DATA_SRC_LABEL={ind:'Indicators',bond:'Bond yields',cot:'COT',sentiment:'Retail sentiment',price:'Prices',news:'News',risk:'Risk index',calendar:'Calendar'};
 
 // Official FX pairs list (base/quote correct)
 const ALL_PAIRS=[
@@ -14389,6 +14401,7 @@ async function fetchFF(silent,btnEl){
     localStorage.setItem('fxpro_ff_last',new Date().toISOString());
     localStorage.setItem('fxpro_ff_lastok','0');
     updFFLastUpd();
+    rerender();
     if(!silent)alert('Could not reach Forex Factory.\n\nForex Factory does not offer a public API or API key - this uses an unofficial data feed which can be blocked (e.g. by Cloudflare) for everyone, including all proxy fallbacks tried.\n\nFix: Go to forexfactory.com/calendar and add events manually using the form below. Only takes 1 minute per week.');
   }
   if(btn){btn.innerHTML=icn('refresh')+' Refresh';btn.disabled=false;}
@@ -14411,9 +14424,10 @@ function autoFetchFF(){
 // renditen, Swaps, länderspezifische Lohnmaße) behalten die Recherchewerte.
 let IND_DATA_FEED=null;
 async function fetchIndData(){
+  DATA_LIVE_OK.ind=false;
   try{
     const res=await fetch(DATA_BASE+'ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
-    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){IND_DATA_FEED=d;invalidateRateStepCache();}}
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){IND_DATA_FEED=d;invalidateRateStepCache();DATA_LIVE_OK.ind=true;}}
   }catch(e){}
 }
 // Kuratierter Quellen-Link (i.d.R. investing.com) eines Indikators aus der
@@ -14564,9 +14578,10 @@ function applyIndDataFeed(){
 const BOND_INDS=['2Y Bond Yield','10Y Bond Yield'];
 let BOND_DATA_FEED=null;
 async function fetchBondData(){
+  DATA_LIVE_OK.bond=false;
   try{
     const res=await fetch(DATA_BASE+'bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
-    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))BOND_DATA_FEED=d;}
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){BOND_DATA_FEED=d;DATA_LIVE_OK.bond=true;}}
   }catch(e){}
 }
 function isoMinusDays(iso,days){
@@ -14690,9 +14705,10 @@ let PRICE_DATA_FEED=null;
 // wenn der stuendliche Workflow zwischen zwei Abrufen keine neuen Werte hatte.
 let priceDataLastFetch=null;
 async function fetchPriceData(){
+  DATA_LIVE_OK.price=false;
   try{
     const res=await fetch(DATA_BASE+'price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
-    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))PRICE_DATA_FEED=d;}
+    if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){PRICE_DATA_FEED=d;DATA_LIVE_OK.price=true;}}
   }catch(e){}
   priceDataLastFetch=Date.now();
 }
@@ -14711,7 +14727,11 @@ function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rere
 let NEWS_DATA=null;
 function fetchNewsData(){
   return fetch(DATA_BASE+'news_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
-    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&Array.isArray(d.headlines))NEWS_DATA=d;}).catch(()=>{});
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&Array.isArray(d.headlines)){NEWS_DATA=d;DATA_LIVE_OK.news=true;}
+      else DATA_LIVE_OK.news=false;
+    }).catch(()=>{DATA_LIVE_OK.news=false;});
 }
 function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')renderDash();});}
 // Risk-On/Risk-Off-Index aus echten Marktpreisen (VIX, Gold, AUD/USD,
@@ -14729,7 +14749,11 @@ function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')rende
 let RISK_INDEX_DATA=null;
 function fetchRiskIndexData(){
   return fetch(DATA_BASE+'risk_index.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
-    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.value!=null)RISK_INDEX_DATA=d;}).catch(()=>{});
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&d.value!=null){RISK_INDEX_DATA=d;DATA_LIVE_OK.risk=true;}
+      else DATA_LIVE_OK.risk=false;
+    }).catch(()=>{DATA_LIVE_OK.risk=false;});
 }
 function autoFetchRiskIndex(){fetchRiskIndexData().then(()=>{if(curPage==='dash')renderDash();});}
 // Kurze relative Zeitangabe ("12m"/"3h"/"2d") fuer Schlagzeilen-Zeitstempel -
@@ -14898,6 +14922,7 @@ function updFFLastUpd(){
   const time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   const ok=localStorage.getItem('fxpro_ff_lastok')!=='0';
   el.textContent=(ok?'Last updated: ':'Last attempt (error): ')+time;
+  DATA_LIVE_OK.calendar=ok;
 }
 
 // ══ NOTE CATS ════════════════════════════════════════════════════
@@ -15889,6 +15914,22 @@ function awaitingNotifyHtml(){
     <div class="stale-notify-note">The calendar knows the release happened, but none of the sources delivered a number. Nothing is estimated — the card keeps the last confirmed value and says so, so you can look it up yourself if it matters.</div>
   </div>`;
 }
+// Dashboard-Meldung fuer fehlgeschlagene Live-Datenabrufe (DATA_LIVE_OK,
+// siehe Definition bei DATA_BASE) - Nutzer-Wunsch 2026-08-25: "immer
+// aktuelle Daten, nie veraltete", ausgeloest durch den Fund, dass ein
+// privates Repo den anonymen raw.githubusercontent.com-Fetch aller zehn
+// Live-JSONs mit 404 blockiert. Ersetzt KEINEN Wert (die Karten zeigen
+// weiter den letzten synchronisierten Stand, Cross-Device-Sync ist die
+// einzige Quelle ausserhalb dieser Session) - macht nur sichtbar, dass er
+// gerade nicht live bestaetigt ist.
+function dataFeedStaleNotifyHtml(){
+  const failed=Object.keys(DATA_SRC_LABEL).filter(k=>DATA_LIVE_OK[k]===false);
+  if(!failed.length)return'';
+  return`<div class="stale-notify-card">
+    <div class="stale-notify-hd">${icn('clock',13)}<span>Live data unavailable: ${failed.map(k=>DATA_SRC_LABEL[k]).join(', ')}</span></div>
+    <div class="stale-notify-note">The last live fetch failed for the source${failed.length>1?'s':''} above — values shown may be from an earlier update, not estimated or replaced.</div>
+  </div>`;
+}
 function cotNotifyHtml(){
   if(!cotWarningActive())return'';
   return`<div class="cot-notify-card" onclick="showTab('cot')">
@@ -16830,7 +16871,7 @@ function renderDash(){
       // "mach die Pop ups wie zB cot in die notifications rein"). Der
       // "View FF"-Link im Kartenkopf (hdrHtml weiter unten) fuehrt direkt
       // zum Forex-Factory-Kalender.
-      const popups=cloudNotConnectedNoticeHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
+      const popups=cloudNotConnectedNoticeHtml()+dataFeedStaleNotifyHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
       // ⚠ Nutzer-Wunsch 2026-08-20: die Karte darf NICHT beliebig lang werden.
       // Wie viele Meldungen anstehen, haengt allein davon ab, was gerade los
       // ist (veraltete Indikatoren, ausstehende Werte, COT-Erinnerung) - auf
@@ -19279,6 +19320,9 @@ async function fetchCotData(){
     try{COT_DATA=await cotFetchLive();}catch(e){}
   }
   if(COT_DATA)COT_DATA=cotMergeHistory(COT_DATA);
+  // DATA_BASE-Fetch UND CFTC-Live-Fallback sind zwei unabhaengige Wege -
+  // erst wenn beide nichts liefern, gilt die Quelle diese Sitzung als tot.
+  DATA_LIVE_OK.cot=!!(COT_DATA&&COT_DATA.symbols);
 }
 function autoFetchCot(){
   fetchCotData().then(()=>{
@@ -19782,7 +19826,11 @@ function sentEval(key,d){
 }
 function fetchSentimentData(){
   return fetch(DATA_BASE+'sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
-    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&!Array.isArray(d))SENTIMENT_DATA=d;}).catch(()=>{});
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&!Array.isArray(d)){SENTIMENT_DATA=d;DATA_LIVE_OK.sentiment=true;}
+      else DATA_LIVE_OK.sentiment=false;
+    }).catch(()=>{DATA_LIVE_OK.sentiment=false;});
 }
 function autoFetchSentiment(){
   fetchSentimentData().then(()=>{
