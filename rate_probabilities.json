@@ -2559,11 +2559,11 @@
    ],
    [
     "2026-08-25",
-    2.27,
+    2.26,
     [
      [
       "2026-09-02",
-      6
+      7
      ],
      [
       "2026-10-28",
@@ -2577,14 +2577,14 @@
    ]
   ],
   "asOf": "2026-08-25",
-  "currentRate": 2.27,
+  "currentRate": 2.26,
   "meetings": [
    {
     "date": "2026-09-02",
     "label": "Sep 2, 2026",
-    "rateBefore": 2.27,
+    "rateBefore": 2.26,
     "rateAfter": 2.33,
-    "deltaBp": 6,
+    "deltaBp": 7,
     "approx": true
    },
    {
