@@ -566,7 +566,7 @@
    ]
   ]
  },
- "updated": "2026-08-25T00:38:57.009Z",
+ "updated": "2026-08-25T02:13:09.233Z",
  "stockFng": {
   "value": 55,
   "label": "greed",
@@ -1066,8 +1066,8 @@
   },
   {
    "sym": "USDJPY",
-   "long": 70,
-   "short": 30
+   "long": 66,
+   "short": 34
   },
   {
    "sym": "GBPJPY",
@@ -1086,8 +1086,8 @@
   },
   {
    "sym": "EURJPY",
-   "long": 20,
-   "short": 80
+   "long": 19,
+   "short": 81
   },
   {
    "sym": "AUDCAD",
@@ -1141,8 +1141,8 @@
   },
   {
    "sym": "GBPCHF",
-   "long": 29,
-   "short": 71
+   "long": 28,
+   "short": 72
   },
   {
    "sym": "NZDCAD",
@@ -1166,8 +1166,8 @@
   },
   {
    "sym": "CHFJPY",
-   "long": 27,
-   "short": 73
+   "long": 26,
+   "short": 74
   },
   {
    "sym": "AUDCHF",
@@ -1196,13 +1196,13 @@
   },
   {
    "sym": "XAUUSD",
-   "long": 48,
-   "short": 52
+   "long": 50,
+   "short": 50
   },
   {
    "sym": "XAGUSD",
-   "long": 47,
-   "short": 53
+   "long": 49,
+   "short": 51
   },
   {
    "sym": "BTCUSD",
@@ -1227,7 +1227,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.66,
+  "value": 0.73,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1513,6 +1513,10 @@
    [
     "2026-08-21",
     0.66
+   ],
+   [
+    "2026-08-24",
+    0.73
    ]
   ]
  },
@@ -15363,8 +15367,8 @@
    ],
    [
     "2026-08-25",
-    27,
-    73
+    26,
+    74
    ]
   ],
   "EURAUD": [
@@ -16523,8 +16527,8 @@
    ],
    [
     "2026-08-25",
-    20,
-    80
+    19,
+    81
    ]
   ],
   "EURNZD": [
@@ -17683,8 +17687,8 @@
    ],
    [
     "2026-08-25",
-    29,
-    71
+    28,
+    72
    ]
   ],
   "GBPJPY": [
@@ -20467,8 +20471,8 @@
    ],
    [
     "2026-08-25",
-    70,
-    30
+    66,
+    34
    ]
   ],
   "USOIL": [
@@ -20931,8 +20935,8 @@
    ],
    [
     "2026-08-25",
-    47,
-    53
+    49,
+    51
    ]
   ],
   "XAUUSD": [
@@ -21163,8 +21167,8 @@
    ],
    [
     "2026-08-25",
-    48,
-    52
+    50,
+    50
    ]
   ]
  },
