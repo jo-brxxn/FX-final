@@ -102,6 +102,25 @@ Quelle — dynamisch zusammengesetzte Namen und Mehrfach-Statement-Handler
 "Brücke alles, was im Modul-Top-Level steht" ist robuster als "brücke nur,
 was ich per Suche gefunden habe".
 
+**⚠️ Zweite Quelle, die genauso zwingend ist: die `check/*.js`-Skripte
+selbst.** Bei der Daten-Feeds-Kategorie (VERSION-CHECK-451) rief
+`check/score.js` `applyIndDataFeed`/`applyBondDataFeed` per `page.evaluate()`
+als bloße Bezeichner auf (`const feeds={applyIndDataFeed,...}`) - das ist
+GENAU derselbe globale Zugriff wie ein inline `onclick`, taucht aber in
+keiner HTML-Handler-Liste auf, weil es aus einem Node-Skript kommt, nicht
+aus dem Browser-Markup. `node check/all.js` hat das sofort gefunden
+(`score`/`score-cl`: `ReferenceError: applyIndDataFeed is not defined`).
+**Vor jeder Extraktion deshalb zusätzlich `check/*.js` nach den zu
+verschiebenden Namen durchsuchen** (Wortgrenzen beachten - eine naive
+Substring-Suche findet z.B. `FX` auch in `FX-final`):
+```js
+const checkFiles = fs.readdirSync('check').filter(f=>f.endsWith('.js'))
+  .map(f=>fs.readFileSync('check/'+f,'utf8')).join('\n');
+const treffer = kandidatenNamen.filter(n =>
+  new RegExp('(^|[^A-Za-z0-9_$.])'+n+'(\\W|$)').test(checkFiles));
+```
+Jeder Treffer braucht dieselbe Selbst-Brücke wie ein onclick-Name.
+
 ## Ablauf pro Kategorie (Checkliste)
 
 1. Abschnitt per Kommentar-Banner (`// ══ NAME ══`) im Hauptskript
@@ -276,3 +295,11 @@ kein SECHSTER blinder Fleck in einem der Check-Skripte lauert.
   die Externalisierung von index.html nach js/main.js ausgeloest (siehe
   oben) und beide oben dokumentierten Fallen (Import-Binding-Schreibschutz,
   handschriftlich abgetippte Namenslisten) zuerst getroffen.
+- `js/data-feeds.js` (VERSION-CHECK-451): Indikator-/Anleiherenditen-/
+  Preis-/News-/Risk-Index-Live-Abrufe (`fetch*Data`/`apply*Feed`) + die
+  Asset-Strength-Karten-Konfiguration (`ccyAllOptions`/`openCcyCfgM`/...,
+  thematisch direkt benachbart im selben Abschnitt), 45 Top-Level-Namen,
+  wie bei globe.js voll bidirektional. Hat die dritte Bruecken-Fallgrube
+  gefunden: `check/score.js` ruft `applyIndDataFeed`/`applyBondDataFeed`
+  direkt als globalen Namen per `page.evaluate()` auf - siehe den
+  "check/*.js selbst durchsuchen"-Abschnitt oben.

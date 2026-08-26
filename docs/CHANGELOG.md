@@ -7595,3 +7595,30 @@ Listen zwischen main.js/globe.js, Regressionstest mit absichtlich kaputtem
 `biasScore()` (schlaegt VOR der Reparatur nicht an, danach zuverlaessig bei
 `scorediff.js` UND `rules.js`), danach `node check/all.js` komplett gruen
 (jetzt 13 Waechter).
+
+## Modul-Aufteilung Runde 3: Daten-Feeds ausgekoppelt, dritte Bruecken-Quelle gefunden (2026-08-25)
+
+Dritte Kategorie: `js/data-feeds.js` - Indikator-/Anleiherenditen-/Preis-/
+News-/Risk-Index-Live-Abrufe (`fetch*Data`/`apply*Feed`) plus die Asset-
+Strength-Karten-Konfiguration, 45 Top-Level-Namen, bidirektional mit
+`js/main.js` wie schon bei `js/globe.js`. Derselbe volle Ablauf wie zuvor
+(AST-Extraktion, externe-Referenzen-Finder, Symmetrie-Pruefung,
+Import-Bindung-Zuweisungs-Check) - diesmal ohne eigene neue Fehler beim Bau.
+
+**Aber `node check/all.js` fand trotzdem etwas Neues:** `check/score.js`
+ruft `applyIndDataFeed`/`applyBondDataFeed` direkt per `page.evaluate()` als
+bloße Bezeichner auf (`const feeds={applyIndDataFeed,...}`) - exakt derselbe
+globale Zugriff wie ein inline `onclick`, nur aus einem Node-Test-Skript
+statt aus HTML-Markup, und deshalb von der bisherigen Handler-Namen-Suche
+(die nur `index.html`+`js/*.js` nach `onclick=`-Mustern durchsucht) nicht
+erfasst. Fix: beide Namen in `js/data-feeds.js`s eigene Selbst-Bruecke
+aufgenommen. In `docs/module-split.md` als eigener, ab jetzt fester
+Prüfschritt dokumentiert - `check/*.js` selbst nach den zu verschiebenden
+Namen durchsuchen, nicht nur die HTML-Handler-Liste.
+
+**Geprueft:** dieselbe volle Kette wie bei den vorigen zwei Kategorien
+(Playwright-Smoke-Test inkl. Ccy-Config-Modal, AST-Symmetrie beider
+Import-/Export-Paare, Import-Bindungs-Zuweisungs-Check beide Richtungen),
+danach `node check/all.js` komplett gruen (13 Waechter) - der erste Lauf
+schlug bei `score`/`score-cl` fehl (genau der oben beschriebene Fund), nach
+der Selbst-Bruecken-Ergaenzung durchgehend gruen.

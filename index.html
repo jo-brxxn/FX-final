@@ -3708,11 +3708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-450 - Waechter-Skripte modul-faehig gemacht (check/scorediff.js, neues check/summarydiff.js, check/rules.js, check/scoreSurface.js, check/structure.js) - alle lasen bisher NUR index.html und wurden durch die Modul-Aufteilung blind (per Regressionstest bestaetigt: ein absichtlich kaputter biasScore() wurde vor der Korrektur NICHT erkannt, danach zuverlaessig). Damit ist die Score-/Formulierungs-Sperre aus docs/module-split.md aufgehoben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-451 - Dritte Modul-Kategorie ausgekoppelt: js/data-feeds.js (Indikator-/Anleiherenditen-/Preis-/News-/Risk-Index-Live-Abrufe + Asset-Strength-Konfig, 45 Namen, bidirektional mit js/main.js). Dabei eine weitere Bruecken-Quelle gefunden: check/score.js ruft applyIndDataFeed/applyBondDataFeed direkt per page.evaluate() als globalen Namen auf - derselbe Bedarf wie ein inline onclick, nur aus einem Node-Skript statt aus HTML. Jetzt in docs/module-split.md als eigener Pruefschritt dokumentiert."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-450</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-451</span>
     </span>
   </div>
   <div class="hdr-r">
