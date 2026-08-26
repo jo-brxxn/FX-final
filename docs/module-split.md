@@ -127,6 +127,55 @@ was ich per Suche gefunden habe".
    damit fehlende Brücken-Einträge aufdecken).
 9. Erst bei komplett grünem Lauf committen/pushen (dev-Branch + `main`).
 
+## ⚠️ Gesperrt bis auf Weiteres: Score- und Formulierungs-Logik
+
+**`check/rules.js` diffed NUR `index.html`** (`git diff -U0 ${BASE} -- index.html`,
+fest verdrahtet) und **`check/scoreSurface.js` liest Funktionskörper NUR aus
+inline `<script>`-Blöcken von `index.html`** (`inlineJs()` filtert explizit
+`<script src=...>` raus). Beide sind die Grundlage für die
+SCORE_MODEL_VERSION-/SUMMARY_ENGINE_VERSION-Zwangsprüfung (`check/rules.js`
+Regel 2+3, Konstanten-Regex `/const SCORE_MODEL_VERSION=(\d+)/` bzw.
+`/const SUMMARY_ENGINE_VERSION=(\d+)/`, beide explizit gegen
+`index.html`-Text).
+
+**Betroffene Funktionen/Konstanten (NICHT auskoppeln, ohne die Check-Skripte
+mit anzupassen):**
+- Score-Fläche (`check/scoreSurface.js` WURZELN + deren Aufrufbaum, Tiefe 2):
+  `indScoreParts`, `indScore`, `rubScore`, `symScore`, `symScoreCmp`,
+  `symScoreAvg`, `pairScore`, `symTrackedCount`, `symOwnZ`, `symStrength10`,
+  `applyIndDataFeed`, `applyBondDataFeed`, `applyCotDataFeed`,
+  `applySentimentFeed`, `syncIndicatorBiases`, `applyTrendModel`,
+  `recomputeRubricAutoBias`, `deriveMacroBiasAll`, `recomputeRiskCorr`,
+  `sentEval`, `addSurveyInds`, `migrateRubInds`, `moveYieldIndsToInflation`,
+  `migrateRiskEnvRub`, `stripGeopoliticsRub`, `mkRubs` — plus alles, was sie
+  zwei Ebenen tief aufrufen (in der Praxis der komplette Score-Abschnitt,
+  ~104 Top-Level-Namen zwischen `bCol` und `fmtDate`, Zeilen ~4760-6141).
+- `SCORE_MODEL_VERSION` selbst (die Konstante).
+- Formulierungs-Fläche (`check/rules.js` `SUM_FN`): `summarizeRub`,
+  `summarizeGeneric`, `summarizeInflation`, `summarizeLabour`,
+  `summarizeGrowth`, `summarizeInterestRates`, `summarizeCot`,
+  `summarizeRiskEnv`, `cameInPhrase`, `supportPhrase`, `anchorClause`,
+  `HOTCOLD_WORDS`, `JOBS_WORDS`, `TREND_WORDS`, `SUMMARY_ENGINE_VERSION`.
+
+**Wie es doch ginge, sauber vorbereitet statt hastig:**
+1. `check/rules.js`: `git diff -U0 ${BASE} -- index.html` auf mehrere Pfade
+   erweitern (`-- index.html js/*.js`), `diffText` entsprechend über alle
+   geänderten Dateien zusammenbauen. `SCORE_MODEL_VERSION`/
+   `SUMMARY_ENGINE_VERSION`-Regex ebenfalls über mehrere Kandidaten-Dateien
+   suchen (Konstante bleibt am sinnvollsten ohnehin in `index.html`, auch
+   wenn die Funktionen umziehen — dann reicht die Diff-Pfad-Erweiterung).
+2. `check/scoreSurface.js`: `inlineJs()` um `js/score.js`/`js/summary.js`
+   ergänzen (Inhalt einfach anhängen, kein echtes Modul-Parsing nötig, die
+   nachgelagerte Brace-Matching-Funktionssuche ist dateiformat-agnostisch).
+3. **Regressionstest, nicht nur "laeuft durch":** einen echten Score-Bug
+   künstlich einbauen (z.B. `biasScore` eine falsche Zahl zurückgeben lassen)
+   OHNE `SCORE_MODEL_VERSION` zu bumpen, `node check/rules.js` laufen lassen
+   und bestätigen, dass er IMMER NOCH fehlschlägt — genau wie vor der
+   Modul-Aufteilung. Erst danach die Extraktion selbst durchführen und mit
+   demselben künstlichen Bug nochmal bestätigen.
+
+Bis das erledigt ist: Score/Formulierungs-Logik bleibt in `index.html`.
+
 ## Bereits ausgekoppelt
 
 - `js/constants.js` (VERSION-CHECK-448): `BC`/`BL`/`FX`/`FX_FLAG`, das
@@ -135,3 +184,16 @@ was ich per Suche gefunden habe".
   deshalb als erste, risikoärmste Kategorie gewählt. Keine eigene
   window-Brücke nötig (verifiziert: keiner der 15 Exports taucht in der
   Handler-Namen-Liste auf).
+
+## Naechster Kandidat (angeschaut, noch nicht umgesetzt)
+
+"DASHBOARD: ROTIERENDER FX-WELTGLOBUS" (Zeilen ~16832-17060, 26 Top-Level-
+Namen: `GLOBE_*`-Konstanten inkl. der Kontinent-Polygon-Daten, Boost-/
+Throttle-Steuerung) ist inhaltlich sauber abgegrenzt und hat KEINE
+Ueberschneidung mit der Score-/Formulierungs-Flaeche. Aber: `setGlobeThrust`
+ruft `introBoostOfferReset`/`introMaybeOfferBoost` aus der direkt
+anschliessenden "INTRO-BOOST-SEQUENZ" auf - beide Abschnitte muessten
+zusammen als eine Kategorie raus (z.B. `js/globe.js`), nicht der Globus
+allein, sonst bleibt ein ungeloester Import-Kreis. Naechster Schritt fuer
+diese Kategorie: Grenzen der INTRO-BOOST-SEQUENZ bestimmen, volle
+AST-Namensliste beider Abschnitte zusammen ziehen, dann wie im Ablauf oben.
