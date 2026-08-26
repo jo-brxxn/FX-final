@@ -319,3 +319,33 @@ kein SECHSTER blinder Fleck in einem der Check-Skripte lauert.
   `_suppressBiasFlipAlerts` wirklich auf `true` setzen). Regressionstest
   (biasScore() absichtlich falsch, in `js/score.js` diesmal) bestaetigt:
   Sicherheitsnetz haelt auch mit Score jetzt in eigener Datei.
+- `js/calendar.js` (VERSION-CHECK-453): Kalender-Symbol-Matching
+  (`CAL_ALIASES`/`evtMatchesSym`) + FF-Style Kalender-Tabellenzeilen
+  (Actual-vs-Forecast-Faerbung inkl. Asset-Bias-Umkehr, `calTableHtml`/
+  `calRowHtml`/`calToolbarHtml`, High-Impact-/Waehrungs-/Kompaktansicht-
+  Filter). 25 Top-Level-Namen exportiert, voll bidirektional. Drei
+  Import-Binding-Schreibversuche gefunden (main.js-Zustand `calHighOnly`/
+  `compactView`/`calCcyFilter` wurde direkt aus dem ausgekoppelten Bereich
+  heraus zugewiesen), nach demselben Muster mit drei neuen Settern
+  (`setCalHighOnlyVal()`/`setCompactViewVal()`/`setCalCcyFilterVal()`)
+  geloest - plus drei weitere Stellen, die den bereits vorhandenen Setter
+  `markLsUpdatedSeen()` (aus der score.js-Runde) haetten nutzen muessen,
+  aber noch direkt `_lsUpdatedSeen=...` zuwiesen.
+  **Dabei einen echten, seit der score.js-Runde bestehenden Fehler
+  gefunden**, der nichts mit dieser Kategorie zu tun hatte: `importData()`
+  und `cloudPull()` in `js/main.js` schrieben an zwei Stellen direkt auf
+  `scoreMode` (ein Import-Binding aus `js/score.js`, seit VERSION-CHECK-452)
+  statt einen Setter zu nutzen - waere beim naechsten JSON-Import bzw. beim
+  naechsten Cloud-Sync-Konflikt mit einem Laufzeitfehler ("Assignment to
+  constant variable"/Import-Binding-Fehler) abgestuerzt. `node check/all.js`
+  hatte das nach der score.js-Runde NICHT gefangen, weil kein Testlauf
+  jemals `importData()`/den `cd.scoreMode`-Zweig von `cloudPull()` ausloest.
+  Gefunden durch den in dieser Runde routinemaessig laufenden Import-
+  Bindungs-Zuweisungs-Check (AST-basiert, beide Richtungen) - **dieser
+  Check faengt also nicht nur Fehler der GERADE bearbeiteten Kategorie,
+  sondern auch aeltere, noch unentdeckte Faelle in bereits verschobenem
+  Code** - deshalb bleibt er fester Bestandteil des Ablaufs, auch wenn die
+  aktuelle Extraktion selbst keinen neuen Fall hat. Behoben mit einem
+  vierten Setter (`setScoreModeVal()` in `js/score.js`), `check/rules.js`
+  Regel 5 flaggte ihn zu Recht ("neue Score-Groesse") - echter
+  Verhaltenstest in `check/score.js` ergaenzt statt die Regel zu umgehen.

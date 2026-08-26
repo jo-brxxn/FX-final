@@ -8,7 +8,10 @@ export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScor
   invalidateRateStepCache,isNonFx,macroCcyFor,parseNumLike,pushU,renderDash,rerender,researchBias,
   resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,todayStr,trackIndValues,widgets,
   IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,evtMatchesSym,getSym,markLsUpdatedSeen,
-  markPrefEdit,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,scoreHist,selId,setSuppressBiasFlipAlerts};
+  markPrefEdit,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,scoreHist,selId,setSuppressBiasFlipAlerts,
+  MACRO_DERIVE_RUBS,calCcyFilter,calHighOnly,calOpenDays,compactView,effDeriveRules,escJH,eventAlerts,
+  evtDismissKey,evtNewsCount,evtNewsIds,isScoreDrivingEvent,renderCalendar,renderDetail,
+  setCalCcyFilterVal,setCalHighOnlyVal,setCompactViewVal};
 // ── EINFARBIGER ICON-SATZ (Nutzer-Wunsch 2026-08-23) ───────────────────────
 // "mach davor die Flagge aber ohne Farben also eine Art icon aber schon die
 // richtige Form und nicht animiert und bei Gold und dem Rest auch gleich".
@@ -444,7 +447,7 @@ import {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
-  saveScoreMode,setScoreMode,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
+  saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseSigma,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
@@ -455,350 +458,12 @@ import {
   fxRefCount,symCmpFactor,symScoreCmp,SCORE_MODEL_VERSION,SCORE_MODEL_TAG,scoreHistEntryCurrent,STRENGTH_MIN_OBS,STRENGTH_Z_BANDS,
   symScoreAvg,symOwnHistory,symOwnZ,symStrength10,symStrengthMissing,pairScore,rowScore,fmtDate,
 } from './score.js';
-// ── CALENDAR ↔ SYMBOL MATCHING ──
-const CAL_ALIASES={
-  GOLD:['GOLD','XAU','XAUUSD'],
-  SILVER:['SILVER','XAG','XAGUSD'],
-  OIL:['OIL','WTI','CRUDE','USOIL','BRENT'],
-  BTC:['BTC','BITCOIN','BTCUSD'],
-  SP500:['SP500','SPX','S&P','S&P500','S&P 500','US500'],
-  NAS:['NAS','NASDAQ','NDX','US100','NAS100'],
-  DAX:['DAX','DAX40','GER40','DE40','GERMANY40'],
-  GER100:['GER100','DE100','GERMANY100'],
-};
-function evtMatchesSym(ev,id){
-  if(!ev.currencies||!id)return false;
-  const tokens=ev.currencies.toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).filter(Boolean);
-  const names=CAL_ALIASES[id]||[id];
-  return tokens.some(t=>names.some(n=>n&&n.replace(/[^A-Z0-9]/g,'')===t.replace(/[^A-Z0-9]/g,'')));
-}
-function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function daysUntil(dateStr){const a=new Date(todayStr()+'T00:00:00');const b=new Date(dateStr+'T00:00:00');return Math.round((b-a)/86400000);}
-// Aktuelle Uhrzeit als "HH:MM" (lokal) - fuer Vergleiche mit ev.time.
-function nowHM(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
-function evtTimeValid(t){return /^\d{1,2}:\d{2}$/.test(t||'');}
-// Ist ein Event bereits vergangen? Vergangene Tage komplett; heute nur, wenn die
-// (gueltige) Uhrzeit schon erreicht/ueberschritten ist.
-function isEvtPast(ev){
-  const dl=daysUntil(ev.date);
-  if(dl<0)return true;
-  if(dl>0)return false;
-  return evtTimeValid(ev.time)&&ev.time<=nowHM();
-}
-// Datum (YYYY-MM-DD) um n Tage verschieben, lokal gerechnet (kein UTC-Versatz).
-function dateAddStr(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Today';if(n===1)return'Tomorrow';if(n===-1)return'Yesterday';return n>1?`in ${n}d`:`${-n}d ago`;}
-function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
-
-// ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
-// Vergleicht "Actual" ausschliesslich mit "Forecast" (kein Previous-Fallback
-// mehr - ohne hinterlegten Forecast aus der Quelle gibt es nichts, womit der
-// Wert verglichen werden könnte, und er bleibt neutral) und färbt grün/rot,
-// je nachdem ob der Wert für die jeweilige Währung gut oder schlecht ist -
-// oder lässt ihn neutral, wenn er dem Forecast entspricht.
-// Bei Indikatoren wie Unemployment/Claims/Deficit ist "niedriger" besser.
-// "claim" statt "claims" (Praefix-Match), damit auch GBPs Anzeigename
-// "Claimant Count Change" erfasst wird - der interne kanonische Name des
-// Indikators ("Unemployment Claims") matchte zwar schon vorher, aber Stellen,
-// die den waehrungsspezifischen ANZEIGENAMEN fuer die Bias-Klassifikation
-// nutzen (z.B. symScoreDrivingEventsByDate()'s synthetisches Event fuer die
-// History-Karte, das bewusst ind.displayName fuers Label bevorzugt), gaben
-// dadurch trotz identischer Daten das GEGENTEIL des korrekten Live-Scores
-// aus (Nutzer-Bugreport 2026-07-21: Score-Modal zeigte "Claimant Count
-// Change" korrekt bullish, History-Karte fuer denselben Tag/Release bearish).
-const LOWER_IS_BETTER_RE=/unemployment|jobless|claim|deficit/i;
-function parseNumLike(s){
-  if(s==null||s==='')return null;
-  const str=String(s).trim();
-  const m=str.match(/-?\d[\d.,]*/);
-  if(!m)return null;
-  let v=parseFloat(m[0].replace(/,/g,''));
-  if(isNaN(v))return null;
-  // Skalierungssuffix (K/M/B/T) NUR anwenden, wenn es UNMITTELBAR auf die Zahl
-  // folgt (z.B. "1.7M", "625B", "2.89 Mio."). Buchstaben weiter hinten im
-  // String (z.B. "Monthly", "m/m", "revidiert") dürfen die Zahl NICHT
-  // skalieren - sonst wurde z.B. "-0.1% (Monthly GDP m/m)" faelschlich als
-  // -0.1 Millionen interpretiert und damit die Farbe verfaelscht. Ein direkt
-  // folgendes "%" bedeutet Prozent -> ebenfalls keine Skalierung.
-  const after=str.slice(m.index+m[0].length).match(/^\s*([%KMBT])/i);
-  if(after){
-    const suf=after[1].toUpperCase();
-    if(suf==='B')v*=1e9;else if(suf==='M')v*=1e6;else if(suf==='K')v*=1e3;
-  }
-  return v;
-}
-// Steht die Karte dieses Indikators bei DIESEM Asset auf "Bearish"?
-//
-// Anlass (Nutzer-Wunsch 2026-08-23): in den Asset-Einstellungen laesst sich
-// je Makro-Karte einstellen, ob starke Daten der verknuepften Waehrung fuer
-// dieses Asset Bullish oder Bearish sind (setAssetDeriveRule, same/inverse).
-// deriveMacroBiasAll() dreht daraufhin Karten- und Indikator-Bias korrekt um -
-// die ACTUAL-FARBE kannte diese Einstellung aber nicht und faerbte weiter rein
-// nach "actual gegen forecast". Bei GOLD mit Inflation auf "Bearish" stand ein
-// heisser CPI-Wert damit gruen da, waehrend GOLDs eigener Bias fuer denselben
-// Indikator bearish war.
-//
-// Gilt NUR fuer die vier echten Makro-Karten (MACRO_DERIVE_RUBS) und nur fuer
-// Nicht-FX-Assets mit verknuepfter Waehrung - COT Data und Risk Environment
-// sind asset-eigene Daten und werden nie gespiegelt.
-function actualColorInverted(assetId,indName){
-  if(!assetId||!indName)return false;
-  const sym=syms.find(s=>s.id===assetId);
-  if(!sym||!isNonFx(sym.id)||!macroCcyFor(sym.id))return false;
-  const base=stripPeriodSuffix(indName).base;
-  const rub=(sym.rubrics||[]).find(r=>MACRO_DERIVE_RUBS.includes(r.name)
-    &&(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base||i.displayName===indName));
-  if(!rub)return false;
-  return effDeriveRules(sym)[rub.name]==='inverse';
-}
-// assetId ist optional. Ohne ihn (Haupt-Kalender, waehrungsweite Auswertungen)
-// bleibt die Farbe die reine Datenrichtung - dort gibt es kein Asset, dessen
-// Einstellung gelten koennte.
-function actualColor(ev,assetId){
-  const roh=actualColorRaw(ev);
-  if(!roh||!assetId)return roh;
-  // ev.bias tragen die synthetischen COT-/Sentiment-Events: deren Richtung IST
-  // bereits der fertig berechnete ind.bias des Assets. Ein zweites Drehen wuerde
-  // die Umkehr doppelt anwenden.
-  if(ev&&ev.bias)return roh;
-  if(!actualColorInverted(assetId,ev&&ev.name))return roh;
-  return roh==='act-good'?'act-bad':'act-good';
-}
-function actualColorRaw(ev){
-  // Explizite Bias-Vorgabe (COT/Sentiment-Synthetic-Events aus
-  // symScoreDrivingEventsByDate: deren Richtung ist Schwellen-/Vorzeichen-
-  // basiert, nicht "Actual vs Forecast" - kann hier nicht numerisch
-  // hergeleitet werden, kommt daher direkt vom bereits berechneten ind.bias).
-  if(ev.bias)return ev.bias==='bull'?'act-good':ev.bias==='bear'?'act-bad':'';
-  if(!ev.actual)return'';
-  const a=parseNumLike(ev.actual);
-  if(a===null)return'';
-  const lowerBetter=LOWER_IS_BETTER_RE.test(ev.name||'');
-  if(ev.forecast!=null&&ev.forecast!==''){
-    const f=parseNumLike(ev.forecast);
-    if(f===null||a===f)return'';
-    return(lowerBetter?a<f:a>f)?'act-good':'act-bad';
-  }
-  // Kein Forecast vorhanden (Nutzer-Wunsch 2026-08-03): Actual dann gegen
-  // Previous vergleichen statt ungefaerbt zu lassen - dieselbe Richtungslogik
-  // (lower-is-better) wie beim Forecast-Vergleich.
-  if(ev.previous!=null&&ev.previous!==''){
-    const p=parseNumLike(ev.previous);
-    if(p===null||a===p)return'';
-    return(lowerBetter?a<p:a>p)?'act-good':'act-bad';
-  }
-  return'';
-}
-// Rendert eine Kalender-Zeile im FF-Stil: Zeit | Symbol | Impact | Name | Actual | Forecast | Previous
-// Im "compact"-Modus (z.B. Dashboard-Widget) entfallen die Impact-Text- und Lösch-Spalte
-// zugunsten eines farbigen Rahmens, damit die Werte auf schmalen Karten nicht abgeschnitten werden.
-// CNY-News werden in allen Kalendern immer als Medium-Impact behandelt.
-function evtIsCNY(ev){return(ev.currencies||'').toUpperCase().split(/[,/&\s]+/).map(t=>t.trim()).includes('CNY');}
-// Effektiver Impact eines Events (einzige Wahrheit fuer Anzeige UND Filter):
-// CNY-News sind immer nur Medium, score-treibende Events (CPI, NFP, Zins,
-// PMI, GDP ...) immer High - unabhaengig davon, was die rohe ev.impact sagt.
-function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev))return'high';return ev.impact;}
-// Gemeinsame Kalender-Bedienleiste (Forex-Factory-Link, High-Impact-Filter,
-// Refresh) - damit Haupt- und Asset-Kalender identische Buttons an gleicher
-// Stelle haben. Ein Waehrungsfilter ist hier nicht enthalten: der Hauptkalender
-// hat dafuer ein eigenes Select, der Asset-Kalender ist ohnehin schon auf sein
-// Asset (inkl. verknuepfter Waehrung) gefiltert.
-function calToolbarHtml(){
-  const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
-  const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> ${calHighOnly?'High-impact only':'All impacts'}</button>`;
-  const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>`;
-  const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>`;
-  return`<div class="cal-toolbar" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:9px">${ff}${high}${alertBtn}${refresh}</div>`;
-}
-function calRowHtml(ev,opts){
-  opts=opts||{};
-  const imp=evtImpact(ev);
-  const ic=imp==='high'?'ih':imp==='medium'?'im':'il';
-  const impLbl=imp==='high'?'High':imp==='medium'?'Medium':'Low';
-  const ac=actualColor(ev,opts.symId);
-  const val=(v,cls)=>v?`<div class="cal-val${cls?' '+cls:''}">${escH(v)}</div>`:'<div class="cal-val ph">–</div>';
-  const isToday=ev.date===todayStr();
-  const isPast=isEvtPast(ev);
-  const past=isPast?' cal-past':'';
-  const sub=[ev.expected,ev.notes].filter(Boolean).join(' · ');
-  if(opts.compact){
-    return`<div class="cal-row compact ${ic}${isToday?' today':''}${past}">
-      <div class="cal-time">${ev.time||'—'}</div>
-      <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-      <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
-      ${val(ev.actual,ac)}
-      ${val(ev.forecast)}
-      ${val(ev.previous)}
-      ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
-    </div>`;
-  }
-  return`<div class="cal-row${isToday?' today':''}${past}">
-    <div class="cal-time">${ev.time||'—'}</div>
-    <div class="cal-ccy">${escH(ev.currencies||'')}</div>
-    <div class="cal-imp ${ic}">${impLbl}</div>
-    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
-    ${val(ev.actual,ac)}
-    ${val(ev.forecast)}
-    ${val(ev.previous)}
-    ${(()=>{
-      const ekey=evtDismissKey(ev);
-      const hasAlert=eventAlerts.some(a=>a.evKey===ekey);
-      const canAlert=!isPast&&evtTimeValid(ev.time);
-      const alertBtn=canAlert?`<button class="cal-alert-btn${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Telegram alert set — tap to edit or remove':'Set a Telegram alert for this event'}">${icn('bell',13)}</button>`:'';
-      const other=opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`:'';
-      // Schlagzeilen zu diesem Termin: gleiche Waehrung, gleicher Tag. Reine
-      // Koinzidenz-Anzeige - der Knopf oeffnet den News-Tab auf dieses Asset
-      // und diesen Tag, es wird kein inhaltlicher Zusammenhang behauptet.
-      const nH=evtNewsCount(ev);
-      const newsBtn=nH?`<button class="cal-news-btn" onclick="gotoNewsFor('${escJH(evtNewsIds(ev)[0]||'')}','${escJH(ev.date||'')}')" title="${escH(nH+' headline(s) on this day mentioning '+evtNewsIds(ev).join('/'))}">${icn('note',11)}<span>${nH}</span></button>`:'';
-      return(alertBtn||other||newsBtn)?`<div class="cal-row-actions">${newsBtn}${alertBtn}${other}</div>`:'<div></div>';
-    })()}
-    ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
-  </div>`;
-}
-// Rendert eine Liste von Events gruppiert nach Tag (mit Spalten-Header und Datums-Headern).
-// opts.compact: kompaktere Spaltenbreiten ohne Impact-Text/Lösch-Spalte (z.B. Dashboard-Widget).
-function calTableHtml(evts,opts){
-  opts=opts||{};
-  if(!evts.length&&!(opts.allDates&&opts.allDates.length))return'';
-  const today=todayStr();
-  let html=opts.skipHeader?'':opts.compact
-    ?`<div class="cal-col-hdr compact"><span>Time</span><span>Sym</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Prev</span></div>`
-    :`<div class="cal-col-hdr"><span>Time</span><span>Sym</span><span>Impact</span><span>Event</span><span>Actual</span><span>Forecast</span><span>Previous</span><span></span></div>`;
-  // Events nach Datum gruppieren (Reihenfolge innerhalb des Tages bleibt erhalten).
-  const byDate={};
-  evts.forEach(ev=>{(byDate[ev.date]=byDate[ev.date]||[]).push(ev);});
-  // Welche Tage werden gerendert? Mit opts.allDates wird ein lückenloses Fenster
-  // gezeichnet (auch Tage ganz ohne News), sonst nur Tage mit Events.
-  const dates=(opts.allDates&&opts.allDates.length)?opts.allDates:Object.keys(byDate).sort();
-  // ID-Präfix, damit Haupt- und Mini-Kalender keine doppelten Element-IDs
-  // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
-  const pfx=opts.idPrefix||'';
-  const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact,symId:opts.symId});
-  // Dünne rote "Jetzt"-Linie mit aktueller Uhrzeit (linksbündig). Wird in der
-  // heutigen Tagesgruppe zwischen vergangenen und anstehenden Events eingefügt.
-  const nowMarker=`<div class="cal-now-line" title="Aktuelle Uhrzeit"><span class="cal-now-time">${nowHM()}</span><span class="cal-now-rule"></span></div>`;
-  const renderToday=dayEvts=>{
-    const now=nowHM();let out='',done=false;
-    dayEvts.forEach(ev=>{
-      if(!done&&evtTimeValid(ev.time)&&ev.time>now){out+=nowMarker;done=true;}
-      out+=rows(ev);
-    });
-    if(!done)out+=nowMarker;
-    return out;
-  };
-  dates.forEach(date=>{
-    const dayEvts=byDate[date]||[];
-    const n=dayEvts.length;
-    const isToday=date===today;
-    const nowHere=opts.showNowLine&&isToday;
-    // Vergangene Tage (gestern / vorgestern) bleiben im Kalender, werden aber
-    // eingeklappt dargestellt - erst per Klick auf den Tages-Header sichtbar.
-    const isPast=opts.collapsePast&&daysUntil(date)<0;
-    if(isPast){
-      const open=calOpenDays.has(date);
-      html+=`<div class="cal-day-hdr past${open?'':' collapsed'}" id="${pfx}calhdr-${date}" onclick="toggleCalDay('${date}','${pfx}')"><span><span class="cal-day-chev">▾</span>${fmtDayHdr(date)}<span class="cal-day-cnt">${n} Event${n===1?'':'s'}</span></span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
-      html+=`<div class="cal-day-body" id="${pfx}calbody-${date}"${open?'':' style="display:none"'}>`;
-      html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">No events</div>`;
-      html+=`</div>`;
-    }else{
-      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 TODAY':''}</span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
-      html+=n?(nowHere?renderToday(dayEvts):dayEvts.map(rows).join('')):(nowHere?nowMarker+`<div class="cal-empty-day">No events</div>`:`<div class="cal-empty-day">No events</div>`);
-    }
-  });
-  return`<div class="cal-table${opts.compact?' compact':''}">${html}</div>`;
-}
-// Lückenloses Tagesfenster (erstes bis letztes Event, mind. inkl. heute) für
-// eine Eventliste - für die "leere Tage anzeigen"-Darstellung.
-function calWindowDatesFor(evts){
-  if(!evts||!evts.length)return[];
-  const today=todayStr();let min=today,max=today;
-  evts.forEach(ev=>{if(ev.date<min)min=ev.date;if(ev.date>max)max=ev.date;});
-  const out=[];for(let d=min,g=0;d<=max&&g<400;d=dateAddStr(d,1),g++)out.push(d);
-  return out;
-}
-// Klappt einen vergangenen Kalender-Tag auf/zu (ohne Re-Render, damit die
-// Scroll-Position erhalten bleibt). pfx unterscheidet Haupt-/Mini-Kalender.
-function toggleCalDay(date,pfx){
-  pfx=pfx||'';
-  if(calOpenDays.has(date))calOpenDays.delete(date);else calOpenDays.add(date);
-  const open=calOpenDays.has(date);
-  const body=document.getElementById(pfx+'calbody-'+date);
-  const hdr=document.getElementById(pfx+'calhdr-'+date);
-  if(body)body.style.display=open?'':'none';
-  if(hdr)hdr.classList.toggle('collapsed',!open);
-}
-// Schaltet den "nur High-Impact"-Filter um (persistiert) und rendert neu.
-function toggleCalHighOnly(){
-  calHighOnly=!calHighOnly;
-  localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  updCalHighBtn();
-  renderCalendar();
-  
-  if(curPage==='dash')renderDash();
-  if(curPage==='cur')renderDetail();
-}
-function updCalHighBtn(){
-  const b=document.getElementById('calHighBtn');if(!b)return;
-  b.classList.toggle('active',calHighOnly);
-  b.innerHTML=icn('filter')+(calHighOnly?' High-impact only':' All impacts');
-}
-// Kompaktansicht in 3 Stufen (0 = alles sichtbar, 1 = Stichpunkte/
-// Zusammenfassungen UND die Perioden-Badge (wie oft ein Indikator
-// veroeffentlicht wird) weg, 2 = zusaetzlich Datum-Badge, i-Knopf und
-// Trend-Chip der Indikatoren weg). Alte Boolean-Werte (true/'1' bzw.
-// false/'0') werden auf 1 bzw. 0 abgebildet.
-function normCompactLevel(v){
-  if(v===true)return 1;
-  if(v===false)return 0;
-  const n=Number(v);
-  return n>=1?1:0;
-}
-// Nur noch 2 Stufen (Nutzer-Wunsch 2026-07-29, vorher 3): Stufe 1 zeigt alles
-// inkl. der Rubrik-Zusammenfassungen, Stufe 2 blendet nur die Zusammenfassungen
-// aus (die Stichpunkte-Funktion, die vorher bei Stufe 1 mitausgeblendet wurde,
-// ist komplett entfernt - siehe removeAllPts-Merksatz weiter unten).
-const COMPACT_TITLES=[
-  'Summaries visible (stage 1 of 2) - tap to hide the rubric summaries',
-  'Summaries hidden (stage 2 of 2) - tap to show them again'
-];
-function applyCompactView(){
-  document.body.classList.toggle('compact-view',compactView>=1);
-}
-function updCompactSw(){
-  const b=document.getElementById('compactSw');
-  if(!b)return;
-  b.classList.toggle('on',compactView===1);
-  b.title=COMPACT_TITLES[compactView]||COMPACT_TITLES[0];
-}
-function toggleCompactView(){
-  compactView=(compactView+1)%2;
-  localStorage.setItem('fxpro_compactview',String(compactView));
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  applyCompactView();
-  updCompactSw();
-}
-function setCalCcyFilter(v){
-  calCcyFilter=v||'ALL';
-  localStorage.setItem('fxpro_cal_ccy',calCcyFilter);
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  renderCalendar();
-}
-function updCalCcySel(){
-  const sel=document.getElementById('calCcySel');if(!sel)return;
-  sel.value=calCcyFilter;
-}
-
+import {
+  evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,fmtDayHdr,
+  LOWER_IS_BETTER_RE,parseNumLike,actualColor,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,
+  calTableHtml,calWindowDatesFor,updCalHighBtn,normCompactLevel,COMPACT_TITLES,applyCompactView,
+  updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,
+} from './calendar.js';
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
@@ -985,6 +650,7 @@ function eventSrcIds(id){
 // (eingeklappt) - genau wie tabStacks ausserhalb von snap()/
 // Undo, aber trotzdem geraeteuebergreifend synchron (siehe cloudPush/Pull).
 let compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);
+function setCompactViewVal(v){compactView=v;}
 // Stabiler Schlüssel für ein Kalender-Event (unabhängig von ev.id, das sich
 // bei jedem FF-Reload ändert): Name + Datum + Währung sind event-übergreifend
 // stabil - genutzt für Event-Alarme UND die Dashboard-Notification-Dedup.
@@ -1022,10 +688,12 @@ const INBOX_NOTIF_DAYS=5;
 // nur High-Impact zeigen) - wer den Wert schon einmal selbst gesetzt hat
 // (gespeichertes '0' oder '1'), bleibt davon unberuehrt.
 let calHighOnly=localStorage.getItem('fxpro_cal_highonly')===null?true:localStorage.getItem('fxpro_cal_highonly')==='1';
+function setCalHighOnlyVal(v){calHighOnly=v;}
 // Kalender-Filter "nach Währung" ('ALL' = alle). Gilt nur für den grossen
 // Kalender, nicht für die symbol-eigenen Mini-Kalender (die sind ohnehin schon
 // auf ihre Währung gefiltert). Persistiert eigenständig im localStorage.
 let calCcyFilter=localStorage.getItem('fxpro_cal_ccy')||'ALL';
+function setCalCcyFilterVal(v){calCcyFilter=v;}
 // Welche vergangenen Tage im Kalender aktuell aufgeklappt sind (nur Session,
 // vergangene Tage starten immer eingeklappt).
 const calOpenDays=new Set();
@@ -4262,7 +3930,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){scoreMode=_imp.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4615,7 +4283,7 @@ async function cloudPull(manual,forceOverwrite){
       // 2026-07-27) - anders als compactLevel/designHue direkt daneben wurde
       // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
       // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
-      if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){scoreMode=cd.scoreMode==='normalized'?'normalized':'classic';try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
+      if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){setScoreModeVal(cd.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
       if(!prefPending&&typeof cd.newsSeenTs==='string'&&cd.newsSeenTs>newsSeenTs){newsSeenTs=cd.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
@@ -16306,111 +15974,146 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
-  assetGlyphHtml,aiDefsSvg,aiEnsureDefs,assetIconHtml,assetFilterSelect,multiAssetFilterBarHtml,applyMultiAssetFilter,safeUrl,icn,ar,
-  mvArr,evtMatchesSym,todayStr,daysUntil,nowHM,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,fmtDayHdr,
-  parseNumLike,actualColorInverted,actualColor,actualColorRaw,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,calTableHtml,calWindowDatesFor,
-  toggleCalDay,toggleCalHighOnly,updCalHighBtn,normCompactLevel,applyCompactView,updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,assetCls,
-  isNonFx,macroSyncIds,isCrypto,symSyncGroup,syncAssetGroup,nonFxLegAssetId,nonFxWatchIconHtml,rateWatchUrl,rwPressStart,rwPressEnd,
-  rwClick,openRateWatchEdit,saveRateWatch,resetRateWatch,indLinkKey,ilPressStart,ilPressEnd,ilClick,openIndLinkEdit,saveIndLink,
-  resetIndLink,biasPressStart,biasPressEnd,eventSrcIds,evtDismissKey,isEvtJustReleased,processCalEvts,getSymEventsAll,getSymEventsCompact,toggleEvtSection,
-  setHistRange,histWeekStart,symScoreDrivingEventsByDate,histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,histDeltaParts,renderSymHistoryPanel,
-  openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,
-  reviseValHistArr,applyRevisionToValHist,adoptFeedHistory,adoptChartHist,indTrendProgress,fmtTrendVal,openTrendInfo,indBiasInputSig,indBiasPinned,applyTrendModel,
-  indTrendBias,indStepBias,indBiasFromEvent,isScoreDrivingEvent,applyResearchToCal,syncIndicatorBiases,resetNonFxIndBias,fmtResearchDateFull,srcLabel,periodLabel,
-  stripPeriodSuffix,splitResearchVal,researchBias,applyIndResearch,mkInds,mkRubs,mkRubOrder,applyRubOrder,ensureRiskEnvLast,stripGeopoliticsRub,
-  migrateRiskEnvRub,moveYieldIndsToInflation,cleanDeriveRules,addSurveyInds,migrateRubInds,mkR,cbName,cbDat,enrichRubrics,invertBias,
-  effDeriveRules,deriveMacroBiasAll,migrateRiskEnvCfg,mkMacroRub,addMacroRub,mkPairCats,mkNCs,mkResearchFolders,mkResearch,researchFolderIdFor,
-  researchAssetsIn,researchCustomChildren,researchChildrenOf,researchAllFolderIds,researchFolderById,researchNotesContextFor,researchToggleNode,researchSelectLeaf,researchSelectAsset,researchSelectAndToggle,
-  researchExpandAllToggle,researchAddFolder,researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,researchNodeRow,researchTitleFrom,migrateResearch,
-  migrateResearchToAssetFolders,mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,
-  pushU,sanitizeSnapIds,ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,saveLocalBackup,openBackupM,
-  restoreLocalBackup,restoreAlltimeDashboard,migrateDash,loadState,adoptExternalState,save,saveSoon,exportData,importData,getCloudCfg,
-  cloudHeaders,openCloudM,setCloudStatus,saveCloudCfg,updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,
-  keyNavAktiv,openKeyHelp,cloudPush,cloudPull,cloudAutoSync,getSym,openM,closeM,computeSbCats,getSbIds,
-  moveSbSym,moveSbCat,scrollIntoNav,sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,miniSparklineSvg,indSparklineSvg,
-  renderSidebar,setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,renderOverviewCard,goToRubCard,assetQuickRowHtml,assetPinnedNotes,
-  togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,assetPerfStripHtml,renderRub,indPairGroupPositions,renderIndsTable,renderIndRow,
-  toggleIndDetailRow,renderNotesSubTab,renderNoteRub,updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,
-  pullMacroFromCcy,rubAutoDerived,setRubBias,openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,
-  setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,renderRiskEnvLists,renderRiskEnvCfgM,delRub,
-  mvRub,addRub,openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,
-  getNoteRub,ensureNoteTable,migrateGeneralToNotes,addNoteTableItem,delNoteTableItem,setNoteTableField,mvNoteTableItem,moveNoteTableGroup,addNoteRub,setNoteRubBias,
-  togNoteRubImp,delNoteRub,mvNoteRub,addNoteRubItem,delNoteRubItem,setNoteRubItemBias,togNoteRubItem,mvNoteRubItem,cloneRubsFromUSD,confirmAddSym,
-  escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,
-  autoPairBias,flipCauseLines,flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,recomputeAllPairBiases,rubAutoBiasNeeded,recomputeRubricAutoBias,
-  riskCorrBiasFor,recomputeRiskCorr,sumPhrase,indFamily,rubTrendWord,sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,famContextPhrase,
-  summarizeGeneric,findIndByBase,sumRawState,fcState,trendState,classifySingle,classifyPair,dirSign,alignCls,macroSignAdjust,
-  assetBiasWord,biasSignOf,assetVerdictClause,cameInPhrase,supportPhrase,inflDirWord,anchorClause,noSignalFallback,summarizeInflation,summarizeLabour,
-  summarizeGrowth,summarizeInterestRates,magnitudeBiasWord,summarizeCot,summarizeRiskEnv,summarizeRub,rubSummarySig,syncRubSummaries,stampRubOwners,recomputeAuto,
-  _scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,confirmAddPair,saveSetupCcy,syncSetupFilterPref,clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,
-  toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,setPairOvRangeCustom,openPairOverview,closePairOverview,
-  pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,
-  povPositioningHtml,povCalendarHtml,povCorrHtml,povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,
-  watchlistedAssetIds,setWatched,toggleWatch,gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,watchInvolvedAssets,newResNoteForAsset,
-  watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,movePair,delPair,renderCalendar,addCalEv,delCalEv,
-  findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,evtAlertRowsHtml,renderEvtAlertList,deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,
-  onEvtAlertBtnClick,openEvtAlertListModal,openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,removeEvtAlert,openEvtAlertCustom,saveCustomEvtAlert,removeCustomEvtAlert,
-  pruneEventAlerts,currentPriceOf,priceAlertTargets,openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,checkPriceAlerts,fetchFFPeriod,ffLocalDate,
-  ffEvKey,mergeFeedEvents,fetchFFLive,fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,
-  resFmtDateParts,resAllTags,resAssetCounts,priceAtOrBefore,priceNBarsAfter,noteOutcome,noteHitStats,noteOutcomeBadge,noteHitStatsHtml,noteEventOptions,
-  resFilteredNotes,researchMidHtml,researchToggleTop,researchTopCardsHtml,toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,researchShortcutGo,researchBackFromShortcut,setBackPillTitle,
-  assetQuickGo,researchSideTitleHtml,researchSidebarHtml,rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,researchSetAnText,
-  researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,researchFolderNameOf,researchSetNoteQuery,researchNotesPanelHtml,newResNoteIn,renderResearchNotes,resModeToggleHtml,
-  setResMode,renderResearchFolders,openResFolder,resPickAsset,resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,resSetQuery,togResFav,
-  newResNote,openResNote,resPickDir,resPaintDir,resFillNoteModal,resFillNoteFolderOptions,saveResNote,delResNote,staleNotifyHtml,awaitingNotifyHtml,
-  dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,riskEnvRemindSundayKey,riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,renderRiskEnvRemind,
-  updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,
-  toggleDashEditMode,indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,dashZoneOf,mvWidget,setPerfWindow,perfReturn,perfRankingHtml,
-  carryRankingHtml,watchlistCorrPairs,corrWarnHtml,esiForCcy,esiSeries,esiSpark,esiCardHtml,renderDash,equalizeDashColumns,scrollCalsToNow,
-  delWidget,renameWidget,confirmRename,addWidget,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
-  cmpSelectAll,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,toggleCmpRow,renderCompare,loadScoreHist,mergeScoreHist,
-  rubScoreByName,trendAssets,recordScoreHist,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,startScanBroadcast,scanFlyParticle,
-  surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,setCorrB,setCorrWin,logReturns,pearson,
-  corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,biasGroup,biasLineSegments,groupedAssetOptions,timeRangeBarHtml,timeRangeCustomHtml,filterDatesByRange,
-  setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,
-  scoreTrendCard,resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,clearCotCcyFilter,cotLoadCache,
-  cotSaveCache,cotMergeHistory,fetchCotData,autoFetchCot,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,cotNthWeekday,
-  cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,cotPublicationDate,cotNextReportTs,cotStartCountdown,cotStopCountdown,
-  cotTickCountdown,cotMetrics,cotColor,cotHistRowMetrics,cotNum,cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,
-  cotChartPointerMove,cotWireChartHover,cotSigned,cotPct,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,fetchSentimentData,autoFetchSentiment,
-  applySentimentFeed,sentGauge,gaugeNeedleAnim,chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
-  setDataAsset,setDataInd,renderDataTab,sentReadBadge,openSentInfoM,toggleSentCcy,setSentScope,clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,
-  setNewsRange,toggleNewsWatch,toggleNewsExpand,setNewsAsset,toggleNewsTopic,toggleNewsSrc,newsLevel,newsWatchAssets,saveNewsSeen,markNewsSeen,
-  newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,newsDayLabel,newsForAsset,symBiasFlipDays,
-  newsAssetSectionHtml,edgeIndHistories,edgeScoreSeries,edgeForwardReturns,edgeBucketStats,edgeIndicatorStats,ind_kurz,setEdgeAsset,renderEdge,setNewsTabRange,
-  setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,newsTabMore,gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,
-  setAaiiView,aaiiBarsRange,setAaiiRange,setAaiiRangeCustom,setSentSub,setSentSym,setPcAsset,setSentimentRange,setPcRange,setFearGreedRange,
-  setSentimentRangeCustom,setPcRangeCustom,setFearGreedRangeCustom,sentSymPriceSeries,sentSymLabel,sentSymWatched,sentFilterBar,pcUsableAssetIds,pcFilterBar,renderSentiment,
-  pcRangeBarInChart,pcXLabel,pcXTickIdx,renderRetailBars,renderRetailHistory,retailNetChart,retailStackChart,pcThinNote,pcThresholds,renderPutCallChart,
-  renderNetFlowChart,aaiiSmooth,renderAaiiCard,legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,
-  autoFetchSeasonality,setSeasAsset,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,autoFetchRateProb,rateProbCcyData,setRateProbCcy,
-  probsFromDelta,rateProbDistTimeline,rateProbLineColor,setRateProbHistRange,setRateProbHistRangeCustom,rateProbBuildPts,rateProbTimelineChart,rateProbSafeTargetX,scrollRateProbTo,termStructureData,
-  termStructureCardHtml,renderRateProb,loadTabStacks,saveTabStacks,stackOf,tabIdFor,selectTab,npIconSvg,tabBtnHtml,syncNavExpanded,
-  renderTabBar,tabPressStart,tabPressEnd,onTabClick,onStackClick,createStack,addTabToStack,removeTabFromStack,dissolveStack,closeTabMenu,
-  tabMenuOutside,openTabMenu,triggerEnterAnim,showTab,rerender,parsePolicyRate,loadRateCache,saveRateCache,rateInfo,realRateInfo,
-  yieldSpreadSeries,carryRows,carryRowHTML,setRealRateSort,realRateTableHtml,setSpreadPair,setSpreadTenor,spreadCardHtml,spreadChart,renderCarry,
-  openHelpM,maybeShowFirstRunHelp,updPinToggleBtn,togglePinEnabled,updIntroAnimToggleBtn,applyAssetAnim,updAssetAnimToggleBtn,toggleAssetAnimEnabled,applyUiAnim,applyDataAnim,
-  applyDenseMode,updDenseToggleBtn,toggleDenseMode,updUiAnimToggleBtn,updDataAnimToggleBtn,toggleUiAnimEnabled,toggleDataAnimEnabled,allAnimOn,updAllAnimToggleBtn,toggleAllAnim,
-  updTelegramToggleBtn,toggleTelegramEnabled,toggleIntroAnimEnabled,checkLockCode,lockKey,lockBack,updLockDots,unlockApp,flushAndSave,cloudSyncNow,
-  bootFetchScoreFeeds,fetchScoreHistServer,applyScoreHistServerFeed,updNetStatus,AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,AI_GRIDS,
-  AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,SK,DATA_BASE,DATA_LIVE_OK,DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,
-  NODIR_CAT,FX_PAIRS,SB_CATS,uid,escH,ICONS,CAL_ALIASES,LOWER_IS_BETTER_RE,COMPACT_TITLES,NONFX_IDS,
-  ASSET_SYNC_FIELDS,SYNC_EXCLUDE_RUBS,PAIR_CODE_TO_ID,RATE_WATCH,CAL_PAST_DAYS,INBOX_NOTIF_DAYS,calOpenDays,evtSectionOpen,indDetailsOpen,HIST_DAYS,
-  HIST_RANGES,HIST_MAX_RANGE,HIST_BRK_MAX_REST,IND_EVENT_MATCHERS,IND_AUTO_RUBS,CAL_RESEARCH_MATCHERS,IND_DISPLAY_NAMES,IND_RESEARCH_DATA,RESEARCH_MONTHS_DE_FULL,PERIOD_TAG_RE,
-  NAME_PERIOD_SUFFIX_RE,_stripPeriodCache,IND_INFO_DEFAULTS,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,RISK_ENV_INDS,RISK_ENV_INDS_NONFX,YIELD_INDS_TO_INFLATION,NEUE_UMFRAGEN_2026_08,
-  UMFRAGE_NAMEN_2026_08,CB_MAP,ASSET_CLASS,DEF,MACRO_NAME,MACRO_NAME_LEGACY,MACRO_NAME_LEGACY2,MACRO_SYNC_RUBS,MACRO_DERIVE_RUBS,MACRO_DERIVE_RULES,
-  MACRO_RUB_INFO,MACRO_DATA,RISK_ENV_DEFAULT_DIR,RISK_ENV_DIR_MIGRATE,RESEARCH_FOLDER_ICONS,RESEARCH_ASSET_FOLDERS,LEGACY_SEED_EVTS,SAFE_ID_RE,SAFE_UID_RE,BACKUP_KEY,
-  DASH_V,DASH_DEFAULTS,DASH_RANK,CLOUD_CFG_KEY,KEY_TABS,CLS_CAT,ASSET_PIN_MAX,IND_PAIR_GROUPS,RISK_ENV_DIRS,RISK_ENV_DIR_CLS,
-  RISK_ENV_DIR_ORDER,FX_LINK_CCYS,BIAS_LBL,FLIP_CAUSE_TXT,RUB_AUTO_BIAS_THRESHOLD,SUM_PHRASE,IND_FAMILY,RUB_TREND_WORDS,RUB_TREND_DEFAULT,RUB_ANCHOR_IND,
-  HOTCOLD_WORDS,TREND_WORDS,JOBS_WORDS,ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,ANCHOR_VERBS_GROWTH,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,RUB_SUMMARIZERS,
-  SUMMARY_ENGINE_VERSION,EVT_ALERT_TTL_MS,FF_WINDOW_DAYS,FF_PAST_DAYS,NOTE_HORIZON_D,NOTE_FLAT_PCT,RESEARCH_TOP_RUBS,RESEARCH_SHORTCUTS,ASSET_QUICK_LINKS,W_TYPES,
-  AURORA_NEU,ZONE_OF_TYPE,PERF_WINDOWS,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,ESI_HALFLIFE_D,ESI_THIN_N,ESI_SERIE_TAGE,DASH_COL_MIN_H,DASH_SHRINK_MIN_H,
-  CMP_RUBS,CMP_RUB_ICON,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpOpenRows,SCOREHIST_KEY,RISK_ON_IDS,RISK_OFF_IDS,TREND_COLORS,CLS_LABELS,
-  TIME_RANGES,COT_SYMS,COT_NAME,COT_CACHE_KEY,COT_CFTC_URL,COT_HIST_LEN,COT_MARKETS,COT_SOURCE_URL,_gaugeAnimPrev,_chvReg,
-  SENT_INFO,iBtn,NEWS_TOP_N,NEWS_MAX_N,EDGE_MIN_N,EDGE_HORIZONTE,EDGE_MAX_ALTER,EDGE_BUCKETS,edgeFmt,SENT_NONFX_SYMS,
-  SENT_NONFX_PRICE_ID,PC_THIN_VOL,AAII_SMOOTH_W,SEAS_MON,SEAS_ORDER,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,RATEPROB_SLOT,
-  RATEPROB_PADL,RATEPROB_PADR,RATEPROB_MIN_SLOT,RATEPROB_AXIS_GAP,TERM_FARBEN,PAGE_IDS,TAB_ORDER,TABS,TABSTACKS_KEY,TAB_ICONS,
-  TAB_ICON_STACK,ASSET_STACK_ID,CARRY_CACHE_KEY,LOCK_HASH,_seedCleaned,_researchCalChanged,
+  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
+  AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
+  DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
+  applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,
+  ASSET_SYNC_FIELDS,symSyncGroup,SYNC_EXCLUDE_RUBS,syncAssetGroup,PAIR_CODE_TO_ID,nonFxLegAssetId,nonFxWatchIconHtml,
+  RATE_WATCH,rateWatchUrl,rwPressStart,rwPressEnd,rwClick,openRateWatchEdit,saveRateWatch,resetRateWatch,indLinkKey,
+  ilPressStart,ilPressEnd,ilClick,openIndLinkEdit,saveIndLink,resetIndLink,biasPressStart,biasPressEnd,eventSrcIds,
+  setCompactViewVal,evtDismissKey,isEvtJustReleased,CAL_PAST_DAYS,INBOX_NOTIF_DAYS,setCalHighOnlyVal,
+  setCalCcyFilterVal,calOpenDays,processCalEvts,getSymEventsAll,getSymEventsCompact,evtSectionOpen,toggleEvtSection,
+  indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,histWeekStart,symScoreDrivingEventsByDate,
+  histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,HIST_BRK_MAX_REST,histDeltaParts,
+  renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,
+  IND_AUTO_RUBS,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,reviseValHistArr,
+  applyRevisionToValHist,adoptFeedHistory,adoptChartHist,indTrendProgress,fmtTrendVal,openTrendInfo,indBiasInputSig,
+  indBiasPinned,applyTrendModel,indTrendBias,indStepBias,indBiasFromEvent,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,
+  applyResearchToCal,syncIndicatorBiases,resetNonFxIndBias,IND_DISPLAY_NAMES,IND_RESEARCH_DATA,
+  RESEARCH_MONTHS_DE_FULL,fmtResearchDateFull,srcLabel,PERIOD_TAG_RE,periodLabel,NAME_PERIOD_SUFFIX_RE,
+  _stripPeriodCache,stripPeriodSuffix,splitResearchVal,researchBias,applyIndResearch,mkInds,mkRubs,mkRubOrder,
+  IND_INFO_DEFAULTS,applyRubOrder,ensureRiskEnvLast,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,
+  stripGeopoliticsRub,RISK_ENV_INDS,RISK_ENV_INDS_NONFX,migrateRiskEnvRub,YIELD_INDS_TO_INFLATION,
+  moveYieldIndsToInflation,cleanDeriveRules,NEUE_UMFRAGEN_2026_08,UMFRAGE_NAMEN_2026_08,addSurveyInds,migrateRubInds,
+  mkR,CB_MAP,cbName,cbDat,ASSET_CLASS,enrichRubrics,DEF,MACRO_NAME,MACRO_NAME_LEGACY,MACRO_NAME_LEGACY2,
+  MACRO_SYNC_RUBS,MACRO_DERIVE_RUBS,MACRO_DERIVE_RULES,invertBias,effDeriveRules,deriveMacroBiasAll,MACRO_RUB_INFO,
+  MACRO_DATA,RISK_ENV_DEFAULT_DIR,RISK_ENV_DIR_MIGRATE,migrateRiskEnvCfg,mkMacroRub,addMacroRub,mkPairCats,mkNCs,
+  RESEARCH_FOLDER_ICONS,RESEARCH_ASSET_FOLDERS,mkResearchFolders,mkResearch,researchFolderIdFor,researchAssetsIn,
+  researchCustomChildren,researchChildrenOf,researchAllFolderIds,researchFolderById,researchNotesContextFor,
+  researchToggleNode,researchSelectLeaf,researchSelectAsset,researchSelectAndToggle,researchExpandAllToggle,
+  researchAddFolder,researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,
+  researchNodeRow,researchTitleFrom,migrateResearch,migrateResearchToAssetFolders,LEGACY_SEED_EVTS,mkCalEvts,
+  cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,pushU,
+  SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,BACKUP_KEY,
+  saveLocalBackup,openBackupM,restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,migrateDash,
+  loadState,adoptExternalState,save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,openCloudM,
+  setCloudStatus,saveCloudCfg,updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,KEY_TABS,
+  keyNavAktiv,openKeyHelp,cloudPush,cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,getSbIds,
+  moveSbSym,moveSbCat,scrollIntoNav,sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,miniSparklineSvg,
+  indSparklineSvg,renderSidebar,setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,renderOverviewCard,goToRubCard,
+  assetQuickRowHtml,ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,
+  renderSpecTab,assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,indPairGroupPositions,renderIndsTable,renderIndRow,
+  toggleIndDetailRow,renderNotesSubTab,renderNoteRub,updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,
+  syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,openBiasPicker,biasPickerChoose,closeBiasPicker,
+  biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,
+  openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,renderRiskEnvLists,RISK_ENV_DIRS,
+  RISK_ENV_DIR_CLS,RISK_ENV_DIR_ORDER,renderRiskEnvCfgM,delRub,mvRub,addRub,openInfoM,saveInfoM,setIndBias,
+  syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,getNoteRub,ensureNoteTable,migrateGeneralToNotes,
+  addNoteTableItem,delNoteTableItem,setNoteTableField,mvNoteTableItem,moveNoteTableGroup,addNoteRub,setNoteRubBias,
+  togNoteRubImp,delNoteRub,mvNoteRub,addNoteRubItem,delNoteRubItem,setNoteRubItemBias,togNoteRubItem,mvNoteRubItem,
+  cloneRubsFromUSD,confirmAddSym,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,
+  setAssetLinkCcy,setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,
+  FLIP_CAUSE_TXT,flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,
+  recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,
+  recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
+  sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,
+  sumRawState,fcState,trendState,classifySingle,classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,
+  biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,
+  ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,
+  summarizeInflation,summarizeLabour,summarizeGrowth,summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,
+  magnitudeBiasWord,summarizeCot,summarizeRiskEnv,RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,
+  syncRubSummaries,stampRubOwners,recomputeAuto,_scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,
+  confirmAddPair,saveSetupCcy,syncSetupFilterPref,clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,
+  toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,
+  setPairOvRangeCustom,openPairOverview,closePairOverview,pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,
+  povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,povPositioningHtml,povCalendarHtml,povCorrHtml,
+  povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,
+  watchlistedAssetIds,setWatched,toggleWatch,gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,
+  watchInvolvedAssets,newResNoteForAsset,watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,
+  movePair,delPair,renderCalendar,addCalEv,delCalEv,findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,
+  evtAlertRowsHtml,renderEvtAlertList,deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,
+  onEvtAlertBtnClick,openEvtAlertListModal,openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,
+  removeEvtAlert,openEvtAlertCustom,saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,
+  currentPriceOf,priceAlertTargets,openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,
+  checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,
+  fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,resFmtDateParts,resAllTags,
+  resAssetCounts,NOTE_HORIZON_D,NOTE_FLAT_PCT,priceAtOrBefore,priceNBarsAfter,noteOutcome,noteHitStats,
+  noteOutcomeBadge,noteHitStatsHtml,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,researchMidHtml,
+  researchToggleTop,researchTopCardsHtml,toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,
+  RESEARCH_SHORTCUTS,researchShortcutGo,researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,
+  researchSideTitleHtml,researchSidebarHtml,rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,
+  researchToggleAnOpen,researchSetAnBias,researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,
+  assetAnalysisHtml,researchNotesFolderOptions,researchFolderNameOf,researchSetNoteQuery,researchNotesPanelHtml,
+  newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,renderResearchFolders,openResFolder,resPickAsset,
+  resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,resSetQuery,togResFav,newResNote,openResNote,resPickDir,
+  resPaintDir,resFillNoteModal,resFillNoteFolderOptions,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
+  awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
+  riskEnvRemindSundayKey,riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,
+  renderRiskEnvRemind,AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
+  detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,
+  indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
+  setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
+  corrWarnHtml,ESI_HALFLIFE_D,ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,
+  DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
+  CMP_RUBS,CMP_RUB_ICON,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
+  cmpSelectAll,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,
+  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,
+  recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
+  startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
+  setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
+  biasGroup,biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
+  filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
+  setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
+  resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
+  clearCotCcyFilter,COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,
+  autoFetchCot,COT_CFTC_URL,COT_HIST_LEN,COT_MARKETS,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,
+  cotNthWeekday,cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,
+  cotPublicationDate,cotNextReportTs,cotStartCountdown,cotStopCountdown,cotTickCountdown,cotMetrics,cotColor,
+  cotHistRowMetrics,cotNum,cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,cotChartPointerMove,
+  cotWireChartHover,cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,
+  fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
+  chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
+  setDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
+  clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
+  setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
+  markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
+  newsDayLabel,newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,
+  EDGE_MAX_ALTER,edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,
+  setEdgeAsset,edgeFmt,renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,
+  newsTabMore,gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
+  setAaiiRangeCustom,setSentSub,setSentSym,setPcAsset,setSentimentRange,setPcRange,setFearGreedRange,
+  setSentimentRangeCustom,setPcRangeCustom,setFearGreedRangeCustom,SENT_NONFX_SYMS,SENT_NONFX_PRICE_ID,
+  sentSymPriceSeries,sentSymLabel,sentSymWatched,sentFilterBar,pcUsableAssetIds,pcFilterBar,renderSentiment,
+  pcRangeBarInChart,pcXLabel,pcXTickIdx,renderRetailBars,renderRetailHistory,retailNetChart,retailStackChart,
+  PC_THIN_VOL,pcThinNote,pcThresholds,renderPutCallChart,renderNetFlowChart,AAII_SMOOTH_W,aaiiSmooth,renderAaiiCard,
+  legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,autoFetchSeasonality,
+  setSeasAsset,SEAS_MON,SEAS_ORDER,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,
+  autoFetchRateProb,rateProbCcyData,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,
+  setRateProbCcy,probsFromDelta,RATEPROB_SLOT,RATEPROB_PADL,RATEPROB_PADR,RATEPROB_MIN_SLOT,RATEPROB_AXIS_GAP,
+  rateProbDistTimeline,rateProbLineColor,setRateProbHistRange,setRateProbHistRangeCustom,rateProbBuildPts,
+  rateProbTimelineChart,rateProbSafeTargetX,scrollRateProbTo,TERM_FARBEN,termStructureData,termStructureCardHtml,
+  renderRateProb,PAGE_IDS,TAB_ORDER,TABS,TABSTACKS_KEY,loadTabStacks,saveTabStacks,stackOf,tabIdFor,selectTab,
+  TAB_ICONS,TAB_ICON_STACK,npIconSvg,tabBtnHtml,syncNavExpanded,ASSET_STACK_ID,renderTabBar,tabPressStart,tabPressEnd,
+  onTabClick,onStackClick,createStack,addTabToStack,removeTabFromStack,dissolveStack,closeTabMenu,tabMenuOutside,
+  openTabMenu,triggerEnterAnim,showTab,rerender,parsePolicyRate,CARRY_CACHE_KEY,loadRateCache,saveRateCache,rateInfo,
+  realRateInfo,yieldSpreadSeries,carryRows,carryRowHTML,setRealRateSort,realRateTableHtml,setSpreadPair,
+  setSpreadTenor,spreadCardHtml,spreadChart,renderCarry,openHelpM,maybeShowFirstRunHelp,LOCK_HASH,updPinToggleBtn,
+  togglePinEnabled,updIntroAnimToggleBtn,applyAssetAnim,updAssetAnimToggleBtn,toggleAssetAnimEnabled,applyUiAnim,
+  applyDataAnim,applyDenseMode,updDenseToggleBtn,toggleDenseMode,updUiAnimToggleBtn,updDataAnimToggleBtn,
+  toggleUiAnimEnabled,toggleDataAnimEnabled,allAnimOn,updAllAnimToggleBtn,toggleAllAnim,updTelegramToggleBtn,
+  toggleTelegramEnabled,toggleIntroAnimEnabled,checkLockCode,lockKey,lockBack,updLockDots,unlockApp,flushAndSave,
+  cloudSyncNow,_seedCleaned,_researchCalChanged,bootFetchScoreFeeds,fetchScoreHistServer,applyScoreHistServerFeed,
+  updNetStatus,
 });
 // Live-Bruecke fuer TOP-LEVEL-LET-VARIABLEN (echter Zustand) - siehe
 // docs/module-split.md fuer die Begruendung (kein Kopier-Snapshot).

@@ -187,6 +187,7 @@ const NO_TREND_RUBS=new Set(['Interest Rates']);
 // pinEnabled-Muster an allen vier Stellen (cloudPush/cloudPull/export/import)
 // plus markPrefEdit() in der Save-Funktion.
 let scoreMode=localStorage.getItem('fxpro_score_mode')==='normalized'?'normalized':'classic';
+function setScoreModeVal(v){scoreMode=v;}
 function saveScoreMode(){
   try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}
   try{localStorage.setItem('fxpro_updated',new Date().toISOString());markLsUpdatedSeen();}catch(e){}
@@ -1401,7 +1402,7 @@ export {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
-  saveScoreMode,setScoreMode,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
+  saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseSigma,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,

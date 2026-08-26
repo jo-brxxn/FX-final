@@ -7661,3 +7661,48 @@ Import-Bindungs-Zuweisungs-Check beide Richtungen, check/*.js-Suche nach
 Direktreferenzen), Playwright-Smoke-Test (Score-Bruecke, Score-Mode-Toggle,
 Score-Info-Modal), danach `node check/all.js` komplett gruen (13 Waechter),
 plus der oben beschriebene Regressionstest.
+
+## Modul-Aufteilung Runde 5: Kalender-Kategorie ausgekoppelt, ein aelterer Fehler dabei gefunden (2026-08-26)
+
+Fuenfte Kategorie: `js/calendar.js` (VERSION-CHECK-453) - Kalender-Symbol-
+Matching (`CAL_ALIASES`/`evtMatchesSym`) und die FF-Style Kalender-
+Tabellenzeilen (Actual-vs-Forecast-Faerbung inkl. Asset-Bias-Umkehr,
+`calTableHtml`/`calRowHtml`/`calToolbarHtml`, High-Impact-/Waehrungs-/
+Kompaktansicht-Filter). 25 Top-Level-Namen exportiert, voll bidirektional
+mit `js/main.js` (Grenze: Zeilen 458-801 des vorherigen `js/main.js`).
+
+**Drei neue Import-Binding-Schreibversuche** gefunden und mit dem
+etablierten Setter-Muster geloest: `calHighOnly`/`compactView`/
+`calCcyFilter` (main.js-Zustand) wurden aus dem ausgekoppelten Bereich
+heraus direkt zugewiesen - neue Setter `setCalHighOnlyVal()`/
+`setCompactViewVal()`/`setCalCcyFilterVal()` in `js/main.js`. Zusaetzlich
+drei Stellen gefunden, die noch direkt `_lsUpdatedSeen=...` zuwiesen statt
+den in der score.js-Runde bereits eingefuehrten Setter `markLsUpdatedSeen()`
+zu nutzen - korrigiert.
+
+**Wichtigster Fund dieser Runde, aber nicht Teil der Kalender-Kategorie
+selbst:** der routinemaessige Import-Bindungs-Zuweisungs-Check (AST-basiert,
+beide Richtungen, laeuft ueber die GESAMTE main.js, nicht nur den gerade
+extrahierten Bereich) fand zwei bestehende Direktzuweisungen auf `scoreMode`
+in `importData()` und im `cd.scoreMode`-Zweig von `cloudPull()` - beide
+schreiben seit der score.js-Runde (VERSION-CHECK-452) auf ein Import-Binding
+aus `js/score.js` und waeren beim naechsten JSON-Import bzw. Cloud-Sync-
+Konflikt mit einem Laufzeitfehler abgestuerzt. `node check/all.js` hatte das
+nach Runde 4 nicht gefangen, weil kein bestehender Testlauf diese beiden
+Codepfade ausloest. Mit einem vierten Setter (`setScoreModeVal()` in
+`js/score.js`) behoben. `check/rules.js` Regel 5 flaggte den neuen Namen zu
+Recht als "neue Score-Groesse ohne Pruefung" - echten Verhaltenstest in
+`check/score.js` ergaenzt statt die Regel zu umgehen.
+
+**Lehre:** der Import-Bindungs-Zuweisungs-Check ist nicht nur ein Test fuer
+die GERADE bearbeitete Kategorie, sondern ein generelles Sicherheitsnetz,
+das bei jeder Extraktion erneut ueber die gesamte Datei laufen sollte - er
+kann aeltere, noch unentdeckte Faelle aus fruaheren Runden auffangen, auch
+wenn die aktuelle Extraktion selbst gar keinen neuen Fall hat.
+
+**Geprueft:** volle Kette wie bei den vorigen vier Kategorien
+(AST-Extraktion, externe-Referenzen-Finder, Symmetrie-Pruefung ueber ALLE
+sechs js/*.js-Dateien, Import-Bindungs-Zuweisungs-Check beide Richtungen,
+check/*.js-Suche nach Direktreferenzen), Playwright-Smoke-Test (alle Tabs,
+toggleCalHighOnly/toggleCompactView/setCalCcyFilter/todayStr), danach
+`node check/all.js` komplett gruen (13 Waechter).

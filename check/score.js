@@ -102,6 +102,22 @@ const MODE = process.argv[2] || 'normalized';
     setSuppressBiasFlipAlerts(false);
     if(_suppressBiasFlipAlerts!==false)add('setSuppressBiasFlipAlerts(false) wirkt nicht',{});
   }
+  // ── F3) setScoreModeVal() haelt wirklich, was es zusagt ──
+  // Derselbe Setter-statt-Direktzugriff-Grund wie bei F2, eingefuehrt bei der
+  // Modul-Aufteilung von js/calendar.js: importData()/cloudPull() in
+  // js/main.js schrieben vorher direkt auf scoreMode (Import-Binding aus
+  // js/score.js) - ein Laufzeitfehler, der erst durch den Import-Bindungs-
+  // Zuweisungs-Check dieser Runde aufgefallen ist (nicht durch einen zuvor
+  // bestandenen Testlauf). Regel 5 flaggt setScoreModeVal zu Recht als neue
+  // Score-Groesse - hier der Beleg, dass der Setter scoreMode wirklich setzt.
+  if(typeof setScoreModeVal==='function'){
+    const vorher=scoreMode;
+    setScoreModeVal('normalized');
+    if(scoreMode!=='normalized')add('setScoreModeVal(\'normalized\') wirkt nicht',{});
+    setScoreModeVal('classic');
+    if(scoreMode!=='classic')add('setScoreModeVal(\'classic\') wirkt nicht',{});
+    setScoreModeVal(vorher);
+  }
   // ── G2) Flip-Tage gegen scoreHist ──────────────────────────────
   // symBiasFlipDays speist die Flip-Marke an den Asset-Schlagzeilen. Sie darf
   // NUR Tage melden, an denen scoreHist wirklich einen Bias-Wechsel
