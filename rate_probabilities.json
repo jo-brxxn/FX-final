@@ -3336,15 +3336,15 @@
     [
      [
       "2026-09-29",
-      4
-     ],
-     [
-      "2026-11-03",
       9
      ],
      [
+      "2026-11-03",
+      11
+     ],
+     [
       "2026-12-08",
-      2
+      -4
      ]
     ]
    ]
@@ -3356,22 +3356,22 @@
     "date": "2026-09-29",
     "label": "Sep 28-29, 2026",
     "rateBefore": 4.35,
-    "rateAfter": 4.39,
-    "deltaBp": 4
+    "rateAfter": 4.44,
+    "deltaBp": 9
    },
    {
     "date": "2026-11-03",
     "label": "Nov 2-3, 2026",
-    "rateBefore": 4.39,
-    "rateAfter": 4.48,
-    "deltaBp": 9
+    "rateBefore": 4.44,
+    "rateAfter": 4.54,
+    "deltaBp": 11
    },
    {
     "date": "2026-12-08",
     "label": "Dec 7-8, 2026",
-    "rateBefore": 4.48,
+    "rateBefore": 4.54,
     "rateAfter": 4.5,
-    "deltaBp": 2
+    "deltaBp": -4
    }
   ],
   "method": "precise",

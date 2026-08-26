@@ -570,7 +570,7 @@
    ]
   ]
  },
- "updated": "2026-08-26T00:39:55.454Z",
+ "updated": "2026-08-26T02:19:44.985Z",
  "stockFng": {
   "value": 59,
   "label": "greed",
@@ -1070,8 +1070,8 @@
   },
   {
    "sym": "USDJPY",
-   "long": 58,
-   "short": 42
+   "long": 57,
+   "short": 43
   },
   {
    "sym": "GBPJPY",
@@ -1080,8 +1080,8 @@
   },
   {
    "sym": "USDCAD",
-   "long": 63,
-   "short": 37
+   "long": 62,
+   "short": 38
   },
   {
    "sym": "EURAUD",
@@ -1100,8 +1100,8 @@
   },
   {
    "sym": "AUDJPY",
-   "long": 7,
-   "short": 93
+   "long": 8,
+   "short": 92
   },
   {
    "sym": "AUDNZD",
@@ -1115,8 +1115,8 @@
   },
   {
    "sym": "CADJPY",
-   "long": 42,
-   "short": 58
+   "long": 43,
+   "short": 57
   },
   {
    "sym": "EURCAD",
@@ -1135,13 +1135,13 @@
   },
   {
    "sym": "EURNZD",
-   "long": 71,
-   "short": 29
+   "long": 70,
+   "short": 30
   },
   {
    "sym": "GBPCAD",
-   "long": 23,
-   "short": 77
+   "long": 22,
+   "short": 78
   },
   {
    "sym": "GBPCHF",
@@ -1205,8 +1205,8 @@
   },
   {
    "sym": "XAGUSD",
-   "long": 50,
-   "short": 50
+   "long": 49,
+   "short": 51
   },
   {
    "sym": "BTCUSD",
@@ -1231,7 +1231,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.73,
+  "value": 0.65,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1521,6 +1521,10 @@
    [
     "2026-08-24",
     0.73
+   ],
+   [
+    "2026-08-25",
+    0.65
    ]
   ]
  },
@@ -14030,8 +14034,8 @@
    ],
    [
     "2026-08-26",
-    7,
-    93
+    8,
+    92
    ]
   ],
   "AUDNZD": [
@@ -15215,8 +15219,8 @@
    ],
    [
     "2026-08-26",
-    42,
-    58
+    43,
+    57
    ]
   ],
   "CHFJPY": [
@@ -16874,8 +16878,8 @@
    ],
    [
     "2026-08-26",
-    71,
-    29
+    70,
+    30
    ]
   ],
   "EURUSD": [
@@ -17585,8 +17589,8 @@
    ],
    [
     "2026-08-26",
-    23,
-    77
+    22,
+    78
    ]
   ],
   "GBPCHF": [
@@ -20192,8 +20196,8 @@
    ],
    [
     "2026-08-26",
-    63,
-    37
+    62,
+    38
    ]
   ],
   "USDCHF": [
@@ -20666,8 +20670,8 @@
    ],
    [
     "2026-08-26",
-    58,
-    42
+    57,
+    43
    ]
   ],
   "USOIL": [
@@ -21140,8 +21144,8 @@
    ],
    [
     "2026-08-26",
-    50,
-    50
+    49,
+    51
    ]
   ],
   "XAUUSD": [
