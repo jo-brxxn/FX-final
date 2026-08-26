@@ -7622,3 +7622,42 @@ Import-/Export-Paare, Import-Bindungs-Zuweisungs-Check beide Richtungen),
 danach `node check/all.js` komplett gruen (13 Waechter) - der erste Lauf
 schlug bei `score`/`score-cl` fehl (genau der oben beschriebene Fund), nach
 der Selbst-Bruecken-Ergaenzung durchgehend gruen.
+
+## Modul-Aufteilung Runde 4: die Score-Rechenkette selbst ausgekoppelt (2026-08-25)
+
+Vierte Kategorie - und die, die den urspruenglichen Nutzer-Wunsch direkt
+bedient ("es gibt eine Menge Probleme beim Score"): `js/score.js`, 104
+Top-Level-Namen (Bias-Score, Normierung, Altersgrenze, Datenqualitaet,
+eigene Historie/Staerke, Carry, Sidebar-Sync). Erste Kategorie, die NACH
+Aufhebung der zuvor dokumentierten Score-Sperre (Runde 2) ausgekoppelt
+wurde.
+
+**Zwei Import-Binding-Schreibversuche gefunden** (dieselbe Fallenklasse wie
+`_globeLon` in Runde 2, diesmal auf main.js-Seite): der Score-Bereich
+schrieb direkt auf `_lsUpdatedSeen` und `_suppressBiasFlipAlerts`, beide
+`let`-Zustand in main.js. Fix nach demselben Muster - zwei neue, in main.js
+verbleibende Setter-Funktionen (`markLsUpdatedSeen()`/
+`setSuppressBiasFlipAlerts()`), score.js ruft sie jetzt statt direkt
+zuzuweisen.
+
+**`check/rules.js`s eigene Regel 5 ("neue Score-Groesse ohne Pruefung")
+schlug zu Recht an:** die neue Funktion `setSuppressBiasFlipAlerts` matcht
+den Namensfilter (enthaelt "Bias"). Statt die Regel zu umgehen (z.B. mit
+einer beliebigen check/-Datei-Beruehrung), einen ECHTEN Verhaltenstest in
+`check/score.js` ergaenzt: `setSuppressBiasFlipAlerts(true)` muss
+`_suppressBiasFlipAlerts` wirklich auf `true` setzen (und zurueck) - genau
+das koennte bei der naechsten Extraktion kaputtgehen, ohne dass es sonst
+auffiele.
+
+**Regressionstest wiederholt, diesmal mit Score selbst in der neuen
+Datei:** `biasScore()` in `js/score.js` absichtlich falsch zurueckgeben
+lassen (`bull` gibt 999 statt 1) - `check/scorediff.js` UND `check/rules.js`
+melden den Fehler weiterhin zuverlaessig, danach Originalzustand
+wiederhergestellt und bestaetigt.
+
+**Geprueft:** volle Kette wie bei den vorigen drei Kategorien
+(AST-Extraktion, externe-Referenzen-Finder, Symmetrie-Pruefung,
+Import-Bindungs-Zuweisungs-Check beide Richtungen, check/*.js-Suche nach
+Direktreferenzen), Playwright-Smoke-Test (Score-Bruecke, Score-Mode-Toggle,
+Score-Info-Modal), danach `node check/all.js` komplett gruen (13 Waechter),
+plus der oben beschriebene Regressionstest.

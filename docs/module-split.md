@@ -303,3 +303,19 @@ kein SECHSTER blinder Fleck in einem der Check-Skripte lauert.
   gefunden: `check/score.js` ruft `applyIndDataFeed`/`applyBondDataFeed`
   direkt als globalen Namen per `page.evaluate()` auf - siehe den
   "check/*.js selbst durchsuchen"-Abschnitt oben.
+- `js/score.js` (VERSION-CHECK-452): die eigentliche Score-Rechenkette -
+  Bias-Score, Normierung (Ueberraschung/Aktualitaet/Marktreaktion),
+  Altersgrenze, Datenqualitaet/Gewichtung, eigene Historie/Staerke 1-10,
+  Carry, Sidebar-Synchronisation. 104 Top-Level-Namen, voll bidirektional.
+  Erste Kategorie NACH Aufhebung der Score-Sperre - zwei Import-Binding-
+  Schreibversuche gefunden (main.js-Zustand `_lsUpdatedSeen`/
+  `_suppressBiasFlipAlerts` wurde direkt aus dem Score-Bereich heraus
+  zugewiesen), nach demselben `resetGlobeLon`-Muster mit zwei neuen
+  Settern (`markLsUpdatedSeen()`/`setSuppressBiasFlipAlerts()`) geloest.
+  `check/rules.js` Regel 5 flaggte die neue `setSuppressBiasFlipAlerts`
+  zu Recht als "neue Score-Groesse ohne Pruefung" (Name enthaelt "Bias") -
+  statt die Regel zu umgehen, einen echten Verhaltenstest in
+  `check/score.js` ergaenzt (`setSuppressBiasFlipAlerts(true)` muss
+  `_suppressBiasFlipAlerts` wirklich auf `true` setzen). Regressionstest
+  (biasScore() absichtlich falsch, in `js/score.js` diesmal) bestaetigt:
+  Sicherheitsnetz haelt auch mit Score jetzt in eigener Datei.

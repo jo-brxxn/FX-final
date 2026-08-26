@@ -3708,11 +3708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-451 - Dritte Modul-Kategorie ausgekoppelt: js/data-feeds.js (Indikator-/Anleiherenditen-/Preis-/News-/Risk-Index-Live-Abrufe + Asset-Strength-Konfig, 45 Namen, bidirektional mit js/main.js). Dabei eine weitere Bruecken-Quelle gefunden: check/score.js ruft applyIndDataFeed/applyBondDataFeed direkt per page.evaluate() als globalen Namen auf - derselbe Bedarf wie ein inline onclick, nur aus einem Node-Skript statt aus HTML. Jetzt in docs/module-split.md als eigener Pruefschritt dokumentiert."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-452 - Vierte Modul-Kategorie ausgekoppelt: js/score.js (die eigentliche Score-Rechenkette - Bias-Score, Normierung, Altersgrenze, Datenqualitaet, eigene Historie/Staerke, Carry, 104 Namen, bidirektional mit js/main.js). Zwei Import-Bindings mussten auf Setter-Funktionen umgestellt werden (markLsUpdatedSeen/setSuppressBiasFlipAlerts statt Direktzuweisung an main.js-Zustand). check/rules.js Regel 5 flaggte die neue setSuppressBiasFlipAlerts-Funktion zu Recht als Verdacht - check/score.js um einen echten Verhaltenstest dafuer ergaenzt statt die Regel zu umgehen. Regressionstest (biasScore absichtlich falsch) bestaetigt: Sicherheitsnetz haelt weiterhin, auch mit Score jetzt in eigener Datei."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-451</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-452</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -89,6 +89,19 @@ const MODE = process.argv[2] || 'normalized';
     try{feeds[n]();recomputeAuto();const zweiter=feeds[n]();ok.idempotenz[n]=zweiter;
       if(zweiter)add('Feed nicht idempotent',{feed:n});}catch(e){ok.idempotenz[n]='ERR '+e;}
   });
+  // ── F2) setSuppressBiasFlipAlerts() haelt wirklich, was es zusagt ──
+  // Setter statt Direktzugriff, eingefuehrt bei der Modul-Aufteilung von
+  // js/score.js (docs/module-split.md) - Import-Bindings sind schreibge-
+  // schuetzt von aussen. Trivial genug, um keine eigene Rubrik zu brauchen,
+  // aber Regel 5 (check/rules.js) flaggt jede neue *Bias*-benannte Funktion
+  // zu Recht als Verdacht - hier der Beleg, dass der Setter den Zustand
+  // tatsaechlich umschaltet (nicht nur so aussieht).
+  if(typeof setSuppressBiasFlipAlerts==='function'){
+    setSuppressBiasFlipAlerts(true);
+    if(_suppressBiasFlipAlerts!==true)add('setSuppressBiasFlipAlerts(true) wirkt nicht',{});
+    setSuppressBiasFlipAlerts(false);
+    if(_suppressBiasFlipAlerts!==false)add('setSuppressBiasFlipAlerts(false) wirkt nicht',{});
+  }
   // ── G2) Flip-Tage gegen scoreHist ──────────────────────────────
   // symBiasFlipDays speist die Flip-Marke an den Asset-Schlagzeilen. Sie darf
   // NUR Tage melden, an denen scoreHist wirklich einen Bias-Wechsel
