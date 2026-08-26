@@ -7477,3 +7477,59 @@ umgesetzt.
 data unavailable: Prices, Risk index" in der Notifications-Karte, an
 korrekter Position vor den bestehenden Veraltet-/Awaiting-Meldungen, ohne
 Seitenfehler. `node check/all.js` komplett gruen.
+
+## Start der Modul-Aufteilung: erste Kategorie ausgekoppelt (2026-08-25)
+
+Nutzer-Wunsch (nach einer Rueckschau auf mehrere Fehler in dieser Sitzung):
+"generell das Projekt in Kategorien machen ich denke das nicht nur Score
+sehr wichtig ist" - per `AskUserQuestion` geklaert: OHNE Build-Tool, echte
+ES-Module (`type="module"`, `import`/`export`), damit der bestehende
+Zero-Build-Deploy (Cloudflare Worker + GitHub Pages liefern Dateien direkt
+aus) unveraendert bleibt. Volles Vorgehen/Methodik: `docs/module-split.md`
+(neue Datei, von CLAUDE.md referenziert).
+
+**VERSION-CHECK-448, erste Kategorie:** `js/constants.js` (Farben/Bias-
+Labels/FX-Liste/Flaggen-SVGs/Asset-Icon-System/Yield-Waehrungszuordnung) -
+reine Daten/Geometrie ohne DOM-/onclick-Kopplung, deshalb als risikoärmste
+Kategorie zuerst gewaehlt. Hauptskript auf `<script type="module">`
+umgestellt.
+
+**Zwei reale Fehler dabei gemacht und gefunden, bevor sie live gingen:**
+1. Ein pauschaler `sed -i 's|^<script>$|<script type="module">|'` traf NICHT
+   nur das Hauptskript, sondern auch ein zweites, kleines Inline-Skript
+   (Intro-Overlay-Logik bei `#introOv`) - dessen eigener Kommentar erklaert,
+   warum es bewusst SYNCHRON/klassisch laufen muss (entfernt das Overlay
+   sofort, bevor es je sichtbar wird, wenn die Animation deaktiviert ist).
+   Als Modul waere es dagegen verzoegert (deferred) gelaufen - sichtbares
+   Aufblitzen des Overlays. Beim gezielten Nachpruefen der `<script`-Stellen
+   gefunden und zurueckgesetzt, bevor es getestet/gepusht wurde.
+2. `type="module"` macht ALLE ~1.200 Top-Level-Funktionen/-Variablen des
+   verbleibenden Hauptskripts auf einen Schlag nicht mehr global - die App
+   generiert ihre UI ueberwiegend als HTML-Strings mit `onclick="fooBar()"`
+   direkt drin, was der Browser im globalen Scope aufloest. Ohne Brücke
+   waere JEDE Interaktion in der GESAMTEN App kaputt gegangen, nicht nur die
+   ausgekoppelte Kategorie. Erste Brücke per Zeilen-Regex gebaut, dabei zwei
+   Klassen von Fehlern gemacht (Mehrfach-Deklarationen auf einer Zeile wie
+   `let a=1,b=2;` verschluckten alle Namen ausser dem ersten - darunter
+   zentrale State-Variablen wie `curPage`/`calEvts`/`widgets`/`pairs`/
+   `research`; ein Anfuehrungszeichen INNERHALB eines Regex-Literals
+   `/"/g` liess den handgeschriebenen String-Scanner entgleisen und einen
+   erfundenen Namen `die` erzeugen). Beide durch `check/all.js` gefunden
+   (`nav`-Waechter: `ReferenceError: curPage is not defined`) - NICHT durch
+   eigene Sorgfalt beim Schreiben. Fix: echten JS-Parser (`acorn`, liegt
+   unter der global installierten `eslint`-Abhaengigkeit) statt Regex
+   benutzt, liefert 100% korrekte Top-Level-Namen. Details/Methodik fuer
+   kuenftige Kategorien: `docs/module-split.md`.
+
+**Bruecken-Mechanismus:** Funktionen/`const` per einmaligem
+`Object.assign(window,{...})` (stabile Referenzen), `let`-Zustand per
+LIVE `Object.defineProperty(window,name,{get,set})` - ein einmaliger
+Kopier-Snapshot waere nach der ersten Neuzuweisung (z.B. `curPage='cur'`)
+veraltet gewesen.
+
+**Geprueft:** `node --check` + `acorn`-Parse auf den extrahierten
+Hauptskript-Body, Playwright-Smoke-Test (u.a. `curPage` lesen/live
+mitverfolgen ueber mehrere `showTab()`-Wechsel, Intro-Overlay-Login-Button
+klicken - beide Skript-Kontexte durchquerend), danach `node check/all.js`
+komplett gruen (alle 12 Waechter, inkl. `nav`, das den urspruenglichen
+Bruecken-Fehler gefunden hatte).

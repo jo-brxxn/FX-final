@@ -1,6 +1,8 @@
 # FX Analyst Pro — Projektkonventionen
 
-Die App ist eine einzelne `index.html` (HTML + CSS + JS in einem File).
+Die App ist primär eine `index.html` (HTML + CSS + Hauptskript), die seit
+2026-08-25 schrittweise in Kategorie-Module (`js/*.js`, ES-Module, KEIN
+Build-Schritt) aufgeteilt wird — Details/Vorgehen: `docs/module-split.md`.
 
 **Diese Datei ist ein Router, kein Nachschlagewerk.** Sie sagt, WO etwas
 steht, nicht in voller Länge, WAS dort steht. Grund: jedes Detail als Prosa
@@ -20,6 +22,7 @@ betrifft.
 | Design-System (Schrift, Typografie-Skala, wiederkehrende UI-Bausteine) | `docs/design-system.md` |
 | Navigation/Sidebar/Dashboard-Layout (Koyfin-Umbau, Mehrfach-Dashboards, Klick-/Animationsregeln) | `docs/navigation.md` |
 | Arbeits-Workflow (OK einholen, Version-Bump, Push-Regeln, Syntax-Checks) | `docs/workflow.md` |
+| Modul-Aufteilung von `index.html` in `js/*.js` (Vorgehen, window-Bruecke, AST-Verifikation) | `docs/module-split.md` |
 | Prüfskripte (`check/*.js`), was sie prüfen und warum | `check/README.md` |
 | Volle Änderungshistorie (jeder Bugfix/jede Iteration mit Datum) | `docs/CHANGELOG.md` |
 
