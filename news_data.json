@@ -1,8 +1,28 @@
 {
- "updated": "2026-08-26T06:34:51.031Z",
+ "updated": "2026-08-26T07:42:43.744Z",
  "headlines": [
   {
-   "t": "UK Households Face Highest Winter Bills Since January 2024",
+   "t": "China's short-drama producers flood the market with cheap bets — and let audiences pick the winners",
+   "u": "https://www.cnbc.com/2026/08/26/short-drama-china-production-ai-entertainment-economics.html",
+   "s": "CNBC Finance",
+   "k": 2,
+   "d": "2026-08-26T07:11:25.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Thailand Holds Rate, Will Stay Accommodative to Lift Growth",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-26/thailand-holds-rate-unchanged-for-third-meeting-to-revive-growth",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-26T07:00:33.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "UK Households Face Highest Winter Energy Costs in 3 Years",
    "u": "https://www.bloomberg.com/news/articles/2026-08-26/uk-households-face-highest-winter-bills-since-january-2024",
    "s": "Bloomberg",
    "k": 2,
@@ -17,7 +37,14 @@
    "s": "Bloomberg",
    "k": 2,
    "d": "2026-08-26T05:15:00.000Z",
-   "w": 1,
+   "n": 2,
+   "o": [
+    {
+     "s": "Reuters",
+     "u": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNQi02STdIUDVtTjdzeFJKc3hzNU9Fd0VtZmpWcGFoMngwMmR4VWVTSFc1U0ZwUGxQWUFpcDdQWV9HVlJEakd1cU14a1hpVHRPN25ocEtYb29wN0pmVDRKcFhXbTF3dEJ3U0hWVGpUTE5oV3BFeWF6Y3BpSmxHWXRKV2g1WnhRdEhETG5nOUZfUjViaEFJLVdIbF85Q2ptbTVyWmg5b0NFRnk3WEFhYVV3ejZJS29OZw?oc=5"
+    }
+   ],
+   "w": 3,
    "a": [
     "EUR"
    ],
@@ -34,7 +61,7 @@
    "tg": []
   },
   {
-   "t": "Destry Vows Stability Ahead of Five-Year Term at Central Bank",
+   "t": "Indonesia’s Destry Vows Independence as Central Bank Chief",
    "u": "https://www.bloomberg.com/news/articles/2026-08-26/destry-may-serve-full-five-year-term-as-bank-indonesia-governor",
    "s": "Bloomberg",
    "k": 2,
@@ -80,6 +107,18 @@
    "tg": []
   },
   {
+   "t": "BOJ chief Ueda to skip Jackson Hole, shifts market focus to G20",
+   "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNd3d5U3o5dERmRlZTc3RvT1BpQWVTUWJhM3RiV1pyY1RMM1RWNld4Y2hoaklRbmpLeTFzM25USmtsc3VkamlhRmJ4R2lDZjUyZUZ4eVUyT0lBcHRxaGxDRzdubnJpS2hRYl9VdWRHREtLY2RkSnl1NU12NnNYTlNDazlzMkkwV2xxcWx6WXhVV3huNlgzb04wQTZPSnctbHp3QWItX1BqSmdYTEpLUjhmag?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-26T02:22:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
    "t": "Asian stocks gain before Nvidia, oil slips on Hormuz hopes",
    "u": "https://news.google.com/rss/articles/CBMie0FVX3lxTE91T2JHeEdCeW1LQUVJbHFFd0lzWkxUXzZjUWZodDZET0tTdWZYbEtpWnpPNGRsNzRZSjF1dUs5ZWNDV0t0a3F6YlBCdWJWTlRKc2F6NVV3T3ltWWl6Um9tbFlvVWRIZDk1dHFpNU5aUFo0UGVibk10NFE5dw?oc=5",
    "s": "Reuters",
@@ -100,6 +139,20 @@
    "w": 2.5,
    "a": [
     "AUD"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Dollar moves in a narrow range ahead of inflation data, Jackson Hole",
+   "u": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQalFaeTZ2Tl9BS09vVjROdl84Z24tcVpyWWRLMVltR3hyQ1g5OThDMllnMGxscnZMWktXT2FxNVVMd1ZGTTVycFJMV0JVT202NFFncFh0MVRYUlBiLS1XWEVvUnI1dHNaMEt0TXgzanprZGp5MDRsRXl5cTVVRDZ0SjYwNXc0UUtGNWlMVDlQUE9MRk5EbDgzTFllcWlOZ3ZFWkM0MWFwOGYtYk9CRUl3bWNJVXk?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-26T01:51:00.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
    ],
    "tg": [
     "inflation"
@@ -366,6 +419,18 @@
    "tg": [
     "rate hike"
    ]
+  },
+  {
+   "t": "Japan eyes blockchain for instant stock, government bond settlement, Nikkei reports",
+   "u": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPa1cxT0xzX3RMSzgxdTcwT2duRUNwUmtGNjkzSVR4NGxIbk1IMWQ0LUNXY2RobE9ZdG9iT25ERl9taWZ1dF9QaG1MUWJDQXlTdUtFdVpsR0hiTTI5cFY1WnprMjVNY3BwSkN2bHEyWkJiQjY0RUpscDNnSnBCcHMwRWI1eFc3UUNlbHA3dTNlQmw4NEVmNzhGOXBmTmExSXllTERtVDVZYlFkWnJGanNnYXRjNlVHV3VHa0dJQmw5bGloYXUzbG5jLWVzbEQ?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-25T18:50:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
   },
   {
    "t": "U.S.-Canada Trade War: What to Know About Tariffs and the Negotiations",
@@ -746,6 +811,20 @@
     "OIL"
    ],
    "tg": []
+  },
+  {
+   "t": "Trump’s Canada Tariffs Rely on Untested Law",
+   "u": "https://news.google.com/rss/articles/CBMieEFVX3lxTFA5Tmd0N1hNc1U3T1p0bm9lSGtJa0Y2ZWx3TUIzYlNoeEJrUS1SYUg1ZDBYUDl5d2htODZQMzRUNVJDWFd5QmZtLVpXTDVqQnUtS3Z0NFJvbXhkU1dWYmY3SzRWUDFWb3h2REdRUThlWldPZm5PZXN6aw?oc=5",
+   "s": "The New York Times",
+   "k": 1,
+   "d": "2026-08-25T16:37:02.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
   },
   {
    "t": "QXO (QXO) is Rebuilding Business Models for Greater Value",
@@ -1209,6 +1288,20 @@
    ]
   },
   {
+   "t": "Canada announces new tariffs on the U.S. as trade tensions rise",
+   "u": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQZDFxam9tYWR5eVR2U01lY1hkS1ZVQ3VsNDJYcUhNeWlMU3Q3c3ZzaG1YVkpDSVhXSlU4TEM5UmVMMTAxSDUtUGJUby0tQzQxU1hRSGZ1bWg2QUdOTVBlZE1iSmN1SDFCNHJxaWlVVWhIRDNkX2pyajFJNG82aVNPRmgzQlBDVkpNLUpCLWN5ZV9PMXIzVzAxblU2SlVMdDJmMnJUQktoT0oyYTAyZ0E?oc=5",
+   "s": "NBC News",
+   "k": 1,
+   "d": "2026-08-25T15:33:58.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
    "t": "Bitwise Launches Automated Portfolios for Tokenized U.S. Stocks",
    "u": "https://finance.yahoo.com/markets/crypto/articles/bitwise-launches-automated-portfolios-tokenized-152600936.html",
    "s": "CryptoProwl",
@@ -1481,20 +1574,6 @@
     }
    ],
    "w": 6.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Trump’s Canada Tariffs Rely on Untested Law",
-   "u": "https://news.google.com/rss/articles/CBMieEFVX3lxTFA5Tmd0N1hNc1U3T1p0bm9lSGtJa0Y2ZWx3TUIzYlNoeEJrUS1SYUg1ZDBYUDl5d2htODZQMzRUNVJDWFd5QmZtLVpXTDVqQnUtS3Z0NFJvbXhkU1dWYmY3SzRWUDFWb3h2REdRUThlWldPZm5PZXN6aw?oc=5",
-   "s": "The New York Times",
-   "k": 1,
-   "d": "2026-08-25T15:02:01.000Z",
-   "w": 2.5,
    "a": [
     "CAD"
    ],
@@ -2924,7 +3003,13 @@
    "d": "2026-08-25T10:00:00.000Z",
    "w": 0,
    "a": [],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Yahoo Personal Finance",
+     "u": "https://finance.yahoo.com/personal-finance/mortgages/article/mortgage-and-refinance-interest-rates-today-tuesday-august-25-2026-rates-mixed-this-morning-100000955.html"
+    }
+   ]
   },
   {
    "t": "Best CD rates today, Tuesday, August 25, 2026: Lock in up to 4.30% APY today with multiple offers",
@@ -3691,18 +3776,6 @@
    "tg": []
   },
   {
-   "t": "Japan's Tokio Marine eyes insurer Suncorp as preferred takeover target, FT reports",
-   "u": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPNG1lUk5fX21NdVFlWS00WGowNjFMeWpURDFJTmdwYTVPLTY5UHJIYU03bW5EbW0xSV8tY1hHaGdHeEJfWG5RbXpwUUJTdi1CeUNROUNPSVBxS1lLeGphV20xSkc2ZWJYQjRCNG5Qb2Nwem5jcnNrRzZUTzNIVW96YlVUQWx2ZHVOckUwcHYwNVA1el9EamluSHFPWWNTUzNxRkFkQzJ6cWF2Um1XZmI2NHc0X2NIelVqamt3TGdDTGo2WDlLNGtXOFp6WTFaX1BBai1lYw?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-25T01:58:00.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
    "t": "Australia central bank debated rate hike in August, with board divided",
    "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPN0Q4MFVjWFVDUG5qMVdKLTJfaDlfbnk3X1FHM1JmWVRZTHp5dXJPZUV4SGVxQktYY29hdjJsanU1MVoxTElnZGhFb0JtQjN5YUFGMFRzQVN4bXoyNHotelNNajIzanpSb2h4M1Q2TmtyZUluM3ZEZGx5ZHFRZjVhOVdaVUlJYTdUYjNpSTh5WWxNM05BZWxNMzZBaWh0SmtUMDNCNDRnMWdqcXJId0pfUVVQc1owOVdTVUZObXB3?oc=5",
    "s": "Reuters",
@@ -3739,18 +3812,6 @@
    "a": [
     "OIL",
     "SP500"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Oil settles down more than 3%; investors shrug off US sanctions on Iran",
-   "u": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPeWVpMEdoenRuUHdzUlpxOG1xdVdSMTItdmhxNk5MUGc3YmdGLXl0S2EwYkNYVDV6LUJtaE96QkVuUFhqQzdORlVFdmRJTDRFaTVtSlNTZlh6OE9rQ0ZqdzJOWmQzbjVtWHJxZjFZNmo0VVlzRDRnYzJ1UklrQ0lNOHNCZWdZRVgtdXFZVnZGNXdlQVd2TlN0UjFhS2NNYjByTHBnZTY1NVpXNExJeGdObFllQ2lSYjNzRGw3aGh1ZFBuNmFnaUE?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-25T01:16:00.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
    ],
    "tg": []
   },
@@ -3832,18 +3893,6 @@
    "tg": []
   },
   {
-   "t": "Move over, Warsh. Treasury's Bessent also has a credibility problem",
-   "u": "https://news.google.com/rss/articles/CBMiywFBVV95cUxNYnpIYnF5aERab0NEQURhUm9aQ0k5dk1LdmpFSHpTVkhfUHdvTzhqb2swR2lseDczOUVqMGplQWl5NGFYUXJYVkVxemFydzFlQUtVSFR2cTNPZlg4U0FaNnJDMzJvWE04LTUtWkxxUUw1aW01Z0hiT0Q2U1MxV2pxc2lzckRVUlF6dkNiNmpZblcxRThoSlVvS2pwUmFLWDRLSlVBLWRiLURDZnpUbGhoN2pHNHpRVVRYUzkwc0lXdTIydm9langtZUstaw?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-24T23:30:32.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Canada will announce retaliatory tariffs against U.S. on Tuesday, official tells AP",
    "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPWUl3bmEwRFItYUtuYnY1V1kxcUktQmRRUmxSeVNrZVkzZWZYYl9IMEdXS1NLRHZEVTY5a1JIYVA4ZnhIX3NMNDlkY0RjbElSUlYyeEhzWVRDNkFLMFMwVzVhb2FZd216Rlkxblp6Zk9BTDM5Wi10cTRVV2J4NUtabV82SkV1T2JCcVFxbmlkYW1abWs2SUhMRkVNSjFLRlJBQzB2UnlXZDNwRTJsX2lqUnlSQmhTM28?oc=5",
    "s": "PBS",
@@ -3919,6 +3968,16 @@
    "tg": []
   },
   {
+   "t": "Alibaba Dilutes Shares To Feed Its AI Spending Spree",
+   "u": "https://finance.yahoo.com/technology/ai/articles/alibaba-dilutes-shares-feed-ai-213026936.html",
+   "s": "Moby",
+   "k": 2,
+   "d": "2026-08-24T21:30:26.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "TRADING DAY Tech, tariffs & Treasuries",
    "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQUmpoclpIbHRCNUVXQ0IyQ1ZQbDJoR0VQQ0JuN2k4YVJuekdBQ05YcHI5WnVtc0JNSzN6MDhFSzRSS2dvbWRzUnFxSEJ5TURVVEFuc3Vha0sxdGhSbUZ6TllJSkU0c0JrMFFOb2dsN3VLRTItYnE4MVNVWVJQR3o3alhlSFAzVXNla1pBcXNnTnNwencyLWtpRmJteWVFYnJtS0IzbzZR?oc=5",
    "s": "Reuters",
@@ -3933,6 +3992,39 @@
    ]
   },
   {
+   "t": "Daily ETF Flows: GLD IBIT Pick Up Assets",
+   "u": "https://finance.yahoo.com/markets/options/articles/daily-etf-flows-gld-ibit-210028708.html",
+   "s": "etf.com",
+   "k": 2,
+   "d": "2026-08-24T21:00:28.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Investors Pour $56B Into ETFs as Gold and Bitcoin Roar Back",
+   "u": "https://finance.yahoo.com/markets/commodities/articles/investors-pour-56b-etfs-gold-210015504.html",
+   "s": "etf.com",
+   "k": 2,
+   "d": "2026-08-24T21:00:15.000Z",
+   "w": 2,
+   "a": [
+    "GOLD",
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "ETF League Tables: FT Vest Picks Up $1.4B",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/etf-league-tables-ft-vest-210004589.html",
+   "s": "etf.com",
+   "k": 2,
+   "d": "2026-08-24T21:00:04.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "‘Boxed In’ BOJ Set to Hike Next Month, Former Board Member Says",
    "u": "https://www.bloomberg.com/news/articles/2026-08-24/groundwork-is-set-for-boj-rate-hike-next-month-ex-official-says",
    "s": "Bloomberg",
@@ -3942,6 +4034,16 @@
    "a": [
     "JPY"
    ],
+   "tg": []
+  },
+  {
+   "t": "PM Stock Alert: What to Know as Philip Morris Teams Up With Altria on Manufacturing",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/pm-stock-alert-know-philip-204902812.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-24T20:49:02.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3972,6 +4074,29 @@
    "n": 2
   },
   {
+   "t": "Stock Market Today: Dow Up As Trump Says This On Canada; Nvidia Shares Skid Despite AI Move",
+   "u": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-economic-d-day-alibaba-stock-baba/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-08-24T20:43:08.000Z",
+   "w": 2,
+   "a": [
+    "CAD",
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Stock Indices Finish Mostly Lower on Chipmaker Weakness",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/stock-indices-finish-mostly-lower-203846692.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-24T20:38:46.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "What to know about Trump's tariffs on Canadian goods and rising tensions between once-close allies",
    "u": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNVHl1OFdkU2VpRThnVkF0UE9lcXYyeERtOFZOMDNQTHZTR1VxU3pzVWc4WEs4TXFIcnNtYThhWmVzOHprcmNwbDBUT1RwekVBd003ZGw1YUZwTXlZa2E0d1pIUFdmWVd5enRtYW5tbjlzSmw1aFVhMF94Ni01TlJsTEtfVWdLR2FtclRPUWJYLUxSMDZCam1ESw?oc=5",
    "s": "AP News",
@@ -3984,6 +4109,16 @@
    "tg": [
     "tariff"
    ]
+  },
+  {
+   "t": "Alibaba Stock Wavers As AI Push Drives $10 Billion Share Sale",
+   "u": "https://www.investors.com/news/technology/alibaba-stock-falls-as-ai-push-drives-10-billion-share-sale/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-08-24T20:34:32.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
   },
   {
    "t": "Canada Tariffs, Again",
@@ -4000,11 +4135,132 @@
    ]
   },
   {
+   "t": "A $900 Million Reason to Be Excited About XPEV Stock, Even After Disappointing Earnings Results",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/900-million-reason-excited-xpev-203154382.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-24T20:31:54.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Alibaba Diluted Shareholders for AI. Its Insiders Just Bought the Dip",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/alibaba-diluted-shareholders-ai-insiders-203025926.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-24T20:30:25.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Amazon Has Been Lagging the S&P 500 in 2026. This Is the Only Reason I'd Need to Buy the Stock in August Without Hesitation.",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/amazon-lagging-p-500-2026-202500800.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-24T20:25:00.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "What Independents Should Take From the Chains, and What to Leave Behind",
+   "u": "https://finance.yahoo.com/small-business/articles/independents-chains-leave-behind-202454919.html",
+   "s": "FSR",
+   "k": 2,
+   "d": "2026-08-24T20:24:54.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Apple (AAPL) Cut Its Europe App Store Fees. Its Own Earnings Show Why It Had To",
+   "u": "https://finance.yahoo.com/technology/articles/apple-aapl-cut-europe-app-202405814.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-24T20:24:05.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Steve Cohen makes dramatic switch between 2 top AI giants",
+   "u": "https://finance.yahoo.com/technology/ai/articles/steve-cohen-makes-dramatic-switch-202300729.html",
+   "s": "TheStreet",
+   "k": 2,
+   "d": "2026-08-24T20:23:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "How to buy travel insurance (and when to skip it)",
    "u": "https://finance.yahoo.com/news/how-to-buy-travel-insurance-202029737.html",
    "s": "Yahoo Personal Finance",
    "k": 2,
    "d": "2026-08-24T20:20:29.000Z",
+   "w": 0,
+   "a": [],
+   "tg": [],
+   "o": [
+    {
+     "s": "Yahoo Personal Finance",
+     "u": "https://finance.yahoo.com/personal-finance/insurance/article/how-to-buy-travel-insurance-202029737.html"
+    }
+   ]
+  },
+  {
+   "t": "Datadog CEO Olivier Pomel Sells 47,054 Shares for $11.1 Million",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/datadog-ceo-olivier-pomel-sells-202001827.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-24T20:20:01.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Nvidia Makes Waves With Poolside Deal, AI Investments",
+   "u": "https://www.investors.com/news/technology/nvidia-stock-nvda-poolside-deal-ai-investments/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-08-24T20:18:24.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Elon Musk warns on taxing billionaires amid $40T debt",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/musk-warned-taxing-billionaires-100-170030186.html",
+   "s": "TheStreet",
+   "k": 2,
+   "d": "2026-08-24T20:17:57.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Why the Bitcoin Rally Looks Like a Vote Against the Dollar",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/why-bitcoin-rally-looks-vote-201603203.html",
+   "s": "decrypt",
+   "k": 2,
+   "d": "2026-08-24T20:16:03.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Coinbase Debuts Tokenized Stocks On Base Network",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/coinbase-debuts-tokenized-stocks-network-201600568.html",
+   "s": "CryptoProwl",
+   "k": 2,
+   "d": "2026-08-24T20:16:00.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -4020,6 +4276,70 @@
     "USD",
     "AUD"
    ],
+   "tg": []
+  },
+  {
+   "t": "Crypto Exchange Trading Volumes Double In Five Days",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/crypto-exchange-trading-volumes-double-201500087.html",
+   "s": "CryptoProwl",
+   "k": 2,
+   "d": "2026-08-24T20:15:00.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Top Strategist Warns Nvidia’s Earnings on Wednesday Could Hit the Entire Market",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/top-strategist-warns-nvidia-earnings-201230639.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-24T20:12:30.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Asia Buyers Snap Up American Crude, Add Stress to Tight Market",
+   "u": "https://finance.yahoo.com/energy/articles/asia-buyers-snap-american-crude-201100357.html",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-24T20:11:00.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Guardant Health Dives After Losing A Patent Dispute; Judge Orders Royalties",
+   "u": "https://www.investors.com/news/technology/guardant-health-stock-twinstrand-biosciences-royalties/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-08-24T20:10:59.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Warren Buffett's Favorite 'Forever' Stock Hits A Buy Point After Big Rally",
+   "u": "https://www.investors.com/news/warren-buffett-coca-cola-stock-favorite-forever-holding/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-08-24T20:07:25.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Legendary logistics executive Klaus-Michael Kühne dead at 89",
+   "u": "https://finance.yahoo.com/small-business/articles/legendary-logistics-executive-klaus-michael-200600537.html",
+   "s": "FreightWaves",
+   "k": 2,
+   "d": "2026-08-24T20:06:00.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -4180,12 +4500,6 @@
    "s": "Reuters",
    "k": 2,
    "d": "2026-08-24T19:16:04.000Z",
-   "o": [
-    {
-     "s": "Reuters",
-     "u": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNeWdQcUNEMGg5ZXdrRnBJRl9PLXZtbk9NYzdiZnEydGZBT21TOWRFaV9EQVBpYU9mcktFSV84c0JwcVBDdHVDSkkwUUpIWVM3ZVhYTWFrNFNWRlc3MUhMWVZ5V29JTXh5U01Ja0l3MzdGTTUweFo0Y0VVZjlfYXp5YjVfSU11NW5zdUtqM1l4cEtCV1JmU24xVmlBc1NtVkRHcnpxUFlxNkRZSUU?oc=5"
-    }
-   ],
    "w": 3.5,
    "a": [
     "USD",
@@ -4417,7 +4731,13 @@
    "d": "2026-08-24T18:43:47.000Z",
    "w": 0,
    "a": [],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Motley Fool",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/peloton-insider-parted-36-000-201315357.html"
+    }
+   ]
   },
   {
    "t": "Prediction market traders doubtful Bessent’s bond interventions will push yields lower",
@@ -4990,34 +5310,11 @@
    "tg": []
   },
   {
-   "t": "Stock Market Today: Dow Up As Trump Makes This Canada Warning; Steel Gains Melt (Live Coverage)",
-   "u": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-economic-d-day-alibaba-stock-baba/?src=A00220&yptr=yahoo",
-   "s": "Investor's Business Daily",
-   "k": 2,
-   "d": "2026-08-24T17:05:00.000Z",
-   "w": 2,
-   "a": [
-    "CAD",
-    "SP500"
-   ],
-   "tg": []
-  },
-  {
    "t": "Nvidia Isn’t the Only Way to Win the AI Chip Race",
    "u": "https://finance.yahoo.com/technology/ai/articles/nvidia-isn-t-only-way-170051207.html",
    "s": "24/7 Wall St.",
    "k": 2,
    "d": "2026-08-24T17:00:51.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Musk warned taxing billionaires 100% won't fix the debt, now it's $40 trillion",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/musk-warned-taxing-billionaires-100-170030186.html",
-   "s": "TheStreet",
-   "k": 2,
-   "d": "2026-08-24T17:00:30.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -5341,11 +5638,18 @@
    "s": "Barrons.com",
    "k": 2,
    "d": "2026-08-24T16:20:25.000Z",
-   "w": 1,
+   "w": 3,
    "a": [
     "NAS"
    ],
-   "tg": []
+   "tg": [],
+   "n": 2,
+   "o": [
+    {
+     "s": "The Wall Street Journal",
+     "u": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-08-24-2026/card/nvidia-headed-for-longest-losing-streak-since-2022-as-tech-stocks-slide-8cDllVMijZSgshSpSR3t?siteid=yhoof2&yptr=yahoo"
+    }
+   ]
   },
   {
    "t": "Zcash soars to eight-year high amid crypto rally, and hopes of an ETF approval",
@@ -5365,16 +5669,6 @@
    "s": "24/7 Wall St.",
    "k": 2,
    "d": "2026-08-24T16:09:31.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Guardant Health Dives After Losing A Patent Dispute; Judge Orders Royalties",
-   "u": "https://www.investors.com/news/technology/guardant-health-stock-twinstrand-biosciences-royalties/?src=A00220&yptr=yahoo",
-   "s": "Investor's Business Daily",
-   "k": 2,
-   "d": "2026-08-24T16:08:20.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -5651,16 +5945,6 @@
    "a": [
     "BTC"
    ],
-   "tg": []
-  },
-  {
-   "t": "Nvidia Makes Waves With Poolside Deal, AI Investments",
-   "u": "https://www.investors.com/news/technology/nvidia-stock-nvda-poolside-deal-ai-investments/?src=A00220&yptr=yahoo",
-   "s": "Investor's Business Daily",
-   "k": 2,
-   "d": "2026-08-24T15:41:49.000Z",
-   "w": 0,
-   "a": [],
    "tg": []
   },
   {
@@ -6201,16 +6485,6 @@
    ]
   },
   {
-   "t": "Billionaire Ken Griffin Just Loaded Up on AbbVie and Abbott. Here's Whether Investors Should Follow His Lead.",
-   "u": "https://finance.yahoo.com/healthcare/articles/billionaire-ken-griffin-just-loaded-143500073.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-24T14:35:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "ADNOC Awards McDermott $1 Billion-Plus Contract for Major Offshore Gas Project",
    "u": "https://finance.yahoo.com/energy/articles/adnoc-awards-mcdermott-1-billion-143422737.html",
    "s": "Oilprice.com",
@@ -6425,16 +6699,6 @@
    "t": "Marvell Takes a Shot a Broadcom's Throne With Google Deal",
    "u": "https://finance.yahoo.com/technology/articles/marvell-takes-shot-broadcoms-throne-142000373.html",
    "s": "MarketBeat",
-   "k": 2,
-   "d": "2026-08-24T14:20:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Billionaire Stanley Druckenmiller Bought Amazon and Alphabet in Q2. But His Single Biggest Holding Is Neither of Them -- and It's Not Nvidia Either.",
-   "u": "https://finance.yahoo.com/healthcare/articles/billionaire-stanley-druckenmiller-bought-amazon-142000497.html",
-   "s": "Motley Fool",
    "k": 2,
    "d": "2026-08-24T14:20:00.000Z",
    "w": 0,
@@ -6939,16 +7203,6 @@
    "tg": []
   },
   {
-   "t": "Coinbase Has Been Choppy All Year: One Analyst Expects Nearly 80% Gains Ahead Anyway",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/coinbase-choppy-one-analyst-expects-133117184.html",
-   "s": "24/7 Wall St.",
-   "k": 2,
-   "d": "2026-08-24T13:31:17.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Equinor and Aker BP Make New North Sea Gas Discovery",
    "u": "https://finance.yahoo.com/energy/articles/equinor-aker-bp-north-sea-133000325.html",
    "s": "Oilprice.com",
@@ -7068,16 +7322,6 @@
    "s": "Barchart",
    "k": 2,
    "d": "2026-08-24T13:15:02.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Alibaba Stock Falls As AI Push Drives $10 Billion Share Sale",
-   "u": "https://www.investors.com/news/technology/alibaba-stock-falls-as-ai-push-drives-10-billion-share-sale/?src=A00220&yptr=yahoo",
-   "s": "Investor's Business Daily",
-   "k": 2,
-   "d": "2026-08-24T13:13:52.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -9046,6 +9290,19 @@
    "tg": []
   },
   {
+   "t": "Stock market today: S&P 500, Nasdaq fall as chip stocks sink, US unveils new Iran sanctions",
+   "u": "https://finance.yahoo.com/markets/live/stock-market-today-monday-august-24-dow-sp-500-nasdaq-080306047.html",
+   "s": "Yahoo Finance",
+   "k": 2,
+   "d": "2026-08-24T08:03:06.000Z",
+   "w": 2,
+   "a": [
+    "SP500",
+    "NAS"
+   ],
+   "tg": []
+  },
+  {
    "t": "US Dollar Price Forecast: Fiscal Risks Weigh on DXY; EUR/USD and GBP/USD Test Key Resistance",
    "u": "https://finance.yahoo.com/markets/currencies/articles/us-dollar-price-forecast-fiscal-075010571.html",
    "s": "FX Empire",
@@ -9723,16 +9980,6 @@
    "s": "Insider Monkey",
    "k": 2,
    "d": "2026-08-23T22:15:30.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Danaher vs. Medtronic: Which Healthcare Recovery Story Has More Upside?",
-   "u": "https://finance.yahoo.com/healthcare/articles/danaher-vs-medtronic-healthcare-recovery-221012046.html",
-   "s": "Insider Monkey",
-   "k": 2,
-   "d": "2026-08-23T22:10:12.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -12311,13 +12558,7 @@
    "a": [
     "USD"
    ],
-   "tg": [],
-   "o": [
-    {
-     "s": "Reuters",
-     "u": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNQVlWdFdnWlU0S0d1Wjl4Y29odDBTcV81Tm4wU1JNNTM4MzNQN1ZrMXZVWTNsR1UxNUNYUTNXN3BBMG91NENRLXUxRVRkYnJKajlPWDlLam5LRGxuaG5EbG9hWlJqZHFyZjUtaGFhdHFSU0FGQjRqc1VEbmY1QTgtdDFacWp0TjZmVEFnS3ZESXJGUllQMjVqS3pLbEpvaVc5OUhxS0lPdw?oc=5"
-    }
-   ]
+   "tg": []
   },
   {
    "t": "Treasury doubles long-term bond buybacks to $4 billion",
@@ -13050,6 +13291,16 @@
    "a": [],
    "tg": [
     "interest rate"
+   ],
+   "o": [
+    {
+     "s": "CNBC",
+     "u": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE92QUhuZ3VlYW1yTzlTUnNoUHFFa2kwUXFlQlpOQ202WHE5MDNCMUxIck10T0lXcVloa0M5UzJjVDd4a1lwRVhfS29DdjhfcnJPbG1laEwzZmFoOS0zZGJmWjZ2QdIBaEFVX3lxTFBGaUJKMmlWNnd4YmZiLWdvSENwYVVPNXo2Rm56aDl5aE93SGRHRUdpWDVLTUxXajFJRkljYzZjVWFtSS1SSGozRXdVY3Y5aTIwYzJCZFBScnV3NjJiVDh4ZXpIY1pSeEl6?oc=5"
+    },
+    {
+     "s": "CNBC",
+     "u": "https://news.google.com/rss/articles/CBMiakFVX3lxTE05Rk8tUzJNSHB6LVlZZHZaYVAxZVVZWWVQWU4zQTZmb0Q5UEg3S2draXlqeC1DRjc5blAxZkJwbDM5NnlydGZEUjBaRjFhT2hucENzRGYxLWc2M2RqSGoxeHcwaURuSkF5VEHSAW9BVV95cUxOUks1LWZibHRZMEF3QVpWUllJZjVYTGJ0TV8yYnRsTnRuZ3NNbnFHQUtGUC1RcF9JOEhieExVLUNjbGZ6VUdEY09zY1hvSkdMMkd1RUh6UTB5TjhYd2ZNVEtyTk13OTdQM1ktbEVZTWM?oc=5"
+    }
    ]
   },
   {
