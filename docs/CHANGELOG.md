@@ -7533,3 +7533,65 @@ mitverfolgen ueber mehrere `showTab()`-Wechsel, Intro-Overlay-Login-Button
 klicken - beide Skript-Kontexte durchquerend), danach `node check/all.js`
 komplett gruen (alle 12 Waechter, inkl. `nav`, das den urspruenglichen
 Bruecken-Fehler gefunden hatte).
+
+## Modul-Aufteilung Runde 2: externes Hauptskript, Globus-Kategorie, Waechter-Skripte repariert (2026-08-25)
+
+Nutzer-Wunsch nach der ersten Kategorie (constants.js): "Ja dann mach das
+alles" - Fortsetzung der Aufteilung. Zweite Kategorie geplant: der rotierende
+FX-Weltglobus + Intro-Boost-Sequenz. Dabei kam heraus, dass das bisherige
+INLINE-Hauptskript (`<script type="module">` direkt in `index.html`, nur
+`js/constants.js` war extern) fuer eine Kategorie mit ECHTER bidirektionaler
+Abhaengigkeit nicht reicht - ein Inline-Modul hat keine eigene URL, andere
+Dateien koennen nicht davon importieren. Deshalb zuerst das komplette
+Hauptskript nach `js/main.js` verschoben (`<script type="module"
+src="js/main.js">`), erst danach `js/globe.js` (62 Top-Level-Namen)
+ausgekoppelt, mit einem zirkulaeren Import zwischen beiden Dateien.
+
+**Drei weitere reale Fehler gemacht und VOR dem Push gefunden:**
+1. Import-Bindings sind schreibgeschuetzt - main.js versuchte `_globeLon`
+   (ein `let` aus globe.js) direkt zuzuweisen, was Acorn NICHT als
+   Syntaxfehler erkennt (kracht erst im echten Browser). Fix: kleiner Setter
+   `resetGlobeLon()` in globe.js statt Direktzugriff von aussen.
+2. Trotz des bereits im ersten Schritt eingefuehrten AST-Parsers wurden die
+   Export-/Import-Listen fuer globe.js von HAND aus der Konsolenausgabe
+   abgetippt - dabei gingen alle unterstrich-praefigierten privaten
+   Zustandsnamen (`_globeLon`, `_globeHosts`, ...) verloren, weil sie beim
+   Ueberfliegen wie interne Details aussahen. Playwright-Fehler erst beim
+   MEHRFACHEN Tab-Wechsel sichtbar (`_globeLon is not defined`), nicht beim
+   ersten Laden. Fix: Namenslisten direkt aus der vom Skript geschriebenen
+   Datei generieren, nie von Hand abtippen.
+3. **Der schwerwiegendste Fund:** ein Regressionstest (`biasScore()`
+   absichtlich falsch zurueckgeben lassen, ohne SCORE_MODEL_VERSION zu
+   bumpen) zeigte, dass `node check/rules.js` trotzdem "ok" meldete - das
+   Sicherheitsnetz war durch die Externalisierung LAUTLOS abgeschaltet.
+   Ursache: fuenf Waechter-Skripte gingen implizit davon aus, dass aller
+   Code inline in `index.html` liegt (`check/scoreSurface.js`s `inlineJs()`
+   filtert `<script src=...>` explizit raus; `check/rules.js`s Diff war fest
+   auf `-- index.html` verdrahtet; `check/structure.js` baute seine
+   Funktions-Namensliste nur aus `index.html`; `check/scorediff.js` kopierte
+   fuer den Basis-Vergleich nur `index.html` + `*.json`/`sw.js` in ein
+   Temp-Verzeichnis, ohne `js/constants.js` - ein ES-Modul ist fail-fast,
+   ein 404 auf einen Import laesst KEINE Top-Level-Variable entstehen, auch
+   nicht die unbeteiligten). Alle vier repariert (js/*.js wird jetzt ueberall
+   mitgelesen/mitkopiert/mitgedifft), plus zwei Nebenfehler im Test-Server
+   von scorediff.js (Unterordner wurden von `path.basename()` gestrippt;
+   `.js`-Dateien liefen als `text/html`, was Chrome fuer Modul-Skripte hart
+   verweigert). Fuenfter Fund direkt daraus abgeleitet: `check/rules.js`s
+   SUMMARY_ENGINE_VERSION-Regel hatte KEIN Gegenstueck zu `scorediff.js` -
+   eine reine Datei-Umsortierung der `summarize*`-Funktionen haette den Bump
+   erzwungen, obwohl sich der Text nicht aendert (laut eigenem
+   Projektgrundsatz SCHAEDLICH). Neue Datei `check/summarydiff.js` (13.
+   Waechter) schliesst diese Luecke nach demselben Muster wie `scorediff.js`.
+
+**Damit ist die zuvor dokumentierte Sperre fuer Score-/Formulierungs-Logik
+aufgehoben** - beide koennen jetzt wie jede andere Kategorie ausgekoppelt
+werden. Volle Methodik, Fallen und der jetzt obligatorische
+Regressionstest-Ablauf: `docs/module-split.md`.
+
+**Geprueft:** Playwright-Smoke-Test (mehrfacher `showTab()`-Wechsel deckt
+sowohl die live-let-Bruecke als auch den Globus-Start/Stop-Zyklus ab, 0
+Seitenfehler), AST-basierte Symmetrie-Pruefung aller vier Import-/Export-
+Listen zwischen main.js/globe.js, Regressionstest mit absichtlich kaputtem
+`biasScore()` (schlaegt VOR der Reparatur nicht an, danach zuverlaessig bei
+`scorediff.js` UND `rules.js`), danach `node check/all.js` komplett gruen
+(jetzt 13 Waechter).

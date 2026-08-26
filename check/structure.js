@@ -4,7 +4,24 @@
 // Playwright-Audits sahen es nicht, weil sie den Sperrbildschirm beim Start
 // entfernen. Ein doppeltes id ist der billigste zuverlaessige Indikator.
 const fs=require('fs');
+const path=require('path');
 const h=fs.readFileSync(process.argv[2]||'index.html','utf8');
+// Seit der Modul-Aufteilung (2026-08-25, docs/module-split.md) liegt der
+// allergroesste Teil des JS in js/*.js statt inline in index.html - sowohl
+// die FunktionsDEFINITIONEN als auch viele der onclick=/onchange=/...-
+// Handler selbst (die HTML-Strings mit Handlern werden in js/main.js per
+// Template-Literal gebaut, nicht in index.html). Fuer die Handler-Funktion-
+// Pruefung (drittes Netz unten) MUESSEN deshalb alle js/*.js-Dateien mit
+// durchsucht werden, sonst meldet dieser Waechter fast jeden Handler der
+// App faelschlich als "ohne Funktion". Die id-/Block-Dopplungspruefungen
+// (erstes/zweites Netz) bleiben bewusst auf index.html beschraenkt - das
+// sind reine HTML-Markup-Pruefungen, js/*.js enthaelt kein statisches HTML.
+const jsDir=path.join(path.dirname(process.argv[2]||'index.html'),'js');
+let jsAlle='';
+try{
+  jsAlle=fs.readdirSync(jsDir).filter(f=>f.endsWith('.js'))
+    .map(f=>fs.readFileSync(path.join(jsDir,f),'utf8')).join('\n');
+}catch(e){}
 const ids={};
 for(const m of h.matchAll(/\sid="([A-Za-z0-9_-]+)"/g)) ids[m[1]]=(ids[m[1]]||0)+1;
 // Bekannte, unkritische Mehrfachtreffer: stehen in Template-Strings bzw. sind
@@ -29,8 +46,9 @@ for(let i=0;i+40<L.length;i++){
 // (beim Aufraeumen geloescht) und setAaiiRangeCustom (nie angelegt) verloren
 // gegangen. Beide Male liess sich "Custom" waehlen, die Datumsfelder kamen,
 // und die Eingabe tat still nichts.
-const def=new Set([...h.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]));
-for(const m of h.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g)) def.add(m[1]);
+const alles=h+'\n'+jsAlle;
+const def=new Set([...alles.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]));
+for(const m of alles.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:function\b|\([^)]*\)\s*=>|[A-Za-z_$][\w$]*\s*=>)/g)) def.add(m[1]);
 // Methodenaufrufe auf einem Objekt/Ereignis sind keine globalen Funktionen.
 const METHODEN=/[.\]]\s*$/;
 const EINGEBAUT=new Set(['alert','confirm','prompt','Number','String','Boolean','Date','Math','JSON','Object','Array','Set','Map','RegExp','parseInt','parseFloat','isNaN','encodeURIComponent','decodeURIComponent','setTimeout','requestAnimationFrame','fetch','open','if','for','while','return','typeof','function','catch','switch']);
@@ -39,11 +57,11 @@ const fehlend=new Set();
 // Muster onclick="fn('${x.id}')" - ohne diesen Filter meldet der Waechter
 // "fn" als fehlende Funktion und wird dadurch unglaubwuerdig.
 const inKommentar=idx=>{
-  const zeile=h.slice(h.lastIndexOf('\n',idx)+1, h.indexOf('\n',idx));
+  const zeile=alles.slice(alles.lastIndexOf('\n',idx)+1, alles.indexOf('\n',idx));
   return /^\s*(\/\/|\*|\/\*)/.test(zeile);
 };
 const HANDLER=/\bon(?:click|change|input|toggle|submit|keydown|keyup|focus|blur|pointerdown|pointerup|pointerleave|pointercancel|contextmenu|mouseenter|mouseleave|error|load)\s*=\s*(["'`])([\s\S]*?)\1/g;
-for(const m of h.matchAll(HANDLER)){
+for(const m of alles.matchAll(HANDLER)){
   if(inKommentar(m.index)) continue;
   for(const c of m[2].matchAll(/([A-Za-z_$][\w$]*)\s*\(/g)){
     const vor=m[2].slice(0,c.index);
@@ -54,7 +72,7 @@ for(const m of h.matchAll(HANDLER)){
   }
 }
 // Zusammengesetzte Handlernamen: Praefix aus dem Aufruf + fester Suffix.
-for(const m of h.matchAll(/timeRange(?:Bar|Custom)Html\(([\s\S]{0,200}?)\)/g)){
+for(const m of alles.matchAll(/timeRange(?:Bar|Custom)Html\(([\s\S]{0,200}?)\)/g)){
   for(const q of m[1].matchAll(/['"](set[A-Za-z_$][\w$]*)['"]/g)){
     const basis=q[1].replace(/Custom$/,'');
     if(!def.has(basis)) fehlend.add(basis);

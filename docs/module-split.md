@@ -127,54 +127,139 @@ was ich per Suche gefunden habe".
    damit fehlende Brücken-Einträge aufdecken).
 9. Erst bei komplett grünem Lauf committen/pushen (dev-Branch + `main`).
 
-## ⚠️ Gesperrt bis auf Weiteres: Score- und Formulierungs-Logik
+## Hauptskript ist ein ECHTES externes Modul (seit VERSION-CHECK-449)
 
-**`check/rules.js` diffed NUR `index.html`** (`git diff -U0 ${BASE} -- index.html`,
-fest verdrahtet) und **`check/scoreSurface.js` liest Funktionskörper NUR aus
-inline `<script>`-Blöcken von `index.html`** (`inlineJs()` filtert explizit
-`<script src=...>` raus). Beide sind die Grundlage für die
-SCORE_MODEL_VERSION-/SUMMARY_ENGINE_VERSION-Zwangsprüfung (`check/rules.js`
-Regel 2+3, Konstanten-Regex `/const SCORE_MODEL_VERSION=(\d+)/` bzw.
-`/const SUMMARY_ENGINE_VERSION=(\d+)/`, beide explizit gegen
-`index.html`-Text).
+Ursprünglich blieb das Hauptskript INLINE (`<script type="module">...
+</script>` direkt in `index.html`), nur `js/constants.js` war eine externe
+Datei. Das genügt für eine EINSEITIGE Abhängigkeit (Hauptskript importiert
+von `constants.js`), bricht aber bei einer Kategorie, die auch das
+Hauptskript zurück braucht: ein `<script type="module">` OHNE `src` hat
+keine eigene URL, andere Dateien können nicht `import {...} from` diesem
+Inline-Block. Genau das brauchte die Globus-Kategorie (Dashboard ruft
+`globeSkeleton()`/`startGlobes()` auf, der Globus braucht umgekehrt
+`syms`/`curPage`/`symScoreCmp`/... zurück).
 
-**Betroffene Funktionen/Konstanten (NICHT auskoppeln, ohne die Check-Skripte
-mit anzupassen):**
-- Score-Fläche (`check/scoreSurface.js` WURZELN + deren Aufrufbaum, Tiefe 2):
-  `indScoreParts`, `indScore`, `rubScore`, `symScore`, `symScoreCmp`,
-  `symScoreAvg`, `pairScore`, `symTrackedCount`, `symOwnZ`, `symStrength10`,
-  `applyIndDataFeed`, `applyBondDataFeed`, `applyCotDataFeed`,
-  `applySentimentFeed`, `syncIndicatorBiases`, `applyTrendModel`,
-  `recomputeRubricAutoBias`, `deriveMacroBiasAll`, `recomputeRiskCorr`,
-  `sentEval`, `addSurveyInds`, `migrateRubInds`, `moveYieldIndsToInflation`,
-  `migrateRiskEnvRub`, `stripGeopoliticsRub`, `mkRubs` — plus alles, was sie
-  zwei Ebenen tief aufrufen (in der Praxis der komplette Score-Abschnitt,
-  ~104 Top-Level-Namen zwischen `bCol` und `fmtDate`, Zeilen ~4760-6141).
-- `SCORE_MODEL_VERSION` selbst (die Konstante).
-- Formulierungs-Fläche (`check/rules.js` `SUM_FN`): `summarizeRub`,
-  `summarizeGeneric`, `summarizeInflation`, `summarizeLabour`,
-  `summarizeGrowth`, `summarizeInterestRates`, `summarizeCot`,
-  `summarizeRiskEnv`, `cameInPhrase`, `supportPhrase`, `anchorClause`,
-  `HOTCOLD_WORDS`, `JOBS_WORDS`, `TREND_WORDS`, `SUMMARY_ENGINE_VERSION`.
+**Fix:** das komplette verbleibende Hauptskript nach `js/main.js` verschoben,
+`index.html` laedt es jetzt per `<script type="module" src="js/main.js">`.
+Inhaltlich reine Ortsverschiebung (keine Verhaltensaenderung), macht aber
+JEDE weitere Kategorie-Datei zu einem gleichberechtigten Modul mit eigener
+URL - `js/main.js` und z.B. `js/globe.js` koennen sich seitdem GEGENSEITIG
+importieren (zirkulaerer Import, siehe naechster Abschnitt).
 
-**Wie es doch ginge, sauber vorbereitet statt hastig:**
-1. `check/rules.js`: `git diff -U0 ${BASE} -- index.html` auf mehrere Pfade
-   erweitern (`-- index.html js/*.js`), `diffText` entsprechend über alle
-   geänderten Dateien zusammenbauen. `SCORE_MODEL_VERSION`/
-   `SUMMARY_ENGINE_VERSION`-Regex ebenfalls über mehrere Kandidaten-Dateien
-   suchen (Konstante bleibt am sinnvollsten ohnehin in `index.html`, auch
-   wenn die Funktionen umziehen — dann reicht die Diff-Pfad-Erweiterung).
-2. `check/scoreSurface.js`: `inlineJs()` um `js/score.js`/`js/summary.js`
-   ergänzen (Inhalt einfach anhängen, kein echtes Modul-Parsing nötig, die
-   nachgelagerte Brace-Matching-Funktionssuche ist dateiformat-agnostisch).
-3. **Regressionstest, nicht nur "laeuft durch":** einen echten Score-Bug
-   künstlich einbauen (z.B. `biasScore` eine falsche Zahl zurückgeben lassen)
-   OHNE `SCORE_MODEL_VERSION` zu bumpen, `node check/rules.js` laufen lassen
-   und bestätigen, dass er IMMER NOCH fehlschlägt — genau wie vor der
-   Modul-Aufteilung. Erst danach die Extraktion selbst durchführen und mit
-   demselben künstlichen Bug nochmal bestätigen.
+## Zirkulaerer Import zwischen Kategorie-Datei und js/main.js
 
-Bis das erledigt ist: Score/Formulierungs-Logik bleibt in `index.html`.
+ES-Module erlauben zirkulaere Imports (A importiert von B, B importiert von
+A) - Funktionsdeklarationen sind gehoisted, funktionieren also auch wenn die
+importierende Datei zur Ladezeit noch nicht "fertig" ist, solange NIEMAND
+am eigenen Modul-Top-Level (ausserhalb von Funktionskoerpern) versucht, den
+Wert SOFORT zu lesen. In der Praxis: `js/globe.js` importiert `syms`/
+`curPage`/... aus `js/main.js`, `js/main.js` importiert `startGlobes`/...
+aus `js/globe.js` zurueck - beide referenzieren die importierten Namen NUR
+innerhalb von Funktionskoerpern, nie beim Laden selbst, das reicht.
+
+**⚠️ Import-Bindings sind SCHREIBGESCHUETZT von aussen.** Ein `let`, das ein
+anderes Modul importiert, darf dort NICHT direkt zugewiesen werden (`import
+{_globeLon} from './globe.js'; _globeLon = 0;` ist ein Laufzeitfehler -
+Acorns Standard-Parser meldet das NICHT als Syntaxfehler, `node --check`
+faengt es also nicht ab, es kracht erst im echten Browser beim Ausfuehren).
+Gefunden per Playwright-Test (`ReferenceError`/`TypeError` beim Tab-Wechsel),
+nicht per Syntax-Check. Fix: fuer den einen Schreib-Zugriff (`_globeLon=
+GLOBE_HOME_LON` beim `showTab('dash')`) einen kleinen Setter `resetGlobeLon()`
+IN globe.js ergaenzt und exportiert, statt das Feld von aussen zu beschreiben
+- der allgemeine Grundsatz: mutable State bleibt in SEINEM eigenen Modul,
+andere Module rufen eine Funktion auf, statt das Feld direkt zu setzen.
+**Vor jeder neuen Kategorie mit Zustand pruefen** (per AST, nicht Auge):
+gibt es irgendwo in der ANDEREN Datei eine direkte Zuweisung an einen
+importierten Namen? (`AssignmentExpression`/`UpdateExpression` mit
+`left`/`argument` als `Identifier`, dessen Name im Import steht.)
+
+## ⚠️ Handschriftliche Namenslisten NIE manuell abtippen
+
+Selbst mit dem AST-Parser aus dem Abschnitt oben ist noch ein Fehler
+passiert: die Export-/Import-Listen fuer `js/globe.js` wurden von Hand aus
+der Skript-Konsolenausgabe abgetippt (nur die "wichtig aussehenden" Namen
+uebernommen) - dabei sind ALLE unterstrich-praefigierten privaten
+Zustandsnamen (`_globeLon`, `_globeHosts`, `_globeMode`, ...) verloren
+gegangen, weil sie beim Ueberfliegen wie interne Details aussahen. Das
+Ergebnis war ein Playwright-Fehler beim Tab-Wechsel (`_globeLon is not
+defined`), NICHT beim Laden - der Bug haette leicht unbemerkt bleiben
+koennen, waere der Smoke-Test nicht ausdruecklich durch mehrere `showTab()`-
+Wechsel gegangen. **Fix: die vom Skript geschriebene `.txt`-Datei direkt
+per Node einlesen und die Export-/Import-Bloecke daraus GENERIEREN, nie
+von Hand aus der Konsolenausgabe abtippen** - genau dieselbe Lehre wie beim
+ersten Regex-vs-Parser-Fund oben, nur eine Ebene weiter: auch ein korrektes
+Werkzeug hilft nichts, wenn sein Ergebnis am Ende per Hand kopiert wird.
+
+## ⚠️ Die Waechter-Skripte selbst lasen bisher NUR index.html
+
+Fuenf `check/*.js`-Skripte gingen (unabhaengig von der window-Bruecke oben)
+implizit davon aus, dass der GESAMTE App-Code inline in `index.html` liegt -
+jedes davon wurde durch die Modul-Aufteilung BLIND, nicht laut kaputt:
+
+1. **`check/scoreSurface.js`**: `inlineJs()` liest nur `<script>`-Bloecke
+   OHNE `src`-Attribut aus `index.html`. Sobald die Score-Funktionen extern
+   liegen, findet es keine der WURZEL-Funktionskoerper mehr -> die
+   abgeleitete Score-Flaeche ist leer -> `check/rules.js`s SCORE_MODEL_
+   VERSION-Zwang (Regel 2) greift NIE MEHR, unabhaengig davon was sich
+   wirklich aendert. **Bestaetigt per Regressionstest** (siehe unten) - vor
+   dem Fix meldete `node check/rules.js` "ok", obwohl `biasScore()`
+   absichtlich kaputt gemacht wurde. Fix: `ableiten()` haengt jetzt den
+   Inhalt aller `js/*.js`-Dateien an den inline-JS-String an, bevor die
+   Funktionskoerper-Suche laeuft.
+2. **`check/rules.js`**: `git diff -U0 ${BASE} -- index.html` war fest auf
+   eine Datei verdrahtet - eine Aenderung in `js/main.js` erschien in
+   `diffText` NIE, egal was SCORE_FN/SUM_FN enthalten. Ebenso lasen `wert()`/
+   die SCORE_MODEL_VERSION-/SUMMARY_ENGINE_VERSION-Konstantensuche und Regel
+   5/6 (neue Score-Funktion/neuer persistierter Key) ausschliesslich
+   `index.html`. Fix: `-- index.html js` im Diff-Aufruf, plus zwei neue
+   Helfer `aktuellerCode()`/`basisCode()` (index.html + alle js/*.js,
+   Arbeitsbaum bzw. per `git show BASE:...`), die jetzt ueberall dort
+   eingesetzt sind, wo vorher nur `index.html` gelesen wurde.
+3. **`check/structure.js`** ("Handler ohne Funktion"): baute die Menge
+   bekannter Funktionsnamen NUR aus `index.html` - nach der Externalisierung
+   fast leer, meldete ~68 voellig unbeteiligte Handler faelschlich als
+   "ohne Funktion". Fix: `def`/`HANDLER`-Suche laeuft jetzt ueber
+   `index.html` + den Inhalt von `js/*.js` zusammen (die id-/Block-
+   Dopplungspruefungen bleiben bewusst nur auf `index.html`, da js/*.js kein
+   statisches HTML enthaelt).
+4. **`check/scorediff.js`**: kopierte fuer den BASIS-Stand nur `index.html`
+   + `*.json`/`sw.js` in ein Temp-Verzeichnis - `js/constants.js` fehlte
+   dort komplett. Ein ES-Modul ist fail-fast: ein 404 auf einen Import wirft
+   und laesst KEINE einzige Top-Level-Variable des Moduls entstehen, auch
+   nicht die voellig unbeteiligten. Ergebnis: `ReferenceError: syms is not
+   defined` beim Laden der ALTEN (Basis-)Version - fuer JEDEN Vergleich, ab
+   dem Moment, an dem `origin/main` selbst schon `js/constants.js` brauchte,
+   nicht erst ab dieser Session. Fix: `git ls-tree -r --name-only ${BASE}
+   -- js` + `git show ${BASE}:<datei>` fuer jede gefundene Datei, dazu
+   zwei Nebenfehler im winzigen Test-HTTP-Server behoben: `path.basename()`
+   strippte Unterordner (`js/main.js` -> gesucht wurde `main.js` direkt im
+   Temp-Root) - jetzt `path.normalize()` mit `..`-Schutz; und `.js`-Dateien
+   wurden als `text/html` ausgeliefert - Chrome verweigert `<script
+   type="module" src="...">` dann hart (falscher MIME-Typ), jetzt
+   `text/javascript` fuer `.js`.
+5. **`check/rules.js` Regel 3 (SUMMARY_ENGINE_VERSION)** hatte KEIN
+   Gegenstueck zu `scorediff.js` - eine reine Datei-Umsortierung der
+   `summarize*`-Funktionen (kein Text-Unterschied) haette den Bump zwingend
+   verlangt, obwohl das laut Projekt-Grundsatz SCHAEDLICH waere (markiert
+   synchronisierte Texte faelschlich als veraltet). Neue Datei
+   `check/summarydiff.js` (identisches Muster wie `scorediff.js`, vergleicht
+   `summarizeRub(sym,rub)` fuer jede Karte jedes Symbols statt Score-Zahlen)
+   dient jetzt als Nachrechnung, genau wie `scorediffErgebnis()` es fuer
+   Regel 2 tut.
+
+**Regressionstest-Verfahren (jetzt Standard-Praxis, nicht nur einmalig):**
+`biasScore()` in `js/main.js` testweise kaputt machen (z.B. `bull` gibt 999
+statt 1 zurueck), `node check/scorediff.js` + `node check/rules.js` laufen
+lassen, bestaetigen dass BEIDE den Fehler korrekt melden, DANACH erst den
+Originalzustand wiederherstellen. Ohne dieses Verfahren waere Fund 1 (der
+schwerwiegendste - ein komplett stummes Sicherheitsnetz) unbemerkt geblieben,
+da `node check/rules.js` schlicht "ok" meldete.
+
+**Damit ist die Score-/Formulierungs-Sperre aufgehoben** - `js/score.js`/
+`js/summary.js` koennen jetzt genauso wie jede andere Kategorie ausgekoppelt
+werden. Trotzdem: nach JEDER weiteren Kategorie-Extraktion (nicht nur bei
+Score/Summary) den Regressionstest oben wiederholen, um sicherzugehen, dass
+kein SECHSTER blinder Fleck in einem der Check-Skripte lauert.
 
 ## Bereits ausgekoppelt
 
@@ -183,17 +268,11 @@ Bis das erledigt ist: Score/Formulierungs-Logik bleibt in `index.html`.
   `YIELD_CCY`. Reine Daten/Geometrie-Helfer ohne DOM-/onclick-Kopplung -
   deshalb als erste, risikoärmste Kategorie gewählt. Keine eigene
   window-Brücke nötig (verifiziert: keiner der 15 Exports taucht in der
-  Handler-Namen-Liste auf).
-
-## Naechster Kandidat (angeschaut, noch nicht umgesetzt)
-
-"DASHBOARD: ROTIERENDER FX-WELTGLOBUS" (Zeilen ~16832-17060, 26 Top-Level-
-Namen: `GLOBE_*`-Konstanten inkl. der Kontinent-Polygon-Daten, Boost-/
-Throttle-Steuerung) ist inhaltlich sauber abgegrenzt und hat KEINE
-Ueberschneidung mit der Score-/Formulierungs-Flaeche. Aber: `setGlobeThrust`
-ruft `introBoostOfferReset`/`introMaybeOfferBoost` aus der direkt
-anschliessenden "INTRO-BOOST-SEQUENZ" auf - beide Abschnitte muessten
-zusammen als eine Kategorie raus (z.B. `js/globe.js`), nicht der Globus
-allein, sonst bleibt ein ungeloester Import-Kreis. Naechster Schritt fuer
-diese Kategorie: Grenzen der INTRO-BOOST-SEQUENZ bestimmen, volle
-AST-Namensliste beider Abschnitte zusammen ziehen, dann wie im Ablauf oben.
+  Handler-Namen-Liste auf). Einseitige Abhängigkeit (nur index.html
+  importiert von hier) - brauchte deshalb noch kein externes js/main.js.
+- `js/globe.js` (VERSION-CHECK-449): rotierender FX-Weltglobus + Intro-
+  Boost-Sequenz (Ladebildschirm-Animation), 62 Top-Level-Namen. Erste
+  Kategorie mit ECHTER bidirektionaler Abhängigkeit zum Hauptskript - hat
+  die Externalisierung von index.html nach js/main.js ausgeloest (siehe
+  oben) und beide oben dokumentierten Fallen (Import-Binding-Schreibschutz,
+  handschriftlich abgetippte Namenslisten) zuerst getroffen.

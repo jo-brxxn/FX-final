@@ -31,6 +31,7 @@ das ist mehrfach passiert:
 | 4-Spalten-Dashboard-Raster stand bis zu 179px ueber den rechten Rand (px-Mindestbreiten summierten sich auf 1102px, Breakpoint rechnete ohne die Nav-Sidebar) - kaputt bei 1100-1279 und 1400-1419 | nichts - `scrollWidth` waechst bei GECLIPPTEM Ueberlauf nicht, `cards.js` und `layout.js` meldeten beide gruen. `cards.js` misst seither zusaetzlich die echte Geometrie |
 | Watchlist-Paarname auf 0px zusammengequetscht (alle Nachbarn `flex-shrink:0`), nur noch das Ellipsis-Zeichen sichtbar | nichts - der Text-Check verlangte `clientWidth > 0` und schloss damit genau den Extremfall aus |
 | "Erster Klick verstellt nur die Leiste" navigierte trotzdem - zweimal beim Nutzer angekommen: erst mit der Maus (`pointerenter` klappt schon beim Hinbewegen aus), nach dem Fix dann auf dem iPad (`pointerleave` feuert bei Touch VOR dem `click` und loeschte das Merkmal) | nichts - beide Male war die Testmethode das Problem, nicht die Logik. `nav.js` prueft die Regel seither mit Maus UND Touch |
+| Modul-Aufteilung (2026-08-25, `docs/module-split.md`): `scoreSurface.js`/`rules.js`/`structure.js`/`scorediff.js` lasen bisher fest nur `index.html` - nach dem Auslagern des Hauptskripts nach `js/main.js` fanden sie fast nichts mehr, `rules.js` meldete "ok" sogar bei einem absichtlich kaputt gemachten `biasScore()` | nichts - erst ein gezielter Regressionstest (Score-Bug einbauen, `check/rules.js` muss ihn melden) deckte es auf, nicht der normale Lauf |
 
 Jede Pruefung hier existiert, weil der zugehoerige Fehler schon einmal beim
 Nutzer angekommen ist.
@@ -44,6 +45,7 @@ Nutzer angekommen ist.
 | `rules.js` | Versions-Bumps und Workflow-Ausgaben (siehe unten) | nein |
 | `structure.js` | doppelte `id`s, woertlich wiederholte HTML-Bloecke | nein |
 | `scorediff.js` | rechnet JEDEN Score (Symbol, Karte, Staerke, Carry, Paar) des Arbeitsbaums gegen `origin/main` nach - selber Browser, selbe Daten. Liefert `rules.js` die Tatsachengrundlage fuer die SCORE_MODEL_VERSION-Regel | ja |
+| `summarydiff.js` | vergleicht den generierten Kartentext (`summarizeRub()`) JEDER Karte jedes Symbols gegen `origin/main` - selbes Muster wie `scorediff.js`, nur fuer Text statt Zahlen. Liefert `rules.js` die Tatsachengrundlage fuer die SUMMARY_ENGINE_VERSION-Regel | ja |
 | `score.js` | Additivitaet der Rechenkette, Drift je geoeffnetem Asset, `_symId` nach Boot/`save`/`applySnap`, jeder Bias gegen seine Rohdaten, Karten-Badges, Idempotenz aller vier Feeds, Aufzeichnung automatischer Score-Ursachen, Aufschluesselung der Tagesbewegung in der History | ja |
 | `display.js` | angezeigte Scores in Sidebar, Asset-Kopf und Score-Fenster gegen den Sollwert | ja |
 | `runtime.js` | alle Tabs, Modals und Zustaende ohne JS-Fehler | ja |

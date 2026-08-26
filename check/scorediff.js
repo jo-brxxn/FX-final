@@ -53,16 +53,46 @@ if (!basisVorhanden()) {
 const TMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'scorediff-'));
 fs.writeFileSync(path.join(TMP, 'index.html'), execSync(`git show ${BASE}:index.html`,
   { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }));
+// Seit der Modul-Aufteilung (2026-08-25, docs/module-split.md) laedt
+// index.html Kategorie-Dateien per <script type="module" src="js/*.js">
+// bzw. import - fehlen die am BASIS-Stand, bricht das Modul-Laden dort
+// komplett ab (ES-Module sind fail-fast: ein 404 auf einen Import wirft,
+// KEIN Top-Level-Name wird je definiert). Deshalb js/ GENAU WIE index.html
+// aus BASE auschecken (nicht aus dem Arbeitsbaum wie die *.json-Daten - hier
+// soll ja der alte CODE verglichen werden, nicht der neue mit alten Daten).
+// Faellt bewusst NICHT auf, wenn js/ bei BASE noch gar nicht existierte
+// (aelterer Stand vor der Modul-Aufteilung) - git ls-tree liefert dann
+// einfach nichts.
+try {
+  const jsFiles = execSync(`git ls-tree -r --name-only ${BASE} -- js`, { encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  if (jsFiles.length) fs.mkdirSync(path.join(TMP, 'js'), { recursive: true });
+  jsFiles.forEach(f => {
+    fs.writeFileSync(path.join(TMP, f), execSync(`git show ${BASE}:${f}`,
+      { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }));
+  });
+} catch (e) {}
 fs.readdirSync('.').filter(f => f.endsWith('.json') || f === 'sw.js')
   .forEach(f => { try { fs.copyFileSync(f, path.join(TMP, f)); } catch (e) {} });
 
 const PORT_ALT = +(process.env.CHECK_PORT || 8935) + 1;
 const srv = http.createServer((req, res) => {
+  // ⚠ Vorher path.basename(name) - das strippt Unterordner (js/main.js ->
+  // main.js) und lieferte VOR dieser Korrektur beim erstenmal ein 404 auf
+  // den js/constants.js-Import, wodurch das Modul fail-fast abbrach und JEDE
+  // Top-Level-Variable (u.a. syms) undefiniert blieb - genau der Bug, der
+  // diese ganze js/-Kopie hier erst noetig gemacht hat. path.normalize()
+  // erhaelt die Unterordner, verhindert aber "..".
   const name = decodeURIComponent(String(req.url).split('?')[0]).replace(/^\/+/, '') || 'index.html';
-  const p = path.join(TMP, path.basename(name));
+  const p = path.join(TMP, path.normalize(name).replace(/^(\.\.[\/\\])+/, ''));
   fs.readFile(p, (err, buf) => {
     if (err) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { 'Content-Type': /\.json$/.test(p) ? 'application/json' : 'text/html; charset=utf-8' });
+    // ⚠ .js MUSS als JavaScript-MIME ausgeliefert werden - Chrome verweigert
+    // <script type="module" src="..."> sonst hart ("Expected a JavaScript
+    // module script but the server responded with a MIME type of
+    // text/html"), das Modul laedt gar nicht erst.
+    const ct = /\.json$/.test(p) ? 'application/json' : /\.js$/.test(p) ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8';
+    res.writeHead(200, { 'Content-Type': ct });
     res.end(buf);
   });
 });

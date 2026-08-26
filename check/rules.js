@@ -35,15 +35,47 @@ if (!baseVorhanden()) {
 // Zwei-Punkt-Diff gegen den Arbeitsbaum: greift damit auch VOR dem Commit
 // (lokaler Pre-Push-Lauf) und in der CI gleichermassen.
 const geaendert = git(`diff --name-only ${BASE}`).split('\n').filter(Boolean);
-const diff = git(`diff -U0 ${BASE} -- index.html`);
+// ⚠ Seit der Modul-Aufteilung (2026-08-25, docs/module-split.md) liegt der
+// allergroesste Teil des Codes (inkl. der Score-/Formulierungs-Flaeche) in
+// js/*.js statt inline in index.html - ein Diff, der nur index.html
+// betrachtet, sieht Aenderungen dort NICHT und jede Regel unten, die auf
+// diffText/den aktuellen bzw. Basis-Code aufbaut, wuerde lautlos blind.
+// Bestaetigt per Regressionstest: biasScore() absichtlich kaputt gemacht,
+// ohne diesen Zusatz meldete der Waechter trotzdem "ok".
+const diff = git(`diff -U0 ${BASE} -- index.html js`);
 // Nur die HINZUGEFUEGTEN/ENTFERNTEN Zeilen betrachten, nicht den Kontext.
 const diffZeilen = diff.split('\n').filter(l => /^[+-]/.test(l) && !/^[+-]{3}/.test(l));
 const diffText = diffZeilen.join('\n');
 const indexGeaendert = geaendert.includes('index.html');
+const codeGeaendert = geaendert.some(f => f === 'index.html' || f.startsWith('js/'));
+
+// Aktueller Code (Arbeitsbaum): index.html + alle js/*.js, einmal
+// eingelesen und zusammengehaengt - Regeln, die "den ganzen Code" nach
+// einem Muster durchsuchen (Funktionskoerper, Konstanten...), suchen hier
+// statt nur in index.html.
+function aktuellerCode() {
+  let s = fs.existsSync('index.html') ? fs.readFileSync('index.html', 'utf8') : '';
+  try {
+    s += '\n' + fs.readdirSync('js').filter(f => f.endsWith('.js'))
+      .map(f => fs.readFileSync('js/' + f, 'utf8')).join('\n');
+  } catch (e) {}
+  return s;
+}
+// Dasselbe fuer den BASIS-Stand (git show), memoisiert - wird von mehreren
+// Regeln gebraucht und `git show` pro js-Datei ist nicht gratis.
+let _basisCodeCache = null;
+function basisCode() {
+  if (_basisCodeCache != null) return _basisCodeCache;
+  let s = git(`show ${BASE}:index.html`);
+  try {
+    const jsDateien = execSync(`git ls-tree -r --name-only ${BASE} -- js`, { encoding: 'utf8' }).split('\n').filter(Boolean);
+    s += '\n' + jsDateien.map(f => git(`show ${BASE}:${f}`)).join('\n');
+  } catch (e) {}
+  return _basisCodeCache = s;
+}
 
 function wert(regex) {
-  const html = fs.readFileSync('index.html', 'utf8');
-  const m = html.match(regex);
+  const m = aktuellerCode().match(regex);
   return m ? m[1] : null;
 }
 function wertIn(text, regex) {
@@ -103,7 +135,7 @@ function scorediffErgebnis() {
 }
 if (formelBeruehrt.length) {
   const jetzt = wert(/const SCORE_MODEL_VERSION=(\d+)/);
-  const vorher = wertIn(git(`show ${BASE}:index.html`), /const SCORE_MODEL_VERSION=(\d+)/);
+  const vorher = wertIn(basisCode(), /const SCORE_MODEL_VERSION=(\d+)/);
   const nachgerechnet = scorediffErgebnis();
   if (jetzt == null) fail('SCORE_MODEL_VERSION', 'Konstante nicht gefunden.');
   else if (nachgerechnet && nachgerechnet.symbolUnveraendert) {
@@ -122,6 +154,22 @@ if (formelBeruehrt.length) {
 // ── Regel 3: Formulierungs-Logik geaendert -> SUMMARY_ENGINE_VERSION hoch ──
 // Grund: rubSummarySig() haengt nur an den Rohdaten. Aendert sich die
 // TEXT-FORM, erkennt die Signatur das nie - alte Texte bleiben ewig stehen.
+// Dasselbe Fail-closed-Prinzip wie bei Regel 2 (siehe scorediffErgebnis()):
+// eine reine Datei-Umsortierung (Modul-Aufteilung) laesst diese Funktionen
+// im Diff auftauchen, ohne dass sich der generierte TEXT aendert - ein
+// Bump waere dann SCHAEDLICH (markiert synchronisierte Texte faelschlich
+// als veraltet). check/summarydiff.js rechnet nach, genau wie scorediff.js
+// es fuer die Score-Zahlen tut.
+function summarydiffErgebnis() {
+  try {
+    const p = __dirname + '/.summarydiff.json';
+    if (!fs.existsSync(p)) return null;
+    const o = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (o.status !== 'ok' || o.basis !== BASE) return null;
+    if (fs.statSync(p).mtimeMs < fs.statSync('index.html').mtimeMs) return null;
+    return o;
+  } catch (e) { return null; }
+}
 const SUM_FN = ['function summarizeRub', 'function summarizeGeneric', 'function summarizeInflation',
   'function summarizeLabour', 'function summarizeGrowth', 'function summarizeInterestRates',
   'function summarizeCot', 'function summarizeRiskEnv', 'function cameInPhrase',
@@ -129,11 +177,18 @@ const SUM_FN = ['function summarizeRub', 'function summarizeGeneric', 'function 
 const sumBeruehrt = SUM_FN.filter(s => diffText.includes(s));
 if (sumBeruehrt.length) {
   const jetzt = wert(/const SUMMARY_ENGINE_VERSION=(\d+)/);
-  const vorher = wertIn(git(`show ${BASE}:index.html`), /const SUMMARY_ENGINE_VERSION=(\d+)/);
-  if (jetzt != null && vorher != null && Number(jetzt) <= Number(vorher))
+  const vorher = wertIn(basisCode(), /const SUMMARY_ENGINE_VERSION=(\d+)/);
+  const nachgerechnet = summarydiffErgebnis();
+  if (nachgerechnet && nachgerechnet.textUnveraendert) {
+    console.log('[rules] SUMMARY_ENGINE_VERSION: Bump nicht noetig - check/summarydiff.js hat nachgerechnet, ' +
+      'der generierte Kartentext ist an keiner Stelle veraendert (' + sumBeruehrt.length + ' Funktion(en) der Formulierungs-Flaeche im Diff).');
+  }
+  else if (jetzt != null && vorher != null && Number(jetzt) <= Number(vorher))
     fail('SUMMARY_ENGINE_VERSION',
       `Die Formulierungs-Logik wurde angefasst (${sumBeruehrt.slice(0, 3).join(', ')}), ` +
-      `aber SUMMARY_ENGINE_VERSION steht weiter auf ${jetzt}. Bestandsnutzer sehen sonst den alten Text.`);
+      `aber SUMMARY_ENGINE_VERSION steht weiter auf ${jetzt}. Bestandsnutzer sehen sonst den alten Text.` +
+      (nachgerechnet ? ` check/summarydiff.js hat nachgerechnet: der Text hat sich an ${nachgerechnet.textGeaendert} Stellen geaendert.`
+                     : ` (Kein Ergebnis von check/summarydiff.js - mit "node check/all.js" laeuft es automatisch mit und rechnet nach.)`));
 }
 
 // ── Regel 4: neue Workflow-Ausgabedatei muss auch committet werden ──
@@ -184,7 +239,7 @@ if (neueScoreFnKandidaten.length) {
   // score-benannten Funktion faelschlich "neu eingefuehrt" (Fehlalarm-Fund
   // 2026-08-22, ausgeloest durch setRubBias - dieselbe Klasse Fehlalarm wie
   // scoreSurface.js' Backtick-Fund, siehe docs/score-model.md).
-  const altHtmlFuerFn = indexGeaendert ? git(`show ${BASE}:index.html`) : '';
+  const altHtmlFuerFn = codeGeaendert ? basisCode() : '';
   const neueScoreFn = [...new Set(neueScoreFnKandidaten)]
     .filter(n => !new RegExp('function\\s+' + n + '\\s*\\(').test(altHtmlFuerFn));
   if (neueScoreFn.length) {
@@ -203,7 +258,7 @@ if (neueScoreFnKandidaten.length) {
 // im localStorage und kommt auf keinem anderen Geraet an. Pflicht sind:
 // Save-Funktion, cloudPush, cloudPull (mit prefPending-Schutz), Export/Import.
 const LOKAL_ERLAUBT = /(cloud|updated|seen|pending|cache|migrat|_v\d|intro|help|verbanner|score_mode|lastfetch)/i;
-const altHtmlFuerKeys = indexGeaendert ? git(`show ${BASE}:index.html`) : '';
+const altHtmlFuerKeys = codeGeaendert ? basisCode() : '';
 const neueKeys = [...new Set([...diffText.matchAll(/^\+.*localStorage\.setItem\(\s*['"](fxpro_[\w]+)['"]/gm)]
   .map(m => m[1]))].filter(k => !LOKAL_ERLAUBT.test(k) && !altHtmlFuerKeys.includes(k));
 // ⚠ Frueher wurde nur geprueft, ob die Namen "cloudPush"/"cloudPull"
@@ -230,7 +285,7 @@ function varsFuerKey(quelle, key) {
   return out;
 }
 if (neueKeys.length) {
-  const jetztHtml = fs.existsSync('index.html') ? fs.readFileSync('index.html', 'utf8') : '';
+  const jetztHtml = aktuellerCode();
   const push = fnKoerper(jetztHtml, 'cloudPush'), pull = fnKoerper(jetztHtml, 'cloudPull');
   const fehlt = [];
   neueKeys.forEach(k => {

@@ -66,7 +66,21 @@ function funktionen(js) {
 }
 
 function ableiten(datei) {
-  const js = inlineJs(fs.readFileSync(datei || 'index.html', 'utf8'));
+  datei = datei || 'index.html';
+  // Seit der Modul-Aufteilung (2026-08-25, docs/module-split.md) liegt der
+  // Code ueberwiegend in js/*.js statt inline in index.html - inlineJs()
+  // faende dort sonst nichts mehr, die WURZELN blieben leer und JEDE
+  // Score-Aenderung wuerde lautlos durchrutschen (bestaetigt per
+  // Regressionstest: biasScore() absichtlich kaputt gemacht, ohne diesen
+  // Zusatz meldete rules.js trotzdem "ok").
+  const path = require('path');
+  const jsDir = path.join(path.dirname(datei), 'js');
+  let jsAlle = '';
+  try {
+    jsAlle = fs.readdirSync(jsDir).filter(f => f.endsWith('.js'))
+      .map(f => fs.readFileSync(path.join(jsDir, f), 'utf8')).join('\n');
+  } catch (e) {}
+  const js = inlineJs(fs.readFileSync(datei, 'utf8')) + '\n' + jsAlle;
   const fn = funktionen(js);
   // Alle tatsaechlich deklarierten Konstantennamen (const/let/var GROSS...).
   const deklariert = new Set([...js.matchAll(/\b(?:const|let|var)\s+([A-Z][A-Z0-9_]{2,})\s*=/g)].map(m => m[1]));

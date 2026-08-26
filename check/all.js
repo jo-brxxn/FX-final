@@ -19,9 +19,11 @@ const URL = `http://127.0.0.1:${PORT}/index.html`;
 
 const PRUEFUNGEN = [
   { n: 'syntax',    d: 'JS der <script>-Bloecke, YAML und jeder run-Block',      f: 'check/syntax.js',    args: [],           browser: false },
-  // ⚠ scorediff MUSS vor rules laufen: rules liest dessen Ergebnis, um zu
-  // entscheiden, ob ein SCORE_MODEL_VERSION-Bump wirklich noetig ist.
+  // ⚠ scorediff/summarydiff MUESSEN vor rules laufen: rules liest deren
+  // Ergebnis, um zu entscheiden, ob ein SCORE_MODEL_VERSION-/
+  // SUMMARY_ENGINE_VERSION-Bump wirklich noetig ist.
   { n: 'scorediff', d: 'rechnet jeden Score gegen die Basis nach',              f: 'check/scorediff.js', args: [basis],      browser: true },
+  { n: 'summarydiff', d: 'vergleicht jeden Kartentext gegen die Basis',         f: 'check/summarydiff.js', args: [basis],    browser: true },
   { n: 'rules',     d: 'Versions-Bumps und Workflow-Ausgaben',                   f: 'check/rules.js',     args: [basis],      browser: false },
   { n: 'structure', d: 'doppelte ids und wiederholte HTML-Bloecke',              f: 'check/structure.js', args: ['index.html'], browser: false },
   { n: 'score',     d: 'Rechenkette, _symId, Bias gegen Rohdaten, Idempotenz',   f: 'check/score.js',     args: ['normalized'], browser: true },
