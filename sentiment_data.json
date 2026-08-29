@@ -1,12 +1,8 @@
 {
  "cryptoFng": {
-  "value": 73,
+  "value": 68,
   "label": "Greed",
   "series": [
-   [
-    "2026-05-31",
-    28
-   ],
    [
     "2026-06-01",
     29
@@ -362,11 +358,15 @@
    [
     "2026-08-28",
     73
+   ],
+   [
+    "2026-08-29",
+    68
    ]
   ]
  },
  "vix": {
-  "value": 14.45,
+  "value": 14.43,
   "series": [
    [
     "2026-07-08",
@@ -575,10 +575,14 @@
    [
     "2026-08-28",
     14.45
+   ],
+   [
+    "2026-08-29",
+    14.43
    ]
   ]
  },
- "updated": "2026-08-28T19:46:37.839Z",
+ "updated": "2026-08-29T02:36:21.989Z",
  "stockFng": {
   "value": 54,
   "label": "neutral",
@@ -1068,18 +1072,18 @@
  "retail": [
   {
    "sym": "EURUSD",
-   "long": 36,
-   "short": 64
+   "long": 42,
+   "short": 58
   },
   {
    "sym": "GBPUSD",
-   "long": 37,
-   "short": 63
+   "long": 39,
+   "short": 61
   },
   {
    "sym": "USDJPY",
-   "long": 48,
-   "short": 52
+   "long": 47,
+   "short": 53
   },
   {
    "sym": "GBPJPY",
@@ -1088,8 +1092,8 @@
   },
   {
    "sym": "USDCAD",
-   "long": 50,
-   "short": 50
+   "long": 48,
+   "short": 52
   },
   {
    "sym": "EURAUD",
@@ -1108,18 +1112,18 @@
   },
   {
    "sym": "AUDJPY",
-   "long": 8,
-   "short": 92
+   "long": 9,
+   "short": 91
   },
   {
    "sym": "AUDNZD",
-   "long": 19,
-   "short": 81
+   "long": 18,
+   "short": 82
   },
   {
    "sym": "AUDUSD",
-   "long": 11,
-   "short": 89
+   "long": 12,
+   "short": 88
   },
   {
    "sym": "CADJPY",
@@ -1128,68 +1132,68 @@
   },
   {
    "sym": "EURCAD",
-   "long": 54,
-   "short": 46
+   "long": 57,
+   "short": 43
   },
   {
    "sym": "EURCHF",
-   "long": 18,
-   "short": 82
+   "long": 17,
+   "short": 83
   },
   {
    "sym": "EURGBP",
-   "long": 37,
-   "short": 63
-  },
-  {
-   "sym": "EURNZD",
-   "long": 65,
-   "short": 35
-  },
-  {
-   "sym": "GBPCAD",
    "long": 39,
    "short": 61
   },
   {
+   "sym": "EURNZD",
+   "long": 64,
+   "short": 36
+  },
+  {
+   "sym": "GBPCAD",
+   "long": 41,
+   "short": 59
+  },
+  {
    "sym": "GBPCHF",
+   "long": 30,
+   "short": 70
+  },
+  {
+   "sym": "NZDCAD",
+   "long": 25,
+   "short": 75
+  },
+  {
+   "sym": "NZDJPY",
+   "long": 30,
+   "short": 70
+  },
+  {
+   "sym": "NZDUSD",
    "long": 31,
    "short": 69
   },
   {
-   "sym": "NZDCAD",
-   "long": 19,
-   "short": 81
+   "sym": "USDCHF",
+   "long": 60,
+   "short": 40
   },
   {
-   "sym": "NZDJPY",
-   "long": 29,
-   "short": 71
-  },
-  {
-   "sym": "NZDUSD",
+   "sym": "CHFJPY",
    "long": 27,
    "short": 73
   },
   {
-   "sym": "USDCHF",
-   "long": 63,
-   "short": 37
-  },
-  {
-   "sym": "CHFJPY",
-   "long": 26,
-   "short": 74
-  },
-  {
    "sym": "AUDCHF",
-   "long": 6,
-   "short": 94
+   "long": 5,
+   "short": 95
   },
   {
    "sym": "GBPNZD",
-   "long": 82,
-   "short": 18
+   "long": 79,
+   "short": 21
   },
   {
    "sym": "NZDCHF",
@@ -1198,18 +1202,18 @@
   },
   {
    "sym": "CADCHF",
-   "long": 66,
-   "short": 34
+   "long": 67,
+   "short": 33
   },
   {
    "sym": "GBPAUD",
-   "long": 90,
-   "short": 10
+   "long": 89,
+   "short": 11
   },
   {
    "sym": "XAUUSD",
-   "long": 53,
-   "short": 47
+   "long": 55,
+   "short": 45
   },
   {
    "sym": "XAGUSD",
@@ -1218,8 +1222,8 @@
   },
   {
    "sym": "BTCUSD",
-   "long": 30,
-   "short": 70
+   "long": 32,
+   "short": 68
   },
   {
    "sym": "US500",
@@ -1239,7 +1243,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.68,
+  "value": 0.74,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1541,6 +1545,10 @@
    [
     "2026-08-27",
     0.68
+   ],
+   [
+    "2026-08-28",
+    0.74
    ]
   ]
  },
