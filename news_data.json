@@ -1,6 +1,438 @@
 {
- "updated": "2026-08-30T17:11:03.209Z",
+ "updated": "2026-08-30T20:21:02.060Z",
  "headlines": [
+  {
+   "t": "The Roth Conversion That Cost a 62-Year-Old His $9,600 Health Insurance Subsidy",
+   "u": "https://finance.yahoo.com/healthcare/articles/roth-conversion-cost-62-old-195213072.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T19:52:13.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "PayPal just lost its $53 billion safety net",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/paypal-just-lost-53-billion-194700412.html",
+   "s": "TheStreet",
+   "k": 2,
+   "d": "2026-08-30T19:47:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Strategy’s Bitcoin Is $2.8 Billion in Profit—Is Saylor Teeing Up a Buy?",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/strategy-bitcoin-2-8-billion-193955159.html",
+   "s": "decrypt",
+   "k": 2,
+   "d": "2026-08-30T19:39:55.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Energy Transfer Is Quietly Becoming One of the Biggest Natural Gas Suppliers to AI Data Centers",
+   "u": "https://finance.yahoo.com/energy/articles/energy-transfer-quietly-becoming-one-193501261.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T19:35:01.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Biggest Risk Facing Tesla Stock Right Now",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/biggest-risk-facing-tesla-stock-193400146.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T19:34:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Insanely Obvious Secret Behind This $69K/Month SaaS",
+   "u": "https://finance.yahoo.com/video/insanely-obvious-secret-behind-69k-193123747.html",
+   "s": "Starter Story",
+   "k": 2,
+   "d": "2026-08-30T19:31:23.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Retirees Who Convert to a Roth in a Down-Market Year Move the Same Shares for Less Tax. Almost Nobody Times It.",
+   "u": "https://finance.yahoo.com/markets/options/articles/retirees-convert-roth-down-market-192934790.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T19:29:34.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "What Happens When You Invest in the Stock Market at the Worst Possible Time? History Has Reassuring News for Investors.",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/happens-invest-stock-market-worst-192000469.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T19:20:00.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Abercrombie may be back. Will its shoppers stay?",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/abercrombie-may-back-shoppers-stay-191300436.html",
+   "s": "TheStreet",
+   "k": 2,
+   "d": "2026-08-30T19:13:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The 1 Metric I Check Before Buying Any Dividend Stock",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/1-metric-check-buying-dividend-191100637.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T19:11:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Will Having Roommates in Your 60s and Beyond Become the New Normal? Some Already 'Highly Recommend the Golden Girl Lifestyle'",
+   "u": "https://finance.yahoo.com/real-estate/articles/having-roommates-60s-beyond-become-190108465.html",
+   "s": "Benzinga",
+   "k": 2,
+   "d": "2026-08-30T19:01:08.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Russia’s Largest Bank Wants Bitcoin and Ethereum as Collateral",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/russia-largest-bank-wants-bitcoin-185935086.html",
+   "s": "BeInCrypto",
+   "k": 2,
+   "d": "2026-08-30T18:59:35.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Miniso (MNSO) Booming Membership Growth Collides With A Struggling Global Expansion",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/miniso-mnso-booming-membership-growth-184952315.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T18:49:52.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Frontline (FRO) Just Delivered Its Best Quarter Yet, But Can It Last?",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/frontline-fro-just-delivered-best-184112065.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T18:41:12.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Retirement Risk Most Investors Overlook Could Leave You With Too Much",
+   "u": "https://finance.yahoo.com/markets/articles/retirement-risk-most-investors-overlook-183500983.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T18:35:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Every Year a Retiree Skips a Roth Conversion Before 73 Costs About $3,500 in Extra Tax Later. Here’s the Math on the Average $167,970 Balance.",
+   "u": "https://finance.yahoo.com/markets/options/articles/every-retiree-skips-roth-conversion-182928538.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T18:29:28.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Boeing Is Building 737s Faster Than It Has in Years. But Its Engineers Just Authorized an October Strike.",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/boeing-building-737s-faster-years-182701948.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T18:27:01.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Pinterest’s (PINS) CFO Exit Tests Whether The Growth Story Holds",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/pinterest-pins-cfo-exit-tests-182159557.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T18:21:59.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Michael Saylor Says ‘We're Back': 3 Reasons MicroStrategy May Resume Buying Bitcoin",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/michael-saylor-says-were-back-181738443.html",
+   "s": "BeInCrypto",
+   "k": 2,
+   "d": "2026-08-30T18:17:38.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "3 Simple ETFs Worth Buying and Holding for Decades",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/3-simple-etfs-worth-buying-181500129.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T18:15:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Honda (HMC), Nissan Edge Toward a Software Alliance",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/honda-hmc-nissan-edge-toward-180935321.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T18:09:35.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "At 63 She Took a Job Paying Over $150,000. The Catch-Up Rule Checked a Paycheck That Didn’t Exist.",
+   "u": "https://finance.yahoo.com/markets/options/articles/63-she-took-job-paying-180218441.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T18:02:18.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Woman, 33, Got A $60,000 Bonus And Wants Real Estate Exposure Without Buying A House — Her Parents Are Furious She Won't 'Just Buy Something Already'",
+   "u": "https://finance.yahoo.com/real-estate/articles/woman-33-got-60-000-180039146.html",
+   "s": "Benzinga",
+   "k": 2,
+   "d": "2026-08-30T18:00:39.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Canadian Small Businesses to Bear Brunt of New U.S. Tariffs",
+   "u": "https://www.wsj.com/economy/trade/canadian-small-businesses-to-bear-brunt-of-new-u-s-tariffs-7a434c08?siteid=yhoof2&yptr=yahoo",
+   "s": "The Wall Street Journal",
+   "k": 2,
+   "d": "2026-08-30T18:00:00.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "2 ‘Perfect 10’ Stocks Wall Street Is Betting On",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/2-perfect-10-stocks-wall-180000464.html",
+   "s": "TipRanks",
+   "k": 2,
+   "d": "2026-08-30T18:00:00.000Z",
+   "w": 1,
+   "a": [
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Jobs, Broadcom, Dell, Hewlett, Planet Labs, and More to Watch This Week",
+   "u": "https://www.barrons.com/articles/jobs-broadcom-dell-hewlett-planet-labs-3211f95e?siteid=yhoof2&yptr=yahoo",
+   "s": "Barrons.com",
+   "k": 2,
+   "d": "2026-08-30T18:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "What Affirm’s (AFRM) Blowout Quarter and Cautious CEO Say About the Consumer",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/affirm-afrm-blowout-quarter-cautious-175800405.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T17:58:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Hidden Costs of Retiring to Puerto Rico Nobody Mentions Until You Move There",
+   "u": "https://finance.yahoo.com/real-estate/articles/hidden-costs-retiring-puerto-rico-174527918.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T17:45:27.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Vanguard Says Women Save More Than Men at Every Income Level. Men Still Have 30% More",
+   "u": "https://finance.yahoo.com/markets/currencies/articles/vanguard-says-women-save-more-174302680.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T17:43:02.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "US Treasury's Bessent faces G20 diplomacy test amid tariffs, Iran war, bond turmoil",
+   "u": "https://news.google.com/rss/articles/CBMixwFBVV95cUxORVlaS1VmZVF5Rjh3RFkwVk40ZGpBSU1LLXM3XzQ1REFxbnl0aHREWXhieU9vUnU0aUdkTWgtNmJrYk9BRDE3aEllamozWFJVMHZ5QTJUS0pkckpwbjFVQ2dxaEhBaWZWZXg3a05ISG1Fb3k4aWV0QmRSbGFiOHdsQ0x6QWZjUUN6b3lsc2c5MEZOc2RCWXZXcERhdkN4NFJGVHBGejVxbTBZWDdvczdJamxDQ3Jib29xS1lzcURfX05MQ1BET25r?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-30T17:41:00.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "How AI Power Demand Transformed Caterpillar (CAT) into a High-Multiple Tech Play",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/ai-power-demand-transformed-caterpillar-173543057.html",
+   "s": "Insider Monkey",
+   "k": 2,
+   "d": "2026-08-30T17:35:43.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Not Nvidia. Not AMD. This Semiconductor Giant Will Be the Ultimate Winner of the Artificial Intelligence (AI) Hardware Race.",
+   "u": "https://finance.yahoo.com/technology/ai/articles/not-nvidia-not-amd-semiconductor-173500352.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T17:35:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Michael Burry sends another Nvidia stock verdict to investors",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/michael-burry-sends-another-nvidia-173300389.html",
+   "s": "TheStreet",
+   "k": 2,
+   "d": "2026-08-30T17:33:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Prediction: Micron Stock Will Go Parabolic After Sept. 30",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/prediction-micron-stock-parabolic-sept-172000876.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T17:20:00.000Z",
+   "o": [
+    {
+     "s": "Motley Fool",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/prediction-broadcom-stock-parabolic-sept-180500512.html"
+    }
+   ],
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The “QLAC”: Move $210,000 of Your IRA Into This One Account and the IRS Stops Counting It for RMDs Until You’re 85.",
+   "u": "https://finance.yahoo.com/markets/options/articles/qlac-move-210-000-ira-171424046.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-30T17:14:24.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "GE Vernova vs. Vistra: The AI Power Stock to Buy Now for 2026 and Beyond",
+   "u": "https://finance.yahoo.com/energy/articles/ge-vernova-vs-vistra-ai-171207493.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T17:12:07.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Is It Too Late to Buy Moderna Stock After Its 127% Surge?",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/too-buy-moderna-stock-127-170500349.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-30T17:05:00.000Z",
+   "o": [
+    {
+     "s": "Motley Fool",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/too-buy-crowdstrike-stock-20-190000185.html"
+    }
+   ],
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Dollar Tree Says Higher Fuel Prices Are Becoming a ‘Very, Very Meaningful’ Headwind",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/dollar-tree-says-higher-fuel-170108132.html",
+   "s": "Benzinga",
+   "k": 2,
+   "d": "2026-08-30T17:01:08.000Z",
+   "w": 1,
+   "a": [
+    "USD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Man, 41, Sold His Business For $1.4 Million — His Wife Wants To Pay Off Her Parents' Mortgage With The Money",
+   "u": "https://finance.yahoo.com/small-business/articles/man-41-sold-business-1-170106039.html",
+   "s": "Benzinga",
+   "k": 2,
+   "d": "2026-08-30T17:01:06.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Average Middle-Class Retirement Budget at 75 for Renters vs. Homeowners",
+   "u": "https://finance.yahoo.com/real-estate/articles/average-middle-class-retirement-budget-170026277.html",
+   "s": "MoneyLion",
+   "k": 2,
+   "d": "2026-08-30T17:00:26.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
   {
    "t": "Should Eli Lilly Investors Be Worried About a Threat From Amylyx?",
    "u": "https://finance.yahoo.com/healthcare/articles/eli-lilly-investors-worried-threat-163500915.html",
@@ -329,20 +761,6 @@
    "tg": []
   },
   {
-   "t": "US Treasury's Bessent faces G20 diplomacy test amid tariffs, Iran war, bond turmoil",
-   "u": "https://news.google.com/rss/articles/CBMixwFBVV95cUxORVlaS1VmZVF5Rjh3RFkwVk40ZGpBSU1LLXM3XzQ1REFxbnl0aHREWXhieU9vUnU0aUdkTWgtNmJrYk9BRDE3aEllamozWFJVMHZ5QTJUS0pkckpwbjFVQ2dxaEhBaWZWZXg3a05ISG1Fb3k4aWV0QmRSbGFiOHdsQ0x6QWZjUUN6b3lsc2c5MEZOc2RCWXZXcERhdkN4NFJGVHBGejVxbTBZWDdvczdJamxDQ3Jib29xS1lzcURfX05MQ1BET25r?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-30T10:32:20.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "German Finance Minister to Press G20 on Iran War, Trade Fights",
    "u": "https://www.bloomberg.com/news/articles/2026-08-30/german-finance-minister-to-press-g20-on-iran-war-trade-fights",
    "s": "Bloomberg",
@@ -353,6 +771,18 @@
     "EUR"
    ],
    "tg": []
+  },
+  {
+   "t": "How a comic book store got swept into the tariff storm",
+   "u": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNTEVaZDZwdTZtbm1yZDB0bng4YjBjcHFFbjZSN2Rha010aEhuRnlFSHgwX2FYcWxReHpGaEplYk9CXzFic1QzT29SZzlIa3RfMlhDTkd4ajRIQ2YycEZaT1FhX1l0YlhqeExOeVo1MldfWnpucTNpVjdvTGx6RkM2UHl3?oc=5",
+   "s": "NPR",
+   "k": 1,
+   "d": "2026-08-30T10:00:00.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "tariff"
+   ]
   },
   {
    "t": "Modi’s Developed-Nation Dream Strains Against India’s Growth Gap",
@@ -449,6 +879,18 @@
    "tg": []
   },
   {
+   "t": "Warsh, After Talking Tough on Inflation, Faces a ‘No-Win Situation’ on Rates",
+   "u": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNUkZFdlh5emdvLTJTbEVINkVEY1dRa2ZmMUkxNHZBZExGdFRLdkZWQ2hOQWJFNTZ6cXJUcTFEMERrbGg1ZmkyalBQNVdaVk9pODVLZVFZN24zX0pKdmxRalNNVjBxYmNMalRveVE0Z056VjNtV0JibF8yc3czUHE4U0xSU0NuOTA?oc=5",
+   "s": "The New York Times",
+   "k": 1,
+   "d": "2026-08-29T21:47:19.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
    "t": "Where You Hold SCHD and MAIN Matters More Than You Think: The Taxable vs. IRA Math",
    "u": "https://finance.yahoo.com/markets/stocks/articles/where-hold-schd-main-matters-213856842.html",
    "s": "24/7 Wall St.",
@@ -521,18 +963,6 @@
     "USD"
    ],
    "tg": []
-  },
-  {
-   "t": "Warsh, After Talking Tough on Inflation, Faces a ‘No-Win Situation’ on Rates",
-   "u": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNUkZFdlh5emdvLTJTbEVINkVEY1dRa2ZmMUkxNHZBZExGdFRLdkZWQ2hOQWJFNTZ6cXJUcTFEMERrbGg1ZmkyalBQNVdaVk9pODVLZVFZN24zX0pKdmxRalNNVjBxYmNMalRveVE0Z056VjNtV0JibF8yc3czUHE4U0xSU0NuOTA?oc=5",
-   "s": "The New York Times",
-   "k": 1,
-   "d": "2026-08-29T20:39:24.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "inflation"
-   ]
   },
   {
    "t": "Why I Think the Best Dividend Stock Isn't a Tech Name: It's Realty Income",
@@ -691,6 +1121,20 @@
    "tg": []
   },
   {
+   "t": "Investors heartened by Warsh inflation talk, still uncertain about Fed action",
+   "u": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPLW9HOXdFRGd4QWlJUHhlT0hzZEpqekl3UllCWkU2cW1BNmlzd0E4TGxSZVpIek5Vci1BM3RXNndHcGk4RWt3ZXVGV2NnMDBTQTJPNkNMUm1QVnpMdHRydXhwTFZqbTh2SDllNzdETEgydEhhWG1TVy1adWp5VDNDZEVMbWZnWWpxTGlLdEcxcm1oQ2YwenBaVy1KRUlsX1hVWS1BS0lhR21UNl93WFM4dVhWNEtHNHFZVWgtOGpUdUFITnBudmZhRA?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-29T19:47:50.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
    "t": "Jim Cramer sends blunt message to investors picking single stocks",
    "u": "https://finance.yahoo.com/markets/stocks/articles/jim-cramer-sends-blunt-message-194700217.html",
    "s": "TheStreet",
@@ -748,7 +1192,13 @@
    "d": "2026-08-29T19:09:00.000Z",
    "w": 0,
    "a": [],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Motley Fool",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/youd-invested-1-000-voo-185000225.html"
+    }
+   ]
   },
   {
    "t": "Ameresco CEO Sakellaris Buys 5,000 Shares for $113,300. Is This a Sign Renewable Energy Projects are Taking Off?",
@@ -2424,20 +2874,6 @@
    "tg": []
   },
   {
-   "t": "Investors heartened by Warsh inflation talk, still uncertain about Fed action",
-   "u": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPLW9HOXdFRGd4QWlJUHhlT0hzZEpqekl3UllCWkU2cW1BNmlzd0E4TGxSZVpIek5Vci1BM3RXNndHcGk4RWt3ZXVGV2NnMDBTQTJPNkNMUm1QVnpMdHRydXhwTFZqbTh2SDllNzdETEgydEhhWG1TVy1adWp5VDNDZEVMbWZnWWpxTGlLdEcxcm1oQ2YwenBaVy1KRUlsX1hVWS1BS0lhR21UNl93WFM4dVhWNEtHNHFZVWgtOGpUdUFITnBudmZhRA?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-28T19:09:00.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
    "t": "Gold Is Forecast to Climb as Central Banks Buy the Precious Metal",
    "u": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQR3Rkbk5XV2w2ZFFsUGY2WVRfTlJjYWJKVnI4TUJFRktBV1dOejd2UktQaXd3RUVUMWhYVTFDWFk2d2VxbXhERWpKM2EtRnp4X2Q2MHRoV0dnRzFiLUxOSVQ5LXoyRllBZ1VRMjViSzlqTHF5UTh1WVRPUldOMmxRbnBYU3VHOVNPUGFOd0pBUldMZDM2SXlTYWxqYkNBVDA2TmVqb3AtdW9aM1dJM2hndGhn?oc=5",
    "s": "Goldman Sachs",
@@ -3372,8 +3808,8 @@
    "n": 2,
    "o": [
     {
-     "s": "ABC News",
-     "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNVWZyUWpuN0E4dk84MXd4dGlGeVA5QnR0cXNkM19QaVJEc3VuRXBYSU96S2pCNDYzbEo3clpfdV9iMERPWmxnWVNYVlJpbkI2a1N5eGNFQnNyUHNobGlKc2tHMHhsUEtjSmtraVAzeUdnSTRTMWJzaE85QU9LQVVLZzc3M2J0UHg5ZHdfTlBhWExzS3ZQNENYc21ZXzNJY19XaWfSAacBQVVfeXFMUEUyNndJQml5cDdZUm42NlBucU82RGJzYnRkWW94a29hblMzeEVhNmw5d2FlUThFZFg2OG9QMTJ3dEVSZHZTc3E3Q1Q1RWlqUXh3SEdKcWdVOVJYdVJlSDFkdDBXUl9kX09jUWhSbW9MTk11cG1XbVVXTGJwUGtTc3cwQWJqbm1OMm5YNi1TR1VQQ0NjR2VKcnp2WEwwWHVFVHU5dWxHNmc?oc=5"
+     "s": "AP News",
+     "u": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNTUFJSHBlaThPY3QxNm1TZEpORnhMam5QQUZTc203emxiY0pKSWJLYWtvaFZNMUd0UGluNzJHVHNhcTZERkpOdmpQR2ZsWC10Q1IxMTFIaDVVRkQ3WjhFWFZsX254RVVJUG9QemZ6ZEtIbndJZk1iYUtuNDEzUGFmejVPZTZlQXl5SEx5WGZPSzh1WHlXalY1dldNR2l3a0RkT0t2M1RZTEdLZw?oc=5"
     }
    ],
    "w": 6,
@@ -4459,99 +4895,6 @@
    ]
   },
   {
-   "t": "Which states do Trump's tariffs hit the hardest",
-   "u": "https://news.google.com/rss/articles/CBMidEFVX3lxTE82X21VcTktM19oREdWWGR4ajBCY3hKcm9Fd09UWGhwMEYyTER2R2YxZFhzS1haeVMwLXpWcDg5NVZmOUkzaFdmNGZ2NFYzY1h6cXlzV0duQ0MzckN5aFJNWk9pUHZudzFaN21ET0cyb0dWU1Nx?oc=5",
-   "s": "Axios",
-   "k": 1,
-   "d": "2026-08-27T20:03:48.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Just received a settlement? Here are 5 smart ways to use the money.",
-   "u": "https://finance.yahoo.com/personal-finance/banking/article/what-to-do-with-settlement-money-190618678.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-27T19:06:18.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Generali Global Assistance travel insurance review: 4.4 out of 5 stars",
-   "u": "https://finance.yahoo.com/personal-finance/insurance/review/generali-global-assistance-travel-insurance-185817160.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-27T18:58:17.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Bank of America Issues Pessimistic Forecast for CAE (TSE:CAE) Stock Price",
-   "u": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPYmNsN0ZFeDRWN1RRQ0xBVzVMcjdiOU9HaExyZmJDSUNMOC1DVmJ0RWpFRDZSa1IydEdIVUZaTm5rRHE1M3lRR1B6VnBqRFc4X05LMW9oUkJ0WUxQSUV3SXVzbkVCNTRXTk1hcW83SEl2UHFLRExBOXBSQ2d4V3UwSFBLYmk2UVNMc3IyeU9oRXMtS0phN2ZITGUyR0h0Zkk3ZjRCaWZBX1hYVlJoZE1ZMjhJckhVQmJkemFNMHE0SlhDbE1RejFtMFBIcnJwdw?oc=5",
-   "s": "MarketBeat",
-   "k": 1,
-   "d": "2026-08-27T18:46:28.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Fixed Income and Markets Dispersion",
-   "u": "https://news.google.com/rss/articles/CBMipwFBVV95cUxPaWhTQXRSN3pXejM0Ny1uZWh3MTFscWJWcy11U0NuYklwOTU3RTF6YkVpVU9Qa1RZTWxZMjVhZGdHdWZzT1lNMU41Z2lyLU9fQmxzczkyb2c0RTZnbVhvTXQ3VW1mRkctRzFLNlhac1d6OVBUSVNRSndOdmdTUXZjbVlJTmNVQWloaWNiR0ZHdHhITGx5OE9hdEktMjVLMzdLanlJV2dCSQ?oc=5",
-   "s": "Morgan Stanley",
-   "k": 1,
-   "d": "2026-08-27T18:45:35.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Fed Chair Warsh's Jackson Hole Speech: How Can He Soothe Markets?",
-   "u": "https://www.bloomberg.com/news/articles/2026-08-27/fed-chair-warsh-s-jackson-hole-speech-how-can-he-soothe-markets",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-27T18:40:16.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "JPMorgan Chase & Co. Issues Positive Forecast for Intercorp Financial Services (NYSE:IFS) Stock Price",
-   "u": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQT3kxYlhPMXVQcWxmZjc0ck5qWVM2am95MVVCQnhhZ19TbGNITUoyenlUS1BZSnBXZnpLQ0l4aHFUcjJuVFBXSDV2S3ppS0VXYzdia2pCUDc1WDM3ZnJfN2RaMHZuUUhzb0RTcWl0eThtRGVjZUNVV2lhVUFLRnB5VU9ZbXN6ZGFjelo4TlZhMkxzcXA2UlhaQndvZVNuQkY0bzVVT1ZrVHp5M1owMzBYMkxNcXFDUjJEaHp0Qm9jNGVBZDd3eXdjajlHUU5MdGY2Q1I0dXUzNXgxLTEyR0M5ZGc2RXFYNUVDOWZadFhQUQ?oc=5",
-   "s": "MarketBeat",
-   "k": 1,
-   "d": "2026-08-27T18:22:39.000Z",
-   "o": [
-    {
-     "s": "MarketBeat",
-     "u": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxQa0dpZjVDRk1mdENzUXFFZllFRUhzWU5qNmt0M2FBNi1PcEdNaUFlWndlRjJHTVV0dWM4dlBlYjBfTlg4QTBQdXQxR05jNzlRWFBFRGQwN0VmS1FQdmRsSHZYTk5seTJxMGtMU09VbDcxYjlOS1U5MGJjTnNhQjhzTFZydjdrU1o1UzJOSTluSTR2V240aWxSd3lYSk00NGxvaUp0RmgwRVJJdmxvcDUyNGhKOGE0eVFFOC1kTUx0R1NaZFZ2MmV1aldkblBEeUZYN0VKNFln?oc=5"
-    }
-   ],
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Gold ticks up on weaker dollar, Warsh's Jackson Hole speech in focus",
-   "u": "https://news.google.com/rss/articles/CBMingFBVV95cUxOX0xCdWt3R3VfbVdKX2hPT3dhM3Y1czNyaUpReTV5UWpSdXdFNDlsSE05WFlaTVBmbjZuamY3aG9NU3drM2FKalc5V25GVWctQ1EyekgtRUFoeHJBblcyNENiaExoTzBkYTQ2ZnFTU2U0djBVdnoyX29mR3p0YmFOU050cS1KamxEZ0M1OTNIZWpBSkZUX0J0RWtjb0VvQQ?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-27T18:13:35.000Z",
-   "w": 2,
-   "a": [
-    "USD",
-    "GOLD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Canada excludes seafood from retaliatory tariffs on US goods",
    "u": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQZm9PS3FZenJPTDJ0VXZRRG9YUmZmdUY2TWc4YTVWclBMN09ZcUFsdVJTUnVid2YzamRQOUt4T1FxVnFwS3RNcU9nT1ZYSnI1d19DdDJUNENFMXNSSmNLcnVUNVhVa2UzRFhlUW5BdGd2WE5UWjR3b2hFR3pQTXhOdkg2c0d0YmtOREtz0gGQAUFVX3lxTE5PSkowYkZLVmpmbnNocS04UFByaVp4SGdSemxrUm1wLWZVNVlGU3g5WXlfU2p5Y2dEdkdzY2c3eFpLWGNmQnZRLXVBblhUTTR4VW1Wblp4a1hKcXBmRk9GOE4wa3ZkV1lUOVpGd3hwV1A1RlFielppQXg0NHNQdXhwa1JxWldQaW9VV19zTWgyOQ?oc=5",
    "s": "The Hill",
@@ -5465,7 +5808,7 @@
    "u": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQWE01Njd3S2hIWVJFYXFjbUdRWEJFR0NuZWhDdXdCWlpIbUNIVnkxeWUxak5Fa2NFTmMweGV2WFBubHVjVGkyZi1BZ2hQSHZhTlZIblVXNURkTUd2c2owMUZaTmhsaDR3eG9aZHpWbVZLZEZWMTl6QXhkcUVUQXl2NDVhUzY3MkNCTTBaazBvZGRlYVJQRVNNM04xLXJPQlltRlZ1YUI0dFQyakxyQVhWemI0RXBMeHpJ?oc=5",
    "s": "WSJ",
    "k": 1,
-   "d": "2026-08-25T20:55:00.000Z",
+   "d": "2026-08-25T21:00:25.000Z",
    "w": 2.5,
    "a": [
     "CAD"
@@ -6861,10 +7204,6 @@
    ],
    "o": [
     {
-     "s": "NBC News",
-     "u": "https://news.google.com/rss/articles/CBMifkFVX3lxTE1NQ2ZGZ3ktRms1RXlVUUhxbXJCZDFNd3U2UHRSLXNNdnpIT3hRd1VhZWphTnlsRUpCaWxkREdKQ2tlYkFSWG96TmhsbDI2aFMwcnByMkhHMmdnV2ZTZXpiYWRINmdwOGV6ZHNMYkoxZGxXSWQyWnNoazFNTVFMdw?oc=5"
-    },
-    {
      "s": "ABC News",
      "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQSnJ3eU9oWVFyV3VkMC1RT1JiYm8tcVBiMXJkdkR1Zi0tZ3hlZTR4M3A2TVM1U2RzdFJUUXVSTjhYLS1DTEVFcHQwd2FhUkVGdzJVeGk2enRTTjhQaUpIOW9wUUpzSW5JbkdZWjluZlB2ZGtRNld3RmhvV3J0MDBYbTZrd2VBSUNqS2U1bmZRbnAtTEl4ZDlTcU5wWkFxMS10aTlHSjVB0gGrAUFVX3lxTE52aHJucmkxZU1TMW5JZE5QNVNNNkRQclZfWnNsQkpmMTNNNTNuREFBRUVZX0FvVE1YTU05M2ZmU0g0OTlwTjRmMTMyUjYxNmdwWWxySks4ODJ3ZnQwTmVIX21vUXBOQ29GSERsSjlpOTdBanBwdXYzYjQwb2w1dnAybjl5Vi1kNjJicS1DTHRCLW5rRG12NDRFWUR4eDRYYUxNQmNwNjcwQlc0aw?oc=5"
     },
@@ -7311,20 +7650,6 @@
    ]
   },
   {
-   "t": "The Fed's preferred measure of inflation is changing",
-   "u": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNaDBnRlJKZDIwTFVSZkRvRnFXM0VXd2hkVzFrcWpLMkZxS0RHdmtDRFVJNjJxVmJGTFFqNURoeFpKOHNnYkZRV2xZRnRuNm9Dc2pZZ2J3ai1aMjJKcEJPRk9mRWt6VjlXVHJHOUh5N2dEQnpzemJUdU5JY012aXd0WDNlQnYtcTVENXpvcWpnY3NTeEJMbENnc195U2dPWVVFNnFn?oc=5",
-   "s": "marketplace.org",
-   "k": 1,
-   "d": "2026-08-20T20:18:00.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
    "t": "Minutes of the Federal Open Market Committee, July 28–29, 2026",
    "u": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260819a.htm",
    "s": "Federal Reserve",
@@ -7401,28 +7726,6 @@
     "EUR"
    ],
    "tg": []
-  },
-  {
-   "t": "Good news for bitcoin: Goldman says September Fed rate hike is 'very unlikely.'",
-   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNcThKdkdVSl9Kd1k3RDlZMXEydUdjekRPWmtWRHpRQzNFZmlpNXBXVXgzd2xXWnRkVUEtbkVmaXFUQ1VTQ2ZILXJ0a2RPX01OUnIzNEJIanFoenlfcE1YdnEzZFRkX3gzZFlDNjRybEF3d0tua2RFOXVObFZKVzJQa0RRRmNEdWhzbXI0VG16YWdZbnNKNGRmT2pfWkhmcjA4YWE2cXFTZ2ltSm5OZkRaYVFEdmpsb1k?oc=5",
-   "s": "CoinDesk",
-   "k": 1,
-   "d": "2026-08-17T07:00:00.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "CryptoRank",
-     "u": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNZjQ5enpjc25WZm5ZbXBHeFhsZ0dySTRuSndRZy1NR0pvY2xhN0dIZnhvdmJQV2VTVWtzMzZQWEtDcE1SZlRYNGtwaDRDT1dnV1pYYlBkczFtc2NGZGczS0dESEhESHNUeFphNVVDVlJXcTUzX0tyZ205Wm9pS1RjVWk1Y21FeHRNWlZ1aQ?oc=5"
-    }
-   ],
-   "w": 5.5,
-   "a": [
-    "USD",
-    "BTC"
-   ],
-   "tg": [
-    "rate hike"
-   ]
   },
   {
    "t": "Gold rises on weaker dollar as inflation data cements rate-hold bets",
@@ -7545,7 +7848,6 @@
   "CNN",
   "Car and Driver",
   "Cato Institute",
-  "CoinDesk",
   "CoinGape",
   "CryptoProwl",
   "DW.com",
@@ -7595,6 +7897,7 @@
   "Sourcing Journal",
   "South China Morning Post",
   "Spectrum News",
+  "Starter Story",
   "TechCrunch",
   "The Architect’s Newspaper",
   "The Daily Upside",
@@ -7605,6 +7908,7 @@
   "The Wall Street Journal",
   "The Washington Post",
   "TheStreet",
+  "TipRanks",
   "Trefis",
   "U.S. News & World Report",
   "USA Today",
@@ -7613,14 +7917,13 @@
   "Yahoo Personal Finance",
   "decrypt",
   "etf.com",
-  "marketplace.org",
   "newscentermaine.com",
   "rti.org.tw",
   "thestreet.com"
  ],
  "topic": {
-  "label": "Trump · Deal · Reserves",
+  "label": "Bitcoin · Saylor",
   "n": 4,
-  "total": 21
+  "total": 24
  }
 }
