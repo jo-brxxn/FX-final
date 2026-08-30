@@ -1,0 +1,491 @@
+'use strict';
+// ══ VERHALTENS-NOTIZEN JE ASSET (Nutzer-Wunsch 2026-08-30) ═══════════════
+// "schreib schon in jeden Ordner 6 Notizen pro bias" - fuer jedes Asset
+// werden hier 6 Themen-Unterordner angelegt (Bloomberg/Citi-Style-
+// Gliederung, vom Nutzer bestaetigt), jeder mit 6 bullish + 6 bearish + 3
+// neutralen Notizen, die beschreiben, wie sich das Asset in bestimmten
+// Situationen typischerweise verhaelt. Reines Hintergrundwissen (kein
+// Live-Signal, kein Datum, keine aktuelle Marktlage) - deshalb als
+// einmalige Befuellung vertretbar, anders als echte Marktdaten (siehe
+// docs/data-sources.md: "nie schaetzen" gilt fuer LIVE-Werte, nicht fuer
+// zeitlose Verhaltens-Beobachtungen).
+//
+// Bewusst nur die 16 "echten" Assets (nicht die 8 YIELD-Pseudo-Assets, die
+// nur die Anleiherendite derselben 8 Waehrungen spiegeln - keine eigene
+// Verhaltens-Story).
+const ASSET_BEHAVIOR_THEMES=[
+  ['macro','Macro & Growth'],
+  ['cb','Central Bank & Rates'],
+  ['risk','Risk Sentiment & Flows'],
+  ['pos','Positioning & Technicals'],
+  ['event','Event Risk & Catalysts'],
+  ['season','Seasonality & Structural Flows'],
+];
+// Jeder Eintrag: [assetId, {theme:{bull:[6],bear:[6],neu:[3]}}]
+const ASSET_BEHAVIOR_NOTES={
+USD:{
+macro:{bull:[
+'Strong US jobs/GDP prints tend to pull USD up first, before other currencies react - the US data calendar leads the G10 news cycle.',
+'A widening US growth gap versus the Eurozone/Japan attracts relative capital flows into US assets, supporting the dollar.',
+'US productivity gains (AI capex cycle) reinforce a structurally stronger long-run growth trajectory than most G10 peers.',
+'Soft-landing narratives (growth cooling without recession) usually favor USD over high-beta currencies, which need global growth to outperform.',
+'A stronger US consumer (low unemployment, real wage growth) keeps domestic demand - and imported goods pricing power - USD-supportive.',
+'Fiscal stimulus surprises (deficit spending) can boost near-term US growth expectations and pull USD higher even as debt concerns build.',
+],bear:[
+'A sharp US growth slowdown relative to the rest of the world closes the yield/growth gap that has been supporting USD.',
+'Twin deficits (fiscal + current account) are a standing structural headwind once markets refocus on them.',
+'Weak ISM/PMI prints below 50 for several months in a row often precede broader USD weakness as recession odds rise.',
+'A softening US labor market (rising claims, falling payrolls) undercuts the "US exceptionalism" growth premium in USD.',
+'De-dollarization narratives (BRICS reserve diversification) resurface whenever US growth loses its relative edge.',
+'A weaker US housing market historically drags on consumer wealth effects and dollar-supportive spending.',
+],neu:[
+'Mixed US data (strong labor, weak manufacturing) tends to keep USD range-bound until one signal dominates.',
+'Growth data revisions rarely move USD on their own - the market waits for the NEXT release to confirm the trend.',
+'Above-trend but decelerating growth is the most common US state and usually keeps USD in a slow grind rather than a trend.',
+]},
+cb:{bull:[
+'A hawkish Fed hold (rates unchanged but hawkish guidance) is usually more USD-positive than an actual hike, since it resets rate-cut expectations later.',
+'Fed officials pushing back on rate-cut pricing ("higher for longer") tends to lift the front end of the US curve and USD together.',
+'A wider Fed-vs-ECB/BoJ policy rate gap makes USD the highest-yielding safe funding-cost currency in G10, attracting carry inflows.',
+'Sticky core inflation prints force the Fed to stay restrictive longer than peers, extending the rate advantage.',
+'Quantitative tightening (balance sheet runoff) drains dollar liquidity globally, which structurally supports USD versus a QE backdrop elsewhere.',
+'A new, credibly hawkish Fed chair nomination typically firms USD on the signal of continued inflation discipline.',
+],bear:[
+'A dovish pivot (first cut after a long hold) usually weakens USD even if the cut itself was expected, since it confirms the turn.',
+'Faster-than-priced rate cuts (50bp increments instead of 25bp) signal the Fed sees more downside risk than the market - USD-negative.',
+'Political pressure on Fed independence (public criticism of the chair) undermines confidence in future policy credibility and can weigh on USD.',
+'A Fed that cuts while other central banks hold closes the rate gap that has been the main USD support.',
+'Financial-stability rate cuts (emergency-style, e.g. banking stress) are read as USD-negative because they signal deeper problems, not just normalization.',
+'Persistently below-target inflation would argue for a lower terminal rate and a smaller long-run rate advantage.',
+],neu:[
+'A fully priced-in rate decision (matches consensus exactly) usually produces only a brief, fading USD reaction.',
+'FOMC "dot plot" revisions matter more than the rate decision itself for the multi-month USD trend.',
+'Between meetings, Fed speakers with balanced messaging tend to leave USD directionless until the next data print.',
+]},
+risk:{bull:[
+'In acute risk-off (equity selloffs, credit stress), USD is still the primary global funding-currency safe haven alongside JPY and CHF.',
+'A sudden VIX spike typically triggers demand for USD cash/Treasuries as the world\'s deepest, most liquid safe asset.',
+'Global banking-system stress tends to concentrate dollar demand, since most cross-border trade and debt is dollar-denominated.',
+'Emerging-market currency crises usually drive capital flight INTO USD as the default safe-haven destination.',
+'A broad "flight to quality" out of commodities and equities into cash historically means USD strength, not weakness.',
+'Geopolitical shocks with unclear resolution (war escalation, terror events) reliably see an initial USD bid.',
+],bear:[
+'Prolonged, orderly risk-on rallies (steady equity gains, low volatility) usually see USD grind lower as capital chases higher-yielding, higher-beta currencies.',
+'When risk appetite improves AND the Fed is cutting simultaneously, USD tends to underperform both legs at once.',
+'A "USD smile" trough forms in the middle of the cycle - moderate global growth with no crisis is the weakest USD regime.',
+'Broad-based global reflation (synchronized growth pickup outside the US) reduces the relative appeal of US assets.',
+'Improving risk sentiment specifically in China/EM tends to pull carry flows away from USD into higher-yielding alternatives.',
+'A durable ceasefire or de-escalation of a prior USD-supportive crisis typically unwinds part of the safe-haven premium.',
+],neu:[
+'Short, sharp risk-off spikes that reverse within a day or two often leave little lasting USD impact.',
+'USD\'s reaction to risk sentiment depends heavily on WHERE the risk event originates - US-based stress can be USD-negative even in risk-off.',
+'Range-bound risk sentiment (neither clear risk-on nor risk-off) usually means USD trades on rate differentials instead.',
+]},
+pos:{bull:[
+'Extreme net-short USD positioning in CFTC data often precedes short-covering rallies once the bearish narrative stalls.',
+'A crowded consensus bearish USD view (widely published "dollar smile is over" calls) is itself a contrarian bullish signal historically.',
+'Real money (pension/reserve manager) rebalancing flows into US Treasuries at quarter-end can provide a mechanical USD bid.',
+'When USD has been oversold on RSI/momentum measures for an extended stretch, mean-reversion rallies tend to follow.',
+'A break above a multi-month USD Index resistance level often triggers trend-following (CTA) buying that extends the move.',
+'Foreign central bank reserve accumulation in dollars during calm periods provides a steady, underappreciated USD bid.',
+],bear:[
+'Extreme net-long USD positioning leaves the currency vulnerable to a sharp unwind on any disappointing data surprise.',
+'A crowded consensus bullish USD call (widely published "US exceptionalism" theme) often marks a local top before mean reversion.',
+'CTA/trend-following funds that are max-long USD can accelerate a selloff once key technical support breaks.',
+'Option markets pricing very low USD volatility (complacency) tend to precede sharper, positioning-driven moves when a catalyst hits.',
+'A crowded "long USD against everything" trade unwinds fast when even ONE major currency finds its own catalyst to rally.',
+'Real money flows out of US Treasuries (foreign selling on fiscal/deficit concerns) chip away at structural USD demand over time.',
+],neu:[
+'Positioning data (CFTC) is a one-week-lagged snapshot - it describes what already happened, not what happens next.',
+'Balanced positioning (net long/short close to zero) offers no directional edge on its own.',
+'Positioning extremes matter most when combined with a stretched price - extreme positioning alone is a weak standalone signal.',
+]},
+event:{bull:[
+'A strong US Nonfarm Payrolls beat (both headline and wages) is one of the most reliable single-print USD boosters in the calendar.',
+'Hawkish surprises at FOMC press conferences move USD more than the rate decision itself, since Powell\'s tone sets forward expectations.',
+'A hot CPI/Core CPI surprise forces the market to price fewer cuts, lifting front-end yields and USD together.',
+'Escalating trade tensions where the US holds relative leverage can lift USD as counterparties absorb more of the cost.',
+'A credible fiscal deal (debt ceiling resolved smoothly) removes an overhang and lets USD trade on fundamentals again.',
+'Strong ISM Services (the dominant US sector) beats often move USD more than manufacturing prints given services\' economic weight.',
+],bear:[
+'A weak NFP miss combined with downward prior-month revisions is one of the sharpest single-day USD-negative catalysts.',
+'A government shutdown or debt-ceiling brinkmanship raises default-risk premia and typically pressures USD alongside US Treasuries.',
+'A soft CPI surprise that beats expectations to the downside quickly reprices rate-cut odds higher, weighing on USD.',
+'Credit rating agency downgrades of US sovereign debt are rare but historically dollar-negative on the headline, even if yields sometimes rise.',
+'Weak ADP/JOLTS prints ahead of NFP can pre-position markets short USD into the main payrolls release.',
+'A dovish surprise at Jackson Hole (Fed\'s annual symposium) can set the tone for USD weakness over the following weeks.',
+],neu:[
+'Second-tier data (e.g. Philly Fed, Empire State) rarely moves USD unless it wildly diverges from consensus.',
+'Fed speeches during the "blackout period" before FOMC don\'t occur, so pre-meeting drift is driven by data, not commentary.',
+'An in-line NFP print (within the standard error of consensus) usually produces only brief, two-way USD chop.',
+]},
+season:{bull:[
+'USD has a well-documented tendency to firm into US quarter-end as real money and corporate repatriation flows peak.',
+'Year-end dollar demand (funding, balance-sheet window-dressing by banks) tends to provide a seasonal December bid.',
+'US tax-related repatriation flows around April can add a modest, recurring seasonal USD tailwind.',
+'Risk-off seasonality around August/September (historically volatile months for equities) often coincides with safe-haven USD demand.',
+'The dollar smile\'s "US growth outperformance" leg tends to reassert itself in Q1 as new-year positioning resets.',
+'US Treasury coupon settlement dates cluster mid-month and can produce a modest, recurring USD demand pulse.',
+],bear:[
+'USD often softens into the new calendar year as portfolio managers rebalance out of prior-year winners.',
+'A seasonally quiet US summer (lower trading volumes, holiday-thinned liquidity) can see USD drift lower on light flows.',
+'Post-quarter-end, some of the USD strength from repatriation flows mechanically unwinds in the following days.',
+'Carry-friendly, low-volatility summer periods historically favor higher-yielding currencies over the funding-currency USD.',
+'A seasonally strong Golden Week/holiday period in Asia can temporarily reduce USD demand from that region.',
+'Thanksgiving-week thin US liquidity can see USD drift without a clear directional catalyst.',
+],neu:[
+'Seasonal patterns are tendencies, not rules - a strong macro or policy catalyst overrides any calendar-based bias.',
+'Quarter-end flow effects are usually a one-to-two day phenomenon, not a multi-week trend driver.',
+'Historical seasonality studies vary in strength year to year - treat them as a minor tiebreaker, not a primary signal.',
+]},
+},
+EUR:{
+macro:{bull:[
+'A pickup in Eurozone PMIs above 50 (especially German manufacturing) signals the bloc\'s largest economy is stabilizing, supporting EUR.',
+'Falling Eurozone unemployment and rising real wages support consumer spending, a structurally underweighted growth driver for the currency.',
+'Fiscal expansion in Germany (defense/infrastructure spending after decades of restraint) is a structural growth upgrade for the whole bloc.',
+'A narrowing growth gap versus the US (US slowing while EZ stabilizes) tends to support EUR/USD.',
+'Stronger-than-expected French/Italian growth reduces fragmentation-risk premia baked into the euro.',
+'EU-wide industrial policy initiatives (chips, green energy) that reduce import dependency support medium-term EUR fundamentals.',
+],bear:[
+'Germany\'s export-heavy model is structurally exposed to China/global trade slowdowns, dragging on EZ growth and EUR.',
+'Energy dependency (still importing a large share of energy) leaves the euro vulnerable to any new supply shock.',
+'Chronically weak EZ productivity growth versus the US widens the medium-term growth gap that pressures EUR.',
+'A China slowdown hits German industrial exports disproportionately, given the bloc\'s reliance on Chinese demand.',
+'Persistent fragmentation risk (weaker peripheral economies lagging the core) is a standing structural EUR headwind.',
+'An aging population and weak demographics constrain the euro area\'s long-run potential growth rate.',
+],neu:[
+'Mixed EZ data across member states (Germany weak, Spain strong) tends to average out into a directionless EUR reaction.',
+'EU Commission growth forecast revisions rarely move EUR much - the market has usually already priced the trend.',
+'Stable, unspectacular EZ growth in line with trend keeps EUR trading mostly on rate differentials instead.',
+]},
+cb:{bull:[
+'An ECB that is more hawkish than priced (holding rates while the Fed cuts) narrows the rate gap and lifts EUR.',
+'ECB officials pushing back against market-priced cuts ("not in a hurry") tends to firm EUR on repriced expectations.',
+'Sticky Eurozone core/services inflation forces the ECB to stay restrictive longer than the market expects.',
+'A credible ECB balance-sheet reduction (QT) alongside a still-active Fed easing cycle supports relative EUR liquidity conditions.',
+'Rising Bund yields on the back of increased German fiscal issuance can lift EUR via the rate channel.',
+'A new ECB president/board seen as more hawkish than the outgoing one is typically a EUR-supportive signal.',
+],bear:[
+'An ECB cutting faster than the Fed - especially on growth concerns - closes the yield gap that supports EUR.',
+'Below-target inflation forecasts from the ECB argue for a lower terminal rate and weaker EUR carry appeal.',
+'Fragmentation stress (BTP-Bund spread widening) forces the ECB into a more dovish reaction function to protect the periphery.',
+'A weak EZ growth outlook pushes the ECB toward pre-emptive cuts even with inflation not fully tamed.',
+'Negative real rates in the Eurozone for an extended period reduce the currency\'s carry appeal versus higher-yielding G10 peers.',
+'ECB emergency support measures during banking-sector stress are typically read as EUR-negative in the near term.',
+],neu:[
+'A fully anticipated ECB rate decision, in line with consensus, tends to produce only brief EUR volatility.',
+'ECB press conference tone matters more than the decision itself for the EUR reaction, similar to the Fed dynamic.',
+'Long gaps between ECB meetings without major data surprises leave EUR trading on the general USD trend instead.',
+]},
+risk:{bull:[
+'In broad global risk-on rallies, EUR tends to benefit as a liquid, non-US-dollar alternative that funds move into.',
+'A weaker USD across the board (driven by Fed dovishness) mechanically lifts EUR/USD even without EZ-specific news.',
+'Reduced US political/fiscal uncertainty sometimes redirects safe-haven flows that had been parked in EUR-area bonds back out, but improving GLOBAL risk sentiment still tends to favor EUR over USD.',
+'Diversification flows out of USD reserves (structural, slow-moving) provide a steady EUR bid over long horizons.',
+'A resolution of Russia-Ukraine tensions would remove a standing EUR risk premium tied to regional security concerns.',
+'Improving Chinese demand (a key EZ export market) lifts risk appetite toward EUR-area growth-sensitive assets.',
+],bear:[
+'Acute risk-off flows typically favor USD/JPY/CHF over EUR, since the euro is not considered a primary safe haven.',
+'Energy-driven risk-off episodes (supply shocks) hit EUR disproportionately given the bloc\'s import dependence.',
+'A flare-up in Russia-Ukraine tensions or new regional security risk reliably weighs on EUR given proximity.',
+'Fragmentation-risk flare-ups (peripheral bond spread widening) trigger capital flight within the Eurozone itself, pressuring EUR.',
+'Global trade-war escalation hits the export-dependent EZ economy harder than most G10 peers, weighing on EUR.',
+'A China-led global slowdown reduces demand for German/EZ exports, a direct risk-sentiment channel into EUR.',
+],neu:[
+'Moderate, non-directional risk sentiment usually leaves EUR trading on rate differentials rather than risk flows.',
+'EUR\'s risk-sentiment beta is lower than AUD/NZD but higher than USD/JPY/CHF - it sits in the middle of the G10 risk spectrum.',
+'Risk events centered outside Europe and the US (e.g. isolated EM stress) often have limited direct EUR impact.',
+]},
+pos:{bull:[
+'Extreme net-short EUR positioning historically precedes short-covering rallies once bearish EZ narratives are fully priced.',
+'A break above a key EUR/USD technical resistance level (e.g. a multi-month range top) often triggers trend-following buying.',
+'Real money reserve managers gradually increasing EUR allocation (diversification away from USD) provides a slow structural bid.',
+'Oversold RSI/momentum readings on EUR after a sharp selloff often precede mean-reversion bounces.',
+'A crowded consensus bearish EUR call becomes a contrarian bullish setup once the narrative is fully in the price.',
+'CTA/trend funds flipping from short to long EUR on a technical breakout can extend a rally mechanically.',
+],bear:[
+'Extreme net-long EUR positioning leaves the currency vulnerable to sharp corrections on any disappointing EZ data.',
+'A break below key EUR/USD support often triggers trend-following selling that accelerates the move lower.',
+'A crowded consensus bullish EUR call (widely published "EUR/USD to parity-reversal" theme) often marks a local top.',
+'Low implied volatility pricing in EUR options (complacency) tends to precede sharper positioning-driven moves.',
+'Foreign outflows from EZ equities/bonds on growth disappointment chip away at the currency\'s structural demand.',
+'Real money outflows during fragmentation-risk episodes can be self-reinforcing as EUR-area asset prices fall further.',
+],neu:[
+'CFTC positioning data is a lagging, weekly snapshot - it explains the past move, not the next one.',
+'Balanced EUR positioning offers little directional signal without a clear price or fundamental catalyst.',
+'Positioning extremes matter most in combination with an already-stretched price, not in isolation.',
+]},
+event:{bull:[
+'A strong German IFO or ZEW survey beat is one of the more reliable single-print EUR boosters given Germany\'s bloc weight.',
+'Hawkish ECB press conference commentary from the president moves EUR more than the headline rate decision itself.',
+'A hot Eurozone flash CPI print forces the market to price a slower ECB cutting path, lifting EUR.',
+'A strong EZ Composite PMI beat (especially services) signals broad-based, not just German, momentum.',
+'Positive surprises in EU fiscal coordination (joint bond issuance, defense funding agreements) reduce fragmentation risk and lift EUR.',
+'A dovish-to-neutral shift from the Fed at a US data release can lift EUR/USD via the USD leg alone.',
+],bear:[
+'A weak German IFO/ZEW miss, especially alongside falling expectations, is a reliable single-print EUR-negative catalyst.',
+'A soft Eurozone flash CPI print that undershoots consensus quickly reprices ECB cut expectations lower for rates, weighing on EUR.',
+'Weak EZ Composite PMI prints below 50 for consecutive months signal broadening contraction risk.',
+'Political instability in a major member state (snap elections, coalition collapse) typically pressures EUR on uncertainty.',
+'An escalation in EU-US trade tension (tariff threats) weighs on the export-exposed EZ growth outlook.',
+'A downside surprise in German industrial production highlights the bloc\'s manufacturing-sector weakness.',
+],neu:[
+'Second-tier national data (e.g. individual member-state retail sales) rarely moves EUR on its own.',
+'An in-line Eurozone CPI print within consensus range usually produces only brief, two-way chop.',
+'ECB speakers during quiet periods between meetings with balanced messaging tend to leave EUR range-bound.',
+]},
+season:{bull:[
+'EUR has shown a tendency to firm in early Q1 as year-end USD demand unwinds and positioning resets.',
+'European repatriation flows around EZ corporate tax deadlines can provide a modest recurring EUR bid.',
+'Improving risk sentiment into spring (historically calmer trading months) tends to favor EUR over safe-haven funding currencies.',
+'Summer tourism-driven current account inflows (peak EZ tourist season) provide a seasonal, if modest, EUR support.',
+'German industrial re-stocking cycles into Q4 can add a modest, recurring EUR-area demand pulse.',
+'EU budget disbursement cycles (structural/cohesion funds) sometimes concentrate flows into member states in specific quarters.',
+],bear:[
+'EUR often softens into year-end as global USD funding demand (repo, balance-sheet effects) peaks seasonally.',
+'A seasonally quiet EZ summer (August holidays, thin liquidity) can see EUR drift on light, directionless flows.',
+'Post-summer positioning resets in September have historically coincided with EUR volatility as macro themes re-assert.',
+'Year-end profit-taking on EUR longs built up over the year can produce mechanical December softness.',
+'German auto-sector summer shutdown periods can temporarily soften industrial output data and sentiment.',
+'Christmas/New Year holiday-thinned EZ liquidity can see EUR drift lower without a clear catalyst.',
+],neu:[
+'Seasonal tendencies are historical averages, not rules - any given year can diverge sharply given active catalysts.',
+'Holiday-thinned liquidity (EZ August, US Thanksgiving week) tends to exaggerate moves in either direction, not bias them.',
+'Quarter-end flow effects on EUR/USD are usually short-lived (one to two sessions), not durable trend drivers.',
+]},
+},
+GBP:{
+macro:{bull:[
+'A stronger UK services PMI (the dominant sector, ~80% of GDP) is one of the more reliable GBP-supportive growth signals.',
+'Wage growth outpacing inflation supports the UK consumer, a key swing factor for the domestically-focused GBP growth story.',
+'Improved post-Brexit trade arrangements (new deals, reduced friction with the EU) chip away at a standing structural GBP headwind.',
+'London\'s financial-hub status keeps structural institutional demand for GBP-denominated assets even through domestic growth wobbles.',
+'A narrowing UK current account deficit reduces the currency\'s reliance on constant capital inflows to stay stable.',
+'Business investment picking up after a period of policy-uncertainty-driven caution supports medium-term UK growth and GBP.',
+],bear:[
+'The UK\'s chronic current account deficit (~3-4% of GDP) is a standing structural headwind requiring constant capital inflows.',
+'Post-Brexit structural growth costs (reduced EU market access) remain a multi-year drag versus pre-2016 trend growth.',
+'A weak UK services PMI, given the sector\'s outsized GDP weight, is a reliable GBP-negative growth signal.',
+'Persistent UK productivity stagnation versus G7 peers widens the medium-term growth gap.',
+'Political confidence shocks (leadership crises, fiscal credibility concerns) can trigger fast, large GBP moves given the market\'s sensitivity.',
+'Weak business investment on policy uncertainty (regulatory, tax) constrains the UK\'s medium-term growth potential.',
+],neu:[
+'Mixed UK data (strong services, weak manufacturing) tends to leave GBP range-bound pending a clearer signal.',
+'GBP is more sensitive to political headlines than most G10 peers - fundamentals alone rarely tell the full story.',
+'Stable, unspectacular UK growth in line with the BoE\'s own forecasts usually keeps GBP trading on rate differentials.',
+]},
+cb:{bull:[
+'A BoE that holds rates while inflation surprises to the upside tends to firm GBP on delayed cut expectations.',
+'UK inflation running structurally hotter than G10 peers has historically kept gilt yields - and GBP carry appeal - elevated.',
+'BoE officials pushing back on market-priced cuts ("more work to do") typically supports GBP via the rate channel.',
+'A hawkish BoE relative to the Fed/ECB (holding while others cut) widens the rate gap in GBP\'s favor.',
+'Heavy gilt issuance that pushes yields structurally higher (if not accompanied by fiscal-credibility concerns) can support GBP carry.',
+'A new BoE governor perceived as more hawkish than the outgoing one is typically read as GBP-supportive.',
+],bear:[
+'BoE rate cuts delivered faster than priced, especially alongside growth concerns, weigh on GBP via the rate channel.',
+'A BoE cutting while the Fed holds closes the rate gap that has been supporting GBP carry appeal.',
+'Heavy gilt issuance to fund the budget deficit, when paired with fiscal-credibility concerns, can push yields up for the WRONG reasons - and pressure GBP (2022-style dynamics).',
+'Below-target medium-term inflation forecasts from the BoE argue for a faster cutting cycle and weaker GBP carry.',
+'A dovish BoE surprise (unexpected 50bp cut) signals the MPC sees more downside risk than priced.',
+'Financial-stability-driven emergency rate action (banking or gilt-market stress) is read as clearly GBP-negative.',
+],neu:[
+'A fully priced BoE decision in line with consensus tends to produce only brief GBP volatility.',
+'BoE\'s three-way voting splits (hawks/doves/centrists) can create noisy, offsetting GBP reactions to a single decision.',
+'Between MPC meetings, balanced BoE speaker commentary tends to leave GBP trading on data instead.',
+]},
+risk:{bull:[
+'In broad risk-on rallies, GBP tends to benefit as a liquid, higher-beta G10 currency relative to the safe havens.',
+'A weaker USD across the board mechanically lifts GBP/USD even absent UK-specific news.',
+'Reduced political-risk premium (stable government, credible fiscal plans) allows GBP to trade more on fundamentals and less on headline risk.',
+'Improving global risk appetite tends to support London\'s financial-hub-driven capital inflows.',
+'A resolution of lingering post-Brexit trade friction removes a standing uncertainty discount in GBP.',
+'Strong risk appetite in global equities often correlates with GBP outperformance versus the safe-haven currencies.',
+],bear:[
+'GBP carries an elevated political-risk premium versus most G10 peers - confidence shocks cause outsized, fast moves.',
+'Acute global risk-off episodes see GBP sell off alongside other higher-beta currencies, unlike safe-haven USD/JPY/CHF.',
+'Fiscal credibility scares (unfunded tax cuts, market-tested "mini-budget" style events) can trigger sharp, gilt-market-driven GBP selloffs.',
+'A widening current account deficit makes GBP more vulnerable than most peers during global capital-flow risk-off episodes.',
+'Renewed EU-UK trade friction (regulatory divergence disputes) reintroduces a structural uncertainty discount.',
+'Global de-risking that hits London-based financial flows disproportionately affects GBP given the sector\'s outsized economic weight.',
+],neu:[
+'Moderate, non-extreme risk sentiment usually leaves GBP trading mainly on UK-specific rate and political news.',
+'GBP\'s risk-sentiment beta sits between the high-beta commodity currencies and the safe havens - context-dependent.',
+'Risk events centered outside the UK/EU often have muted direct GBP impact unless they hit global risk appetite broadly.',
+]},
+pos:{bull:[
+'Extreme net-short GBP positioning historically precedes sharp short-covering rallies once bearish narratives are fully priced.',
+'A break above key GBP/USD technical resistance often triggers trend-following buying that extends the move.',
+'Oversold GBP on momentum measures after a political-risk-driven selloff often sees mean-reversion bounces once headlines calm.',
+'A crowded consensus bearish GBP call becomes a contrarian bullish setup once fully reflected in positioning.',
+'Real money increasing UK gilt allocations on attractive relative yields provides a supporting GBP bid.',
+'CTA/trend funds flipping long on a technical breakout can mechanically extend a GBP rally.',
+],bear:[
+'Extreme net-long GBP positioning leaves the currency vulnerable to sharp corrections on any disappointing UK data or political headline.',
+'A break below key GBP/USD support often triggers trend-following selling that accelerates the move.',
+'A crowded consensus bullish GBP call marks a local top once fully priced into positioning.',
+'Low GBP implied volatility (complacency) historically precedes sharper positioning-driven moves once a political catalyst hits.',
+'Foreign investor outflows from UK gilts on fiscal-credibility concerns can be self-reinforcing.',
+'GBP option markets pricing in event risk (elections, budgets) ahead of the date can see pre-positioning volatility.',
+],neu:[
+'CFTC GBP positioning is a lagging weekly snapshot - it explains the past move, not the next one.',
+'Balanced GBP positioning offers little directional signal on its own without a clear catalyst.',
+'Positioning extremes matter most alongside an already-stretched price, not as a standalone signal.',
+]},
+event:{bull:[
+'A strong UK CPI beat (especially core/services inflation) that delays BoE cuts is historically GBP-supportive.',
+'A hawkish BoE press conference or minutes (more hawkish votes than expected) moves GBP more than the decision itself.',
+'A strong UK wage growth print (Average Weekly Earnings) that outpaces inflation supports the domestic consumer story.',
+'A credible UK Budget/fiscal statement that avoids market-tested credibility concerns removes a standing risk premium.',
+'Strong UK retail sales beats, given the consumer-driven economy, are a reliable near-term GBP booster.',
+'A resolution of a UK political crisis (confidence vote survived, stable coalition) removes an uncertainty discount quickly.',
+],bear:[
+'A soft UK CPI miss that accelerates BoE cut pricing is a reliable single-print GBP-negative catalyst.',
+'A "mini-budget"-style fiscal event (unfunded tax cuts spooking gilt markets) is one of the sharpest GBP-negative catalysts on record.',
+'Weak UK GDP or PMI prints that raise recession odds typically pressure GBP quickly.',
+'A leadership crisis or confidence vote in government raises political-risk premia and weighs on GBP.',
+'Weak UK retail sales, given the consumption-driven economy, are a reliable near-term GBP-negative signal.',
+'A dovish BoE surprise (unexpected votes for a cut) repriced GBP lower quickly given the market\'s sensitivity to MPC splits.',
+],neu:[
+'Second-tier UK data (e.g. construction PMI alone) rarely moves GBP without a broader confirming signal.',
+'An in-line UK CPI print within consensus range usually produces only brief GBP volatility.',
+'BoE speakers with balanced, non-committal messaging between meetings tend to leave GBP range-bound.',
+]},
+season:{bull:[
+'GBP has shown a tendency to firm in early Q1 as global risk appetite typically improves after year-end.',
+'UK fiscal year-end (April) sometimes coincides with repatriation-related GBP flows from UK institutions.',
+'Strong London financial-sector bonus season flows (Q1) can provide a modest, recurring seasonal GBP bid.',
+'UK companies\' March/April dividend and repatriation flows can add a modest, recurring GBP demand pulse.',
+'Improving risk appetite typically favors higher-beta GBP over safe-haven funding currencies in calmer spring markets.',
+'UK pension fund quarter-end rebalancing can add a modest, recurring domestic gilt/GBP demand pulse.',
+],bear:[
+'GBP has historically been more volatile around the UK Budget statement (typically autumn/spring) given its market-moving potential.',
+'A seasonally quiet UK summer (parliamentary recess, thin liquidity) can see GBP drift on light flows.',
+'Year-end global USD demand can pressure GBP/USD lower even without UK-specific negative news.',
+'UK parliamentary recess periods reduce policy-headline flow, sometimes leaving GBP directionless and prone to drift.',
+'Party conference season (autumn) can introduce policy-uncertainty-driven GBP volatility around leadership speeches.',
+'January fiscal-year tax-receipt data (self-assessment deadline) can trigger short-lived GBP volatility on fiscal-headroom headlines.',
+],neu:[
+'Seasonal patterns in GBP are secondary to the dominant driver of political and BoE-rate headlines in any given period.',
+'Holiday-thinned liquidity around UK bank holidays tends to exaggerate moves rather than bias their direction.',
+'Budget-date volatility is a known, calendar-visible event risk rather than a true seasonal drift pattern.',
+]},
+},
+CHF:{
+macro:{bull:[
+'Switzerland\'s persistent current account surplus provides structural, non-speculative demand for CHF regardless of the broader cycle.',
+'Political neutrality and institutional stability mean CHF carries close to zero country-risk premium versus most peers.',
+'Strong Swiss export competitiveness (precision manufacturing, pharma) supports the currency even through global trade cycles.',
+'Low and stable Swiss inflation historically preserves the currency\'s purchasing power better than most G10 peers.',
+'A well-capitalized, conservative Swiss banking sector reinforces confidence in CHF as a store of value.',
+'Switzerland\'s stable, low-debt fiscal position (among the lowest debt-to-GDP in G10) removes a source of currency risk that affects many peers.',
+],bear:[
+'An export-dependent Swiss economy suffers when CHF becomes too strong, creating a structural tension the SNB actively manages.',
+'A slowdown in Eurozone demand (Switzerland\'s largest trading partner) directly weighs on Swiss export growth.',
+'Persistently low/negative Swiss rates versus peers historically meant a rate disadvantage that dampened carry-driven inflows.',
+'A very small, open economy is disproportionately exposed to any global trade-volume slowdown.',
+'Very low Swiss wage growth relative to inflation would erode the domestic consumption base over time.',
+'Swiss real estate market imbalances, if they were to unwind, could pressure the broader Swiss financial system and CHF sentiment.',
+],neu:[
+'Swiss macro data releases are typically low-volatility for CHF - the market prices in stability, not surprises.',
+'Swiss GDP is a smaller, less market-moving release than for larger G10 economies.',
+'Steady, low-single-digit Swiss growth in line with trend rarely shifts the CHF narrative much either way.',
+]},
+cb:{bull:[
+'SNB intervention risk caps CHF strength, but a period of SNB inaction (allowing appreciation) signals confidence in the currency\'s fundamentals.',
+'Rising Swiss rates (even modestly, from a near-zero base) narrow the yield disadvantage versus USD/EUR.',
+'A hawkish SNB surprise (holding rates when cuts were priced) can firm CHF sharply given the market\'s low expectations.',
+'SNB balance sheet reduction (selling foreign currency reserves accumulated during past interventions) is CHF-supportive by design.',
+'Global rate-cutting cycles that outpace Switzerland\'s (already-low) starting point can narrow the disadvantage and support CHF.',
+'A credible, independent SNB reaffirming its price-stability mandate reinforces long-term confidence in CHF.',
+],bear:[
+'The SNB has historically intervened directly (FX purchases/sales) when CHF strength threatens export competitiveness - an active headwind for CHF bulls.',
+'SNB rates have traditionally sat near or below zero, a structural carry disadvantage versus most G10 peers.',
+'A dovish SNB cutting into negative territory again would reinforce the currency\'s low-yield status.',
+'Verbal intervention ("closely monitoring the exchange rate") from SNB officials can cap CHF rallies without actual market operations.',
+'A large SNB balance sheet built from past interventions represents latent CHF-selling capacity if needed again.',
+'SNB officials explicitly citing an "overvalued" CHF in communications typically precede policy action to weaken it.',
+],neu:[
+'A widely expected, in-line SNB decision usually produces limited CHF reaction given the bank\'s telegraphed communication style.',
+'SNB meets less frequently than the Fed/ECB (quarterly), so CHF often drifts on external drivers between meetings.',
+'SNB\'s dual mandate (price stability plus managing an "overvalued" currency) makes its reaction function harder to predict than peers.',
+]},
+risk:{bull:[
+'CHF is a top-tier G10 safe haven - capital flows in during almost every major global risk-off episode.',
+'Swiss banking secrecy history and neutral political status reinforce demand during geopolitical crises specifically.',
+'A flight to quality out of risk assets typically sees CHF strengthen alongside JPY and USD.',
+'European-specific stress (EU fragmentation, regional conflict) tends to disproportionately favor CHF given geographic proximity and neutrality.',
+'Uncertainty around Eurozone stability specifically drives EUR-area capital into CHF as the nearest "safe" alternative.',
+'Global sovereign debt concerns (any G7 country) tend to redirect flows toward Switzerland\'s low-debt profile.',
+],bear:[
+'Prolonged risk-on periods see CHF underperform as capital rotates into higher-yielding, higher-beta currencies.',
+'When the SNB actively intervenes to cap safe-haven inflows during risk-off, the usual CHF strength can be muted or reversed.',
+'A durable resolution of a European geopolitical crisis unwinds part of the region-specific CHF safe-haven premium.',
+'Sustained global risk appetite with low volatility is historically the weakest environment for CHF performance.',
+'Improving Eurozone-specific sentiment (reduced fragmentation risk) can reduce the CHF safe-haven bid specifically tied to EU stress.',
+'A broad "search for yield" environment pulls capital away from CHF\'s traditionally low-yield safe-haven status.',
+],neu:[
+'Moderate, non-extreme risk sentiment often sees CHF trade in a tight range given its safe-haven ceiling and SNB intervention floor.',
+'CHF\'s reaction to risk events depends on whether the SNB is perceived as tolerant of the resulting strength.',
+'Isolated, non-European risk events sometimes bypass CHF in favor of USD/JPY as the primary safe-haven response.',
+]},
+pos:{bull:[
+'Extreme net-short CHF positioning can precede sharp squeezes, especially if a risk-off catalyst hits unexpectedly.',
+'A break above key EUR/CHF or USD/CHF resistance/support levels can trigger trend-following CHF buying.',
+'Oversold CHF on momentum measures after a bout of SNB-driven selling often sees partial mean reversion.',
+'Reduced SNB intervention activity (visible in sight deposit data) signals less active resistance to CHF strength.',
+'A crowded consensus "CHF too strong, SNB will act" narrative becomes contrarian bullish once fully priced without follow-through.',
+'Real money safe-haven allocation into Swiss assets during uncertain periods provides a durable positioning tailwind.',
+],bear:[
+'Extreme net-long CHF positioning leaves the currency vulnerable to SNB intervention risk and sharp reversals.',
+'Rising SNB sight deposits (a proxy for FX intervention) signal active CHF-selling pressure from the central bank.',
+'A crowded consensus bullish CHF safe-haven call can unwind quickly once risk sentiment stabilizes.',
+'Low CHF implied volatility (a "boring" safe haven) can suddenly spike on unexpected SNB action, catching positioning offside.',
+'CTA/trend funds long CHF into a risk-on regime shift can be forced to unwind quickly.',
+'Speculative CHF longs built during a crisis tend to fade fast once the triggering event resolves.',
+],neu:[
+'CHF positioning data is a lagging weekly snapshot and often less informative than SNB sight-deposit data for near-term direction.',
+'Balanced CHF positioning without a clear risk-sentiment or SNB catalyst tends to produce range-bound trading.',
+'Positioning extremes in CHF matter most in combination with visible signs of SNB intervention activity.',
+]},
+event:{bull:[
+'A surprise SNB hold (against priced cuts) is one of the sharpest single-event CHF boosters given low market expectations.',
+'A sudden spike in global risk aversion (equity selloff, credit event) reliably triggers a same-day CHF bid.',
+'Strong Swiss trade balance data reinforces the structural current-account-driven CHF demand story.',
+'A flare-up in Eurozone political risk (elections, coalition crises) tends to see immediate CHF safe-haven inflows.',
+'Positive Swiss KOF leading indicator surprises can modestly support CHF on improved growth expectations.',
+'A surprise upgrade to a Swiss sovereign/bank credit outlook reinforces the currency\'s stability premium.',
+],bear:[
+'Direct SNB FX intervention (confirmed via sight deposits) is one of the more reliable CHF-negative catalysts when it occurs.',
+'A surprise SNB rate cut, especially back into negative territory, is a clear CHF-negative single event.',
+'Weak Swiss trade data (falling exports) can weigh on CHF given the economy\'s trade dependence.',
+'A durable de-escalation of a risk-off trigger (peace deal, crisis resolution) sees CHF safe-haven flows unwind quickly.',
+'Verbal SNB warnings about currency "overvaluation" ahead of a meeting can pressure CHF pre-emptively.',
+'A surprise negative CPI print (deflation risk) can pressure the SNB toward renewed easing, weighing on CHF.',
+],neu:[
+'Swiss data releases are generally lower-volatility events for CHF than the equivalent US/EZ releases.',
+'A quiet SNB meeting with unchanged rates and neutral guidance typically produces limited CHF reaction.',
+'Isolated, non-systemic risk headlines often have a muted or fading CHF response.',
+]},
+season:{bull:[
+'CHF has shown some tendency to firm around year-end as Swiss institutions and global investors seek safe-haven balance-sheet positioning.',
+'Periods of heightened geopolitical calendar risk (e.g. major elections globally) tend to see seasonal CHF safe-haven demand.',
+'Swiss pension fund rebalancing at quarter-end can add a modest, recurring domestic CHF demand pulse.',
+'A seasonally calmer global backdrop still leaves a residual CHF bid from structural current-account surplus flows.',
+'Q1 typically sees renewed safe-haven positioning after year-end portfolio resets, modestly favoring CHF.',
+'Swiss corporate dividend season (spring) can see some repatriation-related CHF demand from multinational payouts.',
+],bear:[
+'A seasonally quiet Swiss summer with typically low volatility can see CHF drift on thin, directionless flows.',
+'Improving seasonal risk appetite (historically calmer Q1/Q2 markets) can see CHF underperform higher-beta peers.',
+'Post-crisis-resolution periods often see a seasonal unwind of accumulated CHF safe-haven positioning.',
+'Year-end profit-taking on safe-haven CHF longs built up during the year can produce mechanical December softness.',
+'A seasonally strong risk-on Q4 rally in equities can see funds rotate out of defensive CHF positions.',
+'Swiss summer holiday season can see reduced SNB communication, leaving CHF to drift on external drivers alone.',
+],neu:[
+'CHF seasonal patterns are secondary to SNB policy and global risk sentiment in any given period.',
+'Holiday-thinned Swiss liquidity tends to exaggerate CHF moves rather than bias their direction.',
+'Seasonal effects on CHF are generally weaker and less reliable than the dominant SNB-intervention-risk driver.',
+]},
+},
+};
+export {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES};

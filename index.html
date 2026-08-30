@@ -1132,6 +1132,9 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
 .rtree-search{display:flex;align-items:center;gap:6px;margin-bottom:10px}
 .rtree-search-inp{flex:1}
 .rtree-search-x{flex:none;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);width:26px;height:26px;cursor:pointer;font-size:13px}
+.res-sfield{flex:none;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);padding:3px 6px;font-size:11px;outline:none;cursor:pointer}
+/* Gelbe Treffer-Hervorhebung in Suchergebnissen (Nutzer-Wunsch 2026-08-30). */
+mark.res-hl{background:#F5D90A;color:#1a1a1a;border-radius:2px;padding:0 1px}
 .note-places{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
 .rtree-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .rtree-title{font-size:16px;font-weight:700;color:var(--t0);margin-right:auto}
@@ -3724,11 +3727,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-455 - Notizen ueberarbeitet (Nutzer-Wunsch 2026-08-30): Notiz-Ordner koennen jetzt Unterordner haben (bestand technisch schon, jetzt auch bei Watchlist/Asset-Schnellnotizen wirksam); jede Notiz zeigt ihren Bias (bullish/bearish/neutral) als farbige Randlinie, manuell waehlbar im Notiz-Modal statt wie zuvor per Kurs-Auswertung; eine Notiz kann jetzt in mehreren Ordnern GLEICHZEITIG liegen, auch ueber verschiedene Assets hinweg (z.B. CAD UND USD) - neues Feld n.fids (Array) ersetzt n.fid, Assets werden aus den Ordnern abgeleitet (resNoteAssetIds); neue globale Suchleiste (durchsucht ALLE Notizen, Hashtag-Klick filtert ueberall danach) getrennt von der ordnergebundenen Suche (durchsucht jetzt genau den Ordner + seine Unterordner, nicht mehr das ganze Asset). Die fruehere 'war die Richtung richtig'-Kursauswertung (noteOutcome/noteHitStats) komplett entfernt - reiner manueller Tag statt automatischer Bewertung. Einmalige Migration alter Notizen (fid->fids, dir->bias), keine Daten verloren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-456 - Notizen Runde 2 (Nutzer-Wunsch 2026-08-30): Bugfix - Notizen im Wurzelordner (General Notes) verschwanden nach der letzten Migration (fid='' wurde faelschlich als fids=[] statt als General-Notes-Wurzel interpretiert), jetzt repariert (auch fuer bereits migrierte Nutzer, _noteSchemaV<2). Die alte Bullish/Bearish-Tabelle je Asset (noteTable/noteRubs/freies Notizfeld) ist entfernt - ihr Inhalt wurde vollstaendig als Notizen in die General-Notes-Wurzel uebernommen. Jedes Asset bekommt 6 Themen-Unterordner (Macro & Growth, Central Bank & Rates, Risk Sentiment & Flows, Positioning & Technicals, Event Risk & Catalysts, Seasonality & Structural Flows, Bloomberg/Citi-Style) - fuer USD/EUR/GBP/CHF bereits mit 90 verfassten Verhaltens-Notizen (6 bullish/6 bearish/3 neutral je Thema) einmalig befuellt, weitere Assets folgen. Suchergebnisse markieren den gesuchten Text jetzt gelb; ein Umschalter waehlt zwischen Hashtag/Titel/Alles; die ordnergebundene Suche bleibt auf Ordner+Unterordner begrenzt, eine neue globale Suchleiste durchsucht wirklich alles."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-455</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-456</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -7847,3 +7847,80 @@ JS-Fehler. `node check/all.js` komplett gruen (13 Waechter, inkl. neuem
 Verhaltenstest in `check/score.js` fuer resPickBias/noteBiasBadge, von
 Regel 5 zu Recht als neue "Bias"-benannte Namen geflaggt). Keine
 Score-Formel angefasst - `scorediff`/`summarydiff`: 0 Aenderungen.
+
+## 2026-08-30 — Notizen Runde 2: Root-Bug behoben, alte Tabelle migriert+entfernt, Verhaltens-Notizen (VERSION-CHECK-456)
+
+**Bugreport:** "Wenn man ein Asset auswählt sehe ich nicht mehr die
+Notizen die ich geschrieben habe." Ursache in der letzten Runde (VERSION-
+CHECK-455): eine Notiz im Wurzelordner ("General Notes") trug im alten
+Schema `fid=''` (leer) - `migrateResearchNoteFields()` behandelte das
+faelschlich wie "gar keinem Ordner zugewiesen" (`fids` blieb `[]`), obwohl
+`n.asset` die richtige Zuordnung noch trug. Ein leeres Array matcht nie
+einen Ordner-Filter, also verschwanden genau diese (meist die Mehrheit
+der) Notizen aus der Asset-Ansicht. Fix: `_noteSchemaV` auf 2 erhoeht,
+laeuft darum auch fuer bereits (fehlerhaft) migrierte Nutzer noch einmal
+und rekonstruiert `fids` aus `n.asset`, wo `fids` leer aber `asset`
+gesetzt ist - reine Reparatur, nichts erfunden.
+
+**Alte Bullish/Bearish-Tabelle entfernt** (Nutzer-Wunsch: "entfern da die
+free Notes... entfern dann diese Tabelle"): `renderNotesSubTab`/
+`renderNoteRub` und rund 15 zugehoerige Aktions-Funktionen komplett aus
+dem Code entfernt. Ihr Inhalt (die Bullish/Bearish-Tabelle `noteTable`,
+die Kategorie-Karten `noteRubs`, das freie Notizfeld `notes` UND die
+eingebauten Struktur-Argumente `genBull`/`genBear` aus den DEF-Assets)
+wird ueber eine neue, einmalige Migration (`migrateLegacyAssetNotesIntoResearch`)
+vollstaendig als einzelne Notizen in die General-Notes-Wurzel jedes Assets
+uebernommen, bevor die alten Felder geleert werden - kein Datenverlust.
+
+**Verhaltens-Notizen je Asset** (Nutzer-Wunsch, per `AskUserQuestion`
+abgestimmt: Bloomberg/Citi-Style-Gliederung, einmalige automatische
+Befuellung statt manuellem Import): jedes Asset bekommt 6 Themen-
+Unterordner unter seiner General-Notes-Wurzel (Macro & Growth, Central
+Bank & Rates, Risk Sentiment & Flows, Positioning & Technicals, Event
+Risk & Catalysts, Seasonality & Structural Flows). Fuer USD/EUR/GBP/CHF
+bereits mit je 90 handverfassten Notizen befuellt (6 bullish + 6 bearish +
+3 neutral je Thema, `js/asset-notes-seed.js`) - reines zeitloses
+Hintergrundwissen ohne Datum/Live-Bezug, keine Live-Marktdaten (siehe
+docs/data-sources.md "nie schaetzen" gilt fuer Live-Werte, nicht fuer
+zeitlose Verhaltens-Beobachtungen). `seedAssetBehaviorNotes()` ist PRO
+ASSET gegattert (`research._behaviorNotesSeeded[assetId]`), nicht ein
+einzelnes Bool-Flag - die restlichen 12 Assets koennen in einer
+Folgerunde ergaenzt werden, ohne bereits befuellte Assets erneut
+anzufassen.
+
+**Beim Verdrahten gefunden:** `researchFolders` wurde in beiden
+Lade-Pfaden (`applySnap`/`loadState`) ERST NACH `migrateResearch()`
+zugewiesen - die neue Ordner-Erstellung in `seedAssetBehaviorNotes()`
+schrieb dadurch auf den ALTEN `researchFolders`-Stand, der direkt danach
+von der eigentlichen Zuweisung ueberschrieben worden waere (neu
+angelegte Ordner waeren sofort wieder verschwunden). Zuweisungsreihenfolge
+in beiden Pfaden getauscht - mit einem Zwei-Reload-Test bestaetigt (Ordner
+UND Notizen bleiben stabil, keine Duplikate, kein Verlust). Der
+komplett-frische Installationspfad (kein gespeicherter Zustand) rief
+weder die Legacy-Tabellen-Migration noch (urspruenglich) die
+Verhaltens-Notizen-Befuellung auf - beides dort separat ergaenzt.
+
+**Suche:** Treffer werden jetzt gelb markiert (`<mark class="res-hl">`,
+auf dem bereits escapten String, nie unescapten Nutzertext einfuegend).
+Neuer Umschalter (Hashtag/Titel/Alles, `resSearchField`) gilt fuer beide
+Suchboxen. Die ordnergebundene Suche durchsucht jetzt wieder wirklich nur
+den Ordner (reines Durchblaettern) bzw. Ordner+Unterordner (bei aktiver
+Texteingabe) statt wie zuvor bei jeder Eingabe das ganze Asset.
+
+**Geprueft:** `node --check` aller geaenderten/neuen Dateien; End-zu-Ende-
+Migrationstest (simulierte fehlerhaft-migrierte Notiz repariert, simulierte
+Legacy-Tabelle korrekt in 9 Notizen umgewandelt inkl. Feld-Leerung);
+Such-Highlighting und Feld-Filter per Playwright bestaetigt; alte Tabelle
+im DOM nicht mehr vorhanden, neue Ordner-UI vorhanden; Zwei- und
+Vier-Reload-Stabilitaetstest (Notizen-/Ordneranzahl bleibt exakt gleich,
+keine Duplikate); alle 4 bereits verfassten Asset-Verhaltens-Notizen-
+Datensaetze (USD/EUR/GBP/CHF) programmatisch auf exakt 6/6/3 je Thema
+geprueft (90 Notizen je Asset). `node check/all.js` komplett gruen (13
+Waechter). Keine Score-Formel angefasst.
+
+**Noch offen:** die restlichen 12 Assets (JPY, CAD, AUD, NZD, BTC, GOLD,
+SILVER, OIL, SP500, NAS, DAX, GER100) haben noch keine Verhaltens-Notizen -
+folgt in einer weiteren Runde. Der 5s-Long-Press fuer eigene Unterordner
+(Nutzer-Wunsch "Unterordner erstellen") war schon vor dieser Runde
+vorhanden, nur wenig entdeckbar - unveraendert gelassen, nicht Teil dieses
+Bugreports.

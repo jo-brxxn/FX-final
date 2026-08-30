@@ -1,5 +1,6 @@
 'use strict';
 import {BC,BL,FX,FX_FLAG,aiStar,aiStars,AI_EU_STARS,AI_UNION_JACK,AI_MAPLE,AI_FLAGS,YIELD_CCY,AI_SYMBOLS,AI_BOND_BADGE,aiIndex,AI_INDEX_ACCENT} from './constants.js';
+import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES} from './asset-notes-seed.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -3392,7 +3393,9 @@ function migrateResearch(r,legacyCats){
     }
   }
   r=migrateResearchToAssetFolders(r);
-  return migrateResearchNoteFields(r);
+  r=migrateResearchNoteFields(r);
+  r=migrateLegacyAssetNotesIntoResearch(r);
+  return seedAssetBehaviorNotes(r);
 }
 // Einmalige Migration (Nutzer-Wunsch 2026-08-30 "in mehreren Ordnern
 // ablegen"): `fid` (genau EIN Ordner) -> `fids` (mehrere Ordner gleichzeitig,
@@ -3400,17 +3403,113 @@ function migrateResearch(r,legacyCats){
 // bear, Grundlage der jetzt entfernten "war die Richtung richtig"-Auswertung)
 // -> `bias` (bull/bear/neu, rein manuelle Einordnung wie ueberall sonst in
 // der App - keine Kursauswertung mehr dahinter). Ueber _noteSchemaV
-// idempotent, laeuft nur einmal pro Nutzer, kein Datenverlust (fid/dir
-// werden 1:1 uebernommen, nicht neu interpretiert).
+// idempotent, kein Datenverlust (fid/dir werden 1:1 uebernommen, nicht neu
+// interpretiert).
 function migrateResearchNoteFields(r){
-  if(r._noteSchemaV>=1)return r;
+  if(r._noteSchemaV>=2)return r;
   (r.notes||[]).forEach(n=>{
     if(!Array.isArray(n.fids))n.fids=n.fid?[n.fid]:[];
+    // Bugfix (Nutzer-Bugreport 2026-08-30: "sehe ich nicht mehr die
+    // Notizen die ich geschrieben habe"): eine Notiz im Wurzelordner
+    // ("General Notes") trug im alten Schema fid='' (leer) - Version 1
+    // dieser Migration behandelte das faelschlich wie "gar keinem Ordner
+    // zugewiesen" (fids blieb []), obwohl n.asset die richtige Zuordnung
+    // noch trug. Root-Notizen verschwanden dadurch aus der Asset-Ansicht.
+    // _noteSchemaV<2 laeuft darum auch fuer bereits (fehlerhaft)
+    // migrierte Nutzer noch einmal - reine Reparatur, nichts erfunden:
+    // eine wirklich unfiled Notiz (ohne n.asset) bleibt unfiled.
+    if(n.fids.length===0&&n.asset){
+      const g=researchGenFidFor(n.asset);
+      if(g)n.fids=[g];
+    }
     delete n.fid;
     if(n.bias!=='bull'&&n.bias!=='bear'&&n.bias!=='neu')n.bias=(n.dir==='bull'||n.dir==='bear')?n.dir:'neu';
     delete n.dir;
   });
-  r._noteSchemaV=1;
+  r._noteSchemaV=2;
+  return r;
+}
+// Einmalige Migration (Nutzer-Wunsch 2026-08-30 "entfern da die free Notes
+// ... entfern dann diese Tabelle"): die alte Bullish/Bearish-Tabelle
+// (sym.noteTable), die Kategorie-Karten (sym.noteRubs) und das freie
+// Notizfeld (sym.notes) je Asset werden als einzelne Notizen in die
+// General-Notes-Wurzel dieses Assets uebernommen - danach verschwindet die
+// alte Tabelle komplett aus der UI (renderNotesSubTab entfernt), ohne dass
+// etwas verloren geht. Liest die globale `syms` - zum Zeitpunkt beider
+// Aufrufstellen von migrateResearch() bereits befuellt.
+function migrateLegacyAssetNotesIntoResearch(r){
+  if(r._legacyNotesMigrated)return r;
+  const now=new Date().toISOString();
+  (syms||[]).forEach(sym=>{
+    const g=researchGenFidFor(sym.id);
+    if(!g)return;
+    const push=(title,body,bias)=>{
+      if(!body||!String(body).trim())return;
+      r.notes.push({id:uid(),fids:[g],title:researchTitleFrom(title||body),
+        body:String(body),tags:[],fav:false,pin:false,ts:now,up:now,
+        bias:(bias==='bull'||bias==='bear')?bias:'neu',evt:null,asset:''});
+    };
+    const nt=sym.noteTable;
+    if(nt){
+      ['bull','bear'].forEach(side=>{
+        ['cur','gen'].forEach(grp=>{
+          ((nt[side]&&nt[side][grp])||[]).forEach(it=>push(it.title,it.text,side));
+        });
+      });
+    }
+    (sym.noteRubs||[]).forEach(rub=>{
+      (rub.items||[]).forEach(it=>push(rub.name,it.text,it.bias));
+    });
+    // genBull/genBear (die eingebauten Struktur-Argumente aus DEF): bei
+    // Bestandsnutzern schon lange in noteTable.bull/bear.gen uebernommen
+    // (genBull/genBear selbst bereits leer, kein Doppeln) - bei einer
+    // frischen Installation stehen sie noch direkt hier, deshalb zusaetzlich
+    // gelesen, damit nichts uebersehen wird.
+    (sym.genBull||[]).forEach(it=>push(null,typeof it==='string'?it:(it&&it.text),'bull'));
+    (sym.genBear||[]).forEach(it=>push(null,typeof it==='string'?it:(it&&it.text),'bear'));
+    if(sym.notes&&sym.notes.trim())push(sym.name+' — notes',sym.notes,'neu');
+    // Quelle jetzt vollstaendig uebernommen - leeren, damit sie nicht als
+    // zweite, veraltete Kopie neben den echten Notizen liegen bleibt (die
+    // alte Tabellen-UI, die diese Felder zeigte, ist entfernt).
+    sym.noteTable=undefined;sym.noteRubs=[];sym.genBull=[];sym.genBear=[];sym.notes='';
+  });
+  r._legacyNotesMigrated=true;
+  return r;
+}
+// Einmalige Befuellung (Nutzer-Wunsch 2026-08-30, ausdruecklich als
+// "einmalige automatische Befuellung" bestaetigt statt manuellem Import):
+// legt je Asset die 6 Bloomberg/Citi-Style-Themenordner unter dessen
+// General Notes an (falls noch nicht vorhanden) und fuellt sie mit den in
+// js/asset-notes-seed.js hinterlegten Verhaltens-Notizen (6 bullish + 6
+// bearish + 3 neutral je Thema). Reines Hintergrundwissen ohne Datum/
+// Live-Bezug - siehe Kommentar am Kopf von asset-notes-seed.js.
+// _behaviorNotesSeeded ist PRO ASSET gegattert (nicht ein einzelnes
+// Bool-Flag): so koennen in einer spaeteren Runde weitere Assets zu
+// ASSET_BEHAVIOR_NOTES hinzukommen, ohne bereits befuellte Assets erneut
+// anzufassen oder zu duplizieren.
+function seedAssetBehaviorNotes(r){
+  if(!r._behaviorNotesSeeded)r._behaviorNotesSeeded={};
+  const now=new Date().toISOString();
+  Object.keys(ASSET_BEHAVIOR_NOTES).forEach(assetId=>{
+    if(r._behaviorNotesSeeded[assetId])return;
+    if(!(syms||[]).some(s=>s.id===assetId))return;
+    const root=researchGenFidFor(assetId);
+    if(!root)return;
+    ASSET_BEHAVIOR_THEMES.forEach(([key,name])=>{
+      let folder=researchFolders.find(f=>f.parentId===root&&f.name===name);
+      if(!folder){folder={id:uid(),name:name,parentId:root};researchFolders.push(folder);}
+      const data=ASSET_BEHAVIOR_NOTES[assetId][key];
+      if(!data)return;
+      ['bull','bear','neu'].forEach(bias=>{
+        (data[bias]||[]).forEach(body=>{
+          r.notes.push({id:uid(),fids:[folder.id],title:researchTitleFrom(body),
+            body:body,tags:[],fav:false,pin:false,ts:now,up:now,
+            bias:bias,evt:null,asset:''});
+        });
+      });
+    });
+    r._behaviorNotesSeeded[assetId]=true;
+  });
   return r;
 }
 // Einmalige Migration (Nutzer-Wunsch 2026-08-03): die fruehere freie Themen-
@@ -3596,7 +3695,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureB
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();research=migrateResearch(d.research,noteCats);researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -3874,8 +3973,8 @@ function loadState(){
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
       migrateMarkedToWatchlist();
       noteCats=d.noteCats||mkNCs();
-      research=migrateResearch(d.research,noteCats);
       researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];
+      research=migrateResearch(d.research,noteCats);
       researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
@@ -3922,6 +4021,14 @@ function loadState(){
   }catch(e){}
   syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
+  // Ein brandneuer Nutzer (kein gespeicherter Zustand) durchlaeuft
+  // migrateResearch() nie (mkResearch() liefert bereits einen frischen,
+  // migrationsfreien Stand) - Legacy-Tabellen-Uebernahme (leert nebenbei
+  // die eingebauten genBull/genBear-DEF-Werte) und Verhaltens-Notizen-
+  // Befuellung deshalb hier separat angestossen, sonst bekaeme genau
+  // dieser Fall sie nie bzw. erst nach dem naechsten Reload.
+  research=migrateLegacyAssetNotesIntoResearch(research);
+  research=seedAssetBehaviorNotes(research);
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
 }
@@ -4956,9 +5063,10 @@ function assetNotesFoldersHtml(c){
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
   // Notes: Ordner + Notizen wie im Research-Terminal. Die aeltere
-  // Bullish/Bearish-Tabelle (renderNotesSubTab) bleibt bewusst DARUNTER
-  // stehen - sie traegt Nutzerinhalte und waere sonst nicht mehr erreichbar.
-  if(curSub==='notes')return assetQuickRowHtml(c)+assetNotesFoldersHtml(c)+renderNotesSubTab(c);
+  // Bullish/Bearish-Tabelle ist entfernt (Nutzer-Wunsch 2026-08-30) - ihr
+  // Inhalt wurde per migrateLegacyAssetNotesIntoResearch() vollstaendig als
+  // Notizen uebernommen, nichts geht verloren.
+  if(curSub==='notes')return assetQuickRowHtml(c)+assetNotesFoldersHtml(c);
   return`${assetQuickRowHtml(c)}
   ${renderOverviewCard(rubs)}
   ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
@@ -5186,73 +5294,6 @@ function toggleIndDetailRow(ev,indId){
   attachChartHovers(holder);
 }
 
-// ── NOTES SUB-TAB ──
-function renderNotesSubTab(c){
-  const rubs=c.noteRubs||[];
-  const nt=ensureNoteTable(c);
-  const item=(side,group,it,i,len)=>`<div class="nt-item" data-flip="${side}-${group}-${escH(it.id||(it.id=uid()))}">
-    <div class="nt-item-top">
-      <input class="nt-item-hd" placeholder="Heading…" value="${escH(it.title||'')}" oninput="setNoteTableField('${side}','${group}',${i},'title',this.value)" onchange="save()">
-      <div class="nt-item-ctrl">
-        <button class="nt-mv" title="Move up" onclick="mvNoteTableItem('${side}','${group}',${i},-1)" ${i===0?'disabled':''}>▲</button>
-        <button class="nt-mv" title="Move down" onclick="mvNoteTableItem('${side}','${group}',${i},1)" ${i===len-1?'disabled':''}>▼</button>
-        <button class="nt-mv" title="${group==='cur'?'Move to General':'Move to Current'}" onclick="moveNoteTableGroup('${side}','${group}',${i})">${group==='cur'?'⇩':'⇧'}</button>
-        <button class="nt-del" title="Delete" onclick="delNoteTableItem('${side}','${group}',${i})">×</button>
-      </div>
-    </div>
-    <textarea class="nt-item-tx" rows="1" placeholder="short text…" oninput="ar(this);setNoteTableField('${side}','${group}',${i},'text',this.value)" onblur="save()">${escH(it.text||'')}</textarea>
-  </div>`;
-  const grp=(side,group,items)=>items.map((it,i)=>item(side,group,it,i,items.length)).join('');
-  const col=(side,label,color,d)=>`<div class="nt-col" style="--ntc:${color}">
-    <div class="nt-col-hd">${label}</div>
-    <div class="nt-sub-lbl">CURRENT</div>
-    ${grp(side,'cur',d.cur)}
-    <button class="nt-add" onclick="addNoteTableItem('${side}','cur')">＋ Current</button>
-    <div class="nt-divider"></div>
-    <div class="nt-sub-lbl">GENERAL</div>
-    ${grp(side,'gen',d.gen)}
-    <button class="nt-add" onclick="addNoteTableItem('${side}','gen')">＋ General</button>
-  </div>`;
-  return`<div class="nt-wrap">
-    ${col('bull','▲ BULLISH',BC.bull,nt.bull)}
-    ${col('bear','▼ BEARISH',BC.bear,nt.bear)}
-  </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
-    <div style="font-size:12px;color:var(--t3);font-family:var(--ff-num)">Organized notes for ${escH(c.name)}</div>
-    <button onclick="addNoteRub()" class="btn g" style="padding:4px 8px;font-size:11px">＋ Category</button>
-  </div>
-  ${masonryHTML(rubs,(rub,ri)=>renderNoteRub(rub,ri,rubs.length))}
-  <div style="margin-top:10px">
-    <div class="slbl"><span style="color:var(--t3)">FREE NOTES</span><div class="slbl-line"></div></div>
-    <textarea class="nbox" placeholder="Free-form notes, levels, ideas..." oninput="getSym().notes=this.value;saveSoon()" onchange="markUserEditTs();getSym().notes=this.value;save()">${escH(c.notes||'')}</textarea>
-  </div>`;}
-
-function renderNoteRub(rub,ri,total){
-  return`<div class="rub-card${rub.imp?' imp':''}">
-    <div class="rub-hdr" onpointerdown="biasPressStart(event,'noteRub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-      <input class="rub-inp" value="${escH(rub.name)}" oninput="getNoteRub(${ri}).name=this.value;saveSoon()" onchange="markUserEditTs();getNoteRub(${ri}).name=this.value;save()" placeholder="Category...">
-      <button class="rstar${rub.imp?' on':''}" onclick="togNoteRubImp(${ri})">⭐</button>
-      <button class="rmv" onclick="mvNoteRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
-      <button class="rmv" onclick="mvNoteRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
-      <button class="rdel" onclick="delNoteRub(${ri})">×</button>
-    </div>
-    <div class="rub-body">
-      ${(rub.items||[]).map((item,ii)=>`
-        <div class="ri${item.imp?' imp':''}" style="--rc:${item.imp?'#55617A40':bRC(item.bias||'neu')}" onpointerdown="biasPressStart(event,'noteItem',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-          <div class="rdot" style="background:${item.imp?'var(--star)':bCol(item.bias||'neu')}"></div>
-          <textarea class="rtxt" rows="1" oninput="ar(this);getNoteRub(${ri}).items[${ii}].text=this.value;saveSoon()" onblur="save()">${escH(item.text||'')}</textarea>
-          <button class="istar${item.imp?' on':''}" onclick="togNoteRubItem(${ri},${ii})">⭐</button>
-          <button class="mv" onclick="mvNoteRubItem(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
-          <button class="mv" onclick="mvNoteRubItem(${ri},${ii},1)" ${ii===(rub.items.length-1)?'disabled':''}>▼</button>
-          <button class="idel" onclick="delNoteRubItem(${ri},${ii})">×</button>
-        </div>`).join('')}
-      <div class="add-row">
-        <input class="ai" id="nr-${ri}" placeholder="+ Add point..." onkeydown="if(event.key==='Enter'){addNoteRubItem(${ri});event.preventDefault()}">
-        <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addNoteRubItem(${ri})">＋</button>
-      </div>
-    </div>
-  </div>`;}
-
 // ══ ACTIONS – GENERAL ═══════════════════════════════════════════════
 // Nur die Auswahl-Markierung (.on) in der Assets-Leiste umsetzen, OHNE die
 // ganze Leiste per innerHTML neu zu bauen. Wichtig fuers Scrollen auf iOS:
@@ -5355,15 +5396,6 @@ function openBiasPicker(kind,ri,ii,x,y){
     else if(obj.name==='Risk Correlation')lockMsg='This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.';
     label=obj.displayName||obj.name;
     _biasPickerApply=b=>setIndBias(ri,ii,b);
-  }else if(kind==='noteRub'){
-    obj=getNoteRub(ri);if(!obj)return;
-    label=obj.name;
-    _biasPickerApply=b=>setNoteRubBias(ri,b);
-  }else if(kind==='noteItem'){
-    obj=getNoteRub(ri);if(!obj||!obj.items||!obj.items[ii])return;
-    obj=obj.items[ii];obj.bias=obj.bias||'neu';
-    label=obj.text||'Note';
-    _biasPickerApply=b=>setNoteRubItemBias(ri,ii,b);
   }else return;
   if(lockMsg){alert(lockMsg);return;}
   const cur=obj.bias||'neu';
@@ -5595,65 +5627,6 @@ function addInd(ri){
   const inp=document.getElementById('ind-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;
   pushU();const r=getRub(ri);if(!r)return;if(!r.indicators)r.indicators=[];
   r.indicators.push({id:uid(),name:v,bias:'neu',imp:false,date:'',interval:''});inp.value='';syncMacroIndAddRemove(ri,'add',v);syncMacroRub(ri);_flipCauseTag='structure';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
-
-// ══ ACTIONS – NOTE RUBS ══════════════════════════════════════════════
-function getNoteRub(ri){const c=getSym();return c&&c.noteRubs?c.noteRubs[ri]:null;}
-// ── Notes-Bullish/Bearish-Tabelle ──
-// Struktur: noteTable={bull:{cur:[],gen:[]}, bear:{cur:[],gen:[]}}.
-// cur = aktuell wichtige Punkte (oben), gen = generelle/strukturelle (unten).
-// Jeder Punkt: {id,title,text}. ensureNoteTable migriert auch das fruehere
-// flache Format ({bull:[],bear:[]}) -> cur.
-function ensureNoteTable(c){
-  let nt=(c.noteTable&&typeof c.noteTable==='object')?c.noteTable:{};
-  ['bull','bear'].forEach(side=>{
-    const s=nt[side];
-    if(Array.isArray(s)){nt[side]={cur:s,gen:[]};}            // altes flaches Format
-    else if(!s||typeof s!=='object'){nt[side]={cur:[],gen:[]};}
-    if(!Array.isArray(nt[side].cur))nt[side].cur=[];
-    if(!Array.isArray(nt[side].gen))nt[side].gen=[];
-  });
-  c.noteTable=nt;
-  return nt;
-}
-// Einmalige Migration: bullish/bearish Argumente aus dem alten General-Tab
-// (genBull/genBear) in den GENERELL-Bereich der Notes-Tabelle uebernehmen.
-function migrateGeneralToNotes(){
-  let changed=false;
-  syms.forEach(c=>{
-    if(c._notesMigrated)return;
-    const nt=ensureNoteTable(c);
-    (c.genBull||[]).forEach(r=>{const t=(typeof r==='string')?r:(r&&r.text||'');if(t.trim())nt.bull.gen.push({id:uid(),title:t,text:''});});
-    (c.genBear||[]).forEach(r=>{const t=(typeof r==='string')?r:(r&&r.text||'');if(t.trim())nt.bear.gen.push({id:uid(),title:t,text:''});});
-    c.genBull=[];c.genBear=[];
-    c._notesMigrated=true;changed=true;
-  });
-  if(changed)save();
-}
-function addNoteTableItem(side,group){const c=getSym();if(!c||(side!=='bull'&&side!=='bear'))return;group=group==='gen'?'gen':'cur';pushU();ensureNoteTable(c)[side][group].push({id:uid(),title:'',text:''});save();renderDetail();}
-function delNoteTableItem(side,group,i){const c=getSym();if(!c)return;pushU();const a=ensureNoteTable(c)[side][group];if(a&&a[i])a.splice(i,1);save();renderDetail();}
-function setNoteTableField(side,group,i,field,val){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(a&&a[i]){a[i][field]=val;saveSoon();}}
-function mvNoteTableItem(side,group,i,d){const c=getSym();if(!c)return;const a=ensureNoteTable(c)[side][group];if(!a)return;const j=i+d;if(j<0||j>=a.length)return;pushU();flipNotes(()=>{const t=a[i];a[i]=a[j];a[j]=t;save();renderDetail();});}
-function moveNoteTableGroup(side,group,i){const c=getSym();if(!c)return;const nt=ensureNoteTable(c);const from=nt[side][group];if(!from||!from[i])return;pushU();flipNotes(()=>{const it=from.splice(i,1)[0];nt[side][group==='cur'?'gen':'cur'].push(it);save();renderDetail();});}
-function addNoteRub(){pushU();const c=getSym();if(!c)return;if(!c.noteRubs)c.noteRubs=[];c.noteRubs.push({id:uid(),name:'New Category',bias:'neu',imp:false,items:[]});save();renderDetail();}
-// pushU() fehlte hier bisher (Nutzer-Bugreport 2026-07-27: "UI-Aenderungen
-// werden nach wenigen Sekunden ueberschrieben") - ohne den Undo-/Pending-
-// Marker sah der Multi-Tab-/Cloud-Schutz (save()-Guard, cloudPush()s
-// optimistische Versionspruefung) diese Aenderungen NICHT als "der Nutzer
-// hat hier gerade selbst editiert" an. Ein zeitgleicher Cloud-Pull (anderes
-// Geraet/Tab pusht dazwischen) konnte die Bias-/Wichtig-/Reihenfolge-
-// Aenderung dadurch binnen weniger Sekunden mit dem aelteren Stand
-// ueberschreiben - exakt dieselbe Bug-Klasse wie beim designHue/compactLevel-
-// Fix, hier aber bei den Notes-Rubrik-Geschwisterfunktionen uebersehen
-// (addNoteRub/delNoteRub hatten pushU() bereits, die uebrigen sechs nicht).
-function setNoteRubBias(ri,b){const r=getNoteRub(ri);if(!r)return;pushU();r.bias=b;save();renderDetail();}
-function togNoteRubImp(ri){const r=getNoteRub(ri);if(!r)return;pushU();r.imp=!r.imp;save();renderDetail();}
-function delNoteRub(ri){pushU();const c=getSym();if(c&&c.noteRubs)c.noteRubs.splice(ri,1);save();renderDetail();}
-function mvNoteRub(ri,d){const c=getSym();if(!c||!c.noteRubs)return;pushU();mvArr(c.noteRubs,ri,d);save();renderDetail();}
-function addNoteRubItem(ri){const inp=document.getElementById('nr-'+ri);if(!inp)return;const v=inp.value.trim();if(!v)return;pushU();const r=getNoteRub(ri);if(!r)return;if(!r.items)r.items=[];r.items.push({id:uid(),text:v,bias:'neu',imp:false});inp.value='';save();renderDetail();}
-function delNoteRubItem(ri,ii){pushU();const r=getNoteRub(ri);if(r&&r.items)r.items.splice(ii,1);save();renderDetail();}
-function setNoteRubItemBias(ri,ii,b){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].bias=b;save();renderDetail();}
-function togNoteRubItem(ri,ii){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();r.items[ii].imp=!r.items[ii].imp;save();renderDetail();}
-function mvNoteRubItem(ri,ii,d){const r=getNoteRub(ri);if(!r||!r.items)return;pushU();mvArr(r.items,ii,d);save();renderDetail();}
 
 // ══ ADD SYMBOL ════════════════════════════════════════════════════
 // Übernimmt die Karten-/Indikator-Struktur vom US-Dollar (gleiche Rubriken
@@ -8446,13 +8419,9 @@ function researchGlobalSearchHtml(){
   const q=resGlobalQuery.trim().toLowerCase();
   const notes=resNotes().filter(n=>{
     if(resGlobalTag&&!(n.tags||[]).includes(resGlobalTag))return false;
-    if(q){
-      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+resNoteAssetIds(n).join(' ')+' '+(n.fids||[]).map(researchFolderNameOf).join(' ')).toLowerCase();
-      if(hay.indexOf(q)<0)return false;
-    }
-    return true;
+    return resNoteMatchesQuery(n,q);
   }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
-  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,true)).join(''):`<div class="dw-empty">No notes match this search.</div>`;
+  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,true,q)).join(''):`<div class="dw-empty">No notes match this search.</div>`;
   const tagChip=resGlobalTag?`<button class="res-chip on" onclick="resOpenGlobalTag('')">#${escH(resGlobalTag)} ✕</button>`:'';
   return`<div class="ranl-wrap">
     <div class="ranl-title">Search all notes ${tagChip?'':(q?'— “'+escH(resGlobalQuery)+'”':'')}</div>
@@ -8673,6 +8642,7 @@ function researchSidebarHtml(){
       <input class="finp rtree-search-inp" id="resGlobalSearchInp" placeholder="Search all notes…" value="${escH(resGlobalQuery)}" oninput="resSetGlobalQuery(this.value)">
       ${searching?`<button class="rtree-search-x" onclick="resClearGlobalSearch()" title="Back to folders">✕</button>`:''}
     </div>
+    <div class="rtree-search" style="margin-top:-4px">${resSearchFieldPickerHtml()}</div>
     <div class="rtree-toolbar">
       <button class="rterm-side-toggle rterm-side-toggle-in" onclick="researchToggleSidebar()" title="Collapse folders">${icn('chevronRight',15)}</button>
       <button class="btn" onclick="researchExpandAllToggle()">${anyOpen?'Collapse all':'Expand all'}</button>
@@ -8863,17 +8833,53 @@ function researchSetNoteQuery(v){
 // (ueberall). showPlaces zeigt zusaetzlich, in welchen Assets/Ordnern die
 // Notiz ueberall abgelegt ist (nur in der globalen Suche sinnvoll - im
 // Ordner-Panel steht man ja bereits in genau einem davon).
-function resNoteRowHtml(n,showPlaces){
+// Wonach durchsucht eine Notiz-Suche genau: 'all' (Standard - Titel+Hashtags
+// +Inhalt), 'title' (nur Titel), 'tag' (nur Hashtags). EINE Einstellung fuer
+// beide Suchboxen (global + ordnergebunden), Nutzer-Wunsch 2026-08-30.
+let resSearchField='all';
+function resSetSearchField(v){
+  resSearchField=(v==='title'||v==='tag')?v:'all';
+  rerenderNotesHost();
+}
+function resSearchFieldPickerHtml(){
+  return`<select class="res-sfield" onchange="resSetSearchField(this.value)" title="What to search">
+    <option value="all"${resSearchField==='all'?' selected':''}>Everything</option>
+    <option value="title"${resSearchField==='title'?' selected':''}>Title only</option>
+    <option value="tag"${resSearchField==='tag'?' selected':''}>Hashtag only</option>
+  </select>`;
+}
+function resNoteMatchesQuery(n,q){
+  if(!q)return true;
+  if(resSearchField==='title')return(n.title||'').toLowerCase().indexOf(q)>=0;
+  if(resSearchField==='tag')return(n.tags||[]).some(t=>t.toLowerCase().indexOf(q)>=0);
+  const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')).toLowerCase();
+  return hay.indexOf(q)>=0;
+}
+// Markiert den gesuchten Text gelb - arbeitet auf dem BEREITS ESCAPETEN
+// String (nie unescapten Nutzertext einfuegen). q ist bereits kleingeschrieben
+// getrimmt; der Vergleich selbst ist case-insensitive (Regex-Flag 'i').
+function resHighlight(text,q){
+  const esc=escH(text||'');
+  if(!q)return esc;
+  const qEsc=escH(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  if(!qEsc)return esc;
+  return esc.replace(new RegExp('('+qEsc+')','gi'),'<mark class="res-hl">$1</mark>');
+}
+function resNoteRowHtml(n,showPlaces,q){
+  q=q||'';
   const dp=resFmtDateParts(n.up||n.ts);
   const places=showPlaces?(n.fids||[]).map(f=>escH(researchFolderNameOf(f))).join(' · '):'';
+  const hlTitle=resSearchField!=='tag';
+  const hlBody=resSearchField==='all';
+  const hlTag=resSearchField!=='title';
   return`<div class="res-note" style="border-left-color:${BC[n.bias||'neu']}" onclick="openResNote('${n.id}')">
       <div class="res-note-datebox"><div class="res-note-day">${dp.day}</div><div class="res-note-mon">${dp.mon}</div><div class="res-note-yr">${dp.year}</div></div>
       <div class="res-note-body">
-        <div class="res-note-top"><span class="res-note-ti">${escH(n.title||'Untitled note')}</span>${noteBiasBadge(n)}</div>
+        <div class="res-note-top"><span class="res-note-ti">${hlTitle?resHighlight(n.title||'Untitled note',q):escH(n.title||'Untitled note')}</span>${noteBiasBadge(n)}</div>
         ${places?`<div class="note-places">${icn('folder',10)} ${places}</div>`:''}
         ${n.evt?`<div class="note-evt" title="Linked calendar event">${icn('clock',10)} ${escH(String(n.evt).replace('|',' · '))}</div>`:''}
-        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resOpenGlobalTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
-        ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
+        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resOpenGlobalTag('${escJH(t)}')">#${hlTag?resHighlight(t,q):escH(t)}</span>`).join('')}</div>`:''}
+        ${n.body?`<div class="res-note-ex">${hlBody?resHighlight(n.body.replace(/\s+/g,' ').slice(0,160),q):escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
       </div>
       <div class="res-note-side">
         <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="Pin to the asset page (max ${ASSET_PIN_MAX}) — also shows in the watchlist">${icn('pin',14)}</button>
@@ -8895,18 +8901,15 @@ function researchNotesPanelHtml(assetId,fid){
   const notes=resNotes().filter(n=>{
     if(!resNoteAssetIds(n).includes(assetId))return false;
     if(!(n.fids||[]).some(f=>scope.includes(f)))return false;
-    if(q){
-      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+(n.fids||[]).map(researchFolderNameOf).join(' ')).toLowerCase();
-      if(hay.indexOf(q)<0)return false;
-    }
-    return true;
+    return resNoteMatchesQuery(n,q);
   }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
-  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,false)).join(''):`<div class="dw-empty">No notes here yet.</div>`;
+  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,false,q)).join(''):`<div class="dw-empty">No notes here yet.</div>`;
   const scopeName=fid?escH(researchFolderNameOf(fid)):'General Notes';
   return`<div class="ranl-wrap">
     <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${scopeName}</div>
     <div class="rterm-noterow">
       <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search in ${scopeName} and its subfolders…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
+      ${resSearchFieldPickerHtml()}
       <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
     </div>
     <div class="res-list" style="margin-top:10px">${rows}</div>
@@ -15765,7 +15768,6 @@ loadState();
 applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
 applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();
-migrateGeneralToNotes();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
@@ -16141,96 +16143,94 @@ Object.assign(window,{
   researchGenFidFor,researchFolderAssetOf,researchDescendantFolderIds,resNoteAssetIds,researchToggleNode,
   researchSelectLeaf,researchSelectAsset,researchSelectAndToggle,researchExpandAllToggle,researchAddFolder,
   researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,researchNodeRow,
-  researchTitleFrom,migrateResearch,migrateResearchNoteFields,migrateResearchToAssetFolders,LEGACY_SEED_EVTS,
-  mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,
-  snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,
-  BACKUP_KEY,saveLocalBackup,openBackupM,restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,
-  migrateDash,loadState,adoptExternalState,save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,
-  openCloudM,setCloudStatus,saveCloudCfg,updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,
-  KEY_TABS,keyNavAktiv,openKeyHelp,cloudPush,cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,
-  getSbIds,moveSbSym,moveSbCat,scrollIntoNav,sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,
-  miniSparklineSvg,indSparklineSvg,renderSidebar,setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,
-  renderOverviewCard,goToRubCard,assetQuickRowHtml,ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,
-  setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,
-  indPairGroupPositions,renderIndsTable,renderIndRow,toggleIndDetailRow,renderNotesSubTab,renderNoteRub,
+  researchTitleFrom,migrateResearch,migrateResearchNoteFields,migrateLegacyAssetNotesIntoResearch,
+  migrateResearchToAssetFolders,LEGACY_SEED_EVTS,mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,
+  markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,
+  ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,BACKUP_KEY,saveLocalBackup,openBackupM,
+  restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,migrateDash,loadState,adoptExternalState,
+  save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,openCloudM,setCloudStatus,saveCloudCfg,
+  updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,KEY_TABS,keyNavAktiv,openKeyHelp,cloudPush,
+  cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,getSbIds,moveSbSym,moveSbCat,scrollIntoNav,
+  sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,miniSparklineSvg,indSparklineSvg,renderSidebar,
+  setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,renderOverviewCard,goToRubCard,assetQuickRowHtml,
+  ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,
+  assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,indPairGroupPositions,renderIndsTable,renderIndRow,toggleIndDetailRow,
   updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,
   openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,
   setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,
   renderRiskEnvLists,RISK_ENV_DIRS,RISK_ENV_DIR_CLS,RISK_ENV_DIR_ORDER,renderRiskEnvCfgM,delRub,mvRub,addRub,
-  openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,getNoteRub,
-  ensureNoteTable,migrateGeneralToNotes,addNoteTableItem,delNoteTableItem,setNoteTableField,mvNoteTableItem,
-  moveNoteTableGroup,addNoteRub,setNoteRubBias,togNoteRubImp,delNoteRub,mvNoteRub,addNoteRubItem,delNoteRubItem,
-  setNoteRubItemBias,togNoteRubItem,mvNoteRubItem,cloneRubsFromUSD,confirmAddSym,FX_LINK_CCYS,escJs,escJH,
-  openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,setAssetDeriveRule,toggleAssetSync,openDelSym,
-  confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,FLIP_CAUSE_TXT,flipCauseBlock,queueScoreFlipAlert,
-  triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,recomputeAllPairBiases,rubAutoBiasNeeded,
-  RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,
-  indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,
-  famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,sumRawState,fcState,trendState,classifySingle,
-  classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,
-  cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,
-  ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,summarizeInflation,summarizeLabour,summarizeGrowth,
-  summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,magnitudeBiasWord,summarizeCot,summarizeRiskEnv,
-  RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,syncRubSummaries,stampRubOwners,recomputeAuto,
-  _scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,confirmAddPair,saveSetupCcy,syncSetupFilterPref,
-  clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,
-  isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,setPairOvRangeCustom,openPairOverview,closePairOverview,
-  pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,
-  povPositioningHtml,povCalendarHtml,povCorrHtml,povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,
-  migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,watchlistedAssetIds,setWatched,toggleWatch,
-  gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,watchInvolvedAssets,newResNoteForAsset,
-  watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,movePair,delPair,renderCalendar,addCalEv,
-  delCalEv,findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,evtAlertRowsHtml,renderEvtAlertList,
-  deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,onEvtAlertBtnClick,openEvtAlertListModal,
-  openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,removeEvtAlert,openEvtAlertCustom,
-  saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,currentPriceOf,priceAlertTargets,
-  openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,
-  fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,
-  resFolderName,resFmtDate,resFmtDateParts,resAllTags,resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,
-  RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,
-  researchToggleTop,researchTopCardsHtml,toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,
-  RESEARCH_SHORTCUTS,researchShortcutGo,researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,
-  researchSideTitleHtml,researchSidebarHtml,rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,
-  researchToggleAnOpen,researchSetAnBias,researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,
-  assetAnalysisHtml,researchNotesFolderOptions,researchFolderNameOf,researchSetNoteQuery,resNoteRowHtml,
-  researchNotesPanelHtml,newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,renderResearchFolders,
-  openResFolder,resPickAsset,resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,resSetQuery,togResFav,
-  newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,resRemovePlace,
-  resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,awaitingNotifyHtml,
-  dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,riskEnvRemindSundayKey,
-  riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,renderRiskEnvRemind,AURORA_NEU,
-  updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,detailMetaHtml,dashMajorsHtml,
-  dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,indEditPressStart,indEditPressMove,
-  indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,setPerfWindow,perfReturn,
-  perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,corrWarnHtml,ESI_HALFLIFE_D,
-  ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,DASH_COL_MIN_H,DASH_SHRINK_MIN_H,
-  equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,CMP_RUBS,CMP_RUB_ICON,
-  cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,cmpSelectAll,IND_UNIT_LABEL,
-  IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,cmpOpenRows,toggleCmpRow,
-  renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,recordScoreHist,RISK_ON_IDS,
-  RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,startScanBroadcast,
-  scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,setCorrB,setCorrWin,
-  logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,biasGroup,
-  biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,filterDatesByRange,
-  setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,setTrendsFilter,
-  toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,resolvePairPriceSeries,
-  scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,clearCotCcyFilter,
-  COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,autoFetchCot,COT_CFTC_URL,
-  COT_HIST_LEN,COT_MARKETS,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,cotNthWeekday,
-  cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,cotPublicationDate,
-  cotNextReportTs,cotStartCountdown,cotStopCountdown,cotTickCountdown,cotMetrics,cotColor,cotHistRowMetrics,cotNum,
-  cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,cotChartPointerMove,cotWireChartHover,
-  cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,fetchSentimentData,
-  autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,chartHoverWrap,
-  attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,setDataAsset,setDataInd,
-  renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,clearSentCcyFilter,
-  sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,setNewsAsset,
-  toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,markNewsSeen,newsIsNew,
-  newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,newsDayLabel,
-  newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,EDGE_MAX_ALTER,
-  edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,setEdgeAsset,edgeFmt,
-  renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,newsTabMore,
-  gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
+  openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,cloneRubsFromUSD,
+  confirmAddSym,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,
+  setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,FLIP_CAUSE_TXT,
+  flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,
+  recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,
+  recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
+  sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,
+  sumRawState,fcState,trendState,classifySingle,classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,
+  biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,
+  ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,
+  summarizeInflation,summarizeLabour,summarizeGrowth,summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,
+  magnitudeBiasWord,summarizeCot,summarizeRiskEnv,RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,
+  syncRubSummaries,stampRubOwners,recomputeAuto,_scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,
+  confirmAddPair,saveSetupCcy,syncSetupFilterPref,clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,
+  toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,
+  setPairOvRangeCustom,openPairOverview,closePairOverview,pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,
+  povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,povPositioningHtml,povCalendarHtml,povCorrHtml,
+  povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,
+  watchlistedAssetIds,setWatched,toggleWatch,gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,
+  watchInvolvedAssets,newResNoteForAsset,watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,
+  movePair,delPair,renderCalendar,addCalEv,delCalEv,findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,
+  evtAlertRowsHtml,renderEvtAlertList,deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,
+  onEvtAlertBtnClick,openEvtAlertListModal,openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,
+  removeEvtAlert,openEvtAlertCustom,saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,
+  currentPriceOf,priceAlertTargets,openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,
+  checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,
+  fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,resFmtDateParts,resAllTags,
+  resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,
+  resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
+  toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
+  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,researchSideTitleHtml,researchSidebarHtml,
+  rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
+  researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
+  researchFolderNameOf,researchSetNoteQuery,resSetSearchField,resSearchFieldPickerHtml,resNoteMatchesQuery,
+  resHighlight,resNoteRowHtml,researchNotesPanelHtml,newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,
+  renderResearchFolders,openResFolder,resPickAsset,resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,
+  resSetQuery,togResFav,newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,
+  resRemovePlace,resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
+  awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
+  riskEnvRemindSundayKey,riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,
+  renderRiskEnvRemind,AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
+  detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,
+  indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
+  setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
+  corrWarnHtml,ESI_HALFLIFE_D,ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,
+  DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
+  CMP_RUBS,CMP_RUB_ICON,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
+  cmpSelectAll,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,
+  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,
+  recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
+  startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
+  setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
+  biasGroup,biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
+  filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
+  setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
+  resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
+  clearCotCcyFilter,COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,
+  autoFetchCot,COT_CFTC_URL,COT_HIST_LEN,COT_MARKETS,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,
+  cotNthWeekday,cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,
+  cotPublicationDate,cotNextReportTs,cotStartCountdown,cotStopCountdown,cotTickCountdown,cotMetrics,cotColor,
+  cotHistRowMetrics,cotNum,cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,cotChartPointerMove,
+  cotWireChartHover,cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,
+  fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
+  chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
+  setDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
+  clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
+  setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
+  markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
+  newsDayLabel,newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,
+  EDGE_MAX_ALTER,edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,
+  setEdgeAsset,edgeFmt,renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,
+  newsTabMore,gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
   setAaiiRangeCustom,setSentSub,setSentSym,setPcAsset,setSentimentRange,setPcRange,setFearGreedRange,
   setSentimentRangeCustom,setPcRangeCustom,setFearGreedRangeCustom,SENT_NONFX_SYMS,SENT_NONFX_PRICE_ID,
   sentSymPriceSeries,sentSymLabel,sentSymWatched,sentFilterBar,pcUsableAssetIds,pcFilterBar,renderSentiment,
@@ -16354,6 +16354,7 @@ Object.defineProperty(window,'resGlobalTag',{get:()=>resGlobalTag,set:v=>{resGlo
 Object.defineProperty(window,'resTlHighOnly',{get:()=>resTlHighOnly,set:v=>{resTlHighOnly=v;},configurable:true});
 Object.defineProperty(window,'researchAnOpen',{get:()=>researchAnOpen,set:v=>{researchAnOpen=v;},configurable:true});
 Object.defineProperty(window,'researchNoteQuery',{get:()=>researchNoteQuery,set:v=>{researchNoteQuery=v;},configurable:true});
+Object.defineProperty(window,'resSearchField',{get:()=>resSearchField,set:v=>{resSearchField=v;},configurable:true});
 Object.defineProperty(window,'_resEditId',{get:()=>_resEditId,set:v=>{_resEditId=v;},configurable:true});
 Object.defineProperty(window,'_resBias',{get:()=>_resBias,set:v=>{_resBias=v;},configurable:true});
 Object.defineProperty(window,'_resFids',{get:()=>_resFids,set:v=>{_resFids=v;},configurable:true});
