@@ -7706,3 +7706,61 @@ sechs js/*.js-Dateien, Import-Bindungs-Zuweisungs-Check beide Richtungen,
 check/*.js-Suche nach Direktreferenzen), Playwright-Smoke-Test (alle Tabs,
 toggleCalHighOnly/toggleCompactView/setCalCcyFilter/todayStr), danach
 `node check/all.js` komplett gruen (13 Waechter).
+
+## Bugreport "History hat viele Fehler": Delta ueber Modell-Grenzen hinweg (2026-08-30, VERSION-CHECK-454)
+
+**Bugreport:** "Check jetzt nochmal das Score System vorallem bei der
+history von den Assets gibt es viele Fehler." Auf Rueckfrage bestaetigt:
+gemeint sind die vielen gedimmten/mit `*` markierten Tage ohne Erklaerung
+im History-Fenster.
+
+**Untersuchung.** `node check/all.js` war vollstaendig gruen, und eine
+automatisierte Nachrechnung von `histDeltaParts()` gegen die echte
+aufgezeichnete Historie (alle Assets, 90-Tage-Fenster) fand 0 Abweichungen -
+die Algebra selbst stimmte. Der Fehler lag woanders: `SCORE_MODEL_VERSION`
+wurde in den letzten 3 Wochen 6-mal gebumpt (1→2→4→5→6→8, jeweils echte
+Formel-Korrekturen). Jeder aufgezeichnete Tag traegt seinen Modell-Tag
+(`SCORE_MODEL_TAG()` = Version+Modus), und ein Tag, dessen Tag nicht zum
+AKTUELLEN Live-Tag passt, gilt als "nicht vergleichbar" (gedimmt, kein
+Delta) - das ist beabsichtigt (verhindert genau den 2026-08-16-Bugreport-Typ:
+ein Formel-Sprung als echte Marktbewegung).
+
+**Der eigentliche Fehler:** die Vergleichbarkeitspruefung
+(`renderSymHistoryPanel()`) verglich nur, ob DIESER Tag zum aktuellen
+Live-Modell passt - nicht, ob er zum VORTAG passt, gegen den das Delta
+berechnet wird. Am Tag eines Modellwechsels matcht der NEUE Tag das
+Live-Modell (gilt also selbst nicht als "alt"), sein Vortag steht aber noch
+unter der alten Version - das Delta wurde trotzdem berechnet und als
+"Score moved -1,4 — no dated release" praesentiert, obwohl an dem Tag
+schlicht nur die Formel gewechselt hatte. Bei 6 Versionswechseln x 27 Assets
+ergab das ueber die letzten 3 Wochen rund 80 solcher erfundenen Spruenge in
+der echten aufgezeichneten Historie (per Skript gezaehlt).
+
+**Fix.** Neue, direkt testbare Funktion `histTagsComparable(a,b)` -
+verlangt BEIDE Tage bekannt UND identisch, sonst `false` (auch "beide
+unbekannt" zaehlt bewusst NICHT als vergleichbar - die taglose Fruehzeit vor
+2026-08-09 traegt gar keinen Tag, "unbekannt" ist nicht "gleich"). Ersetzt
+den bisherigen Delta-Gate. Bei einer ECHTEN Modellgrenze (beide Tage
+bekannt, aber unterschiedlich) erscheint jetzt eine eigene Meldung ("The
+score model changed on this day...") statt der erfundenen Score-Bewegung
+oder eines irrefuehrenden "No change.".
+
+**Nebeneffekt (gewollt, macht die History insgesamt informativer statt nur
+korrekter):** zwei aufeinanderfolgende Tage unter DEMSELBEN aelteren Modell
+zeigen jetzt wieder ein Delta zueinander - vorher verstummte JEDER nicht mit
+dem Live-Tag uebereinstimmende Tag komplett, auch relativ zu seinen
+eigenen alten Nachbartagen.
+
+**Geprueft:** automatisierte Nachrechnung gegen die echte Historie (alle
+Assets, 90 Tage) vor und nach dem Fix - 80 echte Modellgrenzen identifiziert,
+alle zeigen danach die neue Meldung statt eines Deltas; 231 gleich-getaggte
+Tagespaare zeigen weiterhin/wieder korrekt ihr Delta; Summe der
+Aufschluesselungs-Teile stimmt in allen 180 gefundenen Delta-Faellen exakt
+mit dem angezeigten Delta ueberein (0 Abweichungen). Playwright-Runtime-Test:
+keine JS-Fehler beim Oeffnen der History fuer alle 27 Assets. Neuer
+Regressionstest in `check/score.js` (H4-Block): 5 gezielte
+`histTagsComparable()`-Faelle plus ein Lauf ueber die komplette echte
+Historie, der garantiert, dass keine bekannte Modellgrenze faelschlich als
+vergleichbar durchgeht. `node check/all.js` komplett gruen (13 Waechter).
+Keine Score-Formel angefasst - `scorediff`/`summarydiff`: 0 Aenderungen,
+`SCORE_MODEL_VERSION` unveraendert.

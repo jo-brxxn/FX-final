@@ -303,6 +303,39 @@ const MODE = process.argv[2] || 'normalized';
     if(echtSchief)add('Zerlegung echter Historie geht nicht auf',{faelle:echtSchief,von:echt,bsp:echtBsp});
     ok.zerlegungEchteTage=echt;
   }
+  // ── H4) histTagsComparable() - History-Delta nie ueber einen
+  // Modell-Grenzwechsel hinweg ──
+  // Nutzer-Bugreport 2026-08-30 "History hat viele Fehler": der Delta-Gate in
+  // renderSymHistoryPanel() prüfte vorher nur, ob der JEWEILS AKTUELLE Tag
+  // zum LIVE-Modell passt - nicht, ob er zum VORTAG passt. Am Tag eines
+  // Modellwechsels (der neue Tag matcht das Live-Modell, sein Vortag aber
+  // noch den alten) wurde die Formel-Umstellung selbst als echte
+  // Score-Bewegung ausgegeben. Fix: histTagsComparable(a,b) verlangt BEIDE
+  // Tage bekannt UND gleich - "beide unbekannt" zaehlt bewusst NICHT als
+  // vergleichbar (nur weil zwei Tage keinen Tag tragen, heisst das nicht,
+  // dass sie unter demselben Modell entstanden sind).
+  if(typeof histTagsComparable==='function'){
+    if(histTagsComparable('8:normalized','8:normalized')!==true)add('histTagsComparable: gleicher Tag nicht als vergleichbar erkannt',{});
+    if(histTagsComparable('8:normalized','6:normalized')!==false)add('histTagsComparable: unterschiedlicher Tag faelschlich vergleichbar',{});
+    if(histTagsComparable('8:classic','8:normalized')!==false)add('histTagsComparable: gleiche Version, anderer Modus faelschlich vergleichbar',{});
+    if(histTagsComparable(null,null)!==false)add('histTagsComparable: zwei unbekannte Tage faelschlich vergleichbar',{});
+    if(histTagsComparable(null,'8:normalized')!==false)add('histTagsComparable: ein unbekannter Tag faelschlich vergleichbar',{});
+    // Gegen ECHTE aufgezeichnete Historie: kein Symbol darf zwei
+    // aufeinanderfolgende Tage mit bekannten, unterschiedlichen Tags als
+    // vergleichbar einstufen.
+    let grenzenGeprueft=0,grenzenFalsch=0;
+    Object.keys(scoreHist||{}).forEach(sid=>{
+      const arr=scoreHist[sid]||[];
+      for(let i=1;i<arr.length;i++){
+        const tHeute=arr[i][6],tVor=arr[i-1][6];
+        if(tHeute==null||tVor==null)continue;
+        grenzenGeprueft++;
+        if(tHeute!==tVor&&histTagsComparable(tHeute,tVor))grenzenFalsch++;
+      }
+    });
+    if(grenzenFalsch)add('histTagsComparable: echte Modellgrenze in der Historie als vergleichbar eingestuft',{faelle:grenzenFalsch,von:grenzenGeprueft});
+    ok.modellGrenzenGeprueft=grenzenGeprueft;
+  }
   // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});

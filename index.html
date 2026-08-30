@@ -3708,11 +3708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-453 - Fuenfte Modul-Kategorie ausgekoppelt: js/calendar.js (Kalender-Symbol-Matching + FF-Style Kalender-Tabellenzeilen - CAL_ALIASES, evtMatchesSym, Actual-Farblogik, calTableHtml/calRowHtml, High-Impact-/Waehrungs-/Kompakt-Filter, 25 Namen exportiert). Drei neue Zustands-Setter (setCalHighOnlyVal/setCompactViewVal/setCalCcyFilterVal) ersetzen Direktzuweisungen an main.js-Zustand aus der ausgekoppelten Datei. Dabei einen ECHTEN, seit der Score.js-Runde bestehenden Fehler gefunden: importData()/cloudPull() in main.js schrieben direkt auf das scoreMode-Import-Binding aus score.js (waere zur Laufzeit mit TypeError abgestuerzt) - per neuem Setter setScoreModeVal behoben, mit echtem Verhaltenstest in check/score.js belegt (Regel 5 flaggte den neuen Namen zu Recht)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-454 - Bugreport 'History hat viele Fehler' behoben: der Delta-Gate im Asset-History-Fenster verglich den Tag eines Tages nur gegen das AKTUELLE Live-Score-Modell, nicht gegen den Tag des VORTAGS. Am Tag eines Modell-/Modus-Wechsels (6 Versionswechsel in 3 Wochen) wurde die reine Formel-Umstellung dadurch als echte Score-Bewegung angezeigt ('Score moved -1.4 - no dated release'), obwohl nichts am Markt passiert war. Neue Funktion histTagsComparable(a,b) verlangt jetzt zwei BEKANNTE, GLEICHE Modell-Tags fuer ein Delta; bei einem echten Modellwechsel steht stattdessen ein klarer Hinweis. Nebeneffekt: aufeinanderfolgende Tage unter DEMSELBEN aelteren Modell zeigen jetzt wieder ein Delta zueinander, statt komplett zu verstummen - die History wird dadurch insgesamt informativer, nicht nur korrekter. Keine Score-Formel angefasst (scorediff/summarydiff: 0 Aenderungen), nur die Vergleichbarkeits-Anzeige in renderSymHistoryPanel()."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-453</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-454</span>
     </span>
   </div>
   <div class="hdr-r">

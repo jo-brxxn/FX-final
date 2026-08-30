@@ -1041,6 +1041,15 @@ function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,name
   if(rest)parts.push({name:'Rounding',v:rest,tip:'Recorded values are stored rounded, so a small remainder is left over. It is shown here so the parts add up exactly.'});
   return parts;
 }
+// Duerfen zwei aufgezeichnete Tage direkt gegeneinander verrechnet werden
+// (Delta/Aufschluesselung)? NUR wenn BEIDE einen bekannten, GLEICHEN
+// Modell-Tag tragen - "beide ohne Tag" ist "unbekannt", nicht "gleich".
+// Eigene, direkt testbare Funktion statt Inline-Logik (Nutzer-Bugreport
+// 2026-08-30 "History hat viele Fehler" - der vorherige Vergleich prüfte nur,
+// ob der JEWEILS AKTUELLE Tag zum LIVE-Modell passt, nicht ob er zum VORTAG
+// passt; am Tag eines Modellwechsels wurde dadurch eine Formel-Umstellung
+// als echte Score-Bewegung ausgegeben).
+function histTagsComparable(a,b){return a!=null&&b!=null&&a===b;}
 function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
@@ -1056,9 +1065,9 @@ function renderSymHistoryPanel(id){
   // Vortage auf +2,4/+3/+3,1 - alle aus dem Modell VOR dem Bias-Fix). Der
   // Wert wird deshalb weiterhin gezeigt (er ist echt aufgezeichnet), aber
   // gedaempft und mit Begruendung - nicht geloescht und nicht umgerechnet.
-  const histMap={},histOld={},histRub={},histCmp={},histRaw={};
+  const histMap={},histOld={},histRub={},histCmp={},histRaw={},histTag={};
   (scoreHist[id]||[]).forEach(e=>{
-    histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];
+    histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];histTag[e[0]]=e[6]||null;
     // Nur Eintraege ab 2026-08-23 tragen Faktor und Rohscore. Aeltere sind
     // NICHT zerlegbar - fuer sie wird darum auch keine Zerlegung gezeigt,
     // statt eine zu erfinden, die nicht aufgeht.
@@ -1133,7 +1142,32 @@ function renderSymHistoryPanel(id){
     // ist die Zahl, die ueberhaupt erst begruendungsbeduerftig ist.
     let prevScore=null,prevDate=null;
     for(let k=days.indexOf(d)+1;k<days.length;k++){const p=histMap[days[k].date];if(p!=null){prevScore=p;prevDate=days[k].date;break;}}
-    const delta=(dayScore!=null&&prevScore!=null&&!altesModell)?Math.round((dayScore-prevScore)*10)/10:null;
+    // ⚠ `!altesModell` allein reichte NICHT: das prueft nur, ob DIESER Tag zum
+    // AKTUELLEN Live-Modell passt - nicht, ob er zum VORTAG passt. Am Tag
+    // eines Modellwechsels (z.B. Version 6 -> 8) matcht der NEUE Tag das
+    // Live-Modell (also nicht "alt"), sein Vortag aber noch Version 6 - das
+    // Delta wurde trotzdem berechnet und als echte Tagesbewegung gezeigt
+    // (Nutzer-Bugreport 2026-08-30: "History hat viele Fehler" - bei jedem
+    // der zuletzt sechs Versionswechsel entstand so ein erfundener Sprung).
+    // Jetzt: beide Tage muessen unter DEMSELBEN Modell-Tag stehen, nicht nur
+    // der jeweils aktuelle mit dem Live-Tag. `dTag` faellt fuer "heute ohne
+    // eigenen Eintrag" auf den Live-Tag zurueck (liveScore ist per
+    // Definition aktuell). Nebeneffekt (gewollt): zwei aufeinanderfolgende
+    // Tage UNTER DEMSELBEN aelteren Modell zeigen jetzt wieder ein Delta
+    // zueinander, statt komplett zu verstummen.
+    // Zwei Faelle, bewusst getrennt: `keinDelta` blockt IMMER, sobald einer
+    // der beiden Tage keinen (oder einen abweichenden) Tag traegt - auch
+    // wenn BEIDE keinen Tag haben (Zeit vor 2026-08-09), denn "beide ohne Tag"
+    // heisst nicht "beide unter demselben Modell", nur "unbekannt". Die
+    // eigene Meldung unten (`bekannteGrenze`) gilt dagegen NUR, wenn wirklich
+    // zwei bekannte, unterschiedliche Tags aufeinandertreffen - sonst wuerde
+    // jeder Tag aus der taglosen Frühzeit faelschlich "Modell geaendert"
+    // vermelden, obwohl dort schlicht keine Herkunft aufgezeichnet ist.
+    const dTag=histMap[d.date]!=null?histTag[d.date]:(isToday?SCORE_MODEL_TAG():null);
+    const prevTag=prevDate!=null?histTag[prevDate]:null;
+    const vergleichbar=histTagsComparable(dTag,prevTag);
+    const bekannteGrenze=dTag!=null&&prevTag!=null&&!vergleichbar;
+    const delta=(dayScore!=null&&prevScore!=null&&vergleichbar)?Math.round((dayScore-prevScore)*10)/10:null;
     const dCol=delta==null?'var(--t3)':delta>0?BC.bull:delta<0?BC.bear:'var(--t3)';
     const dTxt=delta==null?'':(delta>0?'+':'')+delta;
     // Woher kam die Bewegung? Aus den je Tag aufgezeichneten Rubrikwerten
@@ -1148,14 +1182,22 @@ function renderSymHistoryPanel(id){
     // "Alles begruendet": bewegt sich der Score ohne Release, ohne manuelle
     // Aenderung und ohne aufgezeichnete automatische Ursache, wird genau
     // gesagt, was noch bekannt ist - statt einer erfundenen Erklaerung.
+    // bekannteGrenze bekommt eine EIGENE Meldung statt "No change." - der
+    // Score hat sich moeglicherweise sehr wohl geaendert, nur eben durch
+    // einen Modell-/Modus-Wechsel und nicht durch ein echtes Ereignis -
+    // "No change" waere hier selbst wieder eine erfundene Aussage. Bei
+    // UNBEKANNTER Herkunft (keinDelta, aber kein bekannter Tag-Unterschied -
+    // die taglose Frühzeit) bleibt es dagegen wie bisher stumm.
     const nothing=(!evs.length&&!manual.length)
       ?(delta
         ?(parts.length
           ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release. It breaks down as follows (the parts add up to ${dTxt}):</div>`
           :`<div class="histp-noevt">Score moved ${dTxt} — no dated release, and this day was recorded before the breakdown existed, so it cannot be attributed to individual cards.</div>`)
+        :bekannteGrenze
+        ?`<div class="histp-noevt">The score model changed on this day (or the day before), so it isn’t compared to the previous day.</div>`
         :`<div class="histp-noevt">No change.</div>`)
       :'';
-    const has=!!(evs.length||manual.length||delta);
+    const has=!!(evs.length||manual.length||delta||bekannteGrenze);
     return{date:d.date,score:dayScore,has,html:`<div class="histp-day${isToday?' histp-today':''}">
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
         ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
@@ -15974,6 +16016,7 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
+  histTagsComparable,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,

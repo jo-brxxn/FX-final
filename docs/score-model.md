@@ -212,6 +212,20 @@ jetzt als `data.scoreModelTag` mit, der Workflow haengt ihn als 7. Element
 an. Fehlt er (alter Client), wird NICHTS geraten - der Eintrag bleibt
 sechsstellig und faellt wie bisher aus der Notenrechnung.
 
+**⚠️ Ein Tag-Vergleich muss PAARWEISE sein, nicht nur "gegen live"**
+(Nutzer-Bugreport 2026-08-30 "History hat viele Fehler", VERSION-CHECK-454).
+`renderSymHistoryPanel()`s Tagesdelta prüfte bis dahin nur, ob DER
+GEPRÜFTE Tag zum aktuellen Live-Tag passt - nicht, ob er zum VORTAG passt,
+gegen den das Delta ueberhaupt berechnet wird. Am Tag eines Modellwechsels
+matcht der neue Tag das Live-Modell (gilt selbst also nicht als "alt"),
+sein Vortag steht aber noch unter der alten Version - das Delta wurde
+trotzdem berechnet und als echte Score-Bewegung gezeigt, obwohl nur die
+Formel gewechselt hatte (bei den 6 Versionswechseln der letzten 3 Wochen
+rund 80 solcher erfundener Spruenge in der echten Historie). Fix:
+`histTagsComparable(a,b)` verlangt beide Tage bekannt UND identisch - jeder
+Vergleich zwischen zwei aufgezeichneten Tagen (nicht nur "gegen heute")
+braucht diese Funktion, nicht nur `e[6]===SCORE_MODEL_TAG()`.
+
 **Merksatz:** zwei Features, die je fuer sich richtig sind, muessen nicht
 zusammenpassen. Bei jedem neuen Feld in `scoreHist` pruefen, ob der
 SERVER-Pfad (`cloudPush` → Workflow → `score_hist.json` → `mergeScoreHist`)
