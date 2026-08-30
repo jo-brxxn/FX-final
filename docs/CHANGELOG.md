@@ -7764,3 +7764,86 @@ Historie, der garantiert, dass keine bekannte Modellgrenze faelschlich als
 vergleichbar durchgeht. `node check/all.js` komplett gruen (13 Waechter).
 Keine Score-Formel angefasst - `scorediff`/`summarydiff`: 0 Aenderungen,
 `SCORE_MODEL_VERSION` unveraendert.
+
+## 2026-08-30 — Notizen ueberarbeitet: mehrere Ordner, Bias-Farbe, globale Suche (VERSION-CHECK-455)
+
+**Nutzer-Wunsch:** "Überall wo es Notizen gibt füg die Funktion hinzu in
+Ordnern Unterordner zu erstellen und mach von Notizen das Aussehen deutlich
+ob sie neutral bullish oder bearish sind und mach eine Suchleiste... Und man
+soll die Möglichkeit haben wenn man eine Notiz schreibt diese in mehreren
+Ordnern abzulegen also auch wenn man beim CAD eine Notiz schreibt diese auch
+bei USD ablegen zu können."
+
+**Bestandsaufnahme vor der Umsetzung** (per `AskUserQuestion` mit dem Nutzer
+abgestimmt, da mehrere echte Design-Entscheidungen drinsteckten): Unterordner
+gab es bereits technisch (Research-Ordnerbaum, `researchAddFolder`), aber
+nur hinter einer 5-Sekunden-Long-Press-Geste versteckt - nicht der
+gemeldete Mangel. Eine globale Suchleiste mit Hashtag-Filter existierte
+ebenfalls schon im Code (`renderResearchNotes`/`resSetTag`), war aber toter
+Code - `rerenderNotesHost()` ruft seit der Research-Terminal-Umstellung
+(2026-08-04) nur noch `renderResearch()` auf, nie mehr diese Funktion.
+
+**Umgesetzt (Nutzer-Antworten: alle drei Notiz-Oberflaechen, echte
+Mehrfachzuordnung, manueller Bias-Picker, verschachtelter Baum):**
+- **Mehrere Ordner gleichzeitig:** `n.fid` (ein Ordner) → `n.fids` (Array).
+  Ein Asset wird jetzt aus den zugewiesenen Ordnern ABGELEITET
+  (`resNoteAssetIds`, wandert die Baum-Ancestry jedes Ordners hoch) statt in
+  einem separaten Einzelfeld gepflegt zu werden - eine Notiz mit einem
+  CAD-Unterordner UND einem USD-Unterordner erscheint dadurch vollstaendig
+  in beiden Assets. Notiz-Modal umgebaut: statt einem Asset-Select + einem
+  Ordner-Select jetzt eine "Places"-Zeile (Asset waehlen → Ordner waehlen →
+  "+ Add" → Chip, einzeln entfernbar), beliebig oft wiederholbar.
+- **Bias-Farbe:** neues Feld `n.bias` (bull/bear/neu, ersetzt das alte
+  `n.dir`, das nur bull/bear kannte) - manuell im Modal gewaehlt (3 Knoepfe,
+  je in der eigenen Bias-Farbe wenn aktiv), faerbt die Notiz-Karte ueberall
+  als linke Randlinie (`BC[n.bias]`) - Research-Terminal, Asset-Notizen-Karte,
+  Watchlist-Pins, POV-Notizen im Paar-Modus.
+- **Entfernt (Nutzer-Wunsch, Teil derselben Antwort):** die fruehere
+  automatische "war die Richtung richtig"-Auswertung (`noteOutcome`/
+  `noteHitStats`/`noteHitStatsHtml`/`noteOutcomeBadge` + die Kurs-Helfer
+  `priceAtOrBefore`/`priceNBarsAfter`/Konstanten `NOTE_HORIZON_D`/
+  `NOTE_FLAT_PCT`) - der Bias ist jetzt eine reine manuelle Einordnung ohne
+  Kurs-Nachpruefung dahinter, ersetzt durch das schlichte `noteBiasBadge`
+  (▲/▼, "neu" bekommt bewusst kein Abzeichen - die Randfarbe reicht).
+- **Zwei getrennte Such-Kontexte** (Nutzer-Wunsch: "man kann überall suchen
+  aber wenn man in einem Ordner sucht kann man nur die Notizen aus dem
+  Ordner und den Unterordnern finden"):
+  - Neue globale Suchleiste, immer oben in der Ordnerbaum-Sidebar sichtbar
+    (`resGlobalQuery`/`researchGlobalSearchHtml`) - durchsucht ALLE Notizen
+    unabhaengig von Asset/Ordner, Ergebniszeilen zeigen zusaetzlich, in
+    welchen Ordnern/Assets die Notiz ueberall liegt.
+  - Die bestehende ordnergebundene Suche (`researchNotesPanelHtml`) neu
+    gefasst: reines Durchblaettern (keine Eingabe) zeigt NUR Notizen, die
+    GENAU in diesem Ordner liegen (wie ein Datei-Browser) - eine Suche
+    bezieht dagegen bewusst den Ordner UND alle Unterordner ein
+    (`researchDescendantFolderIds`), aber NICHT mehr das ganze Asset (vorher:
+    Ordner-Einschraenkung wurde bei jeder Eingabe komplett aufgehoben).
+  - Hashtag-Klick (ueberall, auch aus der ordnergebundenen Ansicht) oeffnet
+    IMMER die globale Suche mit diesem Tag als Filter (Nutzer-Wunsch: "dann
+    werden alle Notizen dazu angezeigt") statt nur innerhalb des aktuellen
+    Ordners zu filtern.
+- **Migration:** `migrateResearchNoteFields()`, einmalig ueber `_noteSchemaV`
+  abgesichert - `fid`→`fids`, `dir`→`bias` (unbekannt/fehlend wird `neu`),
+  kein Datenverlust.
+
+**Bewusst NICHT angetastet:** die alte, seit 2026-08-04 bereits tote
+`renderResearchNotes()`/`renderResearchFolders()`/`resSelect`/`resSetTag`-
+Familie (referenziert nach dieser Aenderung das entfernte `n.fid` und wuerde
+bei einem Aufruf werfen) - bestaetigt unerreichbar von `rerenderNotesHost()`
+und von keinem `onclick` im echten UI. Absichtlich nicht mit aufgeraeumt, um
+den Umfang dieser Aenderung nicht zusaetzlich auszuweiten; als Aufraeum-
+Kandidat fuer eine spaetere, eigene Runde vermerkt.
+
+**Geprueft:** Playwright-Ende-zu-Ende (Unterordner unter CAD UND USD
+angelegt, eine Notiz mit beiden Ordnern + Bias "bull" + Tags gespeichert,
+bestaetigt: erscheint vollstaendig in CAD- UND USD-Notizen-Panel, fehlt
+korrekt bei EUR, Bias-Randfarbe im HTML vorhanden, Hashtag-Klick oeffnet
+globale Suche mit Treffer, globale Textsuche findet die Notiz inkl. Orte-
+Anzeige); Ordner-vs-Unterordner-Scoping separat verifiziert (Notiz im
+Wurzelordner erscheint nicht beim Durchblaettern eines Unterordners, aber
+Notiz im Unterordner erscheint bei einer Suche vom uebergeordneten Ordner
+aus). Alle Tabs + Notiz-Modal + Asset-Notizen-Unterseite durchgeklickt, 0
+JS-Fehler. `node check/all.js` komplett gruen (13 Waechter, inkl. neuem
+Verhaltenstest in `check/score.js` fuer resPickBias/noteBiasBadge, von
+Regel 5 zu Recht als neue "Bias"-benannte Namen geflaggt). Keine
+Score-Formel angefasst - `scorediff`/`summarydiff`: 0 Aenderungen.

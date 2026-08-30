@@ -3106,7 +3106,7 @@ const RESEARCH_ASSET_FOLDERS=[
   {id:'stocks',name:'Stocks',icon:'trendUp'},
 ];
 function mkResearchFolders(){return RESEARCH_ASSET_FOLDERS.map(f=>({...f}));}
-function mkResearch(){return{folders:mkResearchFolders(),notes:[],_folderSchemaV:2};}
+function mkResearch(){return{folders:mkResearchFolders(),notes:[],_folderSchemaV:2,_noteSchemaV:1};}
 // Asset-ID -> fester Research-Ordner, rein aus der Asset-Klasse abgeleitet
 // (ASSET_CLASS/customIds via assetCls) - KEIN zusaetzlicher State noetig:
 // ein neu ueber "+ Add Symbol" angelegtes Asset erscheint dadurch automatisch
@@ -3199,6 +3199,44 @@ function researchNotesContextFor(selId){
     p=parentFolder.parentId;walked++;
   }
   return null;
+}
+// Kanonische Ordner-ID fuer "General Notes" eines Assets - dieselbe ID, die
+// der Ordnerbaum fuer diesen Knoten selbst verwendet (researchChildrenOf
+// type:'asset'). Notizen speichern diese ID jetzt direkt in n.fids statt
+// (wie vorher) die Asset-Zugehoerigkeit ueber ein getrenntes n.asset-Feld
+// UND "kein Ordner gewaehlt" auszudruecken - eine Quelle weniger.
+function researchGenFidFor(assetId){return assetId?'asset:'+assetId+':gen':null;}
+// Zu welchem Asset gehoert ein Ordner (egal ob General-Notes-Wurzel oder
+// beliebig tief verschachtelter eigener Unterordner darunter)? null, wenn
+// der Ordner zu keinem Asset gehoert (z.B. ein Top-Level-Ordner ausserhalb
+// jeder Asset-Wurzel). Nur ein duenner Wrapper um researchNotesContextFor -
+// bewusst KEINE zweite Baum-Wanderung (Dual-Source-Fehlerklasse).
+function researchFolderAssetOf(fid){const ctx=researchNotesContextFor(fid);return ctx?ctx.assetId:null;}
+// Alle Ordner-IDs "unterhalb" eines Ordners, ihn selbst eingeschlossen -
+// Grundlage fuer "durchsucht diesen Ordner UND seine Unterordner" (Nutzer-
+// Wunsch 2026-08-30). Funktioniert gleichermassen fuer eine echte
+// Unterordner-ID wie fuer die synthetische General-Notes-Wurzel eines
+// Assets (researchCustomChildren() filtert beide Male einfach nach
+// parentId).
+function researchDescendantFolderIds(fid){
+  if(!fid)return[];
+  const out=[fid];
+  (function walk(pid){researchCustomChildren(pid).forEach(f=>{out.push(f.id);walk(f.id);});})(fid);
+  return out;
+}
+// Welche Assets betrifft eine Notiz? Aus JEDEM Ordner in n.fids wird (falls
+// er zu einem Asset gehoert) dessen Asset abgeleitet, PLUS das alte
+// Einzelfeld n.asset (freier manueller Tag, unabhaengig von der
+// Ordnerablage - z.B. um eine allgemeine Notiz zusaetzlich einem Asset
+// zuzuordnen, ohne sie in dessen Ordnerbaum abzulegen). Eine Notiz mit
+// Ordnern aus MEHREREN Assets (z.B. CAD und USD, Nutzer-Wunsch 2026-08-30)
+// erscheint dadurch bei jedem davon vollstaendig - keine Kopie, derselbe
+// Datensatz.
+function resNoteAssetIds(n){
+  const out=new Set();
+  if(n&&n.asset)out.add(n.asset);
+  (n&&n.fids||[]).forEach(fid=>{const a=researchFolderAssetOf(fid);if(a)out.add(a);});
+  return[...out];
 }
 // Transiente UI-Zustaende (Auf-/Zuklapp-Status pro Knoten, aktuell markiertes
 // Blatt) - bewusst NICHT persistiert, gleiches Muster wie indDetailsOpen{}/
@@ -3353,7 +3391,27 @@ function migrateResearch(r,legacyCats){
       });
     }
   }
-  return migrateResearchToAssetFolders(r);
+  r=migrateResearchToAssetFolders(r);
+  return migrateResearchNoteFields(r);
+}
+// Einmalige Migration (Nutzer-Wunsch 2026-08-30 "in mehreren Ordnern
+// ablegen"): `fid` (genau EIN Ordner) -> `fids` (mehrere Ordner gleichzeitig,
+// die Notiz erscheint dann vollstaendig in jedem davon). `dir` (nur bull/
+// bear, Grundlage der jetzt entfernten "war die Richtung richtig"-Auswertung)
+// -> `bias` (bull/bear/neu, rein manuelle Einordnung wie ueberall sonst in
+// der App - keine Kursauswertung mehr dahinter). Ueber _noteSchemaV
+// idempotent, laeuft nur einmal pro Nutzer, kein Datenverlust (fid/dir
+// werden 1:1 uebernommen, nicht neu interpretiert).
+function migrateResearchNoteFields(r){
+  if(r._noteSchemaV>=1)return r;
+  (r.notes||[]).forEach(n=>{
+    if(!Array.isArray(n.fids))n.fids=n.fid?[n.fid]:[];
+    delete n.fid;
+    if(n.bias!=='bull'&&n.bias!=='bear'&&n.bias!=='neu')n.bias=(n.dir==='bull'||n.dir==='bear')?n.dir:'neu';
+    delete n.dir;
+  });
+  r._noteSchemaV=1;
+  return r;
 }
 // Einmalige Migration (Nutzer-Wunsch 2026-08-03): die fruehere freie Themen-
 // Ordner-Struktur (beliebig viele, per "+Add topic" erweiterbar) wird durch
@@ -4832,13 +4890,17 @@ const ASSET_PIN_MAX=3;
 // am Notiz-Objekt (wie n.fav) und liegt damit automatisch im bestehenden
 // Cross-Device-Sync - keine zweite Speicherform noetig.
 function assetPinnedNotes(assetId){
-  return resNotes().filter(n=>n&&n.asset===assetId&&n.pin)
+  return resNotes().filter(n=>n&&n.pin&&resNoteAssetIds(n).includes(assetId))
     .sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')))
     .slice(0,ASSET_PIN_MAX);
 }
 function togResPin(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
-  if(!n.pin&&assetPinnedNotes(n.asset).length>=ASSET_PIN_MAX){
+  // Eine Notiz in mehreren Assets (Nutzer-Wunsch 2026-08-30) zaehlt beim
+  // Anpinnen fuer JEDES davon - blockiert, sobald AUCH NUR EINES bereits
+  // am Limit ist, statt das Limit fuer dieses Asset stillschweigend zu
+  // ueberschreiten.
+  if(!n.pin&&resNoteAssetIds(n).some(a=>assetPinnedNotes(a).length>=ASSET_PIN_MAX)){
     alert('At most '+ASSET_PIN_MAX+' notes can be pinned per asset — unpin one first.');return;
   }
   pushU();n.pin=!n.pin;n.up=new Date().toISOString();save();rerenderNotesHost();
@@ -4849,7 +4911,7 @@ function assetNotesCardHtml(c){
   const pins=assetPinnedNotes(c.id);
   const on=curSub==='notes';
   const body=pins.length
-    ? pins.map(n=>`<button class="aqn-n" onclick="openResNote('${escJH(n.id)}')">
+    ? pins.map(n=>`<button class="aqn-n" style="border-left:3px solid ${BC[n.bias||'neu']}" onclick="openResNote('${escJH(n.id)}')">
         <span class="aqn-n-ti">${escH(n.title||'Untitled note')}</span>
         ${n.body?`<span class="aqn-n-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,72))}</span>`:''}
       </button>`).join('')
@@ -7255,16 +7317,16 @@ function povCorrHtml(name){
 // Research Terminal.
 function povNotesHtml(name){
   const l=pairLegs(name);if(!l)return'';
-  const list=resNotes().filter(n=>n&&(n.asset===l.bId||n.asset===l.qId))
+  const list=resNotes().filter(n=>{const a=resNoteAssetIds(n);return a.includes(l.bId)||a.includes(l.qId);})
     .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||''))).slice(0,8);
   if(!list.length)return povEmpty('No notes on either side yet. Write them in the Research Terminal — they show up here automatically.')+
     `<div class="pov-note"><button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
-  return list.map(n=>`<div class="pov-note-row" onclick="showTab('notes')" title="Open in the Research Terminal">
-      <span class="pov-nleg">${escH(n.asset===l.bId?l.bc:l.qc)}</span>
+  return list.map(n=>{const a=resNoteAssetIds(n);return`<div class="pov-note-row" style="border-left:3px solid ${BC[n.bias||'neu']};padding-left:6px" onclick="showTab('notes')" title="Open in the Research Terminal">
+      <span class="pov-nleg">${escH(a.includes(l.bId)?l.bc:l.qc)}</span>
       <span class="pov-ntitle">${escH(n.title||'(untitled)')}</span>
-      ${typeof noteOutcomeBadge==='function'?noteOutcomeBadge(n):''}
+      ${noteBiasBadge(n)}
       <span class="pov-ndate">${escH(String(n.ts||'').slice(0,10))}</span>
-    </div>`).join('')+
+    </div>`;}).join('')+
     `<div class="pov-note">Notes from both currencies of this pair, newest first. <button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
 }
 
@@ -7537,9 +7599,9 @@ function watchAssetNotesHtml(name){
   return`<div class="wt-pins">${ids.map(id=>{
     const sym=syms.find(x=>x.id===id);
     const pins=assetPinnedNotes(id);
-    const total=resNotes().filter(n=>n&&n.asset===id).length;
+    const total=resNotes().filter(n=>n&&resNoteAssetIds(n).includes(id)).length;
     const rows=pins.length
-      ? pins.map(n=>`<button class="wt-pin" onclick="event.stopPropagation();openResNote('${escJH(n.id)}')">
+      ? pins.map(n=>`<button class="wt-pin" style="border-left:3px solid ${BC[n.bias||'neu']}" onclick="event.stopPropagation();openResNote('${escJH(n.id)}')">
           <span class="wt-pin-ti">${escH(n.title||'Untitled note')}</span>
           ${n.body?`<span class="wt-pin-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,80))}</span>`:''}
         </button>`).join('')
@@ -8259,93 +8321,22 @@ function resAssetCounts(){
   return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
 // ══ NOTIZ-RICHTUNG, EVENT-BEZUG UND TREFFERQUOTE ═════════════════════════
-// (Nutzer-Wunsch 2026-08-07) Der eigentliche Grund, warum Profis
-// dokumentieren, ist nicht das Aufschreiben, sondern das messbare Feedback:
-// lag ich richtig? Dafuer bekommt eine Notiz zwei optionale Zusaetze -
-// eine RICHTUNG (bullish/bearish) und einen BEZUG zu einem Kalender-Event.
-// Beides ist freiwillig; Notizen ohne Richtung verhalten sich exakt wie
-// bisher und tauchen in keiner Statistik auf.
+// (Nutzer-Wunsch 2026-08-07, per 2026-08-30 wieder entfernt - siehe unten)
+// eine BEZUG zu einem Kalender-Event bleibt an einer Notiz moeglich.
 //
-// Die Auswertung vergleicht den Kurs des Assets am Notiz-Tag mit dem Kurs
-// NOTE_HORIZON_D Handelstage spaeter - rein aus price_data.json, das seit
-// dem 3-Jahres-Backfill weit genug zurueckreicht. Bewusst KEINE Bewertung,
-// solange das Fenster noch nicht abgelaufen ist ("pending" statt raten).
-const NOTE_HORIZON_D=5;        // Handelstage bis zur Auswertung
-const NOTE_FLAT_PCT=0.15;      // darunter gilt die Bewegung als seitwaerts
-
-// Kurs eines Assets am (oder zuletzt vor dem) gegebenen Datum.
-function priceAtOrBefore(id,iso){
-  const s=priceSeriesFor(id);
-  if(!Array.isArray(s)||!s.length)return null;
-  let pick=null;
-  for(let i=0;i<s.length;i++){if(s[i][0]<=iso)pick=s[i];else break;}
-  return pick?{d:pick[0],v:Number(pick[1])}:null;
-}
-// Der Punkt n Handelstage NACH dem Startdatum (zaehlt echte Reihen-Eintraege,
-// nicht Kalendertage - Wochenenden/Feiertage fallen so automatisch raus).
-function priceNBarsAfter(id,iso,n){
-  const s=priceSeriesFor(id);
-  if(!Array.isArray(s)||!s.length)return null;
-  let idx=-1;
-  for(let i=0;i<s.length;i++){if(s[i][0]<=iso)idx=i;else break;}
-  if(idx<0)return null;
-  const t=idx+n;
-  if(t>=s.length)return null;                 // Fenster noch nicht abgelaufen
-  return{d:s[t][0],v:Number(s[t][1])};
-}
-// Auswertung einer einzelnen Notiz.
-//   null      -> nicht auswertbar (keine Richtung/kein Asset/keine Kurse)
-//   'pending' -> Fenster laeuft noch
-//   {hit:bool, pct:number, ...}
-function noteOutcome(n){
-  if(!n||!n.dir||(n.dir!=='bull'&&n.dir!=='bear'))return null;
-  if(!n.asset)return null;
-  const iso=String(n.ts||'').slice(0,10);
-  if(!iso)return null;
-  const a=priceAtOrBefore(n.asset,iso);
-  if(!a||!isFinite(a.v)||a.v<=0)return null;
-  const b=priceNBarsAfter(n.asset,iso,NOTE_HORIZON_D);
-  if(!b)return{status:'pending'};
-  if(!isFinite(b.v)||b.v<=0)return null;
-  const pct=(b.v/a.v-1)*100;
-  if(Math.abs(pct)<NOTE_FLAT_PCT)return{status:'flat',pct,from:a.d,to:b.d};
-  const hit=(n.dir==='bull')===(pct>0);
-  return{status:hit?'hit':'miss',hit,pct,from:a.d,to:b.d};
-}
-// Gesamtbilanz ueber alle auswertbaren Notizen (optional auf ein Asset
-// eingeschraenkt). Seitwaerts-Faelle zaehlen bewusst NICHT als Treffer und
-// NICHT als Fehlschlag - sie sagen ueber die Richtung nichts aus.
-function noteHitStats(assetId){
-  let hit=0,miss=0,flat=0,pending=0;
-  resNotes().forEach(n=>{
-    if(assetId&&n.asset!==assetId)return;
-    const o=noteOutcome(n);
-    if(!o)return;
-    if(o.status==='pending')pending++;
-    else if(o.status==='flat')flat++;
-    else if(o.hit)hit++;else miss++;
-  });
-  const graded=hit+miss;
-  return{hit,miss,flat,pending,graded,rate:graded?hit/graded:null};
-}
-// Kleines Ergebnis-Abzeichen fuer eine Notizzeile.
-function noteOutcomeBadge(n){
-  const o=noteOutcome(n);
-  if(!o)return n&&n.dir?`<span class="note-dir ${n.dir==='bull'?'nd-bull':'nd-bear'}" title="Direction you called — needs an asset and price history to be scored">${n.dir==='bull'?'▲':'▼'}</span>`:'';
-  if(o.status==='pending')return`<span class="note-out no-pend" title="Called ${n.dir==='bull'?'bullish':'bearish'} — outcome window (${NOTE_HORIZON_D} trading days) has not closed yet">⋯</span>`;
-  if(o.status==='flat')return`<span class="note-out no-flat" title="Called ${n.dir==='bull'?'bullish':'bearish'} — price moved only ${o.pct.toFixed(2)}% over ${NOTE_HORIZON_D} trading days, too flat to score">≈ ${o.pct>0?'+':''}${o.pct.toFixed(1)}%</span>`;
-  return`<span class="note-out ${o.hit?'no-hit':'no-miss'}" title="Called ${n.dir==='bull'?'bullish':'bearish'} on ${escH(o.from)} — price ${o.pct>0?'rose':'fell'} ${Math.abs(o.pct).toFixed(2)}% by ${escH(o.to)}">${o.hit?'✓':'✗'} ${o.pct>0?'+':''}${o.pct.toFixed(1)}%</span>`;
-}
-// Statistik-Zeile fuer den Terminal-Mittelteil.
-function noteHitStatsHtml(assetId){
-  const st=noteHitStats(assetId);
-  if(!st.graded&&!st.pending)return'';
-  const pct=st.rate==null?null:Math.round(st.rate*100);
-  const col=pct==null?'var(--t3)':pct>=60?BC.bull:pct<=40?BC.bear:'var(--amber)';
-  return`<div class="note-stats" title="Only notes with a direction, an asset and a closed ${NOTE_HORIZON_D}-day window are scored. Sideways moves under ${NOTE_FLAT_PCT}% count as neither.">
-    <span class="ns-big" style="color:${col}">${pct==null?'–':pct+'%'}</span>
-    <span class="ns-lbl">calls correct<br><span style="color:var(--t3)">${st.hit} hit · ${st.miss} miss${st.flat?' · '+st.flat+' flat':''}${st.pending?' · '+st.pending+' open':''}</span></span>
-  </div>`;
+// Ursprünglich hing hier zusaetzlich eine automatische "war die Richtung
+// richtig"-Auswertung (verglich den Kurs am Notiz-Tag mit dem Kurs N Tage
+// spaeter). Nutzer-Wunsch 2026-08-30: entfernt - die Richtung (jetzt
+// `n.bias`, umbenannt und um "neu" erweitert) ist wieder eine rein manuelle
+// Einordnung wie ueberall sonst in der App, ohne Kurs-Nachpruefung.
+// Kleines Bias-Abzeichen fuer eine Notizzeile - ersetzt das fruehere
+// Treffer/Fehlschlag-Abzeichen (noteOutcomeBadge). "neu" bekommt bewusst
+// KEIN Abzeichen (die farbige Randlinie der Notiz-Karte reicht dafuer,
+// siehe noteBiasColor/CSS .res-note) - ein Pfeil fuer "neutral" waere kein
+// Pfeil und nur Rauschen.
+function noteBiasBadge(n){
+  if(!n||(n.bias!=='bull'&&n.bias!=='bear'))return'';
+  return`<span class="note-dir ${n.bias==='bull'?'nd-bull':'nd-bear'}" title="Your call: ${n.bias==='bull'?'Bullish':'Bearish'}">${n.bias==='bull'?'▲':'▼'}</span>`;
 }
 // Kalender-Events rund um heute fuer die Verknuepfung im Notiz-Modal.
 // Nur Events der gewaehlten Waehrung, +/-30 Tage, High/Medium zuerst.
@@ -8427,7 +8418,50 @@ const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest
 // ignoriert (faellt zurueck auf die Wurzel), kann nicht vorkommen, da
 // researchSelectAsset() researchTopOpen aber nicht researchTreeSel zuruecksetzt;
 // der assetId-Abgleich schuetzt trotzdem vor einem veralteten Treffer.
+// ── GLOBALE NOTIZ-SUCHE (Nutzer-Wunsch 2026-08-30) ──────────────────────
+// Eigenstaendig von der ordnergebundenen Suche in researchNotesPanelHtml:
+// durchsucht ALLE Notizen, unabhaengig von Asset/Ordner/Baum-Auswahl. Aktiv,
+// sobald resGlobalQuery oder resGlobalTag gesetzt ist - ersetzt dann den
+// normalen Mittelteil komplett (researchMidHtml prueft das zuerst), bis
+// beides wieder geleert wird.
+let resGlobalQuery='',resGlobalTag='';
+function resSetGlobalQuery(v){
+  resGlobalQuery=v||'';
+  const el=document.getElementById('rtermMid');
+  if(el){
+    el.innerHTML=researchMidHtml();
+    const inp=el.querySelector('#resGlobalSearchInp');
+    if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  }else rerenderNotesHost();
+}
+// Klick auf ein #hashtag - ueberall im Terminal, nicht nur im Ordner-Panel -
+// aktiviert IMMER die globale Suche (Nutzer-Wunsch: "dann werden alle
+// Notizen dazu angezeigt", nicht nur die des gerade offenen Ordners).
+function resOpenGlobalTag(tag){
+  resGlobalQuery='';resGlobalTag=tag||'';
+  rerenderNotesHost();
+}
+function resClearGlobalSearch(){resGlobalQuery='';resGlobalTag='';rerenderNotesHost();}
+function researchGlobalSearchHtml(){
+  const q=resGlobalQuery.trim().toLowerCase();
+  const notes=resNotes().filter(n=>{
+    if(resGlobalTag&&!(n.tags||[]).includes(resGlobalTag))return false;
+    if(q){
+      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+resNoteAssetIds(n).join(' ')+' '+(n.fids||[]).map(researchFolderNameOf).join(' ')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
+  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,true)).join(''):`<div class="dw-empty">No notes match this search.</div>`;
+  const tagChip=resGlobalTag?`<button class="res-chip on" onclick="resOpenGlobalTag('')">#${escH(resGlobalTag)} ✕</button>`:'';
+  return`<div class="ranl-wrap">
+    <div class="ranl-title">Search all notes ${tagChip?'':(q?'— “'+escH(resGlobalQuery)+'”':'')}</div>
+    ${tagChip?`<div class="rterm-noterow">${tagChip}<span class="res-list-ct">${notes.length} note${notes.length===1?'':'s'}</span></div>`:''}
+    <div class="res-list" style="margin-top:10px">${rows}</div>
+  </div>`;
+}
 function researchMidHtml(){
+  if(resGlobalQuery||resGlobalTag)return researchGlobalSearchHtml();
   if(!researchFocusAsset)return`<div class="dw-empty" style="padding:16px">Select an asset in the sidebar to see its notes here.</div>`;
   const ctx=researchNotesContextFor(researchTreeSel);
   const use=(ctx&&ctx.assetId===researchFocusAsset)?ctx:{assetId:researchFocusAsset,fid:null};
@@ -8633,7 +8667,12 @@ function researchSidebarHtml(){
   }
   const anyOpen=researchAllFolderIds().some(id=>researchTreeOpen[id]);
   const rows=researchChildrenOf('root',null).map(n=>researchNodeRow(n,0)).join('');
+  const searching=!!(resGlobalQuery||resGlobalTag);
   return`<div class="rterm-tree">
+    <div class="rtree-search">
+      <input class="finp rtree-search-inp" id="resGlobalSearchInp" placeholder="Search all notes…" value="${escH(resGlobalQuery)}" oninput="resSetGlobalQuery(this.value)">
+      ${searching?`<button class="rtree-search-x" onclick="resClearGlobalSearch()" title="Back to folders">✕</button>`:''}
+    </div>
     <div class="rtree-toolbar">
       <button class="rterm-side-toggle rterm-side-toggle-in" onclick="researchToggleSidebar()" title="Collapse folders">${icn('chevronRight',15)}</button>
       <button class="btn" onclick="researchExpandAllToggle()">${anyOpen?'Collapse all':'Expand all'}</button>
@@ -8792,12 +8831,19 @@ function researchNotesFolderOptions(assetId){
   })('asset:'+assetId+':gen',0);
   return out;
 }
-function researchFolderNameOf(fid){const f=researchFolderById(fid);return f?f.name:'Folder';}
-// Volltextsuche im Terminal-Mittelteil (Nutzer-Wunsch 2026-08-07): "nach 200
-// Notizen findest du ohne Suche nichts wieder". Sucht ueber Titel, Text, Tags
-// und Ordnernamen. Ist etwas eingegeben, wird die Ordner-Einschraenkung
-// bewusst AUFGEHOBEN und ueber alle Notizen dieses Assets gesucht - sonst
-// findet man genau die Notiz nicht, deren Ordner man vergessen hat.
+function researchFolderNameOf(fid){
+  const m=/^asset:(.+):gen$/.exec(fid||'');
+  if(m){const s=(syms||[]).find(x=>x.id===m[1]);return'General Notes'+(s?' ('+s.id+')':'');}
+  const f=researchFolderById(fid);return f?f.name:'Folder';
+}
+// Volltextsuche im Terminal-Mittelteil (Nutzer-Wunsch 2026-08-07 und
+// -08-30): sucht ueber Titel, Text, Tags und Ordnernamen. Bewusst NICHT
+// mehr assetweit, sobald etwas eingegeben ist (fruehere Regel) - Nutzer-
+// Wunsch 2026-08-30 will es genau umgekehrt: "wenn man in einem Ordner
+// sucht kann man nur die Notizen aus dem Ordner und den Unterordnern
+// finden". Fuer eine WIRKLICH globale, ordnerunabhaengige Suche gibt es
+// jetzt eine eigene Leiste oben in der Sidebar (siehe resGlobalQuery/
+// researchGlobalSearchHtml) statt diese hier zu ueberladen.
 let researchNoteQuery='';
 function researchSetNoteQuery(v){
   researchNoteQuery=v||'';
@@ -8812,26 +8858,21 @@ function researchSetNoteQuery(v){
     if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
   }
 }
-function researchNotesPanelHtml(assetId,fid){
-  const sym=(syms||[]).find(s=>s.id===assetId);
-  const q=researchNoteQuery.trim().toLowerCase();
-  const notes=resNotes().filter(n=>{
-    if(n.asset!==assetId)return false;
-    if(!q&&(n.fid||null)!==(fid||null))return false;
-    if(q){
-      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+researchFolderNameOf(n.fid||'')).toLowerCase();
-      if(hay.indexOf(q)<0)return false;
-    }
-    return true;
-  }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
-  const rows=notes.length?notes.map(n=>{
-    const dp=resFmtDateParts(n.up||n.ts);
-    return`<div class="res-note" onclick="openResNote('${n.id}')">
+// Eine Notiz-Zeile im gemeinsamen "res-note"-Kartenstil - wiederverwendet
+// von researchNotesPanelHtml (ordnergebunden) UND researchGlobalSearchHtml
+// (ueberall). showPlaces zeigt zusaetzlich, in welchen Assets/Ordnern die
+// Notiz ueberall abgelegt ist (nur in der globalen Suche sinnvoll - im
+// Ordner-Panel steht man ja bereits in genau einem davon).
+function resNoteRowHtml(n,showPlaces){
+  const dp=resFmtDateParts(n.up||n.ts);
+  const places=showPlaces?(n.fids||[]).map(f=>escH(researchFolderNameOf(f))).join(' · '):'';
+  return`<div class="res-note" style="border-left-color:${BC[n.bias||'neu']}" onclick="openResNote('${n.id}')">
       <div class="res-note-datebox"><div class="res-note-day">${dp.day}</div><div class="res-note-mon">${dp.mon}</div><div class="res-note-yr">${dp.year}</div></div>
       <div class="res-note-body">
-        <div class="res-note-top"><span class="res-note-ti">${escH(n.title||'Untitled note')}</span>${noteOutcomeBadge(n)}</div>
+        <div class="res-note-top"><span class="res-note-ti">${escH(n.title||'Untitled note')}</span>${noteBiasBadge(n)}</div>
+        ${places?`<div class="note-places">${icn('folder',10)} ${places}</div>`:''}
         ${n.evt?`<div class="note-evt" title="Linked calendar event">${icn('clock',10)} ${escH(String(n.evt).replace('|',' · '))}</div>`:''}
-        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag">#${escH(t)}</span>`).join('')}</div>`:''}
+        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resOpenGlobalTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
         ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
       </div>
       <div class="res-note-side">
@@ -8840,12 +8881,32 @@ function researchNotesPanelHtml(assetId,fid){
         <div class="res-note-dt">${dp.time}</div>
       </div>
     </div>`;
-  }).join(''):`<div class="dw-empty">No notes here yet.</div>`;
+}
+function researchNotesPanelHtml(assetId,fid){
+  const sym=(syms||[]).find(s=>s.id===assetId);
+  const scopeFid=fid||researchGenFidFor(assetId);
+  const q=researchNoteQuery.trim().toLowerCase();
+  // Reines Durchblaettern (keine Suche) zeigt NUR Notizen, die GENAU in
+  // diesem Ordner liegen - wie ein Datei-Browser, Unterordner-Inhalte
+  // erscheinen erst beim Hineinklicken. Eine SUCHE dagegen bezieht bewusst
+  // den Ordner UND alle Unterordner ein (Nutzer-Wunsch 2026-08-30) - sonst
+  // muesste man jeden Unterordner einzeln durchsuchen.
+  const scope=q?researchDescendantFolderIds(scopeFid):[scopeFid];
+  const notes=resNotes().filter(n=>{
+    if(!resNoteAssetIds(n).includes(assetId))return false;
+    if(!(n.fids||[]).some(f=>scope.includes(f)))return false;
+    if(q){
+      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+(n.fids||[]).map(researchFolderNameOf).join(' ')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
+  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,false)).join(''):`<div class="dw-empty">No notes here yet.</div>`;
+  const scopeName=fid?escH(researchFolderNameOf(fid)):'General Notes';
   return`<div class="ranl-wrap">
-    <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${q?'Search results':(fid?escH(researchFolderNameOf(fid)):'General Notes')}</div>
-    ${noteHitStatsHtml(assetId)}
+    <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${scopeName}</div>
     <div class="rterm-noterow">
-      <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search all notes for ${escH(sym?sym.name:assetId)}…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
+      <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search in ${scopeName} and its subfolders…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
       <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
     </div>
     <div class="res-list" style="margin-top:10px">${rows}</div>
@@ -8855,7 +8916,7 @@ function researchNotesPanelHtml(assetId,fid){
 // resSel-Zustand abzuleiten (der Baum kennt Asset/Ordner bereits genau).
 function newResNoteIn(assetId,fid){
   _resEditId=null;
-  resFillNoteModal({title:'',body:'',fid:fid||'',asset:assetId||'',tags:[],fav:false});
+  resFillNoteModal({title:'',body:'',fids:[fid||researchGenFidFor(assetId)].filter(Boolean),tags:[],fav:false});
   openM('mResNote');
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
@@ -9056,9 +9117,7 @@ function togResFav(id){
 let _resEditId=null;
 function newResNote(){
   _resEditId=null;
-  const pre=resSel.startsWith('f:')?resSel.slice(2):'';
-  const preA=resSel.startsWith('a:')?resSel.slice(2):'';
-  resFillNoteModal({title:'',body:'',fid:pre,asset:preA,tags:[],fav:false});
+  resFillNoteModal({title:'',body:'',fids:[],tags:[],fav:false});
   openM('mResNote');
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
@@ -9068,57 +9127,94 @@ function openResNote(id){
   resFillNoteModal(n);
   openM('mResNote');
 }
-let _resDir='';
-function resPickDir(d){_resDir=(d==='bull'||d==='bear')?d:'';resPaintDir();}
-function resPaintDir(){
-  [['resNDirBull','bull'],['resNDirNone',''],['resNDirBear','bear']].forEach(([id,v])=>{
+// 3-stufiger Bias statt der frueheren 2-stufigen "Richtung" (Nutzer-Wunsch
+// 2026-08-30: "deutlich ob sie neutral bullish oder bearish sind") - rein
+// manuelle Einordnung, keine Kurs-Auswertung mehr dahinter (siehe
+// migrateResearchNoteFields/noteBiasBadge).
+let _resBias='neu';
+function resPickBias(b){_resBias=(b==='bull'||b==='bear')?b:'neu';resPaintBias();}
+function resPaintBias(){
+  [['resNBiasBull','bull'],['resNBiasNeu','neu'],['resNBiasBear','bear']].forEach(([id,v])=>{
     const b=document.getElementById(id);
-    if(b)b.classList.toggle('on',_resDir===v);
+    if(b)b.classList.toggle('on',_resBias===v);
   });
+}
+// Arbeitszustand des Modals waehrend es offen ist (bis Speichern/Abbrechen) -
+// eine Notiz kann jetzt in mehreren Ordnern gleichzeitig liegen (Nutzer-
+// Wunsch 2026-08-30: "auch wenn man beim CAD eine Notiz schreibt diese auch
+// bei USD ablegen"), deshalb eine wachsende Liste statt eines Einzelwerts.
+let _resFids=[];
+function resPlaceLabel(fid){
+  const a=researchFolderAssetOf(fid);
+  const sym=a?(syms||[]).find(s=>s.id===a):null;
+  const m=/^asset:(.+):gen$/.exec(fid||'');
+  const folderName=m?'General Notes':researchFolderNameOf(fid);
+  return(sym?sym.id+' — ':'')+folderName;
+}
+function resRenderPlaces(){
+  const box=document.getElementById('resNPlaces');if(!box)return;
+  box.innerHTML=_resFids.length?_resFids.map(fid=>
+    `<span class="res-place-chip">${escH(resPlaceLabel(fid))}<button type="button" onclick="resRemovePlace('${escJH(fid)}')" title="Remove">×</button></span>`
+  ).join(''):`<span class="res-place-empty">Not filed in any folder yet — still findable via global search.</span>`;
+}
+function resAddPlace(){
+  const fEl=document.getElementById('resNPlaceFolder');
+  const fid=fEl&&fEl.value;
+  if(!fid||_resFids.includes(fid))return;
+  _resFids.push(fid);
+  resRenderPlaces();
+}
+function resRemovePlace(fid){
+  _resFids=_resFids.filter(f=>f!==fid);
+  resRenderPlaces();
+}
+function resFillPlaceFolderSelect(assetId){
+  const fs=document.getElementById('resNPlaceFolder');if(!fs)return;
+  const opts=[{id:researchGenFidFor(assetId),name:'General Notes'}].concat(researchNotesFolderOptions(assetId));
+  fs.innerHTML=opts.map(f=>`<option value="${escH(f.id)}">${escH(f.name)}</option>`).join('');
+  const ev=document.getElementById('resNEvt');
+  if(ev)ev.innerHTML=noteEventOptions(assetId,ev.dataset.sel||'');
 }
 function resFillNoteModal(n){
   document.getElementById('resNTitle').value=n.title||'';
   document.getElementById('resNBody').value=n.body||'';
   document.getElementById('resNTags').value=(n.tags||[]).join(', ');
   document.getElementById('resNFav').checked=!!n.fav;
-  const as=document.getElementById('resNAsset');
-  as.innerHTML='<option value="">— No asset —</option>'+(syms||[]).map(s=>`<option value="${escH(s.id)}"${n.asset===s.id?' selected':''}>${escH(s.name)}</option>`).join('');
-  // Ordner-Auswahl kommt jetzt aus dem neuen Research-Ordnerbaum (den eigenen
-  // Unterordnern unter "General Notes" DIESES Assets, siehe researchNotesFolderOptions)
-  // statt aus dem alten, nicht mehr aktiv genutzten research.folders-Themensystem -
-  // haengt vom gewaehlten Asset ab, aktualisiert sich daher live bei dessen Wechsel.
-  resFillNoteFolderOptions(n.asset,n.fid);
-  as.onchange=()=>resFillNoteFolderOptions(as.value,'');
-  _resDir=(n.dir==='bull'||n.dir==='bear')?n.dir:'';
-  resPaintDir();
+  _resFids=Array.isArray(n.fids)?n.fids.slice():[];
+  resRenderPlaces();
+  // "Places"-Zeile: Asset-Auswahl bestimmt, aus welchem Asset-Ordnerbaum als
+  // naechstes ein Ordner hinzugefuegt werden kann - bereits hinzugefuegte
+  // Ordner (auch aus anderen Assets) bleiben in _resFids/den Chips oben
+  // unveraendert stehen.
+  const startAsset=resNoteAssetIds(n)[0]||(syms&&syms[0]&&syms[0].id)||'';
+  const as=document.getElementById('resNPlaceAsset');
+  as.innerHTML=(syms||[]).map(s=>`<option value="${escH(s.id)}"${startAsset===s.id?' selected':''}>${escH(s.name)}</option>`).join('');
   const ev=document.getElementById('resNEvt');
-  if(ev)ev.innerHTML=noteEventOptions(n.asset||'',n.evt||'');
-  const asEl=document.getElementById('resNAsset');
-  if(asEl)asEl.addEventListener('change',()=>{const e2=document.getElementById('resNEvt');if(e2)e2.innerHTML=noteEventOptions(asEl.value,'');},{once:false});
+  if(ev)ev.dataset.sel=n.evt||'';
+  resFillPlaceFolderSelect(startAsset);
+  as.onchange=()=>resFillPlaceFolderSelect(as.value);
+  _resBias=(n.bias==='bull'||n.bias==='bear')?n.bias:'neu';
+  resPaintBias();
   document.getElementById('resNDel').style.display=_resEditId?'':'none';
   document.getElementById('resNMeta').textContent=_resEditId&&n.ts?('Created '+resFmtDate(n.ts)+(n.up&&n.up!==n.ts?'  ·  updated '+resFmtDate(n.up):'')):'New note';
-}
-function resFillNoteFolderOptions(assetId,selFid){
-  const fs=document.getElementById('resNFolder');
-  const opts=researchNotesFolderOptions(assetId);
-  fs.innerHTML='<option value="">— Unfiled —</option>'+opts.map(f=>`<option value="${escH(f.id)}"${selFid===f.id?' selected':''}>${escH(f.name)}</option>`).join('');
 }
 function saveResNote(){
   const title=document.getElementById('resNTitle').value.trim();
   const body=document.getElementById('resNBody').value;
   const tags=document.getElementById('resNTags').value.split(',').map(t=>t.trim().replace(/^#/,'')).filter(Boolean).slice(0,12);
-  const fid=document.getElementById('resNFolder').value;
-  const asset=document.getElementById('resNAsset').value;
+  const fids=_resFids.slice();
   const fav=document.getElementById('resNFav').checked;
   if(!title&&!body.trim()){alert('Give the note a title or some text first.');return;}
   const now=new Date().toISOString();
+  const evt=(document.getElementById('resNEvt')||{}).value||null;
+  const primaryAsset=document.getElementById('resNPlaceAsset').value||'';
   pushU();
   if(_resEditId){
     const n=resNotes().find(x=>x.id===_resEditId);
-    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fid=fid;n.asset=asset;n.fav=fav;n.up=now;n.dir=_resDir||null;n.evt=(document.getElementById('resNEvt')||{}).value||null;}
+    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;}
   }else{
-    if(_resAutoPin&&asset===_resAutoPin&&assetPinnedNotes(asset).length<ASSET_PIN_MAX)var _pinNeu=true;
-    research.notes.push({id:uid(),fid:fid,title:title||researchTitleFrom(body),body:body,tags:tags,asset:asset,fav:fav,pin:!!_pinNeu,ts:now,up:now,dir:_resDir||null,evt:(document.getElementById('resNEvt')||{}).value||null});
+    if(_resAutoPin&&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
+    research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
   }
   _resAutoPin=null;
   save();closeM('mResNote');rerenderNotesHost();
@@ -16016,7 +16112,6 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
-  histTagsComparable,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
@@ -16028,11 +16123,11 @@ Object.assign(window,{
   setCalCcyFilterVal,calOpenDays,processCalEvts,getSymEventsAll,getSymEventsCompact,evtSectionOpen,toggleEvtSection,
   indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,histWeekStart,symScoreDrivingEventsByDate,
   histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,HIST_BRK_MAX_REST,histDeltaParts,
-  renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,
-  IND_AUTO_RUBS,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,reviseValHistArr,
-  applyRevisionToValHist,adoptFeedHistory,adoptChartHist,indTrendProgress,fmtTrendVal,openTrendInfo,indBiasInputSig,
-  indBiasPinned,applyTrendModel,indTrendBias,indStepBias,indBiasFromEvent,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,
-  applyResearchToCal,syncIndicatorBiases,resetNonFxIndBias,IND_DISPLAY_NAMES,IND_RESEARCH_DATA,
+  histTagsComparable,renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,
+  IND_EVENT_MATCHERS,IND_AUTO_RUBS,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,
+  reviseValHistArr,applyRevisionToValHist,adoptFeedHistory,adoptChartHist,indTrendProgress,fmtTrendVal,openTrendInfo,
+  indBiasInputSig,indBiasPinned,applyTrendModel,indTrendBias,indStepBias,indBiasFromEvent,CAL_RESEARCH_MATCHERS,
+  isScoreDrivingEvent,applyResearchToCal,syncIndicatorBiases,resetNonFxIndBias,IND_DISPLAY_NAMES,IND_RESEARCH_DATA,
   RESEARCH_MONTHS_DE_FULL,fmtResearchDateFull,srcLabel,PERIOD_TAG_RE,periodLabel,NAME_PERIOD_SUFFIX_RE,
   _stripPeriodCache,stripPeriodSuffix,splitResearchVal,researchBias,applyIndResearch,mkInds,mkRubs,mkRubOrder,
   IND_INFO_DEFAULTS,applyRubOrder,ensureRiskEnvLast,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,
@@ -16043,97 +16138,99 @@ Object.assign(window,{
   MACRO_DATA,RISK_ENV_DEFAULT_DIR,RISK_ENV_DIR_MIGRATE,migrateRiskEnvCfg,mkMacroRub,addMacroRub,mkPairCats,mkNCs,
   RESEARCH_FOLDER_ICONS,RESEARCH_ASSET_FOLDERS,mkResearchFolders,mkResearch,researchFolderIdFor,researchAssetsIn,
   researchCustomChildren,researchChildrenOf,researchAllFolderIds,researchFolderById,researchNotesContextFor,
-  researchToggleNode,researchSelectLeaf,researchSelectAsset,researchSelectAndToggle,researchExpandAllToggle,
-  researchAddFolder,researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,
-  researchNodeRow,researchTitleFrom,migrateResearch,migrateResearchToAssetFolders,LEGACY_SEED_EVTS,mkCalEvts,
-  cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,pushU,
-  SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,BACKUP_KEY,
-  saveLocalBackup,openBackupM,restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,migrateDash,
-  loadState,adoptExternalState,save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,openCloudM,
-  setCloudStatus,saveCloudCfg,updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,KEY_TABS,
-  keyNavAktiv,openKeyHelp,cloudPush,cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,getSbIds,
-  moveSbSym,moveSbCat,scrollIntoNav,sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,miniSparklineSvg,
-  indSparklineSvg,renderSidebar,setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,renderOverviewCard,goToRubCard,
-  assetQuickRowHtml,ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,
-  renderSpecTab,assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,indPairGroupPositions,renderIndsTable,renderIndRow,
-  toggleIndDetailRow,renderNotesSubTab,renderNoteRub,updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,
-  syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,openBiasPicker,biasPickerChoose,closeBiasPicker,
-  biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,
-  openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,renderRiskEnvLists,RISK_ENV_DIRS,
-  RISK_ENV_DIR_CLS,RISK_ENV_DIR_ORDER,renderRiskEnvCfgM,delRub,mvRub,addRub,openInfoM,saveInfoM,setIndBias,
-  syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,getNoteRub,ensureNoteTable,migrateGeneralToNotes,
-  addNoteTableItem,delNoteTableItem,setNoteTableField,mvNoteTableItem,moveNoteTableGroup,addNoteRub,setNoteRubBias,
-  togNoteRubImp,delNoteRub,mvNoteRub,addNoteRubItem,delNoteRubItem,setNoteRubItemBias,togNoteRubItem,mvNoteRubItem,
-  cloneRubsFromUSD,confirmAddSym,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,
-  setAssetLinkCcy,setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,
-  FLIP_CAUSE_TXT,flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,
-  recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,
-  recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
-  sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,
-  sumRawState,fcState,trendState,classifySingle,classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,
-  biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,
-  ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,
-  summarizeInflation,summarizeLabour,summarizeGrowth,summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,
-  magnitudeBiasWord,summarizeCot,summarizeRiskEnv,RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,
-  syncRubSummaries,stampRubOwners,recomputeAuto,_scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,
-  confirmAddPair,saveSetupCcy,syncSetupFilterPref,clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,
-  toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,
-  setPairOvRangeCustom,openPairOverview,closePairOverview,pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,
-  povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,povPositioningHtml,povCalendarHtml,povCorrHtml,
-  povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,
-  watchlistedAssetIds,setWatched,toggleWatch,gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,
-  watchInvolvedAssets,newResNoteForAsset,watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,
-  movePair,delPair,renderCalendar,addCalEv,delCalEv,findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,
-  evtAlertRowsHtml,renderEvtAlertList,deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,
-  onEvtAlertBtnClick,openEvtAlertListModal,openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,
-  removeEvtAlert,openEvtAlertCustom,saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,
-  currentPriceOf,priceAlertTargets,openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,
-  checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,
-  fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,resFmtDateParts,resAllTags,
-  resAssetCounts,NOTE_HORIZON_D,NOTE_FLAT_PCT,priceAtOrBefore,priceNBarsAfter,noteOutcome,noteHitStats,
-  noteOutcomeBadge,noteHitStatsHtml,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,researchMidHtml,
+  researchGenFidFor,researchFolderAssetOf,researchDescendantFolderIds,resNoteAssetIds,researchToggleNode,
+  researchSelectLeaf,researchSelectAsset,researchSelectAndToggle,researchExpandAllToggle,researchAddFolder,
+  researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,researchNodeRow,
+  researchTitleFrom,migrateResearch,migrateResearchNoteFields,migrateResearchToAssetFolders,LEGACY_SEED_EVTS,
+  mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,
+  snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,
+  BACKUP_KEY,saveLocalBackup,openBackupM,restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,
+  migrateDash,loadState,adoptExternalState,save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,
+  openCloudM,setCloudStatus,saveCloudCfg,updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,
+  KEY_TABS,keyNavAktiv,openKeyHelp,cloudPush,cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,
+  getSbIds,moveSbSym,moveSbCat,scrollIntoNav,sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,
+  miniSparklineSvg,indSparklineSvg,renderSidebar,setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,
+  renderOverviewCard,goToRubCard,assetQuickRowHtml,ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,
+  setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,
+  indPairGroupPositions,renderIndsTable,renderIndRow,toggleIndDetailRow,renderNotesSubTab,renderNoteRub,
+  updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,
+  openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,
+  setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,
+  renderRiskEnvLists,RISK_ENV_DIRS,RISK_ENV_DIR_CLS,RISK_ENV_DIR_ORDER,renderRiskEnvCfgM,delRub,mvRub,addRub,
+  openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,getNoteRub,
+  ensureNoteTable,migrateGeneralToNotes,addNoteTableItem,delNoteTableItem,setNoteTableField,mvNoteTableItem,
+  moveNoteTableGroup,addNoteRub,setNoteRubBias,togNoteRubImp,delNoteRub,mvNoteRub,addNoteRubItem,delNoteRubItem,
+  setNoteRubItemBias,togNoteRubItem,mvNoteRubItem,cloneRubsFromUSD,confirmAddSym,FX_LINK_CCYS,escJs,escJH,
+  openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,setAssetDeriveRule,toggleAssetSync,openDelSym,
+  confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,FLIP_CAUSE_TXT,flipCauseBlock,queueScoreFlipAlert,
+  triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,recomputeAllPairBiases,rubAutoBiasNeeded,
+  RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,
+  indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,
+  famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,sumRawState,fcState,trendState,classifySingle,
+  classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,
+  cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,
+  ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,summarizeInflation,summarizeLabour,summarizeGrowth,
+  summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,magnitudeBiasWord,summarizeCot,summarizeRiskEnv,
+  RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,syncRubSummaries,stampRubOwners,recomputeAuto,
+  _scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,confirmAddPair,saveSetupCcy,syncSetupFilterPref,
+  clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,
+  isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,setPairOvRangeCustom,openPairOverview,closePairOverview,
+  pairLegs,pairPerfReturn,pairCorrRows,povCard,povEmpty,povRow,povScoreHtml,povPerfHtml,povCarryHtml,povMacroHtml,
+  povPositioningHtml,povCalendarHtml,povCorrHtml,povNotesHtml,povTrendHtml,renderPairOverview,watchlistCat,
+  migrateMarkedToWatchlist,watchPairNameForAsset,isWatched,watchlistedAssetIds,setWatched,toggleWatch,
+  gotoPairOverview,watchlistPairs,watchNextEvent,watchMetric,watchRowHtml,watchInvolvedAssets,newResNoteForAsset,
+  watchAssetNotesHtml,watchSetNote,renderWatchlistTab,renderPairs,togSymMark,movePair,delPair,renderCalendar,addCalEv,
+  delCalEv,findCalEvtByKey,defaultEvtAlertMsg,evtAlertLabel,fmtAlertFireAt,evtAlertRowsHtml,renderEvtAlertList,
+  deleteEvtAlertById,openEvtAlertEdit,evtAlertPressStart,evtAlertPressEnd,onEvtAlertBtnClick,openEvtAlertListModal,
+  openEvtAlertPicker,confirmEvtAlertPicker,openEvtAlertM,saveEvtAlert,removeEvtAlert,openEvtAlertCustom,
+  saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,currentPriceOf,priceAlertTargets,
+  openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,
+  fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,
+  resFolderName,resFmtDate,resFmtDateParts,resAllTags,resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,
+  RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,
   researchToggleTop,researchTopCardsHtml,toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,
   RESEARCH_SHORTCUTS,researchShortcutGo,researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,
   researchSideTitleHtml,researchSidebarHtml,rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,
   researchToggleAnOpen,researchSetAnBias,researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,
-  assetAnalysisHtml,researchNotesFolderOptions,researchFolderNameOf,researchSetNoteQuery,researchNotesPanelHtml,
-  newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,renderResearchFolders,openResFolder,resPickAsset,
-  resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,resSetQuery,togResFav,newResNote,openResNote,resPickDir,
-  resPaintDir,resFillNoteModal,resFillNoteFolderOptions,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
-  awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
-  riskEnvRemindSundayKey,riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,
-  renderRiskEnvRemind,AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
-  detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,
-  indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
-  setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
-  corrWarnHtml,ESI_HALFLIFE_D,ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,
-  DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
-  CMP_RUBS,CMP_RUB_ICON,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
-  cmpSelectAll,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,
-  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,
-  recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
-  startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
-  setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
-  biasGroup,biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
-  filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
-  setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
-  resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
-  clearCotCcyFilter,COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,
-  autoFetchCot,COT_CFTC_URL,COT_HIST_LEN,COT_MARKETS,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,
-  cotNthWeekday,cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,
-  cotPublicationDate,cotNextReportTs,cotStartCountdown,cotStopCountdown,cotTickCountdown,cotMetrics,cotColor,
-  cotHistRowMetrics,cotNum,cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,cotChartPointerMove,
-  cotWireChartHover,cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,
-  fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
-  chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
-  setDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
-  clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
-  setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
-  markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
-  newsDayLabel,newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,
-  EDGE_MAX_ALTER,edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,
-  setEdgeAsset,edgeFmt,renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,
-  newsTabMore,gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
+  assetAnalysisHtml,researchNotesFolderOptions,researchFolderNameOf,researchSetNoteQuery,resNoteRowHtml,
+  researchNotesPanelHtml,newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,renderResearchFolders,
+  openResFolder,resPickAsset,resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,resSetQuery,togResFav,
+  newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,resRemovePlace,
+  resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,awaitingNotifyHtml,
+  dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,riskEnvRemindSundayKey,
+  riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,renderRiskEnvRemind,AURORA_NEU,
+  updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,detailMetaHtml,dashMajorsHtml,
+  dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,indEditPressStart,indEditPressMove,
+  indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,setPerfWindow,perfReturn,
+  perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,corrWarnHtml,ESI_HALFLIFE_D,
+  ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,DASH_COL_MIN_H,DASH_SHRINK_MIN_H,
+  equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,CMP_RUBS,CMP_RUB_ICON,
+  cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,cmpSelectAll,IND_UNIT_LABEL,
+  IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,cmpOpenRows,toggleCmpRow,
+  renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,recordScoreHist,RISK_ON_IDS,
+  RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,startScanBroadcast,
+  scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,setCorrB,setCorrWin,
+  logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,biasGroup,
+  biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,filterDatesByRange,
+  setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,setTrendsFilter,
+  toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,resolvePairPriceSeries,
+  scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,clearCotCcyFilter,
+  COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,autoFetchCot,COT_CFTC_URL,
+  COT_HIST_LEN,COT_MARKETS,cotParseRaw,cotFetchLive,cotManualRefresh,cotNyParts,cotNyToUtc,cotNthWeekday,
+  cotLastWeekday,cotObserved,cotUsFederalHolidays,cotIsHoliday,cotShiftRelease,cotNextReleaseInfo,cotPublicationDate,
+  cotNextReportTs,cotStartCountdown,cotStopCountdown,cotTickCountdown,cotMetrics,cotColor,cotHistRowMetrics,cotNum,
+  cotNiceAxis,cotHistChart,cotBiasColor,cotChartShowIdx,cotChartHideTip,cotChartPointerMove,cotWireChartHover,
+  cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,fetchSentimentData,
+  autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,chartHoverWrap,
+  attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,setDataAsset,setDataInd,
+  renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,clearSentCcyFilter,
+  sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,setNewsAsset,
+  toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,markNewsSeen,newsIsNew,
+  newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,newsDayLabel,
+  newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,EDGE_MAX_ALTER,
+  edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,setEdgeAsset,edgeFmt,
+  renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,newsTabMore,
+  gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
   setAaiiRangeCustom,setSentSub,setSentSym,setPcAsset,setSentimentRange,setPcRange,setFearGreedRange,
   setSentimentRangeCustom,setPcRangeCustom,setFearGreedRangeCustom,SENT_NONFX_SYMS,SENT_NONFX_PRICE_ID,
   sentSymPriceSeries,sentSymLabel,sentSymWatched,sentFilterBar,pcUsableAssetIds,pcFilterBar,renderSentiment,
@@ -16158,8 +16255,6 @@ Object.assign(window,{
   cloudSyncNow,_seedCleaned,_researchCalChanged,bootFetchScoreFeeds,fetchScoreHistServer,applyScoreHistServerFeed,
   updNetStatus,
 });
-// Live-Bruecke fuer TOP-LEVEL-LET-VARIABLEN (echter Zustand) - siehe
-// docs/module-split.md fuer die Begruendung (kein Kopier-Snapshot).
 Object.defineProperty(window,'_aiDefsDone',{get:()=>_aiDefsDone,set:v=>{_aiDefsDone=v;},configurable:true});
 Object.defineProperty(window,'_rwPressTimer',{get:()=>_rwPressTimer,set:v=>{_rwPressTimer=v;},configurable:true});
 Object.defineProperty(window,'_rwLong',{get:()=>_rwLong,set:v=>{_rwLong=v;},configurable:true});
@@ -16254,11 +16349,14 @@ Object.defineProperty(window,'resSort',{get:()=>resSort,set:v=>{resSort=v;},conf
 Object.defineProperty(window,'resMode',{get:()=>resMode,set:v=>{resMode=v;},configurable:true});
 Object.defineProperty(window,'resFolderOpen',{get:()=>resFolderOpen,set:v=>{resFolderOpen=v;},configurable:true});
 Object.defineProperty(window,'resExpandedRubs',{get:()=>resExpandedRubs,set:v=>{resExpandedRubs=v;},configurable:true});
+Object.defineProperty(window,'resGlobalQuery',{get:()=>resGlobalQuery,set:v=>{resGlobalQuery=v;},configurable:true});
+Object.defineProperty(window,'resGlobalTag',{get:()=>resGlobalTag,set:v=>{resGlobalTag=v;},configurable:true});
 Object.defineProperty(window,'resTlHighOnly',{get:()=>resTlHighOnly,set:v=>{resTlHighOnly=v;},configurable:true});
 Object.defineProperty(window,'researchAnOpen',{get:()=>researchAnOpen,set:v=>{researchAnOpen=v;},configurable:true});
 Object.defineProperty(window,'researchNoteQuery',{get:()=>researchNoteQuery,set:v=>{researchNoteQuery=v;},configurable:true});
 Object.defineProperty(window,'_resEditId',{get:()=>_resEditId,set:v=>{_resEditId=v;},configurable:true});
-Object.defineProperty(window,'_resDir',{get:()=>_resDir,set:v=>{_resDir=v;},configurable:true});
+Object.defineProperty(window,'_resBias',{get:()=>_resBias,set:v=>{_resBias=v;},configurable:true});
+Object.defineProperty(window,'_resFids',{get:()=>_resFids,set:v=>{_resFids=v;},configurable:true});
 Object.defineProperty(window,'riskEnvRemindDismissed',{get:()=>riskEnvRemindDismissed,set:v=>{riskEnvRemindDismissed=v;},configurable:true});
 Object.defineProperty(window,'_liveClockInt',{get:()=>_liveClockInt,set:v=>{_liveClockInt=v;},configurable:true});
 Object.defineProperty(window,'_lastFeedTs',{get:()=>_lastFeedTs,set:v=>{_lastFeedTs=v;},configurable:true});

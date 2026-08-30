@@ -984,7 +984,7 @@ body.compact-view .rub-summary{display:block}
 .res-list-ct{margin-left:auto;font-size:11px;color:var(--t3);font-family:var(--ff-num)}
 .res-sort{background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);padding:3px 6px;font-size:11px;outline:none;cursor:pointer}
 .res-list{display:flex;flex-direction:column}
-.res-note{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid var(--bd);border-left:2px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
+.res-note{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid var(--bd);border-left:3px solid transparent;cursor:pointer;transition:background .12s,border-color .12s}
 .res-note:last-child{border-bottom:none}
 @media (hover:hover){.res-note:hover{background:var(--bg4);border-left-color:var(--blue)}}
 /* Referenz-Mockup 2026-08-03: eigener Datums-Block links (Tag gross,
@@ -1126,6 +1126,13 @@ body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
    Blaetter "General Notes"/"Analysis". +/× zum Anlegen/Loeschen eigener
    Ordner erscheinen erst nach 5s-Long-Press (body.res-edit-mode), gleiches
    Muster wie dashEditMode/indEditMode. */
+/* Globale Notiz-Suche (Nutzer-Wunsch 2026-08-30): eigene, immer sichtbare
+   Leiste oben in der Ordnerbaum-Sidebar - unabhaengig von Asset/Ordner-
+   Auswahl, im Gegensatz zur ordnergebundenen Suche in researchNotesPanelHtml. */
+.rtree-search{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.rtree-search-inp{flex:1}
+.rtree-search-x{flex:none;background:var(--bg2);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rss);width:26px;height:26px;cursor:pointer;font-size:13px}
+.note-places{font-size:10px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:4px}
 .rtree-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .rtree-title{font-size:16px;font-weight:700;color:var(--t0);margin-right:auto}
 .rtree-edit-ctrls{display:none;align-items:center;gap:4px}
@@ -1908,6 +1915,15 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .note-dirpick{display:flex;gap:4px}
 .note-dirbtn{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:11px;font-weight:700;padding:6px 4px;cursor:pointer}
 .note-dirbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+#resNBiasBull.on{background:var(--green);border-color:var(--green)}
+#resNBiasBear.on{background:var(--red);border-color:var(--red)}
+#resNBiasNeu.on{background:var(--amber);border-color:var(--amber)}
+/* Orte-Chips im Notiz-Modal (Nutzer-Wunsch 2026-08-30: mehrere Ordner). */
+.res-places-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:26px}
+.res-place-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--bg2);border:1px solid var(--bd2);border-radius:999px;padding:3px 6px 3px 10px;color:var(--t1)}
+.res-place-chip button{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
+.res-place-chip button:hover{color:var(--red)}
+.res-place-empty{font-size:11px;color:var(--t3);padding:4px 0}
 .note-dir{font-size:11px;font-weight:800;margin-left:6px}
 .note-dir.nd-bull{color:var(--green)}.note-dir.nd-bear{color:var(--red)}
 .note-out{font-size:10px;font-weight:800;margin-left:6px;padding:1px 5px;border-radius:999px;font-family:var(--ff-num);white-space:nowrap}
@@ -3708,11 +3724,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-454 - Bugreport 'History hat viele Fehler' behoben: der Delta-Gate im Asset-History-Fenster verglich den Tag eines Tages nur gegen das AKTUELLE Live-Score-Modell, nicht gegen den Tag des VORTAGS. Am Tag eines Modell-/Modus-Wechsels (6 Versionswechsel in 3 Wochen) wurde die reine Formel-Umstellung dadurch als echte Score-Bewegung angezeigt ('Score moved -1.4 - no dated release'), obwohl nichts am Markt passiert war. Neue Funktion histTagsComparable(a,b) verlangt jetzt zwei BEKANNTE, GLEICHE Modell-Tags fuer ein Delta; bei einem echten Modellwechsel steht stattdessen ein klarer Hinweis. Nebeneffekt: aufeinanderfolgende Tage unter DEMSELBEN aelteren Modell zeigen jetzt wieder ein Delta zueinander, statt komplett zu verstummen - die History wird dadurch insgesamt informativer, nicht nur korrekter. Keine Score-Formel angefasst (scorediff/summarydiff: 0 Aenderungen), nur die Vergleichbarkeits-Anzeige in renderSymHistoryPanel()."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-455 - Notizen ueberarbeitet (Nutzer-Wunsch 2026-08-30): Notiz-Ordner koennen jetzt Unterordner haben (bestand technisch schon, jetzt auch bei Watchlist/Asset-Schnellnotizen wirksam); jede Notiz zeigt ihren Bias (bullish/bearish/neutral) als farbige Randlinie, manuell waehlbar im Notiz-Modal statt wie zuvor per Kurs-Auswertung; eine Notiz kann jetzt in mehreren Ordnern GLEICHZEITIG liegen, auch ueber verschiedene Assets hinweg (z.B. CAD UND USD) - neues Feld n.fids (Array) ersetzt n.fid, Assets werden aus den Ordnern abgeleitet (resNoteAssetIds); neue globale Suchleiste (durchsucht ALLE Notizen, Hashtag-Klick filtert ueberall danach) getrennt von der ordnergebundenen Suche (durchsucht jetzt genau den Ordner + seine Unterordner, nicht mehr das ganze Asset). Die fruehere 'war die Richtung richtig'-Kursauswertung (noteOutcome/noteHitStats) komplett entfernt - reiner manueller Tag statt automatischer Bewertung. Einmalige Migration alter Notizen (fid->fids, dir->bias), keine Daten verloren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-454</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-455</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -3923,21 +3939,30 @@ function introLogin(){
     <div id="resNMeta" style="font-size:11px;color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <input class="finp" id="resNTitle" placeholder="Title — e.g. Core CPI surprised to the downside" style="margin-bottom:8px">
     <textarea class="nbox" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…" style="margin-bottom:8px;min-height:170px"></textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <div style="flex:1;min-width:150px"><div class="res-flbl">Topic</div><select class="finp" id="resNFolder"></select></div>
-      <div style="flex:1;min-width:150px"><div class="res-flbl">Asset</div><select class="finp" id="resNAsset"></select></div>
+    <!-- Orte (Nutzer-Wunsch 2026-08-30): eine Notiz kann in mehreren
+         Ordnern gleichzeitig liegen, auch ueber verschiedene Assets hinweg
+         (z.B. CAD UND USD) - Asset+Ordner waehlen, "+ Add" haengt einen
+         weiteren Platz an, die Chips darunter sind einzeln entfernbar. -->
+    <div style="margin-bottom:8px">
+      <div class="res-flbl">Places (folders this note is filed in — add as many as you like, across any asset)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <select class="finp" id="resNPlaceAsset" style="flex:1;min-width:120px"></select>
+        <select class="finp" id="resNPlaceFolder" style="flex:1;min-width:120px"></select>
+        <button type="button" class="btn" onclick="resAddPlace()">＋ Add</button>
+      </div>
+      <div class="res-places-chips" id="resNPlaces"></div>
     </div>
     <div style="margin-bottom:8px"><div class="res-flbl">Tags (comma separated)</div><input class="finp" id="resNTags" placeholder="inflation, cpi, fed"></div>
-    <!-- Richtung + Event-Bezug (Nutzer-Wunsch 2026-08-07): beides optional.
-         Erst eine Richtung macht die Notiz spaeter automatisch auswertbar -
-         ohne sie verhaelt sich die Notiz exakt wie vorher. -->
+    <!-- Bias + Event-Bezug (Nutzer-Wunsch 2026-08-07, Bias erweitert und von
+         der Kurs-Auswertung geloest 2026-08-30): rein manuelle Einordnung,
+         macht die Notiz-Karte auf einen Blick farbig erkennbar. -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <div style="flex:1;min-width:150px">
-        <div class="res-flbl">Your call (makes this note scoreable)</div>
+        <div class="res-flbl">Bias</div>
         <div class="note-dirpick">
-          <button type="button" class="note-dirbtn" id="resNDirBull" onclick="resPickDir('bull')">▲ Bullish</button>
-          <button type="button" class="note-dirbtn" id="resNDirNone" onclick="resPickDir('')">— None</button>
-          <button type="button" class="note-dirbtn" id="resNDirBear" onclick="resPickDir('bear')">▼ Bearish</button>
+          <button type="button" class="note-dirbtn" id="resNBiasBull" onclick="resPickBias('bull')">▲ Bullish</button>
+          <button type="button" class="note-dirbtn" id="resNBiasNeu" onclick="resPickBias('neu')">◆ Neutral</button>
+          <button type="button" class="note-dirbtn" id="resNBiasBear" onclick="resPickBias('bear')">▼ Bearish</button>
         </div>
       </div>
     </div>

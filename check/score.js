@@ -118,6 +118,29 @@ const MODE = process.argv[2] || 'normalized';
     if(scoreMode!=='classic')add('setScoreModeVal(\'classic\') wirkt nicht',{});
     setScoreModeVal(vorher);
   }
+  // ── F4) Notiz-Bias (resPickBias/resPaintBias/noteBiasBadge) - reiner
+  // UI-Tag, KEINE Score-Groesse ──
+  // Nutzer-Wunsch 2026-08-30 ("mach von Notizen das Aussehen deutlich ob sie
+  // neutral bullish oder bearish sind"): eine Notiz bekommt einen rein
+  // manuellen Bias-Tag (bull/bear/neu), der NICHTS mit dem App-Score zu tun
+  // hat - er faerbt nur die Notiz-Karte. Der Name matcht trotzdem Regel 5s
+  // Bias-Filter (zu Recht vorsichtig) - hier der Beleg, dass die drei
+  // Funktionen wirklich nur den Notiz-eigenen Zustand betreffen: der Picker
+  // setzt/validiert _resBias, das Malen spiegelt ihn auf die drei Modal-
+  // Buttons, das Abzeichen zeigt bull/bear an und bleibt bei "neu" leer.
+  if(typeof resPickBias==='function'&&typeof noteBiasBadge==='function'){
+    resPickBias('bull');
+    if(_resBias!=='bull')add('resPickBias(\'bull\') wirkt nicht',{});
+    if(document.getElementById('resNBiasBull')&&!document.getElementById('resNBiasBull').classList.contains('on'))
+      add('resPaintBias() markiert den Bullish-Knopf nicht',{});
+    resPickBias('bear');
+    if(_resBias!=='bear')add('resPickBias(\'bear\') wirkt nicht',{});
+    resPickBias('unsinn');
+    if(_resBias!=='neu')add('resPickBias() faengt ungueltige Werte nicht auf neu ab',{});
+    if(!noteBiasBadge({bias:'bull'}))add('noteBiasBadge zeigt fuer bull kein Abzeichen',{});
+    if(!noteBiasBadge({bias:'bear'}))add('noteBiasBadge zeigt fuer bear kein Abzeichen',{});
+    if(noteBiasBadge({bias:'neu'}))add('noteBiasBadge zeigt fuer neu faelschlich ein Abzeichen',{});
+  }
   // ── G2) Flip-Tage gegen scoreHist ──────────────────────────────
   // symBiasFlipDays speist die Flip-Marke an den Asset-Schlagzeilen. Sie darf
   // NUR Tage melden, an denen scoreHist wirklich einen Bias-Wechsel
