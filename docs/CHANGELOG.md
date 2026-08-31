@@ -8028,3 +8028,63 @@ bestaetigen Watchlist-Quicklinks (Buttonzahl + Klick + Zurueck-Pille),
 Notiz-Struktur (Titel/Body/Tags/Unterordner-Kette), Retail-Sentiment-
 Balken bei extremen Splits (z.B. 98%/2%, beide Zahlen sichtbar). Keine
 Score-Formel angefasst.
+
+## 2026-08-31 — Watchlist-Quicklinks: FX-Paar-Bug + News-Bug + Notiz-Dubletten nachgebessert
+
+**Bugreport (direkt nach VERSION-CHECK-457):** "bei usdcad geht nicht
+seasonality weil es da im Filter nicht usdcad gibt" + "wenn ich auf die
+quicklinks gehe ist auch oft nicht direkt das Asset ausgewaehlt". Beides per
+Playwright gegen das echte DOM nachvollzogen (nicht nur die JS-Variable
+geprueft, sondern der tatsaechlich sichtbare `<select>`-Wert je Kategorie),
+zwei getrennte Ursachen gefunden:
+
+1. **FX-Paar-Zeilen bekamen Quicklinks zu Kategorien ohne Paar-Filter.**
+   Die vorherige Fassung nahm bei einem FX-Paar (z.B. USD/CAD) die
+   Basiswaehrung als Ersatz-Asset. Audit aller 8 `ASSET_QUICK_LINKS`-
+   Kategorien zeigte: Seasonality/COT/Data/News/Rate Probabilities/
+   Calendar/Put-Call filtern AUSNAHMSLOS nach einer einzelnen Waehrung oder
+   einem einzelnen Asset - keine einzige hat eine "waehle dieses Paar"-
+   Option. Einzige Ausnahme: Trends im Paar-Modus (`trendsPairSel`,
+   ALL_PAIRS-Liste inkl. Watchlist-Gruppe). FX-Paar-Zeilen zeigen deshalb
+   jetzt nur noch DIESEN einen Quicklink (`watchQuickGoPair()`, setzt
+   `trendsFilter='PAIR'` + `trendsPairSel=name` direkt) - dafuer waehlt er
+   das Paar dann auch wirklich exakt, statt nur eine Seite davon. Non-FX-
+   Zeilen (Gold, BTC, Indizes - ein eindeutiges Einzel-Asset, keine
+   Mehrdeutigkeit) unveraendert bei ihren bisherigen 5 Kategorien.
+2. **News-Quicklink setzte die falsche Variable** (vorbestehender Bug, traf
+   auch die alten Asset-Seiten-Quicklinks, nicht nur die neuen Watchlist-
+   Quicklinks): `applyAssetQuickFilter()`s News-Zweig rief `setNewsAsset()`
+   auf - das setzt `newsAssetSel`, den Filter des Dashboard-"Headlines"-
+   Widgets. Der News-TAB selbst liest aber `newsTabAsset` (eigene
+   Zustandsvariable, gesetzt ueber `setNewsTabAsset()` - derselbe Weg, den
+   `gotoNewsFor()` vom Kalender aus schon nutzt). Der Tab blieb deshalb nach
+   dem Klick bei "All assets" stehen. Fix: News-Zweig ruft jetzt
+   `setNewsTabAsset()` auf. Alle anderen 7 Kategorien wurden einzeln gegen
+   das DOM verifiziert und waren bereits korrekt.
+
+**Notiz-Dubletten nachgebessert** (Nutzerfrage vorab beantwortet: keine
+geteilte Notiz in mehreren Ordnern, sondern eigenstaendig umformulierter
+Inhalt je Asset): 104 vom Vortag bekannte Dublettenpaare plus 8 beim
+Ueberarbeiten zusaetzlich gefundene Gruppen (macht 235 einzelne Notizen)
+in NAS/SP500, GOLD/SILVER, DAX/GER100 (und den Querueberschneidungen
+dazwischen) neu geschrieben mit jeweils eigenem inhaltlichem Blickwinkel:
+GOLD (Reserve-Asset/Zentralbank-Kauf-Boden) vs. SILVER (zusaetzlich
+Industrienachfrage/PMI, kein Zentralbank-Boden, duennerer/volatilerer
+Markt); NAS (Mega-Cap/AI-Capex/Duration-Sensitivitaet) vs. SP500 (breiter,
+sektor-diversifizierter Referenzindex); DAX (der Kassa-Index/die
+Unternehmens-Fundamentaldaten selbst) vs. GER100 (dasselbe Marktgeschehen,
+aber als CFD/Futures-Handelsinstrument mit eigenen Mechaniken -
+Finanzierungskosten, Roll-Termine, Wochenend-Gap-Risiko, duennere
+Liquiditaet ausserhalb der Kassaboersen-Handelszeit). Eigene Nachpruefung
+(nicht nur der Agent-Eigenbericht): 0 Dubletten-Titel mehr innerhalb dieses
+6-Asset-Clusters, Struktur (6/6/3 je Thema, Titel/Body/Tags/Unterthema) fuer
+alle 16 Assets weiterhin fehlerfrei.
+
+**Geprueft:** `node --check` beider geaenderter Dateien; eigenes
+Verifikationsscript (Struktur + Dubletten-Scan); `node check/all.js`
+komplett gruen (13 Waechter); Playwright bestaetigt USD/CAD-Zeile jetzt nur
+noch 1 Quicklink (Trends), Klick waehlt "USD/CAD" exakt im Paar-Filter
+(JS-Variable UND sichtbarer DOM-Select-Wert geprueft), Gold-Zeile
+weiterhin 5 Quicklinks, News-Quicklink setzt jetzt `newsTabAsset` korrekt.
+Keine VERSION-CHECK-Nummer noetig (kein `index.html`-Diff diese Runde, nur
+`js/main.js` + `js/asset-notes-seed.js`). Keine Score-Formel angefasst.

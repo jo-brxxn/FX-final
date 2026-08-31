@@ -8635,7 +8635,13 @@ function applyAssetQuickFilter(tabId,id){
   else if(tabId==='trends')setTrendsFilter(dataId);
   else if(tabId==='cot')pickCotFilter(dataId);
   else if(tabId==='data')setDataAsset(dataId);
-  else if(tabId==='news')setNewsAsset(dataId);
+  // Bugfix 2026-08-31: setNewsAsset() setzt newsAssetSel, das ist aber nur
+  // der Filter des Dashboard-"Headlines"-Widgets - der News-TAB selbst
+  // liest newsTabAsset (siehe renderNewsTab/setNewsTabAsset, derselbe Weg
+  // wie gotoNewsFor() vom Kalender aus). Der Quicklink oeffnet den News-Tab
+  // (showTab('news')), musste also auch dessen Filter setzen - vorher blieb
+  // der Tab auf "All assets" stehen, obwohl der Klick "vorgefiltert" meinte.
+  else if(tabId==='news')setNewsTabAsset(dataId);
   // Nutzer-Audit 2026-08-24 ("Check das nochmal ob das ueberall so ist"):
   // drei der acht Schnellzugriffe waren bisher gar nicht vorgefiltert -
   // Sentiment/Rate Probabilities/Calendar fielen einfach auf showTab(tabId)
@@ -8657,37 +8663,52 @@ function assetQuickGo(tabId){
   setBackPillTitle(`Back to ${c.name}`);
   showTab(tabId);
 }
-// Welche der 8 ASSET_QUICK_LINKS-Kategorien filtern fuer dieses Asset
-// WIRKLICH nach dem Asset selbst (statt nur nach seiner verknuepften
-// Waehrung)? Nutzer-Wunsch 2026-08-31: die Watchlist soll dieselben
-// Quicklinks bekommen wie die Asset-Seite, aber NUR die Kategorien, "wo man
-// auch nach dem Asset filtern kann" - je nach Asset koennen das
-// unterschiedlich viele sein. Aus applyAssetQuickFilter() folgt:
-// - seas/trends/cot/data/news filtern per Asset-ID, AUSSER bei Yields (dort
-//   Waehrungs-Fallback, siehe oben) - qualifizieren also fuer alles ausser
-//   Yields.
-// - rate/cal/sent loesen IMMER ueber macroCcyFor(id) auf, filtern also nur
-//   fuer echte FX-Waehrungen wirklich "nach dem Asset" (dort ist Asset =
-//   Waehrung); bei Gold/BTC/Indizes zeigen sie nur die verknuepfte Waehrung,
-//   nicht das Asset selbst - fallen fuer die also raus.
+// Welche der 8 ASSET_QUICK_LINKS-Kategorien filtern fuer dieses (Non-FX-)
+// Asset WIRKLICH nach dem Asset selbst (statt nur nach seiner verknuepften
+// Waehrung)? Nur fuer Non-FX-Watchlist-Zeilen aufgerufen (ein einzelnes,
+// eindeutiges Asset wie GOLD) - fuer FX-PAAR-Zeilen siehe
+// watchQuickLinksHtml(), die haben eine eigene, strengere Regel. Aus
+// applyAssetQuickFilter() folgt: seas/trends/cot/data/news filtern per
+// Asset-ID (ausser bei Yields, dort Waehrungs-Fallback), rate/cal/sent
+// loesen IMMER ueber macroCcyFor(id) auf - zeigen bei Gold/BTC/Indizes also
+// nur die verknuepfte Waehrung, nicht das Asset selbst, und fallen deshalb
+// fuer Non-FX-Assets grundsaetzlich raus.
 function assetSpecificQuickLinks(id){
   const cls=assetCls(id);
   return ASSET_QUICK_LINKS.filter(([tab])=>
-    (tab==='rate'||tab==='cal'||tab==='sent')?cls==='fx':cls!=='yield');
-}
-// Kanonisches Fokus-Asset einer Watchlist-Zeile fuer die Quicklinks: bei
-// einem FX-Paar die Basiswaehrung (dieselbe Wahl wie beim COT-Metric in
-// watchRowHtml - "COT der Basisseite"), bei Non-FX das Asset selbst.
-function watchQuickAssetId(name){
-  if(isPureFxPair(name)){const l=pairLegs(name);return l?l.bId:null;}
-  return nonFxLegAssetId(name)||null;
+    (tab==='rate'||tab==='cal'||tab==='sent')?false:cls!=='yield');
 }
 function watchQuickLinksHtml(name){
-  const id=watchQuickAssetId(name);if(!id)return'';
+  // FX-PAAR-Zeile (z.B. USD/CAD): "das Asset" dieser Zeile ist das Paar
+  // selbst, nicht eine seiner beiden Seiten. Bugreport 2026-08-31: die
+  // vorherige Version nahm die Basiswaehrung als Ersatz und zeigte damit
+  // Quicklinks zu Kategorien (Seasonality/COT/Data/News/...), die ueberhaupt
+  // keine Paar-Option im Filter haben ("bei usdcad geht nicht seasonality
+  // weil es da im Filter nicht usdcad gibt") - man landete dort faktisch bei
+  // nur einer Waehrung, nicht beim Paar. Von den 8 Kategorien kann NUR
+  // Trends (PAIR-Modus, trendsPairSel) ein echtes Paar direkt auswaehlen -
+  // deshalb fuer FX-Paare nur dieser eine Quicklink.
+  if(isPureFxPair(name)){
+    return`<div class="wt-quick"><button class="aql" onclick="watchQuickGoPair('${escJH(name)}')" title="Trends — opens with ${escH(name)} already selected as a pair">${icn('trendUp',14)}<span>Trends</span></button></div>`;
+  }
+  const id=nonFxLegAssetId(name);if(!id)return'';
   const links=assetSpecificQuickLinks(id);if(!links.length)return'';
   const label=(syms.find(s=>s.id===id)||{}).name||id;
   return`<div class="wt-quick">${links.map(([tab,ic,lbl])=>
     `<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('')}</div>`;
+}
+// Trends-PAIR-Modus-Quicklink fuer FX-Paar-Watchlist-Zeilen (siehe
+// watchQuickLinksHtml) - eigener, einfacherer Weg als watchQuickGo(), weil
+// hier kein einzelnes Asset ueber applyAssetQuickFilter gesetzt wird,
+// sondern direkt der Paar-Modus von Trends.
+function watchQuickGoPair(name){
+  if(!name)return;
+  setTrendsFilter('PAIR');
+  setTrendsPair(name);
+  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
+  document.body.classList.add('res-return-active');
+  setBackPillTitle('Back to the Watchlist');
+  showTab('trends');
 }
 // Wie assetQuickGo, aber ausgeloest von einer Watchlist-Zeile statt der
 // Asset-Detailseite - es gibt kein einzelnes fokussiertes Asset, auf das die
@@ -16306,7 +16327,7 @@ Object.assign(window,{
   resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
   toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
   researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,applyAssetQuickFilter,assetSpecificQuickLinks,
-  watchQuickAssetId,watchQuickLinksHtml,watchQuickGo,researchSideTitleHtml,researchSidebarHtml,
+  watchQuickLinksHtml,watchQuickGo,watchQuickGoPair,researchSideTitleHtml,researchSidebarHtml,
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
   researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
   researchFolderNameOf,researchSetNoteQuery,resSetSearchField,resSearchFieldPickerHtml,resNoteMatchesQuery,
