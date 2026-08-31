@@ -8292,3 +8292,46 @@ Direktlinks ("USD Asset", "CAD Asset"), Gold genau 1 ("Gold Asset"), Klick
 auf "CAD Asset" navigiert korrekt zur Asset-Seite mit CAD ausgewaehlt
 (`curPage==='cur'`, `getSym().id==='CAD'`); `node check/all.js` komplett
 gruen (13 Waechter). Keine Score-Formel angefasst.
+
+## 2026-08-31 — History als Zeitstrahl mit Wochen->Tage-Drill-down (VERSION-CHECK-460)
+
+Nutzer-Wunsch: die Score-History je Asset (bisher eine vertikale Liste aus
+Wochen-Karten mit Tages-Listen darunter) als horizontalen Zeitstrahl von
+links nach rechts, mit Drill-down beim Anklicken. Vorher per
+`AskUserQuestion` abgestimmt (95%-Sicherheits-Regel bei Design-
+Entscheidungen): Balken statt Punkte/Linie, bestaetigt.
+
+**Neue Struktur (`histTimelineChart()`, neue generische Funktion):**
+Diverging Balken-Chart (Nulllinie mittig, positive Netto-Bewegung gruen
+nach oben, negative rot nach unten) - gleiches Grundmuster wie
+`seasBarChart()` bei Seasonality, hier aber mit Klick-Handler je Balken.
+Oben EIN Zeitstrahl mit einem Balken je WOCHE (aeltester Balken links,
+neuester rechts - `weeks` war intern neueste-zuerst sortiert, fuer den
+Zeitstrahl umgedreht). Klick auf einen Wochen-Balken klappt darunter einen
+zweiten Zeitstrahl mit einem Balken je TAG dieser Woche auf (eingezogen,
+mit Akzentstrich als visuelle Hierarchie-Markierung). Klick auf einen
+Tag-Balken zeigt darunter die BESTEHENDE Detail-Karte (Events, manuelle
+Aenderungen, Score-Aufschluesselung) - deren Inhalt/Logik ist komplett
+unveraendert, nur der Zugriffsweg ist neu (Zeitstrahl-Klick statt endloses
+Scrollen). Zustand ueber zwei neue Variablen (`histExpandWeek`,
+`histExpandDay`) - Klick auf denselben Balken klappt wieder zu.
+
+Wochen-Balken-Wert = Netto-Score-Aenderung der Woche (Wochenanfang vs.
+Wochenende, wie zuvor). Tages-Balken-Wert = Tages-Delta zum Vortag (dieselbe
+Zahl, die vorher schon als "+/-X" neben jedem Tag stand) - konsistente
+Bedeutung auf beiden Zoom-Stufen ("wie stark hat sich hier etwas bewegt").
+Ein Balken ohne aufgezeichneten Wert wird als duenner grauer Strich auf der
+Nulllinie gezeichnet statt unsichtbar zu bleiben. Die bisherigen, jetzt
+toten CSS-Regeln fuer die alten Wochen-Karten (`.histp-week`,
+`.histp-weekhdr`, `.histp-weeklbl`, `.histp-weeknet`, `.histp-weekcnt`)
+entfernt, `.histp-weekempty` bleibt (wird jetzt fuer einen leeren
+aufgeklappten Tag genutzt).
+
+**Geprueft:** `node --check`; Playwright bestaetigt: 6 Wochen-Balken bei
+30-Tage-Bereich, Klick auf die aktuelle Woche klappt einen Tages-Zeitstrahl
+mit korrektem Label ("Mon, Aug 31 – Sun, Sep 6") auf, ein VOLLSTAENDIGER
+Wochen-Balken zeigt 7 Tages-Balken, Klick auf einen Tag zeigt die
+bestehende Detail-Karte mit korrektem Inhalt, erneuter Klick auf denselben
+Wochen-Balken klappt wieder zu, SVG-`<title>`-Tooltips liefern korrekten
+Text. `node check/all.js` komplett gruen (13 Waechter). Keine Score-Formel
+angefasst (nur die Anzeige einer bereits bestehenden Zahl).

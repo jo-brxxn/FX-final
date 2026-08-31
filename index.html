@@ -2664,12 +2664,13 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-rbtn{border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);font:700 11.5px/1 var(--ff-text);padding:7px 13px;cursor:pointer}
 .histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
 @media(hover:hover){.histp-rbtn:hover{border-color:var(--accent);color:var(--accent)}.histp-rbtn.on:hover{color:#FFFFFF}}
-.histp-week{margin-bottom:14px}
-.histp-weekhdr{display:flex;align-items:center;gap:9px;padding:6px 2px 7px;border-bottom:1px solid var(--bd2);margin-bottom:7px}
-.histp-weeklbl{font:800 12px/1 var(--ff-text);color:var(--t1);letter-spacing:.02em}
-.histp-weeknet{font:800 12px/1 var(--ff-num)}
-.histp-weekcnt{margin-left:auto;font:600 10.5px/1 var(--ff-text);color:var(--t3)}
 .histp-weekempty{font:400 11.5px/1.4 var(--ff-text);color:var(--t3);padding:4px 2px 8px}
+/* Zeitstrahl-Ansicht (Nutzer-Wunsch 2026-08-31): der Tages-Zeitstrahl einer
+   aufgeklappten Woche sitzt sichtbar EINE Ebene tiefer (linker Akzentstrich
+   + Einzug), damit die Drill-down-Hierarchie (Woche -> Tage -> Detail-Karte)
+   auf einen Blick erkennbar bleibt, nicht nur durch Reihenfolge. */
+.histp-daychart{margin:10px 0 4px 10px;padding-left:10px;border-left:2px solid var(--bd2)}
+.histp-daychart-lbl{font:700 10.5px/1 var(--ff-text);color:var(--t3);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
 .histp-brk{display:flex;flex-wrap:wrap;gap:5px;padding:4px 2px 3px 22px}
 .histp-brk-i{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:var(--rss);padding:3px 7px;background:var(--bg1)}
 .histp-brk-n{font:600 10.5px/1 var(--ff-text);color:var(--t2)}
@@ -3773,11 +3774,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-459 - Watchlist: Direktlinks zur Assets-Seite (Nutzer-Wunsch 2026-08-31): jede Watchlist-Karte bekommt unter den Kategorie-Quicklinks eine zweite, farblich abgehobene Zeile mit Direktlinks zur vollen Assets-Detailseite (gotoSym) - bei einem FX-Paar (z.B. USD/CAD) je ein Button pro Seite (USD, CAD), bei einem Non-FX-Asset (z.B. Gold) nur einer."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-460 - History als Zeitstrahl mit Drill-down (Nutzer-Wunsch 2026-08-31): die Score-History je Asset ist jetzt ein horizontaler Balken-Zeitstrahl (aeltester Balken links, neuester rechts) statt einer vertikalen Liste. Oben ein Balken je Woche (Netto-Bewegung, gruen/rot); Klick auf einen Wochen-Balken klappt darunter einen zweiten Zeitstrahl mit einem Balken je Tag dieser Woche auf; Klick auf einen Tag-Balken zeigt darunter die bestehende Detail-Karte (Events, Score-Aufschluesselung) - inhaltlich unveraendert, nur ueber den Zeitstrahl statt Scrollen erreicht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-459</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-460</span>
     </span>
   </div>
   <div class="hdr-r">

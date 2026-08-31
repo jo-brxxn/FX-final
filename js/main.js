@@ -784,8 +784,27 @@ const HIST_DAYS=10;
 const HIST_RANGES=[['1W',7],['2W',14],['1M',30],['2M',60],['3M',90]];
 const HIST_MAX_RANGE=90;
 let histRange=30,_histSymId=null;
+// Zeitstrahl-Drill-down (Nutzer-Wunsch 2026-08-31: "Historie als Zeitstrahl
+// von links nach rechts... wenn man [eine Woche] anklickt erscheint
+// darunter ein weiterer Zeitstrahl") - histExpandWeek = Wochenanfang
+// (Montag-Datum) der gerade aufgeklappten Woche, histExpandDay = Datum des
+// gerade aufgeklappten Tages INNERHALB dieser Woche. Beide null = nur der
+// oberste Wochen-Zeitstrahl ist sichtbar.
+let histExpandWeek=null,histExpandDay=null;
 function setHistRange(d){
   histRange=+d||30;
+  histExpandWeek=null;histExpandDay=null;
+  const el=document.getElementById('histBody');
+  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
+}
+function toggleHistWeek(ws){
+  histExpandWeek=(histExpandWeek===ws)?null:ws;
+  histExpandDay=null;
+  const el=document.getElementById('histBody');
+  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
+}
+function toggleHistDay(d){
+  histExpandDay=(histExpandDay===d)?null:d;
   const el=document.getElementById('histBody');
   if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
 }
@@ -1067,6 +1086,46 @@ function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,name
 // passt; am Tag eines Modellwechsels wurde dadurch eine Formel-Umstellung
 // als echte Score-Bewegung ausgegeben).
 function histTagsComparable(a,b){return a!=null&&b!=null&&a===b;}
+// Horizontaler Balken-Zeitstrahl fuer die History (Nutzer-Wunsch
+// 2026-08-31: "Historie als Zeitstrahl von links nach rechts... wenn man
+// [eine Woche] anklickt erscheint darunter ein weiterer Zeitstrahl") -
+// diverging bar chart (Nulllinie mittig, positiv gruen nach oben, negativ
+// rot nach unten), gleiches Grundmuster wie seasBarChart(), hier aber mit
+// Klick-Handler je Balken (ruft onClickFn(key) auf) und einem
+// Hervorhebungs-Rahmen fuer den Balken, dessen Zeitraum gerade aufgeklappt
+// ist (activeKey). items: [{key,label,sub,val,tip}], val=null -> kein
+// aufgezeichneter Wert (duenner grauer Strich auf der Nulllinie statt
+// Balken). Items MUESSEN bereits chronologisch aufsteigend sortiert sein
+// (aeltester zuerst) - "links nach rechts" ist explizit der Nutzer-Wunsch.
+function histTimelineChart(items,onClickFn,activeKey){
+  if(!items.length)return'';
+  const iw=68,padT=10,padB=32,padL=6,padR=6,H=104;
+  const W=padL+padR+iw*items.length;
+  const vals=items.map(i=>i.val).filter(v=>v!=null);
+  const maxAbs=Math.max(0.5,...vals.map(Math.abs));
+  const yOf=v=>padT+(1-(v+maxAbs)/(2*maxAbs))*(H-padT-padB);
+  const y0=yOf(0);
+  const parts=[];
+  items.forEach((it,i)=>{
+    const cx=padL+(i+.5)*iw;
+    const active=it.key===activeKey;
+    const tip=`<title>${escH(it.tip||it.label)}</title>`;
+    if(active)parts.push(`<rect x="${(padL+i*iw).toFixed(1)}" y="2" width="${iw.toFixed(1)}" height="${(H-2).toFixed(1)}" rx="6" fill="rgba(255,255,255,.07)"/>`);
+    if(it.val==null){
+      parts.push(`<g style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${tip}<rect x="${(cx-iw*.28).toFixed(1)}" y="${(y0-1.5).toFixed(1)}" width="${(iw*.56).toFixed(1)}" height="3" rx="1.5" fill="var(--t3)" opacity=".4"/></g>`);
+    }else{
+      const col=it.val>=0?BC.bull:BC.bear;
+      const yv=yOf(it.val),top=Math.min(y0,yv),h=Math.max(2,Math.abs(y0-yv));
+      parts.push(`<g style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${tip}<rect x="${(cx-iw*.28).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.56).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${active?.95:.82}"${active?' stroke="rgba(255,255,255,.85)" stroke-width="1.5"':''}/></g>`);
+    }
+    parts.push(`<text x="${cx.toFixed(1)}" y="${H-padB+16}" text-anchor="middle" font-size="11" font-weight="${active?'800':'600'}" fill="${active?'var(--t0)':'var(--t3)'}" style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${escH(it.label)}</text>`);
+    if(it.sub)parts.push(`<text x="${cx.toFixed(1)}" y="${H-padB+29}" text-anchor="middle" font-size="9.5" fill="var(--t3)">${escH(it.sub)}</text>`);
+  });
+  return`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMinYMid meet" style="display:block;height:${H}px;min-width:${W}px">
+    <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+    ${parts.join('')}
+  </svg></div>`;
+}
 function renderSymHistoryPanel(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
@@ -1215,7 +1274,7 @@ function renderSymHistoryPanel(id){
         :`<div class="histp-noevt">No change.</div>`)
       :'';
     const has=!!(evs.length||manual.length||delta||bekannteGrenze);
-    return{date:d.date,score:dayScore,has,html:`<div class="histp-day${isToday?' histp-today':''}">
+    return{date:d.date,score:dayScore,delta,has,html:`<div class="histp-day${isToday?' histp-today':''}">
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
         ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
         <span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
@@ -1223,9 +1282,6 @@ function renderSymHistoryPanel(id){
     </div>`};
   });
   // ── Nach Wochen gruppieren (Montag-Start) ──
-  // Tage ohne jede Bewegung werden innerhalb einer Woche uebersprungen -
-  // ueber 90 Tage waeren sonst 90 leere Zeilen zu scrollen. Die Woche selbst
-  // bleibt sichtbar und nennt ihre Netto-Veraenderung.
   const weeks=[];
   dayCards.forEach(dc=>{
     const ws=histWeekStart(dc.date);
@@ -1233,31 +1289,53 @@ function renderSymHistoryPanel(id){
     if(!w){w={start:ws,cards:[]};weeks.push(w);}
     w.cards.push(dc);
   });
-  const rows=weeks.map(w=>{
+  // Zeitstrahl-Ansicht (Nutzer-Wunsch 2026-08-31): oben ein Balken je Woche,
+  // aeltester Balken links / neuester rechts ("von links nach rechts") -
+  // `weeks` selbst ist neueste-zuerst (gleiche Reihenfolge wie `dayCards`),
+  // fuer den Zeitstrahl deshalb umgedreht. Klick auf einen Wochen-Balken
+  // klappt darunter einen zweiten Zeitstrahl mit einem Balken je Tag dieser
+  // Woche auf; Klick auf einen Tag-Balken zeigt darunter dessen bestehende
+  // Detail-Karte (Events/manuelle Aenderungen/Aufschluesselung) - inhaltlich
+  // unveraendert, nur ueber den Zeitstrahl statt endloses Scrollen erreicht.
+  const weeksChrono=weeks.slice().reverse();
+  const weekItems=weeksChrono.map(w=>{
     const scored=w.cards.filter(c=>c.score!=null);
-    const first=scored.length?scored[scored.length-1].score:null;   // Wochenanfang (Liste ist neueste zuerst)
+    const first=scored.length?scored[scored.length-1].score:null;   // Wochenanfang (w.cards ist neueste-zuerst)
     const last=scored.length?scored[0].score:null;
     const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
-    const nCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
     const end=dateAddStr(w.start,6);
-    const shown=w.cards.filter(c=>c.has);
-    const body=shown.length?shown.map(c=>c.html).join('')
-      :`<div class="histp-weekempty">No score-driving events this week.</div>`;
-    return`<div class="histp-week">
-      <div class="histp-weekhdr">
-        <span class="histp-weeklbl">${escH(fmtDayHdr(w.start))} – ${escH(fmtDayHdr(end))}</span>
-        ${net!=null?`<span class="histp-weeknet" style="color:${nCol}">${(net>0?'+':'')+net}</span>`:''}
-        <span class="histp-weekcnt">${shown.length} ${shown.length===1?'day':'days'}</span>
-      </div>${body}
-    </div>`;
-  }).join('');
+    const label=new Date(w.start+'T00:00:00').toLocaleDateString('en',{day:'numeric',month:'short'});
+    const tip=net!=null
+      ?`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: ${net>0?'+':''}${net} this week`
+      :`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: no recorded change`;
+    return{key:w.start,label,val:net,tip};
+  });
+  const weekChart=histTimelineChart(weekItems,'toggleHistWeek',histExpandWeek);
+  let dayChart='',dayDetail='';
+  const expandedWeek=histExpandWeek?weeksChrono.find(w=>w.start===histExpandWeek):null;
+  if(expandedWeek){
+    const daysChrono=expandedWeek.cards.slice().reverse(); // aeltester Tag der Woche zuerst
+    const dayItems=daysChrono.map(c=>{
+      const wd=new Date(c.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'});
+      const dn=new Date(c.date+'T00:00:00').toLocaleDateString('en',{day:'numeric'});
+      const tip=c.delta?`${fmtDayHdr(c.date)}: ${c.delta>0?'+':''}${c.delta} vs previous day`
+        :c.score!=null?`${fmtDayHdr(c.date)}: no change`
+        :`${fmtDayHdr(c.date)}: no recorded score`;
+      return{key:c.date,label:wd,sub:dn,val:c.delta||null,tip};
+    });
+    dayChart=`<div class="histp-daychart"><div class="histp-daychart-lbl">${escH(fmtDayHdr(expandedWeek.start))} – ${escH(fmtDayHdr(dateAddStr(expandedWeek.start,6)))}</div>${histTimelineChart(dayItems,'toggleHistDay',histExpandDay)}</div>`;
+    if(histExpandDay){
+      const dc=expandedWeek.cards.find(c=>c.date===histExpandDay);
+      dayDetail=dc?(dc.has?dc.html:`<div class="histp-weekempty">No score-driving events on ${escH(fmtDayHdr(dc.date))}.</div>`):'';
+    }
+  }
   // Fussnote nur, wenn tatsaechlich ein Tag aus einem frueheren Modell dabei
   // ist - sonst gar kein Hinweis (kein Rauschen im Normalfall).
   const tageAltesModell=days.filter(d=>histMap[d.date]!=null&&histOld[d.date]).length;
   const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
   const bar=`<div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
     `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>`;
-  return`<div class="histp">${bar}${rows}${fuss}</div>`;
+  return`<div class="histp">${bar}${weekChart}${dayChart}${dayDetail}${fuss}</div>`;
 }
 function openHistModal(id){
   const c=syms.find(s=>s.id===id);if(!c)return;
@@ -16438,7 +16516,8 @@ Object.assign(window,{
   ilPressStart,ilPressEnd,ilClick,openIndLinkEdit,saveIndLink,resetIndLink,biasPressStart,biasPressEnd,eventSrcIds,
   setCompactViewVal,evtDismissKey,isEvtJustReleased,CAL_PAST_DAYS,INBOX_NOTIF_DAYS,setCalHighOnlyVal,
   setCalCcyFilterVal,calOpenDays,processCalEvts,getSymEventsAll,getSymEventsCompact,evtSectionOpen,toggleEvtSection,
-  indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,histWeekStart,symScoreDrivingEventsByDate,
+  indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,toggleHistWeek,toggleHistDay,histTimelineChart,
+  histWeekStart,symScoreDrivingEventsByDate,
   histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,HIST_BRK_MAX_REST,histDeltaParts,
   histTagsComparable,renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,
   IND_EVENT_MATCHERS,IND_AUTO_RUBS,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,
@@ -16587,6 +16666,8 @@ Object.defineProperty(window,'calHighOnly',{get:()=>calHighOnly,set:v=>{calHighO
 Object.defineProperty(window,'calCcyFilter',{get:()=>calCcyFilter,set:v=>{calCcyFilter=v;},configurable:true});
 Object.defineProperty(window,'histRange',{get:()=>histRange,set:v=>{histRange=v;},configurable:true});
 Object.defineProperty(window,'_histSymId',{get:()=>_histSymId,set:v=>{_histSymId=v;},configurable:true});
+Object.defineProperty(window,'histExpandWeek',{get:()=>histExpandWeek,set:v=>{histExpandWeek=v;},configurable:true});
+Object.defineProperty(window,'histExpandDay',{get:()=>histExpandDay,set:v=>{histExpandDay=v;},configurable:true});
 Object.defineProperty(window,'researchTreeOpen',{get:()=>researchTreeOpen,set:v=>{researchTreeOpen=v;},configurable:true});
 Object.defineProperty(window,'researchTreeSel',{get:()=>researchTreeSel,set:v=>{researchTreeSel=v;},configurable:true});
 Object.defineProperty(window,'researchFocusAsset',{get:()=>researchFocusAsset,set:v=>{researchFocusAsset=v;},configurable:true});
