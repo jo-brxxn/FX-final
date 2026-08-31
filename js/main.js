@@ -7598,6 +7598,7 @@ function watchRowHtml(p){
       ${watchMetric('Next event',evTxt,evCol,ev?`${ev.currencies||''} ${ev.name||''} · ${ev.date} ${ev.time||''}`:'No upcoming event for either side')}
     </div>
     ${watchQuickLinksHtml(name)}
+    ${watchAssetLinksHtml(name)}
     ${watchAssetNotesHtml(name)}
     <textarea class="wt-note" data-pid="${escH(p.id)}" placeholder="Notes on ${escH(title)} — your plan, the level you are waiting for, why you are watching it..."
       oninput="ar(this);watchSetNote('${escJH(p.id)}',this.value)"
@@ -8740,6 +8741,24 @@ function watchQuickLinksHtml(name){
     if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'watch',id:'${escJH(id)}'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
     return`<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
   }).join('')}</div>`;
+}
+// Zweite, farblich abgehobene Quicklink-Zeile UNTER den Kategorie-
+// Quicklinks (Nutzer-Wunsch 2026-08-31): fuehrt direkt zur Assets-
+// Detailseite (gotoSym, dieselbe Seite wie ueberall sonst im Research-
+// Terminal - kein eigener Rueckweg noetig, die Asset-Seite ist eine volle
+// Navigationsseite mit eigener Sidebar, keine gefilterte Unteransicht wie
+// COT/Seasonality). Bei einem FX-Paar (z.B. USD/CAD) je EIN Button pro
+// Seite, weil das Paar zwei verschiedene Asset-Seiten hat; bei einem
+// Non-FX-Asset (z.B. Gold) nur einer, weil es nur die eine Asset-Seite gibt.
+function watchAssetLinksHtml(name){
+  const ids=isPureFxPair(name)?(()=>{const l=pairLegs(name);return l?[l.bId,l.qId]:[];})()
+    :(()=>{const id=nonFxLegAssetId(name);return id?[id]:[];})();
+  if(!ids.length)return'';
+  const btns=ids.map(id=>{
+    const label=(syms.find(s=>s.id===id)||{}).name||id;
+    return`<button class="aql aql-asset" onclick="gotoSym('${escJH(id)}')" title="Open the ${escH(label)} asset page">${icn('link',14)}<span>${escH(COT_NAME[id]||id)} Asset</span></button>`;
+  }).join('');
+  return`<div class="wt-quick wt-quick-assets">${btns}</div>`;
 }
 // Direkter Paar-Quicklink (Trends-Paar-Modus / Retail Sentiment) fuer FX-
 // Paar-Watchlist-Zeilen (siehe WATCH_QUICK_PAIR_DIRECT) - eigener,
@@ -16487,7 +16506,7 @@ Object.assign(window,{
   toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
   researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,SENT_QUICK_SUBLINKS,assetQuickGo,applyAssetQuickFilter,
   QUICK_LINK_REAL_TAB,feargreedEligible,retailSymFor,WATCH_QUICK_PAIR_DIRECT,
-  watchQuickLinksHtml,watchQuickGo,watchQuickGoDirect,openLegPicker,legPickerChoose,closeLegPicker,legPickerOutside,
+  watchQuickLinksHtml,watchAssetLinksHtml,watchQuickGo,watchQuickGoDirect,openLegPicker,legPickerChoose,closeLegPicker,legPickerOutside,
   openSentPicker,chooseSentPicker,closeSentPicker,sentPickerOutside,
   researchSideTitleHtml,researchSidebarHtml,
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,

@@ -1278,11 +1278,20 @@ body.res-return-active .rterm-back-pill{display:flex}
 .aql svg{flex:none}
 @media(hover:hover){.aql:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
 /* Watchlist-Zeile: dieselben .aql-Buttons wie assetQuickRowHtml, aber ohne
-   die 4-Spalten-Zwangsbreite (variable Anzahl je Asset - siehe
-   assetSpecificQuickLinks) und ohne die 300px-Notizen-Spalte daneben,
-   deshalb ein eigener, umbrechender Flex-Container statt .aqr/.aqr-links. */
+   die 4-Spalten-Zwangsbreite (variable Anzahl je Asset/Paar - siehe
+   watchQuickLinksHtml) und ohne die 300px-Notizen-Spalte daneben, deshalb
+   ein eigener, umbrechender Flex-Container statt .aqr/.aqr-links. */
 .wt-quick{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 .wt-quick .aql{flex:1 1 120px}
+/* Zweite Zeile darunter (Nutzer-Wunsch 2026-08-31): Direktlinks zur
+   Assets-Detailseite je Paar-Seite (watchAssetLinksHtml) - bewusst farblich
+   abgehoben von den Kategorie-Quicklinks darueber, damit klar ist, dass sie
+   zu einer ANDEREN Art Ziel fuehren (volle Asset-Seite statt gefilterte
+   Kategorie-Unteransicht). margin-top:0, weil .wt-quick selbst schon
+   margin:10px 0 mitbringt - sonst doppelter Abstand zwischen den Zeilen. */
+.wt-quick-assets{margin-top:0}
+.aql.aql-asset{border-color:rgba(var(--blue-rgb),.45);background:rgba(var(--blue-rgb),.14);color:var(--blue)}
+@media(hover:hover){.aql.aql-asset:hover{background:rgba(var(--blue-rgb),.24);border-color:var(--blue);color:var(--blue)}}
 .aqn{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card)}
 .aqn-hd{display:flex;align-items:center;gap:7px;padding:9px 11px;border-bottom:1px solid var(--bd);color:var(--t2)}
 .aqn-t{font:700 12px/1 var(--ff-text);color:var(--t1)}
@@ -3764,11 +3773,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-458 - Filter-Vereinheitlichung + mehrere Bugfixes (Nutzer-Wunsch 2026-08-31): Asset-Filter (Seasonality/COT/Data/Sentiment/...) sitzen jetzt ueberall gleich oben rechts im Karten-Titel mit derselben Watchlist/FX/Crypto/Metals/Energy/Indices/Yields-Gruppierung statt drei leicht unterschiedlicher Varianten. Watchlist-Quicklinks: Sentiment ist wieder EIN Quicklink, oeffnet ein zentriertes Fenster mit den passenden Unterkategorien (Retail/Put-Call/Net Options Flow/Volatility Indicators); Kategorien, die bei einem FX-Paar nur eine Seite auswaehlen koennen, oeffnen ein zentriertes 'welche Seite?'-Fenster statt ausgeblendet zu werden. Alle Popover (Bias-Auswahl, Seiten-Wahl, Sentiment) oeffnen jetzt zentriert statt am Klickpunkt. Offener Kategorie-Stapel schliesst beim Tab-Wechsel jetzt animiert statt abrupt. Retail-Sentiment: dauerhaft-100%-Symbole (kein echtes Positionierungssignal) werden nicht mehr uebernommen. Select-Fokusrahmen (fehlendes outline:none) behoben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-459 - Watchlist: Direktlinks zur Assets-Seite (Nutzer-Wunsch 2026-08-31): jede Watchlist-Karte bekommt unter den Kategorie-Quicklinks eine zweite, farblich abgehobene Zeile mit Direktlinks zur vollen Assets-Detailseite (gotoSym) - bei einem FX-Paar (z.B. USD/CAD) je ein Button pro Seite (USD, CAD), bei einem Non-FX-Asset (z.B. Gold) nur einer."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-458</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-459</span>
     </span>
   </div>
   <div class="hdr-r">

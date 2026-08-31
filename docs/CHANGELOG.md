@@ -8271,3 +8271,24 @@ Stapel-DOM-Knoten wird beim Tab-Wechsel wiederverwendet statt neu gebaut,
 Assets-Stapel-Hervorhebung); `node check/all.js` komplett gruen (13
 Waechter, inkl. der zwei oben genannten Regressionen, die der Waechter-Lauf
 selbst vor dem Push gefangen hat). Keine Score-Formel angefasst.
+
+## 2026-08-31 — Watchlist: zweite Quicklink-Zeile mit Direktlinks zur Assets-Seite (VERSION-CHECK-459)
+
+Nutzer-Wunsch: unter den bestehenden Kategorie-Quicklinks (Seasonality/
+COT/Sentiment/...) noch eine zweite, farblich abgehobene Zeile, die direkt
+zur vollen Assets-Detailseite fuehrt (`gotoSym()`, dieselbe Seite wie
+ueberall sonst im Research-Terminal - keine gefilterte Unteransicht wie
+COT/Seasonality, deshalb auch keine eigene Zurueck-Pille noetig, die
+Asset-Seite hat ihre eigene Navigation). Bei einer FX-Paar-Zeile (z.B.
+USD/CAD) je ein Button pro Seite ("USD Asset", "CAD Asset"), weil das
+Paar zwei verschiedene Asset-Seiten hat; bei einem Non-FX-Asset (z.B.
+Gold) nur einer ("Gold Asset"), weil es nur die eine Asset-Seite gibt.
+Neue CSS-Klasse `.aql-asset` (blauer Akzent statt der neutralen
+Kategorie-Optik) macht den Unterschied zum darueberliegenden Quicklink-
+Typ auf den ersten Blick erkennbar.
+
+**Geprueft:** `node --check`; Playwright bestaetigt USD/CAD zeigt genau 2
+Direktlinks ("USD Asset", "CAD Asset"), Gold genau 1 ("Gold Asset"), Klick
+auf "CAD Asset" navigiert korrekt zur Asset-Seite mit CAD ausgewaehlt
+(`curPage==='cur'`, `getSym().id==='CAD'`); `node check/all.js` komplett
+gruen (13 Waechter). Keine Score-Formel angefasst.
