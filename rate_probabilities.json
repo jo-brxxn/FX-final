@@ -803,7 +803,7 @@
     [
      [
       "2026-09-16",
-      14
+      16
      ],
      [
       "2026-10-28",
@@ -811,7 +811,7 @@
      ],
      [
       "2026-12-09",
-      16
+      15
      ]
     ]
    ]
@@ -823,22 +823,22 @@
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
     "rateBefore": 3.63,
-    "rateAfter": 3.77,
-    "deltaBp": 14
+    "rateAfter": 3.79,
+    "deltaBp": 16
    },
    {
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
-    "rateBefore": 3.77,
-    "rateAfter": 3.84,
+    "rateBefore": 3.79,
+    "rateAfter": 3.86,
     "deltaBp": 7
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.84,
-    "rateAfter": 4,
-    "deltaBp": 16
+    "rateBefore": 3.86,
+    "rateAfter": 4.01,
+    "deltaBp": 15
    }
   ],
   "pastMeeting": {
@@ -1530,7 +1530,7 @@
      ],
      [
       "2026-10-29",
-      9
+      10
      ],
      [
       "2026-12-17",
@@ -1546,23 +1546,23 @@
     "date": "2026-09-10",
     "label": "Sep 10, 2026",
     "rateBefore": 2.59,
-    "rateAfter": 2.66,
+    "rateAfter": 2.67,
     "deltaBp": 7,
     "approx": true
    },
    {
     "date": "2026-10-29",
     "label": "Oct 29, 2026",
-    "rateBefore": 2.66,
-    "rateAfter": 2.75,
-    "deltaBp": 9,
+    "rateBefore": 2.67,
+    "rateAfter": 2.77,
+    "deltaBp": 10,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 2.75,
-    "rateAfter": 2.85,
+    "rateBefore": 2.77,
+    "rateAfter": 2.87,
     "deltaBp": 10,
     "approx": true
    }
@@ -4343,11 +4343,11 @@
    ],
    [
     "2026-08-31",
-    -0.07,
+    -0.05,
     [
      [
       "2026-09-24",
-      4
+      2
      ],
      [
       "2026-12-10",
@@ -4357,14 +4357,14 @@
    ]
   ],
   "asOf": "2026-08-31",
-  "currentRate": -0.07,
+  "currentRate": -0.05,
   "meetings": [
    {
     "date": "2026-09-24",
     "label": "Sep 24, 2026",
-    "rateBefore": -0.07,
+    "rateBefore": -0.05,
     "rateAfter": -0.03,
-    "deltaBp": 4,
+    "deltaBp": 2,
     "approx": true
    },
    {
