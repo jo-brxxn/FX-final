@@ -408,6 +408,9 @@ const ICONS={
   trendUp:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
   globe:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
   zap:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  // Fuer die 4 Sentiment-Quicklinks (Nutzer-Wunsch 2026-08-31) - derselbe
+  // Zickzack-Pfad wie TAB_ICONS.sent, hier zusaetzlich ueber icn() nutzbar.
+  pulse:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
   pin:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
   shuffle:'<polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/>',
   flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
@@ -5033,7 +5036,10 @@ function goToRubCard(ri){
 // dadurch fuellen sie die Zeile IMMER exakt bis zum rechten Rand, egal wie
 // breit das Fenster ist (Nutzer-Wunsch 2026-08-23).
 function assetQuickRowHtml(c){
-  const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>
+  // "Volatility Indicators" nur bei Non-FX-Assets, die die Karte auch
+  // wirklich abdeckt (siehe feargreedEligible) - gleiche Regel wie bei den
+  // Watchlist-Quicklinks.
+  const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed'||feargreedEligible(c.id)).map(([tab,ic,lbl])=>
     `<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('');
   return`<div class="aqr"><div class="aqr-links">${links}</div>${assetNotesCardHtml(c)}</div>`;
 }
@@ -8612,11 +8618,42 @@ function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(
 // aber vom aktuell offenen Asset aus statt von einem separaten Fokus-
 // Asset - und die Zurueck-Pille fuehrt zu GENAU diesem Asset zurueck statt
 // ins Research-Terminal.
+// Nutzer-Wunsch 2026-08-31 ("mach bei Sentiment das in 4 unterschiedliche
+// quick links"): das fruehere einzelne 'sent' (ging immer zu Put/Call) ist
+// jetzt 4 eigene Eintraege - jeder springt in den passenden Sentiment-
+// Subtab (siehe QUICK_LINK_REAL_TAB unten, alle vier landen auf 'sent').
 const ASSET_QUICK_LINKS=[
   ['seas','clock','Seasonality'],['trends','trendUp','Trends'],['cot','bars','COT'],
-  ['sent','zap','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
+  ['retail','pulse','Retail Sentiment'],['putcall','bars','Put/Call Ratio'],
+  ['netflow','shuffle','Net Options Flow'],['feargreed','zap','Volatility Indicators'],
+  ['data','note','Data'],['rate','flame','Rate Probabilities'],
   ['news','news','News'],['cal','calendar','Calendar'],
 ];
+// Manche Quicklink-Kategorien sind nur Subtabs EINER echten Seite (alle vier
+// Sentiment-Kategorien -> Tab 'sent') - showTab() braucht die echte Tab-ID,
+// nicht den Kategorie-Schluessel.
+const QUICK_LINK_REAL_TAB={retail:'sent',putcall:'sent',netflow:'sent',feargreed:'sent'};
+// "Volatility Indicators" (VIX/Fear-&-Greed-Karten) deckt inhaltlich nur
+// Aktienindizes (VIX = S&P 500/Nasdaq) und Krypto (Fear&Greed = BTC/ETH) ab
+// - Nutzer-Wunsch: Quicklink nur bei Non-FX-Assets, ausdruecklich NICHT bei
+// Anleihen/Yields und NICHT bei Rohstoffen/Oel.
+function feargreedEligible(id){
+  const cls=assetCls(id);
+  return cls==='index'||cls==='crypto';
+}
+// Broker-Symbol fuer Retail Sentiment zu einer App-Asset-ID (Kehrwert von
+// SENT_NONFX_PRICE_ID) - fuer die Watchlist-Non-FX-Zeile (z.B. GOLD ->
+// XAUUSD) UND als "gegen USD"-Standardannahme auf der Einzel-Asset-Seite,
+// wo eine einzelne Waehrung (z.B. EUR) keinen eigenen Retail-Sentiment-Wert
+// hat, nur das Paar (EURUSD) - derselbe Kompromiss wie an anderer Stelle
+// schon fuer waehrungsbezogene Konzepte (macroCcyFor).
+function retailSymFor(id){
+  if(!id)return'';
+  const rev=Object.keys(SENT_NONFX_PRICE_ID).find(k=>SENT_NONFX_PRICE_ID[k]===id);
+  if(rev)return rev;
+  if(FX.includes(id))return id==='USD'?'EURUSD':(id+'USD');
+  return'';
+}
 // Setzt bei tabId's Zielseite den Asset-/Waehrungsfilter auf id - der reine
 // Filter-Teil von assetQuickGo, ausgelagert, damit watchQuickGo() (Quick-
 // Links auf der Watchlist, siehe dort) dieselbe Logik ohne Umweg ueber
@@ -8653,7 +8690,10 @@ function applyAssetQuickFilter(tabId,id){
   // fuer die Research-Terminal-Timeline macht.
   else if(tabId==='rate')setRateProbCcy(macroCcyFor(id));
   else if(tabId==='cal')setCalCcyFilter(macroCcyFor(id));
-  else if(tabId==='sent'){setSentSub('putcall');setPcAsset(macroCcyFor(id));}
+  else if(tabId==='putcall'){setSentSub('putcall');setPcAsset(macroCcyFor(id));}
+  else if(tabId==='netflow'){setSentSub('netflow');setPcAsset(macroCcyFor(id));}
+  else if(tabId==='retail'){setSentSub('retail');setSentSym(retailSymFor(dataId));}
+  else if(tabId==='feargreed')setSentSub('feargreed');
 }
 function assetQuickGo(tabId){
   const c=getSym();if(!c)return;
@@ -8661,54 +8701,46 @@ function assetQuickGo(tabId){
   _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;
   document.body.classList.add('res-return-active');
   setBackPillTitle(`Back to ${c.name}`);
-  showTab(tabId);
+  showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
 }
-// Welche der 8 ASSET_QUICK_LINKS-Kategorien filtern fuer dieses (Non-FX-)
-// Asset WIRKLICH nach dem Asset selbst (statt nur nach seiner verknuepften
-// Waehrung)? Nur fuer Non-FX-Watchlist-Zeilen aufgerufen (ein einzelnes,
-// eindeutiges Asset wie GOLD) - fuer FX-PAAR-Zeilen siehe
-// watchQuickLinksHtml(), die haben eine eigene, strengere Regel. Aus
-// applyAssetQuickFilter() folgt: seas/trends/cot/data/news filtern per
-// Asset-ID (ausser bei Yields, dort Waehrungs-Fallback), rate/cal/sent
-// loesen IMMER ueber macroCcyFor(id) auf - zeigen bei Gold/BTC/Indizes also
-// nur die verknuepfte Waehrung, nicht das Asset selbst, und fallen deshalb
-// fuer Non-FX-Assets grundsaetzlich raus.
-function assetSpecificQuickLinks(id){
-  const cls=assetCls(id);
-  return ASSET_QUICK_LINKS.filter(([tab])=>
-    (tab==='rate'||tab==='cal'||tab==='sent')?false:cls!=='yield');
-}
+// Kategorien, die ein FX-PAAR (z.B. USD/CAD) direkt als GANZES auswaehlen
+// koennen, statt nur eine der beiden Seiten: Trends im Paar-Modus
+// (trendsPairSel fuehrt echte Paare) und Retail Sentiment (Broker-Symbole
+// sind selbst Paare, z.B. USDCAD). Alle anderen Kategorien (Seasonality/
+// COT/Data/News/Rate/Calendar/Put-Call/Net Options Flow) filtern
+// ausnahmslos nach einer EINZELNEN Waehrung/einem einzelnen Asset - dafuer
+// oeffnet openLegPicker() ein kleines Fenster, das fragt, welche der beiden
+// Seiten man sehen will (Nutzer-Wunsch 2026-08-31, ersetzt die vorherige
+// Loesung, die diese Kategorien fuer Paare komplett ausgeblendet hatte).
+const WATCH_QUICK_PAIR_DIRECT=new Set(['trends','retail']);
 function watchQuickLinksHtml(name){
-  // FX-PAAR-Zeile (z.B. USD/CAD): "das Asset" dieser Zeile ist das Paar
-  // selbst, nicht eine seiner beiden Seiten. Bugreport 2026-08-31: die
-  // vorherige Version nahm die Basiswaehrung als Ersatz und zeigte damit
-  // Quicklinks zu Kategorien (Seasonality/COT/Data/News/...), die ueberhaupt
-  // keine Paar-Option im Filter haben ("bei usdcad geht nicht seasonality
-  // weil es da im Filter nicht usdcad gibt") - man landete dort faktisch bei
-  // nur einer Waehrung, nicht beim Paar. Von den 8 Kategorien kann NUR
-  // Trends (PAIR-Modus, trendsPairSel) ein echtes Paar direkt auswaehlen -
-  // deshalb fuer FX-Paare nur dieser eine Quicklink.
   if(isPureFxPair(name)){
-    return`<div class="wt-quick"><button class="aql" onclick="watchQuickGoPair('${escJH(name)}')" title="Trends — opens with ${escH(name)} already selected as a pair">${icn('trendUp',14)}<span>Trends</span></button></div>`;
+    const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed');
+    const btns=links.map(([tab,ic,lbl])=>WATCH_QUICK_PAIR_DIRECT.has(tab)
+      ?`<button class="aql" onclick="watchQuickGoDirect('${tab}','${escJH(name)}')" title="${escH(lbl)} — opens with ${escH(name)} already selected as a pair">${icn(ic,14)}<span>${escH(lbl)}</span></button>`
+      :`<button class="aql" onclick="openLegPicker('${tab}','${escJH(name)}',event.clientX,event.clientY)" title="${escH(lbl)} — pick which side of ${escH(name)} to view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`
+    ).join('');
+    return`<div class="wt-quick">${btns}</div>`;
   }
   const id=nonFxLegAssetId(name);if(!id)return'';
-  const links=assetSpecificQuickLinks(id);if(!links.length)return'';
+  const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed'||feargreedEligible(id));
   const label=(syms.find(s=>s.id===id)||{}).name||id;
   return`<div class="wt-quick">${links.map(([tab,ic,lbl])=>
     `<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('')}</div>`;
 }
-// Trends-PAIR-Modus-Quicklink fuer FX-Paar-Watchlist-Zeilen (siehe
-// watchQuickLinksHtml) - eigener, einfacherer Weg als watchQuickGo(), weil
-// hier kein einzelnes Asset ueber applyAssetQuickFilter gesetzt wird,
-// sondern direkt der Paar-Modus von Trends.
-function watchQuickGoPair(name){
+// Direkter Paar-Quicklink (Trends-Paar-Modus / Retail Sentiment) fuer FX-
+// Paar-Watchlist-Zeilen (siehe WATCH_QUICK_PAIR_DIRECT) - eigener,
+// einfacherer Weg als watchQuickGo(), weil hier kein einzelnes Asset ueber
+// applyAssetQuickFilter gesetzt wird, sondern direkt das Paar selbst.
+function watchQuickGoDirect(tabId,name){
   if(!name)return;
-  setTrendsFilter('PAIR');
-  setTrendsPair(name);
+  if(tabId==='trends'){setTrendsFilter('PAIR');setTrendsPair(name);}
+  else if(tabId==='retail'){setSentSub('retail');setSentSym(name.replace('/',''));}
+  else return;
   _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
   document.body.classList.add('res-return-active');
   setBackPillTitle('Back to the Watchlist');
-  showTab('trends');
+  showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
 }
 // Wie assetQuickGo, aber ausgeloest von einer Watchlist-Zeile statt der
 // Asset-Detailseite - es gibt kein einzelnes fokussiertes Asset, auf das die
@@ -8720,8 +8752,42 @@ function watchQuickGo(tabId,id){
   _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
   document.body.classList.add('res-return-active');
   setBackPillTitle('Back to the Watchlist');
-  showTab(tabId);
+  showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
 }
+// "Kleines Fenster" (Nutzer-Wunsch 2026-08-31), das bei einer FX-Paar-
+// Watchlist-Zeile fragt, welche der beiden Seiten (z.B. USD oder CAD) man
+// in einer Kategorie sehen will, die kein Paar direkt auswaehlen kann -
+// gleiches Popover-Muster wie openBiasPicker() (dieselben .bias-picker-CSS-
+// Klassen, verankert am Klickpunkt statt am Kartenzentrum).
+let _legPickerCtx=null;
+function openLegPicker(tabId,name,x,y){
+  closeLegPicker();
+  const l=pairLegs(name);if(!l)return;
+  const opt=(id,cc)=>`<button class="bias-picker-opt" onclick="legPickerChoose('${escJH(id)}')">${escH(cc)}</button>`;
+  const m=document.createElement('div');
+  m.className='bias-picker';m.id='legPicker';
+  m.innerHTML=`<div class="bias-picker-lbl">View ${escH(name)} as…</div><div class="bias-picker-opts">${opt(l.bId,l.bc)}${opt(l.qId,l.qc)}</div>`;
+  document.body.appendChild(m);
+  const mw=m.offsetWidth,mh=m.offsetHeight;
+  m.style.position='fixed';
+  const left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8)),top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8));
+  m.style.left=left+'px';
+  m.style.top=top+'px';
+  m.style.zIndex='100001';
+  m.style.transformOrigin=Math.max(0,Math.min(x-left,mw))+'px '+mh+'px';
+  _legPickerCtx={tabId};
+  setTimeout(()=>document.addEventListener('pointerdown',legPickerOutside,true),0);
+}
+function legPickerChoose(id){
+  const ctx=_legPickerCtx;closeLegPicker();
+  if(ctx)watchQuickGo(ctx.tabId,id);
+}
+function closeLegPicker(){
+  const m=document.getElementById('legPicker');if(m)m.remove();
+  document.removeEventListener('pointerdown',legPickerOutside,true);
+  _legPickerCtx=null;
+}
+function legPickerOutside(e){const m=document.getElementById('legPicker');if(m&&!m.contains(e.target))closeLegPicker();}
 // FX bekommt die Landesflagge (FX_FLAG, wie im Asset-Seitentitel) - fuer
 // Non-FX (Indices/Commodities/Crypto/Stocks) gibt es dort bewusst kein
 // erfundenes Ersatz-Icon, nur Ticker+Name+Score.
@@ -14159,7 +14225,7 @@ function renderCot(){
   const bars=rows.map(r=>{
     const lp=r.m.longPct,sp=r.m.shortPct;
     const crowded=lp>=COT_CROWDED_PCT||sp>=COT_CROWDED_PCT;
-    return`<div class="cot-bar-row" onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
+    return`<div class="cot-bar-row" onclick="pickCotFilter('${r.id}')" title="Show ${escH(r.name)} positioning detail — stays on this COT tab">
       <div class="cot-bar-sym">${escH(r.name)}${crowded?`<span class="cot-crowded" title="${lp>=COT_CROWDED_PCT?lp.toFixed(0)+'% long':sp.toFixed(0)+'% short'} - extremely one-sided positioning raises the risk of a sharp squeeze in the other direction">⚠</span>`:''}</div>
       <div class="cot-bar-long-lbl">${lp.toFixed(0)}%</div>
       <div class="cot-bar"><div class="cot-bar-long" style="width:${lp.toFixed(1)}%"></div><div class="cot-bar-short" style="width:${sp.toFixed(1)}%"></div></div>
@@ -14227,7 +14293,7 @@ function renderCot(){
     const hasP3=tblRows.some(r=>cotPct3yOf(r.id));
     tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>`;
     head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th>${hasP3?'<th title="Percentile of the current net positioning within the last ~3 years of weekly reports — 100 = most net-long in 3 years, 0 = most net-short. ⚠ at ≥90 / ≤10 (historically extreme, contrarian caution). Display-only, no score effect.">3y %ile</th>':''}<th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
-    body=tblRows.map(r=>{const m=r.m;return`<tr onclick="gotoSym('${r.id}')" title="Open ${escH(r.name)}">
+    body=tblRows.map(r=>{const m=r.m;return`<tr onclick="pickCotFilter('${r.id}')" title="Show ${escH(r.name)} positioning detail — stays on this COT tab">
       <th class="cot-rowh">${escH(r.name)}</th>
       <td class="cot-c-long">${m.longPct.toFixed(1)}%</td>
       <td class="cot-c-short">${m.shortPct.toFixed(1)}%</td>
@@ -16326,8 +16392,10 @@ Object.assign(window,{
   resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,
   resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
   toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
-  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,applyAssetQuickFilter,assetSpecificQuickLinks,
-  watchQuickLinksHtml,watchQuickGo,watchQuickGoPair,researchSideTitleHtml,researchSidebarHtml,
+  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,applyAssetQuickFilter,
+  QUICK_LINK_REAL_TAB,feargreedEligible,retailSymFor,WATCH_QUICK_PAIR_DIRECT,
+  watchQuickLinksHtml,watchQuickGo,watchQuickGoDirect,openLegPicker,legPickerChoose,closeLegPicker,legPickerOutside,
+  researchSideTitleHtml,researchSidebarHtml,
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
   researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
   researchFolderNameOf,researchSetNoteQuery,resSetSearchField,resSearchFieldPickerHtml,resNoteMatchesQuery,
@@ -16461,6 +16529,7 @@ Object.defineProperty(window,'_sbSuppressClick',{get:()=>_sbSuppressClick,set:v=
 Object.defineProperty(window,'sbEditMode',{get:()=>sbEditMode,set:v=>{sbEditMode=v;},configurable:true});
 Object.defineProperty(window,'assetNoteFid',{get:()=>assetNoteFid,set:v=>{assetNoteFid=v;},configurable:true});
 Object.defineProperty(window,'_biasPickerApply',{get:()=>_biasPickerApply,set:v=>{_biasPickerApply=v;},configurable:true});
+Object.defineProperty(window,'_legPickerCtx',{get:()=>_legPickerCtx,set:v=>{_legPickerCtx=v;},configurable:true});
 Object.defineProperty(window,'_infoRi',{get:()=>_infoRi,set:v=>{_infoRi=v;},configurable:true});
 Object.defineProperty(window,'_infoIi',{get:()=>_infoIi,set:v=>{_infoIi=v;},configurable:true});
 Object.defineProperty(window,'_delSymId',{get:()=>_delSymId,set:v=>{_delSymId=v;},configurable:true});

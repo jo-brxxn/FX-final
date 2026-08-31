@@ -8088,3 +8088,69 @@ noch 1 Quicklink (Trends), Klick waehlt "USD/CAD" exakt im Paar-Filter
 weiterhin 5 Quicklinks, News-Quicklink setzt jetzt `newsTabAsset` korrekt.
 Keine VERSION-CHECK-Nummer noetig (kein `index.html`-Diff diese Runde, nur
 `js/main.js` + `js/asset-notes-seed.js`). Keine Score-Formel angefasst.
+
+## 2026-08-31 — Watchlist-Quicklinks: alle zurueck + "welche Seite?"-Popup + 4 Sentiment-Kategorien + COT-Klick bleibt im Tab
+
+Nutzer-Korrektur zur vorherigen Loesung ("FX-Paar-Zeilen bekommen nur noch
+den Trends-Quicklink"): das war die falsche Richtung. Gewuenscht ist,
+ALLE Quicklinks auf jeder Zeile zu zeigen - und dort, wo eine Kategorie
+nicht das ganze Paar auswaehlen kann (z.B. USD/CAD -> nur USD ODER nur
+CAD), erst ein kleines Fenster zu zeigen, das fragt, welche Seite man sehen
+will.
+
+**"Welche Seite?"-Popup (`openLegPicker`):** wiederverwendet exakt das
+bestehende `.bias-picker`-Popover-Muster (`openBiasPicker`, sonst fuer die
+Bias-Auswahl an Notizen) - selbe CSS-Klassen, am Klickpunkt verankertes
+kleines Fenster statt eines grossen zentrierten Modals, schliesst bei Klick
+daneben. Zeigt "View USD/CAD as…" mit zwei Buttons (USD, CAD); die Wahl
+geht direkt in `watchQuickGo()`. Gilt fuer alle Kategorien, die
+nachweislich (siehe `applyAssetQuickFilter`) nur eine einzelne
+Waehrung/ein einzelnes Asset filtern koennen: Seasonality, COT, Data,
+News, Rate Probabilities, Calendar, Put/Call Ratio, Net Options Flow.
+**Zwei Kategorien koennen ein Paar dagegen direkt als Ganzes auswaehlen**
+(kein Popup): Trends (Paar-Modus, unveraendert) und - neu - **Retail
+Sentiment**, weil Myfxbook-Broker-Symbole selbst Paare sind (z.B. USDCAD).
+
+**Sentiment in 4 eigene Quicklinks aufgeteilt** (vorher 1 gemeinsamer, ging
+immer zu Put/Call): Retail Sentiment, Put/Call Ratio, Net Options Flow,
+Volatility Indicators (VIX + Fear&Greed-Karten, vorher nicht per Quicklink
+erreichbar). Alle vier landen auf demselben Tab (`sent`), nur der
+Sentiment-Subtab wechselt (`QUICK_LINK_REAL_TAB`-Mapping, weil `showTab()`
+sonst versucht haette, einen nicht existierenden Tab `retail`/`putcall`/
+`netflow`/`feargreed` zu oeffnen). **Volatility Indicators nur bei
+Non-FX-Assets, die die Karte inhaltlich abdeckt** (VIX = S&P 500/Nasdaq,
+Crypto Fear&Greed = BTC) - Nutzer-Wunsch, ausdruecklich NICHT bei
+Anleihen/Yields und NICHT bei Rohstoffen/Oel (`feargreedEligible()`,
+Index/Crypto ja, Metal/Energy/FX/Yield nein). Gilt fuer die Watchlist-
+Quicklinks UND die urspruenglichen Asset-Seiten-Quicklinks gleichermassen
+(ein gemeinsames `ASSET_QUICK_LINKS`).
+
+`ASSET_QUICK_LINKS` waechst dadurch von 8 auf 11 Eintraege - eine FX-Paar-
+Zeile zeigt jetzt 10 (alles ausser Volatility Indicators), eine Non-FX-
+Zeile mit abgedeckter Volatilitaets-Karte (Index/Crypto) alle 11, sonst
+(Metal/Energy) 10.
+
+**COT-Zeilenklick blieb bisher nicht in der Kategorie** (Nutzer-Wunsch:
+"bei cot und anderen Kategorien wenn man da auf ein Asset klickt... mach
+aber das man dann einfach in der Kategorie bleibt und zur detail ansicht
+kommt"): die COT-Balken-Uebersicht UND die Detail-Tabelle sprangen beim
+Klick auf eine Zeile per `gotoSym()` zur Asset-Seite, obwohl COT selbst
+schon eine Einzel-Asset-Detailansicht hat (`pickCotFilter`, zeigt
+Positionierungs-Historie + Report-Tabelle fuer genau dieses Asset, ohne
+den Tab zu verlassen). Beide Zeilen rufen jetzt `pickCotFilter(id)` statt
+`gotoSym(id)` auf. Alle anderen `gotoSym`-Aufrufe im Code wurden geprueft
+(Dashboard-Widgets wie Performance-Ranking, Heat-Grid, Risk-Sentiment,
+Matrix - keine davon hat eine eigene Einzel-Asset-Detailansicht wie COT,
+"zur Asset-Seite springen" ist dort weiterhin die richtige, beabsichtigte
+Aktion) - nur COT hatte dieses konkrete Muster.
+
+**Geprueft:** `node --check`; Playwright bestaetigt fuer USD/CAD 10
+Quicklinks (kein Volatility Indicators), Klick auf "Seasonality" oeffnet
+das Popup mit "USD"/"CAD", Wahl von CAD setzt `seasAsset='CAD'` und
+navigiert; "Retail Sentiment" waehlt direkt `sentSym='USDCAD'` ohne Popup;
+Gold-Zeile 10 Quicklinks, S&P-500-Zeile 11 (inkl. Volatility Indicators);
+COT-Zeilen- UND Tabellenklick bleiben auf `curPage==='cot'` und setzen
+`cotFilter` korrekt; Asset-Seiten-Quicklinks fuer EUR (10, kein
+Volatility Indicators) und BTC (11) korrekt gefiltert. `node check/all.js`
+komplett gruen (13 Waechter). Keine VERSION-CHECK-Nummer noetig (kein
+`index.html`-Diff). Keine Score-Formel angefasst.
