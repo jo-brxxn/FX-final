@@ -218,9 +218,13 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
    sitzt optisch auf der Textlinie der Buttons. */
 svg.ic{vertical-align:-2px;flex:none}
 /* Bias-Picker-Popover (Long-Press-Ersatz fuer die ▲/◆/▼-Buttons, Nutzer-
-   Wunsch 2026-07-22) - erscheint am Druckpunkt statt zentriert, gleiches
-   position:fixed+body-append-Muster wie .tab-menu. */
-.bias-picker{position:fixed;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:6px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:4px;min-width:150px}
+   Wunsch 2026-07-22) - selbes position:fixed+body-append-Muster wie
+   .tab-menu, aber IMMER zentriert statt am Druckpunkt (Nutzer-Korrektur
+   2026-08-31: "immer wenn sich ein Fenster oeffnet es sich zentriert in der
+   Mitte oeffnet und nicht an der Stelle wo man gedrueckt hat") - gilt auch
+   fuer den Leg-Picker (openLegPicker) und den Sentiment-Picker
+   (openSentPicker), die dieselbe Klasse/Optik wiederverwenden. */
+.bias-picker{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:6px;box-shadow:var(--shadow-pop);display:flex;flex-direction:column;gap:4px;min-width:150px;z-index:100001}
 .bias-picker-lbl{font-size:10.5px;font-weight:700;color:var(--t3);padding:2px 4px 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bias-picker-opts{display:flex;flex-direction:column;gap:2px}
 .bias-picker-opt{display:flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--bd2);color:var(--t1);padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;font-weight:700;text-align:left;width:100%;font-family:inherit}
@@ -229,7 +233,19 @@ svg.ic{vertical-align:-2px;flex:none}
 .bias-picker-opt.cur.bb{border-color:var(--green);background:rgba(var(--green-rgb),.18);color:var(--green)}
 .bias-picker-opt.cur.br{border-color:var(--red);background:rgba(var(--red-rgb),.18);color:var(--red)}
 .bias-picker-opt.cur.bn{border-color:var(--amber);background:rgba(var(--amber-rgb),.12);color:var(--amber)}
-.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
+/* Bugreport 2026-08-31 ("komische Umrandung beim ersten Klick auf einen
+   Filter"): .btn hatte als einzige der interaktiven Klassen in dieser Datei
+   kein outline:none (alle anderen - .quick-note/.ai/.nbox/.res-search/.fsel/
+   .m-sel/... - unterdruecken den nativen Fokus-Rahmen bereits konsequent).
+   Betraf vor allem <select class="btn"> (assetFilterSelect & Co.): Chromium
+   zeigt bei einem <select> den nativen 1px-Auto-Fokusring schon beim reinen
+   Anklicken, nicht nur bei Tastatur-Fokus wie bei <button> - reproduziert per
+   getComputedStyle(sel).outlineStyle vor/nach .focus(): "none 0px" ->
+   "auto 1px". Der eigentliche Wertwechsel selbst hat immer funktioniert
+   (onchange feuert normal) - das "erst passiert nichts"-Gefuehl kam vom
+   ploetzlichen, unpassenden System-Rahmen statt einem sauberen Fokus-Signal. */
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:5px 9px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4;outline:none}@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:rgba(var(--blue-rgb),.4);color:var(--blue)}}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
 /* Nutzer-Wunsch 2026-08-02 (Grau-/Schwarz-Regler): aktiver Zustand fuer
    Toggle-Buttons im .btn-Stil (bisher nutzten .on-Toggles im Projekt immer
    eigene Klassen wie .bo.on - diese ist die erste generische .btn.on). */
@@ -1595,8 +1611,15 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
 @keyframes cotSpin{to{transform:rotate(360deg)}}
 /* COT single Filter button + grouped pop-up list */
-.cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px}
-.cot-filterbar select{font-size:14px;padding:8px 15px}
+.cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px;min-width:0}
+/* min-width:0 auf dem <select> selbst (Bugreport/Waechter-Fund 2026-08-31,
+   layout+cards: "Data"/Seasonality-Karte lief auf Mobile ueber den Rand
+   hinaus): ein <select> ohne feste Breite bemisst sich in Chromium an
+   seiner BREITESTEN Option, nicht an der gerade sichtbaren - bei vielen
+   Assets/Indikatoren im Filter kann das deutlich breiter sein als eine
+   schmale Karte. max-width:100% + min-width:0 lassen es in seinem
+   Flex-Container tatsaechlich schrumpfen statt zu ueberlaufen. */
+.cot-filterbar select{font-size:14px;padding:8px 15px;min-width:0;max-width:100%}
 .sent-toolbar>.cot-filterbar{margin-bottom:0}
 /* Asset-Filter oben rechts in der Karten-Titelzeile (Sentiment) */
 .cot-card-title .cot-filterbar{margin:0}
@@ -3226,7 +3249,15 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 /* Popover-Eintritt (Bias-Picker, Tab-Stack-Menue): waechst vom Trigger-Punkt
    aus (transform-origin per JS gesetzt), nicht vom Zentrum wie ein Modal. */
 @keyframes popoverIn{0%{opacity:0;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
-.bias-picker,.tab-menu{animation:popoverIn .16s cubic-bezier(.2,.8,.3,1) both}
+/* .bias-picker positioniert sich per transform:translate(-50%,-50%) (siehe
+   dort) - eine eigene Keyframe haelt diesen Versatz waehrend der Animation
+   aufrecht, sonst wuerde die scale()-Keyframe den zentrierenden Transform
+   kurz ueberschreiben und das Fenster waehrend des Einblendens springen
+   lassen. .tab-menu bleibt bei der einfachen Variante (kein Transform-
+   Versatz, positioniert sich rein ueber JS-berechnetes left/top). */
+@keyframes popoverInCenter{0%{opacity:0;transform:translate(-50%,-50%) scale(.95)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.bias-picker{animation:popoverInCenter .16s cubic-bezier(.2,.8,.3,1) both}
+.tab-menu{animation:popoverIn .16s cubic-bezier(.2,.8,.3,1) both}
 @media(prefers-reduced-motion:reduce){.bias-picker,.tab-menu{animation:none}}
 /* ── SKELETON-SHIMMER (Platzhalter beim ersten Laden) ── */
 .skel{display:inline-block;height:11px;border-radius:4px;vertical-align:middle;background:linear-gradient(90deg,rgba(128,151,176,.10) 25%,rgba(128,151,176,.30) 50%,rgba(128,151,176,.10) 75%);background-size:200% 100%;animation:skelShimmer 1.2s ease-in-out infinite}
@@ -3733,11 +3764,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-457 - Notizen Runde 3 + Watchlist-Filter-Fixes (Nutzer-Wunsch 2026-08-31): Notiz-Titel sind jetzt immer vollstaendig lesbar (kein Ellipsis-Abschneiden mehr, Zeilenumbruch statt nowrap). Verhaltens-Notizen bekommen ein neues Inhaltsformat (kurzer, praeziser Titel getrennt vom laengeren Erklaerungstext + Hashtags + Unterthema-Unterordner je Themen-Ordner) - Content-Umbau laeuft. Watchlist-Filter-Dropdowns (Data/COT/Sentiment/Trends/...) zeigten ein Asset frueher doppelt (Watchlist-Gruppe UND normale Kategorie); jetzt genau einmal, Position wechselt automatisch mit dem Watchlist-Status - behebt sowohl das fehlende Haken- als auch das Sprung-zur-falschen-Stelle-Problem. Retail-Sentiment-Balken zeigen die Prozentzahl jetzt immer (auch bei >90/<10-Splits), Klick auf einen Balken waehlt das Paar im Filter. Watchlist-Karten haben jetzt eigene Quicklinks (gleiches Design wie auf der Asset-Seite) zu den Kategorien, die wirklich nach dem jeweiligen Asset filtern koennen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-458 - Filter-Vereinheitlichung + mehrere Bugfixes (Nutzer-Wunsch 2026-08-31): Asset-Filter (Seasonality/COT/Data/Sentiment/...) sitzen jetzt ueberall gleich oben rechts im Karten-Titel mit derselben Watchlist/FX/Crypto/Metals/Energy/Indices/Yields-Gruppierung statt drei leicht unterschiedlicher Varianten. Watchlist-Quicklinks: Sentiment ist wieder EIN Quicklink, oeffnet ein zentriertes Fenster mit den passenden Unterkategorien (Retail/Put-Call/Net Options Flow/Volatility Indicators); Kategorien, die bei einem FX-Paar nur eine Seite auswaehlen koennen, oeffnen ein zentriertes 'welche Seite?'-Fenster statt ausgeblendet zu werden. Alle Popover (Bias-Auswahl, Seiten-Wahl, Sentiment) oeffnen jetzt zentriert statt am Klickpunkt. Offener Kategorie-Stapel schliesst beim Tab-Wechsel jetzt animiert statt abrupt. Retail-Sentiment: dauerhaft-100%-Symbole (kein echtes Positionierungssignal) werden nicht mehr uebernommen. Select-Fokusrahmen (fehlendes outline:none) behoben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-457</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-458</span>
     </span>
   </div>
   <div class="hdr-r">

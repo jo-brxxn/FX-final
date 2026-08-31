@@ -58,6 +58,23 @@ ebenso `SCORE_MODEL_VERSION` (bei Score-Formel-Änderungen, siehe
 `docs/score-model.md`) und `SUMMARY_ENGINE_VERSION` (bei
 Formulierungs-Logik-Änderungen).
 
+## Bugfixes: IMMER erst reproduzieren, dann dokumentieren (Nutzer-Wunsch 2026-08-31)
+
+Bei jeder Anweisung, einen Bug/Fehler zu beheben: NIE direkt anhand einer
+vermuteten Ursache im Code herumdoktern. Erst den gemeldeten Fehler
+tatsächlich reproduzieren — per Playwright/Browser-Test, der den falschen
+Zustand konkret zeigt (Screenshot/DOM-Wert/Konsolenausgabe), oder ein
+kleines Skript, das den falschen Wert nachweist. Reproduktion nennt die
+ECHTE Ursache (die Code-Stelle, die es auslöst), nicht nur eine plausible
+Theorie — erst danach fixen. Nach dem Fix in `docs/CHANGELOG.md`
+dokumentieren: was die konkrete Ursache war (mit Code-Stelle/Zeile) und wie
+der Fix verhindert, dass genau dieses Muster nochmal auftritt — nicht nur
+"behoben", sondern WARUM es passiert ist, damit ein späterer Blick ins
+CHANGELOG das Muster wiedererkennt statt denselben Fehler nochmal zu bauen.
+Gilt auch, wenn der Nutzer mehrere Bugs in einer Nachricht gleichzeitig
+meldet — jeder einzeln reproduzieren, nicht nur den ersten und den Rest
+vermuten.
+
 ## KEIN Apostroph in einem `node -e '...'`-Block der Workflow-YAML
 
 Auch nicht im Kommentar. Der gesamte Node-Code steckt in einem

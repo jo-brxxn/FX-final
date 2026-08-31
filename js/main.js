@@ -286,19 +286,20 @@ const SB_CATS=[
 // Kategorien mit mindestens einem verfuegbaren Asset werden gezeigt.
 // allLabel=null unterdrueckt die Kopf-Option (fuer Tabs ohne "alle"-Ansicht,
 // z.B. Seasonality - dort ist immer genau ein Asset aktiv).
-function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
-  const optHtml=id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`;
-  // Watchlist-Gruppe ganz oben, vor den normalen SB_CATS-Kategorien (Nutzer-
-  // Wunsch 2026-08-24) - siehe watchlistedAssetIds(). Ein Asset stand hier
-  // ZUSAETZLICH zu seiner regulaeren Kategorie (bewusste Verdopplung,
-  // "Schnellzugriff wie eine Favoriten-Zeile") - Nutzer-Bugreport 2026-08-30:
-  // bei einer doppelten <option> mit demselben value gilt fuer den Browser nur
-  // die SPAETERE (die reguläre Kategorie weiter unten) als "die ausgewaehlte" -
-  // dadurch fehlte in der Watchlist-Gruppe der Haken, und Aufklappen sprang
-  // zur zweiten, nicht zur ersten Stelle. Jetzt taucht jedes Asset nur einmal
-  // auf: in der Watchlist-Gruppe, solange es dort steht, sonst in seiner
-  // regulaeren Kategorie - wandert automatisch mit, sobald sich die Watchlist
-  // aendert (dieselbe "Watchlist als einzige Wahrheit" wie ueberall sonst).
+// Kanonische Gruppierung fuer JEDEN Asset-Filter im Projekt (Nutzer-Wunsch
+// 2026-08-31: "Asset Filter sollen ueberall einheitlich sein... gleich
+// aufgebaut also Watchlist dann fx usw und other Assets auch aufgeteilt
+// nicht alles zusammen") - Watchlist-Gruppe ganz oben, danach SB_CATS in
+// fester Reihenfolge (FX/Crypto/Metals/Energy/Indices/Yields), jede eigene
+// <optgroup>. Vorher bauten assetFilterSelect/groupedAssetOptions/
+// sentFilterBar das je einzeln und leicht unterschiedlich (SB_CATS vs.
+// CLS_LABELS vs. ein grober "FX Pairs"/"Other Assets"-Topf) - jetzt EINE
+// gemeinsame Quelle. Ein Asset steht nur EINMAL (Nutzer-Bugreport
+// 2026-08-30 - doppelte <option>-Werte liessen den Haken UND die
+// Aufklapp-Position bei der falschen, spaeteren Stelle landen): in der
+// Watchlist-Gruppe, solange es dort steht, sonst in seiner regulaeren
+// Kategorie - wandert automatisch mit, sobald sich die Watchlist aendert.
+function sbCatsOptgroups(ids,optHtml){
   const wl=watchlistedAssetIds(ids);
   const wlSet=new Set(wl);
   const avail=new Set(ids.filter(id=>!wlSet.has(id)));
@@ -308,8 +309,12 @@ function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
     if(!items.length)return'';
     return`<optgroup label="${escH(cat.l)}">${items.map(optHtml).join('')}</optgroup>`;
   }).join('');
+  return wlGroup+groups;
+}
+function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
+  const optHtml=id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`;
   const head=allLabel?`<option value=""${selected?'':' selected'}>${allLabel}</option>`:'';
-  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${wlGroup}${groups}</select></div>`;
+  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${sbCatsOptgroups(ids,optHtml)}</select></div>`;
 }
 // ── Mehrfach-Waehrungsfilter (Chips + All/FX/Non-FX/Yields), ERGAENZEND zum
 // Einzel-Dropdown oben (Nutzer-Wunsch 2026-08-24: "bei set ups gibt es den
@@ -5036,11 +5041,14 @@ function goToRubCard(ri){
 // dadurch fuellen sie die Zeile IMMER exakt bis zum rechten Rand, egal wie
 // breit das Fenster ist (Nutzer-Wunsch 2026-08-23).
 function assetQuickRowHtml(c){
-  // "Volatility Indicators" nur bei Non-FX-Assets, die die Karte auch
-  // wirklich abdeckt (siehe feargreedEligible) - gleiche Regel wie bei den
-  // Watchlist-Quicklinks.
-  const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed'||feargreedEligible(c.id)).map(([tab,ic,lbl])=>
-    `<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('');
+  // Der 'sent'-Quicklink oeffnet den Sentiment-Picker (Retail/Put-Call/
+  // Net Options Flow/Volatility Indicators) statt direkt zu navigieren -
+  // "Volatility Indicators" darin nur, wenn die Karte dieses Asset auch
+  // wirklich abdeckt (siehe feargreedEligible, geprueft in openSentPicker).
+  const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>{
+    if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'page'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+    return`<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+  }).join('');
   return`<div class="aqr"><div class="aqr-links">${links}</div>${assetNotesCardHtml(c)}</div>`;
 }
 // Hoechstens so viele Notizen darf man pro Asset anpinnen.
@@ -5456,16 +5464,13 @@ function openBiasPicker(kind,ri,ii,x,y){
   m.className='bias-picker';m.id='biasPicker';
   m.innerHTML=`<div class="bias-picker-lbl">${escH(String(label).slice(0,60))}</div>
     <div class="bias-picker-opts">${opt('bull','▲','Bullish')}${opt('neu','◆','Neutral')}${opt('bear','▼','Bearish')}</div>`;
+  // Zentriert sich per CSS (.bias-picker: position:fixed;top/left:50%+
+  // translate) - kein Druckpunkt-Anker mehr noetig (Nutzer-Korrektur
+  // 2026-08-31: "immer wenn sich ein Fenster oeffnet... zentriert in der
+  // Mitte, nicht an der Stelle wo man gedrueckt hat"). x/y werden nicht
+  // mehr fuer die Position gebraucht (Aufrufer duerfen sie trotzdem weiter
+  // mitgeben, schadet nicht).
   document.body.appendChild(m);
-  const mw=m.offsetWidth,mh=m.offsetHeight;
-  m.style.position='fixed';
-  const left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8)),top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8));
-  m.style.left=left+'px';
-  m.style.top=top+'px';
-  m.style.zIndex='100001';
-  // Waechst vom Druckpunkt aus (Popover erscheint darueber, daher unten am
-  // Trigger-x verankert) statt vom Kartenzentrum wie ein Modal.
-  m.style.transformOrigin=Math.max(0,Math.min(x-left,mw))+'px '+mh+'px';
   setTimeout(()=>document.addEventListener('pointerdown',biasPickerOutside,true),0);
 }
 function biasPickerChoose(b){const fn=_biasPickerApply;closeBiasPicker();if(fn)fn(b);}
@@ -8618,16 +8623,23 @@ function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(
 // aber vom aktuell offenen Asset aus statt von einem separaten Fokus-
 // Asset - und die Zurueck-Pille fuehrt zu GENAU diesem Asset zurueck statt
 // ins Research-Terminal.
-// Nutzer-Wunsch 2026-08-31 ("mach bei Sentiment das in 4 unterschiedliche
-// quick links"): das fruehere einzelne 'sent' (ging immer zu Put/Call) ist
-// jetzt 4 eigene Eintraege - jeder springt in den passenden Sentiment-
-// Subtab (siehe QUICK_LINK_REAL_TAB unten, alle vier landen auf 'sent').
+// Nutzer-Wunsch 2026-08-31, zweite Korrektur ("mach Sentiment doch wieder
+// EIN quick link aber dann oeffnet sich ein Fenster mit den... quick
+// links"): die 4 einzelnen Sentiment-Eintraege (erste Fassung desselben
+// Tages) sind wieder EIN gemeinsamer 'sent'-Platzhalter - Klick oeffnet
+// openSentPicker() mit den zutreffenden Unterkategorien statt direkt zu
+// navigieren, siehe SENT_QUICK_SUBLINKS.
 const ASSET_QUICK_LINKS=[
   ['seas','clock','Seasonality'],['trends','trendUp','Trends'],['cot','bars','COT'],
+  ['sent','pulse','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
+  ['news','news','News'],['cal','calendar','Calendar'],
+];
+// Unterkategorien hinter dem 'sent'-Quicklink (openSentPicker) - jede
+// springt in den passenden Sentiment-Subtab (QUICK_LINK_REAL_TAB, alle
+// landen auf dem Tab 'sent').
+const SENT_QUICK_SUBLINKS=[
   ['retail','pulse','Retail Sentiment'],['putcall','bars','Put/Call Ratio'],
   ['netflow','shuffle','Net Options Flow'],['feargreed','zap','Volatility Indicators'],
-  ['data','note','Data'],['rate','flame','Rate Probabilities'],
-  ['news','news','News'],['cal','calendar','Calendar'],
 ];
 // Manche Quicklink-Kategorien sind nur Subtabs EINER echten Seite (alle vier
 // Sentiment-Kategorien -> Tab 'sent') - showTab() braucht die echte Tab-ID,
@@ -8715,18 +8727,19 @@ function assetQuickGo(tabId){
 const WATCH_QUICK_PAIR_DIRECT=new Set(['trends','retail']);
 function watchQuickLinksHtml(name){
   if(isPureFxPair(name)){
-    const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed');
-    const btns=links.map(([tab,ic,lbl])=>WATCH_QUICK_PAIR_DIRECT.has(tab)
-      ?`<button class="aql" onclick="watchQuickGoDirect('${tab}','${escJH(name)}')" title="${escH(lbl)} — opens with ${escH(name)} already selected as a pair">${icn(ic,14)}<span>${escH(lbl)}</span></button>`
-      :`<button class="aql" onclick="openLegPicker('${tab}','${escJH(name)}',event.clientX,event.clientY)" title="${escH(lbl)} — pick which side of ${escH(name)} to view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`
-    ).join('');
+    const btns=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>{
+      if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'pair',name:'${escJH(name)}'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+      if(WATCH_QUICK_PAIR_DIRECT.has(tab))return`<button class="aql" onclick="watchQuickGoDirect('${tab}','${escJH(name)}')" title="${escH(lbl)} — opens with ${escH(name)} already selected as a pair">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+      return`<button class="aql" onclick="openLegPicker('${tab}','${escJH(name)}')" title="${escH(lbl)} — pick which side of ${escH(name)} to view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+    }).join('');
     return`<div class="wt-quick">${btns}</div>`;
   }
   const id=nonFxLegAssetId(name);if(!id)return'';
-  const links=ASSET_QUICK_LINKS.filter(([tab])=>tab!=='feargreed'||feargreedEligible(id));
   const label=(syms.find(s=>s.id===id)||{}).name||id;
-  return`<div class="wt-quick">${links.map(([tab,ic,lbl])=>
-    `<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('')}</div>`;
+  return`<div class="wt-quick">${ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>{
+    if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'watch',id:'${escJH(id)}'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+    return`<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+  }).join('')}</div>`;
 }
 // Direkter Paar-Quicklink (Trends-Paar-Modus / Retail Sentiment) fuer FX-
 // Paar-Watchlist-Zeilen (siehe WATCH_QUICK_PAIR_DIRECT) - eigener,
@@ -8754,13 +8767,51 @@ function watchQuickGo(tabId,id){
   setBackPillTitle('Back to the Watchlist');
   showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
 }
+// Sentiment-Picker (Nutzer-Wunsch 2026-08-31): der 'sent'-Quicklink oeffnet
+// dieses kleine, zentrierte Fenster mit den zutreffenden Unterkategorien
+// (SENT_QUICK_SUBLINKS) statt direkt zu navigieren. ctx sagt, wie die Wahl
+// angewendet wird: {kind:'pair',name} = FX-Paar-Watchlist-Zeile (Retail
+// direkt aufs Paar, alles andere ueber openLegPicker), {kind:'watch',id} =
+// Non-FX-Watchlist-Zeile, {kind:'page'} = Asset-Detailseite (nutzt das
+// gerade fokussierte Asset). "Volatility Indicators" nur, wenn die Karte
+// das jeweilige Asset inhaltlich abdeckt (feargreedEligible) - bei einem
+// FX-Paar nie (keine einzelne Asset-ID).
+let _sentPickerCtx=null;
+function openSentPicker(ctx){
+  closeSentPicker();
+  if(!ctx)return;
+  const fgOk=ctx.kind==='watch'?feargreedEligible(ctx.id):ctx.kind==='page'?feargreedEligible((getSym()||{}).id):false;
+  const subs=SENT_QUICK_SUBLINKS.filter(([tab])=>tab!=='feargreed'||fgOk);
+  const opt=([tab,ic,lbl])=>`<button class="bias-picker-opt" onclick="chooseSentPicker('${tab}')">${icn(ic,14)} ${escH(lbl)}</button>`;
+  const m=document.createElement('div');
+  m.className='bias-picker';m.id='sentPicker';
+  m.innerHTML=`<div class="bias-picker-lbl">Sentiment</div><div class="bias-picker-opts">${subs.map(opt).join('')}</div>`;
+  document.body.appendChild(m);
+  _sentPickerCtx=ctx;
+  setTimeout(()=>document.addEventListener('pointerdown',sentPickerOutside,true),0);
+}
+function chooseSentPicker(tab){
+  const ctx=_sentPickerCtx;closeSentPicker();
+  if(!ctx)return;
+  if(ctx.kind==='pair'){
+    if(WATCH_QUICK_PAIR_DIRECT.has(tab))watchQuickGoDirect(tab,ctx.name);
+    else openLegPicker(tab,ctx.name);
+  }else if(ctx.kind==='watch')watchQuickGo(tab,ctx.id);
+  else if(ctx.kind==='page')assetQuickGo(tab);
+}
+function closeSentPicker(){
+  const m=document.getElementById('sentPicker');if(m)m.remove();
+  document.removeEventListener('pointerdown',sentPickerOutside,true);
+  _sentPickerCtx=null;
+}
+function sentPickerOutside(e){const m=document.getElementById('sentPicker');if(m&&!m.contains(e.target))closeSentPicker();}
 // "Kleines Fenster" (Nutzer-Wunsch 2026-08-31), das bei einer FX-Paar-
 // Watchlist-Zeile fragt, welche der beiden Seiten (z.B. USD oder CAD) man
 // in einer Kategorie sehen will, die kein Paar direkt auswaehlen kann -
 // gleiches Popover-Muster wie openBiasPicker() (dieselben .bias-picker-CSS-
-// Klassen, verankert am Klickpunkt statt am Kartenzentrum).
+// Klassen), zentriert statt am Klickpunkt (Nutzer-Korrektur 2026-08-31).
 let _legPickerCtx=null;
-function openLegPicker(tabId,name,x,y){
+function openLegPicker(tabId,name){
   closeLegPicker();
   const l=pairLegs(name);if(!l)return;
   const opt=(id,cc)=>`<button class="bias-picker-opt" onclick="legPickerChoose('${escJH(id)}')">${escH(cc)}</button>`;
@@ -8768,13 +8819,6 @@ function openLegPicker(tabId,name,x,y){
   m.className='bias-picker';m.id='legPicker';
   m.innerHTML=`<div class="bias-picker-lbl">View ${escH(name)} as…</div><div class="bias-picker-opts">${opt(l.bId,l.bc)}${opt(l.qId,l.qc)}</div>`;
   document.body.appendChild(m);
-  const mw=m.offsetWidth,mh=m.offsetHeight;
-  m.style.position='fixed';
-  const left=Math.max(8,Math.min(x-mw/2,window.innerWidth-mw-8)),top=Math.max(8,Math.min(y-mh-14,window.innerHeight-mh-8));
-  m.style.left=left+'px';
-  m.style.top=top+'px';
-  m.style.zIndex='100001';
-  m.style.transformOrigin=Math.max(0,Math.min(x-left,mw))+'px '+mh+'px';
   _legPickerCtx={tabId};
   setTimeout(()=>document.addEventListener('pointerdown',legPickerOutside,true),0);
 }
@@ -11404,25 +11448,14 @@ function biasLineSegments(pts,halo){
   });
   return lines;
 }
-// Group label per asset class (assetCls) for the subdivided filter dropdowns.
-const CLS_LABELS={fx:'Currencies',index:'Indices',metal:'Commodities',energy:'Commodities',crypto:'Crypto',stock:'Stocks'};
+// Nutzt jetzt dieselbe kanonische Gruppierung wie assetFilterSelect (siehe
+// sbCatsOptgroups) - vorher eine eigene, abweichende Gruppierung
+// (CLS_LABELS: Metals+Energy zusammen als "Commodities", andere Namen als
+// SB_CATS) - genau die Uneinheitlichkeit, die der Nutzer 2026-08-31
+// bemaengelt hat.
 function groupedAssetOptions(ids,selected){
   const optHtml=id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`;
-  // Watchlist-Gruppe ganz oben, siehe watchlistedAssetIds()/assetFilterSelect
-  // (derselbe Aufbau, dieser Helfer liefert nur die <optgroup>s ohne <select>).
-  // Jedes Asset nur EINMAL (Nutzer-Bugreport 2026-08-30, siehe assetFilterSelect
-  // fuer die volle Begruendung) - die uebrigen Kategorien bekommen nur die
-  // NICHT watchlisteten Assets.
-  const wl=watchlistedAssetIds(ids);
-  const wlSet=new Set(wl);
-  const wlHtml=wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'';
-  const groups=[];const byLbl={};
-  ids.filter(id=>!wlSet.has(id)).forEach(id=>{
-    const lbl=CLS_LABELS[assetCls(id)]||'Other';
-    if(!byLbl[lbl]){byLbl[lbl]=[];groups.push(lbl);}
-    byLbl[lbl].push(id);
-  });
-  return wlHtml+groups.map(lbl=>`<optgroup label="${escH(lbl)}">`+byLbl[lbl].map(optHtml).join('')+`</optgroup>`).join('');
+  return sbCatsOptgroups(ids,optHtml);
 }
 // Generischer Zeitraum-Filter fuer Zeitreihen-Diagramme (Nutzer-Wunsch
 // 2026-07-20: "ueberall wo es Diagramme gibt" 1Y/2Y/.../Monate/Custom, UND
@@ -12668,7 +12701,15 @@ function renderDataTab(){
       if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind)}</div></div>`;
     }
   }
-  el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">${assetPicker}${indPicker}</div>${chartSection||`<div class="cot-empty">${sym?'Pick an indicator above.':'Pick an asset above to browse its indicator history.'}</div>`}`;
+  // Asset-Filter jetzt oben rechts in einem Karten-Titel, wie bei den
+  // anderen Kategorien (Nutzer-Wunsch 2026-08-31: "Asset Filter sollen
+  // ueberall einheitlich sein... immer oben rechts") - vorher eine
+  // titel-lose Zeile ohne erkennbare Kategorie-Ueberschrift. Der
+  // Indikator-Filter ist ein davon ABHAENGIGER zweiter Schritt (erst
+  // sichtbar/sinnvoll, wenn ein Asset gewaehlt ist) und bleibt deshalb als
+  // eigene Zeile darunter, nicht mit im selben Titel.
+  const dataHead=`<div class="cot-card"><div class="cot-card-title">Data<span style="margin-left:auto">${assetPicker}</span></div>${indPicker?`<div style="padding:0 14px 12px">${indPicker}</div>`:''}</div>`;
+  el.innerHTML=dataHead+(chartSection||`<div class="cot-empty">${sym?'Pick an indicator above.':'Pick an asset above to browse its indicator history.'}</div>`);
   attachChartHovers(el);
 }
 function sentReadBadge(ev){
@@ -13433,7 +13474,16 @@ function sentFilterBar(){
   // fuer die volle Begruendung - doppelte <option>-Werte liessen den Haken UND
   // die Aufklapp-Position bei der falschen, spaeteren Stelle landen).
   const wl=ids.filter(sentSymWatched),wlSet=new Set(wl),rest=ids.filter(s=>!wlSet.has(s));
-  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',wl)}${grp('FX Pairs',rest.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',rest.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
+  const fxPairs=rest.filter(s=>!SENT_NONFX_SYMS.has(s));
+  const nonFx=rest.filter(s=>SENT_NONFX_SYMS.has(s));
+  // "Other Assets" nach SB_CATS-Kategorie aufgeteilt statt in einem Topf
+  // (Nutzer-Wunsch 2026-08-31: "Asset Filter sollen ueberall einheitlich
+  // sein... other Assets auch aufgeteilt nicht alles zusammen") - Broker-
+  // Symbol -> App-Asset-ID ueber SENT_NONFX_PRICE_ID, dann dieselbe
+  // SB_CATS-Kategorie wie ueberall sonst (sbCatsOptgroups).
+  const nonFxGroups=SB_CATS.filter(c=>c.l!=='FX').map(cat=>
+    grp(cat.l,nonFx.filter(s=>cat.ids.includes(SENT_NONFX_PRICE_ID[s])))).join('');
+  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',wl)}${grp('FX Pairs',fxPairs)}${nonFxGroups}`;
   return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
@@ -14203,21 +14253,30 @@ function renderCot(){
   const note=cotRefreshNote?`<span class="cot-note">${escH(cotRefreshNote)}</span>`:'';
   const _rel=cotNextReleaseInfo();
   const _relLbl=_rel?(fmtDayHdr(_rel.ymd)+(_rel.shifted?' · ⚠ holiday-delayed':'')):'';
-  const ctrl=`<div class="cot-ctrl">
-    <div class="cot-cd-box"><span class="cot-cd-lbl">Next report${_relLbl?` (${escH(_relLbl)})`:''} in</span><span class="cot-cd" id="cotCountdown">–</span></div>
-    <div class="cot-ctrl-r">${note}<button class="cot-refresh${refreshSpin}" id="cotRefreshBtn" onclick="cotManualRefresh()" title="Load live from the CFTC now"><span class="cot-refresh-ic">↻</span> Refresh</button></div>
-  </div>`;
+  // ctrlR-Bausteine (rechte Seite von .cot-ctrl) - der Einzel-Asset-Filter
+  // kommt erst dazu, sobald COT_DATA feststeht (unten), damit "kein Filter
+  // ohne Daten" auch fuer den Leerlauf-Zustand gilt.
+  const ctrlRTail=`${note}<button class="cot-refresh${refreshSpin}" id="cotRefreshBtn" onclick="cotManualRefresh()" title="Load live from the CFTC now"><span class="cot-refresh-ic">↻</span> Refresh</button>`;
+  const cdBox=`<div class="cot-cd-box"><span class="cot-cd-lbl">Next report${_relLbl?` (${escH(_relLbl)})`:''} in</span><span class="cot-cd" id="cotCountdown">–</span></div>`;
   if(!COT_DATA||!COT_DATA.symbols){
-    el.innerHTML=ctrl+`<div class="cot-empty">COT data isn't available yet. It is fetched hourly from the CFTC — it will appear here after the data job's first run (COT is released weekly, on Fridays). Use "Refresh" to pull live from the CFTC at any time.</div>`;
+    el.innerHTML=`<div class="cot-ctrl">${cdBox}<div class="cot-ctrl-r">${ctrlRTail}</div></div>`+`<div class="cot-empty">COT data isn't available yet. It is fetched hourly from the CFTC — it will appear here after the data job's first run (COT is released weekly, on Fridays). Use "Refresh" to pull live from the CFTC at any time.</div>`;
     cotStartCountdown();return;
   }
   const allRows=COT_SYMS.map(id=>{const m=cotMetrics(COT_DATA.symbols[id]);return m?{id,name:COT_NAME[id]||id,m}:null;}).filter(Boolean).sort((a,b)=>b.m.longPct-a.m.longPct);
   const avail=allRows.map(r=>r.id);
   if(cotFilter&&!avail.includes(cotFilter))cotFilter=null;
-  const filterBar=assetFilterSelect(avail,cotFilter,'pickCotFilter','All assets','Filter by a single asset',null)
-    +(cotFilter?'':multiAssetFilterBarHtml(avail,cotCcyFilter,cotScope,'toggleCotCcy','setCotScope','clearCotCcyFilter'));
+  // Einzel-Asset-Filter jetzt oben rechts in der Kontrollzeile, wie bei den
+  // anderen Kategorien (Nutzer-Wunsch 2026-08-31: "Asset Filter sollen
+  // ueberall einheitlich sein... immer oben rechts") - vorher stand er als
+  // eigene Zeile UNTER der Kontrollzeile. Der Mehrfach-Waehrungsfilter
+  // (Chips) ist ein eigenstaendiges, ERGAENZENDES Werkzeug (siehe Kommentar
+  // bei multiAssetFilterBarHtml), keine zweite "Asset Filter"-Instanz, und
+  // bleibt deshalb als eigene Zeile darunter.
+  const singleFilter=assetFilterSelect(avail,cotFilter,'pickCotFilter','All assets','Filter by a single asset',null);
+  const ctrl=`<div class="cot-ctrl">${cdBox}<div class="cot-ctrl-r">${singleFilter}${ctrlRTail}</div></div>`;
+  const multiFilter=cotFilter?'':multiAssetFilterBarHtml(avail,cotCcyFilter,cotScope,'toggleCotCcy','setCotScope','clearCotCcyFilter');
   const rows=cotFilter?allRows.filter(r=>r.id===cotFilter):applyMultiAssetFilter(allRows,r=>r.id,cotCcyFilter,cotScope);
-  if(!rows.length){el.innerHTML=ctrl+filterBar+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
+  if(!rows.length){el.innerHTML=ctrl+multiFilter+`<div class="cot-empty">No COT values found for the current selection.</div>`;cotStartCountdown();return;}
   // Ab 80% auf einer Seite gilt die Positionierung als "crowded": extrem
   // einseitige Spekulanten-Positionierung erhoeht das Risiko scharfer
   // Gegenbewegungen (Squeeze), sobald der Trend kippt.
@@ -14312,7 +14371,7 @@ function renderCot(){
       <div class="cot-card-title"><span>${icn('bars',15)} Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small></div>
       <div class="cot-bars">${bars}</div>
     </div>`;
-  el.innerHTML=ctrl+filterBar+`
+  el.innerHTML=ctrl+multiFilter+`
     <div class="cot-meta">Report as of: <b>${escH(date)}</b>${escH(_ageTxt)}${_pubTxt} · Source: CFTC (Legacy, Non-Commercial) · data reflects positioning as of Tuesday's close${_stale}</div>
     ${histCard}
     ${barsCard}
@@ -14454,8 +14513,12 @@ function renderSeasonality(){
   // sichtbare Option - siehe seasCurYearReturns()-Kommentar oben.
   const curYear=seasCurYearReturns(seasAsset,A.inv);
   const cyLegend=Object.keys(curYear).length?`<div class="tr-legend" style="margin-top:6px"><span class="tr-leg-item"><span class="tr-leg-dash"></span>This year so far</span></div>`:'';
+  // Filter jetzt IM Karten-Titel oben rechts, wie bei Retail Sentiment/
+  // Put-Call/Net Options Flow (Nutzer-Wunsch 2026-08-31: "Asset Filter
+  // sollen ueberall einheitlich sein... immer oben rechts") - vorher stand
+  // er als eigene Zeile UEBER der Karte, keins der anderen Tabs macht das so.
   const chartCard=`<div class="cot-card">
-    <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">15y stats · proxy: ${proxyLink} · ${escH(upd)}</span></div>
+    <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="margin-left:auto">${filt}</span><small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">15y stats · proxy: ${proxyLink} · ${escH(upd)}</small></div>
     <div style="padding:12px 14px;overflow-x:auto">${seasBarChart(A.months,curMon,curYear)}${curLine}${cyLegend}</div>
   </div>`;
   // Kompakte Uebersicht: der AKTUELLE Monat quer ueber alle Assets,
@@ -14475,7 +14538,7 @@ function renderSeasonality(){
     <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span></div>
     <div style="padding:12px 14px">${ovRows}</div>
   </div>`;
-  el.innerHTML=filt+chartCard+ovCard;
+  el.innerHTML=chartCard+ovCard;
   attachChartHovers(el);
 }
 // Info-Text fuer den i-Button (nutzt das generische Sentiment-Info-Modal)
@@ -15216,7 +15279,30 @@ function npIconSvg(d){return`<span class="np-ic"><svg viewBox="0 0 24 24" fill="
 function tabBtnHtml(id,sub){
   const d=TABS[id];if(!d)return'';
   const on=activeTabId===id;
-  return`<button class="np${sub?' np-sub':''}${on?' on':''}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" data-tip="${escH(d.label)}" aria-label="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
+  return`<button class="np${sub?' np-sub':''}${on?' on':''}" data-tab="${id}" onpointerdown="tabPressStart(event,'tab','${id}')" onpointerup="tabPressEnd()" onpointerleave="tabPressEnd()" onpointercancel="tabPressEnd()" oncontextmenu="return false" onclick="onTabClick(event,'${id}')" data-tip="${escH(d.label)}" aria-label="${escH(d.label)}">${npIconSvg(TAB_ICONS[id]||TAB_ICON_STACK)}<span class="np-lbl">${escH(d.label)}</span></button>`;
+}
+// Aktualisiert NUR die "aktiv"-Markierung (welcher Tab-Button .on hat,
+// welcher Stapel-Button .has-active) an der BESTEHENDEN Leiste, ohne sie
+// neu zu bauen - Gegenstueck zu syncNavExpanded() fuer den Tab-Wechsel-Fall.
+// showTab() nutzt beide zusammen statt eines vollen renderTabBar(), sonst
+// wuerde ein offener Stapel bei jedem Tab-Wechsel sofort und OHNE Animation
+// schliessen (Nutzer-Bugreport 2026-08-31: "der Stapel sich komplett ohne
+// Animation schliesst") - renderTabBar() ersetzt bei jedem Aufruf die
+// komplette Leiste per innerHTML, ein frisch erzeugtes Element hat keinen
+// Vorher-Zustand und kann deshalb nie animieren (siehe Kommentar dort).
+function syncNavActive(){
+  const bar=document.getElementById('navSidebar');if(!bar)return;
+  bar.querySelectorAll('.np[data-tab]').forEach(b=>b.classList.toggle('on',activeTabId===b.dataset.tab));
+  bar.querySelectorAll('.np-stack[data-stack]').forEach(b=>{
+    // Der Assets-Stapel (ASSET_STACK_ID) ist KEIN Eintrag in tabStacks -
+    // eigener Sonderfall, gleiche Regel wie renderTabBar()s 'fx'-Zweig
+    // (hasActive=activeTabId==='fx'). Fehlte hier zuerst (Nutzer-Bugreport/
+    // Wächter-Fund 2026-08-31: "Assets-Stapel wird auf der Assets-Seite
+    // nicht hervorgehoben").
+    if(b.dataset.stack===ASSET_STACK_ID){b.classList.toggle('has-active',activeTabId==='fx');return;}
+    const st=tabStacks.find(s=>s.id===b.dataset.stack);
+    b.classList.toggle('has-active',!!st&&st.members.includes(activeTabId));
+  });
 }
 // Schaltet NUR die .open-Klassen an der bestehenden Leiste um, statt sie neu
 // zu bauen - ein Neuaufbau wuerde jeden Uebergang verschlucken. renderTabBar()
@@ -15393,7 +15479,14 @@ function showTab(tab,btn,fxMode){
   // jeder echte Stapel bei seinem aktiven Tab.
   const _st=stackOf(activeTabId);
   expandedStack=(activeTabId==='fx')?ASSET_STACK_ID:(_st?_st.id:null);
-  renderTabBar();
+  // syncNavExpanded()+syncNavActive() statt eines vollen renderTabBar():
+  // ein Neuaufbau per innerHTML wuerde einen gerade offenen Stapel sofort
+  // und OHNE Animation schliessen (Nutzer-Bugreport 2026-08-31), weil ein
+  // frisch erzeugtes Element keinen Vorher-Zustand hat. Nur beim allerersten
+  // Aufbau (Leiste noch leer) den vollen renderTabBar() nutzen.
+  const navBar=document.getElementById('navSidebar');
+  if(navBar&&navBar.children.length){syncNavExpanded();syncNavActive();}
+  else renderTabBar();
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
   // aktiv zu lassen (die Steuerbuttons existieren ohnehin nur dort).
@@ -16392,9 +16485,10 @@ Object.assign(window,{
   resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,
   resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
   toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
-  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,applyAssetQuickFilter,
+  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,SENT_QUICK_SUBLINKS,assetQuickGo,applyAssetQuickFilter,
   QUICK_LINK_REAL_TAB,feargreedEligible,retailSymFor,WATCH_QUICK_PAIR_DIRECT,
   watchQuickLinksHtml,watchQuickGo,watchQuickGoDirect,openLegPicker,legPickerChoose,closeLegPicker,legPickerOutside,
+  openSentPicker,chooseSentPicker,closeSentPicker,sentPickerOutside,
   researchSideTitleHtml,researchSidebarHtml,
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
   researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
@@ -16417,7 +16511,7 @@ Object.assign(window,{
   recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
-  biasGroup,biasLineSegments,CLS_LABELS,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
+  biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
   filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
   setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
   resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
@@ -16530,6 +16624,7 @@ Object.defineProperty(window,'sbEditMode',{get:()=>sbEditMode,set:v=>{sbEditMode
 Object.defineProperty(window,'assetNoteFid',{get:()=>assetNoteFid,set:v=>{assetNoteFid=v;},configurable:true});
 Object.defineProperty(window,'_biasPickerApply',{get:()=>_biasPickerApply,set:v=>{_biasPickerApply=v;},configurable:true});
 Object.defineProperty(window,'_legPickerCtx',{get:()=>_legPickerCtx,set:v=>{_legPickerCtx=v;},configurable:true});
+Object.defineProperty(window,'_sentPickerCtx',{get:()=>_sentPickerCtx,set:v=>{_sentPickerCtx=v;},configurable:true});
 Object.defineProperty(window,'_infoRi',{get:()=>_infoRi,set:v=>{_infoRi=v;},configurable:true});
 Object.defineProperty(window,'_infoIi',{get:()=>_infoIi,set:v=>{_infoIi=v;},configurable:true});
 Object.defineProperty(window,'_delSymId',{get:()=>_delSymId,set:v=>{_delSymId=v;},configurable:true});

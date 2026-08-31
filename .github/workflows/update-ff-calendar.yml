@@ -2697,8 +2697,20 @@ jobs:
                 });
                 const total=Object.keys(bySym).length;
                 const retail=[];
-                Object.keys(bySym).forEach(sym=>{if(sym.length===6&&MAJ.has(sym.slice(0,3))&&MAJ.has(sym.slice(3)))retail.push(bySym[sym]);});
-                NONFX.forEach(cands=>{for(const c of cands){if(bySym[c]){retail.push(bySym[c]);break;}}});
+                // Nutzer-Bugreport 2026-08-31: US500/USOIL standen ueber 50
+                // Tage in Folge exakt bei 0%/100% - keine echte Positionierungs-
+                // Verteilung rundet sich ueber so viele Tage konstant auf einen
+                // exakten Rand, das ist ein Symbol ohne echte Community-
+                // Stichprobe hinter der Zahl (Myfxbook fuehrt das Symbol,
+                // aber praktisch niemand handelt es unter genau diesem Namen).
+                // Grundsatz "nie schaetzen" gilt auch hier: ein Symbol mit
+                // 0%/100% wird NICHT uebernommen, bei NONFX wird stattdessen
+                // der naechste Kandidat probiert, bei den FX-Majors bleibt das
+                // Paar diesen Lauf einfach aussen vor (naechster stuendlicher
+                // Lauf versucht es erneut).
+                const plausible=c=>c&&c.long>0&&c.long<100;
+                Object.keys(bySym).forEach(sym=>{if(sym.length===6&&MAJ.has(sym.slice(0,3))&&MAJ.has(sym.slice(3))&&plausible(bySym[sym]))retail.push(bySym[sym]);});
+                NONFX.forEach(cands=>{for(const c of cands){if(plausible(bySym[c])){retail.push(bySym[c]);break;}}});
                 if(retail.length>=5){out.retail=retail;out.retailSource="https://www.myfxbook.com/community/outlook";log.push("retail="+retail.length+"/"+total+" kept (listed assets only)");}
                 else log.push("retail:parsed-"+retail.length+"/"+total);
               }

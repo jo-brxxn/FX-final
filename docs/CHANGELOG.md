@@ -8154,3 +8154,120 @@ COT-Zeilen- UND Tabellenklick bleiben auf `curPage==='cot'` und setzen
 Volatility Indicators) und BTC (11) korrekt gefiltert. `node check/all.js`
 komplett gruen (13 Waechter). Keine VERSION-CHECK-Nummer noetig (kein
 `index.html`-Diff). Keine Score-Formel angefasst.
+
+## 2026-08-31 — Filter-Vereinheitlichung, Popover-Zentrierung, Sentiment-Picker, Stapel-Animation, Retail-Datenbug (VERSION-CHECK-458)
+
+**Neue Standing-Regel (in `docs/workflow.md` verankert):** bei jeder
+Bugfix-Anweisung ab jetzt IMMER erst reproduzieren (Playwright/Skript, das
+den falschen Zustand konkret zeigt), dann fixen, dann hier dokumentieren
+was die echte Ursache war - nicht nur "behoben". Alle Punkte unten wurden
+so bearbeitet.
+
+**1) Select-Fokusrahmen ("komische Umrandung beim ersten Klick", "erst
+kommt nichts"):** reproduziert per `getComputedStyle(select).outlineStyle`
+vor/nach `.focus()`: "none 0px" -> "auto 1px". `.btn` war als einzige der
+interaktiven Klassen in `index.html` ohne `outline:none` (alle anderen -
+`.quick-note`/`.ai`/`.nbox`/`.fsel`/... - unterdruecken den nativen
+Fokusrahmen bereits konsequent) - bei einem `<select class="btn">` zeigt
+Chromium den Ring schon beim reinen Anklicken, nicht erst bei Tastatur-
+Fokus wie bei `<button>`. Der Wertwechsel selbst hat immer funktioniert
+(`onchange` feuert normal) - das "nichts passiert"-Gefuehl kam vom
+ploetzlichen, unpassenden System-Rahmen. Fix: `outline:none` auf `.btn` +
+sauberer `:focus-visible`-Rahmen fuer Tastatur-Nutzer.
+
+**2) Asset-Filter uneinheitlich (Position + Gruppierung):** Audit aller
+Fundstellen zeigte DREI leicht unterschiedliche Aufbauten - `assetFilterSelect`
+(SB_CATS-Gruppen: FX/Crypto/Metals/Energy/Indices/Yields), `groupedAssetOptions`
+(eigene `CLS_LABELS`-Gruppen: "Currencies"/"Commodities" fasste Metals+Energy
+zusammen), `sentFilterBar` ("FX Pairs"/ein grosser "Other Assets"-Topf ohne
+Aufteilung). Und bei der POSITION: Retail/Put-Call/Net-Options-Flow sassen
+bereits oben rechts im Karten-Titel, Seasonality/COT/Data dagegen als eigene
+Zeile UEBER bzw. UNTER der Karte. Fix: neue gemeinsame `sbCatsOptgroups()`,
+von allen drei Funktionen genutzt (CLS_LABELS entfernt); Seasonality/COT/Data
+bekommen denselben Karten-Titel-Aufbau wie Retail Sentiment (Filter oben
+rechts per `margin-left:auto`, Mehrfach-Waehrungs-Chips bei COT bleiben ein
+eigenstaendiges Zusatzwerkzeug darunter, keine zweite "Asset Filter"-Instanz).
+**Dabei ausgeloester Layout-Bug** (vom eigenen `node check/all.js`-Lauf
+gefangen, nicht vom Nutzer gemeldet): die neuen Karten-Titel liessen die
+`<select>`-Filter auf schmalen Bildschirmen ueber den Kartenrand laufen -
+reproduziert/lokalisiert per `element.scrollWidth`: ein `<select>` ohne
+feste Breite bemisst sich in Chromium an seiner BREITESTEN Option, nicht an
+der sichtbaren, das kann bei vielen Assets/Indikatoren im Filter deutlich
+breiter sein als eine schmale Karte. Fix: `min-width:0;max-width:100%` auf
+`.cot-filterbar select` + `min-width:0` auf `.cot-filterbar` selbst, damit
+es im Flex-Layout wirklich schrumpfen kann.
+
+**3) Watchlist-Quicklinks, zweite Korrekturrunde:** Nutzer-Feedback zur
+Vorrunde ("da ist jetzt bei usdcad zb net optionsflow aber es gibt das
+nicht fuer cad nur fuer usd") - die vorherige Loesung zeigte bei FX-Paaren
+entweder ALLE Kategorien (mit Rate-auf-eine-Seite) oder blendete sie ganz
+aus; gewuenscht: IMMER alle Quicklinks zeigen, aber bei Kategorien ohne
+Paar-Filter erst ein kleines Fenster fragen, welche Seite (USD oder CAD)
+man sehen will (`openLegPicker`, wiederverwendet die `.bias-picker`-CSS).
+Zusaetzlich Sentiment nochmal umgebaut: die 4 einzelnen Sentiment-
+Quicklinks von vorhin sind wieder EIN gemeinsamer 'sent'-Quicklink -
+Klick oeffnet `openSentPicker()`, ein kleines Fenster mit den zutreffenden
+Unterkategorien (Retail/Put-Call/Net Options Flow/ggf. Volatility
+Indicators). Darin waehlt Retail Sentiment weiterhin direkt das ganze Paar
+(Broker-Symbole sind selbst Paare), die anderen drei gehen durch denselben
+Seiten-Wahl-Popup wie jede andere leg-only Kategorie.
+
+**4) Alle Popover jetzt zentriert statt am Klickpunkt** (Nutzer-Korrektur:
+"immer wenn sich ein Fenster oeffnet... zentriert in der Mitte... nicht an
+der Stelle wo man gedrueckt hat"): `.bias-picker` (Bias-Auswahl an Notizen,
+Seiten-Wahl-Popup, Sentiment-Picker - alle drei teilen sich die Klasse)
+positioniert sich jetzt per `position:fixed;top/left:50%+translate(-50%,-50%)`
+statt per JS-berechnetem Klickpunkt-Anker; die bisherige Druckpunkt-Logik
+(mw/mh/left/top/transformOrigin) ist komplett raus. Eigene Animations-
+Keyframe (`popoverInCenter`) haelt den zentrierenden Transform waehrend der
+Eintritts-Animation aufrecht, `.tab-menu` (das andere Popover im Projekt,
+bleibt bewusst am Klickpunkt - ein Kontextmenü an einer Tab-Kachel) behaelt
+seine eigene, unveraenderte Keyframe.
+
+**5) Offener Kategorie-Stapel schloss beim Tab-Wechsel ohne Animation:**
+reproduziert per Playwright - derselbe DOM-Knoten (`#sidebar`/`.np-sub-wrap`)
+wurde beim Wechsel auf einen anderen Tab NICHT wiederverwendet, sondern
+`showTab()` rief den vollen `renderTabBar()` auf, der die komplette
+Navigationsleiste per `innerHTML` neu baut - ein frisch erzeugtes Element
+hat keinen Vorher-Zustand und kann deshalb nie animieren (das war sogar
+schon so kommentiert: "beim Tabwechsel also bewusst ohne Animation",
+also eine fruehere ABSICHTLICHE Entscheidung, die der Nutzer jetzt
+ausdruecklich zurueckgenommen hat). Fix: neue `syncNavActive()` (schaltet
+nur `.on`/`.has-active`-Klassen an bestehenden Elementen um) ergaenzt das
+bereits vorhandene `syncNavExpanded()` - `showTab()` nutzt beide zusammen
+statt des vollen Rebuilds, ausser beim allerersten Aufbau (Leiste noch
+leer). **Dabei vom eigenen `node check/all.js`-Lauf gefangener Regressions-
+Bug:** der Assets-Stapel-Button ist KEIN Eintrag in `tabStacks` (eigener
+Sonderfall `ASSET_STACK_ID`) - `syncNavActive()`s generische
+`tabStacks.find(...)`-Suche fand ihn deshalb nie und liess `.has-active`
+nie zu, "Assets-Stapel wird auf der Assets-Seite nicht hervorgehoben".
+Sonderfall ergaenzt (`activeTabId==='fx'`, dieselbe Regel wie
+`renderTabBar()`s eigener 'fx'-Zweig).
+
+**6) Retail Sentiment: manche Assets dauerhaft 100% Long/Short.**
+Reproduziert per Auswertung der gespeicherten `retailHistory`: US500 und
+USOIL standen seit dem allerersten aufgezeichneten Tag (alle 50 Eintraege)
+exakt bei 0%/100% - keine echte Positionierungs-Stichprobe rundet sich
+ueber so viele Tage konstant auf einen exakten Rand, das jeweils ERSTE
+Symbol in ihrer Kandidatenliste (`US500`, `USOIL`) existiert zwar bei
+Myfxbook, hat dort aber praktisch keine echte Community-Stichprobe hinter
+sich. Ursache: `update-ff-calendar.yml`s Retail-Fetch nahm bei mehreren
+Broker-Namens-Kandidaten je Asset einfach den ERSTEN vorhandenen, ohne
+die Plausibilitaet des Werts zu pruefen. Fix (Grundsatz "nie schaetzen"):
+neue `plausible()`-Pruefung verwirft Werte mit exakt 0%/100% - bei NONFX-
+Assets wird dann der naechste Kandidat probiert (z.B. SP500/SPX500 statt
+US500), bei FX-Majors bleibt das Paar den Lauf einfach aussen vor. Die
+bereits gespeicherten falschen Werte manuell bereinigt (`US500`/`USOIL`
+aus `retail` entfernt, ihre komplette `retailHistory` geloescht - keine
+einzige der 50 Eintraege war je echt, kein Backfill/Schaetzen noetig).
+Erscheinen automatisch wieder, sobald ein Kandidat einen plausiblen Wert
+liefert.
+
+**Geprueft:** `node --check` aller geaenderten Dateien; Playwright bestaetigt
+alle 6 Punkte einzeln (Fokusrahmen-Reproduktion, Filter-Gruppen bei
+Seasonality/COT/Data/Retail identisch, kein Overflow mehr auf 390px-Breite,
+Sentiment-Picker + Seiten-Wahl-Popup beide exakt zentriert (Delta 0px),
+Stapel-DOM-Knoten wird beim Tab-Wechsel wiederverwendet statt neu gebaut,
+Assets-Stapel-Hervorhebung); `node check/all.js` komplett gruen (13
+Waechter, inkl. der zwei oben genannten Regressionen, die der Waechter-Lauf
+selbst vor dem Push gefangen hat). Keine Score-Formel angefasst.
