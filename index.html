@@ -996,7 +996,7 @@ body.compact-view .rub-summary{display:block}
 .res-note-body{flex:1;min-width:0}
 .res-note-top{display:flex;align-items:baseline;gap:8px}
 .res-note-as{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--blue);background:rgba(var(--blue-rgb),.1);border:1px solid rgba(var(--blue-rgb),.3);border-radius:6px;padding:1px 5px;flex-shrink:0;font-family:var(--ff-num)}
-.res-note-ti{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-note-ti{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--t0);white-space:normal;overflow-wrap:break-word;line-height:1.3}
 /* Rechte Spalte: Themen-Pill oben, darunter das Stern-Icon, ganz unten die
    Uhrzeit - gestapelt statt inline (Referenz-Mockup). */
 .res-note-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;width:96px}
@@ -1261,6 +1261,12 @@ body.res-return-active .rterm-back-pill{display:flex}
 .aql span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aql svg{flex:none}
 @media(hover:hover){.aql:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
+/* Watchlist-Zeile: dieselben .aql-Buttons wie assetQuickRowHtml, aber ohne
+   die 4-Spalten-Zwangsbreite (variable Anzahl je Asset - siehe
+   assetSpecificQuickLinks) und ohne die 300px-Notizen-Spalte daneben,
+   deshalb ein eigener, umbrechender Flex-Container statt .aqr/.aqr-links. */
+.wt-quick{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.wt-quick .aql{flex:1 1 120px}
 .aqn{display:flex;flex-direction:column;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card)}
 .aqn-hd{display:flex;align-items:center;gap:7px;padding:9px 11px;border-bottom:1px solid var(--bd);color:var(--t2)}
 .aqn-t{font:700 12px/1 var(--ff-text);color:var(--t1)}
@@ -3727,11 +3733,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-456 - Notizen Runde 2 (Nutzer-Wunsch 2026-08-30): Bugfix - Notizen im Wurzelordner (General Notes) verschwanden nach der letzten Migration (fid='' wurde faelschlich als fids=[] statt als General-Notes-Wurzel interpretiert), jetzt repariert (auch fuer bereits migrierte Nutzer, _noteSchemaV<2). Die alte Bullish/Bearish-Tabelle je Asset (noteTable/noteRubs/freies Notizfeld) ist entfernt - ihr Inhalt wurde vollstaendig als Notizen in die General-Notes-Wurzel uebernommen. Jedes Asset bekommt 6 Themen-Unterordner (Macro & Growth, Central Bank & Rates, Risk Sentiment & Flows, Positioning & Technicals, Event Risk & Catalysts, Seasonality & Structural Flows, Bloomberg/Citi-Style) - fuer USD/EUR/GBP/CHF bereits mit 90 verfassten Verhaltens-Notizen (6 bullish/6 bearish/3 neutral je Thema) einmalig befuellt, weitere Assets folgen. Suchergebnisse markieren den gesuchten Text jetzt gelb; ein Umschalter waehlt zwischen Hashtag/Titel/Alles; die ordnergebundene Suche bleibt auf Ordner+Unterordner begrenzt, eine neue globale Suchleiste durchsucht wirklich alles."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-457 - Notizen Runde 3 + Watchlist-Filter-Fixes (Nutzer-Wunsch 2026-08-31): Notiz-Titel sind jetzt immer vollstaendig lesbar (kein Ellipsis-Abschneiden mehr, Zeilenumbruch statt nowrap). Verhaltens-Notizen bekommen ein neues Inhaltsformat (kurzer, praeziser Titel getrennt vom laengeren Erklaerungstext + Hashtags + Unterthema-Unterordner je Themen-Ordner) - Content-Umbau laeuft. Watchlist-Filter-Dropdowns (Data/COT/Sentiment/Trends/...) zeigten ein Asset frueher doppelt (Watchlist-Gruppe UND normale Kategorie); jetzt genau einmal, Position wechselt automatisch mit dem Watchlist-Status - behebt sowohl das fehlende Haken- als auch das Sprung-zur-falschen-Stelle-Problem. Retail-Sentiment-Balken zeigen die Prozentzahl jetzt immer (auch bei >90/<10-Splits), Klick auf einen Balken waehlt das Paar im Filter. Watchlist-Karten haben jetzt eigene Quicklinks (gleiches Design wie auf der Asset-Seite) zu den Kategorien, die wirklich nach dem jeweiligen Asset filtern koennen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-456</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-457</span>
     </span>
   </div>
   <div class="hdr-r">

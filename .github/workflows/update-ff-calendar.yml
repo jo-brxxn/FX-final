@@ -2682,7 +2682,12 @@ jobs:
                 const MAJ=new Set(["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"]);
                 // je Non-FX-Asset Kandidaten in Prioritaetsreihenfolge (Broker-
                 // Namen variieren) - das erste vorhandene Symbol wird genommen.
-                const NONFX=[["XAUUSD"],["XAGUSD"],["BTCUSD"],["US500","SP500","SPX500"],["NAS100","USTEC","NDX100","US100"],["USOIL","XTIUSD","WTIUSD","WTI"]];
+                // GER100/DAX (Nutzer-Bugreport 2026-08-30 "manche Assets gibt es
+                // nicht bei Retail Sentiment") - Myfxbook fuehrt den Index unter
+                // wechselnden Broker-Namen, deshalb mehrere Kandidaten wie bei den
+                // anderen Non-FX-Assets; bleibt leer (Karte zeigt "No data"), falls
+                // keiner davon bei Myfxbook existiert.
+                const NONFX=[["XAUUSD"],["XAGUSD"],["BTCUSD"],["US500","SP500","SPX500"],["NAS100","USTEC","NDX100","US100"],["USOIL","XTIUSD","WTIUSD","WTI"],["GER40","GER30","DE40","DE30","GRXEUR","DAX40","DAX30"]];
                 const bySym={};
                 (Array.isArray(j.symbols)?j.symbols:[]).forEach(s=>{
                   const sym=String(s.name||"").toUpperCase().replace(/[^A-Z0-9]/g,"");

@@ -7924,3 +7924,107 @@ folgt in einer weiteren Runde. Der 5s-Long-Press fuer eigene Unterordner
 (Nutzer-Wunsch "Unterordner erstellen") war schon vor dieser Runde
 vorhanden, nur wenig entdeckbar - unveraendert gelassen, nicht Teil dieses
 Bugreports.
+
+## 2026-08-31 — Notizen Runde 3 (Titel/Body/Hashtags/Unterordner) + Watchlist-Filter-Fixes + Watchlist-Quicklinks (VERSION-CHECK-457)
+
+**Notiz-Inhaltsformat neu geschrieben (Nutzer-Wunsch):** jede der 90
+Verhaltens-Notizen je Asset war bisher EIN langer Fliesssatz ohne
+getrennten Titel, ohne Hashtags. Jetzt `{t,b,tags,sub}`: kurzer,
+praeziser Titel (keine ganzen Saetze mehr, 3-8 Woerter), ein auf 2 (teils
+3) Saetze erweiterter Erklaerungstext (Mechanismus/Groessenordnung/
+Beispiel/Einschraenkung ergaenzt, nicht nur umformuliert), 2-4 Hashtags
+mit fester Schreibweise je Konzept quer durch alle Assets (`fed`,
+`safe-haven`, `positioning`, `seasonality`, ...), und `sub` (0/1) fuer die
+neue zweite Ordnerebene. Titel werden jetzt ueberall vollstaendig
+angezeigt (`.res-note-ti` von Ellipsis/nowrap auf Zeilenumbruch
+umgestellt).
+
+**Neue Unterordner-Ebene:** auf Nachfrage ("ist es schlau in Ordnern
+Unterordner zu machen?") explizit gewaehlt: "nach Unterthema aufteilen".
+Jeder der 6 Themen-Ordner bekommt jetzt 2 feste Unterthema-Unterordner
+(`ASSET_BEHAVIOR_SUBTOPICS`, z.B. bei Central Bank & Rates: "Rate Path &
+Forward Guidance" / "Balance Sheet, Liquidity & Policy Credibility") -
+gleiche Struktur fuer alle 16 Assets, nur der Notizinhalt darunter ist
+asset-spezifisch. `seedAssetBehaviorNotes()` versioniert jetzt per
+`BEHAVIOR_NOTES_CONTENT_V` (=3) statt nur true/false: ein Versionssprung
+ersetzt NUR die eigenen Seed-Notizen (`n.seed===true`, wird beim manuellen
+Speichern in `saveResNote` geloescht) und deren jetzt leeren Ordner, echte
+Notizen/Ordner des Nutzers bleiben unangetastet.
+
+**Alle 16 Assets fertig:** die 4 bereits verfassten (USD/EUR/GBP/CHF, 360
+Notizen) wurden ins neue Format konvertiert, die restlichen 12 (JPY, CAD,
+AUD, NZD, BTC, GOLD, SILVER, OIL, SP500, NAS, DAX, GER100) komplett neu
+verfasst (je 90) - macht 1440 Notizen insgesamt. Content-Erstellung lief
+als Hintergrund-Task (grosser, klar spezifizierter Auftrag, erster Versuch
+scheiterte an einem Session-Rate-Limit ohne etwas zu speichern, zweiter
+Versuch erfolgreich). Eigene Nachpruefung (nicht nur der Eigenbericht des
+Agents): alle 16 Assets x 6 Themen x (6 bull + 6 bear + 3 neutral) mit
+nicht-leerem Titel, Body >= 80 Zeichen, 1-4 Kleinschreib-Hashtags, gueltigem
+`sub` bestaetigt. **Bekannte Einschraenkung:** unter den am staerksten
+verwandten Asset-Paaren (NAS/SP500, GOLD/SILVER, DAX/GER100) gibt es
+gehaeuft wortgleiche oder fast wortgleiche Notizen (insgesamt 179 von 1440
+Titeln kommen mehrfach vor, die meisten davon sind generische, wirklich
+universelle Markt-Wahrheiten wie "CFTC-Daten sind ein Schnappschuss der
+Vergangenheit" - unproblematisch; aber ca. 45 davon konzentrieren sich auf
+genau diese 3 sehr aehnlichen Asset-Paare und sind teils fast
+Copy-Paste). Noch nicht nachgebessert - Folgeauftrag bei Bedarf.
+
+**Watchlist-Filter-Dropdowns zeigten ein Asset doppelt** (Bugreport,
+loeste zwei getrennt gemeldete Symptome gleichzeitig): `assetFilterSelect`,
+`groupedAssetOptions` und `sentFilterBar` bauten je ein Asset SOWOHL in
+eine "Watchlist"-Gruppe ganz oben ALS AUCH in seine normale Kategorie ein -
+eine am 2026-08-24 bewusst so gewollte Design-Entscheidung ("Schnellzugriff
+wie eine Favoriten-Zeile"), die der Nutzer jetzt ausdruecklich zurueckgenommen
+hat. Ursache fuer BEIDE gemeldeten Bugs zugleich: der native `<select>`
+zeigt bei zwei `<option>` mit demselben `value` nur das SPAETERE als
+"ausgewaehlt" an (kein Haken bei der fruehen Watchlist-Option) und
+scrollt beim Oeffnen zu diesem spaeteren Vorkommen (man landet in der
+normalen Kategorie weiter unten statt in der Watchlist-Gruppe). Fix: alle
+drei Funktionen schliessen watchlistete Assets jetzt aus ihrer normalen
+Kategorie-Gruppe aus - jedes Asset genau einmal im Dropdown, wandert
+automatisch zwischen Watchlist-Gruppe und Kategorie je nach
+Watchlist-Status.
+
+**Retail-Sentiment-Balken zeigten bei extremen Splits (>90/<10%) die
+kleinere Prozentzahl gar nicht** (Bugreport): das Label sass BINNEN dem
+Balkensegment (`${L>=12?L+'%':''}`) und verschwand, wenn das Segment unter
+12% Breite fiel. Fix: beide Prozentzahlen stehen jetzt in fixen 30px
+breiten Labels AUSSERHALB der Balken, immer sichtbar unabhaengig von der
+Segmentbreite. Zusaetzlich (Nutzer-Wunsch): Klick auf eine Balkenzeile
+ruft jetzt `setSentSym()` auf und waehlt das Paar im Filter.
+
+**GER100/DAX fehlte komplett bei Retail Sentiment** (Nutzer-Nachfrage "guck
+mal ob es da vlt doch Daten gibt"): Myfxbook fuehrt den Index unter
+wechselndem Brokernamen. 7 Kandidaten ergaenzt (GER40, GER30, DE40, DE30,
+GRXEUR, DAX40, DAX30) in `update-ff-calendar.yml` + `SENT_NONFX_SYMS`/
+`SENT_NONFX_PRICE_ID`/`COT_NAME` im Client - ob Myfxbook den Index
+tatsaechlich fuehrt, zeigt erst der naechste stuendliche Live-Lauf. Die
+bereits vorhandenen 34 Symbole (28 FX-Major-Paare + 6 Non-FX) sind bereits
+die vollstaendige Abdeckung der 8 Major-Waehrungen - dort fehlte nichts.
+
+**Watchlist-Karten haben jetzt eigene Quicklinks** (Nutzer-Wunsch, "im
+gleichen Design wie bei den Assets aber nicht die gleichen... nur fuer
+Kategorien wo man auch nach dem Asset filtern kann"): dieselben `.aql`-
+Buttons wie `assetQuickRowHtml`, aber nur fuer die Kategorien, die fuer
+das jeweilige Asset WIRKLICH nach dem Asset selbst filtern (nicht nur nach
+seiner verknuepften Waehrung) - hergeleitet aus der bestehenden
+Yield-Fallback-Logik in `applyAssetQuickFilter` (ex-`assetQuickGo`, jetzt
+gemeinsam genutzt): `seas/trends/cot/data/news` filtern immer per
+Asset-ID (ausser bei Yields), `rate/cal/sent` loesen IMMER ueber
+`macroCcyFor(id)` auf und filtern damit nur bei echten FX-Waehrungen
+wirklich "nach dem Asset". Ergebnis: FX-Paare (Basiswaehrung) bekommen
+alle 8, echte Non-FX-Assets (Gold/BTC/Indizes) nur die 5 mit echten
+eigenen Daten - per Playwright bestaetigt (EUR/USD: 8 Buttons, Gold: 5).
+Fokus-Asset einer Zeile = Basiswaehrung bei FX-Paaren (gleiche Wahl wie
+beim COT-Metric in der Zeile), sonst das Asset selbst. Neuer dritter
+Zurueck-Pillen-Weg (`_quickReturnTab`, neben dem bestehenden
+`_quickReturnAssetId`): fuehrt zurueck zum Watchlist-Tab statt zu einer
+Asset-Seite, da es kein einzelnes Fokus-Asset gibt.
+
+**Geprueft:** `node --check` aller geaenderten Dateien; eigenes
+Verifikationsscript gegen alle 16 Asset-Notizdatensaetze (s.o.);
+`node check/all.js` komplett gruen (13 Waechter); Playwright-Stichproben
+bestaetigen Watchlist-Quicklinks (Buttonzahl + Klick + Zurueck-Pille),
+Notiz-Struktur (Titel/Body/Tags/Unterordner-Kette), Retail-Sentiment-
+Balken bei extremen Splits (z.B. 98%/2%, beide Zahlen sichtbar). Keine
+Score-Formel angefasst.

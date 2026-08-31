@@ -1,6 +1,6 @@
 'use strict';
 import {BC,BL,FX,FX_FLAG,aiStar,aiStars,AI_EU_STARS,AI_UNION_JACK,AI_MAPLE,AI_FLAGS,YIELD_CCY,AI_SYMBOLS,AI_BOND_BADGE,aiIndex,AI_INDEX_ACCENT} from './constants.js';
-import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES} from './asset-notes-seed.js';
+import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES,ASSET_BEHAVIOR_SUBTOPICS} from './asset-notes-seed.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -287,13 +287,21 @@ const SB_CATS=[
 // allLabel=null unterdrueckt die Kopf-Option (fuer Tabs ohne "alle"-Ansicht,
 // z.B. Seasonality - dort ist immer genau ein Asset aktiv).
 function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
-  const avail=new Set(ids);
   const optHtml=id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`;
   // Watchlist-Gruppe ganz oben, vor den normalen SB_CATS-Kategorien (Nutzer-
-  // Wunsch 2026-08-24) - siehe watchlistedAssetIds(). Ein Asset kann dadurch
-  // doppelt im Dropdown stehen (hier UND in seiner regulaeren Kategorie
-  // weiter unten), das ist gewollt (Schnellzugriff, wie eine Favoriten-Zeile).
+  // Wunsch 2026-08-24) - siehe watchlistedAssetIds(). Ein Asset stand hier
+  // ZUSAETZLICH zu seiner regulaeren Kategorie (bewusste Verdopplung,
+  // "Schnellzugriff wie eine Favoriten-Zeile") - Nutzer-Bugreport 2026-08-30:
+  // bei einer doppelten <option> mit demselben value gilt fuer den Browser nur
+  // die SPAETERE (die reguläre Kategorie weiter unten) als "die ausgewaehlte" -
+  // dadurch fehlte in der Watchlist-Gruppe der Haken, und Aufklappen sprang
+  // zur zweiten, nicht zur ersten Stelle. Jetzt taucht jedes Asset nur einmal
+  // auf: in der Watchlist-Gruppe, solange es dort steht, sonst in seiner
+  // regulaeren Kategorie - wandert automatisch mit, sobald sich die Watchlist
+  // aendert (dieselbe "Watchlist als einzige Wahrheit" wie ueberall sonst).
   const wl=watchlistedAssetIds(ids);
+  const wlSet=new Set(wl);
+  const avail=new Set(ids.filter(id=>!wlSet.has(id)));
   const wlGroup=wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'';
   const groups=SB_CATS.map(cat=>{
     const items=cat.ids.filter(id=>avail.has(id));
@@ -3258,6 +3266,11 @@ let researchFocusAsset=null,researchTopOpen=null,resTreeCollapsed=false,_resRetu
 // auf die Assets-Detailseite dieses Assets (neuer Quick-Links-Weg von dort,
 // siehe assetQuickGo). Rein transienter Navigations-Zustand, kein Sync noetig.
 let _quickReturnAssetId=null;
+// Dritter Zurueck-Weg (Nutzer-Wunsch 2026-08-31): von der Watchlist aus
+// ausgeloeste Quick-Links (watchQuickGo) haben KEIN einzelnes Fokus-Asset -
+// die Pille soll zurueck auf den Watchlist-Tab, nicht auf eine Asset-Seite.
+// Nur gesetzt, wenn _quickReturnAssetId leer ist (siehe researchBackFromShortcut).
+let _quickReturnTab=null;
 function researchToggleNode(id){researchTreeOpen[id]=!researchTreeOpen[id];rerenderNotesHost();}
 function researchSelectLeaf(id){researchTreeSel=id;rerenderNotesHost();}
 // Klick auf einen Asset-Ordner: klappt wie jeder andere Knoten auf/zu UND
@@ -3487,28 +3500,61 @@ function migrateLegacyAssetNotesIntoResearch(r){
 // Bool-Flag): so koennen in einer spaeteren Runde weitere Assets zu
 // ASSET_BEHAVIOR_NOTES hinzukommen, ohne bereits befuellte Assets erneut
 // anzufassen oder zu duplizieren.
+// Inhalts-Version der Seed-Notizen (Nutzer-Wunsch 2026-08-30: kuerzere,
+// praezisere Titel + laengere Erklaerungen + Hashtags statt Fliesssatz ohne
+// Titel/Tags, plus Unterordner je Themen-Ordner nach Unterthema). Erhoeht
+// sich, wenn ASSET_BEHAVIOR_NOTES/ASSET_BEHAVIOR_SUBTOPICS inhaltlich neu
+// geschrieben werden. r._behaviorNotesSeeded[assetId] speichert die Version,
+// mit der zuletzt geseedet wurde (statt nur true/false) - so kann ein
+// Versions-Sprung die alten Seed-Notizen (und ihre Unterordner) ersetzen,
+// OHNE eigene Notizen/Ordner des Nutzers anzutasten: nur Notizen mit
+// seed:true werden ersetzt (seed:false/undefined = vom Nutzer geschrieben
+// oder editiert, bleibt unberuehrt - saveResNote loescht das Flag beim
+// Speichern), und nur Ordner ohne eigene, nicht-geseedete Notizen werden
+// mit aufgeraeumt.
+const BEHAVIOR_NOTES_CONTENT_V=3;
 function seedAssetBehaviorNotes(r){
   if(!r._behaviorNotesSeeded)r._behaviorNotesSeeded={};
   const now=new Date().toISOString();
   Object.keys(ASSET_BEHAVIOR_NOTES).forEach(assetId=>{
-    if(r._behaviorNotesSeeded[assetId])return;
+    const have=r._behaviorNotesSeeded[assetId];
+    if(have===BEHAVIOR_NOTES_CONTENT_V)return;
     if(!(syms||[]).some(s=>s.id===assetId))return;
     const root=researchGenFidFor(assetId);
     if(!root)return;
+    if(have){
+      const staleIds=new Set(r.notes.filter(n=>n.seed&&n.asset===''&&(n.fids||[]).some(f=>{
+        const folder=researchFolders.find(x=>x.id===f);
+        return folder&&(folder.parentId===root||researchFolders.find(t=>t.id===folder.parentId&&t.parentId===root));
+      })).map(n=>n.id));
+      r.notes=r.notes.filter(n=>!staleIds.has(n.id));
+      researchFolders=researchFolders.filter(f=>{
+        const isThemeOrSub=f.parentId===root||researchFolders.find(t=>t.id===f.parentId&&t.parentId===root);
+        if(!isThemeOrSub)return true;
+        return r.notes.some(n=>(n.fids||[]).includes(f.id));
+      });
+    }
     ASSET_BEHAVIOR_THEMES.forEach(([key,name])=>{
-      let folder=researchFolders.find(f=>f.parentId===root&&f.name===name);
-      if(!folder){folder={id:uid(),name:name,parentId:root};researchFolders.push(folder);}
+      let themeFolder=researchFolders.find(f=>f.parentId===root&&f.name===name);
+      if(!themeFolder){themeFolder={id:uid(),name:name,parentId:root};researchFolders.push(themeFolder);}
       const data=ASSET_BEHAVIOR_NOTES[assetId][key];
+      const subNames=ASSET_BEHAVIOR_SUBTOPICS[key]||[];
       if(!data)return;
+      const subFolders=subNames.map(subName=>{
+        let f=researchFolders.find(x=>x.parentId===themeFolder.id&&x.name===subName);
+        if(!f){f={id:uid(),name:subName,parentId:themeFolder.id};researchFolders.push(f);}
+        return f;
+      });
       ['bull','bear','neu'].forEach(bias=>{
-        (data[bias]||[]).forEach(body=>{
-          r.notes.push({id:uid(),fids:[folder.id],title:researchTitleFrom(body),
-            body:body,tags:[],fav:false,pin:false,ts:now,up:now,
-            bias:bias,evt:null,asset:''});
+        (data[bias]||[]).forEach(entry=>{
+          const subFolder=subFolders[entry.sub]||themeFolder;
+          r.notes.push({id:uid(),fids:[subFolder.id],title:entry.t,
+            body:entry.b,tags:(entry.tags||[]).slice(),fav:false,pin:false,ts:now,up:now,
+            bias:bias,evt:null,asset:'',seed:true});
         });
       });
     });
-    r._behaviorNotesSeeded[assetId]=true;
+    r._behaviorNotesSeeded[assetId]=BEHAVIOR_NOTES_CONTENT_V;
   });
   return r;
 }
@@ -7540,6 +7586,7 @@ function watchRowHtml(p){
       ${watchMetric('COT '+(cotId||''),cm?cm.longPct.toFixed(0)+'% long':'–',cm?(cm.longPct>=60?BC.bull:cm.longPct<=40?BC.bear:'var(--t3)'):'var(--t3)','Share of speculative positions that are long')}
       ${watchMetric('Next event',evTxt,evCol,ev?`${ev.currencies||''} ${ev.name||''} · ${ev.date} ${ev.time||''}`:'No upcoming event for either side')}
     </div>
+    ${watchQuickLinksHtml(name)}
     ${watchAssetNotesHtml(name)}
     <textarea class="wt-note" data-pid="${escH(p.id)}" placeholder="Notes on ${escH(title)} — your plan, the level you are waiting for, why you are watching it..."
       oninput="ar(this);watchSetNote('${escJH(p.id)}',this.value)"
@@ -8556,6 +8603,7 @@ function researchBackFromShortcut(){
   _resReturnActive=false;
   document.body.classList.remove('res-return-active');
   if(_quickReturnAssetId){const id=_quickReturnAssetId;_quickReturnAssetId=null;gotoSym(id);}
+  else if(_quickReturnTab){const t=_quickReturnTab;_quickReturnTab=null;showTab(t);}
   else showTab('notes');
 }
 function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(el)el.title=t;}
@@ -8569,9 +8617,11 @@ const ASSET_QUICK_LINKS=[
   ['sent','zap','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
   ['news','news','News'],['cal','calendar','Calendar'],
 ];
-function assetQuickGo(tabId){
-  const c=getSym();if(!c)return;
-  const id=c.id;
+// Setzt bei tabId's Zielseite den Asset-/Waehrungsfilter auf id - der reine
+// Filter-Teil von assetQuickGo, ausgelagert, damit watchQuickGo() (Quick-
+// Links auf der Watchlist, siehe dort) dieselbe Logik ohne Umweg ueber
+// getSym()/den Research-Terminal-Fokus nutzen kann.
+function applyAssetQuickFilter(tabId,id){
   // Die Yields-Kategorie hat in diesen fuenf Datensystemen keine eigenen
   // Eintraege (kein COT-Kontrakt, keine Preis-/Seasonality-Historie, keine
   // eigenen News/Kalender-Events unter "US Yield" etc.) - anders als GOLD/
@@ -8598,9 +8648,57 @@ function assetQuickGo(tabId){
   else if(tabId==='rate')setRateProbCcy(macroCcyFor(id));
   else if(tabId==='cal')setCalCcyFilter(macroCcyFor(id));
   else if(tabId==='sent'){setSentSub('putcall');setPcAsset(macroCcyFor(id));}
-  _resReturnActive=true;_quickReturnAssetId=id;
+}
+function assetQuickGo(tabId){
+  const c=getSym();if(!c)return;
+  applyAssetQuickFilter(tabId,c.id);
+  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;
   document.body.classList.add('res-return-active');
   setBackPillTitle(`Back to ${c.name}`);
+  showTab(tabId);
+}
+// Welche der 8 ASSET_QUICK_LINKS-Kategorien filtern fuer dieses Asset
+// WIRKLICH nach dem Asset selbst (statt nur nach seiner verknuepften
+// Waehrung)? Nutzer-Wunsch 2026-08-31: die Watchlist soll dieselben
+// Quicklinks bekommen wie die Asset-Seite, aber NUR die Kategorien, "wo man
+// auch nach dem Asset filtern kann" - je nach Asset koennen das
+// unterschiedlich viele sein. Aus applyAssetQuickFilter() folgt:
+// - seas/trends/cot/data/news filtern per Asset-ID, AUSSER bei Yields (dort
+//   Waehrungs-Fallback, siehe oben) - qualifizieren also fuer alles ausser
+//   Yields.
+// - rate/cal/sent loesen IMMER ueber macroCcyFor(id) auf, filtern also nur
+//   fuer echte FX-Waehrungen wirklich "nach dem Asset" (dort ist Asset =
+//   Waehrung); bei Gold/BTC/Indizes zeigen sie nur die verknuepfte Waehrung,
+//   nicht das Asset selbst - fallen fuer die also raus.
+function assetSpecificQuickLinks(id){
+  const cls=assetCls(id);
+  return ASSET_QUICK_LINKS.filter(([tab])=>
+    (tab==='rate'||tab==='cal'||tab==='sent')?cls==='fx':cls!=='yield');
+}
+// Kanonisches Fokus-Asset einer Watchlist-Zeile fuer die Quicklinks: bei
+// einem FX-Paar die Basiswaehrung (dieselbe Wahl wie beim COT-Metric in
+// watchRowHtml - "COT der Basisseite"), bei Non-FX das Asset selbst.
+function watchQuickAssetId(name){
+  if(isPureFxPair(name)){const l=pairLegs(name);return l?l.bId:null;}
+  return nonFxLegAssetId(name)||null;
+}
+function watchQuickLinksHtml(name){
+  const id=watchQuickAssetId(name);if(!id)return'';
+  const links=assetSpecificQuickLinks(id);if(!links.length)return'';
+  const label=(syms.find(s=>s.id===id)||{}).name||id;
+  return`<div class="wt-quick">${links.map(([tab,ic,lbl])=>
+    `<button class="aql" onclick="watchQuickGo('${tab}','${escJH(id)}')" title="${escH(lbl)} — opens with ${escH(label)} already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`).join('')}</div>`;
+}
+// Wie assetQuickGo, aber ausgeloest von einer Watchlist-Zeile statt der
+// Asset-Detailseite - es gibt kein einzelnes fokussiertes Asset, auf das die
+// Zurueck-Pille zeigen koennte, daher _quickReturnTab='watch' statt
+// _quickReturnAssetId (siehe researchBackFromShortcut).
+function watchQuickGo(tabId,id){
+  if(!id)return;
+  applyAssetQuickFilter(tabId,id);
+  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
+  document.body.classList.add('res-return-active');
+  setBackPillTitle('Back to the Watchlist');
   showTab(tabId);
 }
 // FX bekommt die Landesflagge (FX_FLAG, wie im Asset-Seitentitel) - fuer
@@ -9214,7 +9312,7 @@ function saveResNote(){
   pushU();
   if(_resEditId){
     const n=resNotes().find(x=>x.id===_resEditId);
-    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;}
+    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
   }else{
     if(_resAutoPin&&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
     research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
@@ -11225,10 +11323,14 @@ function groupedAssetOptions(ids,selected){
   const optHtml=id=>`<option value="${id}"${id===selected?' selected':''}>${escH(COT_NAME[id]||id)}</option>`;
   // Watchlist-Gruppe ganz oben, siehe watchlistedAssetIds()/assetFilterSelect
   // (derselbe Aufbau, dieser Helfer liefert nur die <optgroup>s ohne <select>).
+  // Jedes Asset nur EINMAL (Nutzer-Bugreport 2026-08-30, siehe assetFilterSelect
+  // fuer die volle Begruendung) - die uebrigen Kategorien bekommen nur die
+  // NICHT watchlisteten Assets.
   const wl=watchlistedAssetIds(ids);
+  const wlSet=new Set(wl);
   const wlHtml=wl.length?`<optgroup label="Watchlist">${wl.map(optHtml).join('')}</optgroup>`:'';
   const groups=[];const byLbl={};
-  ids.forEach(id=>{
+  ids.filter(id=>!wlSet.has(id)).forEach(id=>{
     const lbl=CLS_LABELS[assetCls(id)]||'Other';
     if(!byLbl[lbl]){byLbl[lbl]=[];groups.push(lbl);}
     byLbl[lbl].push(id);
@@ -11630,7 +11732,7 @@ let cotRefreshing=false;
 let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
 const COT_SYMS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
-const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq',
+const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq',DAX:'DAX',GER100:'Germany 100',
   USYIELD:'US Yield',DEYIELD:'DE Yield',GBYIELD:'GB Yield',CHYIELD:'CH Yield',JPYIELD:'JP Yield',CAYIELD:'CA Yield',AUYIELD:'AU Yield',NZYIELD:'NZ Yield'};
 // Lokaler Cache der zuletzt gesehenen Historie. Die stuendlich geschriebene
 // cot_data.json kann (z.B. direkt nach diesem Feature-Rollout, oder wenn der
@@ -13202,11 +13304,14 @@ function setFearGreedRangeCustom(from,to){fearGreedCustomFrom=from||'';fearGreed
 // unserer Asset-ID - passt nicht 1:1 in SB_CATS, bekommt daher eine eigene
 // zweigeteilte Gruppierung (FX Pairs / Other Assets), aber dieselbe Optik
 // wie der gemeinsame assetFilterSelect-Helper (gleiche .cot-filterbar-CSS).
-const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOIL']);
+// GER40/GER30/... (7 Kandidaten, siehe update-ff-calendar.yml) - Myfxbook
+// fuehrt den DAX-Index unter wechselndem Brokernamen, welcher davon
+// tatsaechlich ankommt entscheidet erst der Live-Fetch.
+const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOIL','GER40','GER30','DE40','DE30','GRXEUR','DAX40','DAX30']);
 // Broker-Symbol -> unsere Asset-ID, fuer den Preis-Vergleich in der Retail-
 // Sentiment-Historie (priceSeriesFor/resolvePairPriceSeries erwarten unsere
 // IDs, nicht den Myfxbook-Symbolnamen).
-const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL'};
+const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL',GER40:'GER100',GER30:'GER100',DE40:'GER100',DE30:'GER100',GRXEUR:'GER100',DAX40:'GER100',DAX30:'GER100'};
 function sentSymPriceSeries(sym){
   const id=SENT_NONFX_PRICE_ID[sym];
   if(id)return priceSeriesFor(id);
@@ -13237,7 +13342,11 @@ function sentFilterBar(){
   const grp=(label,arr)=>arr.length?`<optgroup label="${escH(label)}">${arr.map(s=>`<option value="${escH(s)}"${sentSym===s?' selected':''}>${escH(s)}</option>`).join('')}</optgroup>`:'';
   // Watchlist-Gruppe ganz oben (Nutzer-Wunsch 2026-08-24, siehe assetFilterSelect/
   // groupedAssetOptions fuer dasselbe Muster bei den Einzel-Asset-Filtern).
-  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',ids.filter(sentSymWatched))}${grp('FX Pairs',ids.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',ids.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
+  // Jedes Symbol nur EINMAL (Nutzer-Bugreport 2026-08-30, siehe assetFilterSelect
+  // fuer die volle Begruendung - doppelte <option>-Werte liessen den Haken UND
+  // die Aufklapp-Position bei der falschen, spaeteren Stelle landen).
+  const wl=ids.filter(sentSymWatched),wlSet=new Set(wl),rest=ids.filter(s=>!wlSet.has(s));
+  const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',wl)}${grp('FX Pairs',rest.filter(s=>!SENT_NONFX_SYMS.has(s)))}${grp('Other Assets',rest.filter(s=>SENT_NONFX_SYMS.has(s)))}`;
   return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
@@ -13328,12 +13437,19 @@ function renderRetailBars(D){
     // Getoenter Pill statt Vollflaeche (Nutzer-Wunsch 2026-07-19, Farbaudit) -
     // gleiches Muster wie tickerChipHtml (Rand 27%, Grund 8%, Text/Bedeutung
     // bleibt ueber die volle Textfarbe erhalten).
-    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    // Die Prozentzahlen stehen jetzt AUSSERHALB des Balkens in fester Breite
+    // (Nutzer-Bugreport 2026-08-30: bei >90/<10-Splits war das schmale Segment
+    // zu schmal fuer die eigene Zahl, die verschwand komplett) - dadurch immer
+    // lesbar, egal wie schmal ein Segment wird. Klick auf die Zeile waehlt das
+    // Symbol im Filter (setSentSym), genau wie die Dropdown-Auswahl.
+    return`<div class="sent-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSentSym('${escJH(r.sym)}')" title="Open ${escH(r.sym)} history">
       <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:12px;color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
+      <span style="flex:none;width:30px;text-align:right;font-size:11px;font-weight:700;color:${BC.bull}">${L}%</span>
       <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
-        <div style="width:${L}%;background:${BC.bull};display:flex;align-items:center;justify-content:flex-start;padding:0 6px;font-size:11px;font-weight:700;color:#FFFFFF;min-width:0" title="${L}% of retail traders are long">${L>=12?L+'%':''}</div>
-        <div style="width:${S}%;background:${BC.bear};display:flex;align-items:center;justify-content:flex-end;padding:0 6px;font-size:11px;font-weight:700;color:#FFFFFF;min-width:0" title="${S}% of retail traders are short">${S>=12?S+'%':''}</div>
+        <div style="width:${L}%;background:${BC.bull};min-width:0" title="${L}% of retail traders are long"></div>
+        <div style="width:${S}%;background:${BC.bear};min-width:0" title="${S}% of retail traders are short"></div>
       </div>
+      <span style="flex:none;width:30px;text-align:left;font-size:11px;font-weight:700;color:${BC.bear}">${S}%</span>
     </div>`;
   }).join('');
   const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
@@ -16189,7 +16305,8 @@ Object.assign(window,{
   resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,
   resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
   toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
-  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,researchSideTitleHtml,researchSidebarHtml,
+  researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,assetQuickGo,applyAssetQuickFilter,assetSpecificQuickLinks,
+  watchQuickAssetId,watchQuickLinksHtml,watchQuickGo,researchSideTitleHtml,researchSidebarHtml,
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
   researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
   researchFolderNameOf,researchSetNoteQuery,resSetSearchField,resSearchFieldPickerHtml,resNoteMatchesQuery,
@@ -16275,6 +16392,7 @@ Object.defineProperty(window,'researchTopOpen',{get:()=>researchTopOpen,set:v=>{
 Object.defineProperty(window,'resTreeCollapsed',{get:()=>resTreeCollapsed,set:v=>{resTreeCollapsed=v;},configurable:true});
 Object.defineProperty(window,'_resReturnActive',{get:()=>_resReturnActive,set:v=>{_resReturnActive=v;},configurable:true});
 Object.defineProperty(window,'_quickReturnAssetId',{get:()=>_quickReturnAssetId,set:v=>{_quickReturnAssetId=v;},configurable:true});
+Object.defineProperty(window,'_quickReturnTab',{get:()=>_quickReturnTab,set:v=>{_quickReturnTab=v;},configurable:true});
 Object.defineProperty(window,'resEditMode',{get:()=>resEditMode,set:v=>{resEditMode=v;},configurable:true});
 Object.defineProperty(window,'_resEditTimer',{get:()=>_resEditTimer,set:v=>{_resEditTimer=v;},configurable:true});
 Object.defineProperty(window,'_resEditStart',{get:()=>_resEditStart,set:v=>{_resEditStart=v;},configurable:true});
