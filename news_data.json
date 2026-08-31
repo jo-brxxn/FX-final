@@ -1,8 +1,183 @@
 {
- "updated": "2026-08-31T01:16:18.648Z",
+ "updated": "2026-08-31T07:58:31.306Z",
  "headlines": [
   {
-   "t": "Bessent Expects BOJ to ‘Do the Right Thing’ on Monetary Policy",
+   "t": "Turkey Growth Quickens in Second Quarter Despite War Stress",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/turkey-economy-quickens-in-second-quarter-despite-war-pressures",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T07:04:03.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Japan’s Industry Ministry Seeks Unprecedented $49 Billion Budget",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/japan-s-industry-ministry-seeks-unprecedented-49-billion-budget",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T06:34:24.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Dollar near two-week high as Warsh boosts rate-hike bets; yen hovers near 160",
+   "u": "https://news.google.com/rss/articles/CBMixgFBVV95cUxNTzZFV05UVTZLQjh4TGh6S2xxU0xMU0w3c2lXNUd0am8tak9EV3p6NV84cVV0NDM2aXFrUkFpQUpVZ3dmdGNkYS1OaXRQbGhybm9lcHBfU2lLaVRwVGxiaXJKNnFRZW9ndFppTmp1TlhxeDJ2emxQLU5YWnVraXJFYzFHbldSU0pmVEtjeHFLdHJlUERTWjlkMmp0d25FSE1Wa3Q3SHpKbG1uNXBGa3FDRTg1cGxFX2VQZUkydHoxaWdHZUxER2c?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-31T05:51:44.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Productores del Mercosur temen competencia de Europa",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/productores-del-mercosur-temen-competencia-de-europa-mtgrrsf6",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T05:00:02.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Japan’s Firms Hire Foreigners Even as Takaichi Tightens Rules",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/japan-s-firms-hire-foreigners-even-as-takaichi-tightens-rules",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T05:00:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "South American Producers Fret Over New Rivals From EU Trade Deal",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/south-american-producers-fret-over-new-rivals-from-eu-trade-deal",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T05:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "China's Xi builds diplomatic clout with multiple state visits ahead of Trump summit",
+   "u": "https://www.cnbc.com/2026/08/31/china-xi-us-trump-visit-sco-brics-modi-india.html",
+   "s": "CNBC Finance",
+   "k": 2,
+   "d": "2026-08-31T04:57:24.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Bessent to Push G20 to Rethink China Trade Terms, Reuters Says",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/bessent-to-push-g20-to-rethink-china-trade-terms-reuters-says",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T04:51:48.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Morning Bid: Oil climbs as missiles fly in the Gulf",
+   "u": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBNbU0wNVdySEl6cVlUdjlVZWlFYmp2eDlTU200dDJkTFJZSk5YbnJmenZmRS1LaTVvcC1nVVdjX2NtNDZUNlA3YU1NQUY4QXBnNGVUTnJZVld3MUNfZjIweU0tYXRlZ2lrUldFUGVXNVBSdjl0RHY5aEN1dG50TFk?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-31T04:32:00.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Barclays sees two more Fed rate hikes this year after Warsh speech",
+   "u": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQcjVHcjZWTGVra3FoZ29XVXdDS05fZlh6S3ZwZHdzb2Z1bHo1Tm12NUNBZWZxN21sTG5hYkdfVVA5VmlBMm5xOERKNXJYZDJURkI2Yk5Lb1JNZFFyNEJVZUdKSjhtdFZtbm5MdHJfN3cwN1FTUzRlUkJwUWxnWjlqLVVpdHZrQkRnaUx0Y1oyZlQ1VzY0LUhmRlI5d2RKbU9lQWVZUC0xTG81QjljYzRwdDRQRndsY3FXZWdR?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-31T04:29:00.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "rate hike"
+   ]
+  },
+  {
+   "t": "Jackson Hole analyst roundup: Warsh's speech sends hike chances higher, may put Fed `at odds' with Treasury",
+   "u": "https://www.cnbc.com/2026/08/31/jackson-hole-fed-chair-kevin-warsh-hawkish-rate-hikes-analysts.html",
+   "s": "CNBC Finance",
+   "k": 2,
+   "d": "2026-08-31T03:47:28.000Z",
+   "w": 1,
+   "a": [
+    "USD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "China's factory activity shrinks for second straight month, contracting less than expected",
+   "u": "https://www.cnbc.com/2026/08/31/china-pmi-august-economy-slowdown.html",
+   "s": "CNBC Economy",
+   "k": 2,
+   "d": "2026-08-31T03:15:01.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "South Korea’s Lee Picks New Finance Chief in Surprise Reshuffle",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/south-korea-s-lee-picks-new-finance-chief-in-surprise-reshuffle",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T01:34:47.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "Reuters",
+     "u": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPVHRkTGtkeEdMVDNXUFBNVzM1MnExNlhHYmhEMHlvVEhkV2VBd0xCX0MyOXBmT3N5cER6aV9uS19Ub2tnUUg1clZmNEJnQUFmVzNHMDJwcVExeHBqdno5T1QzWEpHWUtnNFNTLUVid1k5OFdUQU9ESzA1M0J6c04tT0Rrbm1rY0hpZFhRQW1sNlFQMl95bmpyZEhOYVUzYV9oV1IxN0xVVG5xLVVqbTBBY21maHdhcTZNb0R4UFV6UXBMRG9lb01rRjdyaHk?oc=5"
+    }
+   ],
+   "w": 2,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Indian rupee under pressure from Fed, oil; bonds at risk of further selloff",
+   "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNblJ2YTFRQ3gwdmJPd1FmLXZUSi16TlpBb0lENndWMkI5elBMMzBrejRDUkhVd3pqb0xjRy1ZdWZGZk9yZEFWSzVaZWtpdTJiWVJ6QkR6QVIzZ1JnQUZGak9RMnpGSzVYZVZXcXowV1VUS1RUTDQ3T0lJcnJMSFRHSUNIeEIyOEd5cmVIOW5sSVEzV1B4QUFYYnRRVFk0aWFUOGVza0hmU0VZUUp5dnNB?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-31T01:33:44.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "China’s Factory Activity Extends Slump Even as Gauge Rises",
+   "u": "https://www.bloomberg.com/news/articles/2026-08-31/china-factory-activity-edges-up-in-hopeful-sign-for-economy",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-08-31T01:32:09.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Bessent Expects BOJ to ‘Do the Right Thing’ on Policy",
    "u": "https://www.bloomberg.com/news/articles/2026-08-31/bessent-expects-boj-to-do-the-right-thing-on-monetary-policy",
    "s": "Bloomberg",
    "k": 2,
@@ -14,23 +189,35 @@
    "tg": []
   },
   {
+   "t": "Opinion | Trump’s tariffs aren’t reducing the trade deficit",
+   "u": "https://news.google.com/rss/articles/CBMingFBVV95cUxQbXZPZ0Vvb2VKTVZ4TWI1Vl9IaVRBVTBaa19sY3RDaFBxMWxPM0JPVzZvQzZWQ19uYmVmVTVhdURVZ2UwVXZRNGtZaW5IUmNSZDM0aGx5Q29BbEZtVXRvc1I3VXlmbUNNdGxMWmo4NGxnNEpiWlpDaFBwQmNrZlNKQnhHMWJmY0RXZHp6SG5ONnV1bGpuNXprMlZIdElQdw?oc=5",
+   "s": "The Washington Post",
+   "k": 1,
+   "d": "2026-08-31T00:42:30.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "Shares ease in Asia as oil climbs, yields stay high",
+   "u": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQa0dYVnlvTDVQRkF4YmQxMW9FUElDRmNweFlHclBUa1R5MmZsSHk5WEtnV3B5bFVFeFJhMGMtSWxsV0FqR0Jsc1ltUENJUEs4RWR0QlVnTFBBc2hIbzJmdl9hZVpOS2dGM2Q2ZFF1MmtLallPblc1ZGtJTFhzNTQzRGNhaw?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-31T00:38:00.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
    "t": "Japan’s Factory Output Edges Up Despite Mideast Headwinds",
    "u": "https://www.bloomberg.com/news/articles/2026-08-30/japan-factory-output-edges-up-for-fourth-month-despite-mideast",
    "s": "Bloomberg",
    "k": 2,
    "d": "2026-08-30T23:59:23.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Bessent says yen moves 'pretty contained' and not disorderly",
-   "u": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOemhvR29KUUI0VU1FYmFvbE9CWHhadUtxNWsxQU5uSWxkdVNVNVFDQjhFOHgyaXRnbUFvTjBGd1lwSEtaTGFua0lzQ3B6c1J5enpTQmNaVUlRZEx1VHRfR25qdnRMRlU4bGZzb1h4LTdpdnFqSVJPd1dhZHBvcnZYNTRVM2w0eWdteU52ejJQdzlNaDBsQ2lzQTdkeUZCNjAzSnJIZWRaMUxIWkR0WkE?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-30T23:52:10.000Z",
    "w": 1,
    "a": [
     "JPY"
@@ -60,20 +247,6 @@
    "tg": []
   },
   {
-   "t": "US Treasury's Bessent faces G20 diplomacy test amid tariffs, Iran war, bond turmoil",
-   "u": "https://news.google.com/rss/articles/CBMixwFBVV95cUxORVlaS1VmZVF5Rjh3RFkwVk40ZGpBSU1LLXM3XzQ1REFxbnl0aHREWXhieU9vUnU0aUdkTWgtNmJrYk9BRDE3aEllamozWFJVMHZ5QTJUS0pkckpwbjFVQ2dxaEhBaWZWZXg3a05ISG1Fb3k4aWV0QmRSbGFiOHdsQ0x6QWZjUUN6b3lsc2c5MEZOc2RCWXZXcERhdkN4NFJGVHBGejVxbTBZWDdvczdJamxDQ3Jib29xS1lzcURfX05MQ1BET25r?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-08-30T22:42:32.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "Why Archer Aviation's Management of Hawthorne Airport Matters Just as Much as Developing Its Own Aircraft",
    "u": "https://finance.yahoo.com/technology/articles/why-archer-aviations-management-hawthorne-223500282.html",
    "s": "Motley Fool",
@@ -81,6 +254,18 @@
    "d": "2026-08-30T22:35:00.000Z",
    "w": 0,
    "a": [],
+   "tg": []
+  },
+  {
+   "t": "Bessent says yen moves 'pretty contained' and not disorderly",
+   "u": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOemhvR29KUUI0VU1FYmFvbE9CWHhadUtxNWsxQU5uSWxkdVNVNVFDQjhFOHgyaXRnbUFvTjBGd1lwSEtaTGFua0lzQ3B6c1J5enpTQmNaVUlRZEx1VHRfR25qdnRMRlU4bGZzb1h4LTdpdnFqSVJPd1dhZHBvcnZYNTRVM2w0eWdteU52ejJQdzlNaDBsQ2lzQTdkeUZCNjAzSnJIZWRaMUxIWkR0WkE?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-30T22:28:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
    "tg": []
   },
   {
@@ -1085,6 +1270,20 @@
    "tg": []
   },
   {
+   "t": "US Treasury's Bessent faces G20 diplomacy test amid tariffs, Iran war, bond turmoil",
+   "u": "https://news.google.com/rss/articles/CBMixwFBVV95cUxORVlaS1VmZVF5Rjh3RFkwVk40ZGpBSU1LLXM3XzQ1REFxbnl0aHREWXhieU9vUnU0aUdkTWgtNmJrYk9BRDE3aEllamozWFJVMHZ5QTJUS0pkckpwbjFVQ2dxaEhBaWZWZXg3a05ISG1Fb3k4aWV0QmRSbGFiOHdsQ0x6QWZjUUN6b3lsc2c5MEZOc2RCWXZXcERhdkN4NFJGVHBGejVxbTBZWDdvczdJamxDQ3Jib29xS1lzcURfX05MQ1BET25r?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-08-30T10:04:00.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
    "t": "How a comic book store got swept into the tariff storm",
    "u": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNTEVaZDZwdTZtbm1yZDB0bng4YjBjcHFFbjZSN2Rha010aEhuRnlFSHgwX2FYcWxReHpGaEplYk9CXzFic1QzT29SZzlIa3RfMlhDTkd4ajRIQ2YycEZaT1FhX1l0YlhqeExOeVo1MldfWnpucTNpVjdvTGx6RkM2UHl3?oc=5",
    "s": "NPR",
@@ -1097,7 +1296,61 @@
    ]
   },
   {
-   "t": "Modi’s Developed-Nation Dream Strains Against India’s Growth Gap",
+   "t": "After 35 years of marriage, this couple dreads retiring together — a retirement coach explains why it's so common",
+   "u": "https://finance.yahoo.com/small-business/articles/35-years-marriage-couple-dreads-093000588.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-30T09:30:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Millions of Americans have a ticking time bomb in their tax-deferred accounts — 3 easy ways to start defusing it now",
+   "u": "https://finance.yahoo.com/markets/articles/millions-americans-ticking-time-bomb-090000486.html",
+   "s": "Moneywise",
+   "k": 2,
+   "d": "2026-08-30T09:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Is Coca-Cola Stock Outperforming the Nasdaq?",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/coca-cola-stock-outperforming-nasdaq-083719227.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-30T08:37:19.000Z",
+   "w": 1,
+   "a": [
+    "NAS"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Why Is the Job Market so Tough for Younger Workers?",
+   "u": "https://finance.yahoo.com/economy/articles/why-job-market-tough-younger-040100058.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-08-30T04:01:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "US to take 35% stake in Venezuelan mogul Betancourt's oil venture, WSJ reports",
+   "u": "https://finance.yahoo.com/news/us-35-stake-venezuelan-mogul-020106280.html",
+   "s": "Reuters",
+   "k": 2,
+   "d": "2026-08-30T02:01:06.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Modi’s Developed-Nation Dream Strains Amid India Growth Gap",
    "u": "https://www.bloomberg.com/news/articles/2026-08-30/modi-s-developed-nation-dream-strains-against-india-s-growth-gap",
    "s": "Bloomberg",
    "k": 2,
@@ -1117,6 +1370,56 @@
    "tg": []
   },
   {
+   "t": "Supply driven trucking market cycle explained in the data",
+   "u": "https://finance.yahoo.com/economy/articles/supply-driven-trucking-market-cycle-003000522.html",
+   "s": "FreightWaves",
+   "k": 2,
+   "d": "2026-08-30T00:30:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Uniswap Price Prediction: Rally to $9 Possible as Robinhood Chain Stats Get Hotter",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/uniswap-price-prediction-rally-9-233315397.html",
+   "s": "FX Empire",
+   "k": 2,
+   "d": "2026-08-29T23:33:15.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "‘This Breakup Saved You Far More Than Moderna Ever Could’: Orman to Woman Dumped After 180% Spike",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/breakup-saved-far-more-moderna-230251598.html",
+   "s": "24/7 Wall St.",
+   "k": 2,
+   "d": "2026-08-29T23:02:51.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Kewaunee Scientific Posts Record $282M Revenue, Maps Fiscal 2027 Growth Investments",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/kewaunee-scientific-posts-record-282m-230153069.html",
+   "s": "MarketBeat",
+   "k": 2,
+   "d": "2026-08-29T23:01:53.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Iran War Adds $330 Billion to Global Energy Import Bill",
+   "u": "https://finance.yahoo.com/energy/articles/iran-war-adds-330-billion-230000013.html",
+   "s": "Oilprice.com",
+   "k": 2,
+   "d": "2026-08-29T23:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "Goldman Lowers Oil Price Forecasts on Deal to Reopen Strait of Hormuz",
    "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQYjhVM2FKUElUMkRPM2ZESFZ6ZTFrMnYxSy1Qc3VyU2Y2VmcydXF2NDM4Vk11RjNJVnpqVGNDYzdJWVR0VjM0REQ2eWF3ZkJSZXpwMTcyOHN4VDdLMlJuUVdJbElRZXlFRmlWSEZDMjdmdmp1andOMFl2ekE3U2ZuUVFOM0JBbjhDRlB2b2dtMkhFMUVSVVNFdzFGSWY5c1YwdHc?oc=5",
    "s": "EnergyNow.com",
@@ -1126,6 +1429,16 @@
    "a": [
     "OIL"
    ],
+   "tg": []
+  },
+  {
+   "t": "NIO's Next Earnings Report on September 1 Could Send the Stock Soaring. Here's Why.",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/nios-next-earnings-report-september-225001789.html",
+   "s": "Motley Fool",
+   "k": 2,
+   "d": "2026-08-29T22:50:01.000Z",
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -1156,6 +1469,16 @@
    "s": "TheStreet",
    "k": 2,
    "d": "2026-08-29T22:33:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Pikachu Crashed Tim Cook's Last Apple Park Tour — Here's What the iPhone Maker and the Pokémon Team Talked About",
+   "u": "https://finance.yahoo.com/technology/articles/pikachu-crashed-tim-cooks-last-223109682.html",
+   "s": "Benzinga",
+   "k": 2,
+   "d": "2026-08-29T22:31:09.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -1299,6 +1622,16 @@
    "tg": []
   },
   {
+   "t": "Apple Was Always 1 Step Behind in AI. In Chipmaking, It’s Now 1 Step Ahead.",
+   "u": "https://finance.yahoo.com/technology/ai/articles/apple-always-1-step-behind-203002772.html",
+   "s": "Barchart",
+   "k": 2,
+   "d": "2026-08-29T20:30:02.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "Bond Traders Buy Warsh’s Tough Talk on Inflation, for Now",
    "u": "https://www.barrons.com/articles/treasury-bond-market-fed-warsh-inflation-7689b45a?siteid=yhoof2&yptr=yahoo",
    "s": "Barrons.com",
@@ -1329,20 +1662,6 @@
    "w": 0,
    "a": [],
    "tg": []
-  },
-  {
-   "t": "Fed Chairman Warsh Seeks to Calm Elevated Inflation Concerns",
-   "u": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOeXgwVmE4SkVPN3VMZkRoUGc5MTlnNlgyRHo2NVhZNGpSWmtPZ09oTnczOWtoX3M5QjlqdnN2d0cyRW5lZTNKYUhGRHdVdGk3VS1MSkFkczJ2dzQ2RkoyV2FNZVJaZ01OY3dnMUxMU0R0QmF3Q3hsTVEtT0RjQnhUX2hzcC05TjlQ?oc=5",
-   "s": "The New York Times",
-   "k": 1,
-   "d": "2026-08-29T20:07:00.000Z",
-   "w": 2.5,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "inflation"
-   ]
   },
   {
    "t": "Ameresco Director Joseph Sutton Buys 9,700 Shares for $202,400. What Should Investors Do?",
@@ -1879,7 +2198,13 @@
    "a": [
     "SP500"
    ],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Barchart",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/mastercard-incorporated-stock-underperforming-p-070326303.html"
+    }
+   ]
   },
   {
    "t": "A $2 Billion Reason to Buy UPS Stock",
@@ -1889,6 +2214,18 @@
    "d": "2026-08-29T16:13:56.000Z",
    "w": 0,
    "a": [],
+   "tg": []
+  },
+  {
+   "t": "Morgan Stanley Maintains Oil Price Forecasts and Predicts Slow Recovery in Supply",
+   "u": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOcVY3RWdLY082Q013ZXJCODVJdGV2NnpfZWlNT2hlZWsxR3Z5WktpNUkyN0lBd0pmNFd2dUxmTDAzQWNkMGY1RnBkT1JRcUkwQUQ0VHN2VjVIM21mTDBXVk9ha19obWRBSHdsX05NbnNWcEVxVXI0Y2ZfVHFLcm9sdDRtUFAyZkJGMXpLX0FRUUZrMUdrVmJONmdTMTF6UXNHcUQ0dDRxVVRmZlQyZkhmcmln?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-08-29T16:09:42.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
    "tg": []
   },
   {
@@ -1927,12 +2264,6 @@
    "s": "Barchart",
    "k": 2,
    "d": "2026-08-29T14:57:30.000Z",
-   "o": [
-    {
-     "s": "Barchart",
-     "u": "https://finance.yahoo.com/markets/stocks/articles/costco-stock-underperforming-dow-165446351.html"
-    }
-   ],
    "w": 0,
    "a": [],
    "tg": []
@@ -2188,18 +2519,6 @@
    "tg": []
   },
   {
-   "t": "Morgan Stanley Lowers Oil Price Forecasts After US-Iran Peace Deal",
-   "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPSVctRUFVM1l4Z3VNRnhLZVN0dV9KMENjZW1wWWo4eXJycklOLTdJSkJNSm9qbTB4WDB5OUFsaktnUDc0V2JheDl0eUZoZk43bVpCMjhSTEFJeXNpeWhlc1FhZnhvOXN3Q3B4R0ppbkM3ZmJreFpEbUd3Y3A3WmxTY2Jla1RzSXUwekdNV1l4bnlZOEw3bG85TUt2S08wRm9FNkNlajRR?oc=5",
-   "s": "EnergyNow.com",
-   "k": 1,
-   "d": "2026-08-29T13:15:40.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "Stock Market Week Ahead: Chips, Cybersecurity And Jobs",
    "u": "https://www.investors.com/research/investing-action-plan/stock-market-week-ahead-chips-cybersecurity-and-jobs/?src=A00220&yptr=yahoo",
    "s": "Investor's Business Daily",
@@ -2238,24 +2557,6 @@
    "a": [
     "NAS"
    ],
-   "tg": [],
-   "o": [
-    {
-     "s": "Barchart",
-     "u": "https://finance.yahoo.com/markets/stocks/articles/procter-gamble-stock-underperforming-nasdaq-171921912.html"
-    }
-   ]
-  },
-  {
-   "t": "Goldman Sachs Raises 2026 Brent Crude Average Price Forecast by $8 to $85 a Barrel, WTI to $79 a Barrel",
-   "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPRVg2X190YVA4cHR2S2JPek01bm1OV0NabE1jQUphdTFOZHk4R1FFUjlJS0dBdHgwb3B6b3FYN2trUFFRRUdfbUJPXzhORzl3dG8yZTNFOXc5cDFsY1B2V0FVbHFxNGRlSEc4NU1ONlhZT2JVS2hSalg2TUdOa3VfM3QzbDRRVHVwdWZLRWxadUpiOTFROERzNzFaZklCNGk5VHVtaWU3ZldTaFRxOGlpSQ?oc=5",
-   "s": "EnergyNow.com",
-   "k": 1,
-   "d": "2026-08-29T12:46:27.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
    "tg": []
   },
   {
@@ -2266,18 +2567,6 @@
    "d": "2026-08-29T12:45:02.000Z",
    "w": 0,
    "a": [],
-   "tg": []
-  },
-  {
-   "t": "Morgan Stanley Maintains Oil Price Forecasts and Predicts Slow Recovery in Supply",
-   "u": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOcVY3RWdLY082Q013ZXJCODVJdGV2NnpfZWlNT2hlZWsxR3Z5WktpNUkyN0lBd0pmNFd2dUxmTDAzQWNkMGY1RnBkT1JRcUkwQUQ0VHN2VjVIM21mTDBXVk9ha19obWRBSHdsX05NbnNWcEVxVXI0Y2ZfVHFLcm9sdDRtUFAyZkJGMXpLX0FRUUZrMUdrVmJONmdTMTF6UXNHcUQ0dDRxVVRmZlQyZkhmcmln?oc=5",
-   "s": "EnergyNow.com",
-   "k": 1,
-   "d": "2026-08-29T12:41:27.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
    "tg": []
   },
   {
@@ -2293,6 +2582,16 @@
    "tg": [
     "tariff"
    ]
+  },
+  {
+   "t": "SpaceX Stock Price at $141.50 as Elon Musk Targets $3.5T Revenue by 2033",
+   "u": "https://news.google.com/rss/articles/CBMiygFBVV95cUxNeUJXRzRnR3hQb0NialowMl9yTE1mX2JrSWtBSGxjQ05COWVkMDIwRkdfeWhmeFpCSkpvWHZ4bFlwVWloekJCVi1RZXJtTHc2UGZQVldTRXI3VjFUbEpjZGFXd1BVYVVaVjYxOUJ3elR5ZjZ3anh6Y093WGZvY1l4cEZrWlloYTU4VnBlS01IX1JMb0E5VEpSajZxRjhFQ2pYaE1PeUNSb0JVbHNPYTBiVVFhZ2hZeTN5SkxGTnJobHV3RmRNZnViRE93?oc=5",
+   "s": "TradingView",
+   "k": 1,
+   "d": "2026-08-29T12:18:11.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
   },
   {
    "t": "‘You could lose 25% to 35%.’ AARP warns Americans about making this 401(k) move. Here are 4 alternatives to consider",
@@ -2514,7 +2813,13 @@
    "d": "2026-08-29T11:00:58.000Z",
    "w": 0,
    "a": [],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "Motley Fool",
+     "u": "https://finance.yahoo.com/markets/stocks/articles/better-growth-stock-etf-vanguards-201417595.html"
+    }
+   ]
   },
   {
    "t": "Where the US-Canada Trade War Stands After Talks Fell Apart",
@@ -2710,14 +3015,38 @@
    "tg": []
   },
   {
-   "t": "Dollar jumps after Warsh comments, set for weekly gain",
-   "u": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOZTRZaFZxX1ZxcFJfZUs5OTl0c3lTVDJDWm55NWlHVG9CUmloOU9DWF91QXV1MGxVbTlGSTM2Zmp5MHlyUkJ4YjBiRHVMZGZLemlRcTV4N1ZiZ2Y1V0ZYelpGd3lROUNQSXYxNGFMYWoyWVFVMDQtWmt0RDgyemVtNm5lTDlXUVI4WGxzRWVxbmEtMXptWC02dWllNF9wRFR0anFYbG55TFhXVjRGSlRuQ0xJNFNvMXVDaVdMd09hdGg3VFpsMFE?oc=5",
+   "t": "Warsh's 'quieter Fed' now includes a smidgen of guidance",
+   "u": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPTjdvUDdhMzh1TFphU1hNRUdCWk1jcjA3TmFnN2lJRmN3c1N4eHZlZk8xaER2UHZudjNjdmhCQTZpTk1ERnA2MUVMQS1WdERqbTFkb1h2NWR5VWUwR2lEWk9NZUtDZnd1ZzNhSWljZ2JLdmxnZHJaRUZIWHpqMUJkV1RpVkVfRDhQRkw5TU05UXROWUxoNjZqOFVERHV0dndBRFRB?oc=5",
    "s": "Reuters",
    "k": 1,
-   "d": "2026-08-29T00:34:17.000Z",
+   "d": "2026-08-29T02:20:06.000Z",
    "w": 1,
    "a": [
     "USD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Goldman Sachs Raises 2026 Brent Crude Average Price Forecast by $8 to $85 a Barrel, WTI to $79 a Barrel",
+   "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPRVg2X190YVA4cHR2S2JPek01bm1OV0NabE1jQUphdTFOZHk4R1FFUjlJS0dBdHgwb3B6b3FYN2trUFFRRUdfbUJPXzhORzl3dG8yZTNFOXc5cDFsY1B2V0FVbHFxNGRlSEc4NU1ONlhZT2JVS2hSalg2TUdOa3VfM3QzbDRRVHVwdWZLRWxadUpiOTFROERzNzFaZklCNGk5VHVtaWU3ZldTaFRxOGlpSQ?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-08-29T01:25:05.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Morgan Stanley Lowers Oil Price Forecasts After US-Iran Peace Deal",
+   "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPSVctRUFVM1l4Z3VNRnhLZVN0dV9KMENjZW1wWWo4eXJycklOLTdJSkJNSm9qbTB4WDB5OUFsaktnUDc0V2JheDl0eUZoZk43bVpCMjhSTEFJeXNpeWhlc1FhZnhvOXN3Q3B4R0ppbkM3ZmJreFpEbUd3Y3A3WmxTY2Jla1RzSXUwekdNV1l4bnlZOEw3bG85TUt2S08wRm9FNkNlajRR?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-08-29T00:34:41.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
    ],
    "tg": []
   },
@@ -3306,11 +3635,11 @@
    "tg": []
   },
   {
-   "t": "Warsh's 'quieter Fed' now includes a smidgen of guidance",
-   "u": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPTjdvUDdhMzh1TFphU1hNRUdCWk1jcjA3TmFnN2lJRmN3c1N4eHZlZk8xaER2UHZudjNjdmhCQTZpTk1ERnA2MUVMQS1WdERqbTFkb1h2NWR5VWUwR2lEWk9NZUtDZnd1ZzNhSWljZ2JLdmxnZHJaRUZIWHpqMUJkV1RpVkVfRDhQRkw5TU05UXROWUxoNjZqOFVERHV0dndBRFRB?oc=5",
+   "t": "Dollar jumps after Warsh comments, set for weekly gain",
+   "u": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOZTRZaFZxX1ZxcFJfZUs5OTl0c3lTVDJDWm55NWlHVG9CUmloOU9DWF91QXV1MGxVbTlGSTM2Zmp5MHlyUkJ4YjBiRHVMZGZLemlRcTV4N1ZiZ2Y1V0ZYelpGd3lROUNQSXYxNGFMYWoyWVFVMDQtWmt0RDgyemVtNm5lTDlXUVI4WGxzRWVxbmEtMXptWC02dWllNF9wRFR0anFYbG55TFhXVjRGSlRuQ0xJNFNvMXVDaVdMd09hdGg3VFpsMFE?oc=5",
    "s": "Reuters",
    "k": 1,
-   "d": "2026-08-28T19:34:00.000Z",
+   "d": "2026-08-28T19:01:36.000Z",
    "w": 1,
    "a": [
     "USD"
@@ -3552,6 +3881,20 @@
    "w": 0,
    "a": [],
    "tg": []
+  },
+  {
+   "t": "Warsh Seeks to Calm Concerns About Fed’s Grip on Elevated Inflation",
+   "u": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOeXgwVmE4SkVPN3VMZkRoUGc5MTlnNlgyRHo2NVhZNGpSWmtPZ09oTnczOWtoX3M5QjlqdnN2d0cyRW5lZTNKYUhGRHdVdGk3VS1MSkFkczJ2dzQ2RkoyV2FNZVJaZ01OY3dnMUxMU0R0QmF3Q3hsTVEtT0RjQnhUX2hzcC05TjlQ?oc=5",
+   "s": "The New York Times",
+   "k": 1,
+   "d": "2026-08-28T18:28:31.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "inflation"
+   ]
   },
   {
    "t": "Madison Air Solutions (MAIR) Paid $5.4 Billion for a German Fan Maker. Its Stock Fell 5%",
@@ -4274,14 +4617,7 @@
    "s": "PBS",
    "k": 1,
    "d": "2026-08-28T14:00:04.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "AP News",
-     "u": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNTUFJSHBlaThPY3QxNm1TZEpORnhMam5QQUZTc203emxiY0pKSWJLYWtvaFZNMUd0UGluNzJHVHNhcTZERkpOdmpQR2ZsWC10Q1IxMTFIaDVVRkQ3WjhFWFZsX254RVVJUG9QemZ6ZEtIbndJZk1iYUtuNDEzUGFmejVPZTZlQXl5SEx5WGZPSzh1WHlXalY1dldNR2l3a0RkT0t2M1RZTEdLZw?oc=5"
-    }
-   ],
-   "w": 6,
+   "w": 4,
    "a": [
     "USD"
    ],
@@ -4573,62 +4909,6 @@
    "tg": []
   },
   {
-   "t": "How Is Microsoft’s Stock Performance Compared to Other Software Services Stocks?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/microsoft-stock-performance-compared-other-072434228.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-28T07:24:34.000Z",
-   "w": 0,
-   "a": [],
-   "tg": [],
-   "o": [
-    {
-     "s": "Barchart",
-     "u": "https://finance.yahoo.com/markets/stocks/articles/home-depot-stock-performance-compared-172747281.html"
-    }
-   ]
-  },
-  {
-   "t": "Alphabet Stock: Is GOOGL Underperforming the Technology Sector?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/alphabet-stock-googl-underperforming-technology-070308550.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-28T07:03:08.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "How Proposed Roth IRA Rollover Rules Could Transform Retirement Savings Strategies",
-   "u": "https://finance.yahoo.com/economy/policy/articles/proposed-roth-ira-rollover-legislation-130000101.html",
-   "s": "SmartAsset",
-   "k": 2,
-   "d": "2026-08-28T07:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Why Karman Holdings Stock Was Sliding This Week",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/why-karman-holdings-stock-sliding-065929175.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-28T06:59:29.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Generali Mulling Monte dei Paschi’s $10 Billion Takeover Bid for Banca Generali",
-   "u": "https://www.wsj.com/business/deals/banca-generali-mulling-monte-di-paschis-10-billion-takeover-bid-6f17eaf5?siteid=yhoof2&yptr=yahoo",
-   "s": "The Wall Street Journal",
-   "k": 2,
-   "d": "2026-08-28T06:49:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Spanish Inflation Surges Beyond 4% as France’s Also Quickens",
    "u": "https://www.bloomberg.com/news/articles/2026-08-28/french-inflation-quickens-to-highest-level-since-may-on-energy",
    "s": "Bloomberg",
@@ -4641,136 +4921,6 @@
    "tg": [
     "inflation"
    ]
-  },
-  {
-   "t": "French Economy Just Dodges Recession as Growth Revised Down",
-   "u": "https://www.bloomberg.com/news/articles/2026-08-28/french-economy-just-dodges-recession-after-growth-revised-down",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-28T06:45:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "recession"
-   ]
-  },
-  {
-   "t": "Walt Disney vs. Netflix: Evaluating Massive Overall Business Scale Versus Consistent Double-Digit Growth in Revenue",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/walt-disney-vs-netflix-evaluating-063501232.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-28T06:35:01.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Is Apple Stock Outperforming the S&P 500?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/apple-stock-outperforming-p-500-063132268.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-28T06:31:32.000Z",
-   "w": 1,
-   "a": [
-    "SP500"
-   ],
-   "tg": []
-  },
-  {
-   "t": "America’s Power Grid Is Under Pressure. Here’s What Business Owners Need to Know.",
-   "u": "https://finance.yahoo.com/energy/articles/america-power-grid-under-pressure-063000497.html",
-   "s": "Entrepreneur",
-   "k": 2,
-   "d": "2026-08-28T06:30:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Why SailPoint Stock Was Cruising Higher This Week",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/why-sailpoint-stock-cruising-higher-062527140.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-28T06:25:27.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "1 Reason I Passed on Oklo Even After Its Big Rally",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/1-reason-passed-oklo-even-062500885.html",
-   "s": "Motley Fool",
-   "k": 2,
-   "d": "2026-08-28T06:25:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Rising AI Cyberattacks Fuel Demand for CrowdStrike, Sending Stock Up 20.5%",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/rising-ai-cyberattacks-fuel-demand-061500855.html",
-   "s": "BeInCrypto",
-   "k": 2,
-   "d": "2026-08-28T06:15:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "WEX Details AI, Pricing and Buyback Push at Deutsche Bank Conference",
-   "u": "https://finance.yahoo.com/technology/ai/articles/wex-details-ai-pricing-buyback-060159948.html",
-   "s": "MarketBeat",
-   "k": 2,
-   "d": "2026-08-28T06:01:59.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Are Wall Street Analysts Bullish on Huntington Ingalls Stock?",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/wall-street-analysts-bullish-huntington-055811270.html",
-   "s": "Barchart",
-   "k": 2,
-   "d": "2026-08-28T05:58:11.000Z",
-   "w": 1,
-   "a": [
-    "SP500"
-   ],
-   "tg": []
-  },
-  {
-   "t": "US Dollar Price Forecast: Warsh Looms as DXY Rebounds, EUR/USD Pulls Back; GBPUSD Key Levels",
-   "u": "https://finance.yahoo.com/markets/currencies/articles/us-dollar-price-forecast-warsh-055644863.html",
-   "s": "FX Empire",
-   "k": 2,
-   "d": "2026-08-28T05:56:44.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Japan’s Bigger Budget Puts Focus on Takaichi Bond Sales Cap",
-   "u": "https://www.bloomberg.com/news/articles/2026-08-28/japan-s-bigger-budget-puts-takaichi-s-cap-on-bond-sales-in-focus",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-28T05:52:47.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Okta Inc (OKTA) on Record High Amid AI Boom; Hedge Funds Raise Exposure",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/okta-inc-okta-record-high-053959842.html",
-   "s": "Insider Monkey",
-   "k": 2,
-   "d": "2026-08-28T05:39:59.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "ECB Mustn’t Allow Inflation to Take Root, Kazaks Says",
@@ -4787,28 +4937,6 @@
    ]
   },
   {
-   "t": "South Korea's export boom seen sustained in August on strong chip demand",
-   "u": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNWGZIOVVrYXYwOE9IR1hLSXRraUotSlNONmUxQUE2dlR4MXg2Rll0TDJlUDZSNEYydERUcjZJWW9ENTZ1TDNoNXI4ME9kZUVIRGRWYjdOYlVnSlgxd253LWxlV196Q08yZXA5WFNJWGdqMElob1FKWkV1dVhiTGhNV2swaDZqUUxxMjlKNmF5U0ZHNVZIOEplRTctdnBJMVdYTmFObXdPb1BONkFzbVpyVlkzMFI4MnczalBfeg?oc=5",
-   "s": "Reuters poll",
-   "k": 1,
-   "d": "2026-08-28T05:26:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "German industry presses Merz for tougher China policy",
-   "u": "https://finance.yahoo.com/news/german-industry-presses-merz-tougher-050335957.html",
-   "s": "Reuters",
-   "k": 2,
-   "d": "2026-08-28T05:03:35.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
    "t": "The bond market prepares for a hike to interest rates, while US stocks drift lower",
    "u": "https://finance.yahoo.com/markets/world-indices/articles/asian-shares-mostly-gain-upbeat-040450628.html",
    "s": "Associated Press",
@@ -4823,28 +4951,6 @@
    ]
   },
   {
-   "t": "More Adult Children Are Supporting Their Parents. It May Cost Them in Retirement",
-   "u": "https://finance.yahoo.com/economy/articles/more-adult-children-supporting-parents-040300253.html",
-   "s": "The Daily Upside",
-   "k": 2,
-   "d": "2026-08-28T04:03:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Should Clients Use Crypto To Catch Up on Retirement Savings?",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/clients-crypto-catch-retirement-savings-040200863.html",
-   "s": "The Daily Upside",
-   "k": 2,
-   "d": "2026-08-28T04:02:00.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
    "t": "Ex-RBI Chief Rajan Urges Fed to Hike Rates, Relaxed on Rupee",
    "u": "https://www.bloomberg.com/news/articles/2026-08-28/ex-rbi-chief-rajan-says-fed-should-raise-rates-to-curb-inflation",
    "s": "Bloomberg",
@@ -4855,13 +4961,7 @@
     "USD"
    ],
    "tg": [],
-   "n": 2,
-   "o": [
-    {
-     "s": "Moomoo",
-     "u": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNaURZZHBocU1hMHRhdS1zOFM2eGM2WDZsZzZhZHM2VF9GWFd6VFlQb01paHJEUldhdE9xbC03c2N0NUJ3Z1MxVUlRZ19ENTVITG5JWEI2NGNLYUJVOVV0VU5ieDIzRzlnREZoY0JKRWNLYUlPOWJGT19MUG90U2dHWkVlLW96UG5JT1k3UnBB?oc=5"
-    }
-   ]
+   "n": 2
   },
   {
    "t": "Thai Central Bank Says Gold Curbs Working, May Tighten If Necessary",
@@ -4876,45 +4976,6 @@
    "tg": [
     "central bank"
    ]
-  },
-  {
-   "t": "GS price outlook: Goldman Sachs holds above 0.5 support arc. Potential rebound toward 1,070",
-   "u": "https://news.google.com/rss/articles/CBMiywFBVV95cUxPdk5UZzRWN1F1ZEM4d3J3cnFBZkI1b0FMckxvcm95YUNYVHV5Ty1EZ0pzZmJFZkJ5T1Y0MnlfS0FjNUVmdW9pVlliX20yZVduT1hwV01QNnRFd1Y2emdlZDB1dzFnTjJzd1FDQWF4RlRZbjNud3JMbmw5Z2dZQV9IZE4yUHlPSjFNU0RkZHlQa21DNUwyRjdWUFJYS1RaaDFVNGlqSkx4ZklIUEVocWd0RW5YTjdsSV96R1ZvcUNQUkpDZ2RTQU9SN1BrWQ?oc=5",
-   "s": "FXStreet",
-   "k": 1,
-   "d": "2026-08-28T02:50:42.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "CryptoRank",
-     "u": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPWFNWWk5pMjFqeC1YcUFGU2ZKRjN5eHRoVWtLQ2RaUmsxdjdiLURqaTVDTWlGQWM1ZmN5bHRMSTRXbWFhVGNYV3ItNWxPVGxKaHdaZ1JwQWJZVG1hY2Q4b0R0M2VfS3lWLWVsTXZyWTdPZWxIbmtLOHp5Yjh2QVBoS0txS2UzYWJoWDlBbmVnQXI4QQ?oc=5"
-    }
-   ],
-   "w": 2,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Trump signs proclamation to pause some beef tariffs despite backlash from farmers, GOP",
-   "u": "https://news.google.com/rss/articles/CBMirAFBVV95cUxPVFo2MjIyeFNNazBQcE5FUi1Gck1JdVpRRGNwUGtrRy1HaUwtTUJiUjdWTmx4UDVxTDJsSXZvMmh5STZGaXM2QmE5amZqc25LN1hqSVJoLXd2UERERzQwUFBMSlBERGVQRVhUXzF3V0xqOV9kV3V6LXlKOUJjYUdJTThwZldWd0tyVlBORklZUmVoV1hwa0RPa3F0NDAzbWRnUkEzZDBfZkc4bjRl0gGyAUFVX3lxTE1CamphVWEzUk9IODN6TGVxTDNiNmxQVkdMUU93UjlQSktrakFXM3VsN09lck5Nek1qZW51bzFoTWZPQklDSDRYeGJtWUhMbS1neGFKOGxoTTRTT2FkLWpwaWVxZDY1VTVnM0lhdmRNb3lGMGJzZGdUSVdZa2hXX0lGUDZXSDhKdDZaa2ZXX1VQaEJhaDJTQmlUU1VtUHo1Nm9sYU5NY19kdWtoRFRNc2pFZlE?oc=5",
-   "s": "ABC News",
-   "k": 1,
-   "d": "2026-08-28T01:49:57.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Trump ratchets up rhetoric against Beijing as U.S.-China officials meet for Xi's Washington visit",
-   "u": "https://www.cnbc.com/2026/08/28/trump-x-meeting-us-china-iran-sanctions.html",
-   "s": "CNBC Finance",
-   "k": 2,
-   "d": "2026-08-28T01:35:13.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Tokyo core inflation creeps near BOJ's target, bolsters rate-hike chance",
@@ -6971,6 +7032,25 @@
    "tg": []
   },
   {
+   "t": "JPMorgan's Card Credit Trends Improve: Are Losses Past Their Peak?",
+   "u": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNUDROMGROREFvY25lcGVlLTZJSmhaVC1qQnNlejdXTFNWVjF6UjhSRHRsNHJ5N3R2OTQtdGtad0RteUpWcnZRSEJkaWRfVHJBMjBiSzV1V0c4RlZSS1AyR09JZ003bjNzem9mNF8xU3QtZ1lhSTdxamFiaTBSMEw2OTYzZkYzOHZlcDFQdXBIY3pFM29oMVhueWYySmRESUxYSGVCUzRKajhqb3VidDZXWTZ0ZTZWUUtSVE9tUA?oc=5",
+   "s": "TradingView",
+   "k": 1,
+   "d": "2026-08-24T12:18:00.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "The Globe and Mail",
+     "u": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPajNFSnJQY2tQUjNOaEhuVVptTjZCb2tZc2ZRdUt4R1NXYWs4VFVZYmh2RlRBZkg2VmxJSEI3MFExY3c0UVF4cUVaM1MxQVdwYlN4YW1xX3RaWnNMVjVPMGdGb0VuQmdncWlrYldlbGtDNGJwZ3dFb0FGMDFWcVliSi0wZFU5UmVVM1IyOGd0NU1kTmJRdlBmMzV6aFlKMklXdThqbEFGYlRrS0RiNDZSaHVYRDNNR1BKNTdzVWo3RjRZRUYxMjRFT1k1cVc3S21nSU1YaG1XSjlYeF81a0E?oc=5"
+    }
+   ],
+   "w": 3.5,
+   "a": [],
+   "tg": [
+    "credit"
+   ]
+  },
+  {
    "t": "High asset prices, not low interest rates, are driving inflation",
    "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOTDFwSEROWmxGdnRfenJJOTZ1UTR4dVUwZ1FaLUI0YkFubVcwQm53WF9iTkVyRXNMazhwdkNxem53eDBlUzBwM3BiSUpFdEM2cWhJeUlPa1MzRFlzTktLaE1jOXBKTUE5TV93SEk1Y00wOWt1U296X2ZfaTlKd1Z2NTFTd1I?oc=5",
    "s": "Financial Times",
@@ -6994,13 +7074,7 @@
    "tg": [
     "interest rate"
    ],
-   "n": 2,
-   "o": [
-    {
-     "s": "Yahoo Personal Finance",
-     "u": "https://finance.yahoo.com/personal-finance/banking/article/best-high-yield-savings-interest-rates-today-friday-august-28-2026-earn-up-to-415-apy-100000361.html"
-    }
-   ]
+   "n": 2
   },
   {
    "t": "Trump is threatening 50% tariffs on Canadian cars. Here’s what else he’s targeting",
@@ -7352,6 +7426,10 @@
     {
      "s": "PBS",
      "u": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPRG92UXdBd1c5WndPVVRnQmsyY3puVlVMQWx2akpJdWI3Q211YVB4WnZ1eFZxazBVUlRocGZTLV8xcWhtSlpXNmZxOWJZLWJUa2ZhdWhEc0Y0UjdfQ2oxNkI0Z1IyN1Y3aHI0N0YtTnF0QlhoOU9CaUM3TWRmRlRiSUdBTkJuQlBaUTBKZXZoTUZJSUVUeGJMaHJ3NG9WWUHSAaQBQVVfeXFMTWpKRlZjcWJQWm5zRmF3UUttWDhCcjJtc0xCWEpEOG8xMTlLS2VNMjdOcGdMcTA1NHBjXzdvRnhfM0IxS0NzcEtZbURhZlJJaTJ5SVpmTDgxcXRMSDNlWHVZXzNNSGl0ekJhU2E0Mm5VMDdFdTJMVTJsWUtGWFBzOWZuREZCaF9wOEZEWE5XQ3B1X3NKT3UyWURVSjRuVTlCNU84MVM?oc=5"
+    },
+    {
+     "s": "The Hill",
+     "u": "https://news.google.com/rss/articles/CBMihwFBVV95cUxOMXhHNEdtYTVGV3hlQ0w0bVBmUFlFMHcwZFBjT3IxaUQ5bnotcGFLNWM5RTFwOGZLNXFJOUNwUUh5N0FZa3dNYTdaUklKcnBlSkltMmpvWTJlVTltN0dQaFJpQmFxWFJ4OFFyclhXUGRGelpxSlN5aGY0Xy1FVHFzbUN4Y0lpZ2PSAYwBQVVfeXFMT0xYSkF3ck9UaUZDMWlPMGtfcHo4MmlWRUxJdG15di1QdFJxOG10Smt1dURnbEJ0cnRpbGdadHQ0dTF5MnlUOWtiZmd6M2VJLWFRSEFnX2IxNFBSTU1nR1RtcExQeGtlWkxseWRTRDlTdlBIV2hzNTZxY0Ric2ZJd0JjbG9LaFhhM2tMcXA?oc=5"
     }
    ]
   },
@@ -7663,48 +7741,6 @@
    ]
   },
   {
-   "t": "ECB Well Placed to Act on ‘Uncomfortable’ Inflation, Kazaks Says",
-   "u": "https://www.bloomberg.com/news/articles/2026-08-21/ecb-well-placed-to-act-on-uncomfortable-inflation-kazaks-says",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-21T07:14:09.000Z",
-   "w": 2.5,
-   "a": [
-    "EUR"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
-   "t": "A date on the calendar could shape the BOJ's endgame on interest rates",
-   "u": "https://finance.yahoo.com/news/date-calendar-could-shape-bojs-060629014.html",
-   "s": "Reuters",
-   "k": 2,
-   "d": "2026-08-21T06:06:29.000Z",
-   "w": 2.5,
-   "a": [
-    "JPY"
-   ],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
-   "t": "Japan Inflation Picks Up as Rate-Boost Bets Firm",
-   "u": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQLTM0eGZVSVh1UUJRckJIMENTZzBpWEc1RngzMzhzekg0N25RZGl4dldMZmZmY0haajNMc2JWQ2YtSThtRmc4YlM1bDNlbjVGQUpySEd2cWdUX1JycldSTWtyeEdJSFVMcDdmR1N2N3B3TnNrelRHazNsWmljbi1RQmczVkRvay14Z0RZUXRR?oc=5",
-   "s": "WSJ",
-   "k": 1,
-   "d": "2026-08-21T02:20:00.000Z",
-   "w": 2.5,
-   "a": [
-    "JPY"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
    "t": "Minutes of the Federal Open Market Committee, July 28–29, 2026",
    "u": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260819a.htm",
    "s": "Federal Reserve",
@@ -7911,13 +7947,13 @@
   "EnergyNow.com",
   "Entrepreneur",
   "FX Empire",
-  "FXStreet",
   "Federal Reserve",
   "Federal Reserve Bank of M…",
   "Financial Times",
   "Forbes",
   "Fortune",
   "Fox Business",
+  "FreightWaves",
   "Goldman Sachs",
   "Insider Monkey",
   "Investopedia",
@@ -7946,8 +7982,6 @@
   "Politico",
   "Quartz",
   "Reuters",
-  "Reuters poll",
-  "SmartAsset",
   "Sourcing Journal",
   "South China Morning Post",
   "Spectrum News",
@@ -7963,6 +7997,7 @@
   "The Washington Post",
   "TheStreet",
   "TipRanks",
+  "TradingView",
   "Trefis",
   "U.S. News & World Report",
   "WSJ",
@@ -7976,6 +8011,6 @@
  "topic": {
   "label": "Bitcoin · Billion · Ethereum",
   "n": 7,
-  "total": 31
+  "total": 41
  }
 }
