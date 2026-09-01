@@ -3774,11 +3774,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-460 - History als Zeitstrahl mit Drill-down (Nutzer-Wunsch 2026-08-31): die Score-History je Asset ist jetzt ein horizontaler Balken-Zeitstrahl (aeltester Balken links, neuester rechts) statt einer vertikalen Liste. Oben ein Balken je Woche (Netto-Bewegung, gruen/rot); Klick auf einen Wochen-Balken klappt darunter einen zweiten Zeitstrahl mit einem Balken je Tag dieser Woche auf; Klick auf einen Tag-Balken zeigt darunter die bestehende Detail-Karte (Events, Score-Aufschluesselung) - inhaltlich unveraendert, nur ueber den Zeitstrahl statt Scrollen erreicht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-461 - Papierkorb fuer Notizen/Ordner (Nutzer-Wunsch 2026-09-01): geloeschte Notizen und Ordner (delResNote/researchDelFolder) landen jetzt 30 Tage im Papierkorb (Einstellungen -> 'Trash') statt sofort weg zu sein, mit Restdauer je Eintrag und Einzel-Wiederherstellung. Ausserdem eine zweite, hartnaeckigere Runde am Cross-Tab-Notizen-Datenverlust: navigator.locks serialisiert jetzt jeden save()/cloudPull()-Schreibzyklus tabuebergreifend, schliesst die zuvor per Playwright unter Last weiterhin reproduzierbare Race strukturell."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-460</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-461</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4245,6 +4245,7 @@ function introLogin(){
         <button class="btn" onclick="exportData()">Export</button>
         <button class="btn" onclick="document.getElementById('impFile').click()">Import</button>
         <button class="btn" onclick="openBackupM()">Backups</button>
+        <button class="btn" onclick="openTrashM()">🗑 Trash</button>
       </div>
     </div>
     <div class="set-sec">Security</div>
@@ -4355,6 +4356,17 @@ function introLogin(){
     <div class="m-btns" style="margin-top:12px">
       <button class="btn" onclick="closeM('mBackup')">Close</button>
       <button class="btn g" onclick="saveLocalBackup('Manual');openBackupM()" title="Create a backup snapshot now">💾 Back up now</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: Papierkorb (Nutzer-Wunsch 2026-09-01) -->
+<div class="ov" id="mTrash" style="display:none">
+  <div class="modal">
+    <h3>🗑 Trash</h3>
+    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:12px">Deleted notes and folders (including ones a folder deletion left with nowhere to go) land here — restore them individually, or they're removed automatically after <strong>30 days</strong>.</div>
+    <div id="mTrashList"></div>
+    <div class="m-btns" style="margin-top:12px">
+      <button class="btn" onclick="closeM('mTrash')">Close</button>
     </div>
   </div>
 </div>

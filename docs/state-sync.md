@@ -62,6 +62,43 @@ und `save()`s eigener Change-Diff es daher nicht automatisch erkennt) —
 bumpt `fxpro_updated`+ruft `cloudAutoSync()` selbst auf, wenn sich etwas
 geändert hat.
 
+## Sonderfall `research`/`researchFolders` (Notizen/Ordner/Papierkorb): Merge statt Overwrite + `navigator.locks`
+
+**Zweiter Sonderfall genau der Art, vor der der `scoreHist`-Abschnitt oben
+warnt** (Nutzer-Bugreport 2026-09-01, zweimal hintereinander gemeldeter
+Notiz-Datenverlust, per Playwright reproduziert): `research.notes`/
+`research.trash`/`researchFolders` liegen zwar in `snap()`/`applySnap()`
+(laufen also grundsätzlich automatisch mit), litten aber am selben Problem
+wie `scoreHist` vor dessen Merge-Fix — zwei Tabs/Geräte können UNABHÄNGIG
+voneinander neue Notizen anlegen, ein simples Overwrite bei
+`adoptExternalState()`/`cloudPull()` hätte die jeweils andere Seite gelöscht.
+Fix, zwei Ebenen:
+
+1. **`mergeResearchNotes(base,override)`/`mergeResearchFolders(base,override)`/
+   `mergeResearchTrash(base,override)`** (neben `mergeScoreHist`, ≈ Zeile
+   11170): Vereinigung nach `id`, bei einer Notiz-Kollision gewinnt die
+   zuletzt bearbeitete (`n.up`). Angewendet in `applySnap()` (nur für die
+   PASSIVEN Sync-Pfade, `_flipCauseTag==='sync'` — Undo/Redo/Backup-Restore/
+   Import bleiben bewusst echter Overwrite) UND zusätzlich direkt im
+   Schreibpfad von `save()`/`cloudPull()` gegen den GERADE AUF DER PLATTE
+   stehenden Inhalt, unmittelbar vor dem eigentlichen Schreiben.
+2. **`navigator.locks`** (Web Locks API, `save()`/`cloudPull()`, Lock-Name
+   `'fxpro_sync_lock'`): selbst ein "lies Disk, merge, schreib"-Ablauf OHNE
+   echte Sperre lässt eine kleine, aber unter Last (per Playwright mit
+   künstlich hoher Hintergrund-Save-Frequenz reproduzierbar) reale Lücke
+   zwischen zwei GLEICHZEITIG schreibenden Tabs. `navigator.locks.request()`
+   serialisiert den kompletten Lese-Merge-Schreib-Zyklus ECHT über alle Tabs
+   desselben Ursprungs hinweg (seit 2022 breit unterstützt: Chrome/Edge 69+,
+   Firefox 96+, Safari 15.4+), Fallback (kein `navigator.locks`): der alte,
+   direkte synchrone Ablauf. **Wichtig, falls das Muster auf ein neues Feld
+   übertragen wird:** die Sperre schützt nur, wenn WIRKLICH JEDER Schreiber
+   denselben Lock-Namen benutzt — ein "nur für automatische Saves gesperrt,
+   frische Nutzer-Edits bleiben ungesperrt"-Kompromiss (erste, per Playwright
+   widerlegte Fassung dieses Fixes) lässt die Race weiter offen, weil beide
+   Seiten sich gegenseitig unterlaufen können.
+
+Details/Reproduktionsmethode: `docs/CHANGELOG.md`, Einträge vom 2026-09-01.
+
 ## `markPrefEdit()` in der Save-Funktion nicht vergessen
 
 **Zusätzlich in der Save-Funktion `markPrefEdit()` aufrufen** (2. Ursache des

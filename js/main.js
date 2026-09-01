@@ -3201,7 +3201,42 @@ const RESEARCH_ASSET_FOLDERS=[
   {id:'stocks',name:'Stocks',icon:'trendUp'},
 ];
 function mkResearchFolders(){return RESEARCH_ASSET_FOLDERS.map(f=>({...f}));}
-function mkResearch(){return{folders:mkResearchFolders(),notes:[],_folderSchemaV:2,_noteSchemaV:1};}
+function mkResearch(){return{folders:mkResearchFolders(),notes:[],trash:[],_folderSchemaV:2,_noteSchemaV:1};}
+// ── PAPIERKORB ───────────────────────────────────────────────────────
+// Nutzer-Wunsch 2026-09-01 (nach wiederholtem Notiz-Datenverlust, siehe
+// docs/CHANGELOG.md): alles, was aus research.notes/researchFolders
+// entfernt wird - egal ob der Nutzer selbst loescht (delResNote(),
+// researchDelFolder()) oder eine Notiz durchs Loeschen ihres letzten
+// Ordners elternlos wuerde - landet hier statt direkt im Nichts, 30 Tage
+// lang einzeln wiederherstellbar. Bewusst NICHT fuer die automatische
+// seedAssetBehaviorNotes()-Bereinigung (seed:true-Notizen werden bei jedem
+// Inhalts-Versionssprung routinemaessig ersetzt - das waere reines Rauschen
+// im Papierkorb, keine echte Nutzer-Aktion).
+const TRASH_TTL_MS=30*86400000;
+function trashResNote(n){
+  if(!n)return;
+  if(!Array.isArray(research.trash))research.trash=[];
+  research.trash.push({id:uid(),kind:'note',data:{...n},delAt:new Date().toISOString()});
+}
+// Faellt Eintraege raus, deren delAt laenger als TRASH_TTL_MS zurueckliegt -
+// dasselbe Muster wie pruneEventAlerts()/pruneScoreLog() (siehe dort), laeuft
+// bei jedem migrateResearch()-Durchlauf (Boot, Cloud-Pull, Multi-Tab-Adopt).
+function pruneResearchTrash(trash){
+  if(!Array.isArray(trash))return[];
+  const cutoff=Date.now()-TRASH_TTL_MS;
+  return trash.filter(t=>t&&t.delAt&&new Date(t.delAt).getTime()>=cutoff);
+}
+// Gleiches Merge-statt-Overwrite-Prinzip wie mergeResearchNotes/-Folders
+// (siehe dort, applySnap()) - auch der Papierkorb darf bei einem passiven
+// Sync-Abgleich nicht durch den Stand eines anderen Tabs/Geraets ersetzt
+// werden, sonst waere er selbst wieder anfaellig fuer genau das Problem,
+// vor dem er eigentlich schuetzen soll.
+function mergeResearchTrash(base,override){
+  const map=new Map();
+  (base||[]).forEach(t=>{if(t&&t.id)map.set(t.id,t);});
+  (override||[]).forEach(t=>{if(t&&t.id)map.set(t.id,t);});
+  return Array.from(map.values());
+}
 // Asset-ID -> fester Research-Ordner, rein aus der Asset-Klasse abgeleitet
 // (ASSET_CLASS/customIds via assetCls) - KEIN zusaetzlicher State noetig:
 // ein neu ueber "+ Add Symbol" angelegtes Asset erscheint dadurch automatisch
@@ -3412,6 +3447,35 @@ function researchDelFolder(id){
     grew=false;
     researchFolders.forEach(f=>{if(f.parentId&&doomed.has(f.parentId)&&!doomed.has(f.id)){doomed.add(f.id);grew=true;}});
   }
+  // Papierkorb (Nutzer-Wunsch 2026-09-01): die geloeschten Ordner selbst UND
+  // Notizen, die dadurch komplett elternlos wuerden (alle ihre fids zeigten
+  // NUR auf jetzt geloeschte Ordner, kein anderer Ordner und kein manuelles
+  // asset-Tag), landen im Papierkorb statt spurlos zu verschwinden - bisher
+  // wurden die fids beim Ordner-Loeschen ueberhaupt nicht bereinigt (Notiz
+  // blieb technisch in research.notes bestehen, war aber ueber keinen Ordner
+  // mehr erreichbar, also praktisch verschwunden, ohne dass sie irgendwo
+  // wiederauffindbar gewesen waere). Notizen mit MINDESTENS einem weiteren,
+  // ueberlebenden Ordner bleiben live, verlieren nur die tote fid-Referenz.
+  if(!Array.isArray(research.trash))research.trash=[];
+  const _delNow=new Date().toISOString();
+  researchFolders.filter(f=>doomed.has(f.id)).forEach(f=>{
+    research.trash.push({id:uid(),kind:'folder',data:{...f},delAt:_delNow});
+  });
+  const _orphanedIds=[];
+  research.notes.forEach(n=>{
+    if(!Array.isArray(n.fids)||!n.fids.length)return;
+    const kept=n.fids.filter(f=>!doomed.has(f));
+    if(kept.length===n.fids.length)return;
+    n.fids=kept;
+    if(kept.length===0&&!n.asset)_orphanedIds.push(n.id);
+  });
+  if(_orphanedIds.length){
+    const _orphanSet=new Set(_orphanedIds);
+    research.notes.filter(n=>_orphanSet.has(n.id)).forEach(n=>{
+      research.trash.push({id:uid(),kind:'note',data:{...n},delAt:_delNow});
+    });
+    research.notes=research.notes.filter(n=>!_orphanSet.has(n.id));
+  }
   researchFolders=researchFolders.filter(f=>!doomed.has(f.id));
   delete researchTreeOpen[id];
   if(researchTreeSel&&doomed.has(researchTreeSel.split(':')[0]))researchTreeSel=null;
@@ -3494,6 +3558,11 @@ function migrateResearch(r,legacyCats){
   r=migrateResearchToAssetFolders(r);
   r=migrateResearchNoteFields(r);
   r=migrateLegacyAssetNotesIntoResearch(r);
+  // Papierkorb: fehlt bei Bestandsnutzern (aeltere gespeicherte research-
+  // Objekte kennen das Feld noch nicht) - Default + Alters-Bereinigung bei
+  // JEDEM Durchlauf (Boot, Cloud-Pull, Multi-Tab-Adopt), analog zu
+  // pruneEventAlerts()/pruneScoreLog() anderswo im Boot-Pfad.
+  r.trash=pruneResearchTrash(Array.isArray(r.trash)?r.trash:[]);
   return seedAssetBehaviorNotes(r);
 }
 // Einmalige Migration (Nutzer-Wunsch 2026-08-30 "in mehreren Ordnern
@@ -3834,7 +3903,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // fuer Undo/Redo/Backup-Restore/Import bleibt es bewusst ein echter
   // Overwrite (dort IST das Ersetzen die gewollte Aktion).
   const _mergeSync=_flipCauseTag==='sync';
-  const _prevResNotes=research&&research.notes,_prevResFolders=researchFolders;
+  const _prevResNotes=research&&research.notes,_prevResFolders=researchFolders,_prevResTrash=research&&research.trash;
   syms=d.syms;ensureBuiltinSyms();
   // War bisher ein von migrateRubInds() abgeschriebenes Teilstueck (nur die
   // fuenf Sub-Funktionen, OHNE den RUB_IND_REMOVE/Rename/Dedup-Schlussteil) -
@@ -3844,7 +3913,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -3892,6 +3961,64 @@ function restoreLocalBackup(i){
   }catch(e){alert('Error while restoring: '+e.message);}
 }
 setInterval(()=>{if(document.visibilityState!=='hidden')saveLocalBackup('Automatic (10 min.)');},10*60*1000);
+
+// ── PAPIERKORB-UI ────────────────────────────────────────────────────
+// Fuellt/oeffnet research.trash (siehe trashResNote()/pruneResearchTrash()
+// oben) - eigenstaendig neben den Backups: Backups sichern den GESAMTEN
+// Zustand zu festen Zeitpunkten, der Papierkorb einzelne geloeschte
+// Notizen/Ordner mit voller Kontrolle darueber, was genau wiederkommt.
+function trashEntryLabel(t){
+  if(!t||!t.data)return t&&t.kind==='folder'?'Folder':'Note';
+  if(t.kind==='folder')return t.data.name||'Folder';
+  return t.data.title||researchTitleFrom(t.data.body)||'Note';
+}
+function openTrashM(){
+  try{
+    const items=(research.trash||[]).slice().sort((a,b)=>String(b.delAt).localeCompare(String(a.delAt)));
+    const el=document.getElementById('mTrashList');
+    if(!items.length){
+      el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">Trash is empty. Deleted notes and folders stay here for 30 days.</div>';
+    }else{
+      el.innerHTML=items.map(t=>{
+        const daysLeft=Math.max(0,Math.ceil((new Date(t.delAt).getTime()+TRASH_TTL_MS-Date.now())/86400000));
+        return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;color:var(--t0);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(trashEntryLabel(t))}</div>
+            <div style="color:var(--t3);font-size:11px">${t.kind==='folder'?'Folder':'Note'} · ${daysLeft} day${daysLeft===1?'':'s'} left · deleted ${new Date(t.delAt).toLocaleDateString('en-GB')}</div>
+          </div>
+          <button class="btn g" onclick="restoreTrashItem('${t.id}')" style="font-size:11px;flex-shrink:0" title="Restore">↩</button>
+          <button class="btn" onclick="permaDeleteTrashItem('${t.id}')" style="font-size:11px;flex-shrink:0" title="Delete permanently">✕</button>
+        </div>`;
+      }).join('');
+    }
+  }catch(e){}
+  openM('mTrash');
+}
+function restoreTrashItem(id){
+  const t=(research.trash||[]).find(x=>x.id===id);
+  if(!t)return;
+  pushU();
+  if(t.kind==='folder'){
+    const f={...t.data};
+    // Elternordner fehlt (nicht mitwiederhergestellt)? An die Wurzel haengen
+    // statt unsichtbar zu bleiben - ein synthetischer Asset-Wurzel-Ordner
+    // (asset:<id>:gen) ist bewusst NIE in researchFolders enthalten, zaehlt
+    // hier also nicht als "fehlt".
+    if(f.parentId&&!/^asset:/.test(f.parentId)&&!researchFolders.some(x=>x.id===f.parentId))f.parentId=null;
+    if(!researchFolders.some(x=>x.id===f.id))researchFolders.push(f);
+  }else{
+    const n={...t.data};
+    if(!research.notes.some(x=>x.id===n.id))research.notes.push(n);
+  }
+  research.trash=(research.trash||[]).filter(x=>x.id!==id);
+  save();openTrashM();rerenderNotesHost();
+}
+function permaDeleteTrashItem(id){
+  if(!confirm('Permanently delete this item? This cannot be undone.'))return;
+  pushU();
+  research.trash=(research.trash||[]).filter(x=>x.id!==id);
+  save();openTrashM();
+}
 
 // ══ STATE ═══════════════════════════════════════════════════════════
 let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
@@ -4258,57 +4385,91 @@ function save(){
   // dann auf ein Asset, wenn der Nutzer es geöffnet hat.
   if(selId)syncAssetGroup(selId);
   invalidateCmpCache();
-  let changed=false;
-  try{
-    // Zweite Sicherheitsebene zusaetzlich zum Marker-Guard oben (Nutzer-
-    // Bugreport 2026-09-01, per Playwright bis auf die Millisekunde
-    // nachgewiesen): der Marker-Vergleich kann "luegen", weil ein anderer
-    // Tab SK (den Inhalt) und fxpro_updated (den Marker) als ZWEI GETRENNTE
-    // localStorage-Schreibvorgaenge absetzt, die cross-tab UNTERSCHIEDLICH
-    // schnell sichtbar werden - gemessen wurden >100ms Versatz, bei dem der
-    // NEUE Inhalt hier schon lesbar war, der NEUE Marker aber noch nicht.
-    // Dieser Tab haelt sich dann faelschlich fuer "auf dem neuesten Stand"
-    // (Marker stimmt noch mit dem zuletzt gesehenen ueberein) und ueberschreibt
-    // beim naechsten AUTOMATISCHEN (nicht gerade selbst editierten) save()
-    // die fremde Notiz wieder, OBWOHL deren Inhalt hier zu diesem Zeitpunkt
-    // technisch schon einsehbar gewesen waere. Fix: bei jedem NICHT frisch
-    // selbst editierten save() (>=3s seit der letzten eigenen Aktion, exakt
-    // dieselbe Schwelle wie beim Marker-Guard oben) research.notes/
-    // researchFolders zusaetzlich gegen den GERADE AUF DER PLATTE stehenden
-    // Inhalt mergen (mergeResearchNotes/-Folders, dieselben Merge-Funktionen
-    // wie in applySnap() bei adoptExternalState()/cloudPull()) - unabhaengig
-    // vom Marker-Ergebnis, macht das Ueberschreiben fremder Notizen strukturell
-    // unmoeglich, egal wie die beiden Schreibvorgaenge des anderen Tabs
-    // zeitlich bei uns ankommen.
-    if(Date.now()-_lastUserEditTs>=3000){
-      try{
-        const onDisk=JSON.parse(localStorage.getItem(SK)||'null');
-        if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.notes)){
-          research.notes=mergeResearchNotes(onDisk.research.notes,research.notes);
-        }
-        if(onDisk&&Array.isArray(onDisk.researchFolders)){
-          researchFolders=mergeResearchFolders(onDisk.researchFolders,researchFolders);
-        }
-      }catch(e){}
-    }
-    const s=snap();
-    // fxpro_updated nur bumpen, wenn sich der Inhalt WIRKLICH geändert hat -
-    // save() läuft auch aus reinen Sicherheitsnetzen heraus (15s-Intervall,
-    // beforeunload/pagehide/visibilitychange), die inhaltlich meist nichts
-    // Neues zu speichern haben. Ohne diesen Vergleich würde fxpro_updated bei
-    // JEDEM Reload künstlich bumpen (der unload-Flush feuert praktisch immer
-    // kurz vor dem Neuladen) und beim nächsten Start fälschlich wie eine noch
-    // nicht hochgeladene lokale Änderung aussehen - das würde den Boot-Check
-    // unten (Push-vor-Pull bei pendenter Änderung) unbrauchbar machen, weil er
-    // dann so gut wie immer anschlägt, auch ganz ohne echten Edit.
-    changed=s!==localStorage.getItem(SK);
-    localStorage.setItem(SK,s);
-    if(changed)localStorage.setItem('fxpro_updated',new Date().toISOString());
-    _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-    const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
-  }catch(e){}
-  recordScoreHist();
-  if(changed)cloudAutoSync();
+  // Der eigentliche Lese-Merge-Schreib-Zyklus, ausgelagert, damit er wahlweise
+  // ueber navigator.locks serialisiert oder (Fallback) direkt synchron laeuft
+  // (siehe Kommentar bei der Lock-Anfrage unten).
+  const doSave=()=>{
+    let changed=false;
+    try{
+      // Zweite Sicherheitsebene zusaetzlich zum Marker-Guard oben (Nutzer-
+      // Bugreport 2026-09-01, per Playwright bis auf die Millisekunde
+      // nachgewiesen): der Marker-Vergleich kann "luegen", weil ein anderer
+      // Tab SK (den Inhalt) und fxpro_updated (den Marker) als ZWEI GETRENNTE
+      // localStorage-Schreibvorgaenge absetzt, die cross-tab UNTERSCHIEDLICH
+      // schnell sichtbar werden - gemessen wurden >100ms Versatz, bei dem der
+      // NEUE Inhalt hier schon lesbar war, der NEUE Marker aber noch nicht.
+      // Dieser Tab haelt sich dann faelschlich fuer "auf dem neuesten Stand"
+      // (Marker stimmt noch mit dem zuletzt gesehenen ueberein) und ueberschreibt
+      // beim naechsten AUTOMATISCHEN (nicht gerade selbst editierten) save()
+      // die fremde Notiz wieder, OBWOHL deren Inhalt hier zu diesem Zeitpunkt
+      // technisch schon einsehbar gewesen waere. Fix: bei jedem NICHT frisch
+      // selbst editierten save() (>=3s seit der letzten eigenen Aktion, exakt
+      // dieselbe Schwelle wie beim Marker-Guard oben) research.notes/
+      // researchFolders zusaetzlich gegen den GERADE AUF DER PLATTE stehenden
+      // Inhalt mergen (mergeResearchNotes/-Folders, dieselben Merge-Funktionen
+      // wie in applySnap() bei adoptExternalState()/cloudPull()).
+      if(Date.now()-_lastUserEditTs>=3000){
+        try{
+          const onDisk=JSON.parse(localStorage.getItem(SK)||'null');
+          if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.notes)){
+            research.notes=mergeResearchNotes(onDisk.research.notes,research.notes);
+          }
+          if(onDisk&&Array.isArray(onDisk.researchFolders)){
+            researchFolders=mergeResearchFolders(onDisk.researchFolders,researchFolders);
+          }
+          if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.trash)){
+            research.trash=mergeResearchTrash(onDisk.research.trash,research.trash);
+          }
+        }catch(e){}
+      }
+      const s=snap();
+      // fxpro_updated nur bumpen, wenn sich der Inhalt WIRKLICH geändert hat -
+      // save() läuft auch aus reinen Sicherheitsnetzen heraus (15s-Intervall,
+      // beforeunload/pagehide/visibilitychange), die inhaltlich meist nichts
+      // Neues zu speichern haben. Ohne diesen Vergleich würde fxpro_updated bei
+      // JEDEM Reload künstlich bumpen (der unload-Flush feuert praktisch immer
+      // kurz vor dem Neuladen) und beim nächsten Start fälschlich wie eine noch
+      // nicht hochgeladene lokale Änderung aussehen - das würde den Boot-Check
+      // unten (Push-vor-Pull bei pendenter Änderung) unbrauchbar machen, weil er
+      // dann so gut wie immer anschlägt, auch ganz ohne echten Edit.
+      changed=s!==localStorage.getItem(SK);
+      localStorage.setItem(SK,s);
+      if(changed)localStorage.setItem('fxpro_updated',new Date().toISOString());
+      _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+      const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
+    }catch(e){}
+    recordScoreHist();
+    if(changed)cloudAutoSync();
+  };
+  // Nutzer-Bugreport 2026-09-01 (ZWEITES Auftreten trotz des Merge-Fixes
+  // oben): unter kuenstlich hoher Hintergrund-Save-Frequenz per Playwright
+  // weiter reproduzierbar, weil ein reiner "lies Disk, merge, schreib"-Ablauf
+  // OHNE echte Sperre eine kleine Luecke laesst - der eigene Schreibvorgang
+  // liest sich selbst immer korrekt zurueck, das sagt aber nichts darueber,
+  // ob ein ANDERER Tab GERADE ZEITGLEICH ebenfalls schreibt. navigator.locks
+  // (seit 2022 breit unterstuetzt: Chrome/Edge 69+, Firefox 96+, Safari
+  // 15.4+) serialisiert den kompletten Lese-Merge-Schreib-Zyklus ECHT ueber
+  // alle Tabs desselben Ursprungs hinweg und schliesst die Race damit
+  // strukturell, nicht nur statistisch.
+  // WICHTIG (per Playwright nachgewiesen): die Sperre schuetzt nur, wenn
+  // ALLE Schreiber denselben Lock-Namen benutzen. Ein frisch selbst
+  // editierter Save (der urspruenglich bewusst synchron/ungesperrt blieb,
+  // um keine Verzoegerung bei einer aktiven Nutzeraktion zu riskieren)
+  // konnte dadurch weiterhin MITTEN in den gesperrten Lese-Merge-Schreib-
+  // Zyklus eines anderen (automatischen) Tabs hineinschreiben - die Sperre
+  // schliesst eine Race nur dann wirklich, wenn beide Seiten sie benutzen.
+  // navigator.locks loest bei einer unbeanspruchten Sperre praktisch sofort
+  // auf (kein spuerbarer Unterschied fuer eine aktive Nutzeraktion) - JEDER
+  // save()-Aufruf geht deshalb jetzt durch dieselbe Sperre, nicht nur
+  // automatische. Fallback (kein navigator.locks, z.B. sehr alte Browser
+  // oder unsicherer Kontext): unveraenderter direkter Aufruf.
+  if(window.navigator&&navigator.locks&&navigator.locks.request){
+    try{
+      navigator.locks.request('fxpro_sync_lock',{mode:'exclusive'},async()=>{doSave();}).catch(()=>{});
+    }catch(e){doSave();}
+  }else{
+    doSave();
+  }
 }
 // Debounced save while typing, so a reload mid-edit doesn't lose anything.
 // Bugreport 2026-07-20 (Nutzer: Quick-Note-Text "entfernt sich manchmal
@@ -4738,7 +4899,33 @@ async function cloudPull(manual,forceOverwrite){
         if(Array.isArray(cd.cmpCols)){cmpCols=cd.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}
       }
       processCalEvts();
-      localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
+      // Dieselbe Absicherung wie in save() (siehe dort, Nutzer-Bugreport
+      // 2026-09-01): zwischen dem applySnap()-Merge weiter oben und diesem
+      // finalen Schreibvorgang liegt noch die Verarbeitung der Praeferenz-
+      // Felder oben - genug Zeit fuer einen weiteren, zeitgleich schreibenden
+      // Tab, um dazwischenzufunken. Direkt vor dem Schreiben nochmal gegen
+      // die Platte mergen, und den Schreibvorgang selbst per navigator.locks
+      // ueber alle Tabs hinweg serialisieren (Fallback: direkt, wie bisher).
+      const doCloudWrite=()=>{
+        try{
+          const onDisk=JSON.parse(localStorage.getItem(SK)||'null');
+          if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.notes)){
+            research.notes=mergeResearchNotes(onDisk.research.notes,research.notes);
+          }
+          if(onDisk&&Array.isArray(onDisk.researchFolders)){
+            researchFolders=mergeResearchFolders(onDisk.researchFolders,researchFolders);
+          }
+          if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.trash)){
+            research.trash=mergeResearchTrash(onDisk.research.trash,research.trash);
+          }
+        }catch(e){}
+        localStorage.setItem(SK,snap());localStorage.setItem('fxpro_updated',cloudUpdated);
+      };
+      if(window.navigator&&navigator.locks&&navigator.locks.request){
+        try{await navigator.locks.request('fxpro_sync_lock',{mode:'exclusive'},async()=>{doCloudWrite();});}catch(e){doCloudWrite();}
+      }else{
+        doCloudWrite();
+      }
       localStorage.setItem('fxpro_cloud_seen',cloudUpdated);
       _lsUpdatedSeen=cloudUpdated;
       if(prefPending){
@@ -4791,7 +4978,7 @@ document.addEventListener('click',ev=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
-    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mRateWatch','mIndLink','mBackup'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mRateWatch','mIndLink','mBackup','mTrash'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
   }
 });
 
@@ -9638,7 +9825,13 @@ function delResNote(){
   if(!_resEditId)return;
   if(!confirm('Delete this note?'))return;
   pushU();
-  research.notes=resNotes().filter(n=>n.id!==_resEditId);
+  // Papierkorb statt Sofort-Loeschung (Nutzer-Wunsch 2026-09-01, nach
+  // wiederholtem Notiz-Datenverlust): 30 Tage lang ueber Einstellungen ->
+  // "Papierkorb" einzeln wiederherstellbar, siehe trashResNote()/
+  // TRASH_TTL_MS/pruneResearchTrash().
+  const n=resNotes().find(x=>x.id===_resEditId);
+  if(n)trashResNote(n);
+  research.notes=resNotes().filter(x=>x.id!==_resEditId);
   save();closeM('mResNote');rerenderNotesHost();
 }
 
@@ -16654,7 +16847,9 @@ Object.assign(window,{
   migrateResearchToAssetFolders,LEGACY_SEED_EVTS,mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,
   markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,
   ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,BACKUP_KEY,saveLocalBackup,openBackupM,
-  restoreLocalBackup,DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,migrateDash,loadState,adoptExternalState,
+  restoreLocalBackup,TRASH_TTL_MS,trashResNote,pruneResearchTrash,mergeResearchTrash,trashEntryLabel,openTrashM,
+  restoreTrashItem,permaDeleteTrashItem,
+  DASH_V,DASH_DEFAULTS,DASH_RANK,restoreAlltimeDashboard,migrateDash,loadState,adoptExternalState,
   save,saveSoon,exportData,importData,CLOUD_CFG_KEY,getCloudCfg,cloudHeaders,openCloudM,setCloudStatus,saveCloudCfg,
   updProfile,openSearchM,searchEntries,renderSearch,searchGo,searchKey,KEY_TABS,keyNavAktiv,openKeyHelp,cloudPush,
   cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,getSbIds,moveSbSym,moveSbCat,scrollIntoNav,

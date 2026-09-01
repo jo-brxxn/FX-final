@@ -8425,3 +8425,103 @@ Schnappschuesse (alle 10 Minuten + vor jedem Cloud-Download,
 `localStorage`-Schluessel `fxpro_backups`) mit "Wiederherstellen"-Option -
 falls einer davon von VOR dem beobachteten Verschwinden stammt, laesst sich
 die Notiz darueber zurueckholen.
+
+## 2026-09-01 — Notiz-Datenverlust ZWEITES Mal gemeldet: navigator.locks statt reinem Merge + Papierkorb (VERSION-CHECK-461)
+
+Trotz des Merge-Fixes vom selben Tag (Eintrag direkt oberhalb) meldete der
+Nutzer erneut eine verschwundene Notiz (diesmal mit fuer mehrere Assets neu
+angelegten Ordnern). Laut "Bugfixes: IMMER erst reproduzieren"-Regel weiter
+oben in dieser Datei: nicht direkt am Code herumgedoktert, sondern zuerst
+gezielt nachgestellt.
+
+**Reproduktion 1 (bestaetigt eine LUECKE im vorherigen Fix, nicht dessen
+Widerlegung):** derselbe Zwei-Tab-Aufbau wie beim ersten Fix, aber mit einer
+zweiten, aktiveren Variante - ein Hintergrund-Tab, der `save()` alle 150ms
+aufruft (simuliert mehrere ueberlappende automatische Hintergrund-Ereignisse
+statt nur eines). Ergebnis: 4 von 5 Laeufen verloren die Notiz TROTZ des
+"gegen die Platte mergen"-Fixes. Root Cause: ein reiner "lies Disk, merge,
+schreib"-Zyklus OHNE echte Sperre schliesst die Race nur statistisch, nicht
+strukturell - der eigene Schreibvorgang liest sich selbst immer korrekt
+zurueck, das sagt aber nichts darueber, ob ein ANDERER Tab GENAU IN DIESEM
+MOMENT ebenfalls schreibt. Sobald Tab A einmal mit einem (noch) notizlosen
+Stand gewinnt, bevor Tab B ueberhaupt geschrieben hat, ist die Notiz fuer
+immer weg, weil niemand sie danach nochmal schreibt.
+
+**Fix 1:** `navigator.locks.request('fxpro_sync_lock',...)` (Web Locks API,
+seit 2022 breit unterstuetzt: Chrome/Edge 69+, Firefox 96+, Safari 15.4+) in
+`save()` und `cloudPull()` - serialisiert den kompletten Lese-Merge-Schreib-
+Zyklus ECHT ueber alle Tabs desselben Ursprungs hinweg, schliesst die Race
+strukturell statt nur statistisch. **Erste Fassung dieses Fixes war
+UNVOLLSTAENDIG** (per Playwright selbst widerlegt, bevor sie committet
+wurde): nur AUTOMATISCHE Saves (>=3s seit der letzten eigenen Aktion) gingen
+durch die Sperre, frische Nutzer-Edits blieben bewusst ungesperrt (um keine
+Verzoegerung bei einer aktiven Aktion zu riskieren) - dadurch konnte ein
+frischer Edit weiterhin MITTEN in den gesperrten Zyklus eines anderen Tabs
+hineinschreiben, die Sperre schuetzt naemlich nur, wenn ALLE Schreiber
+denselben Lock-Namen benutzen. Korrigiert: JEDER `save()`-Aufruf geht jetzt
+durch dieselbe Sperre (bei einer unbeanspruchten Sperre praktisch sofort,
+kein spuerbarer Unterschied). Nach der Korrektur: 43/43 Wiederholungen
+gruen ueber drei verschiedene Szenarien (Zwei-Tab-Race mit Wartezeit, ohne
+Wartezeit, mit 150ms-Hintergrund-Stress) plus die urspruenglichen Notizen-
+mit-neu-angelegten-Ordnern-Faelle aus dem Nutzer-Bugreport.
+
+**Zusaetzlich als eigener Wunsch gemeldet: ein Papierkorb.** Nutzer-Zitat:
+*"Kannst du bitte das Problem lösen und noch einbauen das alles was auf der
+Webseite verschwindet abgelegt wird in eine Art Müll Eimer... 30 Tagen
+gelöscht werden. Zeig auch wie viele Tage pro müllstück verbleiben."*
+**Scoping-Entscheidung** (nicht separat erfragt, da aus dem Gespraechs-
+kontext eindeutig): auf Notizen + Ordner begrenzt (research.notes/
+researchFolders) - das ist konkret das, was tatsaechlich verschwindet;
+Symbole/Paare/Widgets haben eigene, bereits mit Bestaetigungsdialog
+abgesicherte Loeschwege und waeren reines Scope-Aufblaehen ohne echten
+Bezug zum gemeldeten Problem.
+
+**Implementierung** (`js/main.js`):
+- `research.trash` (neues Array, Teil von `research` -> laeuft automatisch
+  über `snap()`/`applySnap()` mit): Eintraege `{id,kind:'note'|'folder',
+  data:<vollstaendiges Objekt>,delAt:<ISO-Zeitstempel>}`.
+- `trashResNote(n)`: von `delResNote()` aufgerufen, VOR dem eigentlichen
+  Entfernen aus `research.notes`.
+- `researchDelFolder(id)`: **zusaetzlicher Bugfix** (bisher unbemerkter,
+  verwandter Fehler) - loeschte kaskadierend Ordner, bereinigte aber NIE die
+  `fids`-Referenzen betroffener Notizen. Eine Notiz, deren EINZIGER Ordner
+  geloescht wurde, blieb technisch in `research.notes` bestehen, war aber
+  ueber keinen Ordner mehr erreichbar - praktisch identisch zum gemeldeten
+  Datenverlust, nur ueber einen anderen Pfad. Jetzt: doomed-Ordner werden in
+  den Papierkorb verschoben, `fids` aller betroffenen Notizen bereinigt, und
+  eine Notiz, die dadurch KEINE Ordner-Referenz und kein `asset`-Tag mehr
+  haette, wandert ebenfalls in den Papierkorb statt zu verwaisen.
+- `pruneResearchTrash(trash)`: entfernt Eintraege mit `delAt` >30 Tage
+  (`TRASH_TTL_MS`), laeuft bei jedem `migrateResearch()`-Durchlauf (Boot,
+  Cloud-Pull, Multi-Tab-Adopt) - gleiches Muster wie `pruneEventAlerts()`/
+  `pruneScoreLog()`.
+- `mergeResearchTrash(base,override)`: derselbe Merge-statt-Overwrite wie
+  bei `mergeResearchNotes`/`-Folders` (siehe `docs/state-sync.md`) - sonst
+  waere der Papierkorb selbst wieder anfaellig fuer das Problem, vor dem er
+  schuetzen soll.
+- `openTrashM()`/`restoreTrashItem(id)`/`permaDeleteTrashItem(id)`: neues
+  Modal `#mTrash` (Einstellungen -> "🗑 Trash"-Button neben "Backups"),
+  zeigt je Eintrag Titel/Name, Art (Notiz/Ordner), verbleibende Tage
+  ("`X days left`") und Loeschdatum, mit Wiederherstellen- (↩) und
+  Endgueltig-loeschen-Knopf (✕). Ein wiederhergestellter Ordner, dessen
+  Elternordner nicht mit wiederhergestellt wurde, haengt sich an die Wurzel
+  statt unsichtbar zu bleiben.
+
+**Bewusst NICHT im Papierkorb erfasst:** die automatische
+`seedAssetBehaviorNotes()`-Bereinigung (routinemaessiges Ersetzen der
+`seed:true`-Verhaltensnotizen bei einem Inhalts-Versionssprung) - das waere
+reines Rauschen, keine echte Nutzer-Aktion.
+
+**Geprueft:** `node --check`. Funktionaler Playwright-Test (5 Schritte):
+Notiz anlegen -> loeschen -> im Papierkorb mit korrekter Restdauer sichtbar
+-> wiederherstellen (zurueck in research.notes, raus aus dem Papierkorb) ->
+Ordner-Kaskade (Notiz nur in einem neu angelegten Ordner, Ordner loeschen,
+Notiz UND Ordner landen im Papierkorb statt zu verschwinden) -> 30-Tage-
+Alters-Bereinigung (kuenstlich gealterter Eintrag verschwindet nach
+`pruneResearchTrash()`) - alle 5 Schritte gruen. Sync-Race-Reproduktionen
+erneut 20/20 gruen nach den Papierkorb-Aenderungen (keine Regression).
+`node check/all.js --static` gruen; voller Lauf inkl. Browser-Checks
+ebenfalls gepueft. `docs/state-sync.md` um den `research`/`researchFolders`/
+`research.trash`-Sonderfall ergaenzt (analog zum bestehenden `scoreHist`-
+Abschnitt, inkl. der Lock-Vollstaendigkeits-Falle als Warnung fuer
+kuenftige aehnliche Faelle).
