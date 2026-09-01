@@ -8611,3 +8611,110 @@ null JS-Fehler.
 `Random Picker` (ausdrücklich als Platzhalter bestellt); Perfect Rezept hat
 keine PIN-Sperre (die Seite liegt ohnehin hinter Cloudflare Access, und
 Rezepte sind keine schützenswerten Daten).
+
+---
+
+## 2026-09-01 (2) — ZWEI REPRODUZIERTE FEHLER, NACHFRAGE BEI UNGESPEICHERTEN EINGABEN, NEUE PALETTEN (VERSION-CHECK-463 / REZEPT-CHECK-2)
+
+Nutzer-Meldung: *„Das speichern klappt nicht das Bild hinzufügen geht nicht …
+mach das alle Buttons usw auch wirklich eine Funktion haben und auch
+funktionieren aktuell klappt fast nix."* Beides zuerst reproduziert, dann
+gefixt (CLAUDE.md-Regel), nicht anhand einer Vermutung repariert.
+
+### Fehler 1 — „das Bild hinzufügen geht nicht": Datei-Dialog hing nicht im DOM
+
+`pickFile()` in `js/rezept/app.js` hat einen frei erzeugten, **nicht
+eingehängten** `<input type="file">` geklickt. Chromium öffnet den Dialog so
+trotzdem — **iOS/macOS Safari nicht**, und genau darauf läuft die App des
+Nutzers (iPad/iPhone). Der Klick verpufft dabei ohne jede Fehlermeldung.
+Nachweis im Repro-Lauf: `document.body.contains(inp) === false`.
+**Fix:** einhängen (unsichtbar, `position:fixed;left:-9999px`), klicken,
+danach wieder entfernen; Aufräumen auch, wenn der Dialog abgebrochen wird.
+**Folgefehler, der die zweite Meldung erklärt:** ohne Bild verweigert
+`rezSaveForm()` das Speichern — für den Nutzer sah das aus wie „Speichern
+klappt nicht", war aber nur die Pflicht-Prüfung nach dem ausgefallenen
+Bild-Dialog.
+
+### Fehler 2 — „das Speichern klappt nicht": stille Promise-Rejection
+
+Der Speicherpfad hatte **kein einziges `try/catch`**. Per Playwright mit
+blockierter IndexedDB-Transaktion (`QuotaExceededError`, wie im Privatmodus
+oder bei vollem Speicher) reproduziert: das Hinzufügen-Fenster blieb offen,
+es erschien KEINE Meldung, gespeichert wurde nichts — die Ausnahme landete
+als unbehandelte Promise-Rejection nur in der Konsole.
+**Fix, zwei Ebenen:** (1) jede IndexedDB-Operation fängt jetzt selbst ab und
+fällt auf eine Speicher-Map zurück (`state.dbBroken`, Kopfzeile zeigt
+„No local storage — cloud sync only") — der Cloud-Sync speichert weiter, die
+Sitzung läuft; (2) `rezSaveForm()` fängt ab, zeigt die echte Fehlermeldung im
+Formular und gibt `true`/`false` zurück, damit „Save & close" das Fenster
+nicht schließt, wenn gar nicht gespeichert wurde.
+**Merksatz:** eine unbehandelte Promise-Rejection sieht für den Nutzer exakt
+aus wie „die App macht nichts". Kein Schreibpfad ohne sichtbare Meldung.
+
+### Ungespeicherte Eingaben — in BEIDEN Apps
+
+Nutzer: *„wenn man eine Notiz oder ein Rezept hinzufügt und man neben das
+Fenster schließt, ist das was man eingegeben hat weg."* Ursache im FX Analyst
+Pro: der generische Overlay-Klick-Handler (`js/main.js`, `_ovPressId`)
+schließt JEDES `.ov`-Fenster sofort, ohne zu fragen. Statt einer Sonderlösung
+je Fenster gibt es jetzt **`MODAL_GUARDS`** — eine Registrierstelle
+`{dirty, save}` pro Fenster; `closeMGuarded()` zeigt bei ungespeicherten
+Änderungen das zentrierte `#mUnsaved` mit drei Wegen: *Discard & close*
+(rot = bearish), *Save & close* (grau), *Keep editing* (blau = bullish), also
+in den Bias-Farben dieser App wie vom Nutzer verlangt. Registriert ist
+zunächst der Notiz-Editor (`resNoteDirty`/`saveResNote`); **ein neues
+Eingabe-Fenster gehört dort eingetragen**, nicht mit eigenem Code versehen.
+In der Rezept-App macht `rezRequestClose()` dasselbe für Klick-daneben,
+Escape und *Cancel*.
+Verifiziert: leeres Formular schließt ohne Nachfrage; getipptes fragt nach;
+*Keep editing* behält den Text; *Save & close* speichert wirklich;
+*Discard & close* verwirft; der *Cancel*-Button geht denselben Weg.
+
+**Nebenbefund, bewusst NICHT angefasst:** ein Klick neben ein frisch
+geöffnetes, noch leeres Notiz-Fenster schließt es manchmal nicht — ein in der
+Capture-Phase registrierter „Klick-außerhalb"-Handler eines Pickers
+(`biasPickerOutside` & Verwandte) schluckt den ersten Klick. Verhalten ist
+identisch auf `origin/main`, also nicht neu, und es scheitert SICHER (das
+Fenster bleibt offen, nichts geht verloren). Ein Eingriff in die
+Picker-Handler hätte echtes Regressionsrisiko für einen Fehler, der Daten
+schützt statt sie zu kosten.
+
+### Paletten: acht braun raus, neun weiß/grau rein
+
+Nutzer-Wunsch: *„entfern die aktuellen Paletten außer papercookbook"* und
+*„probier mal was weißes mit Grautönen … mach ruhig so 8 unterschiedliche"*.
+`clay`/`mocha`/`sand` sind weg; neu sind `linear`, `notion`, `vercel`,
+`github`, `stripe`, `ios`, `swiss`, `fog`, `graphite` — jede an einem real
+existierenden Design-System orientiert statt frei erfunden. Standard ist
+jetzt `linear`.
+**Migration nicht vergessen:** ein Gerät mit `clay` im Speicher hätte GAR
+KEIN `[data-rez-theme]`-Regelwerk getroffen und ohne eine einzige
+Farbvariable dagestanden. Die Migrationsliste steht in der Früh-Weiche im
+`<head>` und als `THEME_IDS` in `app.js`; `check/rezept.js` prüft den Fall
+mit einem echten zweiten Seitenaufruf.
+**Kontrast nachgerechnet, nicht geschätzt:** die erste Fassung hatte 25
+Textfarben unter AA (bis hinunter auf 2,86:1) — alle 14 betroffenen Werte
+wurden nachgezogen. Drei Stellen hingen außerdem noch an den alten braunen
+Annahmen und wären bei hellen Paletten unsichtbar geworden: der Toast
+(`var(--chrome-bg)` mit hellem Text → weiß auf weiß, jetzt fest dunkel), der
+Profil-Kreis (`--avatar-bg`/`--avatar-fg`) und der LIVE-Punkt (`--live`).
+
+### Neuer Wächter `check/rezept.js`
+
+Fünf Stufen, weil beide Fehler oben von einer Prüfung hätten gefunden werden
+können: **A** jeder Inline-Handler löst sich zu einer echten Funktion auf
+(bei ES-Modulen ist eine vergessene Zeile in der `window`-Brücke der
+häufigste Grund für „der Button tut nichts"), **B** jeder sichtbare Button
+verändert wirklich den DOM, **C** der komplette Ablauf (anlegen mit echtem
+Bild-Upload, bearbeiten, favorisieren, alle Filter, Papierkorb,
+Wiederherstellen, alle Themes durchschalten, Theme-Migration), **D** die
+Nachfrage bei ungespeicherten Eingaben, **E** Kontrast jeder Palette gegen
+jede ihrer Flächen.
+Der erste Lauf meldete 11 Punkte, davon **9 Messfehler des Wächters selbst** —
+`event.stopPropagation()` ist keine globale Funktion; ein Schalter, der schon
+in seinem Zielzustand steht, darf nichts ändern; und vor allem: Stufe B setzt
+beim Durchklicken Filter, sodass der nächste Klick den Stern einer
+AUSGEBLENDETEN Karte trifft und das sichtbare Raster gleich bleibt, obwohl
+der Schalter korrekt arbeitet. Merksatz für künftige „klick alles"-Wächter:
+**vor jedem Klick den Zustand zurücksetzen und die Elementliste neu abfragen**,
+sonst misst man die Nachwirkungen des vorherigen Klicks.

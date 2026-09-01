@@ -2767,6 +2767,24 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .finp:focus{border-color:var(--bd2);color:var(--t0)}.finp::placeholder{color:var(--t3)}
 .fsel{width:100%;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:6px 8px;color:var(--t1);font-size:13px;outline:none;font-family:var(--ff-text);cursor:pointer}
 /* ── MODALS ── */
+/* ── NACHFRAGE BEI UNGESPEICHERTEN EINGABEN (Nutzer-Bugreport 2026-09-01) ──
+   "wenn man eine Notiz hinzufuegt und man neben das Fenster schliesst, ist
+   das was man eingegeben hat weg". Der generische Overlay-Klick-Handler
+   schloss jedes Fenster kommentarlos. Jetzt fragt ein zentriertes Fenster
+   mit drei eindeutigen Wegen nach - Farben aus der BIAS-Palette dieser App
+   (Nutzer-Vorgabe): rot = bearish/verwerfen, grau = neutral/speichern,
+   blau = bullish/weiterbearbeiten. Registrierung: MODAL_GUARDS in
+   js/main.js. */
+#mUnsaved{z-index:100060}
+#mUnsaved .modal{max-width:min(430px,94vw);text-align:center;padding:24px 22px}
+.uc-txt{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:18px}
+.uc-btns{display:flex;flex-direction:column;gap:8px}
+.uc-btn{width:100%;padding:11px 14px;border-radius:var(--rs);font-size:13px;font-weight:700;
+  cursor:pointer;border:1px solid transparent;font-family:var(--ff-text);transition:filter .14s,background .14s}
+@media (hover:hover){.uc-btn:hover{filter:brightness(1.08)}}
+.uc-discard{background:var(--red);border-color:var(--red);color:#fff}
+.uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
+.uc-keep{background:var(--blue);border-color:var(--blue);color:#fff}
 .ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
 .modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
@@ -3872,11 +3890,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-462 - App-Auswahl beim ersten Oeffnen (FX Analyst Pro / Perfect Rezept), gemerkt pro Geraet, plus Einstellungen -> Apps zum Wechseln. Perfect Rezept ist eine eigenstaendige zweite App (rezept.html + js/rezept/*) und teilt sich mit dem FX Analyst Pro nur Repo, Service Worker und Supabase-Zugangsdaten."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-463 - Ungespeicherte Eingaben gehen nicht mehr verloren: der generische Overlay-Klick-Handler schloss jedes Fenster kommentarlos, jetzt fragt bei einem in MODAL_GUARDS registrierten Fenster (zunaechst dem Notiz-Editor) ein zentriertes Fenster nach - Discard (rot/bearish), Save (grau) und Keep editing (blau/bullish). Ausserdem: Auswahl zwischen FX Analyst Pro und Perfect Rezept beim ersten Oeffnen, Wechsel unter Einstellungen -> Apps."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-462</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-463</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4081,6 +4099,22 @@ function introLogin(){
   <div id="resWrap"></div>
 </div>
 <!-- MODAL: RESEARCH NOTE -->
+<!-- Ungespeicherte Eingaben: zentrierte Nachfrage mit drei Wegen. Wird von
+     closeMGuarded() geoeffnet, sobald ein in MODAL_GUARDS registriertes
+     Fenster mit ungespeicherten Aenderungen geschlossen werden soll. Der
+     Hintergrund-Klick liegt bewusst auf "Keep editing" - der harmloseste
+     der drei Wege. -->
+<div class="ov" id="mUnsaved" style="display:none" onclick="if(event.target===this)unsavedKeepEditing()">
+  <div class="modal">
+    <h3>Unsaved changes</h3>
+    <p class="uc-txt">This note has not been saved yet. What do you want to do?</p>
+    <div class="uc-btns">
+      <button class="uc-btn uc-discard" onclick="unsavedDiscard()">Discard &amp; close</button>
+      <button class="uc-btn uc-save" onclick="unsavedSave()">Save &amp; close</button>
+      <button class="uc-btn uc-keep" onclick="unsavedKeepEditing()">Keep editing</button>
+    </div>
+  </div>
+</div>
 <div class="ov" id="mResNote" style="display:none">
   <div class="modal" style="max-width:640px">
     <h3>📓 Research note</h3>
@@ -4116,7 +4150,7 @@ function introLogin(){
     </div>
     <div style="margin-bottom:8px"><div class="res-flbl">Related calendar event</div><select class="finp" id="resNEvt"></select></div>
     <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);cursor:pointer"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
-    <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeM('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
+    <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeMGuarded('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
   </div>
 </div>
 <!-- PAGE: DASHBOARD -->

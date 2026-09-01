@@ -23,11 +23,23 @@ const NAV=[
 // lang, deshalb oben drei grobe Stufen.
 const DURATIONS=(()=>{const a=[];for(let m=5;m<=180;m+=5)a.push(m);a.push(240,300,360);return a;})();
 const THEMES=[
-  {id:'clay',name:'Warm Clay',desc:'Terracotta accent, espresso chrome',sw:['#3B2A21','#F3EBE1','#FFFDFA','#A85630']},
-  {id:'mocha',name:'Mocha & Cream',desc:'Soft, muted, low saturation',sw:['#4A3A30','#F0E8DE','#FFFFFF','#8C5F3C']},
-  {id:'paper',name:'Paper Cookbook',desc:'Editorial, serif headlines',sw:['#2E241E','#EFE7DA','#FBF7F0','#8A5626']},
-  {id:'sand',name:'Light Brown',desc:'Light chrome, airy and pale',sw:['#E3D5C3','#FAF5EF','#FFFFFF','#8F5B32']},
+  {id:'linear',   name:'Linear Light',   desc:'Cool near-white, indigo accent',   sw:['#F1F2F5','#F7F8F9','#FFFFFF','#4B55B8']},
+  {id:'notion',   name:'Notion Grey',    desc:'Warm off-white, very quiet',       sw:['#F7F7F5','#FAFAF9','#FFFFFF','#286FB4']},
+  {id:'vercel',   name:'Vercel Mono',    desc:'Black header, pure black & white', sw:['#000000','#FAFAFA','#FFFFFF','#171717']},
+  {id:'github',   name:'GitHub Light',   desc:'Dark header, bright content',      sw:['#24292F','#F6F8FA','#FFFFFF','#0969DA']},
+  {id:'stripe',   name:'Stripe Slate',   desc:'Pale blue-grey, violet accent',    sw:['#EEF3F9','#F6F9FC','#FFFFFF','#5145CD']},
+  {id:'ios',      name:'iOS Light',      desc:'System grey, rounded, blue',       sw:['#F9F9FB','#F2F2F7','#FFFFFF','#0A62C9']},
+  {id:'swiss',    name:'Swiss Editorial',desc:'Pure white, hairlines, no colour', sw:['#FFFFFF','#FFFFFF','#F0F0F0','#000000']},
+  {id:'fog',      name:'Nordic Fog',     desc:'Cool blue-grey, dark header',      sw:['#2B3440','#EDF1F5','#FFFFFF','#2C6091']},
+  {id:'graphite', name:'Graphite',       desc:'Neutral grey, graphite header',    sw:['#33383D','#F4F5F6','#FFFFFF','#5A6570']},
+  {id:'paper',    name:'Paper Cookbook', desc:'Editorial brown, serif headlines', sw:['#2E241E','#EFE7DA','#FBF7F0','#8A5626']},
 ];
+// ⚠ Wird ein Theme ENTFERNT, muss `applyStoredTheme()`/die Frueh-Weiche in
+// rezept.html den alten Wert migrieren - sonst trifft ein Geraet mit dem
+// alten Namen im Speicher GAR KEIN Regelwerk und steht ohne eine einzige
+// Farbvariable da. Genau deshalb existiert THEME_IDS.
+const THEME_IDS=THEMES.map(t=>t.id);
+const THEME_DEFAULT='linear';
 const ICONS={
   overview:'<path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
   recipes:'<path d="M4 3h13a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/><path d="M12 8h4"/><path d="M12 12h4"/>',
@@ -66,6 +78,7 @@ export function toast(msg){
 let curPage='overview';
 const filters={q:'',maxMin:0,tag:'',favOnly:false};
 let form=null;          // Entwurf im Hinzufuegen/Bearbeiten-Fenster
+let formBase=null;      // JSON-Schnappschuss beim Oeffnen - Grundlage fuer "ungespeichert?"
 let detailId=null;
 
 // ── Navigation ───────────────────────────────────────────────────────────
@@ -215,15 +228,62 @@ export async function rezToggleFav(id){
 // ── MODAL-INFRASTRUKTUR ──────────────────────────────────────────────────
 function openModal(html,cls){
   const host=$('rezModals');
-  host.innerHTML=`<div class="ov" id="rezOv" onclick="if(event.target===this)rezCloseModal()"><div class="modal ${cls||''}">${html}</div></div>`;
+  host.innerHTML=`<div class="ov" id="rezOv" onclick="if(event.target===this)rezRequestClose()"><div class="modal ${cls||''}">${html}</div></div>`;
+  // ⚠ Erst abmelden, dann anmelden: openModal() wird beim Neuzeichnen des
+  // Formulars mehrfach aufgerufen, sonst haengen am Ende N Escape-Handler
+  // am document und ein Tastendruck loest N Schliess-Versuche aus.
+  document.removeEventListener('keydown',escClose);
   document.addEventListener('keydown',escClose);
 }
-function escClose(e){if(e.key==='Escape')rezCloseModal();}
+function escClose(e){if(e.key==='Escape')rezRequestClose();}
+// Der EINE Weg nach draussen (Klick daneben, Escape, Cancel-Button). Steht
+// ungespeicherte Arbeit im Formular, fragt er nach, statt sie wegzuwerfen.
+export function rezRequestClose(){
+  if(form&&formDirty()){openUnsavedDialog();return;}
+  rezCloseModal();
+}
 export function rezCloseModal(){
   closeRowMenu();
+  closeUnsavedDialog();
   $('rezModals').innerHTML='';
-  detailId=null;form=null;
+  detailId=null;form=null;formBase=null;
   document.removeEventListener('keydown',escClose);
+}
+
+// ══ NACHFRAGE BEI UNGESPEICHERTEN EINGABEN ═══════════════════════════════
+// Nutzer-Bugreport 2026-09-01: "wenn man eine Notiz oder ein Rezept
+// hinzufuegt und man neben das Fenster schliesst, ist das was man eingegeben
+// hat weg". Statt eines Sicherheits-Overlays, das gar nicht mehr zugehen
+// will, ein zentriertes Fenster mit drei eindeutigen Wegen. Dieselbe Loesung
+// steckt im FX Analyst Pro (#mUnsaved) - beide Apps verhalten sich hier
+// gleich, obwohl der Code getrennt ist.
+function formDirty(){
+  if(!form||!formBase)return false;
+  return JSON.stringify(form)!==formBase;
+}
+function openUnsavedDialog(){
+  const host=$('rezConfirm');
+  if(!host)return;
+  host.innerHTML=
+    `<div class="ov uc-ov" onclick="if(event.target===this)rezKeepEditing()"><div class="modal uc-box">`
+    +`<h3>Unsaved changes</h3>`
+    +`<p class="uc-txt">This recipe has not been saved yet. What do you want to do?</p>`
+    +`<div class="uc-btns">`
+      +`<button class="uc-btn uc-discard" onclick="rezDiscardClose()">Discard &amp; close</button>`
+      +`<button class="uc-btn uc-save" onclick="rezSaveClose()">Save &amp; close</button>`
+      +`<button class="uc-btn uc-keep" onclick="rezKeepEditing()">Keep editing</button>`
+    +`</div></div></div>`;
+}
+function closeUnsavedDialog(){const h=$('rezConfirm');if(h)h.innerHTML='';}
+export function rezKeepEditing(){closeUnsavedDialog();}
+export function rezDiscardClose(){closeUnsavedDialog();form=null;formBase=null;rezCloseModal();toast('Changes discarded');}
+export async function rezSaveClose(){
+  closeUnsavedDialog();
+  const ok=await rezSaveForm();
+  // Schlaegt das Speichern fehl (z.B. fehlender Titel oder fehlendes Bild),
+  // bleibt das Formular offen - sonst waere genau das passiert, was der
+  // Nutzer verhindern wollte: Eingaben weg, ohne dass etwas gespeichert ist.
+  if(!ok)toast('Could not save yet - see the message in the form');
 }
 
 // ── DETAILFENSTER ────────────────────────────────────────────────────────
@@ -312,6 +372,7 @@ export async function rezOpenForm(id){
   }else{
     form={id:S.uid(),title:'',min:30,tags:[],fav:false,cover:'',thumb:'',ingredients:[''],blocks:[{t:'text',v:''}],created:'',up:''};
   }
+  formBase=JSON.stringify(form);
   renderForm();
 }
 function renderForm(){
@@ -340,7 +401,7 @@ function renderForm(){
     +`<div id="rfBlocks">${(form.blocks||[]).map(blockLine).join('')}</div>`
     +`<div class="rf-add"><button class="btn" onclick="rezAddBlock('text')">${icn('plus',13)} Add text</button>`
       +`<button class="btn" onclick="rezAddBlock('img')">${icn('image',13)} Add photo</button></div>`
-    +`<div class="m-btns" style="margin-top:18px"><button class="btn" onclick="rezCloseModal()">Cancel</button>`
+    +`<div class="m-btns" style="margin-top:18px"><button class="btn" onclick="rezRequestClose()">Cancel</button>`
       +`<button class="btn btn-primary" onclick="rezSaveForm()">${isNew?'Add recipe':'Save changes'}</button></div>`
   ,'modal-wide');
 }
@@ -390,13 +451,33 @@ export function rezMoveBlock(i,d){
 }
 function renderPart(id,html){const el=$(id);if(el)el.innerHTML=html;}
 
-// Dateiauswahl. Ein einzelner, wiederverwendeter <input type=file> - jedes
-// Mal einen neuen zu erzeugen laesst sie sich im DOM stapeln.
+// ⚠ DER <input type=file> MUSS IM DOKUMENT HAENGEN.
+// Nutzer-Bugreport 2026-09-01 ("das Bild hinzufuegen geht nicht"): die erste
+// Fassung hat einen frei erzeugten, NICHT eingehaengten Input geklickt. In
+// Chromium funktioniert das - iOS/macOS Safari (also genau die Geraete des
+// Nutzers) oeffnet den Dateidialog dann NICHT, der Klick verpufft ohne
+// Fehlermeldung. Nachgewiesen im Repro-Lauf: document.body.contains(inp)
+// war false. Folgefehler war der zweite gemeldete Punkt - ohne Bild
+// verweigert rezSaveForm() das Speichern, was wie "Speichern klappt nicht"
+// aussieht.
+// Deshalb: einhaengen (unsichtbar, aber Teil des Layouts), klicken, danach
+// wieder entfernen. Ausserdem ein Sicherheitsnetz, falls gar nichts
+// passiert.
 function pickFile(cb){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';
-  inp.onchange=()=>{const f=inp.files&&inp.files[0];if(f)cb(f);};
-  inp.click();
+  inp.style.cssText='position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';
+  const weg=()=>{if(inp.parentNode)inp.parentNode.removeChild(inp);};
+  inp.onchange=()=>{
+    const f=inp.files&&inp.files[0];
+    weg();
+    if(f)cb(f);
+  };
+  document.body.appendChild(inp);
+  try{inp.click();}
+  catch(e){weg();toast('Could not open the file picker');return;}
+  // Aufraeumen, falls der Dialog abgebrochen wird (kein change-Ereignis).
+  setTimeout(()=>{if(!inp.files||!inp.files.length)weg();},120000);
 }
 function setBusy(on,txt){
   const el=$('rfBusy');if(!el)return;
@@ -410,7 +491,7 @@ export function rezPickCover(){
       const{cover,thumb}=await S.processCover(f);
       form.cover=cover;form.thumb=thumb;
       renderForm();
-    }catch(e){formError('That image could not be read.');}
+    }catch(e){formError('That image could not be read: '+(e&&e.message||'unknown error'));}
     finally{setBusy(false);}
   });
 }
@@ -420,7 +501,7 @@ export function rezPickBlockImage(i){
     try{
       form.blocks[i].v=await S.processImage(f,S.IMG_BLOCK);
       renderPart('rfBlocks',form.blocks.map(blockLine).join(''));
-    }catch(e){formError('That image could not be read.');}
+    }catch(e){formError('That image could not be read: '+(e&&e.message||'unknown error'));}
     finally{setBusy(false);}
   });
 }
@@ -429,13 +510,16 @@ function formError(msg){
   el.textContent=msg;el.style.display='block';
   el.scrollIntoView({block:'nearest'});
 }
+// Gibt true/false zurueck (gespeichert / nicht gespeichert) - die
+// Nachfrage beim Schliessen braucht diese Auskunft, sonst wuerde sie das
+// Fenster auch dann schliessen, wenn das Speichern gerade gescheitert ist.
 export async function rezSaveForm(){
-  if(!form)return;
+  if(!form)return false;
   const title=(form.title||'').trim();
-  if(!title){formError('Please give the recipe a title.');return;}
+  if(!title){formError('Please give the recipe a title.');return false;}
   // Bild ist Pflicht (Nutzer-Wunsch: "Wichtig ist, dass man immer Bilder
   // macht") - der Text darum herum ist freiwillig.
-  if(!form.cover){formError('Please add a photo of the dish.');return;}
+  if(!form.cover){formError('Please add a photo of the dish.');return false;}
   const doc={
     id:form.id,title,min:+form.min||5,
     tags:(form.tags||[]).filter(Boolean),
@@ -444,16 +528,29 @@ export async function rezSaveForm(){
     blocks:(form.blocks||[]).filter(b=>b&&(b.v||'').trim()),
     created:form.created||'',
   };
-  await S.saveRecipe(doc);
+  // ⚠ OHNE dieses try/catch endete jede Ausnahme des Speicherpfads als
+  // unbehandelte Promise-Rejection: das Fenster blieb offen, es erschien
+  // keine Meldung, gespeichert war nichts. Genau so ist der Bugreport
+  // "das Speichern klappt nicht" entstanden (2026-09-01, per Playwright mit
+  // blockierter IndexedDB-Transaktion reproduziert).
+  try{
+    await S.saveRecipe(doc);
+  }catch(e){
+    formError('Could not save: '+(e&&e.message||'unknown error'));
+    return false;
+  }
+  formBase=null;form=null;
   rezCloseModal();
   rezShowPage('recipes');
-  toast('Recipe saved');
+  toast(S.state.dbBroken?'Saved (this device cannot store offline copies)':'Recipe saved');
+  return true;
 }
 
 // ── EINSTELLUNGEN ────────────────────────────────────────────────────────
 export function rezOpenSettings(){
   const cfg=S.getCloudCfg();
-  const cur=(S.state.index.settings||{}).theme||'clay';
+  let cur=(S.state.index.settings||{}).theme||THEME_DEFAULT;
+  if(THEME_IDS.indexOf(cur)<0)cur=THEME_DEFAULT;
   const trash=(S.state.index.trash||[]).slice().sort((a,b)=>(b.delAt||'').localeCompare(a.delAt||''));
   openModal(
      `<h3>Settings</h3>`
@@ -519,7 +616,8 @@ export function rezSwitchApp(){
 
 // ── Start ────────────────────────────────────────────────────────────────
 function applyStoredTheme(){
-  const t=(S.state.index.settings||{}).theme;
+  let t=(S.state.index.settings||{}).theme;
+  if(t&&THEME_IDS.indexOf(t)<0)t=THEME_DEFAULT;   // entferntes Theme -> Standard
   if(!t)return;
   // Der Cloud-Stand gewinnt gegenueber dem lokalen Vorab-Wert aus dem
   // <head>-Skript (der dient nur dazu, ein Aufblitzen zu verhindern).
@@ -541,7 +639,12 @@ S.onChange(what=>{
   }else if(what==='status'){
     const el=$('rezSyncStatus');if(el)el.textContent=S.state.status||'Idle';
     const b=$('rezSaveBadge');
-    if(b)b.textContent=S.state.online?'✓ Saved':'⚠ Offline — saved on this device';
+    if(b){
+      // Der Nutzer soll SEHEN, wenn dieses Geraet nicht lokal speichern kann -
+      // stilles Weiterlaufen war genau der Fehler aus dem Bugreport.
+      b.textContent=S.state.dbBroken?'⚠ No local storage — cloud sync only'
+        :(S.state.online?'✓ Saved':'⚠ Offline — saved on this device');
+    }
   }
 });
 (async function start(){
@@ -552,7 +655,8 @@ S.onChange(what=>{
 
 // ── window-Bruecke fuer die Inline-Handler im HTML ───────────────────────
 Object.assign(window,{
-  rezShowPage,rezOpenDetail,rezOpenForm,rezCloseModal,rezSaveForm,rezOpenSettings,
+  rezShowPage,rezOpenDetail,rezOpenForm,rezCloseModal,rezRequestClose,rezSaveForm,rezOpenSettings,
+  rezKeepEditing,rezDiscardClose,rezSaveClose,
   rezSetTheme,rezSyncNow,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
   rezSetQuery,rezSetMaxMin,rezSetTag,rezSetTagIdx,rezToggleFavFilter,rezClearFilters,rezFocusSearch,
   rezAddFromOverview,rezOpenRowMenu,rezCloseRowMenu,rezAskDelete,rezConfirmDelete,

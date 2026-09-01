@@ -52,9 +52,17 @@ fs.writeFileSync(path.join(TMP, 'index.html'), execSync(`git show ${BASE}:index.
 try {
   const jsFiles = execSync(`git ls-tree -r --name-only ${BASE} -- js`, { encoding: 'utf8' })
     .split('\n').filter(Boolean);
-  if (jsFiles.length) fs.mkdirSync(path.join(TMP, 'js'), { recursive: true });
+  // ⚠ Verzeichnis JE DATEI anlegen, nicht nur ein flaches js/: seit der
+  // zweiten App liegen Module auch in js/rezept/ (2026-09-01). Ohne das
+  // wirft der erste Schreibversuch in den Unterordner, der umschliessende
+  // catch verschluckt es - und die DANACH folgenden Dateien (u.a. score.js)
+  // fehlen im Basis-Stand. ES-Module sind fail-fast: ein einziger 404 auf
+  // einen Import laesst KEINEN Top-Level-Namen entstehen, der Vergleich
+  // stirbt mit "syms is not defined" statt mit einer nuetzlichen Meldung.
   jsFiles.forEach(f => {
-    fs.writeFileSync(path.join(TMP, f), execSync(`git show ${BASE}:${f}`,
+    const ziel = path.join(TMP, f);
+    fs.mkdirSync(path.dirname(ziel), { recursive: true });
+    fs.writeFileSync(ziel, execSync(`git show ${BASE}:${f}`,
       { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }));
   });
 } catch (e) {}

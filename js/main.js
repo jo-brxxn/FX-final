@@ -4960,6 +4960,50 @@ function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
 function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
+
+// ── Schutz vor verlorenen Eingaben ─────────────────────────────────────
+// Nutzer-Bugreport 2026-09-01: "wenn man eine Notiz oder ein Rezept
+// hinzufuegt und man neben das Fenster schliesst, ist das was man eingegeben
+// hat weg". Ursache war der generische Overlay-Klick-Handler weiter unten -
+// er schliesst JEDES .ov-Fenster sofort, ohne zu fragen, ob darin gerade
+// etwas Ungespeichertes steht.
+//
+// MODAL_GUARDS ist die Registrierstelle: ein Eintrag {dirty, save} macht ein
+// Fenster "geschuetzt". Ab dann laeuft jeder Schliess-Weg (Klick daneben,
+// Cancel-Button) ueber closeMGuarded() und zeigt bei ungespeicherten
+// Eingaben das zentrierte Fenster #mUnsaved mit drei Wegen:
+// verwerfen (rot/bearish) - speichern (grau) - weiterbearbeiten (blau/bullish).
+//
+// ⚠ Ein neues Eingabe-Fenster gehoert HIER eingetragen, nicht mit einer
+// eigenen Sonderloesung versehen - sonst hat die naechste Eingabemaske
+// denselben Datenverlust wieder.
+const MODAL_GUARDS={};
+let _unsavedFor=null;
+function registerModalGuard(id,dirty,save){MODAL_GUARDS[id]={dirty,save};}
+function modalIsDirty(id){
+  const g=MODAL_GUARDS[id];
+  if(!g)return false;
+  try{return !!g.dirty();}catch(e){return false;}
+}
+function closeMGuarded(id){
+  if(modalIsDirty(id)){_unsavedFor=id;openM('mUnsaved');return;}
+  closeM(id);
+}
+function unsavedDiscard(){
+  const id=_unsavedFor;_unsavedFor=null;
+  closeM('mUnsaved');
+  if(id)closeM(id);
+}
+function unsavedSave(){
+  const id=_unsavedFor;_unsavedFor=null;
+  closeM('mUnsaved');
+  const g=id&&MODAL_GUARDS[id];
+  // Die Save-Funktion schliesst das Fenster selbst, WENN sie durchlaeuft.
+  // Bricht sie ab (z.B. Notiz ohne Titel und ohne Text), bleibt das Fenster
+  // offen - genau richtig, sonst waeren die Eingaben trotz "Speichern" weg.
+  if(g&&g.save){try{g.save();}catch(e){alert('Could not save: '+e.message);}}
+}
+function unsavedKeepEditing(){_unsavedFor=null;closeM('mUnsaved');}
 // Klick/Tipp NEBEN das geoeffnete Fenster (auf den abgedunkelten Overlay-
 // Hintergrund) schliesst es - gilt einheitlich fuer alle Modals (.ov).
 // Der pointerdown-Anker verhindert, dass eine Textauswahl, die im Fenster
@@ -4973,7 +5017,7 @@ document.addEventListener('pointerdown',ev=>{
 document.addEventListener('click',ev=>{
   if(!_ovPressId)return;
   const t=ev.target;
-  if(t&&t.classList&&t.classList.contains('ov')&&t.id===_ovPressId)closeM(t.id);
+  if(t&&t.classList&&t.classList.contains('ov')&&t.id===_ovPressId)closeMGuarded(t.id);
   _ovPressId=null;
 });
 document.addEventListener('keydown',e=>{
@@ -9717,10 +9761,21 @@ function togResFav(id){
 }
 // ── Notiz-Editor (Modal) ──
 let _resEditId=null;
+// Schnappschuss beim Oeffnen. Der Vergleich gegen den aktuellen Formular-
+// Inhalt sagt, ob ungespeicherte Arbeit drinsteckt (siehe MODAL_GUARDS).
+let _resNoteBase=null;
+function resNoteSnapshot(){
+  const g=id=>{const e=document.getElementById(id);return e?(e.type==='checkbox'?(e.checked?'1':'0'):e.value):'';};
+  return JSON.stringify([g('resNTitle'),g('resNBody'),g('resNTags'),g('resNFav'),
+    (_resFids||[]).slice().sort(),_resBias,(document.getElementById('resNEvt')||{}).value||'']);
+}
+function resNoteDirty(){return _resNoteBase!==null&&resNoteSnapshot()!==_resNoteBase;}
+registerModalGuard('mResNote',resNoteDirty,()=>saveResNote());
 function newResNote(){
   _resEditId=null;
   resFillNoteModal({title:'',body:'',fids:[],tags:[],fav:false});
   openM('mResNote');
+  _resNoteBase=resNoteSnapshot();
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
 function openResNote(id){
@@ -9728,6 +9783,7 @@ function openResNote(id){
   _resEditId=id;
   resFillNoteModal(n);
   openM('mResNote');
+  _resNoteBase=resNoteSnapshot();
 }
 // 3-stufiger Bias statt der frueheren 2-stufigen "Richtung" (Nutzer-Wunsch
 // 2026-08-30: "deutlich ob sie neutral bullish oder bearish sind") - rein
@@ -9819,6 +9875,7 @@ function saveResNote(){
     research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
   }
   _resAutoPin=null;
+  _resNoteBase=null;
   save();closeM('mResNote');rerenderNotesHost();
 }
 function delResNote(){
@@ -9832,6 +9889,7 @@ function delResNote(){
   const n=resNotes().find(x=>x.id===_resEditId);
   if(n)trashResNote(n);
   research.notes=resNotes().filter(x=>x.id!==_resEditId);
+  _resNoteBase=null;
   save();closeM('mResNote');rerenderNotesHost();
 }
 
@@ -16950,6 +17008,7 @@ Object.assign(window,{
   rateProbTimelineChart,rateProbSafeTargetX,scrollRateProbTo,TERM_FARBEN,termStructureData,termStructureCardHtml,
   renderRateProb,PAGE_IDS,TAB_ORDER,TABS,TABSTACKS_KEY,loadTabStacks,saveTabStacks,stackOf,tabIdFor,selectTab,
   TAB_ICONS,TAB_ICON_STACK,npIconSvg,tabBtnHtml,syncNavExpanded,ASSET_STACK_ID,renderTabBar,tabPressStart,tabPressEnd,
+  closeMGuarded,unsavedDiscard,unsavedSave,unsavedKeepEditing,registerModalGuard,resNoteDirty,
   onTabClick,onStackClick,createStack,addTabToStack,removeTabFromStack,dissolveStack,closeTabMenu,tabMenuOutside,
   openTabMenu,triggerEnterAnim,showTab,rerender,parsePolicyRate,CARRY_CACHE_KEY,loadRateCache,saveRateCache,rateInfo,
   realRateInfo,yieldSpreadSeries,carryRows,carryRowHTML,setRealRateSort,realRateTableHtml,setSpreadPair,

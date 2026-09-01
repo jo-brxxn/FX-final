@@ -81,7 +81,16 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Werts. Policy-Details: `docs/data-sources.md`.
 5. **`node check/all.js` vor jedem Push** (bzw. `--static` für den schnellen
    Teil ohne Browser). Details: `check/README.md`.
-6. **Immer auch auf `main` pushen** (das ist der Branch, der die
+6. **Jedes Bedienelement muss auch wirklich etwas tun.** Ein Button, dessen
+   Handler auf keine (exportierte) Funktion zeigt, wirft beim Klick still ein
+   `ReferenceError` und sieht für den Nutzer einfach kaputt aus — bei
+   ES-Modulen der häufigste Grund dafür ist eine vergessene Zeile in der
+   `window`-Brücke. Ebenso gilt: **kein Speicher-/Schreibpfad ohne
+   `try/catch` mit sichtbarer Meldung** — eine unbehandelte
+   Promise-Rejection sieht für den Nutzer exakt aus wie „die App macht
+   nichts". Beides wird geprüft (`check/structure.js` für den FX Analyst
+   Pro, `check/rezept.js` für Perfect Rezept).
+7. **Immer auch auf `main` pushen** (das ist der Branch, der die
    Produktivadresse — ein Cloudflare Worker hinter Cloudflare Access,
    NICHT primär GitHub Pages — sowie den ungeschützten GitHub-Pages-Mirror
    speist; nicht der Session-Dev-Branch). Details: `docs/workflow.md`.
@@ -105,6 +114,17 @@ dokumentieren als auslassen. Faustregel für WOHIN:
 **Antworten auf Deutsch. Die Oberfläche beider Apps ist Englisch** — jeder
 neue Text, jedes neue Label, jede neue Meldung wird auf Englisch geschrieben,
 ohne Rückfrage (Nutzer-Regel 2026-09-01).
+
+**⚠ Deutsche Begriffe des Nutzers werden automatisch übersetzt** (Nutzer-Regel
+2026-09-01, wörtlich: *„selbst wenn ich dir deutsche Begriffe nenne übersetz
+sie automatisch"*). Nennt der Nutzer eine Kategorie „Zufallsgenerator", einen
+Button „Weiterbearbeiten" oder eine Karte „Heutiges Essen", steht in der App
+`Random Picker`, `Keep editing`, `Today's Meal` — **ohne Rückfrage**, es ist
+keine Interpretationsentscheidung. Die deutsche Formulierung des Nutzers
+gehört in den Code-Kommentar bzw. ins `docs/CHANGELOG.md`, damit später
+nachvollziehbar bleibt, was gemeint war; auf der Oberfläche erscheint sie nie.
+Das gilt auch für Beschriftungen, die aus einem Screenshot oder einer
+Sprachnachricht übernommen werden.
 
 ## Berichte gehoeren in den Chat
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-rez-theme="clay">
+<html lang="en" data-rez-theme="linear">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -24,7 +24,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#3B2A21">
+<meta name="theme-color" content="#F1F2F5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
 // ⚠ LAEUFT VOR DEM ERSTEN PIXEL. Zwei Aufgaben:
@@ -34,7 +34,14 @@
 (function(){
   try{localStorage.setItem('dmfx_app_choice','rezept');}catch(e){}
   try{
+    // ⚠ MIGRATION: clay/mocha/sand sind am 2026-09-01 entfernt worden. Ein
+    // Geraet mit einem dieser Werte im Speicher haette sonst GAR KEIN
+    // passendes [data-rez-theme]-Regelwerk getroffen - keine einzige
+    // Farbvariable waere gesetzt gewesen und die Seite haette unlesbar
+    // ausgesehen. Beim Entfernen eines Themes IMMER migrieren.
+    var LEB={linear:1,notion:1,vercel:1,github:1,stripe:1,ios:1,swiss:1,fog:1,graphite:1,paper:1};
     var t=localStorage.getItem('rez_theme');
+    if(t&&!LEB[t]){t='linear';localStorage.setItem('rez_theme',t);}
     if(t)document.documentElement.setAttribute('data-rez-theme',t);
   }catch(e){}
 })();
@@ -60,49 +67,166 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
 }
 
 /* ══ THEMES ═══════════════════════════════════════════════════════════════
-   Vier braune Paletten, umschaltbar in den Einstellungen (Nutzer-Wunsch:
-   "ich würde einfach mal die ganzen Designs ausprobieren"). Jede besteht aus
-   GENAU zwei Bloecken:
-     :root[data-rez-theme=X]   - die helle Inhaltsflaeche
-     [data-rez-theme=X] .hdr,#rezNav - dieselben Variablen, fuer den dunklen
-                                       Chrome-Bereich umgedreht
-   ⚠ Genau dasselbe Muster wie im FX Analyst Pro (gescopte Variablen-
-   Ueberschreibung statt Einzelstellen anfassen, siehe docs/navigation.md):
-   jede Komponente faerbt ausschliesslich ueber var(--...), ein Theme-Wechsel
-   ist deshalb ein reiner Token-Tausch und kein Umbau.
+   Neun Paletten, umschaltbar in den Einstellungen. Jede besteht aus GENAU
+   zwei Bloecken:
+     :root[data-rez-theme=X]            - die Inhaltsflaeche
+     [data-rez-theme=X] .hdr,#rezNav    - dieselben Variablen fuer den
+                                          Chrome-Bereich (Kopfzeile+Sidebar)
+   ⚠ Dasselbe Muster wie im FX Analyst Pro (gescopte Variablen-Ueberschreibung
+   statt Einzelstellen anfassen, siehe docs/navigation.md): jede Komponente
+   faerbt ausschliesslich ueber var(--...), ein Theme-Wechsel ist deshalb ein
+   reiner Token-Tausch und kein Umbau.
+
+   ⚠ JEDER Block MUSS alle diese Tokens setzen, sonst erbt das Theme still
+   den Wert des vorherigen: --chrome-bg --bg0..--bg5 --bd --bd2 --t0..--t3
+   --accent --accent-soft --live --avatar-bg --avatar-fg (+ optional
+   --ff-title). Fehlt eins, faellt es auf :root zurueck - genau so entstehen
+   "fast richtige" Paletten mit einem falschen Grauton drin.
+
+   Stand 2026-09-01 (Nutzer-Wunsch): die drei uebrigen braunen Paletten
+   (clay/mocha/sand) sind ENTFERNT, "Paper Cookbook" ist als einzige davon
+   geblieben. Dazu acht weiss/graue Paletten, jede an einem echten, real
+   existierenden Design-System orientiert statt frei erfunden.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* ── 1) WARM CLAY (Standard) ──────────────────────────────────────────── */
-:root[data-rez-theme="clay"]{
-  --chrome-bg:#3B2A21;
-  --bg0:#F3EBE1;--bg1:#F8F3ED;--bg2:#FFFDFA;--bg3:#F6EFE7;--bg4:#EDE2D6;--bg5:#E1D2C0;
-  --bd:rgba(88,60,42,.16);--bd2:rgba(88,60,42,.30);
-  --t0:#2A1D16;--t1:#4A382C;--t2:#63503F;--t3:#6F5A49;
-  --accent:#A85630;--accent-soft:rgba(168,86,48,.12);
-  --star:#C98A18;--danger:#A8362F;--ok:#3C6E3F;
+/* ── 1) LINEAR LIGHT (Standard) — kuehles Fastweiss, Indigo-Akzent ────── */
+:root[data-rez-theme="linear"]{
+  --chrome-bg:#F1F2F5;
+  --bg0:#F7F8F9;--bg1:#FBFBFC;--bg2:#FFFFFF;--bg3:#F5F6F8;--bg4:#EDEEF1;--bg5:#E1E3E8;
+  --bd:rgba(22,23,26,.11);--bd2:rgba(22,23,26,.20);
+  --t0:#16171A;--t1:#3C4149;--t2:#5B606A;--t3:#5E636D;
+  --accent:#4B55B8;--accent-soft:rgba(75,85,184,.11);
+  --live:#C0342B;--avatar-bg:#4B55B8;--avatar-fg:#FFFFFF;
 }
-[data-rez-theme="clay"] .hdr,[data-rez-theme="clay"] #rezNav{
-  --bg1:#4A3529;--bg2:#4A3529;--bg3:#54402F;--bg4:#5F4A37;--bg5:#6B5440;
-  --bd:rgba(240,215,190,.16);--bd2:rgba(240,215,190,.28);
-  --t0:#FBF5EF;--t1:#E7D9CC;--t2:#CBB5A2;--t3:#B49E8B;
-  --accent:#E8945C;
+[data-rez-theme="linear"] .hdr,[data-rez-theme="linear"] #rezNav{
+  --bg1:#EBECF0;--bg2:#E7E8ED;--bg3:#E4E5EB;--bg4:#DEE0E6;--bg5:#D5D7DF;
+  --bd:rgba(22,23,26,.13);--bd2:rgba(22,23,26,.22);
+  --t0:#16171A;--t1:#33373E;--t2:#565B64;--t3:#595E67;
+  --accent:#4B55B8;
 }
-/* ── 2) MOCHA & CREAM ─────────────────────────────────────────────────── */
-:root[data-rez-theme="mocha"]{
-  --chrome-bg:#4A3A30;
-  --bg0:#F0E8DE;--bg1:#F6F0E9;--bg2:#FFFFFF;--bg3:#F4EDE5;--bg4:#EAE0D4;--bg5:#DED0BF;
-  --bd:rgba(80,60,45,.15);--bd2:rgba(80,60,45,.28);
-  --t0:#33261E;--t1:#4E3E33;--t2:#6A5747;--t3:#73604F;
-  --accent:#8C5F3C;--accent-soft:rgba(140,95,60,.12);
-  --star:#BE8A20;--danger:#A8362F;--ok:#3C6E3F;
+/* ── 2) NOTION GREY — warmes Off-White, sehr ruhig ────────────────────── */
+:root[data-rez-theme="notion"]{
+  --chrome-bg:#F7F7F5;
+  --bg0:#FAFAF9;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F3;--bg4:#EFEFED;--bg5:#E3E3E0;
+  --bd:rgba(55,53,47,.13);--bd2:rgba(55,53,47,.23);
+  --t0:#37352F;--t1:#4A473F;--t2:#605C52;--t3:#676257;
+  --accent:#286FB4;--accent-soft:rgba(40,111,180,.11);
+  --live:#BF3A2F;--avatar-bg:#37352F;--avatar-fg:#FFFFFF;
 }
-[data-rez-theme="mocha"] .hdr,[data-rez-theme="mocha"] #rezNav{
-  --bg1:#5A4739;--bg2:#5A4739;--bg3:#65503F;--bg4:#705947;--bg5:#7C644F;
-  --bd:rgba(240,220,200,.16);--bd2:rgba(240,220,200,.28);
-  --t0:#FBF6F1;--t1:#E8DCD1;--t2:#CDBBA9;--t3:#B7A390;
-  --accent:#DFA672;
+[data-rez-theme="notion"] .hdr,[data-rez-theme="notion"] #rezNav{
+  --bg1:#F1F1EF;--bg2:#EDEDEA;--bg3:#EAEAE7;--bg4:#E4E4E0;--bg5:#DBDBD6;
+  --bd:rgba(55,53,47,.14);--bd2:rgba(55,53,47,.24);
+  --t0:#37352F;--t1:#48453E;--t2:#5C584F;--t3:#665F55;
+  --accent:#286FB4;
 }
-/* ── 3) PAPER COOKBOOK (editorial, Serifen-Titel) ─────────────────────── */
+/* ── 3) VERCEL MONO — schwarze Kopfzeile, reines Schwarzweiss ─────────── */
+:root[data-rez-theme="vercel"]{
+  --chrome-bg:#000000;
+  --bg0:#FAFAFA;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F5;--bg4:#EDEDED;--bg5:#E0E0E0;
+  --bd:rgba(0,0,0,.12);--bd2:rgba(0,0,0,.23);
+  --t0:#000000;--t1:#2E2E2E;--t2:#4D4D4D;--t3:#585858;
+  --accent:#171717;--accent-soft:rgba(0,0,0,.07);
+  --live:#B62F25;--avatar-bg:#171717;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="vercel"] .hdr,[data-rez-theme="vercel"] #rezNav{
+  --bg1:#111111;--bg2:#161616;--bg3:#1C1C1C;--bg4:#242424;--bg5:#2E2E2E;
+  --bd:rgba(255,255,255,.15);--bd2:rgba(255,255,255,.26);
+  --t0:#FFFFFF;--t1:#EDEDED;--t2:#B4B4B4;--t3:#9E9E9E;
+  --accent:#FFFFFF;--live:#FF6B5E;--avatar-bg:#2E2E2E;--avatar-fg:#FFFFFF;
+}
+/* ── 4) GITHUB LIGHT — dunkle Kopfzeile, heller Inhalt ────────────────── */
+:root[data-rez-theme="github"]{
+  --chrome-bg:#24292F;
+  --bg0:#F6F8FA;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F6F8FA;--bg4:#EFF2F5;--bg5:#E2E7EC;
+  --bd:rgba(31,35,40,.13);--bd2:rgba(31,35,40,.24);
+  --t0:#1F2328;--t1:#343A41;--t2:#55606B;--t3:#5E6873;
+  --accent:#0969DA;--accent-soft:rgba(9,105,218,.10);
+  --live:#B62F25;--avatar-bg:#0969DA;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="github"] .hdr,[data-rez-theme="github"] #rezNav{
+  --bg1:#2D333B;--bg2:#2D333B;--bg3:#343B45;--bg4:#3C444F;--bg5:#474F5B;
+  --bd:rgba(205,217,229,.16);--bd2:rgba(205,217,229,.27);
+  --t0:#F0F6FC;--t1:#DCE3EA;--t2:#BAC3CD;--t3:#B9C2CC;
+  --accent:#6CB6FF;--live:#FF7B72;--avatar-bg:#316DCA;--avatar-fg:#FFFFFF;
+}
+/* ── 5) STRIPE SLATE — sehr helles Blaugrau, Violett-Akzent ───────────── */
+:root[data-rez-theme="stripe"]{
+  --chrome-bg:#EEF3F9;
+  --bg0:#F6F9FC;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F3F7FB;--bg4:#E9EFF6;--bg5:#DBE4EF;
+  --bd:rgba(10,37,64,.11);--bd2:rgba(10,37,64,.20);
+  --t0:#0A2540;--t1:#33415C;--t2:#54607A;--t3:#58647C;
+  --accent:#5145CD;--accent-soft:rgba(81,69,205,.10);
+  --live:#B3261E;--avatar-bg:#5145CD;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="stripe"] .hdr,[data-rez-theme="stripe"] #rezNav{
+  --bg1:#E6EDF6;--bg2:#E2EAF4;--bg3:#DEE7F2;--bg4:#D6E1EF;--bg5:#CBD8EA;
+  --bd:rgba(10,37,64,.13);--bd2:rgba(10,37,64,.22);
+  --t0:#0A2540;--t1:#2E3D58;--t2:#4E5A74;--t3:#4F5B73;
+  --accent:#5145CD;
+}
+/* ── 6) IOS LIGHT — Systemgrau-Flaeche, weisse Karten, Blau ───────────── */
+:root[data-rez-theme="ios"]{
+  --chrome-bg:#F9F9FB;
+  --bg0:#F2F2F7;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F8;--bg4:#EBEBF0;--bg5:#DEDEE4;
+  --bd:rgba(28,28,30,.12);--bd2:rgba(28,28,30,.21);
+  --t0:#1C1C1E;--t1:#3A3A3C;--t2:#545458;--t3:#5E5E63;
+  --accent:#0A62C9;--accent-soft:rgba(10,98,201,.10);
+  --live:#C4302B;--avatar-bg:#0A62C9;--avatar-fg:#FFFFFF;
+  --r:16px;--rs:11px;--rss:8px;
+}
+[data-rez-theme="ios"] .hdr,[data-rez-theme="ios"] #rezNav{
+  --bg1:#F1F1F5;--bg2:#EDEDF1;--bg3:#E9E9EF;--bg4:#E3E3EA;--bg5:#D9D9E1;
+  --bd:rgba(28,28,30,.13);--bd2:rgba(28,28,30,.22);
+  --t0:#1C1C1E;--t1:#38383A;--t2:#4F4F54;--t3:#5A5A5F;
+  --accent:#0A62C9;
+}
+/* ── 7) SWISS EDITORIAL — reines Weiss, Haarlinien, kein Farbakzent ───── */
+:root[data-rez-theme="swiss"]{
+  --chrome-bg:#FFFFFF;
+  --bg0:#FFFFFF;--bg1:#FCFCFC;--bg2:#FFFFFF;--bg3:#F7F7F7;--bg4:#F0F0F0;--bg5:#E3E3E3;
+  --bd:rgba(0,0,0,.16);--bd2:rgba(0,0,0,.30);
+  --t0:#000000;--t1:#242424;--t2:#454545;--t3:#525252;
+  --accent:#000000;--accent-soft:rgba(0,0,0,.06);
+  --live:#B01911;--avatar-bg:#000000;--avatar-fg:#FFFFFF;
+  --r:4px;--rs:3px;--rss:2px;
+}
+[data-rez-theme="swiss"] .hdr,[data-rez-theme="swiss"] #rezNav{
+  --bg1:#FAFAFA;--bg2:#F7F7F7;--bg3:#F2F2F2;--bg4:#EBEBEB;--bg5:#DEDEDE;
+  --bd:rgba(0,0,0,.18);--bd2:rgba(0,0,0,.32);
+  --t0:#000000;--t1:#1F1F1F;--t2:#3D3D3D;--t3:#4A4A4A;
+  --accent:#000000;
+}
+/* ── 8) NORDIC FOG — kuehles Blaugrau, dunkle Kopfzeile ───────────────── */
+:root[data-rez-theme="fog"]{
+  --chrome-bg:#2B3440;
+  --bg0:#EDF1F5;--bg1:#F7F9FB;--bg2:#FFFFFF;--bg3:#F2F5F8;--bg4:#E6EBF0;--bg5:#D6DEE6;
+  --bd:rgba(19,26,33,.13);--bd2:rgba(19,26,33,.23);
+  --t0:#131A21;--t1:#303C48;--t2:#4C5A68;--t3:#556372;
+  --accent:#2C6091;--accent-soft:rgba(44,96,145,.11);
+  --live:#B3302A;--avatar-bg:#2C6091;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="fog"] .hdr,[data-rez-theme="fog"] #rezNav{
+  --bg1:#36414F;--bg2:#36414F;--bg3:#3D4A59;--bg4:#465364;--bg5:#505F71;
+  --bd:rgba(210,224,238,.16);--bd2:rgba(210,224,238,.27);
+  --t0:#F4F7FA;--t1:#DEE5ED;--t2:#CFDAE6;--t3:#CEDAE8;
+  --accent:#7FB3E0;--live:#FF7B72;--avatar-bg:#2C6091;--avatar-fg:#FFFFFF;
+}
+/* ── 9) GRAPHITE — dunkelgraue Kopfzeile, neutrales Grau ──────────────── */
+:root[data-rez-theme="graphite"]{
+  --chrome-bg:#33383D;
+  --bg0:#F4F5F6;--bg1:#FBFBFC;--bg2:#FFFFFF;--bg3:#F3F4F5;--bg4:#EAEBED;--bg5:#DCDEE1;
+  --bd:rgba(28,31,35,.12);--bd2:rgba(28,31,35,.22);
+  --t0:#1C1F23;--t1:#383D43;--t2:#565C63;--t3:#595F67;
+  --accent:#5A6570;--accent-soft:rgba(90,101,112,.12);
+  --live:#B3302A;--avatar-bg:#33383D;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="graphite"] .hdr,[data-rez-theme="graphite"] #rezNav{
+  --bg1:#3D4348;--bg2:#3D4348;--bg3:#454B51;--bg4:#4E555C;--bg5:#585F67;
+  --bd:rgba(226,230,235,.16);--bd2:rgba(226,230,235,.27);
+  --t0:#F5F6F7;--t1:#DFE2E5;--t2:#D4D9DF;--t3:#D3D9E0;
+  --accent:#CBD3DB;--live:#FF7B72;--avatar-bg:#5A6570;--avatar-fg:#FFFFFF;
+}
+/* ── 10) PAPER COOKBOOK — die einzige gebliebene braune Palette ───────── */
 :root[data-rez-theme="paper"]{
   --chrome-bg:#2E241E;
   --ff-title:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,'Times New Roman',serif;
@@ -110,28 +234,13 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
   --bd:rgba(70,55,35,.17);--bd2:rgba(70,55,35,.30);
   --t0:#241B12;--t1:#413225;--t2:#5C4A38;--t3:#665342;
   --accent:#8A5626;--accent-soft:rgba(138,86,38,.12);
-  --star:#B5860F;--danger:#A0332C;--ok:#3A6A3D;
+  --live:#A0332C;--avatar-bg:#8A5626;--avatar-fg:#FFFFFF;
 }
 [data-rez-theme="paper"] .hdr,[data-rez-theme="paper"] #rezNav{
   --bg1:#3D3027;--bg2:#3D3027;--bg3:#493A2F;--bg4:#554438;--bg5:#614E40;
   --bd:rgba(235,215,190,.16);--bd2:rgba(235,215,190,.28);
-  --t0:#FAF4EC;--t1:#E6D9C9;--t2:#C9B69F;--t3:#B29E87;
-  --accent:#D9A05B;
-}
-/* ── 4) LIGHT BROWN (heller Chrome - bricht bewusst mit dem FX-Muster) ── */
-:root[data-rez-theme="sand"]{
-  --chrome-bg:#E3D5C3;
-  --bg0:#FAF5EF;--bg1:#F5EEE5;--bg2:#FFFFFF;--bg3:#F7F1EA;--bg4:#EFE6DA;--bg5:#E2D4C2;
-  --bd:rgba(90,65,45,.16);--bd2:rgba(90,65,45,.30);
-  --t0:#38281C;--t1:#4F3B2C;--t2:#67523F;--t3:#705B47;
-  --accent:#8F5B32;--accent-soft:rgba(143,91,50,.12);
-  --star:#B5860F;--danger:#A0332C;--ok:#3A6A3D;
-}
-[data-rez-theme="sand"] .hdr,[data-rez-theme="sand"] #rezNav{
-  --bg1:#D9C9B4;--bg2:#D9C9B4;--bg3:#D2C0A8;--bg4:#CBB79C;--bg5:#C2AC8E;
-  --bd:rgba(90,65,45,.22);--bd2:rgba(90,65,45,.34);
-  --t0:#2E2016;--t1:#452F1F;--t2:#5B4331;--t3:#65503C;
-  --accent:#8F5B32;
+  --t0:#FAF4EC;--t1:#E6D9C9;--t2:#D5C2AB;--t3:#D6C2AB;
+  --accent:#D9A05B;--live:#FF8A7A;--avatar-bg:#8A5626;--avatar-fg:#FFFFFF;
 }
 
 body{
@@ -156,16 +265,16 @@ body{
 .hdr-r .btn{background:transparent;border-color:transparent;color:var(--t2)}
 @media (hover:hover){.hdr-r .btn:hover:not(:disabled){background:var(--bg3);border-color:var(--bd);color:var(--t0)}}
 .profile-btn{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
-.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--avatar-bg,var(--accent));color:var(--avatar-fg,#fff);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
 @media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-circle svg{width:18px;height:18px}
 /* Versions-Banner - eigenes Gegenstueck zum VERSION-CHECK des FX Analyst
    Pro. Muss bei JEDER Aenderung an rezept.html/js/rezept/* hochgezaehlt
    werden (erzwungen von check/rules.js). */
 .hdr-livebanner{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-family:var(--ff-num);color:var(--t2);min-width:0;overflow:hidden}
-.hlb-dot{width:6px;height:6px;border-radius:50%;background:#D93A34;display:block;animation:hlbPulse 2.2s ease-in-out infinite}
+.hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--live,#D93A34);display:block;animation:hlbPulse 2.2s ease-in-out infinite}
 @keyframes hlbPulse{0%,100%{opacity:1}50%{opacity:.35}}
-.hlb-lbl{font-weight:800;letter-spacing:.6px;color:#D93A34}
+.hlb-lbl{font-weight:800;letter-spacing:.6px;color:var(--live,#D93A34)}
 .hlb-sep{opacity:.5}
 .hlb-name{font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis}
 
@@ -332,8 +441,25 @@ body{
 .trash-nm{font-size:var(--fs-base);font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .trash-sub{font-size:var(--fs-sm);color:var(--t3)}
 
+/* ══ NACHFRAGE BEI UNGESPEICHERTEN EINGABEN ══════════════════════════
+   Nutzer-Bugreport 2026-09-01: Klick neben das Fenster hat die Eingaben
+   kommentarlos verworfen. Drei eindeutige Wege, farblich klar getrennt -
+   rot = weg, grau = sichern, blau = zurueck ins Formular. Liegt ueber dem
+   Formular-Fenster (eigener Host #rezConfirm), damit man im Hintergrund
+   noch sieht, worum es geht. */
+.uc-ov{z-index:520;background:rgba(20,20,24,.55)}
+.uc-box{max-width:min(430px,94vw);text-align:center;padding:24px 22px}
+.uc-txt{font-size:var(--fs-base);color:var(--t2);line-height:1.6;margin-bottom:18px}
+.uc-btns{display:flex;flex-direction:column;gap:8px}
+.uc-btn{width:100%;padding:11px 14px;border-radius:var(--rs);font-size:var(--fs-base);font-weight:700;
+  cursor:pointer;border:1px solid transparent;font-family:var(--ff-text);transition:filter .14s,background .14s}
+@media (hover:hover){.uc-btn:hover{filter:brightness(1.07)}}
+.uc-discard{background:#B3352C;border-color:#B3352C;color:#FFFFFF}
+.uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
+.uc-keep{background:#1E63C0;border-color:#1E63C0;color:#FFFFFF}
+
 /* ══ TOAST ═══════════════════════════════════════════════════════════ */
-#rezToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:500;background:var(--chrome-bg);color:#FBF5EF;font-size:var(--fs-base);font-weight:600;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#rezToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:600;background:#1F2328;color:#FFFFFF;font-size:var(--fs-base);font-weight:600;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 #rezToast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -348,11 +474,11 @@ body{
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-1 - Erste Fassung der Perfect-Rezept-App: eigenstaendige Seite (rezept.html + js/rezept/*), App-Auswahl beim ersten Oeffnen, Overview mit drei Karten, Rezepte-Raster mit Suche/Zeitfilter/Tags/Favoriten, Hinzufuegen-Fenster mit Bild + Zutaten + Zubereitungs-Bloecken (Text und Bild), Detailfenster mit Drei-Punkte-Menue, 30-Tage-Papierkorb, vier braune Themes und Supabase-Sync ueber eigene Zeilen je Rezept.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-2 - Zwei reproduzierte Fehler behoben: der Bild-Dialog ging auf iOS Safari nicht auf (das Datei-Eingabefeld hing nicht im DOM), und jede Ausnahme im Speicherpfad endete als unbehandelte Promise-Rejection - Fenster blieb offen, keine Meldung, nichts gespeichert. Dazu: zentrierte Nachfrage bei ungespeicherten Eingaben (Discard/Save/Keep editing), neun Paletten (acht weiss-graue plus Paper Cookbook, alte braune entfernt und migriert), IndexedDB-Ausfall laeuft nicht mehr still, und ein neuer Waechter check/rezept.js klickt jedes Bedienelement durch.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-1</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-2</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -375,6 +501,7 @@ body{
 </div>
 
 <div id="rezModals"></div>
+<div id="rezConfirm"></div>
 <div id="rezToast"></div>
 
 <script type="module" src="js/rezept/app.js"></script>

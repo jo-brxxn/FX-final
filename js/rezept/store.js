@@ -59,6 +59,8 @@ export const state={
   ready:false,
   online:navigator.onLine,
   status:'',
+  dbBroken:false,   // lokale Ablage ausgefallen -> Speicher-Map als Notbetrieb
+  lastError:'',     // letzte Fehlermeldung, die die Oberflaeche zeigen soll
 };
 
 let _db=null;
@@ -76,37 +78,73 @@ export function setStatus(txt){state.status=txt;emit('status');}
 // localStorage scheidet fuer Rezepte aus: das Limit liegt bei ~5 MB, ein
 // einziges Titelbild frisst davon schon 5%. IndexedDB hat kein solches
 // Limit und ist ohnehin die richtige Ablage fuer Binaerdaten.
+// ⚠ JEDE IndexedDB-Operation kann scheitern - und zwar nicht nur theoretisch:
+// Privatmodus, aufgebrauchtes Speicherkontingent und einzelne iOS-Zustaende
+// lassen `open()` oder schon die Transaktion werfen. Per Playwright
+// reproduziert (2026-09-01): mit blockierter Transaktion blieb das
+// Hinzufuegen-Fenster offen, es erschien KEINE Meldung, nichts wurde
+// gespeichert - der Nutzer sah nur "Speichern klappt nicht". Ursache war,
+// dass die Ausnahme als unbehandelte Promise-Rejection endete.
+//
+// Konsequenz: die lokale Ablage ist ab hier BEST EFFORT. Faellt sie aus,
+// laeuft die App auf einer Speicher-Map weiter (die Sitzung funktioniert,
+// der Cloud-Sync speichert weiterhin dauerhaft) und `state.dbBroken`
+// erzaehlt der Oberflaeche davon. Was NIE passieren darf: eine geworfene
+// Ausnahme, die den Speichervorgang lautlos abbricht.
+const _mem=new Map();
+function memKey(store,key){return store+'\u0000'+key;}
 function openDb(){
   if(_db)return Promise.resolve(_db);
+  if(state.dbBroken)return Promise.reject(new Error('IndexedDB unavailable'));
   return new Promise((res,rej)=>{
-    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    let req;
+    try{req=indexedDB.open(DB_NAME,DB_VERSION);}
+    catch(e){state.dbBroken=true;return rej(e);}
     req.onupgradeneeded=()=>{
       const db=req.result;
       if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');
       if(!db.objectStoreNames.contains('recipes'))db.createObjectStore('recipes',{keyPath:'id'});
     };
     req.onsuccess=()=>{_db=req.result;res(_db);};
-    req.onerror=()=>rej(req.error);
+    req.onerror=()=>{state.dbBroken=true;rej(req.error);};
+    req.onblocked=()=>{state.dbBroken=true;rej(new Error('IndexedDB blocked'));};
   });
 }
-function idbGet(store,key){
-  return openDb().then(db=>new Promise((res,rej)=>{
-    const r=db.transaction(store,'readonly').objectStore(store).get(key);
-    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
-  }));
+function markDbBroken(e){
+  if(!state.dbBroken){
+    state.dbBroken=true;
+    console.warn('[rezept] local storage unavailable, falling back to memory:',e&&e.message);
+    emit('status');
+  }
 }
-function idbPut(store,val,key){
-  return openDb().then(db=>new Promise((res,rej)=>{
-    const tx=db.transaction(store,'readwrite');
-    const r=key===undefined?tx.objectStore(store).put(val):tx.objectStore(store).put(val,key);
-    r.onsuccess=()=>res();r.onerror=()=>rej(r.error);
-  }));
+async function idbGet(store,key){
+  try{
+    const db=await openDb();
+    return await new Promise((res,rej)=>{
+      const r=db.transaction(store,'readonly').objectStore(store).get(key);
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+    });
+  }catch(e){markDbBroken(e);return _mem.get(memKey(store,key));}
 }
-function idbDel(store,key){
-  return openDb().then(db=>new Promise((res,rej)=>{
-    const r=db.transaction(store,'readwrite').objectStore(store).delete(key);
-    r.onsuccess=()=>res();r.onerror=()=>rej(r.error);
-  }));
+async function idbPut(store,val,key){
+  const k=key===undefined?(val&&val.id):key;
+  try{
+    const db=await openDb();
+    await new Promise((res,rej)=>{
+      const tx=db.transaction(store,'readwrite');
+      const r=key===undefined?tx.objectStore(store).put(val):tx.objectStore(store).put(val,key);
+      r.onsuccess=()=>res();r.onerror=()=>rej(r.error);
+    });
+  }catch(e){markDbBroken(e);_mem.set(memKey(store,k),val);}
+}
+async function idbDel(store,key){
+  try{
+    const db=await openDb();
+    await new Promise((res,rej)=>{
+      const r=db.transaction(store,'readwrite').objectStore(store).delete(key);
+      r.onsuccess=()=>res();r.onerror=()=>rej(r.error);
+    });
+  }catch(e){markDbBroken(e);_mem.delete(memKey(store,key));}
 }
 
 // ── Hilfsfunktionen ──────────────────────────────────────────────────────

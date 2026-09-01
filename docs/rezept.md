@@ -102,10 +102,24 @@ Titelbild frisst davon 5 %. Für Bilder ist das keine Option.
    links, Seitenbereich rechts, dieselben Karten-/Modal-Bausteine, dieselbe
    Typo-/Abstands-Skala aus `docs/design-system.md`. Übernommen werden die
    Bauteile, nicht die Dateien.
-4. **Farben nur über die Theme-Tokens.** Vier braune Paletten (`clay`,
-   `mocha`, `paper`, `sand`), umschaltbar unter *Settings → Appearance*, je
-   zwei CSS-Blöcke (heller Inhalt + dunkler Chrome-Bereich). Ein Theme-
-   Wechsel ist ein reiner Token-Tausch — **nie eine Einzelstelle einfärben**.
+4. **Farben nur über die Theme-Tokens.** Zehn Paletten (`linear`, `notion`,
+   `vercel`, `github`, `stripe`, `ios`, `swiss`, `fog`, `graphite` und als
+   einzige braune `paper`), umschaltbar unter *Settings → Appearance*, je
+   zwei CSS-Blöcke (Inhalt + Chrome-Bereich). Ein Theme-Wechsel ist ein
+   reiner Token-Tausch — **nie eine Einzelstelle einfärben**.
+   - **Jeder Block muss ALLE Tokens setzen** (`--chrome-bg`, `--bg0`…`--bg5`,
+     `--bd`/`--bd2`, `--t0`…`--t3`, `--accent`, `--accent-soft`, `--live`,
+     `--avatar-bg`, `--avatar-fg`). Fehlt eins, erbt das Theme still den Wert
+     des vorherigen — so entstehen „fast richtige" Paletten mit einem
+     falschen Grauton drin. `check/rezept.js` prüft das.
+   - **Beim ENTFERNEN eines Themes migrieren.** Ein Gerät mit dem alten Namen
+     im Speicher trifft sonst gar kein `[data-rez-theme]`-Regelwerk und steht
+     ohne eine einzige Farbvariable da. Die Migrationsliste steht doppelt:
+     in der Früh-Weiche im `<head>` von `rezept.html` und als `THEME_IDS` in
+     `js/rezept/app.js`.
+   - **Kontrast wird nachgerechnet, nicht geschätzt** (wie im FX Analyst Pro,
+     siehe `docs/design-system.md`): jede Textstufe ≥ 4,5:1 gegen JEDE Fläche
+     ihres Blocks, erzwungen von `check/rezept.js` Stufe E.
 5. **Bild ist Pflicht, Text ist freiwillig** (Nutzer-Wunsch: *„Wichtig ist,
    dass man immer Bilder macht, aber man kann auch Text schreiben"*).
 6. **Löschen = Papierkorb, 30 Tage** (`TRASH_DAYS`), Wiederherstellung unter
@@ -115,6 +129,25 @@ Titelbild frisst davon 5 %. Für Bilder ist das keine Option.
    scrollenden Modal-Container — sonst werden sie am Rand abgeschnitten
    (`.rd-menu`, siehe `docs/design-system.md`).
 8. **Dauer in 5-Minuten-Schritten** (`DURATIONS`, 5–180 min, darüber 4/5/6 h).
+9. **Der `<input type="file">` muss im Dokument hängen.** iOS Safari öffnet
+   den Dateidialog sonst nicht — der Klick verpufft ohne Fehlermeldung.
+   Genau das war der Bugreport „das Bild hinzufügen geht nicht" vom
+   2026-09-01. `pickFile()` hängt ihn ein, klickt, entfernt ihn wieder;
+   `check/rezept.js` prüft die Stelle direkt im Quelltext, weil Chromium
+   den Fehler nicht zeigt.
+10. **Kein Schreibpfad ohne `try/catch` mit sichtbarer Meldung.** Eine
+   unbehandelte Promise-Rejection sieht für den Nutzer exakt aus wie „die App
+   macht nichts" (Bugreport „das Speichern klappt nicht", 2026-09-01). Die
+   lokale Ablage ist ausdrücklich BEST EFFORT: fällt IndexedDB aus
+   (Privatmodus, Speicherkontingent), läuft die App auf einer Speicher-Map
+   weiter, `state.dbBroken` wird gesetzt und die Kopfzeile sagt
+   „No local storage — cloud sync only".
+11. **Ungespeicherte Eingaben werden nie kommentarlos verworfen.** Klick
+   daneben, Escape und *Cancel* laufen alle über `rezRequestClose()`; bei
+   Änderungen erscheint das zentrierte Fenster mit *Discard & close* (rot),
+   *Save & close* (grau), *Keep editing* (blau). Im FX Analyst Pro macht
+   `MODAL_GUARDS` in `js/main.js` dasselbe — **ein neues Eingabe-Fenster
+   gehört dort registriert**, statt eine eigene Sonderlösung zu bauen.
 
 ## Was noch fehlt (bewusste Platzhalter)
 
