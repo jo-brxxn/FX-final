@@ -3818,7 +3818,24 @@ function ensureBuiltinSyms(){
   const have=new Set(syms.map(s=>s&&s.id));
   DEF.forEach(d=>{if(!have.has(d.id))syms.push({...d});});
 }
-function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureBuiltinSyms();
+function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
+  // Nutzer-Bugreport 2026-09-01 ("Notizen in mehreren Ordnern sind weg,
+  // obwohl kein zweites Geraet benutzt wurde"): per Playwright reproduziert
+  // (2 Tabs derselben App im selben Browser reichen bereits) - applySnap()
+  // ersetzte research/researchFolders bei JEDEM Aufruf komplett (wie syms
+  // etc.), auch bei adoptExternalState()/cloudPull() (_flipCauseTag='sync').
+  // Ein Tab mit noch veraltetem research-Stand im Speicher (z.B. beim
+  // Adoptieren eines fremden Storage-/Cloud-Updates) verlor dadurch seine
+  // eigene, gerade erst anderswo angelegte Notiz wieder, sobald DIESER Tab
+  // als naechstes selbst speicherte - exakt die Bug-Klasse, vor der der
+  // Kommentar bei mergeScoreHist() weiter unten bereits warnt. Fuer die
+  // beiden PASSIVEN Sync-Pfade (_flipCauseTag==='sync') werden
+  // research.notes/researchFolders deshalb ab jetzt gemergt statt ersetzt -
+  // fuer Undo/Redo/Backup-Restore/Import bleibt es bewusst ein echter
+  // Overwrite (dort IST das Ersetzen die gewollte Aktion).
+  const _mergeSync=_flipCauseTag==='sync';
+  const _prevResNotes=research&&research.notes,_prevResFolders=researchFolders;
+  syms=d.syms;ensureBuiltinSyms();
   // War bisher ein von migrateRubInds() abgeschriebenes Teilstueck (nur die
   // fuenf Sub-Funktionen, OHNE den RUB_IND_REMOVE/Rename/Dedup-Schlussteil) -
   // loadState() (der normale Boot-Pfad) ruft dagegen ueber addMacroRub() die
@@ -3827,7 +3844,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));syms=d.syms;ensureB
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -4170,12 +4187,50 @@ function loadState(){
 // fremden Save und wuerde sonst den Undo-Stack fluten.
 function adoptExternalState(){
   try{
-    const s=localStorage.getItem(SK);if(!s)return;
-    _flipCauseTag='sync';applySnap(s);_flipCauseTag=null;
+    // Nutzer-Bugreport 2026-09-01 (per Playwright reproduziert): der Marker
+    // fxpro_updated wurde bisher am ENDE dieser Funktion frisch neu gelesen,
+    // NACHDEM s=localStorage.getItem(SK) (der eigentliche Inhalt) schon am
+    // ANFANG gelesen wurde. save() schreibt SK IMMER VOR fxpro_updated (siehe
+    // dort) - lief zwischen diesen beiden Lesevorgaengen ein WEITERER
+    // fremder save() vollstaendig durch (SK+Marker beide neu geschrieben),
+    // markierte sich dieser Tab faelschlich als "auf dem neuesten Marker-
+    // Stand", obwohl applySnap() nur den AELTEREN SK-Inhalt (von VOR diesem
+    // zweiten Save) uebernommen hatte. Der naechste storage-Event fuer denselben
+    // (schon "gesehenen") Marker wurde dadurch fuer immer ignoriert
+    // (`if(cur===_lsUpdatedSeen)return;`) - der zwischenzeitlich verpasste
+    // Inhalt (z.B. eine gerade angelegte Notiz) kam nie mehr an, bis
+    // dieser Tab selbst wieder speicherte und dabei GENAU DAS TROTZDEM SCHON
+    // ueberschrieben localStorage weiter mit seinem (nun veralteten) Stand
+    // ueberschrieb. Fix: den Marker VOR s lesen (save()s Schreibreihenfolge
+    // garantiert dann marker<=Inhalt-von-s, nie umgekehrt) und exakt DIESEN
+    // Wert setzen statt am Ende erneut nachzulesen - im schlimmsten Fall
+    // wird ein bereits uebernommener Marker als "noch offen" behandelt (ein
+    // harmloser doppelter Re-Adopt), nie umgekehrt ein NICHT uebernommener
+    // Marker als erledigt verbucht.
+    // Zusaetzlich zur Lesereihenfolge oben (Marker vor Inhalt) noch ein
+    // "Settle-Loop": save() ist zwei GETRENNTE localStorage-Schreibvorgaenge
+    // (SK, dann Marker) - laeuft ein WEITERER fremder save() genau
+    // WAEHREND applySnap() hier verarbeitet (nicht nur zwischen den beiden
+    // Lesevorgaengen oben), waere s trotzdem schon wieder veraltet, wenn wir
+    // fertig sind. Nach applySnap() daher pruefen, ob SK sich seitdem
+    // nochmal geaendert hat, und falls ja, mit dem NEUEN Inhalt erneut
+    // anwenden (research.notes/researchFolders mergen sich dank
+    // mergeResearchNotes/mergeResearchFolders in applySnap() ueber alle
+    // Durchlaeufe hinweg auf, nichts geht dabei verloren) - bis zu 4 Versuche,
+    // danach wird der letzte Stand akzeptiert (ein fremder Tab, der
+    // schneller schreibt als wir hier fertig werden, ist praktisch
+    // ausgeschlossen).
+    let seenMarker,s;
+    for(let guard=0;guard<4;guard++){
+      seenMarker=localStorage.getItem('fxpro_updated');
+      s=localStorage.getItem(SK);if(!s)return;
+      _flipCauseTag='sync';applySnap(s);_flipCauseTag=null;
+      if(localStorage.getItem(SK)===s&&localStorage.getItem('fxpro_updated')===seenMarker)break;
+    }
     try{riskEnvRemindDismissed=localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';renderRiskEnvRemind();}catch(e){}
     try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
     compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);applyCompactView();
-    _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+    _lsUpdatedSeen=seenMarker;
     // Nicht pauschal auf "synchronisiert" setzen: der uebernommene Stand kann
     // Nutzeraenderungen des ANDEREN Tabs enthalten, die noch nicht in der
     // Cloud sind (dessen 1.5s-Push laeuft evtl. noch) - das geteilte
@@ -4205,6 +4260,37 @@ function save(){
   invalidateCmpCache();
   let changed=false;
   try{
+    // Zweite Sicherheitsebene zusaetzlich zum Marker-Guard oben (Nutzer-
+    // Bugreport 2026-09-01, per Playwright bis auf die Millisekunde
+    // nachgewiesen): der Marker-Vergleich kann "luegen", weil ein anderer
+    // Tab SK (den Inhalt) und fxpro_updated (den Marker) als ZWEI GETRENNTE
+    // localStorage-Schreibvorgaenge absetzt, die cross-tab UNTERSCHIEDLICH
+    // schnell sichtbar werden - gemessen wurden >100ms Versatz, bei dem der
+    // NEUE Inhalt hier schon lesbar war, der NEUE Marker aber noch nicht.
+    // Dieser Tab haelt sich dann faelschlich fuer "auf dem neuesten Stand"
+    // (Marker stimmt noch mit dem zuletzt gesehenen ueberein) und ueberschreibt
+    // beim naechsten AUTOMATISCHEN (nicht gerade selbst editierten) save()
+    // die fremde Notiz wieder, OBWOHL deren Inhalt hier zu diesem Zeitpunkt
+    // technisch schon einsehbar gewesen waere. Fix: bei jedem NICHT frisch
+    // selbst editierten save() (>=3s seit der letzten eigenen Aktion, exakt
+    // dieselbe Schwelle wie beim Marker-Guard oben) research.notes/
+    // researchFolders zusaetzlich gegen den GERADE AUF DER PLATTE stehenden
+    // Inhalt mergen (mergeResearchNotes/-Folders, dieselben Merge-Funktionen
+    // wie in applySnap() bei adoptExternalState()/cloudPull()) - unabhaengig
+    // vom Marker-Ergebnis, macht das Ueberschreiben fremder Notizen strukturell
+    // unmoeglich, egal wie die beiden Schreibvorgaenge des anderen Tabs
+    // zeitlich bei uns ankommen.
+    if(Date.now()-_lastUserEditTs>=3000){
+      try{
+        const onDisk=JSON.parse(localStorage.getItem(SK)||'null');
+        if(onDisk&&onDisk.research&&Array.isArray(onDisk.research.notes)){
+          research.notes=mergeResearchNotes(onDisk.research.notes,research.notes);
+        }
+        if(onDisk&&Array.isArray(onDisk.researchFolders)){
+          researchFolders=mergeResearchFolders(onDisk.researchFolders,researchFolders);
+        }
+      }catch(e){}
+    }
     const s=snap();
     // fxpro_updated nur bumpen, wenn sich der Inhalt WIRKLICH geändert hat -
     // save() läuft auch aus reinen Sicherheitsnetzen heraus (15s-Intervall,
@@ -11018,6 +11104,33 @@ function mergeScoreHist(base,override){
   });
   return out;
 }
+// Gleiches Merge-statt-Overwrite-Prinzip wie mergeScoreHist() oben, jetzt fuer
+// research.notes/researchFolders (Nutzer-Bugreport 2026-09-01, siehe
+// ausfuehrlicher Kommentar bei applySnap()). Notizen/Ordner haben eine
+// eindeutige id -> Vereinigung beider Seiten, bei einer Kollision (gleiche
+// id auf beiden Seiten) gewinnt bei Notizen die zuletzt bearbeitete (n.up),
+// bei Ordnern (kein Zeitstempel vorhanden) einfach "override". Wie bei
+// mergeScoreHist bewusst KEIN echtes Loeschen ueber Geraete/Tabs hinweg -
+// eine ueber delResNote()/researchDelFolder() geloeschte Notiz/Ordner kann
+// dadurch aus einem noch nicht synchronisierten zweiten Tab/Geraet
+// zurueckkehren. Das ist ein bewusster, bereits bei scoreHist akzeptierter
+// Kompromiss: unendlich besser als der zuvor gemeldete Totalverlust.
+function mergeResearchNotes(base,override){
+  const map=new Map();
+  (base||[]).forEach(n=>{if(n&&n.id)map.set(n.id,n);});
+  (override||[]).forEach(n=>{
+    if(!n||!n.id)return;
+    const ex=map.get(n.id);
+    if(!ex||String(n.up||'')>=String(ex.up||''))map.set(n.id,n);
+  });
+  return Array.from(map.values());
+}
+function mergeResearchFolders(base,override){
+  const map=new Map();
+  (base||[]).forEach(f=>{if(f&&f.id)map.set(f.id,f);});
+  (override||[]).forEach(f=>{if(f&&f.id)map.set(f.id,f);});
+  return Array.from(map.values());
+}
 function rubScoreByName(sym,name){const r=(sym&&sym.rubrics||[]).find(x=>x.name===name);return r?Math.round(rubScore(r)*10)/10:0;}
 // Assets fuer Score-History/Trends: alle FX-Waehrungen plus die vorhandenen
 // Non-FX-Assets (Gold, Silber, Oel, BTC, Indizes) - in stabiler Reihenfolge.
@@ -16605,7 +16718,7 @@ Object.assign(window,{
   DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
   CMP_RUBS,CMP_RUB_ICON,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
   cmpSelectAll,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,
-  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,rubScoreByName,trendAssets,
+  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,mergeResearchNotes,mergeResearchFolders,rubScoreByName,trendAssets,
   recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,

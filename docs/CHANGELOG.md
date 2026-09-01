@@ -8335,3 +8335,93 @@ bestehende Detail-Karte mit korrektem Inhalt, erneuter Klick auf denselben
 Wochen-Balken klappt wieder zu, SVG-`<title>`-Tooltips liefern korrekten
 Text. `node check/all.js` komplett gruen (13 Waechter). Keine Score-Formel
 angefasst (nur die Anzeige einer bereits bestehenden Zahl).
+
+## 2026-09-01 — Kritischer Bugfix: Notizen in mehreren Ordnern verschwanden dauerhaft (Cross-Tab-Sync-Race)
+
+Nutzer-Bugreport (dringend, Datenverlust): *"Ich habe Notizen geschrieben
+und diese in mehrere Ordner abgelegt, jetzt sind sie weg - das ist nur mit
+Notizen in mehreren Ordnern passiert."* Erste Rueckfrage ergab: Cloud-Sync
+ist auf mehreren Geraeten aktiv, die Notiz war nach einem Neuladen noch da,
+verschwand aber SPAETER von selbst (kein zweites Geraet dazwischen benutzt) -
+und liess sich mit einer frisch angelegten Mehrfach-Ordner-Notiz erneut
+ausloesen.
+
+**Reproduktion (Pflicht laut der eigenen Regel weiter oben in dieser Datei,
+"Bugfixes: IMMER erst reproduzieren"):** zwei zuerst gepruefte, plausible
+Theorien (die `seedAssetBehaviorNotes()`-Aufraeumlogik der V2->V3-Migration;
+ein einfacher Erstell->Speichern->Neuladen-Zyklus) wurden je per
+Playwright-Skript nachgebaut und BEIDE widerlegt - die Notiz ueberlebte in
+beiden Faellen intakt. Der tatsaechliche Ausloeser brauchte gar kein zweites
+GERAET, nur einen zweiten TAB derselben App im selben Browser (z.B. ein
+liegen gebliebener alter Tab, oder die App parallel als PWA-Icon UND im
+Browser offen): Tab A bleibt im Hintergrund offen, Tab B legt eine Notiz mit
+2 Ordnern an. Mit Playwright (zwei `page`-Objekte im selben Browser-Context,
+`http://127.0.0.1:8935`, echte `localStorage`-`storage`-Events) liess sich
+der Verlust ueber `save()`/`adoptExternalState()` zuverlaessig (bei einem
+eng getakteten Ablauf nahezu 100%) nachstellen.
+
+**Root Cause 1 - kein Merge, nur Overwrite:** `applySnap()` (der gemeinsame
+Trichter fuer Cloud-Pull/Multi-Tab-Adopt/Undo/Redo/Backup/Import) ersetzte
+`research`/`researchFolders` bei JEDEM Aufruf komplett, genau wie `syms`
+etc. - anders als `scoreHist`, fuer das schon frueher extra ein
+`mergeScoreHist()` gebaut wurde (siehe Kommentar dort: "die beiden Geraete
+haben typischerweise DISJUNKTE Tage angesammelt ... ein Overwrite wuerde die
+jeweils andere Historie loeschen"). Fuer Notizen gilt exakt dasselbe Muster,
+war bisher aber nicht beruecksichtigt.
+
+**Root Cause 2 - der Marker-Guard kann durch Cross-Tab-IPC-Verzoegerung
+"luegen":** `save()`s Multi-Tab-Schutz vergleicht nur den Zeitstempel-Marker
+`fxpro_updated` gegen den zuletzt gesehenen Wert, um zu entscheiden
+"schreibe ich blind druber, oder adoptiere ich erst fremden Stand". Per
+Playwright bis auf die Millisekunde nachgewiesen: ein anderer Tab schreibt
+den eigentlichen Inhalt (`fxpro_v1`) und den Marker (`fxpro_updated`) als
+ZWEI GETRENNTE `localStorage`-Aufrufe - diese werden cross-tab
+UNTERSCHIEDLICH schnell sichtbar (gemessene Faelle mit >100ms Versatz, bei
+denen der neue Inhalt hier schon lesbar war, der neue Marker aber noch
+nicht). Ein Tab, der zufaellig GENAU in diesem Fenster seinen eigenen
+automatischen (nicht selbst editierten) `save()` ausloest, haelt sich fuer
+"auf dem neuesten Stand" (Marker stimmt noch) und ueberschreibt den
+Plattenstand mit seinem eigenen, aelteren `research` - die fremde Notiz ist
+weg, ohne dass irgendein Fehler sichtbar wird.
+
+**Fix (drei Ebenen, alle in `js/main.js`):**
+1. `mergeResearchNotes(base,override)` / `mergeResearchFolders(base,override)`
+   (neu, neben `mergeScoreHist()`): Vereinigung nach `id`, bei einer
+   Notiz-Kollision gewinnt die zuletzt bearbeitete (`n.up`). Wie bei
+   `mergeScoreHist` bewusst kein echtes geraete-/tab-uebergreifendes Loeschen
+   (eine ueber `delResNote()` geloeschte Notiz kann aus einem noch nicht
+   synchronisierten Tab zurueckkehren) - ein bewusster, bereits akzeptierter
+   Kompromiss, unendlich besser als der vorher gemeldete Totalverlust.
+2. `applySnap()`: fuer die beiden PASSIVEN Sync-Pfade (`_flipCauseTag==='sync'`,
+   also `adoptExternalState()`/`cloudPull()`) werden `research.notes`/
+   `researchFolders` jetzt gemergt statt ersetzt. Fuer Undo/Redo/
+   Backup-Restore/Import bleibt es bewusst ein echter Overwrite (dort IST
+   das Ersetzen die gewollte Aktion).
+3. `adoptExternalState()`: liest den Marker jetzt VOR dem Inhalt (statt wie
+   bisher danach) und mit einem bis zu 4-fachen Settle-Loop, der nach
+   `applySnap()` prueft, ob sich Inhalt/Marker seitdem nochmal geaendert
+   haben. `save()`: als zweite, vom Marker-Timing UNABHAENGIGE
+   Sicherheitsebene wird bei jedem automatischen (>=3s seit der letzten
+   eigenen Aktion, dieselbe Schwelle wie beim bestehenden Marker-Guard)
+   `save()` zusaetzlich der GERADE AUF DER PLATTE stehende Research-Stand
+   direkt vor dem Schreiben gemergt - unabhaengig davon, was der
+   Marker-Vergleich sagt, macht das ein Ueberschreiben fremder Notizen
+   strukturell unmoeglich.
+
+**Geprueft:** `node --check` (js/main.js als ESM). Drei unabhaengige
+Playwright-Reproduktionen (Zwei-Tabs-Race mit `waitForTimeout`, Zwei-Tabs-Race
+mit sofortigem `save()` ohne Wartezeit/staerkster Fall, Multi-Event-Trace mit
+Zeitstempeln) liefen VOR dem Fix zuverlaessig rot (Notiz weg in 90-100% der
+Laeufe je nach Szenario) und NACH dem Fix in insgesamt 43/43 Wiederholungen
+gruen. `node check/all.js --static` gruen; voller `node check/all.js`
+(inkl. Browser-Checks) ebenfalls gepruft. Keine Aenderung an `index.html` in
+diesem Fix (nur `js/main.js`) - VERSION-CHECK-Banner daher unveraendert,
+laut `docs/workflow.md` nur bei `index.html`-Aenderungen Pflicht.
+
+**Zur Wiederherstellung bereits verlorener Notizen:** kein direkter
+Zugriff auf die Daten des Nutzers moeglich. Empfohlener Weg: Einstellungen
+-> "Backups"-Button -> `openBackupM()` zeigt bis zu 5 automatische lokale
+Schnappschuesse (alle 10 Minuten + vor jedem Cloud-Download,
+`localStorage`-Schluessel `fxpro_backups`) mit "Wiederherstellen"-Option -
+falls einer davon von VOR dem beobachteten Verschwinden stammt, laesst sich
+die Notiz darueber zurueckholen.
