@@ -15,15 +15,33 @@ const { execSync } = require('child_process');
 const F = [];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fxcheck-'));
 
-const html = fs.readFileSync('index.html', 'utf8');
-const bloecke = [...html.matchAll(/<script((?:\s[^>]*)?)>([\s\S]*?)<\/script>/g)]
-  .filter(m => !/\ssrc=/.test(m[1]))
-  .map(m => m[2]);
-if (!bloecke.length) F.push('Keine Inline-<script>-Bloecke gefunden - Filter kaputt?');
-const js = path.join(tmp, 'app.js');
-fs.writeFileSync(js, bloecke.join('\n;\n'));
-try { execSync(`node --check ${js}`, { stdio: 'pipe' }); }
-catch (e) { F.push('index.html JS: ' + String(e.stderr || e.message).slice(0, 600)); }
+// ⚠ BEIDE Seiten dieses Repos pruefen, nicht nur index.html: seit dem
+// 2026-09-01 liegt hier eine zweite, eigenstaendige App (Perfect Rezept,
+// rezept.html + js/rezept/*). Ein Waechter, der nur index.html kennt, waere
+// fuer die Haelfte des ausgelieferten Codes blind - genau der Fehler, der
+// bei der Modul-Aufteilung schon einmal passiert ist (siehe check/README.md).
+const SEITEN = ['index.html', 'rezept.html'].filter(f => fs.existsSync(f));
+let bloecke = [];
+SEITEN.forEach(datei => {
+  const html = fs.readFileSync(datei, 'utf8');
+  const teil = [...html.matchAll(/<script((?:\s[^>]*)?)>([\s\S]*?)<\/script>/g)]
+    .filter(m => !/\ssrc=/.test(m[1]))
+    .map(m => m[2]);
+  if (!teil.length) F.push(`Keine Inline-<script>-Bloecke in ${datei} gefunden - Filter kaputt?`);
+  bloecke = bloecke.concat(teil);
+  const js = path.join(tmp, datei.replace(/\W/g, '_') + '.js');
+  fs.writeFileSync(js, teil.join('\n;\n'));
+  try { execSync(`node --check ${js}`, { stdio: 'pipe' }); }
+  catch (e) { F.push(datei + ' JS: ' + String(e.stderr || e.message).slice(0, 600)); }
+});
+// Die ES-Module der Rezept-App (eigenes Verzeichnis, wird von der
+// js/*.js-Schleife der uebrigen Waechter nicht miterfasst).
+if (fs.existsSync('js/rezept')) {
+  fs.readdirSync('js/rezept').filter(f => f.endsWith('.js')).forEach(f => {
+    try { execSync(`node --check js/rezept/${f}`, { stdio: 'pipe' }); }
+    catch (e) { F.push(`js/rezept/${f}: ` + String(e.stderr || e.message).slice(0, 600)); }
+  });
+}
 
 let yaml = null;
 try { yaml = require('js-yaml'); } catch (e) { /* Fallback ueber python3 */ }

@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FX Analyst Pro</title>
+<!-- ══ APP-WEICHE (Nutzer-Wunsch 2026-09-01) ═════════════════════════════
+     Dieses Repo liefert ZWEI eigenstaendige Apps aus:
+       index.html   -> FX Analyst Pro
+       rezept.html  -> Perfect Rezept
+     Beim allerersten Oeffnen erscheint unten das Auswahlfenster
+     (#appChoiceOv); die Wahl wird PRO GERAET in localStorage gemerkt
+     (dmfx_app_choice) und bewusst NICHT per Cloud synchronisiert - sonst
+     wuerde das iPad dem Handy seine App aufzwingen. Gewechselt wird
+     jederzeit ueber Einstellungen -> Apps, in BEIDEN Apps.
+     ⚠ Diese Weiche muss VOR allem anderen laufen: sonst bootet erst der
+     komplette FX Analyst Pro (Module, Daten-Fetches, Intro), nur um
+     danach weggeworfen zu werden. -->
+<script>
+(function(){
+  try{
+    if(localStorage.getItem('dmfx_app_choice')==='rezept'){
+      location.replace('rezept.html');
+    }
+  }catch(e){}
+})();
+</script>
 <!-- PWA/Offline: Manifest + Icons + Service-Worker-Registrierung (siehe
      sw.js) - macht die App installierbar und offline nutzbar; Aenderungen
      landen wie bisher zuerst in localStorage und werden per Cloud-Sync
@@ -3659,6 +3680,83 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 <body>
 
 
+<!-- ══ APP-AUSWAHL ════════════════════════════════════════════════════════
+     Erscheint NUR beim allerersten Oeffnen auf diesem Geraet (siehe die
+     Weiche im <head>). Liegt ueber Intro UND PIN-Sperre: die Auswahl ist
+     reines Routing und braucht keine Daten - erst danach entscheidet die
+     gewaehlte App, was sie verlangt.
+     Eigenes, gekapseltes CSS: das Fenster gehoert keiner der beiden Apps,
+     es steht davor. -->
+<style>
+#appChoiceOv{position:fixed;inset:0;z-index:100050;display:none;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(ellipse 70% 55% at 30% 10%,rgba(60,42,32,.55),transparent 70%),
+             radial-gradient(ellipse 60% 50% at 80% 90%,rgba(20,32,60,.55),transparent 70%),#0f1219}
+#appChoiceOv.on{display:flex}
+.ac-box{width:100%;max-width:760px;text-align:center}
+.ac-h{font-size:12px;font-weight:800;letter-spacing:2.4px;text-transform:uppercase;color:#8b94a4;margin-bottom:8px}
+.ac-t{font-size:27px;font-weight:800;color:#f4f6fa;letter-spacing:-.3px;margin-bottom:26px}
+.ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:620px){.ac-grid{grid-template-columns:1fr}.ac-t{font-size:22px}}
+.ac-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px 20px;border-radius:16px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:#e8ebf1;font-family:inherit;
+  transition:transform .16s ease,border-color .16s ease,background .16s ease}
+@media (hover:hover){.ac-card:hover{transform:translateY(-3px);background:rgba(255,255,255,.08)}}
+.ac-card-fx{--ac:#4F9BFF}
+.ac-card-rez{--ac:#D98A54}
+@media (hover:hover){.ac-card:hover{border-color:var(--ac)}}
+.ac-ic{width:60px;height:60px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--ac)}
+.ac-ic svg{width:29px;height:29px}
+.ac-nm{font-size:18px;font-weight:800;letter-spacing:.2px}
+.ac-ds{font-size:12.5px;color:#9aa3b2;line-height:1.5;max-width:230px}
+.ac-note{margin-top:22px;font-size:11.5px;color:#767f8e;line-height:1.6}
+</style>
+<div id="appChoiceOv">
+  <div class="ac-box">
+    <div class="ac-h">Jonathan Brinkmann</div>
+    <div class="ac-t">Which app do you want to open?</div>
+    <div class="ac-grid">
+      <button class="ac-card ac-card-fx" onclick="chooseApp('fx')">
+        <span class="ac-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 5-7"/><path d="M14 7h4v4"/><path d="M3 21h18"/></svg></span>
+        <span class="ac-nm">FX Analyst Pro</span>
+        <span class="ac-ds">Currency scoring, indicators, calendar, set-ups and research.</span>
+      </button>
+      <button class="ac-card ac-card-rez" onclick="chooseApp('rezept')">
+        <span class="ac-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h13a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/><path d="M12 8h4"/><path d="M12 12h4"/></svg></span>
+        <span class="ac-nm">Perfect Rezept</span>
+        <span class="ac-ds">Your own recipes with photos, timings and preparation steps.</span>
+      </button>
+    </div>
+    <div class="ac-note">This device remembers your choice. Switch any time under Settings &#8594; Apps.</div>
+  </div>
+</div>
+<script>
+// Nur beim ALLERERSTEN Oeffnen sichtbar. Steht bereits eine Wahl fest, ist
+// entweder oben schon nach rezept.html umgeleitet worden oder es bleibt bei
+// dieser Seite - in beiden Faellen kommt das Fenster gar nicht erst hoch.
+(function(){
+  var choice=null;
+  try{choice=localStorage.getItem('dmfx_app_choice');}catch(e){}
+  if(!choice){
+    var ov=document.getElementById('appChoiceOv');
+    if(ov)ov.classList.add('on');
+  }
+})();
+function chooseApp(which){
+  try{localStorage.setItem('dmfx_app_choice',which);}catch(e){}
+  if(which==='rezept'){location.href='rezept.html';return;}
+  var ov=document.getElementById('appChoiceOv');
+  if(ov)ov.remove();
+}
+// Einstellungen -> Apps -> "Switch". Bewusst hier oben definiert (normales
+// Inline-Skript = globale Funktion): js/main.js ist ein ES-Modul, eine dort
+// deklarierte Funktion waere fuer das onclick-Attribut unsichtbar, ohne sie
+// eigens ueber die window-Bruecke zu exportieren.
+function switchToRezept(){
+  try{localStorage.setItem('dmfx_app_choice','rezept');}catch(e){}
+  location.href='rezept.html';
+}
+</script>
+
 <!-- INTRO-ANIMATION -->
 <!-- Nutzer-Wunsch 2026-08-04 (Foto+Beschreibung): der alte Klick-zum-
      Wegklicken-Shard-Effekt ist komplett ersetzt durch ein interaktives
@@ -3774,11 +3872,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-461 - Papierkorb fuer Notizen/Ordner (Nutzer-Wunsch 2026-09-01): geloeschte Notizen und Ordner (delResNote/researchDelFolder) landen jetzt 30 Tage im Papierkorb (Einstellungen -> 'Trash') statt sofort weg zu sein, mit Restdauer je Eintrag und Einzel-Wiederherstellung. Ausserdem eine zweite, hartnaeckigere Runde am Cross-Tab-Notizen-Datenverlust: navigator.locks serialisiert jetzt jeden save()/cloudPull()-Schreibzyklus tabuebergreifend, schliesst die zuvor per Playwright unter Last weiterhin reproduzierbare Race strukturell."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-462 - App-Auswahl beim ersten Oeffnen (FX Analyst Pro / Perfect Rezept), gemerkt pro Geraet, plus Einstellungen -> Apps zum Wechseln. Perfect Rezept ist eine eigenstaendige zweite App (rezept.html + js/rezept/*) und teilt sich mit dem FX Analyst Pro nur Repo, Service Worker und Supabase-Zugangsdaten."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-461</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-462</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4238,6 +4336,15 @@ function introLogin(){
          ("Data"), Nutzer-Wunsch per /goal ("pack data in die
          Einstellungen") - jetzt hier als erste Zeile, gleiches .set-row-
          Muster wie jede andere Einstellungs-Zeile in diesem Modal. -->
+    <!-- App-Wechsel: dieses Repo liefert zwei eigenstaendige Apps aus
+         (FX Analyst Pro = index.html, Perfect Rezept = rezept.html). Die
+         Wahl beim ersten Oeffnen wird pro Geraet gemerkt - diese Zeile ist
+         der Weg zurueck, damit man in keiner der beiden Apps feststeckt. -->
+    <div class="set-sec">Apps</div>
+    <div class="set-row" style="flex-wrap:wrap">
+      <span class="set-row-txt">Switch to Perfect Rezept<span class="set-row-sub">separate app in the same place — your recipes with photos and timings</span></span>
+      <button class="btn" onclick="switchToRezept()">Switch</button>
+    </div>
     <div class="set-sec">Data</div>
     <div class="set-row" style="flex-wrap:wrap">
       <span class="set-row-txt">Export, import &amp; local backups</span>

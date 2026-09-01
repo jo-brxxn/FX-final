@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" data-rez-theme="clay">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Perfect Rezept</title>
+<!-- ══════════════════════════════════════════════════════════════════════
+     PERFECT REZEPT - EIGENSTAENDIGE APP
+     ══════════════════════════════════════════════════════════════════════
+     ⚠ Das hier ist NICHT der FX Analyst Pro. Beide Apps liegen im selben
+     Repo und teilen sich Service Worker, Icons und die Supabase-Zugangs-
+     daten - sonst NICHTS. Kein gemeinsames CSS, kein gemeinsames Skript,
+     kein gemeinsamer Zustand. Wer am FX Analyst Pro arbeitet, muss diese
+     Datei nicht lesen (und umgekehrt). Konventionen: docs/rezept.md.
+
+     Die STRUKTUR (Kopfzeile, dunkle Nav-Sidebar links, Seitenbereich rechts,
+     Karten, Modals) ist bewusst 1:1 vom FX Analyst Pro uebernommen - der
+     Nutzer will dieselbe Bedienung. Uebernommen sind die Bauteile, nicht
+     die Datei: Farben laufen hier ueber einen eigenen, braunen Token-Satz.
+
+     Alles auf der Oberflaeche ist ENGLISCH (feste Projektregel, wie im
+     FX Analyst Pro).
+     ══════════════════════════════════════════════════════════════════════ -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#3B2A21">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+// ⚠ LAEUFT VOR DEM ERSTEN PIXEL. Zwei Aufgaben:
+// 1. Wer hier landet, hat "Perfect Rezept" gewaehlt - Wahl festhalten.
+// 2. Das gespeicherte Theme sofort setzen, sonst blitzt eine Palette auf,
+//    die der Nutzer gar nicht ausgewaehlt hat (FOUC).
+(function(){
+  try{localStorage.setItem('dmfx_app_choice','rezept');}catch(e){}
+  try{
+    var t=localStorage.getItem('rez_theme');
+    if(t)document.documentElement.setAttribute('data-rez-theme',t);
+  }catch(e){}
+})();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+*,*::before,*::after{font-family:var(--ff-text)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+
+/* ── SKALEN (uebernommen aus docs/design-system.md - dieselben sieben
+     Schriftstufen und dasselbe 4px-Abstandsraster wie im FX Analyst Pro,
+     damit sich beide Apps trotz anderer Farben gleich "anfuehlen"). ── */
+:root{
+  --ff-text:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-num:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+  --ff-title:var(--ff-text);
+  --fs-hero:30px;--fs-xl:24px;--fs-lg:17px;--fs-md:15px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:10px;
+  --gap-block:14px;
+  --r:12px;--rs:8px;--rss:6px;
+  --shadow-card:0 1px 3px rgba(60,40,26,.10);
+  --shadow-pop:0 6px 22px rgba(60,40,26,.18);
+}
+
+/* ══ THEMES ═══════════════════════════════════════════════════════════════
+   Vier braune Paletten, umschaltbar in den Einstellungen (Nutzer-Wunsch:
+   "ich würde einfach mal die ganzen Designs ausprobieren"). Jede besteht aus
+   GENAU zwei Bloecken:
+     :root[data-rez-theme=X]   - die helle Inhaltsflaeche
+     [data-rez-theme=X] .hdr,#rezNav - dieselben Variablen, fuer den dunklen
+                                       Chrome-Bereich umgedreht
+   ⚠ Genau dasselbe Muster wie im FX Analyst Pro (gescopte Variablen-
+   Ueberschreibung statt Einzelstellen anfassen, siehe docs/navigation.md):
+   jede Komponente faerbt ausschliesslich ueber var(--...), ein Theme-Wechsel
+   ist deshalb ein reiner Token-Tausch und kein Umbau.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1) WARM CLAY (Standard) ──────────────────────────────────────────── */
+:root[data-rez-theme="clay"]{
+  --chrome-bg:#3B2A21;
+  --bg0:#F3EBE1;--bg1:#F8F3ED;--bg2:#FFFDFA;--bg3:#F6EFE7;--bg4:#EDE2D6;--bg5:#E1D2C0;
+  --bd:rgba(88,60,42,.16);--bd2:rgba(88,60,42,.30);
+  --t0:#2A1D16;--t1:#4A382C;--t2:#63503F;--t3:#6F5A49;
+  --accent:#A85630;--accent-soft:rgba(168,86,48,.12);
+  --star:#C98A18;--danger:#A8362F;--ok:#3C6E3F;
+}
+[data-rez-theme="clay"] .hdr,[data-rez-theme="clay"] #rezNav{
+  --bg1:#4A3529;--bg2:#4A3529;--bg3:#54402F;--bg4:#5F4A37;--bg5:#6B5440;
+  --bd:rgba(240,215,190,.16);--bd2:rgba(240,215,190,.28);
+  --t0:#FBF5EF;--t1:#E7D9CC;--t2:#CBB5A2;--t3:#B49E8B;
+  --accent:#E8945C;
+}
+/* ── 2) MOCHA & CREAM ─────────────────────────────────────────────────── */
+:root[data-rez-theme="mocha"]{
+  --chrome-bg:#4A3A30;
+  --bg0:#F0E8DE;--bg1:#F6F0E9;--bg2:#FFFFFF;--bg3:#F4EDE5;--bg4:#EAE0D4;--bg5:#DED0BF;
+  --bd:rgba(80,60,45,.15);--bd2:rgba(80,60,45,.28);
+  --t0:#33261E;--t1:#4E3E33;--t2:#6A5747;--t3:#73604F;
+  --accent:#8C5F3C;--accent-soft:rgba(140,95,60,.12);
+  --star:#BE8A20;--danger:#A8362F;--ok:#3C6E3F;
+}
+[data-rez-theme="mocha"] .hdr,[data-rez-theme="mocha"] #rezNav{
+  --bg1:#5A4739;--bg2:#5A4739;--bg3:#65503F;--bg4:#705947;--bg5:#7C644F;
+  --bd:rgba(240,220,200,.16);--bd2:rgba(240,220,200,.28);
+  --t0:#FBF6F1;--t1:#E8DCD1;--t2:#CDBBA9;--t3:#B7A390;
+  --accent:#DFA672;
+}
+/* ── 3) PAPER COOKBOOK (editorial, Serifen-Titel) ─────────────────────── */
+:root[data-rez-theme="paper"]{
+  --chrome-bg:#2E241E;
+  --ff-title:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,'Times New Roman',serif;
+  --bg0:#EFE7DA;--bg1:#F6F1E7;--bg2:#FBF7F0;--bg3:#F2EBDF;--bg4:#E9DFCF;--bg5:#DCCFBA;
+  --bd:rgba(70,55,35,.17);--bd2:rgba(70,55,35,.30);
+  --t0:#241B12;--t1:#413225;--t2:#5C4A38;--t3:#665342;
+  --accent:#8A5626;--accent-soft:rgba(138,86,38,.12);
+  --star:#B5860F;--danger:#A0332C;--ok:#3A6A3D;
+}
+[data-rez-theme="paper"] .hdr,[data-rez-theme="paper"] #rezNav{
+  --bg1:#3D3027;--bg2:#3D3027;--bg3:#493A2F;--bg4:#554438;--bg5:#614E40;
+  --bd:rgba(235,215,190,.16);--bd2:rgba(235,215,190,.28);
+  --t0:#FAF4EC;--t1:#E6D9C9;--t2:#C9B69F;--t3:#B29E87;
+  --accent:#D9A05B;
+}
+/* ── 4) LIGHT BROWN (heller Chrome - bricht bewusst mit dem FX-Muster) ── */
+:root[data-rez-theme="sand"]{
+  --chrome-bg:#E3D5C3;
+  --bg0:#FAF5EF;--bg1:#F5EEE5;--bg2:#FFFFFF;--bg3:#F7F1EA;--bg4:#EFE6DA;--bg5:#E2D4C2;
+  --bd:rgba(90,65,45,.16);--bd2:rgba(90,65,45,.30);
+  --t0:#38281C;--t1:#4F3B2C;--t2:#67523F;--t3:#705B47;
+  --accent:#8F5B32;--accent-soft:rgba(143,91,50,.12);
+  --star:#B5860F;--danger:#A0332C;--ok:#3A6A3D;
+}
+[data-rez-theme="sand"] .hdr,[data-rez-theme="sand"] #rezNav{
+  --bg1:#D9C9B4;--bg2:#D9C9B4;--bg3:#D2C0A8;--bg4:#CBB79C;--bg5:#C2AC8E;
+  --bd:rgba(90,65,45,.22);--bd2:rgba(90,65,45,.34);
+  --t0:#2E2016;--t1:#452F1F;--t2:#5B4331;--t3:#65503C;
+  --accent:#8F5B32;
+}
+
+body{
+  font-family:var(--ff-text);background-color:var(--bg0);color:var(--t0);
+  height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;
+  font-variant-numeric:tabular-nums}
+
+/* ══ KOPFZEILE (Aufbau 1:1 wie FX Analyst Pro) ════════════════════════ */
+.hdr{background:var(--chrome-bg);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;align-items:center;gap:14px;color:var(--t0)}
+.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+.logo-a{font-weight:900;color:var(--accent);font-size:1.05em;letter-spacing:.5px;font-family:var(--ff-title)}
+.logo-b{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
+.hdr-search{flex:0 1 320px;min-width:0;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
+@media (hover:hover){.hdr-search:hover{border-color:var(--bd2);color:var(--t1)}}
+.hdr-search-lbl{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-status{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;white-space:nowrap}
+.saved{flex-shrink:0;font-size:11px;color:var(--t2);font-family:var(--ff-num)}
+.hdr-r{flex-shrink:0;margin-left:auto;display:flex;gap:5px;align-items:center}
+.hdr-r .btn{background:transparent;border-color:transparent;color:var(--t2)}
+@media (hover:hover){.hdr-r .btn:hover:not(:disabled){background:var(--bg3);border-color:var(--bd);color:var(--t0)}}
+.profile-btn{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
+@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+.profile-circle svg{width:18px;height:18px}
+/* Versions-Banner - eigenes Gegenstueck zum VERSION-CHECK des FX Analyst
+   Pro. Muss bei JEDER Aenderung an rezept.html/js/rezept/* hochgezaehlt
+   werden (erzwungen von check/rules.js). */
+.hdr-livebanner{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-family:var(--ff-num);color:var(--t2);min-width:0;overflow:hidden}
+.hlb-dot{width:6px;height:6px;border-radius:50%;background:#D93A34;display:block;animation:hlbPulse 2.2s ease-in-out infinite}
+@keyframes hlbPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hlb-lbl{font-weight:800;letter-spacing:.6px;color:#D93A34}
+.hlb-sep{opacity:.5}
+.hlb-name{font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis}
+
+/* ══ APP-SHELL + NAV-SIDEBAR (1:1 uebernommene Geometrie) ═════════════ */
+.app-shell{flex:1;display:flex;min-height:0}
+#rezNav{width:max-content;min-width:170px;max-width:230px;flex-shrink:0;background:var(--chrome-bg);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 6px;display:flex;flex-direction:column;gap:1px;color:var(--t0);-webkit-overflow-scrolling:touch}
+#rezPageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
+.np{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
+.np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
+.np-ic svg{width:17px;height:17px}
+.np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
+.np-count{flex:none;font-size:10.5px;font-weight:700;color:var(--t3);font-family:var(--ff-num)}
+@media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
+.np.on{color:var(--t0);background:var(--bg3);border-left-color:var(--accent);font-weight:700}
+.np.on .np-ic{color:var(--accent)}
+@media (max-width:760px){
+  #rezNav{min-width:56px;max-width:56px;width:56px}
+  .np-lbl,.np-count{display:none}
+  .np{justify-content:center;padding:9px 0}
+}
+.pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;min-width:0;-webkit-overflow-scrolling:touch}
+.page-fade-in{animation:pgIn .22s ease both}
+@keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ptitle{font-size:28px;font-weight:800;letter-spacing:-.3px;margin-bottom:2px;font-family:var(--ff-title)}
+.psub{font-size:var(--fs-base);color:var(--t2);margin-bottom:var(--gap-block)}
+
+/* ══ BUTTONS / FORMULARE ═════════════════════════════════════════════ */
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 10px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4;outline:none;display:inline-flex;align-items:center;gap:6px}
+@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:var(--accent);color:var(--accent)}}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (hover:hover){.btn-primary:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:#fff;filter:brightness(1.09)}}
+.btn-danger{color:var(--danger);border-color:var(--bd2)}
+@media (hover:hover){.btn-danger:hover:not(:disabled){background:rgba(168,54,47,.1);border-color:var(--danger);color:var(--danger)}}
+.m-inp,.m-sel,.m-area{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px}
+.m-area{min-height:96px;resize:vertical;line-height:1.55}
+.m-inp:focus,.m-sel:focus,.m-area:focus{border-color:var(--accent)}
+.m-inp::placeholder,.m-area::placeholder{color:var(--t3)}
+.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.m-btns{display:flex;gap:7px;justify-content:flex-end;margin-top:4px}
+
+/* ══ MODALS (Aufbau wie FX Analyst Pro) ══════════════════════════════ */
+.ov{position:fixed;inset:0;background:rgba(40,26,17,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
+@keyframes ovFadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+@keyframes modalPopIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal h3{font-size:var(--fs-lg);font-weight:800;color:var(--t0);margin-bottom:12px;font-family:var(--ff-title)}
+.modal-wide{max-width:min(840px,96vw)}
+
+/* ══ DASHBOARD-KARTEN (Overview) ═════════════════════════════════════ */
+.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-block);align-items:start}
+@media (max-width:1000px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:660px){.ov-grid{grid-template-columns:1fr}}
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
+@media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
+.dw-click{cursor:pointer}
+.dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:11px}
+.dw-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);display:flex;align-items:center;gap:8px}
+.dw-title svg{width:16px;height:16px;color:var(--accent)}
+.dw-body{font-size:var(--fs-base);color:var(--t2);line-height:1.55}
+.dw-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 10px;border:1px dashed var(--bd2);border-radius:var(--rs);background:var(--bg3);color:var(--t3);font-size:var(--fs-sm);text-align:center}
+.dw-ph-big{font-size:var(--fs-xl);color:var(--t2);font-weight:700;font-family:var(--ff-title)}
+.pill{display:inline-block;font-size:var(--fs-2xs);font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 7px}
+
+/* ══ REZEPT-RASTER ═══════════════════════════════════════════════════ */
+.rez-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:var(--gap-block)}
+.rez-search{flex:1 1 220px;min-width:160px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 11px}
+.rez-search input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:13px;color:var(--t0);font-family:var(--ff-text)}
+.rez-search svg{width:15px;height:15px;color:var(--t3);flex-shrink:0}
+.rez-sel{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t1);font-size:12px;font-family:var(--ff-num);cursor:pointer;outline:none}
+.rez-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--gap-block)}
+.tag-chip{font-size:var(--fs-sm);font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);cursor:pointer;transition:all .14s;font-family:var(--ff-text)}
+@media (hover:hover){.tag-chip:hover{border-color:var(--accent);color:var(--accent)}}
+.tag-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.rez-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-block);align-items:start}
+@media (max-width:1000px){.rez-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.rez-grid{grid-template-columns:1fr}}
+.rez-card{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd);background:var(--bg2);cursor:pointer;box-shadow:var(--shadow-card);transition:transform .14s ease,box-shadow .14s ease,border-color .14s}
+@media (hover:hover){.rez-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-pop);border-color:var(--bd2)}}
+.rez-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--bg4)}
+.rez-card-ov{position:absolute;left:0;right:0;bottom:0;padding:30px 12px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+  background:linear-gradient(to top,rgba(28,17,10,.88) 0%,rgba(28,17,10,.55) 48%,rgba(28,17,10,0) 100%)}
+.rez-card-title{font-size:var(--fs-md);font-weight:700;color:#fff;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-family:var(--ff-title);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.rez-card-dur{flex-shrink:0;font-size:var(--fs-xs);font-weight:700;font-family:var(--ff-num);color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(3px)}
+.rez-card-dur svg{width:11px;height:11px}
+.rez-card-star{position:absolute;top:9px;right:9px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(20,12,7,.42);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(3px);transition:transform .14s,background .14s;padding:0}
+.rez-card-star svg{width:15px;height:15px}
+.rez-card-star.on{color:var(--star)}
+@media (hover:hover){.rez-card-star:hover{transform:scale(1.12);background:rgba(20,12,7,.62)}}
+.rez-empty{grid-column:1/-1;border:1px dashed var(--bd2);border-radius:var(--r);background:var(--bg2);padding:44px 18px;text-align:center;color:var(--t2)}
+.rez-empty h4{font-size:var(--fs-lg);color:var(--t0);margin-bottom:6px;font-family:var(--ff-title)}
+.rez-empty p{font-size:var(--fs-base);margin-bottom:14px}
+
+/* ══ DETAIL-FENSTER ══════════════════════════════════════════════════ */
+.rd-hero{position:relative;margin:-22px -22px 16px;border-radius:var(--r) var(--r) 0 0;overflow:hidden}
+.rd-hero img{width:100%;max-height:340px;object-fit:cover;display:block;background:var(--bg4)}
+.rd-menu-btn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(20,12,7,.5);color:#fff;cursor:pointer;font-size:17px;line-height:1;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:0}
+@media (hover:hover){.rd-menu-btn:hover{background:rgba(20,12,7,.72)}}
+/* ⚠ Das Menue haengt bewusst am body (position:fixed), nicht im Modal:
+   ein Kind eines overflow-Containers wuerde am Rand abgeschnitten - genau
+   der Fehler, vor dem docs/design-system.md warnt. */
+.rd-menu{position:fixed;z-index:400;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);box-shadow:var(--shadow-pop);padding:5px;min-width:172px}
+.rd-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--rss);text-align:left;font-family:var(--ff-text)}
+@media (hover:hover){.rd-menu-item:hover{background:var(--bg4);color:var(--t0)}}
+.rd-menu-item.danger{color:var(--danger)}
+.rd-title{font-size:var(--fs-hero);font-weight:800;letter-spacing:-.4px;line-height:1.2;margin-bottom:8px;font-family:var(--ff-title)}
+.rd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
+.rd-chip{font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg3);border:1px solid var(--bd);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px}
+.rd-chip svg{width:12px;height:12px;color:var(--accent)}
+.rd-sec{margin-bottom:20px}
+.rd-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.rd-ing{list-style:none;display:flex;flex-direction:column;gap:1px}
+.rd-ing li{display:flex;align-items:flex-start;gap:9px;font-size:var(--fs-base);color:var(--t1);padding:6px 2px;border-bottom:1px solid var(--bd)}
+.rd-ing li:last-child{border-bottom:none}
+.rd-ing li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px}
+.rd-block{margin-bottom:12px}
+.rd-block p{font-size:var(--fs-base);color:var(--t1);line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.rd-block img{width:100%;border-radius:var(--rs);border:1px solid var(--bd);display:block}
+.rd-empty{font-size:var(--fs-base);color:var(--t3);font-style:italic}
+
+/* ══ HINZUFUEGEN / BEARBEITEN ════════════════════════════════════════ */
+.rf-drop{position:relative;border:1px dashed var(--bd2);border-radius:var(--rs);background:var(--bg3);min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--t3);font-size:var(--fs-sm);text-align:center;padding:16px;overflow:hidden;margin-bottom:14px;transition:border-color .14s,color .14s}
+@media (hover:hover){.rf-drop:hover{border-color:var(--accent);color:var(--accent)}}
+.rf-drop svg{width:26px;height:26px}
+.rf-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rf-drop-badge{position:absolute;right:9px;bottom:9px;z-index:2;font-size:var(--fs-xs);font-weight:700;color:#fff;background:rgba(20,12,7,.6);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 10px;backdrop-filter:blur(3px)}
+.rf-row{display:grid;grid-template-columns:1fr 190px;gap:12px}
+@media (max-width:600px){.rf-row{grid-template-columns:1fr}}
+.rf-line{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.rf-line .m-inp{margin-bottom:0}
+.rf-x{flex-shrink:0;width:30px;height:30px;border-radius:var(--rss);border:1px solid var(--bd2);background:var(--bg2);color:var(--t3);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+@media (hover:hover){.rf-x:hover{color:var(--danger);border-color:var(--danger)}}
+.rf-blk{border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg3);padding:10px;margin-bottom:9px}
+.rf-blk-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.rf-blk-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num)}
+.rf-blk-acts{display:flex;gap:4px}
+.rf-blk img{width:100%;border-radius:var(--rss);border:1px solid var(--bd);display:block}
+.rf-blk .m-area,.rf-blk .m-inp{margin-bottom:0}
+.rf-add{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.rf-hint{font-size:var(--fs-sm);color:var(--t3);margin-bottom:12px;line-height:1.5}
+.rf-err{font-size:var(--fs-sm);color:var(--danger);font-weight:600;margin-bottom:10px;display:none}
+.rf-busy{font-size:var(--fs-sm);color:var(--t2);margin-bottom:10px;display:none}
+
+/* ══ EINSTELLUNGEN ═══════════════════════════════════════════════════ */
+.set-sec{margin-bottom:18px}
+.set-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.set-row:last-child{border-bottom:none}
+.set-row-t{font-size:var(--fs-base);color:var(--t1);font-weight:600}
+.set-row-s{font-size:var(--fs-sm);color:var(--t3);margin-top:2px}
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:520px){.theme-grid{grid-template-columns:1fr}}
+.theme-card{border:1px solid var(--bd2);border-radius:var(--rs);padding:10px;cursor:pointer;background:var(--bg2);text-align:left;transition:border-color .14s,box-shadow .14s;font-family:var(--ff-text)}
+@media (hover:hover){.theme-card:hover{border-color:var(--accent)}}
+.theme-card.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.theme-sw{display:flex;height:34px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd);margin-bottom:8px}
+.theme-sw span{flex:1}
+.theme-nm{font-size:var(--fs-base);font-weight:700;color:var(--t0)}
+.theme-ds{font-size:var(--fs-sm);color:var(--t3)}
+.trash-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.trash-row:last-child{border-bottom:none}
+.trash-thumb{width:44px;height:44px;border-radius:var(--rss);object-fit:cover;flex-shrink:0;background:var(--bg4);border:1px solid var(--bd)}
+.trash-main{flex:1;min-width:0}
+.trash-nm{font-size:var(--fs-base);font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trash-sub{font-size:var(--fs-sm);color:var(--t3)}
+
+/* ══ TOAST ═══════════════════════════════════════════════════════════ */
+#rezToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:500;background:var(--chrome-bg);color:#FBF5EF;font-size:var(--fs-base);font-weight:600;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#rezToast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo"><span class="logo-a">Perfect</span><span class="logo-b">Rezept</span></div>
+  <div class="hdr-search" onclick="rezFocusSearch()" title="Search recipes">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="hdr-search-lbl">Search recipes...</span>
+  </div>
+  <div class="hdr-status">
+    <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-1 - Erste Fassung der Perfect-Rezept-App: eigenstaendige Seite (rezept.html + js/rezept/*), App-Auswahl beim ersten Oeffnen, Overview mit drei Karten, Rezepte-Raster mit Suche/Zeitfilter/Tags/Favoriten, Hinzufuegen-Fenster mit Bild + Zutaten + Zubereitungs-Bloecken (Text und Bild), Detailfenster mit Drei-Punkte-Menue, 30-Tage-Papierkorb, vier braune Themes und Supabase-Sync ueber eigene Zeilen je Rezept.">
+      <span class="hlb-dot"></span>
+      <span class="hlb-lbl">LIVE</span>
+      <span class="hlb-sep">·</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-1</span>
+    </span>
+  </div>
+  <div class="hdr-r">
+    <button class="btn" onclick="rezOpenSettings()" title="Settings, themes, trash &amp; app switch">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span> Settings</span>
+    </button>
+    <button class="profile-btn" onclick="rezOpenSettings()" title="Cloud sync">
+      <span class="profile-circle" id="rezProfileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    </button>
+  </div>
+</div>
+
+<div class="app-shell">
+  <nav id="rezNav"></nav>
+  <div id="rezPageArea">
+    <div class="pc" id="pgOverview"></div>
+    <div class="pc" id="pgRecipes" style="display:none"></div>
+  </div>
+</div>
+
+<div id="rezModals"></div>
+<div id="rezToast"></div>
+
+<script type="module" src="js/rezept/app.js"></script>
+<script>
+// Service Worker wie beim FX Analyst Pro (dieselbe sw.js bedient beide
+// Seiten - siehe APP_SHELL dort).
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>

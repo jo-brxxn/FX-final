@@ -12,10 +12,18 @@
 // Manifest laeuft ueber den Cache-First-Zweig unten, wuerde also weiter aus
 // dem alten Cache kommen; erst der Versions-Bump erzwingt ein frisches
 // Einspielen der App-Shell.
-const CACHE_VERSION = 'fxpro-v6';
+// v7 (2026-09-01): zweite App im selben Repo (Perfect Rezept, rezept.html +
+// js/rezept/*). Der Service Worker bedient jetzt BEIDE Seiten - rezept.html
+// gehoert deshalb in die App-Shell, und der Offline-Fallback fuer eine
+// fehlgeschlagene Navigation darf nicht mehr blind index.html liefern
+// (sonst bekommt man offline die falsche App zu sehen).
+const CACHE_VERSION = 'fxpro-v7';
 const APP_SHELL = [
   './',
   './index.html',
+  './rezept.html',
+  './js/rezept/app.js',
+  './js/rezept/store.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -64,7 +72,8 @@ self.addEventListener('fetch', event => {
         caches.open(CACHE_VERSION).then(cache => cache.put(cacheKey, copy));
         return res;
       }).catch(() =>
-        caches.match(cacheKey).then(cached => cached || caches.match('./index.html'))
+        caches.match(cacheKey).then(cached =>
+          cached || caches.match(/rezept/.test(url.pathname) ? './rezept.html' : './index.html'))
       )
     );
     return;

@@ -17,7 +17,7 @@ const { chromium } = require(PW);
   for (const [w,h,vpName] of VIEWPORTS) {
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(URL, { waitUntil: 'networkidle' });
-    await page.evaluate(() => { ['introOv','lockScreen'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();}); });
+    await page.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();}); });
     await page.waitForTimeout(700);
     await page.evaluate(() => { document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none'); });
 

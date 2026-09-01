@@ -10,9 +10,9 @@ const PORT=process.env.PORT||8935;
   const b=await chromium.launch(); let fehler=[];
   for(const [w,h] of [[1920,1080],[1600,900],[1440,900],[1280,800],[1180,820],[1100,800],[900,900],[390,844]]){
     const p=await b.newPage({viewport:{width:w,height:h}});
-    await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
+    await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('dmfx_app_choice','fx');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
     await p.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'networkidle'});
-    await p.evaluate(()=>{const e=document.getElementById('lockScreen');if(e)e.remove();});
+    await p.evaluate(()=>{['lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});});
     await p.waitForTimeout(1700);
     await p.evaluate(()=>{document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none');showTab('dash');});
     await p.waitForTimeout(800);

@@ -8525,3 +8525,89 @@ ebenfalls gepueft. `docs/state-sync.md` um den `research`/`researchFolders`/
 `research.trash`-Sonderfall ergaenzt (analog zum bestehenden `scoreHist`-
 Abschnitt, inkl. der Lock-Vollstaendigkeits-Falle als Warnung fuer
 kuenftige aehnliche Faelle).
+
+---
+
+## 2026-09-01 — ZWEITE APP IM REPO: „Perfect Rezept" (REZEPT-CHECK-1, VERSION-CHECK-462)
+
+Nutzer-Wunsch: beim Öffnen der Webseite soll ein Fenster kommen, in dem man
+zwischen **FX Analyst Pro** und **Perfect Rezept** wählt; Perfect Rezept ist
+eine eigene Webseite innerhalb derselben Website, mit hellbraunem Design,
+aber demselben Aufbau (gleiche Kopfleiste, gleiche Kategorien-Sidebar links).
+
+**Ausdrückliche Trennungs-Vorgabe (wörtlich):** *„es sind wirklich zwei
+verschiedene Apps, also zwei verschiedene Webseiten … ich möchte auch, dass
+du den ganzen Code in neuen Dateien schreibst und das im cloud.md-File
+deutlich machst … wenn man am FX Analyst Pro arbeitet, sollen nicht die
+anderen ganzen Dateien durchgelesen werden und andersrum. Allerdings sollst
+du aus dem FX Analyst Pro rauskopieren und diese nutzen und die generelle
+Struktur davon nutzen."* → Umgesetzt als `rezept.html` + `js/rezept/*.js`
+mit eigener Doku `docs/rezept.md`; `CLAUDE.md` sagt jetzt in der ERSTEN
+Sektion, welche Dateien zu welcher App gehören und was man bei welcher
+Aufgabe NICHT lesen muss.
+
+**Was gebaut wurde**
+- **App-Weiche:** `#appChoiceOv` in `index.html` (nur beim allerersten
+  Öffnen), Wahl in `localStorage['dmfx_app_choice']`, plus eine
+  `location.replace()`-Weiche ganz oben im `<head>` — sonst würde der
+  komplette FX-Boot laufen, nur um verworfen zu werden. Wechsel in BEIDEN
+  Apps unter *Settings → Apps*.
+- **Overview** mit drei Karten: `Today's Meal` und `Random Picker` als
+  ausdrückliche Platzhalter, `Add New Meal` führt in die Kategorie *Recipes*
+  UND öffnet dort direkt das Hinzufügen-Fenster.
+- **Recipes:** Raster mit drei Karten pro Reihe (2 unter 1000px, 1 unter
+  620px), Bild mit Titel darin, Dauer unten rechts, Favoriten-Stern oben
+  rechts; Suche, Zeit-Filter, Tag-Filter, Favoriten-Filter.
+- **Hinzufügen/Bearbeiten:** Titelbild (Pflicht), Titel, Dauer-Dropdown in
+  5-Minuten-Schritten, Tags, Zutatenliste, und eine Zubereitung aus
+  **Blöcken** — Text und Bild beliebig gemischt und sortierbar (Nutzer:
+  *„entweder in die Zubereitung Text schreiben oder auch ein Bild hinzufügen
+  und Text schreiben. Beides ist möglich"*).
+- **Detailfenster:** Bild oben, Titel, Dauer/Tags, Zutaten, Zubereitung;
+  Drei-Punkte-Menü oben rechts (Bearbeiten / Favorit / Papierkorb).
+- **Papierkorb, 30 Tage**, Wiederherstellung unter *Settings → Trash*.
+- **Vier braune Themes** (`clay`, `mocha`, `paper`, `sand`), umschaltbar
+  unter *Settings → Appearance* — der Nutzer wollte sie alle ausprobieren
+  können; Standard ist `clay` (Terracotta/Espresso).
+
+**Die eine Entscheidung, die wirklich zählt — wohin die Bilder gehen.**
+Der naheliegende Weg (Rezepte in `snap()`/`cloudPush()` des FX Analyst Pro
+hängen) wäre ein Fehler gewesen: dieser Push schiebt bei JEDER Änderung den
+kompletten Zustand als eine JSON-Zeile hoch — jeder beliebige FX-Autosave
+(z. B. der stündliche Kalender-Refresh) hätte damit sämtliche Rezeptbilder
+erneut hochgeladen. Stattdessen eigene Zeilen in der BESTEHENDEN
+`fx_sync`-Tabelle (kein neues Supabase-Setup): `<syncId>:rez:index` fürs
+Verzeichnis inkl. Mini-Thumbnails (ein Request rendert das ganze Raster),
+`<syncId>:rez:r:<id>` je Rezept für die Vollbilder (erst beim Öffnen geholt,
+in IndexedDB gecacht). Hochgeladen wird nur das GEÄNDERTE Rezept.
+Bilder werden im Browser iterativ auf ein **Byte-Budget** gerechnet
+(Titelbild ≤ 260 KB, Block ≤ 180 KB, Thumbnail ≤ 34 KB), nicht nur auf eine
+Kantenlänge — bei 100 Rezepten sind das ~35 MB von 500 MB im Supabase-Free-
+Tarif. localStorage schied für Bilder aus (~5 MB Limit), deshalb IndexedDB.
+
+**Wiederholungsfalle vermieden:** `mergeIndex()` statt Overwrite, mit
+Grabsteinen für gelöschte Rezepte und `navigator.locks` um den
+Lies-Merge-Schreib-Zyklus — exakt das Muster, das bei `scoreHist`
+(2026-07-20) und den Research-Notizen (2026-09-01) erst NACH einem
+Datenverlust nachgerüstet werden musste. Hier von Anfang an drin, weil zwei
+Geräte typischerweise unabhängig voneinander neue Rezepte anlegen.
+
+**Wächter mitgezogen** (sonst wäre die halbe ausgelieferte Codebasis blind):
+`check/syntax.js` prüft jetzt beide HTML-Seiten und `js/rezept/*`;
+`check/rules.js` bekam Regel 1b (REZEPT-CHECK-Nummer muss bei jeder
+Änderung an `rezept.html`/`js/rezept/*` steigen); alle neun Browser-Prüfungen
+setzen `dmfx_app_choice='fx'` und entfernen `#appChoiceOv`, sonst hätte das
+Auswahlfenster jeden Playwright-Lauf blockiert.
+
+**Verifiziert per Playwright** (nicht nur „sieht gut aus"): Auswahlfenster →
+Weiterleitung → Rezept mit echtem Bild-Upload anlegen → Karte im Raster →
+Detailfenster mit Zutaten und Text-/Bild-Blöcken → Reload (Persistenz aus
+IndexedDB) → Suche/Filter → Papierkorb + Wiederherstellen → App-Wechsel
+zurück; dazu Überlauf-Messung auf 1920/1440/1100/900/700/500/390px
+(3/3/3/2/2/1/1 Spalten, kein Überlauf, kein Text außerhalb einer Karte) und
+null JS-Fehler.
+
+**Offen/bewusst weggelassen:** die Funktion hinter `Today's Meal` und
+`Random Picker` (ausdrücklich als Platzhalter bestellt); Perfect Rezept hat
+keine PIN-Sperre (die Seite liegt ohnehin hinter Cloudflare Access, und
+Rezepte sind keine schützenswerten Daten).

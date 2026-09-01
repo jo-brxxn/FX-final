@@ -17,7 +17,7 @@ const { chromium } = require(PW);
   page.on('console', m => { if (m.type() === 'error') { const t = m.text(); if (!/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) rec('CONSOLE', t); } });
 
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.evaluate(() => { ['introOv','lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
+  await page.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
   await page.waitForTimeout(800);
   // dismiss any auto-opened modal
   await page.evaluate(() => { if (typeof closeM === 'function') { document.querySelectorAll('.mov,.mov2').forEach(m => { if (m.id) try { closeM(m.id); } catch(e){} }); } });
@@ -45,6 +45,14 @@ const { chromium } = require(PW);
         if (!b.offsetParent) continue;                    // invisible
         const oc = b.getAttribute('onclick') || '';
         if (/del|remove|reset|clear|Del|Remove|logout|Import|import/i.test(oc)) continue; // destructive
+        // ⚠ Navigations-Buttons ebenfalls ueberspringen. Diese Schleife
+        // klickt JEDEN sichtbaren Button - "Settings -> Apps -> Switch"
+        // (switchToRezept) verlaesst dabei index.html komplett, und jede
+        // spaetere page.evaluate() dieses Waechters lief danach in der
+        // Rezept-App auf: "ReferenceError: syms is not defined". Das ist
+        // kein App-Fehler (ein echter Klick SOLL die App wechseln), sondern
+        // eine Grenze dieser Klick-alles-Methode.
+        if (/switchToRezept|chooseApp/.test(oc)) continue;
         try {
           if (b.tagName === 'SELECT') continue;
           b.click();
