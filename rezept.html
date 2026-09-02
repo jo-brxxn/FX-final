@@ -739,6 +739,51 @@ body.timers-on .pc{padding-bottom:96px}
   border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:6px}
 .gs-res{max-height:min(460px,54vh);overflow-y:auto}
 
+/* ══ BILDER: STREIFEN, GROSSANSICHT, VIDEO ══════════════════════════
+   Nutzer-Wunsch 2026-09-02: die Bilder eines Rezepts sollen ueberall zu
+   sehen sein - auf der Karte, im Rezept und im Kochmodus. */
+.rez-card-imgs{position:absolute;top:9px;left:9px;display:inline-flex;align-items:center;gap:4px;
+  font-size:var(--fs-2xs);font-weight:800;color:#fff;background:rgba(20,12,7,.55);
+  border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:3px 8px;backdrop-filter:blur(3px);
+  font-variant-numeric:tabular-nums}
+.rez-card-imgs svg{width:11px;height:11px}
+.rd-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:-4px 0 16px;scroll-snap-type:x proximity}
+.rd-strip img{flex:0 0 auto;width:96px;height:72px;object-fit:cover;border-radius:var(--rs);border:1px solid var(--bd);
+  cursor:zoom-in;scroll-snap-align:start;transition:transform var(--t-fast) var(--e-out),border-color var(--t-fast)}
+@media (hover:hover){.rd-strip img:hover{transform:translateY(-2px);border-color:var(--accent)}}
+.ck-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ck-strip img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--rss);border:1px solid var(--bd);cursor:zoom-in}
+.ck-step-img{max-height:38vh;object-fit:contain;align-self:flex-start}
+.rd-play{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;gap:8px;
+  padding:9px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(20,12,7,.58);
+  color:#fff;font-size:var(--fs-sm);font-weight:700;cursor:pointer;backdrop-filter:blur(4px);font-family:var(--ff-text)}
+@media (hover:hover){.rd-play:hover{background:rgba(20,12,7,.78)}}
+.rd-play svg{width:18px;height:18px}
+
+#rezLight,#rezVideo{display:none}
+#rezLight.on,#rezVideo.on{display:block}
+.lb-ov,.vd-ov{position:fixed;inset:0;z-index:900;background:rgba(12,9,6,.92);display:flex;align-items:center;
+  justify-content:center;padding:22px;animation:ovIn var(--t-base) var(--e-out) both}
+.lb-img{max-width:min(1200px,94vw);max-height:88vh;object-fit:contain;border-radius:var(--rs);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.lb-x{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:17px;cursor:pointer;line-height:1}
+@media (hover:hover){.lb-x:hover{background:rgba(255,255,255,.24)}}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.lb-prev{left:16px}.lb-next{right:16px}
+@media (hover:hover){.lb-nav:hover{background:rgba(255,255,255,.24)}}
+.lb-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.82);
+  font-size:var(--fs-sm);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
+.vd-box{width:100%;max-width:min(520px,94vw);max-height:92vh;overflow-y:auto;background:var(--bg2);
+  border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--shadow-pop);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.vd-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.vd-title{flex:1;min-width:0;font-family:var(--ff-title);font-size:var(--fs-lg);font-weight:800;
+  letter-spacing:var(--ls-title);color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vd-hd .lb-x{position:static;width:32px;height:32px;border-color:var(--bd2);background:var(--bg3);color:var(--t0)}
+
 /* ══ BEWEGUNG ════════════════════════════════════════════════════════
    Grundsatz: eine Animation erklaert, WOHER etwas kommt und WOHIN es geht.
    Was nichts erklaert, bewegt sich nicht. Dauern und Kurven kommen aus den
@@ -859,11 +904,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-6 - Kochmodus (Vollbild, grosse Schrift, Bildschirm bleibt an, Schritte abhakbar), Timer als digitale Countdown-Uhr mit erzeugtem Klingelton und Vibration - Hinweis auf ein stummes Geraet nur wenn die Wiedergabe wirklich fehlschlug (den Stummschalter selbst kann kein Browser abfragen). Portionen umrechnen, Notizen am Rezept, globale Suche ueber Rezepte/Zutaten/Notizen/Ideen/Verlauf, Was-kann-ich-kochen, Rezept als Bild teilen. Inspiration: viele Links auf einmal, Kuenstler automatisch aus der Adresse, Filter nach Kuenstler und Thema, Sortierung, und fuer YouTube eine echte Abspielleiste (Instagram/TikTok erlauben das nicht).">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-7 - Alle Bilder eines Rezepts sind jetzt ueberall sichtbar: Zaehler-Abzeichen auf der Karte, Bilderstreifen im Detailfenster, Grossansicht mit Blaettern, und im Kochmodus haengt das Bild AM Schritt statt als eigener textloser Schritt dazwischen zu stehen - plus ein Fotostreifen in der Seitenspalte. Stammt ein Rezept aus einem Reel, wird das Vorschaubild des Videos als Titelbild uebernommen (bei YouTube das echte; Instagram und TikTok geben ihre Vorschaubilder nicht oeffentlich heraus, dort entsteht ein erkennbar erzeugtes Titelbild aus Titel und Kuenstler, das ein Tipp durch ein eigenes Foto ersetzt). Das Video laesst sich jetzt auch vom Rezept aus abspielen - im Detailfenster und im Kochmodus.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-6</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-7</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -901,6 +946,10 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
      Wegklicken verliert, ist keiner. -->
 <div id="rezCook"></div>
 <div id="rezTimers"></div>
+<!-- Grossansicht und Video liegen ueber ALLEM - sie muessen auch aus dem
+     Kochmodus heraus funktionieren, und der deckt bereits die App-Shell ab. -->
+<div id="rezLight"></div>
+<div id="rezVideo"></div>
 <div id="rezToast"></div>
 
 <script type="module" src="js/rezept/app.js"></script>

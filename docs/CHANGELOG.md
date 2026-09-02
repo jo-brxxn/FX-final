@@ -9030,3 +9030,65 @@ Rest automatisch.
    entfernt → „Bruch verdoppeln: ½ TL statt 1 TL"; Schritt-Zerlegung entfernt
    → „Zubereitung wird nicht in einzelne Schritte zerlegt"; Künstler-Erkennung
    entfernt → „Der Instagram-Künstler wird nicht aus der Adresse gelesen".
+
+---
+
+## 2026-09-02 (5) — BILDER ÜBERALL SICHTBAR, REEL-VORSCHAUBILD, VIDEO AM REZEPT (REZEPT-CHECK-7)
+
+Nutzer: *„die Bilder die man bei Rezepten hinzufügt sollen immer zu sehen sein
+also von außen und im Rezept und im Cook Mode oder halt das Video. Und nimm
+als Hintergrundbild für ein Rezept aus einem Reel das Vorschaubild von dem
+Reel."*
+
+### Bilder
+
+Bis dahin lagen die Bilder aus der Zubereitung **nur** im Detailfenster: auf
+der Karte sah man das Titelbild, im Kochmodus standen sie als eigene,
+textlose Schritte dazwischen. Jetzt speist **eine** Quelle (`recipeImages`)
+alle drei Stellen — Zähler-Abzeichen auf der Karte, Bilderstreifen im
+Detailfenster mit Großansicht (Blättern, Escape, Pfeiltasten), und im
+Kochmodus hängt das Bild **am** Schritt plus ein Fotostreifen in der
+Seitenspalte.
+
+Zwei Dinge, die dabei leicht zu übersehen gewesen wären:
+- **Der Zähler muss ins Verzeichnis** — die Karte im Raster hat das
+  Volldokument gar nicht geladen. Und er muss bei **Bestandsdaten**
+  nachgetragen werden (`getFull`), sonst bliebe das Abzeichen bei allen
+  älteren Rezepten für immer aus.
+- **Escape in der Großansicht darf nur die Großansicht schließen**, nicht das
+  Rezept darunter — sonst ist man mit einem Tastendruck zwei Ebenen weg.
+  Handler in der Capture-Phase mit `stopPropagation`, vom Wächter geprüft.
+
+### Reel-Vorschaubild — was geht und was nicht
+
+**YouTube**: echtes Vorschaubild über `img.youtube.com/vi/<id>/hqdefault.jpg`,
+öffentlich und ohne Schlüssel. `hqdefault` bewusst statt `maxres` — das gibt
+es für jedes Video. Wird versucht lokal einzulesen, damit das Rezept auch
+offline ein Bild hat.
+
+**Instagram und TikTok geben ihre Vorschaubilder nicht öffentlich heraus** —
+kurzlebig signierte Adressen, nur über eine API mit Konto-Token. ⚠ Statt eine
+Adresse zu **raten**, die später als kaputtes Bild beim Nutzer landet, entsteht
+dort ein erkennbar **erzeugtes** Titelbild aus Titel, Künstler und Plattform,
+mit dem Hinweis „Tap to add your own photo". Der Wächter schlägt fehl, wenn
+für Instagram doch eine Adresse gebildet wird — genau das ist die Sorte
+„sieht funktionierend aus, ist es aber nicht", die dieses Projekt vermeiden
+will.
+
+Nebenwirkung, bewusst: ein aus einer Inspiration erzeugtes Rezept hat damit
+immer ein Titelbild und wird beim Speichern nicht mehr abgelehnt; von Hand
+angelegte Rezepte ohne Foto weiterhin schon. Beides wird geprüft.
+
+### Video am Rezept
+
+Stammt ein Rezept aus einem Reel, lässt sich das Video jetzt **vom Rezept
+aus** abspielen — im Detailfenster („Watch video" über dem Titelbild) und im
+Kochmodus (Knopf in der Kopfzeile). Es gelten dieselben Grenzen wie in der
+Inspiration: Abspielleiste nur bei YouTube.
+
+### Wächter
+
+Neue Stufe L, drei Mutationen nachgewiesen: Bild wieder als eigener Schritt →
+„Bilder werden weiter als eigene Schritte gezählt (Step 1 of 4 statt 1 of 2)";
+Foto-Abzeichen entfernt → „Bilder sind von außen nicht erkennbar";
+Instagram-Vorschaubild geraten → „das landet als kaputtes Bild beim Nutzer".

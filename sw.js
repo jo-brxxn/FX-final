@@ -17,7 +17,7 @@
 // gehoert deshalb in die App-Shell, und der Offline-Fallback fuer eine
 // fehlgeschlagene Navigation darf nicht mehr blind index.html liefern
 // (sonst bekommt man offline die falsche App zu sehen).
-const CACHE_VERSION = 'fxpro-v9';
+const CACHE_VERSION = 'fxpro-v10';
 const APP_SHELL = [
   './',
   './index.html',

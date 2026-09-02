@@ -11,7 +11,7 @@
 // onclick="..." im HTML sieht Modul-Variablen sonst nicht - identisches
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
-import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText} from './import.js';
+import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText,previewUrl} from './import.js';
 import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
 import * as CK from './cook.js';
 
@@ -396,6 +396,11 @@ function cardHtml(r){
                    :`<div class="rez-card-img" style="display:flex;align-items:center;justify-content:center;color:var(--t3)">${icn('image',30)}</div>`;
   return`<div class="rez-card" onclick="rezOpenDetail('${r.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezOpenDetail('${r.id}')">`
     +img
+    // Von aussen sichtbar, dass das Rezept mehr als ein Foto hat
+    // (Nutzer-Wunsch 2026-09-02) - die Bilder selbst liegen im
+    // Volldokument, das im Raster gar nicht geladen ist, deshalb nur die
+    // Anzahl aus dem Verzeichnis.
+    +((r.imgs||0)>1?`<span class="rez-card-imgs">${icn('image',11)} ${r.imgs}</span>`:'')
     +`<button class="rez-card-star${r.fav?' on':''}" onclick="event.stopPropagation();rezToggleFav('${r.id}')" title="${r.fav?'Remove from favourites':'Mark as favourite'}" aria-label="Favourite">`
       +`<svg width="15" height="15" viewBox="0 0 24 24" fill="${r.fav?'currentColor':'none'}" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round">${ICONS.star}</svg></button>`
     +`<div class="rez-card-ov"><div class="rez-card-title">${escH(r.title||'Untitled')}</div>`
@@ -432,6 +437,69 @@ export async function rezToggleFav(id){
   if(detailId===id)rezOpenDetail(id);
 }
 
+// ══ BILDER EINES REZEPTS ═════════════════════════════════════════════════
+// Nutzer-Wunsch 2026-09-02: "die Bilder die man bei Rezepten hinzufuegt
+// sollen immer zu sehen sein, also von aussen und im Rezept und im Cook
+// Mode." Bis dahin tauchten Bilder aus den Zubereitungs-Bloecken NUR im
+// Detailfenster auf - auf der Karte sah man nur das Titelbild, im Kochmodus
+// standen sie als eigene, textlose Schritte dazwischen.
+//
+// Eine Quelle fuer alle drei Stellen: Titelbild zuerst, dann die Bilder aus
+// den Bloecken in ihrer Reihenfolge.
+function recipeImages(doc){
+  const out=[];
+  if(doc&&doc.cover)out.push({src:doc.cover,rolle:'cover'});
+  (doc&&doc.blocks||[]).forEach((b,i)=>{
+    if(b&&b.t==='img'&&b.v)out.push({src:b.v,rolle:'step',i});
+  });
+  return out;
+}
+// ── Grossansicht ───────────────────────────────────────────────────────
+// Eigener Host ueber allem: sie muss auch aus dem Kochmodus heraus
+// funktionieren, und der liegt bereits ueber der App-Shell.
+let _lightbox=[],_lbIdx=0;
+export function rezLightbox(bilder,i){
+  _lightbox=bilder||[];_lbIdx=Math.max(0,Math.min(i||0,_lightbox.length-1));
+  zeichneLightbox();
+}
+function zeichneLightbox(){
+  const host=$('rezLight');
+  if(!host)return;
+  if(!_lightbox.length){host.innerHTML='';host.classList.remove('on');return;}
+  const b=_lightbox[_lbIdx];
+  host.classList.add('on');
+  host.innerHTML=
+     `<div class="lb-ov" onclick="if(event.target===this)rezLightboxClose()">`
+      +`<button class="lb-x" onclick="rezLightboxClose()" aria-label="Close">✕</button>`
+      +(_lightbox.length>1?`<button class="lb-nav lb-prev" onclick="rezLightboxStep(-1)" aria-label="Previous photo">${icn('arrowL',22)}</button>`:'')
+      +`<img class="lb-img" src="${b.src}" alt="">`
+      +(_lightbox.length>1?`<button class="lb-nav lb-next" onclick="rezLightboxStep(1)" aria-label="Next photo">${icn('arrowR',22)}</button>`:'')
+      +(_lightbox.length>1?`<div class="lb-count">${_lbIdx+1} / ${_lightbox.length}</div>`:'')
+    +`</div>`;
+}
+export function rezLightboxStep(d){
+  if(!_lightbox.length)return;
+  _lbIdx=(_lbIdx+d+_lightbox.length)%_lightbox.length;
+  zeichneLightbox();
+}
+export function rezLightboxClose(){
+  _lightbox=[];
+  const host=$('rezLight');
+  if(host){host.innerHTML='';host.classList.remove('on');}
+}
+// Escape und Pfeiltasten - die Grossansicht liegt ueber allem und muss
+// deshalb ihre eigenen Tasten bedienen, bevor das Fenster darunter sie sieht.
+document.addEventListener('keydown',e=>{
+  if(!_lightbox.length)return;
+  if(e.key==='Escape'){e.stopPropagation();rezLightboxClose();}
+  else if(e.key==='ArrowLeft'){e.stopPropagation();rezLightboxStep(-1);}
+  else if(e.key==='ArrowRight'){e.stopPropagation();rezLightboxStep(1);}
+},true);
+// Aus dem HTML heraus (Inline-Handler koennen keine Objekte uebergeben):
+// die Bilder des gerade offenen Rezepts merken.
+let _aktuelleBilder=[];
+export function rezShowImage(i){rezLightbox(_aktuelleBilder,i);}
+
 // ══ KOCHMODUS ════════════════════════════════════════════════════════════
 // Vollbild, grosse Schrift, Bildschirm bleibt an. Beim Kochen steht das
 // Geraet zwei Meter weg und man hat nasse Haende - 13px-Text und eine
@@ -458,11 +526,21 @@ export function rezCookExit(){
 }
 function cookSteps(doc){
   // Die Zubereitung steht als Bloecke da. Fuer den Kochmodus wird sie in
-  // einzelne Schritte zerlegt - Textbloecke an Zeilenumbruechen, Bilder
-  // bleiben eigene Schritte.
+  // einzelne Schritte zerlegt: Textbloecke an Zeilenumbruechen.
+  // ⚠ Ein Bild wird an den VORHERGEHENDEN Schritt geheftet, statt ein
+  // eigener, textloser Schritt zu werden (Nutzer-Wunsch 2026-09-02: die
+  // Bilder sollen auch im Kochmodus zu sehen sein). Vorher musste man am
+  // Bild vorbeiblaettern, um den zugehoerigen Text zu lesen - Bild und
+  // Anweisung gehoeren zusammen. Nur ein Bild GANZ AM ANFANG (ohne Text
+  // davor) bleibt ein eigener Schritt.
   const out=[];
   (doc.blocks||[]).forEach(b=>{
-    if(b.t==='img'){out.push({t:'img',v:b.v});return;}
+    if(b.t==='img'){
+      const letzter=out[out.length-1];
+      if(letzter&&letzter.t==='text'&&!letzter.img)letzter.img=b.v;
+      else out.push({t:'img',v:b.v});
+      return;
+    }
     String(b.v||'').split(/\n+/).forEach(z=>{
       const t=z.replace(/^\s*\d{1,2}[.)]\s*/,'').trim();
       if(t)out.push({t:'text',v:t});
@@ -485,21 +563,34 @@ export function renderCook(){
       +`<span>${escH(txt)}</span></label>`;
   }).join('');
   const timer=CK.findTimers(s.t==='text'?s.v:'');
+  _aktuelleBilder=recipeImages(cookDoc);
+  const vid=cookDoc.source?detectLink(cookDoc.source):null;
+  const streifen=_aktuelleBilder.length
+    ? `<div class="ck-side-h" style="margin-top:18px">Photos</div>`
+      +`<div class="ck-strip">`+_aktuelleBilder.map((b,i)=>
+          `<img src="${b.src}" alt="" onclick="rezShowImage(${i})" loading="lazy">`).join('')+`</div>`
+    : '';
+  const bildIdx=s.img?_aktuelleBilder.findIndex(x=>x.src===s.img)
+                :(s.t==='img'?_aktuelleBilder.findIndex(x=>x.src===s.v):-1);
   host.innerHTML=
      `<div class="ck-bar">`
       +`<button class="ck-x" onclick="rezCookExit()" aria-label="Close cook mode">✕</button>`
       +`<div class="ck-title">${escH(cookDoc.title)}</div>`
+      +(vid&&vid.embedUrl?`<button class="btn" onclick="rezPlayVideo('${cookDoc.id}')">${icn('play',14)} Video</button>`:'')
       +`<div class="ck-serv"><button class="ck-sv" onclick="rezCookServ(-1)" aria-label="Fewer servings">−</button>`
         +`<span>${cookServ} ${cookServ===1?'serving':'servings'}</span>`
         +`<button class="ck-sv" onclick="rezCookServ(1)" aria-label="More servings">+</button></div>`
     +`</div>`
     +`<div class="ck-body">`
-      +`<aside class="ck-side"><div class="ck-side-h">Ingredients</div>${zut||'<div class="ck-empty">No ingredients listed.</div>'}</aside>`
+      +`<aside class="ck-side"><div class="ck-side-h">Ingredients</div>`
+        +(zut||'<div class="ck-empty">No ingredients listed.</div>')+streifen+`</aside>`
       +`<main class="ck-main">`
         +`<div class="ck-prog">Step ${cookStep+1} of ${schritte.length}`
           +`<span class="ck-prog-bar"><span style="width:${Math.round((cookStep+1)/schritte.length*100)}%"></span></span></div>`
-        +(s.t==='img'?`<img class="ck-img" src="${s.v}" alt="">`
-          :`<div class="ck-step">${escH(s.v)}</div>`)
+        +(s.t==='img'
+          ?`<img class="ck-img" src="${s.v}" alt="" onclick="rezShowImage(${bildIdx})" style="cursor:zoom-in">`
+          :`<div class="ck-step">${escH(s.v)}</div>`
+           +(s.img?`<img class="ck-img ck-step-img" src="${s.img}" alt="" onclick="rezShowImage(${bildIdx})" style="cursor:zoom-in">`:''))
         +(timer.length?`<div class="ck-timers">`+timer.map(t=>
             `<button class="btn btn-primary" onclick="rezStartTimer(${t.sek},'${escH(t.label).replace(/'/g,'')}')">${icn('clock',14)} ${escH(t.label)}</button>`).join('')+`</div>`:'')
         +`<div class="ck-nav">`
@@ -521,6 +612,58 @@ export async function rezCookFinish(){
   rezCookExit();
   if(id){await S.logCooked(id,0);toast('Logged in your cooking history');}
   rezShowPage('cooked');
+}
+
+// ══ VIDEO AM REZEPT ══════════════════════════════════════════════════════
+// Stammt ein Rezept aus einem Reel, soll man das Video auch VOM REZEPT aus
+// sehen koennen - im Detailfenster und im Kochmodus (Nutzer-Wunsch
+// 2026-09-02: "im Rezept und im Cook Mode oder halt das Video").
+// Es gelten dieselben Grenzen wie in der Inspiration: die Abspielleiste gibt
+// es nur bei YouTube, Instagram und TikTok erlauben keine Steuerung von
+// aussen.
+export async function rezPlayVideo(id){
+  const doc=await S.getFull(id);
+  if(!doc||!doc.source){toast('This recipe has no video');return;}
+  const l=detectLink(doc.source);
+  if(!l||!l.embedUrl){
+    window.open(doc.source,'_blank','noopener');
+    return;
+  }
+  zeigeVideo(l,doc.title);
+}
+function zeigeVideo(l,titel){
+  const host=$('rezVideo');
+  if(!host)return;
+  const src=l.embedUrl+(l.platform==='youtube'
+    ?(l.embedUrl.includes('?')?'&':'?')+'enablejsapi=1&playsinline=1&origin='+encodeURIComponent(location.origin)
+    :'');
+  host.classList.add('on');
+  host.innerHTML=
+     `<div class="vd-ov" onclick="if(event.target===this)rezCloseVideo()">`
+      +`<div class="vd-box">`
+        +`<div class="vd-hd"><span class="vd-title">${escH(titel||'Video')}</span>`
+          +`<button class="lb-x" onclick="rezCloseVideo()" aria-label="Close">✕</button></div>`
+        +`<div class="insp-frame${l.platform==='youtube'?' yt':''}"><iframe id="inspFrame" src="${escH(src)}" loading="lazy" allowfullscreen`
+          +` referrerpolicy="origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture"`
+          +` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" title="${escH(titel||'Video')}"></iframe></div>`
+        +(l.platform==='youtube'
+          ?`<div class="yt-bar" id="ytBar" hidden>`
+            +`<button class="yt-btn" id="ytPlay" onclick="rezYtToggle()" aria-label="Play or pause">▶</button>`
+            +`<button class="yt-btn" onclick="rezYtSeek(-10)" aria-label="Back 10 seconds">−10</button>`
+            +`<span class="yt-time" id="ytCur">0:00</span>`
+            +`<input class="yt-range" id="ytRange" type="range" min="0" max="1000" value="0"`
+            +` oninput="rezYtScrub(this.value)" onchange="rezYtScrubEnd(this.value)" aria-label="Position in the video">`
+            +`<span class="yt-time" id="ytDur">0:00</span>`
+            +`<button class="yt-btn" onclick="rezYtSeek(10)" aria-label="Forward 10 seconds">+10</button></div>`
+            +`<div class="insp-note" id="ytNote">Loading the player…</div>`
+          :`<div class="insp-note">Instagram and TikTok do not allow an app to control their player from the outside — use the controls inside the video.</div>`)
+      +`</div></div>`;
+  if(l.platform==='youtube')ytStart();
+}
+export function rezCloseVideo(){
+  ytStop();
+  const host=$('rezVideo');
+  if(host){host.innerHTML='';host.classList.remove('on');}
 }
 
 // ══ TIMER-LEISTE ═════════════════════════════════════════════════════════
@@ -1294,16 +1437,45 @@ export async function rezTrashInspo(id){
 // Parser, Ergebnis direkt ins Rezept-Formular. Bewusst NICHT still im
 // Hintergrund speichern - der Nutzer sieht, was erkannt wurde, und kann
 // korrigieren, bevor daraus ein Rezept wird.
-export function rezInspoToRecipe(id){
+export async function rezInspoToRecipe(id){
   const i=S.state.index.inspo.find(x=>x.id===id);
   if(!i)return;
   const entwurf=captionToRecipe(i.caption||'',{});
+  // ⚠ TITELBILD AUS DEM REEL (Nutzer-Wunsch 2026-09-02). Drei Stufen, in
+  // dieser Reihenfolge:
+  //   1. Ein eigenes Bild an der Idee gewinnt immer.
+  //   2. YouTube: echtes Vorschaubild ueber die oeffentliche Adresse
+  //      (img.youtube.com) - wird versucht, lokal einzulesen, damit das
+  //      Rezept auch offline ein Bild hat.
+  //   3. Instagram/TikTok: deren Vorschaubilder sind NICHT oeffentlich
+  //      abrufbar (kurzlebig signierte Adressen, nur ueber eine API mit
+  //      Konto-Token). Statt eine Adresse zu raten, die spaeter als kaputtes
+  //      Bild beim Nutzer landet, wird ein erkennbar ERZEUGTES Titelbild aus
+  //      Titel, Kuenstler und Plattform gebaut - mit dem Hinweis darauf,
+  //      dass ein eigenes Foto es ersetzt.
+  let cover=i.thumb||'',thumb=i.thumb||'';
+  if(!cover){
+    const l=detectLink(i.url||'');
+    const purl=previewUrl(l);
+    if(purl){
+      const geholt=await ladeFernbild(purl).catch(()=>null);
+      if(geholt){cover=geholt.cover;thumb=geholt.thumb;}
+    }
+    if(!cover){
+      const cs=getComputedStyle(document.documentElement);
+      cover=CK.makeCoverCard(entwurf.title||i.title||'Recipe',i.creator||'',i.label||'Video',
+        {a:cs.getPropertyValue('--chrome-bg').trim()||'#3B2A21',
+         b:cs.getPropertyValue('--accent').trim()||'#8A5626',
+         ff:cs.getPropertyValue('--ff-title').trim()||'sans-serif'});
+      thumb=cover;
+    }
+  }
   form={
     id:S.uid(),
     title:entwurf.title||i.title||'',
     min:i.min||entwurf.min||30,
     tags:(entwurf.tags&&entwurf.tags.length)?entwurf.tags:(i.tags||[]),
-    fav:false,servings:2,notes:'',cover:i.thumb||'',thumb:i.thumb||'',
+    fav:false,servings:2,notes:'',cover,thumb,
     ingredients:entwurf.ingredients,
     blocks:entwurf.blocks,
     created:'',up:'',source:i.url||'',
@@ -1316,6 +1488,28 @@ export function rezInspoToRecipe(id){
   toast(gefunden||schritte
     ? `Parsed ${gefunden} ingredient${gefunden===1?'':'s'} and ${schritte} step${schritte===1?'':'s'}`
     : 'No recipe text found — fill it in yourself');
+}
+
+// Ein Bild von einer fremden Adresse in ein lokales Bild verwandeln, damit
+// das Rezept auch offline ein Titelbild hat.
+// ⚠ Das klappt nur, wenn die Gegenstelle CORS erlaubt. Tut sie es nicht,
+// scheitert canvas.toDataURL() mit einem Sicherheitsfehler - dann gibt diese
+// Funktion nichts zurueck und der Aufrufer baut sein erzeugtes Titelbild.
+// Kein stilles Scheitern: der Nutzer sieht in jedem Fall ein Bild.
+function ladeFernbild(url){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    const timeout=setTimeout(()=>rej(new Error('timeout')),8000);
+    img.onload=()=>{
+      clearTimeout(timeout);
+      try{
+        res({cover:CK.encodeToBudgetFrom(img,S.IMG_COVER),thumb:CK.encodeToBudgetFrom(img,S.IMG_THUMB)});
+      }catch(e){rej(e);}
+    };
+    img.onerror=()=>{clearTimeout(timeout);rej(new Error('load failed'));};
+    img.src=url;
+  });
 }
 
 // ══ WOCHENPLAN ═══════════════════════════════════════════════════════════
@@ -1779,12 +1973,20 @@ export async function rezOpenDetail(id){
   detailServ=doc.servings||2;
   const ing=(doc.ingredients||[]).filter(x=>x&&x.trim());
   const blocks=(doc.blocks||[]).filter(b=>b&&(b.v||'').trim());
+  _aktuelleBilder=recipeImages(doc);
+  const vid=doc.source?detectLink(doc.source):null;
   openModal(
      `<div class="rd-hero">`
-      +(doc.cover?`<img src="${doc.cover}" alt="${escH(doc.title)}">`
+      +(doc.cover?`<img src="${doc.cover}" alt="${escH(doc.title)}" onclick="rezShowImage(0)" style="cursor:zoom-in">`
                  :`<div style="height:180px;display:flex;align-items:center;justify-content:center;background:var(--bg4);color:var(--t3)">${icn('image',34)}</div>`)
       +`<button class="rd-menu-btn" onclick="event.stopPropagation();rezOpenRowMenu(event,'${id}')" title="More" aria-label="More">⋮</button>`
+      +(vid&&vid.embedUrl?`<button class="rd-play" onclick="rezPlayVideo('${id}')" aria-label="Play the original video">${icn('play',20)} Watch video</button>`:'')
     +`</div>`
+    // Alle Fotos des Rezepts auf einen Blick - bis 2026-09-02 waren die
+    // Bilder aus der Zubereitung nur beim Durchscrollen zu finden.
+    +(_aktuelleBilder.length>1?`<div class="rd-strip">`
+       +_aktuelleBilder.map((b,i)=>`<img src="${b.src}" alt="" onclick="rezShowImage(${i})" loading="lazy">`).join('')
+     +`</div>`:'')
     +`<div class="rd-title">${escH(doc.title||'Untitled')}</div>`
     +`<div class="rd-meta"><span class="rd-chip">${icn('clock',12)}${fmtDur(doc.min)}</span>`
       +(doc.fav?`<span class="rd-chip" style="color:var(--star)">${icn('star',12)}Favourite</span>`:'')
@@ -1794,9 +1996,11 @@ export async function rezOpenDetail(id){
         +`<span id="rdServN">${detailServ}</span><button class="ck-sv" onclick="rezDetailServ('${id}',1)" aria-label="More servings">+</button></span></div>`
         +`<ul class="rd-ing" id="rdIng">${ingHtml(doc,detailServ)}</ul></div>`:'')
     +`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
-      +(blocks.length?blocks.map(b=>b.t==='img'
-          ?`<div class="rd-block"><img src="${b.v}" alt=""></div>`
-          :`<div class="rd-block"><p>${escH(b.v)}</p></div>`).join('')
+      +(blocks.length?blocks.map(b=>{
+          if(b.t!=='img')return`<div class="rd-block"><p>${escH(b.v)}</p></div>`;
+          const bi=_aktuelleBilder.findIndex(x=>x.src===b.v);
+          return`<div class="rd-block"><img src="${b.v}" alt="" style="cursor:zoom-in" onclick="rezShowImage(${bi})"></div>`;
+        }).join('')
         :`<div class="rd-empty">No preparation steps written down yet.</div>`)
     +`</div>`
     // Notizen: die Information, die beim ZWEITEN Kochen zaehlt ("weniger
@@ -2276,6 +2480,9 @@ Object.assign(window,{
   // Inspiration
   renderInspo,rezInspoQuery,rezInspoClear,rezInspoCreator,rezInspoTag,rezInspoSort,rezOpenBulk,rezRunBulk,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
   rezInspoPaste,rezPickInspoImage,rezSaveInspo,rezOpenInspo,rezTrashInspo,rezInspoToRecipe,
+  rezInspoByCreator,rezYtToggle,rezYtSeek,rezYtScrub,rezYtScrubEnd,
+  // Bilder und Video am Rezept
+  rezPlayVideo,rezCloseVideo,rezLightbox,rezLightboxStep,rezLightboxClose,rezShowImage,
   // Woche
   renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,
   // Einkaufsliste

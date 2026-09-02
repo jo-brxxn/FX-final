@@ -5,6 +5,72 @@
 //
 // ⚠ Gehoert zur Rezept-App, NICHT zum FX Analyst Pro (siehe docs/rezept.md).
 
+// ══ ERZEUGTES TITELBILD ══════════════════════════════════════════════════
+// Fuer Reels, deren echtes Vorschaubild nicht zu bekommen ist (Instagram,
+// TikTok - siehe previewUrl() in import.js). Bewusst als KARTE gestaltet und
+// nicht als Fake-Videostandbild: der Nutzer soll auf einen Blick sehen, dass
+// hier noch sein eigenes Foto hingehoert. Ein Tipp ersetzt es.
+export function makeCoverCard(titel,kuenstler,plattform,farben){
+  const B=800,H=600;
+  const cv=document.createElement('canvas');
+  cv.width=B;cv.height=H;
+  const ctx=cv.getContext('2d');
+  const a=(farben&&farben.a)||'#3B2A21',b=(farben&&farben.b)||'#8A5626';
+  const g=ctx.createLinearGradient(0,0,B,H);
+  g.addColorStop(0,a);g.addColorStop(1,b);
+  ctx.fillStyle=g;ctx.fillRect(0,0,B,H);
+  // Leichtes Raster, damit die Flaeche nicht wie ein Farbfehler wirkt.
+  ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;
+  for(let x=0;x<B;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(B,y);ctx.stroke();}
+  const ff=(farben&&farben.ff)||'sans-serif';
+  const umbruch=(txt,breite,max)=>{
+    const w=String(txt||'').split(/\s+/),z=[];let akt='';
+    w.forEach(x=>{const p=akt?akt+' '+x:x;if(ctx.measureText(p).width>breite&&akt){z.push(akt);akt=x;}else akt=p;});
+    if(akt)z.push(akt);
+    return z.slice(0,max||3);
+  };
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.font=`800 34px ${ff}`;
+  ctx.fillText((plattform||'VIDEO').toUpperCase(),56,110);
+  ctx.font=`800 58px ${ff}`;
+  let y=210;
+  umbruch(titel||'Recipe',B-112,3).forEach(z=>{ctx.fillText(z,56,y);y+=70;});
+  if(kuenstler){
+    ctx.fillStyle='rgba(255,255,255,.72)';
+    ctx.font=`600 32px ${ff}`;
+    ctx.fillText(kuenstler,56,y+16);
+  }
+  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.font=`600 26px ${ff}`;
+  ctx.fillText('Tap to add your own photo',56,H-52);
+  return cv.toDataURL('image/jpeg',0.82);
+}
+
+// Ein bereits geladenes Bild auf ein Byte-Budget bringen. Nutzt dieselbe
+// Pipeline wie die Bild-Auswahl (js/rezept/store.js), nur ohne Datei-Umweg -
+// gebraucht fuer Vorschaubilder, die von einer Adresse kommen.
+export function encodeToBudgetFrom(img,spec){
+  let q=spec.q,max=spec.max,out=zeichne(img,max,q),guard=0;
+  while(out.length*0.75>spec.bytes&&guard++<12){
+    if(q>0.42)q-=0.08;else max=Math.round(max*0.82);
+    out=zeichne(img,max,q);
+  }
+  return out;
+}
+function zeichne(img,maxPx,q){
+  const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height;
+  const scale=Math.min(1,maxPx/Math.max(w0,h0));
+  const w=Math.max(1,Math.round(w0*scale)),h=Math.max(1,Math.round(h0*scale));
+  const cv=document.createElement("canvas");
+  cv.width=w;cv.height=h;
+  const ctx=cv.getContext("2d");
+  ctx.imageSmoothingQuality="high";
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img,0,0,w,h);
+  return cv.toDataURL("image/jpeg",q);
+}
+
 // ══ MENGEN SKALIEREN (Portionen) ═════════════════════════════════════════
 // Erkennt die Menge am Anfang einer Zutatenzeile und rechnet sie um.
 // ⚠ Nichts erfinden: steht keine Zahl da ("Salz & Pfeffer", "etwas Öl"),

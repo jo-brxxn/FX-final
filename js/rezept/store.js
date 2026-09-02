@@ -403,12 +403,29 @@ async function saveLocalIndex(){
   await idbPut('kv',JSON.parse(JSON.stringify(state.index)),'index');
 }
 export async function getFull(id){
-  if(state.full.has(id))return state.full.get(id);
+  if(state.full.has(id))return nachtragen(state.full.get(id));
   let doc=null;
   try{doc=await idbGet('recipes',id);}catch(e){}
-  if(doc){state.full.set(id,doc);return doc;}
+  if(doc){state.full.set(id,doc);return nachtragen(doc);}
   doc=await pullRecipe(id);
   if(doc){state.full.set(id,doc);try{await idbPut('recipes',doc);}catch(e){}}
+  return nachtragen(doc);
+}
+// ⚠ Bestandsdaten nachziehen: `imgs` gibt es erst seit 2026-09-02. Ohne
+// dieses Nachtragen bliebe das Foto-Abzeichen auf der Karte bei allen
+// AELTEREN Rezepten fuer immer aus - ein neues Feld im Verzeichnis muss
+// beim ersten Oeffnen des Volldokuments gefuellt werden, nicht erst beim
+// naechsten Bearbeiten.
+function nachtragen(doc){
+  if(!doc)return doc;
+  const m=state.index.recipes.find(r=>r.id===doc.id);
+  if(!m)return doc;
+  const n=metaOf(doc).imgs;
+  if(m.imgs!==n){
+    m.imgs=n;
+    _indexDirty=true;
+    saveLocalIndex().then(()=>emit('index')).catch(()=>{});
+  }
   return doc;
 }
 
@@ -515,7 +532,11 @@ export async function flushSync(){
 // ── Schreib-API (alles, was die Oberflaeche aufruft) ─────────────────────
 export function metaOf(doc){
   return{id:doc.id,title:doc.title,min:doc.min,tags:doc.tags||[],fav:!!doc.fav,
-    thumb:doc.thumb||'',created:doc.created,up:doc.up};
+    thumb:doc.thumb||'',created:doc.created,up:doc.up,
+    // Anzahl der Bilder im Rezept (Titelbild + Bilder aus der Zubereitung).
+    // Steht im VERZEICHNIS, weil die Karte im Raster sie zeigt und dort das
+    // Volldokument gar nicht geladen ist.
+    imgs:(doc.cover?1:0)+((doc.blocks||[]).filter(b=>b&&b.t==='img'&&b.v).length)};
 }
 // ⚠ servings/notes/source leben im VOLLDOKUMENT, nicht im Verzeichnis: sie
 // werden nur beim Oeffnen eines Rezepts gebraucht und wuerden die

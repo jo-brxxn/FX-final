@@ -47,6 +47,20 @@ const MUSTER=[
 // beide Formen (mit und ohne Handle), TikTok hat ihn immer, YouTube nie.
 // ⚠ Steht er nicht drin, bleibt das Feld LEER - ein geratener Name waere
 // schlimmer als keiner.
+// ══ VORSCHAUBILD EINES VIDEOS ════════════════════════════════════════════
+// ⚠ NUR YOUTUBE hat eine oeffentliche, schluessellose Adresse fuers
+// Vorschaubild (img.youtube.com/vi/<id>/...). Instagram und TikTok haben das
+// NICHT: ihre Bild-Adressen sind kurzlebig signiert und nur ueber die
+// jeweilige API zu bekommen, die ein Konto-Token verlangt. Deshalb gibt diese
+// Funktion dort bewusst nichts zurueck - der Aufrufer baut dann ein sichtbar
+// ERZEUGTES Titelbild, statt eine Adresse zu raten, die spaeter als kaputtes
+// Bild beim Nutzer landet.
+export function previewUrl(link){
+  if(!link||link.platform!=='youtube'||!link.id)return'';
+  // hqdefault existiert fuer JEDES Video (maxres nicht immer) - lieber ein
+  // Bild, das sicher da ist, als eins in besserer Aufloesung, das fehlt.
+  return'https://img.youtube.com/vi/'+link.id+'/hqdefault.jpg';
+}
 export function creatorFromUrl(text){
   const t=String(text||'');
   const ig=t.match(/instagram\.com\/([A-Za-z0-9._]+)\/(?:reels?|p|tv)\//i);

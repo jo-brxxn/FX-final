@@ -566,20 +566,16 @@ function pruefeKontrast() {
   if (entwurf.zutaten.length !== 3) fail('F', `Convert: ${entwurf.zutaten.length} statt 3 Zutaten erkannt`);
   if (!/1\. Nudeln/.test(entwurf.schritte)) fail('F', 'Convert: Zubereitungsschritte nicht uebernommen');
   if (entwurf.dauer !== '20') fail('F', `Convert: Dauer ${entwurf.dauer} statt 20 aus der Caption`);
-  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
-  // Ohne Bild verweigert das Formular - genau richtig, hier nur bestaetigen.
-  await p.click('.modal button:has-text("Add recipe")');
-  await p.waitForTimeout(500);
-  if (!(await p.locator('#rfErr').isVisible().catch(() => false)))
-    fail('F', 'Ein Rezept ohne Titelbild wird kommentarlos angenommen');
-  const fc2 = p.waitForEvent('filechooser', { timeout: 8000 });
-  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 0));
-  await p.click('.rf-drop');
-  await fc2.then(c => c.setFiles(foto)).catch(() => fail('F', 'Datei-Dialog im Convert-Formular oeffnet nicht'));
-  await p.waitForFunction(() => !!document.querySelector('.rf-drop img'), { timeout: 20000 }).catch(() => {});
+  // ⚠ Seit REZEPT-CHECK-7 bekommt ein aus einem Reel erzeugtes Rezept
+  // AUTOMATISCH ein Titelbild (echtes Vorschaubild bei YouTube, sonst ein
+  // erkennbar erzeugtes) - es darf hier also KEINE Bild-Verweigerung mehr
+  // geben. Dass ein von Hand angelegtes Rezept ohne Foto weiterhin abgelehnt
+  // wird, prueft der Block darunter separat.
+  if (!(await p.locator('.rf-drop img').count()))
+    fail('F', 'Convert: das aus dem Reel erzeugte Rezept bekommt kein Titelbild');
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
   await p.click('.modal button:has-text("Add recipe")');
-  await p.waitForTimeout(1200);
+  await p.waitForTimeout(1500);
   const mitQuelle = await p.evaluate(async () => {
     const S = await import('./js/rezept/store.js');
     const r = S.state.index.recipes.find(x => /Pasta al Limone/.test(x.title));
@@ -592,6 +588,19 @@ function pruefeKontrast() {
     if (!/instagram\.com/.test(mitQuelle.source)) fail('F', 'Die Herkunft (Reel-Link) fehlt am Rezept');
     if (mitQuelle.zutaten !== 3) fail('F', `Gespeichertes Rezept hat ${mitQuelle.zutaten} statt 3 Zutaten`);
   }
+
+  // Ein VON HAND angelegtes Rezept ohne Foto muss weiterhin abgelehnt werden -
+  // die Automatik gilt nur fuer den Weg aus einer Inspiration.
+  await p.evaluate(() => window.rezOpenForm(null));
+  await p.waitForTimeout(500);
+  await p.fill('#rfTitle', 'Ohne Foto');
+  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
+  await p.click('.modal button:has-text("Add recipe")');
+  await p.waitForTimeout(600);
+  if (!(await p.locator('#rfErr').isVisible().catch(() => false)))
+    fail('F', 'Ein von Hand angelegtes Rezept ohne Titelbild wird kommentarlos angenommen');
+  await p.evaluate(() => { window.rezDiscardClose(); });
+  await p.waitForTimeout(500);
 
   // F3: Wochenplan + Einkaufsliste
   await p.evaluate(() => window.rezShowPage('week'));
@@ -1083,6 +1092,126 @@ function pruefeKontrast() {
   if ((await p.locator('#pgInspo .rez-card').count()) !== nachherIdeen)
     fail('K', 'Eine bereits vorhandene Adresse wird ein zweites Mal angelegt');
 
+  // ── L) Bilder ueberall sichtbar ──────────────────────────────────────
+  // Nutzer-Wunsch 2026-09-02: die Bilder eines Rezepts sollen auf der Karte,
+  // im Rezept UND im Kochmodus zu sehen sein. Bis dahin lagen die Bilder aus
+  // der Zubereitung nur im Detailfenster.
+  const bildRez = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const px = (f) => 'data:image/svg+xml;base64,' + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="30"><rect width="40" height="30" fill="${f}"/></svg>`);
+    const id = S.uid();
+    await S.saveRecipe({
+      id, title: 'Bilder Test', min: 20, servings: 2, tags: ['Test'],
+      cover: px('#888'), thumb: px('#888'),
+      ingredients: ['200 g Spaghetti'],
+      blocks: [
+        { t: 'text', v: '1. Wasser aufsetzen.' },
+        { t: 'img', v: px('#a55') },
+        { t: 'text', v: '2. Nudeln hinein.' },
+        { t: 'img', v: px('#5a5') },
+      ],
+      source: 'https://youtu.be/dQw4w9WgXcQ',
+    });
+    return id;
+  });
+  await p.waitForTimeout(900);
+  await p.evaluate(() => { window.rezClearFilters(); window.rezShowPage('recipes'); });
+  await p.waitForTimeout(600);
+
+  // L1: Von aussen sichtbar, dass es mehr als ein Foto gibt
+  const abzeichen = await p.evaluate(() => {
+    const k = [...document.querySelectorAll('#pgRecipes .rez-card')]
+      .find(c => /Bilder Test/.test(c.textContent));
+    if (!k) return null;
+    const b = k.querySelector('.rez-card-imgs');
+    return b ? b.textContent.trim() : '';
+  });
+  if (abzeichen === null) fail('L', 'Die Testkarte wurde nicht gefunden');
+  else if (!/3/.test(abzeichen))
+    fail('L', `Die Karte zeigt kein Foto-Abzeichen mit 3 (gelesen: "${abzeichen}") - Bilder sind von aussen nicht erkennbar`);
+
+  // L2: Detailfenster zeigt einen Streifen ALLER Bilder und oeffnet die Grossansicht
+  await p.evaluate(id => window.rezOpenDetail(id), bildRez);
+  await p.waitForTimeout(900);
+  const streifen = await p.locator('.rd-strip img').count();
+  if (streifen !== 3) fail('L', `Der Bilderstreifen im Detailfenster zeigt ${streifen} statt 3 Bilder`);
+  await p.locator('.rd-strip img').nth(1).click();
+  await p.waitForTimeout(500);
+  if (!(await p.locator('#rezLight.on .lb-img').count()))
+    fail('L', 'Ein Klick auf den Bilderstreifen oeffnet keine Grossansicht');
+  else {
+    const vor = await p.evaluate(() => (document.querySelector('.lb-img') || {}).src || '');
+    await p.click('.lb-next');
+    await p.waitForTimeout(400);
+    if ((await p.evaluate(() => (document.querySelector('.lb-img') || {}).src || '')) === vor)
+      fail('L', 'In der Grossansicht laesst sich nicht weiterblaettern');
+    await p.keyboard.press('Escape');
+    await p.waitForTimeout(400);
+    if (await p.locator('#rezLight.on').count()) fail('L', 'Escape schliesst die Grossansicht nicht');
+    // ⚠ Escape darf NUR die Grossansicht schliessen, nicht auch das
+    // Rezept darunter - sonst ist man mit einem Tastendruck zwei Ebenen weg.
+    if (!(await p.locator('.rd-title').count()))
+      fail('L', 'Escape in der Grossansicht schliesst auch das Rezept darunter');
+  }
+
+  // L3: Video ist vom Rezept aus abspielbar
+  if (!(await p.locator('.rd-play').count()))
+    fail('L', 'Ein Rezept mit Video-Herkunft bietet keinen Abspiel-Knopf');
+  else {
+    await p.click('.rd-play');
+    await p.waitForTimeout(800);
+    if (!(await p.locator('#rezVideo.on iframe').count()))
+      fail('L', 'Der Abspiel-Knopf oeffnet kein Video');
+    await p.evaluate(() => window.rezCloseVideo());
+    await p.waitForTimeout(400);
+    if (await p.locator('#rezVideo.on').count()) fail('L', 'Das Video-Fenster laesst sich nicht schliessen');
+  }
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(500);
+
+  // L4: Kochmodus - Bild HAENGT AM SCHRITT, nicht als eigener leerer Schritt
+  await p.evaluate(id => window.rezCook(id), bildRez);
+  await p.waitForTimeout(800);
+  const ckStreifen = await p.locator('.ck-strip img').count();
+  if (ckStreifen !== 3) fail('L', `Der Fotostreifen im Kochmodus zeigt ${ckStreifen} statt 3 Bilder`);
+  const schritt1 = await p.evaluate(() => ({
+    text: (document.querySelector('.ck-step') || {}).textContent || '',
+    bild: !!document.querySelector('.ck-step-img'),
+    anzahl: (document.querySelector('.ck-prog') || {}).textContent || '',
+  }));
+  if (!/Wasser/.test(schritt1.text)) fail('L', 'Der erste Schritt im Kochmodus stimmt nicht');
+  if (!schritt1.bild) fail('L', 'Das Bild wird nicht beim zugehoerigen Schritt gezeigt');
+  if (!/of 2/.test(schritt1.anzahl))
+    fail('L', `Bilder werden weiter als eigene Schritte gezaehlt ("${schritt1.anzahl.trim()}" statt "Step 1 of 2")`);
+  await p.evaluate(() => window.rezCookExit());
+  await p.waitForTimeout(500);
+
+  // L5: Vorschaubild eines Reels wird Titelbild
+  // ⚠ Das ECHTE Vorschaubild (YouTube) laesst sich hier nicht pruefen - die
+  // Netz-Policy dieser Umgebung blockt img.youtube.com. Geprueft wird der
+  // Fall, der ohne Netz gelten muss: Instagram/TikTok geben ihr Vorschaubild
+  // nicht heraus, also MUSS ein erzeugtes Titelbild entstehen, damit
+  // "Convert to recipe" nicht ohne Bild dasteht.
+  const erzeugt = await p.evaluate(async () => {
+    const C = await import('./js/rezept/cook.js');
+    const d = C.makeCoverCard('Pasta al Limone', '@kochenmitchef', 'Instagram',
+      { a: '#3B2A21', b: '#8A5626', ff: 'sans-serif' });
+    return { ist: typeof d === 'string' && d.startsWith('data:image/'), laenge: (d || '').length };
+  });
+  if (!erzeugt.ist) fail('L', 'Es entsteht kein erzeugtes Titelbild fuer Reels ohne oeffentliches Vorschaubild');
+  if (erzeugt.laenge < 2000) fail('L', 'Das erzeugte Titelbild ist verdaechtig klein - vermutlich leer');
+  const vorschau = await p.evaluate(async () => {
+    const I = await import('./js/rezept/import.js');
+    return {
+      yt: I.previewUrl(I.detectLink('https://youtu.be/dQw4w9WgXcQ')),
+      ig: I.previewUrl(I.detectLink('https://www.instagram.com/reel/AbC/')),
+    };
+  });
+  if (!/img\.youtube\.com\/vi\/dQw4w9WgXcQ/.test(vorschau.yt))
+    fail('L', `Fuer YouTube wird keine Vorschaubild-Adresse gebildet ("${vorschau.yt}")`);
+  if (vorschau.ig !== '')
+    fail('L', 'Fuer Instagram wird eine Vorschaubild-Adresse GERATEN - die gibt es nicht oeffentlich, das landet als kaputtes Bild beim Nutzer');
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -1093,7 +1222,7 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus)`);
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus/Bilder)`);
 })().catch(e => {
   // ⚠ Bei einem Absturz AUCH die bis dahin gesammelten Befunde ausgeben.
   // Ohne das sieht man nur "Timeout" und raet, was vorher schon schieflief -

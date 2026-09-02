@@ -166,6 +166,55 @@ Bilder**, nicht nur eine fehlende Animation. Stufe J prüft es.
 **sofort** und den DOM erst nach 140 ms — andersherum hätte man kurz ein
 Fenster, das noch Eingaben annimmt, obwohl es logisch schon zu ist.
 
+## Bilder eines Rezepts
+
+**Eine Quelle für alle drei Stellen** (`recipeImages(doc)`): Titelbild zuerst,
+dann die Bilder aus den Zubereitungs-Blöcken in ihrer Reihenfolge.
+
+| Wo | Was zu sehen ist |
+|---|---|
+| Karte im Raster | Titelbild + Zähler-Abzeichen (`+N`), wenn es mehr als ein Foto gibt |
+| Detailfenster | Titelbild, Bilderstreifen aller Fotos, jedes Bild öffnet die Großansicht |
+| Kochmodus | Bild **beim** Schritt + Fotostreifen in der Seitenspalte |
+
+⚠ **Der Zähler steht im VERZEICHNIS** (`meta.imgs`), nicht im Volldokument —
+die Karte im Raster hat das Volldokument gar nicht geladen. `getFull()` trägt
+das Feld bei Bestandsdaten beim ersten Öffnen nach; ohne dieses Nachtragen
+bliebe das Abzeichen bei allen älteren Rezepten für immer aus.
+
+⚠ **Ein Bild in der Zubereitung wird an den vorhergehenden Schritt geheftet**,
+statt ein eigener, textloser Schritt zu werden. Vorher musste man im Kochmodus
+am Bild vorbeiblättern, um die zugehörige Anweisung zu lesen — Bild und Text
+gehören zusammen. Nur ein Bild ganz am Anfang bleibt ein eigener Schritt.
+
+⚠ **Großansicht und Video-Fenster hängen an eigenen Hosts** (`#rezLight`,
+`#rezVideo`) außerhalb der App-Shell: sie müssen auch aus dem Kochmodus heraus
+funktionieren, und der liegt bereits darüber. Escape schließt in der
+Großansicht **nur** die Großansicht (Handler in der Capture-Phase mit
+`stopPropagation`) — sonst wäre man mit einem Tastendruck zwei Ebenen weg.
+
+## Titelbild aus einem Reel
+
+Drei Stufen, in dieser Reihenfolge:
+
+1. Ein eigenes Bild an der Idee gewinnt immer.
+2. **YouTube**: echtes Vorschaubild über `img.youtube.com/vi/<id>/hqdefault.jpg`
+   — öffentlich und ohne Schlüssel. Wird versucht lokal einzulesen
+   (`crossOrigin='anonymous'` + Canvas), damit das Rezept auch offline ein
+   Bild hat; scheitert das an CORS, greift Stufe 3.
+   `hqdefault` bewusst statt `maxres`: das gibt es für **jedes** Video.
+3. **Instagram/TikTok**: deren Vorschaubilder sind **nicht** öffentlich
+   abrufbar — kurzlebig signierte Adressen, nur über eine API mit
+   Konto-Token. ⚠ Statt eine Adresse zu raten, die später als kaputtes Bild
+   beim Nutzer landet, baut `makeCoverCard()` ein **erkennbar erzeugtes**
+   Titelbild aus Titel, Künstler und Plattform — mit dem Hinweis „Tap to add
+   your own photo". `check/rezept.js` Stufe L schlägt fehl, wenn für Instagram
+   doch eine Adresse gebildet wird.
+
+Nebenwirkung, bewusst: ein aus einer Inspiration erzeugtes Rezept hat damit
+**immer** ein Titelbild und wird beim Speichern nicht mehr abgelehnt. Ein von
+Hand angelegtes Rezept ohne Foto wird weiterhin abgelehnt (beides geprüft).
+
 ## Kochmodus, Timer und Portionen (`js/rezept/cook.js`)
 
 **Kochmodus** ist Vollbild mit großer Schrift, weil das Gerät beim Kochen
