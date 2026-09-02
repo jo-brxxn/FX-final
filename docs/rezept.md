@@ -328,6 +328,23 @@ danach. Ohne Zähler springt ein Fenster Sekunden später von selbst auf oder
 überschreibt ein inzwischen geöffnetes anderes. Jeder asynchrone Öffner merkt
 sich `modalGen()` und bricht ab, wenn sich die Generation geändert hat.
 
+## ⚠ Der Service Worker darf den Programmcode nicht cachen
+
+Nutzer-Bugreport 2026-09-02 (*„es ist wie davor"*) — und die Ursache lag
+**nicht** in der App: `sw.js` lieferte `js/rezept/*.js` über den
+**Cache-First**-Zweig aus. Nach einem Push bekam das Gerät weiter den **alten
+Code**; der neue wurde nur im Hintergrund nachgeladen und wirkte frühestens
+beim **übernächsten** Öffnen. Von außen sieht das exakt aus wie ein nicht
+behobener Fehler — und kostet eine komplette Runde Fehlersuche an der
+falschen Stelle.
+
+Seit `fxpro-v11` laufen `.js`, `.mjs` und `.css` über den **Netz-zuerst**-Zweig
+(Cache nur als Offline-Rückfall). Bilder, Icons und `manifest.json` bleiben
+Cache-zuerst. ⚠ Der Seiten-Rückfall (`rezept.html`/`index.html`) gilt **nur
+für Navigationen** — für eine fehlende `.js`-Datei HTML auszuliefern wäre
+schlimmer als der Fehler selbst. `check/rezept.js` prüft das statisch, damit
+diese Falle nicht zurückkommt.
+
 ## Feste Regeln dieser App
 
 1. **Alles auf der Oberfläche ist Englisch** — wie im FX Analyst Pro
@@ -471,6 +488,17 @@ er auf eine nächste Überschrift wartete, die nie kam. Seither gilt zusätzlich
 
 - `istZutat()` / `istFliesstext()`: eine lange Zeile oder mehrere Sätze
   beenden den Zutaten-Abschnitt, auch ohne Überschrift.
+- ⚠ **Zweiter Bugreport am selben Tag** (*„er schreibt die Zubereitung immer
+  noch als Ingredient … er erkennt auch Sachen wie enjoy als Ingredient"*):
+  die erste Reparatur erkannte nur **lange** Absätze. Reels schreiben die
+  Zubereitung aber meist in **kurzen Zeilen** („Sear the chicken for 5
+  minutes."), die alle als Zutat durchrutschten. Seither zählt zusätzlich
+  (`wirktWieAnweisung()`): eine Zeile, die **auf `.` `!` `?` endet** — Zutaten
+  schreibt niemand mit Punkt —, oder die **mit einem Kochverb beginnt**
+  (`KOCHVERB`, Deutsch und Englisch, inklusive „enjoy"/„Guten Appetit").
+  ⚠ Das Verb zählt **nur am Zeilenanfang**: „Fresh basil to serve" und
+  „Petersilie zum Servieren" sind echte Zutaten und müssen Zutaten bleiben —
+  als Gegenprobe im Wächter.
 - `trenneMehrfach()`: zwei Zutaten in **einer** Zeile werden getrennt
   (`½ tsp black pepper 150 g baby spinach` → zwei Einträge) — passiert, wenn
   beim Kopieren ein Zeilenumbruch verloren geht. ⚠ Nur bei Zeilen, die **mit

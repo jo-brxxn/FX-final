@@ -9171,3 +9171,27 @@ Cover-Fenster (YouTube-Standbilder vorhanden, für Instagram/TikTok keine
 geraten, Bildschirmfoto-Weg da, Zuschnitt auf 1:1 ergibt ein quadratisches
 Titelbild, Escape schließt nur die obere Ebene, jeder Handler im Fenster zeigt
 auf eine echte Funktion).
+
+### Nachtrag am selben Tag: zwei Fehler aus dem zweiten Bugreport (REZEPT-CHECK-9)
+
+Nutzer: *„er schreibt die zubereitung immernoch als ingridient … er erkennt
+auch sachen wie enjoy als ingridient"*.
+
+**1. Kurze Anweisungszeilen.** Die erste Reparatur erkannte nur lange Absätze
+als Zubereitung. Reels schreiben sie aber meist in kurzen Zeilen („Sear the
+chicken for 5 minutes."), und die rutschten alle als Zutat durch — samt
+abschließendem „enjoy". Reproduziert: 9 Zutaten, 0 Schritte. Jetzt zählt
+zusätzlich, ob eine Zeile auf `.`/`!`/`?` endet oder mit einem Kochverb
+beginnt (Deutsch und Englisch, „enjoy"/„Guten Appetit" eingeschlossen) →
+4 Zutaten, 5 Schritte. ⚠ Das Verb zählt nur am Zeilenanfang, sonst hätte
+„Fresh basil to serve" die Zutatenliste vorzeitig beendet; die Gegenprobe
+steht als eigener Fall im Wächter.
+
+**2. Der eigentliche Grund für „es ist wie davor".** `sw.js` lieferte
+`js/rezept/*.js` über den Cache-First-Zweig aus: nach einem Push lief auf dem
+Gerät weiter der alte Code, der neue wirkte frühestens beim übernächsten
+Öffnen. Jede Reparatur kam damit eine Sitzung zu spät an — von außen nicht zu
+unterscheiden von „nicht behoben". Seit `fxpro-v11` laufen `.js`/`.mjs`/`.css`
+über den Netz-zuerst-Zweig (Cache nur offline), der Seiten-Rückfall gilt nur
+noch für Navigationen. Statisch geprüft, Mutation nachgewiesen: Zweig
+zurückgebaut → „sw.js liefert JS/CSS aus dem Cache aus".
