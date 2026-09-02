@@ -9171,3 +9171,70 @@ Cover-Fenster (YouTube-Standbilder vorhanden, für Instagram/TikTok keine
 geraten, Bildschirmfoto-Weg da, Zuschnitt auf 1:1 ergibt ein quadratisches
 Titelbild, Escape schließt nur die obere Ebene, jeder Handler im Fenster zeigt
 auf eine echte Funktion).
+
+---
+
+## 2026-09-02 (7) — Perfect Rezept: Cloud-Sync scheiterte an einer fehlenden Datenbank-Regel (REZEPT-CHECK-9)
+
+Nutzer-Meldung, wörtlich: *„bei der perfect recipe app geht der cloud sync
+nicht das ist das problem: API key rejected (401). Open Settings → Cloud sync
+and paste a fresh key from Supabase → Project Settings → API —
+`{"code":"42501","details":null,"hint":null,"message":"new row violates
+row-level security policy for table \"fx_sync\""}`"*
+
+### Die Meldung war falsch, der Schlüssel war in Ordnung
+
+Der Rumpf sagt es klar: **Postgres 42501**, Row-Level-Security. Mit dem
+Schlüssel war nie etwas. Zwei Dinge kamen zusammen:
+
+1. **PostgREST antwortet auf eine RLS-Verletzung mit 401, wenn kein JWT
+   mitkam** — mit 403 nur bei einer authentifizierten Anfrage. Beide Apps
+   schicken bewusst nur `apikey` (siehe Eintrag 2026-09-02 (2)), sind also
+   anonym: der Statuscode zeigt hier zwangsläufig auf das falsche Problem.
+   `httpFehler()` schaute nur auf den Status → „API key rejected (401)".
+2. **Der FX Analyst Pro fällt nicht auf**, obwohl er dieselbe Tabelle
+   benutzt: Seine Zeile `<syncId>` existiert längst, sein Upsert landet
+   also im `UPDATE`-Zweig. Die Rezept-App muss dagegen **neue** Zeilen
+   (`<syncId>:rez:index`, `<syncId>:rez:r:<id>`) **anlegen** — und genau
+   `INSERT` erlaubt die Policy-Lage des Projekts nicht. Deshalb „bei FX
+   geht es, bei Rezept nicht", mit demselben Schlüssel.
+
+Gegen einen nachgebauten Endpunkt reproduziert (Playwright, echtes
+`rezept.html`, Fake-Supabase mit exakt dem gemeldeten Rumpf), nicht geraten:
+
+| Fall | vorher | jetzt |
+|---|---|---|
+| `POST` → 401 + `42501` | „API key rejected (401)…" | „Reading works, writing does not. Supabase refused to add the row: row-level security … has no policy that lets this key INSERT. Open Settings → Cloud sync → Database setup …" |
+| Verbindungstest bei gesperrtem `INSERT` | „Connection works" (nur `select` geprüft) | Fehlschlag mit derselben Meldung, SQL-Abschnitt klappt auf |
+| Rezept-Upload bei gesperrtem `INSERT` | Status „Synced", Rezept fehlte auf Gerät 2 | „1 recipe could not be uploaded: …" |
+
+### Was geändert wurde (`js/rezept/store.js`, `js/rezept/app.js`, `rezept.html`)
+
+- `httpFehler()` liest **zuerst** `code`/`message` aus dem Rumpf (`42501` →
+  RLS-Meldung, `42P01`/404 → Tabelle fehlt) und erst dann den Status. Die
+  Fehler tragen `e.rls`/`e.setup`, `state.rlsBlocked` merkt sich den Fall.
+- `testConnection()` legt jetzt eine echte Probezeile an (`…:rez:selftest:<zufall>`)
+  und löscht sie wieder — ein reiner Lesetest hätte diesen Bug erneut
+  übersehen. Das Ergebnis nennt Lesen und Schreiben getrennt.
+- **Neu: *Settings → Cloud sync → Database setup (SQL)*** mit `SETUP_SQL`
+  (Tabelle + vier `anon`-Policies, idempotent) und *Copy SQL*
+  (`navigator.clipboard`, Fallback: Text markieren + `execCommand`). Der
+  Abschnitt öffnet sich selbst, sobald ein Regel-Fehler erkannt wurde.
+  Daneben steht offen, was das bedeutet: Wer den publishable Key hat, kann
+  diese Zeilen lesen und schreiben — der Schlüssel steht im Browser, das ist
+  die Architektur beider Apps, kein Versehen dieses SQL.
+- `pushRecipe()` scheitert nicht mehr still: Fehler landet in
+  `state.lastError`, das Rezept bleibt in `_dirtyRecipes`, `flushSync()`
+  meldet „N recipes could not be uploaded" statt „Synced".
+
+### Prüfung
+
+`check/rezept.js` (`pruefeSyncDiagnose`) verlangt seither statisch: der
+Fehlercode wird **vor** dem Status ausgewertet, `testConnection()` schreibt
+tatsächlich (`putRow`), `SETUP_SQL` mit `for insert` existiert, und
+`rezCopySql` hängt in der `window`-Brücke (sonst wirft der Knopf beim Klick
+still ein `ReferenceError`).
+
+**Offen und nur vom Nutzer selbst zu erledigen:** Das SQL muss einmal im
+Supabase-Projekt laufen. Kein Code kann eine fehlende Policy ersetzen — die
+Rechte liegen serverseitig.

@@ -73,6 +73,7 @@ export const state={
   status:'',
   dbBroken:false,   // lokale Ablage ausgefallen -> Speicher-Map als Notbetrieb
   lastError:'',     // letzte Fehlermeldung, die die Oberflaeche zeigen soll
+  rlsBlocked:false, // Supabase laesst diesen Schluessel keine Zeile ANLEGEN
 };
 
 let _db=null;
@@ -185,14 +186,70 @@ export function getCloudCfg(){
 // MERKSATZ: Beim Sprechen mit derselben Gegenstelle wie der FX Analyst Pro
 // die Kopfzeilen NICHT neu erfinden - dort abschreiben.
 function cloudHeaders(cfg){return{'apikey':cfg.key,'Content-Type':'application/json'};}
+// Das SQL, das die Tabelle samt Regeln herstellt. Steht ALS TEXT in der App
+// (Einstellungen -> Cloud sync -> Database setup), weil der Nutzer es nur
+// dort braucht, wo er den Fehler gemeldet bekommt.
+// ⚠ Die Rechte gelten fuer `anon` - genau die Rolle, unter der beide Apps
+// mit dem publishable/anon-Schluessel sprechen. Wer den Schluessel hat, kann
+// die Zeilen lesen und schreiben; das ist die Architektur dieser Apps (der
+// Schluessel steht im Browser), nicht eine Nachlaessigkeit dieses SQL.
+export const SETUP_SQL=`-- Cloud sync for FX Analyst Pro + Perfect Rezept.
+-- Run once in Supabase → SQL editor, then press Test again.
+create table if not exists public.fx_sync (
+  id          text primary key,
+  data        jsonb,
+  updated_at  timestamptz default now()
+);
+alter table public.fx_sync enable row level security;
+
+drop policy if exists "fx_sync anon select" on public.fx_sync;
+drop policy if exists "fx_sync anon insert" on public.fx_sync;
+drop policy if exists "fx_sync anon update" on public.fx_sync;
+drop policy if exists "fx_sync anon delete" on public.fx_sync;
+
+create policy "fx_sync anon select" on public.fx_sync
+  for select to anon, authenticated using (true);
+create policy "fx_sync anon insert" on public.fx_sync
+  for insert to anon, authenticated with check (true);
+create policy "fx_sync anon update" on public.fx_sync
+  for update to anon, authenticated using (true) with check (true);
+create policy "fx_sync anon delete" on public.fx_sync
+  for delete to anon, authenticated using (true);`;
+
+const RLS_HINT='Supabase refused to add the row: row-level security on table '
+  +'"fx_sync" has no policy that lets this key INSERT. Open Settings → Cloud sync '
+  +'→ Database setup, copy the SQL and run it in Supabase → SQL editor.';
+
 // Aus einer Antwort eine Meldung machen, mit der der Nutzer etwas anfangen
 // kann. "HTTP 401" allein sagt ihm nichts - er soll wissen, WO er nachsieht.
+// ⚠ DER STATUSCODE ALLEIN LUEGT HIER. Nutzer-Bugreport 2026-09-02:
+//   "API key rejected (401) … {"code":"42501", … "new row violates
+//    row-level security policy for table \\"fx_sync\\""}"
+// PostgREST beantwortet eine verletzte RLS-Regel mit 403, WENN ein JWT
+// mitkam - bei einer anonymen Anfrage (nur `apikey`, genau wie beide Apps
+// sie schicken) dagegen mit 401. Der Schluessel war die ganze Zeit in
+// Ordnung; die Meldung schickte den Nutzer trotzdem einen neuen holen.
+// Deshalb: ERST den Fehlercode im Rumpf auswerten, DANN den Status.
 async function httpFehler(res){
-  let detail='';
-  try{const t=await res.text();if(t)detail=' — '+t.slice(0,160);}catch(e){}
+  let text='',body=null;
+  try{text=await res.text();}catch(e){}
+  try{body=text?JSON.parse(text):null;}catch(e){}
+  const code=(body&&body.code)||'';
+  const msg=(body&&body.message)||'';
+  const detail=text?' — '+text.slice(0,160):'';
+  if(code==='42501'||/row-level security/i.test(msg)){
+    const e=new Error(RLS_HINT);e.rls=true;return e;
+  }
+  if(code==='42P01'||/relation .*fx_sync.* does not exist/i.test(msg)){
+    const e=new Error('Table "fx_sync" does not exist in this project. Open Settings → Cloud sync → Database setup and run the SQL in Supabase → SQL editor.');
+    e.setup=true;return e;
+  }
   if(res.status===401)return new Error('API key rejected (401). Open Settings → Cloud sync and paste a fresh key from Supabase → Project Settings → API'+detail);
   if(res.status===403)return new Error('Access denied (403). The table exists but its row-level security rules block this key'+detail);
-  if(res.status===404)return new Error('Table "fx_sync" not found (404). Check the project URL'+detail);
+  if(res.status===404){
+    const e=new Error('Table "fx_sync" not found (404). Check the project URL, or run the SQL from Settings → Cloud sync → Database setup'+detail);
+    e.setup=true;return e;
+  }
   if(res.status===429)return new Error('Too many requests (429). Supabase is rate limiting — try again in a moment');
   if(res.status>=500)return new Error('Supabase is unavailable ('+res.status+'). Try again later');
   return new Error('HTTP '+res.status+detail);
@@ -211,18 +268,57 @@ export function saveCloudCfg(url,key,syncId){
 }
 // Einmal hin und zurueck, damit der Nutzer eine klare Auskunft bekommt statt
 // eines stummen "irgendwas klemmt".
+// ⚠ LESEN ALLEIN BEWEIST NICHTS. Bis REZEPT-CHECK-8 fragte dieser Test nur
+// ein `select` ab und meldete "Connection works" - waehrend der Sync bei
+// jedem Schreibversuch an der RLS-Regel scheiterte (Bugreport 2026-09-02).
+// Der FX Analyst Pro fiel dabei nicht auf: SEINE Zeile existiert laengst,
+// sein Upsert landet also im UPDATE-Zweig, waehrend die Rezept-App drei
+// NEUE Zeilen (<syncId>:rez:*) ANLEGEN muss - und genau INSERT war
+// verboten. Der Test legt deshalb eine Probezeile an und raeumt sie weg.
 export async function testConnection(){
   const cfg=getCloudCfg();
-  if(!cfg)return{ok:false,msg:'No credentials saved yet.'};
+  if(!cfg)return{ok:false,read:false,write:false,msg:'No credentials saved yet.'};
+  const fehler=e=>(e&&e.name==='TimeoutError')
+    ?'No answer within 12 s — check the project URL or your connection.'
+    :(e&&e.message||String(e));
+  // 1) Lesen
   try{
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?select=id&limit=1',
       {headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
-    if(!res.ok){const e=await httpFehler(res);return{ok:false,msg:e.message};}
+    if(!res.ok){
+      const e=await httpFehler(res);
+      state.rlsBlocked=!!e.rls||!!e.setup;
+      state.lastError=e.message;
+      return{ok:false,read:false,write:false,rls:state.rlsBlocked,msg:e.message};
+    }
     await res.json();
-    return{ok:true,msg:'Connection works — table fx_sync is reachable.'};
   }catch(e){
-    return{ok:false,msg:(e&&e.name==='TimeoutError')?'No answer within 12 s — check the project URL or your connection.':(e&&e.message||String(e))};
+    state.lastError=fehler(e);
+    return{ok:false,read:false,write:false,msg:state.lastError};
   }
+  // 2) Schreiben - eine echte NEUE Zeile, sonst testet der Upsert nur den
+  //    UPDATE-Zweig und uebersieht genau den Fall, der hier kaputt war.
+  const probe=rowId(cfg,'selftest:'+Math.random().toString(36).slice(2,8));
+  try{
+    await putRow(cfg,probe,{selftest:nowIso()},nowIso());
+  }catch(e){
+    state.rlsBlocked=!!e.rls||!!e.setup;
+    state.lastError='Reading works, writing does not. '+(e&&e.message||String(e));
+    return{ok:false,read:true,write:false,rls:state.rlsBlocked,msg:state.lastError};
+  }
+  state.rlsBlocked=false;
+  state.lastError='';
+  // 3) Aufraeumen. Scheitert nur das Loeschen, funktioniert der Sync
+  //    trotzdem - dann bleibt eine winzige Probezeile liegen, und das ist
+  //    eine Randnotiz, kein Fehlschlag.
+  let rest='';
+  try{
+    const del=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(probe),
+      {method:'DELETE',headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
+    if(!del.ok)rest=' (the test row could not be deleted — add the delete policy from Database setup)';
+  }catch(e){rest=' (the test row could not be deleted)';}
+  return{ok:true,read:true,write:true,
+    msg:'Connection works — table fx_sync can be read and written.'+rest};
 }
 
 // ⚠ Der Zeitstempel entscheidet bei JEDER Kollision, welche Fassung gewinnt.
@@ -478,12 +574,18 @@ export async function syncIndex(manual){
       }
       _indexDirty=false;
       state.lastError='';
+      state.rlsBlocked=false;
       setStatus('Synced '+new Date().toLocaleTimeString());
       emit('index');
       return true;
     }catch(e){
       state.lastError=e.message||String(e);
+      // Merken, DASS es an den Datenbank-Regeln liegt: die Einstellungen
+      // klappen dann das SQL auf, statt den Nutzer einen neuen Schluessel
+      // holen zu lassen, der nichts aendert.
+      state.rlsBlocked=!!e.rls||!!e.setup;
       setStatus('Sync failed: '+state.lastError);
+      emit('status');
       return false;
     }
   });
@@ -498,6 +600,11 @@ async function pullRecipe(id){
     return rows.length?rows[0].data:null;
   }catch(e){return null;}
 }
+// ⚠ Ein gescheiterter Rezept-Upload darf nicht STILL scheitern. Bis
+// REZEPT-CHECK-8 gab diese Funktion im Fehlerfall nur `false` zurueck, und
+// niemand sah es: das Verzeichnis ging danach hoch, die Oberflaeche meldete
+// "Synced" - und auf dem zweiten Geraet fehlte das Rezept. Der Fehler wird
+// deshalb gemerkt und von flushSync() gemeldet.
 async function pushRecipe(id){
   const cfg=getCloudCfg();if(!cfg)return false;
   const doc=state.full.get(id)||await idbGet('recipes',id).catch(()=>null);
@@ -505,7 +612,14 @@ async function pushRecipe(id){
   try{
     await putRow(cfg,rowId(cfg,'r:'+id),doc,doc.up||nowIso());
     return true;
-  }catch(e){return false;}
+  }catch(e){
+    state.lastError=e.message||String(e);
+    if(e.rls||e.setup)state.rlsBlocked=true;
+    // Beim naechsten Lauf noch einmal versuchen - sonst bliebe das Rezept
+    // fuer immer nur lokal liegen.
+    _dirtyRecipes.add(id);
+    return false;
+  }
 }
 async function deleteRow(id){
   const cfg=getCloudCfg();if(!cfg)return;
@@ -525,8 +639,20 @@ export function scheduleSync(){
 export async function flushSync(){
   clearTimeout(_pushTimer);_pushTimer=null;
   const ids=[..._dirtyRecipes];_dirtyRecipes.clear();
-  for(const id of ids)await pushRecipe(id);
-  await syncIndex(false);
+  let fehler=0,meldung='';
+  for(const id of ids){
+    if(!await pushRecipe(id)&&state.lastError){fehler++;meldung=state.lastError;}
+  }
+  const ok=await syncIndex(false);
+  // Das Verzeichnis kann durchgehen, waehrend ein einzelnes Rezept haengen
+  // bleibt (z.B. weil nur INSERT gesperrt ist). Dann darf oben NICHT
+  // "Synced" stehen.
+  if(ok&&fehler){
+    state.lastError=meldung;
+    setStatus(fehler+' recipe'+(fehler===1?'':'s')+' could not be uploaded: '+meldung);
+    return false;
+  }
+  return ok;
 }
 
 // ── Schreib-API (alles, was die Oberflaeche aufruft) ─────────────────────

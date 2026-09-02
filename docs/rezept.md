@@ -395,6 +395,39 @@ sich `modalGen()` und bricht ab, wenn sich die Generation geändert hat.
    nachsieht. Zugangsdaten und ein Verbindungstest stehen in den
    Einstellungen **beider** Apps — eine Reparatur darf keinen App-Wechsel
    verlangen.
+12b. **⚠ Der Statuscode allein lügt — erst den Fehlercode im Rumpf lesen.**
+   PostgREST beantwortet eine verletzte Row-Level-Security-Regel nur dann
+   mit **403**, wenn ein JWT mitkam; bei einer anonymen Anfrage (nur
+   `apikey` — genau so sprechen beide Apps) mit **401**. Der Bugreport vom
+   2026-09-02 lautete deshalb wörtlich „API key rejected (401)… `{"code":
+   "42501", … "new row violates row-level security policy for table
+   \"fx_sync\""}`" — der Schlüssel war die ganze Zeit in Ordnung, die App
+   schickte den Nutzer trotzdem einen neuen holen. `httpFehler()` wertet
+   seither **zuerst** `code`/`message` aus dem Rumpf aus (`42501` → RLS,
+   `42P01`/404 → Tabelle fehlt) und erst danach den Status;
+   `check/rezept.js` prüft die Reihenfolge statisch.
+12c. **Der Verbindungstest muss SCHREIBEN, nicht nur lesen.** Ein reiner
+   `select`-Test meldete „Connection works", während jeder Upload scheiterte.
+   Grund: Der FX Analyst Pro **aktualisiert** nur seine längst vorhandene
+   Zeile (Upsert → `UPDATE`-Zweig, dafür genügt eine UPDATE-Policy), die
+   Rezept-App muss dagegen **neue** Zeilen `<syncId>:rez:*` **anlegen** —
+   und exakt `INSERT` war verboten. `testConnection()` legt deshalb eine
+   Probezeile an und räumt sie weg; sein Ergebnis nennt Lesen und Schreiben
+   getrennt.
+12d. **Die Datenbank-Regeln stehen als SQL in der App**, unter *Settings →
+   Cloud sync → Database setup* (`SETUP_SQL` in `js/rezept/store.js`, Knopf
+   *Copy SQL*). Der Abschnitt klappt bei erkanntem Regel-Fehler von selbst
+   auf (`state.rlsBlocked`). Das SQL legt `fx_sync` an und erteilt `anon`
+   select/insert/update/delete — mehrfaches Ausführen ist harmlos. Wer den
+   publishable Key hat, kann diese Zeilen lesen und schreiben; das ist die
+   Architektur beider Apps (der Schlüssel steht im Browser) und steht als
+   Hinweis direkt neben dem SQL.
+12e. **Kein stiller Upload-Fehlschlag.** `pushRecipe()` gab im Fehlerfall
+   nur `false` zurück — das Verzeichnis ging danach hoch, oben stand
+   „Synced", und auf dem zweiten Gerät fehlte das Rezept. Der Fehler landet
+   jetzt in `state.lastError`, das Rezept bleibt in `_dirtyRecipes` (nächster
+   Versuch) und `flushSync()` meldet „N recipes could not be uploaded: …"
+   statt „Synced".
 13. **Ungespeicherte Eingaben werden nie kommentarlos verworfen.** Klick
    daneben, Escape und *Cancel* laufen alle über `rezRequestClose()`; bei
    Änderungen erscheint das zentrierte Fenster mit *Discard & close* (rot),

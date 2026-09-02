@@ -499,6 +499,12 @@ body{
 .set-adv summary::-webkit-details-marker{display:none}
 .set-adv summary::before{content:'▸';font-size:11px;transition:transform .15s}
 .set-adv[open] summary::before{transform:rotate(90deg)}
+/* Das SQL fuer die Datenbank-Regeln (Einstellungen -> Cloud sync). Monospace
+   und scrollbar, weil man es unveraendert nach Supabase kopiert. */
+.sql-box{margin:8px 0;padding:10px;border:1px solid var(--bd);border-radius:var(--rss);background:var(--bg4);
+  color:var(--t2);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--fs-xs);
+  line-height:1.5;white-space:pre;overflow:auto;max-height:190px;-webkit-overflow-scrolling:touch}
+.sql-warn{border-left:3px solid var(--accent);padding-left:9px}
 .trash-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
 .trash-row:last-child{border-bottom:none}
 .trash-thumb{width:44px;height:44px;border-radius:var(--rss);object-fit:cover;flex-shrink:0;background:var(--bg4);border:1px solid var(--bd)}
@@ -1010,11 +1016,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-8 - Der Kochmodus steht jetzt in drei Spalten: links die Zutaten (mit Portionsregler in der Kopfzeile), in der Mitte das Bild ODER das Video des Rezepts - der Kasten nimmt das Seitenverhaeltnis des Bildes an, statt Hochkant in Querformat zu quetschen -, rechts die komplette Zubereitung als Liste mit hervorgehobenem aktivem Schritt, und oben mittig laufen die Timer. Neu ist ausserdem das Titelbild-Fenster: bei YouTube lassen sich echte Standbilder aus dem Video direkt auswaehlen, bei Instagram und TikTok laeuft das Reel daneben, waehrend man ein Bildschirmfoto einfuegt oder auswaehlt - danach zuschneiden mit festem Seitenverhaeltnis. Und die Caption-Zerlegung trennt jetzt zwei Zutaten in einer Zeile (auch mit Bruchzeichen wie ½) und schreibt die Anleitung nicht mehr in die Zutatenliste.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-9 - Cloud sync now names the real problem instead of blaming the API key. Supabase answers a blocked write with HTTP 401 when the request carries no JWT, even though the body says Postgres 42501 - row-level security. The app reads that body first, so a missing policy is reported as a missing policy. Settings - Cloud sync gained a Database setup section with the exact SQL to run in Supabase (it opens by itself when a write is blocked), the connection test now writes a real test row instead of only reading, and a recipe that fails to upload no longer hides behind a green Synced line.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-8</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-9</span>
     </span>
   </div>
   <div class="hdr-r">
