@@ -215,12 +215,68 @@ Nebenwirkung, bewusst: ein aus einer Inspiration erzeugtes Rezept hat damit
 **immer** ein Titelbild und wird beim Speichern nicht mehr abgelehnt. Ein von
 Hand angelegtes Rezept ohne Foto wird weiterhin abgelehnt (beides geprüft).
 
+### Titelbild selbst wählen: das Cover-Fenster (seit REZEPT-CHECK-8)
+
+Nutzer-Wunsch 2026-09-02: *„Screenshot aus dem Reel als Titelbild direkt in
+der App auswählbar machen."* Erreichbar über **„Cover from the video"** im
+Rezept-Formular und **„Set cover"** im Inspirations-Fenster; eigener Host
+`#rezCover`, der **über** dem Formular liegt — das Formular darunter bleibt
+offen und ungespeichert, `Escape` schließt nur die obere Ebene.
+
+| Plattform | Was das Fenster anbietet |
+|---|---|
+| YouTube | **echte Standbilder** aus dem Video (`frameUrls()`: `maxresdefault`, `hqdefault`, `1/2/3.jpg` = erstes, mittleres, letztes Drittel) — anklicken genügt |
+| Instagram / TikTok | das Reel läuft **links im selben Fenster**; rechts Bildschirmfoto per Klick, Ziehen-und-Ablegen oder ⌘V/Strg+V einfügen |
+
+⚠ **Warum es bei Instagram/TikTok kein „Bild aus dem Video holen" gibt:** das
+Video läuft in einem cross-origin `<iframe>`. Weder Auslesen noch Abmalen auf
+eine Canvas ist erlaubt (Same-Origin-Regel — keine Einstellung, die man
+umlegen könnte), und die Vorschaubilder liegen hinter kurzlebig signierten
+Adressen. Ein Knopf „Frame übernehmen" wäre dort eine **Attrappe**; deshalb
+steht stattdessen der Bildschirmfoto-Weg da, und `frameUrls()` gibt für diese
+Plattformen bewusst eine **leere Liste** zurück (Stufe M schlägt fehl, wenn
+doch Adressen entstehen).
+
+**Zuschneiden** gehört dazu: ein Handy-Screenshot ist hochkant und hat die
+Telefonleisten mit drauf. Der Ausschnitt wird in **Bildpunkten des Originals**
+gerechnet (nicht in Bildschirmpunkten — sonst hinge die Schärfe an der
+Fenstergröße), mit festen Verhältnissen (frei, 4:3, 3:4, 1:1, 16:9, 9:16).
+Das Ergebnis läuft durch dieselben Bild-Budgets wie jedes andere Foto.
+
+⚠ **Die Zwischenablage kann fehlschlagen** (`navigator.clipboard.read()` gibt
+es nicht überall und sie fragt um Erlaubnis). Dann sagt die App **warum** und
+nennt den Weg, der immer geht — kein stilles Nichts.
+
 ## Kochmodus, Timer und Portionen (`js/rezept/cook.js`)
 
 **Kochmodus** ist Vollbild mit großer Schrift, weil das Gerät beim Kochen
 zwei Meter weg steht und man nasse Hände hat. `wakeLock` hält den Bildschirm
 an — und wird nach der Rückkehr aus dem Hintergrund **neu angefordert**, weil
 das System sie dort freigibt.
+
+**Layout seit REZEPT-CHECK-8 — drei Spalten** (Nutzer-Wunsch 2026-09-02:
+*„links die Zutaten, dann in der Mitte das Bild oder das Video … und dann
+rechts die Zubereitung und oben mittig die Timer Funktion"*):
+
+| Bereich | Inhalt |
+|---|---|
+| Kopfzeile | Schließen · Titel · **Timer (mittig)** · Portionsregler |
+| links | Zutaten mit Häkchen (auf die eingestellten Portionen gerechnet) + Fotostreifen |
+| Mitte | Bild **oder** Video des Rezepts, umschaltbar |
+| rechts | **alle** Schritte als Liste, der aktive hervorgehoben, darunter Timer-Knöpfe und Zurück/Weiter |
+
+Zwei Punkte, die dabei leicht kaputtgehen und deshalb geprüft werden:
+
+- ⚠ **Das Medienfeld nimmt das Seitenverhältnis des Bildes an** (`--ck-ar`,
+  gesetzt beim `load` des Bildes). Ein fester 16:9-Kasten lässt ein
+  hochkantes Reel-Bild wie einen Fehler aussehen.
+- ⚠ **Der Video-Rahmen wird beim Schrittwechsel aus dem DOM gelöst und wieder
+  eingehängt**, statt neu geschrieben zu werden — sonst springt das Video bei
+  jedem Klick an den Anfang. Aus demselben Grund schreibt das Timer-Ereignis
+  **nur** die Timer-Zeile neu, nicht den ganzen Kochmodus.
+- ⚠ Im Kochmodus ist die **untere** Timer-Leiste ausgeblendet
+  (`body.cooking #rezTimers`) — dieselbe Uhr an zwei Stellen ist doppelt, und
+  genau die untere Leiste verdeckte früher „Back/Next".
 
 **Portionen skalieren** (`scaleIngredient`): erkennt Zahl, Komma-Wert,
 Schreibbruch (`1 1/2`) und Unicode-Bruch (`½`). ⚠ **Steht keine Zahl da
@@ -405,6 +461,27 @@ Block stehen), der Rest läuft automatisch:
 Formular-Standard und der Nutzer wählt selbst. Reine Reichweiten-Hashtags
 (`#reels`, `#fyp`, `#foodporn`, …) fliegen raus, sonst müllen sie die
 Filterleiste zu.
+
+**⚠ Die FORM einer Zeile entscheidet mit, wo die Zutaten aufhören**
+(Bugreport 2026-09-02 per Screenshot: *„du siehst die caption wird nicht
+richtig zerlegt"*). Reproduziert: eine Caption mit `Ingredients:`, aber **ohne
+eigene Überschrift für die Zubereitung**, schrieb die komplette Anleitung als
+elfte „Zutat" in die Liste — der Überschriften-Weg lief bis zum Textende, weil
+er auf eine nächste Überschrift wartete, die nie kam. Seither gilt zusätzlich:
+
+- `istZutat()` / `istFliesstext()`: eine lange Zeile oder mehrere Sätze
+  beenden den Zutaten-Abschnitt, auch ohne Überschrift.
+- `trenneMehrfach()`: zwei Zutaten in **einer** Zeile werden getrennt
+  (`½ tsp black pepper 150 g baby spinach` → zwei Einträge) — passiert, wenn
+  beim Kopieren ein Zeilenumbruch verloren geht. ⚠ Nur bei Zeilen, die **mit
+  einer Menge beginnen**; in „Bake at 200 C for 25 minutes" wäre Trennen
+  falsch. Mengen dürfen dabei mit **Unicode-Bruch** anfangen (`½`, `⅓`, `¾`)
+  — die erste Fassung erkannte nur ASCII-Ziffern und ließ genau diese Zeile
+  zusammen.
+- Ein Anleitungs-Absatz länger als 170 Zeichen wird in Sätze zerlegt, damit
+  im Kochmodus lesbare Schritte stehen.
+
+Die Caption aus dem Screenshot steht als Testfall in `check/rezept.js` Stufe H.
 
 **⚠ Beide Parser-Wege gehören geprüft.** Ein Regressionstest hat gezeigt: die
 Mengen-Erkennung absichtlich kaputtzumachen blieb unbemerkt, weil die

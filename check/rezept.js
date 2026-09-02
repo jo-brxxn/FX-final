@@ -32,9 +32,9 @@ const fail = (stufe, text) => F.push(stufe + ': ' + text);
 
 // Ein winziges, gueltiges PNG als Testfoto (8x8, Graustufe) - reicht fuer die
 // komplette Bild-Pipeline und kostet nichts.
-function testPng() {
+function testPng(breite, hoehe) {
   const zlib = require('zlib');
-  const W = 8, H = 8;
+  const W = breite || 8, H = hoehe || 8;
   const roh = Buffer.concat(Array.from({ length: H }, () =>
     Buffer.concat([Buffer.from([0]), Buffer.alloc(W * 3, 160)])));
   const chunk = (t, d) => {
@@ -481,6 +481,33 @@ function pruefeKontrast() {
     pruef('ohne Ueberschrift: Schritte', b.steps.length, 2);
     pruef('ohne Ueberschrift: Dauer', b.min, 25);
     pruef('ohne Ueberschrift: Tags', b.tags, ['Mealprep']);
+
+    // Weg 3: GENAU die Caption aus dem Screenshot des Nutzers (2026-09-02,
+    // "du siehst die caption wird nicht richtig zerlegt"). Kennzeichen:
+    // Ueberschrift NUR fuer die Zutaten, die Zubereitung folgt als
+    // Fliesstext ohne eigene Ueberschrift, und in einer Zeile stehen zwei
+    // Zutaten, weil beim Kopieren ein Zeilenumbruch verloren ging.
+    const c = I.parseCaption([
+      'Baked Salmon Feta Pasta', '', 'Ingredients:',
+      '2 salmon fillets', '200 g feta', '400 g cherry tomatoes', '3 tbsp olive oil',
+      '2 tsp oregano', '\u00bd tsp garlic powder', '\u00bd tsp salt',
+      '\u00bd tsp black pepper 150 g baby spinach', '250 g pasta, cooked',
+      'Preheat the oven to 200\u00b0C / 400\u00b0F. Place all the ingredients into a baking dish. '
+      + 'Bake at 200\u00b0C / 400\u00b0F for 25 minutes, until the salmon is cooked through and the tomatoes are soft. '
+      + 'Flake the salmon with a fork and mix it together with the feta and tomatoes until creamy. '
+      + 'Add the spinach to the hot baking dish and let it wilt for 2-3 minutes. '
+      + 'Add the cooked pasta and toss everything together. '
+      + 'If the sauce is too thick, stir in a few tablespoons of the reserved pasta water.',
+      'enjoy', '', '#pasta #salmon #reels', 'https://www.instagram.com/reel/CxYz123AbC/'].join('\n'));
+    pruef('Screenshot-Caption: Zutaten', c.ingredients.length, 10);
+    pruef('Screenshot-Caption: die Anleitung steht NICHT in den Zutaten',
+      c.ingredients.filter(z => /Preheat|Bake at|Flake/.test(z)).length, 0);
+    pruef('Screenshot-Caption: zwei Zutaten in einer Zeile getrennt',
+      [c.ingredients[7], c.ingredients[8]], ['\u00bd tsp black pepper', '150 g baby spinach']);
+    pruef('Screenshot-Caption: Zubereitung in Saetze zerlegt', c.steps.length >= 6, true);
+    pruef('Screenshot-Caption: kein Schritt laenger als 180 Zeichen',
+      c.steps.filter(x => x.length > 180).length, 0);
+    pruef('Screenshot-Caption: Dauer aus dem Text', c.min, 25);
 
     // Dauer-Schreibweisen
     [['1h30', 90], ['2 Std 30 Minuten', 150], ['ca. 20 Min', 20], ['90 mins', 90],
@@ -934,10 +961,29 @@ function pruefeKontrast() {
     await p.waitForTimeout(700);
     if (!(await p.evaluate(() => document.body.classList.contains('cooking'))))
       fail('K', 'Der Kochmodus oeffnet sich nicht');
-    const schritt1 = await p.evaluate(() => (document.querySelector('.ck-step') || {}).textContent || '');
+    // ⚠ Seit dem Umbau auf drei Spalten (Nutzer-Wunsch 2026-09-02) stehen
+    // ALLE Schritte rechts, der aktive ist hervorgehoben. Geprueft wird
+    // deshalb beides: die Liste ist vollstaendig, und genau EIN Schritt ist
+    // aktiv - eine Liste ohne aktiven Schritt waere beim Kochen wertlos.
+    const stpAnzahl = await p.locator('.ck-side-r .ck-stp').count();
+    if (stpAnzahl !== 2) fail('K', `Die Zubereitung zeigt ${stpAnzahl} statt 2 Schritte in der rechten Spalte`);
+    if (await p.locator('.ck-stp.on').count() !== 1) fail('K', 'Es ist nicht genau ein Schritt aktiv');
+    const schritt1 = await p.evaluate(() => (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '');
     if (!/Nudeln/.test(schritt1)) fail('K', `Der erste Schritt fehlt im Kochmodus ("${schritt1.slice(0, 40)}")`);
     // Schritte werden einzeln gezeigt, nicht als Block
     if (/Servieren/.test(schritt1)) fail('K', 'Die Zubereitung wird nicht in einzelne Schritte zerlegt');
+    // Die drei Spalten muessen NEBENEINANDER liegen (links Zutaten, Mitte
+    // Medien, rechts Zubereitung) und duerfen sich nicht ueberlappen.
+    const spalten = await p.evaluate(() => {
+      const g = s => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null; };
+      const l = g('.ck-side'), m = g('.ck-main'), r = g('.ck-side-r'), b = g('.ck-body');
+      return l && m && r && b ? { l: [l.left, l.right], m: [m.left, m.right], r: [r.left, r.right], breit: b.width } : null;
+    });
+    if (!spalten) fail('K', 'Der Kochmodus hat keine drei Spalten');
+    else if (spalten.breit > 1000) {   // schmale Fenster stapeln bewusst
+      if (!(spalten.l[1] <= spalten.m[0] + 1)) fail('K', 'Zutaten und Medienspalte ueberlappen');
+      if (!(spalten.m[1] <= spalten.r[0] + 1)) fail('K', 'Medien- und Zubereitungsspalte ueberlappen');
+    }
     // Ein Timer aus dem Schritt muss angeboten werden
     if (!(await p.locator('.ck-timers .btn').count())) fail('K', 'Aus "10 Minuten" entsteht kein Timer-Knopf');
     // Portionen verdoppeln muss die Menge verdoppeln
@@ -953,36 +999,48 @@ function pruefeKontrast() {
     // Vor/Zurueck
     await p.click('.ck-nav .btn:has-text("Next")');
     await p.waitForTimeout(300);
-    if (!/Servieren/.test(await p.evaluate(() => (document.querySelector('.ck-step') || {}).textContent || '')))
+    if (!/Servieren/.test(await p.evaluate(() => (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '')))
       fail('K', '"Next" blaettert nicht zum naechsten Schritt');
+    // Ein Klick auf einen Schritt in der Liste springt dorthin
+    await p.click('.ck-side-r .ck-stp >> nth=0');
+    await p.waitForTimeout(300);
+    if (!/Nudeln/.test(await p.evaluate(() => (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '')))
+      fail('K', 'Ein Klick auf einen Schritt in der Liste waehlt ihn nicht aus');
     // Timer starten und die Uhr pruefen
     await p.evaluate(() => window.rezStartTimer(90, 'test'));
     await p.waitForTimeout(600);
-    const uhr = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
-    if (!/^0?1:2\d|^0?1:3\d/.test(uhr)) fail('K', `Die Countdown-Uhr zeigt "${uhr}" statt einer Zeit um 01:30`);
-    if (!(await p.locator('#rezTimers.on').count())) fail('K', 'Die Timer-Leiste erscheint nicht');
+    // ⚠ IM KOCHMODUS steht die Uhr OBEN MITTIG (Nutzer-Wunsch 2026-09-02).
+    // Die untere Leiste bleibt dort ausgeblendet - dieselbe Uhr an zwei
+    // Stellen waere doppelt und verdeckte frueher die Navigation.
+    const uhr = await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '');
+    if (!/^0?1:2\d|^0?1:3\d/.test(uhr)) fail('K', `Die Countdown-Uhr oben zeigt "${uhr}" statt einer Zeit um 01:30`);
+    const untenSichtbar = await p.evaluate(() => {
+      const t = document.getElementById('rezTimers');
+      return !!t && getComputedStyle(t).display !== 'none';
+    });
+    if (untenSichtbar) fail('K', 'Die untere Timer-Leiste laeuft im Kochmodus zusaetzlich - dieselbe Uhr an zwei Stellen');
+    const obenImKopf = await p.evaluate(() => {
+      const bar = document.querySelector('.ck-bar'), tm = document.getElementById('ckTimers'), body = document.querySelector('.ck-body');
+      if (!bar || !tm || !body) return false;
+      const b = bar.getBoundingClientRect(), t = tm.getBoundingClientRect(), k = body.getBoundingClientRect();
+      const mitte = (t.left + t.right) / 2, fenster = document.documentElement.clientWidth;
+      return t.top >= b.top - 1 && t.bottom <= k.top + 1 && Math.abs(mitte - fenster / 2) < fenster * 0.2;
+    });
+    if (!obenImKopf) fail('K', 'Die Timer stehen nicht oben mittig in der Kopfleiste');
     await p.waitForTimeout(1400);
-    const uhr2 = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
+    const uhr2 = await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '');
     if (uhr2 === uhr) fail('K', 'Die Uhr laeuft nicht herunter');
     // Pause haelt sie an
-    await p.click('.tm-row .btn:has-text("Pause")');
+    await p.click('#ckTimers .ck-tm-btn[aria-label="Pause or resume"]');
     await p.waitForTimeout(1200);
-    const uhr3 = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
+    const uhr3 = await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '');
     await p.waitForTimeout(1200);
-    if ((await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '')) !== uhr3)
+    if ((await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '')) !== uhr3)
       fail('K', 'Ein pausierter Timer laeuft weiter');
-    // ⚠ Die Leiste darf die Schritt-Navigation nicht verdecken - beim ersten
-    // Screenshot lag sie genau ueber "Back / Next".
-    const ueberdeckt = await p.evaluate(() => {
-      const nav = document.querySelector('.ck-nav'), tm = document.getElementById('rezTimers');
-      if (!nav || !tm || !tm.classList.contains('on')) return false;
-      const a = nav.getBoundingClientRect(), b = tm.getBoundingClientRect();
-      return !(a.bottom <= b.top || a.top >= b.bottom || a.right <= b.left || a.left >= b.right);
-    });
-    if (ueberdeckt) fail('K', 'Die Timer-Leiste verdeckt die Schritt-Navigation im Kochmodus');
-    await p.evaluate(() => document.querySelectorAll('.tm-row .rf-x').forEach(b => b.click()));
+    await p.click('#ckTimers .ck-tm-btn[aria-label="Remove timer"]');
     await p.waitForTimeout(400);
-    if (await p.locator('#rezTimers.on').count()) fail('K', 'Ein gestoppter Timer verschwindet nicht');
+    if (await p.locator('#ckTimers .ck-tm-clock').count()) fail('K', 'Ein gestoppter Timer verschwindet nicht');
+    if (!(await p.locator('#ckTimers .btn').count())) fail('K', 'Ohne laufenden Timer fehlt oben der Knopf, einen zu starten');
     // ⚠ Der Kochmodus muss den Bildschirm-Wachhalter beim Verlassen wieder
     // freigeben - sonst bleibt das Geraet dauerhaft an.
     await p.evaluate(() => window.rezCookExit());
@@ -1175,14 +1233,33 @@ function pruefeKontrast() {
   const ckStreifen = await p.locator('.ck-strip img').count();
   if (ckStreifen !== 3) fail('L', `Der Fotostreifen im Kochmodus zeigt ${ckStreifen} statt 3 Bilder`);
   const schritt1 = await p.evaluate(() => ({
-    text: (document.querySelector('.ck-step') || {}).textContent || '',
-    bild: !!document.querySelector('.ck-step-img'),
-    anzahl: (document.querySelector('.ck-prog') || {}).textContent || '',
+    text: (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '',
+    bild: !!document.querySelector('.ck-media img'),
+    schritte: document.querySelectorAll('.ck-stp').length,
+    anzahl: (document.querySelector('.ck-cap') || {}).textContent || '',
   }));
   if (!/Wasser/.test(schritt1.text)) fail('L', 'Der erste Schritt im Kochmodus stimmt nicht');
-  if (!schritt1.bild) fail('L', 'Das Bild wird nicht beim zugehoerigen Schritt gezeigt');
+  if (!schritt1.bild) fail('L', 'In der Mitte des Kochmodus steht kein Bild');
+  if (schritt1.schritte !== 2)
+    fail('L', `Bilder werden weiter als eigene Schritte gezaehlt (${schritt1.schritte} statt 2 Schritte)`);
   if (!/of 2/.test(schritt1.anzahl))
-    fail('L', `Bilder werden weiter als eigene Schritte gezaehlt ("${schritt1.anzahl.trim()}" statt "Step 1 of 2")`);
+    fail('L', `Die Schrittzaehlung stimmt nicht ("${schritt1.anzahl.trim()}" statt "Step 1 of 2")`);
+  // ⚠ Das Medienfeld MUSS das Seitenverhaeltnis des Bildes annehmen
+  // (Nutzer-Wunsch: "es soll sich anpassen an das Format des Bildes").
+  // Geprueft mit einem 2:1-Bild: der Kasten muss ~2:1 werden, nicht 4:3.
+  const seiten = await p.evaluate(async () => {
+    const box = document.querySelector('.ck-media'), im = box && box.querySelector('img');
+    if (!box || !im) return null;
+    await new Promise(r => { if (im.complete) r(); else im.addEventListener('load', r, { once: true }); });
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const b = box.getBoundingClientRect();
+    return { bild: (im.naturalWidth || 0) / (im.naturalHeight || 1), kasten: b.width / b.height,
+             gesetzt: box.style.getPropertyValue('--ck-ar') };
+  });
+  if (!seiten) fail('L', 'Das Medienfeld im Kochmodus fehlt');
+  else if (!seiten.gesetzt) fail('L', 'Das Medienfeld uebernimmt das Seitenverhaeltnis des Bildes nicht');
+  else if (Math.abs(seiten.kasten - seiten.bild) > 0.12)
+    fail('L', `Das Medienfeld steht auf ${seiten.kasten.toFixed(2)}:1, das Bild ist ${seiten.bild.toFixed(2)}:1`);
   await p.evaluate(() => window.rezCookExit());
   await p.waitForTimeout(500);
 
@@ -1212,6 +1289,139 @@ function pruefeKontrast() {
   if (vorschau.ig !== '')
     fail('L', 'Fuer Instagram wird eine Vorschaubild-Adresse GERATEN - die gibt es nicht oeffentlich, das landet als kaputtes Bild beim Nutzer');
 
+
+  // ── M) Titelbild aus dem Video / Bildschirmfoto ("Cover Studio") ─────
+  // Nutzer-Wunsch 2026-09-02: "Screenshot aus dem Reel als Titelbild direkt
+  // in der App auswaehlbar machen". Geprueft wird beides: der Weg, der bei
+  // YouTube echte Standbilder anbietet, UND der Weg fuer Instagram/TikTok,
+  // wo es die technisch nicht gibt - dort MUSS stattdessen der
+  // Bildschirmfoto-Weg dastehen statt einer Attrappe.
+  const rahmen = await p.evaluate(async () => {
+    const I = await import('./js/rezept/import.js');
+    return {
+      yt: I.frameUrls(I.detectLink('https://youtu.be/dQw4w9WgXcQ')).map(f => f.url),
+      ig: I.frameUrls(I.detectLink('https://www.instagram.com/reel/AbC/')),
+      tt: I.frameUrls(I.detectLink('https://www.tiktok.com/@a/video/123')),
+      leer: I.frameUrls(null),
+    };
+  });
+  if (rahmen.yt.length < 3) fail('M', `Fuer YouTube werden ${rahmen.yt.length} Standbilder angeboten`);
+  if (!rahmen.yt.every(u => /^https:\/\/img\.youtube\.com\/vi\/dQw4w9WgXcQ\//.test(u)))
+    fail('M', 'Die Standbild-Adressen zeigen nicht auf das richtige Video');
+  if (rahmen.ig.length || rahmen.tt.length || rahmen.leer.length)
+    fail('M', 'Fuer Instagram/TikTok werden Standbilder GERATEN - die gibt es nicht, das landet als kaputtes Bild beim Nutzer');
+
+  // M1: mit YouTube-Quelle - Standbilder UND Bildschirmfoto-Weg
+  const ytRez = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const px = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const id = S.uid();
+    await S.saveRecipe({ id, title: 'From YouTube', min: 20, tags: [], fav: false, cover: px, thumb: px,
+      ingredients: ['1 thing'], blocks: [{ t: 'text', v: 'Step.' }], source: 'https://youtu.be/dQw4w9WgXcQ' });
+    return id;
+  });
+  await p.evaluate(id => window.rezOpenForm(id), ytRez);
+  await p.waitForTimeout(700);
+  if (!(await p.locator('.rf-add .btn:has-text("Cover from the video")').count()))
+    fail('M', 'Im Formular fehlt der Knopf "Cover from the video"');
+  await p.evaluate(() => window.rezCoverStudio());
+  await p.waitForTimeout(500);
+  if (!(await p.locator('#rezCover.on').count())) fail('M', 'Das Titelbild-Fenster oeffnet sich nicht');
+  const csYt = await p.evaluate(() => ({
+    frames: document.querySelectorAll('#rezCover .cs-frame').length,
+    rahmen: !!document.querySelector('#csFrame'),
+    drop: !!document.querySelector('#csDrop'),
+    formNochDa: !!document.getElementById('rfTitle'),
+  }));
+  if (csYt.frames < 3) fail('M', `Bei YouTube werden ${csYt.frames} Standbilder zur Auswahl gestellt`);
+  if (!csYt.rahmen) fail('M', 'Das Video wird im Titelbild-Fenster nicht eingebettet');
+  if (!csYt.drop) fail('M', 'Der Weg ueber ein eigenes Bildschirmfoto fehlt');
+  if (!csYt.formNochDa) fail('M', 'Das Rezept-Formular verschwindet, sobald das Titelbild-Fenster aufgeht');
+  // Jeder Handler im Fenster muss auf eine echte Funktion zeigen (Regel 6).
+  const csTot = await p.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('#rezCover [onclick],#rezCover [onchange],#rezCover [onerror]').forEach(el => {
+      ['onclick', 'onchange', 'onerror'].forEach(a => {
+        const v = el.getAttribute(a);
+        if (!v) return;
+        for (const m of v.matchAll(/(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g)) {
+          const n = m[2];
+          if (['if', 'for', 'while', 'return', 'typeof', 'closest', 'querySelector'].includes(n)) continue;
+          if (typeof window[n] !== 'function') out.push(a + '="' + v.slice(0, 40) + '" -> ' + n);
+        }
+      });
+    });
+    return [...new Set(out)];
+  });
+  csTot.forEach(x => fail('M', 'Handler im Titelbild-Fenster zeigt auf keine Funktion: ' + x));
+  // Escape schliesst NUR das obere Fenster, nicht das Formular darunter.
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  if (await p.locator('#rezCover.on').count()) fail('M', 'Escape schliesst das Titelbild-Fenster nicht');
+  if (!(await p.locator('#rfTitle').count())) fail('M', 'Escape schliesst auch das Formular darunter - die Eingaben waeren weg');
+
+  // M2: Bildschirmfoto waehlen, zuschneiden, uebernehmen
+  // ⚠ Das Testbild ist 8x16 (hochkant wie ein Handy-Screenshot). Mit dem
+  // Zuschnitt auf 1:1 MUSS ein quadratisches Titelbild herauskommen - genau
+  // daran haengt, ob der Zuschnitt in BILDPUNKTEN gerechnet wird.
+  const hoch = path.join(tmp, 'shot.png');
+  fs.writeFileSync(hoch, testPng(8, 16));
+  await p.evaluate(() => window.rezCoverStudio());
+  await p.waitForTimeout(400);
+  const fcCs = p.waitForEvent('filechooser', { timeout: 4000 });
+  await p.click('#csDrop');
+  await fcCs.then(c => c.setFiles(hoch)).catch(() => fail('M', 'Der Datei-Dialog fuer das Bildschirmfoto oeffnet sich nicht'));
+  await p.waitForTimeout(900);
+  if (!(await p.locator('#csCrop').count())) fail('M', 'Nach der Auswahl erscheint kein Zuschnitt');
+  await p.click('.cs-ratio:has-text("1:1")');
+  await p.waitForTimeout(300);
+  if (!(await p.locator('.cs-ratio.on:has-text("1:1")').count())) fail('M', 'Das Seitenverhaeltnis 1:1 laesst sich nicht waehlen');
+  await p.click('.cs-btns .btn-primary');
+  await p.waitForTimeout(900);
+  if (await p.locator('#rezCover.on').count()) fail('M', 'Das Titelbild-Fenster bleibt nach "Use as cover" offen');
+  const zug = await p.evaluate(() => new Promise(res => {
+    const im = document.querySelector('.rf-drop img');
+    if (!im) return res(null);
+    const t = new Image();
+    t.onload = () => res({ w: t.naturalWidth, h: t.naturalHeight, src: im.src.slice(0, 30) });
+    t.onerror = () => res(null);
+    t.src = im.src;
+  }));
+  if (!zug) fail('M', 'Nach dem Zuschneiden steht kein Titelbild im Formular');
+  else {
+    if (!/^data:image\//.test(zug.src)) fail('M', 'Das Titelbild ist kein eingebettetes Bild');
+    if (Math.abs(zug.w / zug.h - 1) > 0.12)
+      fail('M', `Der Zuschnitt auf 1:1 ergibt ${zug.w}x${zug.h} - das Seitenverhaeltnis wird nicht angewandt`);
+  }
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
+  // M3: Instagram - keine Standbilder, aber der Bildschirmfoto-Weg MUSS da sein
+  const igRez = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const px = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const id = S.uid();
+    await S.saveRecipe({ id, title: 'From Instagram', min: 20, tags: [], fav: false, cover: px, thumb: px,
+      ingredients: ['1 thing'], blocks: [{ t: 'text', v: 'Step.' }], source: 'https://www.instagram.com/reel/AbC/' });
+    return id;
+  });
+  await p.evaluate(id => window.rezOpenForm(id), igRez);
+  await p.waitForTimeout(700);
+  await p.evaluate(() => window.rezCoverStudio());
+  await p.waitForTimeout(500);
+  const csIg = await p.evaluate(() => ({
+    frames: document.querySelectorAll('#rezCover .cs-frame').length,
+    drop: !!document.querySelector('#csDrop'),
+    text: (document.querySelector('#rezCover') || {}).textContent || '',
+  }));
+  if (csIg.frames) fail('M', 'Bei Instagram werden Standbilder angeboten, die es nicht gibt');
+  if (!csIg.drop) fail('M', 'Bei Instagram fehlt der Bildschirmfoto-Weg - dann kann man dort gar kein Titelbild waehlen');
+  if (!/screenshot/i.test(csIg.text)) fail('M', 'Es wird nicht erklaert, wie man bei Instagram zu einem Titelbild kommt');
+  await p.evaluate(() => window.rezCloseCover());
+  await p.waitForTimeout(300);
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -1222,7 +1432,7 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus/Bilder)`);
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus/Bilder/Titelbild)`);
 })().catch(e => {
   // ⚠ Bei einem Absturz AUCH die bis dahin gesammelten Befunde ausgeben.
   // Ohne das sieht man nur "Timeout" und raet, was vorher schon schieflief -

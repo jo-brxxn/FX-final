@@ -661,17 +661,72 @@ body.cooking{overflow:hidden}
 .ck-serv{flex-shrink:0;display:flex;align-items:center;gap:9px;font-size:var(--fs-base);font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
 .ck-sv{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:17px;line-height:1;cursor:pointer;font-family:var(--ff-num)}
 @media (hover:hover){.ck-sv:hover{border-color:var(--accent);color:var(--accent)}}
-.ck-body{flex:1;min-height:0;display:grid;grid-template-columns:300px 1fr}
-@media (max-width:860px){.ck-body{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+/* Drei Spalten (Nutzer-Wunsch 2026-09-02: "links die Zutaten, in der Mitte
+   das Bild oder das Video, rechts die Zubereitung"). Die Mitte ist die
+   breiteste Spalte, weil dort das Bild steht; die beiden Textspalten sind
+   fest, damit die Zeilenlaenge beim Lesen nicht springt. */
+.ck-body{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 380px}
+@media (max-width:1200px){.ck-body{grid-template-columns:260px minmax(0,1fr) 320px}}
+@media (max-width:1000px){.ck-body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;overflow-y:auto}}
 .ck-side{border-right:1px solid var(--bd);background:var(--bg1);padding:16px;overflow-y:auto}
-@media (max-width:860px){.ck-side{border-right:none;border-bottom:1px solid var(--bd);max-height:34vh}}
+.ck-side-r{border-right:none;border-left:1px solid var(--bd)}
+@media (max-width:1000px){.ck-side{border-right:none;border-bottom:1px solid var(--bd);max-height:none;overflow:visible}
+  .ck-side-r{border-left:none}}
 .ck-side-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin-bottom:10px}
 .ck-ing{display:flex;align-items:flex-start;gap:11px;padding:11px 4px;border-bottom:1px solid var(--bd);font-size:var(--fs-lg);color:var(--t0);cursor:pointer;line-height:var(--lh-snug)}
 .ck-ing:last-child{border-bottom:none}
 .ck-ing input{width:22px;height:22px;flex-shrink:0;margin-top:1px;accent-color:var(--accent);cursor:pointer}
 .ck-ing.done span{text-decoration:line-through;color:var(--t3)}
 .ck-empty{font-size:var(--fs-base);color:var(--t3)}
-.ck-main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.ck-main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:flex-start}
+@media (max-width:1000px){.ck-main{overflow:visible}}
+/* ⚠ Das Medienfeld nimmt das Seitenverhaeltnis des Bildes an, statt eines
+   fest verdrahteten 16:9-Kastens: ein Hochkant-Reel und ein Querformat-Foto
+   sehen im selben Kasten sonst beide falsch aus (Nutzer-Wunsch: "es soll
+   sich anpassen an das Format des Bildes"). Das Verhaeltnis setzt der
+   JS-Teil, sobald das Bild geladen ist - vorher steht ein neutrales 4:3. */
+.ck-media{width:100%;max-width:min(100%,calc((100vh - 230px) * var(--ck-ar, 1.3333)));
+  aspect-ratio:var(--ck-ar,4/3);border-radius:var(--r);border:1px solid var(--bd);background:var(--bg1);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
+.ck-media img{width:100%;height:100%;object-fit:contain;cursor:zoom-in}
+.ck-media iframe{width:100%;height:100%;border:0;display:block}
+.ck-media-empty{font-size:var(--fs-base);color:var(--t3);padding:20px;text-align:center}
+.ck-mtabs{display:flex;gap:8px;align-self:center}
+.ck-mtab{padding:7px 14px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);
+  font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:var(--ff-text);
+  transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast)}
+.ck-mtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ck-cap{font-size:var(--fs-sm);color:var(--t3);text-align:center;max-width:38em}
+/* Zubereitung als LISTE: der aktive Schritt ist gross und hervorgehoben,
+   die uebrigen bleiben lesbar daneben stehen - beim Kochen will man sehen,
+   was als Naechstes kommt, ohne zu blaettern. */
+.ck-steps{display:flex;flex-direction:column;gap:8px}
+.ck-stp{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--rs);border:1px solid transparent;
+  background:transparent;text-align:left;width:100%;cursor:pointer;font-family:var(--ff-text);color:var(--t2);
+  font-size:var(--fs-base);line-height:var(--lh-normal);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
+@media (hover:hover){.ck-stp:hover{background:var(--bg2)}}
+.ck-stp.on{background:var(--bg2);border-color:var(--accent);color:var(--t0);font-size:var(--fs-lg);font-weight:600}
+.ck-stp.done .ck-stp-t{text-decoration:line-through;color:var(--t3)}
+.ck-stp-n{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--bg4);color:var(--t2);
+  font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:800;display:flex;align-items:center;justify-content:center}
+.ck-stp.on .ck-stp-n{background:var(--accent);color:#fff}
+.ck-stp.done .ck-stp-n{background:var(--accent-soft);color:var(--t1)}
+.ck-stp-t{flex:1;min-width:0}
+.ck-stp-thumb{width:44px;height:34px;object-fit:cover;border-radius:var(--rss);border:1px solid var(--bd);flex-shrink:0}
+/* Timer oben in der Mitte (Nutzer-Wunsch 2026-09-02). Im Kochmodus ersetzt
+   diese Leiste die untere Timer-Leiste - zwei Orte fuer dieselbe Uhr waeren
+   genau die Art Doppelung, die beim Kochen verwirrt. */
+.ck-tmwrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.ck-tm{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2)}
+.ck-tm.ring{border-color:var(--accent);animation:tmRing 900ms var(--e-out) infinite}
+.ck-tm-clock{font-family:var(--ff-num);font-variant-numeric:tabular-nums;font-size:24px;font-weight:800;color:var(--t0);min-width:3.2em;text-align:center}
+.ck-tm.ring .ck-tm-clock{color:var(--accent)}
+.ck-tm-lbl{font-size:var(--fs-xs);font-weight:700;color:var(--t3);max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ck-tm-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg3);color:var(--t1);
+  font-size:13px;line-height:1;cursor:pointer;font-family:var(--ff-text)}
+@media (hover:hover){.ck-tm-btn:hover{border-color:var(--accent);color:var(--accent)}}
+.ck-tm-mute{width:100%;text-align:center;font-size:var(--fs-xs);color:var(--t2)}
+@media (max-width:1000px){.ck-bar{flex-wrap:wrap}.ck-tmwrap{order:3;width:100%;flex:0 0 auto}}
 .ck-prog{display:flex;align-items:center;gap:12px;font-size:var(--fs-sm);font-weight:700;color:var(--t3);letter-spacing:var(--ls-label);text-transform:uppercase}
 .ck-prog-bar{flex:1;height:4px;border-radius:999px;background:var(--bg5);overflow:hidden}
 .ck-prog-bar span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width var(--t-slow) var(--e-out)}
@@ -685,8 +740,12 @@ body.cooking{overflow:hidden}
 #rezTimers{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:750;width:min(520px,calc(100vw - 24px));
   display:none;flex-direction:column;gap:8px}
 #rezTimers.on{display:flex}
+/* ⚠ Im Kochmodus zeigt die Kopfleiste die Timer (oben mittig), deshalb
+   bleibt die untere Leiste dort weg - sonst laeuft dieselbe Uhr zweimal. */
+body.cooking #rezTimers{display:none}
 /* Platz fuer die Leiste schaffen, statt Inhalt darunter zu verstecken. */
 body.timers-on .ck-nav{margin-bottom:84px}
+body.cooking.timers-on .ck-nav{margin-bottom:0}
 body.timers-on .pc{padding-bottom:96px}
 .tm-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--bd2);
   background:var(--bg2);box-shadow:var(--shadow-pop);animation:riseIn var(--t-base) var(--e-out) both}
@@ -759,6 +818,53 @@ body.timers-on .pc{padding-bottom:96px}
   color:#fff;font-size:var(--fs-sm);font-weight:700;cursor:pointer;backdrop-filter:blur(4px);font-family:var(--ff-text)}
 @media (hover:hover){.rd-play:hover{background:rgba(20,12,7,.78)}}
 .rd-play svg{width:18px;height:18px}
+
+/* ══ TITELBILD AUS DEM VIDEO ════════════════════════════════════════
+   Zwei Spalten: links laeuft das Reel, rechts liegen die Quellen fuer das
+   Titelbild. Genau so, damit man das Video an der richtigen Stelle anhalten,
+   ein Bildschirmfoto machen und es SOFORT daneben einsetzen kann, ohne die
+   App zu verlassen (Nutzer-Wunsch 2026-09-02). */
+#rezCover{display:none}
+#rezCover.on{display:block}
+.cs-ov{position:fixed;inset:0;z-index:950;background:rgba(12,9,6,.92);display:flex;align-items:center;
+  justify-content:center;padding:20px;animation:ovIn var(--t-base) var(--e-out) both}
+.cs-box{width:min(1080px,96vw);max-height:92vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:var(--r);padding:20px;animation:modalIn var(--t-slow) var(--e-spring) both}
+.cs-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cs-hd h3{flex:1;min-width:0;font-family:var(--ff-title);font-size:var(--fs-xl);font-weight:800;color:var(--t0);margin:0}
+.cs-x{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg3);color:var(--t0);font-size:16px;cursor:pointer;line-height:1}
+.cs-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px}
+@media (max-width:900px){.cs-grid{grid-template-columns:1fr}}
+.cs-note{font-size:var(--fs-sm);color:var(--t2);line-height:var(--lh-normal);margin-bottom:12px}
+.cs-sec{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin:14px 0 8px}
+.cs-sec:first-child{margin-top:0}
+.cs-frames{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cs-frame{padding:0;border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;background:var(--bg3);cursor:pointer;
+  transition:border-color var(--t-fast),transform var(--t-fast) var(--e-out)}
+@media (hover:hover){.cs-frame:hover{border-color:var(--accent);transform:translateY(-2px)}}
+.cs-frame img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.cs-frame span{display:block;padding:5px 6px;font-size:var(--fs-xs);font-weight:700;color:var(--t2)}
+.cs-drop{border:1.5px dashed var(--bd2);border-radius:var(--r);padding:18px;text-align:center;color:var(--t2);
+  font-size:var(--fs-sm);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+.cs-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.cs-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cs-err{display:none;margin-top:10px;padding:9px 11px;border-radius:var(--rs);border:1px solid #B3352C;
+  background:rgba(179,53,44,.1);color:var(--t0);font-size:var(--fs-sm)}
+/* Zuschneiden: Bildschirmfotos vom Handy sind hochkant und haben oben und
+   unten die Bedienleisten des Telefons darauf - ohne Zuschnitt waere das
+   Titelbild zur Haelfte Telefon statt Essen. */
+.cs-crop{position:relative;display:inline-block;max-width:100%;line-height:0;touch-action:none;user-select:none}
+.cs-crop img{display:block;max-width:100%;max-height:56vh;border-radius:var(--rs)}
+.cs-sel{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;border-radius:2px}
+.cs-h{position:absolute;right:-9px;bottom:-9px;width:20px;height:20px;border-radius:50%;background:#fff;
+  border:2px solid var(--accent);cursor:nwse-resize}
+.cs-ratios{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.cs-ratio{padding:6px 12px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);
+  font-size:var(--fs-xs);font-weight:700;cursor:pointer;font-family:var(--ff-text)}
+.cs-ratio.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.cs-embed{border-radius:var(--r);overflow:hidden;border:1px solid var(--bd);background:#000}
+.cs-embed iframe{width:100%;aspect-ratio:9/16;max-height:56vh;border:0;display:block}
+.cs-embed.yt iframe{aspect-ratio:16/9}
 
 #rezLight,#rezVideo{display:none}
 #rezLight.on,#rezVideo.on{display:block}
@@ -904,11 +1010,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-7 - Alle Bilder eines Rezepts sind jetzt ueberall sichtbar: Zaehler-Abzeichen auf der Karte, Bilderstreifen im Detailfenster, Grossansicht mit Blaettern, und im Kochmodus haengt das Bild AM Schritt statt als eigener textloser Schritt dazwischen zu stehen - plus ein Fotostreifen in der Seitenspalte. Stammt ein Rezept aus einem Reel, wird das Vorschaubild des Videos als Titelbild uebernommen (bei YouTube das echte; Instagram und TikTok geben ihre Vorschaubilder nicht oeffentlich heraus, dort entsteht ein erkennbar erzeugtes Titelbild aus Titel und Kuenstler, das ein Tipp durch ein eigenes Foto ersetzt). Das Video laesst sich jetzt auch vom Rezept aus abspielen - im Detailfenster und im Kochmodus.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-8 - Der Kochmodus steht jetzt in drei Spalten: links die Zutaten (mit Portionsregler in der Kopfzeile), in der Mitte das Bild ODER das Video des Rezepts - der Kasten nimmt das Seitenverhaeltnis des Bildes an, statt Hochkant in Querformat zu quetschen -, rechts die komplette Zubereitung als Liste mit hervorgehobenem aktivem Schritt, und oben mittig laufen die Timer. Neu ist ausserdem das Titelbild-Fenster: bei YouTube lassen sich echte Standbilder aus dem Video direkt auswaehlen, bei Instagram und TikTok laeuft das Reel daneben, waehrend man ein Bildschirmfoto einfuegt oder auswaehlt - danach zuschneiden mit festem Seitenverhaeltnis. Und die Caption-Zerlegung trennt jetzt zwei Zutaten in einer Zeile (auch mit Bruchzeichen wie ½) und schreibt die Anleitung nicht mehr in die Zutatenliste.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-7</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-8</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -950,6 +1056,9 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
      Kochmodus heraus funktionieren, und der deckt bereits die App-Shell ab. -->
 <div id="rezLight"></div>
 <div id="rezVideo"></div>
+<!-- Titelbild aus dem Video: liegt UEBER dem Rezept-Formular, damit das
+     Formular darunter offen (und ungespeichert) bleiben darf. -->
+<div id="rezCover"></div>
 <div id="rezToast"></div>
 
 <script type="module" src="js/rezept/app.js"></script>

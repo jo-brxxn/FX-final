@@ -55,6 +55,26 @@ const MUSTER=[
 // Funktion dort bewusst nichts zurueck - der Aufrufer baut dann ein sichtbar
 // ERZEUGTES Titelbild, statt eine Adresse zu raten, die spaeter als kaputtes
 // Bild beim Nutzer landet.
+// Einzelbilder AUS dem Video, aus denen man ein Titelbild waehlen kann.
+// ⚠ Nur YouTube liefert oeffentliche Standbilder (0.jpg = Titelbild,
+// 1/2/3.jpg = Bilder aus dem ersten, mittleren und letzten Drittel). Bei
+// Instagram und TikTok gibt es KEINEN Weg, im Browser ein Bild aus dem
+// Video zu holen: das Video laeuft in einem fremden Rahmen, den diese Seite
+// weder auslesen noch abmalen darf (Same-Origin-Regel), und die
+// Vorschaubilder liegen hinter kurzlebig signierten Adressen. Deshalb gibt
+// diese Funktion dort eine leere Liste zurueck - die Oberflaeche bietet
+// stattdessen an, einen Bildschirmfoto-Schnappschuss einzufuegen.
+export function frameUrls(link){
+  if(!link||link.platform!=='youtube'||!link.id)return[];
+  const b='https://img.youtube.com/vi/'+link.id+'/';
+  return[
+    {url:b+'maxresdefault.jpg',label:'Cover (large)'},
+    {url:b+'hqdefault.jpg',label:'Cover'},
+    {url:b+'1.jpg',label:'Frame 1'},
+    {url:b+'2.jpg',label:'Frame 2'},
+    {url:b+'3.jpg',label:'Frame 3'},
+  ];
+}
 export function previewUrl(link){
   if(!link||link.platform!=='youtube'||!link.id)return'';
   // hqdefault existiert fuer JEDES Video (maxres nicht immer) - lieber ein
@@ -96,10 +116,74 @@ const H_SCHRITTE=/^\s*(?:[^\w]{0,3})?(zubereitung|anleitung|so geht'?s|so wird'?
 // Eine Zeile, die wie eine Zutat aussieht: Aufzaehlungszeichen oder eine
 // Menge am Anfang. Die Einheitenliste ist bewusst kurz und eindeutig - ein
 // zu gieriges Muster zieht sonst Fliesstext mit hinein.
-const EINHEIT=/^\s*(?:[-–—•*·▢▪]|\d+[.)])?\s*\d+(?:[.,/]\d+)?\s*(?:g|kg|mg|ml|cl|l|el|tl|tbsp?|tsp?|cups?|prise[n]?|stk|st(?:ü|ue)ck|scheiben?|zehen?|bund|dose[n]?|packung(?:en)?|pkg|tasse[n]?|glas|gl(?:ä|ae)ser|kugeln?|blatt|bl(?:ä|ae)tter|cloves?|slices?|cans?|pinch(?:es)?|handfuls?|bunch(?:es)?|sprigs?|sticks?|oz|lbs?|pints?|quarts?|packs?|pieces?)\b/i;
+const EINHEIT=/^\s*(?:[-–—•*·▢▪]|\d+[.)])?\s*(?:\d+(?:[.,/]\d+)?(?:\s*[½⅓⅔¼¾⅕⅙⅛])?|[½⅓⅔¼¾⅕⅙⅛])\s*(?:g|kg|mg|ml|cl|l|el|tl|tbsp?|tsp?|cups?|prise[n]?|stk|st(?:ü|ue)ck|scheiben?|zehen?|bund|dose[n]?|packung(?:en)?|pkg|tasse[n]?|glas|gl(?:ä|ae)ser|kugeln?|blatt|bl(?:ä|ae)tter|cloves?|slices?|cans?|pinch(?:es)?|handfuls?|bunch(?:es)?|sprigs?|sticks?|oz|lbs?|pints?|quarts?|packs?|pieces?)\b/i;
 const AUFZAEHLUNG=/^\s*[-–—•*·▢▪]\s+\S/;
 const NUMMERIERT=/^\s*(\d{1,2})[.)]\s+\S/;
 const NUR_HASHTAGS=/^\s*(?:#[\wÀ-ɏ]+[\s,]*)+$/;
+
+// ── Erkennen, WAS eine Zeile ist ────────────────────────────────────────
+// Nutzer-Bugreport 2026-09-02 (per Screenshot): eine Caption mit
+// "Ingredients:", aber OHNE eigene Ueberschrift fuer die Zubereitung, hat
+// die komplette Anleitung als elfte "Zutat" in die Liste geschrieben. Der
+// Ueberschriften-Weg lief bis zum Textende, weil er nur auf die naechste
+// Ueberschrift wartete - die es nie gab. Deshalb entscheidet ab hier
+// zusaetzlich die FORM der Zeile, wo die Zutaten aufhoeren.
+function istZutat(z){
+  const t=String(z||'').trim();
+  if(!t)return false;
+  if(AUFZAEHLUNG.test(t)&&t.length<=80)return true;
+  if(EINHEIT.test(t))return true;
+  // "3 Eier", "1 Zwiebel": Zahl + kurzer Ausdruck, kein Satz.
+  if(/^\s*(?:\d+(?:[.,]\d+)?(?:\s*[½⅓⅔¼¾⅕⅙⅛])?|[½⅓⅔¼¾⅕⅙⅛])\s+\S/.test(t)&&t.length<=48&&!/[.!?]\s/.test(t))return true;
+  return false;
+}
+function istFliesstext(z){
+  const t=String(z||'').trim();
+  // Lange Zeile oder mehrere Saetze -> das ist eine Anweisung, keine Zutat.
+  return t.length>70||/[.!?]\s+["'(„“]?[A-ZÄÖÜ0-9]/.test(t);
+}
+// ── Mehrere Zutaten in EINER Zeile trennen ──────────────────────────────
+// Im selben Bugreport: "½ tsp black pepper 150 g baby spinach" stand als
+// eine Zutat da. Passiert, wenn beim Kopieren ein Zeilenumbruch verloren
+// geht - beim Teilen aus einer App keine Seltenheit.
+// ⚠ Nur angewandt, wenn die Zeile MIT einer Menge beginnt: in einem
+// Anweisungssatz ("Bake at 200 C for 25 minutes") stehen ebenfalls Zahlen
+// mit Einheiten, dort waere ein Trennen falsch.
+const MENGE_MITTEN=/(?:^|[\s,;])((?:\d+(?:[.,\/]\d+)?(?:\s*[½⅓⅔¼¾⅕⅙⅛])?|[½⅓⅔¼¾⅕⅙⅛])\s*(?:g|kg|mg|ml|cl|l|el|tl|tbsps?|tbsp|tsps?|tsp|cups?|prise[n]?|stk|st(?:ü|ue)ck|scheiben?|zehen?|bund|dose[n]?|packung(?:en)?|pkg|tasse[n]?|glas|kugeln?|blatt|cloves?|slices?|cans?|pinch(?:es)?|handfuls?|bunch(?:es)?|sprigs?|sticks?|oz|lbs?)\b)/gi;
+function trenneMehrfach(z){
+  const t=String(z||'').trim();
+  if(!EINHEIT.test(t))return[t];
+  const stellen=[];
+  MENGE_MITTEN.lastIndex=0;
+  let m;
+  while((m=MENGE_MITTEN.exec(t))){
+    const start=m.index+(m[0].length-m[1].length);
+    if(start>=8)stellen.push(start);
+  }
+  if(!stellen.length)return[t];
+  const teile=[];
+  let vor=0;
+  stellen.forEach(st=>{
+    const stueck=t.slice(vor,st).trim().replace(/[,;]\s*$/,'');
+    if(stueck.length>=4)  {teile.push(stueck);vor=st;}
+  });
+  const rest=t.slice(vor).trim();
+  if(rest.length>=4)teile.push(rest);
+  return teile.length>1?teile:[t];
+}
+// ── Einen langen Absatz in Saetze zerlegen ──────────────────────────────
+// Eine Wand aus Text ist im Kochmodus unbrauchbar - man will Schritt fuer
+// Schritt lesen. Bewusst OHNE Lookbehind (das kennen aeltere Safari-Staende
+// nicht) und mit Mindestlaenge, damit "ca." oder "z.B." nicht trennen.
+function satzSplit(t){
+  const out=[];let akt='';
+  String(t||'').split(/\s+/).forEach(w=>{
+    akt=akt?akt+' '+w:w;
+    if(/[.!?]$/.test(w)&&akt.length>28){out.push(akt.trim());akt='';}
+  });
+  if(akt.trim())out.push(akt.trim());
+  return out.filter(Boolean);
+}
 
 function zeilen(text){
   return String(text||'').replace(/\r/g,'').split('\n').map(z=>z.replace(/\s+$/,''));
@@ -192,10 +276,23 @@ export function parseCaption(text){
   if(iZ>=0||iS>=0){
     // ── Durchgang 1: Ueberschriften gefunden ──
     const grenzeZ=(iS>iZ)?iS:inhalt.length;
+    let abZeile=-1;   // ab hier ist es Zubereitung, obwohl keine Ueberschrift kam
     if(iZ>=0){
       for(let i=iZ+1;i<grenzeZ;i++){
+        const roh=inhalt[i];
+        const t=ohneAufzaehlung(roh);
+        if(!t||H_SCHRITTE.test(roh))continue;
+        // ⚠ Fehlt die Ueberschrift fuer die Zubereitung, muss die FORM
+        // entscheiden - sonst landet die komplette Anleitung als Zutat in
+        // der Liste (Bugreport 2026-09-02, per Screenshot).
+        if(abZeile<0&&!istZutat(roh)&&istFliesstext(roh)){abZeile=i;break;}
+        trenneMehrfach(t).forEach(x=>zutaten.push(x));
+      }
+    }
+    if(abZeile>=0){
+      for(let i=abZeile;i<grenzeZ;i++){
         const t=ohneAufzaehlung(inhalt[i]);
-        if(t&&!H_SCHRITTE.test(inhalt[i]))zutaten.push(t);
+        if(t)schritte.push(t);
       }
     }
     if(iS>=0){
@@ -214,7 +311,7 @@ export function parseCaption(text){
       if(!t)return;
       if(NUMMERIERT.test(t)){nummeriertGesehen=true;schritte.push(ohneAufzaehlung(t));return;}
       if(!nummeriertGesehen&&(EINHEIT.test(t)||(AUFZAEHLUNG.test(t)&&t.length<=70))){
-        zutaten.push(ohneAufzaehlung(t));return;
+        trenneMehrfach(ohneAufzaehlung(t)).forEach(x=>zutaten.push(x));return;
       }
       rest.push(t);
     });
@@ -235,13 +332,23 @@ export function parseCaption(text){
   // Die Titelzeile darf nicht doppelt als Notiz stehen bleiben.
   const restOhneTitel=rest.filter(z=>putzeTitel(z)!==titel);
 
+  // ⚠ Eine Wand aus Text ist im Kochmodus unbrauchbar. Kam die Zubereitung
+  // als EIN langer Absatz (haeufig bei Instagram-Captions), wird sie in
+  // Saetze zerlegt - aber nur dann: eine bereits nummerierte Anleitung
+  // bleibt so, wie der Autor sie geschrieben hat.
+  const feineSchritte=[];
+  schritte.forEach(s2=>{
+    if(s2.length>170)satzSplit(s2).forEach(x=>feineSchritte.push(x));
+    else feineSchritte.push(s2);
+  });
+
   return{
     link,
     creator:creatorFromUrl(roh)||creatorFromText(roh),
     title:titel,
     min:parseDuration(roh),
     ingredients:zutaten.filter(Boolean),
-    steps:schritte.filter(Boolean),
+    steps:feineSchritte.filter(Boolean),
     tags,
     notes:restOhneTitel.join('\n').trim(),
   };

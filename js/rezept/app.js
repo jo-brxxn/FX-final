@@ -11,7 +11,7 @@
 // onclick="..." im HTML sieht Modul-Variablen sonst nicht - identisches
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
-import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText,previewUrl} from './import.js';
+import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText,previewUrl,frameUrls} from './import.js';
 import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
 import * as CK from './cook.js';
 
@@ -504,13 +504,13 @@ export function rezShowImage(i){rezLightbox(_aktuelleBilder,i);}
 // Vollbild, grosse Schrift, Bildschirm bleibt an. Beim Kochen steht das
 // Geraet zwei Meter weg und man hat nasse Haende - 13px-Text und eine
 // Bildschirmsperre nach 30 Sekunden machen die App dort unbrauchbar.
-let cookDoc=null,cookStep=0,cookDone=new Set(),cookServ=0;
+let cookDoc=null,cookStep=0,cookDone=new Set(),cookServ=0,cookMedia='photo';
 export async function rezCook(id){
   const g=modalGen();
   const doc=await S.getFull(id);
   if(modalVeraltet(g)&&document.body.classList.contains('cooking'))return;
   if(!doc){toast('Recipe not available on this device yet');return;}
-  cookDoc=doc;cookStep=0;cookDone=new Set();
+  cookDoc=doc;cookStep=0;cookDone=new Set();cookMedia='photo';
   cookServ=doc.servings||2;
   document.body.classList.add('cooking');
   CK.keepAwake(true);
@@ -548,6 +548,13 @@ function cookSteps(doc){
   });
   return out.length?out:[{t:'text',v:'No preparation steps written down yet.'}];
 }
+// ⚠ DREI SPALTEN (Nutzer-Wunsch 2026-09-02: "im Kochmodus links die Zutaten,
+// dann in der Mitte das Bild oder das Video ... und dann rechts die
+// Zubereitung und oben mittig die Timer Funktion").
+// Vorher war die Mitte ein Assistent, der einen Schritt nach dem anderen
+// zeigte - beim Kochen will man aber sehen, was als Naechstes kommt, ohne zu
+// blaettern. Jetzt stehen ALLE Schritte rechts, der aktive ist gross und
+// hervorgehoben, und die Mitte gehoert dem Bild bzw. dem Video.
 export function renderCook(){
   const host=$('rezCook');
   if(!host||!cookDoc)return;
@@ -565,18 +572,46 @@ export function renderCook(){
   const timer=CK.findTimers(s.t==='text'?s.v:'');
   _aktuelleBilder=recipeImages(cookDoc);
   const vid=cookDoc.source?detectLink(cookDoc.source):null;
+  const hatVideo=!!(vid&&vid.embedUrl);
+  if(cookMedia==='video'&&!hatVideo)cookMedia='photo';
   const streifen=_aktuelleBilder.length
     ? `<div class="ck-side-h" style="margin-top:18px">Photos</div>`
       +`<div class="ck-strip">`+_aktuelleBilder.map((b,i)=>
           `<img src="${b.src}" alt="" onclick="rezShowImage(${i})" loading="lazy">`).join('')+`</div>`
     : '';
-  const bildIdx=s.img?_aktuelleBilder.findIndex(x=>x.src===s.img)
-                :(s.t==='img'?_aktuelleBilder.findIndex(x=>x.src===s.v):-1);
+  // ⚠ Der Video-Rahmen darf beim Schrittwechsel NICHT neu geladen werden -
+  // sonst springt das Video bei jedem Klick an den Anfang zurueck. Deshalb
+  // wird er vor dem Neuzeichnen aus dem DOM geloest und danach wieder
+  // eingehaengt, statt ihn neu zu schreiben.
+  let alterRahmen=null;
+  const wrap=$('ckVideoWrap');
+  if(cookMedia==='video'&&wrap){alterRahmen=wrap;wrap.remove();}
+  const bildSrc=s.t==='img'?s.v:(s.img||cookDoc.cover||(_aktuelleBilder[0]&&_aktuelleBilder[0].src)||'');
+  const bildIdx=bildSrc?_aktuelleBilder.findIndex(x=>x.src===bildSrc):-1;
+  // Beim Video gibt das Format der Plattform das Seitenverhaeltnis vor:
+  // YouTube quer, Reels von Instagram/TikTok hochkant.
+  const vidAr=vid&&vid.platform==='youtube'?'1.7778':'0.5625';
+  const medien=cookMedia==='video'
+    ? `<div class="ck-media" id="ckMedia" style="--ck-ar:${vidAr}"></div>`
+    : `<div class="ck-media" id="ckMedia">`
+       +(bildSrc
+         ?`<img src="${bildSrc}" alt="" onload="rezCookAspect(this)" onclick="rezShowImage(${bildIdx})">`
+         :`<div class="ck-media-empty">No photo for this recipe yet — you can add one from the recipe window.</div>`)
+       +`</div>`;
+  const stepListe=schritte.map((x,i)=>{
+    const txt=x.t==='text'?x.v:'Photo';
+    const th=x.img||(x.t==='img'?x.v:'');
+    return`<button class="ck-stp${i===cookStep?' on':''}${cookDone.has('s'+i)?' done':''}" onclick="rezCookGo(${i})">`
+      +`<span class="ck-stp-n">${cookDone.has('s'+i)?'✓':(i+1)}</span>`
+      +`<span class="ck-stp-t">${escH(txt)}</span>`
+      +(th?`<img class="ck-stp-thumb" src="${th}" alt="">`:'')
+    +`</button>`;
+  }).join('');
   host.innerHTML=
      `<div class="ck-bar">`
       +`<button class="ck-x" onclick="rezCookExit()" aria-label="Close cook mode">✕</button>`
       +`<div class="ck-title">${escH(cookDoc.title)}</div>`
-      +(vid&&vid.embedUrl?`<button class="btn" onclick="rezPlayVideo('${cookDoc.id}')">${icn('play',14)} Video</button>`:'')
+      +`<div class="ck-tmwrap" id="ckTimers"></div>`
       +`<div class="ck-serv"><button class="ck-sv" onclick="rezCookServ(-1)" aria-label="Fewer servings">−</button>`
         +`<span>${cookServ} ${cookServ===1?'serving':'servings'}</span>`
         +`<button class="ck-sv" onclick="rezCookServ(1)" aria-label="More servings">+</button></div>`
@@ -585,13 +620,20 @@ export function renderCook(){
       +`<aside class="ck-side"><div class="ck-side-h">Ingredients</div>`
         +(zut||'<div class="ck-empty">No ingredients listed.</div>')+streifen+`</aside>`
       +`<main class="ck-main">`
-        +`<div class="ck-prog">Step ${cookStep+1} of ${schritte.length}`
-          +`<span class="ck-prog-bar"><span style="width:${Math.round((cookStep+1)/schritte.length*100)}%"></span></span></div>`
-        +(s.t==='img'
-          ?`<img class="ck-img" src="${s.v}" alt="" onclick="rezShowImage(${bildIdx})" style="cursor:zoom-in">`
-          :`<div class="ck-step">${escH(s.v)}</div>`
-           +(s.img?`<img class="ck-img ck-step-img" src="${s.img}" alt="" onclick="rezShowImage(${bildIdx})" style="cursor:zoom-in">`:''))
-        +(timer.length?`<div class="ck-timers">`+timer.map(t=>
+        +(hatVideo?`<div class="ck-mtabs">`
+          +`<button class="ck-mtab${cookMedia==='photo'?' on':''}" onclick="rezCookMedia('photo')">${icn('image',13)} Photo</button>`
+          +`<button class="ck-mtab${cookMedia==='video'?' on':''}" onclick="rezCookMedia('video')">${icn('play',13)} Video</button>`
+        +`</div>`:'')
+        +medien
+        +`<div class="ck-cap">`+(cookMedia==='video'
+            ?escH((vid&&vid.label)||'Video')+' — the reel this recipe came from'
+            :(s.t==='text'?'Step '+(cookStep+1)+' of '+schritte.length:'Photo'))+`</div>`
+      +`</main>`
+      +`<aside class="ck-side ck-side-r">`
+        +`<div class="ck-side-h">Preparation</div>`
+        +`<div class="ck-prog"><span class="ck-prog-bar"><span style="width:${Math.round((cookStep+1)/schritte.length*100)}%"></span></span></div>`
+        +`<div class="ck-steps">${stepListe}</div>`
+        +(timer.length?`<div class="ck-timers" style="margin-top:12px">`+timer.map(t=>
             `<button class="btn btn-primary" onclick="rezStartTimer(${t.sek},'${escH(t.label).replace(/'/g,'')}')">${icn('clock',14)} ${escH(t.label)}</button>`).join('')+`</div>`:'')
         +`<div class="ck-nav">`
           +`<button class="btn" onclick="rezCookStep(-1)" ${cookStep===0?'disabled':''}>${icn('arrowL',14)} Back</button>`
@@ -600,9 +642,65 @@ export function renderCook(){
             ?`<button class="btn btn-primary" onclick="rezCookStep(1)">Next ${icn('arrowR',14)}</button>`
             :`<button class="btn btn-primary" onclick="rezCookFinish()">${icn('check',14)} Finish &amp; log</button>`)
         +`</div>`
-      +`</main>`
+      +`</aside>`
     +`</div>`;
+  const slot=$('ckMedia');
+  if(cookMedia==='video'&&slot){
+    if(alterRahmen)slot.appendChild(alterRahmen);
+    else slot.appendChild(videoRahmen(vid));
+  }
+  renderCookTimers();
   renderTimerPanel();
+}
+// Das Medienfeld nimmt das Seitenverhaeltnis des geladenen Bildes an -
+// ein hochkantes Reel-Bild bekommt kein Querformat-Fenster mit Balken.
+export function rezCookAspect(img){
+  const box=img&&img.closest('.ck-media');
+  if(!box)return;
+  const w=img.naturalWidth||0,h=img.naturalHeight||0;
+  if(w>0&&h>0)box.style.setProperty('--ck-ar',(w/h).toFixed(4));
+}
+export function rezCookMedia(m){
+  if(cookMedia===m)return;
+  cookMedia=m;
+  renderCook();
+}
+export function rezCookGo(i){cookStep=i;renderCook();}
+function videoRahmen(l){
+  const el=document.createElement('div');
+  el.id='ckVideoWrap';
+  el.style.cssText='width:100%;height:100%';
+  const src=l.embedUrl+(l.platform==='youtube'
+    ?(l.embedUrl.includes('?')?'&':'?')+'playsinline=1':'');
+  el.innerHTML=`<iframe src="${escH(src)}" loading="lazy" allowfullscreen`
+    +` referrerpolicy="origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture"`
+    +` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" title="Recipe video"></iframe>`;
+  return el;
+}
+// Timer OBEN MITTIG im Kochmodus. Dieselben Timer wie unten in der Leiste -
+// nur wird die Leiste im Kochmodus ausgeblendet (siehe rezept.html), damit
+// dieselbe Uhr nicht an zwei Stellen laeuft.
+function renderCookTimers(){
+  const host=$('ckTimers');
+  if(!host)return;
+  const liste=CK.activeTimers();
+  if(!liste.length){
+    host.innerHTML=`<button class="btn" onclick="rezOpenTimerDialog()">${icn('clock',14)} Timer</button>`;
+    return;
+  }
+  const stumm=liste.some(t=>t.state==='done'&&t.blocked);
+  host.innerHTML=liste.map(t=>
+     `<div class="ck-tm${t.state==='done'?' ring':''}">`
+      +`<span class="ck-tm-clock">${CK.fmtClock(t.rest)}</span>`
+      +`<span class="ck-tm-lbl">${escH(t.label)}</span>`
+      +(t.state==='done'
+        ?`<button class="ck-tm-btn" onclick="rezTimerStop('${t.id}')" aria-label="Stop timer">✓</button>`
+        :`<button class="ck-tm-btn" onclick="rezTimer${t.state==='run'?'Pause':'Resume'}('${t.id}')" aria-label="Pause or resume">${t.state==='run'?'❚❚':'▶'}</button>`
+         +`<button class="ck-tm-btn" onclick="rezTimerPlus('${t.id}')" aria-label="Add a minute">+1</button>`)
+      +`<button class="ck-tm-btn" onclick="rezTimerStop('${t.id}')" aria-label="Remove timer">×</button>`
+    +`</div>`).join('')
+    +`<button class="btn" onclick="rezOpenTimerDialog()">${icn('plus',13)} Timer</button>`
+    +(stumm?`<div class="ck-tm-mute">🔇 No sound came out — your device may be on silent.</div>`:'');
 }
 export function rezCookStep(d){cookStep+=d;renderCook();}
 export function rezCookTick(k){if(cookDone.has(k))cookDone.delete(k);else cookDone.add(k);renderCook();}
@@ -664,6 +762,276 @@ export function rezCloseVideo(){
   ytStop();
   const host=$('rezVideo');
   if(host){host.innerHTML='';host.classList.remove('on');}
+}
+
+
+// ══ TITELBILD AUS DEM VIDEO ("Screenshot aus dem Reel") ══════════════════
+// Nutzer-Wunsch 2026-09-02: "Screenshot aus dem Reel als Titelbild direkt in
+// der App auswaehlbar machen".
+// ⚠ WAS TECHNISCH GEHT UND WAS NICHT - nachgeprueft, nicht geschaetzt:
+//   • YouTube legt zu jedem Video oeffentliche Standbilder ab (0/1/2/3.jpg,
+//     hqdefault, maxresdefault). Die lassen sich hier direkt anzeigen und
+//     als Titelbild uebernehmen - ein echtes Bild AUS dem Video.
+//   • Instagram und TikTok: das Video laeuft in einem fremden Rahmen. Diese
+//     Seite darf ihn weder auslesen noch abmalen (Same-Origin-Regel des
+//     Browsers, keine Einstellung, die man umlegen koennte), und die
+//     Vorschaubilder liegen hinter kurzlebig signierten Adressen. Ein Knopf
+//     "Bild aus dem Video holen" waere dort eine Attrappe.
+//   Deshalb steht das Video LINKS im selben Fenster: anhalten, mit dem
+//   Geraet ein Bildschirmfoto machen, rechts einfuegen oder auswaehlen -
+//   ohne die App zu verlassen. Danach zuschneiden, weil ein Bildschirmfoto
+//   vom Handy hochkant ist und die Telefonleisten mit drauf hat.
+let _cs=null;   // {mode,id,link,titel,img,sel,ratio}
+function coverOffen(){return !!_cs;}
+export function rezCoverStudio(){
+  if(!form){toast('Open a recipe first');return;}
+  starteCover('form',form.id,detectLink(form.source||''),form.title||'Recipe');
+}
+export function rezCoverStudioInspo(id){
+  const i=S.state.index.inspo.find(x=>x.id===id);
+  if(!i)return;
+  starteCover('inspo',id,detectLink(i.url||''),i.title||'Idea');
+}
+function starteCover(mode,id,link,titel){
+  _cs={mode,id,link:link||null,titel,img:null,sel:{x:.05,y:.05,w:.9,h:.9},ratio:4/3,quelle:''};
+  document.addEventListener('paste',csPaste);
+  zeichneCover();
+}
+export function rezCloseCover(){
+  if(_cs)gibFrei(_cs.quelle);
+  _cs=null;
+  document.removeEventListener('paste',csPaste);
+  const h=$('rezCover');
+  if(h){h.innerHTML='';h.classList.remove('on');}
+}
+function csFehler(msg){
+  const el=$('csErr');
+  if(!el){toast(msg);return;}
+  el.textContent=msg;el.style.display='block';
+}
+function zeichneCover(){
+  const host=$('rezCover');
+  if(!host||!_cs)return;
+  host.classList.add('on');
+  host.innerHTML=`<div class="cs-ov" onclick="if(event.target===this)rezCloseCover()"><div class="cs-box">`
+    +`<div class="cs-hd"><h3>${_cs.img?'Crop the cover':'Cover from the video'}</h3>`
+      +`<button class="cs-x" onclick="rezCloseCover()" aria-label="Close">✕</button></div>`
+    +(_cs.img?cropHtml():pickHtml())
+  +`</div></div>`;
+  if(_cs.img)bindeCrop();
+  else{const d=$('csDrop');if(d)bindeDrop(d);}
+  afterRender(host);
+}
+function pickHtml(){
+  const l=_cs.link;
+  const frames=frameUrls(l);
+  const src=l&&l.embedUrl?l.embedUrl+(l.platform==='youtube'
+    ?(l.embedUrl.includes('?')?'&':'?')+'playsinline=1':''):'';
+  const links=src
+    ? `<div class="cs-embed${l.platform==='youtube'?' yt':''}"><iframe id="csFrame" src="${escH(src)}" loading="lazy" allowfullscreen`
+      +` referrerpolicy="origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture"`
+      +` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation" title="${escH(_cs.titel)}"></iframe></div>`
+      +`<div class="cs-note" style="margin-top:10px">Play the reel, pause it on the frame you want, take a screenshot with your device — then add it on the right.</div>`
+    : `<div class="cs-note">This recipe has no video link. You can still pick a photo or paste a screenshot.</div>`;
+  return`<div class="cs-grid"><div>${links}</div><div>`
+    +(frames.length
+      ?`<div class="cs-sec">Frames from the video</div>`
+       +`<div class="cs-frames">`+frames.map((f,i)=>
+          `<button class="cs-frame" onclick="rezCoverFrame(${i})"><img src="${escH(f.url)}" alt="" loading="lazy"`
+          +` onerror="this.closest('.cs-frame').style.display='none'"><span>${escH(f.label)}</span></button>`).join('')+`</div>`
+      :(_cs.link?`<div class="cs-note">${escH(_cs.link.label||'This platform')} does not hand out frames of a reel to other websites — that is their restriction, not a missing feature here. A screenshot works just as well:</div>`:''))
+    +`<div class="cs-sec">Your screenshot</div>`
+    +`<div class="cs-drop" id="csDrop" onclick="rezCoverPick()">${icn('image',22)}`
+      +`<div><b>Click to choose a screenshot</b></div><div>or drop it here — you can also paste with ⌘V / Ctrl+V</div></div>`
+    +`<div class="cs-btns"><button class="btn" onclick="rezCoverPaste()">${icn('image',13)} Paste from clipboard</button>`
+      +`<button class="btn" onclick="rezCloseCover()">Cancel</button></div>`
+    +`<div class="cs-err" id="csErr"></div>`
+  +`</div></div>`;
+}
+function cropHtml(){
+  const s=_cs.sel;
+  const r=[['Free',0],['4:3',4/3],['3:4',3/4],['1:1',1],['16:9',16/9],['9:16',9/16]];
+  return`<div class="cs-note">Drag the frame to move it, pull the round handle to resize. Everything outside stays out of the cover.</div>`
+    +`<div class="cs-ratios">`+r.map(([lbl,v])=>
+        `<button class="cs-ratio${Math.abs((_cs.ratio||0)-v)<1e-6?' on':''}" onclick="rezCoverRatio(${v})">${lbl}</button>`).join('')+`</div>`
+    +`<div class="cs-crop" id="csCrop"><img id="csImg" src="${_cs.quelle}" alt="">`
+      +`<div class="cs-sel" id="csSel" style="left:${s.x*100}%;top:${s.y*100}%;width:${s.w*100}%;height:${s.h*100}%">`
+        +`<span class="cs-h" id="csH"></span></div></div>`
+    +`<div class="cs-btns"><button class="btn" onclick="rezCoverBack()">${icn('arrowL',13)} Choose another</button>`
+      +`<button class="btn btn-primary" onclick="rezCoverUse()">${icn('check',13)} Use as cover</button></div>`
+    +`<div class="cs-err" id="csErr"></div>`;
+}
+// Ein aus einer Datei erzeugter Verweis muss wieder freigegeben werden -
+// sonst haelt der Browser das ganze Bildschirmfoto im Speicher.
+function gibFrei(u){if(u&&u.indexOf('blob:')===0)try{URL.revokeObjectURL(u);}catch(e){}}
+export function rezCoverBack(){if(!_cs)return;gibFrei(_cs.quelle);_cs.img=null;_cs.quelle='';zeichneCover();}
+export function rezCoverRatio(v){
+  if(!_cs)return;
+  _cs.ratio=v||0;
+  if(v)passeSelAn();
+  zeichneCover();
+}
+// Das Seitenverhaeltnis gilt in BILDPUNKTEN. Die Auswahl steht in Anteilen
+// des Bildes, deshalb muss die Bildgroesse mitgerechnet werden - sonst waere
+// "1:1" auf einem Hochkantbild ein Rechteck.
+function passeSelAn(){
+  const im=_cs.img;if(!im||!_cs.ratio)return;
+  const nw=im.naturalWidth,nh=im.naturalHeight,s=_cs.sel;
+  let h=(s.w*nw)/(_cs.ratio*nh);
+  if(h>1){h=1;s.w=(_cs.ratio*nh)/nw;}
+  s.h=h;
+  s.x=Math.min(s.x,1-s.w);s.y=Math.min(s.y,1-s.h);
+  if(s.x<0){s.x=0;s.w=Math.min(1,s.w);}
+  if(s.y<0){s.y=0;s.h=Math.min(1,s.h);}
+}
+function bindeCrop(){
+  const box=$('csCrop'),sel=$('csSel'),h=$('csH');
+  if(!box||!sel||!h)return;
+  let modus='',startX=0,startY=0,start=null;
+  const ab=(e)=>{
+    const r=box.getBoundingClientRect();
+    const dx=(e.clientX-startX)/r.width,dy=(e.clientY-startY)/r.height;
+    const s=_cs.sel;
+    if(modus==='move'){
+      s.x=Math.max(0,Math.min(1-start.w,start.x+dx));
+      s.y=Math.max(0,Math.min(1-start.h,start.y+dy));
+    }else{
+      s.w=Math.max(.08,Math.min(1-s.x,start.w+dx));
+      if(_cs.ratio){
+        const nw=_cs.img.naturalWidth,nh=_cs.img.naturalHeight;
+        s.h=Math.min(1-s.y,(s.w*nw)/(_cs.ratio*nh));
+        s.w=(s.h*_cs.ratio*nh)/nw;
+      }else{
+        s.h=Math.max(.08,Math.min(1-s.y,start.h+dy));
+      }
+    }
+    sel.style.left=(s.x*100)+'%';sel.style.top=(s.y*100)+'%';
+    sel.style.width=(s.w*100)+'%';sel.style.height=(s.h*100)+'%';
+  };
+  const hoch=()=>{modus='';window.removeEventListener('pointermove',ab);window.removeEventListener('pointerup',hoch);};
+  const runter=(m)=>(e)=>{
+    e.preventDefault();e.stopPropagation();
+    modus=m;startX=e.clientX;startY=e.clientY;start=Object.assign({},_cs.sel);
+    window.addEventListener('pointermove',ab);
+    window.addEventListener('pointerup',hoch);
+  };
+  sel.addEventListener('pointerdown',runter('move'));
+  h.addEventListener('pointerdown',runter('size'));
+  // Ein Bildschirmfoto ist hochkant: sinnvoll vorbelegen, statt den Nutzer
+  // jedes Mal von Hand ziehen zu lassen.
+  const im=$('csImg');
+  if(im&&!im.complete)im.addEventListener('load',()=>{passeSelAn();zeichneCover();},{once:true});
+}
+function bindeDrop(el){
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',e=>{
+    e.preventDefault();el.classList.remove('over');
+    const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f)nimmDatei(f);else csFehler('That was not an image file.');
+  });
+}
+function csPaste(e){
+  if(!_cs||_cs.img)return;
+  const it=(e.clipboardData&&e.clipboardData.items)||[];
+  for(let i=0;i<it.length;i++){
+    if(it[i].type&&it[i].type.indexOf('image')===0){
+      const f=it[i].getAsFile();
+      if(f){e.preventDefault();nimmDatei(f);return;}
+    }
+  }
+}
+// ⚠ navigator.clipboard.read() gibt es nicht ueberall und es fragt um
+// Erlaubnis. Scheitert es, sagt die App WARUM und nennt den Weg, der immer
+// geht - statt still nichts zu tun.
+export async function rezCoverPaste(){
+  if(!navigator.clipboard||!navigator.clipboard.read){
+    csFehler('This browser does not let a page read the clipboard. Press ⌘V / Ctrl+V instead, or use “Click to choose a screenshot”.');
+    return;
+  }
+  try{
+    const items=await navigator.clipboard.read();
+    for(const it of items){
+      const typ=(it.types||[]).find(t=>t.indexOf('image')===0);
+      if(typ){nimmDatei(await it.getType(typ));return;}
+    }
+    csFehler('There is no image in the clipboard — take a screenshot first.');
+  }catch(err){
+    csFehler('Could not read the clipboard: '+((err&&err.message)||'permission denied')+'. Press ⌘V / Ctrl+V instead.');
+  }
+}
+export function rezCoverPick(){
+  pickFile(f=>nimmDatei(f));
+}
+function nimmDatei(blob){
+  if(!_cs)return;
+  if(!blob||(blob.type&&blob.type.indexOf('image')!==0)){csFehler('That file is not an image.');return;}
+  const url=URL.createObjectURL(blob);
+  ladeBildEl(url,false).then(img=>{
+    _cs.img=img;_cs.quelle=url;
+    _cs.sel={x:.05,y:.05,w:.9,h:.9};
+    passeSelAn();
+    zeichneCover();
+  }).catch(e=>csFehler('That image could not be read: '+((e&&e.message)||'unknown error')));
+}
+// Ein Standbild von YouTube. Es MUSS mit crossOrigin geladen werden, sonst
+// ist die Zeichenflaeche "verunreinigt" und liefert kein Bild zurueck.
+export function rezCoverFrame(i){
+  if(!_cs)return;
+  const f=frameUrls(_cs.link)[i];
+  if(!f)return;
+  ladeBildEl(f.url,true).then(img=>{
+    _cs.img=img;_cs.quelle=f.url;
+    _cs.sel={x:0,y:0,w:1,h:1};_cs.ratio=0;
+    zeichneCover();
+  }).catch(()=>csFehler('YouTube did not hand out that frame. Try another one, or use a screenshot.'));
+}
+function ladeBildEl(url,cors){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    if(cors)img.crossOrigin='anonymous';
+    const t=setTimeout(()=>rej(new Error('timeout')),9000);
+    img.onload=()=>{clearTimeout(t);res(img);};
+    img.onerror=()=>{clearTimeout(t);rej(new Error('load failed'));};
+    img.src=url;
+  });
+}
+// Zuschnitt anwenden: der gewaehlte Ausschnitt wird in BILDPUNKTEN des
+// Originals ausgeschnitten (nicht in Bildschirmpunkten - sonst haenge die
+// Schaerfe an der Fenstergroesse).
+export async function rezCoverUse(){
+  if(!_cs||!_cs.img)return;
+  try{
+    const im=_cs.img,s=_cs.sel;
+    const nw=im.naturalWidth||im.width,nh=im.naturalHeight||im.height;
+    const sx=Math.round(s.x*nw),sy=Math.round(s.y*nh);
+    const sw=Math.max(1,Math.round(s.w*nw)),sh=Math.max(1,Math.round(s.h*nh));
+    const cv=document.createElement('canvas');
+    cv.width=sw;cv.height=sh;
+    const ctx=cv.getContext('2d');
+    ctx.imageSmoothingQuality='high';
+    ctx.drawImage(im,sx,sy,sw,sh,0,0,sw,sh);
+    const cover=CK.encodeToBudgetFrom(cv,S.IMG_COVER),thumb=CK.encodeToBudgetFrom(cv,S.IMG_THUMB);
+    if(_cs.mode==='form'){
+      if(!form){rezCloseCover();return;}
+      form.cover=cover;form.thumb=thumb;
+      rezCloseCover();
+      renderForm();
+      toast('Cover updated');
+    }else{
+      const it=S.state.index.inspo.find(x=>x.id===_cs.id);
+      if(!it){rezCloseCover();return;}
+      it.thumb=thumb;
+      await S.saveInspo(it);
+      rezCloseCover();
+      renderInspo();
+      toast('Cover updated');
+    }
+  }catch(e){
+    // Genau hier landet der Fall "fremdes Bild ohne CORS": toDataURL wirft.
+    csFehler('This image could not be used: '+((e&&e.message)||'unknown error')
+      +'. A screenshot from your own device always works.');
+  }
 }
 
 // ══ TIMER-LEISTE ═════════════════════════════════════════════════════════
@@ -732,7 +1100,12 @@ function renderTimerPanel(){
   // passiert. Die Klasse schafft unten Platz, solange ein Timer laeuft.
   document.body.classList.add('timers-on');
 }
-CK.onTimers(()=>{renderTimerPanel();});
+CK.onTimers(()=>{
+  renderTimerPanel();
+  // ⚠ NUR die Timer-Zeile neu schreiben, nicht den ganzen Kochmodus - sonst
+  // laedt der Video-Rahmen jede Sekunde neu.
+  if(document.body.classList.contains('cooking'))renderCookTimers();
+});
 
 // ══ REZEPT-AUSWAHL (gemeinsamer Baustein) ════════════════════════════════
 // EIN Auswahlfenster fuer alle Stellen, die ein Rezept brauchen (Today's
@@ -1321,6 +1694,7 @@ export function rezOpenInspo(id){
     +`<div class="m-btns" style="flex-wrap:wrap">`
       +`<button class="btn btn-danger" style="margin-right:auto" onclick="rezTrashInspo('${i.id}')">${icn('trashIcon',13)} Delete</button>`
       +(i.url?`<a class="btn" href="${escH(i.url)}" target="_blank" rel="noopener">Open in ${escH(i.label||'browser')}</a>`:'')
+      +`<button class="btn" onclick="rezCoverStudioInspo('${i.id}')">${icn('image',13)} Set cover</button>`
       +`<button class="btn" onclick="rezOpenInspoForm('${i.id}')">Edit</button>`
       +`<button class="btn btn-primary" onclick="rezInspoToRecipe('${i.id}')">${icn('recipes',13)} Convert to recipe</button>`
     +`</div>`
@@ -1885,7 +2259,13 @@ function openModal(html,cls){
   document.addEventListener('keydown',escClose);
   afterRender(host);
 }
-function escClose(e){if(e.key==='Escape')rezRequestClose();}
+function escClose(e){
+  if(e.key!=='Escape')return;
+  // Das Titelbild-Fenster liegt UEBER dem Formular - Escape schliesst
+  // immer das oberste Fenster, sonst verschwaende man das Formular darunter.
+  if(coverOffen()){rezCloseCover();return;}
+  rezRequestClose();
+}
 // Der EINE Weg nach draussen (Klick daneben, Escape, Cancel-Button). Steht
 // ungespeicherte Arbeit im Formular, fragt er nach, statt sie wegzuwerfen.
 export function rezRequestClose(){
@@ -1905,6 +2285,9 @@ function offeneEingabe(){
 let _closeT=null;
 export function rezCloseModal(){
   _modalGen++;
+  // Das Titelbild-Fenster gehoert zum Formular darunter - bleibt es offen,
+  // schriebe "Use as cover" in ein Formular, das es nicht mehr gibt.
+  if(coverOffen())rezCloseCover();
   closeRowMenu();
   closeUnsavedDialog();
   ytStop();
@@ -2124,6 +2507,8 @@ function renderForm(){
       +(form.cover?`<img src="${form.cover}" alt=""><span class="rf-drop-badge">Change photo</span>`
                   :`${icn('image',26)}<div><b>Click to add a photo</b></div><div>JPG or PNG — it is scaled down automatically</div>`)
     +`</div>`
+    +`<div class="rf-add" style="margin-top:8px"><button class="btn" onclick="rezCoverStudio()">${icn('play',13)} `
+      +`${form.source?'Cover from the video':'Cover from a screenshot'}</button></div>`
     +`<div class="rf-row">`
       +`<div><label class="dm-lbl">Title</label><input class="m-inp" id="rfTitle" placeholder="e.g. Pasta al limone" value="${escH(form.title)}" oninput="rezFormField('title',this.value)"></div>`
       +`<div><label class="dm-lbl">Duration</label><select class="m-sel" onchange="rezFormField('min',this.value)">${durOpts}</select></div>`
@@ -2470,6 +2855,7 @@ Object.assign(window,{
   rezRandomOpt,rezRoll,rezCookThis,rezMarkCooked,rezClearToday,rezPickToday,
   // Kochmodus + Timer
   rezCook,rezCookExit,rezCookStep,rezCookTick,rezCookServ,rezCookFinish,renderCook,
+  rezCookGo,rezCookMedia,rezCookAspect,
   rezStartTimer,rezTimerPause,rezTimerResume,rezTimerPlus,rezTimerStop,
   rezOpenTimerDialog,rezStartCustomTimer,
   // Portionen, Notizen, Suche, Vorschlag, Teilen
@@ -2483,6 +2869,9 @@ Object.assign(window,{
   rezInspoByCreator,rezYtToggle,rezYtSeek,rezYtScrub,rezYtScrubEnd,
   // Bilder und Video am Rezept
   rezPlayVideo,rezCloseVideo,rezLightbox,rezLightboxStep,rezLightboxClose,rezShowImage,
+  // Titelbild aus dem Video / Bildschirmfoto
+  rezCoverStudio,rezCoverStudioInspo,rezCloseCover,rezCoverFrame,rezCoverPick,rezCoverPaste,
+  rezCoverRatio,rezCoverBack,rezCoverUse,
   // Woche
   renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,
   // Einkaufsliste

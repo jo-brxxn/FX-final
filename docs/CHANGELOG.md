@@ -9092,3 +9092,82 @@ Neue Stufe L, drei Mutationen nachgewiesen: Bild wieder als eigener Schritt →
 „Bilder werden weiter als eigene Schritte gezählt (Step 1 of 4 statt 1 of 2)";
 Foto-Abzeichen entfernt → „Bilder sind von außen nicht erkennbar";
 Instagram-Vorschaubild geraten → „das landet als kaputtes Bild beim Nutzer".
+
+---
+
+## 2026-09-02 — Perfect Rezept: Kochmodus in drei Spalten, Titelbild aus dem Reel, Caption-Zerlegung (REZEPT-CHECK-8)
+
+Drei Punkte aus **einer** Nutzer-Nachricht (mit Screenshot als Beleg):
+„Screenshot aus dem Reel als Titelbild direkt in der App auswählbar machen …
+du siehst die caption wird nicht richtig zerlegt … im Kochmodus links die
+Zutaten, in der Mitte das Bild oder das Video … rechts die Zubereitung und
+oben mittig die Timer Funktion".
+
+### Caption-Zerlegung — zuerst reproduziert, dann repariert
+
+Repro mit genau der Caption aus dem Screenshot: Ergebnis **11 Zutaten, 0
+Schritte** — der komplette Anleitungs-Absatz und das abschließende „enjoy"
+standen in der Zutatenliste. Ursache: die Caption hat eine Überschrift
+`Ingredients:`, aber **keine** für die Zubereitung; der Überschriften-Weg lief
+bis zum Textende, weil er auf eine nächste Überschrift wartete, die nie kam.
+
+Behoben über die **Form** der Zeile (`istZutat`/`istFliesstext`): eine lange
+Zeile oder mehrere Sätze beenden den Zutaten-Abschnitt auch ohne Überschrift.
+Anleitungs-Absätze über 170 Zeichen werden in Sätze zerlegt, damit im
+Kochmodus lesbare Schritte stehen. Ergebnis danach: 9 Zutaten, 8 Schritte.
+
+Ein Fall blieb noch: `½ tsp black pepper 150 g baby spinach` (zwei Zutaten in
+einer Zeile, weil beim Kopieren ein Zeilenumbruch verloren ging) wurde nicht
+getrennt — `trenneMehrfach()` stieg sofort aus, weil die Mengen-Erkennung nur
+eine **ASCII-Ziffer** am Zeilenanfang akzeptierte und die Zeile mit `½`
+beginnt. Unicode-Brüche (`½ ⅓ ⅔ ¼ ¾ ⅕ ⅙ ⅛`, auch gemischt wie `1 ½ cups`)
+gelten jetzt als Mengenanfang. Ergebnis: **10 Zutaten, 8 Schritte**, Anleitung
+sauber getrennt. Die Caption steht als Testfall in Stufe H.
+
+### Titelbild aus dem Reel (neues Cover-Fenster)
+
+Eigener Host `#rezCover` **über** dem Formular — das Formular darunter bleibt
+offen und ungespeichert, `Escape` schließt nur die obere Ebene.
+
+- **YouTube**: echte Standbilder aus dem Video zur Auswahl (`frameUrls()`:
+  `maxresdefault`, `hqdefault`, `1/2/3.jpg` = erstes, mittleres, letztes
+  Drittel).
+- **Instagram/TikTok**: das Reel läuft **links im selben Fenster**, rechts
+  wird das Bildschirmfoto eingefügt (Klick, Ziehen-und-Ablegen, ⌘V/Strg+V).
+  ⚠ Ein „Frame aus dem Video holen" ist dort technisch **nicht möglich**: das
+  Video liegt in einem cross-origin `<iframe>` (weder auslesbar noch auf eine
+  Canvas abmalbar), die Vorschaubilder hinter kurzlebig signierten Adressen.
+  `frameUrls()` gibt dort bewusst eine leere Liste zurück statt einer Attrappe.
+- **Zuschneiden** mit festen Verhältnissen (frei, 4:3, 3:4, 1:1, 16:9, 9:16),
+  gerechnet in Bildpunkten des Originals — sonst hinge die Schärfe an der
+  Fenstergröße. Ein Handy-Screenshot ist hochkant und hat die Telefonleisten
+  mit drauf; ohne Zuschnitt wäre das Titelbild zur Hälfte Telefon.
+
+### Kochmodus: drei Spalten, Timer oben mittig
+
+Vorher war die Mitte ein Assistent, der **einen** Schritt zeigte. Jetzt:
+links Zutaten (+ Fotostreifen), Mitte Bild **oder** Video, rechts alle
+Schritte als Liste mit hervorgehobenem aktivem Schritt, oben mittig die Timer,
+rechts der Portionsregler.
+
+Drei Fallen, alle geprüft:
+- **Das Medienfeld nimmt das Seitenverhältnis des Bildes an** (`--ck-ar`,
+  beim `load` gesetzt) — ein fester 16:9-Kasten lässt ein hochkantes
+  Reel-Bild wie einen Fehler aussehen.
+- **Der Video-Rahmen wird beim Schrittwechsel aus dem DOM gelöst und wieder
+  eingehängt** statt neu geschrieben — sonst springt das Video bei jedem
+  Klick an den Anfang. Aus demselben Grund schreibt das Timer-Ereignis nur
+  die Timer-Zeile neu, nicht den ganzen Kochmodus.
+- **Die untere Timer-Leiste ist im Kochmodus ausgeblendet** — dieselbe Uhr an
+  zwei Stellen, und genau die untere Leiste verdeckte früher „Back/Next".
+
+### Wächter
+
+Stufe K auf das neue Layout umgestellt (Spalten überlappen nicht, genau ein
+aktiver Schritt, Klick auf einen Schritt springt dorthin, Uhr oben mittig in
+der Kopfzeile, untere Leiste im Kochmodus aus), Stufe L um die
+Seitenverhältnis-Prüfung des Medienfelds ergänzt, neue **Stufe M** für das
+Cover-Fenster (YouTube-Standbilder vorhanden, für Instagram/TikTok keine
+geraten, Bildschirmfoto-Weg da, Zuschnitt auf 1:1 ergibt ein quadratisches
+Titelbild, Escape schließt nur die obere Ebene, jeder Handler im Fenster zeigt
+auf eine echte Funktion).
