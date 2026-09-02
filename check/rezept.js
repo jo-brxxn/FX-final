@@ -119,6 +119,24 @@ function pruefeSyncDiagnose(s) {
     fail('SYNC', 'rezCopySql fehlt in der window-Bruecke — der Knopf wuerde beim Klick still ein ReferenceError werfen.');
 }
 
+// ── Statisch: der Service Worker darf den Programmcode nicht cachen ─────
+// ⚠ Nutzer-Bugreport 2026-09-02 ("es ist wie davor"): die Reparatur WAR
+// ausgeliefert, kam beim Geraet aber nicht an - js/rezept/*.js lief ueber
+// den Cache-First-Zweig, der Nutzer bekam weiter den alten Code. Von aussen
+// sieht das exakt aus wie ein nicht behobener Fehler. Diese Pruefung haelt
+// den Netz-zuerst-Zweig fuer Skripte fest.
+function pruefeServiceWorker() {
+  const sw = fs.readFileSync('sw.js', 'utf8');
+  const m = sw.match(/if\s*\(req\.mode\s*===\s*'navigate'([^)]*)\)/);
+  if (!m) { fail('SW', 'Der Netz-zuerst-Zweig in sw.js wurde nicht gefunden - Pruefung veraltet?'); return; }
+  if (!/isCode/.test(m[1]))
+    fail('SW', 'sw.js liefert JS/CSS aus dem Cache aus - eine Code-Aenderung erreicht den Nutzer dann erst beim uebernaechsten Oeffnen ("es ist wie davor")');
+  if (!/const\s+isCode\s*=\s*\/\\\.\(\?:js\|mjs\|css\)\$\//.test(sw))
+    fail('SW', 'In sw.js fehlt die Erkennung von Skript-Dateien (isCode)');
+  const v = (sw.match(/CACHE_VERSION\s*=\s*'([^']+)'/) || [])[1];
+  if (!v) fail('SW', 'CACHE_VERSION in sw.js nicht gefunden');
+}
+
 // ── E) Kontrast: rein statisch, braucht keinen Browser ───────────────────
 function pruefeKontrast() {
   const s = fs.readFileSync('rezept.html', 'utf8');
@@ -175,12 +193,13 @@ function pruefeKontrast() {
 (async () => {
   const themeAnzahl = pruefeKontrast();
   pruefeSyncKopfzeilen();
-  // --static: nur die Stufen ohne Browser (Kontrast + Sync-Diagnose). Damit
-  // laesst sich eine Regel in Sekunden gegen eine Mutation pruefen, statt
-  // den kompletten Browser-Lauf abzuwarten.
+  pruefeServiceWorker();
+  // --static: nur die Stufen ohne Browser (Kontrast, Sync-Diagnose, Service
+  // Worker). Damit laesst sich eine Regel in Sekunden gegen eine Mutation
+  // pruefen, statt den kompletten Browser-Lauf abzuwarten.
   if (process.argv.includes('--static')) {
     if (F.length) { console.error('[rezept:static] FEHLER:\n' + F.map(f => '  - ' + f).join('\n')); process.exit(1); }
-    console.log(`[rezept:static] ok (${themeAnzahl} Themes, Sync-Kopfzeilen und -Diagnose)`);
+    console.log(`[rezept:static] ok (${themeAnzahl} Themes, Sync-Kopfzeilen/-Diagnose, Service Worker)`);
     process.exit(0);
   }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rezcheck-'));
@@ -553,6 +572,30 @@ function pruefeKontrast() {
     pruef('Screenshot-Caption: kein Schritt laenger als 180 Zeichen',
       c.steps.filter(x => x.length > 180).length, 0);
     pruef('Screenshot-Caption: Dauer aus dem Text', c.min, 25);
+
+    // Weg 4: zweiter Bugreport 2026-09-02 - die Zubereitung stand in KURZEN
+    // Zeilen da (typisch fuer Reels), und alles davon landete wieder in der
+    // Zutatenliste, "enjoy" eingeschlossen. Die erste Reparatur hatte nur
+    // lange Absaetze erkannt.
+    const d = I.parseCaption([
+      'Creamy Garlic Chicken', '', 'Ingredients:',
+      '2 chicken breasts', '200 ml cream', '3 cloves garlic', 'Salt & pepper',
+      'Sear the chicken for 5 minutes.', 'Add the garlic and cream.',
+      'Simmer for 10 minutes.', 'Serve with rice.', 'enjoy',
+      '#chicken #reels', 'https://www.instagram.com/reel/AbC/'].join('\n'));
+    pruef('kurze Anweisungszeilen: Zutaten', d.ingredients.length, 4);
+    pruef('kurze Anweisungszeilen: Schritte', d.steps.length, 5);
+    pruef('"enjoy" ist keine Zutat', d.ingredients.filter(z => /enjoy/i.test(z)).length, 0);
+    pruef('Anweisungen stehen nicht in den Zutaten',
+      d.ingredients.filter(z => /Sear|Simmer|Serve|Add the/i.test(z)).length, 0);
+    // ⚠ Gegenprobe: Zutaten OHNE Menge, die ein Kochwort enthalten, muessen
+    // Zutaten BLEIBEN. Ein zu gieriger Filter waere die naechste Regression.
+    const e = I.parseCaption([
+      'Pasta', '', 'Ingredients:', '200 g pasta', 'Salt & pepper',
+      'Fresh basil to serve', 'Petersilie zum Servieren', 'Olive oil',
+      'Cook the pasta.', 'Serve hot.'].join('\n'));
+    pruef('Zutat ohne Menge mit Kochwort bleibt Zutat', e.ingredients.length, 5);
+    pruef('danach beginnt die Zubereitung', e.steps.length, 2);
 
     // Dauer-Schreibweisen
     [['1h30', 90], ['2 Std 30 Minuten', 150], ['ca. 20 Min', 20], ['90 mins', 90],

@@ -142,6 +142,45 @@ function istFliesstext(z){
   // Lange Zeile oder mehrere Saetze -> das ist eine Anweisung, keine Zutat.
   return t.length>70||/[.!?]\s+["'(„“]?[A-ZÄÖÜ0-9]/.test(t);
 }
+// ⚠ ZWEITER Bugreport 2026-09-02 (wieder per Screenshot): "er schreibt die
+// Zubereitung immer noch als Ingredient ... er erkennt auch Sachen wie
+// enjoy als Ingredient". Die erste Fassung hat nur LANGE Absaetze als
+// Anweisung erkannt. Reels schreiben die Zubereitung aber meist in KURZEN
+// Zeilen ("Sear the chicken for 5 minutes."), und die rutschten alle als
+// Zutat durch - genau wie das abschliessende "enjoy".
+// Deshalb entscheiden ab hier zwei zusaetzliche, harte Merkmale:
+//   1. Eine Zeile, die auf . ! ? endet, ist ein SATZ. Zutaten schreibt
+//      niemand mit Punkt am Ende ("200 g Mehl." kommt nicht vor).
+//   2. Ein Kochverb im Text ("bake", "mix", "erhitzen", ...) oder eine
+//      Schlussfloskel ("enjoy", "guten Appetit").
+// ⚠ Beides wird NUR geprueft, wenn die Zeile nicht ohnehin schon wie eine
+// Zutat aussieht - "2 tbsp parsley, to serve" enthaelt zwar "serve", ist
+// aber durch die Menge eindeutig eine Zutat und wird vorher erkannt.
+const KOCHVERB=new RegExp('\\b(?:'+[
+  // Englisch
+  'preheat','heat','bake','roast','fry','sear','saute','saut(?:é|e)','boil','simmer','cook','mix','stir',
+  'whisk','combine','add','pour','place','put','transfer','season','garnish','serve','slice','chop','dice',
+  'mince','flake','toss','fold','drain','rinse','spread','top','cover','remove','let','leave','bring',
+  'blend','marinate','knead','grill','steam','melt','wilt','rest','enjoy',
+  // Deutsch
+  'vorheizen','erhitzen','backen','braten','anbraten','kochen','k(?:ö|oe)cheln','mischen','vermengen',
+  'verr(?:ü|ue)hren','r(?:ü|ue)hren','geben','hinzuf(?:ü|ue)gen','zugeben','w(?:ü|ue)rzen','garnieren',
+  'servieren','schneiden','hacken','w(?:ü|ue)rfeln','abgiessen','abgie(?:ß|ss)en','absp(?:ü|ue)len',
+  'bestreichen','abdecken','ruhen','ziehen','schmelzen','anrichten','geniessen','genie(?:ß|ss)en',
+  'guten appetit','bon appetit','viel spass','viel spa(?:ß|ss)',
+].join('|')+')\\b','i');
+// ⚠ Das Kochverb zaehlt nur AM ANFANG der Zeile (Befehlsform), sonst
+// haette "Fresh basil to serve" oder "Petersilie zum Servieren" - beides
+// echte Zutaten - die Liste vorzeitig beendet. Ebenso zaehlen typische
+// Satzanfaenge einer Anleitung ("Then ...", "Danach ...").
+const ANWEISUNG_START=new RegExp('^\\s*(?:(?:then|now|next|finally|meanwhile|first|afterwards|dann|danach|jetzt|zuerst|anschlie(?:ß|ss)end|zum schluss|au(?:ß|ss)erdem|alles)\\s+)?(?:'+KOCHVERB.source.replace(/^\\b\(\?:/,'').replace(/\)\\b$/,'')+')\\b','i');
+function wirktWieAnweisung(z){
+  const t=String(z||'').trim();
+  if(!t)return false;
+  if(/[.!?]$/.test(t))return true;      // Zutaten enden nicht mit einem Punkt
+  if(ANWEISUNG_START.test(t))return true;
+  return istFliesstext(t);
+}
 // ── Mehrere Zutaten in EINER Zeile trennen ──────────────────────────────
 // Im selben Bugreport: "½ tsp black pepper 150 g baby spinach" stand als
 // eine Zutat da. Passiert, wenn beim Kopieren ein Zeilenumbruch verloren
@@ -285,7 +324,7 @@ export function parseCaption(text){
         // ⚠ Fehlt die Ueberschrift fuer die Zubereitung, muss die FORM
         // entscheiden - sonst landet die komplette Anleitung als Zutat in
         // der Liste (Bugreport 2026-09-02, per Screenshot).
-        if(abZeile<0&&!istZutat(roh)&&istFliesstext(roh)){abZeile=i;break;}
+        if(abZeile<0&&!istZutat(roh)&&wirktWieAnweisung(t)){abZeile=i;break;}
         trenneMehrfach(t).forEach(x=>zutaten.push(x));
       }
     }
@@ -313,6 +352,11 @@ export function parseCaption(text){
       if(!nummeriertGesehen&&(EINHEIT.test(t)||(AUFZAEHLUNG.test(t)&&t.length<=70))){
         trenneMehrfach(ohneAufzaehlung(t)).forEach(x=>zutaten.push(x));return;
       }
+      // ⚠ Ohne Ueberschriften landeten Anweisungszeilen frueher in der
+      // Notiz - dort sieht sie im Rezept niemand. Was wie eine Anweisung
+      // aussieht, gehoert in die Zubereitung; nur der Rest (Titelzeile,
+      // Gruss, Werbung) bleibt Notiz.
+      if(zutaten.length&&wirktWieAnweisung(t)){schritte.push(ohneAufzaehlung(t));return;}
       rest.push(t);
     });
   }
